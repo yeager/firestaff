@@ -431,6 +431,32 @@ int main(int argc, char** argv) {
                      strstr(syntheticView.inspectTitle, "HALK") != NULL,
                  "space turns front-cell creature contact into a real strike tick for the selected champion");
 
+    initialTick = syntheticView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_07D",
+                 M11_GameView_HandlePointer(&syntheticView, 110, 78, 1) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == initialTick &&
+                     strcmp(syntheticView.lastAction, "INSPECT") == 0 &&
+                     strcmp(syntheticView.lastOutcome, "ENEMY SPOTTED") == 0,
+                 "clicking the viewport inspects the live front-cell target without spending a tick");
+
+    probe_record(&tally,
+                 "INV_GV_07E",
+                 M11_GameView_HandlePointer(&syntheticView, 20, 182, 1) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.party.activeChampionIndex == 0 &&
+                     strcmp(syntheticView.lastAction, "CHAMP") == 0 &&
+                     strstr(syntheticView.inspectTitle, "TIGGY READY") != NULL,
+                 "clicking a champion slot directly arms that champion for the next action");
+
+    initialTick = syntheticView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_07F",
+                 M11_GameView_HandlePointer(&syntheticView, 90, 170, 1) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == initialTick + 1 &&
+                     strcmp(syntheticView.lastAction, "ATTACK") == 0 &&
+                     strstr(syntheticView.inspectTitle, "TIGGY ATTACKS") != NULL,
+                 "clicking the on-screen action button drives the real front-cell attack flow");
+
     memset(syntheticFramebuffer, 0, sizeof(syntheticFramebuffer));
     M11_GameView_Draw(&syntheticView, syntheticFramebuffer, 320, 200);
 

@@ -26,6 +26,7 @@ Firestaff now has a real front door and a real in-game slice.
 - first front-cell attack affordance driven by real tick/emission state
 - cleaner in-game HUD with readable location, supplies, and action readouts
 - launcher to game to launcher loop with explicit in-view controls
+- clickable in-view controls for movement, inspect/action, and direct champion pick
 - deterministic verification suite still green
 
 **Not there yet:**
@@ -57,6 +58,7 @@ The project is built around portable C, explicit data structures, and aggressive
 - movement / turning / ticking mutate real world state
 - Enter now inspects, Space acts, and Tab cycles the front champion inside the real game view
 - Space now attacks front-cell creature contact through the real tick orchestrator when a target is there
+- mouse clicks now drive the in-view control strip, viewport inspect, and champion selection from the live HUD
 - pseudo-viewport slice now gives a forward-facing dungeon view
 - HUD readouts now prioritise player-facing labels over raw debug telemetry
 
@@ -74,7 +76,7 @@ Launcher / game view:
 ./firestaff --data-dir "$HOME/.firestaff/data"
 ```
 
-In the game view: `Enter` inspects, `Space` acts or waits, `Tab` cycles the active champion, `Esc` returns to the launcher.
+In the game view: `Enter` inspects, `Space` acts or waits, `Tab` cycles the active champion, `Esc` returns to the launcher. You can also click the viewport to inspect, click the control strip to move/act, and click a party card to arm a champion directly.
 
 Headless launcher smoke test:
 
@@ -94,7 +96,7 @@ Verification suite:
 - deepen the first combat/action loop beyond the current inspect / strike slice
 - replace more fallback launcher art with real assets
 - add verified CSB / DM2 asset hashes where evidence exists
-- widen the in-game command surface past keyboard-first navigation
+- keep widening the in-game command surface past the current first clickable HUD slice
 
 ### After that
 - fuller viewport rendering

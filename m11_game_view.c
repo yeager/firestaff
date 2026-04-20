@@ -27,6 +27,26 @@ enum {
     M11_COLOR_WHITE = 15
 };
 
+enum {
+    M11_VIEWPORT_X = 12,
+    M11_VIEWPORT_Y = 24,
+    M11_VIEWPORT_W = 196,
+    M11_VIEWPORT_H = 118,
+    M11_CONTROL_STRIP_X = 14,
+    M11_CONTROL_STRIP_Y = 165,
+    M11_CONTROL_STRIP_W = 88,
+    M11_CONTROL_STRIP_H = 14,
+    M11_PROMPT_STRIP_X = 104,
+    M11_PROMPT_STRIP_Y = 165,
+    M11_PROMPT_STRIP_W = 202,
+    M11_PROMPT_STRIP_H = 14,
+    M11_PARTY_PANEL_X = 12,
+    M11_PARTY_PANEL_Y = 160,
+    M11_PARTY_SLOT_W = 71,
+    M11_PARTY_SLOT_H = 28,
+    M11_PARTY_SLOT_STEP = 77
+};
+
 typedef struct {
     char ch;
     unsigned char rows[7];
@@ -545,6 +565,11 @@ static void m11_get_active_champion_label(const M11_GameViewState* state,
                                           char* out,
                                           size_t outSize);
 static int m11_cycle_active_champion(M11_GameViewState* state);
+static int m11_set_active_champion(M11_GameViewState* state, int championIndex);
+
+static int m11_point_in_rect(int x, int y, int rx, int ry, int rw, int rh) {
+    return x >= rx && y >= ry && x < (rx + rw) && y < (ry + rh);
+}
 
 void M11_GameView_Init(M11_GameViewState* state) {
     if (!state) {
@@ -757,6 +782,69 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
     return M11_GAME_INPUT_REDRAW;
+}
+
+M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
+                                               int x,
+                                               int y,
+                                               int primaryButton) {
+    int slot;
+
+    if (!state || !state->active || !primaryButton) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (m11_point_in_rect(x, y,
+                          M11_PROMPT_STRIP_X,
+                          M11_PROMPT_STRIP_Y,
+                          M11_PROMPT_STRIP_W,
+                          M11_PROMPT_STRIP_H) ||
+        m11_point_in_rect(x, y, 218, 106, 86, 34) ||
+        m11_point_in_rect(x, y,
+                          M11_VIEWPORT_X,
+                          M11_VIEWPORT_Y,
+                          M11_VIEWPORT_W,
+                          M11_VIEWPORT_H)) {
+        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
+
+    if (m11_point_in_rect(x, y,
+                          M11_CONTROL_STRIP_X,
+                          M11_CONTROL_STRIP_Y,
+                          M11_CONTROL_STRIP_W,
+                          M11_CONTROL_STRIP_H)) {
+        if (m11_point_in_rect(x, y, 18, 167, 15, 10)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_LEFT);
+        }
+        if (m11_point_in_rect(x, y, 35, 167, 15, 10)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_UP);
+        }
+        if (m11_point_in_rect(x, y, 52, 167, 15, 10)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_RIGHT);
+        }
+        if (m11_point_in_rect(x, y, 69, 167, 15, 10)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_DOWN);
+        }
+        if (m11_point_in_rect(x, y, 86, 167, 12, 10)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
+        }
+    }
+
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        int slotX = M11_PARTY_PANEL_X + slot * M11_PARTY_SLOT_STEP;
+        if (m11_point_in_rect(x, y,
+                              slotX,
+                              M11_PARTY_PANEL_Y + 20,
+                              M11_PARTY_SLOT_W,
+                              M11_PARTY_SLOT_H - 20)) {
+            if (m11_set_active_champion(state, slot)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+    }
+
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static void m11_draw_party_arrow(unsigned char* framebuffer,
@@ -1934,9 +2022,11 @@ static void m11_draw_control_strip(unsigned char* framebuffer,
                                    const M11_ViewportCell* aheadCell) {
     unsigned char accent = m11_focus_color(aheadCell);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  14, 165, 88, 14, M11_COLOR_BLACK);
+                  M11_CONTROL_STRIP_X, M11_CONTROL_STRIP_Y,
+                  M11_CONTROL_STRIP_W, M11_CONTROL_STRIP_H, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  14, 165, 88, 14, accent);
+                  M11_CONTROL_STRIP_X, M11_CONTROL_STRIP_Y,
+                  M11_CONTROL_STRIP_W, M11_CONTROL_STRIP_H, accent);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             18, 167, 15, 10, "", DIR_WEST,
                             M11_COLOR_YELLOW, M11_COLOR_BLACK);
@@ -2009,7 +2099,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
                               int framebufferHeight) {
-    static const M11_ViewRect viewport = {12, 24, 196, 118};
+    static const M11_ViewRect viewport = {M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H};
     static const M11_ViewRect frames[4] = {
         {20, 32, 180, 102},
         {40, 44, 140, 78},
@@ -2179,6 +2269,29 @@ static int m11_cycle_active_champion(M11_GameViewState* state) {
     return 0;
 }
 
+static int m11_set_active_champion(M11_GameViewState* state, int championIndex) {
+    char champion[16];
+
+    if (!state || !state->active || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    if (championIndex >= state->world.party.championCount ||
+        !state->world.party.champions[championIndex].present) {
+        return 0;
+    }
+    if (state->world.party.activeChampionIndex == championIndex) {
+        return 1;
+    }
+
+    state->world.party.activeChampionIndex = championIndex;
+    m11_get_active_champion_label(state, champion, sizeof(champion));
+    m11_set_status(state, "CHAMP", "ACTIVE CHAMPION READY");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s READY", champion);
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "CLICK OR TAB TO SWAP, SPACE ACTS, ENTER INSPECTS");
+    return 1;
+}
+
 static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
@@ -2189,8 +2302,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         activeIndex = state->world.party.activeChampionIndex;
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        int x = 12 + slot * 77;
-        int y = 160;
+        int x = M11_PARTY_PANEL_X + slot * M11_PARTY_SLOT_STEP;
+        int y = M11_PARTY_PANEL_Y;
         char line[48];
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       x, y, 71, 28, M11_COLOR_BLACK);
@@ -2470,9 +2583,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 154, 157, line, &g_text_small);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  104, 165, 202, 14, M11_COLOR_BLACK);
+                  M11_PROMPT_STRIP_X, M11_PROMPT_STRIP_Y,
+                  M11_PROMPT_STRIP_W, M11_PROMPT_STRIP_H, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  104, 165, 202, 14, m11_focus_color(&aheadCell));
+                  M11_PROMPT_STRIP_X, M11_PROMPT_STRIP_Y,
+                  M11_PROMPT_STRIP_W, M11_PROMPT_STRIP_H, m11_focus_color(&aheadCell));
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   108, 168, focusAction, &g_text_small);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,

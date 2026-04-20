@@ -57,6 +57,10 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);
+M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
+                                               int x,
+                                               int y,
+                                               int primaryButton);
 void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,

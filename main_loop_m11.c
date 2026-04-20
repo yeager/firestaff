@@ -104,8 +104,41 @@ static M12_MenuInput m11_next_script_input(const char** cursor) {
     return m11_map_script_token(start, (size_t)(end - start));
 }
 
-static M12_MenuInput m11_poll_menu_input(int* quitRequested) {
+static int m11_window_to_framebuffer_x(int windowX) {
+    int windowW = M11_Render_GetWindowWidth();
+    if (windowW <= 0) {
+        return 0;
+    }
+    if (windowX < 0) {
+        windowX = 0;
+    }
+    if (windowX >= windowW) {
+        windowX = windowW - 1;
+    }
+    return (windowX * M11_FB_WIDTH) / windowW;
+}
+
+static int m11_window_to_framebuffer_y(int windowY) {
+    int windowH = M11_Render_GetWindowHeight();
+    if (windowH <= 0) {
+        return 0;
+    }
+    if (windowY < 0) {
+        windowY = 0;
+    }
+    if (windowY >= windowH) {
+        windowY = windowH - 1;
+    }
+    return (windowY * M11_FB_HEIGHT) / windowH;
+}
+
+static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
+                                         M11_GameInputResult* gameViewResult,
+                                         int* quitRequested) {
     SDL_Event ev;
+    if (gameViewResult) {
+        *gameViewResult = M11_GAME_INPUT_IGNORED;
+    }
     while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
         if (ev.type == SDL_EVENT_QUIT) {
@@ -117,6 +150,20 @@ static M12_MenuInput m11_poll_menu_input(int* quitRequested) {
         if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
             ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
             M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            continue;
+        }
+        if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+            gameView && gameView->active && ev.button.button == SDL_BUTTON_LEFT) {
+            if (gameViewResult) {
+                *gameViewResult = M11_GameView_HandlePointer(
+                    gameView,
+                    m11_window_to_framebuffer_x((int)ev.button.x),
+                    m11_window_to_framebuffer_y((int)ev.button.y),
+                    1);
+                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
             continue;
         }
         if (ev.type == SDL_EVENT_KEY_DOWN) {
@@ -152,6 +199,20 @@ static M12_MenuInput m11_poll_menu_input(int* quitRequested) {
         if (ev.type == SDL_WINDOWEVENT &&
             ev.window.event == SDL_WINDOWEVENT_RESIZED) {
             M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            continue;
+        }
+        if (ev.type == SDL_MOUSEBUTTONDOWN &&
+            gameView && gameView->active && ev.button.button == SDL_BUTTON_LEFT) {
+            if (gameViewResult) {
+                *gameViewResult = M11_GameView_HandlePointer(
+                    gameView,
+                    m11_window_to_framebuffer_x(ev.button.x),
+                    m11_window_to_framebuffer_y(ev.button.y),
+                    1);
+                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
             continue;
         }
         if (ev.type == SDL_KEYDOWN) {
@@ -227,14 +288,31 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
+        M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
         if (scriptCursor && *scriptCursor != '\0') {
             input = m11_next_script_input(&scriptCursor);
         }
         if (input == M12_MENU_INPUT_NONE) {
-            input = m11_poll_menu_input(&quitRequested);
+            input = m11_poll_menu_input(&gameView, &pointerResult, &quitRequested);
         }
         if (quitRequested) {
             break;
+        }
+        if (pointerResult != M11_GAME_INPUT_IGNORED) {
+            if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
+                M11_GameView_Shutdown(&gameView);
+                M11_GameView_Init(&gameView);
+                M11_ApplyStartupMenuRuntime(&menuState);
+                M12_StartupMenu_Draw(&menuState,
+                                     M11_Render_GetFramebuffer(),
+                                     M11_FB_WIDTH,
+                                     M11_FB_HEIGHT);
+            } else if (pointerResult == M11_GAME_INPUT_REDRAW) {
+                M11_GameView_Draw(&gameView,
+                                  M11_Render_GetFramebuffer(),
+                                  M11_FB_WIDTH,
+                                  M11_FB_HEIGHT);
+            }
         }
         if (input != M12_MENU_INPUT_NONE) {
             if (gameView.active) {
