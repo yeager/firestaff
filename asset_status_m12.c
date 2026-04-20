@@ -28,14 +28,38 @@ typedef struct {
 
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
 static const char* const g_dm1DungeonNames[] = {"DUNGEON.DAT", NULL};
-static const char* const g_csbGraphicsNames[] = {"CSBGRAPH.DAT", NULL};
+static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
 static const char* const g_csbDungeonNames[] = {"CSB.DAT", "CSB_DUNGEON.DAT", NULL};
-static const char* const g_dm2GraphicsNames[] = {"DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
+static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
 static const char* const g_dm2DungeonNames[] = {"DM2DUNGEON.DAT", "SKULLKEEP.DAT", NULL};
 
+/*
+ * Seeded from Daniel's 2026-04-20 checksum mail and normalized in
+ * asset_validator_checksums_m12.json. We wire the reliable GRAPHICS.DAT hashes
+ * directly into the runtime validator here, while keeping the broader mail dump
+ * as reference data for future file-by-file expansion.
+ */
 static const char* const g_dm1GraphicsHashes[] = {
-    "fa6b1aa29e191418713bf2cda93d962e",
+    "0679e39da9dcc2e855cb33c6c64ddcb5",
     "444bcb3a3fcf8389296c49467f27e1d6",
+    "0d7af44dd14f383464288abdcec76afc",
+    "2bdc5f431f84c0ece738f54dbd787c3b",
+    "3e3b9b1800c67b4ce850e087813c325d",
+    "491ca939f9abb33ceeb26619b841fe91",
+    "5095a13692702235d2e74f6b2b1367a9",
+    "6a2f135b53c2220f0251fa103e2a6e7e",
+    "7eee396993745e8af212f44d75ff6c1a",
+    "7f9458e4a3972d06e649a6fa85a7f34b",
+    "9ce2eaf7a9e78620e3f17594437caffa",
+    "b35931b55db649a1bd2d415b61b29801",
+    "b3cfd84e44cdf07ce2eeba47e87f772b",
+    "c10c512f63461ebe79b5ac365115b61b",
+    "dd373954b3fb127db7387946131ea322",
+    "eaec2131541573658da99c13865c2e67",
+    "edf47d7da5de8184604d6d80477ef01f",
+    "f934d97e43e1ba6e5159839acbcd0611",
+    "fa6b1aa29e191418713bf2cda93d962e",
+    "fe08a97c64766614b71164fa06eda545",
     NULL
 };
 static const char* const g_dm1DungeonHashes[] = {
@@ -45,13 +69,45 @@ static const char* const g_dm1DungeonHashes[] = {
 };
 
 /*
- * CSB and DM2 intentionally stay empty until the project captures hashes from
- * verified retail data. The validator structure below keeps those insertion
- * points explicit so future additions only touch the relevant hash lists.
+ * The broader mail dump includes utility-disk sidecars and a few human-format
+ * artifacts, so for runtime matching we currently hook in the reliable
+ * GRAPHICS.DAT hashes and keep dungeon-file hashes explicit but still empty
+ * until they are curated with the same level of confidence.
  */
-static const char* const g_csbGraphicsHashes[] = {NULL};
+static const char* const g_csbGraphicsHashes[] = {
+    "21197b1d4994fd835c403d5a33dcac2b",
+    "291e1bc6803e3dc4b974c60117ca5d68",
+    "405b757038eea3c263e60f240854d6de",
+    "61fbfd56887c94adc26888a9491c6611",
+    "761d6fc588b31aeaaa9caf3725e111b9",
+    "8fe59d4f2af5b57a4cb14447c011d3f1",
+    "cefaddfdf5651df2c91f61b5611a8362",
+    "ebf6a57af3f27782e358c0490bfd2f2e",
+    NULL
+};
 static const char* const g_csbDungeonHashes[] = {NULL};
-static const char* const g_dm2GraphicsHashes[] = {NULL};
+static const char* const g_dm2GraphicsHashes[] = {
+    "027ff3b8ddc2c4c4cdda7ada0b0bc46c",
+    "0a63e22cd83fe3c90aacffda5c0f062c",
+    "1c940ea95703eaea0ecdf84d17e954b9",
+    "25247ede4dabb6a71e5dabdfbcd5907d",
+    "283d5456c4f676609489e200219605bb",
+    "43cf7e8579e83e9f1fa9b411695842fd",
+    "4bf28b3d84e6799d7686c6aaf96cbf23",
+    "5cab25f6b975957eae4a203174e7f2a6",
+    "9a6aa706ae9bed5ddd68ffd730524476",
+    "a0277195099b2ace51d4e085f7eef835",
+    "a31023db49d5d85e469c9323671812c7",
+    "a654ba19e9a6919f46818ecd23d7ea9d",
+    "a669adf2a6ff887e0d451d93c846f57f",
+    "a80c555a858ef7770e1d7f3d2e37fec3",
+    "b4d733576ea60c41737f79f212faf528",
+    "bd2d316eb77c6d6d217bfb76bd0d7e41",
+    "dbced13a38d3036f42b9797175b7ec88",
+    "e52ab5e01715042b16a4dcff02052e5d",
+    "f926a7554bdfb5852105179e67b8a264",
+    NULL
+};
 static const char* const g_dm2DungeonHashes[] = {NULL};
 
 static const M12_AssetFileSpec g_dm1Files[] = {

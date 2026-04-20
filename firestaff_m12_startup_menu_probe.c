@@ -146,9 +146,9 @@ int main(void) {
                      M12_AssetStatus_GameHasCompleteHashSet("dm1") == 1 &&
                      M12_AssetStatus_GameHasCompleteHashSet("csb") == 0 &&
                      M12_AssetStatus_GameHasCompleteHashSet("dm2") == 0 &&
-                     M12_AssetStatus_GameKnownHashCount("csb") == 0U &&
-                     M12_AssetStatus_GameKnownHashCount("dm2") == 0U,
-                 "asset scan uses MD5 matches and exposes explicit hash-set coverage");
+                     M12_AssetStatus_GameKnownHashCount("csb") == 8U &&
+                     M12_AssetStatus_GameKnownHashCount("dm2") == 19U,
+                 "asset scan uses MD5 matches and exposes expanded graphics checksum coverage");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     probe_record(&tally,

@@ -56,17 +56,17 @@
     },
     {
       "gameId": "csb",
-      "description": "CSB Amiga Utility Disk English Release 2 and 3",
+      "description": "CSB Amiga Utility Disk English Release 2/3",
       "filename": "HCSB.DAT",
       "md5": "7496b3b8b9ff6e2368eac9a16be8230b",
-      "label": "CSB Amiga Utility Disk English Release 2 and 3 HCSB.DAT"
+      "label": "CSB Amiga Utility Disk English Release 2/3 HCSB.DAT"
     },
     {
       "gameId": "csb",
-      "description": "CSB Amiga Utility Disk English Release 2 Release 3",
+      "description": "CSB Amiga Utility Disk English Release 2/3",
       "filename": "CEDTLS.DAT",
       "md5": "8aef8165975a36a426aa2ea39823c149",
-      "label": "CSB Amiga Utility Disk English Release 2 Release 3 CEDTLS.DAT"
+      "label": "CSB Amiga Utility Disk English Release 2/3 CEDTLS.DAT"
     },
     {
       "gameId": "csb",
@@ -441,10 +441,10 @@
     },
     {
       "gameId": "dm2",
-      "description": "DMII PC German and EnglishJewelCase",
+      "description": "DMII PC German and English JewelCase",
       "filename": "GRAPHICS.DAT",
       "md5": "e52ab5e01715042b16a4dcff02052e5d",
-      "label": "DMII PC German and EnglishJewelCase GRAPHICS.DAT"
+      "label": "DMII PC German and English JewelCase GRAPHICS.DAT"
     },
     {
       "gameId": "dm2",
