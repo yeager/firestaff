@@ -1,48 +1,49 @@
-# Firestaff — Bug/Change Toggle Spec
+# Firestaff, Bug/Change Toggle Spec
 
-**Status:** Spec (post-M10 implementation).
-**Skapad:** 2026-04-20
-**Källkanon:** http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm
-**Primär databas:** Fontanels `BUGX_YY` och `CHANGEX_YY_KATEGORI` taggar i ReDMCSB-källkoden
-
----
-
-## 1. Översikt
-
-Firestaff låter användaren välja vilken historisk version av Dungeon Master / Chaos Strikes Back de vill spela — ner till individuella buggar och ändringar. Fontanels egen dokumentation ger oss 93 buggar + 108 ändringar spridda över 9 game-versioner. Vi bygger en UI som respekterar hans taxonomi och låter spelare mixa fritt.
+**Status:** Spec (post-M10 implementation)
+**Created:** 2026-04-20
+**Canonical source:** http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm
+**Primary database:** Fontanel's `BUGX_YY` and `CHANGEX_YY_CATEGORY` tags in the ReDMCSB codebase
 
 ---
 
-## 2. Datakälla och struktur
+## 1. Overview
 
-### 2.1 Fontanels taxonomi
+Firestaff lets the player choose which historical version of Dungeon Master / Chaos Strikes Back they want to play, all the way down to individual bugs and changes. Fontanel's documentation already gives us 93 bugs and 108 changes spread across 9 game versions. Firestaff should respect that taxonomy and let players mix and match deliberately.
 
-**Versions-koder (0-8):**
+---
 
-| Kod | Version                  |
-|-----|--------------------------|
-| 0   | DM Atari ST 1.0a EN      |
-| 1   | DM Atari ST 1.0b EN      |
-| 2   | DM Atari ST 1.1 EN       |
-| 3   | DM Atari ST 1.2 EN       |
-| 4   | DM Atari ST 1.2 GE       |
-| 5   | DM Atari ST 1.3a FR      |
-| 6   | DM Atari ST 1.3b FR      |
-| 7   | CSB Atari ST 2.0 EN      |
-| 8   | CSB Atari ST 2.1 EN      |
+## 2. Data source and structure
 
-**Notera:** PC 3.4 (vår baseline) är inte numrerad — Fontanels WIP-kod dokumenterar Atari ST-historien. Vi får själva fastställa vilka Atari-fixes som är inbakade i PC 3.4 och vilka som inte är det.
+### 2.1 Fontanel taxonomy
 
-**Bug-ID:** `BUGX_YY` — X = version där buggen introducerades, YY = löpnummer
-**Change-ID:** `CHANGEX_YY_KATEGORI` — X = version, YY = löpnummer, KATEGORI ∈ {FIX, OPTIMIZATION, LOCALIZATION, IMPROVEMENT}
+**Version codes (0-8):**
 
-### 2.2 Totala antal (per Fontanel)
+| Code | Version |
+|------|---------|
+| 0 | DM Atari ST 1.0a EN |
+| 1 | DM Atari ST 1.0b EN |
+| 2 | DM Atari ST 1.1 EN |
+| 3 | DM Atari ST 1.2 EN |
+| 4 | DM Atari ST 1.2 GE |
+| 5 | DM Atari ST 1.3a FR |
+| 6 | DM Atari ST 1.3b FR |
+| 7 | CSB Atari ST 2.0 EN |
+| 8 | CSB Atari ST 2.1 EN |
+
+**Note:** PC 3.4, our baseline, is not numbered in the Atari timeline. We have to determine ourselves which Atari-era fixes are effectively present in PC 3.4 and which are not.
+
+**Bug ID:** `BUGX_YY`, where X is the version that introduced the bug and YY is a running number.
+
+**Change ID:** `CHANGEX_YY_CATEGORY`, where X is the version, YY is a running number, and CATEGORY ∈ {FIX, OPTIMIZATION, LOCALIZATION, IMPROVEMENT}.
+
+### 2.2 Totals (per Fontanel)
 
 - **Bugs: 93**
-  - Introducerade i 1.0a EN: 89
-  - Introducerade i 1.1 EN: 1
-  - Introducerade i 1.3a FR: 1
-  - Introducerade i CSB 2.0 EN: 2
+  - Introduced in 1.0a EN: 89
+  - Introduced in 1.1 EN: 1
+  - Introduced in 1.3a FR: 1
+  - Introduced in CSB 2.0 EN: 2
 - **Changes: 108**
   - 1.0b EN: 3
   - 1.1 EN: 21
@@ -53,136 +54,136 @@ Firestaff låter användaren välja vilken historisk version av Dungeon Master /
   - CSB 2.0 EN: 40
   - CSB 2.1 EN: 14
 
-Totalt **201 individuella togglar**.
+Total: **201 individual toggles**.
 
-### 2.3 Datamodell (JSON/YAML)
+### 2.3 Data model (JSON / YAML)
 
 ```json
 {
   "id": "BUG0_02",
-  "type": "bug",                           // "bug" | "change"
+  "type": "bug",
   "symptom": "After 850-1000 hours the game hangs",
   "cause": "24-bit event-time overflow in timeline",
   "affected_versions": [0, 1, 2, 3, 4, 5, 6, 7, 8],
   "affected_files": ["GAMELOOP.C"],
-  "resolution": "none",                    // "none" | "fixed_in:<change_id>" | "partial"
-  "fixed_by_change": null,                 // CHANGEX_YY_KATEGORI if applicable
-  "category": null,                        // FIX/OPTIMIZATION/LOCALIZATION/IMPROVEMENT for changes
-  "default_state": "original",             // "original" | "fixed" (per-profile override)
+  "resolution": "none",
+  "fixed_by_change": null,
+  "category": null,
+  "default_state": "original",
   "requires_fontanel_review": false,
   "our_implementation_status": "implemented | deferred | na",
-  "firestaff_flag_id": 2,                  // bit-index in bug_flags_compat mask
-  "applicable_games": ["DM1", "CSB"]       // gate — hides toggle in irrelevant games
+  "firestaff_flag_id": 2,
+  "applicable_games": ["DM1", "CSB"]
 }
 ```
 
-Databasens fullständiga omfång är ~201 poster × 11 fält. Initial scrape från dmweb.free.fr, sedan kurerat manuellt och versionshanterat i projektrepo.
+The full database is roughly 201 entries × 11 fields. Initial import comes from dmweb.free.fr, then we curate and version it inside the project.
 
 ---
 
-## 3. UI-val
+## 3. UI choices
 
-### 3.1 Version-presets (en-klick)
+### 3.1 Version presets (one-click)
 
-Snabbval för vanliga spelsätt:
+Quick presets for common play styles:
 
-| Preset                        | Beskrivning                                                                 | Default för nybörjare? |
-|-------------------------------|-----------------------------------------------------------------------------|------------------------|
-| **DM 1.0a EN (purist)**       | Original 1987. Alla 89 introduktionsbuggar PÅ. Inga changes.                 | ❌                     |
-| **DM 1.0b EN**                | Efter 3 tidiga fixar.                                                       | ❌                     |
-| **DM 1.1 EN**                 | 1988 — 21 changes + BUG2_00 introducerad.                                    | ❌                     |
-| **DM 1.2 EN (senaste EN)**    | Engelska slutversionen för Atari.                                           | ❌                     |
-| **DM 1.3b FR (senaste DM)**   | Alla Atari-fixes tom 1.3b. Franska lokaliserad.                              | ❌                     |
-| **CSB 2.1 EN (senaste CSB)**  | Alla Atari-fixes tom CSB 2.1.                                               | ❌                     |
-| **PC 3.4 baseline**           | Vad Fontanels WIP-kod faktiskt implementerar. **Vårt rekommenderade default.** | ✅ DM1                  |
-| **Modern**                    | Alla FIX + utvalda IMPROVEMENT changes. QoL-fokus.                          | ❌ (opt-in)             |
-| **Custom**                    | Användarens egen mix.                                                       | —                      |
+| Preset | Description | Beginner default? |
+|--------|-------------|-------------------|
+| **DM 1.0a EN (purist)** | Original 1987 build. All 89 launch-era bugs enabled. No later changes. | ❌ |
+| **DM 1.0b EN** | Original plus the first 3 fixes. | ❌ |
+| **DM 1.1 EN** | 1988 build, 21 changes plus BUG2_00 introduced. | ❌ |
+| **DM 1.2 EN (latest EN)** | Final English Atari DM. | ❌ |
+| **DM 1.3b FR (latest DM)** | All Atari DM fixes through 1.3b, French-localised. | ❌ |
+| **CSB 2.1 EN (latest CSB)** | All Atari CSB fixes through 2.1. | ❌ |
+| **PC 3.4 baseline** | What Fontanel's WIP code actually implements. **Recommended default.** | ✅ |
+| **Modern** | All FIX changes plus a curated set of IMPROVEMENT changes. | ❌ |
+| **Custom** | User-defined mix. | — |
 
-**Implementation:** varje preset är en JSON-fil med en lista av `{id, state}`-par. Vid val → UI uppdaterar alla togglar. Användaren kan sedan modifiera och spara som Custom.
+Implementation-wise, each preset should just be a JSON file containing `{id, state}` pairs. Pick preset, populate toggles, then let the player save a modified combination as Custom.
 
 ### 3.2 Custom mix (advanced)
 
-**Full kontroll:** individuella togglar för varje bug/change (~201 stycken).
+**Full control:** individual toggles for every bug and change, roughly 201 total.
 
-**Gruppering i UI:**
-- Bugs (93) — expanderbar sektion
-  - Per affected-version (1.0a: 89, 1.1: 1, 1.3a: 1, CSB 2.0: 2)
-- Changes (108) — expanderbar sektion
-  - Per kategori:
-    - FIX (~60)
-    - OPTIMIZATION (~20)
-    - LOCALIZATION (~15)
-    - IMPROVEMENT (~30) ← troligen mest intressant för användaren
-  - Per version
+**UI grouping:**
+- Bugs (93)
+  - grouped by introducing version
+- Changes (108)
+  - grouped by category:
+    - FIX
+    - OPTIMIZATION
+    - LOCALIZATION
+    - IMPROVEMENT
+  - optionally also by version
 
-**Per-post UI (tooltip + expand):**
-- ID + symptom (one-liner)
-- Cause (full förklaring)
+**Per-entry UI:**
+- ID + one-line symptom
+- Full cause / explanation
 - Affected versions
 - Resolution
-- Affected files (för nördarna)
-- Impact-bedömning: "Silent/Visual/Gameplay/Breaking"
-- Recommended state: "original" eller "fixed"
+- Affected files (for archaeology-minded users)
+- Impact category: Silent / Visual / Gameplay / Breaking
+- Recommended state: original or fixed
 
-**Sökfilter:**
-- "Visa bara buggar som påverkar vald version"
-- "Visa bara changes som INTE är i min version"
-- "Sök fritextsymtom"
-- "Sök filnamn" (för kodarkeologi)
+**Search filters:**
+- show only bugs affecting the selected version
+- show only changes not already included in the selected version
+- free-text symptom search
+- file-name search
 
-### 3.3 Changes är också togglable (inte bara buggar)
+### 3.3 Changes must be toggleable too, not just bugs
 
-Kritisk insikt: Fontanels changes är inte alla fixes. Exempel:
+This matters because Fontanel's "changes" are not all bug fixes.
 
-- **CHANGE3_14_IMPROVEMENT** — eventuell gameplay-tweak, kanske vill spelaren INTE ha den
-- **CHANGE4_00_LOCALIZATION** — tyska textändringar från DM 1.2 GE. Vill en EN-spelare ha dem? Nej.
-- **CHANGE7_01_FIX** — fixar BUG0_03 (graphical glitch). Självklart PÅ i default men togglable för research.
-- **CHANGE7_14_FIX** — del av BUG0_00 (useless code cleanup). Ingen speleffekt men ändrar binary.
+Examples:
+- `CHANGE3_14_IMPROVEMENT`, maybe a gameplay tweak a purist does not want
+- `CHANGE4_00_LOCALIZATION`, maybe irrelevant for an English player
+- `CHANGE7_01_FIX`, fixes BUG0_03 and should default ON
+- `CHANGE7_14_FIX`, no visible gameplay effect but still changes the binary
 
-**UI-logik:**
-- FIX-changes: default PÅ, men kan slås av för att återskapa originalbugg
-- IMPROVEMENT-changes: default PÅ om de matchar vald preset, annars AV
-- LOCALIZATION-changes: default PÅ endast för matchande språk
-- OPTIMIZATION-changes: default PÅ (inga spelsemantikändringar)
+**Default UI behaviour:**
+- FIX changes: ON by default, but still reversible
+- IMPROVEMENT changes: ON only when the chosen preset includes them
+- LOCALIZATION changes: ON only when the selected language matches
+- OPTIMIZATION changes: ON by default unless they change semantics
 
-### 3.4 Gate per spel
+### 3.4 Per-game gating
 
-**Problem:** DM1-specifika buggar ska inte synas när spelaren valt CSB eller DM2. Motsatsen gäller också.
+DM1-only bugs should not clutter the UI when the player selects CSB or DM2, and vice versa.
 
-**Lösning:** varje post har `applicable_games: ["DM1", "CSB", "DM2"]`. UI filtrerar listan baserat på vilket spel som är valt i startmenyn.
+Each entry therefore carries `applicable_games`, for example `["DM1", "CSB"]`.
 
-**Mappning:**
-- `BUG0_*` → DM1-specifika om `affected_versions ⊆ {0-6}`
-- `BUG0_*` → både DM1 och CSB om `affected_versions` inkluderar {7, 8}
-- `BUG7_*` → CSB-specifika (introducerade i CSB 2.0)
-- `CHANGE7_*` → CSB-specifika changes
-- DM2 får egen bug/change-lista när vi portar DM2 (troligen M12+)
+**Rough mapping:**
+- `BUG0_*` affecting only versions 0-6 → DM1 only
+- `BUG0_*` affecting 7-8 too → DM1 + CSB
+- `BUG7_*` and `CHANGE7_*` → CSB only
+- DM2 gets its own list later
 
-**UX:** när spelaren byter spel i startmenyn → bug-listan uppdateras, custom-valet bevaras för varje spel separat.
+**UX rule:** switching the selected game in the startup menu filters the toggle list automatically. Custom selections should be stored per game.
 
 ---
 
-## 4. Community-värde
+## 4. Community value
 
-### 4.1 Publicera databasen
+### 4.1 Publish the database
 
-Bug/change-databasen (`firestaff-bugs.json` eller YAML) publiceras som:
-- Separat GitHub-repo: `firestaff/dm-bug-database`
-- Licens: CC-BY 4.0 (eller motsvarande preservation-vänlig)
-- Versioned: schemaversioning för framtida utbyggnad
+The bug/change database (`firestaff-bugs.json` or YAML) should ideally be publishable as:
+- a separate GitHub repo or exportable subproject
+- preservation-friendly licensed data
+- schema-versioned so other tools can depend on it
 
-### 4.2 Återanvändning
+### 4.2 Reuse by other projects
 
-Andra DM-portar kan konsumera databasen:
-- **ScummVM** (har delvis DM-stöd)
-- **Dungeon Master Java** (dmjava)
-- **RTC (Return to Chaos)** — Fontanels tidiga projekt
-- **Dungeon Master .NET** om den finns
-- Custom dungeon editors
+Potential downstream consumers:
+- ScummVM
+- Dungeon Master Java / dmjava
+- Return to Chaos style projects
+- custom dungeon editors
+- preservation / analysis tools
 
 ### 4.3 Credit
 
-Varje post i databasen har:
+Every exported data file should say clearly:
 
 ```json
 {
@@ -193,101 +194,92 @@ Varje post i databasen har:
 }
 ```
 
-Fontanel får full erkännande. Vår värdeskapning = strukturerad JSON + toggle-UI + mapping till implementation.
+Fontanel gets the credit. Firestaff's value-add is the structured data, UI mapping, and implementation hooks.
 
-### 4.4 Framtida utbyggnad (pull requests välkomna)
+### 4.4 Future expansion
 
-- **Video/GIF-demos** per bug (hur reproducerar man BUG0_02? visa gameplay)
-- **Replay-filer** som demonstrerar buggen
-- **Community-buggar** som Fontanel inte dokumenterat
-- **PC 3.4-specifika buggar** som inte finns i Atari-versionerna
+- video or GIF demos per bug
+- replay files that reproduce specific bugs
+- community-submitted bugs Fontanel never catalogued
+- PC 3.4-specific bug entries absent from the Atari timeline
 
 ---
 
-## 5. Teknisk implementation (post-M10)
+## 5. Technical implementation (post-M10)
 
-### 5.1 Firestaff-sidan
+### 5.1 Firestaff side
 
-**Modul:** `bug_flags_compat`
-- Bit-mask: minst 256 bits (för framtidsskydd; 201 nu + headroom)
-- Per-spel separata masks (DM1, CSB, DM2 har egen)
-- Serialiseras i `GameConfig_Compat` (Phase 20-struktur) och i save-filer
-- Varje kod-site som beror på en flagga:
+**Module:** `bug_flags_compat`
+- bit-mask with at least 256 bits
+- per-game masks (DM1 / CSB / DM2)
+- serialised into config and saves
+- every behaviour site can branch on the active flag
 
 ```c
 if (BUG_ACTIVE(game, BUG0_02)) {
-    // Original buggy behavior — 24-bit overflow
+    /* Original buggy behaviour, 24-bit overflow */
     scheduled_time = (game_time + delay) & 0xFFFFFF;
 } else {
-    // Fixed — use full 32-bit time
+    /* Fixed behaviour, full 32-bit time */
     scheduled_time = game_time + delay;
 }
 ```
 
-### 5.2 Save-fil-integration
+### 5.2 Save-file integration
 
-Save-filer markerar vilken profil som användes:
-- Phase 15 save-blob utökas med ett `ProfileHash_Compat`-fält
-- Vid load: jämför load-tid-profil med nuvarande profil
-- Om mismatch → warning popup: "Din save skapades med profil X, aktuell profil är Y. Spela ändå?"
-- Optionally: låt spelaren "snap-to" save-profilen automatiskt
+Save files must record the profile used to create them:
+- extend the save blob with `ProfileHash_Compat`
+- on load, compare current profile vs saved profile
+- if mismatched, show a warning popup
+- optional convenience path: snap runtime toggles to the save's profile automatically
 
-### 5.3 Replay-integration (TODO top-3 replay-system)
+### 5.3 Replay integration
 
-Replay-determinism kräver identiska flaggor som recording:
-- `TickStreamRecord_Compat` innehåller profile-hash
-- Replay-verifier avvisar replays med profil-mismatch
-- Kör bit-identiskt samma path:
+Replay determinism requires the exact same flag set as recording:
+- `TickStreamRecord_Compat` includes profile hash
+- replay verifier rejects mismatched profiles
+- same flags must lead to the same world hash after N ticks
 
-```c
-// Samma flag-set → samma world-hash efter N ticks → replay verified
-assert(crc32(world_after_N_ticks) == replay_expected_hash);
-```
+### 5.4 Startup-menu flow
 
-### 5.4 Startmenyns UI-flöde
-
-1. Spelare öppnar startmenyn
-2. Väljer spel (DM1/CSB/DM2)
-3. Under "Game version": dropdown med presets
-4. Default för nya spelare: "PC 3.4 baseline"
-5. Advanced-knapp → öppnar Custom-mix dialog
-6. Spara som egen preset → lägger till i dropdown
-7. När spelare startar new game: profilen fryses i save-filen
+1. Player opens startup menu
+2. Selects game (DM1 / CSB / DM2)
+3. Chooses a version preset
+4. Default for new players is `PC 3.4 baseline`
+5. Advanced button opens the full custom-mix dialog
+6. Player may save their custom preset
+7. When starting a new game, the chosen profile is frozen into the save
 
 ---
 
-## 6. Prioritering
+## 6. Priority
 
 ### Must-have (V2)
-- [ ] Scrape dmweb.free.fr → JSON-databas med ~201 poster
-- [ ] `bug_flags_compat` modul
-- [ ] 5 version-presets
-- [ ] Gate per spel
-- [ ] Save-fil profile-hash
-- [ ] UI: dropdown med presets
+- [ ] scrape dmweb.free.fr into a structured database of ~201 entries
+- [ ] `bug_flags_compat` module
+- [ ] 5+ version presets
+- [ ] per-game gating
+- [ ] save-file profile hash
+- [ ] preset dropdown in the UI
 
 ### Should-have (V2.1)
-- [ ] Custom mix UI
-- [ ] Sökfilter
-- [ ] Tooltips med full info
-- [ ] Save-file profile-mismatch warning
+- [ ] custom-mix UI
+- [ ] search filters
+- [ ] full tooltips / expanded explanations
+- [ ] save-profile mismatch warning
 
 ### Nice-to-have (V3+)
-- [ ] Publicera som community-repo
-- [ ] Video-demos per bug
-- [ ] Replay-filer som demonstrerar buggar
-- [ ] Community contribution workflow
+- [ ] publish as a community repo
+- [ ] video demos per bug
+- [ ] replay files demonstrating bugs
+- [ ] contribution workflow
 
 ---
 
-## 7. Open questions (NEEDS DECISION)
+## 7. Open questions
 
-1. **Vad är default för en ny spelare?** Rekommenderar "PC 3.4 baseline" = spel som Fontanels WIP faktiskt implementerar, eftersom det är den mest kompletta och testade versionen. Purister kan välja 1.0a EN.
-
-2. **Ska vi inkludera DM2 nu eller vänta?** DM2 är utanför ReDMCSB-dokumentationen. Vi behöver separat forskning + egen databas. Vänta till DM2-portningsfasen (M12+).
-
-3. **Vilken licens för bug-databasen?** CC-BY 4.0 är standard för preservation-data. Danne beslutar.
-
-4. **Ska changes vara togglable by default, eller endast för "advanced users"?** Förslag: i UI — dölj changes bakom "Advanced" expand-knapp. Visa bara buggar i default-vy eftersom de är mer intuitiva för spelaren att förstå.
-
-5. **Hur gör vi med PC 3.4-specifika buggar/changes som inte finns i Atari-docs?** Eget numreringschema `BUGPC_YY`? Eller `BUG10_YY` (fortsätter sekvensen)? Fråga Fontanel om råd.
+1. **What should be the default for a new player?** Recommendation: `PC 3.4 baseline`, because it is the most complete and testable starting point. Purists can still choose 1.0a EN.
+2. **Should DM2 be included now or later?** Later. DM2 is outside the ReDMCSB bug/change canon and needs separate research.
+3. **What licence should the bug database use?** Daniel decides.
+4. **Should changes be toggleable in the default UI or only under Advanced?** Recommendation: show bugs by default, hide change-toggles behind Advanced.
+5. **How should PC 3.4-specific bugs and changes be named if they are not in the Atari docs?** `BUGPC_YY` is the cleanest option unless Fontanel suggests a better continuation scheme.

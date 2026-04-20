@@ -1,142 +1,142 @@
-# ReDMCSB Version 2, grafikplan
+# ReDMCSB Version 2, Graphics Plan
 
-## Mål
+## Goal
 
-Bygg en **fristående, lagligt distribuerbar version** med:
-- ny högupplöst grafik
-- förbättrat ljud
-- inget beroende av originalspelets datafiler
-- samma övergripande spelstruktur och känsla, men inte asset-kopior
+Build a **standalone, legally distributable version** with:
+- new high-resolution visuals
+- improved audio
+- no dependency on the original game's data files
+- the same broad game structure and emotional feel, without copying original assets
 
-## Grundprincip
+## Core principle
 
-Version 2 ska **inte** vara:
-- AI-upskalad originalgrafik
-- paint-over direkt ovanpå originalassets
-- juridiskt grå “förbättrad originaldump”
+Version 2 should **not** be:
+- AI-upscaled original graphics
+- paint-over directly on top of original assets
+- a legally grey "enhanced original dump"
 
-Version 2 ska vara:
-- **nyritad presentation**
-- egen asset-pipeline
-- tydlig separation mellan spel-logik och presentation
+Version 2 should be:
+- **newly illustrated presentation**
+- its own asset pipeline
+- a clear separation between gameplay logic and presentation
 
-## Rekommenderad visuell riktning
+## Recommended visual direction
 
-### Stil
-- mörk fantasy
-- tydliga silhuetter
-- renare UI än originalet
-- handmålad 2D-känsla, inte fotorealism
-- hög kontrast mellan interaktiva element och bakgrund
+### Style
+- dark fantasy
+- clear silhouettes
+- cleaner UI than the original
+- painterly 2D feel, not photorealism
+- strong contrast between interactive elements and the background
 
-### Upplösning
-Arbeta i en **hög master-upplösning** från början.
+### Resolution
+Work in a **high master resolution** from the start.
 
-Rekommendation:
-- master canvas för menyer och scener: **1920x1080**
-- spelbara UI-paneler byggs modulärt
-- exportera sedan till mindre targets vid behov
+Recommendation:
+- master canvas for menus and scenes: **1920x1080**
+- playable UI panels built modularly
+- export to smaller targets later as needed
 
-### Renderingstil
-Två säkra spår, välj ett tidigt:
+### Rendering style
+Two safe directions, pick one early:
 
 1. **Painterly 2D**
-   - bakgrunder målade
-   - figurer/objekt som rena sprites
-   - bäst för snabbast väg till snygg V2
+   - painted backgrounds
+   - characters and objects as clean sprites
+   - best route for a good-looking V2 quickly
 
 2. **HD pixel-inspired**
-   - inte ren pixelart, men pixelinfluerad formgivning
-   - skarpa former, begränsad palett, moderna effekter
-   - svårare att få riktigt elegant
+   - not pure pixel art, but influenced by it
+   - crisp shapes, limited palette, modern effects
+   - harder to make truly elegant
 
-**Rekommendation: painterly 2D.**
+**Recommendation: painterly 2D.**
 
-## Asset-kategorier
+## Asset categories
 
-### 1. UI och menyer
-- titelbild
-- huvudmeny
-- undermenyer
-- knappar
-- highlight/selection-states
-- paneler, ramar, ornament
-- typsnitt/typografisystem
+### 1. UI and menus
+- title screen
+- main menu
+- submenus
+- buttons
+- highlight / selection states
+- panels, frames, ornaments
+- fonts / typography system
 
-### 2. Ikoner och symboler
-- inventory/verb/action-symboler
-- statusikoner
-- små UI-markörer
-- cursor/highlight-indikatorer
+### 2. Icons and symbols
+- inventory / verb / action symbols
+- status icons
+- small UI markers
+- cursor / highlight indicators
 
-### 3. Scenbakgrunder
-- rum
-- korridorer
-- vyer
-- övergångsbilder
-- loading/splash/intro-bakgrunder
+### 3. Scene backgrounds
+- rooms
+- corridors
+- viewpoints
+- transition images
+- loading / splash / intro backgrounds
 
-### 4. Interaktiva objekt
-- dörrar
-- kistor
-- nyckelobjekt
-- spell/ritual-objekt
-- andra klickbara eller fokusbara element
+### 4. Interactive objects
+- doors
+- chests
+- key objects
+- spell / ritual objects
+- other clickable or focusable elements
 
-### 5. Karaktärsrelaterat
-- porträtt
-- figurposer
-- eventuella ansiktsuttryck
-- dialogkopplade presentationselement
+### 5. Character-related assets
+- portraits
+- character poses
+- facial expressions if needed
+- dialogue-linked presentation elements
 
-### 6. Effekter
-- highlight-glow
-- övergångar/fade
-- aktiveringsflash
-- partiklar, dimma, magiska effekter
+### 6. Effects
+- highlight glow
+- transitions / fades
+- activation flashes
+- particles, mist, magical effects
 
-## Teknisk struktur
+## Technical structure
 
-## Separera logik och presentation
+## Separate logic and presentation
 
-Version 1 lär oss struktur.
-Version 2 ska återanvända så mycket logik som möjligt, men peka på en ny assetkälla.
+Version 1 teaches us structure.
+Version 2 should reuse as much logic as possible, but point at a completely different asset source.
 
-### Rekommenderad modell
+### Recommended model
 - **game logic layer**
-  - menystruktur
+  - menu structure
   - state transitions
-  - interaktionsregler
+  - interaction rules
 - **presentation layer**
-  - vilka bilder som visas
+  - which images are shown
   - layout
-  - effekter
-  - ljudkopplingar
+  - effects
+  - audio hooks
 - **asset manifest layer**
-  - mappar logiska IDs till V2-assets
+  - maps logical IDs to V2 assets
 
-### Exempel
-Istället för:
-- "load graphic index 13"
+### Example
+Instead of:
+- `load graphic index 13`
 
-använd:
+Use:
 - `menu.main.title`
 - `menu.main.option.new_game.highlighted`
 - `screen.submenu.inventory.background`
 
-Det gör V2 ren, utbytbar och mycket enklare att underhålla.
+That makes V2 clean, swappable, and much easier to maintain.
 
-## Filformat
+## File formats
 
-Rekommendation:
-- **PNG** för 2D-assets med alpha
-- **WebP lossless** kan övervägas senare för distribution
-- **SVG** för vissa UI-element där det passar
-- **JSON** eller **YAML** för asset manifests
+Recommendation:
+- **PNG** for 2D assets with alpha
+- **WebP lossless** can be considered later for distribution
+- **SVG** for some UI elements where it makes sense
+- **JSON** or **YAML** for asset manifests
 
-## Mappstruktur
+## Directory layout
 
-Förslag:
+Suggested structure:
 
 ```text
 assets-v2/
@@ -156,86 +156,86 @@ assets-v2/
   manifests/
 ```
 
-## Produktionspipeline
+## Production pipeline
 
-### Fas 1, art direction
-- skapa moodboard
-- definiera färgpaletter
-- välj typografi
-- gör 2 till 3 stilframes
-- besluta exakt V2-look innan massproduktion
+### Phase 1, art direction
+- create a moodboard
+- define colour palettes
+- choose typography
+- make 2-3 styleframes
+- lock the exact V2 look before mass production
 
-### Fas 2, designsystem
-- definiera UI-grid
-- definiera knappstater
-- definiera highlight/activate-beteenden visuellt
-- definiera standardstorlekar för paneler, ikoner, marginaler
+### Phase 2, design system
+- define the UI grid
+- define button states
+- define highlight / activate visual behaviour
+- define standard sizes for panels, icons, and margins
 
-### Fas 3, vertical slice
-Bygg först en liten spelbar slice:
-- titelbild
-- huvudmeny
-- en submenu
-- en enkel scen
-- ett activate-resultat
+### Phase 3, vertical slice
+Build one small playable slice first:
+- title screen
+- main menu
+- one submenu
+- one simple scene
+- one activation result
 
-Om den ser bra ut, då först skalar vi.
+If that slice looks good, then scale up.
 
-### Fas 4, assetproduktion
-- bakgrunder
-- UI-paket
-- interaktiva objekt
-- effekter
-- ljud
+### Phase 4, asset production
+- backgrounds
+- UI pack
+- interactive objects
+- effects
+- audio
 
-### Fas 5, integration
-- koppla assets till manifest
-- koppla manifest till renderlager
-- testa state transitions, hover/highlight/activate
+### Phase 5, integration
+- wire assets into the manifest
+- wire the manifest into the render layer
+- test state transitions, hover, highlight, and activate behaviour
 
-## AI-användning, ja men smart
+## AI usage, yes but intelligently
 
-AI är bra för:
+AI is good for:
 - thumbnails
 - moodboards
-- variationsidéer
-- kompositionsförslag
-- färgutforskning
+- idea variation
+- composition proposals
+- colour exploration
 
-AI är dåligt som slutpipeline för V2 om målet är kvalitet och tydlig juridik.
+AI is bad as the final V2 pipeline if the goal is quality plus clean legal separation.
 
-**Rekommendation:**
-- använd AI i preproduction
-- människa-kurera och bygg slutassets rent
-- spara prompts och ursprung för spårbarhet
+**Recommendation:**
+- use AI during preproduction
+- have humans curate and build the final assets cleanly
+- keep prompts and provenance for traceability
 
-## Juridisk hygien
+## Legal hygiene
 
-För att hålla V2 ren:
-- använd inte dumpade originalassets som slutmaterial
-- undvik direkt paint-over av originalbilder
-- undvik “för nära” rekonstruktion där originalbilden i praktiken bara är omritad
-- håll designinspiriation på systemnivå, inte pixel-för-pixel
+To keep V2 clean:
+- do not use dumped original assets as final material
+- avoid direct paint-over of original images
+- avoid reconstructions that are effectively just redrawn originals
+- keep inspiration at the systems level, not pixel-for-pixel
 
-## Praktisk nästa ordning
+## Practical next order
 
-1. Skriv ett **asset manifest-schema** för V2
-2. Lista alla första V2-asset-ID:n för:
-   - titel
-   - huvudmeny
+1. Write an **asset manifest schema** for V2
+2. List the first V2 asset IDs for:
+   - title
+   - main menu
    - highlight states
    - activate states
-   - första submenu
-3. Gör en **art bible** på 1 sida
-4. Producera en **vertical slice**
-5. Koppla den till nuvarande meny-state/render/activate-seams
+   - first submenu
+3. Make a **one-page art bible**
+4. Produce a **vertical slice**
+5. Connect it to the current menu-state / render / activate seams
 
-## Min rekommendation
+## My recommendation
 
-Den bästa vägen är:
-- använd Version 1 för att få fram **ren spelstruktur**
-- bygg Version 2 som ett **nyillustrerat presentationslager** ovanpå den strukturen
-- börja med **titel + huvudmeny + en submenu**
-- vänta med 3D tills 2D-versionen känns genomarbetad och snygg
+The best path is:
+- use Version 1 to establish a **clean gameplay structure**
+- build Version 2 as a **newly illustrated presentation layer** on top of that structure
+- start with **title + main menu + one submenu**
+- leave 3D alone until the 2D version feels polished and coherent
 
-Det minskar både risk, juridiskt kladd och fulhack.
+That cuts risk, legal mess, and ugly hacks at the same time.
