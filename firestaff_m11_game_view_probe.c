@@ -636,6 +636,34 @@ int main(int argc, char** argv) {
                      strcmp(gameView.lastOutcome, "QUICKSAVE RESTORED") == 0,
                  "quickload restores the exact live world snapshot after local state drift");
 
+    probe_record(&tally,
+                 "INV_GV_13D",
+                 M11_GameView_HandlePointer(&gameView, 252, 57, 1) == M11_GAME_INPUT_REDRAW &&
+                     strcmp(gameView.lastAction, "SAVE") == 0 &&
+                     strcmp(gameView.lastOutcome, "QUICKSAVE WRITTEN") == 0,
+                 "sidebar save button writes a live quicksave without leaving the viewport");
+
+    initialTick = gameView.world.gameTick;
+    initialHash = gameView.lastWorldHash;
+    gameView.world.party.direction = DIR_WEST;
+    gameView.world.party.mapX = 1;
+    gameView.world.party.mapY = 1;
+    gameView.world.gameTick += 9;
+    gameView.lastWorldHash ^= 0x00FF00FFu;
+    probe_record(&tally,
+                 "INV_GV_13E",
+                 M11_GameView_HandlePointer(&gameView, 280, 57, 1) == M11_GAME_INPUT_REDRAW &&
+                     gameView.world.gameTick == initialTick &&
+                     gameView.lastWorldHash == initialHash &&
+                     strcmp(gameView.lastAction, "LOAD") == 0 &&
+                     strcmp(gameView.lastOutcome, "QUICKSAVE RESTORED") == 0,
+                 "sidebar load button restores the last live quicksave in-place");
+
+    probe_record(&tally,
+                 "INV_GV_13F",
+                 M11_GameView_HandlePointer(&gameView, 220, 30, 1) == M11_GAME_INPUT_RETURN_TO_MENU,
+                 "sidebar menu header returns control to the launcher");
+
     (void)remove(quicksavePath);
 
     probe_record(&tally,

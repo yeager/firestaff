@@ -44,7 +44,19 @@ enum {
     M11_PARTY_PANEL_Y = 160,
     M11_PARTY_SLOT_W = 71,
     M11_PARTY_SLOT_H = 28,
-    M11_PARTY_SLOT_STEP = 77
+    M11_PARTY_SLOT_STEP = 77,
+    M11_UTILITY_PANEL_X = 218,
+    M11_UTILITY_PANEL_Y = 28,
+    M11_UTILITY_PANEL_W = 86,
+    M11_UTILITY_PANEL_H = 42,
+    M11_UTILITY_BUTTON_Y = 56,
+    M11_UTILITY_BUTTON_H = 10,
+    M11_UTILITY_INSPECT_X = 222,
+    M11_UTILITY_INSPECT_W = 22,
+    M11_UTILITY_SAVE_X = 250,
+    M11_UTILITY_SAVE_W = 22,
+    M11_UTILITY_LOAD_X = 278,
+    M11_UTILITY_LOAD_W = 22
 };
 
 enum {
@@ -673,11 +685,41 @@ static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
 static void m11_get_active_champion_label(const M11_GameViewState* state,
                                           char* out,
                                           size_t outSize);
+static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
 static int m11_cycle_active_champion(M11_GameViewState* state);
 static int m11_set_active_champion(M11_GameViewState* state, int championIndex);
 
 static int m11_point_in_rect(int x, int y, int rx, int ry, int rw, int rh) {
     return x >= rx && y >= ry && x < (rx + rw) && y < (ry + rh);
+}
+
+static int m11_point_in_utility_button(int x,
+                                       int y,
+                                       int buttonX,
+                                       int buttonWidth) {
+    return m11_point_in_rect(x, y,
+                             buttonX,
+                             M11_UTILITY_BUTTON_Y,
+                             buttonWidth,
+                             M11_UTILITY_BUTTON_H);
+}
+
+static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state) {
+    int index;
+
+    if (!state) {
+        return NULL;
+    }
+
+    index = state->world.party.activeChampionIndex;
+    if (index < 0 || index >= CHAMPION_MAX_PARTY) {
+        return NULL;
+    }
+    if (index >= state->world.party.championCount || !state->world.party.champions[index].present) {
+        return NULL;
+    }
+
+    return &state->world.party.champions[index];
 }
 
 void M11_GameView_Init(M11_GameViewState* state) {
@@ -1077,6 +1119,29 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
 
     if (!state || !state->active || !primaryButton) {
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (m11_point_in_utility_button(x, y, M11_UTILITY_INSPECT_X, M11_UTILITY_INSPECT_W)) {
+        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
+    if (m11_point_in_utility_button(x, y, M11_UTILITY_SAVE_X, M11_UTILITY_SAVE_W)) {
+        if (M11_GameView_QuickSave(state)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (m11_point_in_utility_button(x, y, M11_UTILITY_LOAD_X, M11_UTILITY_LOAD_W)) {
+        if (M11_GameView_QuickLoad(state)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (m11_point_in_rect(x, y,
+                          M11_UTILITY_PANEL_X,
+                          M11_UTILITY_PANEL_Y,
+                          M11_UTILITY_PANEL_W,
+                          12)) {
+        return M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK);
     }
 
     if (m11_point_in_rect(x, y,
@@ -2513,6 +2578,62 @@ static void m11_draw_focus_card(unsigned char* framebuffer,
                   222, 129, state->inspectDetail, &g_text_small);
 }
 
+static void m11_draw_utility_panel(const M11_GameViewState* state,
+                                   unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   const struct DungeonMapDesc_Compat* mapDesc) {
+    char line[32];
+    char champion[16];
+    const struct ChampionState_Compat* activeChampion = m11_get_active_champion(state);
+    unsigned char accent = activeChampion ? M11_COLOR_LIGHT_GREEN : M11_COLOR_LIGHT_CYAN;
+
+    if (!state) {
+        return;
+    }
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
+                  M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
+                  M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_LIGHT_CYAN);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  222, 34, "MENU", &g_text_small);
+
+    m11_get_active_champion_label(state, champion, sizeof(champion));
+    snprintf(line, sizeof(line), "%s %s", m11_source_name(state->sourceKind), champion);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  250, 34, line, &g_text_small);
+
+    if (activeChampion) {
+        snprintf(line, sizeof(line), "L%d HP%u ST%u",
+                 mapDesc ? (int)mapDesc->level : 0,
+                 (unsigned int)activeChampion->hp.current,
+                 (unsigned int)activeChampion->stamina.current);
+    } else {
+        snprintf(line, sizeof(line), "%s", state->lastOutcome[0] != '\0' ? state->lastOutcome : "READY");
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  222, 44, line, &g_text_small);
+
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            M11_UTILITY_INSPECT_X, M11_UTILITY_BUTTON_Y,
+                            M11_UTILITY_INSPECT_W, M11_UTILITY_BUTTON_H,
+                            "I", -1,
+                            accent, M11_COLOR_BLACK);
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            M11_UTILITY_SAVE_X, M11_UTILITY_BUTTON_Y,
+                            M11_UTILITY_SAVE_W, M11_UTILITY_BUTTON_H,
+                            "S", -1,
+                            M11_COLOR_YELLOW, M11_COLOR_BLACK);
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            M11_UTILITY_LOAD_X, M11_UTILITY_BUTTON_Y,
+                            M11_UTILITY_LOAD_W, M11_UTILITY_BUTTON_H,
+                            "L", -1,
+                            M11_COLOR_LIGHT_BLUE, M11_COLOR_BLACK);
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -2956,26 +3077,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
 
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
 
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 28, 86, 42, M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 28, 86, 42, M11_COLOR_LIGHT_CYAN);
-
-    snprintf(line, sizeof(line), "%s %s",
-             m11_source_name(state->sourceKind),
-             state->sourceId[0] != '\0' ? state->sourceId : "launcher");
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 34, line, &g_text_small);
-    snprintf(line, sizeof(line), "LEVEL %d  FLOOR %d/%d",
-             mapDesc ? (int)mapDesc->level : 0,
-             state->world.party.mapIndex + 1,
-             (int)state->world.dungeon->header.mapCount);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 46, line, &g_text_small);
-    snprintf(line, sizeof(line), "X%d Y%d %s C%d",
-             state->world.party.mapX,
-             state->world.party.mapY,
-             m11_direction_name(state->world.party.direction),
-             state->world.party.championCount);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 58, line, &g_text_small);
+    m11_draw_utility_panel(state, framebuffer, framebufferWidth, framebufferHeight, mapDesc);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   218, 74, 86, 68, M11_COLOR_BLACK);
