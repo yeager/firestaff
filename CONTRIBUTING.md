@@ -16,6 +16,19 @@ Until then, the most useful things you can do:
 - Implementation of UI / rendering (M11). We have a detailed plan; starting would conflict.
 - Translations. These come in M12 once strings are extracted.
 
+## Repository language policy
+
+All GitHub-facing content must be written in **English**.
+
+This includes:
+- source comments intended for contributors
+- README / roadmap / planning docs kept in the repo
+- issue templates, PR text, and public-facing documentation
+
+This does **not** require every personal working note to be in English. Internal scratch notes, local drafts, and one-off research files may exist in any language, but they should stay **untracked** unless they are cleaned up for public consumption.
+
+Rule of thumb: if it will be visible on GitHub, write it in English.
+
 ## Code of conduct
 
 Be respectful. This is a preservation project for a 40-year-old game built by five people who deserve the world. Treat their work with the same care you'd want for your own.

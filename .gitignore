@@ -98,8 +98,9 @@ byteops_backend_pc34_legacy_contract.md
 image_backend_pc34_legacy_contract.md
 
 # -------------------------------------------------------------------------
-# Per-user scratch & editor state
+# Per-user scratch, drafts, and editor state
 # -------------------------------------------------------------------------
+dm-forum-announcement.md
 .DS_Store
 *.bak
 *.orig
