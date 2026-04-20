@@ -904,11 +904,41 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
     }
 }
 
+static void m11_append_phrase(char* out,
+                              size_t outSize,
+                              const char* phrase) {
+    size_t used;
+    if (!out || outSize == 0U || !phrase || phrase[0] == '\0') {
+        return;
+    }
+    used = strlen(out);
+    if (used > 0U && used + 2U < outSize) {
+        snprintf(out + used, outSize - used, ", ");
+        used = strlen(out);
+    }
+    if (used + 1U < outSize) {
+        snprintf(out + used, outSize - used, "%s", phrase);
+    }
+}
+
+static void m11_append_count_phrase(char* out,
+                                    size_t outSize,
+                                    int count,
+                                    const char* singular,
+                                    const char* plural) {
+    char chunk[32];
+    if (count <= 0 || !singular || !plural) {
+        return;
+    }
+    snprintf(chunk, sizeof(chunk), "%d %s", count, count == 1 ? singular : plural);
+    m11_append_phrase(out, outSize, chunk);
+}
+
 static void m11_format_square_summary(const M11_ViewportCell* cell,
                                       char* out,
                                       size_t outSize) {
-    char extras[48];
-    size_t used = 0;
+    char extras[96];
+    const char* base;
 
     if (!out || outSize == 0U) {
         return;
@@ -920,44 +950,66 @@ static void m11_format_square_summary(const M11_ViewportCell* cell,
 
     extras[0] = '\0';
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
-        snprintf(extras + used, sizeof(extras) - used,
-                 " D%d", cell->doorState);
-        used = strlen(extras);
+        m11_append_phrase(extras, sizeof(extras),
+                          (cell->doorState == 0 || cell->doorState == 5) ? "OPEN" : "SHUT");
     }
-    if (cell->summary.groups > 0 && used + 4 < sizeof(extras)) {
-        snprintf(extras + used, sizeof(extras) - used,
-                 " G%d", cell->summary.groups);
-        used = strlen(extras);
-    }
-    if (cell->summary.items > 0 && used + 4 < sizeof(extras)) {
-        snprintf(extras + used, sizeof(extras) - used,
-                 " I%d", cell->summary.items);
-        used = strlen(extras);
-    }
-    if ((cell->summary.projectiles > 0 || cell->summary.explosions > 0) && used + 4 < sizeof(extras)) {
-        snprintf(extras + used, sizeof(extras) - used,
-                 " FX");
-        used = strlen(extras);
-    }
+    m11_append_count_phrase(extras, sizeof(extras), cell->summary.groups, "FOE", "FOES");
+    m11_append_count_phrase(extras, sizeof(extras), cell->summary.items, "ITEM", "ITEMS");
+    m11_append_count_phrase(extras, sizeof(extras),
+                            cell->summary.projectiles + cell->summary.explosions,
+                            "EFFECT", "EFFECTS");
+    m11_append_count_phrase(extras, sizeof(extras), cell->summary.sensors, "SENSOR", "SENSORS");
+    m11_append_count_phrase(extras, sizeof(extras),
+                            cell->summary.textStrings + cell->summary.teleporters,
+                            "MARK", "MARKS");
 
-    snprintf(out, outSize, "%s%s",
-             F0503_DUNGEON_GetElementName_Compat(cell->elementType),
-             extras);
+    base = F0503_DUNGEON_GetElementName_Compat(cell->elementType);
+    if (extras[0] != '\0') {
+        snprintf(out, outSize, "%s, %s", base, extras);
+    } else {
+        snprintf(out, outSize, "%s", base);
+    }
 }
 
 static void m11_format_square_things(unsigned short firstThing,
                                      int squareThingCount,
                                      char* out,
                                      size_t outSize) {
+    int thingType;
     if (!out || outSize == 0U) {
         return;
     }
-    if (firstThing != THING_ENDOFLIST && firstThing != THING_NONE) {
-        snprintf(out, outSize, "THINGS %s X%d",
-                 F0505_DUNGEON_GetThingTypeName_Compat(THING_GET_TYPE(firstThing)),
-                 squareThingCount);
-    } else {
-        snprintf(out, outSize, "THINGS NONE X%d", squareThingCount);
+    if (firstThing == THING_ENDOFLIST || firstThing == THING_NONE || squareThingCount <= 0) {
+        snprintf(out, outSize, "QUIET FLOOR");
+        return;
+    }
+    thingType = THING_GET_TYPE(firstThing);
+    switch (thingType) {
+        case THING_TYPE_GROUP:
+            snprintf(out, outSize, "%d CREATURE %s",
+                     squareThingCount,
+                     squareThingCount == 1 ? "CONTACT" : "CONTACTS");
+            break;
+        case THING_TYPE_PROJECTILE:
+        case THING_TYPE_EXPLOSION:
+            snprintf(out, outSize, "%d LIVE EFFECT %s",
+                     squareThingCount,
+                     squareThingCount == 1 ? "AHEAD" : "STACKED");
+            break;
+        case THING_TYPE_TEXTSTRING:
+            snprintf(out, outSize, "TEXT PLAQUE");
+            break;
+        case THING_TYPE_SENSOR:
+            snprintf(out, outSize, "TRIGGER TILE");
+            break;
+        case THING_TYPE_TELEPORTER:
+            snprintf(out, outSize, "TELEPORT FIELD");
+            break;
+        default:
+            snprintf(out, outSize, "%d FLOOR %s",
+                     squareThingCount,
+                     squareThingCount == 1 ? "ITEM" : "ITEMS");
+            break;
     }
 }
 
@@ -1223,12 +1275,7 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
         frontCell.elementType == DUNGEON_ELEMENT_TELEPORTER) {
         snprintf(title, sizeof(title), "%s",
                  F0503_DUNGEON_GetElementName_Compat(frontCell.elementType));
-        snprintf(detail, sizeof(detail), "I%d G%d FX%d S%d T%d",
-                 frontCell.summary.items,
-                 frontCell.summary.groups,
-                 frontCell.summary.projectiles + frontCell.summary.explosions,
-                 frontCell.summary.sensors,
-                 frontCell.summary.textStrings + frontCell.summary.teleporters);
+        m11_format_square_summary(&frontCell, detail, sizeof(detail));
         m11_set_status(state, "INSPECT", "FRONT CELL READOUT");
         m11_set_inspect_readout(state, title, detail);
         return 1;
