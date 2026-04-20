@@ -937,6 +937,22 @@ static void m11_format_square_summary(const M11_ViewportCell* cell,
              extras);
 }
 
+static void m11_format_square_things(unsigned short firstThing,
+                                     int squareThingCount,
+                                     char* out,
+                                     size_t outSize) {
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (firstThing != THING_ENDOFLIST && firstThing != THING_NONE) {
+        snprintf(out, outSize, "THINGS %s X%d",
+                 F0505_DUNGEON_GetThingTypeName_Compat(THING_GET_TYPE(firstThing)),
+                 squareThingCount);
+    } else {
+        snprintf(out, outSize, "THINGS NONE X%d", squareThingCount);
+    }
+}
+
 static void m11_get_food_water_average(const struct PartyState_Compat* party,
                                        int* outFood,
                                        int* outWater) {
@@ -2058,6 +2074,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        int framebufferHeight) {
     char line[96];
     char line2[96];
+    char line3[96];
     char focusAction[96];
     char focusHint[96];
     unsigned short firstThing = THING_ENDOFLIST;
@@ -2067,6 +2084,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     const struct DungeonMapDesc_Compat* mapDesc = NULL;
     int avgFood = 0;
     int avgWater = 0;
+    char champion[24];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
@@ -2094,6 +2112,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         mapDesc = &state->world.dungeon->maps[state->world.party.mapIndex];
     }
     m11_get_food_water_average(&state->world.party, &avgFood, &avgWater);
+    m11_get_active_champion_label(state, champion, sizeof(champion));
     m11_format_front_cell_prompt(state,
                                  &aheadCell,
                                  focusAction,
@@ -2120,9 +2139,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   150, 13, line, &g_text_small);
 
-    snprintf(line, sizeof(line), "TICK %u", (unsigned int)state->world.gameTick);
+    snprintf(line, sizeof(line), "ENTER ACT  ESC MENU");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  258, 13, line, &g_text_small);
+                  214, 13, line, &g_text_small);
 
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
 
@@ -2135,13 +2154,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              m11_source_name(state->sourceKind),
              state->sourceId[0] != '\0' ? state->sourceId : "launcher");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 34, line, &g_text_small);
-    snprintf(line, sizeof(line), "L%d M%d/%d D%d",
+    snprintf(line, sizeof(line), "LEVEL %d  FLOOR %d/%d",
              mapDesc ? (int)mapDesc->level : 0,
              state->world.party.mapIndex + 1,
-             (int)state->world.dungeon->header.mapCount,
-             mapDesc ? (int)mapDesc->difficulty : 0);
+             (int)state->world.dungeon->header.mapCount);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 46, line, &g_text_small);
-    snprintf(line, sizeof(line), "%d:%d %s C%d",
+    snprintf(line, sizeof(line), "X%d Y%d %s C%d",
              state->world.party.mapX,
              state->world.party.mapY,
              m11_direction_name(state->world.party.direction),
@@ -2155,27 +2173,21 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_map_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
     m11_format_square_summary(&currentCell, line, sizeof(line));
-    snprintf(line2, sizeof(line2), "HERE %s", line);
+    m11_format_square_things(firstThing, squareThingCount, line3, sizeof(line3));
+    snprintf(line2, sizeof(line2), "HERE  %s", line);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 149, line2, &g_text_small);
-    if (firstThing != THING_ENDOFLIST && firstThing != THING_NONE) {
-        snprintf(line, sizeof(line), "TH %s X%d",
-                 F0505_DUNGEON_GetThingTypeName_Compat(THING_GET_TYPE(firstThing)),
-                 squareThingCount);
-    } else {
-        snprintf(line, sizeof(line), "TH NONE X%d", squareThingCount);
-    }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 146, 149, line, &g_text_small);
-    snprintf(line, sizeof(line), "HASH %08X", (unsigned int)state->lastWorldHash);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 122, 149, line3, &g_text_small);
+    snprintf(line, sizeof(line), "TICK %u", (unsigned int)state->world.gameTick);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 240, 149, line, &g_text_small);
 
     m11_format_square_summary(&aheadCell, line, sizeof(line));
     snprintf(line2, sizeof(line2), "AHEAD %s", line);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 157, line2, &g_text_small);
-    snprintf(line, sizeof(line), "LEAD %d F%03d W%03d",
-             state->world.party.activeChampionIndex >= 0 ? state->world.party.activeChampionIndex + 1 : 0,
+    snprintf(line, sizeof(line), "%s F%03d W%03d",
+             champion,
              avgFood,
              avgWater);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 178, 157, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 154, 157, line, &g_text_small);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   14, 165, 292, 14, M11_COLOR_BLACK);
@@ -2186,6 +2198,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   130, 168, focusHint, &g_text_small);
 
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  218, 108, "READOUT", &g_text_small);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   218, 116, state->inspectTitle, &g_text_small);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
