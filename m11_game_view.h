@@ -60,6 +60,7 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   size_t outSize);
 int M11_GameView_QuickSave(M11_GameViewState* state);
 int M11_GameView_QuickLoad(M11_GameViewState* state);
+M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);
 M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,

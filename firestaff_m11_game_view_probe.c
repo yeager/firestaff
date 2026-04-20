@@ -499,6 +499,17 @@ int main(int argc, char** argv) {
                      (syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] & 0x07) == 0,
                  "space toggles a closed front door open and updates the real dungeon square");
 
+    initialTick = syntheticView.world.gameTick;
+    initialHash = syntheticView.lastWorldHash;
+    probe_record(&tally,
+                 "INV_GV_07J",
+                 M11_GameView_AdvanceIdleTick(&syntheticView) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == initialTick + 1 &&
+                     strcmp(syntheticView.lastAction, "WAIT") == 0 &&
+                     strcmp(syntheticView.lastOutcome, "IDLE TICK ADVANCED") == 0 &&
+                     syntheticView.lastWorldHash != initialHash,
+                 "idle cadence advances the real world clock without requiring a manual wait input");
+
     syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] =
         (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B);
     syntheticView.world.party.direction = DIR_NORTH;

@@ -644,6 +644,9 @@ static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
 static int m11_toggle_front_door(M11_GameViewState* state);
+static int m11_apply_tick(M11_GameViewState* state,
+                          uint8_t command,
+                          const char* actionLabel);
 static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
                                                 int x,
                                                 int y);
@@ -897,6 +900,16 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
              (unsigned int)state->lastWorldHash,
              path);
     return 1;
+}
+
+M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
+    if (!state || !state->active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!m11_apply_tick(state, CMD_NONE, "WAIT")) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return M11_GAME_INPUT_REDRAW;
 }
 
 static int m11_apply_tick(M11_GameViewState* state,

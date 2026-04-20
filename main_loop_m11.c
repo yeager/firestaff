@@ -289,6 +289,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_GameViewState gameView;
     const char* scriptCursor = o->script;
     int quitRequested = 0;
+    uint32_t idleAccumulatorMs = 0;
 
     int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
     if (rc != M11_RENDER_OK) {
@@ -308,17 +309,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     Uint64 start = SDL_GetTicks();
     Uint64 now = start;
+    Uint64 lastLoopTick = start;
     const Uint64 duration = (Uint64)(o->durationMs < 0 ? 0 : o->durationMs);
     const Uint64 interval = (Uint64)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
+    const Uint64 gameTickInterval = 166;
 #else
     Uint32 start = SDL_GetTicks();
     Uint32 now = start;
+    Uint32 lastLoopTick = start;
     const Uint32 duration = (Uint32)(o->durationMs < 0 ? 0 : o->durationMs);
     const Uint32 interval = (Uint32)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
+    const Uint32 gameTickInterval = 166;
 #endif
 
     /* Always present at least once so the window actually has content. */
@@ -327,6 +332,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
+        uint32_t tickBeforeEvents = gameView.world.gameTick;
+        uint32_t tickBeforeInput = gameView.world.gameTick;
+
+        now = SDL_GetTicks();
+        if (gameView.active) {
+            idleAccumulatorMs += (uint32_t)(now - lastLoopTick);
+        } else {
+            idleAccumulatorMs = 0;
+        }
+        lastLoopTick = now;
+
         if (scriptCursor && *scriptCursor != '\0') {
             input = m11_next_script_input(&scriptCursor);
         }
@@ -340,6 +356,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
                 M11_GameView_Shutdown(&gameView);
                 M11_GameView_Init(&gameView);
+                idleAccumulatorMs = 0;
                 M11_ApplyStartupMenuRuntime(&menuState);
                 M12_StartupMenu_Draw(&menuState,
                                      M11_Render_GetFramebuffer(),
@@ -350,14 +367,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                   M11_Render_GetFramebuffer(),
                                   M11_FB_WIDTH,
                                   M11_FB_HEIGHT);
+                if (gameView.world.gameTick != tickBeforeEvents) {
+                    idleAccumulatorMs = 0;
+                }
             }
         }
         if (input != M12_MENU_INPUT_NONE) {
+            tickBeforeInput = gameView.world.gameTick;
             if (gameView.active) {
                 M11_GameInputResult result = M11_GameView_HandleInput(&gameView, input);
                 if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
                     M11_GameView_Shutdown(&gameView);
                     M11_GameView_Init(&gameView);
+                    idleAccumulatorMs = 0;
                     M11_ApplyStartupMenuRuntime(&menuState);
                     M12_StartupMenu_Draw(&menuState,
                                          M11_Render_GetFramebuffer(),
@@ -368,6 +390,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                       M11_Render_GetFramebuffer(),
                                       M11_FB_WIDTH,
                                       M11_FB_HEIGHT);
+                    if (gameView.world.gameTick != tickBeforeInput) {
+                        idleAccumulatorMs = 0;
+                    }
                 }
             } else {
                 int launchHandled = 0;
@@ -375,6 +400,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     menuState.view == M12_MENU_VIEW_MAIN) {
                     launchHandled = 1;
                     if (M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState)) {
+                        idleAccumulatorMs = 0;
                         M11_GameView_Draw(&gameView,
                                           M11_Render_GetFramebuffer(),
                                           M11_FB_WIDTH,
@@ -411,6 +437,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                          M11_FB_HEIGHT);
                 }
             }
+        }
+        while (gameView.active && idleAccumulatorMs >= (uint32_t)gameTickInterval) {
+            if (M11_GameView_AdvanceIdleTick(&gameView) == M11_GAME_INPUT_REDRAW) {
+                M11_GameView_Draw(&gameView,
+                                  M11_Render_GetFramebuffer(),
+                                  M11_FB_WIDTH,
+                                  M11_FB_HEIGHT);
+            }
+            idleAccumulatorMs -= (uint32_t)gameTickInterval;
         }
         M11_Render_Present();
         SDL_Delay((Uint32)interval);
