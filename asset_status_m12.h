@@ -21,6 +21,8 @@ typedef struct {
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir);
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
                                   const char* gameId);
+int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId);
+size_t M12_AssetStatus_GameKnownHashCount(const char* gameId);
 const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status);
 
 #ifdef __cplusplus

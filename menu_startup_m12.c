@@ -43,6 +43,15 @@ typedef struct {
     unsigned char rows[7];
 } M12_Glyph;
 
+typedef struct {
+    int scale;
+    int tracking;
+    unsigned char color;
+    int shadowDx;
+    int shadowDy;
+    unsigned char shadowColor;
+} M12_TextStyle;
+
 static const M12_Glyph g_font[] = {
     {' ', {0, 0, 0, 0, 0, 0, 0}},
     {'-', {0, 0, 0, 31, 0, 0, 0}},
@@ -91,6 +100,13 @@ static const M12_Glyph g_font[] = {
 static const char* g_languages[] = {"EN", "SV", "FR", "DE"};
 static const char* g_graphicsLevels[] = {"ORIGINAL", "UPSCALED", "AI/HD"};
 static const char* g_windowModes[] = {"WINDOWED", "FULLSCREEN"};
+
+static const M12_TextStyle g_textSmall = {1, 1, M12_COLOR_WHITE, 0, 0, M12_COLOR_BLACK};
+static const M12_TextStyle g_textSmallMuted = {1, 1, M12_COLOR_LIGHT_GRAY, 0, 0, M12_COLOR_BLACK};
+static const M12_TextStyle g_textSmallAccent = {1, 1, M12_COLOR_LIGHT_CYAN, 0, 0, M12_COLOR_BLACK};
+static const M12_TextStyle g_textSmallShadow = {1, 1, M12_COLOR_WHITE, 1, 1, M12_COLOR_BLACK};
+static const M12_TextStyle g_textMediumShadow = {2, 1, M12_COLOR_WHITE, 1, 1, M12_COLOR_BLACK};
+static const M12_TextStyle g_textTitleShadow = {4, 1, M12_COLOR_YELLOW, 2, 2, M12_COLOR_MAROON};
 
 static int m12_entry_count(void) {
     return (int)(sizeof(g_entryTemplate) / sizeof(g_entryTemplate[0]));
@@ -225,6 +241,10 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     if (entry->available) {
         state->messageLine1 = "READY TO LAUNCH";
         state->messageLine2 = entry->title;
+        state->messageLine3 = "ESC RETURNS TO MENU";
+    } else if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+        state->messageLine1 = "VALIDATOR SCAFFOLD ONLY";
+        state->messageLine2 = "ADD VERIFIED RETAIL HASHES";
         state->messageLine3 = "ESC RETURNS TO MENU";
     } else {
         state->messageLine1 = "GAME DATA NOT FOUND";
@@ -402,14 +422,55 @@ static const unsigned char* m12_find_glyph(char ch) {
     return g_font[0].rows;
 }
 
-static void m12_draw_text(unsigned char* framebuffer,
-                          int framebufferWidth,
-                          int framebufferHeight,
-                          int x,
-                          int y,
-                          const char* text,
-                          int scale,
-                          unsigned char color) {
+static int m12_glyph_visible_width(const unsigned char* glyph) {
+    int right = -1;
+    int row;
+    int col;
+    if (!glyph) {
+        return 0;
+    }
+    for (row = 0; row < 7; ++row) {
+        for (col = 4; col >= 0; --col) {
+            if (((glyph[row] >> (4 - col)) & 1U) != 0U) {
+                if (col > right) {
+                    right = col;
+                }
+                break;
+            }
+        }
+    }
+    return right + 1;
+}
+
+static int m12_measure_text(const char* text,
+                            int scale,
+                            int tracking) {
+    int width = 0;
+    const char* p;
+    if (!text || scale <= 0) {
+        return 0;
+    }
+    for (p = text; *p != '\0'; ++p) {
+        const unsigned char* glyph = m12_find_glyph(*p);
+        int glyphWidth = m12_glyph_visible_width(glyph);
+        int advance = (glyphWidth > 0 ? glyphWidth + 1 : 3) * scale;
+        width += advance + tracking;
+    }
+    if (width > 0) {
+        width -= tracking;
+    }
+    return width;
+}
+
+static void m12_draw_text_raw(unsigned char* framebuffer,
+                              int framebufferWidth,
+                              int framebufferHeight,
+                              int x,
+                              int y,
+                              const char* text,
+                              int scale,
+                              int tracking,
+                              unsigned char color) {
     int cursorX = x;
     const char* p;
     if (!text || scale <= 0) {
@@ -418,6 +479,8 @@ static void m12_draw_text(unsigned char* framebuffer,
     for (p = text; *p != '\0'; ++p) {
         int row;
         const unsigned char* glyph = m12_find_glyph(*p);
+        int glyphWidth = m12_glyph_visible_width(glyph);
+        int advance = (glyphWidth > 0 ? glyphWidth + 1 : 3) * scale;
         for (row = 0; row < 7; ++row) {
             int col;
             for (col = 0; col < 5; ++col) {
@@ -433,8 +496,41 @@ static void m12_draw_text(unsigned char* framebuffer,
                 }
             }
         }
-        cursorX += 6 * scale;
+        cursorX += advance + tracking;
     }
+}
+
+static void m12_draw_text(unsigned char* framebuffer,
+                          int framebufferWidth,
+                          int framebufferHeight,
+                          int x,
+                          int y,
+                          const char* text,
+                          const M12_TextStyle* style) {
+    const M12_TextStyle* resolved = style ? style : &g_textSmall;
+    if (!text) {
+        return;
+    }
+    if (resolved->shadowDx != 0 || resolved->shadowDy != 0) {
+        m12_draw_text_raw(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          x + resolved->shadowDx,
+                          y + resolved->shadowDy,
+                          text,
+                          resolved->scale,
+                          resolved->tracking,
+                          resolved->shadowColor);
+    }
+    m12_draw_text_raw(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      x,
+                      y,
+                      text,
+                      resolved->scale,
+                      resolved->tracking,
+                      resolved->color);
 }
 
 static void m12_draw_centered_text(unsigned char* framebuffer,
@@ -442,14 +538,14 @@ static void m12_draw_centered_text(unsigned char* framebuffer,
                                    int framebufferHeight,
                                    int y,
                                    const char* text,
-                                   int scale,
-                                   unsigned char color) {
+                                   const M12_TextStyle* style) {
+    const M12_TextStyle* resolved = style ? style : &g_textSmall;
     int width;
     int x;
     if (!text) {
         return;
     }
-    width = (int)strlen(text) * 6 * scale;
+    width = m12_measure_text(text, resolved->scale, resolved->tracking);
     x = (framebufferWidth - width) / 2;
     m12_draw_text(framebuffer,
                   framebufferWidth,
@@ -457,8 +553,7 @@ static void m12_draw_centered_text(unsigned char* framebuffer,
                   x,
                   y,
                   text,
-                  scale,
-                  color);
+                  resolved);
 }
 
 static void m12_draw_horizontal_rule(unsigned char* framebuffer,
@@ -471,6 +566,129 @@ static void m12_draw_horizontal_rule(unsigned char* framebuffer,
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, w, 1, color);
 }
 
+static void m12_draw_vertical_rule(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   int x,
+                                   int y,
+                                   int h,
+                                   unsigned char color) {
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, 1, h, color);
+}
+
+static void m12_draw_background(unsigned char* framebuffer,
+                                int framebufferWidth,
+                                int framebufferHeight) {
+    int stripeY;
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  0,
+                  0,
+                  framebufferWidth,
+                  framebufferHeight,
+                  M12_COLOR_BLACK);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  0,
+                  0,
+                  framebufferWidth,
+                  10,
+                  M12_COLOR_DARK_GRAY);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  0,
+                  10,
+                  framebufferWidth,
+                  16,
+                  M12_COLOR_NAVY);
+    for (stripeY = 34; stripeY < framebufferHeight; stripeY += 18) {
+        m12_fill_rect(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      0,
+                      stripeY,
+                      framebufferWidth,
+                      1,
+                      M12_COLOR_DARK_GRAY);
+    }
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  8,
+                  30,
+                  framebufferWidth - 16,
+                  framebufferHeight - 42,
+                  M12_COLOR_BLACK);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   8,
+                   30,
+                   framebufferWidth - 16,
+                   framebufferHeight - 42,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+}
+
+static const char* m12_entry_status_text(const M12_MenuEntry* entry) {
+    if (!entry) {
+        return "OFFLINE";
+    }
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        return "OPEN";
+    }
+    if (entry->available) {
+        return "READY";
+    }
+    if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+        return "MISSING";
+    }
+    return "SCHEMA";
+}
+
+static unsigned char m12_entry_status_fill(const M12_MenuEntry* entry,
+                                           int selected) {
+    if (!entry) {
+        return M12_COLOR_DARK_GRAY;
+    }
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        return selected ? M12_COLOR_CYAN : M12_COLOR_DARK_GRAY;
+    }
+    if (entry->available) {
+        return selected ? M12_COLOR_YELLOW : M12_COLOR_GREEN;
+    }
+    if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+        return selected ? M12_COLOR_LIGHT_RED : M12_COLOR_MAROON;
+    }
+    return selected ? M12_COLOR_LIGHT_CYAN : M12_COLOR_NAVY;
+}
+
+static unsigned char m12_entry_status_text_color(const M12_MenuEntry* entry,
+                                                 int selected) {
+    if (!entry) {
+        return M12_COLOR_WHITE;
+    }
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        return M12_COLOR_WHITE;
+    }
+    if (entry->available) {
+        return M12_COLOR_BLACK;
+    }
+    return selected ? M12_COLOR_BLACK : M12_COLOR_WHITE;
+}
+
+static void m12_draw_status_chip(unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight,
+                                 int x,
+                                 int y,
+                                 const char* text,
+                                 unsigned char fill,
+                                 unsigned char textColor);
+
 static void m12_draw_title(unsigned char* framebuffer,
                            int framebufferWidth,
                            int framebufferHeight,
@@ -482,38 +700,51 @@ static void m12_draw_title(unsigned char* framebuffer,
                    16,
                    12,
                    framebufferWidth - 32,
-                   42,
+                   48,
                    M12_COLOR_YELLOW,
+                   M12_COLOR_NAVY);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   20,
+                   16,
+                   framebufferWidth - 40,
+                   40,
+                   M12_COLOR_BROWN,
                    M12_COLOR_NAVY);
     m12_fill_rect(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
+                  24,
                   20,
-                  16,
-                  framebufferWidth - 40,
-                  5,
+                  framebufferWidth - 48,
+                  4,
                   M12_COLOR_BROWN);
+    m12_draw_horizontal_rule(framebuffer,
+                             framebufferWidth,
+                             framebufferHeight,
+                             24,
+                             50,
+                             framebufferWidth - 48,
+                             M12_COLOR_DARK_GRAY);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           24,
+                           23,
                            "FIRESTAFF",
-                           3,
-                           M12_COLOR_YELLOW);
+                           &g_textTitleShadow);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
                            17,
                            eyebrow,
-                           1,
-                           M12_COLOR_WHITE);
+                           &g_textSmallShadow);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           48,
+                           51,
                            subtitle,
-                           1,
-                           M12_COLOR_LIGHT_GRAY);
+                           &g_textSmallMuted);
 }
 
 static void m12_draw_footer(unsigned char* framebuffer,
@@ -524,18 +755,17 @@ static void m12_draw_footer(unsigned char* framebuffer,
                    framebufferWidth,
                    framebufferHeight,
                    12,
-                   framebufferHeight - 18,
+                   framebufferHeight - 20,
                    framebufferWidth - 24,
-                   10,
+                   12,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           framebufferHeight - 16,
+                           framebufferHeight - 17,
                            text,
-                           1,
-                           M12_COLOR_LIGHT_GRAY);
+                           &g_textSmallMuted);
 }
 
 static unsigned char m12_game_card_fill(const char* gameId) {
@@ -578,13 +808,13 @@ static const char* m12_game_card_line2(const M12_MenuEntry* entry) {
         return "PERSISTED";
     }
     if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
-        return "THE CLASSIC";
+        return "LEGACY EDITION";
     }
     if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
-        return "HARD MODE";
+        return "CHAOS CAMPAIGN";
     }
     if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
-        return "COMING LATER";
+        return "SKULLKEEP ERA";
     }
     return "READY";
 }
@@ -596,7 +826,80 @@ static const char* m12_game_card_line3(const M12_MenuEntry* entry) {
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         return "SETTINGS";
     }
-    return entry->available ? "MD5 VERIFIED" : "ASSETS MISSING";
+    if (entry->available) {
+        return "READY TO LAUNCH";
+    }
+    if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+        return "ASSETS MISSING";
+    }
+    return "VALIDATOR SCAFFOLD";
+}
+
+static void m12_format_hash_summary(const M12_MenuEntry* entry,
+                                    char* out,
+                                    size_t outSize) {
+    unsigned long hashCount;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    if (!entry || entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        snprintf(out, outSize, "PROFILE AND DATA PATH");
+        return;
+    }
+    hashCount = (unsigned long)M12_AssetStatus_GameKnownHashCount(entry->gameId);
+    if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+        snprintf(out,
+                 outSize,
+                 "%lu VERIFIED HASH SLOT%s",
+                 hashCount,
+                 hashCount == 1UL ? "" : "S");
+        return;
+    }
+    snprintf(out,
+             outSize,
+             "%lu KNOWN MD5%s",
+             hashCount,
+             hashCount == 1UL ? "" : "S");
+}
+
+static void m12_draw_box_motif(unsigned char* framebuffer,
+                               int framebufferWidth,
+                               int framebufferHeight,
+                               int x,
+                               int y,
+                               int w,
+                               int h,
+                               const M12_MenuEntry* entry,
+                               unsigned char accent) {
+    if (!entry || entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight, x + 10, y + 6, w - 20, h - 12, M12_COLOR_LIGHT_CYAN, M12_COLOR_BLACK);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 16, y + 12, w - 32, 4, accent);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 16, y + 22, w - 24, 4, M12_COLOR_DARK_GRAY);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 16, y + 32, w - 36, 4, M12_COLOR_DARK_GRAY);
+        return;
+    }
+    if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 14, y + 10, w - 28, h - 14, M12_COLOR_BROWN);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 20, y + 16, w - 40, h - 20, M12_COLOR_BLACK);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 24, y + 16, 5, h - 20, accent);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + w - 29, y + 16, 5, h - 20, accent);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 32, y + 24, w - 64, 5, accent);
+        return;
+    }
+    if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+        m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight, x + 12, y + 8, w - 24, h - 16, M12_COLOR_LIGHT_CYAN, M12_COLOR_BLACK);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 22, y + 18, w - 44, 4, accent);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 22, y + 32, w - 44, 4, accent);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 30, y + 22, w - 60, 10, M12_COLOR_BLACK);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + (w / 2) - 4, y + 22, 8, 10, M12_COLOR_LIGHT_CYAN);
+        return;
+    }
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight, x + 12, y + 8, w - 24, h - 16, M12_COLOR_WHITE, M12_COLOR_BLACK);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 18, y + 14, w - 36, 6, accent);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 18, y + 26, w - 36, 6, M12_COLOR_DARK_GRAY);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + (w / 2) - 8, y + 34, 16, 8, M12_COLOR_WHITE);
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + (w / 2) - 3, y + 42, 6, 4, M12_COLOR_WHITE);
 }
 
 static void m12_draw_box_art(unsigned char* framebuffer,
@@ -607,15 +910,29 @@ static void m12_draw_box_art(unsigned char* framebuffer,
                              ? M12_COLOR_DARK_GRAY
                              : m12_game_card_fill(entry ? entry->gameId : NULL);
     unsigned char accent = entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED;
+    unsigned char statusFill = m12_entry_status_fill(entry, 0);
+    unsigned char statusText = m12_entry_status_text_color(entry, 0);
+    char hashSummary[64];
+
+    m12_format_hash_summary(entry, hashSummary, sizeof(hashSummary));
 
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
                    18,
                    66,
-                   92,
+                   94,
                    108,
                    M12_COLOR_YELLOW,
+                   fill);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   22,
+                   70,
+                   86,
+                   100,
+                   M12_COLOR_BLACK,
                    fill);
     m12_fill_rect(framebuffer,
                   framebufferWidth,
@@ -623,31 +940,59 @@ static void m12_draw_box_art(unsigned char* framebuffer,
                   24,
                   72,
                   80,
-                  8,
+                  6,
                   accent);
-    m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 102, 80, M12_COLOR_BLACK);
-    m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 126, 80, M12_COLOR_BLACK);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  24,
+                  80,
+                  80,
+                  48,
+                  M12_COLOR_BLACK);
+    m12_draw_box_motif(framebuffer,
+                       framebufferWidth,
+                       framebufferHeight,
+                       24,
+                       80,
+                       80,
+                       48,
+                       entry,
+                       accent);
+    m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 130, 80, M12_COLOR_BLACK);
+    m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 150, 80, M12_COLOR_BLACK);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           88,
+                           152,
+                           hashSummary,
+                           &g_textSmallMuted);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           134,
                            m12_game_card_line1(entry),
-                           2,
-                           M12_COLOR_WHITE);
+                           &g_textMediumShadow);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           116,
+                           151,
                            m12_game_card_line2(entry),
-                           1,
-                           M12_COLOR_WHITE);
+                           &g_textSmallShadow);
+    m12_draw_status_chip(framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         33,
+                         82,
+                         m12_entry_status_text(entry),
+                         statusFill,
+                         statusText);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           138,
+                           164,
                            m12_game_card_line3(entry),
-                           1,
-                           entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_WHITE);
+                           entry && entry->available ? &g_textSmallAccent : &g_textSmallMuted);
 }
 
 static void m12_draw_status_chip(unsigned char* framebuffer,
@@ -664,7 +1009,7 @@ static void m12_draw_status_chip(unsigned char* framebuffer,
                    x,
                    y,
                    58,
-                   12,
+                   13,
                    M12_COLOR_BLACK,
                    fill);
     m12_draw_text(framebuffer,
@@ -673,8 +1018,7 @@ static void m12_draw_status_chip(unsigned char* framebuffer,
                   x + 8,
                   y + 2,
                   text,
-                  1,
-                  textColor);
+                  &(M12_TextStyle){1, 1, textColor, 0, 0, M12_COLOR_BLACK});
 }
 
 static void m12_draw_main_row(unsigned char* framebuffer,
@@ -693,64 +1037,58 @@ static void m12_draw_main_row(unsigned char* framebuffer,
                    122,
                    y,
                    180,
-                   22,
+                   24,
                    border,
+                   fill);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   124,
+                   y + 2,
+                   176,
+                   20,
+                   selected ? M12_COLOR_BROWN : M12_COLOR_BLACK,
                    fill);
     m12_fill_rect(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   126,
-                  y + 3,
-                  4,
-                  16,
+                  y + 4,
+                  6,
+                  14,
                   selected ? M12_COLOR_YELLOW : (entry->available ? M12_COLOR_GREEN : M12_COLOR_LIGHT_RED));
+    m12_draw_vertical_rule(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           138,
+                           y + 4,
+                           14,
+                           M12_COLOR_DARK_GRAY);
     if (selected) {
         m12_draw_text(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      136,
+                      144,
                       y + 7,
                       ">",
-                      1,
-                      M12_COLOR_YELLOW);
+                      &g_textSmallAccent);
     }
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
-                  148,
+                  158,
                   y + 7,
                   entry->title,
-                  1,
-                  titleColor);
+                  &(M12_TextStyle){1, 1, titleColor, 1, 1, M12_COLOR_BLACK});
 
-    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
-        m12_draw_status_chip(framebuffer,
-                             framebufferWidth,
-                             framebufferHeight,
-                             236,
-                             y + 5,
-                             "OPEN",
-                             selected ? M12_COLOR_CYAN : M12_COLOR_DARK_GRAY,
-                             M12_COLOR_WHITE);
-    } else if (entry->available) {
-        m12_draw_status_chip(framebuffer,
-                             framebufferWidth,
-                             framebufferHeight,
-                             232,
-                             y + 5,
-                             "READY",
-                             selected ? M12_COLOR_YELLOW : M12_COLOR_GREEN,
-                             M12_COLOR_BLACK);
-    } else {
-        m12_draw_status_chip(framebuffer,
-                             framebufferWidth,
-                             framebufferHeight,
-                             224,
-                             y + 5,
-                             "MISSING",
-                             selected ? M12_COLOR_LIGHT_RED : M12_COLOR_MAROON,
-                             M12_COLOR_WHITE);
-    }
+    m12_draw_status_chip(framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         236,
+                         y + 5,
+                         m12_entry_status_text(entry),
+                         m12_entry_status_fill(entry, selected),
+                         m12_entry_status_text_color(entry, selected));
 }
 
 static void m12_draw_main_view(const M12_StartupMenuState* state,
@@ -758,13 +1096,13 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                                int framebufferWidth,
                                int framebufferHeight) {
     int i;
-    int rowY = 70;
+    int rowY = 76;
     const M12_MenuEntry* selectedEntry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
 
     m12_draw_title(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   "PRODUCT PREVIEW",
+                   "FRONTEND PREVIEW",
                    "SELECT A DESTINATION");
     m12_draw_box_art(framebuffer, framebufferWidth, framebufferHeight, selectedEntry);
     m12_draw_frame(framebuffer,
@@ -781,9 +1119,8 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                   framebufferHeight,
                   126,
                   72,
-                  "PLAYABLE BUILDS",
-                  1,
-                  M12_COLOR_LIGHT_CYAN);
+                  "LAUNCHER DESTINATIONS",
+                  &g_textSmallAccent);
     for (i = 0; i < m12_entry_count(); ++i) {
         m12_draw_main_row(framebuffer,
                           framebufferWidth,
@@ -791,34 +1128,32 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                           rowY,
                           &state->entries[i],
                           i == state->selectedIndex);
-        rowY += 25;
+        rowY += 24;
     }
 
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
                    18,
-                   177,
+                   170,
                    framebufferWidth - 36,
-                   14,
+                   18,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   24,
-                  181,
+                  175,
                   "DATA DIR",
-                  1,
-                  M12_COLOR_LIGHT_GRAY);
+                  &g_textSmallMuted);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   84,
-                  181,
+                  175,
                   M12_AssetStatus_GetDataDir(&state->assetStatus),
-                  1,
-                  M12_COLOR_WHITE);
+                  &g_textSmallShadow);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
@@ -846,18 +1181,26 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
                    24,
                    border,
                    fill);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   124,
+                   y + 2,
+                   176,
+                   20,
+                   selected ? M12_COLOR_BROWN : M12_COLOR_BLACK,
+                   fill);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
-                  132,
+                  130,
                   y + 8,
                   label,
-                  1,
-                  M12_COLOR_WHITE);
+                  &g_textSmallShadow);
     m12_draw_status_chip(framebuffer,
                          framebufferWidth,
                          framebufferHeight,
-                         230,
+                         236,
                          y + 6,
                          value,
                          valueFill,
@@ -872,7 +1215,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_title(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   "PRODUCT PREVIEW",
+                   "FRONTEND PREVIEW",
                    "SETTINGS");
     m12_draw_box_art(framebuffer, framebufferWidth, framebufferHeight, &settingsCard);
     m12_draw_frame(framebuffer,
@@ -890,8 +1233,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                   126,
                   72,
                   "PERSISTED OPTIONS",
-                  1,
-                  M12_COLOR_LIGHT_CYAN);
+                  &g_textSmallAccent);
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
@@ -917,19 +1259,18 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                    framebufferWidth,
                    framebufferHeight,
                    18,
-                   177,
+                   170,
                    framebufferWidth - 36,
-                   14,
+                   18,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   24,
-                  181,
+                  175,
                   "CHANGES SAVE IMMEDIATELY TO CONFIG",
-                  1,
-                  M12_COLOR_LIGHT_GRAY);
+                  &g_textSmallMuted);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
@@ -950,7 +1291,7 @@ static void m12_draw_message_view(const M12_StartupMenuState* state,
     m12_draw_title(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   "PRODUCT PREVIEW",
+                   "FRONTEND PREVIEW",
                    "STATUS");
     m12_draw_box_art(framebuffer, framebufferWidth, framebufferHeight, entry);
     m12_draw_frame(framebuffer,
@@ -967,22 +1308,19 @@ static void m12_draw_message_view(const M12_StartupMenuState* state,
                            framebufferHeight,
                            90,
                            state->messageLine1,
-                           1,
-                           messageColor);
+                           &(M12_TextStyle){1, 1, messageColor, 1, 1, M12_COLOR_BLACK});
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
                            112,
                            state->messageLine2,
-                           1,
-                           M12_COLOR_WHITE);
+                           &g_textSmallShadow);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
                            134,
                            state->messageLine3,
-                           1,
-                           M12_COLOR_LIGHT_GRAY);
+                           &g_textSmallMuted);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
@@ -999,22 +1337,7 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
     memset(framebuffer,
            M12_COLOR_BLACK,
            (size_t)framebufferWidth * (size_t)framebufferHeight);
-    m12_fill_rect(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  0,
-                  0,
-                  framebufferWidth,
-                  framebufferHeight,
-                  M12_COLOR_BLACK);
-    m12_fill_rect(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  0,
-                  0,
-                  framebufferWidth,
-                  8,
-                  M12_COLOR_DARK_GRAY);
+    m12_draw_background(framebuffer, framebufferWidth, framebufferHeight);
     if (state->view == M12_MENU_VIEW_MESSAGE) {
         m12_draw_message_view(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_SETTINGS) {

@@ -15,6 +15,7 @@ typedef struct {
 
 typedef struct {
     const char* gameId;
+    const char* label;
     const char* const* names;
     const char* const* md5List;
 } M12_AssetFileSpec;
@@ -24,6 +25,53 @@ typedef struct {
     const M12_AssetFileSpec* files;
     size_t fileCount;
 } M12_GameSpec;
+
+static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
+static const char* const g_dm1DungeonNames[] = {"DUNGEON.DAT", NULL};
+static const char* const g_csbGraphicsNames[] = {"CSBGRAPH.DAT", NULL};
+static const char* const g_csbDungeonNames[] = {"CSB.DAT", "CSB_DUNGEON.DAT", NULL};
+static const char* const g_dm2GraphicsNames[] = {"DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
+static const char* const g_dm2DungeonNames[] = {"DM2DUNGEON.DAT", "SKULLKEEP.DAT", NULL};
+
+static const char* const g_dm1GraphicsHashes[] = {
+    "fa6b1aa29e191418713bf2cda93d962e",
+    "444bcb3a3fcf8389296c49467f27e1d6",
+    NULL
+};
+static const char* const g_dm1DungeonHashes[] = {
+    "766450c940651fc021c92fe5d0d0b3a6",
+    "444bcb3a3fcf8389296c49467f27e1d6",
+    NULL
+};
+
+/*
+ * CSB and DM2 intentionally stay empty until the project captures hashes from
+ * verified retail data. The validator structure below keeps those insertion
+ * points explicit so future additions only touch the relevant hash lists.
+ */
+static const char* const g_csbGraphicsHashes[] = {NULL};
+static const char* const g_csbDungeonHashes[] = {NULL};
+static const char* const g_dm2GraphicsHashes[] = {NULL};
+static const char* const g_dm2DungeonHashes[] = {NULL};
+
+static const M12_AssetFileSpec g_dm1Files[] = {
+    {"dm1", "graphics", g_dm1GraphicsNames, g_dm1GraphicsHashes},
+    {"dm1", "dungeon", g_dm1DungeonNames, g_dm1DungeonHashes}
+};
+static const M12_AssetFileSpec g_csbFiles[] = {
+    {"csb", "graphics", g_csbGraphicsNames, g_csbGraphicsHashes},
+    {"csb", "dungeon", g_csbDungeonNames, g_csbDungeonHashes}
+};
+static const M12_AssetFileSpec g_dm2Files[] = {
+    {"dm2", "graphics", g_dm2GraphicsNames, g_dm2GraphicsHashes},
+    {"dm2", "dungeon", g_dm2DungeonNames, g_dm2DungeonHashes}
+};
+
+static const M12_GameSpec g_gameSpecs[] = {
+    {"dm1", g_dm1Files, sizeof(g_dm1Files) / sizeof(g_dm1Files[0])},
+    {"csb", g_csbFiles, sizeof(g_csbFiles) / sizeof(g_csbFiles[0])},
+    {"dm2", g_dm2Files, sizeof(g_dm2Files) / sizeof(g_dm2Files[0])}
+};
 
 static void m12_md5_init(M12_Md5Context* ctx) {
     if (!ctx) {
@@ -240,6 +288,54 @@ static int m12_hash_list_contains(const char* const* hashes, const char* md5Hex)
     return 0;
 }
 
+static size_t m12_hash_list_count(const char* const* hashes) {
+    size_t i;
+    if (!hashes) {
+        return 0U;
+    }
+    for (i = 0U; hashes[i] != NULL; ++i) {
+    }
+    return i;
+}
+
+static const M12_GameSpec* m12_find_game_spec(const char* gameId) {
+    size_t i;
+    if (!gameId) {
+        return NULL;
+    }
+    for (i = 0U; i < sizeof(g_gameSpecs) / sizeof(g_gameSpecs[0]); ++i) {
+        if (strcmp(g_gameSpecs[i].gameId, gameId) == 0) {
+            return &g_gameSpecs[i];
+        }
+    }
+    return NULL;
+}
+
+static int m12_game_has_complete_hash_set(const M12_GameSpec* spec) {
+    size_t i;
+    if (!spec || !spec->files || spec->fileCount == 0U) {
+        return 0;
+    }
+    for (i = 0U; i < spec->fileCount; ++i) {
+        if (m12_hash_list_count(spec->files[i].md5List) == 0U) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static size_t m12_game_known_hash_count(const M12_GameSpec* spec) {
+    size_t i;
+    size_t total = 0U;
+    if (!spec || !spec->files) {
+        return 0U;
+    }
+    for (i = 0U; i < spec->fileCount; ++i) {
+        total += m12_hash_list_count(spec->files[i].md5List);
+    }
+    return total;
+}
+
 static int m12_match_known_asset(const char* dir, const M12_AssetFileSpec* spec) {
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
     char md5Hex[33];
@@ -263,7 +359,7 @@ static int m12_match_known_asset(const char* dir, const M12_AssetFileSpec* spec)
 
 static int m12_detect_game(const char* dir, const M12_GameSpec* spec) {
     size_t i;
-    if (!dir || !spec || !spec->files) {
+    if (!dir || !spec || !spec->files || !m12_game_has_complete_hash_set(spec)) {
         return 0;
     }
     for (i = 0U; i < spec->fileCount; ++i) {
@@ -275,43 +371,6 @@ static int m12_detect_game(const char* dir, const M12_GameSpec* spec) {
 }
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir) {
-    static const char* const dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
-    static const char* const dm1DungeonNames[] = {"DUNGEON.DAT", NULL};
-    static const char* const csbGraphicsNames[] = {"CSBGRAPH.DAT", NULL};
-    static const char* const csbDungeonNames[] = {"CSB.DAT", "CSB_DUNGEON.DAT", NULL};
-    static const char* const dm2GraphicsNames[] = {"DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
-    static const char* const dm2DungeonNames[] = {"DM2DUNGEON.DAT", "SKULLKEEP.DAT", NULL};
-
-    static const char* const dm1GraphicsHashes[] = {
-        "fa6b1aa29e191418713bf2cda93d962e",
-        "444bcb3a3fcf8389296c49467f27e1d6",
-        NULL
-    };
-    static const char* const dm1DungeonHashes[] = {
-        "766450c940651fc021c92fe5d0d0b3a6",
-        "444bcb3a3fcf8389296c49467f27e1d6",
-        NULL
-    };
-    static const char* const unknownHashes[] = {NULL};
-
-    static const M12_AssetFileSpec dm1Files[] = {
-        {"dm1", dm1GraphicsNames, dm1GraphicsHashes},
-        {"dm1", dm1DungeonNames, dm1DungeonHashes}
-    };
-    static const M12_AssetFileSpec csbFiles[] = {
-        {"csb", csbGraphicsNames, unknownHashes},
-        {"csb", csbDungeonNames, unknownHashes}
-    };
-    static const M12_AssetFileSpec dm2Files[] = {
-        {"dm2", dm2GraphicsNames, unknownHashes},
-        {"dm2", dm2DungeonNames, unknownHashes}
-    };
-    static const M12_GameSpec gameSpecs[] = {
-        {"dm1", dm1Files, sizeof(dm1Files) / sizeof(dm1Files[0])},
-        {"csb", csbFiles, sizeof(csbFiles) / sizeof(csbFiles[0])},
-        {"dm2", dm2Files, sizeof(dm2Files) / sizeof(dm2Files[0])}
-    };
-
     if (!status) {
         return;
     }
@@ -319,9 +378,9 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
     memset(status, 0, sizeof(*status));
     m12_copy_data_dir(status->dataDir, sizeof(status->dataDir), requestedDataDir);
 
-    status->dm1Available = m12_detect_game(status->dataDir, &gameSpecs[0]);
-    status->csbAvailable = m12_detect_game(status->dataDir, &gameSpecs[1]);
-    status->dm2Available = m12_detect_game(status->dataDir, &gameSpecs[2]);
+    status->dm1Available = m12_detect_game(status->dataDir, &g_gameSpecs[0]);
+    status->csbAvailable = m12_detect_game(status->dataDir, &g_gameSpecs[1]);
+    status->dm2Available = m12_detect_game(status->dataDir, &g_gameSpecs[2]);
 }
 
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
@@ -339,6 +398,14 @@ int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
         return status->dm2Available;
     }
     return 0;
+}
+
+int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId) {
+    return m12_game_has_complete_hash_set(m12_find_game_spec(gameId));
+}
+
+size_t M12_AssetStatus_GameKnownHashCount(const char* gameId) {
+    return m12_game_known_hash_count(m12_find_game_spec(gameId));
 }
 
 const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status) {

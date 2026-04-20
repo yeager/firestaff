@@ -127,8 +127,13 @@ int main(void) {
                  "INV_M12_03",
                  state.assetStatus.dm1Available == 1 &&
                      state.assetStatus.csbAvailable == 0 &&
-                     state.assetStatus.dm2Available == 0,
-                 "asset scan uses MD5 matches instead of filename-only readiness");
+                     state.assetStatus.dm2Available == 0 &&
+                     M12_AssetStatus_GameHasCompleteHashSet("dm1") == 1 &&
+                     M12_AssetStatus_GameHasCompleteHashSet("csb") == 0 &&
+                     M12_AssetStatus_GameHasCompleteHashSet("dm2") == 0 &&
+                     M12_AssetStatus_GameKnownHashCount("csb") == 0U &&
+                     M12_AssetStatus_GameKnownHashCount("dm2") == 0U,
+                 "asset scan uses MD5 matches and exposes explicit hash-set coverage");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     probe_record(&tally,
@@ -160,8 +165,8 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_08",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0,
-                 "enter on unavailable entry opens missing-data message");
+                     strcmp(state.messageLine1, "VALIDATOR SCAFFOLD ONLY") == 0,
+                 "enter on scaffold-only entry explains missing verified hashes");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
