@@ -97,6 +97,7 @@ Verification suite:
 
 ### Longer term
 - full Chaos Strikes Back support
+- preserve **Amiga CSB** in-game map support as a product requirement, not an optional extra
 - full **Dungeon Master II** support
 - replay system
 - packaging and release builds
