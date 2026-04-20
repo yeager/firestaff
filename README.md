@@ -10,7 +10,7 @@
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey">
 </p>
 
-An open-source engine port of **Dungeon Master** (1987) and **Chaos Strikes Back** (1989) for modern platforms.
+An open-source engine port of **Dungeon Master** (1987), **Chaos Strikes Back** (1989), and eventually **Dungeon Master II** for modern platforms.
 
 ## Status
 
@@ -48,6 +48,7 @@ The project is built around portable C, explicit data structures, and aggressive
 - built-in fallback launcher card art
 - future-ready slot system for real card assets
 - clean path for future custom dungeon sources
+- explicit product direction that DM2 belongs in the supported game family, even if runtime support is still ahead
 
 ### Engine-backed game view
 - boots from real `DUNGEON.DAT`
@@ -62,6 +63,7 @@ The project is built around portable C, explicit data structures, and aggressive
 - deterministic verification remains green
 - DM1 asset detection is MD5-based, not filename-based
 - CSB / DM2 validator path is scaffolded honestly, without invented support
+- README and roadmap now call out DM2 as a real planned target, not an afterthought
 
 ## Running Firestaff
 
