@@ -395,6 +395,31 @@ static int m11_get_square_byte(const struct GameWorld_Compat* world,
     return 1;
 }
 
+static unsigned char* m11_get_square_ptr(struct GameWorld_Compat* world,
+                                         int mapIndex,
+                                         int mapX,
+                                         int mapY) {
+    const struct DungeonMapDesc_Compat* map;
+    struct DungeonMapTiles_Compat* tiles;
+    int index;
+    if (!world || !world->dungeon || !world->dungeon->tilesLoaded) {
+        return NULL;
+    }
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return NULL;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) {
+        return NULL;
+    }
+    tiles = &world->dungeon->tiles[mapIndex];
+    index = mapX * (int)map->height + mapY;
+    if (!tiles->squareData || index < 0 || index >= tiles->squareCount) {
+        return NULL;
+    }
+    return &tiles->squareData[index];
+}
+
 static unsigned short m11_raw_next_thing(const struct DungeonThings_Compat* things,
                                          unsigned short thing) {
     int type;
@@ -563,7 +588,9 @@ static void m11_refresh_hash(M11_GameViewState* state) {
 
 static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
+static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
+static int m11_toggle_front_door(M11_GameViewState* state);
 static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
                                                 int x,
                                                 int y);
@@ -768,6 +795,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 command = CMD_ATTACK;
                 label = "ATTACK";
                 break;
+            }
+            if (m11_front_cell_is_door(state)) {
+                if (m11_toggle_front_door(state)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
             }
             command = CMD_NONE;
             label = "WAIT";
@@ -1404,6 +1437,75 @@ static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
         return 0;
     }
     return frontCell.summary.groups > 0;
+}
+
+static int m11_front_cell_is_door(const M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+
+    if (!m11_get_front_cell(state, &frontCell)) {
+        return 0;
+    }
+    return frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR;
+}
+
+static int m11_toggle_front_door(M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+    unsigned char* squarePtr;
+    int newDoorState;
+    uint32_t preTick;
+
+    if (!state || !state->active || !m11_get_front_cell(state, &frontCell) ||
+        !frontCell.valid || frontCell.elementType != DUNGEON_ELEMENT_DOOR) {
+        return 0;
+    }
+
+    squarePtr = m11_get_square_ptr(&state->world,
+                                   state->world.party.mapIndex,
+                                   frontCell.mapX,
+                                   frontCell.mapY);
+    if (!squarePtr) {
+        return 0;
+    }
+
+    if (frontCell.doorState == 5) {
+        m11_set_status(state, "DOOR", "DOOR DESTROYED");
+        m11_set_inspect_readout(state, "FRONT DOOR", "DESTROYED, NO LONGER BLOCKING THE PASSAGE");
+        return 1;
+    }
+
+    newDoorState = (frontCell.doorState == 0) ? 4 : 0;
+    *squarePtr = (unsigned char)((*squarePtr & ~0x07U) | (unsigned char)newDoorState);
+
+    preTick = state->world.gameTick;
+    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    state->world.gameTick += 1;
+    state->world.timeline.nowTick = state->world.gameTick;
+    state->lastTickResult.preTick = preTick;
+    state->lastTickResult.postTick = state->world.gameTick;
+    state->lastTickResult.emissionCount = 2;
+    state->lastTickResult.emissions[0].kind = EMIT_DOOR_STATE;
+    state->lastTickResult.emissions[0].payloadSize = 4;
+    state->lastTickResult.emissions[0].payload[0] = frontCell.mapX;
+    state->lastTickResult.emissions[0].payload[1] = frontCell.mapY;
+    state->lastTickResult.emissions[0].payload[2] = newDoorState;
+    state->lastTickResult.emissions[0].payload[3] = state->world.party.mapIndex;
+    state->lastTickResult.emissions[1].kind = EMIT_SOUND_REQUEST;
+    state->lastTickResult.emissions[1].payloadSize = 4;
+    state->lastTickResult.emissions[1].payload[0] = newDoorState == 0 ? 1 : 2;
+    state->lastTickResult.emissions[1].payload[1] = frontCell.mapX;
+    state->lastTickResult.emissions[1].payload[2] = frontCell.mapY;
+    state->lastTickResult.emissions[1].payload[3] = state->world.party.mapIndex;
+    m11_refresh_hash(state);
+    state->lastTickResult.worldHashPost = state->lastWorldHash;
+
+    if (newDoorState == 0) {
+        m11_set_status(state, "DOOR", "DOOR OPENED");
+        m11_set_inspect_readout(state, "FRONT DOOR", "OPEN, PASSAGE CLEAR, CLICK CENTER OR PRESS UP TO CROSS");
+    } else {
+        m11_set_status(state, "DOOR", "DOOR CLOSED");
+        m11_set_inspect_readout(state, "FRONT DOOR", "SHUT, ENTER INSPECTS, SPACE TOGGLES AGAIN");
+    }
+    return 1;
 }
 
 static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
@@ -2441,10 +2543,10 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
         if (m11_viewport_cell_is_open(cell)) {
             snprintf(outAction, outActionSize, "FOCUS OPEN DOOR");
-            snprintf(outHint, outHintSize, "UP OR CLICK CENTER CROSSES, ENTER INSPECTS, SPACE WAITS");
+            snprintf(outHint, outHintSize, "UP OR CLICK CENTER CROSSES, ENTER INSPECTS, SPACE CLOSES THE DOOR");
         } else {
             snprintf(outAction, outActionSize, "FOCUS CLOSED DOOR");
-            snprintf(outHint, outHintSize, "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH");
+            snprintf(outHint, outHintSize, "SPACE OPENS THE DOOR, ENTER INSPECTS, TURN TO SEARCH");
         }
         return;
     }

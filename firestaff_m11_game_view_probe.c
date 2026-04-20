@@ -484,6 +484,28 @@ int main(int argc, char** argv) {
                      strstr(syntheticView.inspectTitle, "TIGGY ATTACKS") != NULL,
                  "clicking the on-screen action button drives the real front-cell attack flow");
 
+    syntheticView.world.party.direction = DIR_EAST;
+    syntheticView.world.party.mapX = 2;
+    syntheticView.world.party.mapY = 2;
+    initialTick = syntheticView.world.gameTick;
+    initialHash = syntheticView.lastWorldHash;
+    probe_record(&tally,
+                 "INV_GV_07I",
+                 M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACTION) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == initialTick + 1 &&
+                     strcmp(syntheticView.lastAction, "DOOR") == 0 &&
+                     strcmp(syntheticView.lastOutcome, "DOOR OPENED") == 0 &&
+                     (syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] & 0x07) == 0,
+                 "space toggles a closed front door open and updates the real dungeon square");
+
+    syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] =
+        (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B);
+    syntheticView.world.party.direction = DIR_NORTH;
+    syntheticView.world.party.mapX = 2;
+    syntheticView.world.party.mapY = 3;
+    syntheticView.world.party.activeChampionIndex = 0;
+    (void)M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACTION);
+
     memset(syntheticFramebuffer, 0, sizeof(syntheticFramebuffer));
     M11_GameView_Draw(&syntheticView, syntheticFramebuffer, 320, 200);
 
