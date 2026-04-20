@@ -92,10 +92,11 @@ Verification suite:
 - broader settings coverage
 - better language support
 - stronger custom dungeon / custom map entry path
+- first real CSB and **DM2** validator/data integration steps
 
 ### Longer term
-- Chaos Strikes Back support
-- Dungeon Master II support
+- full Chaos Strikes Back support
+- full **Dungeon Master II** support
 - replay system
 - packaging and release builds
 
