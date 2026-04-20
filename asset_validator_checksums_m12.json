@@ -1,0 +1,492 @@
+{
+  "source": {
+    "type": "email",
+    "subject": "Checksums",
+    "from": "Daniel Nylander <daniel@danielnylander.se>",
+    "date": "2026-04-20 18:12 Europe/Stockholm"
+  },
+  "notes": [
+    "Extracted from Daniel Nylander checksum mail.",
+    "This is a seed/reference list for future asset validator work.",
+    "Entries keep the original human description from the mail and normalize MD5 to lowercase."
+  ],
+  "entryCount": 68,
+  "entries": [
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga 3.1 and 3.3 Multilanguage",
+      "filename": "GRAPHICS.DAT",
+      "md5": "61fbfd56887c94adc26888a9491c6611",
+      "label": "CSB Amiga 3.1 and 3.3 Multilanguage GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga 3.5 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "291e1bc6803e3dc4b974c60117ca5d68",
+      "label": "CSB Amiga 3.5 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga 3.5 Multilanguage",
+      "filename": "GRAPHICS.DAT",
+      "md5": "cefaddfdf5651df2c91f61b5611a8362",
+      "label": "CSB Amiga 3.5 Multilanguage GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk",
+      "filename": "DRAGON.AMG",
+      "md5": "bd85386535697df62bdbae73740fe435",
+      "label": "CSB Amiga Utility Disk DRAGON.AMG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk English",
+      "filename": "NAKED.AMG",
+      "md5": "4d14d2f12752653bcb1d4464840a7230",
+      "label": "CSB Amiga Utility Disk English NAKED.AMG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk English Release 1 Release X and Atari ST 2.0 EN",
+      "filename": "HCSB.DAT",
+      "md5": "708e113c869ab922633e885aa72a3c77",
+      "label": "CSB Amiga Utility Disk English Release 1 Release X and Atari ST 2.0 EN HCSB.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk English Release 2 and 3",
+      "filename": "HCSB.DAT",
+      "md5": "7496b3b8b9ff6e2368eac9a16be8230b",
+      "label": "CSB Amiga Utility Disk English Release 2 and 3 HCSB.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk English Release 2 Release 3",
+      "filename": "CEDTLS.DAT",
+      "md5": "8aef8165975a36a426aa2ea39823c149",
+      "label": "CSB Amiga Utility Disk English Release 2 Release 3 CEDTLS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk",
+      "filename": "EXPLOS1.AMG",
+      "md5": "370a3c46aecee04bdc6eae73771208c0",
+      "label": "CSB Amiga Utility Disk EXPLOS1.AMG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk French and German",
+      "filename": "NAKED.AMG",
+      "md5": "dc22b3dae4c1c799e7e21f66f291aa9c",
+      "label": "CSB Amiga Utility Disk French and German NAKED.AMG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk French",
+      "filename": "CEDTLS.DAT",
+      "md5": "b367d58374a799de88bc1a24c6320771",
+      "label": "CSB Amiga Utility Disk French CEDTLS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk French Release",
+      "filename": "HCSB.DAT",
+      "md5": "bbf3ada2da9722577feea4fa213b32f1",
+      "label": "CSB Amiga Utility Disk French Release HCSB.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk German",
+      "filename": "CEDTLS.DAT",
+      "md5": "a3cff52ef8e4d85853282181219cde63",
+      "label": "CSB Amiga Utility Disk German CEDTLS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk German Release",
+      "filename": "HCSB.DAT",
+      "md5": "9e0da6c5a569859c6191201dcc6e6aae",
+      "label": "CSB Amiga Utility Disk German Release HCSB.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk",
+      "filename": "MAGEXPLO.AMG",
+      "md5": "59ce0ca034656595b0e0a7a9b1a71316",
+      "label": "CSB Amiga Utility Disk MAGEXPLO.AMG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk",
+      "filename": "SWIPE.AMG",
+      "md5": "cca41290e6121fbb451ee55283ce4abb",
+      "label": "CSB Amiga Utility Disk SWIPE.AMG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga Utility Disk",
+      "filename": "TELE2.AMG",
+      "md5": "70528f7143bd0a3ca7bfd3988722a8a8",
+      "label": "CSB Amiga Utility Disk TELE2.AMG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Amiga X.X and 3.1 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "21197b1d4994fd835c403d5a33dcac2b",
+      "label": "CSB Amiga X.X and 3.1 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Atari ST 2.0 and 2.1 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "ebf6a57af3f27782e358c0490bfd2f2e",
+      "label": "CSB Atari ST 2.0 and 2.1 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB Atari ST Utility Disk English",
+      "filename": "ANIMATE.DAT",
+      "md5": "9f8feb269c959c9fe722ac08f99d9c35",
+      "label": "CSB Atari ST Utility Disk English ANIMATE.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB FM-Towns English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "405b757038eea3c263e60f240854d6de",
+      "label": "CSB FM-Towns English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB FM-Towns Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "761d6fc588b31aeaaa9caf3725e111b9",
+      "label": "CSB FM-Towns Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB PC-98",
+      "filename": "ENTER.SNG",
+      "md5": "61f51d7ffbe0a8ccd6a49c2fec3295fc",
+      "label": "CSB PC-98 ENTER.SNG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB PC-98 Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "761d6fc588b31aeaaa9caf3725e111b9",
+      "label": "CSB PC-98 Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB X68000 Japanese",
+      "filename": "ENTER.SNG",
+      "md5": "ee1ec8a63e0d41d45d2e073bfcdf5df7",
+      "label": "CSB X68000 Japanese ENTER.SNG"
+    },
+    {
+      "gameId": "csb",
+      "description": "CSB X68000 Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "8fe59d4f2af5b57a4cb14447c011d3f1",
+      "label": "CSB X68000 Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Amiga 2.0 and 2.2 German",
+      "filename": "GRAPHICS.DAT",
+      "md5": "0679e39da9dcc2e855cb33c6c64ddcb5",
+      "label": "DM Amiga 2.0 and 2.2 German GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Amiga 2.0 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "6a2f135b53c2220f0251fa103e2a6e7e",
+      "label": "DM Amiga 2.0 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Amiga 2.0 French",
+      "filename": "GRAPHICS.DAT",
+      "md5": "dd373954b3fb127db7387946131ea322",
+      "label": "DM Amiga 2.0 French GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Amiga 2.1 and 2.2 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "b35931b55db649a1bd2d415b61b29801",
+      "label": "DM Amiga 2.1 and 2.2 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Amiga 3.6 Multilanguage",
+      "filename": "GRAPHICS.DAT",
+      "md5": "7f9458e4a3972d06e649a6fa85a7f34b",
+      "label": "DM Amiga 3.6 Multilanguage GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Amiga Demo English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "491ca939f9abb33ceeb26619b841fe91",
+      "label": "DM Amiga Demo English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Apple IIGS English",
+      "filename": "DEMOIIGS.DAT",
+      "md5": "12edef8658079697aae1c2dcb16d5f67",
+      "label": "DM Apple IIGS English DEMOIIGS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Apple IIGS English",
+      "filename": "GRAPHICS.GAME",
+      "md5": "1045a36952e64eb2bc7b4c7b2965b112",
+      "label": "DM Apple IIGS English GRAPHICS.GAME"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Atari ST 1.0 (1987-12-08) English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "b3cfd84e44cdf07ce2eeba47e87f772b",
+      "label": "DM Atari ST 1.0 (1987-12-08) English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Atari ST 1.0 (1987-12-11) English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "7eee396993745e8af212f44d75ff6c1a",
+      "label": "DM Atari ST 1.0 (1987-12-11) English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Atari ST 1.1 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "5095a13692702235d2e74f6b2b1367a9",
+      "label": "DM Atari ST 1.1 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Atari ST 1.2 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "9ce2eaf7a9e78620e3f17594437caffa",
+      "label": "DM Atari ST 1.2 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Atari ST 1.2 German",
+      "filename": "GRAPHICS.DAT",
+      "md5": "2bdc5f431f84c0ece738f54dbd787c3b",
+      "label": "DM Atari ST 1.2 German GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM Atari ST 1.3 French",
+      "filename": "GRAPHICS.DAT",
+      "md5": "0d7af44dd14f383464288abdcec76afc",
+      "label": "DM Atari ST 1.3 French GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM FM-Towns English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "c10c512f63461ebe79b5ac365115b61b",
+      "label": "DM FM-Towns English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM FM-Towns Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "edf47d7da5de8184604d6d80477ef01f",
+      "label": "DM FM-Towns Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM PC 3.4 English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "fa6b1aa29e191418713bf2cda93d962e",
+      "label": "DM PC 3.4 English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM PC 3.4 Multilanguage",
+      "filename": "GRAPHICS.DAT",
+      "md5": "f934d97e43e1ba6e5159839acbcd0611",
+      "label": "DM PC 3.4 Multilanguage GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM PC",
+      "filename": "SONG.DAT",
+      "md5": "c20e5b8f756e360a631595cc9260f62d",
+      "label": "DM PC SONG.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM PC-98 2.0a Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "eaec2131541573658da99c13865c2e67",
+      "label": "DM PC-98 2.0a Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM PC-98 2.0b Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "3e3b9b1800c67b4ce850e087813c325d",
+      "label": "DM PC-98 2.0b Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm1",
+      "description": "DM X68000 Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "fe08a97c64766614b71164fa06eda545",
+      "label": "DM X68000 Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII Amiga",
+      "filename": "GRAPHICS.DAT",
+      "md5": "1c940ea95703eaea0ecdf84d17e954b9",
+      "label": "DMII Amiga GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII FM-Towns Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "027ff3b8ddc2c4c4cdda7ada0b0bc46c",
+      "label": "DMII FM-Towns Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII IBM PSV Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "f926a7554bdfb5852105179e67b8a264",
+      "label": "DMII IBM PSV Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII Macintosh English Demo",
+      "filename": "GRAPHICS.DAT",
+      "md5": "4bf28b3d84e6799d7686c6aaf96cbf23",
+      "label": "DMII Macintosh English Demo GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII Macintosh English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "5cab25f6b975957eae4a203174e7f2a6",
+      "label": "DMII Macintosh English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII Macintosh Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "283d5456c4f676609489e200219605bb",
+      "label": "DMII Macintosh Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC 0.9 Beta English",
+      "filename": "DMCOORD.DAT",
+      "md5": "5dc5d15ae4a3ee85757b3d3622ed2221",
+      "label": "DMII PC 0.9 Beta English DMCOORD.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC 0.9 Beta English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "0a63e22cd83fe3c90aacffda5c0f062c",
+      "label": "DMII PC 0.9 Beta English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC English Demo 19950112",
+      "filename": "GRAPHICS.DAT",
+      "md5": "bd2d316eb77c6d6d217bfb76bd0d7e41",
+      "label": "DMII PC English Demo 19950112 GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC English Demo 19950509",
+      "filename": "GRAPHICS.DAT",
+      "md5": "43cf7e8579e83e9f1fa9b411695842fd",
+      "label": "DMII PC English Demo 19950509 GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC English Demo 19950713",
+      "filename": "GRAPHICS.DAT",
+      "md5": "9a6aa706ae9bed5ddd68ffd730524476",
+      "label": "DMII PC English Demo 19950713 GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "25247ede4dabb6a71e5dabdfbcd5907d",
+      "label": "DMII PC English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC French",
+      "filename": "GRAPHICS.DAT",
+      "md5": "b4d733576ea60c41737f79f212faf528",
+      "label": "DMII PC French GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC German and EnglishJewelCase",
+      "filename": "GRAPHICS.DAT",
+      "md5": "e52ab5e01715042b16a4dcff02052e5d",
+      "label": "DMII PC German and EnglishJewelCase GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC-9801 Japanese Demo",
+      "filename": "GRAPHICS.DAT",
+      "md5": "a0277195099b2ace51d4e085f7eef835",
+      "label": "DMII PC-9801 Japanese Demo GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC-9801 Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "a669adf2a6ff887e0d451d93c846f57f",
+      "label": "DMII PC-9801 Japanese GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC-9821 Japanese Release 1",
+      "filename": "GRAPHICS.DAT",
+      "md5": "a31023db49d5d85e469c9323671812c7",
+      "label": "DMII PC-9821 Japanese Release 1 GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII PC-9821 Japanese Release 2",
+      "filename": "GRAPHICS.DAT",
+      "md5": "a80c555a858ef7770e1d7f3d2e37fec3",
+      "label": "DMII PC-9821 Japanese Release 2 GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII Sega CD English",
+      "filename": "GRAPHICS.DAT",
+      "md5": "dbced13a38d3036f42b9797175b7ec88",
+      "label": "DMII Sega CD English GRAPHICS.DAT"
+    },
+    {
+      "gameId": "dm2",
+      "description": "DMII Sega CD Japanese",
+      "filename": "GRAPHICS.DAT",
+      "md5": "a654ba19e9a6919f46818ecd23d7ea9d",
+      "label": "DMII Sega CD Japanese GRAPHICS.DAT"
+    }
+  ]
+}
