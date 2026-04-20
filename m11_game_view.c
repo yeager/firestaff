@@ -395,6 +395,26 @@ static uint8_t m11_backward_command_for_direction(int direction) {
     }
 }
 
+static uint8_t m11_strafe_left_command_for_direction(int direction) {
+    switch (direction) {
+        case DIR_NORTH: return CMD_MOVE_WEST;
+        case DIR_EAST: return CMD_MOVE_NORTH;
+        case DIR_SOUTH: return CMD_MOVE_EAST;
+        case DIR_WEST: return CMD_MOVE_SOUTH;
+        default: return CMD_NONE;
+    }
+}
+
+static uint8_t m11_strafe_right_command_for_direction(int direction) {
+    switch (direction) {
+        case DIR_NORTH: return CMD_MOVE_EAST;
+        case DIR_EAST: return CMD_MOVE_SOUTH;
+        case DIR_SOUTH: return CMD_MOVE_WEST;
+        case DIR_WEST: return CMD_MOVE_NORTH;
+        default: return CMD_NONE;
+    }
+}
+
 static unsigned char m11_tile_color(int elementType) {
     switch (elementType) {
         case DUNGEON_ELEMENT_WALL: return M11_COLOR_DARK_GRAY;
@@ -1002,6 +1022,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         case M12_MENU_INPUT_RIGHT:
             command = CMD_TURN_RIGHT;
             label = "TURN RIGHT";
+            break;
+        case M12_MENU_INPUT_STRAFE_LEFT:
+            command = m11_strafe_left_command_for_direction(state->world.party.direction);
+            label = "STRAFE LEFT";
+            break;
+        case M12_MENU_INPUT_STRAFE_RIGHT:
+            command = m11_strafe_right_command_for_direction(state->world.party.direction);
+            label = "STRAFE RIGHT";
             break;
         case M12_MENU_INPUT_ACCEPT:
             if (m11_inspect_front_cell(state)) {
@@ -1741,9 +1769,15 @@ static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
     localY = y - M11_VIEWPORT_Y;
 
     if (localX < M11_VIEWPORT_W / 3) {
+        if (localY >= (M11_VIEWPORT_H * 2) / 3) {
+            return M12_MENU_INPUT_STRAFE_LEFT;
+        }
         return M12_MENU_INPUT_LEFT;
     }
     if (localX >= (M11_VIEWPORT_W * 2) / 3) {
+        if (localY >= (M11_VIEWPORT_H * 2) / 3) {
+            return M12_MENU_INPUT_STRAFE_RIGHT;
+        }
         return M12_MENU_INPUT_RIGHT;
     }
     if (!m11_get_front_cell(state, &frontCell)) {
@@ -2750,7 +2784,7 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     if (cell->summary.groups > 0) {
         m11_get_active_champion_label(state, champion, sizeof(champion));
         snprintf(outAction, outActionSize, "ATTACK WITH %s", champion);
-        snprintf(outHint, outHintSize, "SPACE OR CLICK CENTER STRIKES, ENTER INSPECTS, TAB SWAPS CHAMPION");
+        snprintf(outHint, outHintSize, "SPACE OR CLICK CENTER STRIKES, A/D OR LOWER CORNERS STRAFE, TAB SWAPS CHAMPION");
         return;
     }
     if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
@@ -2761,10 +2795,10 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
         if (m11_viewport_cell_is_open(cell)) {
             snprintf(outAction, outActionSize, "FOCUS OPEN DOOR");
-            snprintf(outHint, outHintSize, "UP OR CLICK CENTER CROSSES, ENTER INSPECTS, SPACE CLOSES THE DOOR");
+            snprintf(outHint, outHintSize, "UP OR CLICK CENTER CROSSES, A/D STRAFES, ENTER INSPECTS, SPACE CLOSES THE DOOR");
         } else {
             snprintf(outAction, outActionSize, "FOCUS CLOSED DOOR");
-            snprintf(outHint, outHintSize, "SPACE OPENS THE DOOR, ENTER INSPECTS, TURN TO SEARCH");
+            snprintf(outHint, outHintSize, "SPACE OPENS THE DOOR, ENTER INSPECTS, A/D STRAFES, TURN TO SEARCH");
         }
         return;
     }
@@ -2785,12 +2819,12 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     }
     if (cell->summary.items > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
         snprintf(outAction, outActionSize, "FOCUS INTERACTABLE");
-        snprintf(outHint, outHintSize, "ENTER INSPECTS, UP OR CLICK CENTER CLOSES DISTANCE, SPACE WAITS");
+        snprintf(outHint, outHintSize, "ENTER INSPECTS, UP OR CLICK CENTER CLOSES DISTANCE, A/D STRAFES, SPACE WAITS");
         return;
     }
     if (m11_viewport_cell_is_open(cell)) {
         snprintf(outAction, outActionSize, "FOCUS CLEAR PASSAGE");
-        snprintf(outHint, outHintSize, "UP OR CLICK CENTER ADVANCES, ENTER INSPECTS, TAB SWAPS CHAMPION");
+        snprintf(outHint, outHintSize, "UP ADVANCES, A/D OR LOWER CORNERS STRAFE, ENTER INSPECTS, TAB SWAPS CHAMPION");
         return;
     }
     snprintf(outAction, outActionSize, "FOCUS BLOCKED");
@@ -2916,7 +2950,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   150, 13, line, &g_text_small);
 
-    snprintf(line, sizeof(line), "ENTER INSPECT SPACE ACT TAB CHAMP");
+    snprintf(line, sizeof(line), "A/D STRAFE  ENTER INSPECT");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   214, 13, line, &g_text_small);
 

@@ -54,6 +54,14 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 1U && strncmp(token, "d", len) == 0)) {
         return M12_MENU_INPUT_DOWN;
     }
+    if ((len == 11U && strncmp(token, "strafe-left", len) == 0) ||
+        (len == 2U && strncmp(token, "sl", len) == 0)) {
+        return M12_MENU_INPUT_STRAFE_LEFT;
+    }
+    if ((len == 12U && strncmp(token, "strafe-right", len) == 0) ||
+        (len == 2U && strncmp(token, "sr", len) == 0)) {
+        return M12_MENU_INPUT_STRAFE_RIGHT;
+    }
     if ((len == 4U && strncmp(token, "left", len) == 0) ||
         (len == 1U && strncmp(token, "l", len) == 0)) {
         return M12_MENU_INPUT_LEFT;
@@ -151,13 +159,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
                 case SDLK_LEFT:
-                case SDLK_A:
                 case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
-                case SDLK_D:
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
+                case SDLK_A:
+                    return gameView && gameView->active
+                               ? M12_MENU_INPUT_STRAFE_LEFT
+                               : M12_MENU_INPUT_LEFT;
+                case SDLK_D:
+                    return gameView && gameView->active
+                               ? M12_MENU_INPUT_STRAFE_RIGHT
+                               : M12_MENU_INPUT_RIGHT;
                 case SDLK_W:
                     return M12_MENU_INPUT_UP;
                 case SDLK_S:
@@ -232,13 +246,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
                 case SDLK_LEFT:
-                case SDLK_A:
                 case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
-                case SDLK_D:
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
+                case SDLK_A:
+                    return gameView && gameView->active
+                               ? M12_MENU_INPUT_STRAFE_LEFT
+                               : M12_MENU_INPUT_LEFT;
+                case SDLK_D:
+                    return gameView && gameView->active
+                               ? M12_MENU_INPUT_STRAFE_RIGHT
+                               : M12_MENU_INPUT_RIGHT;
                 case SDLK_W:
                     return M12_MENU_INPUT_UP;
                 case SDLK_S:
@@ -423,7 +443,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                 }
                 if (!launchHandled) {
-                    if (input == M12_MENU_INPUT_ACTION || input == M12_MENU_INPUT_CYCLE_CHAMPION) {
+                    if (input == M12_MENU_INPUT_ACTION ||
+                        input == M12_MENU_INPUT_CYCLE_CHAMPION ||
+                        input == M12_MENU_INPUT_STRAFE_LEFT ||
+                        input == M12_MENU_INPUT_STRAFE_RIGHT) {
                         input = M12_MENU_INPUT_NONE;
                     }
                     M12_StartupMenu_HandleInput(&menuState, input);
