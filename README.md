@@ -23,6 +23,7 @@ Firestaff now has a real front door and a real in-game slice.
 - runtime language / graphics / window-mode switching in the launcher
 - first in-game DM1 view with real dungeon loading
 - real movement / facing / tick updates backed by world state
+- first front-cell attack affordance driven by real tick/emission state
 - deterministic verification suite still green
 
 **Not there yet:**
@@ -51,6 +52,7 @@ The project is built around portable C, explicit data structures, and aggressive
 - enters a real game-view state from the launcher
 - displays dungeon-backed view state instead of fake placeholder text
 - movement / turning / ticking mutate real world state
+- Enter now attacks front-cell creature contact through the real tick orchestrator
 - pseudo-viewport slice now gives a forward-facing dungeon view
 
 ### Validation
@@ -81,7 +83,7 @@ Verification suite:
 ## Roadmap
 
 ### Next up
-- make the pseudo-viewport feel more like a real dungeon face
+- deepen the first combat/action loop around the pseudo-viewport slice
 - add first HUD / party presentation around the view
 - bring in more real launcher art assets
 - add verified CSB / DM2 asset hashes where evidence exists

@@ -540,6 +540,10 @@ static void m11_refresh_hash(M11_GameViewState* state) {
 }
 
 static int m11_inspect_front_cell(M11_GameViewState* state);
+static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
+static void m11_get_active_champion_label(const M11_GameViewState* state,
+                                          char* out,
+                                          size_t outSize);
 
 void M11_GameView_Init(M11_GameViewState* state) {
     if (!state) {
@@ -647,13 +651,37 @@ static int m11_apply_tick(M11_GameViewState* state,
     beforeHash = state->lastWorldHash;
     input.tick = state->world.gameTick;
     input.command = command;
+    if (command == CMD_ATTACK) {
+        input.commandArg1 = (uint8_t)(state->world.party.activeChampionIndex >= 0
+                                          ? state->world.party.activeChampionIndex
+                                          : 0);
+        input.commandArg2 = (uint8_t)state->world.party.direction;
+    }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     if (F0884_ORCH_AdvanceOneTick_Compat(&state->world, &input, &state->lastTickResult) == 0) {
         m11_set_status(state, actionLabel, "TICK REJECTED");
         return 0;
     }
     state->lastWorldHash = state->lastTickResult.worldHashPost;
-    if (command == CMD_TURN_LEFT || command == CMD_TURN_RIGHT) {
+    if (command == CMD_ATTACK) {
+        char champion[16];
+        int attackRoll = 0;
+        int i;
+        m11_get_active_champion_label(state, champion, sizeof(champion));
+        for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
+            const struct TickEmission_Compat* emission = &state->lastTickResult.emissions[i];
+            if (emission->kind == EMIT_DAMAGE_DEALT) {
+                attackRoll = emission->payload[2];
+                break;
+            }
+        }
+        m11_set_status(state, actionLabel, "STRIKE COMMITTED");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s ATTACKS", champion);
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "FRONT CONTACT, ROLL %d, TICK %u",
+                 attackRoll,
+                 (unsigned int)state->world.gameTick);
+    } else if (command == CMD_TURN_LEFT || command == CMD_TURN_RIGHT) {
         if (state->world.party.direction != beforeParty.direction) {
             m11_set_status(state, actionLabel, "FACING UPDATED");
         } else {
@@ -699,6 +727,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             label = "TURN RIGHT";
             break;
         case M12_MENU_INPUT_ACCEPT:
+            if (m11_front_cell_has_attack_target(state)) {
+                command = CMD_ATTACK;
+                label = "ATTACK";
+                break;
+            }
             if (m11_inspect_front_cell(state)) {
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -1180,6 +1213,16 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
     return 0;
 }
 
+static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+
+    memset(&frontCell, 0, sizeof(frontCell));
+    if (!state || !state->active || !m11_sample_viewport_cell(state, 1, 0, &frontCell) || !frontCell.valid) {
+        return 0;
+    }
+    return frontCell.summary.groups > 0;
+}
+
 static unsigned char m11_viewport_fill_color(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return M11_COLOR_DARK_GRAY;
@@ -1587,6 +1630,24 @@ static void m11_format_champion_name(const unsigned char* raw,
     }
 }
 
+static void m11_get_active_champion_label(const M11_GameViewState* state,
+                                          char* out,
+                                          size_t outSize) {
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!state || !state->active ||
+        state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY ||
+        !state->world.party.champions[state->world.party.activeChampionIndex].present) {
+        snprintf(out, outSize, "LEADER");
+        return;
+    }
+    m11_format_champion_name(state->world.party.champions[state->world.party.activeChampionIndex].name,
+                             out,
+                             outSize);
+}
+
 static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
@@ -1640,11 +1701,13 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     }
 }
 
-static void m11_format_front_cell_prompt(const M11_ViewportCell* cell,
-                                        char* outAction,
-                                        size_t outActionSize,
-                                        char* outHint,
-                                        size_t outHintSize) {
+static void m11_format_front_cell_prompt(const M11_GameViewState* state,
+                                         const M11_ViewportCell* cell,
+                                         char* outAction,
+                                         size_t outActionSize,
+                                         char* outHint,
+                                         size_t outHintSize) {
+    char champion[16];
     if (outAction && outActionSize > 0U) {
         outAction[0] = '\0';
     }
@@ -1657,8 +1720,9 @@ static void m11_format_front_cell_prompt(const M11_ViewportCell* cell,
         return;
     }
     if (cell->summary.groups > 0) {
-        snprintf(outAction, outActionSize, "FOCUS ENEMY FRONT");
-        snprintf(outHint, outHintSize, "HOLD OR TURN, CONTACT IN 1 TILE");
+        m11_get_active_champion_label(state, champion, sizeof(champion));
+        snprintf(outAction, outActionSize, "ATTACK WITH %s", champion);
+        snprintf(outHint, outHintSize, "ENTER STRIKES, LEFT OR RIGHT REPOSITIONS");
         return;
     }
     if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
@@ -1795,7 +1859,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         mapDesc = &state->world.dungeon->maps[state->world.party.mapIndex];
     }
     m11_get_food_water_average(&state->world.party, &avgFood, &avgWater);
-    m11_format_front_cell_prompt(&aheadCell,
+    m11_format_front_cell_prompt(state,
+                                 &aheadCell,
                                  focusAction,
                                  sizeof(focusAction),
                                  focusHint,

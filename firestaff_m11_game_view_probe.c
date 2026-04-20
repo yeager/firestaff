@@ -389,10 +389,10 @@ int main(int argc, char** argv) {
     probe_record(&tally,
                  "INV_GV_07",
                  M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
-                     syntheticView.world.gameTick == initialTick &&
-                     strcmp(syntheticView.lastAction, "INSPECT") == 0 &&
-                     strcmp(syntheticView.inspectTitle, "CREATURE CONTACT") == 0,
-                 "accept inspects a real front-cell target instead of spending a fallback wait tick");
+                     syntheticView.world.gameTick == initialTick + 1 &&
+                     strcmp(syntheticView.lastAction, "ATTACK") == 0 &&
+                     strstr(syntheticView.inspectTitle, "ATTACKS") != NULL,
+                 "accept turns front-cell creature contact into a real strike tick instead of a passive inspect");
 
     memset(syntheticFramebuffer, 0, sizeof(syntheticFramebuffer));
     M11_GameView_Draw(&syntheticView, syntheticFramebuffer, 320, 200);
