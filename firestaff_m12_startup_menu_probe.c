@@ -116,19 +116,21 @@ int main(void) {
                      state.selectedIndex == 0 &&
                      state.view == M12_MENU_VIEW_MAIN &&
                      state.shouldExit == 0 &&
-                     M12_CardArt_HasImage(&state.cardArt[0]) == 0 &&
+                     M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
+                     M12_CardArt_HasExternalFile(&state.cardArt[0]) == 0 &&
                      state.entries[0].available == 1 &&
                      state.entries[1].available == 0 &&
                      state.entries[2].available == 0,
-                 "startup state loads defaults, writes config, detects only MD5-known DM1 assets, and seeds empty art slots");
+                 "startup state loads defaults, writes config, detects only MD5-known DM1 assets, and seeds built-in card art");
 
     make_file_with_text(cardPath, "future art slot");
     M12_StartupMenu_InitWithDataDir(&state, dataDir);
     probe_record(&tally,
                  "INV_M12_02B",
                  M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
+                     M12_CardArt_HasExternalFile(&state.cardArt[0]) == 1 &&
                      strcmp(M12_CardArt_GetFileName(&state.cardArt[0]), "dm1.png") == 0,
-                 "card-art loader resolves image slot paths when files are present");
+                 "card-art loader promotes external slot files when present");
 
     make_file_with_text(csbGraphicsPath, "ok");
     make_file_with_text(csbDungeonPath, "ok");

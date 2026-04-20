@@ -135,8 +135,9 @@ int main(void) {
     smoke_record(&tally,
                  "SMOKE_04",
                  M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
+                     M12_CardArt_HasExternalFile(&state.cardArt[0]) == 1 &&
                      strcmp(M12_CardArt_GetFileName(&state.cardArt[0]), "dm1.png") == 0,
-                 "card-art slot loader resolves future artwork paths");
+                 "card-art slot loader prefers external artwork over the built-in fallback");
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     M11_Render_Shutdown();

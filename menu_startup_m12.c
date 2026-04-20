@@ -1022,13 +1022,15 @@ static const char* m12_game_card_line3(const M12_MenuEntry* entry) {
     if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         return "ASSETS MISSING";
     }
-    return "VALIDATOR SCAFFOLD";
+    return "HASH COVERAGE PENDING";
 }
 
 static void m12_format_hash_summary(const M12_MenuEntry* entry,
                                     char* out,
                                     size_t outSize) {
     unsigned long hashCount;
+    unsigned long verifiedFiles;
+    unsigned long requiredFiles;
     if (!out || outSize == 0U) {
         return;
     }
@@ -1038,12 +1040,14 @@ static void m12_format_hash_summary(const M12_MenuEntry* entry,
         return;
     }
     hashCount = (unsigned long)M12_AssetStatus_GameKnownHashCount(entry->gameId);
+    verifiedFiles = (unsigned long)M12_AssetStatus_GameVerifiedFileCount(entry->gameId);
+    requiredFiles = (unsigned long)M12_AssetStatus_GameRequiredFileCount(entry->gameId);
     if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         snprintf(out,
                  outSize,
-                 "%lu VERIFIED HASH SLOT%s",
-                 hashCount,
-                 hashCount == 1UL ? "" : "S");
+                 "%lu OF %lu FILES HASHED",
+                 verifiedFiles,
+                 requiredFiles);
         return;
     }
     snprintf(out,
@@ -1090,6 +1094,43 @@ static void m12_draw_box_motif(unsigned char* framebuffer,
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 18, y + 26, w - 36, 6, M12_COLOR_DARK_GRAY);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + (w / 2) - 8, y + 34, 16, 8, M12_COLOR_WHITE);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + (w / 2) - 3, y + 42, 6, 4, M12_COLOR_WHITE);
+}
+
+static void m12_draw_card_preview(unsigned char* framebuffer,
+                                  int framebufferWidth,
+                                  int framebufferHeight,
+                                  const M12_MenuEntry* entry,
+                                  const M12_GameCardArt* art,
+                                  int x,
+                                  int y,
+                                  int w,
+                                  int h,
+                                  unsigned char fill,
+                                  unsigned char accent) {
+    if (entry && entry->kind != M12_MENU_ENTRY_SETTINGS && art && M12_CardArt_HasImage(art)) {
+        M12_CardArt_DrawPreview(art,
+                                framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                x,
+                                y,
+                                w,
+                                h,
+                                fill,
+                                M12_COLOR_BLACK,
+                                accent,
+                                M12_COLOR_YELLOW);
+        return;
+    }
+    m12_draw_box_motif(framebuffer,
+                       framebufferWidth,
+                       framebufferHeight,
+                       x,
+                       y,
+                       w,
+                       h,
+                       entry,
+                       accent);
 }
 
 static void m12_draw_box_art(const M12_StartupMenuState* state,
@@ -1142,15 +1183,17 @@ static void m12_draw_box_art(const M12_StartupMenuState* state,
                   80,
                   48,
                   M12_COLOR_BLACK);
-    m12_draw_box_motif(framebuffer,
-                       framebufferWidth,
-                       framebufferHeight,
-                       24,
-                       80,
-                       80,
-                       48,
-                       entry,
-                       accent);
+    m12_draw_card_preview(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          entry,
+                          art,
+                          24,
+                          80,
+                          80,
+                          48,
+                          fill,
+                          accent);
     m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 130, 80, M12_COLOR_BLACK);
     m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 150, 80, M12_COLOR_BLACK);
     m12_draw_centered_text(framebuffer,
@@ -1198,18 +1241,18 @@ static void m12_draw_box_art(const M12_StartupMenuState* state,
                   framebufferHeight,
                   28,
                   104,
-                  (art && M12_CardArt_HasImage(art))
+                  (art && M12_CardArt_HasExternalFile(art))
                       ? m12_text(state, M12_TEXT_ART_SLOT_READY)
-                      : m12_text(state, M12_TEXT_ART_SLOT_EMPTY),
+                      : m12_text(state, M12_TEXT_CARD_ART_ACTIVE),
                   &g_textSmallMuted);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   28,
                   114,
-                  (art && M12_CardArt_HasImage(art))
+                  (art && M12_CardArt_HasExternalFile(art))
                       ? M12_CardArt_GetFileName(art)
-                      : m12_text(state, M12_TEXT_DROP_ART_INTO_SLOT),
+                      : M12_CardArt_GetSlotLabel(art),
                   &g_textSmallShadow);
 }
 

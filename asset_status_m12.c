@@ -336,6 +336,20 @@ static size_t m12_game_known_hash_count(const M12_GameSpec* spec) {
     return total;
 }
 
+static size_t m12_game_verified_file_count(const M12_GameSpec* spec) {
+    size_t i;
+    size_t total = 0U;
+    if (!spec || !spec->files) {
+        return 0U;
+    }
+    for (i = 0U; i < spec->fileCount; ++i) {
+        if (m12_hash_list_count(spec->files[i].md5List) > 0U) {
+            total += 1U;
+        }
+    }
+    return total;
+}
+
 static int m12_match_known_asset(const char* dir, const M12_AssetFileSpec* spec) {
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
     char md5Hex[33];
@@ -406,6 +420,15 @@ int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId) {
 
 size_t M12_AssetStatus_GameKnownHashCount(const char* gameId) {
     return m12_game_known_hash_count(m12_find_game_spec(gameId));
+}
+
+size_t M12_AssetStatus_GameVerifiedFileCount(const char* gameId) {
+    return m12_game_verified_file_count(m12_find_game_spec(gameId));
+}
+
+size_t M12_AssetStatus_GameRequiredFileCount(const char* gameId) {
+    const M12_GameSpec* spec = m12_find_game_spec(gameId);
+    return spec ? spec->fileCount : 0U;
 }
 
 const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status) {
