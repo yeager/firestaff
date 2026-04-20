@@ -1248,32 +1248,32 @@ msgstr ""
 
 #: menu_main_m12.c:42
 msgid "menu.game_picker.title"
-msgstr "Välj spel"
+msgstr "Choose game"
 
 #: menu_main_m12.c:55
 msgid "menu.game_picker.unavailable"
-msgstr "Speldata hittades inte"
+msgstr "Game data not found"
 
 #: menu_main_m12.c:58
 #, c-format
 msgid "menu.game_picker.found"
-msgstr "Hittade: %s"
+msgstr "Found: %s"
 
 #: menu_settings_m12.c:120
 msgid "settings.tab.graphics"
-msgstr "Grafik"
+msgstr "Graphics"
 
 #: menu_settings_m12.c:121
 msgid "settings.tab.audio"
-msgstr "Ljud"
+msgstr "Audio"
 
 #: menu_settings_m12.c:122
 msgid "settings.tab.input"
-msgstr "Kontroller"
+msgstr "Controls"
 
 #: menu_settings_m12.c:123
 msgid "settings.tab.language"
-msgstr "Språk"
+msgstr "Language"
 
 #: menu_bugtoggles_m12.c:30
 msgid "bugtoggles.preset.purist"
@@ -1281,11 +1281,11 @@ msgstr "DM 1.0a EN (purist)"
 
 #: menu_bugtoggles_m12.c:88
 msgid "bugtoggles.save_mismatch.title"
-msgstr "Profil-varning"
+msgstr "Profile warning"
 
 #: menu_bugtoggles_m12.c:89
 msgid "bugtoggles.save_mismatch.body"
-msgstr "Denna sparfil skapades med en annan buggprofil. Fortsätt ändå?"
+msgstr "This save file was created with a different bug profile. Continue anyway?"
 ```
 
 ### §6.3  Runtime Loading Strategy
@@ -1488,11 +1488,11 @@ M12 can begin as soon as M11 Phase G (`fs_portable_compat`) lands. Phases A–D 
 **Invariants (8):**
 - INV-D01: English catalogue has ≥100 entries (all M12 strings).
 - INV-D02: `tr("menu.game_picker.title")` in English → "Select Game".
-- INV-D03: `tr("menu.game_picker.title")` in Swedish → "Välj spel".
+- INV-D03: `tr("menu.game_picker.title")` in the active secondary locale → returns the translated string correctly.
 - INV-D04: `tr("nonexistent.key")` → returns the key itself.
-- INV-D05: Language switch en → sv → en → same results as initial en.
+- INV-D05: Language switch en → secondary locale → en → same results as initial en.
 - INV-D06: `trf("menu.game_picker.found", "DM1")` → "Found: DM1" (en).
-- INV-D07: Every key in `en/firestaff.po` exists in `sv/firestaff.po` (completeness).
+- INV-D07: Every key in `en/firestaff.po` exists in the shipped secondary catalogues (completeness).
 - INV-D08: Parsing a malformed .po file → returns error, no crash.
 
 **Exit criteria:** Full i18n pipeline works end-to-end. All 4 languages load. No missing keys in Swedish (primary non-English language).
