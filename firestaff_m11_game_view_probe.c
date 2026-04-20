@@ -48,7 +48,11 @@ enum {
     PROBE_FEEDBACK_STRIP_X = 24,
     PROBE_FEEDBACK_STRIP_Y = 130,
     PROBE_FEEDBACK_STRIP_W = 172,
-    PROBE_FEEDBACK_STRIP_H = 10
+    PROBE_FEEDBACK_STRIP_H = 10,
+    PROBE_DEPTH_STRIP_X = 44,
+    PROBE_DEPTH_STRIP_Y = 112,
+    PROBE_DEPTH_STRIP_W = 144,
+    PROBE_DEPTH_STRIP_H = 18
 };
 
 typedef struct {
@@ -616,6 +620,16 @@ int main(int argc, char** argv) {
                                        PROBE_FEEDBACK_STRIP_H,
                                        PROBE_COLOR_LIGHT_RED) > 8U,
                  "post-tick feedback strip renders attack-colored event telemetry inside the HUD");
+
+    probe_record(&tally,
+                 "INV_GV_20",
+                 probe_count_non_zero(syntheticFramebuffer,
+                                      320,
+                                      PROBE_DEPTH_STRIP_X,
+                                      PROBE_DEPTH_STRIP_Y,
+                                      PROBE_DEPTH_STRIP_W,
+                                      PROBE_DEPTH_STRIP_H) > 180U,
+                 "forward depth chips summarize the next three center-lane cells with live threat and traversal cues");
 
     probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);

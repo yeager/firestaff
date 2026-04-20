@@ -1581,6 +1581,50 @@ static void m11_draw_lane_chip(unsigned char* framebuffer,
                   x + 9, y + 2, label, &g_text_small);
 }
 
+static void m11_format_depth_label(const M11_ViewportCell* cell,
+                                   int depth,
+                                   char* out,
+                                   size_t outSize) {
+    char lane[16];
+    char depthPrefix[2];
+
+    if (!out || outSize == 0U) {
+        return;
+    }
+    depthPrefix[0] = (char)('1' + depth);
+    depthPrefix[1] = '\0';
+    m11_format_lane_label(cell, depthPrefix, lane, sizeof(lane));
+    snprintf(out, outSize, "%s", lane);
+}
+
+static void m11_draw_depth_chip(unsigned char* framebuffer,
+                                int framebufferWidth,
+                                int framebufferHeight,
+                                int x,
+                                int y,
+                                int w,
+                                int h,
+                                const M11_ViewportCell* cell,
+                                int depth) {
+    char label[16];
+    unsigned char border = m11_focus_color(cell);
+    unsigned char fill = (!cell || !cell->valid || !m11_viewport_cell_is_open(cell))
+                             ? M11_COLOR_DARK_GRAY
+                             : M11_COLOR_BLACK;
+
+    m11_format_depth_label(cell, depth, label, sizeof(label));
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, w, h, fill);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, w, h, border);
+    if (cell && cell->valid) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x + 2, y + 2, w - 4, 2, border);
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  x + 4, y + 2, label, &g_text_small);
+}
+
 static void m11_draw_focus_brackets(unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight,
@@ -1842,6 +1886,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
                        viewport.x + 128, viewport.y + 6, 42, 11,
                        &cells[0][2], "R");
+
+    m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
+                        viewport.x + 40, viewport.y + viewport.h - 24, 34, 10,
+                        &cells[0][1], 0);
+    m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
+                        viewport.x + 88, viewport.y + viewport.h - 24, 34, 10,
+                        &cells[1][1], 1);
+    m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
+                        viewport.x + 136, viewport.y + viewport.h - 24, 34, 10,
+                        &cells[2][1], 2);
 
     m11_draw_focus_brackets(framebuffer, framebufferWidth, framebufferHeight,
                             &frames[1], &cells[0][1]);
