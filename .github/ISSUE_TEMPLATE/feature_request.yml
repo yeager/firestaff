@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest an improvement or new feature
+labels: [enhancement, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check the [roadmap](https://github.com/yeager/firestaff/blob/main/TODO.md) — your idea may already be planned.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the user-facing issue or limitation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you imagine this would work?
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you thought about?
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Engine (M10)
+        - Rendering / audio / input (M11)
+        - Menus / config / i18n (M12)
+        - Graphics levels / upscaling
+        - Preservation / museum content
+        - Other
+    validations:
+      required: true

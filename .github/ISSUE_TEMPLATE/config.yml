@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Where do I get the original game files?
+    url: https://github.com/yeager/firestaff#building
+    about: Firestaff does not distribute any original game assets. You need a legally-owned copy.
+  - name: Original-game bug or preserved quirk?
+    url: https://github.com/yeager/firestaff/blob/main/firestaff-bugs.json
+    about: Check the bug database — many "bugs" are intentional preservations of original behaviour, toggleable in settings.

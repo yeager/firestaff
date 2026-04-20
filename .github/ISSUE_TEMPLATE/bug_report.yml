@@ -1,0 +1,100 @@
+name: Bug report
+description: Something in Firestaff doesn't behave as expected
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Before filing, please check:
+        - [Existing issues](https://github.com/yeager/firestaff/issues) for duplicates
+        - Whether this is a bug in Firestaff itself or in the original game (some original-game bugs are intentionally preserved — see Bug Toggles in settings)
+
+  - type: input
+    id: version
+    attributes:
+      label: Firestaff version
+      description: From Help → About, or `firestaff --version`
+      placeholder: e.g. 0.1.0-M10
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux (x86_64)
+        - Linux (ARM64)
+        - Windows (x86_64)
+        - Other (describe in steps)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game
+    attributes:
+      label: Which game?
+      options:
+        - Dungeon Master 1
+        - Chaos Strikes Back
+        - Dungeon Master 2
+        - Not game-specific (engine / UI / config)
+    validations:
+      required: true
+
+  - type: input
+    id: game_version
+    attributes:
+      label: Original game version/variant
+      description: Which DAT file? (PC 3.4 EN, Atari 1.3a FR, CSB 2.1 EN, ...)
+      placeholder: e.g. DM1 PC 3.4 EN
+
+  - type: textarea
+    id: bug_toggles
+    attributes:
+      label: Bug-toggle preset
+      description: Which preset is active? (Purist / Modern / Custom — if Custom, attach or list toggles)
+      placeholder: e.g. Modern preset, plus enabled "dm1_bug_0042_stairway_loss"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What do you do to trigger the bug?
+      placeholder: |
+        1. Start new game
+        2. Move party to ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: save
+    attributes:
+      label: Save file + world-hash
+      description: If you have a save file near the bug, drag it in. Also paste world-hash from Help → Diagnostics.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant logs from `~/Library/Application Support/Firestaff/logs/` (macOS), `$XDG_STATE_HOME/firestaff/logs/` (Linux), or `%APPDATA%\Firestaff\logs\` (Windows)
+      render: shell

@@ -1,0 +1,114 @@
+name: M10 verify + cross-platform determinism
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+        compiler: [default]
+        include:
+          - os: ubuntu-24.04
+            cc: gcc
+            shell: bash
+          - os: macos-14
+            cc: clang
+            shell: bash
+          - os: windows-2022
+            cc: gcc
+            shell: msys2 {0}
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSYS2 (Windows only)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+
+      - name: Run M10 verify
+        run: |
+          chmod +x ./run_firestaff_m10_verify.sh
+          ./run_firestaff_m10_verify.sh 2>&1 | tee verify.log
+          tail -20 verify.log
+
+      - name: Assert all 20 phases PASS
+        run: |
+          PASS_COUNT=$(grep -c ": PASS$" verify.log || echo 0)
+          if [ "$PASS_COUNT" -lt 20 ]; then
+            echo "::error::Expected 20 PASS, got $PASS_COUNT"
+            exit 1
+          fi
+
+      - name: Compute deterministic world-hash
+        run: |
+          chmod +x ./run_firestaff_headless_driver.sh
+          # Use a tiny synthetic dungeon file committed to tests/fixtures/
+          if [ -f tests/fixtures/minimal.DAT ]; then
+            ./run_firestaff_headless_driver.sh tests/fixtures/minimal.DAT --seed 42 --ticks 100 2>&1 | tee hash-${{ matrix.os }}.txt
+            grep "final_hash:" hash-${{ matrix.os }}.txt > hash-only-${{ matrix.os }}.txt
+          fi
+
+      - name: Upload hash artefact
+        if: hashFiles('hash-only-*.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: determinism-hash-${{ matrix.os }}
+          path: hash-only-*.txt
+
+  cross-platform-determinism:
+    needs: verify
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: determinism-hash-*
+          merge-multiple: true
+
+      - name: Compare hashes across platforms
+        run: |
+          echo "Hashes per platform:"
+          cat hash-only-*.txt || echo "No hash files (skipping)"
+          # All hash files must be byte-identical
+          if ls hash-only-*.txt >/dev/null 2>&1; then
+            FIRST=$(head -1 hash-only-ubuntu-24.04.txt)
+            for f in hash-only-*.txt; do
+              if [ "$(head -1 $f)" != "$FIRST" ]; then
+                echo "::error::Determinism broken: $f differs from baseline"
+                echo "baseline: $FIRST"
+                echo "$f: $(head -1 $f)"
+                exit 1
+              fi
+            done
+            echo "✓ All platforms produced identical hash: $FIRST"
+          fi
+
+  warnings-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Strict -Wall -Wextra -Werror build
+        run: |
+          for probe in firestaff_m10_*_probe.c; do
+            echo "=== $probe ==="
+            gcc -Wall -Wextra -Werror -c -o /tmp/probe.o "$probe" || exit 1
+          done
+          echo "All M10 probes compile clean with -Werror"
