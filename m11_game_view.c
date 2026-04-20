@@ -1490,6 +1490,81 @@ static unsigned char m11_focus_color(const M11_ViewportCell* cell) {
     return M11_COLOR_LIGHT_GREEN;
 }
 
+static void m11_format_lane_label(const M11_ViewportCell* cell,
+                                  const char* prefix,
+                                  char* out,
+                                  size_t outSize) {
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!cell || !cell->valid) {
+        snprintf(out, outSize, "%s VOID", prefix ? prefix : "?");
+        return;
+    }
+    if (cell->summary.groups > 0) {
+        snprintf(out, outSize, "%s %dG", prefix ? prefix : "?", cell->summary.groups);
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
+        snprintf(out, outSize, "%s DOOR", prefix ? prefix : "?");
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+        snprintf(out, outSize, "%s PIT", prefix ? prefix : "?");
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_STAIRS) {
+        snprintf(out, outSize, "%s STEP", prefix ? prefix : "?");
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
+        snprintf(out, outSize, "%s TELE", prefix ? prefix : "?");
+        return;
+    }
+    if (cell->summary.items > 0) {
+        snprintf(out, outSize, "%s ITEM", prefix ? prefix : "?");
+        return;
+    }
+    if (cell->summary.sensors > 0 || cell->summary.textStrings > 0 ||
+        cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
+        snprintf(out, outSize, "%s MARK", prefix ? prefix : "?");
+        return;
+    }
+    if (m11_viewport_cell_is_open(cell)) {
+        snprintf(out, outSize, "%s OPEN", prefix ? prefix : "?");
+        return;
+    }
+    snprintf(out, outSize, "%s WALL", prefix ? prefix : "?");
+}
+
+static void m11_draw_lane_chip(unsigned char* framebuffer,
+                               int framebufferWidth,
+                               int framebufferHeight,
+                               int x,
+                               int y,
+                               int w,
+                               int h,
+                               const M11_ViewportCell* cell,
+                               const char* prefix) {
+    char label[16];
+    unsigned char border = m11_focus_color(cell);
+    unsigned char fill = (!cell || !cell->valid || !m11_viewport_cell_is_open(cell))
+                             ? M11_COLOR_DARK_GRAY
+                             : M11_COLOR_BLACK;
+
+    m11_format_lane_label(cell, prefix, label, sizeof(label));
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, w, h, fill);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, w, h, border);
+    if (cell && cell->valid) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x + 2, y + 2, 4, h - 4, border);
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  x + 9, y + 2, label, &g_text_small);
+}
+
 static void m11_draw_focus_brackets(unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight,
@@ -1593,6 +1668,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
+
+    m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
+                       viewport.x + 26, viewport.y + 6, 42, 11,
+                       &cells[0][0], "L");
+    m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
+                       viewport.x + 77, viewport.y + 6, 42, 11,
+                       &cells[0][1], "F");
+    m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
+                       viewport.x + 128, viewport.y + 6, 42, 11,
+                       &cells[0][2], "R");
 
     m11_draw_focus_brackets(framebuffer, framebufferWidth, framebufferHeight,
                             &frames[1], &cells[0][1]);

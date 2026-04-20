@@ -23,6 +23,10 @@ enum {
     PROBE_VIEWPORT_Y = 24,
     PROBE_VIEWPORT_W = 196,
     PROBE_VIEWPORT_H = 118,
+    PROBE_LANE_STRIP_X = 38,
+    PROBE_LANE_STRIP_Y = 30,
+    PROBE_LANE_STRIP_W = 148,
+    PROBE_LANE_STRIP_H = 12,
     PROBE_SIDEBAR_X = 214,
     PROBE_SIDEBAR_Y = 24,
     PROBE_SIDEBAR_W = 94,
@@ -567,6 +571,30 @@ int main(int argc, char** argv) {
                                           PROBE_PROMPT_STRIP_W,
                                           PROBE_PROMPT_STRIP_H) > 200U,
                  "front-cell focus adds a threat-colored viewport reticle plus contextual inspect readout");
+
+    probe_record(&tally,
+                 "INV_GV_18",
+                 probe_count_non_zero(syntheticFramebuffer,
+                                      320,
+                                      PROBE_LANE_STRIP_X,
+                                      PROBE_LANE_STRIP_Y,
+                                      PROBE_LANE_STRIP_W,
+                                      PROBE_LANE_STRIP_H) > 250U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_LANE_STRIP_X,
+                                       PROBE_LANE_STRIP_Y,
+                                       PROBE_LANE_STRIP_W,
+                                       PROBE_LANE_STRIP_H,
+                                       PROBE_COLOR_LIGHT_RED) > 6U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_LANE_STRIP_X,
+                                       PROBE_LANE_STRIP_Y,
+                                       PROBE_LANE_STRIP_W,
+                                       PROBE_LANE_STRIP_H,
+                                       PROBE_COLOR_YELLOW) > 6U,
+                 "near-lane scanner chips surface left, front, and right contact state inside the viewport");
 
     probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);
