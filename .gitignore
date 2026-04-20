@@ -82,6 +82,7 @@ test_vga_palette
 *.pgm
 *.ppm
 *.png
+!assets/branding/*.png
 *.log
 tmp_probe_*
 startup_dispatch_*

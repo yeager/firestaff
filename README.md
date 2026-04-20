@@ -1,97 +1,130 @@
 # Firestaff
 
-[![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Milestone](https://img.shields.io/badge/milestone-M10%20engine--core%20complete-success)](https://github.com/yeager/firestaff/blob/main/TODO.md)
-[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#building)
-[![Invariants](https://img.shields.io/badge/invariants-500%2B%20passing-brightgreen)](https://github.com/yeager/firestaff/blob/main/run_firestaff_m10_verify.sh)
+<p align="center">
+  <img src="assets/branding/firestaff-logo.png" alt="Firestaff logo" width="420">
+</p>
 
+<p align="center">
+  <a href="https://github.com/yeager/firestaff/actions/workflows/verify.yml"><img alt="CI" src="https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey">
+</p>
 
 An open-source engine port of **Dungeon Master** (1987) and **Chaos Strikes Back** (1989) for modern platforms.
 
-**Status:** M10 complete — 20 of 20 engine-core phases passing deterministic verification. No UI/rendering yet (M11+).
+## Status
 
-## What it is
+Firestaff now has a real front door and a real in-game slice.
 
-Firestaff is a deterministic, modular re-implementation of the FTL Games engine, designed to run on **macOS, Linux, and Windows** from day one. The entire engine is written in portable C with bit-identical cross-platform serialisation.
+**Working today:**
+- launcher with game selection
+- persistent startup settings
+- DM1 asset validation via MD5
+- runtime language / graphics / window-mode switching in the launcher
+- first in-game DM1 view with real dungeon loading
+- real movement / facing / tick updates backed by world state
+- deterministic verification suite still green
 
-- Pure data-layer modules with invariant-based verification
-- 500+ passing invariants across 20 engine phases
-- Deterministic RNG, bit-identical save/load round-trip
-- Headless driver for regression and replay verification
-- Designed to read player-owned original `DUNGEON.DAT` files — no assets redistributed
+**Not there yet:**
+- full classic Dungeon Master viewport rendering
+- full audio layer
+- complete CSB / DM2 asset support
+- full end-to-end playable UI/HUD flow
 
-## What it isn't (yet)
+## What Firestaff is
 
-- Not playable in the traditional sense — UI/rendering/audio layer is M11+
-- Does not distribute any FTL Games assets
-- Does not include reverse-engineered source from other projects
+Firestaff is a deterministic, modular re-implementation of the FTL Games engine, designed to run on **macOS, Linux, and Windows**.
 
-## Architecture
+The project is built around portable C, explicit data structures, and aggressive verification. The goal is not just to "run the game somehow", but to preserve its behaviour in a form that is inspectable, testable, and maintainable.
 
-The engine is split into 20 phases, each a separate compilable module with its own invariant probe:
+## Current feature snapshot
 
-| Phase | Module | What it does |
-|-------|--------|--------------|
-| 1-9 | Dungeon data layer | Tiles, text, doors, sensors, monsters, items |
-| 10 | Movement + champions | Party position, champion state, inventory |
-| 11 | Sensor execution | Pressure plates, triggers, actuator chains |
-| 12 | Timeline scheduler | 16 event kinds with deterministic priority |
-| 13 | Combat | Champion↔creature damage resolution |
-| 14 | Magic | Spell system with runes and effects |
-| 15 | Save/Load | CRC32 integrity, bit-identical round-trip |
-| 16 | Monster AI | Creature behaviour state machine |
-| 17 | Projectiles | Flight, collision, explosions |
-| 18 | Champion lifecycle | Hunger, status effects, XP, rest |
-| 19 | Runtime dynamics | Generators, light decay, fluxcage |
-| 20 | Tick orchestrator | Main loop with deterministic harness |
+### Launcher
+- DM1 / CSB / DM2 game list
+- startup settings screen
+- built-in fallback launcher card art
+- future-ready slot system for real card assets
+- clean path for future custom dungeon sources
 
-Each phase emits a probe with dozens of invariants that must pass bit-identically on every compile.
+### Engine-backed game view
+- boots from real `DUNGEON.DAT`
+- enters a real game-view state from the launcher
+- displays dungeon-backed view state instead of fake placeholder text
+- movement / turning / ticking mutate real world state
+- pseudo-viewport slice now gives a forward-facing dungeon view
 
-## Building
+### Validation
+- deterministic verification remains green
+- DM1 asset detection is MD5-based, not filename-based
+- CSB / DM2 validator path is scaffolded honestly, without invented support
 
-Currently Unix-like (macOS, Linux). Windows via MSYS2/WSL during M10. Native Windows support lands in M11.
+## Running Firestaff
 
-```sh
-./run_firestaff_m10_verify.sh
-```
-
-This compiles all 20 phases and runs their invariant probes. Exits 0 on success; prints phase-by-phase PASS/FAIL summary.
-
-### Headless driver
-
-Run a deterministic game simulation from the command line:
+Launcher / game view:
 
 ```sh
-./run_firestaff_headless_driver.sh /path/to/DUNGEON.DAT --seed 42 --ticks 100
+./firestaff --data-dir "$HOME/.firestaff/data"
 ```
 
-Output includes final world hash, party state, and RNG seed. Two invocations with the same seed produce bit-identical output.
+Headless launcher smoke test:
+
+```sh
+./run_firestaff_m11_launcher_smoke.sh
+```
+
+Verification suite:
+
+```sh
+./run_firestaff_m10_verify.sh "$HOME/.firestaff/data/GRAPHICS.DAT"
+```
 
 ## Roadmap
 
-- **M11** — SDL3 integration: rendering, audio, input (macOS/Linux/Windows)
-- **M12** — Startup menu, i18n (sv/fr/de), asset validation via MD5
-- **M13** — Chaos Strikes Back + Dungeon Master II integration
+### Next up
+- make the pseudo-viewport feel more like a real dungeon face
+- add first HUD / party presentation around the view
+- bring in more real launcher art assets
+- add verified CSB / DM2 asset hashes where evidence exists
+
+### After that
+- fuller viewport rendering
+- audio layer
+- broader settings coverage
+- better language support
+- stronger custom dungeon / custom map entry path
+
+### Longer term
+- Chaos Strikes Back support
+- Dungeon Master II support
+- replay system
+- packaging and release builds
+
+## Design principles
+
+- **Use real game data whenever possible**
+- **Do not fake support we have not verified**
+- **Keep deterministic behaviour intact**
+- **Build additive slices that stay green**
+- **Prefer honest progress over flashy shortcuts**
 
 ## Credits
 
-Firestaff's development has been informed by **Christophe Fontanel's** extensive reverse-engineering work on [ReDMCSB](http://dmweb.free.fr/?q=community/redmcsb). His meticulous documentation of the original engine's bugs, quirks, and mechanics has been invaluable as a reference — though no ReDMCSB source code is included in Firestaff.
+Firestaff's development has been informed by **Christophe Fontanel's** reverse-engineering work on [ReDMCSB](http://dmweb.free.fr/?q=community/redmcsb). His documentation of the original engine's bugs, quirks, and mechanics has been invaluable as a reference, though no ReDMCSB source code is included in Firestaff.
 
-The original Dungeon Master and Chaos Strikes Back games were designed by **Doug Bell**, **Dennis Walker**, **Mike Newton**, **Andy Jaros**, and **Wayne Holder** at FTL Games. This project exists to preserve their work in a form playable on modern hardware.
+The original Dungeon Master and Chaos Strikes Back games were designed by **Doug Bell**, **Dennis Walker**, **Mike Newton**, **Andy Jaros**, and **Wayne Holder** at FTL Games.
 
 ## Licence
 
 Firestaff is released under the **MIT Licence**. See [LICENSE](LICENSE).
 
-This licence covers **only the engine code**. Dungeon Master and Chaos Strikes Back are © FTL Games / Software Heaven, Inc. You must own a legal copy of the original games (floppy disk, CD-ROM, or authorised digital release) to play them with Firestaff. No assets are distributed with this project.
+This licence covers **only the engine code**. Dungeon Master and Chaos Strikes Back are © FTL Games / Software Heaven, Inc. You must own a legal copy of the original games to use them with Firestaff. No original assets are distributed with this project.
 
 ## Contributing
 
-Firestaff is in early development. Once M11 lands and the project is playable end-to-end, contribution guidelines will be published. For now, issues and discussion are welcome.
+Issues and discussion are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for repository policy and current contribution guidance.
 
 ## Links
 
 - Dungeon Master Encyclopaedia: [dmweb.free.fr](http://dmweb.free.fr/)
 - ReDMCSB reference project: [dmweb.free.fr/?q=community/redmcsb](http://dmweb.free.fr/?q=community/redmcsb)
-- Project tagline: *An open Dungeon Master engine — deterministic, modular, museum-grade*
+- Project tagline: *An open Dungeon Master engine, deterministic, modular, museum-grade*
