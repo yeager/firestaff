@@ -5,6 +5,27 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum {
+    PROBE_COLOR_BLACK = 0,
+    PROBE_COLOR_BROWN = 6,
+    PROBE_COLOR_LIGHT_RED = 12,
+    PROBE_COLOR_MAGENTA = 13,
+    PROBE_COLOR_LIGHT_GREEN = 10,
+    PROBE_COLOR_LIGHT_BLUE = 9,
+    PROBE_COLOR_LIGHT_CYAN = 11
+};
+
+enum {
+    PROBE_VIEWPORT_X = 14,
+    PROBE_VIEWPORT_Y = 30,
+    PROBE_VIEWPORT_W = 224,
+    PROBE_VIEWPORT_H = 136,
+    PROBE_MAP_BOX_X = 224,
+    PROBE_MAP_BOX_Y = 90,
+    PROBE_MAP_BOX_W = 82,
+    PROBE_MAP_BOX_H = 64
+};
+
 typedef struct {
     int total;
     int passed;
@@ -23,16 +44,185 @@ static void probe_record(ProbeTally* tally,
     }
 }
 
+static size_t probe_count_non_zero(const unsigned char* framebuffer,
+                                   int width,
+                                   int x,
+                                   int y,
+                                   int w,
+                                   int h) {
+    size_t count = 0;
+    int xx;
+    int yy;
+    for (yy = 0; yy < h; ++yy) {
+        for (xx = 0; xx < w; ++xx) {
+            if (framebuffer[(y + yy) * width + (x + xx)] != 0U) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+static size_t probe_count_color(const unsigned char* framebuffer,
+                                int width,
+                                int x,
+                                int y,
+                                int w,
+                                int h,
+                                unsigned char color) {
+    size_t count = 0;
+    int xx;
+    int yy;
+    for (yy = 0; yy < h; ++yy) {
+        for (xx = 0; xx < w; ++xx) {
+            if (framebuffer[(y + yy) * width + (x + xx)] == color) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+static void probe_set_square(struct DungeonDatState_Compat* dungeon,
+                             int mapX,
+                             int mapY,
+                             unsigned char square) {
+    int height;
+    if (!dungeon || !dungeon->tiles || !dungeon->tiles[0].squareData) {
+        return;
+    }
+    height = dungeon->maps[0].height;
+    dungeon->tiles[0].squareData[mapX * height + mapY] = square;
+}
+
+static int probe_init_synthetic_view(M11_GameViewState* state) {
+    struct DungeonDatState_Compat* dungeon;
+    struct DungeonThings_Compat* things;
+    int i;
+    int squareCount = 25;
+
+    if (!state) {
+        return 0;
+    }
+
+    M11_GameView_Init(state);
+    state->active = 1;
+    state->sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+    snprintf(state->title, sizeof(state->title), "SYNTHETIC");
+    snprintf(state->sourceId, sizeof(state->sourceId), "probe");
+    snprintf(state->lastAction, sizeof(state->lastAction), "PROBE");
+    snprintf(state->lastOutcome, sizeof(state->lastOutcome), "SYNTHETIC VIEW");
+
+    dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));
+    things = (struct DungeonThings_Compat*)calloc(1, sizeof(*things));
+    if (!dungeon || !things) {
+        free(dungeon);
+        free(things);
+        return 0;
+    }
+
+    dungeon->header.mapCount = 1;
+    dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));
+    dungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(1, sizeof(struct DungeonMapTiles_Compat));
+    if (!dungeon->maps || !dungeon->tiles) {
+        free(dungeon->maps);
+        free(dungeon->tiles);
+        free(dungeon);
+        free(things);
+        return 0;
+    }
+
+    dungeon->loaded = 1;
+    dungeon->tilesLoaded = 1;
+    dungeon->maps[0].width = 5;
+    dungeon->maps[0].height = 5;
+    dungeon->tiles[0].squareCount = squareCount;
+    dungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)squareCount, sizeof(unsigned char));
+    things->squareFirstThings = (unsigned short*)calloc((size_t)squareCount, sizeof(unsigned short));
+    things->doors = (struct DungeonDoor_Compat*)calloc(1, sizeof(struct DungeonDoor_Compat));
+    things->rawThingData[THING_TYPE_DOOR] = (unsigned char*)calloc(4, sizeof(unsigned char));
+    if (!dungeon->tiles[0].squareData || !things->squareFirstThings ||
+        !things->doors || !things->rawThingData[THING_TYPE_DOOR]) {
+        free(dungeon->tiles[0].squareData);
+        free(dungeon->maps);
+        free(dungeon->tiles);
+        free(dungeon);
+        free(things->squareFirstThings);
+        free(things->doors);
+        free(things->rawThingData[THING_TYPE_DOOR]);
+        free(things);
+        return 0;
+    }
+
+    for (i = 0; i < squareCount; ++i) {
+        things->squareFirstThings[i] = THING_ENDOFLIST;
+        dungeon->tiles[0].squareData[i] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    }
+
+    things->squareFirstThingCount = squareCount;
+    things->doorCount = 1;
+    things->thingCounts[THING_TYPE_DOOR] = 1;
+    things->rawThingData[THING_TYPE_DOOR][0] = 0xFE;
+    things->rawThingData[THING_TYPE_DOOR][1] = 0xFF;
+    things->doors[0].next = THING_ENDOFLIST;
+    things->doors[0].vertical = 1;
+    things->loaded = 1;
+
+    state->world.dungeon = dungeon;
+    state->world.things = things;
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 2;
+    state->world.party.mapY = 3;
+    state->world.party.direction = DIR_NORTH;
+    state->world.party.championCount = 0;
+
+    probe_set_square(dungeon, 2, 3, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+    probe_set_square(dungeon, 1, 2, (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+    probe_set_square(dungeon, 2, 2, (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B));
+    probe_set_square(dungeon, 3, 2, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+    probe_set_square(dungeon, 2, 1, (unsigned char)(DUNGEON_ELEMENT_STAIRS << 5));
+    probe_set_square(dungeon, 3, 1, (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
+    probe_set_square(dungeon, 1, 0, (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5));
+    probe_set_square(dungeon, 2, 0, (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5));
+    probe_set_square(dungeon, 3, 0, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+    things->squareFirstThings[2 * dungeon->maps[0].height + 2] = 0;
+
+    return 1;
+}
+
+static void probe_free_synthetic_view(M11_GameViewState* state) {
+    if (!state) {
+        return;
+    }
+    if (state->world.dungeon) {
+        free(state->world.dungeon->tiles ? state->world.dungeon->tiles[0].squareData : NULL);
+        free(state->world.dungeon->maps);
+        free(state->world.dungeon->tiles);
+        free(state->world.dungeon);
+    }
+    if (state->world.things) {
+        free(state->world.things->squareFirstThings);
+        free(state->world.things->doors);
+        free(state->world.things->rawThingData[THING_TYPE_DOOR]);
+        free(state->world.things);
+    }
+    memset(state, 0, sizeof(*state));
+}
+
 int main(int argc, char** argv) {
     const char* dataDir = NULL;
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
+    M11_GameViewState syntheticView;
     ProbeTally tally = {0, 0};
     unsigned char framebuffer[320 * 200];
     unsigned char turnedFramebuffer[320 * 200];
+    unsigned char movedFramebuffer[320 * 200];
+    unsigned char syntheticFramebuffer[320 * 200];
     uint32_t initialHash = 0;
     int initialDirection = 0;
     uint32_t initialTick = 0;
+    int moved = 0;
     size_t litPixels = 0;
     size_t i;
 
@@ -51,6 +241,8 @@ int main(int argc, char** argv) {
         snprintf(fallback, sizeof(fallback), "%s/.firestaff/data", home);
         dataDir = fallback;
     }
+
+    memset(&syntheticView, 0, sizeof(syntheticView));
 
     M12_StartupMenu_InitWithDataDir(&menuState, dataDir);
     probe_record(&tally,
@@ -100,20 +292,70 @@ int main(int argc, char** argv) {
     probe_record(&tally,
                  "INV_GV_05",
                  memcmp(framebuffer, turnedFramebuffer, sizeof(framebuffer)) != 0,
-                 "turning changes the rendered viewport frame, not just the inspector text");
+                 "turning changes the rendered pseudo-viewport frame, not just the inspector text");
+
+    memset(movedFramebuffer, 0, sizeof(movedFramebuffer));
+    if (M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_UP) == M11_GAME_INPUT_REDRAW) {
+        M11_GameView_Draw(&gameView, movedFramebuffer, 320, 200);
+        moved = memcmp(turnedFramebuffer, movedFramebuffer, sizeof(movedFramebuffer)) != 0;
+    }
+    probe_record(&tally,
+                 "INV_GV_06",
+                 moved,
+                 "movement changes the rendered pseudo-viewport with real world movement");
 
     initialTick = gameView.world.gameTick;
     probe_record(&tally,
-                 "INV_GV_06",
+                 "INV_GV_07",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
                      gameView.world.gameTick == initialTick + 1,
                  "accept advances an in-game wait tick distinct from menu navigation");
 
     probe_record(&tally,
-                 "INV_GV_07",
+                 "INV_GV_08",
+                 probe_count_non_zero(framebuffer,
+                                      320,
+                                      PROBE_MAP_BOX_X,
+                                      PROBE_MAP_BOX_Y,
+                                      PROBE_MAP_BOX_W,
+                                      PROBE_MAP_BOX_H) > 250U,
+                 "small minimap inset still renders in the corner");
+
+    probe_record(&tally,
+                 "INV_GV_09",
+                 probe_init_synthetic_view(&syntheticView),
+                 "synthetic viewport harness initialises a focused 3x3 sample state");
+
+    memset(syntheticFramebuffer, 0, sizeof(syntheticFramebuffer));
+    M11_GameView_Draw(&syntheticView, syntheticFramebuffer, 320, 200);
+
+    probe_record(&tally,
+                 "INV_GV_10",
+                 probe_count_color(syntheticFramebuffer, 320, 91, 108, 70, 50, PROBE_COLOR_BROWN) > 250U &&
+                     probe_count_color(syntheticFramebuffer, 320, 91, 108, 70, 50, PROBE_COLOR_LIGHT_RED) > 8U,
+                 "door panels render distinctly in the near center cell");
+
+    probe_record(&tally,
+                 "INV_GV_11",
+                 probe_count_color(syntheticFramebuffer, 320, 74, 40, 28, 18, PROBE_COLOR_MAGENTA) == 0U,
+                 "a near wall occludes the far cell behind it in the same column");
+
+    probe_record(&tally,
+                 "INV_GV_12",
+                 probe_count_non_zero(syntheticFramebuffer, 320,
+                                      PROBE_VIEWPORT_X, PROBE_VIEWPORT_Y,
+                                      PROBE_VIEWPORT_W, PROBE_VIEWPORT_H) > 4000U &&
+                     probe_count_non_zero(syntheticFramebuffer, 320,
+                                          PROBE_MAP_BOX_X, PROBE_MAP_BOX_Y,
+                                          PROBE_MAP_BOX_W, PROBE_MAP_BOX_H) > 250U,
+                 "viewport slice and minimap inset coexist in the same frame");
+
+    probe_record(&tally,
+                 "INV_GV_13",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_RETURN_TO_MENU,
                  "escape from the game view returns control to the launcher");
 
+    probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;

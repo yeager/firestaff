@@ -635,9 +635,20 @@ typedef struct {
     int h;
 } M11_ViewRect;
 
-static int m11_element_is_open(int elementType) {
-    return elementType != DUNGEON_ELEMENT_WALL;
-}
+typedef struct {
+    int valid;
+    int mapX;
+    int mapY;
+    int relForward;
+    int relSide;
+    unsigned char square;
+    int elementType;
+    int thingCount;
+    unsigned short firstThing;
+    int doorState;
+    int doorVertical;
+    int hasDoorThing;
+} M11_ViewportCell;
 
 static void m11_direction_vectors(int direction,
                                   int* outForwardX,
@@ -676,12 +687,10 @@ static void m11_direction_vectors(int direction,
     }
 }
 
-static int m11_sample_relative_square(const M11_GameViewState* state,
-                                      int relForward,
-                                      int relSide,
-                                      unsigned char* outSquare,
-                                      int* outElementType,
-                                      int* outThingCount) {
+static int m11_sample_viewport_cell(const M11_GameViewState* state,
+                                    int relForward,
+                                    int relSide,
+                                    M11_ViewportCell* outCell) {
     int fx;
     int fy;
     int rx;
@@ -689,102 +698,212 @@ static int m11_sample_relative_square(const M11_GameViewState* state,
     int mapX;
     int mapY;
     unsigned char square = 0;
+    unsigned short firstThing = THING_ENDOFLIST;
+    M11_ViewportCell cell;
+
+    memset(&cell, 0, sizeof(cell));
+    cell.relForward = relForward;
+    cell.relSide = relSide;
+    cell.elementType = DUNGEON_ELEMENT_WALL;
+    cell.firstThing = THING_ENDOFLIST;
+    cell.doorState = -1;
+
     if (!state || !state->active) {
-        if (outElementType) {
-            *outElementType = DUNGEON_ELEMENT_WALL;
-        }
-        if (outThingCount) {
-            *outThingCount = 0;
+        if (outCell) {
+            *outCell = cell;
         }
         return 0;
     }
+
     m11_direction_vectors(state->world.party.direction, &fx, &fy, &rx, &ry);
     mapX = state->world.party.mapX + relForward * fx + relSide * rx;
     mapY = state->world.party.mapY + relForward * fy + relSide * ry;
+    cell.mapX = mapX;
+    cell.mapY = mapY;
+
     if (!m11_get_square_byte(&state->world,
                              state->world.party.mapIndex,
                              mapX,
                              mapY,
                              &square)) {
-        if (outElementType) {
-            *outElementType = DUNGEON_ELEMENT_WALL;
-        }
-        if (outThingCount) {
-            *outThingCount = 0;
+        if (outCell) {
+            *outCell = cell;
         }
         return 0;
     }
-    if (outSquare) {
-        *outSquare = square;
+
+    firstThing = m11_get_first_square_thing(&state->world,
+                                            state->world.party.mapIndex,
+                                            mapX,
+                                            mapY);
+    cell.valid = 1;
+    cell.square = square;
+    cell.elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    cell.thingCount = m11_count_square_things(&state->world,
+                                              state->world.party.mapIndex,
+                                              mapX,
+                                              mapY);
+    cell.firstThing = firstThing;
+
+    if (cell.elementType == DUNGEON_ELEMENT_DOOR) {
+        cell.doorState = square & 0x07;
+        cell.doorVertical = (square & 0x08) != 0;
+        if (firstThing != THING_ENDOFLIST && firstThing != THING_NONE &&
+            THING_GET_TYPE(firstThing) == THING_TYPE_DOOR &&
+            state->world.things && state->world.things->doors) {
+            int doorIndex = THING_GET_INDEX(firstThing);
+            if (doorIndex >= 0 && doorIndex < state->world.things->doorCount) {
+                cell.hasDoorThing = 1;
+                cell.doorVertical = state->world.things->doors[doorIndex].vertical;
+            }
+        }
     }
-    if (outElementType) {
-        *outElementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-    }
-    if (outThingCount) {
-        *outThingCount = m11_count_square_things(&state->world,
-                                                 state->world.party.mapIndex,
-                                                 mapX,
-                                                 mapY);
+
+    if (outCell) {
+        *outCell = cell;
     }
     return 1;
 }
 
-static void m11_draw_viewport_marker(unsigned char* framebuffer,
-                                     int framebufferWidth,
-                                     int framebufferHeight,
-                                     const M11_ViewRect* rect,
-                                     int elementType,
-                                     int thingCount) {
-    if (!rect) {
+static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
+    if (!cell || !cell->valid) {
+        return 0;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_WALL ||
+        cell->elementType == DUNGEON_ELEMENT_FAKEWALL) {
+        return 0;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
+        return cell->doorState == 0 || cell->doorState == 5;
+    }
+    return 1;
+}
+
+static unsigned char m11_viewport_fill_color(const M11_ViewportCell* cell) {
+    if (!cell || !cell->valid) {
+        return M11_COLOR_DARK_GRAY;
+    }
+    switch (cell->elementType) {
+        case DUNGEON_ELEMENT_WALL:
+            return M11_COLOR_DARK_GRAY;
+        case DUNGEON_ELEMENT_CORRIDOR:
+            return M11_COLOR_BLACK;
+        case DUNGEON_ELEMENT_PIT:
+            return M11_COLOR_RED;
+        case DUNGEON_ELEMENT_STAIRS:
+            return M11_COLOR_GREEN;
+        case DUNGEON_ELEMENT_DOOR:
+            return M11_COLOR_BROWN;
+        case DUNGEON_ELEMENT_TELEPORTER:
+            return M11_COLOR_MAGENTA;
+        case DUNGEON_ELEMENT_FAKEWALL:
+            return M11_COLOR_LIGHT_GRAY;
+        default:
+            return M11_COLOR_BLACK;
+    }
+}
+
+static void m11_draw_viewport_panel(unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    const M11_ViewRect* rect,
+                                    const M11_ViewportCell* cell) {
+    int insetX;
+    int insetY;
+    int insetW;
+    int insetH;
+    int dot;
+    int dots;
+    unsigned char fill;
+    int open;
+
+    if (!rect || !cell) {
         return;
     }
-    switch (elementType) {
+
+    fill = m11_viewport_fill_color(cell);
+    open = m11_viewport_cell_is_open(cell);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  rect->x, rect->y, rect->w, rect->h, fill);
+
+    if (open) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      rect->x, rect->y, rect->w, rect->h * 2 / 3, M11_COLOR_DARK_GRAY);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      rect->x, rect->y + rect->h * 2 / 3, rect->w, rect->h / 3,
+                      M11_COLOR_BROWN);
+    }
+
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  rect->x, rect->y, rect->w, rect->h,
+                  open ? M11_COLOR_LIGHT_GRAY : M11_COLOR_WHITE);
+
+    insetX = rect->x + rect->w / 6;
+    insetY = rect->y + rect->h / 6;
+    insetW = rect->w - (rect->w / 3);
+    insetH = rect->h - (rect->h / 3);
+
+    switch (cell->elementType) {
         case DUNGEON_ELEMENT_DOOR:
+            if (cell->doorVertical) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect->x + rect->w / 2 - 2, insetY,
+                              4, insetH, M11_COLOR_YELLOW);
+            } else {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              insetX, rect->y + rect->h / 2 - 2,
+                              insetW, 4, M11_COLOR_YELLOW);
+            }
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 4, rect->y + 4,
-                          rect->w / 2, rect->h - 8, M11_COLOR_LIGHT_RED);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 2 - 1, rect->y + 8,
-                          2, rect->h - 16, M11_COLOR_BROWN);
-            break;
-        case DUNGEON_ELEMENT_TELEPORTER:
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 4, rect->y + rect->h / 4,
-                          rect->w / 2, rect->h / 2, M11_COLOR_LIGHT_CYAN);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 3, rect->y + rect->h / 3,
-                          rect->w / 3, rect->h / 3, M11_COLOR_WHITE);
-            break;
-        case DUNGEON_ELEMENT_STAIRS:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 5, rect->y + rect->h - 10,
-                          rect->w * 3 / 5, 2, M11_COLOR_YELLOW);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 4, rect->y + rect->h - 16,
-                          rect->w / 2, 2, M11_COLOR_YELLOW);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 3, rect->y + rect->h - 22,
-                          rect->w / 3, 2, M11_COLOR_YELLOW);
+                          insetX, insetY, insetW, insetH, M11_COLOR_LIGHT_RED);
+            if (cell->doorState > 0 && cell->doorState < 5) {
+                int barHeight = (insetH * cell->doorState) / 5;
+                if (barHeight < 2) {
+                    barHeight = 2;
+                }
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              insetX + 2, insetY + insetH - barHeight,
+                              insetW - 4, barHeight - 1, M11_COLOR_DARK_GRAY);
+            }
             break;
         case DUNGEON_ELEMENT_PIT:
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 4, rect->y + rect->h - 14,
-                          rect->w / 2, 8, M11_COLOR_BLACK);
+                          insetX, rect->y + rect->h - insetH / 2,
+                          insetW, insetH / 3, M11_COLOR_BLACK);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 4, rect->y + rect->h - 14,
-                          rect->w / 2, 8, M11_COLOR_BROWN);
+                          insetX, rect->y + rect->h - insetH / 2,
+                          insetW, insetH / 3, M11_COLOR_BROWN);
+            break;
+        case DUNGEON_ELEMENT_STAIRS:
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          insetX, rect->y + rect->h - 6,
+                          insetW, 2, M11_COLOR_YELLOW);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          insetX + 4, rect->y + rect->h - 11,
+                          insetW - 8, 2, M11_COLOR_YELLOW);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          insetX + 8, rect->y + rect->h - 16,
+                          insetW - 16, 2, M11_COLOR_YELLOW);
+            break;
+        case DUNGEON_ELEMENT_TELEPORTER:
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          insetX, insetY, insetW, insetH, M11_COLOR_LIGHT_CYAN);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          insetX + 4, insetY + 3, insetW - 8, insetH - 6, M11_COLOR_WHITE);
             break;
         case DUNGEON_ELEMENT_FAKEWALL:
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 4, rect->y + rect->h / 4,
-                          rect->w / 2, rect->h / 2, M11_COLOR_MAGENTA);
+                          insetX, insetY, insetW, insetH, M11_COLOR_MAGENTA);
             break;
+        case DUNGEON_ELEMENT_CORRIDOR:
         default:
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          insetX, insetY, insetW, insetH, M11_COLOR_DARK_GRAY);
             break;
     }
-    if (thingCount > 0) {
-        int dot;
-        int dots = thingCount > 3 ? 3 : thingCount;
+
+    if (cell->thingCount > 0) {
+        dots = cell->thingCount > 3 ? 3 : cell->thingCount;
         for (dot = 0; dot < dots; ++dot) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           rect->x + rect->w / 2 - 7 + dot * 5,
@@ -798,128 +917,68 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
                               int framebufferHeight) {
-    static const M11_ViewRect depthRects[] = {
-        {18, 34, 198, 106},
-        {42, 48, 150, 78},
-        {60, 58, 114, 58},
-        {74, 66, 86, 42}
+    static const M11_ViewRect viewport = {14, 30, 224, 136};
+    static const M11_ViewRect depthRows[3] = {
+        {18, 108, 216, 50},
+        {42, 68, 168, 32},
+        {70, 38, 112, 22}
     };
-    static const int depthCount = (int)(sizeof(depthRects) / sizeof(depthRects[0]));
+    M11_ViewportCell cells[3][3];
+    int visible[3][3];
+    int col;
     int depth;
-    int stopDepth = depthCount;
-    int farElementType = DUNGEON_ELEMENT_CORRIDOR;
-    int farThingCount = 0;
 
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  14, 30, 206, 114, M11_COLOR_BLACK);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 34, 198, 52, M11_COLOR_NAVY);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 86, 198, 54, M11_COLOR_BROWN);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  14, 30, 206, 114, M11_COLOR_LIGHT_CYAN);
+    memset(cells, 0, sizeof(cells));
+    memset(visible, 0, sizeof(visible));
 
-    for (depth = depthCount - 1; depth >= 0; --depth) {
-        M11_ViewRect rect = depthRects[depth];
-        M11_ViewRect inner = rect;
-        unsigned char centerSquare = 0;
-        int centerType = DUNGEON_ELEMENT_WALL;
-        int centerThings = 0;
-        int leftType = DUNGEON_ELEMENT_WALL;
-        int rightType = DUNGEON_ELEMENT_WALL;
-        int leftThings = 0;
-        int rightThings = 0;
-        unsigned char wallColor = M11_COLOR_DARK_GRAY;
-        int openCenter;
-        int openLeft;
-        int openRight;
-
-        if (depth + 1 < depthCount) {
-            inner = depthRects[depth + 1];
-        } else {
-            inner.x += rect.w / 4;
-            inner.y += rect.h / 4;
-            inner.w /= 2;
-            inner.h /= 2;
+    for (depth = 0; depth < 3; ++depth) {
+        for (col = 0; col < 3; ++col) {
+            (void)m11_sample_viewport_cell(state, depth + 1, col - 1, &cells[depth][col]);
         }
-
-        (void)m11_sample_relative_square(state, depth + 1, 0,
-                                         &centerSquare, &centerType, &centerThings);
-        (void)m11_sample_relative_square(state, depth + 1, -1,
-                                         NULL, &leftType, &leftThings);
-        (void)m11_sample_relative_square(state, depth + 1, 1,
-                                         NULL, &rightType, &rightThings);
-        openCenter = m11_element_is_open(centerType);
-        openLeft = m11_element_is_open(leftType);
-        openRight = m11_element_is_open(rightType);
-        wallColor = m11_tile_color(centerType);
-
-        if (!openCenter) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect.x, rect.y, rect.w, rect.h, wallColor);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect.x, rect.y, rect.w, rect.h, M11_COLOR_WHITE);
-            m11_draw_viewport_marker(framebuffer, framebufferWidth, framebufferHeight,
-                                     &rect, centerType, centerThings);
-            stopDepth = depth;
-            break;
-        }
-
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      rect.x, rect.y, rect.w, inner.y - rect.y, M11_COLOR_NAVY);
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      rect.x, inner.y + inner.h, rect.w,
-                      (rect.y + rect.h) - (inner.y + inner.h), M11_COLOR_BROWN);
-
-        if (!openLeft) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect.x, rect.y, inner.x - rect.x, rect.h,
-                          m11_tile_color(leftType));
-        } else {
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect.x, rect.y, inner.x - rect.x, rect.h,
-                          M11_COLOR_LIGHT_GRAY);
-            if (leftThings > 0) {
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              rect.x + 2, rect.y + rect.h / 2,
-                              4, 2, M11_COLOR_WHITE);
-            }
-        }
-
-        if (!openRight) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          inner.x + inner.w, rect.y,
-                          (rect.x + rect.w) - (inner.x + inner.w), rect.h,
-                          m11_tile_color(rightType));
-        } else {
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          inner.x + inner.w, rect.y,
-                          (rect.x + rect.w) - (inner.x + inner.w), rect.h,
-                          M11_COLOR_LIGHT_GRAY);
-            if (rightThings > 0) {
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              rect.x + rect.w - 6, rect.y + rect.h / 2,
-                              4, 2, M11_COLOR_WHITE);
-            }
-        }
-
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      rect.x, rect.y, rect.w, rect.h, M11_COLOR_LIGHT_GRAY);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      inner.x, inner.y, inner.w, inner.h, M11_COLOR_DARK_GRAY);
-        m11_draw_viewport_marker(framebuffer, framebufferWidth, framebufferHeight,
-                                 &inner, centerType, centerThings);
-        farElementType = centerType;
-        farThingCount = centerThings;
     }
 
-    if (stopDepth == depthCount) {
-        M11_ViewRect farRect = depthRects[depthCount - 1];
-        m11_draw_viewport_marker(framebuffer, framebufferWidth, framebufferHeight,
-                                 &farRect, farElementType, farThingCount);
+    for (col = 0; col < 3; ++col) {
+        int blocked = 0;
+        for (depth = 0; depth < 3; ++depth) {
+            visible[depth][col] = blocked ? 0 : 1;
+            if (visible[depth][col] && !m11_viewport_cell_is_open(&cells[depth][col])) {
+                blocked = 1;
+            }
+        }
+    }
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  viewport.x + 2, viewport.y + 2, viewport.w - 4, 48, M11_COLOR_NAVY);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  viewport.x + 2, viewport.y + 50, viewport.w - 4, viewport.h - 52,
+                  M11_COLOR_DARK_GRAY);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
+
+    for (depth = 2; depth >= 0; --depth) {
+        M11_ViewRect row = depthRows[depth];
+        int gap = depth == 2 ? 6 : (depth == 1 ? 5 : 4);
+        int usable = row.w - gap * 2;
+        int baseWidth = usable / 3;
+        int extra = usable - baseWidth * 3;
+        int x = row.x;
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      farRect.x + farRect.w / 4, farRect.y + farRect.h / 4,
-                      farRect.w / 2, farRect.h / 2, M11_COLOR_LIGHT_BLUE);
+                      row.x - 2, row.y - 2, row.w + 4, row.h + 4, M11_COLOR_DARK_GRAY);
+        for (col = 0; col < 3; ++col) {
+            M11_ViewRect cellRect;
+            int panelWidth = baseWidth + (col == 1 ? extra : 0);
+            cellRect.x = x;
+            cellRect.y = row.y;
+            cellRect.w = panelWidth;
+            cellRect.h = row.h;
+            if (visible[depth][col]) {
+                m11_draw_viewport_panel(framebuffer, framebufferWidth, framebufferHeight,
+                                        &cellRect, &cells[depth][col]);
+            }
+            x += panelWidth + gap;
+        }
     }
 }
 
