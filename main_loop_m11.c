@@ -104,38 +104,12 @@ static M12_MenuInput m11_next_script_input(const char** cursor) {
     return m11_map_script_token(start, (size_t)(end - start));
 }
 
-static int m11_window_to_framebuffer_x(int windowX) {
-    int windowW = M11_Render_GetWindowWidth();
-    if (windowW <= 0) {
-        return 0;
-    }
-    if (windowX < 0) {
-        windowX = 0;
-    }
-    if (windowX >= windowW) {
-        windowX = windowW - 1;
-    }
-    return (windowX * M11_FB_WIDTH) / windowW;
-}
-
-static int m11_window_to_framebuffer_y(int windowY) {
-    int windowH = M11_Render_GetWindowHeight();
-    if (windowH <= 0) {
-        return 0;
-    }
-    if (windowY < 0) {
-        windowY = 0;
-    }
-    if (windowY >= windowH) {
-        windowY = windowH - 1;
-    }
-    return (windowY * M11_FB_HEIGHT) / windowH;
-}
-
 static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          M11_GameInputResult* gameViewResult,
                                          int* quitRequested) {
     SDL_Event ev;
+    int mappedX;
+    int mappedY;
     if (gameViewResult) {
         *gameViewResult = M11_GAME_INPUT_IGNORED;
     }
@@ -154,11 +128,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         }
         if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
             gameView && gameView->active && ev.button.button == SDL_BUTTON_LEFT) {
-            if (gameViewResult) {
+            if (gameViewResult &&
+                M11_Render_MapWindowToFramebuffer((int)ev.button.x,
+                                                  (int)ev.button.y,
+                                                  &mappedX,
+                                                  &mappedY)) {
                 *gameViewResult = M11_GameView_HandlePointer(
                     gameView,
-                    m11_window_to_framebuffer_x((int)ev.button.x),
-                    m11_window_to_framebuffer_y((int)ev.button.y),
+                    mappedX,
+                    mappedY,
                     1);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
@@ -173,9 +151,17 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
                 case SDLK_LEFT:
+                case SDLK_A:
+                case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
+                case SDLK_D:
+                case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
+                case SDLK_W:
+                    return M12_MENU_INPUT_UP;
+                case SDLK_S:
+                    return M12_MENU_INPUT_DOWN;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;
@@ -185,6 +171,12 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_ACTION;
                 case SDLK_TAB:
                     return M12_MENU_INPUT_CYCLE_CHAMPION;
+                case SDLK_F10:
+                    M11_Render_CycleScaleMode();
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_F11:
+                    M11_Render_ToggleFullscreen();
+                    return M12_MENU_INPUT_NONE;
                 default:
                     break;
             }
@@ -203,11 +195,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         }
         if (ev.type == SDL_MOUSEBUTTONDOWN &&
             gameView && gameView->active && ev.button.button == SDL_BUTTON_LEFT) {
-            if (gameViewResult) {
+            if (gameViewResult &&
+                M11_Render_MapWindowToFramebuffer(ev.button.x,
+                                                  ev.button.y,
+                                                  &mappedX,
+                                                  &mappedY)) {
                 *gameViewResult = M11_GameView_HandlePointer(
                     gameView,
-                    m11_window_to_framebuffer_x(ev.button.x),
-                    m11_window_to_framebuffer_y(ev.button.y),
+                    mappedX,
+                    mappedY,
                     1);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
@@ -222,9 +218,17 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
                 case SDLK_LEFT:
+                case SDLK_A:
+                case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
+                case SDLK_D:
+                case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
+                case SDLK_W:
+                    return M12_MENU_INPUT_UP;
+                case SDLK_S:
+                    return M12_MENU_INPUT_DOWN;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;
@@ -234,6 +238,12 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_ACTION;
                 case SDLK_TAB:
                     return M12_MENU_INPUT_CYCLE_CHAMPION;
+                case SDLK_F10:
+                    M11_Render_CycleScaleMode();
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_F11:
+                    M11_Render_ToggleFullscreen();
+                    return M12_MENU_INPUT_NONE;
                 default:
                     break;
             }

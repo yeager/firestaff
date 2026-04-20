@@ -69,6 +69,55 @@ static int m11_validate_window_mode(int mode) {
     return mode == M11_WINDOW_MODE_WINDOWED || mode == M11_WINDOW_MODE_FULLSCREEN;
 }
 
+static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH) {
+    int x = 0;
+    int y = 0;
+    int w = g_state.windowW;
+    int h = g_state.windowH;
+
+    if (g_state.windowW <= 0 || g_state.windowH <= 0) {
+        w = M11_FB_WIDTH;
+        h = M11_FB_HEIGHT;
+    } else {
+        switch (g_state.scaleMode) {
+            case M11_SCALE_1X:
+            case M11_SCALE_2X:
+            case M11_SCALE_3X:
+            case M11_SCALE_4X: {
+                int factor = g_state.scaleMode + 1;
+                w = M11_FB_WIDTH * factor;
+                h = M11_FB_HEIGHT * factor;
+                break;
+            }
+            case M11_SCALE_FIT: {
+                int fitW = g_state.windowW;
+                int fitH = (fitW * M11_FB_HEIGHT) / M11_FB_WIDTH;
+                if (fitH > g_state.windowH) {
+                    fitH = g_state.windowH;
+                    fitW = (fitH * M11_FB_WIDTH) / M11_FB_HEIGHT;
+                }
+                if (fitW < 1) fitW = 1;
+                if (fitH < 1) fitH = 1;
+                w = fitW;
+                h = fitH;
+                break;
+            }
+            case M11_SCALE_STRETCH:
+            default:
+                w = g_state.windowW;
+                h = g_state.windowH;
+                break;
+        }
+    }
+
+    x = (g_state.windowW - w) / 2;
+    y = (g_state.windowH - h) / 2;
+    if (outX) *outX = x;
+    if (outY) *outY = y;
+    if (outW) *outW = w;
+    if (outH) *outH = h;
+}
+
 static int m11_apply_window_mode(int windowMode) {
     if (!g_state.window) {
         return M11_RENDER_ERR_WINDOW;
@@ -290,7 +339,18 @@ int M11_Render_Present(void) {
         return M11_RENDER_ERR_NOT_INIT;
     }
 
+    int destX = 0;
+    int destY = 0;
+    int destW = 0;
+    int destH = 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_FRect destRect;
+#else
+    SDL_Rect destRect;
+#endif
+
     m11_framebuffer_to_rgba();
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     if (!SDL_UpdateTexture(
@@ -303,7 +363,11 @@ int M11_Render_Present(void) {
     if (!SDL_RenderClear(g_state.renderer)) {
         return M11_RENDER_ERR_RENDERER;
     }
-    if (!SDL_RenderTexture(g_state.renderer, g_state.texture, NULL, NULL)) {
+    destRect.x = (float)destX;
+    destRect.y = (float)destY;
+    destRect.w = (float)destW;
+    destRect.h = (float)destH;
+    if (!SDL_RenderTexture(g_state.renderer, g_state.texture, NULL, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
     if (!SDL_RenderPresent(g_state.renderer)) {
@@ -320,7 +384,11 @@ int M11_Render_Present(void) {
     if (SDL_RenderClear(g_state.renderer) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
-    if (SDL_RenderCopy(g_state.renderer, g_state.texture, NULL, NULL) != 0) {
+    destRect.x = destX;
+    destRect.y = destY;
+    destRect.w = destW;
+    destRect.h = destH;
+    if (SDL_RenderCopy(g_state.renderer, g_state.texture, NULL, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
     SDL_RenderPresent(g_state.renderer);
@@ -379,6 +447,85 @@ int M11_Render_GetWindowWidth(void) {
 
 int M11_Render_GetWindowHeight(void) {
     return g_state.windowH;
+}
+
+int M11_Render_SetScaleMode(int scaleMode) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!m11_validate_scale(scaleMode)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    g_state.scaleMode = scaleMode;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetScaleMode(void) {
+    return g_state.scaleMode;
+}
+
+int M11_Render_CycleScaleMode(void) {
+    int next;
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    next = g_state.scaleMode + 1;
+    if (next > M11_SCALE_STRETCH) {
+        next = M11_SCALE_1X;
+    }
+    g_state.scaleMode = next;
+    return g_state.scaleMode;
+}
+
+int M11_Render_ToggleFullscreen(void) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    return m11_apply_window_mode(g_state.windowMode == M11_WINDOW_MODE_FULLSCREEN
+                                     ? M11_WINDOW_MODE_WINDOWED
+                                     : M11_WINDOW_MODE_FULLSCREEN);
+}
+
+int M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    m11_compute_present_rect(outX, outY, outW, outH);
+    return M11_RENDER_OK;
+}
+
+int M11_Render_MapWindowToFramebuffer(int windowX,
+                                      int windowY,
+                                      int* outFbX,
+                                      int* outFbY) {
+    int rectX;
+    int rectY;
+    int rectW;
+    int rectH;
+    int localX;
+    int localY;
+
+    if (!g_state.initialised || !outFbX || !outFbY) {
+        return 0;
+    }
+
+    m11_compute_present_rect(&rectX, &rectY, &rectW, &rectH);
+    if (rectW <= 0 || rectH <= 0) {
+        return 0;
+    }
+    if (windowX < rectX || windowY < rectY || windowX >= rectX + rectW || windowY >= rectY + rectH) {
+        return 0;
+    }
+
+    localX = windowX - rectX;
+    localY = windowY - rectY;
+    *outFbX = (localX * M11_FB_WIDTH) / rectW;
+    *outFbY = (localY * M11_FB_HEIGHT) / rectH;
+    if (*outFbX < 0) *outFbX = 0;
+    if (*outFbY < 0) *outFbY = 0;
+    if (*outFbX >= M11_FB_WIDTH) *outFbX = M11_FB_WIDTH - 1;
+    if (*outFbY >= M11_FB_HEIGHT) *outFbY = M11_FB_HEIGHT - 1;
+    return 1;
 }
 
 int M11_Render_SetWindowMode(int windowModeIndex) {

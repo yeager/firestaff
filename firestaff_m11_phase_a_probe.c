@@ -23,6 +23,11 @@
  *   INV_A11  Double-init returns ERR_ALREADY_INIT (no handle leak)
  *   INV_A12  Shutdown without init is a safe no-op, and double-shutdown
  *            after a valid init is also safe (idempotent)
+ *   INV_A13  Scale-mode setter and cycling cover the full 1x..stretch range
+ *   INV_A14  Fit-mode present rect preserves the 320x200 aspect ratio
+ *   INV_A15  Stretch-mode present rect fills the whole window
+ *   INV_A16  Window-to-framebuffer mapping ignores letterboxed margins
+ *   INV_A17  Window-to-framebuffer mapping lands inside framebuffer bounds
  *
  * Exit code: 0 if every invariant PASSes, 1 otherwise.
  *
@@ -183,6 +188,54 @@ int main(int argc, char** argv) {
            dbl == M11_RENDER_ERR_ALREADY_INIT &&
                M11_Render_IsInitialized() == 1,
            "double-init refused without leaking handles");
+
+    /* ---------- INV_A13: scale mode setter + cycling --------------- */
+    int scaleOk =
+        M11_Render_SetScaleMode(M11_SCALE_4X) == M11_RENDER_OK &&
+        M11_Render_GetScaleMode() == M11_SCALE_4X &&
+        M11_Render_CycleScaleMode() == M11_SCALE_FIT &&
+        M11_Render_CycleScaleMode() == M11_SCALE_STRETCH &&
+        M11_Render_CycleScaleMode() == M11_SCALE_1X;
+    record(&t, "INV_A13",
+           scaleOk,
+           "scale mode setter and cycle path cover 1x..stretch");
+
+    /* ---------- INV_A14: fit mode preserves 16:10 aspect ----------- */
+    int rectX = 0;
+    int rectY = 0;
+    int rectW = 0;
+    int rectH = 0;
+    int fitOk = 0;
+    M11_Render_HandleResize(1000, 700);
+    M11_Render_SetScaleMode(M11_SCALE_FIT);
+    if (M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
+        rectW == 1000 && rectH == 625 && rectX == 0 && rectY == 37) {
+        fitOk = 1;
+    }
+    record(&t, "INV_A14",
+           fitOk,
+           "fit mode keeps a centered 16:10 present rect");
+
+    /* ---------- INV_A15: stretch mode fills entire window ---------- */
+    M11_Render_SetScaleMode(M11_SCALE_STRETCH);
+    record(&t, "INV_A15",
+           M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
+               rectX == 0 && rectY == 0 && rectW == 1000 && rectH == 700,
+           "stretch mode uses the full window area");
+
+    /* ---------- INV_A16/A17: coordinate mapping respects bars ------ */
+    M11_Render_SetScaleMode(M11_SCALE_FIT);
+    int fbX = -1;
+    int fbY = -1;
+    int marginMiss = M11_Render_MapWindowToFramebuffer(20, 20, &fbX, &fbY) == 0;
+    int centerHit = M11_Render_MapWindowToFramebuffer(500, 350, &fbX, &fbY) == 1 &&
+                    fbX >= 0 && fbX < 320 && fbY >= 0 && fbY < 200;
+    record(&t, "INV_A16",
+           marginMiss,
+           "letterbox margins do not map to framebuffer coordinates");
+    record(&t, "INV_A17",
+           centerHit,
+           "window coordinates map back inside framebuffer bounds");
 
     /* ---------- INV_A12 (part 2): double-shutdown is idempotent ------ */
     M11_Render_Shutdown();

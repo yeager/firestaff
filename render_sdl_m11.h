@@ -92,6 +92,15 @@ int  M11_Render_PumpEvents(void);
 int  M11_Render_HandleResize(int newWidth, int newHeight);
 int  M11_Render_GetWindowWidth(void);
 int  M11_Render_GetWindowHeight(void);
+int  M11_Render_SetScaleMode(int scaleMode);
+int  M11_Render_GetScaleMode(void);
+int  M11_Render_CycleScaleMode(void);
+int  M11_Render_ToggleFullscreen(void);
+int  M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH);
+int  M11_Render_MapWindowToFramebuffer(int windowX,
+                                       int windowY,
+                                       int* outFbX,
+                                       int* outFbY);
 int  M11_Render_SetWindowMode(int windowModeIndex);
 int  M11_Render_GetWindowMode(void);
 
