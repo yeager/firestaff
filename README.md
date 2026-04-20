@@ -93,6 +93,7 @@ Verification suite:
 - better language support
 - stronger custom dungeon / custom map entry path
 - first real CSB and **DM2** validator/data integration steps
+- reorganise the codebase into clearer source directories instead of keeping everything in one flat pile
 
 ### Longer term
 - full Chaos Strikes Back support
