@@ -39,6 +39,7 @@ typedef struct {
     int windowH;
     int scaleMode;
     int paletteLevel;
+    int windowMode;
     int quitRequested;
 
     SDL_Window*   window;
@@ -62,6 +63,34 @@ static void m11_free_present_buffer(void) {
 
 static int m11_validate_scale(int mode) {
     return (mode >= M11_SCALE_1X && mode <= M11_SCALE_STRETCH) ? 1 : 0;
+}
+
+static int m11_validate_window_mode(int mode) {
+    return mode == M11_WINDOW_MODE_WINDOWED || mode == M11_WINDOW_MODE_FULLSCREEN;
+}
+
+static int m11_apply_window_mode(int windowMode) {
+    if (!g_state.window) {
+        return M11_RENDER_ERR_WINDOW;
+    }
+    if (!m11_validate_window_mode(windowMode)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    if (!SDL_SetWindowFullscreen(g_state.window,
+                                 windowMode == M11_WINDOW_MODE_FULLSCREEN)) {
+        return M11_RENDER_ERR_WINDOW;
+    }
+#else
+    if (SDL_SetWindowFullscreen(g_state.window,
+                                windowMode == M11_WINDOW_MODE_FULLSCREEN
+                                    ? SDL_WINDOW_FULLSCREEN_DESKTOP
+                                    : 0) != 0) {
+        return M11_RENDER_ERR_WINDOW;
+    }
+#endif
+    g_state.windowMode = windowMode;
+    return M11_RENDER_OK;
 }
 
 /* Build the 32-bit RGBA presentation pixels from the 4-bit framebuffer
@@ -185,6 +214,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.windowH = windowHeight;
     g_state.scaleMode = scaleMode;
     g_state.paletteLevel = 0;
+    g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
     g_state.quitRequested = 0;
     g_state.initialised = 1;
     return M11_RENDER_OK;
@@ -213,6 +243,7 @@ void M11_Render_Shutdown(void) {
     g_state.windowW = 0;
     g_state.windowH = 0;
     g_state.paletteLevel = 0;
+    g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
 }
 
 int M11_Render_IsInitialized(void) {
@@ -348,6 +379,17 @@ int M11_Render_GetWindowWidth(void) {
 
 int M11_Render_GetWindowHeight(void) {
     return g_state.windowH;
+}
+
+int M11_Render_SetWindowMode(int windowModeIndex) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    return m11_apply_window_mode(windowModeIndex);
+}
+
+int M11_Render_GetWindowMode(void) {
+    return g_state.windowMode;
 }
 
 int M11_Render_GetSdlMajorVersion(void) {

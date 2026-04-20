@@ -19,6 +19,14 @@
 #include <SDL.h>
 #endif
 
+void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
+    if (!menuState) {
+        return;
+    }
+    M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
+    M11_Render_SetWindowMode(menuState->settings.windowModeIndex);
+}
+
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     if (!opts) {
         return;
@@ -170,6 +178,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
 
     M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
+    M11_ApplyStartupMenuRuntime(&menuState);
     M12_StartupMenu_Draw(&menuState,
                          M11_Render_GetFramebuffer(),
                          M11_FB_WIDTH,
@@ -212,6 +221,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (menuState.shouldExit) {
                 break;
             }
+            M11_ApplyStartupMenuRuntime(&menuState);
             M12_StartupMenu_Draw(&menuState,
                                  M11_Render_GetFramebuffer(),
                                  M11_FB_WIDTH,

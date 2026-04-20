@@ -12,7 +12,7 @@ cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     "$HERE/firestaff_m12_startup_menu_probe.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
+    "$HERE/card_art_m12.c" \
     "$HERE/menu_startup_m12.c"
 
 "$PROBE_BIN" | tee "$OUT_DIR/startup_menu_probe.log"
-

@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_MAIN_LOOP_M11_H
 #define FIRESTAFF_MAIN_LOOP_M11_H
 
+#include "menu_startup_m12.h"
+
 /*
  * main_loop_m11 — M11 Phase A stub.
  *
@@ -35,6 +37,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
    zero on error. Safe to call multiple times (each call initialises +
    tears down the render module). */
 int  M11_PhaseA_Run(const M11_PhaseA_Options* opts);
+void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState);
 
 #ifdef __cplusplus
 }

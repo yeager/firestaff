@@ -69,6 +69,8 @@ int main(void) {
     char dm2GraphicsPath[1024];
     char dm2DungeonPath[1024];
     char bogusGraphicsPath[1024];
+    char cardsDir[1024];
+    char cardPath[1024];
     char* rootDir = mkdtemp(rootTemplate);
 
     if (!rootDir) {
@@ -91,8 +93,10 @@ int main(void) {
     snprintf(dm2GraphicsPath, sizeof(dm2GraphicsPath), "%s/DM2GRAPHICS.DAT", dataDir);
     snprintf(dm2DungeonPath, sizeof(dm2DungeonPath), "%s/DM2DUNGEON.DAT", dataDir);
     snprintf(bogusGraphicsPath, sizeof(bogusGraphicsPath), "%s/GRAPHICS_BAD.DAT", dataDir);
+    snprintf(cardsDir, sizeof(cardsDir), "%s/cards", dataDir);
+    snprintf(cardPath, sizeof(cardPath), "%s/dm1.png", cardsDir);
 
-    if (!make_dir(firestaffDir) || !make_dir(dataDir)) {
+    if (!make_dir(firestaffDir) || !make_dir(dataDir) || !make_dir(cardsDir)) {
         perror("mkdir");
         return 2;
     }
@@ -112,10 +116,19 @@ int main(void) {
                      state.selectedIndex == 0 &&
                      state.view == M12_MENU_VIEW_MAIN &&
                      state.shouldExit == 0 &&
+                     M12_CardArt_HasImage(&state.cardArt[0]) == 0 &&
                      state.entries[0].available == 1 &&
                      state.entries[1].available == 0 &&
                      state.entries[2].available == 0,
-                 "startup state loads defaults, writes config, and detects only MD5-known DM1 assets");
+                 "startup state loads defaults, writes config, detects only MD5-known DM1 assets, and seeds empty art slots");
+
+    make_file_with_text(cardPath, "future art slot");
+    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    probe_record(&tally,
+                 "INV_M12_02B",
+                 M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
+                     strcmp(M12_CardArt_GetFileName(&state.cardArt[0]), "dm1.png") == 0,
+                 "card-art loader resolves image slot paths when files are present");
 
     make_file_with_text(csbGraphicsPath, "ok");
     make_file_with_text(csbDungeonPath, "ok");
@@ -196,8 +209,9 @@ int main(void) {
                  reloaded.settings.languageIndex == 1 &&
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.windowModeIndex == 1 &&
+                     M12_StartupMenu_GetRenderPaletteLevel(&reloaded) == 1 &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and data dir persist across reloads");
+                 "settings, runtime palette mapping, and data dir persist across reloads");
 
     M12_StartupMenu_Draw(&state, framebuffer, 320, 200);
     for (i = 0; i < sizeof(framebuffer); ++i) {
@@ -209,6 +223,27 @@ int main(void) {
                  "INV_M12_12",
                  framebuffer[0] != 0U && litPixels > 2000U,
                  "draw renders structured non-empty menu pixels for the visual pass");
+
+    {
+        unsigned char localized[320 * 200];
+        unsigned char english[320 * 200];
+        unsigned long checksumA = 0UL;
+        unsigned long checksumB = 0UL;
+        for (i = 0; i < sizeof(localized); ++i) {
+            localized[i] = framebuffer[i];
+        }
+        reloaded.settings.languageIndex = 0;
+        reloaded.settings.graphicsIndex = 0;
+        M12_StartupMenu_Draw(&reloaded, english, 320, 200);
+        for (i = 0; i < sizeof(localized); ++i) {
+            checksumA = (checksumA * 131UL) + localized[i];
+            checksumB = (checksumB * 131UL) + english[i];
+        }
+        probe_record(&tally,
+                     "INV_M12_12B",
+                     checksumA != checksumB,
+                     "language and graphics selections change the rendered launcher output");
+    }
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     probe_record(&tally,
@@ -223,9 +258,11 @@ int main(void) {
     remove_if_present(dm2GraphicsPath);
     remove_if_present(csbDungeonPath);
     remove_if_present(csbGraphicsPath);
+    remove_if_present(cardPath);
     remove_if_present(dungeonPath);
     remove_if_present(graphicsPath);
     remove_if_present(configPath);
+    rmdir(cardsDir);
     rmdir(dataDir);
     rmdir(firestaffDir);
     rmdir(rootDir);

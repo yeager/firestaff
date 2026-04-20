@@ -55,6 +55,9 @@ extern "C" {
 #define M11_RENDER_ERR_INVALID_ARG   -6
 #define M11_RENDER_ERR_NOT_INIT      -7
 
+#define M11_WINDOW_MODE_WINDOWED     0
+#define M11_WINDOW_MODE_FULLSCREEN   1
+
 /* Lifecycle */
 int  M11_Render_Init(int windowWidth, int windowHeight, int scaleMode);
 void M11_Render_Shutdown(void);
@@ -89,6 +92,8 @@ int  M11_Render_PumpEvents(void);
 int  M11_Render_HandleResize(int newWidth, int newHeight);
 int  M11_Render_GetWindowWidth(void);
 int  M11_Render_GetWindowHeight(void);
+int  M11_Render_SetWindowMode(int windowModeIndex);
+int  M11_Render_GetWindowMode(void);
 
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);

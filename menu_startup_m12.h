@@ -2,6 +2,7 @@
 #define FIRESTAFF_MENU_STARTUP_M12_H
 
 #include "asset_status_m12.h"
+#include "card_art_m12.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,8 +42,9 @@ typedef struct {
     int windowModeIndex;
 } M12_MenuSettingsState;
 
-typedef struct {
+typedef struct M12_StartupMenuState {
     M12_MenuEntry entries[4];
+    M12_GameCardArt cardArt[4];
     int selectedIndex;
     int settingsSelectedIndex;
     int shouldExit;
@@ -68,6 +70,7 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
 int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
                                               int index);
+int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state);
 
 #ifdef __cplusplus
 }
