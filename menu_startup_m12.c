@@ -32,10 +32,10 @@ enum {
 };
 
 static const M12_MenuEntry g_entryTemplate[] = {
-    {"DUNGEON MASTER", "dm1", M12_MENU_ENTRY_GAME, 0},
-    {"CHAOS STRIKES BACK", "csb", M12_MENU_ENTRY_GAME, 0},
-    {"DUNGEON MASTER II", "dm2", M12_MENU_ENTRY_GAME, 0},
-    {"SETTINGS", NULL, M12_MENU_ENTRY_SETTINGS, 1}
+    {.title = "DUNGEON MASTER", .gameId = "dm1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = "CHAOS STRIKES BACK", .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = "DUNGEON MASTER II", .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = "SETTINGS", .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
 };
 
 typedef struct {
@@ -1480,7 +1480,13 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
                                    int framebufferHeight) {
-    M12_MenuEntry settingsCard = {"SETTINGS", NULL, M12_MENU_ENTRY_SETTINGS, 1};
+    M12_MenuEntry settingsCard = {
+        .title = "SETTINGS",
+        .gameId = NULL,
+        .kind = M12_MENU_ENTRY_SETTINGS,
+        .sourceKind = M12_MENU_SOURCE_SYSTEM,
+        .available = 1
+    };
     m12_draw_title(framebuffer,
                    framebufferWidth,
                    framebufferHeight,

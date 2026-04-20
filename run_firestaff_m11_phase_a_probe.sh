@@ -72,11 +72,25 @@ cc $CFLAGS_M11 \
     -o "$MAIN_BIN" \
     "$HERE/firestaff_main_m11.c" \
     "$HERE/main_loop_m11.c" \
+    "$HERE/m11_game_view.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
     "$HERE/card_art_m12.c" \
     "$HERE/menu_startup_m12.c" \
     "$HERE/render_sdl_m11.c" \
+    "$HERE/memory_tick_orchestrator_pc34_compat.c" \
+    "$HERE/memory_champion_lifecycle_pc34_compat.c" \
+    "$HERE/memory_runtime_dynamics_pc34_compat.c" \
+    "$HERE/memory_projectile_pc34_compat.c" \
+    "$HERE/memory_creature_ai_pc34_compat.c" \
+    "$HERE/memory_savegame_pc34_compat.c" \
+    "$HERE/memory_magic_pc34_compat.c" \
+    "$HERE/memory_combat_pc34_compat.c" \
+    "$HERE/memory_timeline_pc34_compat.c" \
+    "$HERE/memory_sensor_execution_pc34_compat.c" \
+    "$HERE/memory_movement_pc34_compat.c" \
+    "$HERE/memory_champion_state_pc34_compat.c" \
+    "$HERE/memory_dungeon_dat_pc34_compat.c" \
     "$VGA_OBJ" \
     $SDL_LIBS
 
@@ -110,5 +124,9 @@ if [ "$PASSED" != "$TOTAL" ]; then
 fi
 
 echo "M11 Phase A probe: PASS ($PASSED/$TOTAL)"
+
+GAME_VIEW_DIR="$OUT_DIR/game-view"
+"$HERE/run_firestaff_m11_game_view_probe.sh" "$GAME_VIEW_DIR"
+
 echo "Artifact: $PROBE_LOG"
 echo "Binary:   $MAIN_BIN"

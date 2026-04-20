@@ -29,10 +29,17 @@ typedef enum {
     M12_MENU_ENTRY_SETTINGS
 } M12_MenuEntryKind;
 
+typedef enum {
+    M12_MENU_SOURCE_BUILTIN_CATALOG = 0,
+    M12_MENU_SOURCE_CUSTOM_DUNGEON,
+    M12_MENU_SOURCE_SYSTEM
+} M12_MenuSourceKind;
+
 typedef struct {
     const char* title;
     const char* gameId;
     M12_MenuEntryKind kind;
+    M12_MenuSourceKind sourceKind;
     int available;
 } M12_MenuEntry;
 

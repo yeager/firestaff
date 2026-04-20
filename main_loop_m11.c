@@ -9,8 +9,10 @@
 #include "main_loop_m11.h"
 
 #include "menu_startup_m12.h"
+#include "m11_game_view.h"
 #include "render_sdl_m11.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include <SDL3/SDL.h>
@@ -169,6 +171,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_PhaseA_SetDefaultOptions(&defaults);
     const M11_PhaseA_Options* o = opts ? opts : &defaults;
     M12_StartupMenuState menuState;
+    M11_GameViewState gameView;
     const char* scriptCursor = o->script;
     int quitRequested = 0;
 
@@ -178,6 +181,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
 
     M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
+    M11_GameView_Init(&gameView);
     M11_ApplyStartupMenuRuntime(&menuState);
     M12_StartupMenu_Draw(&menuState,
                          M11_Render_GetFramebuffer(),
@@ -217,21 +221,68 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             break;
         }
         if (input != M12_MENU_INPUT_NONE) {
-            M12_StartupMenu_HandleInput(&menuState, input);
-            if (menuState.shouldExit) {
-                break;
+            if (gameView.active) {
+                M11_GameInputResult result = M11_GameView_HandleInput(&gameView, input);
+                if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
+                    M11_GameView_Shutdown(&gameView);
+                    M11_GameView_Init(&gameView);
+                    M11_ApplyStartupMenuRuntime(&menuState);
+                    M12_StartupMenu_Draw(&menuState,
+                                         M11_Render_GetFramebuffer(),
+                                         M11_FB_WIDTH,
+                                         M11_FB_HEIGHT);
+                } else if (result == M11_GAME_INPUT_REDRAW) {
+                    M11_GameView_Draw(&gameView,
+                                      M11_Render_GetFramebuffer(),
+                                      M11_FB_WIDTH,
+                                      M11_FB_HEIGHT);
+                }
+            } else {
+                int launchHandled = 0;
+                if ((input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_RIGHT) &&
+                    menuState.view == M12_MENU_VIEW_MAIN) {
+                    launchHandled = 1;
+                    if (M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState)) {
+                        M11_GameView_Draw(&gameView,
+                                          M11_Render_GetFramebuffer(),
+                                          M11_FB_WIDTH,
+                                          M11_FB_HEIGHT);
+                    } else {
+                        const M12_MenuEntry* selected = M12_StartupMenu_GetEntry(&menuState,
+                                                                                 menuState.selectedIndex);
+                        if (!selected || selected->kind != M12_MENU_ENTRY_GAME || !selected->available) {
+                            launchHandled = 0;
+                        } else {
+                            menuState.view = M12_MENU_VIEW_MESSAGE;
+                            menuState.messageLine1 = "DUNGEON LOAD FAILED";
+                            menuState.messageLine2 = "CHECK DUNGEON.DAT";
+                            menuState.messageLine3 = "ESC RETURNS TO MENU";
+                            M12_StartupMenu_Draw(&menuState,
+                                                 M11_Render_GetFramebuffer(),
+                                                 M11_FB_WIDTH,
+                                                 M11_FB_HEIGHT);
+                        }
+                    }
+                }
+                if (!launchHandled) {
+                    M12_StartupMenu_HandleInput(&menuState, input);
+                    if (menuState.shouldExit) {
+                        break;
+                    }
+                    M11_ApplyStartupMenuRuntime(&menuState);
+                    M12_StartupMenu_Draw(&menuState,
+                                         M11_Render_GetFramebuffer(),
+                                         M11_FB_WIDTH,
+                                         M11_FB_HEIGHT);
+                }
             }
-            M11_ApplyStartupMenuRuntime(&menuState);
-            M12_StartupMenu_Draw(&menuState,
-                                 M11_Render_GetFramebuffer(),
-                                 M11_FB_WIDTH,
-                                 M11_FB_HEIGHT);
         }
         M11_Render_Present();
         SDL_Delay((Uint32)interval);
         now = SDL_GetTicks();
     }
 
+    M11_GameView_Shutdown(&gameView);
     M11_Render_Shutdown();
     return 0;
 }

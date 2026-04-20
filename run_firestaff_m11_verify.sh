@@ -42,5 +42,26 @@ echo "Phase A: PASS"
     grep '^PASS\|^FAIL\|^# summary' "$OUT_DIR/phase-a/phase_a_probe.log" || true
 } >> "$SUMMARY_MD"
 
+echo "=== Game view slice probe ==="
+"$HERE/run_firestaff_m11_game_view_probe.sh" "$OUT_DIR/game-view" > \
+    "$OUT_DIR/game_view.log" 2>&1 || {
+    echo "FAIL: Game view probe did not pass"
+    echo "see: $OUT_DIR/game_view.log"
+    {
+        echo
+        echo "## Game view slice: FAIL"
+        echo
+        tail -n 30 "$OUT_DIR/game_view.log" || true
+    } >> "$SUMMARY_MD"
+    exit 1
+}
+echo "Game view slice: PASS"
+{
+    echo
+    echo "## Game view slice: PASS"
+    echo
+    grep '^PASS\|^FAIL\|^# summary' "$OUT_DIR/game-view/game_view_probe.log" || true
+} >> "$SUMMARY_MD"
+
 echo "=== M11 verification complete ==="
 printf '%s\n' "$SUMMARY_MD"
