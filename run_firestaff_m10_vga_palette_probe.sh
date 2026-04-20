@@ -6,12 +6,12 @@ HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
 FIRESTAFF_DATA="${FIRESTAFF_DATA:-$HOME/.firestaff/data}"
 
 GRAPHICS_DAT=${1:-$FIRESTAFF_DATA/GRAPHICS.DAT}
-ROOT=$HERE/../..
-OUT_DIR=${2:-$ROOT/tmp/firestaff/verification-m10/vga-palette}
+ROOT=$HERE
+OUT_DIR=${2:-$ROOT/verification-m10/vga-palette}
 mkdir -p "$OUT_DIR"
 
 # Step 1: Produce a title hold frame using the M9 beta harness
-"$ROOT/tmp/firestaff/run_firestaff_m9_beta_harness.sh" \
+"$ROOT/run_firestaff_m9_beta_harness.sh" \
   "$GRAPHICS_DAT" \
   "$OUT_DIR/title_hold" \
   --title-hold 1 > "$OUT_DIR/title_hold.log" 2>&1
@@ -26,10 +26,10 @@ fi
 # Step 2: Compile and run the VGA palette probe
 cc -std=c99 -Wall -Wextra -pedantic \
   -DCOMPILE_H '-DSTATICFUNCTION=static' '-DSEPARATOR=,' '-DFINAL_SEPARATOR=)' \
-  -I"$ROOT/tmp/firestaff" \
+  -I"$ROOT" \
   -o "$OUT_DIR/vga_palette_probe" \
-  "$ROOT/tmp/firestaff/firestaff_m10_vga_palette_probe.c" \
-  "$ROOT/tmp/firestaff/vga_palette_pc34_compat.c"
+  "$ROOT/firestaff_m10_vga_palette_probe.c" \
+  "$ROOT/vga_palette_pc34_compat.c"
 
 PPM_FILE="$OUT_DIR/title_hold_vga.ppm"
 "$OUT_DIR/vga_palette_probe" "$PGM_FILE" "$PPM_FILE" 0 > "$OUT_DIR/vga_palette.log"

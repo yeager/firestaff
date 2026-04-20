@@ -199,7 +199,7 @@ static const unsigned char s_thingDataByteCount[16] = {
     4   /* 15 Explosion */
 };
 
-static const char* s_thingTypeNames[16] = {
+static const char* const s_thingTypeNames[16] __attribute__((unused)) = {
     "Door", "Teleporter", "TextString", "Sensor",
     "Group", "Weapon", "Armour", "Scroll",
     "Potion", "Container", "Junk", "Unused11",

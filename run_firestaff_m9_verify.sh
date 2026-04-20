@@ -6,15 +6,15 @@ HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
 FIRESTAFF_DATA="${FIRESTAFF_DATA:-$HOME/.firestaff/data}"
 
 GRAPHICS_DAT=${1:-$FIRESTAFF_DATA/GRAPHICS.DAT}
-ROOT=$HERE/../..
-OUT_DIR=${2:-$ROOT/tmp/firestaff/verification}
+ROOT=$HERE
+OUT_DIR=${2:-$ROOT/verification}
 mkdir -p "$OUT_DIR"
 
 TITLE_LOG="$OUT_DIR/title_hold.log"
 MENU_LOG="$OUT_DIR/submenu_matrix.log"
 SUMMARY_MD="$OUT_DIR/verification_summary.md"
 
-"$ROOT/tmp/firestaff/run_firestaff_m9_beta_harness.sh" \
+"$ROOT/run_firestaff_m9_beta_harness.sh" \
   "$GRAPHICS_DAT" \
   "$OUT_DIR/title_hold" \
   --title-hold 2 > "$TITLE_LOG"
@@ -66,7 +66,7 @@ if failures:
     raise SystemExit(1)
 PY
 
-"$ROOT/tmp/firestaff/run_firestaff_m9_submenu_matrix.sh" "$GRAPHICS_DAT" "$OUT_DIR/submenu-matrix" > "$MENU_LOG"
+"$ROOT/run_firestaff_m9_submenu_matrix.sh" "$GRAPHICS_DAT" "$OUT_DIR/submenu-matrix" > "$MENU_LOG"
 
 python3 - <<'PY' "$OUT_DIR/submenu-matrix/submenu_invariants.md" "$SUMMARY_MD" "$OUT_DIR/submenu-matrix"
 from pathlib import Path

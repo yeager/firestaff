@@ -6,15 +6,15 @@ HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
 FIRESTAFF_DATA="${FIRESTAFF_DATA:-$HOME/.firestaff/data}"
 
 GRAPHICS_DAT=${1:-$FIRESTAFF_DATA/GRAPHICS.DAT}
-ROOT=$HERE/../..
-OUT_DIR=${2:-$ROOT/tmp/firestaff/verification-m10}
+ROOT=$HERE
+OUT_DIR=${2:-$ROOT/verification-m10}
 mkdir -p "$OUT_DIR"
 
 SUMMARY_MD="$OUT_DIR/verification_summary.md"
 
 # Phase 1: M9 frozen verify (must pass unchanged)
 echo "=== Phase 1: M9 frozen verify ==="
-"$ROOT/tmp/firestaff/run_firestaff_m9_verify.sh" "$GRAPHICS_DAT" "$OUT_DIR" || {
+"$ROOT/run_firestaff_m9_verify.sh" "$GRAPHICS_DAT" "$OUT_DIR" || {
     echo "FAIL: M9 verify did not pass"
     exit 1
 }
@@ -23,7 +23,7 @@ echo "M9 verify: PASS"
 # Phase 2: M10 round-trip matrix
 echo "=== Phase 2: M10 round-trip matrix ==="
 ROUNDTRIP_DIR="$OUT_DIR/roundtrip-matrix"
-"$ROOT/tmp/firestaff/run_firestaff_m10_roundtrip_matrix.sh" "$GRAPHICS_DAT" "$ROUNDTRIP_DIR" || {
+"$ROOT/run_firestaff_m10_roundtrip_matrix.sh" "$GRAPHICS_DAT" "$ROUNDTRIP_DIR" || {
     echo "FAIL: M10 round-trip matrix did not pass"
     exit 1
 }
@@ -64,7 +64,7 @@ PY
 # Phase 3: M10 internal classification matrix (Goal A)
 echo "=== Phase 3: M10 internal classification matrix ==="
 INTERNAL_DIR="$OUT_DIR/internal-matrix"
-"$ROOT/tmp/firestaff/run_firestaff_m10_internal_matrix.sh" "$GRAPHICS_DAT" "$INTERNAL_DIR" || {
+"$ROOT/run_firestaff_m10_internal_matrix.sh" "$GRAPHICS_DAT" "$INTERNAL_DIR" || {
     echo "FAIL: M10 internal classification matrix did not pass"
     exit 1
 }
@@ -104,7 +104,7 @@ PY
 # Phase 4: M10 VGA palette probe
 echo "=== Phase 4: M10 VGA palette probe ==="
 VGA_DIR="$OUT_DIR/vga-palette"
-"$ROOT/tmp/firestaff/run_firestaff_m10_vga_palette_probe.sh" "$GRAPHICS_DAT" "$VGA_DIR" || {
+"$ROOT/run_firestaff_m10_vga_palette_probe.sh" "$GRAPHICS_DAT" "$VGA_DIR" || {
     echo "FAIL: M10 VGA palette probe did not pass"
     exit 1
 }
@@ -148,7 +148,7 @@ PY
 echo "=== Phase 5: M10 dungeon header probe ==="
 DUNGEON_DAT=${DUNGEON_DAT:-$FIRESTAFF_DATA/DUNGEON.DAT}
 DUNGEON_DIR="$OUT_DIR/dungeon-header"
-"$ROOT/tmp/firestaff/run_firestaff_m10_dungeon_header_probe.sh" "$DUNGEON_DAT" "$DUNGEON_DIR" || {
+"$ROOT/run_firestaff_m10_dungeon_header_probe.sh" "$DUNGEON_DAT" "$DUNGEON_DIR" || {
     echo "FAIL: M10 dungeon header probe did not pass"
     exit 1
 }
@@ -189,7 +189,7 @@ PY
 echo "=== Phase 6: M10 dungeon tile decode probe ==="
 DUNGEON_DAT=${DUNGEON_DAT:-$FIRESTAFF_DATA/DUNGEON.DAT}
 TILE_DIR="$OUT_DIR/dungeon-tiles"
-"$ROOT/tmp/firestaff/run_firestaff_m10_dungeon_tile_probe.sh" "$DUNGEON_DAT" "$TILE_DIR" || {
+"$ROOT/run_firestaff_m10_dungeon_tile_probe.sh" "$DUNGEON_DAT" "$TILE_DIR" || {
     echo "FAIL: M10 dungeon tile decode probe did not pass"
     exit 1
 }
@@ -230,7 +230,7 @@ PY
 echo "=== Phase 7: M10 dungeon text decode probe ==="
 DUNGEON_DAT=${DUNGEON_DAT:-$FIRESTAFF_DATA/DUNGEON.DAT}
 TEXT_DIR="$OUT_DIR/dungeon-text"
-"$ROOT/tmp/firestaff/run_firestaff_m10_dungeon_text_probe.sh" "$DUNGEON_DAT" "$TEXT_DIR" || {
+"$ROOT/run_firestaff_m10_dungeon_text_probe.sh" "$DUNGEON_DAT" "$TEXT_DIR" || {
     echo "FAIL: M10 dungeon text decode probe did not pass"
     exit 1
 }
@@ -271,7 +271,7 @@ PY
 echo "=== Phase 8: M10 dungeon doors/sensors probe ==="
 DUNGEON_DAT=${DUNGEON_DAT:-$FIRESTAFF_DATA/DUNGEON.DAT}
 DOOR_SENSOR_DIR="$OUT_DIR/dungeon-doors-sensors"
-"$ROOT/tmp/firestaff/run_firestaff_m10_dungeon_doors_sensors_probe.sh" "$DUNGEON_DAT" "$DOOR_SENSOR_DIR" || {
+"$ROOT/run_firestaff_m10_dungeon_doors_sensors_probe.sh" "$DUNGEON_DAT" "$DOOR_SENSOR_DIR" || {
     echo "FAIL: M10 dungeon doors/sensors probe did not pass"
     exit 1
 }
@@ -312,7 +312,7 @@ PY
 echo "=== Phase 9: M10 dungeon monsters/items probe ==="
 DUNGEON_DAT=${DUNGEON_DAT:-$FIRESTAFF_DATA/DUNGEON.DAT}
 MONSTER_ITEM_DIR="$OUT_DIR/dungeon-monsters-items"
-"$ROOT/tmp/firestaff/run_firestaff_m10_dungeon_monsters_items_probe.sh" "$DUNGEON_DAT" "$MONSTER_ITEM_DIR" || {
+"$ROOT/run_firestaff_m10_dungeon_monsters_items_probe.sh" "$DUNGEON_DAT" "$MONSTER_ITEM_DIR" || {
     echo "FAIL: M10 dungeon monsters/items probe did not pass"
     exit 1
 }
@@ -353,7 +353,7 @@ PY
 echo "=== Phase 10: M10 movement + champions probe ==="
 DUNGEON_DAT=${DUNGEON_DAT:-$FIRESTAFF_DATA/DUNGEON.DAT}
 MOVE_CHAMP_DIR="$OUT_DIR/movement-champions"
-"$ROOT/tmp/firestaff/run_firestaff_m10_movement_champions_probe.sh" "$DUNGEON_DAT" "$MOVE_CHAMP_DIR" || {
+"$ROOT/run_firestaff_m10_movement_champions_probe.sh" "$DUNGEON_DAT" "$MOVE_CHAMP_DIR" || {
     echo "FAIL: M10 movement + champions probe did not pass"
     exit 1
 }
@@ -393,7 +393,7 @@ PY
 # Phase 11: Sensor execution probe
 echo "=== Phase 11: M10 sensor execution probe ==="
 SENSOR_EXEC_DIR="$OUT_DIR/sensor-execution"
-"$ROOT/tmp/firestaff/run_firestaff_m10_sensor_execution_probe.sh" "$DUNGEON_DAT" "$SENSOR_EXEC_DIR" || {
+"$ROOT/run_firestaff_m10_sensor_execution_probe.sh" "$DUNGEON_DAT" "$SENSOR_EXEC_DIR" || {
     echo "FAIL: M10 sensor execution probe did not pass"
     exit 1
 }
@@ -433,7 +433,7 @@ PY
 # Phase 12: Timeline / turn scheduler probe
 echo "=== Phase 12: M10 timeline probe ==="
 TIMELINE_DIR="$OUT_DIR/timeline"
-"$ROOT/tmp/firestaff/run_firestaff_m10_timeline_probe.sh" "$TIMELINE_DIR" || {
+"$ROOT/run_firestaff_m10_timeline_probe.sh" "$TIMELINE_DIR" || {
     echo "FAIL: M10 timeline probe did not pass"
     exit 1
 }
@@ -473,7 +473,7 @@ PY
 # Phase 13: Combat system probe
 echo "=== Phase 13: M10 combat probe ==="
 COMBAT_DIR="$OUT_DIR/combat"
-"$ROOT/tmp/firestaff/run_firestaff_m10_combat_probe.sh" "$DUNGEON_DAT" "$COMBAT_DIR" || {
+"$ROOT/run_firestaff_m10_combat_probe.sh" "$DUNGEON_DAT" "$COMBAT_DIR" || {
     echo "FAIL: M10 combat probe did not pass"
     exit 1
 }
@@ -513,7 +513,7 @@ PY
 # Phase 14: Magic system probe
 echo "=== Phase 14: M10 magic probe ==="
 MAGIC_DIR="$OUT_DIR/magic"
-"$ROOT/tmp/firestaff/run_firestaff_m10_magic_probe.sh" "$DUNGEON_DAT" "$MAGIC_DIR" || {
+"$ROOT/run_firestaff_m10_magic_probe.sh" "$DUNGEON_DAT" "$MAGIC_DIR" || {
     echo "FAIL: M10 magic probe did not pass"
     exit 1
 }
@@ -553,7 +553,7 @@ PY
 # Phase 15: Save / Load system probe
 echo "=== Phase 15: M10 savegame probe ==="
 SAVEGAME_DIR="$OUT_DIR/savegame"
-"$ROOT/tmp/firestaff/run_firestaff_m10_savegame_probe.sh" "$DUNGEON_DAT" "$SAVEGAME_DIR" || {
+"$ROOT/run_firestaff_m10_savegame_probe.sh" "$DUNGEON_DAT" "$SAVEGAME_DIR" || {
     echo "FAIL: M10 savegame probe did not pass"
     exit 1
 }
@@ -593,7 +593,7 @@ PY
 # Phase 16: Creature AI probe
 echo "=== Phase 16: M10 creature AI probe ==="
 CREATURE_AI_DIR="$OUT_DIR/creature-ai"
-"$ROOT/tmp/firestaff/run_firestaff_m10_creature_ai_probe.sh" "$DUNGEON_DAT" "$CREATURE_AI_DIR" || {
+"$ROOT/run_firestaff_m10_creature_ai_probe.sh" "$DUNGEON_DAT" "$CREATURE_AI_DIR" || {
     echo "FAIL: M10 creature AI probe did not pass"
     exit 1
 }
@@ -633,7 +633,7 @@ PY
 # Phase 17: Projectile & explosion flight probe
 echo "=== Phase 17: M10 projectile probe ==="
 PROJECTILE_DIR="$OUT_DIR/projectile"
-"$ROOT/tmp/firestaff/run_firestaff_m10_projectile_probe.sh" "$DUNGEON_DAT" "$PROJECTILE_DIR" || {
+"$ROOT/run_firestaff_m10_projectile_probe.sh" "$DUNGEON_DAT" "$PROJECTILE_DIR" || {
     echo "FAIL: M10 projectile probe did not pass"
     exit 1
 }
@@ -673,7 +673,7 @@ PY
 # Phase 18: Champion lifecycle probe
 echo "=== Phase 18: M10 champion lifecycle probe ==="
 CHAMPION_LIFECYCLE_DIR="$OUT_DIR/champion-lifecycle"
-"$ROOT/tmp/firestaff/run_firestaff_m10_champion_lifecycle_probe.sh" "$DUNGEON_DAT" "$CHAMPION_LIFECYCLE_DIR" || {
+"$ROOT/run_firestaff_m10_champion_lifecycle_probe.sh" "$DUNGEON_DAT" "$CHAMPION_LIFECYCLE_DIR" || {
     echo "FAIL: M10 champion lifecycle probe did not pass"
     exit 1
 }
@@ -713,7 +713,7 @@ PY
 # Phase 19: Runtime dynamics probe
 echo "=== Phase 19: M10 runtime dynamics probe ==="
 RUNTIME_DYNAMICS_DIR="$OUT_DIR/runtime-dynamics"
-"$ROOT/tmp/firestaff/run_firestaff_m10_runtime_dynamics_probe.sh" "$DUNGEON_DAT" "$RUNTIME_DYNAMICS_DIR" || {
+"$ROOT/run_firestaff_m10_runtime_dynamics_probe.sh" "$DUNGEON_DAT" "$RUNTIME_DYNAMICS_DIR" || {
     echo "FAIL: M10 runtime dynamics probe did not pass"
     exit 1
 }
@@ -753,7 +753,7 @@ PY
 # Phase 20: Tick orchestrator probe (M10 culmination)
 echo "=== Phase 20: M10 tick orchestrator probe ==="
 TICK_ORCH_DIR="$OUT_DIR/tick-orchestrator"
-"$ROOT/tmp/firestaff/run_firestaff_m10_tick_orchestrator_probe.sh" "$DUNGEON_DAT" "$TICK_ORCH_DIR" || {
+"$ROOT/run_firestaff_m10_tick_orchestrator_probe.sh" "$DUNGEON_DAT" "$TICK_ORCH_DIR" || {
     echo "FAIL: M10 tick orchestrator probe did not pass"
     exit 1
 }
