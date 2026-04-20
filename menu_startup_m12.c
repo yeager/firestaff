@@ -1,20 +1,27 @@
 #include "menu_startup_m12.h"
 
+#include "config_m12.h"
+
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 enum {
     M12_COLOR_BLACK = 0,
-    M12_COLOR_BLUE = 1,
+    M12_COLOR_NAVY = 1,
     M12_COLOR_GREEN = 2,
     M12_COLOR_CYAN = 3,
-    M12_COLOR_RED = 12,
+    M12_COLOR_MAROON = 4,
     M12_COLOR_BROWN = 6,
-    M12_COLOR_DARK_GRAY = 8,
     M12_COLOR_LIGHT_GRAY = 7,
+    M12_COLOR_DARK_GRAY = 8,
     M12_COLOR_LIGHT_BLUE = 9,
-    M12_COLOR_WHITE = 15,
-    M12_COLOR_YELLOW = 14
+    M12_COLOR_LIGHT_GREEN = 10,
+    M12_COLOR_LIGHT_CYAN = 11,
+    M12_COLOR_LIGHT_RED = 12,
+    M12_COLOR_MAGENTA = 13,
+    M12_COLOR_YELLOW = 14,
+    M12_COLOR_WHITE = 15
 };
 
 enum {
@@ -112,6 +119,19 @@ static int m12_cycle_index(int value, int delta, int count) {
     return value;
 }
 
+static int m12_clamp_index(int value, int count) {
+    if (count <= 0) {
+        return 0;
+    }
+    if (value < 0) {
+        return 0;
+    }
+    if (value >= count) {
+        return count - 1;
+    }
+    return value;
+}
+
 static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     int i;
     if (!state) {
@@ -126,6 +146,34 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+static void m12_save_settings(const M12_StartupMenuState* state) {
+    M12_Config config;
+    if (!state) {
+        return;
+    }
+    M12_Config_SetDefaults(&config);
+    config.languageIndex = state->settings.languageIndex;
+    config.graphicsIndex = state->settings.graphicsIndex;
+    config.windowModeIndex = state->settings.windowModeIndex;
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", M12_AssetStatus_GetDataDir(&state->assetStatus));
+    M12_Config_Save(&config);
+}
+
+static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dataDirOverride) {
+    M12_Config config;
+    if (!state) {
+        return;
+    }
+    M12_Config_Load(&config, dataDirOverride);
+    state->settings.languageIndex = m12_clamp_index(config.languageIndex,
+                                                    (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+    state->settings.graphicsIndex = m12_clamp_index(config.graphicsIndex,
+                                                    (int)(sizeof(g_graphicsLevels) / sizeof(g_graphicsLevels[0])));
+    state->settings.windowModeIndex = m12_clamp_index(config.windowModeIndex,
+                                                       (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
+    M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
+}
+
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
     M12_StartupMenu_InitWithDataDir(state, NULL);
 }
@@ -136,7 +184,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
         return;
     }
     memset(state, 0, sizeof(*state));
-    M12_AssetStatus_Scan(&state->assetStatus, dataDir);
+    m12_apply_loaded_config(state, dataDir);
     m12_sync_entries_from_assets(state);
     state->selectedIndex = 0;
     state->settingsSelectedIndex = 0;
@@ -211,6 +259,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
         default:
             break;
     }
+    m12_save_settings(state);
 }
 
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
@@ -412,30 +461,56 @@ static void m12_draw_centered_text(unsigned char* framebuffer,
                   color);
 }
 
+static void m12_draw_horizontal_rule(unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int x,
+                                     int y,
+                                     int w,
+                                     unsigned char color) {
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, w, 1, color);
+}
+
 static void m12_draw_title(unsigned char* framebuffer,
                            int framebufferWidth,
                            int framebufferHeight,
+                           const char* eyebrow,
                            const char* subtitle) {
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   32,
+                   16,
                    12,
-                   framebufferWidth - 64,
-                   40,
+                   framebufferWidth - 32,
+                   42,
                    M12_COLOR_YELLOW,
-                   M12_COLOR_BLUE);
+                   M12_COLOR_NAVY);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  20,
+                  16,
+                  framebufferWidth - 40,
+                  5,
+                  M12_COLOR_BROWN);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           20,
+                           24,
                            "FIRESTAFF",
                            3,
                            M12_COLOR_YELLOW);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           58,
+                           17,
+                           eyebrow,
+                           1,
+                           M12_COLOR_WHITE);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           48,
                            subtitle,
                            1,
                            M12_COLOR_LIGHT_GRAY);
@@ -448,19 +523,234 @@ static void m12_draw_footer(unsigned char* framebuffer,
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   16,
-                   framebufferHeight - 24,
-                   framebufferWidth - 32,
                    12,
+                   framebufferHeight - 18,
+                   framebufferWidth - 24,
+                   10,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           framebufferHeight - 21,
+                           framebufferHeight - 16,
                            text,
                            1,
                            M12_COLOR_LIGHT_GRAY);
+}
+
+static unsigned char m12_game_card_fill(const char* gameId) {
+    if (gameId && strcmp(gameId, "dm1") == 0) {
+        return M12_COLOR_MAROON;
+    }
+    if (gameId && strcmp(gameId, "csb") == 0) {
+        return M12_COLOR_NAVY;
+    }
+    if (gameId && strcmp(gameId, "dm2") == 0) {
+        return M12_COLOR_GREEN;
+    }
+    return M12_COLOR_DARK_GRAY;
+}
+
+static const char* m12_game_card_line1(const M12_MenuEntry* entry) {
+    if (!entry) {
+        return "CONFIG";
+    }
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        return "CONFIG";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+        return "DM1";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+        return "CSB";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
+        return "DM2";
+    }
+    return "GAME";
+}
+
+static const char* m12_game_card_line2(const M12_MenuEntry* entry) {
+    if (!entry) {
+        return "PERSISTED";
+    }
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        return "PERSISTED";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+        return "THE CLASSIC";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+        return "HARD MODE";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
+        return "COMING LATER";
+    }
+    return "READY";
+}
+
+static const char* m12_game_card_line3(const M12_MenuEntry* entry) {
+    if (!entry) {
+        return "SETTINGS";
+    }
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        return "SETTINGS";
+    }
+    return entry->available ? "MD5 VERIFIED" : "ASSETS MISSING";
+}
+
+static void m12_draw_box_art(unsigned char* framebuffer,
+                             int framebufferWidth,
+                             int framebufferHeight,
+                             const M12_MenuEntry* entry) {
+    unsigned char fill = entry && entry->kind == M12_MENU_ENTRY_SETTINGS
+                             ? M12_COLOR_DARK_GRAY
+                             : m12_game_card_fill(entry ? entry->gameId : NULL);
+    unsigned char accent = entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED;
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   18,
+                   66,
+                   92,
+                   108,
+                   M12_COLOR_YELLOW,
+                   fill);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  24,
+                  72,
+                  80,
+                  8,
+                  accent);
+    m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 102, 80, M12_COLOR_BLACK);
+    m12_draw_horizontal_rule(framebuffer, framebufferWidth, framebufferHeight, 24, 126, 80, M12_COLOR_BLACK);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           88,
+                           m12_game_card_line1(entry),
+                           2,
+                           M12_COLOR_WHITE);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           116,
+                           m12_game_card_line2(entry),
+                           1,
+                           M12_COLOR_WHITE);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           138,
+                           m12_game_card_line3(entry),
+                           1,
+                           entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_WHITE);
+}
+
+static void m12_draw_status_chip(unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight,
+                                 int x,
+                                 int y,
+                                 const char* text,
+                                 unsigned char fill,
+                                 unsigned char textColor) {
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   58,
+                   12,
+                   M12_COLOR_BLACK,
+                   fill);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 8,
+                  y + 2,
+                  text,
+                  1,
+                  textColor);
+}
+
+static void m12_draw_main_row(unsigned char* framebuffer,
+                              int framebufferWidth,
+                              int framebufferHeight,
+                              int y,
+                              const M12_MenuEntry* entry,
+                              int selected) {
+    unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+    unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char titleColor = entry->available ? M12_COLOR_WHITE : M12_COLOR_LIGHT_GRAY;
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   122,
+                   y,
+                   180,
+                   22,
+                   border,
+                   fill);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  126,
+                  y + 3,
+                  4,
+                  16,
+                  selected ? M12_COLOR_YELLOW : (entry->available ? M12_COLOR_GREEN : M12_COLOR_LIGHT_RED));
+    if (selected) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      136,
+                      y + 7,
+                      ">",
+                      1,
+                      M12_COLOR_YELLOW);
+    }
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  148,
+                  y + 7,
+                  entry->title,
+                  1,
+                  titleColor);
+
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        m12_draw_status_chip(framebuffer,
+                             framebufferWidth,
+                             framebufferHeight,
+                             236,
+                             y + 5,
+                             "OPEN",
+                             selected ? M12_COLOR_CYAN : M12_COLOR_DARK_GRAY,
+                             M12_COLOR_WHITE);
+    } else if (entry->available) {
+        m12_draw_status_chip(framebuffer,
+                             framebufferWidth,
+                             framebufferHeight,
+                             232,
+                             y + 5,
+                             "READY",
+                             selected ? M12_COLOR_YELLOW : M12_COLOR_GREEN,
+                             M12_COLOR_BLACK);
+    } else {
+        m12_draw_status_chip(framebuffer,
+                             framebufferWidth,
+                             framebufferHeight,
+                             224,
+                             y + 5,
+                             "MISSING",
+                             selected ? M12_COLOR_LIGHT_RED : M12_COLOR_MAROON,
+                             M12_COLOR_WHITE);
+    }
 }
 
 static void m12_draw_main_view(const M12_StartupMenuState* state,
@@ -468,103 +758,55 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                                int framebufferWidth,
                                int framebufferHeight) {
     int i;
-    int rowY = 84;
+    int rowY = 70;
+    const M12_MenuEntry* selectedEntry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
 
-    m12_draw_title(framebuffer, framebufferWidth, framebufferHeight, "SELECT A DESTINATION");
+    m12_draw_title(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   "PRODUCT PREVIEW",
+                   "SELECT A DESTINATION");
+    m12_draw_box_art(framebuffer, framebufferWidth, framebufferHeight, selectedEntry);
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   28,
-                   74,
-                   framebufferWidth - 56,
-                   100,
-                   M12_COLOR_DARK_GRAY,
-                   M12_COLOR_BLACK);
-
-    for (i = 0; i < m12_entry_count(); ++i) {
-        const M12_MenuEntry* entry = &state->entries[i];
-        const int selected = (i == state->selectedIndex);
-        unsigned char rowFill = M12_COLOR_BLACK;
-        unsigned char rowBorder = M12_COLOR_DARK_GRAY;
-        unsigned char textColor = M12_COLOR_WHITE;
-        unsigned char stateColor = M12_COLOR_GREEN;
-
-        if (entry->kind == M12_MENU_ENTRY_GAME && !entry->available) {
-            textColor = M12_COLOR_DARK_GRAY;
-            stateColor = M12_COLOR_RED;
-        }
-        if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
-            stateColor = M12_COLOR_CYAN;
-        }
-        if (selected) {
-            rowFill = entry->kind == M12_MENU_ENTRY_SETTINGS ? M12_COLOR_CYAN : M12_COLOR_LIGHT_BLUE;
-            rowBorder = M12_COLOR_YELLOW;
-            textColor = M12_COLOR_WHITE;
-        }
-
-        m12_draw_frame(framebuffer,
-                       framebufferWidth,
-                       framebufferHeight,
-                       42,
-                       rowY - 4,
-                       236,
-                       18,
-                       rowBorder,
-                       rowFill);
-        m12_draw_text(framebuffer,
-                      framebufferWidth,
-                      framebufferHeight,
-                      50,
-                      rowY,
-                      entry->title,
-                      1,
-                      textColor);
-
-        if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
-            m12_draw_text(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          214,
-                          rowY,
-                          "OPEN",
-                          1,
-                          selected ? M12_COLOR_YELLOW : stateColor);
-        } else if (entry->available) {
-            m12_draw_text(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          208,
-                          rowY,
-                          "READY",
-                          1,
-                          selected ? M12_COLOR_YELLOW : stateColor);
-        } else {
-            m12_draw_text(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          196,
-                          rowY,
-                          "MISSING",
-                          1,
-                          selected ? M12_COLOR_YELLOW : stateColor);
-        }
-
-        rowY += 22;
-    }
-
-    m12_draw_frame(framebuffer,
-                   framebufferWidth,
-                   framebufferHeight,
-                   28,
-                   177,
-                   framebufferWidth - 56,
-                   15,
+                   118,
+                   66,
+                   188,
+                   108,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
-                  36,
+                  126,
+                  72,
+                  "PLAYABLE BUILDS",
+                  1,
+                  M12_COLOR_LIGHT_CYAN);
+    for (i = 0; i < m12_entry_count(); ++i) {
+        m12_draw_main_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          rowY,
+                          &state->entries[i],
+                          i == state->selectedIndex);
+        rowY += 25;
+    }
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   18,
+                   177,
+                   framebufferWidth - 36,
+                   14,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  24,
                   181,
                   "DATA DIR",
                   1,
@@ -572,7 +814,7 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
-                  92,
+                  84,
                   181,
                   M12_AssetStatus_GetDataDir(&state->assetStatus),
                   1,
@@ -590,56 +832,70 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
                                   const char* label,
                                   const char* value,
                                   int selected) {
-    unsigned char rowFill = selected ? M12_COLOR_LIGHT_BLUE : M12_COLOR_BLACK;
-    unsigned char rowBorder = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
-    unsigned char valueColor = selected ? M12_COLOR_YELLOW : M12_COLOR_CYAN;
+    unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+    unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char valueFill = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char valueText = selected ? M12_COLOR_BLACK : M12_COLOR_WHITE;
 
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   42,
-                   y - 4,
-                   236,
-                   18,
-                   rowBorder,
-                   rowFill);
+                   122,
+                   y,
+                   180,
+                   24,
+                   border,
+                   fill);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
-                  52,
-                  y,
+                  132,
+                  y + 8,
                   label,
                   1,
                   M12_COLOR_WHITE);
-    m12_draw_text(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  170,
-                  y,
-                  value,
-                  1,
-                  valueColor);
+    m12_draw_status_chip(framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         230,
+                         y + 6,
+                         value,
+                         valueFill,
+                         valueText);
 }
 
 static void m12_draw_settings_view(const M12_StartupMenuState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
                                    int framebufferHeight) {
-    m12_draw_title(framebuffer, framebufferWidth, framebufferHeight, "SETTINGS");
+    M12_MenuEntry settingsCard = {"SETTINGS", NULL, M12_MENU_ENTRY_SETTINGS, 1};
+    m12_draw_title(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   "PRODUCT PREVIEW",
+                   "SETTINGS");
+    m12_draw_box_art(framebuffer, framebufferWidth, framebufferHeight, &settingsCard);
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   28,
-                   74,
-                   framebufferWidth - 56,
-                   100,
+                   118,
+                   66,
+                   188,
+                   108,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
-
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  126,
+                  72,
+                  "PERSISTED OPTIONS",
+                  1,
+                  M12_COLOR_LIGHT_CYAN);
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          88,
+                          84,
                           "LANGUAGE",
                           m12_settings_value_language(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE);
@@ -653,26 +909,25 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          136,
+                          140,
                           "WINDOW MODE",
                           m12_settings_value_window_mode(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE);
-
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   28,
+                   18,
                    177,
-                   framebufferWidth - 56,
-                   15,
+                   framebufferWidth - 36,
+                   14,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
-                  44,
+                  24,
                   181,
-                  "SETTINGS ARE SESSION ONLY IN THIS SLICE",
+                  "CHANGES SAVE IMMEDIATELY TO CONFIG",
                   1,
                   M12_COLOR_LIGHT_GRAY);
     m12_draw_footer(framebuffer,
@@ -689,37 +944,42 @@ static void m12_draw_message_view(const M12_StartupMenuState* state,
     const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
 
     if (entry && !entry->available) {
-        messageColor = M12_COLOR_RED;
+        messageColor = M12_COLOR_LIGHT_RED;
     }
 
-    m12_draw_title(framebuffer, framebufferWidth, framebufferHeight, "STATUS");
+    m12_draw_title(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   "PRODUCT PREVIEW",
+                   "STATUS");
+    m12_draw_box_art(framebuffer, framebufferWidth, framebufferHeight, entry);
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
-                   40,
-                   78,
-                   framebufferWidth - 80,
-                   82,
+                   118,
+                   74,
+                   188,
+                   88,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           92,
+                           90,
                            state->messageLine1,
                            1,
                            messageColor);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           114,
+                           112,
                            state->messageLine2,
                            1,
                            M12_COLOR_WHITE);
     m12_draw_centered_text(framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           136,
+                           134,
                            state->messageLine3,
                            1,
                            M12_COLOR_LIGHT_GRAY);
@@ -753,7 +1013,7 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
                   0,
                   0,
                   framebufferWidth,
-                  14,
+                  8,
                   M12_COLOR_DARK_GRAY);
     if (state->view == M12_MENU_VIEW_MESSAGE) {
         m12_draw_message_view(state, framebuffer, framebufferWidth, framebufferHeight);
