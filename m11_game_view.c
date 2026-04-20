@@ -1297,6 +1297,65 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 }
 
+static unsigned char m11_focus_color(const M11_ViewportCell* cell) {
+    if (!cell || !cell->valid) {
+        return M11_COLOR_DARK_GRAY;
+    }
+    if (cell->summary.groups > 0 || cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
+        return M11_COLOR_LIGHT_RED;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR && !m11_viewport_cell_is_open(cell)) {
+        return M11_COLOR_YELLOW;
+    }
+    if (cell->summary.items > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
+        return M11_COLOR_LIGHT_CYAN;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_PIT ||
+        cell->elementType == DUNGEON_ELEMENT_TELEPORTER ||
+        cell->elementType == DUNGEON_ELEMENT_STAIRS) {
+        return M11_COLOR_MAGENTA;
+    }
+    return M11_COLOR_LIGHT_GREEN;
+}
+
+static void m11_draw_focus_brackets(unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    const M11_ViewRect* rect,
+                                    const M11_ViewportCell* cell) {
+    int x1;
+    int x2;
+    int y1;
+    int y2;
+    int arm = 10;
+    unsigned char color;
+
+    if (!rect || !cell || !cell->valid) {
+        return;
+    }
+
+    x1 = rect->x + 8;
+    y1 = rect->y + 7;
+    x2 = rect->x + rect->w - 9;
+    y2 = rect->y + rect->h - 8;
+    if (x2 - x1 < 12 || y2 - y1 < 12) {
+        return;
+    }
+
+    color = m11_focus_color(cell);
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x1, x1 + arm, y1, color);
+    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x1, y1, y1 + arm, color);
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x2 - arm, x2, y1, color);
+    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x2, y1, y1 + arm, color);
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x1, x1 + arm, y2, color);
+    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x1, y2 - arm, y2, color);
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x2 - arm, x2, y2, color);
+    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x2, y2 - arm, y2, color);
+
+    m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                  rect->x + rect->w / 2, rect->y + rect->h / 2, color);
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -1363,6 +1422,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
 
+    m11_draw_focus_brackets(framebuffer, framebufferWidth, framebufferHeight,
+                            &frames[1], &cells[0][1]);
     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                    viewport.x + 6, viewport.x + viewport.w - 7,
                    viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
@@ -1450,6 +1511,71 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     }
 }
 
+static void m11_format_front_cell_prompt(const M11_ViewportCell* cell,
+                                        char* outAction,
+                                        size_t outActionSize,
+                                        char* outHint,
+                                        size_t outHintSize) {
+    if (outAction && outActionSize > 0U) {
+        outAction[0] = '\0';
+    }
+    if (outHint && outHintSize > 0U) {
+        outHint[0] = '\0';
+    }
+    if (!cell || !cell->valid) {
+        snprintf(outAction, outActionSize, "FOCUS VOID");
+        snprintf(outHint, outHintSize, "TURN TO RE-ENTER THE MAP");
+        return;
+    }
+    if (cell->summary.groups > 0) {
+        snprintf(outAction, outActionSize, "FOCUS ENEMY FRONT");
+        snprintf(outHint, outHintSize, "HOLD OR TURN, CONTACT IN 1 TILE");
+        return;
+    }
+    if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
+        snprintf(outAction, outActionSize, "FOCUS ACTIVE EFFECT");
+        snprintf(outHint, outHintSize, "WAIT OR TURN, THE FRONT CELL IS HOT");
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
+        if (m11_viewport_cell_is_open(cell)) {
+            snprintf(outAction, outActionSize, "FOCUS OPEN DOOR");
+            snprintf(outHint, outHintSize, "UP TO CROSS, DOWN TO RESET");
+        } else {
+            snprintf(outAction, outActionSize, "FOCUS CLOSED DOOR");
+            snprintf(outHint, outHintSize, "TURN OR WAIT, THE WAY IS BLOCKED");
+        }
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+        snprintf(outAction, outActionSize, "FOCUS PIT");
+        snprintf(outHint, outHintSize, "UP RISKS A DROP, TURN IF UNSURE");
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_STAIRS) {
+        snprintf(outAction, outActionSize, "FOCUS STAIRS");
+        snprintf(outHint, outHintSize, "UP TO CLIMB THROUGH THE NEXT TILE");
+        return;
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
+        snprintf(outAction, outActionSize, "FOCUS TELEPORTER");
+        snprintf(outHint, outHintSize, "UP TO TEST THE RIFT");
+        return;
+    }
+    if (cell->summary.items > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
+        snprintf(outAction, outActionSize, "FOCUS INTERACTABLE");
+        snprintf(outHint, outHintSize, "UP TO CLOSE DISTANCE, CHECK THE FLOOR");
+        return;
+    }
+    if (m11_viewport_cell_is_open(cell)) {
+        snprintf(outAction, outActionSize, "FOCUS CLEAR PASSAGE");
+        snprintf(outHint, outHintSize, "UP ADVANCES, DOWN BACKSTEPS");
+        return;
+    }
+    snprintf(outAction, outActionSize, "FOCUS BLOCKED");
+    snprintf(outHint, outHintSize, "TURN LEFT OR RIGHT TO SEARCH");
+}
+
 static void m11_draw_map_panel(const M11_GameViewState* state,
                                unsigned char* framebuffer,
                                int framebufferWidth,
@@ -1504,6 +1630,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        int framebufferHeight) {
     char line[96];
     char line2[96];
+    char focusAction[96];
+    char focusHint[96];
     unsigned short firstThing = THING_ENDOFLIST;
     int squareThingCount = 0;
     M11_ViewportCell currentCell;
@@ -1538,6 +1666,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         mapDesc = &state->world.dungeon->maps[state->world.party.mapIndex];
     }
     m11_get_food_water_average(&state->world.party, &avgFood, &avgWater);
+    m11_format_front_cell_prompt(&aheadCell,
+                                 focusAction,
+                                 sizeof(focusAction),
+                                 focusHint,
+                                 sizeof(focusHint));
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
@@ -1614,6 +1747,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              avgFood,
              avgWater);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 178, 157, line, &g_text_small);
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  14, 165, 292, 14, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  14, 165, 292, 14, m11_focus_color(&aheadCell));
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  18, 168, focusAction, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  130, 168, focusHint, &g_text_small);
 
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   218, 128, state->lastOutcome, &g_text_small);

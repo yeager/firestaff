@@ -36,7 +36,11 @@ enum {
     PROBE_BOTTOM_PANEL_W = 296,
     PROBE_BOTTOM_PANEL_H = 46,
     PROBE_PARTY_PANEL_Y = 160,
-    PROBE_PARTY_PANEL_H = 28
+    PROBE_PARTY_PANEL_H = 28,
+    PROBE_PROMPT_STRIP_X = 14,
+    PROBE_PROMPT_STRIP_Y = 165,
+    PROBE_PROMPT_STRIP_W = 292,
+    PROBE_PROMPT_STRIP_H = 14
 };
 
 typedef struct {
@@ -531,6 +535,30 @@ int main(int argc, char** argv) {
                                        PROBE_VIEWPORT_H,
                                        PROBE_COLOR_LIGHT_CYAN) > 20U,
                  "viewport framing uses layered face bands and bright dungeon edges");
+
+    probe_record(&tally,
+                 "INV_GV_17",
+                 probe_count_color(syntheticFramebuffer,
+                                   320,
+                                   PROBE_VIEWPORT_X,
+                                   PROBE_VIEWPORT_Y,
+                                   PROBE_VIEWPORT_W,
+                                   PROBE_VIEWPORT_H,
+                                   PROBE_COLOR_LIGHT_RED) > 8U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_PROMPT_STRIP_X,
+                                       PROBE_PROMPT_STRIP_Y,
+                                       PROBE_PROMPT_STRIP_W,
+                                       PROBE_PROMPT_STRIP_H,
+                                       PROBE_COLOR_LIGHT_RED) > 10U &&
+                     probe_count_non_zero(syntheticFramebuffer,
+                                          320,
+                                          PROBE_PROMPT_STRIP_X,
+                                          PROBE_PROMPT_STRIP_Y,
+                                          PROBE_PROMPT_STRIP_W,
+                                          PROBE_PROMPT_STRIP_H) > 200U,
+                 "front-cell focus adds a threat-colored viewport reticle and contextual prompt strip");
 
     probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);
