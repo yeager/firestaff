@@ -1,5 +1,12 @@
 # Firestaff
 
+[![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Milestone](https://img.shields.io/badge/milestone-M10%20engine--core%20complete-success)](https://github.com/yeager/firestaff/blob/main/TODO.md)
+[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#building)
+[![Invariants](https://img.shields.io/badge/invariants-500%2B%20passing-brightgreen)](https://github.com/yeager/firestaff/blob/main/run_firestaff_m10_verify.sh)
+
+
 An open-source engine port of **Dungeon Master** (1987) and **Chaos Strikes Back** (1989) for modern platforms.
 
 **Status:** M10 complete — 20 of 20 engine-core phases passing deterministic verification. No UI/rendering yet (M11+).
