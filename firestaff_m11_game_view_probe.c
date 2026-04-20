@@ -44,7 +44,11 @@ enum {
     PROBE_PROMPT_STRIP_X = 14,
     PROBE_PROMPT_STRIP_Y = 165,
     PROBE_PROMPT_STRIP_W = 292,
-    PROBE_PROMPT_STRIP_H = 14
+    PROBE_PROMPT_STRIP_H = 14,
+    PROBE_FEEDBACK_STRIP_X = 24,
+    PROBE_FEEDBACK_STRIP_Y = 130,
+    PROBE_FEEDBACK_STRIP_W = 172,
+    PROBE_FEEDBACK_STRIP_H = 10
 };
 
 typedef struct {
@@ -595,6 +599,23 @@ int main(int argc, char** argv) {
                                        PROBE_LANE_STRIP_H,
                                        PROBE_COLOR_YELLOW) > 6U,
                  "near-lane scanner chips surface left, front, and right contact state inside the viewport");
+
+    probe_record(&tally,
+                 "INV_GV_19",
+                 probe_count_non_zero(syntheticFramebuffer,
+                                      320,
+                                      PROBE_FEEDBACK_STRIP_X,
+                                      PROBE_FEEDBACK_STRIP_Y,
+                                      PROBE_FEEDBACK_STRIP_W,
+                                      PROBE_FEEDBACK_STRIP_H) > 180U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_FEEDBACK_STRIP_X,
+                                       PROBE_FEEDBACK_STRIP_Y,
+                                       PROBE_FEEDBACK_STRIP_W,
+                                       PROBE_FEEDBACK_STRIP_H,
+                                       PROBE_COLOR_LIGHT_RED) > 8U,
+                 "post-tick feedback strip renders attack-colored event telemetry inside the HUD");
 
     probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);

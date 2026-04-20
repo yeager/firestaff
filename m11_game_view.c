@@ -1603,6 +1603,154 @@ static void m11_draw_focus_brackets(unsigned char* framebuffer,
                   rect->x + rect->w / 2, rect->y + rect->h / 2, color);
 }
 
+static int m11_tick_has_emission_kind(const struct TickResult_Compat* tick,
+                                      uint8_t kind) {
+    int i;
+    if (!tick) {
+        return 0;
+    }
+    for (i = 0; i < tick->emissionCount; ++i) {
+        if (tick->emissions[i].kind == kind) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static unsigned char m11_feedback_color(const M11_GameViewState* state,
+                                        const M11_ViewportCell* aheadCell) {
+    if (!state) {
+        return M11_COLOR_LIGHT_CYAN;
+    }
+    if (m11_tick_has_emission_kind(&state->lastTickResult, EMIT_DAMAGE_DEALT)) {
+        return M11_COLOR_LIGHT_RED;
+    }
+    if (m11_tick_has_emission_kind(&state->lastTickResult, EMIT_DOOR_STATE)) {
+        return M11_COLOR_YELLOW;
+    }
+    if (m11_tick_has_emission_kind(&state->lastTickResult, EMIT_SOUND_REQUEST)) {
+        return M11_COLOR_MAGENTA;
+    }
+    if (m11_tick_has_emission_kind(&state->lastTickResult, EMIT_PARTY_MOVED)) {
+        if (state->lastAction[0] != '\0' && strstr(state->lastAction, "TURN") != NULL) {
+            return M11_COLOR_YELLOW;
+        }
+        return M11_COLOR_LIGHT_CYAN;
+    }
+    if (state->lastOutcome[0] != '\0' && strstr(state->lastOutcome, "BLOCKED") != NULL) {
+        return M11_COLOR_YELLOW;
+    }
+    return m11_focus_color(aheadCell);
+}
+
+static void m11_build_feedback_summary(const M11_GameViewState* state,
+                                       char* out,
+                                       size_t outSize) {
+    const struct TickResult_Compat* tick;
+    const struct TickEmission_Compat* emission;
+    int i;
+    int first = 1;
+
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    if (!state) {
+        return;
+    }
+
+    tick = &state->lastTickResult;
+    for (i = 0; i < tick->emissionCount; ++i) {
+        char chunk[32];
+        emission = &tick->emissions[i];
+        chunk[0] = '\0';
+        switch (emission->kind) {
+            case EMIT_DAMAGE_DEALT:
+                snprintf(chunk, sizeof(chunk), "HIT %d", (int)emission->payload[2]);
+                break;
+            case EMIT_PARTY_MOVED:
+                if (state->lastAction[0] != '\0' && strstr(state->lastAction, "TURN") != NULL) {
+                    snprintf(chunk, sizeof(chunk), "TURN %s",
+                             m11_direction_name(state->world.party.direction));
+                } else {
+                    snprintf(chunk, sizeof(chunk), "STEP %d:%d",
+                             state->world.party.mapX,
+                             state->world.party.mapY);
+                }
+                break;
+            case EMIT_DOOR_STATE:
+                snprintf(chunk, sizeof(chunk), "DOOR %d:%d",
+                         (int)emission->payload[0],
+                         (int)emission->payload[1]);
+                break;
+            case EMIT_SOUND_REQUEST:
+                snprintf(chunk, sizeof(chunk), "FX %d", (int)emission->payload[0]);
+                break;
+            case EMIT_CHAMPION_DOWN:
+                snprintf(chunk, sizeof(chunk), "DOWN %d", (int)emission->payload[0] + 1);
+                break;
+            case EMIT_KILL_NOTIFY:
+                snprintf(chunk, sizeof(chunk), "KILL");
+                break;
+            default:
+                break;
+        }
+        if (chunk[0] == '\0') {
+            continue;
+        }
+        if (!first) {
+            snprintf(out + strlen(out), outSize - strlen(out), " | ");
+        }
+        snprintf(out + strlen(out), outSize - strlen(out), "%s", chunk);
+        first = 0;
+    }
+
+    if (out[0] == '\0') {
+        if (state->lastOutcome[0] != '\0') {
+            snprintf(out, outSize, "%s", state->lastOutcome);
+        } else {
+            snprintf(out, outSize, "READY");
+        }
+    }
+}
+
+static void m11_draw_feedback_strip(unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    const M11_GameViewState* state,
+                                    const M11_ViewportCell* aheadCell) {
+    char summary[96];
+    unsigned char color;
+
+    if (!state) {
+        return;
+    }
+
+    color = m11_feedback_color(state, aheadCell);
+    m11_build_feedback_summary(state, summary, sizeof(summary));
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  24, 130, 172, 10, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  24, 130, 172, 10, color);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  26, 132, 6, 6, color);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  36, 131, summary, &g_text_small);
+}
+
+static void m11_draw_viewport_feedback_frame(unsigned char* framebuffer,
+                                             int framebufferWidth,
+                                             int framebufferHeight,
+                                             const M11_GameViewState* state,
+                                             const M11_ViewportCell* aheadCell) {
+    unsigned char color = m11_feedback_color(state, aheadCell);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  10, 22, 200, 122, color);
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                   82, 138, 145, color);
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -1681,6 +1829,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
 
     m11_draw_focus_brackets(framebuffer, framebufferWidth, framebufferHeight,
                             &frames[1], &cells[0][1]);
+    m11_draw_viewport_feedback_frame(framebuffer, framebufferWidth, framebufferHeight,
+                                     state, &cells[0][1]);
     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                    viewport.x + 6, viewport.x + viewport.w - 7,
                    viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
@@ -2044,4 +2194,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                   218, 136, state->inspectDetail, &g_text_small);
 
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_feedback_strip(framebuffer, framebufferWidth, framebufferHeight,
+                            state, &aheadCell);
 }
