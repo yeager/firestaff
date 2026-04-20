@@ -10,6 +10,7 @@ PROBE_BIN="$OUT_DIR/firestaff_m12_startup_menu_probe_bin"
 cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     -o "$PROBE_BIN" \
     "$HERE/firestaff_m12_startup_menu_probe.c" \
+    "$HERE/asset_status_m12.c" \
     "$HERE/menu_startup_m12.c"
 
 "$PROBE_BIN" | tee "$OUT_DIR/startup_menu_probe.log"

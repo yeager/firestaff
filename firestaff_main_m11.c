@@ -18,7 +18,7 @@
 
 static void usage(const char* prog) {
     fprintf(stderr,
-            "Usage: %s [--duration <ms>] [--width <px>] [--height <px>] [--script <commands>]\n",
+            "Usage: %s [--duration <ms>] [--width <px>] [--height <px>] [--script <commands>] [--data-dir <path>]\n",
             prog);
 }
 
@@ -46,6 +46,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--script") == 0 && i + 1 < argc) {
             opts.script = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
+            opts.dataDir = argv[++i];
             continue;
         }
         fprintf(stderr, "firestaff: unknown argument '%s'\n", a);

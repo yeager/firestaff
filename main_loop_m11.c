@@ -11,6 +11,8 @@
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
+#include <string.h>
+
 #include <SDL3/SDL.h>
 
 #if !SDL_VERSION_ATLEAST(3, 0, 0)
@@ -27,6 +29,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->durationMs     = -1;
     opts->presentEveryMs = 16;
     opts->script         = NULL;
+    opts->dataDir        = NULL;
 }
 
 static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
@@ -40,6 +43,14 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
     if ((len == 4U && strncmp(token, "down", len) == 0) ||
         (len == 1U && strncmp(token, "d", len) == 0)) {
         return M12_MENU_INPUT_DOWN;
+    }
+    if ((len == 4U && strncmp(token, "left", len) == 0) ||
+        (len == 1U && strncmp(token, "l", len) == 0)) {
+        return M12_MENU_INPUT_LEFT;
+    }
+    if ((len == 5U && strncmp(token, "right", len) == 0) ||
+        (len == 1U && strncmp(token, "r", len) == 0)) {
+        return M12_MENU_INPUT_RIGHT;
     }
     if ((len == 5U && strncmp(token, "enter", len) == 0) ||
         (len == 6U && strncmp(token, "return", len) == 0)) {
@@ -96,6 +107,10 @@ static M12_MenuInput m11_poll_menu_input(int* quitRequested) {
                     return M12_MENU_INPUT_UP;
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
+                case SDLK_LEFT:
+                    return M12_MENU_INPUT_LEFT;
+                case SDLK_RIGHT:
+                    return M12_MENU_INPUT_RIGHT;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;
@@ -123,6 +138,10 @@ static M12_MenuInput m11_poll_menu_input(int* quitRequested) {
                     return M12_MENU_INPUT_UP;
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
+                case SDLK_LEFT:
+                    return M12_MENU_INPUT_LEFT;
+                case SDLK_RIGHT:
+                    return M12_MENU_INPUT_RIGHT;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;
@@ -150,7 +169,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         return rc;
     }
 
-    M12_StartupMenu_Init(&menuState);
+    M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
     M12_StartupMenu_Draw(&menuState,
                          M11_Render_GetFramebuffer(),
                          M11_FB_WIDTH,

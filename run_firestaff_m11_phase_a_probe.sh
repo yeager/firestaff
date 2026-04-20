@@ -72,6 +72,7 @@ cc $CFLAGS_M11 \
     -o "$MAIN_BIN" \
     "$HERE/firestaff_main_m11.c" \
     "$HERE/main_loop_m11.c" \
+    "$HERE/asset_status_m12.c" \
     "$HERE/menu_startup_m12.c" \
     "$HERE/render_sdl_m11.c" \
     "$VGA_OBJ" \
