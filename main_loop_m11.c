@@ -13,6 +13,7 @@
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <SDL3/SDL.h>
@@ -20,6 +21,22 @@
 #if !SDL_VERSION_ATLEAST(3, 0, 0)
 #include <SDL.h>
 #endif
+
+enum {
+    M11_LAUNCHER_FB_WIDTH = 480,
+    M11_LAUNCHER_FB_HEIGHT = 270
+};
+
+static void m11_draw_launcher(const M12_StartupMenuState* menuState,
+                              unsigned char* launcherFramebuffer) {
+    if (!menuState || !launcherFramebuffer) {
+        return;
+    }
+    M12_StartupMenu_Draw(menuState,
+                         launcherFramebuffer,
+                         M11_LAUNCHER_FB_WIDTH,
+                         M11_LAUNCHER_FB_HEIGHT);
+}
 
 void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
     if (!menuState) {
@@ -33,9 +50,9 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     if (!opts) {
         return;
     }
-    opts->windowWidth    = 640;
-    opts->windowHeight   = 400;
-    opts->scaleMode      = M11_SCALE_2X;
+    opts->windowWidth    = 960;
+    opts->windowHeight   = 540;
+    opts->scaleMode      = M11_SCALE_FIT;
     opts->durationMs     = -1;
     opts->presentEveryMs = 16;
     opts->script         = NULL;
@@ -308,6 +325,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
     const char* scriptCursor = o->script;
+    unsigned char* launcherFramebuffer = NULL;
     int quitRequested = 0;
     uint32_t idleAccumulatorMs = 0;
 
@@ -316,13 +334,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         return rc;
     }
 
+    launcherFramebuffer = (unsigned char*)calloc((size_t)M11_LAUNCHER_FB_WIDTH,
+                                                 (size_t)M11_LAUNCHER_FB_HEIGHT);
+    if (!launcherFramebuffer) {
+        M11_Render_Shutdown();
+        return M11_RENDER_ERR_TEXTURE;
+    }
+
     M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
     M11_GameView_Init(&gameView);
     M11_ApplyStartupMenuRuntime(&menuState);
-    M12_StartupMenu_Draw(&menuState,
-                         M11_Render_GetFramebuffer(),
-                         M11_FB_WIDTH,
-                         M11_FB_HEIGHT);
+    m11_draw_launcher(&menuState, launcherFramebuffer);
 
     /* Compute deadlines using millisecond ticks. SDL_GetTicks returns
        Uint64 in SDL3 and Uint32 in SDL2. Both are fine for our math. */
@@ -347,7 +369,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #endif
 
     /* Always present at least once so the window actually has content. */
-    M11_Render_Present();
+    M11_Render_PresentIndexed(launcherFramebuffer,
+                              M11_LAUNCHER_FB_WIDTH,
+                              M11_LAUNCHER_FB_HEIGHT);
 
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
@@ -378,10 +402,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameView_Init(&gameView);
                 idleAccumulatorMs = 0;
                 M11_ApplyStartupMenuRuntime(&menuState);
-                M12_StartupMenu_Draw(&menuState,
-                                     M11_Render_GetFramebuffer(),
-                                     M11_FB_WIDTH,
-                                     M11_FB_HEIGHT);
+                m11_draw_launcher(&menuState, launcherFramebuffer);
             } else if (pointerResult == M11_GAME_INPUT_REDRAW) {
                 M11_GameView_Draw(&gameView,
                                   M11_Render_GetFramebuffer(),
@@ -401,10 +422,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     M11_GameView_Init(&gameView);
                     idleAccumulatorMs = 0;
                     M11_ApplyStartupMenuRuntime(&menuState);
-                    M12_StartupMenu_Draw(&menuState,
-                                         M11_Render_GetFramebuffer(),
-                                         M11_FB_WIDTH,
-                                         M11_FB_HEIGHT);
+                    m11_draw_launcher(&menuState, launcherFramebuffer);
                 } else if (result == M11_GAME_INPUT_REDRAW) {
                     M11_GameView_Draw(&gameView,
                                       M11_Render_GetFramebuffer(),
@@ -435,10 +453,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             menuState.messageLine1 = "DUNGEON LOAD FAILED";
                             menuState.messageLine2 = "CHECK DUNGEON.DAT";
                             menuState.messageLine3 = "ESC RETURNS TO MENU";
-                            M12_StartupMenu_Draw(&menuState,
-                                                 M11_Render_GetFramebuffer(),
-                                                 M11_FB_WIDTH,
-                                                 M11_FB_HEIGHT);
+                            m11_draw_launcher(&menuState, launcherFramebuffer);
                         }
                     }
                 }
@@ -454,10 +469,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         break;
                     }
                     M11_ApplyStartupMenuRuntime(&menuState);
-                    M12_StartupMenu_Draw(&menuState,
-                                         M11_Render_GetFramebuffer(),
-                                         M11_FB_WIDTH,
-                                         M11_FB_HEIGHT);
+                    m11_draw_launcher(&menuState, launcherFramebuffer);
                 }
             }
         }
@@ -470,12 +482,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             }
             idleAccumulatorMs -= (uint32_t)gameTickInterval;
         }
-        M11_Render_Present();
+        if (gameView.active) {
+            M11_Render_Present();
+        } else {
+            M11_Render_PresentIndexed(launcherFramebuffer,
+                                      M11_LAUNCHER_FB_WIDTH,
+                                      M11_LAUNCHER_FB_HEIGHT);
+        }
         SDL_Delay((Uint32)interval);
         now = SDL_GetTicks();
     }
 
     M11_GameView_Shutdown(&gameView);
+    free(launcherFramebuffer);
     M11_Render_Shutdown();
     return 0;
 }

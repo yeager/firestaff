@@ -41,6 +41,10 @@ typedef struct {
     int paletteLevel;
     int windowMode;
     int quitRequested;
+    int contentW;
+    int contentH;
+    int textureW;
+    int textureH;
 
     SDL_Window*   window;
     SDL_Renderer* renderer;
@@ -69,11 +73,59 @@ static int m11_validate_window_mode(int mode) {
     return mode == M11_WINDOW_MODE_WINDOWED || mode == M11_WINDOW_MODE_FULLSCREEN;
 }
 
+static int m11_recreate_texture_if_needed(int logicalWidth,
+                                          int logicalHeight) {
+    unsigned char* resizedBuffer;
+    SDL_Texture* texture;
+    if (logicalWidth <= 0 || logicalHeight <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (g_state.texture &&
+        g_state.textureW == logicalWidth &&
+        g_state.textureH == logicalHeight) {
+        return M11_RENDER_OK;
+    }
+    resizedBuffer = (unsigned char*)realloc(g_state.presentBuffer,
+                                            (size_t)logicalWidth * (size_t)logicalHeight * 4U);
+    if (!resizedBuffer) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.presentBuffer = resizedBuffer;
+    if (g_state.texture) {
+        SDL_DestroyTexture(g_state.texture);
+        g_state.texture = NULL;
+    }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    texture = SDL_CreateTexture(
+        g_state.renderer,
+        SDL_PIXELFORMAT_RGBA32,
+        SDL_TEXTUREACCESS_STREAMING,
+        logicalWidth,
+        logicalHeight);
+#else
+    texture = SDL_CreateTexture(
+        g_state.renderer,
+        SDL_PIXELFORMAT_RGBA32,
+        SDL_TEXTUREACCESS_STREAMING,
+        logicalWidth,
+        logicalHeight);
+#endif
+    if (!texture) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.texture = texture;
+    g_state.textureW = logicalWidth;
+    g_state.textureH = logicalHeight;
+    return M11_RENDER_OK;
+}
+
 static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH) {
     int x = 0;
     int y = 0;
     int w = g_state.windowW;
     int h = g_state.windowH;
+    int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
+    int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
 
     if (g_state.windowW <= 0 || g_state.windowH <= 0) {
         w = M11_FB_WIDTH;
@@ -85,16 +137,16 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
             case M11_SCALE_3X:
             case M11_SCALE_4X: {
                 int factor = g_state.scaleMode + 1;
-                w = M11_FB_WIDTH * factor;
-                h = M11_FB_HEIGHT * factor;
+                w = contentW * factor;
+                h = contentH * factor;
                 break;
             }
             case M11_SCALE_FIT: {
                 int fitW = g_state.windowW;
-                int fitH = (fitW * M11_FB_HEIGHT) / M11_FB_WIDTH;
+                int fitH = (fitW * contentH) / contentW;
                 if (fitH > g_state.windowH) {
                     fitH = g_state.windowH;
-                    fitW = (fitH * M11_FB_WIDTH) / M11_FB_HEIGHT;
+                    fitW = (fitH * contentW) / contentH;
                 }
                 if (fitW < 1) fitW = 1;
                 if (fitH < 1) fitH = 1;
@@ -145,14 +197,17 @@ static int m11_apply_window_mode(int windowMode) {
 /* Build the 32-bit RGBA presentation pixels from the 4-bit framebuffer
    using the currently active VGA palette level.
    Pixel format: SDL_PIXELFORMAT_RGBA32 — R, G, B, A in memory order. */
-static void m11_framebuffer_to_rgba(void) {
-    const unsigned char* src = g_state.framebuffer;
+static void m11_framebuffer_to_rgba(const unsigned char* src,
+                                    int logicalWidth,
+                                    int logicalHeight) {
     unsigned char* dst = g_state.presentBuffer;
     const int level = g_state.paletteLevel;
+    int pixelCount;
     if (!dst) {
         return;
     }
-    for (int i = 0; i < M11_FB_BYTES; ++i) {
+    pixelCount = logicalWidth * logicalHeight;
+    for (int i = 0; i < pixelCount; ++i) {
         unsigned char idx = src[i] & 0x0F; /* 4-bit palette */
         const unsigned char* rgb =
             G9010_auc_VgaPaletteAll_Compat[level][idx];
@@ -265,6 +320,10 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
     g_state.quitRequested = 0;
+    g_state.contentW = M11_FB_WIDTH;
+    g_state.contentH = M11_FB_HEIGHT;
+    g_state.textureW = M11_FB_WIDTH;
+    g_state.textureH = M11_FB_HEIGHT;
     g_state.initialised = 1;
     return M11_RENDER_OK;
 }
@@ -293,6 +352,10 @@ void M11_Render_Shutdown(void) {
     g_state.windowH = 0;
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
+    g_state.contentW = 0;
+    g_state.contentH = 0;
+    g_state.textureW = 0;
+    g_state.textureH = 0;
 }
 
 int M11_Render_IsInitialized(void) {
@@ -335,8 +398,17 @@ long M11_Render_ClearFramebuffer(unsigned char colorIndex) {
 }
 
 int M11_Render_Present(void) {
+    return M11_Render_PresentIndexed(g_state.framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+}
+
+int M11_Render_PresentIndexed(const unsigned char* framebuffer,
+                              int logicalWidth,
+                              int logicalHeight) {
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!framebuffer || logicalWidth <= 0 || logicalHeight <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
     }
 
     int destX = 0;
@@ -349,7 +421,12 @@ int M11_Render_Present(void) {
     SDL_Rect destRect;
 #endif
 
-    m11_framebuffer_to_rgba();
+    if (m11_recreate_texture_if_needed(logicalWidth, logicalHeight) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.contentW = logicalWidth;
+    g_state.contentH = logicalHeight;
+    m11_framebuffer_to_rgba(framebuffer, logicalWidth, logicalHeight);
     m11_compute_present_rect(&destX, &destY, &destW, &destH);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -357,7 +434,7 @@ int M11_Render_Present(void) {
             g_state.texture,
             NULL,
             g_state.presentBuffer,
-            M11_FB_WIDTH * 4)) {
+            logicalWidth * 4)) {
         return M11_RENDER_ERR_TEXTURE;
     }
     if (!SDL_RenderClear(g_state.renderer)) {
@@ -378,7 +455,7 @@ int M11_Render_Present(void) {
             g_state.texture,
             NULL,
             g_state.presentBuffer,
-            M11_FB_WIDTH * 4) != 0) {
+            logicalWidth * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
     if (SDL_RenderClear(g_state.renderer) != 0) {
@@ -519,12 +596,12 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
 
     localX = windowX - rectX;
     localY = windowY - rectY;
-    *outFbX = (localX * M11_FB_WIDTH) / rectW;
-    *outFbY = (localY * M11_FB_HEIGHT) / rectH;
+    *outFbX = (localX * g_state.contentW) / rectW;
+    *outFbY = (localY * g_state.contentH) / rectH;
     if (*outFbX < 0) *outFbX = 0;
     if (*outFbY < 0) *outFbY = 0;
-    if (*outFbX >= M11_FB_WIDTH) *outFbX = M11_FB_WIDTH - 1;
-    if (*outFbY >= M11_FB_HEIGHT) *outFbY = M11_FB_HEIGHT - 1;
+    if (*outFbX >= g_state.contentW) *outFbX = g_state.contentW - 1;
+    if (*outFbY >= g_state.contentH) *outFbY = g_state.contentH - 1;
     return 1;
 }
 

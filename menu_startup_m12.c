@@ -1,5 +1,6 @@
 #include "menu_startup_m12.h"
 
+#include "branding_logo_m12.h"
 #include "config_m12.h"
 
 #include <stddef.h>
@@ -260,6 +261,11 @@ static const M12_GraphicsTheme g_graphicsThemes[] = {
     {M12_COLOR_NAVY, M12_COLOR_DARK_GRAY, M12_COLOR_BROWN, M12_COLOR_YELLOW, 0},
     {M12_COLOR_LIGHT_BLUE, M12_COLOR_NAVY, M12_COLOR_LIGHT_CYAN, M12_COLOR_WHITE, 1},
     {M12_COLOR_MAGENTA, M12_COLOR_LIGHT_BLUE, M12_COLOR_YELLOW, M12_COLOR_LIGHT_CYAN, 2}
+};
+
+enum {
+    M12_MODERN_MIN_WIDTH = 400,
+    M12_MODERN_MIN_HEIGHT = 240
 };
 
 static int m12_entry_count(void) {
@@ -1678,6 +1684,700 @@ static void m12_apply_graphics_overlay(const M12_StartupMenuState* state,
     }
 }
 
+static int m12_use_modern_layout(int framebufferWidth,
+                                 int framebufferHeight) {
+    return framebufferWidth >= M12_MODERN_MIN_WIDTH &&
+           framebufferHeight >= M12_MODERN_MIN_HEIGHT;
+}
+
+static void m12_draw_branding_logo(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   int x,
+                                   int y,
+                                   int scale) {
+    int yy;
+    int xx;
+    int drawScale = scale < 1 ? 1 : scale;
+    for (yy = 0; yy < M12_BRANDING_LOGO_HEIGHT; ++yy) {
+        for (xx = 0; xx < M12_BRANDING_LOGO_WIDTH; ++xx) {
+            size_t index = (size_t)yy * (size_t)M12_BRANDING_LOGO_WIDTH + (size_t)xx;
+            unsigned char color = g_m12BrandingLogoPixels[index];
+            if (!g_m12BrandingLogoMask[index]) {
+                continue;
+            }
+            m12_fill_rect(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          x + (xx * drawScale),
+                          y + (yy * drawScale),
+                          drawScale,
+                          drawScale,
+                          color);
+        }
+    }
+}
+
+static void m12_draw_modern_status_pill(unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight,
+                                        int x,
+                                        int y,
+                                        int w,
+                                        const char* text,
+                                        unsigned char fill,
+                                        unsigned char border,
+                                        unsigned char textColor) {
+    int innerW = w < 40 ? 40 : w;
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   innerW,
+                   14,
+                   border,
+                   fill);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 6,
+                  y + 3,
+                  text,
+                  &(M12_TextStyle){1, 1, textColor, 0, 0, M12_COLOR_BLACK});
+}
+
+static void m12_draw_modern_background(const M12_StartupMenuState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight) {
+    const M12_GraphicsTheme* theme = m12_theme(state);
+    int y;
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  0,
+                  0,
+                  framebufferWidth,
+                  framebufferHeight,
+                  M12_COLOR_BLACK);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  0,
+                  0,
+                  framebufferWidth,
+                  framebufferHeight / 3,
+                  theme->bandColor);
+    for (y = 0; y < framebufferHeight; y += 12) {
+        m12_fill_rect(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      0,
+                      y,
+                      framebufferWidth,
+                      1,
+                      (y / 12) & 1 ? theme->stripeColor : theme->glowColor);
+    }
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  8,
+                  8,
+                  framebufferWidth - 16,
+                  framebufferHeight - 16,
+                  M12_COLOR_BLACK);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   8,
+                   8,
+                   framebufferWidth - 16,
+                   framebufferHeight - 16,
+                   theme->titleBorder,
+                   M12_COLOR_BLACK);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  18,
+                  18,
+                  framebufferWidth - 36,
+                  2,
+                  theme->glowColor);
+}
+
+static void m12_draw_modern_hero(const M12_StartupMenuState* state,
+                                 unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight,
+                                 int x,
+                                 int y,
+                                 int w,
+                                 int h,
+                                 const char* subtitle) {
+    const M12_GraphicsTheme* theme = m12_theme(state);
+    int logoScale = framebufferWidth >= 640 ? 2 : 1;
+    int logoW = M12_BRANDING_LOGO_WIDTH * logoScale;
+    int logoH = M12_BRANDING_LOGO_HEIGHT * logoScale;
+    int logoX = x + 16;
+    int logoY = y + (h - logoH) / 2;
+    int textX = logoX + logoW + 18;
+    int pillY = y + h - 22;
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   h,
+                   theme->titleBorder,
+                   theme->bandColor);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x + 4,
+                   y + 4,
+                   w - 8,
+                   h - 8,
+                   theme->glowColor,
+                   theme->bandColor);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 8,
+                  y + 8,
+                  w - 16,
+                  6,
+                  theme->glowColor);
+    m12_draw_branding_logo(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           logoX,
+                           logoY,
+                           logoScale);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  textX,
+                  y + 18,
+                  m12_text(state, M12_TEXT_EYEBROW),
+                  &g_textSmallShadow);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  textX,
+                  y + 36,
+                  subtitle,
+                  &g_textMediumShadow);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  textX,
+                  y + 56,
+                  m12_text(state, M12_TEXT_READY_TO_LAUNCH),
+                  &g_textSmallAccent);
+    m12_draw_modern_status_pill(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                textX,
+                                pillY,
+                                58,
+                                m12_settings_value_language(state),
+                                M12_COLOR_DARK_GRAY,
+                                theme->glowColor,
+                                M12_COLOR_WHITE);
+    m12_draw_modern_status_pill(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                textX + 64,
+                                pillY,
+                                88,
+                                m12_settings_value_graphics(state),
+                                M12_COLOR_DARK_GRAY,
+                                theme->glowColor,
+                                M12_COLOR_WHITE);
+    m12_draw_modern_status_pill(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                textX + 158,
+                                pillY,
+                                92,
+                                m12_settings_value_window_mode(state),
+                                M12_COLOR_DARK_GRAY,
+                                theme->glowColor,
+                                M12_COLOR_WHITE);
+}
+
+static const char* m12_entry_detail_line(const M12_MenuEntry* entry) {
+    if (!entry) {
+        return "OFFLINE";
+    }
+    if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
+        return "PERSISTED OPTIONS AND DISPLAY MODE";
+    }
+    if (entry->available) {
+        return "VERIFIED DATA READY";
+    }
+    if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+        return "HASHED, BUT FILES ARE MISSING";
+    }
+    return "KNOWN SLOT, HASH COVERAGE STILL GROWING";
+}
+
+static void m12_draw_modern_main_row(unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int x,
+                                     int y,
+                                     int w,
+                                     const M12_MenuEntry* entry,
+                                     int selected) {
+    unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+    unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char accent = selected ? M12_COLOR_YELLOW
+                                    : (entry && entry->available ? M12_COLOR_GREEN : M12_COLOR_LIGHT_RED);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   36,
+                   border,
+                   fill);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 8,
+                  y + 8,
+                  6,
+                  20,
+                  accent);
+    if (selected) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      x + 20,
+                      y + 6,
+                      ">",
+                      &g_textSmallAccent);
+    }
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 34,
+                  y + 7,
+                  entry ? entry->title : "UNKNOWN",
+                  &g_textSmallShadow);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 34,
+                  y + 20,
+                  m12_entry_detail_line(entry),
+                  &g_textSmallMuted);
+    m12_draw_modern_status_pill(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                x + w - 74,
+                                y + 11,
+                                64,
+                                m12_entry_status_text(entry),
+                                m12_entry_status_fill(entry, selected),
+                                M12_COLOR_BLACK,
+                                m12_entry_status_text_color(entry, selected));
+}
+
+static void m12_draw_modern_sidebar(const M12_StartupMenuState* unusedState,
+                                    unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    int x,
+                                    int y,
+                                    int w,
+                                    int h,
+                                    const M12_MenuEntry* entry,
+                                    const M12_GameCardArt* art,
+                                    const char* title,
+                                    const char* footerText) {
+    unsigned char fill = entry && entry->kind == M12_MENU_ENTRY_SETTINGS
+                             ? M12_COLOR_DARK_GRAY
+                             : m12_game_card_fill(entry ? entry->gameId : NULL);
+    unsigned char accent = entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED;
+    char hashSummary[64];
+    (void)unusedState;
+    m12_format_hash_summary(entry, hashSummary, sizeof(hashSummary));
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   h,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + 10,
+                  title,
+                  &g_textSmallAccent);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + 22,
+                  w - 20,
+                  2,
+                  accent);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + 30,
+                  w - 20,
+                  h / 2 - 10,
+                  fill);
+    m12_draw_card_preview(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          entry,
+                          art,
+                          x + 12,
+                          y + 32,
+                          w - 24,
+                          h / 2 - 14,
+                          fill,
+                          accent);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + h / 2 + 18,
+                  entry ? m12_game_card_line2(entry) : "NO PROFILE",
+                  &g_textSmallShadow);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + h / 2 + 31,
+                  entry ? m12_game_card_line3(entry) : "",
+                  entry && entry->available ? &g_textSmallAccent : &g_textSmallMuted);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + h / 2 + 47,
+                  hashSummary,
+                  &g_textSmallMuted);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + h - 24,
+                  footerText,
+                  &g_textSmallMuted);
+}
+
+static void m12_draw_modern_settings_row(unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         int x,
+                                         int y,
+                                         int w,
+                                         const char* label,
+                                         const char* value,
+                                         int selected) {
+    unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+    unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char valueFill = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char valueText = selected ? M12_COLOR_BLACK : M12_COLOR_WHITE;
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   28,
+                   border,
+                   fill);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + 10,
+                  label,
+                  &g_textSmallShadow);
+    m12_draw_modern_status_pill(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                x + w - 92,
+                                y + 7,
+                                82,
+                                value,
+                                valueFill,
+                                border,
+                                valueText);
+}
+
+static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
+                                      unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight) {
+    const M12_MenuEntry* selectedEntry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
+    const M12_GameCardArt* selectedArt = (state->selectedIndex >= 0 && state->selectedIndex < m12_entry_count())
+                                             ? &state->cardArt[state->selectedIndex]
+                                             : NULL;
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 3;
+    int contentY;
+    int leftW;
+    int rightX;
+    int rowY;
+    int i;
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 82) {
+        heroH = 82;
+    }
+    contentY = margin + heroH + 10;
+    leftW = (framebufferWidth * 56) / 100;
+    rightX = margin + leftW + 10;
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         framebufferWidth - (margin * 2),
+                         heroH,
+                         m12_text(state, M12_TEXT_SELECT_DESTINATION));
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin,
+                  contentY,
+                  m12_text(state, M12_TEXT_LAUNCHER_DESTINATIONS),
+                  &g_textSmallAccent);
+    rowY = contentY + 12;
+    for (i = 0; i < m12_entry_count(); ++i) {
+        m12_draw_modern_main_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 margin,
+                                 rowY,
+                                 leftW - 4,
+                                 &state->entries[i],
+                                 i == state->selectedIndex);
+        rowY += 42;
+    }
+    m12_draw_modern_sidebar(state,
+                            framebuffer,
+                            framebufferWidth,
+                            framebufferHeight,
+                            rightX,
+                            contentY,
+                            framebufferWidth - margin - rightX,
+                            framebufferHeight - contentY - 28,
+                            selectedEntry,
+                            selectedArt,
+                            m12_text(state, M12_TEXT_STATUS),
+                            M12_AssetStatus_GetDataDir(&state->assetStatus));
+    m12_draw_footer(framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    m12_text(state, M12_TEXT_MAIN_FOOTER));
+}
+
+static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight) {
+    M12_MenuEntry settingsCard = {
+        .title = "SETTINGS",
+        .gameId = NULL,
+        .kind = M12_MENU_ENTRY_SETTINGS,
+        .sourceKind = M12_MENU_SOURCE_SYSTEM,
+        .available = 1
+    };
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 3;
+    int contentY;
+    int leftW;
+    int panelX;
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 82) {
+        heroH = 82;
+    }
+    contentY = margin + heroH + 10;
+    leftW = (framebufferWidth * 38) / 100;
+    panelX = margin + leftW + 12;
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         framebufferWidth - (margin * 2),
+                         heroH,
+                         m12_text(state, M12_TEXT_SETTINGS_TITLE));
+    m12_draw_modern_sidebar(state,
+                            framebuffer,
+                            framebufferWidth,
+                            framebufferHeight,
+                            margin,
+                            contentY,
+                            leftW,
+                            framebufferHeight - contentY - 28,
+                            &settingsCard,
+                            NULL,
+                            m12_text(state, M12_TEXT_PERSISTED_OPTIONS),
+                            m12_text(state, M12_TEXT_SETTINGS_SAVED));
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   panelX,
+                   contentY,
+                   framebufferWidth - margin - panelX,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  panelX + 10,
+                  contentY + 10,
+                  m12_text(state, M12_TEXT_PERSISTED_OPTIONS),
+                  &g_textSmallAccent);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 28,
+                                 framebufferWidth - margin - panelX - 20,
+                                 m12_text(state, M12_TEXT_LANGUAGE),
+                                 m12_settings_value_language(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 60,
+                                 framebufferWidth - margin - panelX - 20,
+                                 m12_text(state, M12_TEXT_GRAPHICS_LEVEL),
+                                 m12_settings_value_graphics(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 92,
+                                 framebufferWidth - margin - panelX - 20,
+                                 m12_text(state, M12_TEXT_WINDOW_MODE),
+                                 m12_settings_value_window_mode(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  panelX + 10,
+                  contentY + 126,
+                  m12_text(state, M12_TEXT_SETTINGS_SAVED),
+                  &g_textSmallMuted);
+    m12_draw_footer(framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    m12_text(state, M12_TEXT_SETTINGS_FOOTER));
+}
+
+static void m12_draw_message_view_modern(const M12_StartupMenuState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight) {
+    const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
+    const M12_GameCardArt* art = (state->activatedIndex >= 0 && state->activatedIndex < m12_entry_count())
+                                     ? &state->cardArt[state->activatedIndex]
+                                     : NULL;
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 3;
+    int contentY;
+    int boxX;
+    int boxW;
+    unsigned char messageColor = entry && !entry->available ? M12_COLOR_LIGHT_RED : M12_COLOR_LIGHT_GREEN;
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 82) {
+        heroH = 82;
+    }
+    contentY = margin + heroH + 14;
+    boxX = margin + 18;
+    boxW = framebufferWidth - ((margin + 18) * 2);
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         framebufferWidth - (margin * 2),
+                         heroH,
+                         m12_text(state, M12_TEXT_STATUS));
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   boxX,
+                   contentY,
+                   boxW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_card_preview(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          entry,
+                          art,
+                          boxX + 12,
+                          contentY + 12,
+                          132,
+                          82,
+                          entry && entry->kind == M12_MENU_ENTRY_SETTINGS
+                              ? M12_COLOR_DARK_GRAY
+                              : m12_game_card_fill(entry ? entry->gameId : NULL),
+                          entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  boxX + 160,
+                  contentY + 18,
+                  state->messageLine1,
+                  &(M12_TextStyle){2, 1, messageColor, 1, 1, M12_COLOR_BLACK});
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  boxX + 160,
+                  contentY + 52,
+                  state->messageLine2,
+                  &g_textSmallShadow);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  boxX + 160,
+                  contentY + 74,
+                  state->messageLine3,
+                  &g_textSmallMuted);
+    m12_draw_footer(framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    m12_text(state, M12_TEXT_MESSAGE_FOOTER));
+}
+
 void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
                           unsigned char* framebuffer,
                           int framebufferWidth,
@@ -1688,6 +2388,17 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
     memset(framebuffer,
            M12_COLOR_BLACK,
            (size_t)framebufferWidth * (size_t)framebufferHeight);
+    if (m12_use_modern_layout(framebufferWidth, framebufferHeight)) {
+        if (state->view == M12_MENU_VIEW_MESSAGE) {
+            m12_draw_message_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_SETTINGS) {
+            m12_draw_settings_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else {
+            m12_draw_main_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        }
+        m12_apply_graphics_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
+        return;
+    }
     m12_draw_background(state, framebuffer, framebufferWidth, framebufferHeight);
     if (state->view == M12_MENU_VIEW_MESSAGE) {
         m12_draw_message_view(state, framebuffer, framebufferWidth, framebufferHeight);
