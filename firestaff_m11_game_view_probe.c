@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
     M11_GameViewState gameView;
     ProbeTally tally = {0, 0};
     unsigned char framebuffer[320 * 200];
+    unsigned char turnedFramebuffer[320 * 200];
     uint32_t initialHash = 0;
     int initialDirection = 0;
     uint32_t initialTick = 0;
@@ -94,15 +95,22 @@ int main(int argc, char** argv) {
                      gameView.lastWorldHash != initialHash,
                  "game view input turns the party through the real tick orchestrator");
 
-    initialTick = gameView.world.gameTick;
+    memset(turnedFramebuffer, 0, sizeof(turnedFramebuffer));
+    M11_GameView_Draw(&gameView, turnedFramebuffer, 320, 200);
     probe_record(&tally,
                  "INV_GV_05",
+                 memcmp(framebuffer, turnedFramebuffer, sizeof(framebuffer)) != 0,
+                 "turning changes the rendered viewport frame, not just the inspector text");
+
+    initialTick = gameView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_06",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
                      gameView.world.gameTick == initialTick + 1,
                  "accept advances an in-game wait tick distinct from menu navigation");
 
     probe_record(&tally,
-                 "INV_GV_06",
+                 "INV_GV_07",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_RETURN_TO_MENU,
                  "escape from the game view returns control to the launcher");
 

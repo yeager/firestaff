@@ -628,18 +628,387 @@ static void m11_draw_party_arrow(unsigned char* framebuffer,
     }
 }
 
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} M11_ViewRect;
+
+static int m11_element_is_open(int elementType) {
+    return elementType != DUNGEON_ELEMENT_WALL;
+}
+
+static void m11_direction_vectors(int direction,
+                                  int* outForwardX,
+                                  int* outForwardY,
+                                  int* outRightX,
+                                  int* outRightY) {
+    if (!outForwardX || !outForwardY || !outRightX || !outRightY) {
+        return;
+    }
+    switch (direction) {
+        case DIR_NORTH:
+            *outForwardX = 0;
+            *outForwardY = -1;
+            *outRightX = 1;
+            *outRightY = 0;
+            break;
+        case DIR_EAST:
+            *outForwardX = 1;
+            *outForwardY = 0;
+            *outRightX = 0;
+            *outRightY = 1;
+            break;
+        case DIR_SOUTH:
+            *outForwardX = 0;
+            *outForwardY = 1;
+            *outRightX = -1;
+            *outRightY = 0;
+            break;
+        case DIR_WEST:
+        default:
+            *outForwardX = -1;
+            *outForwardY = 0;
+            *outRightX = 0;
+            *outRightY = -1;
+            break;
+    }
+}
+
+static int m11_sample_relative_square(const M11_GameViewState* state,
+                                      int relForward,
+                                      int relSide,
+                                      unsigned char* outSquare,
+                                      int* outElementType,
+                                      int* outThingCount) {
+    int fx;
+    int fy;
+    int rx;
+    int ry;
+    int mapX;
+    int mapY;
+    unsigned char square = 0;
+    if (!state || !state->active) {
+        if (outElementType) {
+            *outElementType = DUNGEON_ELEMENT_WALL;
+        }
+        if (outThingCount) {
+            *outThingCount = 0;
+        }
+        return 0;
+    }
+    m11_direction_vectors(state->world.party.direction, &fx, &fy, &rx, &ry);
+    mapX = state->world.party.mapX + relForward * fx + relSide * rx;
+    mapY = state->world.party.mapY + relForward * fy + relSide * ry;
+    if (!m11_get_square_byte(&state->world,
+                             state->world.party.mapIndex,
+                             mapX,
+                             mapY,
+                             &square)) {
+        if (outElementType) {
+            *outElementType = DUNGEON_ELEMENT_WALL;
+        }
+        if (outThingCount) {
+            *outThingCount = 0;
+        }
+        return 0;
+    }
+    if (outSquare) {
+        *outSquare = square;
+    }
+    if (outElementType) {
+        *outElementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    }
+    if (outThingCount) {
+        *outThingCount = m11_count_square_things(&state->world,
+                                                 state->world.party.mapIndex,
+                                                 mapX,
+                                                 mapY);
+    }
+    return 1;
+}
+
+static void m11_draw_viewport_marker(unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     const M11_ViewRect* rect,
+                                     int elementType,
+                                     int thingCount) {
+    if (!rect) {
+        return;
+    }
+    switch (elementType) {
+        case DUNGEON_ELEMENT_DOOR:
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 4, rect->y + 4,
+                          rect->w / 2, rect->h - 8, M11_COLOR_LIGHT_RED);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 2 - 1, rect->y + 8,
+                          2, rect->h - 16, M11_COLOR_BROWN);
+            break;
+        case DUNGEON_ELEMENT_TELEPORTER:
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 4, rect->y + rect->h / 4,
+                          rect->w / 2, rect->h / 2, M11_COLOR_LIGHT_CYAN);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 3, rect->y + rect->h / 3,
+                          rect->w / 3, rect->h / 3, M11_COLOR_WHITE);
+            break;
+        case DUNGEON_ELEMENT_STAIRS:
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 5, rect->y + rect->h - 10,
+                          rect->w * 3 / 5, 2, M11_COLOR_YELLOW);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 4, rect->y + rect->h - 16,
+                          rect->w / 2, 2, M11_COLOR_YELLOW);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 3, rect->y + rect->h - 22,
+                          rect->w / 3, 2, M11_COLOR_YELLOW);
+            break;
+        case DUNGEON_ELEMENT_PIT:
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 4, rect->y + rect->h - 14,
+                          rect->w / 2, 8, M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 4, rect->y + rect->h - 14,
+                          rect->w / 2, 8, M11_COLOR_BROWN);
+            break;
+        case DUNGEON_ELEMENT_FAKEWALL:
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 4, rect->y + rect->h / 4,
+                          rect->w / 2, rect->h / 2, M11_COLOR_MAGENTA);
+            break;
+        default:
+            break;
+    }
+    if (thingCount > 0) {
+        int dot;
+        int dots = thingCount > 3 ? 3 : thingCount;
+        for (dot = 0; dot < dots; ++dot) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect->x + rect->w / 2 - 7 + dot * 5,
+                          rect->y + rect->h / 2 - 1,
+                          3, 3, M11_COLOR_WHITE);
+        }
+    }
+}
+
+static void m11_draw_viewport(const M11_GameViewState* state,
+                              unsigned char* framebuffer,
+                              int framebufferWidth,
+                              int framebufferHeight) {
+    static const M11_ViewRect depthRects[] = {
+        {18, 34, 198, 106},
+        {42, 48, 150, 78},
+        {60, 58, 114, 58},
+        {74, 66, 86, 42}
+    };
+    static const int depthCount = (int)(sizeof(depthRects) / sizeof(depthRects[0]));
+    int depth;
+    int stopDepth = depthCount;
+    int farElementType = DUNGEON_ELEMENT_CORRIDOR;
+    int farThingCount = 0;
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  14, 30, 206, 114, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  18, 34, 198, 52, M11_COLOR_NAVY);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  18, 86, 198, 54, M11_COLOR_BROWN);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  14, 30, 206, 114, M11_COLOR_LIGHT_CYAN);
+
+    for (depth = depthCount - 1; depth >= 0; --depth) {
+        M11_ViewRect rect = depthRects[depth];
+        M11_ViewRect inner = rect;
+        unsigned char centerSquare = 0;
+        int centerType = DUNGEON_ELEMENT_WALL;
+        int centerThings = 0;
+        int leftType = DUNGEON_ELEMENT_WALL;
+        int rightType = DUNGEON_ELEMENT_WALL;
+        int leftThings = 0;
+        int rightThings = 0;
+        unsigned char wallColor = M11_COLOR_DARK_GRAY;
+        int openCenter;
+        int openLeft;
+        int openRight;
+
+        if (depth + 1 < depthCount) {
+            inner = depthRects[depth + 1];
+        } else {
+            inner.x += rect.w / 4;
+            inner.y += rect.h / 4;
+            inner.w /= 2;
+            inner.h /= 2;
+        }
+
+        (void)m11_sample_relative_square(state, depth + 1, 0,
+                                         &centerSquare, &centerType, &centerThings);
+        (void)m11_sample_relative_square(state, depth + 1, -1,
+                                         NULL, &leftType, &leftThings);
+        (void)m11_sample_relative_square(state, depth + 1, 1,
+                                         NULL, &rightType, &rightThings);
+        openCenter = m11_element_is_open(centerType);
+        openLeft = m11_element_is_open(leftType);
+        openRight = m11_element_is_open(rightType);
+        wallColor = m11_tile_color(centerType);
+
+        if (!openCenter) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, rect.w, rect.h, wallColor);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, rect.w, rect.h, M11_COLOR_WHITE);
+            m11_draw_viewport_marker(framebuffer, framebufferWidth, framebufferHeight,
+                                     &rect, centerType, centerThings);
+            stopDepth = depth;
+            break;
+        }
+
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      rect.x, rect.y, rect.w, inner.y - rect.y, M11_COLOR_NAVY);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      rect.x, inner.y + inner.h, rect.w,
+                      (rect.y + rect.h) - (inner.y + inner.h), M11_COLOR_BROWN);
+
+        if (!openLeft) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, inner.x - rect.x, rect.h,
+                          m11_tile_color(leftType));
+        } else {
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, inner.x - rect.x, rect.h,
+                          M11_COLOR_LIGHT_GRAY);
+            if (leftThings > 0) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect.x + 2, rect.y + rect.h / 2,
+                              4, 2, M11_COLOR_WHITE);
+            }
+        }
+
+        if (!openRight) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          inner.x + inner.w, rect.y,
+                          (rect.x + rect.w) - (inner.x + inner.w), rect.h,
+                          m11_tile_color(rightType));
+        } else {
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          inner.x + inner.w, rect.y,
+                          (rect.x + rect.w) - (inner.x + inner.w), rect.h,
+                          M11_COLOR_LIGHT_GRAY);
+            if (rightThings > 0) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect.x + rect.w - 6, rect.y + rect.h / 2,
+                              4, 2, M11_COLOR_WHITE);
+            }
+        }
+
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      rect.x, rect.y, rect.w, rect.h, M11_COLOR_LIGHT_GRAY);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      inner.x, inner.y, inner.w, inner.h, M11_COLOR_DARK_GRAY);
+        m11_draw_viewport_marker(framebuffer, framebufferWidth, framebufferHeight,
+                                 &inner, centerType, centerThings);
+        farElementType = centerType;
+        farThingCount = centerThings;
+    }
+
+    if (stopDepth == depthCount) {
+        M11_ViewRect farRect = depthRects[depthCount - 1];
+        m11_draw_viewport_marker(framebuffer, framebufferWidth, framebufferHeight,
+                                 &farRect, farElementType, farThingCount);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      farRect.x + farRect.w / 4, farRect.y + farRect.h / 4,
+                      farRect.w / 2, farRect.h / 2, M11_COLOR_LIGHT_BLUE);
+    }
+}
+
+static void m11_format_champion_name(const unsigned char* raw,
+                                     char* out,
+                                     size_t outSize) {
+    size_t i;
+    size_t end = 0;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!raw) {
+        snprintf(out, outSize, "EMPTY");
+        return;
+    }
+    for (i = 0; i + 1 < outSize && i < CHAMPION_NAME_LENGTH; ++i) {
+        unsigned char ch = raw[i];
+        if (ch == 0U) {
+            break;
+        }
+        out[i] = isprint(ch) ? (char)ch : ' ';
+        if (out[i] != ' ') {
+            end = i + 1;
+        }
+    }
+    out[i < outSize ? i : outSize - 1] = '\0';
+    out[end] = '\0';
+    if (out[0] == '\0') {
+        snprintf(out, outSize, "EMPTY");
+    }
+}
+
+static void m11_draw_party_panel(const M11_GameViewState* state,
+                                 unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight) {
+    int slot;
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        int x = 18 + slot * 74;
+        int y = 160;
+        char line[48];
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, 68, 28, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, 68, 28,
+                      slot < state->world.party.championCount ? M11_COLOR_LIGHT_CYAN : M11_COLOR_DARK_GRAY);
+        if (slot < state->world.party.championCount && state->world.party.champions[slot].present) {
+            char name[16];
+            const struct ChampionState_Compat* champ = &state->world.party.champions[slot];
+            int hpWidth;
+            int staminaWidth;
+            m11_format_champion_name(champ->name, name, sizeof(name));
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 4, name, &g_text_small);
+            hpWidth = champ->hp.maximum > 0 ? (champ->hp.current * 56) / champ->hp.maximum : 0;
+            staminaWidth = champ->stamina.maximum > 0 ? (champ->stamina.current * 56) / champ->stamina.maximum : 0;
+            snprintf(line, sizeof(line), "HP %u", (unsigned int)champ->hp.current);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 12, line, &g_text_small);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 20, 56, 2, M11_COLOR_DARK_GRAY);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 20, hpWidth, 2, M11_COLOR_LIGHT_RED);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 24, 56, 2, M11_COLOR_DARK_GRAY);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 24, staminaWidth, 2, M11_COLOR_LIGHT_GREEN);
+        } else {
+            snprintf(line, sizeof(line), "SLOT %d", slot + 1);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 6, line, &g_text_small);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 16, "EMPTY", &g_text_small);
+        }
+    }
+}
+
 static void m11_draw_map_panel(const M11_GameViewState* state,
                                unsigned char* framebuffer,
                                int framebufferWidth,
                                int framebufferHeight) {
-    static const int radius = 4;
-    static const int cell = 14;
+    static const int radius = 2;
+    static const int cell = 11;
     int cx;
     int cy;
     int gx;
     int gy;
-    int baseX = 16;
-    int baseY = 30;
+    int baseX = 228;
+    int baseY = 94;
     if (!state || !state->active) {
         return;
     }
@@ -684,7 +1053,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     unsigned char currentSquare = 0;
     unsigned short firstThing = THING_ENDOFLIST;
     int squareThingCount = 0;
-    const struct DungeonMapDesc_Compat* map = NULL;
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
@@ -695,7 +1063,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       18, 18, "NO GAME VIEW", &g_text_title);
         return;
     }
-    map = &state->world.dungeon->maps[state->world.party.mapIndex];
     (void)m11_get_square_byte(&state->world,
                               state->world.party.mapIndex,
                               state->world.party.mapX,
@@ -715,68 +1082,57 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_YELLOW);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, 12, framebufferWidth - 24, 18, M11_COLOR_BLACK);
+                  12, 12, framebufferWidth - 24, 16, M11_COLOR_BLACK);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 16, state->title[0] != '\0' ? state->title : "GAME VIEW", &g_text_title);
+                  18, 14, state->title[0] != '\0' ? state->title : "GAME VIEW", &g_text_shadow);
 
-    m11_draw_map_panel(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  160, 32, 148, 126, M11_COLOR_BLACK);
+                  224, 34, 82, 52, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  160, 32, 148, 126, M11_COLOR_LIGHT_CYAN);
+                  224, 34, 82, 52, M11_COLOR_LIGHT_CYAN);
 
     snprintf(line, sizeof(line), "%s %s",
              m11_source_name(state->sourceKind),
              state->sourceId[0] != '\0' ? state->sourceId : "launcher");
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 40, line, &g_text_shadow);
-
-    snprintf(line, sizeof(line), "MAP %d/%d  SIZE %dx%d",
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 40, line, &g_text_small);
+    snprintf(line, sizeof(line), "MAP %d/%d",
              state->world.party.mapIndex + 1,
-             (int)state->world.dungeon->header.mapCount,
-             (int)map->width,
-             (int)map->height);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 54, line, &g_text_shadow);
-
-    snprintf(line, sizeof(line), "POS %d:%d  FACE %s",
+             (int)state->world.dungeon->header.mapCount);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 52, line, &g_text_small);
+    snprintf(line, sizeof(line), "%d:%d %s",
              state->world.party.mapX,
              state->world.party.mapY,
              m11_direction_name(state->world.party.direction));
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 68, line, &g_text_shadow);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 64, line, &g_text_small);
+    snprintf(line, sizeof(line), "TICK %u", (unsigned int)state->world.gameTick);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 76, line, &g_text_small);
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  224, 90, 82, 64, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  224, 90, 82, 64, M11_COLOR_LIGHT_BLUE);
+    m11_draw_map_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
     snprintf(line, sizeof(line), "TILE %s",
              F0503_DUNGEON_GetElementName_Compat(currentSquare >> 5));
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 82, line, &g_text_shadow);
-
-    snprintf(line, sizeof(line), "THING COUNT %d", squareThingCount);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 96, line, &g_text_shadow);
-
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 18, 146, line, &g_text_small);
     if (firstThing != THING_ENDOFLIST && firstThing != THING_NONE) {
-        snprintf(line, sizeof(line), "FIRST THING %s",
-                 F0505_DUNGEON_GetThingTypeName_Compat(THING_GET_TYPE(firstThing)));
+        snprintf(line, sizeof(line), "THING %s X%d",
+                 F0505_DUNGEON_GetThingTypeName_Compat(THING_GET_TYPE(firstThing)),
+                 squareThingCount);
     } else {
-        snprintf(line, sizeof(line), "FIRST THING NONE");
+        snprintf(line, sizeof(line), "THING NONE X%d", squareThingCount);
     }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 110, line, &g_text_shadow);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 110, 146, line, &g_text_small);
+    snprintf(line, sizeof(line), "HASH %08X", (unsigned int)state->lastWorldHash);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 236, 146, line, &g_text_small);
 
-    snprintf(line, sizeof(line), "GROUPS %d  DOORS %d",
-             state->world.things ? state->world.things->groupCount : 0,
-             state->world.things ? state->world.things->doorCount : 0);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 124, line, &g_text_shadow);
+    m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
-    snprintf(line, sizeof(line), "SENSORS %d HASH %08X",
-             state->world.things ? state->world.things->sensorCount : 0,
-             (unsigned int)state->lastWorldHash);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 168, 138, line, &g_text_shadow);
-
-    snprintf(line, sizeof(line), "LAST %s", state->lastAction);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 18, 168, line, &g_text_shadow);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 18, 182,
-                  state->lastOutcome, &g_text_shadow);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 170, 168,
-                  "UP FORWARD  DOWN BACKSTEP", &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 170, 180,
-                  "LEFT/RIGHT TURN  ENTER WAIT", &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 170, 192,
-                  "ESC RETURNS TO LAUNCHER", &g_text_small);
+    snprintf(line, sizeof(line), "%s", state->lastAction);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 122, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 134,
+                  state->lastOutcome, &g_text_small);
 }
