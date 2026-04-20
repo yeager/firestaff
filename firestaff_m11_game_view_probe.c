@@ -256,6 +256,7 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     state->world.party.champions[1].water = 155;
 
     probe_set_square(dungeon, 2, 3, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+    probe_set_square(dungeon, 3, 3, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     probe_set_square(dungeon, 1, 2, (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
     probe_set_square(dungeon, 2, 2, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     probe_set_square(dungeon, 3, 2, (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B));
@@ -449,8 +450,34 @@ int main(int argc, char** argv) {
                  "clicking a champion slot directly arms that champion for the next action");
 
     initialTick = syntheticView.world.gameTick;
+    initialDirection = syntheticView.world.party.direction;
     probe_record(&tally,
                  "INV_GV_07F",
+                 M11_GameView_HandlePointer(&syntheticView, 28, 78, 1) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == initialTick + 1 &&
+                     syntheticView.world.party.direction != initialDirection &&
+                     strcmp(syntheticView.lastAction, "TURN LEFT") == 0,
+                 "clicking the left viewport lane turns the party through the real tick path");
+
+    syntheticView.world.party.direction = DIR_EAST;
+    syntheticView.world.party.mapX = 2;
+    syntheticView.world.party.mapY = 3;
+    initialTick = syntheticView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_07G",
+                 M11_GameView_HandlePointer(&syntheticView, 110, 126, 1) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == initialTick + 1 &&
+                     syntheticView.world.party.mapX == 3 &&
+                     syntheticView.world.party.mapY == 3 &&
+                     strcmp(syntheticView.lastAction, "FORWARD") == 0,
+                 "clicking the lower center viewport advances into a clear front cell without using the HUD arrows");
+
+    syntheticView.world.party.direction = DIR_NORTH;
+    syntheticView.world.party.mapX = 2;
+    syntheticView.world.party.mapY = 3;
+    initialTick = syntheticView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_07H",
                  M11_GameView_HandlePointer(&syntheticView, 90, 170, 1) == M11_GAME_INPUT_REDRAW &&
                      syntheticView.world.gameTick == initialTick + 1 &&
                      strcmp(syntheticView.lastAction, "ATTACK") == 0 &&

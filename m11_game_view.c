@@ -465,6 +465,8 @@ typedef struct {
     int doors;
 } M11_SquareThingSummary;
 
+struct M11_ViewportCell;
+
 static int m11_thing_is_item(int thingType) {
     switch (thingType) {
         case THING_TYPE_WEAPON:
@@ -561,6 +563,10 @@ static void m11_refresh_hash(M11_GameViewState* state) {
 
 static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
+static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
+static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
+                                                int x,
+                                                int y);
 static void m11_get_active_champion_label(const M11_GameViewState* state,
                                           char* out,
                                           size_t outSize);
@@ -577,7 +583,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     }
     memset(state, 0, sizeof(*state));
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
-    m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER ON A REAL FRONT-CELL TARGET");
+    m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
@@ -624,7 +630,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
     m11_refresh_hash(state);
     m11_set_status(state, "BOOT", "GAME DATA LOADED");
-    m11_set_inspect_readout(state, "READY", "ENTER INSPECTS, SPACE ACTS, TAB PICKS THE FRONT CHAMPION");
+    m11_set_inspect_readout(state, "READY", "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION");
     return 1;
 }
 
@@ -799,13 +805,16 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                           M11_PROMPT_STRIP_Y,
                           M11_PROMPT_STRIP_W,
                           M11_PROMPT_STRIP_H) ||
-        m11_point_in_rect(x, y, 218, 106, 86, 34) ||
-        m11_point_in_rect(x, y,
+        m11_point_in_rect(x, y, 218, 106, 86, 34)) {
+        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
+
+    if (m11_point_in_rect(x, y,
                           M11_VIEWPORT_X,
                           M11_VIEWPORT_Y,
                           M11_VIEWPORT_W,
                           M11_VIEWPORT_H)) {
-        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        return M11_GameView_HandleInput(state, m11_pointer_viewport_input(state, x, y));
     }
 
     if (m11_point_in_rect(x, y,
@@ -893,7 +902,7 @@ typedef struct {
     int h;
 } M11_ViewRect;
 
-typedef struct {
+typedef struct M11_ViewportCell {
     int valid;
     int mapX;
     int mapY;
@@ -1372,14 +1381,69 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
     return 0;
 }
 
-static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
+static int m11_get_front_cell(const M11_GameViewState* state, M11_ViewportCell* outCell) {
     M11_ViewportCell frontCell;
 
     memset(&frontCell, 0, sizeof(frontCell));
     if (!state || !state->active || !m11_sample_viewport_cell(state, 1, 0, &frontCell) || !frontCell.valid) {
+        if (outCell) {
+            *outCell = frontCell;
+        }
+        return 0;
+    }
+    if (outCell) {
+        *outCell = frontCell;
+    }
+    return 1;
+}
+
+static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+
+    if (!m11_get_front_cell(state, &frontCell)) {
         return 0;
     }
     return frontCell.summary.groups > 0;
+}
+
+static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
+                                                int x,
+                                                int y) {
+    M11_ViewportCell frontCell;
+    int localX;
+    int localY;
+
+    if (!state || !state->active) {
+        return M12_MENU_INPUT_NONE;
+    }
+
+    localX = x - M11_VIEWPORT_X;
+    localY = y - M11_VIEWPORT_Y;
+
+    if (localX < M11_VIEWPORT_W / 3) {
+        return M12_MENU_INPUT_LEFT;
+    }
+    if (localX >= (M11_VIEWPORT_W * 2) / 3) {
+        return M12_MENU_INPUT_RIGHT;
+    }
+    if (!m11_get_front_cell(state, &frontCell)) {
+        return M12_MENU_INPUT_ACCEPT;
+    }
+    if (localY >= (M11_VIEWPORT_H * 2) / 3) {
+        if (frontCell.summary.groups > 0) {
+            return M12_MENU_INPUT_ACTION;
+        }
+        if (m11_viewport_cell_is_open(&frontCell) &&
+            frontCell.summary.items == 0 &&
+            frontCell.summary.sensors == 0 &&
+            frontCell.summary.textStrings == 0 &&
+            frontCell.summary.projectiles == 0 &&
+            frontCell.summary.explosions == 0 &&
+            frontCell.elementType != DUNGEON_ELEMENT_PIT) {
+            return M12_MENU_INPUT_UP;
+        }
+    }
+    return M12_MENU_INPUT_ACCEPT;
 }
 
 static unsigned char m11_viewport_fill_color(const M11_ViewportCell* cell) {
@@ -2261,7 +2325,7 @@ static int m11_cycle_active_champion(M11_GameViewState* state) {
             m11_set_status(state, "CHAMP", "ACTIVE CHAMPION READY");
             snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s READY", champion);
             snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "SPACE ACTS, ENTER INSPECTS, TAB CYCLES THE FRONT CHAMPION");
+                     "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION");
             return 1;
         }
     }
@@ -2288,7 +2352,7 @@ static int m11_set_active_champion(M11_GameViewState* state, int championIndex) 
     m11_set_status(state, "CHAMP", "ACTIVE CHAMPION READY");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s READY", champion);
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "CLICK OR TAB TO SWAP, SPACE ACTS, ENTER INSPECTS");
+             "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS");
     return 1;
 }
 
@@ -2366,7 +2430,7 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     if (cell->summary.groups > 0) {
         m11_get_active_champion_label(state, champion, sizeof(champion));
         snprintf(outAction, outActionSize, "ATTACK WITH %s", champion);
-        snprintf(outHint, outHintSize, "SPACE STRIKES, ENTER INSPECTS, TAB SWAPS CHAMPION");
+        snprintf(outHint, outHintSize, "SPACE OR CLICK CENTER STRIKES, ENTER INSPECTS, TAB SWAPS CHAMPION");
         return;
     }
     if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
@@ -2377,7 +2441,7 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
         if (m11_viewport_cell_is_open(cell)) {
             snprintf(outAction, outActionSize, "FOCUS OPEN DOOR");
-            snprintf(outHint, outHintSize, "UP TO CROSS, ENTER INSPECTS, SPACE WAITS");
+            snprintf(outHint, outHintSize, "UP OR CLICK CENTER CROSSES, ENTER INSPECTS, SPACE WAITS");
         } else {
             snprintf(outAction, outActionSize, "FOCUS CLOSED DOOR");
             snprintf(outHint, outHintSize, "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH");
@@ -2401,12 +2465,12 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     }
     if (cell->summary.items > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
         snprintf(outAction, outActionSize, "FOCUS INTERACTABLE");
-        snprintf(outHint, outHintSize, "ENTER INSPECTS, UP CLOSES DISTANCE, SPACE WAITS");
+        snprintf(outHint, outHintSize, "ENTER INSPECTS, UP OR CLICK CENTER CLOSES DISTANCE, SPACE WAITS");
         return;
     }
     if (m11_viewport_cell_is_open(cell)) {
         snprintf(outAction, outActionSize, "FOCUS CLEAR PASSAGE");
-        snprintf(outHint, outHintSize, "UP ADVANCES, ENTER INSPECTS, TAB SWAPS CHAMPION");
+        snprintf(outHint, outHintSize, "UP OR CLICK CENTER ADVANCES, ENTER INSPECTS, TAB SWAPS CHAMPION");
         return;
     }
     snprintf(outAction, outActionSize, "FOCUS BLOCKED");
