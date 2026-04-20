@@ -142,6 +142,42 @@ static void m11_draw_rect(unsigned char* framebuffer,
     }
 }
 
+static void m11_draw_hline(unsigned char* framebuffer,
+                           int framebufferWidth,
+                           int framebufferHeight,
+                           int x1,
+                           int x2,
+                           int y,
+                           unsigned char color) {
+    int x;
+    if (x2 < x1) {
+        int swap = x1;
+        x1 = x2;
+        x2 = swap;
+    }
+    for (x = x1; x <= x2; ++x) {
+        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x, y, color);
+    }
+}
+
+static void m11_draw_vline(unsigned char* framebuffer,
+                           int framebufferWidth,
+                           int framebufferHeight,
+                           int x,
+                           int y1,
+                           int y2,
+                           unsigned char color) {
+    int y;
+    if (y2 < y1) {
+        int swap = y1;
+        y1 = y2;
+        y2 = swap;
+    }
+    for (y = y1; y <= y2; ++y) {
+        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x, y, color);
+    }
+}
+
 static const M11_Glyph* m11_find_glyph(char ch) {
     size_t i;
     unsigned char uch = (unsigned char)ch;
@@ -803,113 +839,175 @@ static unsigned char m11_viewport_fill_color(const M11_ViewportCell* cell) {
     }
 }
 
-static void m11_draw_viewport_panel(unsigned char* framebuffer,
-                                    int framebufferWidth,
-                                    int framebufferHeight,
-                                    const M11_ViewRect* rect,
-                                    const M11_ViewportCell* cell) {
-    int insetX;
-    int insetY;
-    int insetW;
-    int insetH;
-    int dot;
-    int dots;
-    unsigned char fill;
-    int open;
+static unsigned char m11_feature_accent_color(const M11_ViewportCell* cell) {
+    if (!cell || !cell->valid) {
+        return M11_COLOR_DARK_GRAY;
+    }
+    switch (cell->elementType) {
+        case DUNGEON_ELEMENT_DOOR: return M11_COLOR_LIGHT_RED;
+        case DUNGEON_ELEMENT_STAIRS: return M11_COLOR_YELLOW;
+        case DUNGEON_ELEMENT_PIT: return M11_COLOR_BROWN;
+        case DUNGEON_ELEMENT_TELEPORTER: return M11_COLOR_LIGHT_CYAN;
+        case DUNGEON_ELEMENT_FAKEWALL: return M11_COLOR_MAGENTA;
+        case DUNGEON_ELEMENT_CORRIDOR: return M11_COLOR_LIGHT_GRAY;
+        default: return M11_COLOR_WHITE;
+    }
+}
 
-    if (!rect || !cell) {
+static void m11_draw_wall_face(unsigned char* framebuffer,
+                               int framebufferWidth,
+                               int framebufferHeight,
+                               const M11_ViewRect* rect,
+                               const M11_ViewportCell* cell,
+                               int depthIndex) {
+    int inset = 6 + depthIndex * 4;
+    int faceX = rect->x + inset;
+    int faceY = rect->y + inset / 2;
+    int faceW = rect->w - inset * 2;
+    int faceH = rect->h - inset;
+    unsigned char accent = m11_feature_accent_color(cell);
+
+    if (faceW < 8 || faceH < 8) {
         return;
     }
 
-    fill = m11_viewport_fill_color(cell);
-    open = m11_viewport_cell_is_open(cell);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  rect->x, rect->y, rect->w, rect->h, fill);
-
-    if (open) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      rect->x, rect->y, rect->w, rect->h * 2 / 3, M11_COLOR_DARK_GRAY);
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      rect->x, rect->y + rect->h * 2 / 3, rect->w, rect->h / 3,
-                      M11_COLOR_BROWN);
-    }
-
+                  faceX, faceY, faceW, faceH,
+                  cell->elementType == DUNGEON_ELEMENT_WALL ? M11_COLOR_DARK_GRAY : m11_viewport_fill_color(cell));
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  rect->x, rect->y, rect->w, rect->h,
-                  open ? M11_COLOR_LIGHT_GRAY : M11_COLOR_WHITE);
-
-    insetX = rect->x + rect->w / 6;
-    insetY = rect->y + rect->h / 6;
-    insetW = rect->w - (rect->w / 3);
-    insetH = rect->h - (rect->h / 3);
+                  faceX, faceY, faceW, faceH, accent);
 
     switch (cell->elementType) {
         case DUNGEON_ELEMENT_DOOR:
-            if (cell->doorVertical) {
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              rect->x + rect->w / 2 - 2, insetY,
-                              4, insetH, M11_COLOR_YELLOW);
-            } else {
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              insetX, rect->y + rect->h / 2 - 2,
-                              insetW, 4, M11_COLOR_YELLOW);
-            }
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX, insetY, insetW, insetH, M11_COLOR_LIGHT_RED);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           faceX + faceW / 2, faceY + 3, faceY + faceH - 4, M11_COLOR_YELLOW);
             if (cell->doorState > 0 && cell->doorState < 5) {
-                int barHeight = (insetH * cell->doorState) / 5;
-                if (barHeight < 2) {
-                    barHeight = 2;
-                }
+                int shutHeight = (faceH - 8) * cell->doorState / 5;
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              insetX + 2, insetY + insetH - barHeight,
-                              insetW - 4, barHeight - 1, M11_COLOR_DARK_GRAY);
+                              faceX + 3, faceY + faceH - 4 - shutHeight,
+                              faceW - 6, shutHeight, M11_COLOR_BLACK);
             }
+            break;
+        case DUNGEON_ELEMENT_STAIRS:
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           faceX + 4, faceX + faceW - 5, faceY + faceH - 5, M11_COLOR_YELLOW);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           faceX + 8, faceX + faceW - 9, faceY + faceH - 10, M11_COLOR_YELLOW);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           faceX + 12, faceX + faceW - 13, faceY + faceH - 15, M11_COLOR_YELLOW);
             break;
         case DUNGEON_ELEMENT_PIT:
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX, rect->y + rect->h - insetH / 2,
-                          insetW, insetH / 3, M11_COLOR_BLACK);
+                          faceX + 5, faceY + faceH / 2,
+                          faceW - 10, faceH / 3, M11_COLOR_BLACK);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX, rect->y + rect->h - insetH / 2,
-                          insetW, insetH / 3, M11_COLOR_BROWN);
-            break;
-        case DUNGEON_ELEMENT_STAIRS:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX, rect->y + rect->h - 6,
-                          insetW, 2, M11_COLOR_YELLOW);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX + 4, rect->y + rect->h - 11,
-                          insetW - 8, 2, M11_COLOR_YELLOW);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX + 8, rect->y + rect->h - 16,
-                          insetW - 16, 2, M11_COLOR_YELLOW);
+                          faceX + 5, faceY + faceH / 2,
+                          faceW - 10, faceH / 3, M11_COLOR_BROWN);
             break;
         case DUNGEON_ELEMENT_TELEPORTER:
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX, insetY, insetW, insetH, M11_COLOR_LIGHT_CYAN);
+                          faceX + 5, faceY + 4, faceW - 10, faceH - 8, M11_COLOR_LIGHT_CYAN);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX + 4, insetY + 3, insetW - 8, insetH - 6, M11_COLOR_WHITE);
+                          faceX + 10, faceY + 8, faceW - 20, faceH - 16, M11_COLOR_WHITE);
             break;
         case DUNGEON_ELEMENT_FAKEWALL:
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX, insetY, insetW, insetH, M11_COLOR_MAGENTA);
+                          faceX + 5, faceY + 4, faceW - 10, faceH - 8, M11_COLOR_MAGENTA);
             break;
         case DUNGEON_ELEMENT_CORRIDOR:
         default:
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          insetX, insetY, insetW, insetH, M11_COLOR_DARK_GRAY);
+                          faceX + 4, faceY + 4, faceW - 8, faceH - 8, M11_COLOR_DARK_GRAY);
             break;
     }
 
     if (cell->thingCount > 0) {
-        dots = cell->thingCount > 3 ? 3 : cell->thingCount;
+        int dots = cell->thingCount > 3 ? 3 : cell->thingCount;
+        int dot;
         for (dot = 0; dot < dots; ++dot) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          rect->x + rect->w / 2 - 7 + dot * 5,
-                          rect->y + rect->h / 2 - 1,
+                          faceX + faceW / 2 - 6 + dot * 5,
+                          faceY + faceH / 2 - 1,
                           3, 3, M11_COLOR_WHITE);
         }
+    }
+}
+
+static void m11_draw_corridor_frame(unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    const M11_ViewRect* outer,
+                                    const M11_ViewRect* inner,
+                                    int depthIndex) {
+    unsigned char wallShade = depthIndex == 0 ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK;
+    unsigned char edge = depthIndex == 0 ? M11_COLOR_LIGHT_GRAY : M11_COLOR_DARK_GRAY;
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  outer->x, outer->y, outer->w, inner->y - outer->y, wallShade);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  outer->x, inner->y + inner->h, outer->w,
+                  (outer->y + outer->h) - (inner->y + inner->h), M11_COLOR_BROWN);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  outer->x, inner->y, inner->x - outer->x, inner->h, wallShade);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  inner->x + inner->w, inner->y,
+                  (outer->x + outer->w) - (inner->x + inner->w), inner->h, wallShade);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  outer->x, outer->y, outer->w, outer->h, edge);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  inner->x, inner->y, inner->w, inner->h, M11_COLOR_LIGHT_GRAY);
+}
+
+static void m11_draw_side_feature(unsigned char* framebuffer,
+                                  int framebufferWidth,
+                                  int framebufferHeight,
+                                  const M11_ViewRect* outer,
+                                  const M11_ViewRect* inner,
+                                  const M11_ViewportCell* cell,
+                                  int side,
+                                  int depthIndex) {
+    int paneX;
+    int paneW;
+    int paneY = inner->y + 3;
+    int paneH = inner->h - 6;
+    unsigned char accent;
+
+    if (!cell || !cell->valid || paneH <= 4) {
+        return;
+    }
+
+    if (side < 0) {
+        paneX = outer->x + 4;
+        paneW = (inner->x - outer->x) - 8;
+    } else {
+        paneX = inner->x + inner->w + 4;
+        paneW = (outer->x + outer->w) - paneX - 4;
+    }
+    if (paneW <= 4) {
+        return;
+    }
+
+    accent = m11_feature_accent_color(cell);
+    if (m11_viewport_cell_is_open(cell)) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      paneX, paneY, paneW, paneH, M11_COLOR_BLACK);
+        if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          paneX + 1, paneY + 1, paneW - 2, paneH - 2, M11_COLOR_LIGHT_CYAN);
+        } else if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          paneX + 1, paneY + paneH / 2, paneW - 2, paneH / 3, M11_COLOR_BROWN);
+        }
+    } else {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      paneX, paneY, paneW, paneH,
+                      depthIndex == 0 ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      paneX, paneY, paneW, paneH, accent);
+    }
+
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
+        m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                       paneX + paneW / 2, paneY + 2, paneY + paneH - 3, M11_COLOR_YELLOW);
     }
 }
 
@@ -917,69 +1015,60 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
                               int framebufferHeight) {
-    static const M11_ViewRect viewport = {14, 30, 224, 136};
-    static const M11_ViewRect depthRows[3] = {
-        {18, 108, 216, 50},
-        {42, 68, 168, 32},
-        {70, 38, 112, 22}
+    static const M11_ViewRect viewport = {12, 24, 196, 118};
+    static const M11_ViewRect frames[4] = {
+        {20, 32, 180, 102},
+        {40, 44, 140, 78},
+        {58, 56, 104, 54},
+        {74, 66, 72, 34}
     };
     M11_ViewportCell cells[3][3];
-    int visible[3][3];
-    int col;
     int depth;
+    int occluded = 0;
 
     memset(cells, 0, sizeof(cells));
-    memset(visible, 0, sizeof(visible));
 
     for (depth = 0; depth < 3; ++depth) {
-        for (col = 0; col < 3; ++col) {
-            (void)m11_sample_viewport_cell(state, depth + 1, col - 1, &cells[depth][col]);
-        }
-    }
-
-    for (col = 0; col < 3; ++col) {
-        int blocked = 0;
-        for (depth = 0; depth < 3; ++depth) {
-            visible[depth][col] = blocked ? 0 : 1;
-            if (visible[depth][col] && !m11_viewport_cell_is_open(&cells[depth][col])) {
-                blocked = 1;
-            }
+        int side;
+        for (side = 0; side < 3; ++side) {
+            (void)m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side]);
         }
     }
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  viewport.x + 2, viewport.y + 2, viewport.w - 4, 48, M11_COLOR_NAVY);
+                  viewport.x + 2, viewport.y + 2, viewport.w - 4, viewport.h / 2, M11_COLOR_NAVY);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  viewport.x + 2, viewport.y + 50, viewport.w - 4, viewport.h - 52,
+                  viewport.x + 2, viewport.y + viewport.h / 2, viewport.w - 4, viewport.h / 2 - 2,
                   M11_COLOR_DARK_GRAY);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  viewport.x - 2, viewport.y - 2, viewport.w + 4, viewport.h + 4, M11_COLOR_YELLOW);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
 
-    for (depth = 2; depth >= 0; --depth) {
-        M11_ViewRect row = depthRows[depth];
-        int gap = depth == 2 ? 6 : (depth == 1 ? 5 : 4);
-        int usable = row.w - gap * 2;
-        int baseWidth = usable / 3;
-        int extra = usable - baseWidth * 3;
-        int x = row.x;
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      row.x - 2, row.y - 2, row.w + 4, row.h + 4, M11_COLOR_DARK_GRAY);
-        for (col = 0; col < 3; ++col) {
-            M11_ViewRect cellRect;
-            int panelWidth = baseWidth + (col == 1 ? extra : 0);
-            cellRect.x = x;
-            cellRect.y = row.y;
-            cellRect.w = panelWidth;
-            cellRect.h = row.h;
-            if (visible[depth][col]) {
-                m11_draw_viewport_panel(framebuffer, framebufferWidth, framebufferHeight,
-                                        &cellRect, &cells[depth][col]);
+    for (depth = 0; depth < 3; ++depth) {
+        m11_draw_corridor_frame(framebuffer, framebufferWidth, framebufferHeight,
+                                &frames[depth], &frames[depth + 1], depth);
+    }
+
+    for (depth = 0; depth < 3; ++depth) {
+        m11_draw_side_feature(framebuffer, framebufferWidth, framebufferHeight,
+                              &frames[depth], &frames[depth + 1], &cells[depth][0], -1, depth);
+        m11_draw_side_feature(framebuffer, framebufferWidth, framebufferHeight,
+                              &frames[depth], &frames[depth + 1], &cells[depth][2], 1, depth);
+        if (!occluded) {
+            m11_draw_wall_face(framebuffer, framebufferWidth, framebufferHeight,
+                               &frames[depth + 1], &cells[depth][1], depth);
+            if (!m11_viewport_cell_is_open(&cells[depth][1])) {
+                occluded = 1;
             }
-            x += panelWidth + gap;
         }
     }
+
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                   viewport.x + 6, viewport.x + viewport.w - 7,
+                   viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
 }
 
 static void m11_format_champion_name(const unsigned char* raw,
@@ -1017,13 +1106,13 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                  int framebufferHeight) {
     int slot;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        int x = 18 + slot * 74;
+        int x = 12 + slot * 77;
         int y = 160;
         char line[48];
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x, y, 68, 28, M11_COLOR_BLACK);
+                      x, y, 71, 28, M11_COLOR_BLACK);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x, y, 68, 28,
+                      x, y, 71, 28,
                       slot < state->world.party.championCount ? M11_COLOR_LIGHT_CYAN : M11_COLOR_DARK_GRAY);
         if (slot < state->world.party.championCount && state->world.party.champions[slot].present) {
             char name[16];
@@ -1033,17 +1122,17 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             m11_format_champion_name(champ->name, name, sizeof(name));
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 4, name, &g_text_small);
-            hpWidth = champ->hp.maximum > 0 ? (champ->hp.current * 56) / champ->hp.maximum : 0;
-            staminaWidth = champ->stamina.maximum > 0 ? (champ->stamina.current * 56) / champ->stamina.maximum : 0;
+            hpWidth = champ->hp.maximum > 0 ? (champ->hp.current * 59) / champ->hp.maximum : 0;
+            staminaWidth = champ->stamina.maximum > 0 ? (champ->stamina.current * 59) / champ->stamina.maximum : 0;
             snprintf(line, sizeof(line), "HP %u", (unsigned int)champ->hp.current);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 12, line, &g_text_small);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 20, 56, 2, M11_COLOR_DARK_GRAY);
+                          x + 4, y + 20, 59, 2, M11_COLOR_DARK_GRAY);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 20, hpWidth, 2, M11_COLOR_LIGHT_RED);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 24, 56, 2, M11_COLOR_DARK_GRAY);
+                          x + 4, y + 24, 59, 2, M11_COLOR_DARK_GRAY);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 24, staminaWidth, 2, M11_COLOR_LIGHT_GREEN);
         } else {
@@ -1067,7 +1156,7 @@ static void m11_draw_map_panel(const M11_GameViewState* state,
     int gx;
     int gy;
     int baseX = 228;
-    int baseY = 94;
+    int baseY = 78;
     if (!state || !state->active) {
         return;
     }
@@ -1141,42 +1230,54 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_YELLOW);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, 12, framebufferWidth - 24, 16, M11_COLOR_BLACK);
+                  12, 12, framebufferWidth - 24, 12, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  12, 24, 196, 120, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  214, 24, 94, 120, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  12, 146, 296, 46, M11_COLOR_BLACK);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 14, state->title[0] != '\0' ? state->title : "GAME VIEW", &g_text_shadow);
+                  18, 13, state->title[0] != '\0' ? state->title : "GAME VIEW", &g_text_shadow);
+
+    snprintf(line, sizeof(line), "%s %s", m11_direction_name(state->world.party.direction), state->lastAction);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  150, 13, line, &g_text_small);
+
+    snprintf(line, sizeof(line), "TICK %u", (unsigned int)state->world.gameTick);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  258, 13, line, &g_text_small);
 
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  224, 34, 82, 52, M11_COLOR_BLACK);
+                  218, 28, 86, 42, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  224, 34, 82, 52, M11_COLOR_LIGHT_CYAN);
+                  218, 28, 86, 42, M11_COLOR_LIGHT_CYAN);
 
     snprintf(line, sizeof(line), "%s %s",
              m11_source_name(state->sourceKind),
              state->sourceId[0] != '\0' ? state->sourceId : "launcher");
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 40, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 34, line, &g_text_small);
     snprintf(line, sizeof(line), "MAP %d/%d",
              state->world.party.mapIndex + 1,
              (int)state->world.dungeon->header.mapCount);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 52, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 46, line, &g_text_small);
     snprintf(line, sizeof(line), "%d:%d %s",
              state->world.party.mapX,
              state->world.party.mapY,
              m11_direction_name(state->world.party.direction));
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 64, line, &g_text_small);
-    snprintf(line, sizeof(line), "TICK %u", (unsigned int)state->world.gameTick);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 76, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 58, line, &g_text_small);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  224, 90, 82, 64, M11_COLOR_BLACK);
+                  218, 74, 86, 68, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  224, 90, 82, 64, M11_COLOR_LIGHT_BLUE);
+                  218, 74, 86, 68, M11_COLOR_LIGHT_BLUE);
     m11_draw_map_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
     snprintf(line, sizeof(line), "TILE %s",
              F0503_DUNGEON_GetElementName_Compat(currentSquare >> 5));
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 18, 146, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 149, line, &g_text_small);
     if (firstThing != THING_ENDOFLIST && firstThing != THING_NONE) {
         snprintf(line, sizeof(line), "THING %s X%d",
                  F0505_DUNGEON_GetThingTypeName_Compat(THING_GET_TYPE(firstThing)),
@@ -1184,14 +1285,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     } else {
         snprintf(line, sizeof(line), "THING NONE X%d", squareThingCount);
     }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 110, 146, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 100, 149, line, &g_text_small);
     snprintf(line, sizeof(line), "HASH %08X", (unsigned int)state->lastWorldHash);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 236, 146, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 216, 149, line, &g_text_small);
+
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  218, 128, state->lastOutcome, &g_text_small);
 
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
-
-    snprintf(line, sizeof(line), "%s", state->lastAction);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 122, line, &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 228, 134,
-                  state->lastOutcome, &g_text_small);
 }

@@ -8,22 +8,34 @@
 enum {
     PROBE_COLOR_BLACK = 0,
     PROBE_COLOR_BROWN = 6,
+    PROBE_COLOR_DARK_GRAY = 8,
     PROBE_COLOR_LIGHT_RED = 12,
     PROBE_COLOR_MAGENTA = 13,
+    PROBE_COLOR_YELLOW = 14,
     PROBE_COLOR_LIGHT_GREEN = 10,
     PROBE_COLOR_LIGHT_BLUE = 9,
     PROBE_COLOR_LIGHT_CYAN = 11
 };
 
 enum {
-    PROBE_VIEWPORT_X = 14,
-    PROBE_VIEWPORT_Y = 30,
-    PROBE_VIEWPORT_W = 224,
-    PROBE_VIEWPORT_H = 136,
-    PROBE_MAP_BOX_X = 224,
-    PROBE_MAP_BOX_Y = 90,
-    PROBE_MAP_BOX_W = 82,
-    PROBE_MAP_BOX_H = 64
+    PROBE_VIEWPORT_X = 12,
+    PROBE_VIEWPORT_Y = 24,
+    PROBE_VIEWPORT_W = 196,
+    PROBE_VIEWPORT_H = 118,
+    PROBE_SIDEBAR_X = 214,
+    PROBE_SIDEBAR_Y = 24,
+    PROBE_SIDEBAR_W = 94,
+    PROBE_SIDEBAR_H = 120,
+    PROBE_MAP_BOX_X = 218,
+    PROBE_MAP_BOX_Y = 74,
+    PROBE_MAP_BOX_W = 86,
+    PROBE_MAP_BOX_H = 68,
+    PROBE_BOTTOM_PANEL_X = 12,
+    PROBE_BOTTOM_PANEL_Y = 146,
+    PROBE_BOTTOM_PANEL_W = 296,
+    PROBE_BOTTOM_PANEL_H = 46,
+    PROBE_PARTY_PANEL_Y = 160,
+    PROBE_PARTY_PANEL_H = 28
 };
 
 typedef struct {
@@ -331,13 +343,25 @@ int main(int argc, char** argv) {
 
     probe_record(&tally,
                  "INV_GV_10",
-                 probe_count_color(syntheticFramebuffer, 320, 91, 108, 70, 50, PROBE_COLOR_BROWN) > 250U &&
-                     probe_count_color(syntheticFramebuffer, 320, 91, 108, 70, 50, PROBE_COLOR_LIGHT_RED) > 8U,
-                 "door panels render distinctly in the near center cell");
+                 probe_count_color(syntheticFramebuffer,
+                                   320,
+                                   PROBE_VIEWPORT_X,
+                                   PROBE_VIEWPORT_Y,
+                                   PROBE_VIEWPORT_W,
+                                   PROBE_VIEWPORT_H,
+                                   PROBE_COLOR_LIGHT_RED) > 3U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_VIEWPORT_X,
+                                       PROBE_VIEWPORT_Y,
+                                       PROBE_VIEWPORT_W,
+                                       PROBE_VIEWPORT_H,
+                                       PROBE_COLOR_YELLOW) > 20U,
+                 "synthetic feature cells add door and stair accents inside the viewport");
 
     probe_record(&tally,
                  "INV_GV_11",
-                 probe_count_color(syntheticFramebuffer, 320, 74, 40, 28, 18, PROBE_COLOR_MAGENTA) == 0U,
+                 probe_count_color(syntheticFramebuffer, 320, 70, 58, 72, 34, PROBE_COLOR_MAGENTA) == 0U,
                  "a near wall occludes the far cell behind it in the same column");
 
     probe_record(&tally,
@@ -354,6 +378,58 @@ int main(int argc, char** argv) {
                  "INV_GV_13",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_RETURN_TO_MENU,
                  "escape from the game view returns control to the launcher");
+
+    probe_record(&tally,
+                 "INV_GV_14",
+                 probe_count_non_zero(framebuffer,
+                                      320,
+                                      PROBE_SIDEBAR_X,
+                                      PROBE_SIDEBAR_Y,
+                                      PROBE_SIDEBAR_W,
+                                      PROBE_SIDEBAR_H) > 1200U &&
+                     probe_count_color(framebuffer,
+                                       320,
+                                       PROBE_SIDEBAR_X,
+                                       PROBE_SIDEBAR_Y,
+                                       PROBE_SIDEBAR_W,
+                                       PROBE_SIDEBAR_H,
+                                       PROBE_COLOR_LIGHT_CYAN) > 40U,
+                 "sidebar HUD renders separate status and map framing beside the viewport");
+
+    probe_record(&tally,
+                 "INV_GV_15",
+                 probe_count_non_zero(framebuffer,
+                                      320,
+                                      PROBE_BOTTOM_PANEL_X,
+                                      PROBE_BOTTOM_PANEL_Y,
+                                      PROBE_BOTTOM_PANEL_W,
+                                      PROBE_BOTTOM_PANEL_H) > 1800U &&
+                     probe_count_color(framebuffer,
+                                       320,
+                                       PROBE_BOTTOM_PANEL_X,
+                                       PROBE_PARTY_PANEL_Y,
+                                       PROBE_BOTTOM_PANEL_W,
+                                       PROBE_PARTY_PANEL_H,
+                                       PROBE_COLOR_DARK_GRAY) > 120U,
+                 "bottom HUD renders a dedicated party/status strip instead of a single inspector blob");
+
+    probe_record(&tally,
+                 "INV_GV_16",
+                 probe_count_color(syntheticFramebuffer,
+                                   320,
+                                   PROBE_VIEWPORT_X,
+                                   PROBE_VIEWPORT_Y,
+                                   PROBE_VIEWPORT_W,
+                                   PROBE_VIEWPORT_H,
+                                   PROBE_COLOR_YELLOW) > 20U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_VIEWPORT_X,
+                                       PROBE_VIEWPORT_Y,
+                                       PROBE_VIEWPORT_W,
+                                       PROBE_VIEWPORT_H,
+                                       PROBE_COLOR_LIGHT_CYAN) > 20U,
+                 "viewport framing uses layered face bands and bright dungeon edges");
 
     probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);
