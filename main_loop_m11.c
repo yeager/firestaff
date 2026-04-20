@@ -66,6 +66,14 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 6U && strncmp(token, "return", len) == 0)) {
         return M12_MENU_INPUT_ACCEPT;
     }
+    if ((len == 5U && strncmp(token, "space", len) == 0) ||
+        (len == 3U && strncmp(token, "act", len) == 0)) {
+        return M12_MENU_INPUT_ACTION;
+    }
+    if ((len == 3U && strncmp(token, "tab", len) == 0) ||
+        (len == 5U && strncmp(token, "champ", len) == 0)) {
+        return M12_MENU_INPUT_CYCLE_CHAMPION;
+    }
     if ((len == 3U && strncmp(token, "esc", len) == 0) ||
         (len == 6U && strncmp(token, "escape", len) == 0) ||
         (len == 4U && strncmp(token, "back", len) == 0)) {
@@ -126,6 +134,10 @@ static M12_MenuInput m11_poll_menu_input(int* quitRequested) {
                     return M12_MENU_INPUT_ACCEPT;
                 case SDLK_ESCAPE:
                     return M12_MENU_INPUT_BACK;
+                case SDLK_SPACE:
+                    return M12_MENU_INPUT_ACTION;
+                case SDLK_TAB:
+                    return M12_MENU_INPUT_CYCLE_CHAMPION;
                 default:
                     break;
             }
@@ -157,6 +169,10 @@ static M12_MenuInput m11_poll_menu_input(int* quitRequested) {
                     return M12_MENU_INPUT_ACCEPT;
                 case SDLK_ESCAPE:
                     return M12_MENU_INPUT_BACK;
+                case SDLK_SPACE:
+                    return M12_MENU_INPUT_ACTION;
+                case SDLK_TAB:
+                    return M12_MENU_INPUT_CYCLE_CHAMPION;
                 default:
                     break;
             }
@@ -265,6 +281,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                 }
                 if (!launchHandled) {
+                    if (input == M12_MENU_INPUT_ACTION || input == M12_MENU_INPUT_CYCLE_CHAMPION) {
+                        input = M12_MENU_INPUT_NONE;
+                    }
                     M12_StartupMenu_HandleInput(&menuState, input);
                     if (menuState.shouldExit) {
                         break;

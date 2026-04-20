@@ -236,7 +236,7 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     state->world.party.mapX = 2;
     state->world.party.mapY = 3;
     state->world.party.direction = DIR_NORTH;
-    state->world.party.championCount = 1;
+    state->world.party.championCount = 2;
     state->world.party.activeChampionIndex = 0;
     state->world.party.champions[0].present = 1;
     memcpy(state->world.party.champions[0].name, "TIGGY", 5);
@@ -246,6 +246,14 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     state->world.party.champions[0].stamina.maximum = 80;
     state->world.party.champions[0].food = 180;
     state->world.party.champions[0].water = 140;
+    state->world.party.champions[1].present = 1;
+    memcpy(state->world.party.champions[1].name, "HALK", 4);
+    state->world.party.champions[1].hp.current = 91;
+    state->world.party.champions[1].hp.maximum = 110;
+    state->world.party.champions[1].stamina.current = 60;
+    state->world.party.champions[1].stamina.maximum = 90;
+    state->world.party.champions[1].food = 200;
+    state->world.party.champions[1].water = 155;
 
     probe_set_square(dungeon, 2, 3, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     probe_set_square(dungeon, 1, 2, (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
@@ -397,14 +405,31 @@ int main(int argc, char** argv) {
                  probe_init_synthetic_view(&syntheticView),
                  "synthetic viewport harness initialises a focused 3x3 sample state");
 
-    initialTick = syntheticView.world.gameTick;
     probe_record(&tally,
                  "INV_GV_07",
                  M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == 0 &&
+                     strcmp(syntheticView.lastAction, "INSPECT") == 0 &&
+                     strcmp(syntheticView.lastOutcome, "ENEMY SPOTTED") == 0,
+                 "enter now inspects the front-cell target without spending a real tick");
+
+    probe_record(&tally,
+                 "INV_GV_07B",
+                 M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_CYCLE_CHAMPION) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.party.activeChampionIndex == 1 &&
+                     strcmp(syntheticView.lastAction, "CHAMP") == 0 &&
+                     strstr(syntheticView.inspectTitle, "HALK READY") != NULL,
+                 "tab cycles the active front champion and updates the in-view readout");
+
+    initialTick = syntheticView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_07C",
+                 M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACTION) == M11_GAME_INPUT_REDRAW &&
                      syntheticView.world.gameTick == initialTick + 1 &&
                      strcmp(syntheticView.lastAction, "ATTACK") == 0 &&
-                     strstr(syntheticView.inspectTitle, "ATTACKS") != NULL,
-                 "accept turns front-cell creature contact into a real strike tick instead of a passive inspect");
+                     strstr(syntheticView.inspectTitle, "ATTACKS") != NULL &&
+                     strstr(syntheticView.inspectTitle, "HALK") != NULL,
+                 "space turns front-cell creature contact into a real strike tick for the selected champion");
 
     memset(syntheticFramebuffer, 0, sizeof(syntheticFramebuffer));
     M11_GameView_Draw(&syntheticView, syntheticFramebuffer, 320, 200);

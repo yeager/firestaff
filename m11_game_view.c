@@ -544,6 +544,7 @@ static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static void m11_get_active_champion_label(const M11_GameViewState* state,
                                           char* out,
                                           size_t outSize);
+static int m11_cycle_active_champion(M11_GameViewState* state);
 
 void M11_GameView_Init(M11_GameViewState* state) {
     if (!state) {
@@ -598,7 +599,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
     m11_refresh_hash(state);
     m11_set_status(state, "BOOT", "GAME DATA LOADED");
-    m11_set_inspect_readout(state, "READY", "ENTER WAITS, OR INSPECTS THE FRONT CELL WHEN SOMETHING IS THERE");
+    m11_set_inspect_readout(state, "READY", "ENTER INSPECTS, SPACE ACTS, TAB PICKS THE FRONT CHAMPION");
     return 1;
 }
 
@@ -727,17 +728,24 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             label = "TURN RIGHT";
             break;
         case M12_MENU_INPUT_ACCEPT:
+            if (m11_inspect_front_cell(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        case M12_MENU_INPUT_ACTION:
             if (m11_front_cell_has_attack_target(state)) {
                 command = CMD_ATTACK;
                 label = "ATTACK";
                 break;
             }
-            if (m11_inspect_front_cell(state)) {
-                return M11_GAME_INPUT_REDRAW;
-            }
             command = CMD_NONE;
             label = "WAIT";
             break;
+        case M12_MENU_INPUT_CYCLE_CHAMPION:
+            if (m11_cycle_active_champion(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
         case M12_MENU_INPUT_BACK:
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
@@ -2092,6 +2100,38 @@ static void m11_get_active_champion_label(const M11_GameViewState* state,
                              outSize);
 }
 
+static int m11_cycle_active_champion(M11_GameViewState* state) {
+    int start;
+    int step;
+    char champion[16];
+
+    if (!state || !state->active || state->world.party.championCount <= 0) {
+        return 0;
+    }
+
+    start = state->world.party.activeChampionIndex;
+    if (start < 0 || start >= CHAMPION_MAX_PARTY ||
+        !state->world.party.champions[start].present) {
+        start = 0;
+    }
+
+    for (step = 1; step <= CHAMPION_MAX_PARTY; ++step) {
+        int candidate = (start + step) % CHAMPION_MAX_PARTY;
+        if (candidate < state->world.party.championCount &&
+            state->world.party.champions[candidate].present) {
+            state->world.party.activeChampionIndex = candidate;
+            m11_get_active_champion_label(state, champion, sizeof(champion));
+            m11_set_status(state, "CHAMP", "ACTIVE CHAMPION READY");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s READY", champion);
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "SPACE ACTS, ENTER INSPECTS, TAB CYCLES THE FRONT CHAMPION");
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
@@ -2166,51 +2206,51 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     if (cell->summary.groups > 0) {
         m11_get_active_champion_label(state, champion, sizeof(champion));
         snprintf(outAction, outActionSize, "ATTACK WITH %s", champion);
-        snprintf(outHint, outHintSize, "ENTER STRIKES, LEFT OR RIGHT REPOSITIONS");
+        snprintf(outHint, outHintSize, "SPACE STRIKES, ENTER INSPECTS, TAB SWAPS CHAMPION");
         return;
     }
     if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
         snprintf(outAction, outActionSize, "FOCUS ACTIVE EFFECT");
-        snprintf(outHint, outHintSize, "WAIT OR TURN, THE FRONT CELL IS HOT");
+        snprintf(outHint, outHintSize, "SPACE WAITS, ENTER INSPECTS, TURN IF THE CELL STAYS HOT");
         return;
     }
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
         if (m11_viewport_cell_is_open(cell)) {
             snprintf(outAction, outActionSize, "FOCUS OPEN DOOR");
-            snprintf(outHint, outHintSize, "UP TO CROSS, DOWN TO RESET");
+            snprintf(outHint, outHintSize, "UP TO CROSS, ENTER INSPECTS, SPACE WAITS");
         } else {
             snprintf(outAction, outActionSize, "FOCUS CLOSED DOOR");
-            snprintf(outHint, outHintSize, "TURN OR WAIT, THE WAY IS BLOCKED");
+            snprintf(outHint, outHintSize, "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH");
         }
         return;
     }
     if (cell->elementType == DUNGEON_ELEMENT_PIT) {
         snprintf(outAction, outActionSize, "FOCUS PIT");
-        snprintf(outHint, outHintSize, "UP RISKS A DROP, TURN IF UNSURE");
+        snprintf(outHint, outHintSize, "UP RISKS A DROP, ENTER INSPECTS BEFORE COMMITTING");
         return;
     }
     if (cell->elementType == DUNGEON_ELEMENT_STAIRS) {
         snprintf(outAction, outActionSize, "FOCUS STAIRS");
-        snprintf(outHint, outHintSize, "UP TO CLIMB THROUGH THE NEXT TILE");
+        snprintf(outHint, outHintSize, "UP CLIMBS, ENTER INSPECTS, SPACE WAITS");
         return;
     }
     if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
         snprintf(outAction, outActionSize, "FOCUS TELEPORTER");
-        snprintf(outHint, outHintSize, "UP TO TEST THE RIFT");
+        snprintf(outHint, outHintSize, "UP TESTS THE RIFT, ENTER INSPECTS FIRST");
         return;
     }
     if (cell->summary.items > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
         snprintf(outAction, outActionSize, "FOCUS INTERACTABLE");
-        snprintf(outHint, outHintSize, "UP TO CLOSE DISTANCE, CHECK THE FLOOR");
+        snprintf(outHint, outHintSize, "ENTER INSPECTS, UP CLOSES DISTANCE, SPACE WAITS");
         return;
     }
     if (m11_viewport_cell_is_open(cell)) {
         snprintf(outAction, outActionSize, "FOCUS CLEAR PASSAGE");
-        snprintf(outHint, outHintSize, "UP ADVANCES, DOWN BACKSTEPS");
+        snprintf(outHint, outHintSize, "UP ADVANCES, ENTER INSPECTS, TAB SWAPS CHAMPION");
         return;
     }
     snprintf(outAction, outActionSize, "FOCUS BLOCKED");
-    snprintf(outHint, outHintSize, "TURN LEFT OR RIGHT TO SEARCH");
+    snprintf(outHint, outHintSize, "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH");
 }
 
 static void m11_draw_map_panel(const M11_GameViewState* state,
@@ -2332,7 +2372,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   150, 13, line, &g_text_small);
 
-    snprintf(line, sizeof(line), "ENTER ACT  ESC MENU");
+    snprintf(line, sizeof(line), "ENTER INSPECT SPACE ACT TAB CHAMP");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   214, 13, line, &g_text_small);
 

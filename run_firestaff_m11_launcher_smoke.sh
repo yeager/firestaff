@@ -12,7 +12,7 @@ LOG="$OUT_DIR/launcher_smoke.log"
 SDL_VIDEODRIVER=${SDL_VIDEODRIVER:-dummy} \
     "$HERE/firestaff" \
     --data-dir "$DATA_DIR" \
-    --script enter,right,enter,esc \
+    --script enter,tab,space,esc \
     --duration 80 >"$LOG" 2>&1
 
 echo "M11 launcher smoke: PASS"

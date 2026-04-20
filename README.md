@@ -55,7 +55,8 @@ The project is built around portable C, explicit data structures, and aggressive
 - enters a real game-view state from the launcher
 - displays dungeon-backed view state instead of fake placeholder text
 - movement / turning / ticking mutate real world state
-- Enter now attacks front-cell creature contact through the real tick orchestrator
+- Enter now inspects, Space acts, and Tab cycles the front champion inside the real game view
+- Space now attacks front-cell creature contact through the real tick orchestrator when a target is there
 - pseudo-viewport slice now gives a forward-facing dungeon view
 - HUD readouts now prioritise player-facing labels over raw debug telemetry
 
@@ -72,6 +73,8 @@ Launcher / game view:
 ```sh
 ./firestaff --data-dir "$HOME/.firestaff/data"
 ```
+
+In the game view: `Enter` inspects, `Space` acts or waits, `Tab` cycles the active champion, `Esc` returns to the launcher.
 
 Headless launcher smoke test:
 
