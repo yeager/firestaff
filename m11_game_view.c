@@ -1811,6 +1811,145 @@ static void m11_draw_viewport_feedback_frame(unsigned char* framebuffer,
                    82, 138, 145, color);
 }
 
+static void m11_draw_arrow_glyph(unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight,
+                                 int x,
+                                 int y,
+                                 int direction,
+                                 unsigned char color) {
+    switch (direction) {
+        case DIR_NORTH:
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x, x + 6, y + 1, color);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x + 1, x + 5, y + 2, color);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x + 2, x + 4, y + 3, color);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x + 3, y + 3, y + 8, color);
+            break;
+        case DIR_SOUTH:
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x + 3, y, y + 5, color);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x + 2, x + 4, y + 5, color);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x + 1, x + 5, y + 6, color);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x, x + 6, y + 7, color);
+            break;
+        case DIR_EAST:
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x + 5, y, y + 6, color);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x, x + 5, y + 3, color);
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x + 4, y + 2, color);
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x + 4, y + 4, color);
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x + 6, y + 3, color);
+            break;
+        case DIR_WEST:
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight, x + 1, y, y + 6, color);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight, x + 1, x + 6, y + 3, color);
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x + 2, y + 2, color);
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x + 2, y + 4, color);
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, x, y + 3, color);
+            break;
+        default:
+            break;
+    }
+}
+
+static void m11_draw_control_button(unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    int x,
+                                    int y,
+                                    int w,
+                                    int h,
+                                    const char* label,
+                                    int iconDirection,
+                                    unsigned char border,
+                                    unsigned char fill) {
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, w, h, fill);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, w, h, border);
+    if (iconDirection >= 0) {
+        m11_draw_arrow_glyph(framebuffer, framebufferWidth, framebufferHeight,
+                             x + 2, y + 2, iconDirection, border);
+    }
+    if (label && label[0] != '\0') {
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x + 11, y + 2, label, &g_text_small);
+    }
+}
+
+static void m11_draw_control_strip(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   const M11_ViewportCell* aheadCell) {
+    unsigned char accent = m11_focus_color(aheadCell);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  14, 165, 88, 14, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  14, 165, 88, 14, accent);
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            18, 167, 15, 10, "", DIR_WEST,
+                            M11_COLOR_YELLOW, M11_COLOR_BLACK);
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            35, 167, 15, 10, "", DIR_NORTH,
+                            M11_COLOR_LIGHT_CYAN, M11_COLOR_BLACK);
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            52, 167, 15, 10, "", DIR_EAST,
+                            M11_COLOR_YELLOW, M11_COLOR_BLACK);
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            69, 167, 15, 10, "", DIR_SOUTH,
+                            M11_COLOR_LIGHT_CYAN, M11_COLOR_BLACK);
+    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                            86, 167, 12, 10, "", -1,
+                            accent, M11_COLOR_BLACK);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  88, 169, "A", &g_text_small);
+}
+
+static const char* m11_focus_badge_label(const M11_ViewportCell* cell) {
+    if (!cell || !cell->valid) {
+        return "VOID";
+    }
+    if (cell->summary.groups > 0) {
+        return "CONTACT";
+    }
+    if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
+        return "DANGER";
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
+        return m11_viewport_cell_is_open(cell) ? "ENTRY" : "BARRIER";
+    }
+    if (cell->elementType == DUNGEON_ELEMENT_PIT ||
+        cell->elementType == DUNGEON_ELEMENT_TELEPORTER ||
+        cell->elementType == DUNGEON_ELEMENT_STAIRS) {
+        return "HAZARD";
+    }
+    if (cell->summary.items > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
+        return "INTERACT";
+    }
+    if (m11_viewport_cell_is_open(cell)) {
+        return "CLEAR";
+    }
+    return "STONE";
+}
+
+static void m11_draw_focus_card(unsigned char* framebuffer,
+                                int framebufferWidth,
+                                int framebufferHeight,
+                                const M11_GameViewState* state,
+                                const M11_ViewportCell* aheadCell) {
+    unsigned char accent = m11_focus_color(aheadCell);
+    const char* badge = m11_focus_badge_label(aheadCell);
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  218, 106, 86, 34, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  218, 106, 86, 34, accent);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  222, 110, 26, 8, accent);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  224, 111, badge, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  222, 121, state->inspectTitle, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  222, 129, state->inspectDetail, &g_text_small);
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -2244,22 +2383,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 154, 157, line, &g_text_small);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  14, 165, 292, 14, M11_COLOR_BLACK);
+                  104, 165, 202, 14, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  14, 165, 292, 14, m11_focus_color(&aheadCell));
+                  104, 165, 202, 14, m11_focus_color(&aheadCell));
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 168, focusAction, &g_text_small);
+                  108, 168, focusAction, &g_text_small);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  130, 168, focusHint, &g_text_small);
+                  197, 168, focusHint, &g_text_small);
 
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 108, "READOUT", &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 116, state->inspectTitle, &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 128, state->lastOutcome, &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 136, state->inspectDetail, &g_text_small);
+    m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
+    m11_draw_focus_card(framebuffer, framebufferWidth, framebufferHeight, state, &aheadCell);
 
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_feedback_strip(framebuffer, framebufferWidth, framebufferHeight,
