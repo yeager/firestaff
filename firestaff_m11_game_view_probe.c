@@ -309,6 +309,7 @@ int main(int argc, char** argv) {
     uint32_t initialHash = 0;
     int initialDirection = 0;
     uint32_t initialTick = 0;
+    char quicksavePath[512];
     int moved = 0;
     size_t litPixels = 0;
     size_t i;
@@ -572,6 +573,30 @@ int main(int argc, char** argv) {
                  "INV_GV_13",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_RETURN_TO_MENU,
                  "escape from the game view returns control to the launcher");
+
+    probe_record(&tally,
+                 "INV_GV_13B",
+                 M11_GameView_GetQuickSavePath(&gameView, quicksavePath, sizeof(quicksavePath)) == 1 &&
+                     M11_GameView_QuickSave(&gameView) == 1,
+                 "quicksave serialises the live dungeon-backed world to a recoverable slot");
+
+    initialTick = gameView.world.gameTick;
+    initialHash = gameView.lastWorldHash;
+    gameView.world.party.direction = DIR_SOUTH;
+    gameView.world.party.mapX = 0;
+    gameView.world.party.mapY = 0;
+    gameView.world.gameTick += 7;
+    gameView.lastWorldHash ^= 0xFFFFFFFFu;
+    probe_record(&tally,
+                 "INV_GV_13C",
+                 M11_GameView_QuickLoad(&gameView) == 1 &&
+                     gameView.world.gameTick == initialTick &&
+                     gameView.lastWorldHash == initialHash &&
+                     strcmp(gameView.lastAction, "LOAD") == 0 &&
+                     strcmp(gameView.lastOutcome, "QUICKSAVE RESTORED") == 0,
+                 "quickload restores the exact live world snapshot after local state drift");
+
+    (void)remove(quicksavePath);
 
     probe_record(&tally,
                  "INV_GV_14",

@@ -74,6 +74,8 @@ split_redmcsb_*.py
 
 # Specific top-level binary outputs
 firestaff_headless
+firestaff
+firestaff-*-quicksave.sav
 exports_driver_probe_*
 test_*_pc34_compat
 test_vga_palette

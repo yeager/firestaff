@@ -55,6 +55,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
 int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState);
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
+int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
+                                  char* out,
+                                  size_t outSize);
+int M11_GameView_QuickSave(M11_GameViewState* state);
+int M11_GameView_QuickLoad(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);
 M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,

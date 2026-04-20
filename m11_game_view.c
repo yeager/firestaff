@@ -47,6 +47,14 @@ enum {
     M11_PARTY_SLOT_STEP = 77
 };
 
+enum {
+    M11_QUICKSAVE_HEADER_SIZE = 16
+};
+
+static const unsigned char g_m11_quicksave_magic[8] = {
+    'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
+};
+
 typedef struct {
     char ch;
     unsigned char rows[7];
@@ -300,6 +308,51 @@ static int m11_join_path(char* out,
                   left,
                   (leftLen > 0U && left[leftLen - 1U] == '/') ? "" : "/",
                   right);
+    return rc > 0 && (size_t)rc < outSize;
+}
+
+static void m11_write_u32_le(unsigned char* dst, uint32_t value) {
+    if (!dst) {
+        return;
+    }
+    dst[0] = (unsigned char)(value & 0xFFu);
+    dst[1] = (unsigned char)((value >> 8) & 0xFFu);
+    dst[2] = (unsigned char)((value >> 16) & 0xFFu);
+    dst[3] = (unsigned char)((value >> 24) & 0xFFu);
+}
+
+static uint32_t m11_read_u32_le(const unsigned char* src) {
+    if (!src) {
+        return 0;
+    }
+    return ((uint32_t)src[0]) |
+           ((uint32_t)src[1] << 8) |
+           ((uint32_t)src[2] << 16) |
+           ((uint32_t)src[3] << 24);
+}
+
+int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
+                                  char* out,
+                                  size_t outSize) {
+    const char* envPath;
+    const char* sourceId = "dm1";
+    int rc;
+
+    if (!out || outSize == 0U) {
+        return 0;
+    }
+
+    envPath = getenv("FIRESTAFF_QUICKSAVE_PATH");
+    if (envPath && envPath[0] != '\0') {
+        rc = snprintf(out, outSize, "%s", envPath);
+        return rc > 0 && (size_t)rc < outSize;
+    }
+
+    if (state && state->sourceId[0] != '\0') {
+        sourceId = state->sourceId;
+    }
+
+    rc = snprintf(out, outSize, "firestaff-%s-quicksave.sav", sourceId);
     return rc > 0 && (size_t)rc < outSize;
 }
 
@@ -692,6 +745,158 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     spec.sourceId = "dm1";
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     return M11_GameView_Start(state, &spec);
+}
+
+int M11_GameView_QuickSave(M11_GameViewState* state) {
+    char path[M11_GAME_VIEW_PATH_CAPACITY];
+    FILE* file = NULL;
+    unsigned char* blob = NULL;
+    int blobSize;
+    int bytesWritten = 0;
+    unsigned char header[M11_QUICKSAVE_HEADER_SIZE];
+
+    if (!state || !state->active) {
+        return 0;
+    }
+    if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
+        m11_set_status(state, "SAVE", "SAVE PATH TOO LONG");
+        return 0;
+    }
+
+    blobSize = F0899_WORLD_SerializedSize_Compat(&state->world);
+    if (blobSize <= 0) {
+        m11_set_status(state, "SAVE", "SERIALISE SIZE FAILED");
+        return 0;
+    }
+
+    blob = (unsigned char*)malloc((size_t)blobSize);
+    if (!blob) {
+        m11_set_status(state, "SAVE", "OUT OF MEMORY");
+        return 0;
+    }
+    if (!F0897_WORLD_Serialize_Compat(&state->world, blob, blobSize, &bytesWritten) ||
+        bytesWritten != blobSize) {
+        free(blob);
+        m11_set_status(state, "SAVE", "SERIALISE FAILED");
+        return 0;
+    }
+
+    memcpy(header, g_m11_quicksave_magic, sizeof(g_m11_quicksave_magic));
+    m11_write_u32_le(header + 8, (uint32_t)blobSize);
+    m11_write_u32_le(header + 12, state->lastWorldHash);
+
+    file = fopen(path, "wb");
+    if (!file) {
+        free(blob);
+        m11_set_status(state, "SAVE", "OPEN FAILED");
+        return 0;
+    }
+    if (fwrite(header, 1U, sizeof(header), file) != sizeof(header) ||
+        fwrite(blob, 1U, (size_t)blobSize, file) != (size_t)blobSize ||
+        fclose(file) != 0) {
+        free(blob);
+        m11_set_status(state, "SAVE", "WRITE FAILED");
+        return 0;
+    }
+    free(blob);
+
+    m11_set_status(state, "SAVE", "QUICKSAVE WRITTEN");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SAVE SLOT READY");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "F9 RESTORES TICK %u FROM %s",
+             (unsigned int)state->world.gameTick,
+             path);
+    return 1;
+}
+
+int M11_GameView_QuickLoad(M11_GameViewState* state) {
+    char path[M11_GAME_VIEW_PATH_CAPACITY];
+    FILE* file = NULL;
+    long fileSizeLong;
+    int blobSize;
+    unsigned char header[M11_QUICKSAVE_HEADER_SIZE];
+    unsigned char* blob = NULL;
+    struct GameWorld_Compat loadedWorld;
+    uint32_t expectedHash;
+    uint32_t loadedHash = 0;
+
+    if (!state || !state->active) {
+        return 0;
+    }
+    if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
+        m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
+        return 0;
+    }
+
+    file = fopen(path, "rb");
+    if (!file) {
+        m11_set_status(state, "LOAD", "NO QUICKSAVE FOUND");
+        return 0;
+    }
+    if (fread(header, 1U, sizeof(header), file) != sizeof(header) ||
+        memcmp(header, g_m11_quicksave_magic, sizeof(g_m11_quicksave_magic)) != 0) {
+        fclose(file);
+        m11_set_status(state, "LOAD", "SAVE HEADER INVALID");
+        return 0;
+    }
+
+    blobSize = (int)m11_read_u32_le(header + 8);
+    expectedHash = m11_read_u32_le(header + 12);
+    if (blobSize <= 0) {
+        fclose(file);
+        m11_set_status(state, "LOAD", "SAVE SIZE INVALID");
+        return 0;
+    }
+
+    if (fseek(file, 0L, SEEK_END) != 0) {
+        fclose(file);
+        m11_set_status(state, "LOAD", "SAVE SEEK FAILED");
+        return 0;
+    }
+    fileSizeLong = ftell(file);
+    if (fileSizeLong < (long)M11_QUICKSAVE_HEADER_SIZE ||
+        fileSizeLong != (long)(M11_QUICKSAVE_HEADER_SIZE + blobSize) ||
+        fseek(file, (long)M11_QUICKSAVE_HEADER_SIZE, SEEK_SET) != 0) {
+        fclose(file);
+        m11_set_status(state, "LOAD", "SAVE LENGTH MISMATCH");
+        return 0;
+    }
+
+    blob = (unsigned char*)malloc((size_t)blobSize);
+    if (!blob) {
+        fclose(file);
+        m11_set_status(state, "LOAD", "OUT OF MEMORY");
+        return 0;
+    }
+    if (fread(blob, 1U, (size_t)blobSize, file) != (size_t)blobSize || fclose(file) != 0) {
+        free(blob);
+        m11_set_status(state, "LOAD", "READ FAILED");
+        return 0;
+    }
+
+    memset(&loadedWorld, 0, sizeof(loadedWorld));
+    if (!F0898_WORLD_Deserialize_Compat(&loadedWorld, blob, blobSize, NULL) ||
+        !F0891_ORCH_WorldHash_Compat(&loadedWorld, &loadedHash) ||
+        loadedHash != expectedHash) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        free(blob);
+        m11_set_status(state, "LOAD", "SAVE VERIFY FAILED");
+        return 0;
+    }
+    free(blob);
+
+    F0883_WORLD_Free_Compat(&state->world);
+    state->world = loadedWorld;
+    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    m11_refresh_hash(state);
+    m11_set_status(state, "LOAD", "QUICKSAVE RESTORED");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTORED");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "TICK %u HASH %08X RELOADED FROM %s",
+             (unsigned int)state->world.gameTick,
+             (unsigned int)state->lastWorldHash,
+             path);
+    return 1;
 }
 
 static int m11_apply_tick(M11_GameViewState* state,

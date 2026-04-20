@@ -171,6 +171,20 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_ACTION;
                 case SDLK_TAB:
                     return M12_MENU_INPUT_CYCLE_CHAMPION;
+                case SDLK_F5:
+                    if (gameView && gameView->active && M11_GameView_QuickSave(gameView)) {
+                        if (gameViewResult) {
+                            *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        }
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_F9:
+                    if (gameView && gameView->active && M11_GameView_QuickLoad(gameView)) {
+                        if (gameViewResult) {
+                            *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        }
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();
                     return M12_MENU_INPUT_NONE;
@@ -238,6 +252,20 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_ACTION;
                 case SDLK_TAB:
                     return M12_MENU_INPUT_CYCLE_CHAMPION;
+                case SDLK_F5:
+                    if (gameView && gameView->active && M11_GameView_QuickSave(gameView)) {
+                        if (gameViewResult) {
+                            *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        }
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_F9:
+                    if (gameView && gameView->active && M11_GameView_QuickLoad(gameView)) {
+                        if (gameViewResult) {
+                            *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        }
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();
                     return M12_MENU_INPUT_NONE;
