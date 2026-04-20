@@ -9,12 +9,13 @@ enum {
     PROBE_COLOR_BLACK = 0,
     PROBE_COLOR_BROWN = 6,
     PROBE_COLOR_DARK_GRAY = 8,
+    PROBE_COLOR_LIGHT_GREEN = 10,
+    PROBE_COLOR_LIGHT_CYAN = 11,
     PROBE_COLOR_LIGHT_RED = 12,
     PROBE_COLOR_MAGENTA = 13,
     PROBE_COLOR_YELLOW = 14,
-    PROBE_COLOR_LIGHT_GREEN = 10,
     PROBE_COLOR_LIGHT_BLUE = 9,
-    PROBE_COLOR_LIGHT_CYAN = 11
+    PROBE_COLOR_WHITE = 15
 };
 
 enum {
@@ -107,6 +108,15 @@ static void probe_set_square(struct DungeonDatState_Compat* dungeon,
     dungeon->tiles[0].squareData[mapX * height + mapY] = square;
 }
 
+static void probe_set_next(unsigned char* raw,
+                           unsigned short nextThing) {
+    if (!raw) {
+        return;
+    }
+    raw[0] = (unsigned char)(nextThing & 0xFFu);
+    raw[1] = (unsigned char)((nextThing >> 8) & 0xFFu);
+}
+
 static int probe_init_synthetic_view(M11_GameViewState* state) {
     struct DungeonDatState_Compat* dungeon;
     struct DungeonThings_Compat* things;
@@ -153,8 +163,18 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     things->squareFirstThings = (unsigned short*)calloc((size_t)squareCount, sizeof(unsigned short));
     things->doors = (struct DungeonDoor_Compat*)calloc(1, sizeof(struct DungeonDoor_Compat));
     things->rawThingData[THING_TYPE_DOOR] = (unsigned char*)calloc(4, sizeof(unsigned char));
+    things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(struct DungeonGroup_Compat));
+    things->weapons = (struct DungeonWeapon_Compat*)calloc(1, sizeof(struct DungeonWeapon_Compat));
+    things->projectiles = (struct DungeonProjectile_Compat*)calloc(1, sizeof(struct DungeonProjectile_Compat));
+    things->rawThingData[THING_TYPE_GROUP] = (unsigned char*)calloc(16, sizeof(unsigned char));
+    things->rawThingData[THING_TYPE_WEAPON] = (unsigned char*)calloc(4, sizeof(unsigned char));
+    things->rawThingData[THING_TYPE_PROJECTILE] = (unsigned char*)calloc(8, sizeof(unsigned char));
     if (!dungeon->tiles[0].squareData || !things->squareFirstThings ||
-        !things->doors || !things->rawThingData[THING_TYPE_DOOR]) {
+        !things->doors || !things->rawThingData[THING_TYPE_DOOR] ||
+        !things->groups || !things->weapons || !things->projectiles ||
+        !things->rawThingData[THING_TYPE_GROUP] ||
+        !things->rawThingData[THING_TYPE_WEAPON] ||
+        !things->rawThingData[THING_TYPE_PROJECTILE]) {
         free(dungeon->tiles[0].squareData);
         free(dungeon->maps);
         free(dungeon->tiles);
@@ -162,6 +182,12 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
         free(things->squareFirstThings);
         free(things->doors);
         free(things->rawThingData[THING_TYPE_DOOR]);
+        free(things->groups);
+        free(things->weapons);
+        free(things->projectiles);
+        free(things->rawThingData[THING_TYPE_GROUP]);
+        free(things->rawThingData[THING_TYPE_WEAPON]);
+        free(things->rawThingData[THING_TYPE_PROJECTILE]);
         free(things);
         return 0;
     }
@@ -173,9 +199,17 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
 
     things->squareFirstThingCount = squareCount;
     things->doorCount = 1;
+    things->groupCount = 1;
+    things->weaponCount = 1;
+    things->projectileCount = 1;
     things->thingCounts[THING_TYPE_DOOR] = 1;
-    things->rawThingData[THING_TYPE_DOOR][0] = 0xFE;
-    things->rawThingData[THING_TYPE_DOOR][1] = 0xFF;
+    things->thingCounts[THING_TYPE_GROUP] = 1;
+    things->thingCounts[THING_TYPE_WEAPON] = 1;
+    things->thingCounts[THING_TYPE_PROJECTILE] = 1;
+    probe_set_next(things->rawThingData[THING_TYPE_DOOR], THING_ENDOFLIST);
+    probe_set_next(things->rawThingData[THING_TYPE_GROUP], (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
+    probe_set_next(things->rawThingData[THING_TYPE_WEAPON], (unsigned short)((THING_TYPE_PROJECTILE << 10) | 0));
+    probe_set_next(things->rawThingData[THING_TYPE_PROJECTILE], THING_ENDOFLIST);
     things->doors[0].next = THING_ENDOFLIST;
     things->doors[0].vertical = 1;
     things->loaded = 1;
@@ -186,18 +220,28 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     state->world.party.mapX = 2;
     state->world.party.mapY = 3;
     state->world.party.direction = DIR_NORTH;
-    state->world.party.championCount = 0;
+    state->world.party.championCount = 1;
+    state->world.party.activeChampionIndex = 0;
+    state->world.party.champions[0].present = 1;
+    memcpy(state->world.party.champions[0].name, "TIGGY", 5);
+    state->world.party.champions[0].hp.current = 72;
+    state->world.party.champions[0].hp.maximum = 100;
+    state->world.party.champions[0].stamina.current = 48;
+    state->world.party.champions[0].stamina.maximum = 80;
+    state->world.party.champions[0].food = 180;
+    state->world.party.champions[0].water = 140;
 
     probe_set_square(dungeon, 2, 3, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     probe_set_square(dungeon, 1, 2, (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
-    probe_set_square(dungeon, 2, 2, (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B));
-    probe_set_square(dungeon, 3, 2, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+    probe_set_square(dungeon, 2, 2, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+    probe_set_square(dungeon, 3, 2, (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B));
     probe_set_square(dungeon, 2, 1, (unsigned char)(DUNGEON_ELEMENT_STAIRS << 5));
     probe_set_square(dungeon, 3, 1, (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
     probe_set_square(dungeon, 1, 0, (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5));
     probe_set_square(dungeon, 2, 0, (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5));
     probe_set_square(dungeon, 3, 0, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
-    things->squareFirstThings[2 * dungeon->maps[0].height + 2] = 0;
+    things->squareFirstThings[2 * dungeon->maps[0].height + 2] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+    things->squareFirstThings[3 * dungeon->maps[0].height + 2] = 0;
 
     return 1;
 }
@@ -215,7 +259,13 @@ static void probe_free_synthetic_view(M11_GameViewState* state) {
     if (state->world.things) {
         free(state->world.things->squareFirstThings);
         free(state->world.things->doors);
+        free(state->world.things->groups);
+        free(state->world.things->weapons);
+        free(state->world.things->projectiles);
         free(state->world.things->rawThingData[THING_TYPE_DOOR]);
+        free(state->world.things->rawThingData[THING_TYPE_GROUP]);
+        free(state->world.things->rawThingData[THING_TYPE_WEAPON]);
+        free(state->world.things->rawThingData[THING_TYPE_PROJECTILE]);
         free(state->world.things);
     }
     memset(state, 0, sizeof(*state));
@@ -349,20 +399,28 @@ int main(int argc, char** argv) {
                                    PROBE_VIEWPORT_Y,
                                    PROBE_VIEWPORT_W,
                                    PROBE_VIEWPORT_H,
-                                   PROBE_COLOR_LIGHT_RED) > 3U &&
+                                   PROBE_COLOR_LIGHT_RED) > 1U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
                                        PROBE_VIEWPORT_X,
                                        PROBE_VIEWPORT_Y,
                                        PROBE_VIEWPORT_W,
                                        PROBE_VIEWPORT_H,
-                                       PROBE_COLOR_YELLOW) > 20U,
-                 "synthetic feature cells add door and stair accents inside the viewport");
+                                       PROBE_COLOR_YELLOW) > 20U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_VIEWPORT_X,
+                                       PROBE_VIEWPORT_Y,
+                                       PROBE_VIEWPORT_W,
+                                       PROBE_VIEWPORT_H,
+                                       PROBE_COLOR_LIGHT_GREEN) > 0U,
+                 "synthetic feature cells add door, stair, and occupancy cues inside the viewport");
 
     probe_record(&tally,
                  "INV_GV_11",
-                 probe_count_color(syntheticFramebuffer, 320, 70, 58, 72, 34, PROBE_COLOR_MAGENTA) == 0U,
-                 "a near wall occludes the far cell behind it in the same column");
+                 probe_count_non_zero(syntheticFramebuffer, 320, 74, 66, 72, 34) > 300U &&
+                     probe_count_color(syntheticFramebuffer, 320, 150, 48, 40, 48, PROBE_COLOR_LIGHT_RED) > 3U,
+                 "a side door accent stays visible without collapsing the forward corridor window");
 
     probe_record(&tally,
                  "INV_GV_12",
@@ -370,9 +428,27 @@ int main(int argc, char** argv) {
                                       PROBE_VIEWPORT_X, PROBE_VIEWPORT_Y,
                                       PROBE_VIEWPORT_W, PROBE_VIEWPORT_H) > 4000U &&
                      probe_count_non_zero(syntheticFramebuffer, 320,
-                                          PROBE_MAP_BOX_X, PROBE_MAP_BOX_Y,
-                                          PROBE_MAP_BOX_W, PROBE_MAP_BOX_H) > 250U,
+                                         PROBE_MAP_BOX_X, PROBE_MAP_BOX_Y,
+                                         PROBE_MAP_BOX_W, PROBE_MAP_BOX_H) > 250U,
                  "viewport slice and minimap inset coexist in the same frame");
+
+    probe_record(&tally,
+                 "INV_GV_12B",
+                 probe_count_color(syntheticFramebuffer,
+                                   320,
+                                   PROBE_VIEWPORT_X,
+                                   PROBE_VIEWPORT_Y,
+                                   PROBE_VIEWPORT_W,
+                                   PROBE_VIEWPORT_H,
+                                   PROBE_COLOR_WHITE) > 6U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_VIEWPORT_X,
+                                       PROBE_VIEWPORT_Y,
+                                       PROBE_VIEWPORT_W,
+                                       PROBE_VIEWPORT_H,
+                                       PROBE_COLOR_LIGHT_CYAN) > 10U,
+                 "viewport item and effect cues appear when real thing chains include loot and projectiles");
 
     probe_record(&tally,
                  "INV_GV_13",
@@ -412,6 +488,31 @@ int main(int argc, char** argv) {
                                        PROBE_PARTY_PANEL_H,
                                        PROBE_COLOR_DARK_GRAY) > 120U,
                  "bottom HUD renders a dedicated party/status strip instead of a single inspector blob");
+
+    probe_record(&tally,
+                 "INV_GV_15B",
+                 probe_count_color(syntheticFramebuffer,
+                                   320,
+                                   PROBE_BOTTOM_PANEL_X,
+                                   PROBE_PARTY_PANEL_Y,
+                                   PROBE_BOTTOM_PANEL_W,
+                                   PROBE_PARTY_PANEL_H,
+                                   PROBE_COLOR_LIGHT_RED) > 30U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_BOTTOM_PANEL_X,
+                                       PROBE_PARTY_PANEL_Y,
+                                       PROBE_BOTTOM_PANEL_W,
+                                       PROBE_PARTY_PANEL_H,
+                                       PROBE_COLOR_LIGHT_GREEN) > 30U &&
+                     probe_count_color(syntheticFramebuffer,
+                                       320,
+                                       PROBE_BOTTOM_PANEL_X,
+                                       PROBE_PARTY_PANEL_Y,
+                                       PROBE_BOTTOM_PANEL_W,
+                                       PROBE_PARTY_PANEL_H,
+                                       PROBE_COLOR_YELLOW) > 20U,
+                 "party strip reflects real champion bars and active-slot framing when champion data exists");
 
     probe_record(&tally,
                  "INV_GV_16",

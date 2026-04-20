@@ -433,6 +433,80 @@ static int m11_count_square_things(const struct GameWorld_Compat* world,
     return count;
 }
 
+typedef struct {
+    int total;
+    int groups;
+    int items;
+    int sensors;
+    int textStrings;
+    int teleporters;
+    int projectiles;
+    int explosions;
+    int doors;
+} M11_SquareThingSummary;
+
+static int m11_thing_is_item(int thingType) {
+    switch (thingType) {
+        case THING_TYPE_WEAPON:
+        case THING_TYPE_ARMOUR:
+        case THING_TYPE_SCROLL:
+        case THING_TYPE_POTION:
+        case THING_TYPE_CONTAINER:
+        case THING_TYPE_JUNK:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static void m11_summarize_square_things(const struct GameWorld_Compat* world,
+                                        int mapIndex,
+                                        int mapX,
+                                        int mapY,
+                                        M11_SquareThingSummary* outSummary) {
+    M11_SquareThingSummary summary;
+    unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+
+    memset(&summary, 0, sizeof(summary));
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && summary.total < 32) {
+        int thingType = THING_GET_TYPE(thing);
+        ++summary.total;
+        switch (thingType) {
+            case THING_TYPE_DOOR:
+                ++summary.doors;
+                break;
+            case THING_TYPE_TELEPORTER:
+                ++summary.teleporters;
+                break;
+            case THING_TYPE_TEXTSTRING:
+                ++summary.textStrings;
+                break;
+            case THING_TYPE_SENSOR:
+                ++summary.sensors;
+                break;
+            case THING_TYPE_GROUP:
+                ++summary.groups;
+                break;
+            case THING_TYPE_PROJECTILE:
+                ++summary.projectiles;
+                break;
+            case THING_TYPE_EXPLOSION:
+                ++summary.explosions;
+                break;
+            default:
+                if (m11_thing_is_item(thingType)) {
+                    ++summary.items;
+                }
+                break;
+        }
+        thing = m11_raw_next_thing(world->things, thing);
+    }
+
+    if (outSummary) {
+        *outSummary = summary;
+    }
+}
+
 static void m11_set_status(M11_GameViewState* state,
                            const char* action,
                            const char* outcome) {
@@ -684,7 +758,164 @@ typedef struct {
     int doorState;
     int doorVertical;
     int hasDoorThing;
+    M11_SquareThingSummary summary;
 } M11_ViewportCell;
+
+static void m11_draw_creature_cue(unsigned char* framebuffer,
+                                  int framebufferWidth,
+                                  int framebufferHeight,
+                                  int x,
+                                  int y,
+                                  int w,
+                                  int h,
+                                  int depthIndex) {
+    int bodyW = w / 3;
+    int bodyH = h / 3;
+    int bodyX;
+    int bodyY;
+    int eyeY;
+    unsigned char color = depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN;
+
+    if (bodyW < 4 || bodyH < 5) {
+        return;
+    }
+
+    bodyX = x + (w - bodyW) / 2;
+    bodyY = y + (h - bodyH) / 2;
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  bodyX + bodyW / 4, bodyY - 2, bodyW / 2, 3, color);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  bodyX, bodyY, bodyW, bodyH, color);
+    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                   bodyX + 1, bodyY + bodyH, bodyY + bodyH + 2, color);
+    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                   bodyX + bodyW - 2, bodyY + bodyH, bodyY + bodyH + 2, color);
+    eyeY = bodyY + 2;
+    m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                  bodyX + bodyW / 3, eyeY, M11_COLOR_BLACK);
+    m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                  bodyX + (bodyW * 2) / 3, eyeY, M11_COLOR_BLACK);
+}
+
+static void m11_draw_item_cue(unsigned char* framebuffer,
+                              int framebufferWidth,
+                              int framebufferHeight,
+                              int x,
+                              int y,
+                              int w,
+                              int h,
+                              int count) {
+    int items = count > 3 ? 3 : count;
+    int i;
+    int baseY = y + h - 6;
+
+    for (i = 0; i < items; ++i) {
+        int cx = x + w / 2 - 8 + i * 7;
+        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, cx, baseY - 2, M11_COLOR_WHITE);
+        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, cx - 1, baseY - 1, M11_COLOR_WHITE);
+        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, cx + 1, baseY - 1, M11_COLOR_WHITE);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      cx - 1, baseY, 3, 2, M11_COLOR_YELLOW);
+    }
+}
+
+static void m11_draw_effect_cue(unsigned char* framebuffer,
+                                int framebufferWidth,
+                                int framebufferHeight,
+                                int x,
+                                int y,
+                                int w,
+                                int h,
+                                const M11_ViewportCell* cell) {
+    int cx = x + w / 2;
+    int cy = y + h / 2;
+    if (!cell) {
+        return;
+    }
+    if (cell->summary.projectiles > 0 || cell->summary.teleporters > 0) {
+        m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                       cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
+        m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                       cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
+    }
+    if (cell->summary.explosions > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      cx - 4, cy - 4, 9, 9, M11_COLOR_MAGENTA);
+    }
+}
+
+static void m11_format_square_summary(const M11_ViewportCell* cell,
+                                      char* out,
+                                      size_t outSize) {
+    char extras[48];
+    size_t used = 0;
+
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!cell || !cell->valid) {
+        snprintf(out, outSize, "VOID");
+        return;
+    }
+
+    extras[0] = '\0';
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
+        snprintf(extras + used, sizeof(extras) - used,
+                 " D%d", cell->doorState);
+        used = strlen(extras);
+    }
+    if (cell->summary.groups > 0 && used + 4 < sizeof(extras)) {
+        snprintf(extras + used, sizeof(extras) - used,
+                 " G%d", cell->summary.groups);
+        used = strlen(extras);
+    }
+    if (cell->summary.items > 0 && used + 4 < sizeof(extras)) {
+        snprintf(extras + used, sizeof(extras) - used,
+                 " I%d", cell->summary.items);
+        used = strlen(extras);
+    }
+    if ((cell->summary.projectiles > 0 || cell->summary.explosions > 0) && used + 4 < sizeof(extras)) {
+        snprintf(extras + used, sizeof(extras) - used,
+                 " FX");
+        used = strlen(extras);
+    }
+
+    snprintf(out, outSize, "%s%s",
+             F0503_DUNGEON_GetElementName_Compat(cell->elementType),
+             extras);
+}
+
+static void m11_get_food_water_average(const struct PartyState_Compat* party,
+                                       int* outFood,
+                                       int* outWater) {
+    int slot;
+    int foodTotal = 0;
+    int waterTotal = 0;
+    int count = 0;
+    if (!party) {
+        if (outFood) {
+            *outFood = 0;
+        }
+        if (outWater) {
+            *outWater = 0;
+        }
+        return;
+    }
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        if (!party->champions[slot].present) {
+            continue;
+        }
+        foodTotal += party->champions[slot].food;
+        waterTotal += party->champions[slot].water;
+        ++count;
+    }
+    if (outFood) {
+        *outFood = count > 0 ? foodTotal / count : 0;
+    }
+    if (outWater) {
+        *outWater = count > 0 ? waterTotal / count : 0;
+    }
+}
 
 static void m11_direction_vectors(int direction,
                                   int* outForwardX,
@@ -780,6 +1011,11 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                               mapX,
                                               mapY);
     cell.firstThing = firstThing;
+    m11_summarize_square_things(&state->world,
+                                state->world.party.mapIndex,
+                                mapX,
+                                mapY,
+                                &cell.summary);
 
     if (cell.elementType == DUNGEON_ELEMENT_DOOR) {
         cell.doorState = square & 0x07;
@@ -854,6 +1090,13 @@ static unsigned char m11_feature_accent_color(const M11_ViewportCell* cell) {
     }
 }
 
+static void m11_draw_wall_contents(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   const M11_ViewRect* rect,
+                                   const M11_ViewportCell* cell,
+                                   int depthIndex);
+
 static void m11_draw_wall_face(unsigned char* framebuffer,
                                int framebufferWidth,
                                int framebufferHeight,
@@ -921,16 +1164,42 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
             break;
     }
 
-    if (cell->thingCount > 0) {
-        int dots = cell->thingCount > 3 ? 3 : cell->thingCount;
-        int dot;
-        for (dot = 0; dot < dots; ++dot) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          faceX + faceW / 2 - 6 + dot * 5,
-                          faceY + faceH / 2 - 1,
-                          3, 3, M11_COLOR_WHITE);
-        }
+    if (m11_viewport_cell_is_open(cell)) {
+        m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
+                               rect, cell, depthIndex);
+    } else if (cell->thingCount > 0) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      faceX + faceW / 2 - 1, faceY + faceH / 2 - 1,
+                      3, 3, M11_COLOR_WHITE);
     }
+}
+
+static void m11_draw_wall_contents(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   const M11_ViewRect* rect,
+                                   const M11_ViewportCell* cell,
+                                   int depthIndex) {
+    int inset = 6 + depthIndex * 4;
+    int faceX = rect->x + inset;
+    int faceY = rect->y + inset / 2;
+    int faceW = rect->w - inset * 2;
+    int faceH = rect->h - inset;
+
+    if (!cell || !m11_viewport_cell_is_open(cell) || faceW < 8 || faceH < 8) {
+        return;
+    }
+    if (cell->summary.groups > 0) {
+        m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
+                              faceX + 4, faceY + 5, faceW - 8, faceH - 10, depthIndex);
+    }
+    if (cell->summary.items > 0) {
+        m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
+                          faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                          cell->summary.items);
+    }
+    m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
+                        faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell);
 }
 
 static void m11_draw_corridor_frame(unsigned char* framebuffer,
@@ -1009,6 +1278,23 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
         m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
                        paneX + paneW / 2, paneY + 2, paneY + paneH - 3, M11_COLOR_YELLOW);
     }
+
+    if (m11_viewport_cell_is_open(cell)) {
+        if (cell->summary.groups > 0) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          paneX + paneW / 2 - 1, paneY + paneH / 2 - 2,
+                          3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+        }
+        if (cell->summary.items > 0) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          paneX + paneW / 2 - 2, paneY + paneH - 4,
+                          5, 2, M11_COLOR_YELLOW);
+        }
+        if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                          paneX + paneW / 2, paneY + paneH / 2, M11_COLOR_LIGHT_CYAN);
+        }
+    }
 }
 
 static void m11_draw_viewport(const M11_GameViewState* state,
@@ -1066,6 +1352,17 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
 
+    occluded = 0;
+    for (depth = 0; depth < 3; ++depth) {
+        if (!occluded) {
+            m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
+                                   &frames[depth + 1], &cells[depth][1], depth);
+            if (!m11_viewport_cell_is_open(&cells[depth][1])) {
+                occluded = 1;
+            }
+        }
+    }
+
     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                    viewport.x + 6, viewport.x + viewport.w - 7,
                    viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
@@ -1105,6 +1402,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                  int framebufferWidth,
                                  int framebufferHeight) {
     int slot;
+    int activeIndex = -1;
+    if (state) {
+        activeIndex = state->world.party.activeChampionIndex;
+    }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         int x = 12 + slot * 77;
         int y = 160;
@@ -1122,6 +1423,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             m11_format_champion_name(champ->name, name, sizeof(name));
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 4, name, &g_text_small);
+            if (slot == activeIndex) {
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 1, y + 1, 69, 26, M11_COLOR_YELLOW);
+            }
             hpWidth = champ->hp.maximum > 0 ? (champ->hp.current * 59) / champ->hp.maximum : 0;
             staminaWidth = champ->stamina.maximum > 0 ? (champ->stamina.current * 59) / champ->stamina.maximum : 0;
             snprintf(line, sizeof(line), "HP %u", (unsigned int)champ->hp.current);
@@ -1198,9 +1503,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        int framebufferWidth,
                        int framebufferHeight) {
     char line[96];
-    unsigned char currentSquare = 0;
+    char line2[96];
     unsigned short firstThing = THING_ENDOFLIST;
     int squareThingCount = 0;
+    M11_ViewportCell currentCell;
+    M11_ViewportCell aheadCell;
+    const struct DungeonMapDesc_Compat* mapDesc = NULL;
+    int avgFood = 0;
+    int avgWater = 0;
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
@@ -1211,11 +1521,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       18, 18, "NO GAME VIEW", &g_text_title);
         return;
     }
-    (void)m11_get_square_byte(&state->world,
-                              state->world.party.mapIndex,
-                              state->world.party.mapX,
-                              state->world.party.mapY,
-                              &currentSquare);
     firstThing = m11_get_first_square_thing(&state->world,
                                             state->world.party.mapIndex,
                                             state->world.party.mapX,
@@ -1224,6 +1529,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                state->world.party.mapIndex,
                                                state->world.party.mapX,
                                                state->world.party.mapY);
+    memset(&currentCell, 0, sizeof(currentCell));
+    memset(&aheadCell, 0, sizeof(aheadCell));
+    (void)m11_sample_viewport_cell(state, 0, 0, &currentCell);
+    (void)m11_sample_viewport_cell(state, 1, 0, &aheadCell);
+    if (state->world.dungeon && state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        mapDesc = &state->world.dungeon->maps[state->world.party.mapIndex];
+    }
+    m11_get_food_water_average(&state->world.party, &avgFood, &avgWater);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
@@ -1259,14 +1573,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              m11_source_name(state->sourceKind),
              state->sourceId[0] != '\0' ? state->sourceId : "launcher");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 34, line, &g_text_small);
-    snprintf(line, sizeof(line), "MAP %d/%d",
+    snprintf(line, sizeof(line), "L%d M%d/%d D%d",
+             mapDesc ? (int)mapDesc->level : 0,
              state->world.party.mapIndex + 1,
-             (int)state->world.dungeon->header.mapCount);
+             (int)state->world.dungeon->header.mapCount,
+             mapDesc ? (int)mapDesc->difficulty : 0);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 46, line, &g_text_small);
-    snprintf(line, sizeof(line), "%d:%d %s",
+    snprintf(line, sizeof(line), "%d:%d %s C%d",
              state->world.party.mapX,
              state->world.party.mapY,
-             m11_direction_name(state->world.party.direction));
+             m11_direction_name(state->world.party.direction),
+             state->world.party.championCount);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 224, 58, line, &g_text_small);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -1275,19 +1592,28 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                   218, 74, 86, 68, M11_COLOR_LIGHT_BLUE);
     m11_draw_map_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
-    snprintf(line, sizeof(line), "TILE %s",
-             F0503_DUNGEON_GetElementName_Compat(currentSquare >> 5));
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 149, line, &g_text_small);
+    m11_format_square_summary(&currentCell, line, sizeof(line));
+    snprintf(line2, sizeof(line2), "HERE %s", line);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 149, line2, &g_text_small);
     if (firstThing != THING_ENDOFLIST && firstThing != THING_NONE) {
-        snprintf(line, sizeof(line), "THING %s X%d",
+        snprintf(line, sizeof(line), "TH %s X%d",
                  F0505_DUNGEON_GetThingTypeName_Compat(THING_GET_TYPE(firstThing)),
                  squareThingCount);
     } else {
-        snprintf(line, sizeof(line), "THING NONE X%d", squareThingCount);
+        snprintf(line, sizeof(line), "TH NONE X%d", squareThingCount);
     }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 100, 149, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 146, 149, line, &g_text_small);
     snprintf(line, sizeof(line), "HASH %08X", (unsigned int)state->lastWorldHash);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 216, 149, line, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 240, 149, line, &g_text_small);
+
+    m11_format_square_summary(&aheadCell, line, sizeof(line));
+    snprintf(line2, sizeof(line2), "AHEAD %s", line);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 157, line2, &g_text_small);
+    snprintf(line, sizeof(line), "LEAD %d F%03d W%03d",
+             state->world.party.activeChampionIndex >= 0 ? state->world.party.activeChampionIndex + 1 : 0,
+             avgFood,
+             avgWater);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 178, 157, line, &g_text_small);
 
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   218, 128, state->lastOutcome, &g_text_small);
