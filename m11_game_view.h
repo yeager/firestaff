@@ -42,6 +42,8 @@ typedef struct {
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     char lastAction[32];
     char lastOutcome[64];
+    char inspectTitle[64];
+    char inspectDetail[128];
     uint32_t lastWorldHash;
     struct TickResult_Compat lastTickResult;
     struct GameWorld_Compat world;

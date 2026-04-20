@@ -370,13 +370,6 @@ int main(int argc, char** argv) {
                  moved,
                  "movement changes the rendered pseudo-viewport with real world movement");
 
-    initialTick = gameView.world.gameTick;
-    probe_record(&tally,
-                 "INV_GV_07",
-                 M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
-                     gameView.world.gameTick == initialTick + 1,
-                 "accept advances an in-game wait tick distinct from menu navigation");
-
     probe_record(&tally,
                  "INV_GV_08",
                  probe_count_non_zero(framebuffer,
@@ -391,6 +384,15 @@ int main(int argc, char** argv) {
                  "INV_GV_09",
                  probe_init_synthetic_view(&syntheticView),
                  "synthetic viewport harness initialises a focused 3x3 sample state");
+
+    initialTick = syntheticView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_07",
+                 M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
+                     syntheticView.world.gameTick == initialTick &&
+                     strcmp(syntheticView.lastAction, "INSPECT") == 0 &&
+                     strcmp(syntheticView.inspectTitle, "CREATURE CONTACT") == 0,
+                 "accept inspects a real front-cell target instead of spending a fallback wait tick");
 
     memset(syntheticFramebuffer, 0, sizeof(syntheticFramebuffer));
     M11_GameView_Draw(&syntheticView, syntheticFramebuffer, 320, 200);
@@ -554,11 +556,17 @@ int main(int argc, char** argv) {
                                        PROBE_COLOR_LIGHT_RED) > 10U &&
                      probe_count_non_zero(syntheticFramebuffer,
                                           320,
+                                          PROBE_SIDEBAR_X,
+                                          112,
+                                          PROBE_SIDEBAR_W,
+                                          24) > 60U &&
+                     probe_count_non_zero(syntheticFramebuffer,
+                                          320,
                                           PROBE_PROMPT_STRIP_X,
                                           PROBE_PROMPT_STRIP_Y,
                                           PROBE_PROMPT_STRIP_W,
                                           PROBE_PROMPT_STRIP_H) > 200U,
-                 "front-cell focus adds a threat-colored viewport reticle and contextual prompt strip");
+                 "front-cell focus adds a threat-colored viewport reticle plus contextual inspect readout");
 
     probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);

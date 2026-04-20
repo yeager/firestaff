@@ -517,6 +517,18 @@ static void m11_set_status(M11_GameViewState* state,
     snprintf(state->lastOutcome, sizeof(state->lastOutcome), "%s", outcome ? outcome : "");
 }
 
+static void m11_set_inspect_readout(M11_GameViewState* state,
+                                    const char* title,
+                                    const char* detail) {
+    if (!state) {
+        return;
+    }
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s",
+             title ? title : "NO FOCUS");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail), "%s",
+             detail ? detail : "PRESS ENTER ON A REAL FRONT-CELL TARGET");
+}
+
 static void m11_refresh_hash(M11_GameViewState* state) {
     uint32_t hash = 0;
     if (!state) {
@@ -527,12 +539,15 @@ static void m11_refresh_hash(M11_GameViewState* state) {
     }
 }
 
+static int m11_inspect_front_cell(M11_GameViewState* state);
+
 void M11_GameView_Init(M11_GameViewState* state) {
     if (!state) {
         return;
     }
     memset(state, 0, sizeof(*state));
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
+    m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER ON A REAL FRONT-CELL TARGET");
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
@@ -579,6 +594,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
     m11_refresh_hash(state);
     m11_set_status(state, "BOOT", "GAME DATA LOADED");
+    m11_set_inspect_readout(state, "READY", "ENTER WAITS, OR INSPECTS THE FRONT CELL WHEN SOMETHING IS THERE");
     return 1;
 }
 
@@ -683,6 +699,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             label = "TURN RIGHT";
             break;
         case M12_MENU_INPUT_ACCEPT:
+            if (m11_inspect_front_cell(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
             command = CMD_NONE;
             label = "WAIT";
             break;
@@ -1049,6 +1068,116 @@ static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
         return cell->doorState == 0 || cell->doorState == 5;
     }
     return 1;
+}
+
+static int m11_build_front_text_readout(const M11_GameViewState* state,
+                                        const M11_ViewportCell* cell,
+                                        char* outTitle,
+                                        size_t outTitleSize,
+                                        char* outDetail,
+                                        size_t outDetailSize) {
+    unsigned short thing;
+
+    if (!state || !cell || !cell->valid || !outTitle || !outDetail) {
+        return 0;
+    }
+
+    thing = cell->firstThing;
+    while (thing != THING_ENDOFLIST && thing != THING_NONE) {
+        int thingType = THING_GET_TYPE(thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        if (thingType == THING_TYPE_TEXTSTRING && state->world.things &&
+            state->world.things->textStrings && thingIndex >= 0 &&
+            thingIndex < state->world.things->textStringCount) {
+            const struct DungeonTextString_Compat* textThing = &state->world.things->textStrings[thingIndex];
+            char decoded[96];
+            if (state->world.things->textData && state->world.things->textDataWordCount > 0 &&
+                F0507_DUNGEON_DecodeTextAtOffset_Compat(state->world.things->textData,
+                                                        state->world.things->textDataWordCount,
+                                                        textThing->textDataWordOffset,
+                                                        decoded,
+                                                        sizeof(decoded)) >= 0 &&
+                decoded[0] != '\0') {
+                snprintf(outTitle, outTitleSize, "TEXT PLAQUE");
+                snprintf(outDetail, outDetailSize, "%s", decoded);
+                return 1;
+            }
+            snprintf(outTitle, outTitleSize, "TEXT PLAQUE");
+            snprintf(outDetail, outDetailSize, "TEXT OFFSET %u (DECODE UNAVAILABLE)",
+                     (unsigned int)textThing->textDataWordOffset);
+            return 1;
+        }
+        thing = m11_raw_next_thing(state->world.things, thing);
+    }
+
+    return 0;
+}
+
+static int m11_inspect_front_cell(M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+    char title[64];
+    char detail[128];
+
+    if (!state || !state->active) {
+        return 0;
+    }
+
+    memset(&frontCell, 0, sizeof(frontCell));
+    if (!m11_sample_viewport_cell(state, 1, 0, &frontCell) || !frontCell.valid) {
+        m11_set_status(state, "INSPECT", "VOID AHEAD");
+        m11_set_inspect_readout(state, "VOID", "TURN TO RE-ENTER THE MAP");
+        return 1;
+    }
+
+    if (m11_build_front_text_readout(state, &frontCell,
+                                     title, sizeof(title),
+                                     detail, sizeof(detail))) {
+        m11_set_status(state, "INSPECT", "READ TEXT");
+        m11_set_inspect_readout(state, title, detail);
+        return 1;
+    }
+
+    if (frontCell.elementType == DUNGEON_ELEMENT_DOOR) {
+        snprintf(title, sizeof(title), "FRONT DOOR");
+        snprintf(detail, sizeof(detail), "%s, STATE %d, %s",
+                 frontCell.doorVertical ? "VERTICAL" : "HORIZONTAL",
+                 frontCell.doorState,
+                 m11_viewport_cell_is_open(&frontCell) ? "OPEN ENOUGH TO CROSS" : "STILL CLOSED");
+        m11_set_status(state, "INSPECT", "DOOR CHECK");
+        m11_set_inspect_readout(state, title, detail);
+        return 1;
+    }
+
+    if (frontCell.summary.groups > 0) {
+        snprintf(title, sizeof(title), "CREATURE CONTACT");
+        snprintf(detail, sizeof(detail), "%d GROUP TARGET%s IN FRONT CELL",
+                 frontCell.summary.groups,
+                 frontCell.summary.groups == 1 ? "" : "S");
+        m11_set_status(state, "INSPECT", "ENEMY SPOTTED");
+        m11_set_inspect_readout(state, title, detail);
+        return 1;
+    }
+
+    if (frontCell.summary.items > 0 || frontCell.summary.projectiles > 0 ||
+        frontCell.summary.explosions > 0 || frontCell.summary.sensors > 0 ||
+        frontCell.summary.teleporters > 0 || frontCell.summary.textStrings > 0 ||
+        frontCell.elementType == DUNGEON_ELEMENT_PIT ||
+        frontCell.elementType == DUNGEON_ELEMENT_STAIRS ||
+        frontCell.elementType == DUNGEON_ELEMENT_TELEPORTER) {
+        snprintf(title, sizeof(title), "%s",
+                 F0503_DUNGEON_GetElementName_Compat(frontCell.elementType));
+        snprintf(detail, sizeof(detail), "I%d G%d FX%d S%d T%d",
+                 frontCell.summary.items,
+                 frontCell.summary.groups,
+                 frontCell.summary.projectiles + frontCell.summary.explosions,
+                 frontCell.summary.sensors,
+                 frontCell.summary.textStrings + frontCell.summary.teleporters);
+        m11_set_status(state, "INSPECT", "FRONT CELL READOUT");
+        m11_set_inspect_readout(state, title, detail);
+        return 1;
+    }
+
+    return 0;
 }
 
 static unsigned char m11_viewport_fill_color(const M11_ViewportCell* cell) {
@@ -1758,7 +1887,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                   130, 168, focusHint, &g_text_small);
 
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  218, 116, state->inspectTitle, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   218, 128, state->lastOutcome, &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  218, 136, state->inspectDetail, &g_text_small);
 
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 }
