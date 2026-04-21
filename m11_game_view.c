@@ -2946,6 +2946,10 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    if (state->assetsAvailable) {
+        M11_AssetLoader_Shutdown(&state->assetLoader);
+        state->assetsAvailable = 0;
+    }
     if (state->active) {
         F0883_WORLD_Free_Compat(&state->world);
     }
@@ -2984,6 +2988,24 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     snprintf(state->sourceId, sizeof(state->sourceId), "%s",
              spec->sourceId ? spec->sourceId : "launcher");
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
+
+    /* Try to open GRAPHICS.DAT from the same directory as the dungeon file */
+    {
+        char graphicsDatPath[M11_GAME_VIEW_PATH_CAPACITY];
+        size_t dungeonLen = strlen(dungeonPath);
+        size_t slashPos = dungeonLen;
+        while (slashPos > 0 && dungeonPath[slashPos - 1] != '/' && dungeonPath[slashPos - 1] != '\\') {
+            --slashPos;
+        }
+        if (slashPos > 0 && slashPos + 13 < sizeof(graphicsDatPath)) {
+            memcpy(graphicsDatPath, dungeonPath, slashPos);
+            memcpy(graphicsDatPath + slashPos, "GRAPHICS.DAT", 13);
+            if (M11_AssetLoader_Init(&state->assetLoader, graphicsDatPath)) {
+                state->assetsAvailable = 1;
+            }
+        }
+    }
+
     m11_refresh_hash(state);
     m11_mark_explored(state);
     m11_log_event(state, M11_COLOR_YELLOW, "T0: %s LOADED", spec->title);
@@ -4322,6 +4344,17 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                         faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell);
 }
 
+/* Known GRAPHICS.DAT indices for corridor wall textures.
+ * These are 256x32 wall-set strip graphics in CSB PC 3.4. */
+enum {
+    M11_GFX_WALL_SET_0 = 42,  /* 256x32 — wall set A */
+    M11_GFX_WALL_SET_1 = 43,  /* 256x32 — wall set B */
+    M11_GFX_WALL_SET_2 = 44,  /* 256x32 — wall set C */
+    M11_GFX_WALL_SET_3 = 45,  /* 256x32 — wall set D */
+    M11_GFX_FLOOR_SET_0 = 76, /* 32x32 — floor tile */
+    M11_GFX_FLOOR_SET_1 = 77  /* 32x32 — floor tile variant */
+};
+
 static void m11_draw_corridor_frame(unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight,
@@ -5033,6 +5066,58 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                    viewport.x + 6, viewport.x + viewport.w - 7,
                    viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
+
+    /* Overlay real GRAPHICS.DAT wall textures when available.
+     * Tiles wall-set strips into the corridor frame regions using
+     * scaled blits. Draws back-to-front so nearer strips occlude. */
+    if (state->assetsAvailable) {
+        int d;
+        for (d = 2; d >= 0; --d) {
+            const M11_AssetSlot* wallSlot;
+            unsigned int wallIdx = (unsigned int)(M11_GFX_WALL_SET_0 + (d % 4));
+            wallSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, wallIdx);
+            if (wallSlot && wallSlot->width > 0 && wallSlot->height > 0) {
+                int ceilH = frames[d + 1].y - frames[d].y;
+                int floorY = frames[d + 1].y + frames[d + 1].h;
+                int floorH = (frames[d].y + frames[d].h) - floorY;
+                int leftW = frames[d + 1].x - frames[d].x;
+                int rightX = frames[d + 1].x + frames[d + 1].w;
+                int rightW = (frames[d].x + frames[d].w) - rightX;
+                /* Ceiling strip */
+                if (ceilH > 2) {
+                    M11_AssetLoader_BlitScaled(wallSlot, framebuffer,
+                        framebufferWidth, framebufferHeight,
+                        frames[d].x + 1, frames[d].y + 1,
+                        frames[d].w - 2, ceilH - 1, -1);
+                }
+                /* Left wall strip */
+                if (leftW > 2) {
+                    M11_AssetLoader_BlitScaled(wallSlot, framebuffer,
+                        framebufferWidth, framebufferHeight,
+                        frames[d].x + 1, frames[d + 1].y,
+                        leftW - 1, frames[d + 1].h, -1);
+                }
+                /* Right wall strip */
+                if (rightW > 2) {
+                    M11_AssetLoader_BlitScaled(wallSlot, framebuffer,
+                        framebufferWidth, framebufferHeight,
+                        rightX + 1, frames[d + 1].y,
+                        rightW - 1, frames[d + 1].h, -1);
+                }
+                /* Floor strip */
+                if (floorH > 2) {
+                    const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_SET_0);
+                    if (floorSlot && floorSlot->width > 0 && floorSlot->height > 0) {
+                        M11_AssetLoader_BlitScaled(floorSlot, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            frames[d].x + 1, floorY + 1,
+                            frames[d].w - 2, floorH - 1, -1);
+                    }
+                }
+            }
+        }
+    }
 }
 
 static void m11_format_champion_name(const unsigned char* raw,

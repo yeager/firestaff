@@ -16,6 +16,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* IMG3 global state required by the GRAPHICS.DAT image decompressor */
+unsigned short G2157_;
+unsigned char* G2159_puc_Bitmap_Source;
+unsigned char* G2160_puc_Bitmap_Destination;
+
 static void usage(const char* prog) {
     fprintf(stderr,
             "Usage: %s [--duration <ms>] [--width <px>] [--height <px>] [--script <commands>] [--data-dir <path>]\n",

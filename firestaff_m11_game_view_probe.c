@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* IMG3 global state required by the image decompressor pipeline */
+unsigned short G2157_;
+unsigned char* G2159_puc_Bitmap_Source;
+unsigned char* G2160_puc_Bitmap_Destination;
+
 enum {
     PROBE_COLOR_BLACK = 0,
     PROBE_COLOR_BROWN = 6,
@@ -2334,6 +2339,206 @@ int main(int argc, char** argv) {
     }
 
     M11_GameView_Shutdown(&gameView);
+
+    /* ================================================================
+     * GRAPHICS.DAT asset loader integration invariants
+     * ================================================================ */
+    {
+        /* Re-open game view with real dungeon to test asset loading */
+        M11_GameViewState assetView;
+        M11_GameView_Init(&assetView);
+        (void)M11_GameView_OpenSelectedMenuEntry(&assetView, &menuState);
+
+        /* INV_GV_84: Asset loader initializes with GRAPHICS.DAT */
+        probe_record(&tally,
+                     "INV_GV_84",
+                     assetView.assetsAvailable == 1 &&
+                         M11_AssetLoader_IsReady(&assetView.assetLoader),
+                     "asset loader initializes from GRAPHICS.DAT in the game data directory");
+
+        /* INV_GV_85: Asset loader reports correct graphic count */
+        probe_record(&tally,
+                     "INV_GV_85",
+                     assetView.assetLoader.graphicCount > 40,
+                     "asset loader enumerates more than 40 graphics from GRAPHICS.DAT");
+
+        /* INV_GV_86: Wall set graphic loads and has correct dimensions */
+        {
+            const M11_AssetSlot* wallSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 42);
+            probe_record(&tally,
+                         "INV_GV_86",
+                         wallSlot != NULL &&
+                             wallSlot->loaded == 1 &&
+                             wallSlot->width == 256 &&
+                             wallSlot->height == 32 &&
+                             wallSlot->pixels != NULL,
+                         "wall set graphic 42 loads as 256x32 with valid pixel data");
+
+            /* INV_GV_87: Loaded graphic has non-uniform pixel data */
+            if (wallSlot && wallSlot->pixels) {
+                int px;
+                int uniqueColors = 0;
+                int seen[16];
+                memset(seen, 0, sizeof(seen));
+                for (px = 0; px < (int)wallSlot->width * (int)wallSlot->height && px < 8192; ++px) {
+                    int c = wallSlot->pixels[px] & 0x0F;
+                    if (!seen[c]) {
+                        seen[c] = 1;
+                        ++uniqueColors;
+                    }
+                }
+                probe_record(&tally,
+                             "INV_GV_87",
+                             uniqueColors >= 3,
+                             "wall texture contains at least 3 distinct palette colors");
+            } else {
+                probe_record(&tally, "INV_GV_87", 0,
+                             "wall texture pixel data unavailable");
+            }
+        }
+
+        /* INV_GV_88: Floor tile graphic loads with correct dimensions */
+        {
+            const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 76);
+            probe_record(&tally,
+                         "INV_GV_88",
+                         floorSlot != NULL &&
+                             floorSlot->loaded == 1 &&
+                             floorSlot->width == 32 &&
+                             floorSlot->height == 32 &&
+                             floorSlot->pixels != NULL,
+                         "floor tile graphic 76 loads as 32x32 with valid pixel data");
+        }
+
+        /* INV_GV_89: Full screen title graphic loads */
+        {
+            const M11_AssetSlot* titleSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 4);
+            probe_record(&tally,
+                         "INV_GV_89",
+                         titleSlot != NULL &&
+                             titleSlot->loaded == 1 &&
+                             titleSlot->width == 320 &&
+                             titleSlot->height == 200 &&
+                             titleSlot->pixels != NULL,
+                         "full-screen graphic 4 loads as 320x200");
+        }
+
+        /* INV_GV_90: QuerySize returns correct values without loading */
+        {
+            unsigned short qw = 0, qh = 0;
+            int ok = M11_AssetLoader_QuerySize(&assetView.assetLoader, 42, &qw, &qh);
+            probe_record(&tally,
+                         "INV_GV_90",
+                         ok == 1 && qw == 256 && qh == 32,
+                         "QuerySize returns 256x32 for wall set graphic 42");
+        }
+
+        /* INV_GV_91: Blit produces non-zero pixels in framebuffer */
+        {
+            unsigned char assetFb[320 * 200];
+            const M11_AssetSlot* slot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 42);
+            size_t nonZero = 0;
+            memset(assetFb, 0, sizeof(assetFb));
+            if (slot) {
+                M11_AssetLoader_Blit(slot, assetFb, 320, 200, 10, 10, -1);
+            }
+            nonZero = probe_count_non_zero(assetFb, 320, 10, 10, 256, 32);
+            probe_record(&tally,
+                         "INV_GV_91",
+                         nonZero > 500,
+                         "blitting wall texture produces substantial non-zero pixel coverage");
+        }
+
+        /* INV_GV_92: Game view with assets renders richer viewport than without */
+        {
+            unsigned char assetFrame[320 * 200];
+            int uniqueInAssetViewport = 0;
+            int seen2[16];
+            int px2;
+            memset(assetFrame, 0, sizeof(assetFrame));
+            M11_GameView_Draw(&assetView, assetFrame, 320, 200);
+            memset(seen2, 0, sizeof(seen2));
+            for (px2 = 0; px2 < PROBE_VIEWPORT_W * PROBE_VIEWPORT_H; ++px2) {
+                int vy = PROBE_VIEWPORT_Y + px2 / PROBE_VIEWPORT_W;
+                int vx = PROBE_VIEWPORT_X + px2 % PROBE_VIEWPORT_W;
+                int c = assetFrame[vy * 320 + vx] & 0x0F;
+                if (!seen2[c]) {
+                    seen2[c] = 1;
+                    ++uniqueInAssetViewport;
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_92",
+                         uniqueInAssetViewport >= 6,
+                         "asset-backed viewport uses at least 6 distinct palette colors");
+        }
+
+        /* INV_GV_93: Cache hit returns same slot on second load */
+        {
+            const M11_AssetSlot* first = M11_AssetLoader_Load(
+                &assetView.assetLoader, 42);
+            const M11_AssetSlot* second = M11_AssetLoader_Load(
+                &assetView.assetLoader, 42);
+            probe_record(&tally,
+                         "INV_GV_93",
+                         first != NULL && first == second,
+                         "repeated load of same graphic returns cached slot");
+        }
+
+        /* INV_GV_94: Zero-sized placeholder returns NULL */
+        {
+            const M11_AssetSlot* empty = M11_AssetLoader_Load(
+                &assetView.assetLoader, 12);
+            probe_record(&tally,
+                         "INV_GV_94",
+                         empty == NULL,
+                         "zero-sized placeholder graphic returns NULL from loader");
+        }
+
+        /* INV_GV_95: BlitScaled renders into target rect */
+        {
+            unsigned char scaleFb[320 * 200];
+            const M11_AssetSlot* slot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 76);
+            size_t nonZero = 0;
+            memset(scaleFb, 0, sizeof(scaleFb));
+            if (slot) {
+                M11_AssetLoader_BlitScaled(slot, scaleFb, 320, 200,
+                                           50, 50, 100, 60, -1);
+            }
+            nonZero = probe_count_non_zero(scaleFb, 320, 50, 50, 100, 60);
+            probe_record(&tally,
+                         "INV_GV_95",
+                         nonZero > 200,
+                         "BlitScaled renders floor tile into 100x60 target rect");
+        }
+
+        /* INV_GV_96: BlitRegion extracts correct sub-rectangle */
+        {
+            unsigned char regionFb[320 * 200];
+            const M11_AssetSlot* slot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 42);
+            size_t nonZero = 0;
+            memset(regionFb, 0, sizeof(regionFb));
+            if (slot) {
+                M11_AssetLoader_BlitRegion(slot, 0, 0, 64, 16,
+                                           regionFb, 320, 200,
+                                           20, 20, -1);
+            }
+            nonZero = probe_count_non_zero(regionFb, 320, 20, 20, 64, 16);
+            probe_record(&tally,
+                         "INV_GV_96",
+                         nonZero > 100,
+                         "BlitRegion extracts 64x16 sub-rect from wall texture");
+        }
+
+        M11_GameView_Shutdown(&assetView);
+    }
+
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
 }

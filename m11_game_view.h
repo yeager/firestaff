@@ -4,6 +4,7 @@
 #include "menu_startup_m12.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
+#include "asset_loader_m11.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,6 +69,10 @@ typedef struct {
     int resting;
     int partyDead;
     uint32_t exploredBits[32]; /* 32 * 32 = 1024 cells tracked per level */
+
+    /* Asset loader for GRAPHICS.DAT-backed rendering */
+    M11_AssetLoader assetLoader;
+    int assetsAvailable; /* 1 if assetLoader is ready */
 
     /* Spell casting UI state */
     int spellPanelOpen;          /* 1 when rune entry panel is visible */
