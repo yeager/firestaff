@@ -9,42 +9,12 @@ on:
 
 jobs:
   cmake-build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            shell: bash
-            sdl_install: sudo apt-get update && sudo apt-get install -y libsdl3-dev || true
-          - os: macos-14
-            shell: bash
-            sdl_install: brew install sdl3 || true
-          - os: windows-2022
-            shell: msys2 {0}
-            sdl_install: pacman -S --noconfirm mingw-w64-ucrt-x86_64-SDL3 || true
-
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: ${{ matrix.shell }}
-
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MSYS2 (Windows only)
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-pkg-config
-
       - name: Install SDL3
-        run: ${{ matrix.sdl_install }}
+        run: brew install sdl3 || true
 
       - name: CMake configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
