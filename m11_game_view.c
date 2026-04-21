@@ -5021,6 +5021,15 @@ static int m11_draw_stairs_asset(const M11_GameViewState* state,
  * or 0 if no sprite is available for this type.
  * The mapping covers 8 creature graphic sets: 4 at base 246, 4 at base 439.
  * Creature types are mapped round-robin to the available sets. */
+/* Forward declaration for extended creature sprite draw. */
+static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int fbW, int fbH,
+                                       int x, int y, int w, int h,
+                                       int creatureType,
+                                       int depthIndex,
+                                       int sideHint);
+
 static unsigned int m11_creature_sprite_base(int creatureType) {
     /* CSB has 8 creature graphic sets.
      * Sets 0-3: indices 246, 249, 252, 255 (each set = 3 consecutive indices)
@@ -5034,8 +5043,11 @@ static unsigned int m11_creature_sprite_base(int creatureType) {
     return s_set_bases[setIdx];
 }
 
-/* Draw a creature sprite from GRAPHICS.DAT at the given viewport depth.
+/* Draw a creature sprite from GRAPHICS.DAT at the given viewport position.
  * depthIndex 0 = near (large sprite), 1 = mid, 2 = far (small sprite).
+ * sideHint: 0 = center, -1 = left side cell, +1 = right side cell.
+ * When sideHint != 0 the sprite is drawn mirrored so creatures
+ * appear to face inward toward the corridor center.
  * Returns 1 if a real sprite was drawn, 0 if fallback needed. */
 static int m11_draw_creature_sprite(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
@@ -5047,15 +5059,41 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
                                     int h,
                                     int creatureType,
                                     int depthIndex) {
+    return m11_draw_creature_sprite_ex(state, framebuffer, fbW, fbH,
+                                       x, y, w, h, creatureType,
+                                       depthIndex, 0);
+}
+
+static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int fbW,
+                                       int fbH,
+                                       int x,
+                                       int y,
+                                       int w,
+                                       int h,
+                                       int creatureType,
+                                       int depthIndex,
+                                       int sideHint) {
     unsigned int base;
     unsigned int spriteIdx;
     const M11_AssetSlot* slot;
     int spriteW, spriteH;
     int drawW, drawH, drawX, drawY;
+    int useAttackPose = 0;
+    int useMirror = 0;
 
     if (!state->assetsAvailable || creatureType < 0) return 0;
     base = m11_creature_sprite_base(creatureType);
     if (base == 0) return 0;
+
+    /* Check if this creature is currently attacking (attack cue active
+     * and matches the creature type in front cell at depth 0). */
+    if (state->attackCueTimer > 0 &&
+        state->attackCueCreatureType == creatureType &&
+        depthIndex == 0 && sideHint == 0) {
+        useAttackPose = 1;
+    }
 
     /* Depth 0 = large (offset +2), depth 1 = mid (+1), depth 2 = small (+0) */
     switch (depthIndex) {
@@ -5064,11 +5102,36 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
         default: spriteIdx = base;    break; /* 44x38 */
     }
 
+    /* Attack pose: try one set ahead for visual variety.
+     * If the alternate set fails to load, fall back to normal. */
+    if (useAttackPose) {
+        unsigned int attackBase = m11_creature_sprite_base(
+            (creatureType + 1) % 8);
+        if (attackBase != 0) {
+            unsigned int attackIdx;
+            const M11_AssetSlot* attackSlot;
+            switch (depthIndex) {
+                case 0: attackIdx = attackBase + 2; break;
+                case 1: attackIdx = attackBase + 1; break;
+                default: attackIdx = attackBase;    break;
+            }
+            attackSlot = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, attackIdx);
+            if (attackSlot && attackSlot->width > 0 && attackSlot->height > 0) {
+                spriteIdx = attackIdx;
+            }
+        }
+    }
+
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
     spriteW = (int)slot->width;
     spriteH = (int)slot->height;
+
+    /* Side creatures are mirrored: left side = normal (facing right),
+     * right side = mirrored (facing left), so they both face inward. */
+    useMirror = (sideHint > 0) ? 1 : 0;
 
     /* Scale to fit within the face rect while preserving aspect ratio */
     drawW = w - 4;
@@ -5083,8 +5146,9 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
     drawY = y + (h - drawH) / 2;
 
     /* Idle animation: on frame 1, bob the creature up by 1-2 pixels
-     * to give a breathing / pulsing effect.  Frame 0 is the base pose. */
-    {
+     * to give a breathing / pulsing effect.  Frame 0 is the base pose.
+     * Attack pose skips the bob for a snappier look. */
+    if (!useAttackPose) {
         int animFrame = M11_GameView_CreatureAnimFrame(state, creatureType);
         if (animFrame == 1) {
             int bob = (depthIndex == 0) ? 2 : 1;
@@ -5092,8 +5156,13 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
         }
     }
 
-    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                               drawX, drawY, drawW, drawH, 0);
+    if (useMirror) {
+        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
+                                         drawX, drawY, drawW, drawH, 0);
+    } else {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                   drawX, drawY, drawW, drawH, 0);
+    }
     return 1;
 }
 
@@ -5214,9 +5283,19 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
 
     if (m11_viewport_cell_is_open(cell)) {
         if (cell->summary.groups > 0) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          paneX + paneW / 2 - 1, paneY + paneH / 2 - 2,
-                          3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+            /* Try real creature sprite with side-aware mirror blit.
+             * Fall back to primitive colored rectangle. */
+            if (!g_drawState ||
+                !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
+                                             framebufferWidth, framebufferHeight,
+                                             paneX + 1, paneY + 1,
+                                             paneW - 2, paneH - 2,
+                                             cell->creatureType, depthIndex,
+                                             side)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              paneX + paneW / 2 - 1, paneY + paneH / 2 - 2,
+                              3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+            }
         }
         if (cell->summary.items > 0) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -6761,4 +6840,8 @@ int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,
     if (!state) return 0;
     phase = state->animTick + (uint32_t)creatureType * 3;
     return (int)((phase / M11_CREATURE_ANIM_PERIOD) & 1);
+}
+
+int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state) {
+    return state ? state->attackCueCreatureType : -1;
 }

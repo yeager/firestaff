@@ -456,3 +456,38 @@ void M11_AssetLoader_BlitScaled(const M11_AssetSlot* slot,
         }
     }
 }
+
+void M11_AssetLoader_BlitScaledMirror(const M11_AssetSlot* slot,
+                                      unsigned char* framebuffer,
+                                      int fbWidth,
+                                      int fbHeight,
+                                      int dstX,
+                                      int dstY,
+                                      int dstW,
+                                      int dstH,
+                                      int transparentColor) {
+    int dy, dx;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = dy * (int)slot->height / dstH;
+        int fbY = dstY + dy;
+        if (fbY < 0 || fbY >= fbHeight) continue;
+        for (dx = 0; dx < dstW; ++dx) {
+            /* Mirror: sample from (width - 1 - sx) instead of sx */
+            int sx = dx * (int)slot->width / dstW;
+            int mirrorSx = (int)slot->width - 1 - sx;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbWidth) continue;
+            if (mirrorSx < 0) mirrorSx = 0;
+            pixel = slot->pixels[sy * (int)slot->width + mirrorSx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            framebuffer[fbY * fbWidth + fbX] = pixel;
+        }
+    }
+}

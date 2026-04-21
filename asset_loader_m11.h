@@ -110,6 +110,19 @@ void M11_AssetLoader_BlitScaled(const M11_AssetSlot* slot,
                                 int dstH,
                                 int transparentColor);
 
+/* Blit with scaling and horizontal mirror (nearest-neighbor).
+ * Draws the sprite flipped left-to-right. Used for creatures
+ * in side viewport cells so they appear to face inward. */
+void M11_AssetLoader_BlitScaledMirror(const M11_AssetSlot* slot,
+                                      unsigned char* framebuffer,
+                                      int fbWidth,
+                                      int fbHeight,
+                                      int dstX,
+                                      int dstY,
+                                      int dstW,
+                                      int dstH,
+                                      int transparentColor);
+
 #ifdef __cplusplus
 }
 #endif

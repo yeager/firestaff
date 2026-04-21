@@ -206,6 +206,9 @@ uint32_t M11_GameView_GetAnimTick(const M11_GameViewState* state);
 int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,
                                    int creatureType);
 
+/* Return the attack-cue creature type (-1 if no active attack). */
+int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state);
+
 #ifdef __cplusplus
 }
 #endif
