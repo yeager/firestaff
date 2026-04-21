@@ -1785,6 +1785,319 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&sv);
     }
 
+    /* ================================================================
+     * Stair-up transition invariants (INV_GV_66 .. INV_GV_69)
+     * ================================================================ */
+    {
+        M11_GameViewState stairView;
+        struct DungeonDatState_Compat* sDungeon;
+        struct DungeonThings_Compat* sThings;
+        int sSquareCount0 = 9; /* 3x3 map 0 */
+        int sSquareCount1 = 9; /* 3x3 map 1 */
+        int sTotalSquares = 18;
+        int sI;
+
+        memset(&stairView, 0, sizeof(stairView));
+        M11_GameView_Init(&stairView);
+        stairView.active = 1;
+        stairView.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+        snprintf(stairView.title, sizeof(stairView.title), "STAIR-PROBE");
+        snprintf(stairView.sourceId, sizeof(stairView.sourceId), "stair");
+
+        sDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*sDungeon));
+        sThings = (struct DungeonThings_Compat*)calloc(1, sizeof(*sThings));
+        sDungeon->header.mapCount = 2;
+        sDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(struct DungeonMapDesc_Compat));
+        sDungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(2, sizeof(struct DungeonMapTiles_Compat));
+        sDungeon->loaded = 1;
+        sDungeon->tilesLoaded = 1;
+
+        sDungeon->maps[0].width = 3;
+        sDungeon->maps[0].height = 3;
+        sDungeon->tiles[0].squareCount = sSquareCount0;
+        sDungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)sSquareCount0, 1);
+
+        sDungeon->maps[1].width = 3;
+        sDungeon->maps[1].height = 3;
+        sDungeon->tiles[1].squareCount = sSquareCount1;
+        sDungeon->tiles[1].squareData = (unsigned char*)calloc((size_t)sSquareCount1, 1);
+
+        sThings->squareFirstThings = (unsigned short*)calloc((size_t)sTotalSquares, sizeof(unsigned short));
+        sThings->squareFirstThingCount = sTotalSquares;
+        sThings->loaded = 1;
+
+        for (sI = 0; sI < sTotalSquares; ++sI) {
+            sThings->squareFirstThings[sI] = THING_ENDOFLIST;
+        }
+
+        /* Map 0 layout:
+         *   (0,0)=wall       (1,0)=corridor  (2,0)=wall
+         *   (0,1)=wall       (1,1)=stairs-dn  (2,1)=wall
+         *   (0,2)=wall       (1,2)=corridor  (2,2)=wall
+         * Stairs-down at (1,1): attribute bit 0 = 0 */
+        for (sI = 0; sI < sSquareCount0; ++sI) {
+            sDungeon->tiles[0].squareData[sI] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+        }
+        sDungeon->tiles[0].squareData[1 * 3 + 0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        sDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x00); /* down */
+        sDungeon->tiles[0].squareData[1 * 3 + 2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+
+        /* Map 1 layout:
+         *   (0,0)=wall       (1,0)=corridor  (2,0)=wall
+         *   (0,1)=wall       (1,1)=stairs-up  (2,1)=wall
+         *   (0,2)=wall       (1,2)=corridor  (2,2)=wall
+         * Stairs-up at (1,1): attribute bit 0 = 1 */
+        for (sI = 0; sI < sSquareCount1; ++sI) {
+            sDungeon->tiles[1].squareData[sI] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+        }
+        sDungeon->tiles[1].squareData[1 * 3 + 0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        sDungeon->tiles[1].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x01); /* up */
+        sDungeon->tiles[1].squareData[1 * 3 + 2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+
+        stairView.world.dungeon = sDungeon;
+        stairView.world.things = sThings;
+        stairView.world.party.mapIndex = 0;
+        stairView.world.party.mapX = 1;
+        stairView.world.party.mapY = 2;
+        stairView.world.party.direction = DIR_NORTH;
+        stairView.world.party.championCount = 1;
+        stairView.world.party.activeChampionIndex = 0;
+        stairView.world.party.champions[0].present = 1;
+        memcpy(stairView.world.party.champions[0].name, "ALEX", 4);
+        { int invI; for (invI = 0; invI < CHAMPION_SLOT_COUNT; ++invI) { stairView.world.party.champions[0].inventory[invI] = THING_NONE; } }
+        stairView.world.party.champions[0].hp.current = 100;
+        stairView.world.party.champions[0].hp.maximum = 100;
+
+        /* INV_GV_66: Stairs-down on map 0 moves party to map 1 */
+        stairView.world.party.mapX = 1;
+        stairView.world.party.mapY = 1;
+        stairView.world.party.mapIndex = 0;
+        {
+            M11_GameInputResult r = M11_GameView_HandleInput(&stairView, M12_MENU_INPUT_USE_STAIRS);
+            probe_record(&tally,
+                         "INV_GV_66",
+                         r == M11_GAME_INPUT_REDRAW &&
+                             stairView.world.party.mapIndex == 1,
+                         "stairs-down (bit 0 clear) descends from map 0 to map 1");
+        }
+
+        /* INV_GV_67: Stairs-up on map 1 moves party back to map 0 */
+        stairView.world.party.mapX = 1;
+        stairView.world.party.mapY = 1;
+        /* Now on map 1, which has stairs-up at (1,1) */
+        {
+            M11_GameInputResult r = M11_GameView_HandleInput(&stairView, M12_MENU_INPUT_USE_STAIRS);
+            probe_record(&tally,
+                         "INV_GV_67",
+                         r == M11_GAME_INPUT_REDRAW &&
+                             stairView.world.party.mapIndex == 0,
+                         "stairs-up (bit 0 set) ascends from map 1 back to map 0");
+        }
+
+        /* INV_GV_68: Stairs-up on map 0 (index 0) leads nowhere */
+        {
+            /* Put party back on map 0 at stairs but change to stairs-up */
+            stairView.world.party.mapIndex = 0;
+            stairView.world.party.mapX = 1;
+            stairView.world.party.mapY = 1;
+            sDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x01); /* up */
+            {
+                M11_GameInputResult r = M11_GameView_HandleInput(&stairView, M12_MENU_INPUT_USE_STAIRS);
+                probe_record(&tally,
+                             "INV_GV_68",
+                             r == M11_GAME_INPUT_REDRAW &&
+                                 stairView.world.party.mapIndex == 0,
+                             "stairs-up on top level (map 0) leads nowhere, party stays");
+            }
+            /* Restore original stairs-down */
+            sDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x00);
+        }
+
+        /* INV_GV_69: Stair transition logs appropriate message */
+        {
+            int logBefore = M11_GameView_GetMessageLogCount(&stairView);
+            stairView.world.party.mapIndex = 1;
+            stairView.world.party.mapX = 1;
+            stairView.world.party.mapY = 1;
+            M11_GameView_HandleInput(&stairView, M12_MENU_INPUT_USE_STAIRS);
+            {
+                int logAfter = M11_GameView_GetMessageLogCount(&stairView);
+                const char* lastMsg = M11_GameView_GetMessageLogEntry(&stairView, 0);
+                probe_record(&tally,
+                             "INV_GV_69",
+                             logAfter > logBefore &&
+                                 lastMsg != NULL &&
+                                 strstr(lastMsg, "ASCENDED") != NULL,
+                             "stairs-up transition logs ASCENDED message");
+            }
+        }
+
+        /* Clean up stair view */
+        free(sDungeon->tiles[0].squareData);
+        free(sDungeon->tiles[1].squareData);
+        free(sDungeon->maps);
+        free(sDungeon->tiles);
+        free(sDungeon);
+        free(sThings->squareFirstThings);
+        free(sThings);
+    }
+
+    /* ================================================================
+     * XP/leveling integration invariants (INV_GV_70 .. INV_GV_74)
+     * ================================================================ */
+    {
+        M11_GameViewState xpView;
+        struct DungeonDatState_Compat* xDungeon;
+        struct DungeonThings_Compat* xThings;
+        int xSquareCount = 9; /* 3x3 */
+        int xI;
+
+        memset(&xpView, 0, sizeof(xpView));
+        M11_GameView_Init(&xpView);
+        xpView.active = 1;
+        xpView.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+        snprintf(xpView.title, sizeof(xpView.title), "XP-PROBE");
+        snprintf(xpView.sourceId, sizeof(xpView.sourceId), "xp");
+
+        xDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*xDungeon));
+        xThings = (struct DungeonThings_Compat*)calloc(1, sizeof(*xThings));
+        xDungeon->header.mapCount = 1;
+        xDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(struct DungeonMapDesc_Compat));
+        xDungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(1, sizeof(struct DungeonMapTiles_Compat));
+        xDungeon->loaded = 1;
+        xDungeon->tilesLoaded = 1;
+        xDungeon->maps[0].width = 3;
+        xDungeon->maps[0].height = 3;
+        xDungeon->tiles[0].squareCount = xSquareCount;
+        xDungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)xSquareCount, 1);
+
+        xThings->squareFirstThings = (unsigned short*)calloc((size_t)xSquareCount, sizeof(unsigned short));
+        xThings->squareFirstThingCount = xSquareCount;
+        xThings->loaded = 1;
+        for (xI = 0; xI < xSquareCount; ++xI) {
+            xThings->squareFirstThings[xI] = THING_ENDOFLIST;
+            xDungeon->tiles[0].squareData[xI] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        }
+
+        xpView.world.dungeon = xDungeon;
+        xpView.world.things = xThings;
+        xpView.world.party.mapIndex = 0;
+        xpView.world.party.mapX = 1;
+        xpView.world.party.mapY = 1;
+        xpView.world.party.direction = DIR_NORTH;
+        xpView.world.party.championCount = 1;
+        xpView.world.party.activeChampionIndex = 0;
+        xpView.world.party.champions[0].present = 1;
+        memcpy(xpView.world.party.champions[0].name, "HERO", 4);
+        { int invI; for (invI = 0; invI < CHAMPION_SLOT_COUNT; ++invI) { xpView.world.party.champions[0].inventory[invI] = THING_NONE; } }
+        xpView.world.party.champions[0].hp.current = 100;
+        xpView.world.party.champions[0].hp.maximum = 100;
+        xpView.world.party.champions[0].stamina.current = 80;
+        xpView.world.party.champions[0].stamina.maximum = 80;
+
+        /* Initialize lifecycle from party state */
+        F0859_LIFECYCLE_Init_Compat(&xpView.world.lifecycle, &xpView.world.party);
+
+        /* INV_GV_70: GetSkillLevel returns 0 for fresh champion */
+        {
+            int level = M11_GameView_GetSkillLevel(&xpView, 0, CHAMPION_SKILL_FIGHTER);
+            probe_record(&tally,
+                         "INV_GV_70",
+                         level >= 0,
+                         "GetSkillLevel returns non-negative for a present champion");
+        }
+
+        /* INV_GV_71: GetSkillLevel returns -1 for invalid champion */
+        {
+            int level = M11_GameView_GetSkillLevel(&xpView, 5, CHAMPION_SKILL_FIGHTER);
+            probe_record(&tally,
+                         "INV_GV_71",
+                         level == -1,
+                         "GetSkillLevel returns -1 for out-of-range champion");
+        }
+
+        /* INV_GV_72: EMIT_DAMAGE_DEALT emission triggers combat XP increase */
+        {
+            unsigned long expBefore = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
+
+            /* Simulate a DAMAGE_DEALT emission like the tick orchestrator would */
+            memset(&xpView.lastTickResult, 0, sizeof(xpView.lastTickResult));
+            xpView.lastTickResult.emissionCount = 1;
+            xpView.lastTickResult.emissions[0].kind = EMIT_DAMAGE_DEALT;
+            xpView.lastTickResult.emissions[0].payload[0] = 0; /* target */
+            xpView.lastTickResult.emissions[0].payload[1] = 0; /* attacker */
+            xpView.lastTickResult.emissions[0].payload[2] = 15; /* damage amount */
+            xpView.lastTickResult.emissions[0].payload[3] = 0;
+
+            M11_GameView_ProcessTickEmissions(&xpView);
+
+            {
+                unsigned long expAfter = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
+                probe_record(&tally,
+                             "INV_GV_72",
+                             expAfter > expBefore,
+                             "EMIT_DAMAGE_DEALT awards combat XP to active champion via lifecycle");
+            }
+        }
+
+        /* INV_GV_73: EMIT_SPELL_EFFECT emission triggers magic XP increase */
+        {
+            unsigned long wizExpBefore = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_WIZARD].experience;
+
+            memset(&xpView.lastTickResult, 0, sizeof(xpView.lastTickResult));
+            xpView.lastTickResult.emissionCount = 1;
+            xpView.lastTickResult.emissions[0].kind = EMIT_SPELL_EFFECT;
+            xpView.lastTickResult.emissions[0].payload[0] = 0; /* champIdx */
+            xpView.lastTickResult.emissions[0].payload[1] = C2_SPELL_KIND_PROJECTILE_COMPAT; /* kind */
+            xpView.lastTickResult.emissions[0].payload[2] = 8; /* type (Fireball) */
+            xpView.lastTickResult.emissions[0].payload[3] = 4; /* power */
+
+            M11_GameView_ProcessTickEmissions(&xpView);
+
+            {
+                unsigned long wizExpAfter = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_WIZARD].experience;
+                probe_record(&tally,
+                             "INV_GV_73",
+                             wizExpAfter > wizExpBefore,
+                             "EMIT_SPELL_EFFECT awards magic XP to casting champion via lifecycle");
+            }
+        }
+
+        /* INV_GV_74: Potion spell effect awards priest XP, not wizard */
+        {
+            unsigned long priestExpBefore = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_PRIEST].experience;
+            unsigned long wizExpBefore2 = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_WIZARD].experience;
+
+            memset(&xpView.lastTickResult, 0, sizeof(xpView.lastTickResult));
+            xpView.lastTickResult.emissionCount = 1;
+            xpView.lastTickResult.emissions[0].kind = EMIT_SPELL_EFFECT;
+            xpView.lastTickResult.emissions[0].payload[0] = 0; /* champIdx */
+            xpView.lastTickResult.emissions[0].payload[1] = C1_SPELL_KIND_POTION_COMPAT; /* kind */
+            xpView.lastTickResult.emissions[0].payload[2] = 0; /* type */
+            xpView.lastTickResult.emissions[0].payload[3] = 2; /* power */
+
+            M11_GameView_ProcessTickEmissions(&xpView);
+
+            {
+                unsigned long priestExpAfter = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_PRIEST].experience;
+                unsigned long wizExpAfter2 = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_WIZARD].experience;
+                probe_record(&tally,
+                             "INV_GV_74",
+                             priestExpAfter > priestExpBefore &&
+                                 wizExpAfter2 == wizExpBefore2,
+                             "potion spell awards priest XP, not wizard XP");
+            }
+        }
+
+        /* Clean up xp view */
+        free(xDungeon->tiles[0].squareData);
+        free(xDungeon->maps);
+        free(xDungeon->tiles);
+        free(xDungeon);
+        free(xThings->squareFirstThings);
+        free(xThings);
+    }
+
     M11_GameView_Shutdown(&gameView);
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;

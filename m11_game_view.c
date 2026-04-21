@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 
 #include "asset_status_m12.h"
+#include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -813,6 +814,7 @@ static int m11_is_explored(const M11_GameViewState* state, int mapX, int mapY) {
 static int m11_try_stairs_transition(M11_GameViewState* state) {
     unsigned char square = 0;
     int elementType;
+    int stairUp;
     int targetLevel;
     const struct DungeonMapDesc_Compat* targetMap;
 
@@ -831,10 +833,17 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
         return 0;
     }
 
-    /* Stairs go down (index + 1). Could also go up if the nibble
-       says so, but for DM1 the convention is stairs-down. */
-    targetLevel = state->world.party.mapIndex + 1;
-    if (targetLevel >= (int)state->world.dungeon->header.mapCount) {
+    /* Attribute bit 0 of the low nibble selects direction:
+     *   0 = stairs down (mapIndex + 1)
+     *   1 = stairs up   (mapIndex - 1)
+     * This matches the Fontanel convention for DM1 stair encoding. */
+    stairUp = (square & 0x01);
+    if (stairUp) {
+        targetLevel = state->world.party.mapIndex - 1;
+    } else {
+        targetLevel = state->world.party.mapIndex + 1;
+    }
+    if (targetLevel < 0 || targetLevel >= (int)state->world.dungeon->header.mapCount) {
         m11_log_event(state, M11_COLOR_YELLOW, "T%u: STAIRS LEAD NOWHERE",
                       (unsigned int)state->world.gameTick);
         return 0;
@@ -854,10 +863,17 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
     memset(state->exploredBits, 0, sizeof(state->exploredBits));
     m11_mark_explored(state);
     m11_refresh_hash(state);
-    m11_log_event(state, M11_COLOR_YELLOW, "T%u: DESCENDED TO LEVEL %d",
-                  (unsigned int)state->world.gameTick,
-                  targetLevel + 1);
-    m11_set_status(state, "STAIRS", "DESCENDED TO NEXT LEVEL");
+    if (stairUp) {
+        m11_log_event(state, M11_COLOR_YELLOW, "T%u: ASCENDED TO LEVEL %d",
+                      (unsigned int)state->world.gameTick,
+                      targetLevel + 1);
+        m11_set_status(state, "STAIRS", "ASCENDED TO PREVIOUS LEVEL");
+    } else {
+        m11_log_event(state, M11_COLOR_YELLOW, "T%u: DESCENDED TO LEVEL %d",
+                      (unsigned int)state->world.gameTick,
+                      targetLevel + 1);
+        m11_set_status(state, "STAIRS", "DESCENDED TO NEXT LEVEL");
+    }
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "LEVEL %d", targetLevel + 1);
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
              "MAP %dx%d, ENTERED FROM STAIRS",
@@ -1468,6 +1484,18 @@ int M11_GameView_CountChampionItems(const M11_GameViewState* state, int champion
     return count;
 }
 
+int M11_GameView_GetSkillLevel(const M11_GameViewState* state,
+                               int championIndex,
+                               int skillIndex) {
+    if (!state || !state->active) return -1;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return -1;
+    if (!state->world.party.champions[championIndex].present) return -1;
+    if (skillIndex < 0 || skillIndex >= CHAMPION_SKILL_COUNT) return -1;
+    return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+        &state->world.lifecycle.champions[championIndex],
+        skillIndex, 0);
+}
+
 /* ================================================================
  * Pickup: take first item from current cell -> champion inventory
  * ================================================================ */
@@ -1622,7 +1650,7 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
 }
 
 /* Forward declarations for spell casting */
-static void m11_process_tick_emissions(M11_GameViewState* state);
+/* Forward declaration — public, see header */
 
 /* ================================================================
  * Spell casting UI
@@ -1827,7 +1855,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
         F0884_ORCH_AdvanceOneTick_Compat(&state->world, &input, &state->lastTickResult);
         state->lastWorldHash = state->lastTickResult.worldHashPost;
-        m11_process_tick_emissions(state);
+        M11_GameView_ProcessTickEmissions(state);
     }
 
     m11_log_event(state, M11_COLOR_GREEN, "T%u: %s CAST SPELL #%d (COST %d MANA)",
@@ -2323,7 +2351,133 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
     (void)i; /* suppress unused warning */
 }
 
-static void m11_process_tick_emissions(M11_GameViewState* state) {
+/* ================================================================
+ * XP award and level-up processing
+ *
+ * When EMIT_DAMAGE_DEALT fires, the active champion earns combat XP
+ * through the M10 lifecycle layer.  If the accumulated experience
+ * crosses a level threshold, F0850 applies stat boosts and we log
+ * the level-up.
+ * ================================================================ */
+static void m11_award_combat_xp(M11_GameViewState* state,
+                                int championIndex,
+                                int damage) {
+    struct ChampionLifecycleState_Compat* lc;
+    struct LevelUpMarker_Compat marker;
+    int xpAmount;
+    int skillIndex;
+    char name[16];
+
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (!state->world.party.champions[championIndex].present) return;
+
+    lc = &state->world.lifecycle.champions[championIndex];
+    memset(&marker, 0, sizeof(marker));
+
+    /* XP proportional to damage, minimum 1.
+     * The lifecycle layer uses 20-skill indices: LIFECYCLE_SKILL_SWING
+     * is the default melee sub-skill under Fighter. */
+    xpAmount = damage;
+    if (xpAmount < 1) xpAmount = 1;
+    skillIndex = LIFECYCLE_SKILL_SWING;
+
+    if (F0851_LIFECYCLE_AwardCombatXP_Compat(
+            lc, championIndex, skillIndex, xpAmount,
+            state->world.party.mapIndex, /* map difficulty */
+            state->world.gameTick,
+            state->world.lifecycle.lastCreatureAttackTime,
+            &state->world.masterRng,
+            &marker)) {
+        /* Sync base skill level back to Phase 10 party state.
+         * The lifecycle uses 20 sub-skills; Phase 10 only tracks the
+         * 4 base classes (Fighter/Ninja/Priest/Wizard). */
+        int baseIdx = (skillIndex - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2;
+        if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT) {
+            int newLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+                lc, baseIdx, 0);
+            if (newLevel > 0) {
+                state->world.party.champions[championIndex].skillLevels[baseIdx] =
+                    (unsigned short)newLevel;
+            }
+        }
+
+        /* Check for level-up */
+        if (marker.newLevel > marker.previousLevel && marker.newLevel > 0) {
+            m11_format_champion_name(
+                state->world.party.champions[championIndex].name,
+                name, sizeof(name));
+            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                          "T%u: %s LEVELED UP! (%s %d -> %d)",
+                          (unsigned int)state->world.gameTick,
+                          name,
+                          (baseIdx == LIFECYCLE_SKILL_FIGHTER)  ? "FIGHTER" :
+                          (baseIdx == LIFECYCLE_SKILL_NINJA)    ? "NINJA"   :
+                          (baseIdx == LIFECYCLE_SKILL_PRIEST)   ? "PRIEST"  :
+                          (baseIdx == LIFECYCLE_SKILL_WIZARD)   ? "WIZARD"  :
+                          "SKILL",
+                          marker.previousLevel, marker.newLevel);
+        }
+    }
+}
+
+static void m11_award_magic_xp(M11_GameViewState* state,
+                               int championIndex,
+                               int spellKind,
+                               int power) {
+    struct ChampionLifecycleState_Compat* lc;
+    struct LevelUpMarker_Compat marker;
+    int skillIndex;
+    char name[16];
+
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (!state->world.party.champions[championIndex].present) return;
+
+    lc = &state->world.lifecycle.champions[championIndex];
+    memset(&marker, 0, sizeof(marker));
+
+    /* Map spell kind to lifecycle sub-skill: Heal (13) for potions,
+     * Fire (16) for projectile/combat magic. */
+    if (spellKind == C1_SPELL_KIND_POTION_COMPAT) {
+        skillIndex = LIFECYCLE_SKILL_HEAL;
+    } else {
+        skillIndex = LIFECYCLE_SKILL_FIRE;
+    }
+
+    if (F0852_LIFECYCLE_AwardMagicXP_Compat(
+            lc, championIndex, skillIndex, power > 0 ? power : 1,
+            state->world.party.mapIndex,
+            state->world.gameTick,
+            state->world.lifecycle.lastCreatureAttackTime,
+            &state->world.masterRng,
+            &marker)) {
+        int baseIdx = (skillIndex - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2;
+        if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT) {
+            int newLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+                lc, baseIdx, 0);
+            if (newLevel > 0) {
+                state->world.party.champions[championIndex].skillLevels[baseIdx] =
+                    (unsigned short)newLevel;
+            }
+        }
+        if (marker.newLevel > marker.previousLevel && marker.newLevel > 0) {
+            m11_format_champion_name(
+                state->world.party.champions[championIndex].name,
+                name, sizeof(name));
+            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                          "T%u: %s LEVELED UP! (%s %d -> %d)",
+                          (unsigned int)state->world.gameTick,
+                          name,
+                          (baseIdx == LIFECYCLE_SKILL_PRIEST)  ? "PRIEST"  :
+                          (baseIdx == LIFECYCLE_SKILL_WIZARD)  ? "WIZARD"  :
+                          "SKILL",
+                          marker.previousLevel, marker.newLevel);
+        }
+    }
+}
+
+void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     int i;
     if (!state) {
         return;
@@ -2331,12 +2485,16 @@ static void m11_process_tick_emissions(M11_GameViewState* state) {
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         const struct TickEmission_Compat* e = &state->lastTickResult.emissions[i];
         switch (e->kind) {
-            case EMIT_DAMAGE_DEALT:
+            case EMIT_DAMAGE_DEALT: {
+                int champIdx = state->world.party.activeChampionIndex;
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: DAMAGE %d DEALT",
                               (unsigned int)state->world.gameTick,
                               (int)e->payload[2]);
+                /* Award combat XP to the active champion */
+                m11_award_combat_xp(state, champIdx, (int)e->payload[2]);
                 break;
+            }
             case EMIT_KILL_NOTIFY:
                 m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                               "T%u: ENEMY DEFEATED",
@@ -2377,6 +2535,7 @@ static void m11_process_tick_emissions(M11_GameViewState* state) {
                 break;
             case EMIT_SPELL_EFFECT: {
                 /* payload[0]=champIdx, [1]=spellKind, [2]=spellType, [3]=power */
+                int sChamp = (int)e->payload[0];
                 int sKind = (int)e->payload[1];
                 int sType = (int)e->payload[2];
                 int sPow  = (int)e->payload[3];
@@ -2388,6 +2547,8 @@ static void m11_process_tick_emissions(M11_GameViewState* state) {
                               "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)",
                               (unsigned int)state->world.gameTick,
                               kindStr, sType, sPow);
+                /* Award magic XP to the casting champion */
+                m11_award_magic_xp(state, sChamp, sKind, sPow);
                 break;
             }
             default:
@@ -2680,7 +2841,7 @@ static int m11_apply_tick(M11_GameViewState* state,
     state->lastWorldHash = state->lastTickResult.worldHashPost;
 
     /* Process emissions into the message log */
-    m11_process_tick_emissions(state);
+    M11_GameView_ProcessTickEmissions(state);
 
     /* Apply survival mechanics */
     m11_apply_survival_drain(state);

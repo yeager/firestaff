@@ -115,6 +115,17 @@ const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int 
  * Returns 1 if a transition occurred. */
 int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state);
 
+/* Query the computed skill level for a champion via the lifecycle layer.
+ * Returns the effective level (>= 0), or -1 on error. */
+int M11_GameView_GetSkillLevel(const M11_GameViewState* state,
+                               int championIndex,
+                               int skillIndex);
+
+/* Process tick emissions: log events, award XP, apply level-ups.
+ * Normally called internally after each tick advance; exposed for
+ * probe-level verification of emission-driven XP integration. */
+void M11_GameView_ProcessTickEmissions(M11_GameViewState* state);
+
 #ifdef __cplusplus
 }
 #endif
