@@ -3588,6 +3588,12 @@ typedef struct M11_ViewportCell {
     int doorVertical;
     int hasDoorThing;
     int creatureType; /* -1 if no creature, else creature type index (0-26) */
+    /* First floor item info for sprite rendering */
+    int firstItemThingType;    /* THING_TYPE_WEAPON..JUNK, or -1 if no item */
+    int firstItemSubtype;      /* weapon/armour/potion/junk subtype, or -1 */
+    /* Wall/door ornament ordinal from thing data (0-15, -1 if none) */
+    int wallOrnamentOrdinal;
+    int doorOrnamentOrdinal;
     M11_SquareThingSummary summary;
 } M11_ViewportCell;
 
@@ -3873,6 +3879,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.firstThing = THING_ENDOFLIST;
     cell.doorState = -1;
     cell.creatureType = -1;
+    cell.firstItemThingType = -1;
+    cell.firstItemSubtype = -1;
+    cell.wallOrnamentOrdinal = -1;
+    cell.doorOrnamentOrdinal = -1;
 
     if (!state || !state->active) {
         if (outCell) {
@@ -3941,6 +3951,82 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                     cell.creatureType = (int)state->world.things->groups[gIdx].creatureType;
                 }
                 break;
+            }
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            ++scanSafety;
+        }
+    }
+
+    /* Extract first floor item type and subtype for sprite rendering */
+    if (cell.summary.items > 0 && state->world.things) {
+        unsigned short scanThing = firstThing;
+        int scanSafety = 0;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            int tType = THING_GET_TYPE(scanThing);
+            int tIdx = THING_GET_INDEX(scanThing);
+            if (m11_thing_is_item(tType)) {
+                cell.firstItemThingType = tType;
+                switch (tType) {
+                    case THING_TYPE_WEAPON:
+                        if (state->world.things->weapons && tIdx >= 0 && tIdx < state->world.things->weaponCount)
+                            cell.firstItemSubtype = (int)state->world.things->weapons[tIdx].type;
+                        break;
+                    case THING_TYPE_ARMOUR:
+                        if (state->world.things->armours && tIdx >= 0 && tIdx < state->world.things->armourCount)
+                            cell.firstItemSubtype = (int)state->world.things->armours[tIdx].type;
+                        break;
+                    case THING_TYPE_POTION:
+                        if (state->world.things->potions && tIdx >= 0 && tIdx < state->world.things->potionCount)
+                            cell.firstItemSubtype = (int)state->world.things->potions[tIdx].type;
+                        break;
+                    case THING_TYPE_JUNK:
+                        if (state->world.things->junks && tIdx >= 0 && tIdx < state->world.things->junkCount)
+                            cell.firstItemSubtype = (int)state->world.things->junks[tIdx].type;
+                        break;
+                    case THING_TYPE_SCROLL:
+                        cell.firstItemSubtype = 0;
+                        break;
+                    case THING_TYPE_CONTAINER:
+                        if (state->world.things->containers && tIdx >= 0 && tIdx < state->world.things->containerCount)
+                            cell.firstItemSubtype = (int)state->world.things->containers[tIdx].type;
+                        break;
+                    default:
+                        cell.firstItemSubtype = 0;
+                        break;
+                }
+                break;
+            }
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            ++scanSafety;
+        }
+    }
+
+    /* Extract door ornament ordinal */
+    if (cell.elementType == DUNGEON_ELEMENT_DOOR && cell.hasDoorThing &&
+        state->world.things && state->world.things->doors) {
+        int doorIdx = THING_GET_INDEX(firstThing);
+        if (doorIdx >= 0 && doorIdx < state->world.things->doorCount) {
+            int ord = (int)state->world.things->doors[doorIdx].ornamentOrdinal;
+            if (ord > 0) cell.doorOrnamentOrdinal = ord;
+        }
+    }
+
+    /* Extract wall ornament ordinal from sensors on this square.
+     * In DM, wall ornaments are placed via sensor things whose
+     * ornamentOrdinal field specifies the graphic to display. */
+    if (state->world.things && state->world.things->sensors) {
+        unsigned short scanThing = firstThing;
+        int scanSafety = 0;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
+                int sIdx = THING_GET_INDEX(scanThing);
+                if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
+                    int ord = (int)state->world.things->sensors[sIdx].ornamentOrdinal;
+                    if (ord > 0) {
+                        cell.wallOrnamentOrdinal = ord;
+                        break;
+                    }
+                }
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
             ++scanSafety;
@@ -4284,6 +4370,24 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
                                     int fbW, int fbH,
                                     int x, int y, int w, int h,
                                     int creatureType, int depthIndex);
+static int m11_draw_item_sprite(const M11_GameViewState* state,
+                                unsigned char* framebuffer,
+                                int fbW, int fbH,
+                                int x, int y, int w, int h,
+                                int thingType, int subtype,
+                                int depthIndex);
+static int m11_draw_wall_ornament(const M11_GameViewState* state,
+                                  unsigned char* framebuffer,
+                                  int fbW, int fbH,
+                                  const M11_ViewRect* rect,
+                                  int ornamentOrdinal,
+                                  int depthIndex);
+static int m11_draw_door_ornament(const M11_GameViewState* state,
+                                  unsigned char* framebuffer,
+                                  int fbW, int fbH,
+                                  const M11_ViewRect* rect,
+                                  int ornamentOrdinal,
+                                  int depthIndex);
 
 static void m11_draw_wall_face(unsigned char* framebuffer,
                                int framebufferWidth,
@@ -4370,6 +4474,34 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
             break;
     }
 
+    /* Draw wall ornament on wall-type cells (sensor-placed ornaments) */
+    if (cell->elementType == DUNGEON_ELEMENT_WALL && cell->wallOrnamentOrdinal >= 0) {
+        M11_ViewRect ornRect;
+        ornRect.x = faceX;
+        ornRect.y = faceY;
+        ornRect.w = faceW;
+        ornRect.h = faceH;
+        if (g_drawState) {
+            m11_draw_wall_ornament(g_drawState, framebuffer,
+                                   framebufferWidth, framebufferHeight,
+                                   &ornRect, cell->wallOrnamentOrdinal, depthIndex);
+        }
+    }
+
+    /* Draw door ornament on door-type cells */
+    if (cell->elementType == DUNGEON_ELEMENT_DOOR && cell->doorOrnamentOrdinal >= 0) {
+        M11_ViewRect ornRect;
+        ornRect.x = faceX;
+        ornRect.y = faceY;
+        ornRect.w = faceW;
+        ornRect.h = faceH;
+        if (g_drawState) {
+            m11_draw_door_ornament(g_drawState, framebuffer,
+                                   framebufferWidth, framebufferHeight,
+                                   &ornRect, cell->doorOrnamentOrdinal, depthIndex);
+        }
+    }
+
     if (m11_viewport_cell_is_open(cell)) {
         m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
                                rect, cell, depthIndex);
@@ -4408,9 +4540,17 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         }
     }
     if (cell->summary.items > 0) {
-        m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
-                          faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                          cell->summary.items);
+        /* Try real item sprite first, fall back to primitive cue */
+        if (!g_drawState ||
+            !m11_draw_item_sprite(g_drawState, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                                  cell->firstItemThingType, cell->firstItemSubtype,
+                                  depthIndex)) {
+            m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
+                              faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                              cell->summary.items);
+        }
     }
     m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
                         faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell);
@@ -4456,8 +4596,27 @@ enum {
     M11_GFX_CREATURE_BASE_B = 439, /* second batch */
     M11_GFX_CREATURE_SETS_B = 4,   /* 4 more sets at 439+ (439,443,448,451 are 96x88) */
 
-    /* Item viewport sprites (small icons shown in corridor) */
+    /* Item viewport sprites (small icons shown in corridor).
+     * In CSB/DM, object list entries map thing types to graphic indices.
+     * The mapping uses a base index per thing type; subtypes offset from
+     * there.  Graphic indices 267+ hold the floor item icons. */
     M11_GFX_ITEM_SPRITE_BASE = 267, /* pairs of 14x19/16x19 icons */
+    M11_GFX_ITEM_WEAPON_BASE = 267, /* 46 weapon subtypes */
+    M11_GFX_ITEM_ARMOUR_BASE = 313, /* 30 armour subtypes */
+    M11_GFX_ITEM_SCROLL_BASE = 343, /* 1 generic scroll icon */
+    M11_GFX_ITEM_POTION_BASE = 344, /* 17 potion subtypes */
+    M11_GFX_ITEM_CONTAINER_BASE = 361, /* 3 container subtypes */
+    M11_GFX_ITEM_JUNK_BASE   = 364, /* 52 junk subtypes */
+    M11_GFX_ITEM_SPRITE_END  = 416, /* safety cap */
+
+    /* Wall ornament graphics (per wall set, 16 ornaments each).
+     * In CSB/DM, wall ornaments start at graphic index 321 and are
+     * organized as 16 ornaments per wall set.  We map using the map's
+     * wallSet + ornament ordinal. */
+    M11_GFX_WALL_ORNAMENT_BASE = 101, /* first wall ornament graphic */
+    M11_GFX_WALL_ORNAMENTS_PER_SET = 16,
+    M11_GFX_DOOR_ORNAMENT_BASE = 165, /* first door ornament graphic */
+    M11_GFX_DOOR_ORNAMENTS_PER_SET = 16,
 
     /* Stair graphics */
     M11_GFX_STAIRS_DOWN_D2 = 93,  /* 33x136 */
@@ -4605,6 +4764,223 @@ static int m11_draw_door_side_asset(const M11_GameViewState* state,
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
                                x, y, w, h, 0);
     return 1;
+}
+
+/* Map an item thing type + subtype to a GRAPHICS.DAT graphic index.
+ * Returns the graphic index, or 0 if no mapping exists. */
+static unsigned int m11_item_sprite_index(int thingType, int subtype) {
+    unsigned int base;
+    unsigned int maxSubtype;
+    if (subtype < 0) subtype = 0;
+    switch (thingType) {
+        case THING_TYPE_WEAPON:
+            base = M11_GFX_ITEM_WEAPON_BASE;
+            maxSubtype = 45;
+            break;
+        case THING_TYPE_ARMOUR:
+            base = M11_GFX_ITEM_ARMOUR_BASE;
+            maxSubtype = 29;
+            break;
+        case THING_TYPE_SCROLL:
+            return M11_GFX_ITEM_SCROLL_BASE;
+        case THING_TYPE_POTION:
+            base = M11_GFX_ITEM_POTION_BASE;
+            maxSubtype = 16;
+            break;
+        case THING_TYPE_CONTAINER:
+            base = M11_GFX_ITEM_CONTAINER_BASE;
+            maxSubtype = 2;
+            break;
+        case THING_TYPE_JUNK:
+            base = M11_GFX_ITEM_JUNK_BASE;
+            maxSubtype = 51;
+            break;
+        default:
+            return 0;
+    }
+    if ((unsigned int)subtype > maxSubtype) subtype = 0;
+    return base + (unsigned int)subtype;
+}
+
+/* Draw an item sprite from GRAPHICS.DAT at the given viewport position.
+ * Falls back to the primitive item cue if the asset is unavailable.
+ * Returns 1 if a real sprite was drawn. */
+static int m11_draw_item_sprite(const M11_GameViewState* state,
+                                unsigned char* framebuffer,
+                                int fbW,
+                                int fbH,
+                                int x,
+                                int y,
+                                int w,
+                                int h,
+                                int thingType,
+                                int subtype,
+                                int depthIndex) {
+    unsigned int gfxIdx;
+    const M11_AssetSlot* slot;
+    int spriteW, spriteH;
+    int drawW, drawH, drawX, drawY;
+
+    if (!state || !state->assetsAvailable || thingType < 0) return 0;
+    gfxIdx = m11_item_sprite_index(thingType, subtype);
+    if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
+
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+
+    spriteW = (int)slot->width;
+    spriteH = (int)slot->height;
+
+    /* Scale item sprite to fit within the floor area, keeping aspect ratio.
+     * Reduce size at greater depths for perspective. */
+    drawW = w / 2;
+    drawH = (drawW * spriteH) / spriteW;
+    if (drawH > h / 2) {
+        drawH = h / 2;
+        drawW = (drawH * spriteW) / spriteH;
+    }
+    /* Shrink at depth */
+    if (depthIndex >= 1) {
+        drawW = drawW * 2 / 3;
+        drawH = drawH * 2 / 3;
+    }
+    if (depthIndex >= 2) {
+        drawW = drawW * 2 / 3;
+        drawH = drawH * 2 / 3;
+    }
+    if (drawW < 3 || drawH < 3) return 0;
+
+    /* Position item on the floor area (bottom-center of the face rect) */
+    drawX = x + (w - drawW) / 2;
+    drawY = y + h - drawH - 2;
+
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               drawX, drawY, drawW, drawH, 0);
+    return 1;
+}
+
+/* Draw a wall ornament from GRAPHICS.DAT on the wall face.
+ * Uses the map's wall set and the cell's ornament ordinal.
+ * Returns 1 if a real ornament was drawn. */
+static int m11_draw_wall_ornament(const M11_GameViewState* state,
+                                  unsigned char* framebuffer,
+                                  int fbW,
+                                  int fbH,
+                                  const M11_ViewRect* rect,
+                                  int ornamentOrdinal,
+                                  int depthIndex) {
+    unsigned int gfxIdx;
+    const M11_AssetSlot* slot;
+    int ornW, ornH, drawX, drawY;
+    int wallSet;
+
+    if (!state || !state->assetsAvailable || ornamentOrdinal < 0) return 0;
+    if (!state->world.dungeon) return 0;
+
+    /* Get the current map's wall set */
+    wallSet = 0;
+    if (state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
+    }
+
+    gfxIdx = (unsigned int)(M11_GFX_WALL_ORNAMENT_BASE +
+              wallSet * M11_GFX_WALL_ORNAMENTS_PER_SET +
+              ornamentOrdinal);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+
+    /* Scale ornament to fit in the center of the wall face, at ~40% of face size */
+    ornW = rect->w * 2 / 5;
+    ornH = (ornW * (int)slot->height) / (int)slot->width;
+    if (ornH > rect->h * 2 / 5) {
+        ornH = rect->h * 2 / 5;
+        ornW = (ornH * (int)slot->width) / (int)slot->height;
+    }
+    /* Shrink at depth */
+    if (depthIndex >= 1) {
+        ornW = ornW * 3 / 4;
+        ornH = ornH * 3 / 4;
+    }
+    if (ornW < 3 || ornH < 3) return 0;
+
+    drawX = rect->x + (rect->w - ornW) / 2;
+    drawY = rect->y + (rect->h - ornH) / 2;
+
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               drawX, drawY, ornW, ornH, 0);
+    return 1;
+}
+
+/* Draw a door ornament from GRAPHICS.DAT on the door face.
+ * Returns 1 if a real ornament was drawn. */
+static int m11_draw_door_ornament(const M11_GameViewState* state,
+                                  unsigned char* framebuffer,
+                                  int fbW,
+                                  int fbH,
+                                  const M11_ViewRect* rect,
+                                  int ornamentOrdinal,
+                                  int depthIndex) {
+    unsigned int gfxIdx;
+    const M11_AssetSlot* slot;
+    int ornW, ornH, drawX, drawY;
+    int doorSet;
+
+    if (!state || !state->assetsAvailable || ornamentOrdinal < 0) return 0;
+    if (!state->world.dungeon) return 0;
+
+    /* Get the current map's door set (use doorSet0 by default) */
+    doorSet = 0;
+    if (state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        doorSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].doorSet0;
+    }
+
+    gfxIdx = (unsigned int)(M11_GFX_DOOR_ORNAMENT_BASE +
+              doorSet * M11_GFX_DOOR_ORNAMENTS_PER_SET +
+              ornamentOrdinal);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+
+    ornW = rect->w / 3;
+    ornH = (ornW * (int)slot->height) / (int)slot->width;
+    if (ornH > rect->h / 3) {
+        ornH = rect->h / 3;
+        ornW = (ornH * (int)slot->width) / (int)slot->height;
+    }
+    if (depthIndex >= 1) {
+        ornW = ornW * 3 / 4;
+        ornH = ornH * 3 / 4;
+    }
+    if (ornW < 3 || ornH < 3) return 0;
+
+    drawX = rect->x + (rect->w - ornW) / 2;
+    drawY = rect->y + (rect->h - ornH) / 2;
+
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               drawX, drawY, ornW, ornH, 0);
+    return 1;
+}
+
+/* Get the current map's wall set index for wall texture selection.
+ * Returns 0 (default set) if dungeon data is unavailable. */
+static int m11_current_map_wall_set(const M11_GameViewState* state) {
+    if (!state || !state->world.dungeon ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+    return (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
+}
+
+/* Get the current map's floor set index for floor texture selection. */
+static int m11_current_map_floor_set(const M11_GameViewState* state) {
+    if (!state || !state->world.dungeon ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+    return (int)state->world.dungeon->maps[state->world.party.mapIndex].floorSet;
 }
 
 /* Draw stair graphics from GRAPHICS.DAT at the given depth. */
@@ -5452,12 +5828,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
 
     /* Overlay real GRAPHICS.DAT wall textures when available.
      * Tiles wall-set strips into the corridor frame regions using
-     * scaled blits. Draws back-to-front so nearer strips occlude. */
+     * scaled blits. Draws back-to-front so nearer strips occlude.
+     * Uses the current map's wallSet for texture selection. */
     if (state->assetsAvailable) {
         int d;
+        int mapWallSet = m11_current_map_wall_set(state);
+        int mapFloorSet = m11_current_map_floor_set(state);
         for (d = 2; d >= 0; --d) {
             const M11_AssetSlot* wallSlot;
-            unsigned int wallIdx = (unsigned int)(M11_GFX_WALL_SET_0 + (d % 4));
+            unsigned int wallIdx = (unsigned int)(M11_GFX_WALL_SET_0 + (mapWallSet & 3));
             wallSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, wallIdx);
             if (wallSlot && wallSlot->width > 0 && wallSlot->height > 0) {
                 int ceilH = frames[d + 1].y - frames[d].y;
@@ -5487,10 +5866,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                         rightX + 1, frames[d + 1].y,
                         rightW - 1, frames[d + 1].h, -1);
                 }
-                /* Floor strip */
+                /* Floor strip — use the current map's floor set */
                 if (floorH > 2) {
                     const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
-                        (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_SET_0);
+                        (M11_AssetLoader*)&state->assetLoader,
+                        (unsigned int)(M11_GFX_FLOOR_SET_0 + (mapFloorSet & 1)));
                     if (floorSlot && floorSlot->width > 0 && floorSlot->height > 0) {
                         M11_AssetLoader_BlitScaled(floorSlot, framebuffer,
                             framebufferWidth, framebufferHeight,
