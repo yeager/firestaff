@@ -98,6 +98,10 @@ void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char co
 int M11_GameView_GetMessageLogCount(const M11_GameViewState* state);
 const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex);
 
+/* Post-move environmental transition check (pits, teleporters).
+ * Returns 1 if a transition occurred. */
+int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state);
+
 #ifdef __cplusplus
 }
 #endif

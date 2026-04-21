@@ -1296,6 +1296,232 @@ int main(int argc, char** argv) {
     }
 
     probe_free_synthetic_view(&syntheticView);
+
+    /* ================================================================
+     * Pit and teleporter transition invariants (INV_GV_39 .. INV_GV_45)
+     * ================================================================ */
+    {
+        M11_GameViewState pitView;
+        struct DungeonDatState_Compat* pDungeon;
+        struct DungeonThings_Compat* pThings;
+        int pSquareCount0 = 9; /* 3x3 map 0 */
+        int pSquareCount1 = 9; /* 3x3 map 1 */
+        int pTotalSquares = 18;
+        int pI;
+
+        memset(&pitView, 0, sizeof(pitView));
+        M11_GameView_Init(&pitView);
+        pitView.active = 1;
+        pitView.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+        snprintf(pitView.title, sizeof(pitView.title), "PIT-PROBE");
+        snprintf(pitView.sourceId, sizeof(pitView.sourceId), "pit");
+
+        pDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*pDungeon));
+        pThings = (struct DungeonThings_Compat*)calloc(1, sizeof(*pThings));
+        pDungeon->header.mapCount = 2;
+        pDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(struct DungeonMapDesc_Compat));
+        pDungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(2, sizeof(struct DungeonMapTiles_Compat));
+        pDungeon->loaded = 1;
+        pDungeon->tilesLoaded = 1;
+
+        /* Map 0: 3x3 */
+        pDungeon->maps[0].width = 3;
+        pDungeon->maps[0].height = 3;
+        pDungeon->tiles[0].squareCount = pSquareCount0;
+        pDungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)pSquareCount0, 1);
+
+        /* Map 1: 3x3 */
+        pDungeon->maps[1].width = 3;
+        pDungeon->maps[1].height = 3;
+        pDungeon->tiles[1].squareCount = pSquareCount1;
+        pDungeon->tiles[1].squareData = (unsigned char*)calloc((size_t)pSquareCount1, 1);
+
+        pThings->squareFirstThings = (unsigned short*)calloc((size_t)pTotalSquares, sizeof(unsigned short));
+        pThings->squareFirstThingCount = pTotalSquares;
+        pThings->loaded = 1;
+
+        /* Allocate teleporter things */
+        pThings->teleporters = (struct DungeonTeleporter_Compat*)calloc(1, sizeof(struct DungeonTeleporter_Compat));
+        pThings->teleporterCount = 1;
+        pThings->thingCounts[THING_TYPE_TELEPORTER] = 1;
+        pThings->rawThingData[THING_TYPE_TELEPORTER] = (unsigned char*)calloc(6, 1);
+        probe_set_next(pThings->rawThingData[THING_TYPE_TELEPORTER], THING_ENDOFLIST);
+
+        for (pI = 0; pI < pTotalSquares; ++pI) {
+            pThings->squareFirstThings[pI] = THING_ENDOFLIST;
+        }
+
+        /* Map 0 layout:
+         *   (0,0)=wall  (1,0)=teleporter  (2,0)=wall
+         *   (0,1)=wall  (1,1)=corridor     (2,1)=pit
+         *   (0,2)=wall  (1,2)=corridor     (2,2)=wall
+         * Party starts at (1,2) facing north. */
+        for (pI = 0; pI < pSquareCount0; ++pI) {
+            pDungeon->tiles[0].squareData[pI] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+        }
+        /* probe_set_square works for the first map: col*height+row */
+        pDungeon->tiles[0].squareData[1 * 3 + 2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        pDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        pDungeon->tiles[0].squareData[2 * 3 + 1] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
+        pDungeon->tiles[0].squareData[1 * 3 + 0] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+
+        /* Map 1 layout: all corridor except border walls */
+        for (pI = 0; pI < pSquareCount1; ++pI) {
+            pDungeon->tiles[1].squareData[pI] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        }
+
+        /* Teleporter at map0 (1,0) targets map1 (2,2), rotation=1, audible */
+        pThings->teleporters[0].targetMapIndex = 1;
+        pThings->teleporters[0].targetMapX = 2;
+        pThings->teleporters[0].targetMapY = 2;
+        pThings->teleporters[0].rotation = 1;
+        pThings->teleporters[0].absoluteRotation = 0;
+        pThings->teleporters[0].audible = 1;
+        pThings->teleporters[0].next = THING_ENDOFLIST;
+        /* Link teleporter thing to square (1,0) on map 0 */
+        pThings->squareFirstThings[1 * 3 + 0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
+
+        pitView.world.dungeon = pDungeon;
+        pitView.world.things = pThings;
+        pitView.world.party.mapIndex = 0;
+        pitView.world.party.mapX = 1;
+        pitView.world.party.mapY = 2;
+        pitView.world.party.direction = DIR_NORTH;
+        pitView.world.party.championCount = 1;
+        pitView.world.party.activeChampionIndex = 0;
+        pitView.world.party.champions[0].present = 1;
+        memcpy(pitView.world.party.champions[0].name, "ALEX", 4);
+        { int invI; for (invI = 0; invI < CHAMPION_SLOT_COUNT; ++invI) { pitView.world.party.champions[0].inventory[invI] = THING_NONE; } }
+        pitView.world.party.champions[0].hp.current = 100;
+        pitView.world.party.champions[0].hp.maximum = 100;
+        pitView.world.party.champions[0].stamina.current = 80;
+        pitView.world.party.champions[0].stamina.maximum = 80;
+        pitView.world.party.champions[0].food = 200;
+        pitView.world.party.champions[0].water = 150;
+
+        /* INV_GV_39: Party on corridor at (1,2) does not trigger any transition */
+        {
+            int prevMap = pitView.world.party.mapIndex;
+            int prevX = pitView.world.party.mapX;
+            int prevY = pitView.world.party.mapY;
+            M11_GameView_CheckPostMoveTransitions(&pitView);
+            probe_record(&tally,
+                         "INV_GV_39",
+                         pitView.world.party.mapIndex == prevMap &&
+                             pitView.world.party.mapX == prevX &&
+                             pitView.world.party.mapY == prevY,
+                         "corridor square does not trigger pit or teleporter transition");
+        }
+
+        /* Move party north to (1,1) — corridor, no transition */
+        pitView.world.party.mapY = 1;
+        {
+            int prevMap = pitView.world.party.mapIndex;
+            M11_GameView_CheckPostMoveTransitions(&pitView);
+            probe_record(&tally,
+                         "INV_GV_40",
+                         pitView.world.party.mapIndex == prevMap &&
+                             pitView.world.party.mapX == 1 &&
+                             pitView.world.party.mapY == 1,
+                         "corridor at (1,1) does not trigger transition");
+        }
+
+        /* INV_GV_41: Move party to pit at (2,1) — should fall to map 1 */
+        pitView.world.party.mapX = 2;
+        pitView.world.party.mapY = 1;
+        pitView.world.party.mapIndex = 0;
+        pitView.world.party.champions[0].hp.current = 100;
+        {
+            M11_GameView_CheckPostMoveTransitions(&pitView);
+            probe_record(&tally,
+                         "INV_GV_41",
+                         pitView.world.party.mapIndex == 1,
+                         "stepping on pit drops party to the level below");
+        }
+
+        /* INV_GV_42: Pit fall deals damage to champions */
+        probe_record(&tally,
+                     "INV_GV_42",
+                     pitView.world.party.champions[0].hp.current < 100,
+                     "pit fall deals damage to champion HP");
+
+        /* INV_GV_43: Pit fall preserves X/Y position on the target level */
+        probe_record(&tally,
+                     "INV_GV_43",
+                     pitView.world.party.mapX == 2 &&
+                         pitView.world.party.mapY == 1,
+                     "pit fall preserves X/Y coordinates on the lower level");
+
+        /* INV_GV_44: Pit fall produces a message log entry */
+        {
+            int logCount = M11_GameView_GetMessageLogCount(&pitView);
+            const char* lastMsg = M11_GameView_GetMessageLogEntry(&pitView, 0);
+            probe_record(&tally,
+                         "INV_GV_44",
+                         logCount > 0 && lastMsg != NULL &&
+                             (strstr(lastMsg, "PIT") != NULL || strstr(lastMsg, "FELL") != NULL),
+                         "pit fall writes a log entry mentioning PIT or FELL");
+        }
+
+        /* Reset party to map 0 for teleporter test */
+        pitView.world.party.mapIndex = 0;
+        pitView.world.party.mapX = 1;
+        pitView.world.party.mapY = 0;
+        pitView.world.party.direction = DIR_NORTH;
+
+        /* INV_GV_45: Stepping on teleporter at (1,0) moves party to map 1 (2,2) */
+        {
+            M11_GameView_CheckPostMoveTransitions(&pitView);
+            probe_record(&tally,
+                         "INV_GV_45",
+                         pitView.world.party.mapIndex == 1 &&
+                             pitView.world.party.mapX == 2 &&
+                             pitView.world.party.mapY == 2,
+                         "teleporter transports party to target map and coordinates");
+        }
+
+        /* INV_GV_46: Teleporter applies rotation */
+        probe_record(&tally,
+                     "INV_GV_46",
+                     pitView.world.party.direction == ((DIR_NORTH + 1) & 3),
+                     "teleporter applies relative rotation to party direction");
+
+        /* INV_GV_47: Teleporter produces an audible log entry */
+        {
+            const char* lastMsg = M11_GameView_GetMessageLogEntry(&pitView, 0);
+            probe_record(&tally,
+                         "INV_GV_47",
+                         lastMsg != NULL &&
+                             (strstr(lastMsg, "TELEPORT") != NULL ||
+                              strstr(lastMsg, "MAP") != NULL),
+                         "audible teleporter writes a visible log entry");
+        }
+
+        /* INV_GV_48: Transition chain safety — pit into corridor stops */
+        pitView.world.party.mapIndex = 1;
+        pitView.world.party.mapX = 1;
+        pitView.world.party.mapY = 1;
+        {
+            int prevMap = pitView.world.party.mapIndex;
+            M11_GameView_CheckPostMoveTransitions(&pitView);
+            probe_record(&tally,
+                         "INV_GV_48",
+                         pitView.world.party.mapIndex == prevMap,
+                         "corridor on map 1 does not chain further transitions");
+        }
+
+        /* Cleanup */
+        free(pDungeon->tiles[0].squareData);
+        free(pDungeon->tiles[1].squareData);
+        free(pDungeon->maps);
+        free(pDungeon->tiles);
+        free(pDungeon);
+        free(pThings->squareFirstThings);
+        free(pThings->teleporters);
+        free(pThings->rawThingData[THING_TYPE_TELEPORTER]);
+        free(pThings);
+    }
+
     M11_GameView_Shutdown(&gameView);
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
