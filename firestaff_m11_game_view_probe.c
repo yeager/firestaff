@@ -2089,6 +2089,49 @@ int main(int argc, char** argv) {
             }
         }
 
+        /* INV_GV_75: EMIT_KILL_NOTIFY awards kill XP bonus to active champion */
+        {
+            unsigned long fightExpBefore = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
+
+            memset(&xpView.lastTickResult, 0, sizeof(xpView.lastTickResult));
+            xpView.lastTickResult.emissionCount = 1;
+            xpView.lastTickResult.emissions[0].kind = EMIT_KILL_NOTIFY;
+            xpView.lastTickResult.emissions[0].payload[0] = 12; /* creature type: skeleton */
+            xpView.lastTickResult.emissions[0].payload[1] = 0;
+            xpView.lastTickResult.emissions[0].payload[2] = 0;
+            xpView.lastTickResult.emissions[0].payload[3] = 0;
+
+            M11_GameView_ProcessTickEmissions(&xpView);
+
+            {
+                unsigned long fightExpAfter = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
+                probe_record(&tally,
+                             "INV_GV_75",
+                             fightExpAfter > fightExpBefore,
+                             "EMIT_KILL_NOTIFY awards kill XP to active champion");
+            }
+        }
+
+        /* INV_GV_76: EMIT_KILL_NOTIFY with creature type -1 still awards XP (fallback) */
+        {
+            unsigned long fightExpBefore = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
+
+            memset(&xpView.lastTickResult, 0, sizeof(xpView.lastTickResult));
+            xpView.lastTickResult.emissionCount = 1;
+            xpView.lastTickResult.emissions[0].kind = EMIT_KILL_NOTIFY;
+            xpView.lastTickResult.emissions[0].payload[0] = -1;
+
+            M11_GameView_ProcessTickEmissions(&xpView);
+
+            {
+                unsigned long fightExpAfter = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
+                probe_record(&tally,
+                             "INV_GV_76",
+                             fightExpAfter > fightExpBefore,
+                             "EMIT_KILL_NOTIFY with unknown creature type still awards fallback XP");
+            }
+        }
+
         /* Clean up xp view */
         free(xDungeon->tiles[0].squareData);
         free(xDungeon->maps);
@@ -2096,6 +2139,198 @@ int main(int argc, char** argv) {
         free(xDungeon);
         free(xThings->squareFirstThings);
         free(xThings);
+    }
+
+    /*
+     * UseItem / potion use invariants (INV_GV_77 .. INV_GV_82)
+     */
+    {
+        M11_GameViewState potView;
+        struct DungeonDatState_Compat* pDungeon;
+        struct DungeonThings_Compat* pThings;
+
+        M11_GameView_Init(&potView);
+
+        /* Build minimal world with a potion in hand */
+        pDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*pDungeon));
+        pDungeon->header.mapCount = 1;
+        pDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*pDungeon->maps));
+        pDungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(1, sizeof(*pDungeon->tiles));
+        pDungeon->maps[0].width = 4;
+        pDungeon->maps[0].height = 4;
+        pDungeon->tiles[0].squareData = (unsigned char*)calloc(16, 1);
+        pDungeon->tiles[0].squareCount = 16;
+        /* Make all squares corridors */
+        {
+            int sq;
+            for (sq = 0; sq < 16; ++sq) {
+                pDungeon->tiles[0].squareData[sq] = (DUNGEON_ELEMENT_CORRIDOR << 5);
+            }
+        }
+        pDungeon->tilesLoaded = 1;
+
+        pThings = (struct DungeonThings_Compat*)calloc(1, sizeof(*pThings));
+        pThings->squareFirstThings = (unsigned short*)calloc(16, sizeof(unsigned short));
+        pThings->squareFirstThingCount = 16;
+        {
+            int sq;
+            for (sq = 0; sq < 16; ++sq) {
+                pThings->squareFirstThings[sq] = THING_ENDOFLIST;
+            }
+        }
+
+        /* Allocate 2 potions: index 0 = KU (heal), index 1 = empty flask */
+        pThings->potions = (struct DungeonPotion_Compat*)calloc(2, sizeof(struct DungeonPotion_Compat));
+        pThings->potionCount = 2;
+        pThings->potions[0].type = 7;   /* KU potion = heal */
+        pThings->potions[0].power = 40;
+        pThings->potions[0].doNotDiscard = 1;
+        pThings->potions[0].next = THING_ENDOFLIST;
+        pThings->potions[1].type = 16;  /* EMPTY FLASK */
+        pThings->potions[1].power = 0;
+        pThings->potions[1].next = THING_ENDOFLIST;
+
+        /* Need rawThingData for potion type */
+        pThings->rawThingData[THING_TYPE_POTION] =
+            (unsigned char*)calloc(2, s_thingDataByteCount[THING_TYPE_POTION]);
+        pThings->thingCounts[THING_TYPE_POTION] = 2;
+
+        potView.world.dungeon = pDungeon;
+        potView.world.things = pThings;
+        potView.world.party.mapIndex = 0;
+        potView.world.party.mapX = 1;
+        potView.world.party.mapY = 1;
+        potView.world.party.direction = DIR_NORTH;
+        potView.world.party.championCount = 1;
+        potView.world.party.activeChampionIndex = 0;
+        potView.world.party.champions[0].present = 1;
+        potView.world.party.champions[0].hp.current = 20;
+        potView.world.party.champions[0].hp.maximum = 50;
+        potView.world.party.champions[0].mana.current = 10;
+        potView.world.party.champions[0].mana.maximum = 30;
+        potView.world.party.champions[0].stamina.current = 10;
+        potView.world.party.champions[0].stamina.maximum = 60;
+        potView.world.party.champions[0].food = 100;
+        potView.world.party.champions[0].water = 50;
+        potView.world.party.champions[0].name[0] = 'T';
+        potView.world.party.champions[0].name[1] = 'S';
+        potView.active = 1;
+        potView.world.gameTick = 10;
+
+        /* Place KU potion (type 8, index 0) in right hand */
+        {
+            unsigned short potionThing = (unsigned short)((THING_TYPE_POTION << 10) | 0);
+            potView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = potionThing;
+        }
+
+        /* INV_GV_77: UseItem on a KU potion heals HP */
+        {
+            int hpBefore = (int)potView.world.party.champions[0].hp.current;
+            int rc = M11_GameView_UseItem(&potView);
+            int hpAfter = (int)potView.world.party.champions[0].hp.current;
+            probe_record(&tally,
+                         "INV_GV_77",
+                         rc == 1 && hpAfter > hpBefore,
+                         "UseItem with KU potion heals champion HP");
+        }
+
+        /* INV_GV_78: After drinking, doNotDiscard potion becomes empty flask */
+        {
+            probe_record(&tally,
+                         "INV_GV_78",
+                         pThings->potions[0].type == 16 &&
+                             pThings->potions[0].power == 0,
+                         "doNotDiscard potion converts to empty flask after use");
+        }
+
+        /* INV_GV_79: UseItem on empty flask returns 0 (cannot use) */
+        {
+            unsigned short emptyThing = (unsigned short)((THING_TYPE_POTION << 10) | 1);
+            potView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = emptyThing;
+            {
+                int rc = M11_GameView_UseItem(&potView);
+                probe_record(&tally,
+                             "INV_GV_79",
+                             rc == 0,
+                             "UseItem on empty flask returns 0");
+            }
+        }
+
+        /* INV_GV_80: UseItem with empty hands returns 0 */
+        {
+            potView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = THING_NONE;
+            potView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+            {
+                int rc = M11_GameView_UseItem(&potView);
+                probe_record(&tally,
+                             "INV_GV_80",
+                             rc == 0,
+                             "UseItem with empty hands returns 0");
+            }
+        }
+
+        /* INV_GV_81: UseItem on non-usable item (weapon) returns 0 */
+        {
+            /* Need at least 1 weapon allocated */
+            pThings->weapons = (struct DungeonWeapon_Compat*)calloc(1, sizeof(struct DungeonWeapon_Compat));
+            pThings->weaponCount = 1;
+            pThings->weapons[0].type = 8; /* dagger */
+            pThings->rawThingData[THING_TYPE_WEAPON] =
+                (unsigned char*)calloc(1, s_thingDataByteCount[THING_TYPE_WEAPON]);
+            pThings->thingCounts[THING_TYPE_WEAPON] = 1;
+            {
+                unsigned short weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+                potView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = weaponThing;
+            }
+            {
+                int rc = M11_GameView_UseItem(&potView);
+                probe_record(&tally,
+                             "INV_GV_81",
+                             rc == 0,
+                             "UseItem on a weapon returns 0 (not consumable)");
+            }
+            free(pThings->weapons);
+            pThings->weapons = NULL;
+            free(pThings->rawThingData[THING_TYPE_WEAPON]);
+            pThings->rawThingData[THING_TYPE_WEAPON] = NULL;
+        }
+
+        /* INV_GV_82: UseItem DES potion (poison) reduces HP */
+        {
+            /* Reset potion 0 to DES type */
+            pThings->potions[0].type = 2;   /* DES = poison */
+            pThings->potions[0].power = 60;
+            pThings->potions[0].doNotDiscard = 0;
+            potView.world.party.champions[0].hp.current = 40;
+            {
+                unsigned short potionThing = (unsigned short)((THING_TYPE_POTION << 10) | 0);
+                potView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = potionThing;
+            }
+            {
+                int hpBefore = (int)potView.world.party.champions[0].hp.current;
+                int rc = M11_GameView_UseItem(&potView);
+                int hpAfter = (int)potView.world.party.champions[0].hp.current;
+                probe_record(&tally,
+                             "INV_GV_82",
+                             rc == 1 && hpAfter < hpBefore,
+                             "UseItem with DES potion (poison) reduces HP");
+            }
+            /* After DES with doNotDiscard=0, slot should be empty */
+            probe_record(&tally,
+                         "INV_GV_83",
+                         potView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] == THING_NONE,
+                         "Non-doNotDiscard potion clears slot after use");
+        }
+
+        /* Clean up potion view */
+        free(pThings->potions);
+        free(pThings->rawThingData[THING_TYPE_POTION]);
+        free(pDungeon->tiles[0].squareData);
+        free(pDungeon->maps);
+        free(pDungeon->tiles);
+        free(pDungeon);
+        free(pThings->squareFirstThings);
+        free(pThings);
     }
 
     M11_GameView_Shutdown(&gameView);

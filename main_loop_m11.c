@@ -132,6 +132,11 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         return M12_MENU_INPUT_SPELL_CAST;
     }
     if (len == 5U && strncmp(token, "clear", len) == 0) return M12_MENU_INPUT_SPELL_CLEAR;
+    if ((len == 3U && strncmp(token, "use", len) == 0) ||
+        (len == 5U && strncmp(token, "drink", len) == 0) ||
+        (len == 3U && strncmp(token, "eat", len) == 0)) {
+        return M12_MENU_INPUT_USE_ITEM;
+    }
     return M12_MENU_INPUT_NONE;
 }
 
@@ -296,6 +301,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     if (gameView && gameView->active)
                         return M12_MENU_INPUT_SPELL_CLEAR;
                     return M12_MENU_INPUT_NONE;
+                case SDLK_U:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_USE_ITEM;
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();
                     return M12_MENU_INPUT_NONE;
@@ -434,6 +443,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_v:
                     if (gameView && gameView->active)
                         return M12_MENU_INPUT_SPELL_CLEAR;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_u:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_USE_ITEM;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();

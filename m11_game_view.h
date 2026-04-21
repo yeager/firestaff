@@ -121,6 +121,10 @@ int M11_GameView_GetSkillLevel(const M11_GameViewState* state,
                                int championIndex,
                                int skillIndex);
 
+/* Use the item in the active champion's hand slot (potions, flasks).
+ * Returns 1 if an item was consumed/used. */
+int M11_GameView_UseItem(M11_GameViewState* state);
+
 /* Process tick emissions: log events, award XP, apply level-ups.
  * Normally called internally after each tick advance; exposed for
  * probe-level verification of emission-driven XP integration. */
