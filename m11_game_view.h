@@ -91,6 +91,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
+int M11_GameView_PickupItem(M11_GameViewState* state);
+int M11_GameView_DropItem(M11_GameViewState* state);
+int M11_GameView_CountChampionItems(const M11_GameViewState* state, int championIndex);
 void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char color);
 int M11_GameView_GetMessageLogCount(const M11_GameViewState* state);
 const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex);

@@ -240,6 +240,7 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     state->world.party.activeChampionIndex = 0;
     state->world.party.champions[0].present = 1;
     memcpy(state->world.party.champions[0].name, "TIGGY", 5);
+    { int invI; for (invI = 0; invI < CHAMPION_SLOT_COUNT; ++invI) { state->world.party.champions[0].inventory[invI] = THING_NONE; } }
     state->world.party.champions[0].hp.current = 72;
     state->world.party.champions[0].hp.maximum = 100;
     state->world.party.champions[0].stamina.current = 48;
@@ -248,6 +249,7 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     state->world.party.champions[0].water = 140;
     state->world.party.champions[1].present = 1;
     memcpy(state->world.party.champions[1].name, "HALK", 4);
+    { int invI; for (invI = 0; invI < CHAMPION_SLOT_COUNT; ++invI) { state->world.party.champions[1].inventory[invI] = THING_NONE; } }
     state->world.party.champions[1].hp.current = 91;
     state->world.party.champions[1].hp.maximum = 110;
     state->world.party.champions[1].stamina.current = 60;
@@ -913,6 +915,89 @@ int main(int argc, char** argv) {
                      deathView.partyDead == 1,
                      "party death is detected when all champions reach 0 HP after a tick");
         probe_free_synthetic_view(&deathView);
+    }
+
+    /* INV_GV_27: Item pickup from current cell */
+    {
+        M11_GameViewState pickupView;
+        int invBefore;
+        int invAfter;
+        memset(&pickupView, 0, sizeof(pickupView));
+        (void)probe_init_synthetic_view(&pickupView);
+        /* Place a weapon on the current cell (2,3) */
+        {
+            unsigned short weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            int base = 2 * pickupView.world.dungeon->maps[0].height + 3;
+            unsigned short oldFirst = pickupView.world.things->squareFirstThings[base];
+            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_WEAPON], oldFirst);
+            pickupView.world.things->squareFirstThings[base] = weaponThing;
+        }
+        invBefore = M11_GameView_CountChampionItems(&pickupView, 0);
+        probe_record(&tally,
+                     "INV_GV_27",
+                     M11_GameView_PickupItem(&pickupView) == 1 &&
+                         strcmp(pickupView.lastAction, "PICKUP") == 0 &&
+                         strcmp(pickupView.lastOutcome, "ITEM TAKEN") == 0 &&
+                         M11_GameView_CountChampionItems(&pickupView, 0) == invBefore + 1,
+                     "G picks up the first floor item into the active champion inventory");
+
+        /* INV_GV_28: Item drop back to current cell */
+        invAfter = M11_GameView_CountChampionItems(&pickupView, 0);
+        probe_record(&tally,
+                     "INV_GV_28",
+                     M11_GameView_DropItem(&pickupView) == 1 &&
+                         strcmp(pickupView.lastAction, "DROP") == 0 &&
+                         strcmp(pickupView.lastOutcome, "ITEM DROPPED") == 0 &&
+                         M11_GameView_CountChampionItems(&pickupView, 0) == invAfter - 1,
+                     "P drops the last held item back to the current cell");
+
+        /* INV_GV_29: Pickup on empty floor reports failure gracefully */
+        {
+            int base2 = 2 * pickupView.world.dungeon->maps[0].height + 3;
+            /* Remove all things from current cell */
+            pickupView.world.things->squareFirstThings[base2] = THING_ENDOFLIST;
+        }
+        probe_record(&tally,
+                     "INV_GV_29",
+                     M11_GameView_PickupItem(&pickupView) == 0 &&
+                         strcmp(pickupView.lastOutcome, "NOTHING TO PICK UP") == 0,
+                     "pickup on empty floor reports nothing to pick up without crashing");
+
+        /* INV_GV_30: Drop with empty inventory reports failure gracefully */
+        {
+            int clearSlot;
+            for (clearSlot = 0; clearSlot < CHAMPION_SLOT_COUNT; ++clearSlot) {
+                pickupView.world.party.champions[0].inventory[clearSlot] = THING_NONE;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_30",
+                     M11_GameView_DropItem(&pickupView) == 0 &&
+                         strcmp(pickupView.lastOutcome, "NOTHING TO DROP") == 0,
+                     "drop with empty inventory reports nothing to drop without crashing");
+
+        /* INV_GV_31: HandleInput routes pickup/drop correctly */
+        {
+            unsigned short weaponThing2 = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            int base3 = 2 * pickupView.world.dungeon->maps[0].height + 3;
+            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_WEAPON], THING_ENDOFLIST);
+            pickupView.world.things->squareFirstThings[base3] = weaponThing2;
+        }
+        probe_record(&tally,
+                     "INV_GV_31",
+                     M11_GameView_HandleInput(&pickupView, M12_MENU_INPUT_PICKUP_ITEM) == M11_GAME_INPUT_REDRAW &&
+                         strcmp(pickupView.lastAction, "PICKUP") == 0 &&
+                         M11_GameView_CountChampionItems(&pickupView, 0) == 1,
+                     "HandleInput routes M12_MENU_INPUT_PICKUP_ITEM through the item pickup path");
+
+        probe_record(&tally,
+                     "INV_GV_32",
+                     M11_GameView_HandleInput(&pickupView, M12_MENU_INPUT_DROP_ITEM) == M11_GAME_INPUT_REDRAW &&
+                         strcmp(pickupView.lastAction, "DROP") == 0 &&
+                         M11_GameView_CountChampionItems(&pickupView, 0) == 0,
+                     "HandleInput routes M12_MENU_INPUT_DROP_ITEM through the item drop path");
+
+        probe_free_synthetic_view(&pickupView);
     }
 
     probe_free_synthetic_view(&syntheticView);

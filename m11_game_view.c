@@ -865,6 +865,473 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
 }
 
 /* ================================================================
+ * Item name helpers
+ * ================================================================ */
+
+static const char* const s_weaponTypeNames[] = {
+    "EYE OF TIME", "STORMRING", "TORCH", "FLAMITT",
+    "STAFF OF CLAWS", "BOLT BLADE", "FURY", "THE FIRESTAFF",
+    "DAGGER", "FALCHION", "SWORD", "RAPIER",
+    "SABRE", "SAMURAI SWORD", "DELTA", "DIAMOND EDGE",
+    "VORPAL BLADE", "THE INQUISITOR", "AXE", "HARDCLEAVE",
+    "MACE", "MACE OF ORDER", "MORNING STAR", "CLUB",
+    "STONE CLUB", "BOW", "CROSSBOW", "ARROW",
+    "SLAYER", "SLING", "ROCK", "POISON DART",
+    "THROWING STAR", "STICK", "STAFF", "WAND",
+    "TEOWAND", "YEW STAFF", "STAFF OF MANAR", "SNAKE STAFF",
+    "THE CONDUIT", "DRAGON SPIT", "SCEPTRE OF LYF", "HORN OF FEAR",
+    "SPEED BOW", "THE FIRESTAFF"
+};
+
+static const char* const s_armourTypeNames[] = {
+    "CAPE", "CLOAK OF NIGHT", "BARBARIAN HIDE", "SANDALS",
+    "LEATHER BOOTS", "ELVEN BOOTS", "LEATHER JERKIN", "LEATHER PANTS",
+    "SUEDE BOOTS", "BLUE PANTS", "GHI", "GHI TROUSERS",
+    "CALISTA", "CROWN OF NERRA", "BEZERKER HELM", "HELMET",
+    "BASINET", "NETA SHIRT", "CHAINMAIL", "PLATE MAIL",
+    "MITHRAL MAIL", "MITHRAL HOSEN", "LEG MAIL", "FOOT PLATE",
+    "SMALL SHIELD", "WOODEN SHIELD", "LARGE SHIELD", "SHIELD OF LYTE",
+    "SHIELD OF DARC", "DEXHELM"
+};
+
+static const char* const s_potionTypeNames[] = {
+    "MON POTION", "UM POTION", "DES POTION", "VEN POTION",
+    "SAR POTION", "ZO POTION", "ROS POTION", "KU POTION",
+    "DANE POTION", "NETA POTION", "BRO POTION", "MA POTION",
+    "YA POTION", "EE POTION", "VI POTION", "WATER FLASK",
+    "EMPTY FLASK"
+};
+
+static const char* const s_junkTypeNames[] = {
+    "COMPASS", "TORCH", "WATERSKIN", "JEWEL SYMAL",
+    "ILLUMULET", "ASHES", "BONES", "SAR COIN",
+    "GOLD COIN", "IRON KEY", "KEY OF B", "SOLID KEY",
+    "SQUARE KEY", "TOURQUOISE KEY", "CROSS KEY", "ONYX KEY",
+    "SKELETON KEY", "GOLD KEY", "WINGED KEY", "TOPAZ KEY",
+    "SAPPHIRE KEY", "EMERALD KEY", "RUBY KEY", "RA KEY",
+    "MASTER KEY", "BOULDER", "BLUE GEM", "ORANGE GEM",
+    "GREEN GEM", "APPLE", "CORN", "BREAD",
+    "CHEESE", "SCREAMER SLICE", "WORM ROUND", "DRUMSTICK",
+    "DRAGON STEAK", "GEM OF AGES", "EKKHARD CROSS", "MOONSTONE",
+    "THE HELLION", "PENDANT FERAL", "MAGICAL BOX", "MIRROR OF DAWN",
+    "ROPE", "RABBIT FOOT", "CORBAMITE", "CHOKER",
+    "LOCK PICKS", "MAGNIFIER", "ZOKATHRA SPELL", "EMPTY FLASK"
+};
+
+/* Scroll names not needed yet — all scrolls are just "SCROLL" */
+
+static const char* const s_containerTypeNames[] = {
+    "CHEST", "OPEN CHEST", "OPEN CHEST"
+};
+
+static void m11_get_item_name(const struct DungeonThings_Compat* things,
+                              unsigned short thingId,
+                              char* out,
+                              size_t outSize) {
+    int thingType;
+    int thingIndex;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        snprintf(out, outSize, "NOTHING");
+        return;
+    }
+    thingType = THING_GET_TYPE(thingId);
+    thingIndex = THING_GET_INDEX(thingId);
+    switch (thingType) {
+        case THING_TYPE_WEAPON:
+            if (things->weapons && thingIndex >= 0 && thingIndex < things->weaponCount) {
+                int subtype = things->weapons[thingIndex].type;
+                if (subtype >= 0 && subtype < (int)(sizeof(s_weaponTypeNames) / sizeof(s_weaponTypeNames[0]))) {
+                    snprintf(out, outSize, "%s", s_weaponTypeNames[subtype]);
+                    return;
+                }
+            }
+            snprintf(out, outSize, "WEAPON %d", thingIndex);
+            return;
+        case THING_TYPE_ARMOUR:
+            if (things->armours && thingIndex >= 0 && thingIndex < things->armourCount) {
+                int subtype = things->armours[thingIndex].type;
+                if (subtype >= 0 && subtype < (int)(sizeof(s_armourTypeNames) / sizeof(s_armourTypeNames[0]))) {
+                    snprintf(out, outSize, "%s", s_armourTypeNames[subtype]);
+                    return;
+                }
+            }
+            snprintf(out, outSize, "ARMOUR %d", thingIndex);
+            return;
+        case THING_TYPE_POTION:
+            if (things->potions && thingIndex >= 0 && thingIndex < things->potionCount) {
+                int subtype = things->potions[thingIndex].type;
+                if (subtype >= 0 && subtype < (int)(sizeof(s_potionTypeNames) / sizeof(s_potionTypeNames[0]))) {
+                    snprintf(out, outSize, "%s", s_potionTypeNames[subtype]);
+                    return;
+                }
+            }
+            snprintf(out, outSize, "POTION %d", thingIndex);
+            return;
+        case THING_TYPE_JUNK:
+            if (things->junks && thingIndex >= 0 && thingIndex < things->junkCount) {
+                int subtype = things->junks[thingIndex].type;
+                if (subtype >= 0 && subtype < (int)(sizeof(s_junkTypeNames) / sizeof(s_junkTypeNames[0]))) {
+                    snprintf(out, outSize, "%s", s_junkTypeNames[subtype]);
+                    return;
+                }
+            }
+            snprintf(out, outSize, "JUNK %d", thingIndex);
+            return;
+        case THING_TYPE_SCROLL:
+            snprintf(out, outSize, "SCROLL");
+            return;
+        case THING_TYPE_CONTAINER:
+            if (things->containers && thingIndex >= 0 && thingIndex < things->containerCount) {
+                int subtype = things->containers[thingIndex].type;
+                if (subtype >= 0 && subtype < (int)(sizeof(s_containerTypeNames) / sizeof(s_containerTypeNames[0]))) {
+                    snprintf(out, outSize, "%s", s_containerTypeNames[subtype]);
+                    return;
+                }
+            }
+            snprintf(out, outSize, "CONTAINER %d", thingIndex);
+            return;
+        default:
+            snprintf(out, outSize, "%s %d",
+                     F0505_DUNGEON_GetThingTypeName_Compat(thingType), thingIndex);
+            return;
+    }
+}
+
+/* ================================================================
+ * Thing chain manipulation: remove an item from a square,
+ * prepend an item to a square
+ * ================================================================ */
+
+static void m11_set_raw_next_thing(struct DungeonThings_Compat* things,
+                                   unsigned short thingId,
+                                   unsigned short newNext) {
+    int type;
+    int index;
+    unsigned char* raw;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return;
+    }
+    type = THING_GET_TYPE(thingId);
+    index = THING_GET_INDEX(thingId);
+    if (type < 0 || type >= 16 || !things->rawThingData[type] ||
+        index < 0 || index >= things->thingCounts[type]) {
+        return;
+    }
+    raw = things->rawThingData[type] + (index * s_thingDataByteCount[type]);
+    raw[0] = (unsigned char)(newNext & 0xFFu);
+    raw[1] = (unsigned char)((newNext >> 8) & 0xFFu);
+}
+
+/* Remove a specific thing from a square's chain. Returns 1 if removed. */
+static int m11_unlink_thing_from_square(struct GameWorld_Compat* world,
+                                        int mapIndex,
+                                        int mapX,
+                                        int mapY,
+                                        unsigned short target) {
+    int base;
+    const struct DungeonMapDesc_Compat* map;
+    int squareIndex;
+    unsigned short current;
+    unsigned short prev;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !world->things->squareFirstThings) {
+        return 0;
+    }
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) {
+        return 0;
+    }
+    base = m11_map_square_base(world->dungeon, mapIndex);
+    if (base < 0) {
+        return 0;
+    }
+    squareIndex = base + mapX * (int)map->height + mapY;
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    current = world->things->squareFirstThings[squareIndex];
+    prev = THING_ENDOFLIST;
+
+    while (current != THING_ENDOFLIST && current != THING_NONE && safety < 64) {
+        if (current == target) {
+            unsigned short next = m11_raw_next_thing(world->things, current);
+            if (prev == THING_ENDOFLIST) {
+                world->things->squareFirstThings[squareIndex] = next;
+            } else {
+                m11_set_raw_next_thing(world->things, prev, next);
+            }
+            m11_set_raw_next_thing(world->things, current, THING_ENDOFLIST);
+            return 1;
+        }
+        prev = current;
+        current = m11_raw_next_thing(world->things, current);
+        ++safety;
+    }
+    return 0;
+}
+
+/* Prepend a thing to a square's chain. */
+static int m11_prepend_thing_to_square(struct GameWorld_Compat* world,
+                                       int mapIndex,
+                                       int mapX,
+                                       int mapY,
+                                       unsigned short thingId) {
+    int base;
+    const struct DungeonMapDesc_Compat* map;
+    int squareIndex;
+    unsigned short oldFirst;
+
+    if (!world || !world->dungeon || !world->things || !world->things->squareFirstThings) {
+        return 0;
+    }
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) {
+        return 0;
+    }
+    base = m11_map_square_base(world->dungeon, mapIndex);
+    if (base < 0) {
+        return 0;
+    }
+    squareIndex = base + mapX * (int)map->height + mapY;
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    oldFirst = world->things->squareFirstThings[squareIndex];
+    m11_set_raw_next_thing(world->things, thingId, oldFirst);
+    world->things->squareFirstThings[squareIndex] = thingId;
+    return 1;
+}
+
+/* Find the first item-type thing on a square. */
+static unsigned short m11_find_first_item_on_square(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    int safety = 0;
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+        if (m11_thing_is_item(THING_GET_TYPE(thing))) {
+            return thing;
+        }
+        thing = m11_raw_next_thing(world->things, thing);
+        ++safety;
+    }
+    return THING_NONE;
+}
+
+/* Find the first empty backpack/pouch slot for a champion. */
+static int m11_find_empty_slot(const struct ChampionState_Compat* champ) {
+    int slot;
+    if (!champ || !champ->present) {
+        return -1;
+    }
+    /* Prefer hands first, then pouches, then backpack */
+    if (champ->inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE) {
+        return CHAMPION_SLOT_HAND_LEFT;
+    }
+    if (champ->inventory[CHAMPION_SLOT_HAND_RIGHT] == THING_NONE) {
+        return CHAMPION_SLOT_HAND_RIGHT;
+    }
+    for (slot = CHAMPION_SLOT_POUCH_1; slot <= CHAMPION_SLOT_POUCH_2; ++slot) {
+        if (champ->inventory[slot] == THING_NONE) {
+            return slot;
+        }
+    }
+    for (slot = CHAMPION_SLOT_BACKPACK_1; slot <= CHAMPION_SLOT_BACKPACK_8; ++slot) {
+        if (champ->inventory[slot] == THING_NONE) {
+            return slot;
+        }
+    }
+    return -1;
+}
+
+/* Count items in a champion's inventory. */
+int M11_GameView_CountChampionItems(const M11_GameViewState* state, int championIndex) {
+    int count = 0;
+    int slot;
+    const struct ChampionState_Compat* champ;
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) {
+        return 0;
+    }
+    for (slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+        if (champ->inventory[slot] != THING_NONE) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+/* ================================================================
+ * Pickup: take first item from current cell -> champion inventory
+ * ================================================================ */
+
+int M11_GameView_PickupItem(M11_GameViewState* state) {
+    unsigned short item;
+    int targetSlot;
+    struct ChampionState_Compat* champ;
+    char itemName[48];
+    char champName[16];
+
+    if (!state || !state->active || state->partyDead) {
+        return 0;
+    }
+    if (state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+        m11_set_status(state, "PICKUP", "NO ACTIVE CHAMPION");
+        return 0;
+    }
+    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    if (!champ->present || champ->hp.current == 0) {
+        m11_set_status(state, "PICKUP", "CHAMPION CANNOT ACT");
+        return 0;
+    }
+
+    item = m11_find_first_item_on_square(
+        &state->world,
+        state->world.party.mapIndex,
+        state->world.party.mapX,
+        state->world.party.mapY);
+    if (item == THING_NONE) {
+        m11_set_status(state, "PICKUP", "NOTHING TO PICK UP");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "EMPTY FLOOR");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "NO ITEMS ON THIS CELL");
+        return 0;
+    }
+
+    targetSlot = m11_find_empty_slot(champ);
+    if (targetSlot < 0) {
+        m11_set_status(state, "PICKUP", "INVENTORY FULL");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "HANDS FULL");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "DROP SOMETHING FIRST (P KEY)");
+        return 0;
+    }
+
+    if (!m11_unlink_thing_from_square(&state->world,
+                                      state->world.party.mapIndex,
+                                      state->world.party.mapX,
+                                      state->world.party.mapY,
+                                      item)) {
+        m11_set_status(state, "PICKUP", "CHAIN ERROR");
+        return 0;
+    }
+
+    champ->inventory[targetSlot] = item;
+    m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+    m11_format_champion_name(champ->name, champName, sizeof(champName));
+
+    m11_log_event(state, M11_COLOR_LIGHT_GREEN, "T%u: %s TOOK %s",
+                  (unsigned int)state->world.gameTick, champName, itemName);
+    m11_set_status(state, "PICKUP", "ITEM TAKEN");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "PICKED UP");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "%s -> %s SLOT %d", itemName, champName, targetSlot);
+    m11_refresh_hash(state);
+    return 1;
+}
+
+/* ================================================================
+ * Drop: take item from champion hand/slot -> current cell
+ * ================================================================ */
+
+int M11_GameView_DropItem(M11_GameViewState* state) {
+    struct ChampionState_Compat* champ;
+    unsigned short item = THING_NONE;
+    int dropSlot = -1;
+    int slot;
+    char itemName[48];
+    char champName[16];
+
+    if (!state || !state->active || state->partyDead) {
+        return 0;
+    }
+    if (state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+        m11_set_status(state, "DROP", "NO ACTIVE CHAMPION");
+        return 0;
+    }
+    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    if (!champ->present || champ->hp.current == 0) {
+        m11_set_status(state, "DROP", "CHAMPION CANNOT ACT");
+        return 0;
+    }
+
+    /* Drop from hands first (right, then left), then last backpack item */
+    if (champ->inventory[CHAMPION_SLOT_HAND_RIGHT] != THING_NONE) {
+        dropSlot = CHAMPION_SLOT_HAND_RIGHT;
+    } else if (champ->inventory[CHAMPION_SLOT_HAND_LEFT] != THING_NONE) {
+        dropSlot = CHAMPION_SLOT_HAND_LEFT;
+    } else {
+        for (slot = CHAMPION_SLOT_BACKPACK_8; slot >= CHAMPION_SLOT_BACKPACK_1; --slot) {
+            if (champ->inventory[slot] != THING_NONE) {
+                dropSlot = slot;
+                break;
+            }
+        }
+        if (dropSlot < 0) {
+            for (slot = CHAMPION_SLOT_POUCH_2; slot >= CHAMPION_SLOT_POUCH_1; --slot) {
+                if (champ->inventory[slot] != THING_NONE) {
+                    dropSlot = slot;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (dropSlot < 0) {
+        m11_set_status(state, "DROP", "NOTHING TO DROP");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "EMPTY HANDS");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "PICK SOMETHING UP FIRST (G KEY)");
+        return 0;
+    }
+
+    item = champ->inventory[dropSlot];
+    champ->inventory[dropSlot] = THING_NONE;
+
+    if (!m11_prepend_thing_to_square(&state->world,
+                                     state->world.party.mapIndex,
+                                     state->world.party.mapX,
+                                     state->world.party.mapY,
+                                     item)) {
+        /* Restore if chain operation fails */
+        champ->inventory[dropSlot] = item;
+        m11_set_status(state, "DROP", "CHAIN ERROR");
+        return 0;
+    }
+
+    m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+    m11_format_champion_name(champ->name, champName, sizeof(champName));
+
+    m11_log_event(state, M11_COLOR_YELLOW, "T%u: %s DROPPED %s",
+                  (unsigned int)state->world.gameTick, champName, itemName);
+    m11_set_status(state, "DROP", "ITEM DROPPED");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "DROPPED");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "%s FROM %s SLOT %d", itemName, champName, dropSlot);
+    m11_refresh_hash(state);
+    return 1;
+}
+
+/* ================================================================
  * Food / water drain, rest recovery, champion death
  * ================================================================ */
 
@@ -1423,6 +1890,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             m11_set_status(state, "STAIRS", "NO STAIRS HERE");
+            return M11_GAME_INPUT_REDRAW;
+        case M12_MENU_INPUT_PICKUP_ITEM:
+            if (M11_GameView_PickupItem(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_REDRAW;
+        case M12_MENU_INPUT_DROP_ITEM:
+            if (M11_GameView_DropItem(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
             return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_BACK:
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
@@ -3195,7 +3672,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               x + 4, y + 12, line, &g_text_small);
             } else {
-                snprintf(line, sizeof(line), "HP%u ST%u", (unsigned int)champ->hp.current, (unsigned int)champ->stamina.current);
+                int itemCount = M11_GameView_CountChampionItems(state, slot);
+                if (itemCount > 0) {
+                    snprintf(line, sizeof(line), "HP%u I%d", (unsigned int)champ->hp.current, itemCount);
+                } else {
+                    snprintf(line, sizeof(line), "HP%u ST%u", (unsigned int)champ->hp.current, (unsigned int)champ->stamina.current);
+                }
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               x + 4, y + 12, line, &g_text_small);
             }
@@ -3278,7 +3760,7 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     }
     if (cell->summary.items > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
         snprintf(outAction, outActionSize, "FOCUS INTERACTABLE");
-        snprintf(outHint, outHintSize, "ENTER INSPECTS, UP OR CLICK CENTER CLOSES DISTANCE, A/D STRAFES, SPACE WAITS");
+        snprintf(outHint, outHintSize, "ENTER INSPECTS, G GRABS FLOOR ITEMS, A/D STRAFES, SPACE WAITS");
         return;
     }
     if (m11_viewport_cell_is_open(cell)) {
@@ -3419,7 +3901,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   140, 13, line, &g_text_small);
 
-    snprintf(line, sizeof(line), "R REST  X STAIRS");
+    snprintf(line, sizeof(line), "G GRAB  P DROP  R REST");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   240, 13, line, &g_text_small);
 

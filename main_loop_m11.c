@@ -111,6 +111,16 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 7U && strncmp(token, "descend", len) == 0)) {
         return M12_MENU_INPUT_USE_STAIRS;
     }
+    if ((len == 4U && strncmp(token, "grab", len) == 0) ||
+        (len == 6U && strncmp(token, "pickup", len) == 0) ||
+        (len == 1U && strncmp(token, "g", len) == 0)) {
+        return M12_MENU_INPUT_PICKUP_ITEM;
+    }
+    if ((len == 4U && strncmp(token, "drop", len) == 0) ||
+        (len == 3U && strncmp(token, "put", len) == 0) ||
+        (len == 1U && strncmp(token, "p", len) == 0)) {
+        return M12_MENU_INPUT_DROP_ITEM;
+    }
     return M12_MENU_INPUT_NONE;
 }
 
@@ -233,6 +243,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return M12_MENU_INPUT_USE_STAIRS;
                     }
                     return M12_MENU_INPUT_NONE;
+                case SDLK_G:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_PICKUP_ITEM;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_P:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_DROP_ITEM;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();
                     return M12_MENU_INPUT_NONE;
@@ -328,6 +348,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_x:
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_USE_STAIRS;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_g:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_PICKUP_ITEM;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_p:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_DROP_ITEM;
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
@@ -488,7 +518,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     if (input == M12_MENU_INPUT_ACTION ||
                         input == M12_MENU_INPUT_CYCLE_CHAMPION ||
                         input == M12_MENU_INPUT_STRAFE_LEFT ||
-                        input == M12_MENU_INPUT_STRAFE_RIGHT) {
+                        input == M12_MENU_INPUT_STRAFE_RIGHT ||
+                        input == M12_MENU_INPUT_PICKUP_ITEM ||
+                        input == M12_MENU_INPUT_DROP_ITEM) {
                         input = M12_MENU_INPUT_NONE;
                     }
                     M12_StartupMenu_HandleInput(&menuState, input);
