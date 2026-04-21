@@ -2230,6 +2230,9 @@ static void m11_creature_attack_party(
                       m11_creature_name(group->creatureType),
                       totalDamage);
     }
+
+    /* Trigger visual feedback for the attack */
+    M11_GameView_NotifyDamageFlash(state, group->creatureType);
 }
 
 /* Process one creature group: check distance, maybe move, maybe attack. */
@@ -3250,6 +3253,9 @@ static int m11_apply_tick(M11_GameViewState* state,
 
     /* Creature AI: movement and autonomous damage */
     m11_process_creature_ticks(state);
+
+    /* Advance animation frame counters and decay timers */
+    M11_GameView_TickAnimation(state);
 
     m11_check_party_death(state);
 
@@ -5076,6 +5082,16 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
     drawX = x + (w - drawW) / 2;
     drawY = y + (h - drawH) / 2;
 
+    /* Idle animation: on frame 1, bob the creature up by 1-2 pixels
+     * to give a breathing / pulsing effect.  Frame 0 is the base pose. */
+    {
+        int animFrame = M11_GameView_CreatureAnimFrame(state, creatureType);
+        if (animFrame == 1) {
+            int bob = (depthIndex == 0) ? 2 : 1;
+            drawY -= bob;
+        }
+    }
+
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
                                drawX, drawY, drawW, drawH, 0);
     return 1;
@@ -6666,5 +6682,83 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       112, 88, "R TO WAKE", &g_text_small);
     }
+
+    /* ── Damage flash: red border overlay when party takes melee hit ── */
+    if (state->damageFlashTimer > 0) {
+        int vx = 12, vy = 24, vw = 196, vh = 118;
+        int thickness = 2;
+        /* Top border */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      vx, vy, vw, thickness, M11_COLOR_LIGHT_RED);
+        /* Bottom border */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      vx, vy + vh - thickness, vw, thickness, M11_COLOR_LIGHT_RED);
+        /* Left border */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      vx, vy, thickness, vh, M11_COLOR_LIGHT_RED);
+        /* Right border */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      vx + vw - thickness, vy, thickness, vh, M11_COLOR_LIGHT_RED);
+    }
+
+    /* ── Attack cue: diagonal slash marks when creature attacks ── */
+    if (state->attackCueTimer > 0) {
+        int cx = 110, cy = 78; /* centre of viewport face */
+        int len = 14;
+        int i;
+        /* Draw two crossing diagonal lines (X slash) */
+        for (i = 0; i < len; ++i) {
+            int px1 = cx - len / 2 + i;
+            int py1 = cy - len / 2 + i;
+            int px2 = cx + len / 2 - i;
+            int py2 = cy - len / 2 + i;
+            if (px1 >= 0 && px1 < framebufferWidth &&
+                py1 >= 0 && py1 < framebufferHeight)
+                framebuffer[py1 * framebufferWidth + px1] = M11_COLOR_YELLOW;
+            if (px2 >= 0 && px2 < framebufferWidth &&
+                py2 >= 0 && py2 < framebufferHeight)
+                framebuffer[py2 * framebufferWidth + px2] = M11_COLOR_YELLOW;
+        }
+    }
+
     g_drawState = NULL;
+}
+
+/* ── Creature animation implementation ── */
+
+void M11_GameView_TickAnimation(M11_GameViewState* state) {
+    if (!state) return;
+    state->animTick++;
+    if (state->damageFlashTimer > 0) state->damageFlashTimer--;
+    if (state->attackCueTimer > 0)   state->attackCueTimer--;
+}
+
+void M11_GameView_NotifyDamageFlash(M11_GameViewState* state,
+                                    int creatureType) {
+    if (!state) return;
+    state->damageFlashTimer = M11_DAMAGE_FLASH_DURATION;
+    state->attackCueTimer   = M11_ATTACK_CUE_DURATION;
+    state->attackCueCreatureType = creatureType;
+}
+
+int M11_GameView_GetDamageFlashTimer(const M11_GameViewState* state) {
+    return state ? state->damageFlashTimer : 0;
+}
+
+int M11_GameView_GetAttackCueTimer(const M11_GameViewState* state) {
+    return state ? state->attackCueTimer : 0;
+}
+
+uint32_t M11_GameView_GetAnimTick(const M11_GameViewState* state) {
+    return state ? state->animTick : 0;
+}
+
+int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,
+                                   int creatureType) {
+    /* Stagger animation per creature type so groups don't all
+     * move in lockstep.  Returns 0 or 1. */
+    uint32_t phase;
+    if (!state) return 0;
+    phase = state->animTick + (uint32_t)creatureType * 3;
+    return (int)((phase / M11_CREATURE_ANIM_PERIOD) & 1);
 }

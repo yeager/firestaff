@@ -3083,6 +3083,212 @@ int main(int argc, char** argv) {
         memset(&torchView, 0, sizeof(torchView));
     }
 
+    /* ── Creature Animation Invariants ── */
+    {
+        M11_GameViewState animView;
+        memset(&animView, 0, sizeof(animView));
+
+        /* INV_GV_131: Initial animTick is 0. */
+        probe_record(&tally,
+                     "INV_GV_131",
+                     M11_GameView_GetAnimTick(&animView) == 0,
+                     "initial animTick is 0");
+
+        /* INV_GV_132: Initial damageFlashTimer is 0. */
+        probe_record(&tally,
+                     "INV_GV_132",
+                     M11_GameView_GetDamageFlashTimer(&animView) == 0,
+                     "initial damageFlashTimer is 0");
+
+        /* INV_GV_133: Initial attackCueTimer is 0. */
+        probe_record(&tally,
+                     "INV_GV_133",
+                     M11_GameView_GetAttackCueTimer(&animView) == 0,
+                     "initial attackCueTimer is 0");
+
+        /* INV_GV_134: TickAnimation increments animTick by 1. */
+        M11_GameView_TickAnimation(&animView);
+        probe_record(&tally,
+                     "INV_GV_134",
+                     M11_GameView_GetAnimTick(&animView) == 1,
+                     "TickAnimation increments animTick");
+
+        /* INV_GV_135: NotifyDamageFlash sets damageFlashTimer. */
+        M11_GameView_NotifyDamageFlash(&animView, 5);
+        probe_record(&tally,
+                     "INV_GV_135",
+                     M11_GameView_GetDamageFlashTimer(&animView) == M11_DAMAGE_FLASH_DURATION,
+                     "NotifyDamageFlash sets damageFlashTimer");
+
+        /* INV_GV_136: NotifyDamageFlash sets attackCueTimer. */
+        probe_record(&tally,
+                     "INV_GV_136",
+                     M11_GameView_GetAttackCueTimer(&animView) == M11_ATTACK_CUE_DURATION,
+                     "NotifyDamageFlash sets attackCueTimer");
+
+        /* INV_GV_137: TickAnimation decrements damageFlashTimer. */
+        {
+            int before = M11_GameView_GetDamageFlashTimer(&animView);
+            M11_GameView_TickAnimation(&animView);
+            probe_record(&tally,
+                         "INV_GV_137",
+                         M11_GameView_GetDamageFlashTimer(&animView) == before - 1,
+                         "TickAnimation decrements damageFlashTimer");
+        }
+
+        /* INV_GV_138: TickAnimation decrements attackCueTimer. */
+        {
+            int before = M11_GameView_GetAttackCueTimer(&animView);
+            M11_GameView_TickAnimation(&animView);
+            probe_record(&tally,
+                         "INV_GV_138",
+                         M11_GameView_GetAttackCueTimer(&animView) == before - 1,
+                         "TickAnimation decrements attackCueTimer");
+        }
+
+        /* INV_GV_139: damageFlashTimer does not go negative. */
+        {
+            M11_GameViewState zv;
+            memset(&zv, 0, sizeof(zv));
+            M11_GameView_TickAnimation(&zv); /* timer already 0 */
+            probe_record(&tally,
+                         "INV_GV_139",
+                         M11_GameView_GetDamageFlashTimer(&zv) == 0,
+                         "damageFlashTimer stays at 0 when already 0");
+        }
+
+        /* INV_GV_140: CreatureAnimFrame returns 0 or 1. */
+        {
+            int frame0 = M11_GameView_CreatureAnimFrame(&animView, 0);
+            int frame5 = M11_GameView_CreatureAnimFrame(&animView, 5);
+            probe_record(&tally,
+                         "INV_GV_140",
+                         (frame0 == 0 || frame0 == 1) &&
+                         (frame5 == 0 || frame5 == 1),
+                         "CreatureAnimFrame returns 0 or 1");
+        }
+
+        /* INV_GV_141: CreatureAnimFrame cycles over time. */
+        {
+            M11_GameViewState cycleView;
+            int sawZero = 0, sawOne = 0;
+            int t;
+            memset(&cycleView, 0, sizeof(cycleView));
+            for (t = 0; t < M11_CREATURE_ANIM_PERIOD * 4; ++t) {
+                int f = M11_GameView_CreatureAnimFrame(&cycleView, 0);
+                if (f == 0) sawZero = 1;
+                if (f == 1) sawOne = 1;
+                M11_GameView_TickAnimation(&cycleView);
+            }
+            probe_record(&tally,
+                         "INV_GV_141",
+                         sawZero && sawOne,
+                         "CreatureAnimFrame cycles through both frames");
+        }
+
+        /* INV_GV_142: Different creature types have different anim phase. */
+        {
+            /* At a specific tick, creature type 0 and type 1 should
+             * eventually differ due to phase offset. */
+            M11_GameViewState phaseView;
+            int diffSeen = 0;
+            int t;
+            memset(&phaseView, 0, sizeof(phaseView));
+            for (t = 0; t < M11_CREATURE_ANIM_PERIOD * 4; ++t) {
+                int f0 = M11_GameView_CreatureAnimFrame(&phaseView, 0);
+                int f1 = M11_GameView_CreatureAnimFrame(&phaseView, 1);
+                if (f0 != f1) diffSeen = 1;
+                M11_GameView_TickAnimation(&phaseView);
+            }
+            probe_record(&tally,
+                         "INV_GV_142",
+                         diffSeen,
+                         "different creature types have different anim phase");
+        }
+
+        /* INV_GV_143: Damage flash timer fully decays to 0. */
+        {
+            M11_GameViewState decayView;
+            int t;
+            memset(&decayView, 0, sizeof(decayView));
+            M11_GameView_NotifyDamageFlash(&decayView, 3);
+            for (t = 0; t < M11_DAMAGE_FLASH_DURATION + 2; ++t) {
+                M11_GameView_TickAnimation(&decayView);
+            }
+            probe_record(&tally,
+                         "INV_GV_143",
+                         M11_GameView_GetDamageFlashTimer(&decayView) == 0 &&
+                         M11_GameView_GetAttackCueTimer(&decayView) == 0,
+                         "flash timers fully decay to 0");
+        }
+
+        /* INV_GV_144: Draw with active damage flash produces red pixels
+         * in the viewport border. */
+        {
+            M11_GameViewState flashView;
+            unsigned char fb[64000];
+            int hasRed = 0;
+            int px;
+            memset(&flashView, 0, sizeof(flashView));
+            flashView.active = 1;
+            flashView.damageFlashTimer = 2;
+            memset(fb, 0, sizeof(fb));
+            M11_GameView_Draw(&flashView, fb, 320, 200);
+            /* Check viewport top border row (y=24) for red pixels */
+            for (px = 12; px < 208; ++px) {
+                if (fb[24 * 320 + px] == PROBE_COLOR_LIGHT_RED) {
+                    hasRed = 1;
+                    break;
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_144",
+                         hasRed,
+                         "damage flash renders red pixels on viewport border");
+        }
+
+        /* INV_GV_145: Draw with active attack cue produces yellow pixels
+         * in the viewport center. */
+        {
+            M11_GameViewState cueView;
+            unsigned char fb[64000];
+            int hasYellow = 0;
+            int py, px2;
+            memset(&cueView, 0, sizeof(cueView));
+            cueView.active = 1;
+            cueView.attackCueTimer = 2;
+            memset(fb, 0, sizeof(fb));
+            M11_GameView_Draw(&cueView, fb, 320, 200);
+            /* Check center area for yellow (slash marks) */
+            for (py = 70; py < 90; ++py) {
+                for (px2 = 100; px2 < 120; ++px2) {
+                    if (fb[py * 320 + px2] == PROBE_COLOR_YELLOW) {
+                        hasYellow = 1;
+                        break;
+                    }
+                }
+                if (hasYellow) break;
+            }
+            probe_record(&tally,
+                         "INV_GV_145",
+                         hasYellow,
+                         "attack cue renders yellow slash marks");
+        }
+
+        /* INV_GV_146: NotifyDamageFlash on NULL state does not crash. */
+        M11_GameView_NotifyDamageFlash(NULL, 0);
+        M11_GameView_TickAnimation(NULL);
+        probe_record(&tally,
+                     "INV_GV_146",
+                     M11_GameView_GetDamageFlashTimer(NULL) == 0 &&
+                     M11_GameView_GetAttackCueTimer(NULL) == 0 &&
+                     M11_GameView_GetAnimTick(NULL) == 0 &&
+                     M11_GameView_CreatureAnimFrame(NULL, 0) == 0,
+                     "NULL-state animation queries return 0 safely");
+
+        memset(&animView, 0, sizeof(animView));
+    }
+
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
 }

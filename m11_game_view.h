@@ -87,6 +87,24 @@ typedef struct {
     int spellPanelOpen;          /* 1 when rune entry panel is visible */
     int spellRuneRow;            /* current rune row (0..3) = power/element/form/class */
     struct RuneSequence_Compat spellBuffer; /* runes entered so far */
+
+    /* ── Creature animation state ── */
+    /* Global animation tick — incremented each game tick, drives all
+     * creature frame cycling and attack flash timers. */
+    uint32_t animTick;
+
+    /* Damage-flash timer.  Set to M11_DAMAGE_FLASH_DURATION when the
+     * party takes creature melee damage.  Decremented each tick.
+     * While > 0, the viewport border flashes red. */
+    int damageFlashTimer;
+
+    /* Front-cell attack indicator timer.  Set to M11_ATTACK_CUE_DURATION
+     * when a creature in the front cell (depth 0) attacks.  Decremented
+     * each tick.  While > 0, draw slash-mark overlay on the viewport. */
+    int attackCueTimer;
+
+    /* Creature type that last attacked (for attack-cue sprite). */
+    int attackCueCreatureType;
 } M11_GameViewState;
 
 /* Spell casting API */
@@ -160,6 +178,33 @@ int M11_GameView_GetTorchFuel(const M11_GameViewState* state, int weaponIndex);
 
 /* Update torch fuel for all lit torches (called once per tick). */
 void M11_GameView_UpdateTorchFuel(M11_GameViewState* state);
+
+/* ── Creature animation API ── */
+
+/* Durations in game ticks. */
+#define M11_DAMAGE_FLASH_DURATION   4
+#define M11_ATTACK_CUE_DURATION     3
+#define M11_CREATURE_ANIM_PERIOD    6  /* ticks per idle-frame cycle */
+
+/* Advance the animation frame counter and decrement timers.
+ * Called once per game tick (from AdvanceIdleTick). */
+void M11_GameView_TickAnimation(M11_GameViewState* state);
+
+/* Signal that the party just took creature melee damage.
+ * Starts the damage-flash and attack-cue timers.
+ * creatureType: type index of the attacking creature (for cue sprite). */
+void M11_GameView_NotifyDamageFlash(M11_GameViewState* state,
+                                    int creatureType);
+
+/* Query animation state (for probes). */
+int M11_GameView_GetDamageFlashTimer(const M11_GameViewState* state);
+int M11_GameView_GetAttackCueTimer(const M11_GameViewState* state);
+uint32_t M11_GameView_GetAnimTick(const M11_GameViewState* state);
+
+/* Return the idle-animation frame index (0 or 1) for a given
+ * creature type based on the current animTick. */
+int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,
+                                   int creatureType);
 
 #ifdef __cplusplus
 }
