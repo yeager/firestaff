@@ -1,4 +1,4 @@
-name: M10 verify + cross-platform determinism
+name: M10 verify + CMake build + cross-platform determinism
 
 on:
   push:
@@ -8,6 +8,62 @@ on:
   workflow_dispatch:
 
 jobs:
+  cmake-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            shell: bash
+            sdl_install: sudo apt-get update && sudo apt-get install -y libsdl3-dev || true
+          - os: macos-14
+            shell: bash
+            sdl_install: brew install sdl3 || true
+          - os: windows-2022
+            shell: msys2 {0}
+            sdl_install: pacman -S --noconfirm mingw-w64-ucrt-x86_64-SDL3 || true
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSYS2 (Windows only)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkg-config
+
+      - name: Install SDL3
+        run: ${{ matrix.sdl_install }}
+
+      - name: CMake configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: CMake build
+        run: cmake --build build --parallel
+
+      - name: Run Phase A probe (headless, no game data needed)
+        run: |
+          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe 2>&1 | tee phase_a.log
+          grep '^# summary: ' phase_a.log
+          PASSED=$(grep '^# summary: ' phase_a.log | awk '{print $3}' | cut -d/ -f1)
+          TOTAL=$(grep '^# summary: ' phase_a.log | awk '{print $3}' | cut -d/ -f2)
+          if [ "$PASSED" != "$TOTAL" ]; then
+            echo "::error::Phase A probe: $PASSED/$TOTAL"
+            exit 1
+          fi
+          echo "Phase A probe: PASS ($PASSED/$TOTAL)"
+
   verify:
     strategy:
       fail-fast: false
