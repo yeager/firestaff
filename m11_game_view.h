@@ -135,6 +135,12 @@ int M11_GameView_UseItem(M11_GameViewState* state);
  * probe-level verification of emission-driven XP integration. */
 void M11_GameView_ProcessTickEmissions(M11_GameViewState* state);
 
+/* Compute the party's current light level (0..255).
+ * Combines magical light from FUL/MAGIC_TORCH spells with lit torch
+ * items in hand slots.  Used by the viewport renderer for dynamic
+ * depth dimming and exposed for probe-level verification. */
+int M11_GameView_GetLightLevel(const M11_GameViewState* state);
+
 #ifdef __cplusplus
 }
 #endif

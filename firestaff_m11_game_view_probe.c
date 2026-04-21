@@ -321,6 +321,10 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     things->squareFirstThings[2 * dungeon->maps[0].height + 2] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
     things->squareFirstThings[3 * dungeon->maps[0].height + 2] = 0;
 
+    /* Set a normal light level so rendering probes see consistent
+     * dimming.  Light-specific tests override this as needed. */
+    state->world.magic.magicalLightAmount = 150;
+
     return 1;
 }
 
@@ -2349,6 +2353,11 @@ int main(int argc, char** argv) {
         M11_GameView_Init(&assetView);
         (void)M11_GameView_OpenSelectedMenuEntry(&assetView, &menuState);
 
+        /* Set a normal light level so existing rendering tests see the
+         * same dimming behavior as the pre-dynamic-light baseline.
+         * Tests that specifically exercise the light system override this. */
+        assetView.world.magic.magicalLightAmount = 150;
+
         /* INV_GV_84: Asset loader initializes with GRAPHICS.DAT */
         probe_record(&tally,
                      "INV_GV_84",
@@ -2822,6 +2831,134 @@ int main(int argc, char** argv) {
                          "INV_GV_115",
                          differs,
                          "viewport rendering differs when item is on floor vs absent");
+        }
+
+        /* INV_GV_116: Light level with magicalLightAmount=0 and no torches
+         * returns 0.  We temporarily clear the light to test. */
+        {
+            int savedLight = assetView.world.magic.magicalLightAmount;
+            int light0;
+            assetView.world.magic.magicalLightAmount = 0;
+            light0 = M11_GameView_GetLightLevel(&assetView);
+            probe_record(&tally,
+                         "INV_GV_116",
+                         light0 == 0,
+                         "light level is 0 when no light sources present");
+            assetView.world.magic.magicalLightAmount = savedLight;
+        }
+
+        /* INV_GV_117: Setting magicalLightAmount raises the light level. */
+        {
+            int lightBefore, lightAfter;
+            assetView.world.magic.magicalLightAmount = 0;
+            lightBefore = M11_GameView_GetLightLevel(&assetView);
+            assetView.world.magic.magicalLightAmount = 150;
+            lightAfter = M11_GameView_GetLightLevel(&assetView);
+            probe_record(&tally,
+                         "INV_GV_117",
+                         lightAfter > lightBefore && lightAfter >= 150,
+                         "magicalLightAmount raises computed light level");
+        }
+
+        /* INV_GV_118: Light level is clamped to 255 maximum. */
+        {
+            int lightClamped;
+            assetView.world.magic.magicalLightAmount = 500;
+            lightClamped = M11_GameView_GetLightLevel(&assetView);
+            probe_record(&tally,
+                         "INV_GV_118",
+                         lightClamped == 255,
+                         "light level clamps to 255");
+            assetView.world.magic.magicalLightAmount = 0;  /* reset */
+        }
+
+        /* INV_GV_119: Viewport rendering differs between dark and bright
+         * light levels (depth dimming responds to light state). */
+        {
+            unsigned char fb_dark[320 * 200];
+            unsigned char fb_bright[320 * 200];
+            int differs = 0;
+            int i;
+
+            /* Dark render (light=0) */
+            assetView.world.magic.magicalLightAmount = 0;
+            memset(fb_dark, 0, sizeof(fb_dark));
+            M11_GameView_Draw(&assetView, fb_dark, 320, 200);
+
+            /* Bright render (light=255) */
+            assetView.world.magic.magicalLightAmount = 255;
+            memset(fb_bright, 0, sizeof(fb_bright));
+            M11_GameView_Draw(&assetView, fb_bright, 320, 200);
+
+            for (i = 0; i < 320 * 200; ++i) {
+                if (fb_dark[i] != fb_bright[i]) { differs = 1; break; }
+            }
+            probe_record(&tally,
+                         "INV_GV_119",
+                         differs,
+                         "viewport rendering differs between dark and bright light");
+            assetView.world.magic.magicalLightAmount = 0;  /* reset */
+        }
+
+        /* INV_GV_120: Light level indicator text appears in the utility
+         * panel area (around y=73, x=222) when drawing. */
+        {
+            unsigned char fb_util[320 * 200];
+            int hasContent = 0;
+            int x;
+            memset(fb_util, 0, sizeof(fb_util));
+            M11_GameView_Draw(&assetView, fb_util, 320, 200);
+            /* Check if any non-black pixel exists in the light bar area */
+            for (x = 222; x < 302; ++x) {
+                if (fb_util[73 * 320 + x] != 0) { hasContent = 1; break; }
+                if (fb_util[68 * 320 + x] != 0) { hasContent = 1; break; }
+            }
+            probe_record(&tally,
+                         "INV_GV_120",
+                         hasContent,
+                         "light indicator area has non-black content in utility panel");
+        }
+
+        /* INV_GV_121: Dark scene (light=0) has more black pixels in the
+         * viewport than a bright scene (light=255). */
+        {
+            unsigned char fb_dark2[320 * 200];
+            unsigned char fb_bright2[320 * 200];
+            int darkBlack = 0, brightBlack = 0;
+            int y, x;
+
+            assetView.world.magic.magicalLightAmount = 0;
+            memset(fb_dark2, 0, sizeof(fb_dark2));
+            M11_GameView_Draw(&assetView, fb_dark2, 320, 200);
+
+            assetView.world.magic.magicalLightAmount = 255;
+            memset(fb_bright2, 0, sizeof(fb_bright2));
+            M11_GameView_Draw(&assetView, fb_bright2, 320, 200);
+
+            /* Count black pixels in the viewport region */
+            for (y = 24; y < 142; ++y) {
+                for (x = 12; x < 208; ++x) {
+                    if (fb_dark2[y * 320 + x] == 0) darkBlack++;
+                    if (fb_bright2[y * 320 + x] == 0) brightBlack++;
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_121",
+                         darkBlack > brightBlack,
+                         "dark scene has more black pixels in viewport than bright");
+            assetView.world.magic.magicalLightAmount = 0;  /* reset */
+        }
+
+        /* INV_GV_122: Negative magicalLightAmount is clamped to 0. */
+        {
+            int lightNeg;
+            assetView.world.magic.magicalLightAmount = -100;
+            lightNeg = M11_GameView_GetLightLevel(&assetView);
+            probe_record(&tally,
+                         "INV_GV_122",
+                         lightNeg >= 0,
+                         "negative magicalLightAmount clamps to 0");
+            assetView.world.magic.magicalLightAmount = 0;  /* reset */
         }
 
         M11_GameView_Shutdown(&assetView);

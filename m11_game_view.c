@@ -5678,6 +5678,88 @@ static void m11_draw_focus_card(unsigned char* framebuffer,
                   222, 129, state->inspectDetail, &g_text_small);
 }
 
+/* ================================================================
+ * Light-level computation
+ *
+ * Combines magical light (FUL spell, MAGIC_TORCH), lit torches in
+ * champion hand slots, and the ILLUMULET junk item to produce a
+ * 0..255 light level that drives viewport depth dimming.
+ *
+ * Light sources (additive, clamped to 255):
+ *   - magicalLightAmount from world.magic (FUL/OH spell chain)
+ *   - Each lit TORCH weapon in a hand slot:  +80
+ *   - ILLUMULET junk in any hand slot:       +50
+ *   - FLAMITT weapon (index 3) lit:          +100
+ * ================================================================ */
+
+#define M11_LIGHT_TORCH_BONUS       80
+#define M11_LIGHT_ILLUMULET_BONUS   50
+#define M11_LIGHT_FLAMITT_BONUS     100
+#define M11_LIGHT_MAX               255
+
+/* Torch weapon sub-type index in s_weaponTypeNames[] */
+#define M11_WEAPON_SUBTYPE_TORCH    2
+#define M11_WEAPON_SUBTYPE_FLAMITT  3
+/* ILLUMULET junk sub-type index in s_junkTypeNames[] */
+#define M11_JUNK_SUBTYPE_ILLUMULET  4
+
+static int m11_compute_light_level(const M11_GameViewState* state) {
+    int light;
+    int ci;
+    if (!state) {
+        return 0;
+    }
+
+    /* Start with the magical light amount from the spell system. */
+    light = state->world.magic.magicalLightAmount;
+    if (light < 0) light = 0;
+
+    /* Scan each champion's hand slots for light-emitting items. */
+    for (ci = 0; ci < CHAMPION_MAX_PARTY; ++ci) {
+        const struct ChampionState_Compat* champ = &state->world.party.champions[ci];
+        int slot;
+        if (!champ->present) continue;
+
+        for (slot = CHAMPION_SLOT_HAND_LEFT; slot <= CHAMPION_SLOT_HAND_RIGHT; ++slot) {
+            unsigned short thing = champ->inventory[slot];
+            int thingType, thingIndex;
+            if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+
+            thingType = THING_GET_TYPE(thing);
+            thingIndex = THING_GET_INDEX(thing);
+
+            if (thingType == THING_TYPE_WEAPON &&
+                state->world.things &&
+                thingIndex >= 0 && thingIndex < state->world.things->weaponCount) {
+                const struct DungeonWeapon_Compat* w = &state->world.things->weapons[thingIndex];
+                if (w->type == M11_WEAPON_SUBTYPE_TORCH && w->lit) {
+                    light += M11_LIGHT_TORCH_BONUS;
+                }
+                if (w->type == M11_WEAPON_SUBTYPE_FLAMITT && w->lit) {
+                    light += M11_LIGHT_FLAMITT_BONUS;
+                }
+            }
+
+            if (thingType == THING_TYPE_JUNK &&
+                state->world.things &&
+                thingIndex >= 0 && thingIndex < state->world.things->junkCount) {
+                const struct DungeonJunk_Compat* j = &state->world.things->junks[thingIndex];
+                if (j->type == M11_JUNK_SUBTYPE_ILLUMULET) {
+                    light += M11_LIGHT_ILLUMULET_BONUS;
+                }
+            }
+        }
+    }
+
+    if (light > M11_LIGHT_MAX) light = M11_LIGHT_MAX;
+    return light;
+}
+
+/* Query the current party light level (0..255). Exposed for probes. */
+int M11_GameView_GetLightLevel(const M11_GameViewState* state) {
+    return m11_compute_light_level(state);
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -5732,6 +5814,39 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                             M11_UTILITY_LOAD_W, M11_UTILITY_BUTTON_H,
                             "L", -1,
                             M11_COLOR_LIGHT_BLUE, M11_COLOR_BLACK);
+
+    /* Light level indicator: a small bar and label below the buttons.
+     * Bright = YELLOW, normal = BROWN, dim = DARK_GRAY, dark = BLACK. */
+    {
+        int lightLevel = m11_compute_light_level(state);
+        unsigned char lightColor;
+        const char* lightLabel;
+        int barW;
+        if (lightLevel >= 200) {
+            lightColor = M11_COLOR_YELLOW;
+            lightLabel = "BRIGHT";
+        } else if (lightLevel >= 120) {
+            lightColor = M11_COLOR_BROWN;
+            lightLabel = "LIT";
+        } else if (lightLevel >= 50) {
+            lightColor = M11_COLOR_DARK_GRAY;
+            lightLabel = "DIM";
+        } else {
+            lightColor = M11_COLOR_BLACK;
+            lightLabel = "DARK";
+        }
+        /* Draw light bar (max 80px wide, scaled to light level) */
+        barW = (lightLevel * 80) / M11_LIGHT_MAX;
+        if (barW < 1 && lightLevel > 0) barW = 1;
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      222, 68, 80, 3, M11_COLOR_BLACK);
+        if (barW > 0) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          222, 68, barW, 3, lightColor);
+        }
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      222, 73, lightLabel, &g_text_small);
+    }
 }
 
 static void m11_draw_viewport(const M11_GameViewState* state,
@@ -5882,13 +5997,45 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
 
-    /* Apply depth-based light dimming to the far corridor band only.
-     * Depth 2 gets dimmed to simulate torch light falloff in the
-     * dungeon.  Depth 1 is left bright so near-side accents (door
-     * LIGHT_RED, stair YELLOW) remain clearly visible. */
-    m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
-                            frames[2].x, frames[2].y,
-                            frames[2].w, frames[2].h, 1);
+    /* Apply dynamic depth dimming based on the party's current light
+     * level.  The original DM1 uses torches, FUL spell, ILLUMULET, and
+     * FLAMITT to illuminate the dungeon.  We map the computed 0..255
+     * light level to dimming passes per depth band:
+     *
+     *   light >= 200  (bright):  no dimming at any depth
+     *   light >= 120  (normal):  depth 2 dimmed once
+     *   light >= 50   (dim):     depth 1 once, depth 2 twice
+     *   light <  50   (dark):    depth 0 once, depth 1 twice, depth 2 three times
+     */
+    {
+        int lightLevel = m11_compute_light_level(state);
+        if (lightLevel < 50) {
+            /* Very dark: heavy dimming everywhere */
+            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
+                                    frames[0].x, frames[0].y,
+                                    frames[0].w, frames[0].h, 1);
+            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
+                                    frames[1].x, frames[1].y,
+                                    frames[1].w, frames[1].h, 2);
+            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
+                                    frames[2].x, frames[2].y,
+                                    frames[2].w, frames[2].h, 3);
+        } else if (lightLevel < 120) {
+            /* Dim: moderate dimming */
+            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
+                                    frames[1].x, frames[1].y,
+                                    frames[1].w, frames[1].h, 1);
+            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
+                                    frames[2].x, frames[2].y,
+                                    frames[2].w, frames[2].h, 2);
+        } else if (lightLevel < 200) {
+            /* Normal: only the far band dimmed once */
+            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
+                                    frames[2].x, frames[2].y,
+                                    frames[2].w, frames[2].h, 1);
+        }
+        /* lightLevel >= 200: bright, no dimming */
+    }
 }
 
 static void m11_format_champion_name(const unsigned char* raw,
