@@ -33,6 +33,22 @@ typedef struct {
     M11_GameSourceKind sourceKind;
 } M11_GameLaunchSpec;
 
+enum {
+    M11_MESSAGE_LOG_CAPACITY = 6,
+    M11_MESSAGE_MAX_LENGTH = 80
+};
+
+typedef struct {
+    char text[M11_MESSAGE_MAX_LENGTH];
+    unsigned char color;
+} M11_LogEntry;
+
+typedef struct {
+    M11_LogEntry entries[M11_MESSAGE_LOG_CAPACITY];
+    int writeIndex;
+    int count;
+} M11_MessageLog;
+
 typedef struct {
     int active;
     int startedFromLauncher;
@@ -47,6 +63,10 @@ typedef struct {
     uint32_t lastWorldHash;
     struct TickResult_Compat lastTickResult;
     struct GameWorld_Compat world;
+    M11_MessageLog messageLog;
+    int resting;
+    int partyDead;
+    uint32_t exploredBits[32]; /* 32 * 32 = 1024 cells tracked per level */
 } M11_GameViewState;
 
 void M11_GameView_Init(M11_GameViewState* state);
@@ -71,6 +91,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
+void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char color);
+int M11_GameView_GetMessageLogCount(const M11_GameViewState* state);
+const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex);
 
 #ifdef __cplusplus
 }

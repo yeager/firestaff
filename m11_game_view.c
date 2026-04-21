@@ -5,6 +5,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -685,6 +686,9 @@ static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
 static void m11_get_active_champion_label(const M11_GameViewState* state,
                                           char* out,
                                           size_t outSize);
+static void m11_format_champion_name(const unsigned char* raw,
+                                     char* out,
+                                     size_t outSize);
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
 static int m11_cycle_active_champion(M11_GameViewState* state);
 static int m11_set_active_champion(M11_GameViewState* state, int championIndex);
@@ -720,6 +724,290 @@ static const struct ChampionState_Compat* m11_get_active_champion(const M11_Game
     }
 
     return &state->world.party.champions[index];
+}
+
+/* ================================================================
+ * Message log — ring buffer for event history
+ * ================================================================ */
+
+void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char color) {
+    M11_LogEntry* entry;
+    if (!log || !text) {
+        return;
+    }
+    entry = &log->entries[log->writeIndex];
+    snprintf(entry->text, M11_MESSAGE_MAX_LENGTH, "%s", text);
+    entry->color = color;
+    log->writeIndex = (log->writeIndex + 1) % M11_MESSAGE_LOG_CAPACITY;
+    if (log->count < M11_MESSAGE_LOG_CAPACITY) {
+        ++log->count;
+    }
+}
+
+int M11_GameView_GetMessageLogCount(const M11_GameViewState* state) {
+    return state ? state->messageLog.count : 0;
+}
+
+const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex) {
+    int idx;
+    if (!state || reverseIndex < 0 || reverseIndex >= state->messageLog.count) {
+        return NULL;
+    }
+    idx = (state->messageLog.writeIndex - 1 - reverseIndex + M11_MESSAGE_LOG_CAPACITY) % M11_MESSAGE_LOG_CAPACITY;
+    return state->messageLog.entries[idx].text;
+}
+
+static const M11_LogEntry* m11_log_entry_at(const M11_MessageLog* log, int reverseIndex) {
+    int idx;
+    if (!log || reverseIndex < 0 || reverseIndex >= log->count) {
+        return NULL;
+    }
+    idx = (log->writeIndex - 1 - reverseIndex + M11_MESSAGE_LOG_CAPACITY) % M11_MESSAGE_LOG_CAPACITY;
+    return &log->entries[idx];
+}
+
+static void m11_log_event(M11_GameViewState* state, unsigned char color, const char* fmt, ...) {
+    char buf[M11_MESSAGE_MAX_LENGTH];
+    va_list ap;
+    if (!state) {
+        return;
+    }
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    M11_MessageLog_Push(&state->messageLog, buf, color);
+}
+
+/* ================================================================
+ * Explored cell tracking
+ * ================================================================ */
+
+static void m11_mark_explored(M11_GameViewState* state) {
+    unsigned int cell;
+    if (!state || !state->active) {
+        return;
+    }
+    cell = (unsigned int)(state->world.party.mapX * 32 + state->world.party.mapY);
+    if (cell < 1024U) {
+        state->exploredBits[cell / 32U] |= (1U << (cell % 32U));
+    }
+}
+
+static int m11_is_explored(const M11_GameViewState* state, int mapX, int mapY) {
+    unsigned int cell;
+    if (!state) {
+        return 0;
+    }
+    cell = (unsigned int)(mapX * 32 + mapY);
+    if (cell >= 1024U) {
+        return 0;
+    }
+    return (state->exploredBits[cell / 32U] & (1U << (cell % 32U))) != 0;
+}
+
+/* ================================================================
+ * Level transitions
+ * ================================================================ */
+
+static int m11_try_stairs_transition(M11_GameViewState* state) {
+    unsigned char square = 0;
+    int elementType;
+    int targetLevel;
+    const struct DungeonMapDesc_Compat* targetMap;
+
+    if (!state || !state->active || !state->world.dungeon) {
+        return 0;
+    }
+    if (!m11_get_square_byte(&state->world,
+                             state->world.party.mapIndex,
+                             state->world.party.mapX,
+                             state->world.party.mapY,
+                             &square)) {
+        return 0;
+    }
+    elementType = (square >> 5) & 7;
+    if (elementType != DUNGEON_ELEMENT_STAIRS) {
+        return 0;
+    }
+
+    /* Stairs go down (index + 1). Could also go up if the nibble
+       says so, but for DM1 the convention is stairs-down. */
+    targetLevel = state->world.party.mapIndex + 1;
+    if (targetLevel >= (int)state->world.dungeon->header.mapCount) {
+        m11_log_event(state, M11_COLOR_YELLOW, "T%u: STAIRS LEAD NOWHERE",
+                      (unsigned int)state->world.gameTick);
+        return 0;
+    }
+
+    targetMap = &state->world.dungeon->maps[targetLevel];
+    state->world.party.mapIndex = targetLevel;
+
+    /* Clamp position to the new map bounds */
+    if (state->world.party.mapX >= (int)targetMap->width) {
+        state->world.party.mapX = (int)targetMap->width - 1;
+    }
+    if (state->world.party.mapY >= (int)targetMap->height) {
+        state->world.party.mapY = (int)targetMap->height - 1;
+    }
+
+    memset(state->exploredBits, 0, sizeof(state->exploredBits));
+    m11_mark_explored(state);
+    m11_refresh_hash(state);
+    m11_log_event(state, M11_COLOR_YELLOW, "T%u: DESCENDED TO LEVEL %d",
+                  (unsigned int)state->world.gameTick,
+                  targetLevel + 1);
+    m11_set_status(state, "STAIRS", "DESCENDED TO NEXT LEVEL");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "LEVEL %d", targetLevel + 1);
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "MAP %dx%d, ENTERED FROM STAIRS",
+             (int)targetMap->width, (int)targetMap->height);
+    return 1;
+}
+
+/* ================================================================
+ * Food / water drain, rest recovery, champion death
+ * ================================================================ */
+
+static void m11_apply_survival_drain(M11_GameViewState* state) {
+    int i;
+    if (!state || !state->active) {
+        return;
+    }
+    /* Every 6 ticks, drain 1 food and 1 water from each champion */
+    if ((state->world.gameTick % 6U) != 0U) {
+        return;
+    }
+    for (i = 0; i < state->world.party.championCount; ++i) {
+        struct ChampionState_Compat* champ = &state->world.party.champions[i];
+        if (!champ->present) {
+            continue;
+        }
+        if (champ->hp.current == 0) {
+            continue; /* dead */
+        }
+        if (champ->food > 0) {
+            --champ->food;
+        }
+        if (champ->water > 0) {
+            --champ->water;
+        }
+        /* Starvation/dehydration damage */
+        if (champ->food == 0 && champ->water == 0 && champ->hp.current > 0) {
+            if (champ->hp.current > 1) {
+                --champ->hp.current;
+            }
+        }
+    }
+}
+
+static void m11_apply_rest_recovery(M11_GameViewState* state) {
+    int i;
+    if (!state || !state->active || !state->resting) {
+        return;
+    }
+    /* Every 4 ticks while resting, recover 1 HP, 2 stamina, 1 mana */
+    if ((state->world.gameTick % 4U) != 0U) {
+        return;
+    }
+    for (i = 0; i < state->world.party.championCount; ++i) {
+        struct ChampionState_Compat* champ = &state->world.party.champions[i];
+        if (!champ->present || champ->hp.current == 0) {
+            continue;
+        }
+        if (champ->hp.current < champ->hp.maximum) {
+            ++champ->hp.current;
+        }
+        if (champ->stamina.current + 2 <= champ->stamina.maximum) {
+            champ->stamina.current += 2;
+        } else {
+            champ->stamina.current = champ->stamina.maximum;
+        }
+        if (champ->mana.current < champ->mana.maximum) {
+            ++champ->mana.current;
+        }
+    }
+}
+
+static void m11_check_party_death(M11_GameViewState* state) {
+    int i;
+    int anyAlive = 0;
+    if (!state || !state->active) {
+        return;
+    }
+    for (i = 0; i < state->world.party.championCount; ++i) {
+        if (state->world.party.champions[i].present &&
+            state->world.party.champions[i].hp.current > 0) {
+            anyAlive = 1;
+            break;
+        }
+    }
+    if (!anyAlive && state->world.party.championCount > 0) {
+        state->partyDead = 1;
+        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: ALL CHAMPIONS HAVE FALLEN",
+                      (unsigned int)state->world.gameTick);
+        m11_set_status(state, "DEATH", "PARTY WIPED");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "GAME OVER");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU.");
+    }
+}
+
+static void m11_process_tick_emissions(M11_GameViewState* state) {
+    int i;
+    if (!state) {
+        return;
+    }
+    for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
+        const struct TickEmission_Compat* e = &state->lastTickResult.emissions[i];
+        switch (e->kind) {
+            case EMIT_DAMAGE_DEALT:
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: DAMAGE %d DEALT",
+                              (unsigned int)state->world.gameTick,
+                              (int)e->payload[2]);
+                break;
+            case EMIT_KILL_NOTIFY:
+                m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                              "T%u: ENEMY DEFEATED",
+                              (unsigned int)state->world.gameTick);
+                break;
+            case EMIT_XP_AWARD:
+                m11_log_event(state, M11_COLOR_YELLOW,
+                              "T%u: EXPERIENCE GAINED",
+                              (unsigned int)state->world.gameTick);
+                break;
+            case EMIT_CHAMPION_DOWN: {
+                int champIdx = (int)e->payload[0];
+                char name[16];
+                if (champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY &&
+                    state->world.party.champions[champIdx].present) {
+                    m11_format_champion_name(
+                        state->world.party.champions[champIdx].name,
+                        name, sizeof(name));
+                } else {
+                    snprintf(name, sizeof(name), "CHAMPION");
+                }
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s HAS FALLEN",
+                              (unsigned int)state->world.gameTick, name);
+                break;
+            }
+            case EMIT_PARTY_MOVED:
+                m11_log_event(state, M11_COLOR_LIGHT_GRAY,
+                              "T%u: PARTY MOVED TO %d,%d",
+                              (unsigned int)state->world.gameTick,
+                              state->world.party.mapX,
+                              state->world.party.mapY);
+                break;
+            case EMIT_DOOR_STATE:
+                m11_log_event(state, M11_COLOR_YELLOW,
+                              "T%u: DOOR STATE CHANGED",
+                              (unsigned int)state->world.gameTick);
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 void M11_GameView_Init(M11_GameViewState* state) {
@@ -774,6 +1062,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
              spec->sourceId ? spec->sourceId : "launcher");
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", dungeonPath);
     m11_refresh_hash(state);
+    m11_mark_explored(state);
+    m11_log_event(state, M11_COLOR_YELLOW, "T0: %s LOADED", spec->title);
     m11_set_status(state, "BOOT", "GAME DATA LOADED");
     m11_set_inspect_readout(state, "READY", "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION");
     return 1;
@@ -1002,6 +1292,18 @@ static int m11_apply_tick(M11_GameViewState* state,
         return 0;
     }
     state->lastWorldHash = state->lastTickResult.worldHashPost;
+
+    /* Process emissions into the message log */
+    m11_process_tick_emissions(state);
+
+    /* Apply survival mechanics */
+    m11_apply_survival_drain(state);
+    m11_apply_rest_recovery(state);
+    m11_check_party_death(state);
+
+    /* Mark current cell as explored */
+    m11_mark_explored(state);
+
     if (command == CMD_ATTACK) {
         char champion[16];
         int attackRoll = 0;
@@ -1098,6 +1400,30 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
+        case M12_MENU_INPUT_REST_TOGGLE:
+            state->resting = !state->resting;
+            if (state->resting) {
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: RESTING",
+                              (unsigned int)state->world.gameTick);
+                m11_set_status(state, "REST", "PARTY IS RESTING");
+                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTING");
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "HP AND STAMINA RECOVER SLOWLY. PRESS R AGAIN TO WAKE.");
+            } else {
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                              (unsigned int)state->world.gameTick);
+                m11_set_status(state, "REST", "PARTY AWAKE");
+                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "AWAKE");
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "REST ENDED. RESUME EXPLORING.");
+            }
+            return M11_GAME_INPUT_REDRAW;
+        case M12_MENU_INPUT_USE_STAIRS:
+            if (m11_try_stairs_transition(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            m11_set_status(state, "STAIRS", "NO STAIRS HERE");
+            return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_BACK:
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
@@ -2852,8 +3178,6 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         if (slot < state->world.party.championCount && state->world.party.champions[slot].present) {
             char name[16];
             const struct ChampionState_Compat* champ = &state->world.party.champions[slot];
-            int hpWidth;
-            int staminaWidth;
             m11_format_champion_name(champ->name, name, sizeof(name));
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 4, name, &g_text_small);
@@ -2861,19 +3185,33 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                               x + 1, y + 1, 69, 26, M11_COLOR_YELLOW);
             }
-            hpWidth = champ->hp.maximum > 0 ? (champ->hp.current * 59) / champ->hp.maximum : 0;
-            staminaWidth = champ->stamina.maximum > 0 ? (champ->stamina.current * 59) / champ->stamina.maximum : 0;
-            snprintf(line, sizeof(line), "HP %u", (unsigned int)champ->hp.current);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 12, line, &g_text_small);
+            {
+            int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
+            int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
+            int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
+            int isDead = (champ->hp.current == 0);
+            if (isDead) {
+                snprintf(line, sizeof(line), "DEAD");
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 12, line, &g_text_small);
+            } else {
+                snprintf(line, sizeof(line), "HP%u ST%u", (unsigned int)champ->hp.current, (unsigned int)champ->stamina.current);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 12, line, &g_text_small);
+            }
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 20, 59, 2, M11_COLOR_DARK_GRAY);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 20, hpWidth, 2, M11_COLOR_LIGHT_RED);
+                          x + 4, y + 20, hpWidth, 2, isDead ? M11_COLOR_DARK_GRAY : M11_COLOR_LIGHT_RED);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 24, 59, 2, M11_COLOR_DARK_GRAY);
+                          x + 4, y + 23, 59, 1, M11_COLOR_DARK_GRAY);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 24, staminaWidth, 2, M11_COLOR_LIGHT_GREEN);
+                          x + 4, y + 23, staminaWidth, 1, M11_COLOR_LIGHT_GREEN);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 25, 59, 1, M11_COLOR_DARK_GRAY);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
+            }
         } else {
             snprintf(line, sizeof(line), "SLOT %d", slot + 1);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
@@ -2980,6 +3318,12 @@ static void m11_draw_map_panel(const M11_GameViewState* state,
                                          &square);
             if (ok) {
                 fill = m11_tile_color(square >> 5);
+                /* Dim unexplored cells */
+                if (!m11_is_explored(state,
+                                     state->world.party.mapX + gx,
+                                     state->world.party.mapY + gy)) {
+                    fill = M11_COLOR_NAVY;
+                }
             }
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           drawX, drawY, cell - 1, cell - 1, fill);
@@ -3067,13 +3411,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   18, 13, state->title[0] != '\0' ? state->title : "GAME VIEW", &g_text_shadow);
 
-    snprintf(line, sizeof(line), "%s %s", m11_direction_name(state->world.party.direction), state->lastAction);
+    snprintf(line, sizeof(line), "L%d %s %s%s",
+             state->world.party.mapIndex + 1,
+             m11_direction_name(state->world.party.direction),
+             state->lastAction,
+             state->resting ? " ZZZ" : "");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  150, 13, line, &g_text_small);
+                  140, 13, line, &g_text_small);
 
-    snprintf(line, sizeof(line), "A/D STRAFE  ENTER INSPECT");
+    snprintf(line, sizeof(line), "R REST  X STAIRS");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  214, 13, line, &g_text_small);
+                  240, 13, line, &g_text_small);
 
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
 
@@ -3119,4 +3467,45 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_feedback_strip(framebuffer, framebufferWidth, framebufferHeight,
                             state, &aheadCell);
+
+    /* Message log overlay — draw the last few events in the sidebar */
+    {
+        int logI;
+        int logY = 108;
+        int logCount = state->messageLog.count;
+        int logMax = 4;
+        if (logCount > logMax) {
+            logCount = logMax;
+        }
+        for (logI = 0; logI < logCount; ++logI) {
+            const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, logI);
+            if (entry && entry->text[0] != '\0') {
+                M11_TextStyle logStyle = g_text_small;
+                logStyle.color = entry->color;
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              222, logY + logI * 8, entry->text, &logStyle);
+            }
+        }
+    }
+
+    /* Rest / death overlay */
+    if (state->partyDead) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      60, 70, 200, 60, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      60, 70, 200, 60, M11_COLOR_LIGHT_RED);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      80, 80, "GAME OVER", &g_text_title);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      72, 108, "LOAD SAVE OR ESC TO MENU", &g_text_shadow);
+    } else if (state->resting) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      100, 70, 120, 30, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      100, 70, 120, 30, M11_COLOR_LIGHT_BLUE);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      112, 78, "RESTING...", &g_text_shadow);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      112, 88, "R TO WAKE", &g_text_small);
+    }
 }

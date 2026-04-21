@@ -104,6 +104,13 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 4U && strncmp(token, "back", len) == 0)) {
         return M12_MENU_INPUT_BACK;
     }
+    if (len == 4U && strncmp(token, "rest", len) == 0) {
+        return M12_MENU_INPUT_REST_TOGGLE;
+    }
+    if ((len == 6U && strncmp(token, "stairs", len) == 0) ||
+        (len == 7U && strncmp(token, "descend", len) == 0)) {
+        return M12_MENU_INPUT_USE_STAIRS;
+    }
     return M12_MENU_INPUT_NONE;
 }
 
@@ -216,6 +223,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         }
                     }
                     return M12_MENU_INPUT_NONE;
+                case SDLK_R:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_REST_TOGGLE;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_X:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_USE_STAIRS;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();
                     return M12_MENU_INPUT_NONE;
@@ -301,6 +318,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         if (gameViewResult) {
                             *gameViewResult = M11_GAME_INPUT_REDRAW;
                         }
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_r:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_REST_TOGGLE;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_x:
+                    if (gameView && gameView->active) {
+                        return M12_MENU_INPUT_USE_STAIRS;
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F10:

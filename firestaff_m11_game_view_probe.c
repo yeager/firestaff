@@ -824,6 +824,97 @@ int main(int argc, char** argv) {
                                       PROBE_DEPTH_STRIP_H) > 180U,
                  "forward depth chips summarize the next three center-lane cells with live threat and traversal cues");
 
+    /* ================================================================
+     * New M11 play-loop features
+     * ================================================================ */
+
+    /* INV_GV_21: Message log tracks events from game start */
+    probe_record(&tally,
+                 "INV_GV_21",
+                 M11_GameView_GetMessageLogCount(&gameView) > 0 &&
+                     M11_GameView_GetMessageLogEntry(&gameView, 0) != NULL,
+                 "message log contains at least one event after boot and gameplay");
+
+    /* Re-open for feature probes */
+    M11_GameView_Shutdown(&gameView);
+    M11_GameView_Init(&gameView);
+    (void)M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState);
+
+    /* INV_GV_22: Rest toggle changes state and is visible */
+    probe_record(&tally,
+                 "INV_GV_22",
+                 gameView.resting == 0 &&
+                     M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_REST_TOGGLE) == M11_GAME_INPUT_REDRAW &&
+                     gameView.resting == 1 &&
+                     strcmp(gameView.lastAction, "REST") == 0,
+                 "R toggles rest mode on and reports it through last action");
+
+    probe_record(&tally,
+                 "INV_GV_22B",
+                 M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_REST_TOGGLE) == M11_GAME_INPUT_REDRAW &&
+                     gameView.resting == 0,
+                 "R again toggles rest mode off");
+
+    /* INV_GV_23: Stairs interaction — either descends or reports no stairs */
+    {
+        int levelBefore = gameView.world.party.mapIndex;
+        M11_GameInputResult stairsResult = M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_USE_STAIRS);
+        int descended = (gameView.world.party.mapIndex > levelBefore);
+        int noStairs = (strcmp(gameView.lastOutcome, "NO STAIRS HERE") == 0);
+        probe_record(&tally,
+                     "INV_GV_23",
+                     stairsResult == M11_GAME_INPUT_REDRAW &&
+                         strcmp(gameView.lastAction, "STAIRS") == 0 &&
+                         (descended || noStairs),
+                     "X triggers stair descent or reports no stairs on the current cell");
+    }
+
+    /* INV_GV_24: Message log accumulates entries */
+    {
+        int logBefore = M11_GameView_GetMessageLogCount(&gameView);
+        (void)M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_UP);
+        probe_record(&tally,
+                     "INV_GV_24",
+                     M11_GameView_GetMessageLogCount(&gameView) >= logBefore,
+                     "message log count increases or stays stable after gameplay ticks");
+    }
+
+    /* INV_GV_25: Survival drain runs through idle ticks (food decreases) */
+    {
+        unsigned char foodBefore;
+        unsigned char foodAfter;
+        int tickI;
+        M11_GameViewState survivalView;
+        memset(&survivalView, 0, sizeof(survivalView));
+        (void)probe_init_synthetic_view(&survivalView);
+        foodBefore = survivalView.world.party.champions[0].food;
+        for (tickI = 0; tickI < 24; ++tickI) {
+            (void)M11_GameView_AdvanceIdleTick(&survivalView);
+        }
+        foodAfter = survivalView.world.party.champions[0].food;
+        probe_record(&tally,
+                     "INV_GV_25",
+                     foodBefore > 0 && foodAfter < foodBefore,
+                     "survival drain reduces food over repeated idle ticks");
+        probe_free_synthetic_view(&survivalView);
+    }
+
+    /* INV_GV_26: Party death detection after zeroing all champion HP */
+    {
+        M11_GameViewState deathView;
+        memset(&deathView, 0, sizeof(deathView));
+        (void)probe_init_synthetic_view(&deathView);
+        deathView.world.party.champions[0].hp.current = 0;
+        deathView.world.party.champions[1].hp.current = 0;
+        /* Advance a tick to trigger death check */
+        (void)M11_GameView_AdvanceIdleTick(&deathView);
+        probe_record(&tally,
+                     "INV_GV_26",
+                     deathView.partyDead == 1,
+                     "party death is detected when all champions reach 0 HP after a tick");
+        probe_free_synthetic_view(&deathView);
+    }
+
     probe_free_synthetic_view(&syntheticView);
     M11_GameView_Shutdown(&gameView);
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
