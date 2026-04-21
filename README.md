@@ -130,7 +130,7 @@ Planned direction:
 
 ## Credits
 
-Firestaff's development has been informed by **Christophe Fontanel's** reverse-engineering work on [ReDMCSB](http://dmweb.free.fr/?q=community/redmcsb). His documentation of the original engine's bugs, quirks, and mechanics has been invaluable as a reference, though no ReDMCSB source code is included in Firestaff.
+Firestaff's development has been informed by **Christophe Fontanel's** reverse-engineering work on [ReDMCSB](http://dmweb.free.fr/community/redmcsb/). His documentation of the original engine's bugs, quirks, and mechanics has been invaluable as a reference, though no ReDMCSB source code is included in Firestaff.
 
 The original Dungeon Master and Chaos Strikes Back games were designed by **Doug Bell**, **Dennis Walker**, **Mike Newton**, **Andy Jaros**, and **Wayne Holder** at FTL Games.
 
@@ -147,5 +147,5 @@ Issues and discussion are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for re
 ## Links
 
 - Dungeon Master Encyclopaedia: [dmweb.free.fr](http://dmweb.free.fr/)
-- ReDMCSB reference project: [dmweb.free.fr/?q=community/redmcsb](http://dmweb.free.fr/?q=community/redmcsb)
+- ReDMCSB reference project: [dmweb.free.fr/community/redmcsb/](http://dmweb.free.fr/community/redmcsb/)
 - Project tagline: *An open Dungeon Master engine, deterministic, modular, museum-grade*
