@@ -3,6 +3,7 @@
 
 #include "menu_startup_m12.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,7 +68,19 @@ typedef struct {
     int resting;
     int partyDead;
     uint32_t exploredBits[32]; /* 32 * 32 = 1024 cells tracked per level */
+
+    /* Spell casting UI state */
+    int spellPanelOpen;          /* 1 when rune entry panel is visible */
+    int spellRuneRow;            /* current rune row (0..3) = power/element/form/class */
+    struct RuneSequence_Compat spellBuffer; /* runes entered so far */
 } M11_GameViewState;
+
+/* Spell casting API */
+int M11_GameView_OpenSpellPanel(M11_GameViewState* state);
+int M11_GameView_CloseSpellPanel(M11_GameViewState* state);
+int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex);
+int M11_GameView_CastSpell(M11_GameViewState* state);
+int M11_GameView_ClearSpell(M11_GameViewState* state);
 
 void M11_GameView_Init(M11_GameViewState* state);
 void M11_GameView_Shutdown(M11_GameViewState* state);

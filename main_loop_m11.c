@@ -121,6 +121,17 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 1U && strncmp(token, "p", len) == 0)) {
         return M12_MENU_INPUT_DROP_ITEM;
     }
+    if (len == 5U && strncmp(token, "rune1", len) == 0) return M12_MENU_INPUT_SPELL_RUNE_1;
+    if (len == 5U && strncmp(token, "rune2", len) == 0) return M12_MENU_INPUT_SPELL_RUNE_2;
+    if (len == 5U && strncmp(token, "rune3", len) == 0) return M12_MENU_INPUT_SPELL_RUNE_3;
+    if (len == 5U && strncmp(token, "rune4", len) == 0) return M12_MENU_INPUT_SPELL_RUNE_4;
+    if (len == 5U && strncmp(token, "rune5", len) == 0) return M12_MENU_INPUT_SPELL_RUNE_5;
+    if (len == 5U && strncmp(token, "rune6", len) == 0) return M12_MENU_INPUT_SPELL_RUNE_6;
+    if ((len == 4U && strncmp(token, "cast", len) == 0) ||
+        (len == 5U && strncmp(token, "spell", len) == 0)) {
+        return M12_MENU_INPUT_SPELL_CAST;
+    }
+    if (len == 5U && strncmp(token, "clear", len) == 0) return M12_MENU_INPUT_SPELL_CLEAR;
     return M12_MENU_INPUT_NONE;
 }
 
@@ -253,6 +264,38 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return M12_MENU_INPUT_DROP_ITEM;
                     }
                     return M12_MENU_INPUT_NONE;
+                case SDLK_1:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_1;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_2:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_2;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_3:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_3;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_4:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_4;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_5:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_5;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_6:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_6;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_C:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_CAST;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_V:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_CLEAR;
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();
                     return M12_MENU_INPUT_NONE;
@@ -359,6 +402,38 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     if (gameView && gameView->active) {
                         return M12_MENU_INPUT_DROP_ITEM;
                     }
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_1:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_1;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_2:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_2;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_3:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_3;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_4:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_4;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_5:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_5;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_6:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_RUNE_6;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_c:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_CAST;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_v:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_SPELL_CLEAR;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();

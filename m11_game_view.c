@@ -1621,6 +1621,226 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
     return 1;
 }
 
+/* Forward declarations for spell casting */
+static void m11_process_tick_emissions(M11_GameViewState* state);
+
+/* ================================================================
+ * Spell casting UI
+ * ================================================================ */
+
+/* DM1 rune names per row. Row 0 = power runes, rows 1-3 = element/form/class. */
+static const char* const g_rune_names[4][6] = {
+    { "LO",  "UM",  "ON",  "EE",  "PAL", "MON" },
+    { "YA",  "VI",  "OH",  "FUL", "DES", "ZO"  },
+    { "VEN", "EW",  "KATH","IR",  "BRO", "GOR" },
+    { "KU",  "ROS", "DAIN","NETA","RA",  "SAR" }
+};
+
+/* Encode a rune symbol from (row, column) into the DM1 byte value.
+ * Per SYMBOL.C:F0399: runeValue = 0x60 + 6*row + column. */
+static int m11_encode_rune(int row, int col) {
+    if (row < 0 || row > 3 || col < 0 || col > 5) return -1;
+    return 0x60 + 6 * row + col;
+}
+
+int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
+    if (!state || !state->active || state->partyDead) return 0;
+    state->spellPanelOpen = 1;
+    state->spellRuneRow = 0;
+    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: SPELL PANEL OPENED",
+                  (unsigned int)state->world.gameTick);
+    return 1;
+}
+
+int M11_GameView_CloseSpellPanel(M11_GameViewState* state) {
+    if (!state) return 0;
+    state->spellPanelOpen = 0;
+    state->spellRuneRow = 0;
+    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    return 1;
+}
+
+int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
+    int runeValue;
+    if (!state || !state->active || state->partyDead) return 0;
+    if (!state->spellPanelOpen) return 0;
+    if (symbolIndex < 0 || symbolIndex > 5) return 0;
+    if (state->spellBuffer.runeCount >= 4) return 0;
+
+    runeValue = m11_encode_rune(state->spellRuneRow, symbolIndex);
+    if (runeValue < 0) return 0;
+
+    state->spellBuffer.runes[state->spellBuffer.runeCount] = runeValue;
+    state->spellBuffer.runeCount++;
+    state->spellRuneRow++;
+
+    m11_log_event(state, M11_COLOR_WHITE, "T%u: RUNE %s (%d)",
+                  (unsigned int)state->world.gameTick,
+                  g_rune_names[state->spellRuneRow - 1][symbolIndex],
+                  runeValue);
+
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RUNE ENTERED");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "%s — %d OF 4 SYMBOLS",
+             g_rune_names[state->spellRuneRow - 1][symbolIndex],
+             state->spellBuffer.runeCount);
+
+    /* Auto-close panel after 4 runes (full sequence) */
+    if (state->spellRuneRow >= 4) {
+        state->spellRuneRow = 3; /* clamp display row */
+    }
+    return 1;
+}
+
+int M11_GameView_ClearSpell(M11_GameViewState* state) {
+    if (!state || !state->active) return 0;
+    state->spellRuneRow = 0;
+    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    if (state->spellPanelOpen) {
+        m11_log_event(state, M11_COLOR_YELLOW, "T%u: SPELL CLEARED",
+                      (unsigned int)state->world.gameTick);
+    }
+    return 1;
+}
+
+int M11_GameView_CastSpell(M11_GameViewState* state) {
+    struct ChampionState_Compat* champ;
+    struct SpellCastRequest_Compat req;
+    struct SpellDefinition_Compat spell;
+    struct SpellEffect_Compat effect;
+    uint32_t packed = 0;
+    int tableIndex = -1;
+    int manaCost = 0;
+    int failureReason = 0;
+    char champName[16];
+
+    if (!state || !state->active || state->partyDead) return 0;
+    if (state->spellBuffer.runeCount < 2) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: NEED AT LEAST 2 RUNES",
+                      (unsigned int)state->world.gameTick);
+        m11_set_status(state, "CAST", "NOT ENOUGH RUNES");
+        return 0;
+    }
+    if (state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+        m11_set_status(state, "CAST", "NO ACTIVE CHAMPION");
+        return 0;
+    }
+    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    if (!champ->present || champ->hp.current == 0) {
+        m11_set_status(state, "CAST", "CHAMPION CANNOT ACT");
+        return 0;
+    }
+
+    m11_format_champion_name(champ->name, champName, sizeof(champName));
+
+    /* Encode the rune sequence */
+    memset(&spell, 0, sizeof(spell));
+    if (!F0750_MAGIC_EncodeRuneSequence_Compat(&state->spellBuffer, &packed)) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — INVALID RUNES",
+                      (unsigned int)state->world.gameTick, champName);
+        m11_set_status(state, "CAST", "INVALID RUNE SEQUENCE");
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+        return 0;
+    }
+
+    /* Look up spell in table */
+    if (!F0752_MAGIC_LookupSpellInTable_Compat(packed, &tableIndex, &spell)) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — MEANINGLESS SPELL",
+                      (unsigned int)state->world.gameTick, champName);
+        m11_set_status(state, "CAST", "UNKNOWN SPELL");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SPELL FAILED");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "NO MATCHING SPELL IN TABLE");
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+        return 1; /* consumed the input even though spell failed */
+    }
+
+    /* Compute mana cost */
+    F0753_MAGIC_ComputeManaCost_Compat(&state->spellBuffer, &manaCost);
+    if ((int)champ->mana.current < manaCost) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — NOT ENOUGH MANA (%d/%d)",
+                      (unsigned int)state->world.gameTick, champName,
+                      (int)champ->mana.current, manaCost);
+        m11_set_status(state, "CAST", "OUT OF MANA");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "NEED MANA");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "COST %d, HAVE %d", manaCost, (int)champ->mana.current);
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+        return 1;
+    }
+
+    /* Build a cast request */
+    memset(&req, 0, sizeof(req));
+    req.championIndex = state->world.party.activeChampionIndex;
+    req.currentMana = (int)champ->mana.current;
+    req.maximumMana = (int)champ->mana.maximum;
+    req.skillLevelForSpell = (spell.skillIndex >= 0 && spell.skillIndex < CHAMPION_SKILL_COUNT)
+                                  ? champ->skillLevels[spell.skillIndex] : 0;
+    req.statisticWisdom = champ->attributes[CHAMPION_ATTR_WISDOM];
+    req.luckCurrent = state->world.magic.luckCurrent;
+    req.partyDirection = state->world.party.direction;
+    req.partyMapIndex = state->world.party.mapIndex;
+    req.partyMapX = state->world.party.mapX;
+    req.partyMapY = state->world.party.mapY;
+    req.hasEmptyFlaskInHand = 0; /* TODO: check inventory */
+    req.hasMagicMapInHand = 0;
+    req.gameTimeTicksLow = (int)(state->world.gameTick & 0x7FFFFFFF);
+    req.spellTableIndex = tableIndex;
+    req.rawSymbolsPacked = (int)packed;
+
+    /* Validate the cast */
+    memset(&effect, 0, sizeof(effect));
+    if (!F0754_MAGIC_ValidateCastRequest_Compat(&req, &spell,
+                                                 state->spellBuffer.runes[0] > 0
+                                                     ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
+                                                     : 1,
+                                                 &state->world.masterRng,
+                                                 &failureReason)) {
+        const char* failMsg = "NEEDS MORE PRACTICE";
+        if (failureReason == SPELL_FAILURE_MEANINGLESS_SPELL) failMsg = "MEANINGLESS SPELL";
+        else if (failureReason == SPELL_FAILURE_NEEDS_FLASK_IN_HAND) failMsg = "NEED FLASK";
+        else if (failureReason == SPELL_FAILURE_NEEDS_MAGIC_MAP) failMsg = "NEED MAGIC MAP";
+        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — %s",
+                      (unsigned int)state->world.gameTick, champName, failMsg);
+        m11_set_status(state, "CAST", failMsg);
+    }
+
+    /* Deduct mana */
+    champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
+
+    /* Issue CMD_CAST_SPELL through the tick system */
+    {
+        struct TickInput_Compat input;
+        memset(&input, 0, sizeof(input));
+        input.tick = state->world.gameTick;
+        input.command = CMD_CAST_SPELL;
+        input.commandArg1 = (uint8_t)state->world.party.activeChampionIndex;
+        input.commandArg2 = (uint8_t)tableIndex;
+        memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+        F0884_ORCH_AdvanceOneTick_Compat(&state->world, &input, &state->lastTickResult);
+        state->lastWorldHash = state->lastTickResult.worldHashPost;
+        m11_process_tick_emissions(state);
+    }
+
+    m11_log_event(state, M11_COLOR_GREEN, "T%u: %s CAST SPELL #%d (COST %d MANA)",
+                  (unsigned int)state->world.gameTick, champName, tableIndex, manaCost);
+    m11_set_status(state, "CAST", "SPELL COMMITTED");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s CASTS", champName);
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "SPELL #%d, COST %d MANA, %d REMAINING",
+             tableIndex, manaCost, (int)champ->mana.current);
+
+    M11_GameView_ClearSpell(state);
+    state->spellPanelOpen = 0;
+    m11_refresh_hash(state);
+    return 1;
+}
+
 /* ================================================================
  * Food / water drain, rest recovery, champion death
  * ================================================================ */
@@ -2596,6 +2816,34 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_REDRAW;
+        case M12_MENU_INPUT_SPELL_RUNE_1:
+        case M12_MENU_INPUT_SPELL_RUNE_2:
+        case M12_MENU_INPUT_SPELL_RUNE_3:
+        case M12_MENU_INPUT_SPELL_RUNE_4:
+        case M12_MENU_INPUT_SPELL_RUNE_5:
+        case M12_MENU_INPUT_SPELL_RUNE_6: {
+            int runeIdx = (int)(input - M12_MENU_INPUT_SPELL_RUNE_1);
+            if (!state->spellPanelOpen) {
+                M11_GameView_OpenSpellPanel(state);
+            }
+            if (M11_GameView_EnterRune(state, runeIdx)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        case M12_MENU_INPUT_SPELL_CAST:
+            if (state->spellPanelOpen && state->spellBuffer.runeCount >= 2) {
+                M11_GameView_CastSpell(state);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        case M12_MENU_INPUT_SPELL_CLEAR:
+            if (state->spellPanelOpen) {
+                M11_GameView_ClearSpell(state);
+                M11_GameView_CloseSpellPanel(state);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
         case M12_MENU_INPUT_BACK:
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
@@ -4596,7 +4844,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   140, 13, line, &g_text_small);
 
-    snprintf(line, sizeof(line), "G GRAB  P DROP  R REST");
+    snprintf(line, sizeof(line), "G GRAB P DROP R REST 1-6 RUNE C CAST");
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   240, 13, line, &g_text_small);
 
@@ -4662,6 +4910,77 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               222, logY + logI * 8, entry->text, &logStyle);
             }
+        }
+    }
+
+    /* Spell panel overlay */
+    if (state->spellPanelOpen) {
+        int spI;
+        int spX = 40;
+        int spY = 52;
+        int row = state->spellRuneRow < 4 ? state->spellRuneRow : 3;
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      spX - 4, spY - 4, 240, 82, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      spX - 4, spY - 4, 240, 82, M11_COLOR_LIGHT_BLUE);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      spX, spY, "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)", &g_text_small);
+        /* Show current rune buffer */
+        {
+            char buf[64];
+            int bI;
+            buf[0] = '\0';
+            for (bI = 0; bI < state->spellBuffer.runeCount; ++bI) {
+                int rv = state->spellBuffer.runes[bI];
+                int rr = (rv - 0x60) / 6;
+                int rc = (rv - 0x60) % 6;
+                if (rr >= 0 && rr < 4 && rc >= 0 && rc < 6) {
+                    if (bI > 0) strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+                    strncat(buf, g_rune_names[rr][rc], sizeof(buf) - strlen(buf) - 1);
+                }
+            }
+            if (buf[0] != '\0') {
+                M11_TextStyle spStyle = g_text_small;
+                spStyle.color = M11_COLOR_GREEN;
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              spX, spY + 10, buf, &spStyle);
+            }
+        }
+        /* Show the active rune row */
+        if (state->spellBuffer.runeCount < 4) {
+            char rowLabel[64];
+            const char* rowNames[4] = { "POWER", "ELEMENT", "FORM", "CLASS" };
+            snprintf(rowLabel, sizeof(rowLabel), "ROW %d: %s", row + 1, rowNames[row]);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          spX, spY + 22, rowLabel, &g_text_small);
+            for (spI = 0; spI < 6; ++spI) {
+                char label[12];
+                int bx = spX + spI * 38;
+                int by = spY + 32;
+                snprintf(label, sizeof(label), "%d:%s", spI + 1, g_rune_names[row][spI]);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              bx, by, 36, 14, M11_COLOR_DARK_GRAY);
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              bx, by, 36, 14, M11_COLOR_WHITE);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              bx + 2, by + 3, label, &g_text_small);
+            }
+        } else {
+            M11_TextStyle readyStyle = g_text_small;
+            readyStyle.color = M11_COLOR_GREEN;
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          spX, spY + 22, "READY TO CAST (C) OR CLEAR (V)", &readyStyle);
+        }
+        /* Show mana of active champion */
+        if (state->world.party.activeChampionIndex >= 0 &&
+            state->world.party.activeChampionIndex < CHAMPION_MAX_PARTY) {
+            const struct ChampionState_Compat* sc =
+                &state->world.party.champions[state->world.party.activeChampionIndex];
+            char manaLine[48];
+            snprintf(manaLine, sizeof(manaLine), "MANA: %d/%d",
+                     (int)sc->mana.current, (int)sc->mana.maximum);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          spX, spY + 58, manaLine, &g_text_small);
         }
     }
 

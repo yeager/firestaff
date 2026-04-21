@@ -1522,6 +1522,138 @@ int main(int argc, char** argv) {
         free(pThings);
     }
 
+    /* ================================================================
+     * Spell casting UI invariants
+     * ================================================================ */
+    {
+        M11_GameViewState spellView;
+        M11_GameView_Init(&spellView);
+        spellView.active = 1;
+        snprintf(spellView.title, sizeof(spellView.title), "SPELL TEST");
+        spellView.world.party.championCount = 1;
+        spellView.world.party.activeChampionIndex = 0;
+        spellView.world.party.champions[0].present = 1;
+        spellView.world.party.champions[0].hp.current = 100;
+        spellView.world.party.champions[0].hp.maximum = 100;
+        spellView.world.party.champions[0].mana.current = 50;
+        spellView.world.party.champions[0].mana.maximum = 100;
+        spellView.world.party.champions[0].name[0] = 'A';
+
+        /* INV_GV_49: Open spell panel sets spellPanelOpen */
+        probe_record(&tally,
+                     "INV_GV_49",
+                     M11_GameView_OpenSpellPanel(&spellView) == 1 &&
+                         spellView.spellPanelOpen == 1,
+                     "opening spell panel sets spellPanelOpen flag");
+
+        /* INV_GV_50: EnterRune adds to buffer */
+        probe_record(&tally,
+                     "INV_GV_50",
+                     M11_GameView_EnterRune(&spellView, 0) == 1 &&
+                         spellView.spellBuffer.runeCount == 1 &&
+                         spellView.spellBuffer.runes[0] == 0x60,
+                     "first rune enters buffer with correct encoded value");
+
+        /* INV_GV_51: Second rune increments row */
+        probe_record(&tally,
+                     "INV_GV_51",
+                     M11_GameView_EnterRune(&spellView, 3) == 1 &&
+                         spellView.spellBuffer.runeCount == 2 &&
+                         spellView.spellRuneRow == 2,
+                     "second rune advances row to 2");
+
+        /* INV_GV_52: ClearSpell resets buffer */
+        M11_GameView_ClearSpell(&spellView);
+        probe_record(&tally,
+                     "INV_GV_52",
+                     spellView.spellBuffer.runeCount == 0 &&
+                         spellView.spellRuneRow == 0,
+                     "clear resets rune count and row to zero");
+
+        /* INV_GV_53: CloseSpellPanel clears state */
+        M11_GameView_OpenSpellPanel(&spellView);
+        M11_GameView_EnterRune(&spellView, 1);
+        M11_GameView_CloseSpellPanel(&spellView);
+        probe_record(&tally,
+                     "INV_GV_53",
+                     spellView.spellPanelOpen == 0 &&
+                         spellView.spellBuffer.runeCount == 0,
+                     "close panel clears panel flag and buffer");
+
+        /* INV_GV_54: CastSpell with < 2 runes fails gracefully */
+        M11_GameView_OpenSpellPanel(&spellView);
+        M11_GameView_EnterRune(&spellView, 0); /* only 1 rune */
+        probe_record(&tally,
+                     "INV_GV_54",
+                     M11_GameView_CastSpell(&spellView) == 0,
+                     "casting with fewer than 2 runes returns 0");
+
+        /* INV_GV_55: EnterRune rejects invalid symbolIndex */
+        M11_GameView_ClearSpell(&spellView);
+        probe_record(&tally,
+                     "INV_GV_55",
+                     M11_GameView_EnterRune(&spellView, -1) == 0 &&
+                         M11_GameView_EnterRune(&spellView, 6) == 0,
+                     "out-of-range symbol indices rejected");
+
+        /* INV_GV_56: Full 4-rune sequence can be entered */
+        M11_GameView_OpenSpellPanel(&spellView);
+        M11_GameView_EnterRune(&spellView, 0);
+        M11_GameView_EnterRune(&spellView, 0);
+        M11_GameView_EnterRune(&spellView, 0);
+        M11_GameView_EnterRune(&spellView, 0);
+        probe_record(&tally,
+                     "INV_GV_56",
+                     spellView.spellBuffer.runeCount == 4,
+                     "four consecutive rune entries fill the buffer");
+
+        /* INV_GV_57: Fifth rune is rejected */
+        probe_record(&tally,
+                     "INV_GV_57",
+                     M11_GameView_EnterRune(&spellView, 0) == 0,
+                     "fifth rune entry rejected when buffer is full");
+
+        /* INV_GV_58: HandleInput routes rune inputs */
+        M11_GameView_ClearSpell(&spellView);
+        M11_GameView_CloseSpellPanel(&spellView);
+        {
+            M11_GameInputResult res = M11_GameView_HandleInput(
+                &spellView, M12_MENU_INPUT_SPELL_RUNE_1);
+            probe_record(&tally,
+                         "INV_GV_58",
+                         res == M11_GAME_INPUT_REDRAW &&
+                             spellView.spellPanelOpen == 1 &&
+                             spellView.spellBuffer.runeCount == 1,
+                         "SPELL_RUNE_1 input opens panel and enters rune");
+        }
+
+        /* INV_GV_59: Clear via HandleInput */
+        {
+            M11_GameInputResult res = M11_GameView_HandleInput(
+                &spellView, M12_MENU_INPUT_SPELL_CLEAR);
+            probe_record(&tally,
+                         "INV_GV_59",
+                         res == M11_GAME_INPUT_REDRAW &&
+                             spellView.spellPanelOpen == 0,
+                         "SPELL_CLEAR input closes panel");
+        }
+
+        /* INV_GV_60: Rune encoding correctness */
+        {
+            /* Row 1 (element), symbol 3 (FUL) = 0x60 + 6*1 + 3 = 0x69 */
+            M11_GameView_OpenSpellPanel(&spellView);
+            M11_GameView_EnterRune(&spellView, 0); /* row 0, sym 0 = LO = 0x60 */
+            M11_GameView_EnterRune(&spellView, 3); /* row 1, sym 3 = FUL = 0x69 */
+            probe_record(&tally,
+                         "INV_GV_60",
+                         spellView.spellBuffer.runes[0] == 0x60 &&
+                             spellView.spellBuffer.runes[1] == 0x69,
+                         "rune encoding matches DM1 formula 0x60+6*row+col");
+        }
+
+        M11_GameView_Shutdown(&spellView);
+    }
+
     M11_GameView_Shutdown(&gameView);
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
