@@ -165,9 +165,55 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     probe_record(&tally,
                  "INV_M12_06",
+                 state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                     state.activatedIndex == 0,
+                 "enter on available entry opens game options");
+
+    probe_record(&tally,
+                 "INV_M12_06B",
+                 state.gameOptions[0].cheatsEnabled == 0 &&
+                     state.gameOptions[0].gameSpeed == 1 &&
+                     M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 0,
+                 "game options default to cheats off, speed normal, hotkeys disabled");
+
+    /* Enable cheats and verify speed hotkeys unlock */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* cheats row */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* toggle on */
+    probe_record(&tally,
+                 "INV_M12_06C",
+                 state.gameOptions[0].cheatsEnabled == 1 &&
+                     M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 1,
+                 "enabling cheats unlocks speed hotkeys");
+
+    /* Cycle speed to FASTER */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* speed row */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* NORMAL→FASTER */
+    probe_record(&tally,
+                 "INV_M12_06D",
+                 state.gameOptions[0].gameSpeed == 2,
+                 "game speed cycles to faster with cheats on");
+
+    /* Disable cheats: speed resets, hotkeys disabled */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP); /* back to cheats row */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* toggle off */
+    probe_record(&tally,
+                 "INV_M12_06E",
+                 state.gameOptions[0].cheatsEnabled == 0 &&
+                     state.gameOptions[0].gameSpeed == 1 &&
+                     M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 0,
+                 "disabling cheats resets speed to normal and disables hotkeys");
+
+    /* Navigate to launch and press accept */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* speed */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* aspect */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* resolution */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* launch row */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    probe_record(&tally,
+                 "INV_M12_06F",
                  state.view == M12_MENU_VIEW_MESSAGE &&
                      strcmp(state.messageLine1, "READY TO LAUNCH") == 0,
-                 "enter on available entry opens ready message");
+                 "launch from game options opens ready message");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     probe_record(&tally,

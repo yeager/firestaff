@@ -32,6 +32,63 @@ enum {
     M12_SETTINGS_ROW_COUNT
 };
 
+static int m12_cycle_index(int value, int delta, int count);
+static int m12_clamp_index(int value, int count);
+
+static const char* g_aspectRatios[] = {"ORIGINAL", "4:3", "16:9", "16:10"};
+static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
+static const char* g_patchModes[] = {"ORIGINAL", "PATCHED"};
+static const char* g_cheatsToggle[] = {"OFF", "ON"};
+static const char* g_speedLabels[] = {"SLOWER", "NORMAL", "FASTER"};
+
+int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
+    if (!opts) {
+        return 0;
+    }
+    return opts->cheatsEnabled ? 1 : 0;
+}
+
+static void m12_init_game_options(M12_GameOptions* opts) {
+    if (!opts) {
+        return;
+    }
+    opts->usePatch = 0;
+    opts->cheatsEnabled = 0;
+    opts->gameSpeed = 1; /* index into g_speedLabels: NORMAL */
+    opts->aspectRatio = 0;
+    opts->resolution = 0;
+}
+
+static void m12_cycle_game_opt(M12_GameOptions* opts, int row, int delta) {
+    if (!opts) {
+        return;
+    }
+    switch (row) {
+        case M12_GAME_OPT_ROW_PATCH:
+            opts->usePatch = m12_cycle_index(opts->usePatch, delta, 2);
+            break;
+        case M12_GAME_OPT_ROW_CHEATS:
+            opts->cheatsEnabled = m12_cycle_index(opts->cheatsEnabled, delta, 2);
+            if (!opts->cheatsEnabled) {
+                opts->gameSpeed = 1; /* reset to NORMAL when cheats disabled */
+            }
+            break;
+        case M12_GAME_OPT_ROW_SPEED:
+            if (opts->cheatsEnabled) {
+                opts->gameSpeed = m12_cycle_index(opts->gameSpeed, delta, 3);
+            }
+            break;
+        case M12_GAME_OPT_ROW_ASPECT:
+            opts->aspectRatio = m12_cycle_index(opts->aspectRatio, delta, M12_ASPECT_COUNT);
+            break;
+        case M12_GAME_OPT_ROW_RESOLUTION:
+            opts->resolution = m12_cycle_index(opts->resolution, delta, M12_RES_COUNT);
+            break;
+        default:
+            break;
+    }
+}
+
 static const M12_MenuEntry g_entryTemplate[] = {
     {.title = "DUNGEON MASTER", .gameId = "dm1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "CHAOS STRIKES BACK", .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
@@ -396,11 +453,18 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     m12_sync_card_art(state);
     state->selectedIndex = 0;
     state->settingsSelectedIndex = 0;
+    state->gameOptSelectedRow = 0;
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    {
+        int gi;
+        for (gi = 0; gi < 3; ++gi) {
+            m12_init_game_options(&state->gameOptions[gi]);
+        }
+    }
 }
 
 static const char* m12_settings_value_language(const M12_StartupMenuState* state) {
@@ -429,12 +493,13 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         return;
     }
     state->activatedIndex = state->selectedIndex;
-    state->view = M12_MENU_VIEW_MESSAGE;
     if (entry->available) {
-        state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
-        state->messageLine2 = entry->title;
-        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
-    } else if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+        state->view = M12_MENU_VIEW_GAME_OPTIONS;
+        state->gameOptSelectedRow = 0;
+        return;
+    }
+    state->view = M12_MENU_VIEW_MESSAGE;
+    if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         state->messageLine1 = m12_text(state, M12_TEXT_VALIDATOR_SCAFFOLD_ONLY);
         state->messageLine2 = m12_text(state, M12_TEXT_ADD_VERIFIED_RETAIL_HASHES);
         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
@@ -492,6 +557,55 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             state->messageLine1 = "";
             state->messageLine2 = "";
             state->messageLine3 = "";
+        }
+        return;
+    }
+
+    if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
+        int gi = m12_clamp_index(state->activatedIndex, 3);
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                state->gameOptSelectedRow = m12_cycle_index(
+                    state->gameOptSelectedRow,
+                    -1,
+                    M12_GAME_OPT_ROW_COUNT + 1);
+                break;
+            case M12_MENU_INPUT_DOWN:
+                state->gameOptSelectedRow = m12_cycle_index(
+                    state->gameOptSelectedRow,
+                    1,
+                    M12_GAME_OPT_ROW_COUNT + 1);
+                break;
+            case M12_MENU_INPUT_LEFT:
+                if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
+                    m12_cycle_game_opt(&state->gameOptions[gi],
+                                       state->gameOptSelectedRow, -1);
+                }
+                break;
+            case M12_MENU_INPUT_RIGHT:
+                if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
+                    m12_cycle_game_opt(&state->gameOptions[gi],
+                                       state->gameOptSelectedRow, 1);
+                }
+                break;
+            case M12_MENU_INPUT_ACCEPT:
+                if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
+                    /* Launch row */
+                    state->view = M12_MENU_VIEW_MESSAGE;
+                    state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
+                    state->messageLine2 = state->entries[state->activatedIndex].title;
+                    state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                } else {
+                    m12_cycle_game_opt(&state->gameOptions[gi],
+                                       state->gameOptSelectedRow, 1);
+                }
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
         }
         return;
     }
@@ -1924,70 +2038,6 @@ static const char* m12_entry_detail_line(const M12_MenuEntry* entry) {
     return "KNOWN SLOT, HASH COVERAGE STILL GROWING";
 }
 
-static void m12_draw_modern_main_row(unsigned char* framebuffer,
-                                     int framebufferWidth,
-                                     int framebufferHeight,
-                                     int x,
-                                     int y,
-                                     int w,
-                                     const M12_MenuEntry* entry,
-                                     int selected) {
-    unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
-    unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
-    unsigned char accent = selected ? M12_COLOR_YELLOW
-                                    : (entry && entry->available ? M12_COLOR_GREEN : M12_COLOR_LIGHT_RED);
-    m12_draw_frame(framebuffer,
-                   framebufferWidth,
-                   framebufferHeight,
-                   x,
-                   y,
-                   w,
-                   36,
-                   border,
-                   fill);
-    m12_fill_rect(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  x + 8,
-                  y + 8,
-                  6,
-                  20,
-                  accent);
-    if (selected) {
-        m12_draw_text(framebuffer,
-                      framebufferWidth,
-                      framebufferHeight,
-                      x + 20,
-                      y + 6,
-                      ">",
-                      &g_textSmallAccent);
-    }
-    m12_draw_text(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  x + 34,
-                  y + 7,
-                  entry ? entry->title : "UNKNOWN",
-                  &g_textSmallShadow);
-    m12_draw_text(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  x + 34,
-                  y + 20,
-                  m12_entry_detail_line(entry),
-                  &g_textSmallMuted);
-    m12_draw_modern_status_pill(framebuffer,
-                                framebufferWidth,
-                                framebufferHeight,
-                                x + w - 74,
-                                y + 11,
-                                64,
-                                m12_entry_status_text(entry),
-                                m12_entry_status_fill(entry, selected),
-                                M12_COLOR_BLACK,
-                                m12_entry_status_text_color(entry, selected));
-}
-
 static void m12_draw_modern_sidebar(const M12_StartupMenuState* unusedState,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -2121,72 +2171,288 @@ static void m12_draw_modern_settings_row(unsigned char* framebuffer,
                                 valueText);
 }
 
+static void m12_draw_game_card(const M12_StartupMenuState* state,
+                               unsigned char* framebuffer,
+                               int framebufferWidth,
+                               int framebufferHeight,
+                               int x,
+                               int y,
+                               int w,
+                               int h,
+                               int entryIndex,
+                               int selected) {
+    const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, entryIndex);
+    const M12_GameCardArt* art = (entryIndex >= 0 && entryIndex < m12_entry_count())
+                                     ? &state->cardArt[entryIndex]
+                                     : NULL;
+    unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+    unsigned char accent = entry && entry->available ? M12_COLOR_GREEN : M12_COLOR_LIGHT_RED;
+    unsigned char gameFill = entry ? m12_game_card_fill(entry->gameId) : M12_COLOR_DARK_GRAY;
+    int artH = h * 55 / 100;
+    if (artH < 30) {
+        artH = 30;
+    }
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   h,
+                   border,
+                   fill);
+    if (selected) {
+        m12_fill_rect(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      x + 4,
+                      y + 4,
+                      w - 8,
+                      3,
+                      M12_COLOR_YELLOW);
+    }
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 8,
+                  y + 12,
+                  w - 16,
+                  artH,
+                  gameFill);
+    m12_draw_card_preview(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          entry,
+                          art,
+                          x + 10,
+                          y + 14,
+                          w - 20,
+                          artH - 4,
+                          gameFill,
+                          accent);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 8,
+                  y + artH + 18,
+                  entry ? entry->title : "UNKNOWN",
+                  selected ? &g_textMediumShadow : &g_textSmallShadow);
+    m12_draw_modern_status_pill(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                x + 8,
+                                y + artH + 36,
+                                64,
+                                m12_entry_status_text(entry),
+                                m12_entry_status_fill(entry, selected),
+                                M12_COLOR_BLACK,
+                                m12_entry_status_text_color(entry, selected));
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 8,
+                  y + h - 14,
+                  m12_entry_detail_line(entry),
+                  &g_textSmallMuted);
+}
+
+static void m12_draw_info_sidebar(const M12_StartupMenuState* state,
+                                   unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   int x,
+                                   int y,
+                                   int w,
+                                   int h,
+                                   int settingsSelected) {
+    const M12_GraphicsTheme* theme = m12_theme(state);
+    int logoScale = framebufferWidth >= 640 ? 2 : 1;
+    int logoW = M12_BRANDING_LOGO_WIDTH * logoScale;
+    int logoH = M12_BRANDING_LOGO_HEIGHT * logoScale;
+    int logoX = x + (w - logoW) / 2;
+    int logoY = y + 12;
+    int textY = logoY + logoH + 8;
+    int btnY;
+    unsigned char settingsBorder = settingsSelected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char settingsFill = settingsSelected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   h,
+                   theme->titleBorder,
+                   M12_COLOR_BLACK);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 4,
+                  y + 4,
+                  w - 8,
+                  4,
+                  theme->glowColor);
+    m12_draw_branding_logo(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           logoX,
+                           logoY,
+                           logoScale);
+    {
+        const char* eyebrow = m12_text(state, M12_TEXT_EYEBROW);
+        const char* subtitle = m12_text(state, M12_TEXT_SELECT_DESTINATION);
+        int ew = m12_measure_text(eyebrow, g_textSmallAccent.scale, g_textSmallAccent.tracking);
+        int sw = m12_measure_text(subtitle, g_textSmallMuted.scale, g_textSmallMuted.tracking);
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      x + (w - ew) / 2,
+                      textY,
+                      eyebrow,
+                      &g_textSmallAccent);
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      x + (w - sw) / 2,
+                      textY + 12,
+                      subtitle,
+                      &g_textSmallMuted);
+    }
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  textY + 26,
+                  w - 20,
+                  1,
+                  M12_COLOR_DARK_GRAY);
+    btnY = textY + 34;
+    /* Museum of Lore */
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x + 8,
+                   btnY,
+                   w - 16,
+                   20,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    {
+        int mw = m12_measure_text("MUSEUM OF LORE", g_textSmallMuted.scale, g_textSmallMuted.tracking);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x + 8 + (w - 16 - mw) / 2, btnY + 6,
+                      "MUSEUM OF LORE", &g_textSmallMuted);
+    }
+    btnY += 24;
+    /* Credits */
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x + 8,
+                   btnY,
+                   w - 16,
+                   20,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    {
+        int cw2 = m12_measure_text("CREDITS", g_textSmallMuted.scale, g_textSmallMuted.tracking);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x + 8 + (w - 16 - cw2) / 2, btnY + 6,
+                      "CREDITS", &g_textSmallMuted);
+    }
+    btnY += 24;
+    /* Settings */
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x + 8,
+                   btnY,
+                   w - 16,
+                   24,
+                   settingsBorder,
+                   settingsFill);
+    {
+        const M12_TextStyle* sStyle = settingsSelected ? &g_textSmallShadow : &g_textSmallMuted;
+        int sw2 = m12_measure_text("SETTINGS", sStyle->scale, sStyle->tracking);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x + 8 + (w - 16 - sw2) / 2, btnY + 8,
+                      "SETTINGS", sStyle);
+    }
+    /* Data dir at bottom */
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 6,
+                  y + h - 24,
+                  m12_text(state, M12_TEXT_DATA_DIR),
+                  &g_textSmallMuted);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 6,
+                  y + h - 12,
+                  M12_AssetStatus_GetDataDir(&state->assetStatus),
+                  &g_textSmallMuted);
+}
+
 static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
                                       int framebufferHeight) {
-    const M12_MenuEntry* selectedEntry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
-    const M12_GameCardArt* selectedArt = (state->selectedIndex >= 0 && state->selectedIndex < m12_entry_count())
-                                             ? &state->cardArt[state->selectedIndex]
-                                             : NULL;
     int margin = framebufferWidth / 30;
-    int heroH = framebufferHeight / 3;
-    int contentY;
-    int leftW;
-    int rightX;
-    int rowY;
+    int sidebarW;
+    int cardsX;
+    int cardsW;
+    int cardW;
+    int cardGap;
+    int cardH;
     int i;
+    int settingsSelected;
     if (margin < 12) {
         margin = 12;
     }
-    if (heroH < 82) {
-        heroH = 82;
+    sidebarW = (framebufferWidth * 24) / 100;
+    if (sidebarW < 100) {
+        sidebarW = 100;
     }
-    contentY = margin + heroH + 10;
-    leftW = (framebufferWidth * 56) / 100;
-    rightX = margin + leftW + 10;
+    cardsX = margin + sidebarW + 10;
+    cardsW = framebufferWidth - margin - cardsX;
+    cardGap = 8;
+    cardW = (cardsW - (cardGap * 2)) / 3;
+    cardH = framebufferHeight - (margin * 2) - 18;
+    if (cardH < 100) {
+        cardH = 100;
+    }
+    settingsSelected = (state->selectedIndex == 3);
 
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
-    m12_draw_modern_hero(state,
-                         framebuffer,
-                         framebufferWidth,
-                         framebufferHeight,
-                         margin,
-                         margin,
-                         framebufferWidth - (margin * 2),
-                         heroH,
-                         m12_text(state, M12_TEXT_SELECT_DESTINATION));
-    m12_draw_text(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  margin,
-                  contentY,
-                  m12_text(state, M12_TEXT_LAUNCHER_DESTINATIONS),
-                  &g_textSmallAccent);
-    rowY = contentY + 12;
-    for (i = 0; i < m12_entry_count(); ++i) {
-        m12_draw_modern_main_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 margin,
-                                 rowY,
-                                 leftW - 4,
-                                 &state->entries[i],
-                                 i == state->selectedIndex);
-        rowY += 42;
+
+    /* Left sidebar: logo, about, museum, credits, settings */
+    m12_draw_info_sidebar(state,
+                          framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          margin,
+                          margin,
+                          sidebarW,
+                          cardH,
+                          settingsSelected);
+
+    /* Three game cards: DM1, CSB, DM2 */
+    for (i = 0; i < 3; ++i) {
+        m12_draw_game_card(state,
+                           framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           cardsX + i * (cardW + cardGap),
+                           margin,
+                           cardW,
+                           cardH,
+                           i,
+                           i == state->selectedIndex);
     }
-    m12_draw_modern_sidebar(state,
-                            framebuffer,
-                            framebufferWidth,
-                            framebufferHeight,
-                            rightX,
-                            contentY,
-                            framebufferWidth - margin - rightX,
-                            framebufferHeight - contentY - 28,
-                            selectedEntry,
-                            selectedArt,
-                            m12_text(state, M12_TEXT_STATUS),
-                            M12_AssetStatus_GetDataDir(&state->assetStatus));
+
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
@@ -2296,6 +2562,240 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                     m12_text(state, M12_TEXT_SETTINGS_FOOTER));
 }
 
+static void m12_draw_game_opt_row(unsigned char* framebuffer,
+                                  int framebufferWidth,
+                                  int framebufferHeight,
+                                  int x,
+                                  int y,
+                                  int w,
+                                  const char* label,
+                                  const char* value,
+                                  int selected,
+                                  int dimmed) {
+    unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+    unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+    unsigned char valueFill = dimmed ? M12_COLOR_DARK_GRAY
+                                     : (selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY);
+    unsigned char valueTextC = dimmed ? M12_COLOR_DARK_GRAY
+                                      : (selected ? M12_COLOR_BLACK : M12_COLOR_WHITE);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   28,
+                   border,
+                   fill);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 10,
+                  y + 10,
+                  label,
+                  dimmed ? &g_textSmallMuted : &g_textSmallShadow);
+    m12_draw_modern_status_pill(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                x + w - 92,
+                                y + 7,
+                                82,
+                                value,
+                                valueFill,
+                                border,
+                                valueTextC);
+}
+
+static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight) {
+    const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
+    const M12_GameCardArt* art = (state->activatedIndex >= 0 && state->activatedIndex < m12_entry_count())
+                                     ? &state->cardArt[state->activatedIndex]
+                                     : NULL;
+    int gi = m12_clamp_index(state->activatedIndex, 3);
+    const M12_GameOptions* opts = &state->gameOptions[gi];
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int leftW;
+    int panelX;
+    int panelW;
+    int rowY;
+    int speedDimmed;
+    unsigned char gameFill;
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 64) {
+        heroH = 64;
+    }
+    contentY = margin + heroH + 10;
+    leftW = (framebufferWidth * 35) / 100;
+    panelX = margin + leftW + 12;
+    panelW = framebufferWidth - margin - panelX;
+    gameFill = entry ? m12_game_card_fill(entry->gameId) : M12_COLOR_DARK_GRAY;
+    speedDimmed = !opts->cheatsEnabled;
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         framebufferWidth - (margin * 2),
+                         heroH,
+                         entry ? entry->title : "GAME OPTIONS");
+
+    /* Left: card art preview */
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   margin,
+                   contentY,
+                   leftW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_card_preview(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          entry,
+                          art,
+                          margin + 10,
+                          contentY + 10,
+                          leftW - 20,
+                          (framebufferHeight - contentY - 28) / 2,
+                          gameFill,
+                          M12_COLOR_YELLOW);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin + 10,
+                  contentY + (framebufferHeight - contentY - 28) / 2 + 16,
+                  entry ? entry->title : "UNKNOWN",
+                  &g_textSmallShadow);
+    if (entry && entry->available) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      margin + 10,
+                      contentY + (framebufferHeight - contentY - 28) / 2 + 30,
+                      "VERIFIED DATA READY",
+                      &g_textSmallAccent);
+    }
+
+    /* Right: options panel */
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   panelX,
+                   contentY,
+                   panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  panelX + 10,
+                  contentY + 10,
+                  "GAME OPTIONS",
+                  &g_textSmallAccent);
+    rowY = contentY + 28;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
+                          "ENGINE",
+                          g_patchModes[opts->usePatch],
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_PATCH,
+                          0);
+    rowY += 32;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
+                          "CHEATS",
+                          g_cheatsToggle[opts->cheatsEnabled],
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_CHEATS,
+                          0);
+    rowY += 32;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
+                          "GAME SPEED",
+                          g_speedLabels[m12_clamp_index(opts->gameSpeed, 3)],
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_SPEED,
+                          speedDimmed);
+    if (speedDimmed) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      panelX + 10,
+                      rowY + 28,
+                      "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS",
+                      &g_textSmallMuted);
+    }
+    rowY += speedDimmed ? 42 : 32;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
+                          "ASPECT RATIO",
+                          g_aspectRatios[m12_clamp_index(opts->aspectRatio, M12_ASPECT_COUNT)],
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_ASPECT,
+                          0);
+    rowY += 32;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
+                          "RESOLUTION",
+                          g_resolutions[m12_clamp_index(opts->resolution, M12_RES_COUNT)],
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_RESOLUTION,
+                          0);
+    rowY += 36;
+    {
+        int launchSelected = state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT;
+        unsigned char launchFill = launchSelected ? M12_COLOR_GREEN : M12_COLOR_DARK_GRAY;
+        unsigned char launchBorder = launchSelected ? M12_COLOR_YELLOW : M12_COLOR_GREEN;
+        m12_draw_frame(framebuffer,
+                       framebufferWidth,
+                       framebufferHeight,
+                       panelX + 10,
+                       rowY,
+                       panelW - 20,
+                       28,
+                       launchBorder,
+                       launchFill);
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      panelX + 10 + (panelW - 20) / 2 - 24,
+                      rowY + 10,
+                      "> LAUNCH",
+                      launchSelected ? &g_textSmallShadow : &g_textSmallMuted);
+    }
+    m12_draw_footer(framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT");
+}
+
 static void m12_draw_message_view_modern(const M12_StartupMenuState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -2393,6 +2893,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_message_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_SETTINGS) {
             m12_draw_settings_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
+            m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
             m12_draw_main_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         }
@@ -2404,6 +2906,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_message_view(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_SETTINGS) {
         m12_draw_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
+        m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else {
         m12_draw_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
     }

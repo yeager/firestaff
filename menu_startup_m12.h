@@ -25,7 +25,8 @@ typedef enum {
 typedef enum {
     M12_MENU_VIEW_MAIN = 0,
     M12_MENU_VIEW_SETTINGS,
-    M12_MENU_VIEW_MESSAGE
+    M12_MENU_VIEW_MESSAGE,
+    M12_MENU_VIEW_GAME_OPTIONS
 } M12_MenuView;
 
 typedef enum {
@@ -53,6 +54,48 @@ typedef struct {
     int windowModeIndex;
 } M12_MenuSettingsState;
 
+typedef enum {
+    M12_ASPECT_ORIGINAL = 0,
+    M12_ASPECT_4_3,
+    M12_ASPECT_16_9,
+    M12_ASPECT_16_10,
+    M12_ASPECT_COUNT
+} M12_AspectRatio;
+
+typedef enum {
+    M12_RES_320x200 = 0,
+    M12_RES_640x400,
+    M12_RES_800x600,
+    M12_RES_1024x768,
+    M12_RES_1280x960,
+    M12_RES_COUNT
+} M12_Resolution;
+
+typedef enum {
+    M12_GAME_SPEED_SLOWER = -1,
+    M12_GAME_SPEED_NORMAL = 0,
+    M12_GAME_SPEED_FASTER = 1
+} M12_GameSpeed;
+
+typedef enum {
+    M12_GAME_OPT_ROW_PATCH = 0,
+    M12_GAME_OPT_ROW_CHEATS,
+    M12_GAME_OPT_ROW_SPEED,
+    M12_GAME_OPT_ROW_ASPECT,
+    M12_GAME_OPT_ROW_RESOLUTION,
+    M12_GAME_OPT_ROW_COUNT
+} M12_GameOptRow;
+
+typedef struct {
+    int usePatch;
+    int cheatsEnabled;
+    int gameSpeed;
+    int aspectRatio;
+    int resolution;
+} M12_GameOptions;
+
+int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts);
+
 typedef struct M12_StartupMenuState {
     M12_MenuEntry entries[4];
     M12_GameCardArt cardArt[4];
@@ -66,6 +109,8 @@ typedef struct M12_StartupMenuState {
     const char* messageLine3;
     M12_MenuSettingsState settings;
     M12_AssetStatus assetStatus;
+    M12_GameOptions gameOptions[3];
+    int gameOptSelectedRow;
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
