@@ -10,30 +10,32 @@
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey">
 </p>
 
-An open-source engine port of **Dungeon Master** (1987), **Chaos Strikes Back** (1989), and eventually **Dungeon Master II** for modern platforms.
+An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Back** (1989), and later **Dungeon Master II**, with a clear three-track product plan:
+
+- **V1, Original**: original-faithful presentation and behaviour, with a shared startup menu above the games
+- **V2, Enhanced 2D**: higher-resolution 2D presentation, wider aspect ratios, richer assets, same game feel
+- **V3, Modern / 3D**: a later full reinterpretation
 
 ## Status
 
-Firestaff now has a real front door and a real in-game slice.
+Firestaff already has a real launcher, a real in-game DM1 slice, and a growing verified engine core.
 
 **Working today:**
 - launcher with game selection
 - persistent startup settings
 - DM1 asset validation via MD5
-- runtime language / graphics / window-mode switching in the launcher
-- first in-game DM1 view with real dungeon loading
-- real movement / facing / tick updates backed by world state
-- first front-cell attack affordance driven by real tick/emission state
-- cleaner in-game HUD with readable location, supplies, and action readouts
-- launcher to game to launcher loop with explicit in-view controls
-- clickable in-view controls for movement, inspect/action, and direct champion pick
+- explicit launcher/game/settings flow
+- real dungeon loading from `DUNGEON.DAT`
+- real movement / facing / ticking backed by world state
+- melee attack, item, spell, stair, pit, teleporter, XP, save/load, and survival slices wired through the game core
+- increasingly asset-backed viewport rendering using real `GRAPHICS.DAT` data
 - deterministic verification suite still green
 
 **Not there yet:**
-- full classic Dungeon Master viewport rendering
-- full audio layer
-- complete CSB / DM2 asset support
-- full end-to-end playable UI/HUD flow
+- full V1 original-presentation parity
+- complete CSB / DM2 runtime support
+- audio layer finished end to end
+- full endgame / dialog / launcher-product polish
 
 ## What Firestaff is
 
@@ -46,27 +48,23 @@ The project is built around portable C, explicit data structures, and aggressive
 ### Launcher
 - DM1 / CSB / DM2 game list
 - startup settings screen
-- built-in fallback launcher card art
-- future-ready slot system for real card assets
-- clean path for future custom dungeon sources
-- explicit product direction that DM2 belongs in the supported game family, even if runtime support is still ahead
+- built-in and external-ready card-art path
+- persistent configuration
+- clean base for explicit **V1 / V2 / V3** mode selection
 
 ### Engine-backed game view
 - boots from real `DUNGEON.DAT`
 - enters a real game-view state from the launcher
-- displays dungeon-backed view state instead of fake placeholder text
 - movement / turning / ticking mutate real world state
-- Enter now inspects, Space acts, and Tab cycles the front champion inside the real game view
-- Space now attacks front-cell creature contact through the real tick orchestrator when a target is there
-- mouse clicks now drive the in-view control strip, viewport inspect, and champion selection from the live HUD
-- pseudo-viewport slice now gives a forward-facing dungeon view
-- HUD readouts now prioritise player-facing labels over raw debug telemetry
+- melee attack, inspect, and champion cycling work in the live view
+- item pickup/drop, spells, stairs, pits, teleporters, XP, quicksave/load, and survival systems are wired through the core
+- viewport rendering now includes real walls, floor sets, ornaments, item sprites, creature sprites, dynamic lighting, torch decay, and combat feedback slices
 
 ### Validation
 - deterministic verification remains green
 - DM1 asset detection is MD5-based, not filename-based
-- CSB / DM2 validator path is scaffolded honestly, without invented support
-- README and roadmap now call out DM2 as a real planned target, not an afterthought
+- M10 remains protected while M11/M12 advance in verified slices
+- CSB / DM2 support is planned honestly, without pretending the runtime is already complete
 
 ## Running Firestaff
 
@@ -92,30 +90,38 @@ Verification suite:
 
 ## Roadmap
 
-### Next up
-- deepen the first combat/action loop beyond the current inspect / strike slice
-- replace more fallback launcher art with real assets
-- add verified CSB / DM2 asset hashes where evidence exists
-- keep widening the in-game command surface past the current first clickable HUD slice
+### V1, Original
+This is the priority track.
 
-### After that
-- fuller viewport rendering
-- audio layer
-- broader settings coverage
-- better language support
-- stronger custom dungeon / custom map entry path
-- first real CSB and **DM2** validator/data integration steps
-- reorganise the codebase into clearer source directories instead of keeping everything in one flat pile
+Goal: make Firestaff feel like the original games first, with only a shared startup menu above them.
 
-### Longer term
-- full Chaos Strikes Back support
-- preserve **Amiga CSB** in-game map support as a product requirement, not an optional extra
-- full **Dungeon Master II** support
-- replay system
-- packaging and release builds
+Current focus:
+- original-facing presentation parity
+- original timing / animation / light behaviour
+- dialog and endgame runtime coverage
+- verified CSB and then DM2 runtime integration
+- bug/profile handling that preserves original behaviour where needed
+
+### V2, Enhanced 2D
+Built on top of a finished V1 baseline.
+
+Planned direction:
+- higher resolution
+- wider aspect ratios including 16:9 and 4K presentation
+- richer 2D assets and UI polish
+- improved readability without losing the underlying game feel
+
+### V3, Modern / 3D
+A later reinterpretation track.
+
+Planned direction:
+- modern presentation
+- 3D rendering
+- freer redesign, built only after V1 has a trustworthy parity baseline
 
 ## Design principles
 
+- **V1 parity comes before V2/V3 polish**
 - **Use real game data whenever possible**
 - **Do not fake support we have not verified**
 - **Keep deterministic behaviour intact**
