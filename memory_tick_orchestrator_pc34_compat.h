@@ -109,6 +109,7 @@
 #define EMIT_CHAMPION_DOWN    0x07
 #define EMIT_GAME_WON         0x08
 #define EMIT_PARTY_DEAD       0x09
+#define EMIT_SPELL_EFFECT     0x0A
 
 /* ================================================================
  *  Capacities

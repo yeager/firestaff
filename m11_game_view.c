@@ -1821,6 +1821,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         input.command = CMD_CAST_SPELL;
         input.commandArg1 = (uint8_t)state->world.party.activeChampionIndex;
         input.commandArg2 = (uint8_t)tableIndex;
+        input.reserved = (uint8_t)(state->spellBuffer.runes[0] > 0
+                                       ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
+                                       : 1);
         memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
         F0884_ORCH_AdvanceOneTick_Compat(&state->world, &input, &state->lastTickResult);
         state->lastWorldHash = state->lastTickResult.worldHashPost;
@@ -2372,6 +2375,21 @@ static void m11_process_tick_emissions(M11_GameViewState* state) {
                               "T%u: DOOR STATE CHANGED",
                               (unsigned int)state->world.gameTick);
                 break;
+            case EMIT_SPELL_EFFECT: {
+                /* payload[0]=champIdx, [1]=spellKind, [2]=spellType, [3]=power */
+                int sKind = (int)e->payload[1];
+                int sType = (int)e->payload[2];
+                int sPow  = (int)e->payload[3];
+                const char* kindStr = "SPELL";
+                if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT) kindStr = "PROJECTILE";
+                else if (sKind == C3_SPELL_KIND_OTHER_COMPAT) kindStr = "ENCHANTMENT";
+                else if (sKind == C1_SPELL_KIND_POTION_COMPAT) kindStr = "POTION";
+                m11_log_event(state, M11_COLOR_CYAN,
+                              "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)",
+                              (unsigned int)state->world.gameTick,
+                              kindStr, sType, sPow);
+                break;
+            }
             default:
                 break;
         }

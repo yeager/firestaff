@@ -234,6 +234,11 @@ int F0752_MAGIC_LookupSpellInTable_Compat(
     int* outTableIndex,
     struct SpellDefinition_Compat* outSpell);
 
+/* Look up a spell definition by its zero-based table index (0..24). */
+int F0752b_MAGIC_LookupSpellByTableIndex_Compat(
+    int tableIndex,
+    struct SpellDefinition_Compat* outSpell);
+
 /* ==========================================================
  *  Group B — Cast validation (F0753-F0755)
  * ========================================================== */

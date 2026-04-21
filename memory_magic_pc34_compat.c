@@ -293,6 +293,24 @@ int F0752_MAGIC_LookupSpellInTable_Compat(
     return 0;
 }
 
+int F0752b_MAGIC_LookupSpellByTableIndex_Compat(
+    int tableIndex,
+    struct SpellDefinition_Compat* outSpell)
+{
+    const struct Phase14_RawSpellRow* row;
+    if (tableIndex < 0 || tableIndex >= SPELL_TABLE_SIZE) return 0;
+    if (!outSpell) return 0;
+    row = &Phase14_SpellTable[tableIndex];
+    outSpell->symbolsPacked          = row->symbolsPacked;
+    outSpell->baseRequiredSkillLevel = row->baseRequiredSkillLevel;
+    outSpell->skillIndex             = row->skillIndex;
+    outSpell->attributes             = row->attributes;
+    outSpell->kind          = phase14_spell_kind_from_attr(row->attributes);
+    outSpell->type          = phase14_spell_type_from_attr(row->attributes);
+    outSpell->disabledTicks = phase14_spell_disabled_ticks_from_attr(row->attributes);
+    return 1;
+}
+
 /* ==========================================================
  *  Group B — Cast validation (F0753-F0755)
  *

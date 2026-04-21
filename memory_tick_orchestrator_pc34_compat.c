@@ -959,10 +959,79 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         return 1;
     }
     case CMD_CAST_SPELL: {
-        /* Minimal v1: advance RNG + emit sound marker. */
+        /* Full spell effect application.
+         *   commandArg1 = champion index
+         *   commandArg2 = spell table index (0..24)
+         *   reserved    = power ordinal (1..6, 0 defaults to 1)
+         */
+        struct SpellDefinition_Compat spell;
+        struct SpellEffect_Compat effect;
+        int tableIdx = (int)input->commandArg2;
+        int champIdx = (int)input->commandArg1;
+        int powerOrd = (int)input->reserved;
+
         (void)F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
-        emit(result, EMIT_SOUND_REQUEST, input->commandArg2,
+        emit(result, EMIT_SOUND_REQUEST, tableIdx,
              world->party.mapX, world->party.mapY, 0);
+
+        if (powerOrd < 1 || powerOrd > 6) powerOrd = 1;
+
+        if (!F0752b_MAGIC_LookupSpellByTableIndex_Compat(tableIdx, &spell)) {
+            return 1; /* unknown spell — sound already emitted */
+        }
+
+        memset(&effect, 0, sizeof(effect));
+
+        switch (spell.kind) {
+        case C2_SPELL_KIND_PROJECTILE_COMPAT: {
+            int skillLvl = 0;
+            if (champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY &&
+                world->party.champions[champIdx].present &&
+                spell.skillIndex >= 0 && spell.skillIndex < CHAMPION_SKILL_COUNT) {
+                skillLvl = world->party.champions[champIdx].skillLevels[spell.skillIndex];
+            }
+            F0756_MAGIC_ProduceProjectileEffect_Compat(
+                &spell, powerOrd, skillLvl, &world->masterRng, &effect);
+            break;
+        }
+        case C3_SPELL_KIND_OTHER_COMPAT:
+            F0757_MAGIC_ProduceOtherEffect_Compat(
+                &spell, powerOrd, &world->magic, &effect);
+            break;
+        case C1_SPELL_KIND_POTION_COMPAT:
+            F0758_MAGIC_ProducePotionEffect_Compat(
+                &spell, powerOrd, 0 /* hasEmptyFlaskInHand: UI checked */, &world->masterRng, &effect);
+            break;
+        default:
+            /* Unknown kind (e.g. magic map) — no effect. */
+            return 1;
+        }
+
+        if (effect.castResult == SPELL_CAST_SUCCESS) {
+            /* Apply magic state deltas (light, shields, footprints, etc.) */
+            F0760_MAGIC_ApplyStateDelta_Compat(&effect, &world->magic);
+
+            /* Schedule follow-up timeline event if applicable */
+            if (effect.followupEventKind != TIMELINE_EVENT_INVALID &&
+                effect.durationTicks > 0) {
+                struct TimelineEvent_Compat tlEv;
+                if (F0763_MAGIC_BuildTimelineEvent_Compat(
+                        &effect, world->partyMapIndex,
+                        world->party.mapX, world->party.mapY,
+                        0 /* partyCell */, world->gameTick, &tlEv)) {
+                    F0721_TIMELINE_Schedule_Compat(&world->timeline, &tlEv);
+                }
+            }
+
+            /* Emit spell effect notification:
+             *   payload[0] = champIdx
+             *   payload[1] = spellKind
+             *   payload[2] = spellType
+             *   payload[3] = powerOrdinal */
+            emit(result, EMIT_SPELL_EFFECT, champIdx,
+                 effect.spellKind, effect.spellType, effect.powerOrdinal);
+        }
+
         return 1;
     }
     case CMD_USE_ITEM:

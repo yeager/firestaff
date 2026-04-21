@@ -1654,6 +1654,137 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&spellView);
     }
 
+    /* ================================================================
+     * Spell effect application invariants
+     * ================================================================ */
+    {
+        /* Verify that casting a valid spell through the orchestrator
+         * produces a EMIT_SPELL_EFFECT emission and modifies magic state.
+         *
+         * We use spell table index 6 (Oh Ir Ra = Light, kind=OTHER,
+         * type=C0_SPELL_TYPE_OTHER_LIGHT_COMPAT). */
+        M11_GameViewState sv;
+        struct TickInput_Compat castInput;
+        int foundSpellEffect;
+        int i;
+
+        M11_GameView_Init(&sv);
+        sv.active = 1;
+        sv.world.gameTick = 100;
+        sv.world.party.championCount = 1;
+        sv.world.party.activeChampionIndex = 0;
+        sv.world.party.champions[0].present = 1;
+        sv.world.party.champions[0].hp.current = 100;
+        sv.world.party.champions[0].hp.maximum = 100;
+        sv.world.party.champions[0].mana.current = 80;
+        sv.world.party.champions[0].mana.maximum = 100;
+        sv.world.party.champions[0].name[0] = 'T';
+        sv.world.party.mapX = 5;
+        sv.world.party.mapY = 5;
+        sv.world.magic.magicalLightAmount = 0;
+
+        /* INV_GV_61: CMD_CAST_SPELL with valid Light spell emits SPELL_EFFECT */
+        memset(&castInput, 0, sizeof(castInput));
+        castInput.tick = sv.world.gameTick;
+        castInput.command = CMD_CAST_SPELL;
+        castInput.commandArg1 = 0; /* champion 0 */
+        castInput.commandArg2 = 6; /* table index 6 = Oh Ir Ra = Light */
+        castInput.reserved = 3;    /* power ordinal 3 */
+        memset(&sv.lastTickResult, 0, sizeof(sv.lastTickResult));
+        F0884_ORCH_AdvanceOneTick_Compat(&sv.world, &castInput, &sv.lastTickResult);
+
+        foundSpellEffect = 0;
+        for (i = 0; i < sv.lastTickResult.emissionCount; ++i) {
+            if (sv.lastTickResult.emissions[i].kind == EMIT_SPELL_EFFECT) {
+                foundSpellEffect = 1;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_61",
+                     foundSpellEffect == 1,
+                     "CMD_CAST_SPELL for Light spell emits EMIT_SPELL_EFFECT");
+
+        /* INV_GV_62: Magic state is modified by spell (light increases) */
+        probe_record(&tally,
+                     "INV_GV_62",
+                     sv.world.magic.magicalLightAmount > 0,
+                     "Light spell application increases magicalLightAmount");
+
+        /* INV_GV_63: Projectile spell (Fireball, index 8) emits SPELL_EFFECT
+         * with kind=PROJECTILE */
+        {
+            struct TickInput_Compat fbInput;
+            int foundProjectile = 0;
+
+            memset(&fbInput, 0, sizeof(fbInput));
+            fbInput.tick = sv.world.gameTick;
+            fbInput.command = CMD_CAST_SPELL;
+            fbInput.commandArg1 = 0;
+            fbInput.commandArg2 = 8; /* Ful Ir = Fireball */
+            fbInput.reserved = 2;    /* power ordinal 2 */
+            memset(&sv.lastTickResult, 0, sizeof(sv.lastTickResult));
+            F0884_ORCH_AdvanceOneTick_Compat(&sv.world, &fbInput, &sv.lastTickResult);
+
+            for (i = 0; i < sv.lastTickResult.emissionCount; ++i) {
+                if (sv.lastTickResult.emissions[i].kind == EMIT_SPELL_EFFECT &&
+                    sv.lastTickResult.emissions[i].payload[1] == C2_SPELL_KIND_PROJECTILE_COMPAT) {
+                    foundProjectile = 1;
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_63",
+                         foundProjectile == 1,
+                         "Fireball spell emits EMIT_SPELL_EFFECT with PROJECTILE kind");
+        }
+
+        /* INV_GV_64: Party Shield spell (index 0, Ya Ir) applies shield delta */
+        {
+            struct TickInput_Compat shInput;
+            int prevShield = sv.world.magic.partyShieldDefense;
+
+            memset(&shInput, 0, sizeof(shInput));
+            shInput.tick = sv.world.gameTick;
+            shInput.command = CMD_CAST_SPELL;
+            shInput.commandArg1 = 0;
+            shInput.commandArg2 = 0; /* Ya Ir = Shield (Party) */
+            shInput.reserved = 4;    /* power ordinal 4 */
+            memset(&sv.lastTickResult, 0, sizeof(sv.lastTickResult));
+            F0884_ORCH_AdvanceOneTick_Compat(&sv.world, &shInput, &sv.lastTickResult);
+
+            probe_record(&tally,
+                         "INV_GV_64",
+                         sv.world.magic.partyShieldDefense > prevShield,
+                         "Party Shield spell increases partyShieldDefense");
+        }
+
+        /* INV_GV_65: Invalid table index produces no SPELL_EFFECT emission */
+        {
+            struct TickInput_Compat badInput;
+            int foundBadEffect = 0;
+
+            memset(&badInput, 0, sizeof(badInput));
+            badInput.tick = sv.world.gameTick;
+            badInput.command = CMD_CAST_SPELL;
+            badInput.commandArg1 = 0;
+            badInput.commandArg2 = 99; /* invalid */
+            badInput.reserved = 1;
+            memset(&sv.lastTickResult, 0, sizeof(sv.lastTickResult));
+            F0884_ORCH_AdvanceOneTick_Compat(&sv.world, &badInput, &sv.lastTickResult);
+
+            for (i = 0; i < sv.lastTickResult.emissionCount; ++i) {
+                if (sv.lastTickResult.emissions[i].kind == EMIT_SPELL_EFFECT) {
+                    foundBadEffect = 1;
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_65",
+                         foundBadEffect == 0,
+                         "invalid spell table index produces no SPELL_EFFECT emission");
+        }
+
+        M11_GameView_Shutdown(&sv);
+    }
+
     M11_GameView_Shutdown(&gameView);
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
