@@ -924,6 +924,44 @@ static const char* const s_containerTypeNames[] = {
     "CHEST", "OPEN CHEST", "OPEN CHEST"
 };
 
+/* Creature type name table (C00..C26, matching g_profiles order). */
+static const char* const s_creatureTypeNames[27] = {
+    "GIANT SCORPION",  /* C00 */
+    "SWAMP SLIME",     /* C01 */
+    "GIGGLER",         /* C02 */
+    "WIZARD EYE",      /* C03 */
+    "PAIN RAT",        /* C04 */
+    "RUSTER",          /* C05 */
+    "SCREAMER",        /* C06 */
+    "ROCKPILE",        /* C07 */
+    "GHOST",           /* C08 */
+    "STONE GOLEM",     /* C09 */
+    "MUMMY",           /* C10 */
+    "BLACK FLAME",     /* C11 */
+    "SKELETON",        /* C12 */
+    "COUATL",          /* C13 */
+    "VEXIRK",          /* C14 */
+    "MAGENTA WORM",    /* C15 */
+    "TROLIN",          /* C16 */
+    "GIANT WASP",      /* C17 */
+    "ANIMATED ARMOUR", /* C18 */
+    "MATERIALIZER",    /* C19 */
+    "WATER ELEMENTAL", /* C20 */
+    "OITU",            /* C21 */
+    "DEMON",           /* C22 */
+    "LORD CHAOS",      /* C23 */
+    "RED DRAGON",      /* C24 */
+    "LORD ORDER",      /* C25 */
+    "GREY LORD"        /* C26 */
+};
+
+static const char* m11_creature_name(int creatureType) {
+    if (creatureType >= 0 && creatureType < 27) {
+        return s_creatureTypeNames[creatureType];
+    }
+    return "UNKNOWN CREATURE";
+}
+
 static void m11_get_item_name(const struct DungeonThings_Compat* things,
                               unsigned short thingId,
                               char* out,
@@ -1419,6 +1457,397 @@ static void m11_check_party_death(M11_GameViewState* state) {
     }
 }
 
+/* ================================================================
+ * Creature AI simulation (M11-layer)
+ *
+ * The M10 tick orchestrator treats TIMELINE_EVENT_CREATURE_TICK as a
+ * no-op (v1 stub). This M11-layer simulation provides simple creature
+ * behavior so the game feels alive:
+ *   - Creatures within sight range move toward the party (one step per
+ *     movementTicks interval).
+ *   - Creatures on the party square deal autonomous damage.
+ *   - Creature death removes the group from the map.
+ * All manipulation happens on M11-owned world state — no M10 files
+ * are modified.
+ * ================================================================ */
+
+/* Find a creature group thing on a specific square. */
+static unsigned short m11_find_group_on_square(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    int safety = 0;
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
+            return thing;
+        }
+        thing = m11_raw_next_thing(world->things, thing);
+        ++safety;
+    }
+    return THING_NONE;
+}
+
+/* Locate a group by thing-id: scan all squares on the given map.
+ * Returns 1 if found, filling outX/outY. */
+static int m11_find_group_position(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    unsigned short groupThing,
+    int* outX,
+    int* outY) {
+    const struct DungeonMapDesc_Compat* map;
+    int mx, my, base, idx;
+    unsigned short thing;
+    int safety;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings) {
+        return 0;
+    }
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    base = m11_map_square_base(world->dungeon, mapIndex);
+    if (base < 0) return 0;
+    for (mx = 0; mx < (int)map->width; ++mx) {
+        for (my = 0; my < (int)map->height; ++my) {
+            idx = base + mx * (int)map->height + my;
+            if (idx < 0 || idx >= world->things->squareFirstThingCount) continue;
+            thing = world->things->squareFirstThings[idx];
+            safety = 0;
+            while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+                if (thing == groupThing) {
+                    *outX = mx;
+                    *outY = my;
+                    return 1;
+                }
+                thing = m11_raw_next_thing(world->things, thing);
+                ++safety;
+            }
+        }
+    }
+    return 0;
+}
+
+/* Check whether a square is walkable for a creature. */
+static int m11_square_walkable_for_creature(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    unsigned char square = 0;
+    int elementType;
+    if (!m11_get_square_byte(world, mapIndex, mapX, mapY, &square)) {
+        return 0;
+    }
+    elementType = (square >> 5) & 7;
+    switch (elementType) {
+        case DUNGEON_ELEMENT_CORRIDOR:
+        case DUNGEON_ELEMENT_PIT:
+        case DUNGEON_ELEMENT_TELEPORTER:
+        case DUNGEON_ELEMENT_FAKEWALL:
+            return 1;
+        case DUNGEON_ELEMENT_DOOR: {
+            /* Open doors (low bits == 0) are walkable */
+            int doorState = square & 0x07;
+            return (doorState == 0) ? 1 : 0;
+        }
+        default:
+            return 0;
+    }
+}
+
+/* Move a creature one step toward the party. Returns 1 if moved. */
+static int m11_creature_try_move(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int groupX,
+    int groupY,
+    int* outNewX,
+    int* outNewY) {
+    int partyX = state->world.party.mapX;
+    int partyY = state->world.party.mapY;
+    int mapIdx = state->world.party.mapIndex;
+    int dx = 0, dy = 0;
+    int bestX = groupX, bestY = groupY;
+    int bestDist;
+    int candidates[4][2];
+    int candidateCount = 0;
+    int i;
+
+    /* Compute desired direction */
+    if (partyX > groupX) dx = 1;
+    else if (partyX < groupX) dx = -1;
+    if (partyY > groupY) dy = 1;
+    else if (partyY < groupY) dy = -1;
+
+    /* Already on party square? Don't move. */
+    if (groupX == partyX && groupY == partyY) {
+        *outNewX = groupX;
+        *outNewY = groupY;
+        return 0;
+    }
+
+    /* Try primary direction first, then lateral, then diagonal */
+    if (dx != 0) {
+        candidates[candidateCount][0] = groupX + dx;
+        candidates[candidateCount][1] = groupY;
+        candidateCount++;
+    }
+    if (dy != 0) {
+        candidates[candidateCount][0] = groupX;
+        candidates[candidateCount][1] = groupY + dy;
+        candidateCount++;
+    }
+    if (dx != 0 && dy != 0) {
+        candidates[candidateCount][0] = groupX + dx;
+        candidates[candidateCount][1] = groupY + dy;
+        candidateCount++;
+    }
+    /* Lateral fallback: if only one axis differs, try the other axis */
+    if (dx == 0 && dy != 0) {
+        candidates[candidateCount][0] = groupX + 1;
+        candidates[candidateCount][1] = groupY;
+        candidateCount++;
+    }
+    if (dy == 0 && dx != 0) {
+        candidates[candidateCount][0] = groupX;
+        candidates[candidateCount][1] = groupY + 1;
+        candidateCount++;
+    }
+
+    bestDist = abs(partyX - groupX) + abs(partyY - groupY);
+    for (i = 0; i < candidateCount; ++i) {
+        int cx = candidates[i][0];
+        int cy = candidates[i][1];
+        int dist;
+        if (!m11_square_walkable_for_creature(&state->world, mapIdx, cx, cy)) {
+            continue;
+        }
+        /* Don't step onto a square that already has another group */
+        if (m11_find_group_on_square(&state->world, mapIdx, cx, cy) != THING_NONE) {
+            /* Allow stepping onto the party square even if another group is there */
+            if (cx != partyX || cy != partyY) continue;
+        }
+        dist = abs(partyX - cx) + abs(partyY - cy);
+        if (dist < bestDist) {
+            bestDist = dist;
+            bestX = cx;
+            bestY = cy;
+        }
+    }
+
+    if (bestX == groupX && bestY == groupY) {
+        *outNewX = groupX;
+        *outNewY = groupY;
+        return 0; /* couldn't move */
+    }
+
+    /* Move: unlink from old square, prepend to new square */
+    if (!m11_unlink_thing_from_square(&state->world, mapIdx, groupX, groupY, groupThing)) {
+        *outNewX = groupX;
+        *outNewY = groupY;
+        return 0;
+    }
+    if (!m11_prepend_thing_to_square(&state->world, mapIdx, bestX, bestY, groupThing)) {
+        /* Failed to place — put it back */
+        m11_prepend_thing_to_square(&state->world, mapIdx, groupX, groupY, groupThing);
+        *outNewX = groupX;
+        *outNewY = groupY;
+        return 0;
+    }
+    *outNewX = bestX;
+    *outNewY = bestY;
+    return 1;
+}
+
+/* Deal autonomous creature damage to the party. */
+static void m11_creature_attack_party(
+    M11_GameViewState* state,
+    const struct DungeonGroup_Compat* group) {
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int creatureCount;
+    int totalDamage;
+    int targetChamp;
+    int i;
+    struct ChampionState_Compat* champ;
+    int baseDmg;
+
+    if (!state || !group) return;
+
+    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    creatureCount = (int)group->count + 1;  /* count field is 0-based */
+    baseDmg = profile ? profile->baseAttack : 10;
+
+    /* Each creature in the group attacks for baseDmg / 3 (simplified) */
+    totalDamage = 0;
+    for (i = 0; i < creatureCount; ++i) {
+        if (group->health[i] > 0) {
+            /* Simple damage: baseAttack / 3, minimum 1 */
+            int dmg = baseDmg / 3;
+            if (dmg < 1) dmg = 1;
+            totalDamage += dmg;
+        }
+    }
+
+    if (totalDamage <= 0) return;
+
+    /* Target the active champion, or first alive champion */
+    targetChamp = state->world.party.activeChampionIndex;
+    if (targetChamp < 0 || targetChamp >= state->world.party.championCount ||
+        !state->world.party.champions[targetChamp].present ||
+        state->world.party.champions[targetChamp].hp.current == 0) {
+        targetChamp = -1;
+        for (i = 0; i < state->world.party.championCount; ++i) {
+            if (state->world.party.champions[i].present &&
+                state->world.party.champions[i].hp.current > 0) {
+                targetChamp = i;
+                break;
+            }
+        }
+    }
+    if (targetChamp < 0) return;
+
+    champ = &state->world.party.champions[targetChamp];
+    if ((int)champ->hp.current > totalDamage) {
+        champ->hp.current -= (unsigned short)totalDamage;
+    } else {
+        champ->hp.current = 0;
+    }
+
+    {
+        char champName[16];
+        m11_format_champion_name(champ->name, champName, sizeof(champName));
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: %s HIT BY %s FOR %d",
+                      (unsigned int)state->world.gameTick,
+                      champName,
+                      m11_creature_name(group->creatureType),
+                      totalDamage);
+    }
+}
+
+/* Process one creature group: check distance, maybe move, maybe attack. */
+static void m11_process_one_creature_group(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int groupIndex) {
+    const struct CreatureBehaviorProfile_Compat* profile;
+    struct DungeonGroup_Compat* group;
+    int groupX, groupY;
+    int dist;
+    int anyAlive;
+    int i;
+
+    if (!state || !state->world.things ||
+        groupIndex < 0 || groupIndex >= state->world.things->groupCount) {
+        return;
+    }
+    group = &state->world.things->groups[groupIndex];
+    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    if (!profile) return;
+
+    /* Check if any creature in the group is alive */
+    anyAlive = 0;
+    for (i = 0; i < (int)group->count + 1; ++i) {
+        if (group->health[i] > 0) {
+            anyAlive = 1;
+            break;
+        }
+    }
+    if (!anyAlive) return;
+
+    /* Find where this group is on the map */
+    if (!m11_find_group_position(&state->world,
+                                 state->world.party.mapIndex,
+                                 groupThing,
+                                 &groupX, &groupY)) {
+        return; /* not on current map */
+    }
+
+    dist = abs(state->world.party.mapX - groupX) +
+           abs(state->world.party.mapY - groupY);
+
+    /* If on same square as party: attack */
+    if (dist == 0) {
+        /* Attack cadence: only attack every attackTicks ticks */
+        if (profile->attackTicks > 0 &&
+            (state->world.gameTick % (uint32_t)profile->attackTicks) == 0u) {
+            m11_creature_attack_party(state, group);
+        }
+        return;
+    }
+
+    /* Movement check: within sight range? */
+    if (dist > profile->sightRange && dist > profile->smellRange) {
+        return; /* too far to detect party */
+    }
+
+    /* Movement cadence: only move every movementTicks ticks */
+    if (profile->movementTicks > 0 &&
+        (state->world.gameTick % (uint32_t)profile->movementTicks) != 0u) {
+        return;
+    }
+
+    /* Try to move toward the party */
+    {
+        int newX, newY;
+        if (m11_creature_try_move(state, groupThing, groupX, groupY, &newX, &newY)) {
+            /* Check if creature arrived at party square */
+            if (newX == state->world.party.mapX &&
+                newY == state->world.party.mapY) {
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s REACHES THE PARTY!",
+                              (unsigned int)state->world.gameTick,
+                              m11_creature_name(group->creatureType));
+            }
+        }
+    }
+}
+
+/* Scan all groups on the current map and process their AI. */
+static void m11_process_creature_ticks(M11_GameViewState* state) {
+    int mapIdx;
+    int i;
+    const struct DungeonMapDesc_Compat* map;
+    int base, mx, my, idx;
+    unsigned short thing;
+    int safety;
+
+    if (!state || !state->active || state->partyDead) return;
+    if (!state->world.dungeon || !state->world.things ||
+        !state->world.things->squareFirstThings) return;
+
+    mapIdx = state->world.party.mapIndex;
+    if (mapIdx < 0 || mapIdx >= (int)state->world.dungeon->header.mapCount) return;
+    map = &state->world.dungeon->maps[mapIdx];
+    base = m11_map_square_base(state->world.dungeon, mapIdx);
+    if (base < 0) return;
+
+    /* Scan all squares on the current map for groups */
+    for (mx = 0; mx < (int)map->width; ++mx) {
+        for (my = 0; my < (int)map->height; ++my) {
+            idx = base + mx * (int)map->height + my;
+            if (idx < 0 || idx >= state->world.things->squareFirstThingCount) continue;
+            thing = state->world.things->squareFirstThings[idx];
+            safety = 0;
+            while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+                if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
+                    int groupIdx = THING_GET_INDEX(thing);
+                    m11_process_one_creature_group(state, thing, groupIdx);
+                    break; /* one group per square for simplicity */
+                }
+                thing = m11_raw_next_thing(state->world.things, thing);
+                ++safety;
+            }
+        }
+    }
+
+    (void)i; /* suppress unused warning */
+}
+
 static void m11_process_tick_emissions(M11_GameViewState* state) {
     int i;
     if (!state) {
@@ -1766,6 +2195,10 @@ static int m11_apply_tick(M11_GameViewState* state,
     /* Apply survival mechanics */
     m11_apply_survival_drain(state);
     m11_apply_rest_recovery(state);
+
+    /* Creature AI: movement and autonomous damage */
+    m11_process_creature_ticks(state);
+
     m11_check_party_death(state);
 
     /* Mark current cell as explored */
