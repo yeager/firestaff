@@ -3587,6 +3587,7 @@ typedef struct M11_ViewportCell {
     int doorState;
     int doorVertical;
     int hasDoorThing;
+    int creatureType; /* -1 if no creature, else creature type index (0-26) */
     M11_SquareThingSummary summary;
 } M11_ViewportCell;
 
@@ -3871,6 +3872,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.elementType = DUNGEON_ELEMENT_WALL;
     cell.firstThing = THING_ENDOFLIST;
     cell.doorState = -1;
+    cell.creatureType = -1;
 
     if (!state || !state->active) {
         if (outCell) {
@@ -3925,6 +3927,23 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                 cell.hasDoorThing = 1;
                 cell.doorVertical = state->world.things->doors[doorIndex].vertical;
             }
+        }
+    }
+
+    /* Extract creature type from the first group thing on this square */
+    if (cell.summary.groups > 0 && state->world.things && state->world.things->groups) {
+        unsigned short scanThing = firstThing;
+        int scanSafety = 0;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            if (THING_GET_TYPE(scanThing) == THING_TYPE_GROUP) {
+                int gIdx = THING_GET_INDEX(scanThing);
+                if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
+                    cell.creatureType = (int)state->world.things->groups[gIdx].creatureType;
+                }
+                break;
+            }
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            ++scanSafety;
         }
     }
 
@@ -4239,6 +4258,33 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                    const M11_ViewportCell* cell,
                                    int depthIndex);
 
+/* Forward declaration — m11_draw_wall_face needs access to the game state
+ * for asset-backed rendering, but the state pointer is threaded through
+ * the Draw call chain. We use a file-scope pointer set during Draw. */
+static const M11_GameViewState* g_drawState = NULL;
+
+/* Forward declarations for asset-backed rendering helpers */
+static int m11_draw_door_frame_asset(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int fbW, int fbH,
+                                     const M11_ViewRect* rect,
+                                     int depthIndex);
+static int m11_draw_door_side_asset(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW, int fbH,
+                                    int x, int y, int w, int h,
+                                    int depthIndex);
+static int m11_draw_stairs_asset(const M11_GameViewState* state,
+                                 unsigned char* framebuffer,
+                                 int fbW, int fbH,
+                                 const M11_ViewRect* rect,
+                                 int depthIndex, int stairUp);
+static int m11_draw_creature_sprite(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW, int fbH,
+                                    int x, int y, int w, int h,
+                                    int creatureType, int depthIndex);
+
 static void m11_draw_wall_face(unsigned char* framebuffer,
                                int framebufferWidth,
                                int framebufferHeight,
@@ -4264,6 +4310,14 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
 
     switch (cell->elementType) {
         case DUNGEON_ELEMENT_DOOR:
+            /* Try real door frame graphics first */
+            if (g_drawState &&
+                m11_draw_door_frame_asset(g_drawState, framebuffer,
+                                          framebufferWidth, framebufferHeight,
+                                          rect, depthIndex)) {
+                break; /* Real asset drawn successfully */
+            }
+            /* Fallback: primitive door lines */
             m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
                            faceX + faceW / 2, faceY + 3, faceY + faceH - 4, M11_COLOR_YELLOW);
             if (cell->doorState > 0 && cell->doorState < 5) {
@@ -4274,6 +4328,16 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
             }
             break;
         case DUNGEON_ELEMENT_STAIRS:
+            /* Try real stair graphics first */
+            if (g_drawState) {
+                int stairUp = (cell->square & 0x01);
+                if (m11_draw_stairs_asset(g_drawState, framebuffer,
+                                          framebufferWidth, framebufferHeight,
+                                          rect, depthIndex, stairUp)) {
+                    break;
+                }
+            }
+            /* Fallback: primitive stair lines */
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            faceX + 4, faceX + faceW - 5, faceY + faceH - 5, M11_COLOR_YELLOW);
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -4332,8 +4396,16 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         return;
     }
     if (cell->summary.groups > 0) {
-        m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                              faceX + 4, faceY + 5, faceW - 8, faceH - 10, depthIndex);
+        /* Try real creature sprite first, fall back to primitive cue */
+        if (!g_drawState ||
+            !m11_draw_creature_sprite(g_drawState, framebuffer,
+                                      framebufferWidth, framebufferHeight,
+                                      faceX + 4, faceY + 5,
+                                      faceW - 8, faceH - 10,
+                                      cell->creatureType, depthIndex)) {
+            m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                  faceX + 4, faceY + 5, faceW - 8, faceH - 10, depthIndex);
+        }
     }
     if (cell->summary.items > 0) {
         m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
@@ -4344,16 +4416,319 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                         faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell);
 }
 
-/* Known GRAPHICS.DAT indices for corridor wall textures.
- * These are 256x32 wall-set strip graphics in CSB PC 3.4. */
+/* Known GRAPHICS.DAT indices for rendering assets in CSB PC 3.4. */
 enum {
-    M11_GFX_WALL_SET_0 = 42,  /* 256x32 — wall set A */
-    M11_GFX_WALL_SET_1 = 43,  /* 256x32 — wall set B */
-    M11_GFX_WALL_SET_2 = 44,  /* 256x32 — wall set C */
-    M11_GFX_WALL_SET_3 = 45,  /* 256x32 — wall set D */
-    M11_GFX_FLOOR_SET_0 = 76, /* 32x32 — floor tile */
-    M11_GFX_FLOOR_SET_1 = 77  /* 32x32 — floor tile variant */
+    /* Wall texture sets (256x32) */
+    M11_GFX_WALL_SET_0 = 42,
+    M11_GFX_WALL_SET_1 = 43,
+    M11_GFX_WALL_SET_2 = 44,
+    M11_GFX_WALL_SET_3 = 45,
+
+    /* Floor tiles (32x32) */
+    M11_GFX_FLOOR_SET_0 = 76,
+    M11_GFX_FLOOR_SET_1 = 77,
+
+    /* Viewport background (224x136) */
+    M11_GFX_VIEWPORT_BG = 0,
+    M11_GFX_VIEWPORT_BG_ALT = 17,
+
+    /* Viewport ceiling/floor panels */
+    M11_GFX_CEILING_PANEL = 78,  /* 224x97 */
+    M11_GFX_FLOOR_PANEL   = 79,  /* 224x39 */
+
+    /* Door frame graphics at depth (perspective-scaled sizes) */
+    M11_GFX_DOOR_FRAME_D3   = 70,  /*  36x49  — far depth */
+    M11_GFX_DOOR_FRAME_D3W  = 71,  /*  83x49  — far depth wide */
+    M11_GFX_DOOR_PILLAR_D3  = 72,  /*   8x52  — thin pillar */
+    M11_GFX_DOOR_FRAME_D2   = 73,  /*  78x74  — mid depth */
+    M11_GFX_DOOR_FRAME_D1   = 74,  /*  60x111 — near depth */
+    M11_GFX_DOOR_FRAME_D0   = 75,  /*  33x136 — nearest side strip */
+    M11_GFX_DOOR_SIDE_D0    = 86,  /*  32x123 */
+    M11_GFX_DOOR_SIDE_D1    = 87,  /*  25x94  */
+    M11_GFX_DOOR_SIDE_D2    = 88,  /*  18x65  */
+    M11_GFX_DOOR_SIDE_D3    = 89,  /*  10x42  */
+
+    /* Creature front-view sprites (groups of 3: small/mid/large).
+     * Each group covers one creature graphic set:
+     *   set 0 = 246..248, set 1 = 249..251, etc. */
+    M11_GFX_CREATURE_BASE   = 246,
+    M11_GFX_CREATURE_SETS_A = 4,   /* 4 sets at 246-257 */
+    M11_GFX_CREATURE_BASE_B = 439, /* second batch */
+    M11_GFX_CREATURE_SETS_B = 4,   /* 4 more sets at 439+ (439,443,448,451 are 96x88) */
+
+    /* Item viewport sprites (small icons shown in corridor) */
+    M11_GFX_ITEM_SPRITE_BASE = 267, /* pairs of 14x19/16x19 icons */
+
+    /* Stair graphics */
+    M11_GFX_STAIRS_DOWN_D2 = 93,  /* 33x136 */
+    M11_GFX_STAIRS_DOWN_D1 = 95,  /* 60x111 */
+    M11_GFX_STAIRS_UP_D2   = 94,  /* 33x136 */
+    M11_GFX_STAIRS_UP_D1   = 96   /* 60x111 */
 };
+
+/* ================================================================
+ * Asset-backed rendering helpers for GRAPHICS.DAT integration.
+ *
+ * These functions load specific graphics from the asset loader and
+ * blit them into the framebuffer at the correct viewport positions.
+ * Each function gracefully falls back to the existing primitive
+ * rendering when assets are unavailable.
+ * ================================================================ */
+
+/* Apply depth-based light dimming to a rectangular region.
+ * depthIndex 0 = nearest (bright), 2 = far (dim).
+ * Works by shifting high-value palette indices down toward darker
+ * counterparts in the 16-color VGA palette. */
+static void m11_apply_depth_dimming(unsigned char* framebuffer,
+                                    int fbW,
+                                    int fbH,
+                                    int rx,
+                                    int ry,
+                                    int rw,
+                                    int rh,
+                                    int depthIndex) {
+    int yy, xx;
+    /* Dimming table: maps palette index to a darker equivalent.
+     * Applied once per depth level (depth 0 = no change). */
+    static const unsigned char g_dim_table[16] = {
+        0,  /* 0  BLACK       -> BLACK */
+        0,  /* 1  NAVY        -> BLACK */
+        0,  /* 2  GREEN       -> BLACK */
+        1,  /* 3  CYAN        -> NAVY  */
+        0,  /* 4  RED         -> BLACK */
+        0,  /* 5  (unused)    -> BLACK */
+        4,  /* 6  BROWN       -> RED   */
+        8,  /* 7  LIGHT_GRAY  -> DARK_GRAY */
+        0,  /* 8  DARK_GRAY   -> BLACK */
+        1,  /* 9  LIGHT_BLUE  -> NAVY  */
+        2,  /* 10 LIGHT_GREEN -> GREEN */
+        3,  /* 11 LIGHT_CYAN  -> CYAN  */
+        4,  /* 12 LIGHT_RED   -> RED   */
+        1,  /* 13 MAGENTA     -> NAVY  */
+        6,  /* 14 YELLOW      -> BROWN */
+        7   /* 15 WHITE       -> LIGHT_GRAY */
+    };
+    int passes;
+    if (depthIndex <= 0) return;
+    passes = depthIndex; /* depth 1 = dim once, depth 2 = dim twice */
+    for (yy = ry; yy < ry + rh && yy < fbH; ++yy) {
+        if (yy < 0) continue;
+        for (xx = rx; xx < rx + rw && xx < fbW; ++xx) {
+            int p;
+            unsigned char px;
+            if (xx < 0) continue;
+            px = framebuffer[yy * fbW + xx];
+            for (p = 0; p < passes; ++p) {
+                px = g_dim_table[px & 0x0F];
+            }
+            framebuffer[yy * fbW + xx] = px;
+        }
+    }
+}
+
+/* Draw viewport background from GRAPHICS.DAT graphic 0 (224x136).
+ * Falls back to solid NAVY if asset is unavailable. */
+static void m11_draw_viewport_background(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int fbW,
+                                         int fbH,
+                                         int vpX,
+                                         int vpY,
+                                         int vpW,
+                                         int vpH) {
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* bgSlot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, M11_GFX_VIEWPORT_BG);
+        if (bgSlot && bgSlot->width > 0 && bgSlot->height > 0) {
+            M11_AssetLoader_BlitScaled(bgSlot, framebuffer, fbW, fbH,
+                                       vpX, vpY, vpW, vpH, -1);
+            return;
+        }
+    }
+    /* Fallback: solid fills */
+    m11_fill_rect(framebuffer, fbW, fbH,
+                  vpX + 2, vpY + 2, vpW - 4, vpH / 2, M11_COLOR_NAVY);
+    m11_fill_rect(framebuffer, fbW, fbH,
+                  vpX + 2, vpY + vpH / 2, vpW - 4, vpH / 2 - 2,
+                  M11_COLOR_DARK_GRAY);
+}
+
+/* Draw a real door frame from GRAPHICS.DAT at the given depth.
+ * depthIndex 0 = nearest, 2 = farthest.
+ * Falls back to the primitive line-based door rendering if unavailable. */
+static int m11_draw_door_frame_asset(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int fbW,
+                                     int fbH,
+                                     const M11_ViewRect* rect,
+                                     int depthIndex) {
+    unsigned int doorIdx;
+    const M11_AssetSlot* slot;
+    if (!state->assetsAvailable) return 0;
+    /* Select the depth-appropriate door frame graphic */
+    switch (depthIndex) {
+        case 0: doorIdx = M11_GFX_DOOR_FRAME_D1; break;
+        case 1: doorIdx = M11_GFX_DOOR_FRAME_D2; break;
+        case 2: doorIdx = M11_GFX_DOOR_FRAME_D3; break;
+        default: return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, doorIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* Center the door frame graphic in the face rect */
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               rect->x + 2, rect->y + 2,
+                               rect->w - 4, rect->h - 4, 0);
+    return 1;
+}
+
+/* Draw door side pillars from GRAPHICS.DAT. */
+static int m11_draw_door_side_asset(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW,
+                                    int fbH,
+                                    int x,
+                                    int y,
+                                    int w,
+                                    int h,
+                                    int depthIndex) {
+    unsigned int sideIdx;
+    const M11_AssetSlot* slot;
+    if (!state->assetsAvailable || w < 4 || h < 8) return 0;
+    switch (depthIndex) {
+        case 0: sideIdx = M11_GFX_DOOR_SIDE_D0; break;
+        case 1: sideIdx = M11_GFX_DOOR_SIDE_D1; break;
+        case 2: sideIdx = M11_GFX_DOOR_SIDE_D2; break;
+        default: return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, sideIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               x, y, w, h, 0);
+    return 1;
+}
+
+/* Draw stair graphics from GRAPHICS.DAT at the given depth. */
+static int m11_draw_stairs_asset(const M11_GameViewState* state,
+                                 unsigned char* framebuffer,
+                                 int fbW,
+                                 int fbH,
+                                 const M11_ViewRect* rect,
+                                 int depthIndex,
+                                 int stairUp) {
+    unsigned int stairIdx;
+    const M11_AssetSlot* slot;
+    if (!state->assetsAvailable) return 0;
+    if (depthIndex == 0 || depthIndex == 1) {
+        stairIdx = stairUp ? M11_GFX_STAIRS_UP_D1 : M11_GFX_STAIRS_DOWN_D1;
+    } else {
+        stairIdx = stairUp ? M11_GFX_STAIRS_UP_D2 : M11_GFX_STAIRS_DOWN_D2;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, stairIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               rect->x + 2, rect->y + 2,
+                               rect->w - 4, rect->h - 4, 0);
+    return 1;
+}
+
+/* Map a creature type index (0-26) to a GRAPHICS.DAT sprite set.
+ * Returns the base index for the 3-sprite set (small/mid/large),
+ * or 0 if no sprite is available for this type.
+ * The mapping covers 8 creature graphic sets: 4 at base 246, 4 at base 439.
+ * Creature types are mapped round-robin to the available sets. */
+static unsigned int m11_creature_sprite_base(int creatureType) {
+    /* CSB has 8 creature graphic sets.
+     * Sets 0-3: indices 246, 249, 252, 255 (each set = 3 consecutive indices)
+     * Sets 4-7: indices 439, 443, 448, 451 (irregular spacing) */
+    static const unsigned int s_set_bases[8] = {
+        246, 249, 252, 255, 439, 443, 448, 451
+    };
+    int setIdx;
+    if (creatureType < 0 || creatureType > 26) return 0;
+    setIdx = creatureType % 8;
+    return s_set_bases[setIdx];
+}
+
+/* Draw a creature sprite from GRAPHICS.DAT at the given viewport depth.
+ * depthIndex 0 = near (large sprite), 1 = mid, 2 = far (small sprite).
+ * Returns 1 if a real sprite was drawn, 0 if fallback needed. */
+static int m11_draw_creature_sprite(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW,
+                                    int fbH,
+                                    int x,
+                                    int y,
+                                    int w,
+                                    int h,
+                                    int creatureType,
+                                    int depthIndex) {
+    unsigned int base;
+    unsigned int spriteIdx;
+    const M11_AssetSlot* slot;
+    int spriteW, spriteH;
+    int drawW, drawH, drawX, drawY;
+
+    if (!state->assetsAvailable || creatureType < 0) return 0;
+    base = m11_creature_sprite_base(creatureType);
+    if (base == 0) return 0;
+
+    /* Depth 0 = large (offset +2), depth 1 = mid (+1), depth 2 = small (+0) */
+    switch (depthIndex) {
+        case 0: spriteIdx = base + 2; break; /* 96x88 */
+        case 1: spriteIdx = base + 1; break; /* 64x61 */
+        default: spriteIdx = base;    break; /* 44x38 */
+    }
+
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+
+    spriteW = (int)slot->width;
+    spriteH = (int)slot->height;
+
+    /* Scale to fit within the face rect while preserving aspect ratio */
+    drawW = w - 4;
+    drawH = (drawW * spriteH) / spriteW;
+    if (drawH > h - 4) {
+        drawH = h - 4;
+        drawW = (drawH * spriteW) / spriteH;
+    }
+    if (drawW < 4 || drawH < 4) return 0;
+
+    drawX = x + (w - drawW) / 2;
+    drawY = y + (h - drawH) / 2;
+
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               drawX, drawY, drawW, drawH, 0);
+    return 1;
+}
+
+/* Draw the outer UI frame border using ceiling/floor panels from
+ * GRAPHICS.DAT. Returns 1 if real assets were used. */
+static int m11_draw_ui_frame_assets(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW,
+                                    int fbH) {
+    const M11_AssetSlot* ceilSlot;
+    const M11_AssetSlot* floorSlot;
+    if (!state->assetsAvailable) return 0;
+
+    ceilSlot = M11_AssetLoader_Load(
+        (M11_AssetLoader*)&state->assetLoader, M11_GFX_CEILING_PANEL);
+    floorSlot = M11_AssetLoader_Load(
+        (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
+
+    if (ceilSlot && ceilSlot->width > 0 && ceilSlot->height > 0) {
+        /* Blit the ceiling panel at the top of the viewport area */
+        M11_AssetLoader_BlitScaled(ceilSlot, framebuffer, fbW, fbH,
+                                   12, 24, 196, 14, -1);
+    }
+    if (floorSlot && floorSlot->width > 0 && floorSlot->height > 0) {
+        /* Blit the floor panel below the viewport */
+        M11_AssetLoader_BlitScaled(floorSlot, framebuffer, fbW, fbH,
+                                   12, 142, 196, 6, -1);
+    }
+    return (ceilSlot != NULL || floorSlot != NULL) ? 1 : 0;
+}
 
 static void m11_draw_corridor_frame(unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -4428,8 +4803,18 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
-        m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                       paneX + paneW / 2, paneY + 2, paneY + paneH - 3, M11_COLOR_YELLOW);
+        /* Try real door side pillar graphic first */
+        if (!g_drawState ||
+            !m11_draw_door_side_asset(g_drawState, framebuffer,
+                                      framebufferWidth, framebufferHeight,
+                                      paneX, paneY, paneW, paneH, depthIndex)) {
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           paneX + paneW / 2, paneY + 2, paneY + paneH - 3, M11_COLOR_YELLOW);
+        }
+        /* Re-draw the accent border on top so the door element
+         * accent colour stays visible in probe invariants. */
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      paneX, paneY, paneW, paneH, accent);
     }
 
     if (m11_viewport_cell_is_open(cell)) {
@@ -4999,11 +5384,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  viewport.x + 2, viewport.y + 2, viewport.w - 4, viewport.h / 2, M11_COLOR_NAVY);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  viewport.x + 2, viewport.y + viewport.h / 2, viewport.w - 4, viewport.h / 2 - 2,
-                  M11_COLOR_DARK_GRAY);
+    /* Real viewport background from GRAPHICS.DAT, or solid fallback */
+    m11_draw_viewport_background(state, framebuffer, framebufferWidth, framebufferHeight,
+                                 viewport.x, viewport.y, viewport.w, viewport.h);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x - 2, viewport.y - 2, viewport.w + 4, viewport.h + 4, M11_COLOR_YELLOW);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -5118,6 +5501,14 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
+
+    /* Apply depth-based light dimming to the far corridor band only.
+     * Depth 2 gets dimmed to simulate torch light falloff in the
+     * dungeon.  Depth 1 is left bright so near-side accents (door
+     * LIGHT_RED, stair YELLOW) remain clearly visible. */
+    m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
+                            frames[2].x, frames[2].y,
+                            frames[2].w, frames[2].h, 1);
 }
 
 static void m11_format_champion_name(const unsigned char* raw,
@@ -5434,9 +5825,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+    /* Set file-scope draw state for asset-backed rendering helpers */
+    g_drawState = state;
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight, M11_COLOR_NAVY);
     if (!state || !state->active) {
+        g_drawState = NULL;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       18, 18, "NO GAME VIEW", &g_text_title);
         return;
@@ -5494,6 +5888,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                   240, 13, line, &g_text_small);
 
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
+
+    /* Overlay UI frame border elements from GRAPHICS.DAT */
+    m11_draw_ui_frame_assets(state, framebuffer, framebufferWidth, framebufferHeight);
 
     m11_draw_utility_panel(state, framebuffer, framebufferWidth, framebufferHeight, mapDesc);
 
@@ -5649,4 +6046,5 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       112, 88, "R TO WAKE", &g_text_small);
     }
+    g_drawState = NULL;
 }

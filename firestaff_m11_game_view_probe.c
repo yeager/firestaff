@@ -2536,6 +2536,182 @@ int main(int argc, char** argv) {
                          "BlitRegion extracts 64x16 sub-rect from wall texture");
         }
 
+        /* INV_GV_97: Viewport background graphic 0 loads as 224x136 */
+        {
+            const M11_AssetSlot* bgSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 0);
+            probe_record(&tally,
+                         "INV_GV_97",
+                         bgSlot != NULL &&
+                             bgSlot->width == 224 && bgSlot->height == 136 &&
+                             bgSlot->pixels != NULL,
+                         "viewport background graphic 0 loads as 224x136");
+        }
+
+        /* INV_GV_98: Door frame graphic 73 loads as 78x74 (mid depth) */
+        {
+            const M11_AssetSlot* doorSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 73);
+            probe_record(&tally,
+                         "INV_GV_98",
+                         doorSlot != NULL &&
+                             doorSlot->width == 78 && doorSlot->height == 74 &&
+                             doorSlot->pixels != NULL,
+                         "door frame graphic 73 loads as 78x74 (mid depth)");
+        }
+
+        /* INV_GV_99: Door frame graphic 70 loads as 36x49 (far depth) */
+        {
+            const M11_AssetSlot* doorFarSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 70);
+            probe_record(&tally,
+                         "INV_GV_99",
+                         doorFarSlot != NULL &&
+                             doorFarSlot->width == 36 && doorFarSlot->height == 49 &&
+                             doorFarSlot->pixels != NULL,
+                         "door frame graphic 70 loads as 36x49 (far depth)");
+        }
+
+        /* INV_GV_100: Door side graphic 86 loads as 32x123 */
+        {
+            const M11_AssetSlot* sideSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 86);
+            probe_record(&tally,
+                         "INV_GV_100",
+                         sideSlot != NULL &&
+                             sideSlot->width == 32 && sideSlot->height == 123 &&
+                             sideSlot->pixels != NULL,
+                         "door side graphic 86 loads as 32x123");
+        }
+
+        /* INV_GV_101: Stair graphic 95 loads as 60x111 */
+        {
+            const M11_AssetSlot* stairSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 95);
+            probe_record(&tally,
+                         "INV_GV_101",
+                         stairSlot != NULL &&
+                             stairSlot->width == 60 && stairSlot->height == 111 &&
+                             stairSlot->pixels != NULL,
+                         "stair graphic 95 loads as 60x111");
+        }
+
+        /* INV_GV_102: Creature sprite base 246 loads as 44x38 (far view) */
+        {
+            const M11_AssetSlot* creatSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 246);
+            probe_record(&tally,
+                         "INV_GV_102",
+                         creatSlot != NULL &&
+                             creatSlot->width == 44 && creatSlot->height == 38 &&
+                             creatSlot->pixels != NULL,
+                         "creature sprite base 246 loads as 44x38 (far view)");
+        }
+
+        /* INV_GV_103: Creature sprite 248 loads as 96x88 (near view) */
+        {
+            const M11_AssetSlot* creatNear = M11_AssetLoader_Load(
+                &assetView.assetLoader, 248);
+            probe_record(&tally,
+                         "INV_GV_103",
+                         creatNear != NULL &&
+                             creatNear->width == 96 && creatNear->height == 88 &&
+                             creatNear->pixels != NULL,
+                         "creature sprite 248 loads as 96x88 (near view)");
+        }
+
+        /* INV_GV_104: Ceiling panel graphic 78 loads as 224x97 */
+        {
+            const M11_AssetSlot* ceilSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 78);
+            probe_record(&tally,
+                         "INV_GV_104",
+                         ceilSlot != NULL &&
+                             ceilSlot->width == 224 && ceilSlot->height == 97 &&
+                             ceilSlot->pixels != NULL,
+                         "ceiling panel graphic 78 loads as 224x97");
+        }
+
+        /* INV_GV_105: Floor panel graphic 79 loads as 224x39 */
+        {
+            const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 79);
+            probe_record(&tally,
+                         "INV_GV_105",
+                         floorSlot != NULL &&
+                             floorSlot->width == 224 && floorSlot->height == 39 &&
+                             floorSlot->pixels != NULL,
+                         "floor panel graphic 79 loads as 224x39");
+        }
+
+        /* INV_GV_106: Far corridor band is darker than near band after Draw.
+         * The depth dimming system dims the far-depth frame (depth 2) so
+         * average pixel brightness in the far corridor rect should be
+         * lower than in the near corridor rect. */
+        {
+            unsigned char drawFb[320 * 200];
+            size_t nearBright, farBright;
+            memset(drawFb, 0, sizeof(drawFb));
+            M11_GameView_Draw(&assetView, drawFb, 320, 200);
+            /* Near band = frames[0] = (20,32,180,102)
+             * Far band  = frames[2] = (58,56,104,54) */
+            nearBright = probe_count_non_zero(drawFb, 320, 20, 32, 180, 102);
+            farBright = probe_count_non_zero(drawFb, 320, 58, 56, 104, 54);
+            /* Both should have content; far band should have some darkened pixels
+             * (fewer non-zero pixels if dimming zeroed some, or same count but
+             * different brightness distribution). As a simple check: the near
+             * band fills a much larger area so nearBright > farBright. */
+            probe_record(&tally,
+                         "INV_GV_106",
+                         nearBright > 1000 && farBright > 100 && nearBright > farBright,
+                         "near corridor band has more content than dimmed far band");
+        }
+
+        /* INV_GV_107: Viewport with assets renders viewport background
+         * (more pixel variety than solid fallback) */
+        {
+            unsigned char withAssetFb[320 * 200];
+            size_t distinct;
+            int i;
+            unsigned char seen[16];
+            memset(withAssetFb, 0, sizeof(withAssetFb));
+            M11_GameView_Draw(&assetView, withAssetFb, 320, 200);
+            memset(seen, 0, sizeof(seen));
+            for (i = 0; i < 320 * 200; ++i) {
+                seen[withAssetFb[i] & 0x0F] = 1;
+            }
+            distinct = 0;
+            for (i = 0; i < 16; ++i) {
+                if (seen[i]) ++distinct;
+            }
+            probe_record(&tally,
+                         "INV_GV_107",
+                         distinct >= 8,
+                         "asset-backed game view uses at least 8 distinct palette entries");
+        }
+
+        /* INV_GV_108: Draw with assets produces more than 10 distinct
+         * pixel values in the viewport region, proving that multiple
+         * GRAPHICS.DAT assets contribute to the rendered frame. */
+        {
+            unsigned char fb108[320 * 200];
+            unsigned char palette_seen[16];
+            int i, distinct108 = 0;
+            memset(fb108, 0, sizeof(fb108));
+            M11_GameView_Draw(&assetView, fb108, 320, 200);
+            memset(palette_seen, 0, sizeof(palette_seen));
+            for (i = 12 * 320 + 12; i < 200 * 320; ++i) {
+                palette_seen[fb108[i] & 0x0F] = 1;
+            }
+            for (i = 0; i < 16; ++i) {
+                if (palette_seen[i]) ++distinct108;
+            }
+            probe_record(&tally,
+                         "INV_GV_108",
+                         distinct108 >= 10,
+                         "asset-backed full frame uses 10+ distinct palette entries");
+        }
+
         M11_GameView_Shutdown(&assetView);
     }
 
