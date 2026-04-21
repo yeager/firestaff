@@ -3245,6 +3245,9 @@ static int m11_apply_tick(M11_GameViewState* state,
     m11_apply_survival_drain(state);
     m11_apply_rest_recovery(state);
 
+    /* Torch fuel burn-down */
+    M11_GameView_UpdateTorchFuel(state);
+
     /* Creature AI: movement and autonomous damage */
     m11_process_creature_ticks(state);
 
@@ -5733,10 +5736,19 @@ static int m11_compute_light_level(const M11_GameViewState* state) {
                 thingIndex >= 0 && thingIndex < state->world.things->weaponCount) {
                 const struct DungeonWeapon_Compat* w = &state->world.things->weapons[thingIndex];
                 if (w->type == M11_WEAPON_SUBTYPE_TORCH && w->lit) {
-                    light += M11_LIGHT_TORCH_BONUS;
+                    /* Scale light by remaining fuel fraction */
+                    int fuel = (thingIndex >= 0 && thingIndex < M11_TORCH_FUEL_CAPACITY)
+                               ? state->torchFuel[thingIndex] : M11_TORCH_INITIAL_FUEL;
+                    int bonus = (M11_LIGHT_TORCH_BONUS * fuel) / M11_TORCH_INITIAL_FUEL;
+                    if (bonus < 1 && fuel > 0) bonus = 1;
+                    light += bonus;
                 }
                 if (w->type == M11_WEAPON_SUBTYPE_FLAMITT && w->lit) {
-                    light += M11_LIGHT_FLAMITT_BONUS;
+                    int fuel = (thingIndex >= 0 && thingIndex < M11_TORCH_FUEL_CAPACITY)
+                               ? state->torchFuel[thingIndex] : M11_FLAMITT_INITIAL_FUEL;
+                    int bonus = (M11_LIGHT_FLAMITT_BONUS * fuel) / M11_FLAMITT_INITIAL_FUEL;
+                    if (bonus < 1 && fuel > 0) bonus = 1;
+                    light += bonus;
                 }
             }
 
@@ -5758,6 +5770,87 @@ static int m11_compute_light_level(const M11_GameViewState* state) {
 /* Query the current party light level (0..255). Exposed for probes. */
 int M11_GameView_GetLightLevel(const M11_GameViewState* state) {
     return m11_compute_light_level(state);
+}
+
+/* ================================================================
+ * Torch fuel burn-down
+ * ================================================================ */
+
+int M11_GameView_GetTorchFuel(const M11_GameViewState* state, int weaponIndex) {
+    if (!state || weaponIndex < 0 || weaponIndex >= M11_TORCH_FUEL_CAPACITY) {
+        return 0;
+    }
+    return state->torchFuel[weaponIndex];
+}
+
+void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
+    int ci;
+    if (!state || !state->active || !state->world.things) {
+        return;
+    }
+
+    /* Scan all champion hand slots for lit torches/flamitts. */
+    for (ci = 0; ci < CHAMPION_MAX_PARTY; ++ci) {
+        struct ChampionState_Compat* champ = &state->world.party.champions[ci];
+        int slot;
+        if (!champ->present) continue;
+
+        for (slot = CHAMPION_SLOT_HAND_LEFT; slot <= CHAMPION_SLOT_HAND_RIGHT; ++slot) {
+            unsigned short thing = champ->inventory[slot];
+            int thingType, thingIndex;
+            if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+
+            thingType = THING_GET_TYPE(thing);
+            thingIndex = THING_GET_INDEX(thing);
+
+            if (thingType != THING_TYPE_WEAPON) continue;
+            if (thingIndex < 0 || thingIndex >= state->world.things->weaponCount) continue;
+            if (thingIndex >= M11_TORCH_FUEL_CAPACITY) continue;
+
+            {
+                struct DungeonWeapon_Compat* w = &state->world.things->weapons[thingIndex];
+                int isTorch = (w->type == M11_WEAPON_SUBTYPE_TORCH);
+                int isFlamitt = (w->type == M11_WEAPON_SUBTYPE_FLAMITT);
+
+                if (!isTorch && !isFlamitt) continue;
+                if (!w->lit) continue;
+
+                /* Initialize fuel on first encounter */
+                if (!state->torchFuelInitialized[thingIndex]) {
+                    state->torchFuel[thingIndex] = isTorch
+                        ? M11_TORCH_INITIAL_FUEL
+                        : M11_FLAMITT_INITIAL_FUEL;
+                    state->torchFuelInitialized[thingIndex] = 1;
+                }
+
+                /* Burn one unit of fuel */
+                state->torchFuel[thingIndex]--;
+
+                /* Log when fuel is low */
+                if (state->torchFuel[thingIndex] == (M11_TORCH_INITIAL_FUEL / 4) && isTorch) {
+                    m11_log_event(state, M11_COLOR_YELLOW,
+                                  "T%u: TORCH DIMS",
+                                  (unsigned int)state->world.gameTick);
+                }
+                if (state->torchFuel[thingIndex] == (M11_FLAMITT_INITIAL_FUEL / 4) && isFlamitt) {
+                    m11_log_event(state, M11_COLOR_YELLOW,
+                                  "T%u: FLAMITT DIMS",
+                                  (unsigned int)state->world.gameTick);
+                }
+
+                /* Extinguish when fuel is exhausted */
+                if (state->torchFuel[thingIndex] <= 0) {
+                    state->torchFuel[thingIndex] = 0;
+                    state->torchFuelInitialized[thingIndex] = 0;
+                    w->lit = 0;
+                    m11_log_event(state, M11_COLOR_LIGHT_RED,
+                                  "T%u: %s BURNS OUT",
+                                  (unsigned int)state->world.gameTick,
+                                  isTorch ? "TORCH" : "FLAMITT");
+                }
+            }
+        }
+    }
 }
 
 static void m11_draw_utility_panel(const M11_GameViewState* state,

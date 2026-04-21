@@ -2964,6 +2964,125 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&assetView);
     }
 
+    /* ================================================================
+     * Torch fuel burn-down tests
+     * ================================================================ */
+    {
+        M11_GameViewState torchView;
+        struct DungeonThings_Compat torchThings;
+        struct DungeonWeapon_Compat torchWeapons[2];
+
+        M11_GameView_Init(&torchView);
+        memset(&torchThings, 0, sizeof(torchThings));
+        memset(torchWeapons, 0, sizeof(torchWeapons));
+
+        /* Set up a lit torch at weapon index 0 */
+        torchWeapons[0].type = 2;  /* TORCH subtype */
+        torchWeapons[0].lit = 1;
+        /* Set up a lit flamitt at weapon index 1 */
+        torchWeapons[1].type = 3;  /* FLAMITT subtype */
+        torchWeapons[1].lit = 1;
+
+        torchThings.weapons = torchWeapons;
+        torchThings.weaponCount = 2;
+
+        torchView.active = 1;
+        torchView.world.things = &torchThings;
+        torchView.world.party.championCount = 1;
+        torchView.world.party.champions[0].present = 1;
+        torchView.world.party.activeChampionIndex = 0;
+        /* Place torch in left hand, flamitt in right hand */
+        torchView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        torchView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+
+        /* INV_GV_123: GetTorchFuel returns 0 before first update. */
+        probe_record(&tally,
+                     "INV_GV_123",
+                     M11_GameView_GetTorchFuel(&torchView, 0) == 0,
+                     "torch fuel is 0 before first update");
+
+        /* INV_GV_124: After one UpdateTorchFuel, fuel is initialized
+         * to INITIAL_FUEL - 1 (one tick burned). */
+        M11_GameView_UpdateTorchFuel(&torchView);
+        probe_record(&tally,
+                     "INV_GV_124",
+                     M11_GameView_GetTorchFuel(&torchView, 0) == M11_TORCH_INITIAL_FUEL - 1,
+                     "torch fuel initialized to INITIAL-1 after first update");
+
+        /* INV_GV_125: Flamitt fuel is initialized to FLAMITT_INITIAL - 1. */
+        probe_record(&tally,
+                     "INV_GV_125",
+                     M11_GameView_GetTorchFuel(&torchView, 1) == M11_FLAMITT_INITIAL_FUEL - 1,
+                     "flamitt fuel initialized to FLAMITT_INITIAL-1 after first update");
+
+        /* INV_GV_126: Light level with full-fuel torch is higher than with
+         * half-fuel torch. */
+        {
+            int lightFull, lightHalf;
+            torchView.world.magic.magicalLightAmount = 0;
+            /* Full fuel */
+            torchView.torchFuel[0] = M11_TORCH_INITIAL_FUEL;
+            lightFull = M11_GameView_GetLightLevel(&torchView);
+            /* Half fuel */
+            torchView.torchFuel[0] = M11_TORCH_INITIAL_FUEL / 2;
+            lightHalf = M11_GameView_GetLightLevel(&torchView);
+            probe_record(&tally,
+                         "INV_GV_126",
+                         lightFull > lightHalf,
+                         "full-fuel torch gives more light than half-fuel torch");
+        }
+
+        /* INV_GV_127: Draining torch fuel to 0 extinguishes the torch. */
+        {
+            torchView.torchFuel[0] = 1;  /* one tick left */
+            torchView.torchFuelInitialized[0] = 1;
+            torchWeapons[0].lit = 1;
+            M11_GameView_UpdateTorchFuel(&torchView);
+            probe_record(&tally,
+                         "INV_GV_127",
+                         torchWeapons[0].lit == 0,
+                         "torch extinguished when fuel reaches 0");
+        }
+
+        /* INV_GV_128: GetTorchFuel returns 0 for out-of-range index. */
+        probe_record(&tally,
+                     "INV_GV_128",
+                     M11_GameView_GetTorchFuel(&torchView, -1) == 0 &&
+                     M11_GameView_GetTorchFuel(&torchView, 9999) == 0,
+                     "GetTorchFuel returns 0 for out-of-range index");
+
+        /* INV_GV_129: Unlit torch in hand does not consume fuel. */
+        {
+            torchWeapons[0].lit = 0;
+            torchView.torchFuel[0] = 500;
+            torchView.torchFuelInitialized[0] = 1;
+            M11_GameView_UpdateTorchFuel(&torchView);
+            probe_record(&tally,
+                         "INV_GV_129",
+                         torchView.torchFuel[0] == 500,
+                         "unlit torch does not consume fuel");
+        }
+
+        /* INV_GV_130: Light level is 0 with extinguished torch and no
+         * magical light. */
+        {
+            int lightOff;
+            torchView.world.magic.magicalLightAmount = 0;
+            torchWeapons[0].lit = 0;
+            torchWeapons[1].lit = 0;
+            lightOff = M11_GameView_GetLightLevel(&torchView);
+            probe_record(&tally,
+                         "INV_GV_130",
+                         lightOff == 0,
+                         "light is 0 with extinguished torches and no magic");
+        }
+
+        /* Don't call Shutdown — we didn't fully init, just zero. */
+        memset(&torchView, 0, sizeof(torchView));
+    }
+
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
 }

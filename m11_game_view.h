@@ -74,6 +74,15 @@ typedef struct {
     M11_AssetLoader assetLoader;
     int assetsAvailable; /* 1 if assetLoader is ready */
 
+    /* Torch fuel burn-down tracking.
+     * Each weapon index that is a lit torch has its remaining fuel
+     * tracked here.  Fuel decreases by 1 each game tick.  When it
+     * reaches 0, the torch is extinguished.  A torch's light
+     * contribution is scaled by its fuel fraction. */
+    enum { M11_TORCH_FUEL_CAPACITY = 256 };
+    int torchFuel[256];          /* remaining fuel per weapon index */
+    int torchFuelInitialized[256]; /* 1 if fuel has been set for this index */
+
     /* Spell casting UI state */
     int spellPanelOpen;          /* 1 when rune entry panel is visible */
     int spellRuneRow;            /* current rune row (0..3) = power/element/form/class */
@@ -140,6 +149,17 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state);
  * items in hand slots.  Used by the viewport renderer for dynamic
  * depth dimming and exposed for probe-level verification. */
 int M11_GameView_GetLightLevel(const M11_GameViewState* state);
+
+/* Torch fuel constants.  INITIAL is the starting fuel for a freshly-lit
+ * torch (approximately 1500 game ticks).  Each tick burns 1 unit. */
+#define M11_TORCH_INITIAL_FUEL  1500
+#define M11_FLAMITT_INITIAL_FUEL 2500
+
+/* Query remaining fuel for a weapon index (0 if untracked or exhausted). */
+int M11_GameView_GetTorchFuel(const M11_GameViewState* state, int weaponIndex);
+
+/* Update torch fuel for all lit torches (called once per tick). */
+void M11_GameView_UpdateTorchFuel(M11_GameViewState* state);
 
 #ifdef __cplusplus
 }
