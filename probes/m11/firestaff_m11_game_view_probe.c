@@ -3520,6 +3520,32 @@ int main(int argc, char** argv) {
                      "M11_FB_ENCODE/DECODE round-trip for all index/level combos");
     }
 
+    /* INV_GV_156-159: creature view selection follows original aspect
+     * bitmap ordering for front/side/back/attack poses. */
+    {
+        int mirror = -1;
+        probe_record(&tally,
+                     "INV_GV_156",
+                     M11_GameView_GetCreatureSpriteForView(0, 0, 2, 0, 0, &mirror) == 446u &&
+                     mirror == 0,
+                     "front-facing D1 creature view selects native front bitmap");
+        probe_record(&tally,
+                     "INV_GV_157",
+                     M11_GameView_GetCreatureSpriteForView(0, 0, 1, 0, 0, &mirror) == 447u &&
+                     mirror == 1,
+                     "side-facing D1 creature view selects native side bitmap with mirror");
+        probe_record(&tally,
+                     "INV_GV_158",
+                     M11_GameView_GetCreatureSpriteForView(0, 1, 0, 0, 0, &mirror) == 500u &&
+                     mirror == 0,
+                     "back-facing D2 creature view selects derived back bitmap");
+        probe_record(&tally,
+                     "INV_GV_159",
+                     M11_GameView_GetCreatureSpriteForView(0, 0, 2, 0, 1, &mirror) == 449u &&
+                     mirror == 0,
+                     "front-facing attack selects native attack bitmap");
+    }
+
     /* ── Original DM1 font invariants ── */
 
     /* INV_GV_156: M11_Font_Init zeroes font state. */

@@ -360,10 +360,19 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
                                             int* outCenterX,
                                             int* outBottomY);
 
-/* Return the GRAPHICS.DAT sprite index for a creature at a given depth.
- * Accounts for ascending (sets 0-3) vs descending (sets 4+) bitmap
- * order within GRAPHICS.DAT.  Returns 0 for invalid inputs. */
+/* Return the front-pose GRAPHICS.DAT sprite index for a creature at a
+ * given depth. Returns 0 for invalid inputs. */
 unsigned int M11_GameView_GetCreatureSpriteForDepth(int creatureType, int depthIndex);
+
+/* Return the GRAPHICS.DAT sprite index selected for an actual view using
+ * creature direction vs party direction and optional attack state.
+ * outMirror receives whether the side pose should be mirrored. */
+unsigned int M11_GameView_GetCreatureSpriteForView(int creatureType,
+                                                   int depthIndex,
+                                                   int creatureDir,
+                                                   int partyDir,
+                                                   int attacking,
+                                                   int* outMirror);
 
 /* Query replacement color palette indices for a creature type.
  * Returns 1 if the creature uses replacement colors, 0 if not.

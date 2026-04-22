@@ -4098,6 +4098,7 @@ typedef struct M11_ViewportCell {
     /* All creature group types on this square (up to 4, -1 terminated) */
     int creatureTypes[M11_MAX_CELL_CREATURES];
     int creatureCountsPerGroup[M11_MAX_CELL_CREATURES]; /* creature count per group (count+1) */
+    int creatureDirections[M11_MAX_CELL_CREATURES]; /* DungeonGroup_Compat.direction per group */
     int creatureGroupCount; /* number of valid entries in creatureTypes[] */
     /* First floor item info for sprite rendering (legacy single-item) */
     int firstItemThingType;    /* THING_TYPE_WEAPON..JUNK, or -1 if no item */
@@ -4792,7 +4793,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.firstThing = THING_ENDOFLIST;
     cell.doorState = -1;
     cell.creatureType = -1;
-    { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) { cell.creatureTypes[ci] = -1; cell.creatureCountsPerGroup[ci] = 0; } }
+    { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) { cell.creatureTypes[ci] = -1; cell.creatureCountsPerGroup[ci] = 0; cell.creatureDirections[ci] = -1; } }
     cell.creatureGroupCount = 0;
     cell.firstItemThingType = -1;
     cell.firstItemSubtype = -1;
@@ -4881,6 +4882,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                     cell.creatureTypes[cell.creatureGroupCount] = ct;
                     cell.creatureCountsPerGroup[cell.creatureGroupCount] =
                         (int)state->world.things->groups[gIdx].count + 1;
+                    cell.creatureDirections[cell.creatureGroupCount] =
+                        (int)state->world.things->groups[gIdx].direction;
                     cell.creatureGroupCount++;
                 }
             }
@@ -5405,7 +5408,8 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW, int fbH,
                                     int x, int y, int w, int h,
-                                    int creatureType, int depthIndex);
+                                    int creatureType, int depthIndex,
+                                    int creatureDir);
 static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW, int fbH,
@@ -5628,7 +5632,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                     !m11_draw_creature_sprite(g_drawState, framebuffer,
                                               framebufferWidth, framebufferHeight,
                                               cx, cy, slotW, slotH,
-                                              cell->creatureTypes[gi], depthIndex)) {
+                                              cell->creatureTypes[gi], depthIndex,
+                                              cell->creatureDirections[gi])) {
                     m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
                                           cx, cy, slotW, slotH, depthIndex);
                 }
@@ -5684,7 +5689,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                         !m11_draw_creature_sprite(g_drawState, framebuffer,
                                                   framebufferWidth, framebufferHeight,
                                                   dx, dy, dupW, dupH,
-                                                  cell->creatureTypes[gi], depthIndex)) {
+                                                  cell->creatureTypes[gi], depthIndex,
+                                                  cell->creatureDirections[gi])) {
                         m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
                                               dx, dy, dupW, dupH, depthIndex);
                     }
@@ -6451,7 +6457,8 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int x, int y, int w, int h,
                                        int creatureType,
                                        int depthIndex,
-                                       int sideHint);
+                                       int sideHint,
+                                       int creatureDir);
 
 /* ── DM1 Creature Replacement Color Sets (G0220_as_Graphic558) ──
  * In the original VGA driver, VIDRV_12_SetCreatureReplacementColors
@@ -6518,114 +6525,72 @@ static int m11_creature_replacement_colors(int creatureType,
     return 1;
 }
 
-static unsigned int m11_creature_sprite_base(int creatureType) {
-    /* ReDMCSB creature graphic set mapping.
-     * Each creature type has a specific graphic set index (column 2 in
-     * G0243_as_Graphic559_CreatureInfo).  Each set has 3 sprites
-     * (D3-far, D2-mid, D1-near) at consecutive GRAPHICS.DAT indices.
-     *
-     * Sets 0-3 store bitmaps in ASCENDING size order: base+0=D3, +1=D2, +2=D1.
-     * Sets 4-18 store bitmaps in DESCENDING size order: base+0=D1, +1=D2, +2=D3.
-     *
-     * Ref: ReDMCSB DEFS.H, G0243_as_Graphic559_CreatureInfo,
-     *      GRAPHICS.DAT bitmap dimensions verified via diag_creature_bitmaps. */
-    static const unsigned int s_set_bases[] = {
-        246,  /* set 0 */
-        249,  /* set 1 */
-        252,  /* set 2 */
-        255,  /* set 3 */
-        439,  /* set 4 */
-        442,  /* set 5 */
-        445,  /* set 6 */
-        448,  /* set 7 */
-        451,  /* set 8 */
-        454,  /* set 9 */
-        457,  /* set 10 */
-        460,  /* set 11 */
-        463,  /* set 12 */
-        466,  /* set 13 */
-        469,  /* set 14 */
-        472,  /* set 15 */
-        475,  /* set 16 */
-        478,  /* set 17 */
-        481   /* set 18 */
+enum {
+    M11_CREATURE_POSE_FRONT = 0,
+    M11_CREATURE_POSE_SIDE = 1,
+    M11_CREATURE_POSE_BACK = 2,
+    M11_CREATURE_POSE_ATTACK = 3
+};
+
+/* Return the GRAPHICS.DAT index for a creature sprite pose.
+ * Ref: ReDMCSB DEFS.H creature aspect layout.
+ * Native D1 bitmaps start at graphic 446 and are ordered:
+ *   Front D1, Side D1, Back D1, Attack D1, Additional Front D1...
+ * Derived D2/D3 bitmaps start at FirstDerivedBitmapIndex and are ordered:
+ *   Front D3, Front D2, Side D3, Side D2, Back D3, Back D2,
+ *   Attack D3, Attack D2.
+ */
+static unsigned int m11_creature_sprite_for_pose(int creatureType,
+                                                 int depthIndex,
+                                                 int pose) {
+    static const unsigned int kFirstNativeCreatureGraphic = 446;
+    static const unsigned char s_nativePoseOffset[4] = {0, 1, 2, 3};
+    static const unsigned char s_derivedPoseOffset[4][2] = {
+        {0, 1}, /* front  D3/D2 */
+        {2, 3}, /* side   D3/D2 */
+        {4, 5}, /* back   D3/D2 */
+        {6, 7}  /* attack D3/D2 */
     };
-    /* Creature type -> graphic set index from ReDMCSB
-     * G0243_as_Graphic559_CreatureInfo (second column). */
-    static const int s_type_to_set[27] = {
-         4,  /* 0  GiantScorpionScorpion */
-        14,  /* 1  SwampSlimeSlimeDevil */
-         6,  /* 2  Giggler */
-         0,  /* 3  PainRatHellHound */
-        18,  /* 4  Ruster */
-        17,  /* 5  Screamer */
-         3,  /* 6  Rockpile */
-         7,  /* 7  GhostRive */
-         2,  /* 8  WaterElemental */
-        10,  /* 9  Couatl */
-        13,  /* 10 StoneGolem */
-         0,  /* 11 Mummy */
-        11,  /* 12 Skeleton */
-         9,  /* 13 MagentaWormWorm */
-        16,  /* 14 Trolin */
-         5,  /* 15 GiantWaspMuncher */
-        10,  /* 16 Antman */
-        15,  /* 17 Vexirk */
-        12,  /* 18 AnimatedArmourDethKnight */
-         0,  /* 19 MaterializerZytaz */
-         8,  /* 20 RedDragon */
-         3,  /* 21 Oitu */
-        16,  /* 22 Demon */
-         0,  /* 23 LordChaos */
-         1,  /* 24 LordOrder */
-         0,  /* 25 GreyLord */
-         0   /* 26 LordChaosRedDragon */
-    };
-    int setIdx;
+    const M11_CreatureAspect* aspect;
+    int dIdx;
+
     if (creatureType < 0 || creatureType > 26) return 0;
-    setIdx = s_type_to_set[creatureType];
-    if (setIdx < 0 || setIdx >= (int)(sizeof(s_set_bases)/sizeof(s_set_bases[0]))) return 0;
-    return s_set_bases[setIdx];
+    if (pose < M11_CREATURE_POSE_FRONT || pose > M11_CREATURE_POSE_ATTACK) {
+        pose = M11_CREATURE_POSE_FRONT;
+    }
+    aspect = &s_creatureAspects[creatureType];
+    if (depthIndex <= 0) {
+        return kFirstNativeCreatureGraphic +
+               (unsigned int)aspect->firstNativeBitmapRelativeIndex +
+               (unsigned int)s_nativePoseOffset[pose];
+    }
+    dIdx = (depthIndex >= 2) ? 0 : 1; /* derived order is D3, then D2 */
+    return (unsigned int)aspect->firstDerivedBitmapIndex +
+           (unsigned int)s_derivedPoseOffset[pose][dIdx];
 }
 
-/* Return the GRAPHICS.DAT index for a creature sprite at a given depth.
- * depthIndex: 0 = nearest/D1 (largest), 1 = mid/D2, 2 = far/D3 (smallest).
- * Accounts for ascending (sets 0-3) vs descending (sets 4-18) bitmap order
- * within GRAPHICS.DAT.
- * Returns 0 if the creature type is invalid. */
-static unsigned int m11_creature_sprite_for_depth(int creatureType, int depthIndex) {
-    static const unsigned char s_set_descending[] = {
-        0, 0, 0, 0,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1
-    };
-    static const int s_type_to_set[27] = {
-         4, 14, 6, 0, 18, 17, 3, 7, 2, 10, 13, 0, 11, 9, 16, 5,
-        10, 15, 12, 0, 8, 3, 16, 0, 1, 0, 0
-    };
-    unsigned int base;
-    int setIdx;
-    int offset;
-    if (creatureType < 0 || creatureType > 26) return 0;
-    base = m11_creature_sprite_base(creatureType);
-    if (base == 0) return 0;
-    setIdx = s_type_to_set[creatureType];
-    if (setIdx < 0 || setIdx >= 19) return 0;
+static int m11_creature_relative_facing(int creatureDir, int partyDir) {
+    if (creatureDir < 0 || partyDir < 0) return 2;
+    return (creatureDir - partyDir) & 3;
+}
 
-    if (s_set_descending[setIdx]) {
-        /* Descending: base+0=D1(large), base+1=D2(mid), base+2=D3(small) */
-        switch (depthIndex) {
-            case 0:  offset = 0; break; /* D1 nearest = base+0 */
-            case 1:  offset = 1; break; /* D2 mid     = base+1 */
-            default: offset = 2; break; /* D3 far     = base+2 */
-        }
-    } else {
-        /* Ascending: base+0=D3(small), base+1=D2(mid), base+2=D1(large) */
-        switch (depthIndex) {
-            case 0:  offset = 2; break; /* D1 nearest = base+2 */
-            case 1:  offset = 1; break; /* D2 mid     = base+1 */
-            default: offset = 0; break; /* D3 far     = base+0 */
-        }
+static int m11_creature_pose_for_view(int relFacing, int attacking) {
+    if (attacking && relFacing == 2) {
+        return M11_CREATURE_POSE_ATTACK;
     }
-    return base + (unsigned int)offset;
+    switch (relFacing & 3) {
+        case 0: return M11_CREATURE_POSE_BACK;
+        case 1:
+        case 3: return M11_CREATURE_POSE_SIDE;
+        default: return M11_CREATURE_POSE_FRONT;
+    }
+}
+
+static int m11_creature_pose_mirror(int relFacing, int pose) {
+    if (pose == M11_CREATURE_POSE_SIDE) {
+        return (relFacing & 3) == 1;
+    }
+    return 0;
 }
 
 /* Draw a creature sprite from GRAPHICS.DAT at the given viewport position.
@@ -6643,10 +6608,11 @@ static int m11_draw_creature_sprite(const M11_GameViewState* state,
                                     int w,
                                     int h,
                                     int creatureType,
-                                    int depthIndex) {
+                                    int depthIndex,
+                                    int creatureDir) {
     return m11_draw_creature_sprite_ex(state, framebuffer, fbW, fbH,
                                        x, y, w, h, creatureType,
-                                       depthIndex, 0);
+                                       depthIndex, 0, creatureDir);
 }
 
 static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
@@ -6659,7 +6625,8 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int h,
                                        int creatureType,
                                        int depthIndex,
-                                       int sideHint) {
+                                       int sideHint,
+                                       int creatureDir) {
     unsigned int spriteIdx;
     const M11_AssetSlot* slot;
     int spriteW, spriteH;
@@ -6668,27 +6635,26 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
     int useMirror = 0;
     int hasReplColors = 0;
     int replDst9 = 9, replDst10 = 10;
+    int relFacing;
+    int pose;
 
     if (!state->assetsAvailable || creatureType < 0) return 0;
 
-    /* Use depth-aware sprite index that handles ascending/descending
-     * bitmap order within GRAPHICS.DAT per graphic set.
-     * Sets 0-3 (base 246-257): ascending (base+0=D3, +2=D1)
-     * Sets 4-18 (base 439+):   descending (base+0=D1, +2=D3) */
-    spriteIdx = m11_creature_sprite_for_depth(creatureType, depthIndex);
-    if (spriteIdx == 0) return 0;
-
-    /* Check if this creature is currently attacking (attack cue active
-     * and matches the creature type at depth 0).
-     * In DM1, the attack animation applies to ALL sprites of the
-     * attacking creature type in the front cell row (depth 0),
-     * including side-pane creatures.  Restricting the attack pose
-     * to center-only was a fidelity gap. */
+    /* Bounded DM1 fidelity pass:
+     * choose the native/derived creature bitmap from original aspect data
+     * using group facing vs party facing. This lands true front/side/back
+     * pose selection and front-facing attack selection instead of reusing
+     * the same generic sprite for every view. */
     if (state->attackCueTimer > 0 &&
         state->attackCueCreatureType == creatureType &&
         depthIndex == 0) {
         useAttackPose = 1;
     }
+    relFacing = m11_creature_relative_facing(creatureDir,
+                                             state->world.party.direction);
+    pose = m11_creature_pose_for_view(relFacing, useAttackPose);
+    spriteIdx = m11_creature_sprite_for_pose(creatureType, depthIndex, pose);
+    if (spriteIdx == 0) return 0;
 
     /* Query replacement colors from the creature aspect data.
      * In DM1, creatures that share the same graphic set are
@@ -6704,9 +6670,10 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
     spriteW = (int)slot->width;
     spriteH = (int)slot->height;
 
-    /* Side creatures are mirrored: left side = normal (facing right),
-     * right side = mirrored (facing left), so they both face inward. */
-    useMirror = (sideHint > 0) ? 1 : 0;
+    /* Mirror only when the original pose needs it.
+     * Side pose orientation comes from creature direction relative to the
+     * party, not from which pane the creature happens to occupy. */
+    useMirror = m11_creature_pose_mirror(relFacing, pose);
 
     /* Scale to fit within the face rect while preserving aspect ratio.
      * DM1 perspective fidelity: side-cell creatures are drawn smaller
@@ -7004,7 +6971,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                                      paneX + 1, cy,
                                                      paneW - 2, slotH,
                                                      cell->creatureTypes[gi], depthIndex,
-                                                     side)) {
+                                                     side,
+                                                     cell->creatureDirections[gi])) {
                         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                       paneX + paneW / 2 - 1, cy + slotH / 2 - 2,
                                       3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
@@ -7021,7 +6989,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                                          paneX + 1, dy,
                                                          paneW - 2, dupH,
                                                          cell->creatureTypes[gi], depthIndex,
-                                                         side)) {
+                                                         side,
+                                                         cell->creatureDirections[gi])) {
                             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                           paneX + paneW / 2 - 1, dy + dupH / 2 - 2,
                                           3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
@@ -9785,7 +9754,22 @@ int M11_GameView_GetCreatureTransparentColor(int creatureType) {
 }
 
 unsigned int M11_GameView_GetCreatureSpriteForDepth(int creatureType, int depthIndex) {
-    return m11_creature_sprite_for_depth(creatureType, depthIndex);
+    return m11_creature_sprite_for_pose(creatureType, depthIndex,
+                                        M11_CREATURE_POSE_FRONT);
+}
+
+unsigned int M11_GameView_GetCreatureSpriteForView(int creatureType,
+                                                   int depthIndex,
+                                                   int creatureDir,
+                                                   int partyDir,
+                                                   int attacking,
+                                                   int* outMirror) {
+    int relFacing = m11_creature_relative_facing(creatureDir, partyDir);
+    int pose = m11_creature_pose_for_view(relFacing, attacking);
+    if (outMirror) {
+        *outMirror = m11_creature_pose_mirror(relFacing, pose);
+    }
+    return m11_creature_sprite_for_pose(creatureType, depthIndex, pose);
 }
 
 int M11_GameView_GetCreatureReplacementColors(int creatureType,
