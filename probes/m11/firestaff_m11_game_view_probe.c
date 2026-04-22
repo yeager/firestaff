@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -555,6 +556,12 @@ int main(int argc, char** argv) {
                      strcmp(syntheticView.lastOutcome, "DOOR OPENED") == 0 &&
                      (syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] & 0x07) == 0,
                  "space toggles a closed front door open and updates the real dungeon square");
+
+    probe_record(&tally,
+                 "INV_GV_07M",
+                 syntheticView.audioEventCount > 0 &&
+                     syntheticView.audioState.lastMarker == M11_AUDIO_MARKER_DOOR,
+                 "door interaction maps tick emissions to the M11 audio marker pipeline");
 
     initialTick = syntheticView.world.gameTick;
     initialHash = syntheticView.lastWorldHash;
@@ -2935,11 +2942,20 @@ int main(int argc, char** argv) {
             memset(fb_bright2, 0, sizeof(fb_bright2));
             M11_GameView_Draw(&assetView, fb_bright2, 320, 200);
 
-            /* Count black pixels in the viewport region */
+            /* Count visually dark pixels in the viewport region.
+             * With V1-faithful palette-level encoding, dimmed pixels
+             * keep their index but have a higher palette brightness
+             * level in the upper bits.  A pixel is "visually dark"
+             * when its palette level is >= 3 (heavy dimming) or its
+             * decoded index is 0 (black at any level). */
             for (y = 24; y < 142; ++y) {
                 for (x = 12; x < 208; ++x) {
-                    if (fb_dark2[y * 320 + x] == 0) darkBlack++;
-                    if (fb_bright2[y * 320 + x] == 0) brightBlack++;
+                    unsigned char dPx = fb_dark2[y * 320 + x];
+                    unsigned char bPx = fb_bright2[y * 320 + x];
+                    if (M11_FB_DECODE_INDEX(dPx) == 0 ||
+                        M11_FB_DECODE_LEVEL(dPx) >= 3) darkBlack++;
+                    if (M11_FB_DECODE_INDEX(bPx) == 0 ||
+                        M11_FB_DECODE_LEVEL(bPx) >= 3) brightBlack++;
                 }
             }
             probe_record(&tally,
@@ -3417,6 +3433,63 @@ int main(int argc, char** argv) {
                      fb[0] == 99 && fb[1] == 0 &&
                      fb[2] == 7 && fb[3] == 99,
                      "BlitScaledMirror skips transparent pixels");
+    }
+
+    /* INV_GV_153: V1-faithful depth dimming encodes palette brightness
+     * level in upper 4 bits of framebuffer pixels instead of remapping
+     * colour indices.  A dimmed viewport band should have pixels whose
+     * decoded level is > 0, while the colour index remains the original
+     * asset value. */
+    {
+        M11_GameViewState dimView;
+        unsigned char fb_dim[320 * 200];
+        int foundEncodedLevel = 0;
+        int foundPreservedIndex = 0;
+        int y, x;
+
+        M11_GameView_Init(&dimView);
+        (void)M11_GameView_OpenSelectedMenuEntry(&dimView, &menuState);
+        /* Draw a dark scene — light level 0 triggers heavy dimming */
+        dimView.world.magic.magicalLightAmount = 0;
+        memset(fb_dim, 0, sizeof(fb_dim));
+        M11_GameView_Draw(&dimView, fb_dim, 320, 200);
+
+        /* Scan far depth band (frames[2] region, approximately the
+         * upper/inner viewport area). */
+        for (y = 30; y < 80; ++y) {
+            for (x = 60; x < 160; ++x) {
+                unsigned char px = fb_dim[y * 320 + x];
+                int lvl = M11_FB_DECODE_LEVEL(px);
+                int idx = M11_FB_DECODE_INDEX(px);
+                if (lvl > 0) foundEncodedLevel = 1;
+                if (lvl > 0 && idx > 0) foundPreservedIndex = 1;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_153",
+                     foundEncodedLevel,
+                     "V1 depth dimming encodes palette level in upper bits");
+        probe_record(&tally,
+                     "INV_GV_154",
+                     foundPreservedIndex,
+                     "V1 depth dimming preserves original colour index");
+    }
+
+    /* INV_GV_155: M11_FB_ENCODE / DECODE macros round-trip correctly. */
+    {
+        int encodeOk = 1;
+        int idx, lvl;
+        for (lvl = 0; lvl < 6; ++lvl) {
+            for (idx = 0; idx < 16; ++idx) {
+                unsigned char encoded = M11_FB_ENCODE(idx, lvl);
+                if (M11_FB_DECODE_INDEX(encoded) != idx) encodeOk = 0;
+                if (M11_FB_DECODE_LEVEL(encoded) != lvl) encodeOk = 0;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_155",
+                     encodeOk,
+                     "M11_FB_ENCODE/DECODE round-trip for all index/level combos");
     }
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);

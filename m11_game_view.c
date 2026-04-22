@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 
 #include "asset_status_m12.h"
+#include "render_sdl_m11.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -306,6 +307,55 @@ static const char* m11_source_name(M11_GameSourceKind sourceKind) {
         default:
             return "BUILTIN";
     }
+}
+
+static M11_AudioMarker m11_audio_marker_from_emission(const struct TickEmission_Compat* emission) {
+    if (!emission) {
+        return M11_AUDIO_MARKER_NONE;
+    }
+    switch (emission->kind) {
+        case EMIT_PARTY_MOVED:
+            return M11_AUDIO_MARKER_FOOTSTEP;
+        case EMIT_DOOR_STATE:
+            return M11_AUDIO_MARKER_DOOR;
+        case EMIT_DAMAGE_DEALT:
+        case EMIT_KILL_NOTIFY:
+        case EMIT_CHAMPION_DOWN:
+            return M11_AUDIO_MARKER_COMBAT;
+        case EMIT_SPELL_EFFECT:
+            return M11_AUDIO_MARKER_SPELL;
+        case EMIT_SOUND_REQUEST:
+            switch (emission->payload[0]) {
+                case 1:
+                case 2:
+                    return M11_AUDIO_MARKER_DOOR;
+                case 3:
+                    return M11_AUDIO_MARKER_FOOTSTEP;
+                case 4:
+                    return M11_AUDIO_MARKER_COMBAT;
+                case 6:
+                    return M11_AUDIO_MARKER_SPELL;
+                default:
+                    return M11_AUDIO_MARKER_CREATURE;
+            }
+        default:
+            break;
+    }
+    return M11_AUDIO_MARKER_NONE;
+}
+
+static void m11_audio_emit_for_emission(M11_GameViewState* state,
+                                        const struct TickEmission_Compat* emission) {
+    M11_AudioMarker marker;
+    if (!state || !emission) {
+        return;
+    }
+    marker = m11_audio_marker_from_emission(emission);
+    if (marker == M11_AUDIO_MARKER_NONE) {
+        return;
+    }
+    (void)M11_Audio_EmitMarker(&state->audioState, marker);
+    state->audioEventCount += 1;
 }
 
 static int m11_join_path(char* out,
@@ -2855,6 +2905,7 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     }
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         const struct TickEmission_Compat* e = &state->lastTickResult.emissions[i];
+        m11_audio_emit_for_emission(state, e);
         switch (e->kind) {
             case EMIT_DAMAGE_DEALT: {
                 int champIdx = state->world.party.activeChampionIndex;
@@ -2941,6 +2992,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
         return;
     }
     memset(state, 0, sizeof(*state));
+    (void)M11_Audio_Init(&state->audioState);
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 }
@@ -2956,6 +3008,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (state->active) {
         F0883_WORLD_Free_Compat(&state->world);
     }
+    M11_Audio_Shutdown(&state->audioState);
     memset(state, 0, sizeof(*state));
 }
 
@@ -4248,6 +4301,7 @@ static int m11_toggle_front_door(M11_GameViewState* state) {
     state->lastTickResult.emissions[1].payload[1] = frontCell.mapX;
     state->lastTickResult.emissions[1].payload[2] = frontCell.mapY;
     state->lastTickResult.emissions[1].payload[3] = state->world.party.mapIndex;
+    M11_GameView_ProcessTickEmissions(state);
     m11_refresh_hash(state);
     state->lastTickResult.worldHashPost = state->lastWorldHash;
 
@@ -4645,8 +4699,19 @@ enum {
 
 /* Apply depth-based light dimming to a rectangular region.
  * depthIndex 0 = nearest (bright), 2 = far (dim).
- * Works by shifting high-value palette indices down toward darker
- * counterparts in the 16-color VGA palette. */
+ *
+ * V1-faithful approach: instead of remapping palette indices through a
+ * subjective dim_table, we set the per-pixel VGA palette brightness
+ * level in the upper 4 bits of each framebuffer byte.  This matches
+ * the original game, which achieves depth darkness by programming
+ * different RGB values into the VGA DAC registers for the same colour
+ * indices — same index, darker palette.  The RGBA conversion stage
+ * in render_sdl_m11 reads the per-pixel level and looks up the
+ * correct brightness from G9010_auc_VgaPaletteAll_Compat.
+ *
+ * Each depth pass adds 1 to the palette level, clamped to
+ * M11_PALETTE_LEVELS-1 (the darkest).  Palette level 0 is brightest
+ * (normal light), level 5 is the darkest. */
 static void m11_apply_depth_dimming(unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
@@ -4656,40 +4721,23 @@ static void m11_apply_depth_dimming(unsigned char* framebuffer,
                                     int rh,
                                     int depthIndex) {
     int yy, xx;
-    /* Dimming table: maps palette index to a darker equivalent.
-     * Applied once per depth level (depth 0 = no change). */
-    static const unsigned char g_dim_table[16] = {
-        0,  /* 0  BLACK       -> BLACK */
-        0,  /* 1  NAVY        -> BLACK */
-        0,  /* 2  GREEN       -> BLACK */
-        1,  /* 3  CYAN        -> NAVY  */
-        0,  /* 4  RED         -> BLACK */
-        0,  /* 5  (unused)    -> BLACK */
-        4,  /* 6  BROWN       -> RED   */
-        8,  /* 7  LIGHT_GRAY  -> DARK_GRAY */
-        0,  /* 8  DARK_GRAY   -> BLACK */
-        1,  /* 9  LIGHT_BLUE  -> NAVY  */
-        2,  /* 10 LIGHT_GREEN -> GREEN */
-        3,  /* 11 LIGHT_CYAN  -> CYAN  */
-        4,  /* 12 LIGHT_RED   -> RED   */
-        1,  /* 13 MAGENTA     -> NAVY  */
-        6,  /* 14 YELLOW      -> BROWN */
-        7   /* 15 WHITE       -> LIGHT_GRAY */
-    };
-    int passes;
     if (depthIndex <= 0) return;
-    passes = depthIndex; /* depth 1 = dim once, depth 2 = dim twice */
     for (yy = ry; yy < ry + rh && yy < fbH; ++yy) {
         if (yy < 0) continue;
         for (xx = rx; xx < rx + rw && xx < fbW; ++xx) {
-            int p;
-            unsigned char px;
+            unsigned char raw;
+            int idx;
+            int currentLevel;
+            int newLevel;
             if (xx < 0) continue;
-            px = framebuffer[yy * fbW + xx];
-            for (p = 0; p < passes; ++p) {
-                px = g_dim_table[px & 0x0F];
+            raw = framebuffer[yy * fbW + xx];
+            idx = M11_FB_DECODE_INDEX(raw);
+            currentLevel = M11_FB_DECODE_LEVEL(raw);
+            newLevel = currentLevel + depthIndex;
+            if (newLevel >= M11_PALETTE_LEVELS) {
+                newLevel = M11_PALETTE_LEVELS - 1;
             }
-            framebuffer[yy * fbW + xx] = px;
+            framebuffer[yy * fbW + xx] = M11_FB_ENCODE(idx, newLevel);
         }
     }
 }
@@ -5102,27 +5150,6 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
         default: spriteIdx = base;    break; /* 44x38 */
     }
 
-    /* Attack pose: try one set ahead for visual variety.
-     * If the alternate set fails to load, fall back to normal. */
-    if (useAttackPose) {
-        unsigned int attackBase = m11_creature_sprite_base(
-            (creatureType + 1) % 8);
-        if (attackBase != 0) {
-            unsigned int attackIdx;
-            const M11_AssetSlot* attackSlot;
-            switch (depthIndex) {
-                case 0: attackIdx = attackBase + 2; break;
-                case 1: attackIdx = attackBase + 1; break;
-                default: attackIdx = attackBase;    break;
-            }
-            attackSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader, attackIdx);
-            if (attackSlot && attackSlot->width > 0 && attackSlot->height > 0) {
-                spriteIdx = attackIdx;
-            }
-        }
-    }
-
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
@@ -5144,6 +5171,23 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
 
     drawX = x + (w - drawW) / 2;
     drawY = y + (h - drawH) / 2;
+
+    /* Attack cue should keep creature identity stable. Use a subtle
+     * forward lunge on the same sprite instead of swapping graphic sets. */
+    if (useAttackPose) {
+        int lungeW = drawW / 8;
+        int lungeH = drawH / 10;
+        if (lungeW < 1) lungeW = 1;
+        if (lungeH < 1) lungeH = 1;
+        if (drawW + lungeW <= w) {
+            drawX -= lungeW / 2;
+            drawW += lungeW;
+        }
+        if (drawH + lungeH <= h) {
+            drawY -= lungeH;
+            drawH += lungeH;
+        }
+    }
 
     /* Idle animation: on frame 1, bob the creature up by 1-2 pixels
      * to give a breathing / pulsing effect.  Frame 0 is the base pose.

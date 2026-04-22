@@ -194,23 +194,40 @@ static int m11_apply_window_mode(int windowMode) {
     return M11_RENDER_OK;
 }
 
-/* Build the 32-bit RGBA presentation pixels from the 4-bit framebuffer
-   using the currently active VGA palette level.
-   Pixel format: SDL_PIXELFORMAT_RGBA32 — R, G, B, A in memory order. */
+/* Build the 32-bit RGBA presentation pixels from the framebuffer.
+ *
+ * Each source byte encodes both a 4-bit VGA palette colour index
+ * (bits 0-3) and a per-pixel palette brightness level (bits 4-7).
+ * This matches the original game's approach of using VGA DAC
+ * register switching for depth-based dimming: the same colour
+ * index produces different RGB values at different brightness
+ * levels.
+ *
+ * When no per-pixel level is encoded (upper bits zero), the global
+ * paletteLevel acts as a fallback, preserving backward compatibility
+ * with code that writes bare 4-bit indices.
+ *
+ * Pixel format: SDL_PIXELFORMAT_RGBA32 — R, G, B, A in memory order. */
 static void m11_framebuffer_to_rgba(const unsigned char* src,
                                     int logicalWidth,
                                     int logicalHeight) {
     unsigned char* dst = g_state.presentBuffer;
-    const int level = g_state.paletteLevel;
+    const int globalLevel = g_state.paletteLevel;
     int pixelCount;
     if (!dst) {
         return;
     }
     pixelCount = logicalWidth * logicalHeight;
     for (int i = 0; i < pixelCount; ++i) {
-        unsigned char idx = src[i] & 0x0F; /* 4-bit palette */
-        const unsigned char* rgb =
-            G9010_auc_VgaPaletteAll_Compat[level][idx];
+        unsigned char raw = src[i];
+        unsigned char idx = raw & M11_FB_INDEX_MASK;
+        int perPixelLevel = (raw & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
+        int level = perPixelLevel > 0 ? perPixelLevel : globalLevel;
+        const unsigned char* rgb;
+        if (level >= M11_PALETTE_LEVELS) {
+            level = M11_PALETTE_LEVELS - 1;
+        }
+        rgb = G9010_auc_VgaPaletteAll_Compat[level][idx];
         dst[i * 4 + 0] = rgb[0];
         dst[i * 4 + 1] = rgb[1];
         dst[i * 4 + 2] = rgb[2];

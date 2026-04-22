@@ -36,6 +36,27 @@ extern "C" {
    0 = brightest, 5 = darkest. */
 #define M11_PALETTE_LEVELS 6
 
+/* Framebuffer pixel encoding for V1-faithful palette-level rendering.
+ *
+ * Each framebuffer byte encodes both the 4-bit VGA palette index and
+ * a per-pixel palette brightness level, matching the original game's
+ * use of VGA DAC register switching for depth-based dimming.
+ *
+ *   Bits 0-3: palette color index (0-15)
+ *   Bits 4-7: palette brightness level (0-5, clamped to M11_PALETTE_LEVELS-1)
+ *
+ * Level 0 = brightest (default), Level 5 = darkest.  Code that writes
+ * only a bare 4-bit index gets level 0 automatically (upper bits zero),
+ * so existing callers need no changes.
+ */
+#define M11_FB_INDEX_MASK   0x0F
+#define M11_FB_LEVEL_SHIFT  4
+#define M11_FB_LEVEL_MASK   0xF0
+#define M11_FB_ENCODE(index, level) \
+    (unsigned char)(((unsigned)(level) << M11_FB_LEVEL_SHIFT) | ((unsigned)(index) & M11_FB_INDEX_MASK))
+#define M11_FB_DECODE_INDEX(px) ((unsigned char)((px) & M11_FB_INDEX_MASK))
+#define M11_FB_DECODE_LEVEL(px) ((unsigned char)(((px) & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT))
+
 /* Scale modes. Only 1x and 2x have meaningful behaviour in Phase A; the
    rest are wired in Phase B. Kept here so the ABI does not shift later. */
 #define M11_SCALE_1X        0
