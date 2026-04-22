@@ -350,6 +350,16 @@ int M11_GameView_GetCreatureCoordinateSet(int creatureType);
 /* Return the transparent color index for a creature type. */
 int M11_GameView_GetCreatureTransparentColor(int creatureType);
 
+/* Return front-cell viewport placement for a creature duplicate using
+ * original Graphic558 center/bottom coordinates.  Exposed for probe
+ * verification of original-data-backed coordinate extraction. */
+void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
+                                            int depthIndex,
+                                            int visibleCount,
+                                            int slotIndex,
+                                            int* outCenterX,
+                                            int* outBottomY);
+
 /* Return the floor ornament ordinal for a viewport cell position.
  * relForward/relSide are relative to party position/facing. */
 int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,

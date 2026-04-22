@@ -5167,13 +5167,46 @@ int main(int argc, char** argv) {
                      "out-of-range creature type returns coordSet=0 transparent=0");
     }
 
+    /* INV_GV_254: exact front-cell creature coordinates use original
+     * Graphic558 center/bottom positions for DM1 sets 0-2. */
+    {
+        int cx = 0;
+        int by = 0;
+        M11_GameView_GetCreatureFrontSlotPoint(1, 0, 1, 0, &cx, &by);
+        probe_record(&tally, "INV_GV_254",
+                     cx == 111 && by == 119,
+                     "coord set 1 single creature uses original D1 c10 center/bottom");
+    }
+
+    /* INV_GV_255: coord set 1 two-creature placement uses original D2
+     * pair slots c6/c7 rather than the generic center slot. */
+    {
+        int cx0 = 0, by0 = 0, cx1 = 0, by1 = 0;
+        M11_GameView_GetCreatureFrontSlotPoint(1, 1, 2, 0, &cx0, &by0);
+        M11_GameView_GetCreatureFrontSlotPoint(1, 1, 2, 1, &cx1, &by1);
+        probe_record(&tally, "INV_GV_255",
+                     cx0 == 91 && by0 == 90 && cx1 == 132 && by1 == 90,
+                     "coord set 1 D2 pair uses original c6/c7 positions");
+    }
+
+    /* INV_GV_256: coord set 0 single creature uses original centered c5
+     * placement rather than a generic rectangle midpoint. */
+    {
+        int cx = 0;
+        int by = 0;
+        M11_GameView_GetCreatureFrontSlotPoint(0, 2, 1, 0, &cx, &by);
+        probe_record(&tally, "INV_GV_256",
+                     cx == 111 && by == 72,
+                     "coord set 0 single creature uses original D3 c5 center/bottom");
+    }
+
     /* ── Floor ornament ordinal query ── */
     {
         /* Query the front cell's floor ornament ordinal.
          * The actual value depends on dungeon data, but the API
          * should return >= 0 without crashing. */
         int frontFloorOrn = M11_GameView_GetFloorOrnamentOrdinal(&gameView, 1, 0);
-        probe_record(&tally, "INV_GV_254",
+        probe_record(&tally, "INV_GV_257",
                      frontFloorOrn >= 0,
                      "floor ornament ordinal query returns >= 0 for front cell");
     }

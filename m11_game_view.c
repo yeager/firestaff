@@ -853,63 +853,70 @@ static const M11_CreatureAspect s_creatureAspects[27] = {
 };
 
 /* ── DM1 Creature Viewport Coordinate Sets (G0224) ──
- * 3 depth levels × 11 coordinate sets × 5 sub-cell positions × 2 (X,Y)
- * Each entry is {X, Y} in viewport-local pixels for the original 224×136
- * viewport resolution.  Coordinate set is selected from the creature
- * aspect data.  Sub-cell positions are:
- *   0=back-left, 1=back-right, 2=front-left, 3=front-right, 4=center
- * Depth 0=near (D1), 1=mid (D2), 2=far (D3).
+ * Exact front-cell viewport coordinates extracted from original item 558
+ * documentation (Graphic558 / G0224). Each entry is {centerX, bottomY}
+ * in the original 224×136 viewport.
  *
- * NOTE: These are approximate values reconstructed from ReDMCSB disassembly
- * and visual comparison.  They provide correct relative positioning for
- * the viewport perspective, but exact pixel values may differ slightly
- * from the original.  Full pixel-perfect reconstruction requires reading
- * the G0224 table from GRAPHICS.DAT (Graphic558) at runtime.
+ * We only encode the 3 coordinate sets actually referenced by the DM1
+ * creature aspect table in this renderer (sets 0, 1 and 2).
+ *
+ * For set 0 / set 2 the five slots map to c1..c5.
+ * For set 1 the five slots map to c6..c10.
+ * Depth index mapping here is 0=D1, 1=D2, 2=D3.
  */
-static const unsigned char s_creatureCoordSets[3][11][5][2] = {
-    /* Depth 0 (D1 — nearest, largest creatures) */
+static const unsigned char s_creatureFrontCoordSets[3][3][5][2] = {
+    /* Depth 0 (D1) */
     {
-        /* Set 0 */  {{ 32, 66 }, { 96, 66 }, { 32, 66 }, { 96, 66 }, { 64, 66 }},
-        /* Set 1 */  {{ 24, 48 }, {104, 48 }, { 24, 72 }, {104, 72 }, { 64, 60 }},
-        /* Set 2 */  {{ 16, 40 }, {112, 40 }, { 16, 80 }, {112, 80 }, { 64, 60 }},
-        /* Set 3 */  {{ 32, 52 }, { 96, 52 }, { 32, 76 }, { 96, 76 }, { 64, 64 }},
-        /* Set 4 */  {{ 40, 56 }, { 88, 56 }, { 40, 72 }, { 88, 72 }, { 64, 64 }},
-        /* Set 5 */  {{ 28, 44 }, {100, 44 }, { 28, 76 }, {100, 76 }, { 64, 60 }},
-        /* Set 6 */  {{ 36, 50 }, { 92, 50 }, { 36, 74 }, { 92, 74 }, { 64, 62 }},
-        /* Set 7 */  {{ 20, 42 }, {108, 42 }, { 20, 78 }, {108, 78 }, { 64, 60 }},
-        /* Set 8 */  {{ 44, 58 }, { 84, 58 }, { 44, 70 }, { 84, 70 }, { 64, 64 }},
-        /* Set 9 */  {{ 24, 46 }, {104, 46 }, { 24, 74 }, {104, 74 }, { 64, 60 }},
-        /* Set 10 */ {{ 30, 50 }, { 98, 50 }, { 30, 74 }, { 98, 74 }, { 64, 62 }}
+        /* Set 0: c1..c5 */  {{ 83,103 }, {141,103 }, {148,119 }, { 76,119 }, {109,111 }},
+        /* Set 1: c6..c10 */ {{ 81,119 }, {142,119 }, {111,105 }, {111,111 }, {111,119 }},
+        /* Set 2: c1..c5 */  {{ 83, 94 }, {141, 94 }, {148, 98 }, { 76, 98 }, {109, 96 }}
     },
-    /* Depth 1 (D2 — mid) */
+    /* Depth 1 (D2) */
     {
-        /* Set 0 */  {{ 56, 60 }, { 72, 60 }, { 56, 60 }, { 72, 60 }, { 64, 60 }},
-        /* Set 1 */  {{ 48, 52 }, { 80, 52 }, { 48, 64 }, { 80, 64 }, { 64, 58 }},
-        /* Set 2 */  {{ 40, 46 }, { 88, 46 }, { 40, 68 }, { 88, 68 }, { 64, 56 }},
-        /* Set 3 */  {{ 52, 54 }, { 76, 54 }, { 52, 66 }, { 76, 66 }, { 64, 60 }},
-        /* Set 4 */  {{ 56, 56 }, { 72, 56 }, { 56, 64 }, { 72, 64 }, { 64, 60 }},
-        /* Set 5 */  {{ 46, 50 }, { 82, 50 }, { 46, 66 }, { 82, 66 }, { 64, 58 }},
-        /* Set 6 */  {{ 50, 52 }, { 78, 52 }, { 50, 64 }, { 78, 64 }, { 64, 58 }},
-        /* Set 7 */  {{ 42, 48 }, { 86, 48 }, { 42, 66 }, { 86, 66 }, { 64, 56 }},
-        /* Set 8 */  {{ 58, 58 }, { 70, 58 }, { 58, 62 }, { 70, 62 }, { 64, 60 }},
-        /* Set 9 */  {{ 46, 52 }, { 82, 52 }, { 46, 64 }, { 82, 64 }, { 64, 58 }},
-        /* Set 10 */ {{ 50, 52 }, { 78, 52 }, { 50, 64 }, { 78, 64 }, { 64, 58 }}
+        /* Set 0: c1..c5 */  {{ 92, 81 }, {131, 81 }, {132, 90 }, { 91, 90 }, {111, 85 }},
+        /* Set 1: c6..c10 */ {{ 91, 90 }, {132, 90 }, {111, 83 }, {111, 85 }, {111, 90 }},
+        /* Set 2: c1..c5 */  {{ 92, 73 }, {131, 73 }, {132, 78 }, { 91, 78 }, {111, 75 }}
     },
-    /* Depth 2 (D3 — farthest, smallest) */
+    /* Depth 2 (D3) */
     {
-        /* Set 0 */  {{ 60, 56 }, { 68, 56 }, { 60, 56 }, { 68, 56 }, { 64, 56 }},
-        /* Set 1 */  {{ 56, 52 }, { 72, 52 }, { 56, 58 }, { 72, 58 }, { 64, 55 }},
-        /* Set 2 */  {{ 52, 50 }, { 76, 50 }, { 52, 60 }, { 76, 60 }, { 64, 54 }},
-        /* Set 3 */  {{ 58, 54 }, { 70, 54 }, { 58, 58 }, { 70, 58 }, { 64, 56 }},
-        /* Set 4 */  {{ 60, 55 }, { 68, 55 }, { 60, 57 }, { 68, 57 }, { 64, 56 }},
-        /* Set 5 */  {{ 55, 52 }, { 73, 52 }, { 55, 58 }, { 73, 58 }, { 64, 55 }},
-        /* Set 6 */  {{ 57, 53 }, { 71, 53 }, { 57, 58 }, { 71, 58 }, { 64, 55 }},
-        /* Set 7 */  {{ 54, 51 }, { 74, 51 }, { 54, 59 }, { 74, 59 }, { 64, 54 }},
-        /* Set 8 */  {{ 61, 56 }, { 67, 56 }, { 61, 57 }, { 67, 57 }, { 64, 56 }},
-        /* Set 9 */  {{ 56, 52 }, { 72, 52 }, { 56, 58 }, { 72, 58 }, { 64, 55 }},
-        /* Set 10 */ {{ 57, 53 }, { 71, 53 }, { 57, 58 }, { 71, 58 }, { 64, 55 }}
+        /* Set 0: c1..c5 */  {{ 95, 70 }, {127, 70 }, {129, 75 }, { 93, 75 }, {111, 72 }},
+        /* Set 1: c6..c10 */ {{ 94, 75 }, {128, 75 }, {111, 70 }, {111, 72 }, {111, 75 }},
+        /* Set 2: c1..c5 */  {{ 95, 59 }, {127, 59 }, {129, 61 }, { 93, 61 }, {111, 60 }}
     }
 };
+
+void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
+                                            int depthIndex,
+                                            int visibleCount,
+                                            int slotIndex,
+                                            int* outCenterX,
+                                            int* outBottomY) {
+    int pointIndex = 4;
+    if (outCenterX) *outCenterX = 111;
+    if (outBottomY) *outBottomY = (depthIndex <= 0) ? 111 : (depthIndex == 1 ? 85 : 72);
+    if (coordSet < 0 || coordSet > 2 || depthIndex < 0 || depthIndex > 2 ||
+        slotIndex < 0 || slotIndex > 3) {
+        return;
+    }
+
+    if (coordSet == 1) {
+        if (visibleCount <= 1) {
+            pointIndex = 4; /* c10 */
+        } else {
+            pointIndex = slotIndex < 2 ? slotIndex : 4; /* c6/c7, clamp extras */
+        }
+    } else {
+        if (visibleCount <= 1) {
+            pointIndex = 4; /* c5 */
+        } else {
+            pointIndex = slotIndex;
+            if (pointIndex > 3) pointIndex = 3;
+        }
+    }
+
+    if (outCenterX) *outCenterX = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][0];
+    if (outBottomY) *outBottomY = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][1];
+}
 
 /* Query the creature aspect's coordinate set index (0-10) for a type. */
 static int m11_creature_coordinate_set(int creatureType) {
@@ -5633,28 +5640,34 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                 int ofsY = (slotH - dupH) / 2;
                 if (ofsX < 1) ofsX = 1;
                 if (ofsY < 1) ofsY = 1;
-                /* DM1 creature sub-cell positioning from coordinate set data.
-                 * When coordinate sets are available, use the original's
-                 * sub-cell layout (0=BL, 1=BR, 2=FL, 3=FR) scaled to
-                 * the face rect.  The coordinate set is selected by the
-                 * creature aspect data.
-                 * Ref: ReDMCSB G0224 s_creatureCoordSets. */
+                /* DM1 creature front-cell positioning from original
+                 * Graphic558 coordinates. The stored points are center X and
+                 * bottom Y in the 224x136 viewport, so convert them into the
+                 * local face rectangle and then anchor the duplicate sprite
+                 * by its bottom center. */
                 {
                     int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
                     int dIdx = depthIndex < 3 ? depthIndex : 2;
-                    if (coordSet >= 0 && coordSet < 11) {
-                        /* Map original 224-pixel viewport coordinates to face rect.
-                         * Original viewport is 224w x 136h. */
+                    if (coordSet >= 0 && coordSet <= 2) {
                         for (di = 0; di < visibleDups && di < 4; ++di) {
-                            int origX = (int)s_creatureCoordSets[dIdx][coordSet][di][0];
-                            int origY = (int)s_creatureCoordSets[dIdx][coordSet][di][1];
-                            dupOffX[di] = (origX - 64) * faceW / 224 + (faceW - dupW) / 2;
-                            dupOffY[di] = (origY - 56) * faceH / 136 + (faceH - dupH) / 2;
-                            /* Clamp to face bounds */
+                            int origCenterX;
+                            int origBottomY;
+                            int localCenterX;
+                            int localBottomY;
+                            M11_GameView_GetCreatureFrontSlotPoint(coordSet, dIdx,
+                                                                   visibleDups, di,
+                                                                   &origCenterX,
+                                                                   &origBottomY);
+                            localCenterX = (origCenterX * faceW) / 224;
+                            localBottomY = (origBottomY * faceH) / 136;
+                            dupOffX[di] = localCenterX - dupW / 2;
+                            dupOffY[di] = localBottomY - dupH;
                             if (dupOffX[di] < 0) dupOffX[di] = 0;
                             if (dupOffY[di] < 0) dupOffY[di] = 0;
                             if (dupOffX[di] + dupW > slotW + ofsX * 2)
                                 dupOffX[di] = slotW + ofsX * 2 - dupW;
+                            if (dupOffY[di] + dupH > slotH + ofsY * 2)
+                                dupOffY[di] = slotH + ofsY * 2 - dupH;
                         }
                     } else {
                         /* Fallback: grid layout */
