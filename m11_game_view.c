@@ -7316,72 +7316,123 @@ void M11_GameView_Draw(const M11_GameViewState* state,
 
     /* Spell panel overlay */
     if (state->spellPanelOpen) {
+        /* ── P4 V1 Presentation: DM1-style rune-dominant spell panel ── */
         int spI;
-        int spX = 40;
-        int spY = 52;
+        int pnlX = 24, pnlY = 36, pnlW = 180, pnlH = 110;
         int row = state->spellRuneRow < 4 ? state->spellRuneRow : 3;
+        const char* rowNames[4] = { "POWER", "ELEMENT", "FORM", "CLASS" };
+
+        /* Panel background with DM1-style double border */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      spX - 4, spY - 4, 240, 82, M11_COLOR_BLACK);
+                      pnlX, pnlY, pnlW, pnlH, M11_COLOR_BLACK);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      spX - 4, spY - 4, 240, 82, M11_COLOR_LIGHT_BLUE);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      spX, spY, "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)", &g_text_small);
-        /* Show current rune buffer */
+                      pnlX, pnlY, pnlW, pnlH, M11_COLOR_BROWN);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      pnlX + 2, pnlY + 2, pnlW - 4, pnlH - 4, M11_COLOR_BROWN);
+
+        /* ── Selected rune sequence (prominent, top of panel) ── */
         {
             char buf[64];
             int bI;
+            int seqY = pnlY + 6;
             buf[0] = '\0';
             for (bI = 0; bI < state->spellBuffer.runeCount; ++bI) {
                 int rv = state->spellBuffer.runes[bI];
                 int rr = (rv - 0x60) / 6;
                 int rc = (rv - 0x60) % 6;
                 if (rr >= 0 && rr < 4 && rc >= 0 && rc < 6) {
-                    if (bI > 0) strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+                    if (bI > 0) strncat(buf, "  ", sizeof(buf) - strlen(buf) - 1);
                     strncat(buf, g_rune_names[rr][rc], sizeof(buf) - strlen(buf) - 1);
                 }
             }
             if (buf[0] != '\0') {
-                M11_TextStyle spStyle = g_text_small;
-                spStyle.color = M11_COLOR_GREEN;
+                M11_TextStyle seqStyle = g_text_title;
+                seqStyle.color = M11_COLOR_LIGHT_GREEN;
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              spX, spY + 10, buf, &spStyle);
+                              pnlX + 8, seqY, buf, &seqStyle);
+            } else {
+                /* Empty sequence placeholder */
+                M11_TextStyle dimStyle = g_text_small;
+                dimStyle.color = M11_COLOR_DARK_GRAY;
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              pnlX + 8, seqY + 2, "- - - -", &dimStyle);
             }
         }
-        /* Show the active rune row */
+
+        /* ── Separator line below rune sequence ── */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      pnlX + 6, pnlY + 22, pnlW - 12, 1, M11_COLOR_BROWN);
+
+        /* ── Active rune row: category label + large rune buttons ── */
         if (state->spellBuffer.runeCount < 4) {
-            char rowLabel[64];
-            const char* rowNames[4] = { "POWER", "ELEMENT", "FORM", "CLASS" };
-            snprintf(rowLabel, sizeof(rowLabel), "ROW %d: %s", row + 1, rowNames[row]);
+            int runeW = 26, runeH = 20;
+            int rowStartX = pnlX + 6;
+            int runeY = pnlY + 38;
+            M11_TextStyle catStyle = g_text_small;
+            catStyle.color = M11_COLOR_YELLOW;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          spX, spY + 22, rowLabel, &g_text_small);
+                          pnlX + 8, pnlY + 26, rowNames[row], &catStyle);
             for (spI = 0; spI < 6; ++spI) {
-                char label[12];
-                int bx = spX + spI * 38;
-                int by = spY + 32;
-                snprintf(label, sizeof(label), "%d:%s", spI + 1, g_rune_names[row][spI]);
+                int bx = rowStartX + spI * (runeW + 2);
+                M11_TextStyle runeStyle = g_text_shadow;
+                runeStyle.color = M11_COLOR_WHITE;
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              bx, by, 36, 14, M11_COLOR_DARK_GRAY);
+                              bx, runeY, runeW, runeH, M11_COLOR_NAVY);
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              bx, by, 36, 14, M11_COLOR_WHITE);
+                              bx, runeY, runeW, runeH, M11_COLOR_LIGHT_BLUE);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              bx + 2, by + 3, label, &g_text_small);
+                              bx + 3, runeY + 6, g_rune_names[row][spI],
+                              &runeStyle);
             }
         } else {
-            M11_TextStyle readyStyle = g_text_small;
-            readyStyle.color = M11_COLOR_GREEN;
+            /* All 4 runes selected — show cast-ready state */
+            M11_TextStyle readyStyle = g_text_title;
+            readyStyle.color = M11_COLOR_LIGHT_GREEN;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          spX, spY + 22, "READY TO CAST (C) OR CLEAR (V)", &readyStyle);
+                          pnlX + 40, pnlY + 42, "CAST", &readyStyle);
         }
-        /* Show mana of active champion */
+
+        /* ── Mana indicator (compact bar + value) ── */
         if (state->world.party.activeChampionIndex >= 0 &&
             state->world.party.activeChampionIndex < CHAMPION_MAX_PARTY) {
             const struct ChampionState_Compat* sc =
                 &state->world.party.champions[state->world.party.activeChampionIndex];
-            char manaLine[48];
-            snprintf(manaLine, sizeof(manaLine), "MANA: %d/%d",
+            int barX = pnlX + 8, barY = pnlY + 64;
+            int barW = pnlW - 16, barH = 6;
+            int fillW;
+            char manaStr[24];
+            M11_TextStyle manaStyle = g_text_small;
+            manaStyle.color = M11_COLOR_LIGHT_CYAN;
+            /* Mana bar outline */
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          barX, barY, barW, barH, M11_COLOR_DARK_GRAY);
+            /* Mana bar fill */
+            fillW = (sc->mana.maximum > 0)
+                ? (int)((long)sc->mana.current * (barW - 2) / sc->mana.maximum)
+                : 0;
+            if (fillW > barW - 2) fillW = barW - 2;
+            if (fillW > 0) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              barX + 1, barY + 1, fillW, barH - 2,
+                              M11_COLOR_LIGHT_BLUE);
+            }
+            snprintf(manaStr, sizeof(manaStr), "%d/%d",
                      (int)sc->mana.current, (int)sc->mana.maximum);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          spX, spY + 58, manaLine, &g_text_small);
+                          barX, barY + barH + 2, manaStr, &manaStyle);
+        }
+
+        /* ── Remaining rune rows shown dimmed below active row ── */
+        if (state->spellBuffer.runeCount < 4) {
+            int futRow;
+            int dimY = pnlY + 76;
+            M11_TextStyle dimStyle = g_text_small;
+            dimStyle.color = M11_COLOR_DARK_GRAY;
+            for (futRow = row + 1; futRow < 4; ++futRow) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              pnlX + 8, dimY, rowNames[futRow], &dimStyle);
+                dimY += 10;
+            }
         }
     }
 
