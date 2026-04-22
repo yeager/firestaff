@@ -3829,6 +3829,7 @@ typedef struct M11_ViewportCell {
     int creatureType; /* -1 if no creature, else creature type index (0-26) */
     /* All creature group types on this square (up to 4, -1 terminated) */
     int creatureTypes[M11_MAX_CELL_CREATURES];
+    int creatureCountsPerGroup[M11_MAX_CELL_CREATURES]; /* creature count per group (count+1) */
     int creatureGroupCount; /* number of valid entries in creatureTypes[] */
     /* First floor item info for sprite rendering (legacy single-item) */
     int firstItemThingType;    /* THING_TYPE_WEAPON..JUNK, or -1 if no item */
@@ -4284,7 +4285,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.firstThing = THING_ENDOFLIST;
     cell.doorState = -1;
     cell.creatureType = -1;
-    { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) cell.creatureTypes[ci] = -1; }
+    { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) { cell.creatureTypes[ci] = -1; cell.creatureCountsPerGroup[ci] = 0; } }
     cell.creatureGroupCount = 0;
     cell.firstItemThingType = -1;
     cell.firstItemSubtype = -1;
@@ -4368,6 +4369,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                         cell.creatureType = ct; /* legacy compat */
                     }
                     cell.creatureTypes[cell.creatureGroupCount] = ct;
+                    cell.creatureCountsPerGroup[cell.creatureGroupCount] =
+                        (int)state->world.things->groups[gIdx].count + 1;
                     cell.creatureGroupCount++;
                 }
             }
@@ -5017,6 +5020,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         for (gi = 0; gi < groupCount; ++gi) {
             int cx = faceX + 4 + gi * stepX;
             int cy = faceY + 5;
+            int countInGroup = cell->creatureCountsPerGroup[gi];
             if (cell->creatureTypes[gi] < 0) continue;
             if (!g_drawState ||
                 !m11_draw_creature_sprite(g_drawState, framebuffer,
@@ -5025,6 +5029,20 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                           cell->creatureTypes[gi], depthIndex)) {
                 m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
                                       cx, cy, slotW, slotH, depthIndex);
+            }
+            /* DM1-faithful creature count indicator.
+             * When a group contains multiple creatures (count > 1),
+             * draw a small numeric badge in the bottom-right of the
+             * creature's slot. */
+            if (countInGroup > 1 && slotW >= 12 && slotH >= 12) {
+                char countStr[4];
+                int badgeX = cx + slotW - 8;
+                int badgeY = cy + slotH - 8;
+                snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              badgeX, badgeY, countStr, &g_text_small);
             }
         }
     }
@@ -6004,6 +6022,20 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
                            paneX + paneW / 2, paneY + 2, paneY + paneH - 3, M11_COLOR_YELLOW);
         }
+        /* Draw door ornament on side-visible doors.
+         * DM1 renders door ornaments on the side-view door frame
+         * when the door has a decorative element (button, keyhole, etc.). */
+        if (cell->doorOrnamentOrdinal >= 0 && g_drawState) {
+            M11_ViewRect sideOrnRect;
+            sideOrnRect.x = paneX;
+            sideOrnRect.y = paneY;
+            sideOrnRect.w = paneW;
+            sideOrnRect.h = paneH;
+            m11_draw_door_ornament(g_drawState, framebuffer,
+                                   framebufferWidth, framebufferHeight,
+                                   &sideOrnRect, cell->doorOrnamentOrdinal,
+                                   depthIndex);
+        }
         /* Re-draw the accent border on top so the door element
          * accent colour stays visible in probe invariants. */
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -6025,6 +6057,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                 : 0;
             for (gi = 0; gi < groupCount; ++gi) {
                 int cy = paneY + 1 + gi * stepY;
+                int countInGroup = cell->creatureCountsPerGroup[gi];
                 if (cell->creatureTypes[gi] < 0) continue;
                 if (!g_drawState ||
                     !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
@@ -6037,9 +6070,44 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                   paneX + paneW / 2 - 1, cy + slotH / 2 - 2,
                                   3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
                 }
+                /* Multi-creature group count badge in side panes */
+                if (countInGroup > 1 && paneW >= 10 && slotH >= 10) {
+                    char countStr[4];
+                    int badgeX = paneX + paneW - 9;
+                    int badgeY = cy + slotH - 8;
+                    snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
+                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                  badgeX, badgeY, countStr, &g_text_small);
+                }
             }
         }
-        if (cell->summary.items > 0) {
+        /* ── Side-pane item sprites ──
+         * DM1 draws item sprites in side cells similarly to front cells,
+         * just smaller to fit the narrower pane. */
+        if (cell->floorItemCount > 0) {
+            int ii;
+            int itemArea = paneH / 3;
+            int itemBaseY = paneY + paneH - itemArea - 2;
+            for (ii = 0; ii < cell->floorItemCount; ++ii) {
+                if (cell->floorItemTypes[ii] < 0) continue;
+                if (!g_drawState ||
+                    !m11_draw_item_sprite(g_drawState, framebuffer,
+                                          framebufferWidth, framebufferHeight,
+                                          paneX + 1, itemBaseY,
+                                          paneW - 2, itemArea,
+                                          cell->floorItemTypes[ii],
+                                          cell->floorItemSubtypes[ii],
+                                          depthIndex + 1)) {
+                    if (ii == 0) {
+                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      paneX + paneW / 2 - 2, paneY + paneH - 4,
+                                      5, 2, M11_COLOR_YELLOW);
+                    }
+                }
+            }
+        } else if (cell->summary.items > 0) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           paneX + paneW / 2 - 2, paneY + paneH - 4,
                           5, 2, M11_COLOR_YELLOW);
@@ -6084,7 +6152,16 @@ static void m11_format_lane_label(const M11_ViewportCell* cell,
         return;
     }
     if (cell->summary.groups > 0) {
-        snprintf(out, outSize, "%s %dG", prefix ? prefix : "?", cell->summary.groups);
+        int totalCreatures = 0;
+        int gi;
+        for (gi = 0; gi < cell->creatureGroupCount && gi < M11_MAX_CELL_CREATURES; ++gi) {
+            totalCreatures += cell->creatureCountsPerGroup[gi];
+        }
+        if (totalCreatures > 0) {
+            snprintf(out, outSize, "%s %dC", prefix ? prefix : "?", totalCreatures);
+        } else {
+            snprintf(out, outSize, "%s %dG", prefix ? prefix : "?", cell->summary.groups);
+        }
         return;
     }
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
