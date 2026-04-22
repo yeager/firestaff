@@ -22,6 +22,7 @@ typedef struct {
 
     /* Per-game options (indexed by game slot 0..M12_CONFIG_GAME_COUNT-1) */
     int gameUsePatch[M12_CONFIG_GAME_COUNT];
+    int gameLanguageIndex[M12_CONFIG_GAME_COUNT];
     int gameCheatsEnabled[M12_CONFIG_GAME_COUNT];
     int gameSpeed[M12_CONFIG_GAME_COUNT];
     int gameAspectRatio[M12_CONFIG_GAME_COUNT];

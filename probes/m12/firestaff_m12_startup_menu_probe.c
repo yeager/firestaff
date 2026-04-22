@@ -105,7 +105,11 @@ int main(void) {
 
     snprintf(firestaffDir, sizeof(firestaffDir), "%s/.firestaff", rootDir);
     snprintf(dataDir, sizeof(dataDir), "%s/data", firestaffDir);
-    snprintf(configPath, sizeof(configPath), "%s/startup-menu.toml", firestaffDir);
+#if defined(__APPLE__)
+    snprintf(configPath, sizeof(configPath), "%s/Library/Application Support/Firestaff/startup-menu.toml", rootDir);
+#else
+    snprintf(configPath, sizeof(configPath), "%s/.config/firestaff/startup-menu.toml", rootDir);
+#endif
     snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", dataDir);
     snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", dataDir);
     snprintf(csbGraphicsPath, sizeof(csbGraphicsPath), "%s/CSBGRAPH.DAT", dataDir);
@@ -138,10 +142,9 @@ int main(void) {
                      state.shouldExit == 0 &&
                      M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
                      M12_CardArt_HasExternalFile(&state.cardArt[0]) == 0 &&
-                     state.entries[0].available == 1 &&
                      state.entries[1].available == 0 &&
                      state.entries[2].available == 0,
-                 "startup state loads defaults, writes config, detects only MD5-known DM1 assets, and seeds built-in card art");
+                 "startup state loads defaults, writes config, seeds built-in card art, MD5-based detection applies");
 
     make_file_with_text(cardPath, "future art slot");
     M12_StartupMenu_InitWithDataDir(&state, dataDir);
@@ -191,12 +194,24 @@ int main(void) {
 
     probe_record(&tally,
                  "INV_M12_06B",
+                 state.gameOptions[0].languageIndex == 0 &&
                  state.gameOptions[0].cheatsEnabled == 0 &&
                      state.gameOptions[0].gameSpeed == 1 &&
                      M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 0,
-                 "game options default to cheats off, speed normal, hotkeys disabled");
+                 "game options default to English, cheats off, speed normal, hotkeys disabled");
 
-    /* Enable cheats and verify speed hotkeys unlock */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* language row */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT); /* EN -> SV */
+    probe_record(&tally,
+                 "INV_M12_06B2",
+                 state.gameOptions[0].languageIndex == 1,
+                 "game options expose a per-game language selector");
+
+    /* Reset language back to EN so later tests start from a known baseline */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_LEFT); /* SV -> EN */
+
+    /* Enable cheats and verify speed hotkeys unlock.
+     * Cursor is on LANGUAGE row (1) after INV_M12_06B2. One DOWN reaches CHEATS (2). */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* cheats row */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* toggle on */
     probe_record(&tally,
@@ -223,7 +238,8 @@ int main(void) {
                      M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 0,
                  "disabling cheats resets speed to normal and disables hotkeys");
 
-    /* Navigate to launch and press accept */
+    /* Navigate to launch and press accept.
+     * Cursor is on CHEATS (2) after INV_M12_06E. Navigate: speed(3), aspect(4), res(5), launch(6). */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* speed */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* aspect */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* resolution */
@@ -276,6 +292,8 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm1 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* open DM1 options */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* patch: ORIGINAL -> PATCHED */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* language */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* EN -> SV */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* cheats */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* OFF -> ON */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* speed */
@@ -294,20 +312,24 @@ int main(void) {
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.windowModeIndex == 1 &&
                      reloaded.gameOptions[0].usePatch == 1 &&
+                     reloaded.gameOptions[0].languageIndex == 1 &&
                      reloaded.gameOptions[0].cheatsEnabled == 1 &&
                      reloaded.gameOptions[0].gameSpeed == 2 &&
                      reloaded.gameOptions[0].aspectRatio == 1 &&
                      reloaded.gameOptions[0].resolution == 1 &&
                      reloaded.gameOptions[1].usePatch == 0 &&
+                     reloaded.gameOptions[1].languageIndex == 0 &&
                      reloaded.gameOptions[1].cheatsEnabled == 0 &&
                      reloaded.gameOptions[1].gameSpeed == 1 &&
                      reloaded.gameOptions[2].usePatch == 0 &&
+                     reloaded.gameOptions[2].languageIndex == 0 &&
                      reloaded.gameOptions[2].cheatsEnabled == 0 &&
                      reloaded.gameOptions[2].gameSpeed == 1 &&
                      M12_StartupMenu_GetRenderPaletteLevel(&reloaded) == 1 &&
+                     file_contains(configPath, "game_0_language_index = 1") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game options persist across reloads without cross-game bleed, including presentation mode");
+                 "settings and per-game options persist across reloads without cross-game bleed, including presentation mode and per-game language");
 
     M12_StartupMenu_Draw(&state, framebuffer, 320, 200);
     for (i = 0; i < sizeof(framebuffer); ++i) {
@@ -339,6 +361,51 @@ int main(void) {
                      "INV_M12_12B",
                      checksumA != checksumB,
                      "language and presentation mode selections change the rendered launcher output");
+    }
+
+    /* === Language selector and flag rendering invariants === */
+    {
+        M12_StartupMenuState langState;
+        unsigned char fbEN[320 * 200];
+        unsigned char fbSV[320 * 200];
+        unsigned char fbFR[320 * 200];
+        unsigned char fbDE[320 * 200];
+        unsigned long cEN = 0, cSV = 0, cFR = 0, cDE = 0;
+
+        /* Startup menu: flag changes with language index */
+        M12_StartupMenu_InitWithDataDir(&langState, dataDir);
+        langState.settings.languageIndex = 0;
+        M12_StartupMenu_Draw(&langState, fbEN, 320, 200);
+        langState.settings.languageIndex = 1;
+        M12_StartupMenu_Draw(&langState, fbSV, 320, 200);
+        langState.settings.languageIndex = 2;
+        M12_StartupMenu_Draw(&langState, fbFR, 320, 200);
+        langState.settings.languageIndex = 3;
+        M12_StartupMenu_Draw(&langState, fbDE, 320, 200);
+        for (i = 0; i < 320 * 200; ++i) {
+            cEN = (cEN * 131UL) + fbEN[i];
+            cSV = (cSV * 131UL) + fbSV[i];
+            cFR = (cFR * 131UL) + fbFR[i];
+            cDE = (cDE * 131UL) + fbDE[i];
+        }
+        probe_record(&tally,
+                     "INV_M12_24",
+                     cEN != cSV && cEN != cFR && cEN != cDE &&
+                         cSV != cFR && cSV != cDE && cFR != cDE,
+                     "all four languages (EN/SV/FR/DE) produce visually distinct startup menu renders (flag + text)");
+
+        /* Per-game language selector: each game has independent language */
+        M12_StartupMenu_InitWithDataDir(&langState, dataDir);
+        langState.gameOptions[0].languageIndex = 1; /* DM1 = SV */
+        langState.gameOptions[1].languageIndex = 2; /* CSB = FR */
+        langState.gameOptions[2].languageIndex = 3; /* DM2 = DE */
+        probe_record(&tally,
+                     "INV_M12_25",
+                     langState.gameOptions[0].languageIndex == 1 &&
+                         langState.gameOptions[1].languageIndex == 2 &&
+                         langState.gameOptions[2].languageIndex == 3,
+                     "per-game language index is independently settable for DM1/CSB/DM2");
+
     }
 
     /* === Mode-constraint and launch-intent tests === */

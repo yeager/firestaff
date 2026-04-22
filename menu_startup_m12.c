@@ -552,13 +552,6 @@ static const char* m12_settings_value_language(const M12_StartupMenuState* state
     return g_languages[state->settings.languageIndex];
 }
 
-static const char* m12_game_value_language(const M12_GameOptions* opts) {
-    int index = opts ? m12_clamp_index(opts->languageIndex,
-                                       (int)(sizeof(g_languages) / sizeof(g_languages[0])))
-                     : 0;
-    return g_languages[index];
-}
-
 static const char* m12_game_value_language_name(const M12_GameOptions* opts) {
     int index = opts ? m12_clamp_index(opts->languageIndex,
                                        (int)(sizeof(g_languageNames) / sizeof(g_languageNames[0])))

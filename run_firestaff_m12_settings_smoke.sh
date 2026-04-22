@@ -62,10 +62,13 @@ cc $CFLAGS_COMMON $SDL_FLAG $SDL_CFLAGS \
     "$HERE/m11_game_view.c" \
     "$HERE/audio_sdl_m11.c" \
     "$HERE/asset_loader_m11.c" \
+    "$HERE/font_m11.c" \
+    "$HERE/fs_portable_compat.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
     "$HERE/branding_logo_m12.c" \
     "$HERE/card_art_m12.c" \
+    "$HERE/creature_art_m12.c" \
     "$HERE/menu_startup_m12.c" \
     "$HERE/render_sdl_m11.c" \
     "$HERE/memory_tick_orchestrator_pc34_compat.c" \

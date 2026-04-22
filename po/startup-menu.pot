@@ -1,39 +1,226 @@
 # Firestaff — startup-menu domain template.
-# This file is the canonical source-string template for the startup menu.
-# Translators: use this as the base for new language catalogs.
+# Canonical English source-string template for the startup menu.
 #
 # Domain: startup-menu
 # Covers: top-level launcher, mode selection, game cards, credits/about,
-#         launcher-only errors/status text.
+#         launcher-only errors/status text, settings, game options.
 #
-# NOTE: This is a seed file (Slice 1). Strings will be populated as the
-# i18n runtime is implemented in later slices.
+# NOTE: Extracted from g_localeText[0] in menu_startup_m12.c (M12 pass).
+# This is the authoritative set of user-facing startup menu strings.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-startup-menu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: \n"
+"POT-Creation-Date: 2026-04-22 11:20+0200\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. Title shown at the top of the startup launcher
-msgid "startup.title"
+#. Launcher title / eyebrow
+msgid "FRONTEND PREVIEW"
 msgstr ""
 
-#. Game card label for Dungeon Master 1
-msgid "startup.game.dm1"
+#. Main menu heading
+msgid "SELECT A DESTINATION"
 msgstr ""
 
-#. Game card label for Chaos Strikes Back
-msgid "startup.game.csb"
+#. Settings panel title
+msgid "SETTINGS"
 msgstr ""
 
-#. Game card label for Dungeon Master 2
-msgid "startup.game.dm2"
+#. Status label
+msgid "STATUS"
+msgstr ""
+
+#. Section heading for launcher entries
+msgid "LAUNCHER DESTINATIONS"
+msgstr ""
+
+#. Data directory label
+msgid "DATA DIR"
+msgstr ""
+
+#. Main menu footer / navigation hint
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr ""
+
+#. Settings section heading
+msgid "PERSISTED OPTIONS"
+msgstr ""
+
+#. Settings row label
+msgid "LANGUAGE"
+msgstr ""
+
+#. Settings row label
+msgid "PRESENTATION MODE"
+msgstr ""
+
+#. Settings row label
+msgid "WINDOW MODE"
+msgstr ""
+
+#. Settings save confirmation
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr ""
+
+#. Settings footer / navigation hint
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr ""
+
+#. Message view return hint
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr ""
+
+#. Launch confirmation
+msgid "READY TO LAUNCH"
+msgstr ""
+
+#. Escape hint in messages
+msgid "ESC RETURNS TO MENU"
+msgstr ""
+
+#. Missing hash-verified data message
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr ""
+
+#. Missing hash-verified data detail
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr ""
+
+#. Missing game data message
+msgid "GAME DATA NOT FOUND"
+msgstr ""
+
+#. Missing game data detail
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr ""
+
+#. Card art slot status
+msgid "ART SLOT READY"
+msgstr ""
+
+#. Card art slot status
+msgid "ART SLOT EMPTY"
+msgstr ""
+
+#. Card art slot instruction
+msgid "DROP ART INTO SLOT"
+msgstr ""
+
+#. Card art active label
+msgid "CARD ART ACTIVE"
+msgstr ""
+
+#. Card art slot label
+msgid "CARD ART SLOT"
+msgstr ""
+
+#. Game card label
+msgid "Dungeon Master"
+msgstr ""
+
+#. Game card label
+msgid "Chaos Strikes Back"
+msgstr ""
+
+#. Game card label
+msgid "Dungeon Master II"
+msgstr ""
+
+#. Launcher title
+msgid "Firestaff"
+msgstr ""
+
+#. Game options row label
+msgid "PATCH"
+msgstr ""
+
+#. Game options value: original version
+msgid "ORIGINAL"
+msgstr ""
+
+#. Game options value: patched version
+msgid "PATCHED"
+msgstr ""
+
+#. Game options row label
+msgid "CHEATS"
+msgstr ""
+
+#. Game options value: off
+msgid "OFF"
+msgstr ""
+
+#. Game options value: on
+msgid "ON"
+msgstr ""
+
+#. Game options row label
+msgid "SPEED"
+msgstr ""
+
+#. Game options value: slower
+msgid "SLOWER"
+msgstr ""
+
+#. Game options value: normal
+msgid "NORMAL"
+msgstr ""
+
+#. Game options value: faster
+msgid "FASTER"
+msgstr ""
+
+#. Game options row label
+msgid "ASPECT RATIO"
+msgstr ""
+
+#. Game options row label
+msgid "RESOLUTION"
+msgstr ""
+
+#. Game options action
+msgid "LAUNCH"
+msgstr ""
+
+#. Presentation mode name
+msgid "V1 ORIGINAL"
+msgstr ""
+
+#. Presentation mode name
+msgid "V2 ENHANCED 2D"
+msgstr ""
+
+#. Presentation mode name
+msgid "V3 MODERN/3D"
+msgstr ""
+
+#. V3 unavailable message
+msgid "COMING SOON"
+msgstr ""
+
+#. Language names
+msgid "ENGLISH"
+msgstr ""
+
+#. Language names
+msgid "SVENSKA"
+msgstr ""
+
+#. Language names
+msgid "FRANCAIS"
+msgstr ""
+
+#. Language names
+msgid "DEUTSCH"
+msgstr ""
+
+#. Window mode values
+msgid "WINDOWED"
+msgstr ""
+
+#. Window mode values
+msgid "FULLSCREEN"
 msgstr ""

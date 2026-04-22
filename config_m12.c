@@ -152,13 +152,45 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->languageIndex = m12_parse_int(value, config->languageIndex);
         return;
     }
-    if (m12_string_equals(key, "graphics_index")) {
+    if (m12_string_equals(key, "graphics_index") ||
+        m12_string_equals(key, "presentation_mode_index")) {
         config->graphicsIndex = m12_parse_int(value, config->graphicsIndex);
         return;
     }
     if (m12_string_equals(key, "window_mode_index")) {
         config->windowModeIndex = m12_parse_int(value, config->windowModeIndex);
         return;
+    }
+    if (strncmp(key, "game_", 5) == 0) {
+        int gameIndex = -1;
+        char field[64];
+        if (sscanf(key, "game_%d_%63s", &gameIndex, field) == 2 &&
+            gameIndex >= 0 && gameIndex < M12_CONFIG_GAME_COUNT) {
+            if (m12_string_equals(field, "use_patch")) {
+                config->gameUsePatch[gameIndex] = m12_parse_int(value, config->gameUsePatch[gameIndex]);
+                return;
+            }
+            if (m12_string_equals(field, "language_index")) {
+                config->gameLanguageIndex[gameIndex] = m12_parse_int(value, config->gameLanguageIndex[gameIndex]);
+                return;
+            }
+            if (m12_string_equals(field, "cheats_enabled")) {
+                config->gameCheatsEnabled[gameIndex] = m12_parse_int(value, config->gameCheatsEnabled[gameIndex]);
+                return;
+            }
+            if (m12_string_equals(field, "speed")) {
+                config->gameSpeed[gameIndex] = m12_parse_int(value, config->gameSpeed[gameIndex]);
+                return;
+            }
+            if (m12_string_equals(field, "aspect_ratio")) {
+                config->gameAspectRatio[gameIndex] = m12_parse_int(value, config->gameAspectRatio[gameIndex]);
+                return;
+            }
+            if (m12_string_equals(field, "resolution")) {
+                config->gameResolution[gameIndex] = m12_parse_int(value, config->gameResolution[gameIndex]);
+                return;
+            }
+        }
     }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
@@ -174,7 +206,7 @@ int M12_Config_Save(const M12_Config* config) {
         return 0;
     }
     if (FSP_ParentDir(parentDir, sizeof(parentDir), config->path)) {
-        if (!FSP_CreateDirectory(parentDir)) {
+        if (!FSP_CreateDirectoryRecursive(parentDir)) {
             return 0;
         }
     }
@@ -185,8 +217,20 @@ int M12_Config_Save(const M12_Config* config) {
     }
     fprintf(fp, "# Firestaff startup menu config\n");
     fprintf(fp, "language_index = %d\n", config->languageIndex);
+    fprintf(fp, "presentation_mode_index = %d\n", config->graphicsIndex);
     fprintf(fp, "graphics_index = %d\n", config->graphicsIndex);
     fprintf(fp, "window_mode_index = %d\n", config->windowModeIndex);
+    {
+        int gi;
+        for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+            fprintf(fp, "game_%d_use_patch = %d\n", gi, config->gameUsePatch[gi]);
+            fprintf(fp, "game_%d_language_index = %d\n", gi, config->gameLanguageIndex[gi]);
+            fprintf(fp, "game_%d_cheats_enabled = %d\n", gi, config->gameCheatsEnabled[gi]);
+            fprintf(fp, "game_%d_speed = %d\n", gi, config->gameSpeed[gi]);
+            fprintf(fp, "game_%d_aspect_ratio = %d\n", gi, config->gameAspectRatio[gi]);
+            fprintf(fp, "game_%d_resolution = %d\n", gi, config->gameResolution[gi]);
+        }
+    }
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);

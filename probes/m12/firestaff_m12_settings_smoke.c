@@ -58,6 +58,7 @@ static int make_file_with_text(const char* path, const char* text) {
 int main(void) {
     unsigned char framebufferA[320 * 200];
     unsigned char framebufferB[320 * 200];
+    unsigned char framebufferC[320 * 200];
     M12_StartupMenuState state;
     SmokeTally tally = {0, 0};
     char rootTemplate[] = "/tmp/firestaff-m12-smoke-XXXXXX";
@@ -135,6 +136,21 @@ int main(void) {
                  smoke_checksum(framebufferA, sizeof(framebufferA)) !=
                      smoke_checksum(framebufferB, sizeof(framebufferB)),
                  "language and presentation mode changes alter launcher output");
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_Draw(&state, framebufferC, 320, 200);
+    smoke_record(&tally,
+                 "SMOKE_03B",
+                 state.gameOptions[0].languageIndex == 1 &&
+                     smoke_checksum(framebufferA, sizeof(framebufferA)) !=
+                         smoke_checksum(framebufferC, sizeof(framebufferC)),
+                 "per-game language selection is reachable and changes the game-options render output");
 
     smoke_record(&tally,
                  "SMOKE_04",
