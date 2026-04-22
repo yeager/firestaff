@@ -6573,11 +6573,18 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             char name[16];
             const struct ChampionState_Compat* champ = &state->world.party.champions[slot];
             m11_format_champion_name(champ->name, name, sizeof(name));
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 4, name, &g_text_small);
+            /* Active champion: double yellow border + brighter name
+             * (ReDMCSB highlights the active champion status box) */
             if (slot == activeIndex) {
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                               x + 1, y + 1, 69, 26, M11_COLOR_YELLOW);
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 2, y + 2, 67, 24, M11_COLOR_YELLOW);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 3, name, &g_text_shadow);
+            } else {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 3, name, &g_text_small);
             }
             {
             int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
@@ -6585,18 +6592,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
             int isDead = (champ->hp.current == 0);
             if (isDead) {
-                snprintf(line, sizeof(line), "DEAD");
+                M11_TextStyle ds = g_text_small;
+                ds.color = M11_COLOR_RED;
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 12, line, &g_text_small);
-            } else {
-                int itemCount = M11_GameView_CountChampionItems(state, slot);
-                if (itemCount > 0) {
-                    snprintf(line, sizeof(line), "HP%u I%d", (unsigned int)champ->hp.current, itemCount);
-                } else {
-                    snprintf(line, sizeof(line), "HP%u ST%u", (unsigned int)champ->hp.current, (unsigned int)champ->stamina.current);
-                }
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 12, line, &g_text_small);
+                              x + 4, y + 12, "DEAD", &ds);
             }
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 20, 59, 2, M11_COLOR_DARK_GRAY);
@@ -6783,117 +6782,295 @@ static void m11_draw_fullscreen_map(const M11_GameViewState* state,
                   "M CLOSE  ESC MENU  ARROWS EXPLORE", &g_text_small);
 }
 
-/* ── Full inventory panel (I key) ── */
+/* ── Full inventory panel (I key) ──
+ * ReDMCSB-faithful composition: portrait+name at top, hands row,
+ * body column, containers, backpack grid.  All equipment slots are
+ * uniform 16×16 icon boxes matching the original SLOT_BOX structure
+ * from Fontanel’s INVNTORY.C / OBJECT.C DrawIconInSlotBox.
+ *
+ * Original DM1 layout reference (viewport-relative):
+ *   [Portrait 32×29]  [Name]       Hands: [Ready][Action]
+ *   [Stats bars]       Body:  HEAD  NECK  TORSO  LEGS  FEET
+ *                      Containers: POUCH×2  QUIVER×4
+ *                      Backpack: 4×2 grid
+ *                      Panel: Food/Water or object details
+ */
+
+/* Helper: draw one 16×16 equipment slot box.  Matches the ReDMCSB
+ * SlotBox model: fixed-size icon cell, thin border, icon or empty. */
+static void m11_draw_inv_slot(const M11_GameViewState* state,
+                              const struct ChampionState_Compat* champ,
+                              unsigned char* fb, int fbW, int fbH,
+                              int sx, int sy,
+                              int slotIdx, const char* shortLabel) {
+    static const int SZ = 16; /* icon box size — matches ReDMCSB 16×16 */
+    unsigned short thingId = champ->inventory[slotIdx];
+    int selected = (slotIdx == state->inventorySelectedSlot);
+    unsigned char borderColor = selected ? M11_COLOR_LIGHT_GREEN : M11_COLOR_DARK_GRAY;
+
+    m11_fill_rect(fb, fbW, fbH, sx, sy, SZ, SZ, M11_COLOR_BLACK);
+    m11_draw_rect(fb, fbW, fbH, sx, sy, SZ, SZ, borderColor);
+
+    if (thingId != THING_NONE && thingId != THING_ENDOFLIST) {
+        /* Occupied — show short type tag centered in box */
+        int thingType = THING_GET_TYPE(thingId);
+        const char* tag = "?";
+        M11_TextStyle s = g_text_small;
+        s.color = M11_COLOR_WHITE;
+        switch (thingType) {
+            case THING_TYPE_WEAPON:    tag = "Wp"; break;
+            case THING_TYPE_ARMOUR:    tag = "Ar"; break;
+            case THING_TYPE_SCROLL:    tag = "Sc"; break;
+            case THING_TYPE_POTION:    tag = "Po"; break;
+            case THING_TYPE_CONTAINER: tag = "Ch"; break;
+            case THING_TYPE_JUNK:      tag = "Jk"; break;
+            default: break;
+        }
+        m11_draw_text(fb, fbW, fbH, sx + 3, sy + 4, tag, &s);
+    } else {
+        /* Empty — faint position hint */
+        M11_TextStyle dim = g_text_small;
+        dim.color = M11_COLOR_DARK_GRAY;
+        m11_draw_text(fb, fbW, fbH, sx + 2, sy + 4, shortLabel, &dim);
+    }
+}
+
 static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight) {
-    int panelX = 16, panelY = 16;
-    int panelW = framebufferWidth - 32;
-    int panelH = framebufferHeight - 32;
+    /* Overlay positioned like the DM1 viewport-replacement inventory,
+     * centered with proportional margins. */
+    int panelX = 8, panelY = 8;
+    int panelW = framebufferWidth - 16;
+    int panelH = framebufferHeight - 16;
     const struct ChampionState_Compat* champ;
-    int slot;
-    int row;
-    int slotX, slotY;
     char champion[32];
-    static const int SLOT_W = 66;
-    static const int SLOT_H = 12;
-    static const int COLS = 4;
-    static const int startX = 24;
-    static const int startY = 40;
+    int isDead;
+    int bpI;
+
+    /* Portrait proportions from ReDMCSB: 32×29 pixels */
+    static const int PORT_W = 32;
+    static const int PORT_H = 29;
+    /* Uniform slot size (ReDMCSB: 16×16 icon boxes) */
+    static const int SZ = 16;
+    static const int GAP = 2; /* spacing between adjacent slot boxes */
+
+    /* Layout anchors */
+    int portX, portY;   /* portrait position */
+    int nameX, nameY;   /* champion name */
+    int handY;          /* hands row Y */
+    int handLX, handRX; /* hand slot X positions */
+    int bodyX, bodyY;   /* body column anchor (Head at top) */
+    int contX, contY;   /* container section anchor */
+    int bpX, bpY;       /* backpack grid anchor */
+    int panelBottom;    /* bottom info panel Y */
 
     if (!state || !state->active) return;
     if (state->world.party.activeChampionIndex < 0 ||
         state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) return;
     champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    isDead = (champ->hp.current == 0);
 
-    /* Background */
+    /* ── Panel background — double-border like ReDMCSB panels ── */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   panelX, panelY, panelW, panelH, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX, panelY, panelW, panelH, M11_COLOR_YELLOW);
+                  panelX, panelY, panelW, panelH, M11_COLOR_BROWN);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_BROWN);
+                  panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_DARK_GRAY);
 
-    /* Title with champion name */
+    /* ── Champion identity ── portrait + name + stat bars */
+    portX = panelX + 5;
+    portY = panelY + 4;
     m11_get_active_champion_label(state, champion, sizeof(champion));
-    {
-        char title[64];
-        snprintf(title, sizeof(title), "INVENTORY: %s", champion);
+
+    /* Portrait box (ReDMCSB: native bitmap blitted from GRAPHIC_CHAMPION_PORTRAITS,
+     * 32×29.  We draw a placeholder frame until actual portrait assets arrive.) */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  portX, portY, PORT_W, PORT_H, M11_COLOR_DARK_GRAY);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  portX, portY, PORT_W, PORT_H,
+                  isDead ? M11_COLOR_RED : M11_COLOR_LIGHT_CYAN);
+    /* Minimal face silhouette inside portrait */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  portX + 9,  portY + 8, 3, 3, M11_COLOR_WHITE);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  portX + 20, portY + 8, 3, 3, M11_COLOR_WHITE);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  portX + 10, portY + 19, 12, 2,
+                  isDead ? M11_COLOR_RED : M11_COLOR_LIGHT_GRAY);
+
+    /* Champion name — prominent, right of portrait */
+    nameX = portX + PORT_W + 6;
+    nameY = portY + 2;
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  nameX, nameY, champion, &g_text_title);
+
+    if (isDead) {
+        M11_TextStyle deadStyle = g_text_small;
+        deadStyle.color = M11_COLOR_RED;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      panelX + 6, panelY + 4, title, &g_text_title);
+                      nameX, nameY + 14, "DEAD", &deadStyle);
     }
 
-    /* Stats line */
+    /* Stat bars — compact DM-style HP/STA/MANA right of portrait */
     {
-        char stats[96];
-        snprintf(stats, sizeof(stats), "HP %d/%d  STA %d/%d  MANA %d/%d",
-                 (int)champ->hp.current, (int)champ->hp.maximum,
-                 (int)champ->stamina.current, (int)champ->stamina.maximum,
-                 (int)champ->mana.current, (int)champ->mana.maximum);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      panelX + 6, panelY + 18, stats, &g_text_small);
-    }
-
-    /* Draw slot grid: display first 21 named slots in a grid */
-    row = 0;
-    for (slot = 0; slot <= CHAMPION_SLOT_HAND_RIGHT; ++slot) {
-        unsigned short thingId = champ->inventory[slot];
-        const char* slotLabel = M11_GameView_SlotName(slot);
-        unsigned char borderColor;
-        unsigned char fillColor;
-        int col = row % COLS;
-        int r = row / COLS;
-        char label[48];
-
-        slotX = startX + col * (SLOT_W + 2);
-        slotY = startY + r * (SLOT_H + 2);
-
-        /* Highlight selected slot */
-        if (slot == state->inventorySelectedSlot) {
-            borderColor = M11_COLOR_LIGHT_GREEN;
-            fillColor = M11_COLOR_DARK_GRAY;
-        } else {
-            borderColor = M11_COLOR_LIGHT_BLUE;
-            fillColor = M11_COLOR_BLACK;
-        }
+        int barX = nameX;
+        int barY = nameY + (isDead ? 22 : 14);
+        int barMaxW = 80;
+        int barH = 3;
+        int hpW = champ->hp.maximum > 0
+            ? (int)(champ->hp.current * barMaxW) / (int)champ->hp.maximum : 0;
+        int staW = champ->stamina.maximum > 0
+            ? (int)(champ->stamina.current * barMaxW) / (int)champ->stamina.maximum : 0;
+        int manaW = champ->mana.maximum > 0
+            ? (int)(champ->mana.current * barMaxW) / (int)champ->mana.maximum : 0;
 
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      slotX, slotY, SLOT_W, SLOT_H, fillColor);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      slotX, slotY, SLOT_W, SLOT_H, borderColor);
+                      barX, barY, barMaxW, barH, M11_COLOR_DARK_GRAY);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      barX, barY, hpW, barH,
+                      isDead ? M11_COLOR_DARK_GRAY : M11_COLOR_LIGHT_RED);
 
-        if (thingId != THING_NONE && thingId != THING_ENDOFLIST) {
-            int thingType = THING_GET_TYPE(thingId);
-            const char* typeLabel = "ITEM";
-            switch (thingType) {
-                case THING_TYPE_WEAPON:    typeLabel = "WEAPON"; break;
-                case THING_TYPE_ARMOUR:    typeLabel = "ARMOUR"; break;
-                case THING_TYPE_SCROLL:    typeLabel = "SCROLL"; break;
-                case THING_TYPE_POTION:    typeLabel = "POTION"; break;
-                case THING_TYPE_CONTAINER: typeLabel = "CHEST"; break;
-                case THING_TYPE_JUNK:      typeLabel = "JUNK"; break;
-                default: break;
-            }
-            snprintf(label, sizeof(label), "%-7s %s", slotLabel, typeLabel);
-            {
-                M11_TextStyle itemStyle = g_text_small;
-                itemStyle.color = M11_COLOR_WHITE;
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              slotX + 2, slotY + 2, label, &itemStyle);
-            }
-        } else {
-            snprintf(label, sizeof(label), "%-7s ---", slotLabel);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          slotX + 2, slotY + 2, label, &g_text_small);
-        }
-        row++;
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      barX, barY + barH + 1, barMaxW, barH, M11_COLOR_DARK_GRAY);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      barX, barY + barH + 1, staW, barH, M11_COLOR_LIGHT_GREEN);
+
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      barX, barY + 2 * (barH + 1), barMaxW, barH, M11_COLOR_DARK_GRAY);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      barX, barY + 2 * (barH + 1), manaW, barH, M11_COLOR_LIGHT_BLUE);
     }
 
-    /* Footer */
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX + 6, panelY + panelH - 14,
-                  "I CLOSE  UP/DN SELECT  TAB CHAMPION  ESC MENU", &g_text_small);
+    /* ── Hands row — ReDMCSB places Ready Hand + Action Hand as the
+     * first two slots, prominently above the body equipment column.
+     * In the original, these are the primary interaction slots. ── */
+    handY = portY + PORT_H + 4;
+    handLX = panelX + 5;
+    handRX = handLX + SZ + GAP;
+
+    /* Thin section label */
+    {
+        M11_TextStyle hlbl = g_text_small;
+        hlbl.color = M11_COLOR_BROWN;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      handLX, handY - 1, "HANDS", &hlbl);
+    }
+    handY += 7;
+    m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                      handLX, handY, CHAMPION_SLOT_HAND_LEFT, "L");
+    m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                      handRX, handY, CHAMPION_SLOT_HAND_RIGHT, "R");
+
+    /* ── Body column — Head → Neck → Torso → Legs → Feet ──
+     * Vertical column to the right of hands, matching ReDMCSB’s
+     * equipment slot arrangement.  Each slot is a 16×16 icon box. */
+    bodyX = handRX + SZ + 10;
+    bodyY = handY;
+    {
+        static const int bodySlots[5] = {
+            CHAMPION_SLOT_HEAD, CHAMPION_SLOT_NECK, CHAMPION_SLOT_TORSO,
+            CHAMPION_SLOT_LEGS, CHAMPION_SLOT_FEET
+        };
+        static const char* bodyLabels[5] = { "Hd", "Nk", "To", "Lg", "Ft" };
+        int bi;
+        M11_TextStyle blbl = g_text_small;
+        blbl.color = M11_COLOR_BROWN;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      bodyX, handY - 8, "BODY", &blbl);
+        for (bi = 0; bi < 5; ++bi) {
+            m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                              bodyX, bodyY + bi * (SZ + GAP),
+                              bodySlots[bi], bodyLabels[bi]);
+        }
+    }
+
+    /* ── Container region: Pouches + Quiver ──
+     * Positioned to the right of the body column, matching the
+     * original’s right-side container layout. */
+    contX = bodyX + SZ + 10;
+    contY = handY;
+    {
+        M11_TextStyle clbl = g_text_small;
+        clbl.color = M11_COLOR_BROWN;
+
+        /* Pouches (2 slots side by side) */
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      contX, contY - 1, "POUCH", &clbl);
+        contY += 7;
+        m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                          contX, contY, CHAMPION_SLOT_POUCH_1, "1");
+        m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                          contX + SZ + GAP, contY, CHAMPION_SLOT_POUCH_2, "2");
+
+        /* Quiver (4 slots in a row) */
+        contY += SZ + GAP + 4;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      contX, contY, "QUIVER", &clbl);
+        contY += 8;
+        m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                          contX, contY, CHAMPION_SLOT_QUIVER_1, "1");
+        m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                          contX + (SZ + GAP), contY, CHAMPION_SLOT_QUIVER_2, "2");
+        m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                          contX + 2 * (SZ + GAP), contY, CHAMPION_SLOT_QUIVER_3, "3");
+        m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                          contX + 3 * (SZ + GAP), contY, CHAMPION_SLOT_QUIVER_4, "4");
+    }
+
+    /* ── Backpack grid — 4×2, the largest container section ──
+     * ReDMCSB: BACKPACK slots 13–20, drawn as 4-wide × 2-tall grid
+     * at the bottom of the equipment area. */
+    bpX = panelX + 5;
+    bpY = handY + 5 * (SZ + GAP) + 6;
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                   panelX + 3, bpY - 3, panelW - 6, M11_COLOR_DARK_GRAY);
+    {
+        M11_TextStyle plbl = g_text_small;
+        plbl.color = M11_COLOR_BROWN;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      bpX, bpY, "BACKPACK", &plbl);
+    }
+    bpY += 8;
+    for (bpI = 0; bpI < 8; ++bpI) {
+        int col = bpI % 4;
+        int row = bpI / 4;
+        char bpLabel[4];
+        snprintf(bpLabel, sizeof(bpLabel), "%d", bpI + 1);
+        m11_draw_inv_slot(state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                          bpX + col * (SZ + GAP),
+                          bpY + row * (SZ + GAP),
+                          CHAMPION_SLOT_BACKPACK_1 + bpI, bpLabel);
+    }
+
+    /* ── Bottom panel area — food/water status (ReDMCSB: G424_i_PanelContent) ── */
+    panelBottom = bpY + 2 * (SZ + GAP) + 4;
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                   panelX + 3, panelBottom - 2, panelW - 6, M11_COLOR_DARK_GRAY);
+    {
+        char foodWater[48];
+        int avgFood = 0, avgWater = 0;
+        M11_TextStyle fwStyle = g_text_small;
+        fwStyle.color = M11_COLOR_LIGHT_GRAY;
+        avgFood = (int)champ->food;
+        avgWater = (int)champ->water;
+        snprintf(foodWater, sizeof(foodWater), "FOOD %d  WATER %d",
+                 avgFood > 999 ? 999 : avgFood,
+                 avgWater > 999 ? 999 : avgWater);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 5, panelBottom, foodWater, &fwStyle);
+    }
+
+    /* ── Footer — minimal DM-style key hints ── */
+    {
+        M11_TextStyle footStyle = g_text_small;
+        footStyle.color = M11_COLOR_DARK_GRAY;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 5, panelY + panelH - 10,
+                      "I CLOSE  TAB CHAMPION", &footStyle);
+    }
 }
 
 static void m11_draw_map_panel(const M11_GameViewState* state,

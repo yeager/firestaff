@@ -4110,6 +4110,43 @@ int main(int argc, char** argv) {
                  M11_GameView_GetInventorySelectedSlot(NULL) == -1,
                  "Map/inventory query APIs are NULL-safe");
 
+    /* ── Screenshot: dump inventory panel to PGM for visual verification ── */
+    {
+        M11_GameViewState ssView;
+        unsigned char ssFb[320 * 200];
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+        memcpy(&ssView, &gameView, sizeof(ssView));
+        ssView.inventoryPanelActive = 1;
+        ssView.inventorySelectedSlot = CHAMPION_SLOT_HAND_RIGHT;
+        if (ssView.world.party.activeChampionIndex < 0)
+            ssView.world.party.activeChampionIndex = 0;
+        /* Add some items for visual richness */
+        ssView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] =
+            (THING_TYPE_WEAPON << 12) | 0x001;
+        ssView.world.party.champions[0].inventory[CHAMPION_SLOT_TORSO] =
+            (THING_TYPE_ARMOUR << 12) | 0x002;
+        ssView.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] =
+            (THING_TYPE_POTION << 12) | 0x003;
+        memset(ssFb, 0, sizeof(ssFb));
+        M11_GameView_Draw(&ssView, ssFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            char ssPath[512];
+            FILE* ssFile;
+            snprintf(ssPath, sizeof(ssPath), "%s/inventory_panel_p3.pgm", ssDir);
+            ssFile = fopen(ssPath, "wb");
+            if (ssFile) {
+                int px;
+                fprintf(ssFile, "P5\n320 200\n255\n");
+                for (px = 0; px < 320 * 200; ++px) {
+                    unsigned char gray = (unsigned char)(ssFb[px] * 17);
+                    fwrite(&gray, 1, 1, ssFile);
+                }
+                fclose(ssFile);
+                printf("Screenshot: %s\n", ssPath);
+            }
+        }
+    }
+
     M11_GameView_Shutdown(&gameView);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
