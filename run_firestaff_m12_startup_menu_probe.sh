@@ -16,6 +16,7 @@ cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     "$HERE/branding_logo_m12.c" \
     "$HERE/card_art_m12.c" \
     "$HERE/creature_art_m12.c" \
-    "$HERE/menu_startup_m12.c"
+    "$HERE/menu_startup_m12.c" \
+    "$HERE/menu_hit_m12.c"
 
 "$PROBE_BIN" | tee "$OUT_DIR/startup_menu_probe.log"

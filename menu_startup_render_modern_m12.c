@@ -26,6 +26,7 @@
 #include "asset_status_m12.h"
 #include "branding_logo_m12.h"
 #include "card_art_m12.h"
+#include "creature_art_m12.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -555,6 +556,64 @@ static int slot_for_game_id(const char* id) {
 /* Card drawing                                                               */
 /* -------------------------------------------------------------------------- */
 
+/* Brightest VGA palette (DM/CSB PC 3.4). Duplicated here so the
+ * modern renderer stays link-independent from the VGA palette table
+ * used by the in-game renderer. Values match
+ * G9010_auc_VgaPaletteBrightest_Compat at brightness level 0. */
+static const unsigned char g_vgaBrightest[16][3] = {
+    {0x00, 0x00, 0x00}, {0x4C, 0x4C, 0x4C}, {0x00, 0x80, 0x00}, {0x00, 0xCC, 0xCC},
+    {0xCC, 0x33, 0x33}, {0x80, 0x00, 0x80}, {0xB0, 0x70, 0x30}, {0xCC, 0xCC, 0xCC},
+    {0x70, 0x70, 0x70}, {0x33, 0x88, 0xFF}, {0x33, 0xFF, 0x66}, {0x66, 0xFF, 0xFF},
+    {0xFF, 0x66, 0x66}, {0xFF, 0x66, 0xFF}, {0xFF, 0xFF, 0x66}, {0xFF, 0xFF, 0xFF}
+};
+
+/* Draw the selected creature thumbnail as a faded silhouette onto the
+ * modern canvas so the background feels alive with art from the game
+ * without stealing attention from the UI. Pixel value 0 is treated as
+ * fully transparent; every other palette index is blended with the
+ * caller-supplied tint at the supplied alpha. */
+static void draw_creature_silhouette(M12_ModernCanvas* c,
+                                     const M12_CreatureArtState* art,
+                                     int dstX, int dstY,
+                                     int dstW, int dstH,
+                                     M12_RGB tint,
+                                     int alphaMax) {
+    if (!c || !art || !M12_CreatureArt_HasSelection(art)) return;
+    if (dstW <= 0 || dstH <= 0) return;
+    const M12_CreatureThumb* thumb = &art->creatures[art->selectedIndex];
+    for (int y = 0; y < dstH; ++y) {
+        int srcY = y * M12_CREATURE_THUMB_HEIGHT / dstH;
+        int py = dstY + y;
+        if (py < 0 || py >= c->h) continue;
+        for (int x = 0; x < dstW; ++x) {
+            int srcX = x * M12_CREATURE_THUMB_WIDTH / dstW;
+            int px = dstX + x;
+            if (px < 0 || px >= c->w) continue;
+            unsigned char pi = thumb->pixels[srcY * M12_CREATURE_THUMB_WIDTH + srcX];
+            if (pi == 0) continue;
+            if (pi > 15) pi = (unsigned char)(pi & 0x0F);
+            /* Combine original palette colour with the tint so it reads
+             * as "atmospheric art" instead of a crisp sprite. */
+            const unsigned char* base = g_vgaBrightest[pi];
+            M12_RGB mixed = rgb(
+                clamp_u8(((int)base[0] + tint.r) / 2),
+                clamp_u8(((int)base[1] + tint.g) / 2),
+                clamp_u8(((int)base[2] + tint.b) / 2));
+            blend_pixel(c, px, py, mixed, alphaMax);
+        }
+    }
+}
+
+/* Pulse animation driven by state->frameTick. Returns a 0..255 modulation
+ * factor that oscillates gently; used for selection glow breathing. */
+static int pulse_modulation(unsigned int frameTick) {
+    /* Triangle wave over a ~60-frame period. 0 at base, peaks at +80. */
+    unsigned int phase = frameTick % 60U;
+    int amp = (int)phase;
+    if (amp > 30) amp = 60 - amp;
+    return amp;
+}
+
 static void draw_card(M12_ModernCanvas* c,
                       const M12_StartupMenuState* state,
                       int slot,
@@ -563,10 +622,12 @@ static void draw_card(M12_ModernCanvas* c,
     const M12_MenuEntry* entry = &state->entries[slot];
     int isSettings = entry->kind == M12_MENU_ENTRY_SETTINGS;
 
-    /* Selected cards glow. */
+    /* Selected cards glow (pulse-modulated for a living feel). */
+    int pulseBoost = selected ? pulse_modulation(state->frameTick) : 0;
     if (selected) {
         for (int i = 1; i <= 10; ++i) {
-            int alpha = 110 - i * 9;
+            int alpha = 110 - i * 9 + pulseBoost;
+            if (alpha > 255) alpha = 255;
             M12_RGB glow = isSettings ? rgb(160, 180, 240) : COLOR_ACCENT();
             for (int xx = x - i; xx < x + w + i; ++xx) {
                 blend_pixel(c, xx, y - i, glow, alpha);
@@ -703,6 +764,58 @@ static void draw_card(M12_ModernCanvas* c,
 /* View drawing                                                               */
 /* -------------------------------------------------------------------------- */
 
+/* Top-left back button, visible on every non-main view. Coords must
+ * match M12_HIT_BACK_* in menu_hit_m12.c. */
+static void draw_back_button(M12_ModernCanvas* c, int highlight) {
+    int x = 24;
+    int y = 120;
+    int w = 110;
+    int h = 44;
+    M12_RGB fill = highlight ? rgb(44, 38, 74) : rgb(22, 22, 46);
+    M12_RGB edge = highlight ? COLOR_ACCENT_HI() : COLOR_PANEL_EDGE();
+    fill_rounded_rect(c, x, y, w, h, 10, fill);
+    stroke_rounded_rect(c, x, y, w, h, 10, edge);
+    ModernTextStyle t = text_style_make(2, COLOR_TEXT(), 1);
+    draw_text(c, x + 14, y + 14, "< BACK", &t);
+}
+
+/* Launch button, lower-right of the game-options panel. Coords must
+ * match M12_HIT_LAUNCH_* in menu_hit_m12.c. */
+static void draw_launch_button(M12_ModernCanvas* c,
+                               int highlight,
+                               unsigned int frameTick) {
+    int panelX = 96;
+    int panelY = 260;
+    int panelW = c->w - 2 * panelX;
+    int panelH = 400;
+    int w = 240;
+    int h = 54;
+    int x = panelX + panelW - w - 36;
+    int y = panelY + panelH - h - 20;
+    int boost = highlight ? pulse_modulation(frameTick) : 0;
+    M12_RGB fill = highlight
+        ? rgb(clamp_u8(90 + boost), clamp_u8(60 + boost / 2), 24)
+        : rgb(60, 42, 20);
+    M12_RGB edge = COLOR_ACCENT_HI();
+    for (int i = 1; i <= 6; ++i) {
+        int alpha = 80 - i * 10 + boost;
+        if (alpha <= 0) continue;
+        for (int xx = x - i; xx < x + w + i; ++xx) {
+            blend_pixel(c, xx, y - i, COLOR_ACCENT(), alpha);
+            blend_pixel(c, xx, y + h + i - 1, COLOR_ACCENT(), alpha);
+        }
+        for (int yy = y - i; yy < y + h + i; ++yy) {
+            blend_pixel(c, x - i, yy, COLOR_ACCENT(), alpha);
+            blend_pixel(c, x + w + i - 1, yy, COLOR_ACCENT(), alpha);
+        }
+    }
+    fill_rounded_rect(c, x, y, w, h, 12, fill);
+    stroke_rounded_rect(c, x, y, w, h, 12, edge);
+    ModernTextStyle t = text_style_make(3, COLOR_ACCENT_HI(), 2);
+    int tw = text_width_px("LAUNCH >", &t);
+    draw_text(c, x + (w - tw) / 2, y + 12, "LAUNCH >", &t);
+}
+
 static void draw_footer(M12_ModernCanvas* c, const char* left, const char* right) {
     int h = 48;
     int y = c->h - h - 12;
@@ -767,6 +880,19 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
     /* Section title */
     ModernTextStyle h = text_style_make(3, COLOR_ACCENT(), 2);
     draw_text(c, 48, 142, "SELECT A DESTINATION", &h);
+
+    /* Faded creature silhouette in the upper-right background so the
+     * screen feels like a Dungeon Master front door without stealing
+     * focus from the card grid. */
+    if (M12_CreatureArt_HasSelection(&state->creatureArt)) {
+        int cx = c->w - 460;
+        int cy = 10;
+        int cw = 420;
+        int ch = 136;
+        draw_creature_silhouette(c, &state->creatureArt,
+                                 cx, cy, cw, ch,
+                                 rgb(48, 32, 72), 70);
+    }
 }
 
 static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
@@ -784,10 +910,11 @@ static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
 }
 
 static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 48, 142, "SETTINGS", &h);
+    draw_text(c, 160, 130, "SETTINGS", &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, 48, 210, "CHANGES ARE PERSISTED IMMEDIATELY", &sub);
+    draw_text(c, 160, 210, "CHANGES ARE PERSISTED IMMEDIATELY", &sub);
 
     int panelX = 96;
     int panelY = 260;
@@ -823,10 +950,11 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     const M12_GameOptions* opts = &state->gameOptions[slot];
     const M12_MenuEntry* entry = &state->entries[state->selectedIndex];
 
+    draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 48, 142, "GAME OPTIONS", &h);
+    draw_text(c, 160, 130, "GAME OPTIONS", &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, 48, 210, entry->title, &sub);
+    draw_text(c, 160, 210, entry->title, &sub);
 
     int panelX = 96;
     int panelY = 260;
@@ -893,9 +1021,16 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
                   "V3 MODERN 3D IS A LATER MILESTONE (COMING SOON)",
                   &note);
     }
+
+    /* Launch button: pulses when the cursor is on the synthetic launch
+     * row (gameOptSelectedRow == M12_GAME_OPT_ROW_COUNT). */
+    draw_launch_button(c,
+                       state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT,
+                       state->frameTick);
 }
 
 static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    draw_back_button(c, 0);
     int panelW = 840;
     int panelH = 320;
     int panelX = (c->w - panelW) / 2;

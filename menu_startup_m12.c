@@ -778,6 +778,9 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    state->frameTick = 0;
+    state->hoverX = -1;
+    state->hoverY = -1;
 }
 
 static const char* m12_settings_value_language(const M12_StartupMenuState* state) {

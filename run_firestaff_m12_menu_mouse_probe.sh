@@ -2,14 +2,14 @@
 set -eu
 
 HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
-OUT_DIR=${1:-$HERE/verification-m12/modern-menu}
+OUT_DIR=${1:-$HERE/verification-m12/menu-mouse}
 mkdir -p "$OUT_DIR"
 
-PROBE_BIN="$OUT_DIR/firestaff_m12_modern_menu_probe_bin"
+PROBE_BIN="$OUT_DIR/firestaff_m12_menu_mouse_probe_bin"
 
 cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     -o "$PROBE_BIN" \
-    "$HERE/probes/m12/firestaff_m12_modern_menu_probe.c" \
+    "$HERE/probes/m12/firestaff_m12_menu_mouse_probe.c" \
     "$HERE/fs_portable_compat.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
@@ -21,4 +21,4 @@ cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     "$HERE/menu_hit_m12.c"
 
 cd "$HERE"
-"$PROBE_BIN" | tee "$OUT_DIR/modern_menu_probe.log"
+"$PROBE_BIN" | tee "$OUT_DIR/menu_mouse_probe.log"

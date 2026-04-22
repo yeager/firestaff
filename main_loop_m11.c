@@ -10,6 +10,7 @@
 
 #include "menu_startup_m12.h"
 #include "menu_startup_render_modern_m12.h"
+#include "menu_hit_m12.h"
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 
@@ -211,14 +212,47 @@ static M12_MenuInput m11_next_script_input(const char** cursor) {
     return m11_map_script_token(start, (size_t)(end - start));
 }
 
+/* Result of polling a single pump. `menuPointerChanged` is set to 1
+ * when a launcher mouse event mutated the menu state (the caller
+ * should redraw the launcher). */
+typedef struct {
+    M12_MenuInput menuInput;
+    int menuPointerChanged;
+    int useModernLauncher;
+} M11_PumpResult;
+
+static int m11_map_window_to_launcher(int wx, int wy,
+                                      int useModern,
+                                      int* outX, int* outY) {
+    int fbX = 0;
+    int fbY = 0;
+    if (!M11_Render_MapWindowToFramebuffer(wx, wy, &fbX, &fbY)) {
+        return 0;
+    }
+    /* MapWindowToFramebuffer already maps into the current presented
+     * content dimensions (1280x720 for modern, 480x270 for legacy).
+     * For the modern path we return the coords unchanged; for legacy
+     * there is no mouse UI so we skip. */
+    (void)useModern;
+    if (outX) *outX = fbX;
+    if (outY) *outY = fbY;
+    return 1;
+}
+
 static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
+                                         M12_StartupMenuState* menuState,
+                                         int useModernLauncher,
                                          M11_GameInputResult* gameViewResult,
-                                         int* quitRequested) {
+                                         int* quitRequested,
+                                         int* menuPointerChanged) {
     SDL_Event ev;
     int mappedX;
     int mappedY;
     if (gameViewResult) {
         *gameViewResult = M11_GAME_INPUT_IGNORED;
+    }
+    if (menuPointerChanged) {
+        *menuPointerChanged = 0;
     }
     while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -231,6 +265,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
             ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
             M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            continue;
+        }
+        if (ev.type == SDL_EVENT_MOUSE_MOTION &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active)) {
+            int lx, ly;
+            if (m11_map_window_to_launcher((int)ev.motion.x, (int)ev.motion.y,
+                                           1, &lx, &ly)) {
+                M12_ModernMenu_HandlePointer(menuState, lx, ly, 0, NULL);
+            }
             continue;
         }
         if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
@@ -247,6 +291,21 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     1);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
+                }
+            }
+            continue;
+        }
+        if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active) &&
+            ev.button.button == SDL_BUTTON_LEFT) {
+            int lx, ly;
+            if (m11_map_window_to_launcher((int)ev.button.x, (int)ev.button.y,
+                                           1, &lx, &ly)) {
+                int changed = M12_ModernMenu_HandlePointer(menuState,
+                                                           lx, ly, 1, NULL);
+                if (changed && menuPointerChanged) {
+                    *menuPointerChanged = 1;
                 }
             }
             continue;
@@ -384,6 +443,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             M11_Render_HandleResize(ev.window.data1, ev.window.data2);
             continue;
         }
+        if (ev.type == SDL_MOUSEMOTION &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active)) {
+            int lx, ly;
+            if (m11_map_window_to_launcher(ev.motion.x, ev.motion.y,
+                                           1, &lx, &ly)) {
+                M12_ModernMenu_HandlePointer(menuState, lx, ly, 0, NULL);
+            }
+            continue;
+        }
         if (ev.type == SDL_MOUSEBUTTONDOWN &&
             gameView && gameView->active && ev.button.button == SDL_BUTTON_LEFT) {
             if (gameViewResult &&
@@ -398,6 +467,21 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     1);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
+                }
+            }
+            continue;
+        }
+        if (ev.type == SDL_MOUSEBUTTONDOWN &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active) &&
+            ev.button.button == SDL_BUTTON_LEFT) {
+            int lx, ly;
+            if (m11_map_window_to_launcher(ev.button.x, ev.button.y,
+                                           1, &lx, &ly)) {
+                int changed = M12_ModernMenu_HandlePointer(menuState,
+                                                           lx, ly, 1, NULL);
+                if (changed && menuPointerChanged) {
+                    *menuPointerChanged = 1;
                 }
             }
             continue;
@@ -602,11 +686,28 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (scriptCursor && *scriptCursor != '\0') {
             input = m11_next_script_input(&scriptCursor);
         }
+        int menuPointerChanged = 0;
         if (input == M12_MENU_INPUT_NONE) {
-            input = m11_poll_menu_input(&gameView, &pointerResult, &quitRequested);
+            input = m11_poll_menu_input(&gameView,
+                                        &menuState,
+                                        useModern,
+                                        &pointerResult,
+                                        &quitRequested,
+                                        &menuPointerChanged);
         }
         if (quitRequested) {
             break;
+        }
+        if (menuPointerChanged && !gameView.active) {
+            if (menuState.shouldExit) {
+                break;
+            }
+            M11_ApplyStartupMenuRuntime(&menuState);
+            m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+            /* If the click flipped us into game-options and the user
+             * next triggers launch, we still need the game-view open
+             * path below, which requires an explicit ACCEPT. No harm
+             * done here — continue to let polling drive the rest. */
         }
         if (pointerResult != M11_GAME_INPUT_IGNORED) {
             if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
@@ -699,6 +800,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (gameView.active) {
             M11_Render_Present();
         } else {
+            /* Redraw the launcher every tick so animations (pulse,
+             * hover) remain alive even without input. */
+            menuState.frameTick += 1U;
+            m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
         }
         SDL_Delay((Uint32)interval);

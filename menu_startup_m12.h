@@ -149,6 +149,14 @@ typedef struct M12_StartupMenuState {
     M12_GameOptions gameOptions[3];
     int gameOptSelectedRow;
     M12_CreatureArtState creatureArt;
+    /* Monotonically-increasing animation tick consumed by the modern
+     * renderer. Incremented by the runtime once per present. Safe to
+     * leave at zero in headless probes (no visible change). */
+    unsigned int frameTick;
+    /* Last mouse hover (1280x720 canvas coords). -1 = no hover. Used
+     * by the modern renderer to highlight the item under the mouse. */
+    int hoverX;
+    int hoverY;
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
