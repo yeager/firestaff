@@ -3808,6 +3808,11 @@ typedef struct {
     int h;
 } M11_ViewRect;
 
+enum {
+    M11_MAX_CELL_CREATURES = 4, /* DM1 supports up to 4 creature groups per square */
+    M11_MAX_CELL_ITEMS    = 4  /* DM1 scatters up to 4 floor items visibly */
+};
+
 typedef struct M11_ViewportCell {
     int valid;
     int mapX;
@@ -3822,9 +3827,16 @@ typedef struct M11_ViewportCell {
     int doorVertical;
     int hasDoorThing;
     int creatureType; /* -1 if no creature, else creature type index (0-26) */
-    /* First floor item info for sprite rendering */
+    /* All creature group types on this square (up to 4, -1 terminated) */
+    int creatureTypes[M11_MAX_CELL_CREATURES];
+    int creatureGroupCount; /* number of valid entries in creatureTypes[] */
+    /* First floor item info for sprite rendering (legacy single-item) */
     int firstItemThingType;    /* THING_TYPE_WEAPON..JUNK, or -1 if no item */
     int firstItemSubtype;      /* weapon/armour/potion/junk subtype, or -1 */
+    /* All visible floor items (up to 4) for multi-item scatter */
+    int floorItemTypes[M11_MAX_CELL_ITEMS];    /* THING_TYPE_*, -1 sentinel */
+    int floorItemSubtypes[M11_MAX_CELL_ITEMS]; /* subtype per item, -1 sentinel */
+    int floorItemCount; /* number of valid entries in floorItem arrays */
     /* Wall/door ornament ordinal from thing data (0-15, -1 if none) */
     int wallOrnamentOrdinal;
     int doorOrnamentOrdinal;
@@ -4272,8 +4284,12 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.firstThing = THING_ENDOFLIST;
     cell.doorState = -1;
     cell.creatureType = -1;
+    { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) cell.creatureTypes[ci] = -1; }
+    cell.creatureGroupCount = 0;
     cell.firstItemThingType = -1;
     cell.firstItemSubtype = -1;
+    { int fi; for (fi = 0; fi < M11_MAX_CELL_ITEMS; ++fi) { cell.floorItemTypes[fi] = -1; cell.floorItemSubtypes[fi] = -1; } }
+    cell.floorItemCount = 0;
     cell.wallOrnamentOrdinal = -1;
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
@@ -4335,61 +4351,78 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
-    /* Extract creature type from the first group thing on this square */
+    /* Extract all creature group types on this square (up to 4).
+     * DM1 can have multiple creature groups on a single square; the
+     * viewport draws them stacked/offset.  We also keep the legacy
+     * single creatureType field pointing at the first group. */
     if (cell.summary.groups > 0 && state->world.things && state->world.things->groups) {
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
             if (THING_GET_TYPE(scanThing) == THING_TYPE_GROUP) {
                 int gIdx = THING_GET_INDEX(scanThing);
-                if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
-                    cell.creatureType = (int)state->world.things->groups[gIdx].creatureType;
+                if (gIdx >= 0 && gIdx < state->world.things->groupCount &&
+                    cell.creatureGroupCount < M11_MAX_CELL_CREATURES) {
+                    int ct = (int)state->world.things->groups[gIdx].creatureType;
+                    if (cell.creatureGroupCount == 0) {
+                        cell.creatureType = ct; /* legacy compat */
+                    }
+                    cell.creatureTypes[cell.creatureGroupCount] = ct;
+                    cell.creatureGroupCount++;
                 }
-                break;
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
             ++scanSafety;
         }
     }
 
-    /* Extract first floor item type and subtype for sprite rendering */
+    /* Extract floor item types and subtypes for sprite rendering.
+     * Collect up to M11_MAX_CELL_ITEMS items for multi-item scatter.
+     * The first one also populates the legacy single-item fields. */
     if (cell.summary.items > 0 && state->world.things) {
         unsigned short scanThing = firstThing;
         int scanSafety = 0;
-        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
+               scanSafety < 64 && cell.floorItemCount < M11_MAX_CELL_ITEMS) {
             int tType = THING_GET_TYPE(scanThing);
             int tIdx = THING_GET_INDEX(scanThing);
             if (m11_thing_is_item(tType)) {
-                cell.firstItemThingType = tType;
+                int itemSubtype = -1;
                 switch (tType) {
                     case THING_TYPE_WEAPON:
                         if (state->world.things->weapons && tIdx >= 0 && tIdx < state->world.things->weaponCount)
-                            cell.firstItemSubtype = (int)state->world.things->weapons[tIdx].type;
+                            itemSubtype = (int)state->world.things->weapons[tIdx].type;
                         break;
                     case THING_TYPE_ARMOUR:
                         if (state->world.things->armours && tIdx >= 0 && tIdx < state->world.things->armourCount)
-                            cell.firstItemSubtype = (int)state->world.things->armours[tIdx].type;
+                            itemSubtype = (int)state->world.things->armours[tIdx].type;
                         break;
                     case THING_TYPE_POTION:
                         if (state->world.things->potions && tIdx >= 0 && tIdx < state->world.things->potionCount)
-                            cell.firstItemSubtype = (int)state->world.things->potions[tIdx].type;
+                            itemSubtype = (int)state->world.things->potions[tIdx].type;
                         break;
                     case THING_TYPE_JUNK:
                         if (state->world.things->junks && tIdx >= 0 && tIdx < state->world.things->junkCount)
-                            cell.firstItemSubtype = (int)state->world.things->junks[tIdx].type;
+                            itemSubtype = (int)state->world.things->junks[tIdx].type;
                         break;
                     case THING_TYPE_SCROLL:
-                        cell.firstItemSubtype = 0;
+                        itemSubtype = 0;
                         break;
                     case THING_TYPE_CONTAINER:
                         if (state->world.things->containers && tIdx >= 0 && tIdx < state->world.things->containerCount)
-                            cell.firstItemSubtype = (int)state->world.things->containers[tIdx].type;
+                            itemSubtype = (int)state->world.things->containers[tIdx].type;
                         break;
                     default:
-                        cell.firstItemSubtype = 0;
+                        itemSubtype = 0;
                         break;
                 }
-                break;
+                if (cell.floorItemCount == 0) {
+                    cell.firstItemThingType = tType;
+                    cell.firstItemSubtype = itemSubtype;
+                }
+                cell.floorItemTypes[cell.floorItemCount] = tType;
+                cell.floorItemSubtypes[cell.floorItemCount] = itemSubtype;
+                cell.floorItemCount++;
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
             ++scanSafety;
@@ -4969,29 +5002,55 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     if (!cell || !m11_viewport_cell_is_open(cell) || faceW < 8 || faceH < 8) {
         return;
     }
-    if (cell->summary.groups > 0) {
-        /* Try real creature sprite first, fall back to primitive cue */
-        if (!g_drawState ||
-            !m11_draw_creature_sprite(g_drawState, framebuffer,
-                                      framebufferWidth, framebufferHeight,
-                                      faceX + 4, faceY + 5,
-                                      faceW - 8, faceH - 10,
-                                      cell->creatureType, depthIndex)) {
-            m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                  faceX + 4, faceY + 5, faceW - 8, faceH - 10, depthIndex);
+
+    /* ── Multi-creature stacking ──
+     * DM1 draws up to 4 creature groups per square, offset horizontally
+     * so they visually stack.  Each subsequent group is shifted right
+     * by a fraction of the face width, giving a crowd appearance. */
+    if (cell->creatureGroupCount > 0) {
+        int gi;
+        int groupCount = cell->creatureGroupCount;
+        /* Width per creature slot: divide face among groups with overlap */
+        int slotW = (groupCount > 1) ? (faceW - 8) * 2 / (groupCount + 1) : faceW - 8;
+        int slotH = faceH - 10;
+        int stepX = (groupCount > 1) ? ((faceW - 8) - slotW) / (groupCount - 1) : 0;
+        for (gi = 0; gi < groupCount; ++gi) {
+            int cx = faceX + 4 + gi * stepX;
+            int cy = faceY + 5;
+            if (cell->creatureTypes[gi] < 0) continue;
+            if (!g_drawState ||
+                !m11_draw_creature_sprite(g_drawState, framebuffer,
+                                          framebufferWidth, framebufferHeight,
+                                          cx, cy, slotW, slotH,
+                                          cell->creatureTypes[gi], depthIndex)) {
+                m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                      cx, cy, slotW, slotH, depthIndex);
+            }
         }
     }
-    if (cell->summary.items > 0) {
-        /* Try real item sprite first, fall back to primitive cue */
-        if (!g_drawState ||
-            !m11_draw_item_sprite(g_drawState, framebuffer,
-                                  framebufferWidth, framebufferHeight,
-                                  faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                                  cell->firstItemThingType, cell->firstItemSubtype,
-                                  depthIndex)) {
-            m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
-                              faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                              cell->summary.items);
+
+    /* ── Multi-item floor scatter ──
+     * DM1 scatters floor items across 4 sub-cell positions.  We render
+     * up to M11_MAX_CELL_ITEMS items, each at its own scatter offset. */
+    if (cell->floorItemCount > 0) {
+        int ii;
+        int itemsToShow = cell->floorItemCount;
+        for (ii = 0; ii < itemsToShow; ++ii) {
+            if (cell->floorItemTypes[ii] < 0) continue;
+            if (!g_drawState ||
+                !m11_draw_item_sprite(g_drawState, framebuffer,
+                                      framebufferWidth, framebufferHeight,
+                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                                      cell->floorItemTypes[ii],
+                                      cell->floorItemSubtypes[ii],
+                                      depthIndex)) {
+                /* Fallback cue only for the first item to avoid clutter */
+                if (ii == 0) {
+                    m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                                      cell->summary.items);
+                }
+            }
         }
     }
     m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
@@ -5471,17 +5530,24 @@ static int m11_draw_wall_ornament(const M11_GameViewState* state,
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
-    /* Scale ornament to fit in the center of the wall face, at ~40% of face size */
-    ornW = rect->w * 2 / 5;
-    ornH = (ornW * (int)slot->height) / (int)slot->width;
-    if (ornH > rect->h * 2 / 5) {
-        ornH = rect->h * 2 / 5;
-        ornW = (ornH * (int)slot->width) / (int)slot->height;
-    }
-    /* Shrink at depth */
-    if (depthIndex >= 1) {
-        ornW = ornW * 3 / 4;
-        ornH = ornH * 3 / 4;
+    /* DM1-faithful wall ornament depth scaling.
+     * The original uses specific perspective-scaled ornament sizes at
+     * each depth level.  We approximate these as fractions of the wall
+     * face rect, derived from ReDMCSB viewport geometry:
+     *   depth 0 (nearest): ornament at ~50% of face
+     *   depth 1 (mid):     ornament at ~38% of face
+     *   depth 2 (far):     ornament at ~28% of face
+     *   depth 3 (farthest): ornament at ~20% of face */
+    {
+        /* Scale numerator/denominator pairs per depth */
+        static const int s_ornScaleNum[4] = { 50, 38, 28, 20 };
+        int scaleIdx = depthIndex < 4 ? depthIndex : 3;
+        ornW = rect->w * s_ornScaleNum[scaleIdx] / 100;
+        ornH = (ornW * (int)slot->height) / (int)slot->width;
+        if (ornH > rect->h * s_ornScaleNum[scaleIdx] / 100) {
+            ornH = rect->h * s_ornScaleNum[scaleIdx] / 100;
+            ornW = (ornH * (int)slot->width) / (int)slot->height;
+        }
     }
     if (ornW < 3 || ornH < 3) return 0;
 
@@ -5523,15 +5589,19 @@ static int m11_draw_door_ornament(const M11_GameViewState* state,
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
-    ornW = rect->w / 3;
-    ornH = (ornW * (int)slot->height) / (int)slot->width;
-    if (ornH > rect->h / 3) {
-        ornH = rect->h / 3;
-        ornW = (ornH * (int)slot->width) / (int)slot->height;
-    }
-    if (depthIndex >= 1) {
-        ornW = ornW * 3 / 4;
-        ornH = ornH * 3 / 4;
+    /* DM1-faithful door ornament depth scaling.
+     * Door ornaments scale with perspective similarly to wall ornaments
+     * but are slightly smaller (centered on the door panel).
+     *   depth 0: ~40%, depth 1: ~30%, depth 2: ~22%, depth 3: ~16% */
+    {
+        static const int s_doorOrnScaleNum[4] = { 40, 30, 22, 16 };
+        int scaleIdx = depthIndex < 4 ? depthIndex : 3;
+        ornW = rect->w * s_doorOrnScaleNum[scaleIdx] / 100;
+        ornH = (ornW * (int)slot->height) / (int)slot->width;
+        if (ornH > rect->h * s_doorOrnScaleNum[scaleIdx] / 100) {
+            ornH = rect->h * s_doorOrnScaleNum[scaleIdx] / 100;
+            ornW = (ornH * (int)slot->width) / (int)slot->height;
+        }
     }
     if (ornW < 3 || ornH < 3) return 0;
 
@@ -5941,19 +6011,32 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 
     if (m11_viewport_cell_is_open(cell)) {
-        if (cell->summary.groups > 0) {
-            /* Try real creature sprite with side-aware mirror blit.
-             * Fall back to primitive colored rectangle. */
-            if (!g_drawState ||
-                !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
-                                             framebufferWidth, framebufferHeight,
-                                             paneX + 1, paneY + 1,
-                                             paneW - 2, paneH - 2,
-                                             cell->creatureType, depthIndex,
-                                             side)) {
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              paneX + paneW / 2 - 1, paneY + paneH / 2 - 2,
-                              3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+        /* ── Multi-creature stacking in side cells ──
+         * DM1 stacks creature groups vertically in side panes.
+         * Each subsequent group is drawn slightly lower. */
+        if (cell->creatureGroupCount > 0) {
+            int gi;
+            int groupCount = cell->creatureGroupCount;
+            int slotH = (groupCount > 1)
+                ? (paneH - 2) * 2 / (groupCount + 1)
+                : paneH - 2;
+            int stepY = (groupCount > 1)
+                ? ((paneH - 2) - slotH) / (groupCount - 1)
+                : 0;
+            for (gi = 0; gi < groupCount; ++gi) {
+                int cy = paneY + 1 + gi * stepY;
+                if (cell->creatureTypes[gi] < 0) continue;
+                if (!g_drawState ||
+                    !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
+                                                 framebufferWidth, framebufferHeight,
+                                                 paneX + 1, cy,
+                                                 paneW - 2, slotH,
+                                                 cell->creatureTypes[gi], depthIndex,
+                                                 side)) {
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  paneX + paneW / 2 - 1, cy + slotH / 2 - 2,
+                                  3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                }
             }
         }
         if (cell->summary.items > 0) {
