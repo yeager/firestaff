@@ -4,7 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 APP_NAME="Firestaff"
-VERSION="0.1.0-mac-preview"
+VERSION="${VERSION:-0.1.5-mac-preview}"
+SHORT_VERSION="${SHORT_VERSION:-0.1.5}"
 STAGE_DIR="$ROOT/release/macos-stage"
 APP_DIR="$STAGE_DIR/$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
@@ -15,7 +16,7 @@ DMG_DIR="$ROOT/release"
 DMG_PATH="$DMG_DIR/Firestaff-${VERSION}.dmg"
 ZIP_PATH="$DMG_DIR/Firestaff-${VERSION}.zip"
 README_SRC="$ROOT/README.md"
-RELEASE_NOTES_SRC="$ROOT/RELEASE_0_1_0_MAC_PREVIEW.md"
+RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/RELEASE_0_1_5_MAC_PREVIEW.md}"
 BIN_SRC="$BUILD_DIR/firestaff"
 SDL_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3.*dylib/ {print $1; exit}')"
 
@@ -38,7 +39,7 @@ cp "$README_SRC" "$STAGE_DIR/README.md"
 cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
 cp "$ROOT/assets/branding/firestaff-logo.png" "$RESOURCES_DIR/firestaff-logo.png"
 
-cat > "$CONTENTS_DIR/Info.plist" <<'EOF'
+cat > "$CONTENTS_DIR/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -56,9 +57,9 @@ cat > "$CONTENTS_DIR/Info.plist" <<'EOF'
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>${SHORT_VERSION}</string>
   <key>CFBundleVersion</key>
-  <string>0.1.0-mac-preview</string>
+  <string>${VERSION}</string>
   <key>LSMinimumSystemVersion</key>
   <string>14.0</string>
   <key>NSHighResolutionCapable</key>

@@ -18,20 +18,22 @@ An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Bac
 
 ## Status
 
-**Firestaff 0.1.0 is an early macOS preview release.**
+**Firestaff 0.1.5 is an early macOS preview release.**
 
-It already has a real launcher, a real in-game DM1 slice, bounded original-version detection, and a growing verified engine core.
+It already has a real launcher, a real in-game DM1 slice, a modern high-resolution startup menu, bounded original-version detection, and a growing verified engine core.
 
 **Working today:**
 - launcher with DM1 / CSB / DM2 entries
-- modern high-resolution true-color startup menu (1280x720 HD, 24-bit RGB) — the shared front door
+- modern high-resolution true-color startup menu (1280x720 HD, 24-bit RGB) as the shared front door
 - persistent startup settings
 - selected-version status and per-game checksum indicators in the startup menu
 - MD5-based original-data detection for bounded DM1 / CSB / DM2 version sets
+- self-contained macOS app packaging with bundled SDL3 for preview releases
 - explicit launcher / game / settings flow
 - real dungeon loading from `DUNGEON.DAT`
 - real movement / facing / ticking backed by world state
 - melee attack, item, spell, stair, pit, teleporter, XP, save/load, and survival slices wired through the game core
+- creature rendering now uses source-backed `GraphicInfo` flags for side / back / attack pose fallback instead of blind pose guesses
 - increasingly asset-backed viewport rendering using real `GRAPHICS.DAT` data
 - deterministic verification suite still green
 
@@ -44,19 +46,24 @@ It already has a real launcher, a real in-game DM1 slice, bounded original-versi
 
 ## Creature Art
 
-Firestaff includes generated creature artwork used in the launcher and card art system.
+Firestaff includes a ten-creature gallery used for launcher and card-art work.
 
 <p align="center">
-  <img src="assets/cards/creatures/red-dragon.png" alt="Red Dragon" width="240">
-  <img src="assets/cards/creatures/skeleton.png" alt="Skeleton" width="240">
-  <img src="assets/cards/creatures/stone-golem.png" alt="Stone Golem" width="240">
+  <img src="assets/cards/creatures/red-dragon.png" alt="Red Dragon" width="180">
+  <img src="assets/cards/creatures/skeleton.png" alt="Skeleton" width="180">
+  <img src="assets/cards/creatures/stone-golem.png" alt="Stone Golem" width="180">
+  <img src="assets/cards/creatures/giant-scorpion.png" alt="Giant Scorpion" width="180">
+  <img src="assets/cards/creatures/mummy.png" alt="Mummy" width="180">
 </p>
 <p align="center">
-  <img src="assets/cards/creatures/giant-scorpion.png" alt="Giant Scorpion" width="240">
-  <img src="assets/cards/creatures/mummy.png" alt="Mummy" width="240">
+  <img src="assets/cards/creature-refs/swamp_slime.png" alt="Swamp Slime" width="180">
+  <img src="assets/cards/creature-refs/giggler.png" alt="Giggler" width="180">
+  <img src="assets/cards/creature-refs/screamer.png" alt="Screamer" width="180">
+  <img src="assets/cards/creature-refs/demon.png" alt="Demon" width="180">
+  <img src="assets/cards/creature-refs/vexirk.png" alt="Vexirk" width="180">
 </p>
 
-These creatures appear as random decorative art in the startup menu sidebar, selected fresh each launch.
+The generated creature cards already in `assets/cards/creatures/` are used in the startup menu sidebar today, selected fresh each launch. The full ten-creature gallery is tracked in the repository as the current art/reference set for the launcher work.
 
 ## What Firestaff is
 
