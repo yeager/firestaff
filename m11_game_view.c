@@ -3843,6 +3843,11 @@ typedef struct M11_ViewportCell {
     int doorOrnamentOrdinal;
     /* First projectile graphic index (416-438) from GRAPHICS.DAT, or -1 */
     int firstProjectileGfxIndex;
+    /* First projectile direction relative to party facing.
+     * 0 = moving away from party, 1 = moving right, 2 = toward party,
+     * 3 = moving left.  -1 if no projectile or direction unknown.
+     * Used for DM1-faithful projectile sprite mirroring. */
+    int firstProjectileRelDir;
     /* First explosion type (0-50), or -1 */
     int firstExplosionType;
     M11_SquareThingSummary summary;
@@ -3907,16 +3912,23 @@ static void m11_draw_item_cue(unsigned char* framebuffer,
 }
 
 /* Draw a GRAPHICS.DAT-backed projectile sprite centered in the given area.
+ * relativeDir: projectile direction relative to party facing (0-3), or -1.
+ *   0 = flying away, 1 = flying right, 2 = flying toward, 3 = flying left.
+ * In DM1, projectile sprites are mirrored horizontally when the relative
+ * direction is 1 (right-bound); left-bound (3) and forward/backward (0,2)
+ * use the normal sprite orientation.
  * Returns 1 if a real sprite was drawn, 0 for fallback. */
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
                                       int framebufferHeight,
                                       int x, int y, int w, int h,
-                                      int gfxIndex, int depthIndex) {
+                                      int gfxIndex, int depthIndex,
+                                      int relativeDir) {
     const M11_AssetSlot* slot;
     int drawW, drawH, drawX, drawY;
     int scale;
+    int useMirror;
     if (!state || !state->assetsAvailable || gfxIndex < 416 ||
         gfxIndex >= 439) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
@@ -3931,8 +3943,23 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
     if (drawH > h) drawH = h;
     drawX = x + (w - drawW) / 2;
     drawY = y + (h - drawH) / 2;
-    M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth, framebufferHeight,
-                               drawX, drawY, drawW, drawH, -1);
+    /* DM1 projectile facing: mirror horizontally for right-bound (relDir 1).
+     * Ref: ReDMCSB VIEWPORT.C — projectile sprites are stored facing left
+     * and flipped for right-ward travel relative to party facing. */
+    useMirror = (relativeDir == 1) ? 1 : 0;
+    /* Use transparentColor=0 (palette index 0 = black) for projectile
+     * compositing, matching DM1 behaviour.  Previous code used -1
+     * (no transparency), which caused black-bordered projectile
+     * rectangles over corridor backgrounds. */
+    if (useMirror) {
+        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, framebufferWidth,
+                                         framebufferHeight,
+                                         drawX, drawY, drawW, drawH, 0);
+    } else {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
+                                   framebufferHeight,
+                                   drawX, drawY, drawW, drawH, 0);
+    }
     return 1;
 }
 
@@ -4013,7 +4040,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                         framebufferWidth, framebufferHeight,
                                         x, y, w, h,
                                         cell->firstProjectileGfxIndex,
-                                        depthIndex)) {
+                                        depthIndex,
+                                        cell->firstProjectileRelDir)) {
             /* Fallback: cyan crosshair */
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
@@ -4264,6 +4292,144 @@ static void m11_direction_vectors(int direction,
     }
 }
 
+/* ── Per-map ornament index cache ──
+ * Load the wall and door ornament index tables for a given map from
+ * DUNGEON.DAT metadata.  In the original, the metadata follows the
+ * square tile data: creatureTypeCount bytes of creature type indices,
+ * then wallOrnamentCount bytes of wall ornament graphic indices,
+ * then floorOrnamentCount bytes of floor ornament graphic indices,
+ * then doorOrnamentCount bytes of door ornament graphic indices.
+ * Ref: ReDMCSB DUNGEON.C F0173_DUNGEON_ReadMapData_CPSE.
+ * We read these lazily and cache in the game view state. */
+static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
+    const struct DungeonDatState_Compat* dun;
+    const struct DungeonMapDesc_Compat* m;
+    long rawDataFileOffset;
+    long mapFileOffset;
+    int squareCount;
+    unsigned char metaBuf[128]; /* enough for all metadata bytes */
+    int metaSize;
+    int offset;
+    FILE* fp;
+    int i;
+    int totalColumns;
+    long thingDataTotalBytes;
+
+    if (!state || !state->world.dungeon || !state->world.dungeon->loaded) return;
+    dun = state->world.dungeon;
+    if (mapIndex < 0 || mapIndex >= (int)dun->header.mapCount) return;
+    if (mapIndex >= (int)32) return;
+    if (state->ornamentCacheLoaded[mapIndex]) return;
+
+    m = &dun->maps[mapIndex];
+    squareCount = (int)m->width * (int)m->height;
+
+    /* Compute metadata size: creature types + wall ornaments (+ inscription slot) +
+     * floor ornaments + door ornaments. */
+    metaSize = (int)m->creatureTypeCount + (int)m->wallOrnamentCount + 1 +
+               (int)m->floorOrnamentCount + (int)m->doorOrnamentCount;
+    if (metaSize <= 0 || metaSize > (int)sizeof(metaBuf)) {
+        state->ornamentCacheLoaded[mapIndex] = 1;
+        return;
+    }
+
+    /* Reconstruct the DUNGEON.DAT path from the GRAPHICS.DAT path
+     * stored in the asset loader (same directory). */
+    {
+        char datPath[512];
+        const char* gfxPath = state->assetLoader.graphicsDatPath;
+        const char* lastSlash;
+        int dirLen;
+        if (!state->assetsAvailable || gfxPath[0] == '\0') {
+            state->ornamentCacheLoaded[mapIndex] = 1;
+            return;
+        }
+        /* Find directory portion of GRAPHICS.DAT path */
+        lastSlash = strrchr(gfxPath, '/');
+        if (!lastSlash) lastSlash = strrchr(gfxPath, '\\');
+        if (lastSlash) {
+            dirLen = (int)(lastSlash - gfxPath);
+        } else {
+            dirLen = 0;
+        }
+        if (dirLen > 0) {
+            snprintf(datPath, sizeof(datPath), "%.*s/DUNGEON.DAT", dirLen, gfxPath);
+        } else {
+            snprintf(datPath, sizeof(datPath), "DUNGEON.DAT");
+        }
+        fp = fopen(datPath, "rb");
+        if (!fp && dirLen > 0) {
+            snprintf(datPath, sizeof(datPath), "%.*s/dungeon.dat", dirLen, gfxPath);
+            fp = fopen(datPath, "rb");
+        }
+        if (!fp) {
+            state->ornamentCacheLoaded[mapIndex] = 1;
+            return;
+        }
+    }
+
+    /* Compute raw data section file offset (same formula as
+     * F0501_DUNGEON_LoadTileData_Compat). */
+    totalColumns = 0;
+    for (i = 0; i < (int)dun->header.mapCount; ++i) {
+        totalColumns += dun->maps[i].width;
+    }
+    thingDataTotalBytes = 0;
+    for (i = 0; i < 16; ++i) {
+        thingDataTotalBytes += (long)dun->header.thingCounts[i] *
+                               (long)s_thingDataByteCount[i];
+    }
+    rawDataFileOffset = DUNGEON_HEADER_SIZE +
+                        (long)dun->header.mapCount * DUNGEON_MAP_DESC_SIZE +
+                        (long)totalColumns * 2 +
+                        (long)dun->header.squareFirstThingCount * 2 +
+                        thingDataTotalBytes;
+    mapFileOffset = rawDataFileOffset + (long)m->rawMapDataByteOffset;
+
+    /* Seek past square data to the metadata area */
+    if (fseek(fp, mapFileOffset + (long)squareCount, SEEK_SET) != 0) {
+        fclose(fp);
+        state->ornamentCacheLoaded[mapIndex] = 1;
+        return;
+    }
+
+    if ((int)fread(metaBuf, 1, (size_t)metaSize, fp) != metaSize) {
+        fclose(fp);
+        state->ornamentCacheLoaded[mapIndex] = 1;
+        return;
+    }
+    fclose(fp);
+
+    /* Parse: skip creature type bytes, then read wall ornament indices.
+     * Each byte is a global ornament index used by the rendering engine.
+     * Ref: ReDMCSB DUNGEON.C F0173_DUNGEON_ReadMapData_CPSE —
+     *   CopyBytes(MapMetaData + CreatureTypeCount, G0261, WallOrnamentCount)
+     *   G0261[InscriptionWallOrnamentIndex] = C0_WALL_ORNAMENT_INSCRIPTION */
+    offset = (int)m->creatureTypeCount;
+    for (i = 0; i < 16; ++i) {
+        if (i < (int)m->wallOrnamentCount + 1 && (offset + i) < metaSize) {
+            state->wallOrnamentIndices[mapIndex][i] = (int)metaBuf[offset + i];
+        } else {
+            state->wallOrnamentIndices[mapIndex][i] = i; /* identity fallback */
+        }
+    }
+    offset += (int)m->wallOrnamentCount + 1; /* +1 for inscription ornament */
+
+    /* Skip floor ornament indices */
+    offset += (int)m->floorOrnamentCount;
+
+    /* Read door ornament indices */
+    for (i = 0; i < 16; ++i) {
+        if (i < (int)m->doorOrnamentCount && (offset + i) < metaSize) {
+            state->doorOrnamentIndices[mapIndex][i] = (int)metaBuf[offset + i];
+        } else {
+            state->doorOrnamentIndices[mapIndex][i] = i; /* identity fallback */
+        }
+    }
+
+    state->ornamentCacheLoaded[mapIndex] = 1;
+}
+
 static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                     int relForward,
                                     int relSide,
@@ -4294,6 +4460,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.wallOrnamentOrdinal = -1;
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
+    cell.firstProjectileRelDir = -1;
     cell.firstExplosionType = -1;
 
     if (!state || !state->active) {
@@ -4489,6 +4656,27 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
             ++scanSafety;
+        }
+    }
+
+    /* Extract first projectile direction from the runtime projectile list.
+     * Match a runtime ProjectileInstance_Compat to this cell's map position
+     * and compute the direction relative to party facing.
+     * In DM1, projectile sprites are horizontally mirrored when the
+     * missile's relative direction is 1 (right) vs 3 (left).  Missiles
+     * heading toward (2) or away (0) from the party use the normal sprite.
+     * Ref: ReDMCSB VIEWPORT.C projectile rendering direction logic. */
+    if (cell.firstProjectileGfxIndex >= 0) {
+        int pi;
+        int partyMap = state->world.party.mapIndex;
+        int partyDir = state->world.party.direction;
+        for (pi = 0; pi < state->world.projectiles.count; ++pi) {
+            const struct ProjectileInstance_Compat* rp = &state->world.projectiles.entries[pi];
+            if (rp->slotIndex < 0) continue;
+            if (rp->mapIndex == partyMap && rp->mapX == mapX && rp->mapY == mapY) {
+                cell.firstProjectileRelDir = (rp->direction - partyDir) & 3;
+                break;
+            }
         }
     }
 
@@ -5553,21 +5741,35 @@ static int m11_draw_wall_ornament(const M11_GameViewState* state,
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
     int ornW, ornH, drawX, drawY;
-    int wallSet;
+    int mapIdx;
+    int ornGlobalIdx;
 
     if (!state || !state->assetsAvailable || ornamentOrdinal < 0) return 0;
     if (!state->world.dungeon) return 0;
 
-    /* Get the current map's wall set */
-    wallSet = 0;
-    if (state->world.party.mapIndex >= 0 &&
-        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
-        wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
-    }
+    mapIdx = state->world.party.mapIndex;
 
-    gfxIdx = (unsigned int)(M11_GFX_WALL_ORNAMENT_BASE +
-              wallSet * M11_GFX_WALL_ORNAMENTS_PER_SET +
-              ornamentOrdinal);
+    /* Ensure the per-map ornament index cache is loaded.
+     * Cast away const: the cache is a lazy-init optimization that
+     * doesn't change observable game state. */
+    m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+
+    /* Resolve the per-map ordinal to a global ornament index via
+     * the cached G0261 table.  Fall back to ordinal if the cache
+     * couldn't be loaded (identity mapping). */
+    if (mapIdx >= 0 && mapIdx < (int)32 &&
+        state->ornamentCacheLoaded[mapIdx] &&
+        ornamentOrdinal < 16) {
+        ornGlobalIdx = state->wallOrnamentIndices[mapIdx][ornamentOrdinal];
+    } else {
+        /* Fallback: direct mapping (old behaviour) */
+        int wallSet = 0;
+        if (mapIdx >= 0 && mapIdx < (int)state->world.dungeon->header.mapCount) {
+            wallSet = (int)state->world.dungeon->maps[mapIdx].wallSet;
+        }
+        ornGlobalIdx = wallSet * M11_GFX_WALL_ORNAMENTS_PER_SET + ornamentOrdinal;
+    }
+    gfxIdx = (unsigned int)(M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
@@ -5612,21 +5814,30 @@ static int m11_draw_door_ornament(const M11_GameViewState* state,
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
     int ornW, ornH, drawX, drawY;
-    int doorSet;
+    int mapIdx;
+    int ornGlobalIdx;
 
     if (!state || !state->assetsAvailable || ornamentOrdinal < 0) return 0;
     if (!state->world.dungeon) return 0;
 
-    /* Get the current map's door set (use doorSet0 by default) */
-    doorSet = 0;
-    if (state->world.party.mapIndex >= 0 &&
-        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
-        doorSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].doorSet0;
-    }
+    mapIdx = state->world.party.mapIndex;
 
-    gfxIdx = (unsigned int)(M11_GFX_DOOR_ORNAMENT_BASE +
-              doorSet * M11_GFX_DOOR_ORNAMENTS_PER_SET +
-              ornamentOrdinal);
+    /* Ensure ornament cache and resolve via per-map door ornament table */
+    m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+
+    if (mapIdx >= 0 && mapIdx < (int)32 &&
+        state->ornamentCacheLoaded[mapIdx] &&
+        ornamentOrdinal < 16) {
+        ornGlobalIdx = state->doorOrnamentIndices[mapIdx][ornamentOrdinal];
+    } else {
+        /* Fallback: direct mapping */
+        int doorSet = 0;
+        if (mapIdx >= 0 && mapIdx < (int)state->world.dungeon->header.mapCount) {
+            doorSet = (int)state->world.dungeon->maps[mapIdx].doorSet0;
+        }
+        ornGlobalIdx = doorSet * M11_GFX_DOOR_ORNAMENTS_PER_SET + ornamentOrdinal;
+    }
+    gfxIdx = (unsigned int)(M11_GFX_DOOR_ORNAMENT_BASE + ornGlobalIdx);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
@@ -5825,10 +6036,14 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
     if (base == 0) return 0;
 
     /* Check if this creature is currently attacking (attack cue active
-     * and matches the creature type in front cell at depth 0). */
+     * and matches the creature type at depth 0).
+     * In DM1, the attack animation applies to ALL sprites of the
+     * attacking creature type in the front cell row (depth 0),
+     * including side-pane creatures.  Restricting the attack pose
+     * to center-only was a fidelity gap. */
     if (state->attackCueTimer > 0 &&
         state->attackCueCreatureType == creatureType &&
-        depthIndex == 0 && sideHint == 0) {
+        depthIndex == 0) {
         useAttackPose = 1;
     }
 
@@ -6181,7 +6396,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                             paneX + 1, projY,
                                             paneW - 2, projArea,
                                             cell->firstProjectileGfxIndex,
-                                            depthIndex + 1)) {
+                                            depthIndex + 1,
+                                            cell->firstProjectileRelDir)) {
                 int pcx = paneX + paneW / 2;
                 int pcy = paneY + paneH / 2;
                 m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,

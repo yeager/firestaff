@@ -98,6 +98,17 @@ typedef struct {
     M11_AudioState audioState;
     int audioEventCount;
 
+    /* ── Per-map ornament index cache ──
+     * In DM1, each map has a per-map wall/floor/door ornament index
+     * table stored in the DUNGEON.DAT metadata area.  The ordinal
+     * from the sensor thing is looked up in this table to get the
+     * actual ornament graphic index.  We cache these per-map tables
+     * here, loaded lazily from DUNGEON.DAT the first time a map is
+     * visited.  Ref: ReDMCSB G0261_auc_CurrentMapWallOrnamentIndices. */
+    int wallOrnamentIndices[32][16];   /* [mapIndex][ordinal] -> graphic index */
+    int doorOrnamentIndices[32][16];
+    int ornamentCacheLoaded[32];       /* 1 if loaded for this map */
+
     /* Torch fuel burn-down tracking.
      * Each weapon index that is a lit torch has its remaining fuel
      * tracked here.  Fuel decreases by 1 each game tick.  When it
