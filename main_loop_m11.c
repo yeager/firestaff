@@ -9,6 +9,7 @@
 #include "main_loop_m11.h"
 
 #include "menu_startup_m12.h"
+#include "menu_startup_render_modern_m12.h"
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 
@@ -24,11 +25,24 @@
 
 enum {
     M11_LAUNCHER_FB_WIDTH = 480,
-    M11_LAUNCHER_FB_HEIGHT = 270
+    M11_LAUNCHER_FB_HEIGHT = 270,
+    M11_LAUNCHER_MODERN_WIDTH = M12_MODERN_MENU_NATIVE_WIDTH,
+    M11_LAUNCHER_MODERN_HEIGHT = M12_MODERN_MENU_NATIVE_HEIGHT
 };
 
-static void m11_draw_launcher(const M12_StartupMenuState* menuState,
-                              unsigned char* launcherFramebuffer) {
+/* Runtime switch: when the environment variable FIRESTAFF_LEGACY_MENU
+ * is set to a non-zero value we fall back to the original
+ * palette-indexed startup menu renderer. This keeps a safe escape hatch
+ * for anyone who depends on the legacy 480x270 output. */
+static int m11_legacy_menu_requested(void) {
+    const char* val = getenv("FIRESTAFF_LEGACY_MENU");
+    if (!val || val[0] == '\0') return 0;
+    if (val[0] == '0' && val[1] == '\0') return 0;
+    return 1;
+}
+
+static void m11_draw_launcher_legacy(const M12_StartupMenuState* menuState,
+                                     unsigned char* launcherFramebuffer) {
     if (!menuState || !launcherFramebuffer) {
         return;
     }
@@ -36,6 +50,41 @@ static void m11_draw_launcher(const M12_StartupMenuState* menuState,
                          launcherFramebuffer,
                          M11_LAUNCHER_FB_WIDTH,
                          M11_LAUNCHER_FB_HEIGHT);
+}
+
+static void m11_draw_launcher_modern(const M12_StartupMenuState* menuState,
+                                     unsigned char* modernRgba) {
+    if (!menuState || !modernRgba) {
+        return;
+    }
+    M12_ModernMenu_Render(menuState,
+                          modernRgba,
+                          M11_LAUNCHER_MODERN_WIDTH,
+                          M11_LAUNCHER_MODERN_HEIGHT);
+}
+
+static void m11_draw_launcher(const M12_StartupMenuState* menuState,
+                              unsigned char* launcherFramebuffer,
+                              unsigned char* modernRgba,
+                              int useModern) {
+    if (useModern && modernRgba) {
+        m11_draw_launcher_modern(menuState, modernRgba);
+    } else if (launcherFramebuffer) {
+        m11_draw_launcher_legacy(menuState, launcherFramebuffer);
+    }
+}
+
+static int m11_present_launcher(unsigned char* launcherFramebuffer,
+                                unsigned char* modernRgba,
+                                int useModern) {
+    if (useModern && modernRgba) {
+        return M11_Render_PresentRGBA(modernRgba,
+                                      M11_LAUNCHER_MODERN_WIDTH,
+                                      M11_LAUNCHER_MODERN_HEIGHT);
+    }
+    return M11_Render_PresentIndexed(launcherFramebuffer,
+                                     M11_LAUNCHER_FB_WIDTH,
+                                     M11_LAUNCHER_FB_HEIGHT);
 }
 
 void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
@@ -479,6 +528,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_GameViewState gameView;
     const char* scriptCursor = o->script;
     unsigned char* launcherFramebuffer = NULL;
+    unsigned char* modernRgba = NULL;
+    int useModern = m11_legacy_menu_requested() ? 0 : 1;
     int quitRequested = 0;
     uint32_t idleAccumulatorMs = 0;
 
@@ -493,11 +544,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_Render_Shutdown();
         return M11_RENDER_ERR_TEXTURE;
     }
+    if (useModern) {
+        modernRgba = (unsigned char*)calloc((size_t)M11_LAUNCHER_MODERN_WIDTH *
+                                                (size_t)M11_LAUNCHER_MODERN_HEIGHT,
+                                            4U);
+        if (!modernRgba) {
+            /* Fall back to legacy renderer on allocation failure rather
+             * than aborting the launcher. */
+            useModern = 0;
+        }
+    }
 
     M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
     M11_GameView_Init(&gameView);
     M11_ApplyStartupMenuRuntime(&menuState);
-    m11_draw_launcher(&menuState, launcherFramebuffer);
+    m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
 
     /* Compute deadlines using millisecond ticks. SDL_GetTicks returns
        Uint64 in SDL3 and Uint32 in SDL2. Both are fine for our math. */
@@ -522,9 +583,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #endif
 
     /* Always present at least once so the window actually has content. */
-    M11_Render_PresentIndexed(launcherFramebuffer,
-                              M11_LAUNCHER_FB_WIDTH,
-                              M11_LAUNCHER_FB_HEIGHT);
+    m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
 
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
@@ -555,7 +614,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameView_Init(&gameView);
                 idleAccumulatorMs = 0;
                 M11_ApplyStartupMenuRuntime(&menuState);
-                m11_draw_launcher(&menuState, launcherFramebuffer);
+                m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             } else if (pointerResult == M11_GAME_INPUT_REDRAW) {
                 M11_GameView_Draw(&gameView,
                                   M11_Render_GetFramebuffer(),
@@ -575,7 +634,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     M11_GameView_Init(&gameView);
                     idleAccumulatorMs = 0;
                     M11_ApplyStartupMenuRuntime(&menuState);
-                    m11_draw_launcher(&menuState, launcherFramebuffer);
+                    m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 } else if (result == M11_GAME_INPUT_REDRAW) {
                     M11_GameView_Draw(&gameView,
                                       M11_Render_GetFramebuffer(),
@@ -606,7 +665,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             menuState.messageLine1 = "DUNGEON LOAD FAILED";
                             menuState.messageLine2 = "CHECK DUNGEON.DAT";
                             menuState.messageLine3 = "ESC RETURNS TO MENU";
-                            m11_draw_launcher(&menuState, launcherFramebuffer);
+                            m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                         }
                     }
                 }
@@ -624,7 +683,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         break;
                     }
                     M11_ApplyStartupMenuRuntime(&menuState);
-                    m11_draw_launcher(&menuState, launcherFramebuffer);
+                    m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 }
             }
         }
@@ -640,9 +699,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (gameView.active) {
             M11_Render_Present();
         } else {
-            M11_Render_PresentIndexed(launcherFramebuffer,
-                                      M11_LAUNCHER_FB_WIDTH,
-                                      M11_LAUNCHER_FB_HEIGHT);
+            m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
         }
         SDL_Delay((Uint32)interval);
         now = SDL_GetTicks();
@@ -650,6 +707,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 
     M11_GameView_Shutdown(&gameView);
     free(launcherFramebuffer);
+    if (modernRgba) {
+        free(modernRgba);
+    }
     M11_Render_Shutdown();
     return 0;
 }

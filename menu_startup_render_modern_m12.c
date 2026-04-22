@@ -1,0 +1,1003 @@
+/*
+ * menu_startup_render_modern_m12.c
+ *
+ * Bounded M12 slice: modern, high-resolution, true-color startup menu.
+ * See menu_startup_render_modern_m12.h for the strict scope rules.
+ *
+ * Style goals:
+ *   - 1280x720 HD canvas, 24-bit RGB.
+ *   - Indigo -> violet vertical gradient background with subtle
+ *     diagonal lighting so the output demonstrably exceeds the 16
+ *     colour VGA palette (tens of thousands of distinct RGB values).
+ *   - Clean panel layout with rounded corners, soft outlines, and
+ *     warm gold accents.
+ *   - Title treatment with a gold gradient + shadow.
+ *   - Card grid for DM1 / CSB / DM2 with legible version and
+ *     checksum status.
+ *   - V1 / V2 / V3 presentation mode badge drawn prominently.
+ *   - Shared footer with keyboard hints.
+ *
+ * All drawing is pure C99 - no platform code, no SDL dependency.
+ * The renderer only reads the public M12_StartupMenuState.
+ */
+
+#include "menu_startup_render_modern_m12.h"
+
+#include "asset_status_m12.h"
+#include "branding_logo_m12.h"
+#include "card_art_m12.h"
+
+#include <ctype.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* -------------------------------------------------------------------------- */
+/* Colour helpers                                                             */
+/* -------------------------------------------------------------------------- */
+
+typedef struct {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+} M12_RGB;
+
+static M12_RGB rgb(unsigned char r, unsigned char g, unsigned char b) {
+    M12_RGB c = {r, g, b};
+    return c;
+}
+
+static unsigned char clamp_u8(int v) {
+    if (v < 0) return 0;
+    if (v > 255) return 255;
+    return (unsigned char)v;
+}
+
+static M12_RGB mix_rgb(M12_RGB a, M12_RGB b, int t, int total) {
+    if (total <= 0) {
+        return a;
+    }
+    if (t < 0) t = 0;
+    if (t > total) t = total;
+    M12_RGB out;
+    out.r = clamp_u8(a.r + ((b.r - a.r) * t) / total);
+    out.g = clamp_u8(a.g + ((b.g - a.g) * t) / total);
+    out.b = clamp_u8(a.b + ((b.b - a.b) * t) / total);
+    return out;
+}
+
+static M12_RGB scale_rgb(M12_RGB c, int num, int den) {
+    if (den <= 0) den = 1;
+    M12_RGB out;
+    out.r = clamp_u8((int)c.r * num / den);
+    out.g = clamp_u8((int)c.g * num / den);
+    out.b = clamp_u8((int)c.b * num / den);
+    return out;
+}
+
+/* Theme palette */
+static M12_RGB COLOR_BG_TOP(void)      { return rgb(9,  10, 28); }
+static M12_RGB COLOR_BG_BOTTOM(void)   { return rgb(38, 17, 62); }
+static M12_RGB COLOR_PANEL_FILL(void)  { return rgb(22, 22, 46); }
+static M12_RGB COLOR_PANEL_EDGE(void)  { return rgb(92, 82, 148); }
+static M12_RGB COLOR_TEXT(void)        { return rgb(240, 236, 225); }
+static M12_RGB COLOR_TEXT_DIM(void)    { return rgb(176, 170, 192); }
+static M12_RGB COLOR_TEXT_FAINT(void)  { return rgb(120, 112, 148); }
+static M12_RGB COLOR_ACCENT(void)      { return rgb(232, 184, 88); }
+static M12_RGB COLOR_ACCENT_HI(void)   { return rgb(255, 222, 148); }
+static M12_RGB COLOR_ACCENT_LO(void)   { return rgb(168, 118, 40); }
+static M12_RGB COLOR_OK(void)          { return rgb(120, 200, 130); }
+static M12_RGB COLOR_WARN(void)        { return rgb(220, 170, 90); }
+static M12_RGB COLOR_BAD(void)         { return rgb(210, 96, 96); }
+static M12_RGB COLOR_V1(void)          { return rgb(232, 184, 88); }
+static M12_RGB COLOR_V2(void)          { return rgb(120, 196, 236); }
+static M12_RGB COLOR_V3(void)          { return rgb(176, 132, 240); }
+static M12_RGB COLOR_SHADOW(void)      { return rgb(6, 6, 14); }
+
+/* -------------------------------------------------------------------------- */
+/* Pixel plotting                                                             */
+/* -------------------------------------------------------------------------- */
+
+typedef struct {
+    unsigned char* rgba;
+    int w;
+    int h;
+} M12_ModernCanvas;
+
+static void put_pixel(M12_ModernCanvas* c, int x, int y, M12_RGB col) {
+    if (x < 0 || y < 0 || x >= c->w || y >= c->h) {
+        return;
+    }
+    unsigned char* p = c->rgba + (y * c->w + x) * 4;
+    p[0] = col.r;
+    p[1] = col.g;
+    p[2] = col.b;
+    p[3] = 0xFF;
+}
+
+static void blend_pixel(M12_ModernCanvas* c, int x, int y, M12_RGB col, int alpha) {
+    if (x < 0 || y < 0 || x >= c->w || y >= c->h) {
+        return;
+    }
+    if (alpha <= 0) return;
+    if (alpha >= 255) {
+        put_pixel(c, x, y, col);
+        return;
+    }
+    unsigned char* p = c->rgba + (y * c->w + x) * 4;
+    int invA = 255 - alpha;
+    p[0] = clamp_u8((p[0] * invA + col.r * alpha) / 255);
+    p[1] = clamp_u8((p[1] * invA + col.g * alpha) / 255);
+    p[2] = clamp_u8((p[2] * invA + col.b * alpha) / 255);
+    p[3] = 0xFF;
+}
+
+static void fill_rect(M12_ModernCanvas* c, int x, int y, int w, int h, M12_RGB col) {
+    for (int yy = y; yy < y + h; ++yy) {
+        for (int xx = x; xx < x + w; ++xx) {
+            put_pixel(c, xx, yy, col);
+        }
+    }
+}
+
+static void hline(M12_ModernCanvas* c, int x, int y, int w, M12_RGB col) {
+    for (int i = 0; i < w; ++i) put_pixel(c, x + i, y, col);
+}
+static void vline(M12_ModernCanvas* c, int x, int y, int h, M12_RGB col) {
+    for (int i = 0; i < h; ++i) put_pixel(c, x, y + i, col);
+}
+
+/* Soft rounded rectangle: fill, then pinch corners and stroke. */
+static void fill_rounded_rect(M12_ModernCanvas* c, int x, int y, int w, int h, int radius, M12_RGB col) {
+    if (radius < 0) radius = 0;
+    if (radius > w / 2) radius = w / 2;
+    if (radius > h / 2) radius = h / 2;
+    for (int yy = 0; yy < h; ++yy) {
+        for (int xx = 0; xx < w; ++xx) {
+            int dx = 0;
+            int dy = 0;
+            if (xx < radius)          dx = radius - xx;
+            else if (xx >= w - radius) dx = xx - (w - radius - 1);
+            if (yy < radius)          dy = radius - yy;
+            else if (yy >= h - radius) dy = yy - (h - radius - 1);
+            if (dx > 0 && dy > 0) {
+                if (dx * dx + dy * dy > radius * radius) {
+                    continue;
+                }
+            }
+            put_pixel(c, x + xx, y + yy, col);
+        }
+    }
+}
+
+static void stroke_rounded_rect(M12_ModernCanvas* c, int x, int y, int w, int h, int radius, M12_RGB col) {
+    /* Approximate by drawing a filled rounded rect one pixel bigger and
+     * subtracting... but for simplicity: draw 4 straight edges, then
+     * corner arcs. */
+    if (radius < 0) radius = 0;
+    if (radius > w / 2) radius = w / 2;
+    if (radius > h / 2) radius = h / 2;
+    hline(c, x + radius, y, w - 2 * radius, col);
+    hline(c, x + radius, y + h - 1, w - 2 * radius, col);
+    vline(c, x, y + radius, h - 2 * radius, col);
+    vline(c, x + w - 1, y + radius, h - 2 * radius, col);
+    for (int i = 0; i <= radius; ++i) {
+        for (int j = 0; j <= radius; ++j) {
+            int d2 = i * i + j * j;
+            if (d2 <= radius * radius && d2 >= (radius - 1) * (radius - 1)) {
+                put_pixel(c, x + radius - i, y + radius - j, col);
+                put_pixel(c, x + w - 1 - (radius - i), y + radius - j, col);
+                put_pixel(c, x + radius - i, y + h - 1 - (radius - j), col);
+                put_pixel(c, x + w - 1 - (radius - i), y + h - 1 - (radius - j), col);
+            }
+        }
+    }
+}
+
+/* Vertical gradient fill (rect spans y0..y1). */
+static void fill_vgradient(M12_ModernCanvas* c, int x, int y, int w, int h, M12_RGB top, M12_RGB bot) {
+    for (int yy = 0; yy < h; ++yy) {
+        M12_RGB row = mix_rgb(top, bot, yy, h - 1);
+        for (int xx = 0; xx < w; ++xx) {
+            put_pixel(c, x + xx, y + yy, row);
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Background with subtle diagonal highlight + noise grid                     */
+/* -------------------------------------------------------------------------- */
+
+static void draw_background(M12_ModernCanvas* c) {
+    M12_RGB top = COLOR_BG_TOP();
+    M12_RGB bot = COLOR_BG_BOTTOM();
+    for (int y = 0; y < c->h; ++y) {
+        M12_RGB row = mix_rgb(top, bot, y, c->h - 1);
+        for (int x = 0; x < c->w; ++x) {
+            /* Diagonal highlight: soft brighten along the
+             * top-left to bottom-right axis. */
+            int diag = (x + y) - (c->w + c->h) / 4;
+            int highlight = 0;
+            if (diag > 0 && diag < (c->w + c->h) / 2) {
+                highlight = (diag * 14) / ((c->w + c->h) / 2);
+            }
+            int r = row.r + highlight;
+            int g = row.g + highlight;
+            int b = row.b + highlight / 2;
+            /* Stable deterministic texture noise so same state ->
+             * same output. */
+            int n = ((x * 131 + y * 197 + (x ^ y) * 17) & 0x1F) - 16;
+            r += n / 8;
+            g += n / 10;
+            b += n / 6;
+            put_pixel(c, x, y, rgb(clamp_u8(r), clamp_u8(g), clamp_u8(b)));
+        }
+    }
+
+    /* Faint star field in the upper half (deterministic). */
+    for (int i = 0; i < 180; ++i) {
+        int x = (i * 3571) % c->w;
+        int y = (i * 1607) % (c->h / 2);
+        int brightness = 120 + (i * 37) % 110;
+        M12_RGB star = rgb(clamp_u8(brightness + 30), clamp_u8(brightness + 10), clamp_u8(brightness));
+        blend_pixel(c, x, y, star, 180);
+        blend_pixel(c, x + 1, y, star, 80);
+        blend_pixel(c, x, y + 1, star, 80);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Font: compact 5x7 monospaced (A-Z, 0-9, punctuation). Rendered at any       */
+/* integer scale with soft shadow for legibility.                             */
+/* -------------------------------------------------------------------------- */
+
+typedef struct {
+    char ch;
+    unsigned char rows[7]; /* each byte: bit4 ... bit0 = leftmost ... rightmost */
+} ModernGlyph;
+
+static const ModernGlyph g_glyphs[] = {
+    {' ', {0, 0, 0, 0, 0, 0, 0}},
+    {'!', {4, 4, 4, 4, 4, 0, 4}},
+    {'-', {0, 0, 0, 31, 0, 0, 0}},
+    {'.', {0, 0, 0, 0, 0, 12, 12}},
+    {',', {0, 0, 0, 0, 0, 12, 4}},
+    {':', {0, 12, 12, 0, 12, 12, 0}},
+    {'/', {1, 1, 2, 4, 8, 16, 16}},
+    {'>', {16, 8, 4, 2, 4, 8, 16}},
+    {'<', {1, 2, 4, 8, 4, 2, 1}},
+    {'+', {0, 4, 4, 31, 4, 4, 0}},
+    {'(', {6, 8, 16, 16, 16, 8, 6}},
+    {')', {12, 2, 1, 1, 1, 2, 12}},
+    {'[', {14, 8, 8, 8, 8, 8, 14}},
+    {']', {14, 2, 2, 2, 2, 2, 14}},
+    {'\'', {4, 4, 0, 0, 0, 0, 0}},
+    {'"', {10, 10, 0, 0, 0, 0, 0}},
+    {'%', {17, 18, 4, 4, 4, 9, 17}},
+    {'#', {10, 10, 31, 10, 31, 10, 10}},
+    {'0', {14, 17, 19, 21, 25, 17, 14}},
+    {'1', {4, 12, 4, 4, 4, 4, 14}},
+    {'2', {14, 17, 1, 2, 4, 8, 31}},
+    {'3', {30, 1, 1, 14, 1, 1, 30}},
+    {'4', {2, 6, 10, 18, 31, 2, 2}},
+    {'5', {31, 16, 16, 30, 1, 1, 30}},
+    {'6', {14, 16, 16, 30, 17, 17, 14}},
+    {'7', {31, 1, 2, 4, 8, 8, 8}},
+    {'8', {14, 17, 17, 14, 17, 17, 14}},
+    {'9', {14, 17, 17, 15, 1, 1, 14}},
+    {'A', {14, 17, 17, 31, 17, 17, 17}},
+    {'B', {30, 17, 17, 30, 17, 17, 30}},
+    {'C', {14, 17, 16, 16, 16, 17, 14}},
+    {'D', {30, 17, 17, 17, 17, 17, 30}},
+    {'E', {31, 16, 16, 30, 16, 16, 31}},
+    {'F', {31, 16, 16, 30, 16, 16, 16}},
+    {'G', {14, 17, 16, 23, 17, 17, 14}},
+    {'H', {17, 17, 17, 31, 17, 17, 17}},
+    {'I', {31, 4, 4, 4, 4, 4, 31}},
+    {'J', {7, 2, 2, 2, 18, 18, 12}},
+    {'K', {17, 18, 20, 24, 20, 18, 17}},
+    {'L', {16, 16, 16, 16, 16, 16, 31}},
+    {'M', {17, 27, 21, 21, 17, 17, 17}},
+    {'N', {17, 25, 21, 19, 17, 17, 17}},
+    {'O', {14, 17, 17, 17, 17, 17, 14}},
+    {'P', {30, 17, 17, 30, 16, 16, 16}},
+    {'Q', {14, 17, 17, 17, 21, 18, 13}},
+    {'R', {30, 17, 17, 30, 20, 18, 17}},
+    {'S', {15, 16, 16, 14, 1, 1, 30}},
+    {'T', {31, 4, 4, 4, 4, 4, 4}},
+    {'U', {17, 17, 17, 17, 17, 17, 14}},
+    {'V', {17, 17, 17, 17, 17, 10, 4}},
+    {'W', {17, 17, 17, 21, 21, 21, 10}},
+    {'X', {17, 17, 10, 4, 10, 17, 17}},
+    {'Y', {17, 17, 10, 4, 4, 4, 4}},
+    {'Z', {31, 1, 2, 4, 8, 16, 31}}
+};
+
+static const ModernGlyph* find_glyph(char ch) {
+    if (ch >= 'a' && ch <= 'z') {
+        ch = (char)(ch - 'a' + 'A');
+    }
+    for (size_t i = 0; i < sizeof(g_glyphs) / sizeof(g_glyphs[0]); ++i) {
+        if (g_glyphs[i].ch == ch) {
+            return &g_glyphs[i];
+        }
+    }
+    return &g_glyphs[0]; /* space */
+}
+
+typedef struct {
+    int scale;
+    int tracking;       /* extra pixels between glyphs at unit scale (x scale) */
+    int shadow;         /* 0 = off, positive = offset magnitude */
+    M12_RGB color;
+    M12_RGB shadowColor;
+} ModernTextStyle;
+
+static ModernTextStyle text_style_make(int scale, M12_RGB color, int shadow) {
+    ModernTextStyle s;
+    s.scale = scale < 1 ? 1 : scale;
+    s.tracking = 1;
+    s.shadow = shadow;
+    s.color = color;
+    s.shadowColor = COLOR_SHADOW();
+    return s;
+}
+
+static int glyph_width_px(int scale, int tracking) {
+    return (5 + tracking) * scale;
+}
+
+static int text_width_px(const char* s, const ModernTextStyle* st) {
+    if (!s) return 0;
+    int n = (int)strlen(s);
+    int w = n * glyph_width_px(st->scale, st->tracking);
+    w -= st->tracking * st->scale;
+    if (w < 0) w = 0;
+    return w;
+}
+
+static void draw_glyph(M12_ModernCanvas* c, int x, int y,
+                       const ModernGlyph* g, const ModernTextStyle* st) {
+    int scale = st->scale;
+    for (int row = 0; row < 7; ++row) {
+        unsigned char bits = g->rows[row];
+        for (int col = 0; col < 5; ++col) {
+            int on = (bits >> (4 - col)) & 1;
+            if (!on) continue;
+            int px = x + col * scale;
+            int py = y + row * scale;
+            if (st->shadow > 0) {
+                fill_rect(c,
+                          px + st->shadow, py + st->shadow,
+                          scale, scale,
+                          st->shadowColor);
+            }
+            fill_rect(c, px, py, scale, scale, st->color);
+        }
+    }
+}
+
+static void draw_text(M12_ModernCanvas* c, int x, int y,
+                      const char* s, const ModernTextStyle* st) {
+    if (!s) return;
+    int step = glyph_width_px(st->scale, st->tracking);
+    for (int i = 0; s[i] != '\0'; ++i) {
+        const ModernGlyph* g = find_glyph(s[i]);
+        draw_glyph(c, x + i * step, y, g, st);
+    }
+}
+
+static void draw_text_centered(M12_ModernCanvas* c, int cx, int y,
+                               const char* s, const ModernTextStyle* st) {
+    int w = text_width_px(s, st);
+    draw_text(c, cx - w / 2, y, s, st);
+}
+
+static void draw_text_gradient(M12_ModernCanvas* c, int x, int y, const char* s,
+                               int scale, M12_RGB top, M12_RGB bot, M12_RGB shadow) {
+    if (!s) return;
+    ModernTextStyle sh = text_style_make(scale, shadow, 0);
+    /* Shadow pass */
+    for (int dy = 2; dy <= 4; ++dy) {
+        ModernTextStyle ps = sh;
+        ps.color = shadow;
+        draw_text(c, x + dy, y + dy, s, &ps);
+    }
+    /* Gradient scan: draw each row of each glyph at a mixed colour. */
+    int step = glyph_width_px(scale, 1);
+    int rowTotal = 7 * scale - 1;
+    for (int i = 0; s[i] != '\0'; ++i) {
+        const ModernGlyph* g = find_glyph(s[i]);
+        for (int row = 0; row < 7; ++row) {
+            unsigned char bits = g->rows[row];
+            for (int col = 0; col < 5; ++col) {
+                int on = (bits >> (4 - col)) & 1;
+                if (!on) continue;
+                for (int py = 0; py < scale; ++py) {
+                    int yy = row * scale + py;
+                    M12_RGB c_ = mix_rgb(top, bot, yy, rowTotal);
+                    fill_rect(c,
+                              x + i * step + col * scale,
+                              y + yy,
+                              scale, 1,
+                              c_);
+                }
+            }
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Layout & panels                                                            */
+/* -------------------------------------------------------------------------- */
+
+static void draw_panel(M12_ModernCanvas* c, int x, int y, int w, int h,
+                       M12_RGB fill, M12_RGB edge, int radius) {
+    /* Drop shadow */
+    for (int i = 1; i <= 10; ++i) {
+        int alpha = 40 - i * 3;
+        if (alpha <= 0) break;
+        for (int xx = x + i; xx < x + w + i; ++xx) {
+            blend_pixel(c, xx, y + h + i, COLOR_SHADOW(), alpha);
+        }
+        for (int yy = y + i; yy < y + h + i; ++yy) {
+            blend_pixel(c, x + w + i, yy, COLOR_SHADOW(), alpha);
+        }
+    }
+    fill_rounded_rect(c, x, y, w, h, radius, fill);
+    /* Inner highlight along the top edge */
+    for (int i = 0; i < w - 2 * radius - 2; ++i) {
+        blend_pixel(c, x + radius + 1 + i, y + 1,
+                    rgb(clamp_u8(fill.r + 38),
+                        clamp_u8(fill.g + 32),
+                        clamp_u8(fill.b + 52)), 160);
+    }
+    stroke_rounded_rect(c, x, y, w, h, radius, edge);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Header: logo + title + mode badge                                          */
+/* -------------------------------------------------------------------------- */
+
+static void draw_title_centered(M12_ModernCanvas* c) {
+    /* Translucent band behind title */
+    for (int y = 20; y < 128; ++y) {
+        int alpha = 90 - (y - 20) * 48 / 108;
+        for (int x = 0; x < c->w; ++x) {
+            blend_pixel(c, x, y, rgb(0, 0, 0), alpha < 0 ? 0 : alpha);
+        }
+    }
+    int scale = 10;
+    const char* label = "FIRESTAFF";
+    ModernTextStyle probe = text_style_make(scale, COLOR_ACCENT_HI(), 0);
+    int w = text_width_px(label, &probe);
+    draw_text_gradient(c, (c->w - w) / 2, 30, label, scale,
+                       COLOR_ACCENT_HI(), COLOR_ACCENT_LO(), COLOR_SHADOW());
+    ModernTextStyle tag = text_style_make(3, COLOR_TEXT_DIM(), 2);
+    draw_text_centered(c, c->w / 2, 110,
+                       "THE DEFINITIVE DUNGEON MASTER FRONT DOOR", &tag);
+}
+
+static M12_RGB mode_color(int mode) {
+    if (mode == M12_PRESENTATION_V2_ENHANCED_2D) return COLOR_V2();
+    if (mode == M12_PRESENTATION_V3_MODERN_3D)   return COLOR_V3();
+    return COLOR_V1();
+}
+
+static const char* mode_short(int mode) {
+    if (mode == M12_PRESENTATION_V2_ENHANCED_2D) return "V2 ENHANCED 2D";
+    if (mode == M12_PRESENTATION_V3_MODERN_3D)   return "V3 MODERN 3D";
+    return "V1 ORIGINAL";
+}
+
+static void draw_mode_badge(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    int mode = M12_StartupMenu_GetPresentationMode(state);
+    M12_RGB col = mode_color(mode);
+    int x = c->w - 300;
+    int y = 40;
+    int w = 260;
+    int h = 48;
+    /* Outer glow */
+    for (int i = 1; i <= 6; ++i) {
+        int alpha = 90 - i * 12;
+        for (int xx = x - i; xx < x + w + i; ++xx) {
+            blend_pixel(c, xx, y - i, col, alpha);
+            blend_pixel(c, xx, y + h + i - 1, col, alpha);
+        }
+        for (int yy = y - i; yy < y + h + i; ++yy) {
+            blend_pixel(c, x - i, yy, col, alpha);
+            blend_pixel(c, x + w + i - 1, yy, col, alpha);
+        }
+    }
+    fill_rounded_rect(c, x, y, w, h, 10, scale_rgb(col, 120, 255));
+    stroke_rounded_rect(c, x, y, w, h, 10, col);
+    ModernTextStyle lbl = text_style_make(2, COLOR_TEXT(), 1);
+    draw_text(c, x + 16, y + 8, "MODE", &lbl);
+    ModernTextStyle big = text_style_make(2, col, 2);
+    const char* s = mode_short(mode);
+    int tw = text_width_px(s, &big);
+    draw_text(c, x + w - tw - 16, y + h - 18, s, &big);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Asset / version status helpers                                             */
+/* -------------------------------------------------------------------------- */
+
+static const M12_AssetVersionStatus* pick_status(const M12_StartupMenuState* state,
+                                                 int gameSlot) {
+    if (!state || gameSlot < 0 || gameSlot >= M12_ASSET_GAME_COUNT) {
+        return NULL;
+    }
+    const M12_AssetVersionStatus* matched = NULL;
+    for (int i = 0; i < M12_ASSET_MAX_VERSIONS_PER_GAME; ++i) {
+        const M12_AssetVersionStatus* v = &state->assetStatus.versions[gameSlot][i];
+        if (!v->versionId) continue;
+        if (v->matched) {
+            matched = v;
+            break;
+        }
+        if (!matched) matched = v;
+    }
+    return matched;
+}
+
+static int slot_for_game_id(const char* id) {
+    if (!id) return -1;
+    if (strcmp(id, "dm1") == 0) return 0;
+    if (strcmp(id, "csb") == 0) return 1;
+    if (strcmp(id, "dm2") == 0) return 2;
+    return -1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Card drawing                                                               */
+/* -------------------------------------------------------------------------- */
+
+static void draw_card(M12_ModernCanvas* c,
+                      const M12_StartupMenuState* state,
+                      int slot,
+                      int x, int y, int w, int h,
+                      int selected) {
+    const M12_MenuEntry* entry = &state->entries[slot];
+    int isSettings = entry->kind == M12_MENU_ENTRY_SETTINGS;
+
+    /* Selected cards glow. */
+    if (selected) {
+        for (int i = 1; i <= 10; ++i) {
+            int alpha = 110 - i * 9;
+            M12_RGB glow = isSettings ? rgb(160, 180, 240) : COLOR_ACCENT();
+            for (int xx = x - i; xx < x + w + i; ++xx) {
+                blend_pixel(c, xx, y - i, glow, alpha);
+                blend_pixel(c, xx, y + h + i - 1, glow, alpha);
+            }
+            for (int yy = y - i; yy < y + h + i; ++yy) {
+                blend_pixel(c, x - i, yy, glow, alpha);
+                blend_pixel(c, x + w + i - 1, yy, glow, alpha);
+            }
+        }
+    }
+
+    M12_RGB fill = COLOR_PANEL_FILL();
+    M12_RGB edge = selected ? (isSettings ? rgb(160, 180, 240) : COLOR_ACCENT())
+                            : COLOR_PANEL_EDGE();
+    /* Inner gradient */
+    fill_vgradient(c, x, y, w, h,
+                   rgb(fill.r + 6, fill.g + 6, fill.b + 16),
+                   rgb(fill.r / 2, fill.g / 2, fill.b / 2 + 10));
+    stroke_rounded_rect(c, x, y, w, h, 12, edge);
+
+    /* Header band */
+    M12_RGB bandTop = isSettings ? rgb(40, 50, 110) : rgb(70, 40, 24);
+    M12_RGB bandBot = isSettings ? rgb(24, 32, 78)  : rgb(42, 26, 16);
+    fill_vgradient(c, x + 2, y + 2, w - 4, 46, bandTop, bandBot);
+
+    ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
+    title.tracking = 1;
+    /* If title is too wide, fall back to scale 2. */
+    if (text_width_px(entry->title, &title) > w - 32) {
+        title = text_style_make(2, COLOR_TEXT(), 1);
+    }
+    draw_text(c, x + 16, y + 12, entry->title, &title);
+
+    if (isSettings) {
+        ModernTextStyle p = text_style_make(2, COLOR_TEXT_DIM(), 1);
+        draw_text(c, x + 16, y + 72,  "LANGUAGE", &p);
+        draw_text(c, x + 16, y + 108, "GRAPHICS", &p);
+        draw_text(c, x + 16, y + 144, "WINDOW",   &p);
+
+        static const char* langs[] = {"EN", "SV", "FR", "DE"};
+        static const char* grf[]   = {"CLASSIC", "ENHANCED", "MODERN"};
+        static const char* win[]   = {"WINDOWED", "FULLSCREEN"};
+        ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
+        int li = state->settings.languageIndex;
+        int gi = state->settings.graphicsIndex;
+        int wi = state->settings.windowModeIndex;
+        if (li < 0) li = 0; if (li > 3) li = 3;
+        if (gi < 0) gi = 0; if (gi > 2) gi = 2;
+        if (wi < 0) wi = 0; if (wi > 1) wi = 1;
+        draw_text(c, x + 200, y + 72,  langs[li], &v);
+        draw_text(c, x + 200, y + 108, grf[gi], &v);
+        draw_text(c, x + 200, y + 144, win[wi], &v);
+
+        ModernTextStyle hint = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+        draw_text(c, x + 16, y + h - 32,
+                  "PRESS ENTER TO CONFIGURE SETTINGS", &hint);
+        return;
+    }
+
+    /* Game card: status line under title, then version list. */
+    int slotIdx = slot_for_game_id(entry->gameId);
+    const M12_AssetVersionStatus* status = pick_status(state, slotIdx);
+
+    M12_RGB statusColor;
+    const char* statusLabel;
+    if (entry->available && status && status->matched) {
+        statusColor = COLOR_OK();
+        statusLabel = "VERIFIED";
+    } else if (status) {
+        statusColor = COLOR_BAD();
+        statusLabel = "DATA MISSING";
+    } else {
+        statusColor = COLOR_WARN();
+        statusLabel = "NOT SCANNED";
+    }
+
+    /* Status pill */
+    {
+        int pillX = x + 16;
+        int pillY = y + 56;
+        int pillW = 180;
+        int pillH = 22;
+        fill_rounded_rect(c, pillX, pillY, pillW, pillH, 6, scale_rgb(statusColor, 90, 255));
+        stroke_rounded_rect(c, pillX, pillY, pillW, pillH, 6, statusColor);
+        ModernTextStyle s = text_style_make(1, statusColor, 0);
+        int tw = text_width_px(statusLabel, &s);
+        draw_text(c, pillX + (pillW - tw) / 2, pillY + 8, statusLabel, &s);
+    }
+
+    /* Version list */
+    ModernTextStyle vlabel = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+    draw_text(c, x + 16, y + 88, "VERSIONS DETECTED", &vlabel);
+
+    int countShown = 0;
+    int lineY = y + 108;
+    for (int i = 0; i < M12_ASSET_MAX_VERSIONS_PER_GAME; ++i) {
+        const M12_AssetVersionStatus* v = &state->assetStatus.versions[slotIdx][i];
+        if (!v->versionId) continue;
+        int sel = (state->gameOptions[slotIdx].versionIndex == i) ? 1 : 0;
+        M12_RGB dot = v->matched ? COLOR_OK() : COLOR_TEXT_FAINT();
+        fill_rect(c, x + 16, lineY + 5, 10, 10, dot);
+        ModernTextStyle vt = text_style_make(2,
+                                             sel ? COLOR_TEXT() : COLOR_TEXT_DIM(),
+                                             1);
+        const char* shown = v->shortLabel ? v->shortLabel
+                                          : (v->label ? v->label : v->versionId);
+        draw_text(c, x + 34, lineY, shown, &vt);
+        if (sel) {
+            ModernTextStyle arrow = text_style_make(2, COLOR_ACCENT(), 1);
+            draw_text(c, x + w - 42, lineY, ">", &arrow);
+        }
+        lineY += 24;
+        countShown++;
+    }
+    if (countShown == 0) {
+        ModernTextStyle m = text_style_make(2, COLOR_TEXT_FAINT(), 1);
+        draw_text(c, x + 16, lineY, "NO VERSIONS CONFIGURED", &m);
+    }
+
+    /* Art mini-slot hint */
+    {
+        ModernTextStyle a = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+        const M12_GameCardArt* art = &state->cardArt[slot];
+        const char* msg;
+        if (M12_CardArt_HasExternalFile(art)) msg = "ART SLOT READY";
+        else if (M12_CardArt_HasImage(art))   msg = "ART BUILT IN";
+        else                                  msg = "ART SLOT EMPTY";
+        draw_text(c, x + 16, y + h - 26, msg, &a);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* View drawing                                                               */
+/* -------------------------------------------------------------------------- */
+
+static void draw_footer(M12_ModernCanvas* c, const char* left, const char* right) {
+    int h = 48;
+    int y = c->h - h - 12;
+    fill_rounded_rect(c, 24, y, c->w - 48, h, 10, rgb(14, 14, 28));
+    stroke_rounded_rect(c, 24, y, c->w - 48, h, 10, COLOR_PANEL_EDGE());
+    ModernTextStyle t = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    if (left)  draw_text(c, 48,            y + 14, left, &t);
+    if (right) {
+        int rw = text_width_px(right, &t);
+        draw_text(c, c->w - 48 - rw, y + 14, right, &t);
+    }
+}
+
+static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    const char* dir = state->assetStatus.dataDir;
+    if (!dir || dir[0] == '\0') dir = "UNSET";
+    /* Elide extremely long paths to keep the footer label legible at
+     * scale 2. Budget: ~72 glyphs for the full line, minus 10 for the
+     * "DATA DIR  " prefix, gives ~62 usable characters. */
+    char dirBuf[96];
+    size_t dirLen = strlen(dir);
+    if (dirLen > 62) {
+        size_t head = 28;
+        size_t tail = 62 - head - 3;
+        memcpy(dirBuf, dir, head);
+        dirBuf[head + 0] = '.';
+        dirBuf[head + 1] = '.';
+        dirBuf[head + 2] = '.';
+        memcpy(dirBuf + head + 3, dir + dirLen - tail, tail);
+        dirBuf[head + 3 + tail] = '\0';
+    } else {
+        snprintf(dirBuf, sizeof(dirBuf), "%s", dir);
+    }
+    char buf[128];
+    snprintf(buf, sizeof(buf), "DATA DIR  %s", dirBuf);
+    /* Uppercase for the retro-meets-modern look. */
+    for (int i = 0; buf[i]; ++i) {
+        if (buf[i] >= 'a' && buf[i] <= 'z') buf[i] = (char)(buf[i] - 'a' + 'A');
+    }
+    ModernTextStyle t = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text(c, 48, c->h - 86, buf, &t);
+}
+
+static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    /* Compute card layout: 4 cards in a row */
+    int gridTop = 170;
+    int gridBottom = c->h - 130;
+    int gridH = gridBottom - gridTop;
+    int cardCount = 4;
+    int gap = 24;
+    int sideMargin = 48;
+    int cardW = (c->w - 2 * sideMargin - gap * (cardCount - 1)) / cardCount;
+    int cardH = gridH;
+
+    for (int i = 0; i < cardCount; ++i) {
+        int x = sideMargin + i * (cardW + gap);
+        int y = gridTop;
+        int selected = (state->selectedIndex == i);
+        draw_card(c, state, i, x, y, cardW, cardH, selected);
+    }
+
+    /* Section title */
+    ModernTextStyle h = text_style_make(3, COLOR_ACCENT(), 2);
+    draw_text(c, 48, 142, "SELECT A DESTINATION", &h);
+}
+
+static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
+                             const char* label, const char* value,
+                             int selected) {
+    M12_RGB fill = selected ? rgb(36, 42, 84) : rgb(20, 22, 48);
+    M12_RGB edge = selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE();
+    fill_rounded_rect(c, x, y, w, 50, 10, fill);
+    stroke_rounded_rect(c, x, y, w, 50, 10, edge);
+    ModernTextStyle L = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    ModernTextStyle V = text_style_make(2, selected ? COLOR_ACCENT_HI() : COLOR_TEXT(), 1);
+    draw_text(c, x + 20, y + 14, label, &L);
+    int vw = text_width_px(value, &V);
+    draw_text(c, x + w - 20 - vw, y + 14, value, &V);
+}
+
+static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
+    draw_text(c, 48, 142, "SETTINGS", &h);
+    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text(c, 48, 210, "CHANGES ARE PERSISTED IMMEDIATELY", &sub);
+
+    int panelX = 96;
+    int panelY = 260;
+    int panelW = c->w - 2 * panelX;
+    int panelH = 400;
+    draw_panel(c, panelX, panelY, panelW, panelH,
+               rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
+
+    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
+    static const char* grf[]   = {"CLASSIC VGA", "ENHANCED", "MODERN"};
+    static const char* win[]   = {"WINDOWED", "FULLSCREEN"};
+    int li = state->settings.languageIndex;
+    int gi = state->settings.graphicsIndex;
+    int wi = state->settings.windowModeIndex;
+    if (li < 0) li = 0; if (li > 3) li = 3;
+    if (gi < 0) gi = 0; if (gi > 2) gi = 2;
+    if (wi < 0) wi = 0; if (wi > 1) wi = 1;
+
+    int rowX = panelX + 36;
+    int rowW = panelW - 72;
+    int rowY = panelY + 36;
+    draw_setting_row(c, rowX, rowY,      rowW, "LANGUAGE",       langs[li],
+                     state->settingsSelectedIndex == 0);
+    draw_setting_row(c, rowX, rowY + 70, rowW, "GRAPHICS STYLE", grf[gi],
+                     state->settingsSelectedIndex == 1);
+    draw_setting_row(c, rowX, rowY + 140, rowW, "WINDOW MODE",   win[wi],
+                     state->settingsSelectedIndex == 2);
+}
+
+static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    int slot = slot_for_game_id(state->entries[state->selectedIndex].gameId);
+    if (slot < 0) slot = 0;
+    const M12_GameOptions* opts = &state->gameOptions[slot];
+    const M12_MenuEntry* entry = &state->entries[state->selectedIndex];
+
+    ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
+    draw_text(c, 48, 142, "GAME OPTIONS", &h);
+    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text(c, 48, 210, entry->title, &sub);
+
+    int panelX = 96;
+    int panelY = 260;
+    int panelW = c->w - 2 * panelX;
+    int panelH = 400;
+    draw_panel(c, panelX, panelY, panelW, panelH,
+               rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
+
+    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
+    static const char* aspects[] = {"ORIGINAL", "4:3", "16:9", "16:10"};
+    static const char* res[] = {"320X200", "640X400", "800X600", "1024X768", "1280X960"};
+    static const char* speeds[] = {"SLOWER", "NORMAL", "FASTER"};
+
+    const M12_AssetVersionStatus* ver = NULL;
+    int vc = (int)M12_AssetStatus_GetVersionCount(entry->gameId);
+    if (vc > 0) {
+        int vi = opts->versionIndex;
+        if (vi < 0) vi = 0;
+        if (vi >= vc) vi = vc - 1;
+        ver = &state->assetStatus.versions[slot][vi];
+    }
+
+    const char* verLabel = ver ? (ver->shortLabel ? ver->shortLabel
+                                                   : (ver->label ? ver->label : "-"))
+                                : "-";
+    const char* patchLabel = opts->usePatch ? "PATCHED" : "ORIGINAL";
+    const char* langLabel  = (opts->languageIndex >= 0 && opts->languageIndex < 4)
+                              ? langs[opts->languageIndex] : "EN";
+    const char* cheatsLabel = opts->cheatsEnabled ? "ON" : "OFF";
+    int speedIdx = opts->gameSpeed;
+    if (speedIdx < 0) speedIdx = 0;
+    if (speedIdx > 2) speedIdx = 2;
+    int aspIdx = opts->aspectRatio;
+    if (aspIdx < 0) aspIdx = 0;
+    if (aspIdx > 3) aspIdx = 3;
+    int resIdx = opts->resolution;
+    if (resIdx < 0) resIdx = 0;
+    if (resIdx > 4) resIdx = 4;
+
+    int rowX = panelX + 36;
+    int rowW = panelW - 72;
+    int rowY = panelY + 28;
+    int step = 52;
+    int sel = state->gameOptSelectedRow;
+
+    draw_setting_row(c, rowX, rowY + 0 * step, rowW, "VERSION",     verLabel,          sel == 0);
+    draw_setting_row(c, rowX, rowY + 1 * step, rowW, "PATCH",       patchLabel,        sel == 1);
+    draw_setting_row(c, rowX, rowY + 2 * step, rowW, "LANGUAGE",    langLabel,         sel == 2);
+    draw_setting_row(c, rowX, rowY + 3 * step, rowW, "CHEATS",      cheatsLabel,       sel == 3);
+    draw_setting_row(c, rowX, rowY + 4 * step, rowW, "SPEED",       speeds[speedIdx],  sel == 4);
+    draw_setting_row(c, rowX, rowY + 5 * step, rowW, "ASPECT",      aspects[aspIdx],   sel == 5);
+    draw_setting_row(c, rowX, rowY + 6 * step, rowW, "RESOLUTION",  res[resIdx],       sel == 6);
+
+    /* Mode constraint notice if V1 */
+    int mode = M12_StartupMenu_GetPresentationMode(state);
+    if (mode == M12_PRESENTATION_V1_ORIGINAL) {
+        ModernTextStyle note = text_style_make(1, COLOR_WARN(), 0);
+        draw_text(c, panelX + 36, panelY + panelH - 40,
+                  "V1 ORIGINAL LOCKS ASPECT AND RESOLUTION FOR AUTHENTICITY",
+                  &note);
+    } else if (mode == M12_PRESENTATION_V3_MODERN_3D) {
+        ModernTextStyle note = text_style_make(1, COLOR_V3(), 0);
+        draw_text(c, panelX + 36, panelY + panelH - 40,
+                  "V3 MODERN 3D IS A LATER MILESTONE (COMING SOON)",
+                  &note);
+    }
+}
+
+static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    int panelW = 840;
+    int panelH = 320;
+    int panelX = (c->w - panelW) / 2;
+    int panelY = (c->h - panelH) / 2;
+    draw_panel(c, panelX, panelY, panelW, panelH,
+               rgb(16, 14, 30), COLOR_ACCENT(), 20);
+    ModernTextStyle big = text_style_make(3, COLOR_ACCENT(), 2);
+    const char* line1 = state->messageLine1 ? state->messageLine1 : "";
+    const char* line2 = state->messageLine2 ? state->messageLine2 : "";
+    const char* line3 = state->messageLine3 ? state->messageLine3 : "";
+    int w1 = text_width_px(line1, &big);
+    draw_text(c, panelX + (panelW - w1) / 2, panelY + 48, line1, &big);
+    ModernTextStyle mid = text_style_make(2, COLOR_TEXT(), 1);
+    int w2 = text_width_px(line2, &mid);
+    draw_text(c, panelX + (panelW - w2) / 2, panelY + 140, line2, &mid);
+    ModernTextStyle sm = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    int w3 = text_width_px(line3, &sm);
+    draw_text(c, panelX + (panelW - w3) / 2, panelY + 220, line3, &sm);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Entrypoint                                                                 */
+/* -------------------------------------------------------------------------- */
+
+int M12_ModernMenu_NativeWidth(void)  { return M12_MODERN_MENU_NATIVE_WIDTH; }
+int M12_ModernMenu_NativeHeight(void) { return M12_MODERN_MENU_NATIVE_HEIGHT; }
+
+void M12_ModernMenu_Render(const M12_StartupMenuState* state,
+                           unsigned char* rgba,
+                           int width,
+                           int height) {
+    if (!state || !rgba || width < 16 || height < 16) {
+        return;
+    }
+    M12_ModernCanvas c = {rgba, width, height};
+    draw_background(&c);
+    draw_title_centered(&c);
+    draw_mode_badge(&c, state);
+
+    const char* footerLeft  = "UP DOWN MOVE    ENTER SELECT    ESC BACK";
+
+    switch (state->view) {
+        case M12_MENU_VIEW_SETTINGS:
+            draw_settings_view(&c, state);
+            footerLeft = "UP DOWN MOVE    LEFT RIGHT CYCLE    ESC BACK";
+            break;
+        case M12_MENU_VIEW_GAME_OPTIONS:
+            draw_game_options_view(&c, state);
+            footerLeft = "UP DOWN MOVE    LEFT RIGHT CYCLE    ENTER LAUNCH    ESC BACK";
+            break;
+        case M12_MENU_VIEW_MESSAGE:
+            draw_message_view(&c, state);
+            footerLeft = "ENTER OR ESC RETURNS TO MENU";
+            break;
+        case M12_MENU_VIEW_MAIN:
+        default:
+            draw_main_view(&c, state);
+            break;
+    }
+
+    draw_data_dir(&c, state);
+
+    const char* modeStr = mode_short(M12_StartupMenu_GetPresentationMode(state));
+    char modeHint[64];
+    snprintf(modeHint, sizeof(modeHint), "PRESENTATION  %s", modeStr);
+    draw_footer(&c, footerLeft, modeHint);
+}
+
+int M12_ModernMenu_CountDistinctColors(const unsigned char* rgba,
+                                       int width,
+                                       int height,
+                                       int capAfter) {
+    if (!rgba || width <= 0 || height <= 0) {
+        return 0;
+    }
+    /* 256 * 32 = 8192-bit bitmap for presence by top byte; fall back to
+     * linear scan approach using a small hash set. Good enough for a
+     * probe. */
+    enum { HASH_SIZE = 32768 };
+    unsigned int* seen = (unsigned int*)calloc(HASH_SIZE, sizeof(unsigned int));
+    if (!seen) return -1;
+    int distinct = 0;
+    int total = width * height;
+    for (int i = 0; i < total; ++i) {
+        unsigned int key =
+            ((unsigned int)rgba[i * 4 + 0]) |
+            (((unsigned int)rgba[i * 4 + 1]) << 8) |
+            (((unsigned int)rgba[i * 4 + 2]) << 16);
+        /* Linear probing in the hash table, storing key+1 (0 means empty). */
+        unsigned int h = ((key * 2654435761U) ^ (key >> 7)) & (HASH_SIZE - 1);
+        while (seen[h] != 0 && seen[h] != key + 1) {
+            h = (h + 1) & (HASH_SIZE - 1);
+        }
+        if (seen[h] == 0) {
+            seen[h] = key + 1;
+            distinct++;
+            if (capAfter > 0 && distinct >= capAfter) {
+                free(seen);
+                return distinct;
+            }
+        }
+    }
+    free(seen);
+    return distinct;
+}

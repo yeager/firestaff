@@ -70,6 +70,7 @@ cc $CFLAGS_COMMON $SDL_FLAG $SDL_CFLAGS \
     "$HERE/card_art_m12.c" \
     "$HERE/creature_art_m12.c" \
     "$HERE/menu_startup_m12.c" \
+    "$HERE/menu_startup_render_modern_m12.c" \
     "$HERE/render_sdl_m11.c" \
     "$HERE/memory_tick_orchestrator_pc34_compat.c" \
     "$HERE/memory_champion_lifecycle_pc34_compat.c" \

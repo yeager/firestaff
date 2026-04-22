@@ -106,6 +106,14 @@ int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);
 
+/* Present a caller-owned 32-bit RGBA framebuffer directly, skipping the
+ * VGA palette lookup. Used by the modern high-resolution true-color
+ * startup-menu renderer. Pixel format is R, G, B, A in memory order
+ * (matches SDL_PIXELFORMAT_RGBA32). */
+int  M11_Render_PresentRGBA(const unsigned char* rgba,
+                            int logicalWidth,
+                            int logicalHeight);
+
 /* Event pump — drains the SDL event queue once and returns whether a
    quit request (window close / ESC) was observed. Safe to call when
    not initialised (returns 0). */

@@ -490,6 +490,81 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     return M11_RENDER_OK;
 }
 
+int M11_Render_PresentRGBA(const unsigned char* rgba,
+                           int logicalWidth,
+                           int logicalHeight) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!rgba || logicalWidth <= 0 || logicalHeight <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+
+    int destX = 0;
+    int destY = 0;
+    int destW = 0;
+    int destH = 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_FRect destRect;
+#else
+    SDL_Rect destRect;
+#endif
+
+    if (m11_recreate_texture_if_needed(logicalWidth, logicalHeight) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.contentW = logicalWidth;
+    g_state.contentH = logicalHeight;
+    if (g_state.presentBuffer) {
+        memcpy(g_state.presentBuffer, rgba,
+               (size_t)logicalWidth * (size_t)logicalHeight * 4U);
+    }
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    if (!SDL_UpdateTexture(
+            g_state.texture,
+            NULL,
+            g_state.presentBuffer,
+            logicalWidth * 4)) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    if (!SDL_RenderClear(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = (float)destX;
+    destRect.y = (float)destY;
+    destRect.w = (float)destW;
+    destRect.h = (float)destH;
+    if (!SDL_RenderTexture(g_state.renderer, g_state.texture, NULL, &destRect)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    if (!SDL_RenderPresent(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+#else
+    if (SDL_UpdateTexture(
+            g_state.texture,
+            NULL,
+            g_state.presentBuffer,
+            logicalWidth * 4) != 0) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    if (SDL_RenderClear(g_state.renderer) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = destX;
+    destRect.y = destY;
+    destRect.w = destW;
+    destRect.h = destH;
+    if (SDL_RenderCopy(g_state.renderer, g_state.texture, NULL, &destRect) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    SDL_RenderPresent(g_state.renderer);
+#endif
+    return M11_RENDER_OK;
+}
+
 int M11_Render_PumpEvents(void) {
     if (!g_state.initialised) {
         return 0;

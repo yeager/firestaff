@@ -24,8 +24,9 @@ It already has a real launcher, a real in-game DM1 slice, bounded original-versi
 
 **Working today:**
 - launcher with DM1 / CSB / DM2 entries
+- modern high-resolution true-color startup menu (1280x720 HD, 24-bit RGB) — the shared front door
 - persistent startup settings
-- selected-version status in the startup menu
+- selected-version status and per-game checksum indicators in the startup menu
 - MD5-based original-data detection for bounded DM1 / CSB / DM2 version sets
 - explicit launcher / game / settings flow
 - real dungeon loading from `DUNGEON.DAT`
