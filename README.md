@@ -46,7 +46,7 @@ It already has a real launcher, a real in-game DM1 slice, a modern high-resoluti
 
 ## Creature Art
 
-Firestaff includes a ten-creature gallery used for launcher and card-art work.
+Firestaff currently ships five finished launcher creature cards, with five more creatures tracked as the next art set.
 
 <p align="center">
   <img src="assets/cards/creatures/red-dragon.png" alt="Red Dragon" width="180">
@@ -55,15 +55,22 @@ Firestaff includes a ten-creature gallery used for launcher and card-art work.
   <img src="assets/cards/creatures/giant-scorpion.png" alt="Giant Scorpion" width="180">
   <img src="assets/cards/creatures/mummy.png" alt="Mummy" width="180">
 </p>
-<p align="center">
-  <img src="assets/cards/creature-refs/swamp_slime.png" alt="Swamp Slime" width="180">
-  <img src="assets/cards/creature-refs/giggler.png" alt="Giggler" width="180">
-  <img src="assets/cards/creature-refs/screamer.png" alt="Screamer" width="180">
-  <img src="assets/cards/creature-refs/demon.png" alt="Demon" width="180">
-  <img src="assets/cards/creature-refs/vexirk.png" alt="Vexirk" width="180">
-</p>
 
-The generated creature cards already in `assets/cards/creatures/` are used in the startup menu sidebar today, selected fresh each launch. The full ten-creature gallery is tracked in the repository as the current art/reference set for the launcher work.
+Finished card art currently shown in the launcher sidebar:
+- Red Dragon
+- Skeleton
+- Stone Golem
+- Giant Scorpion
+- Mummy
+
+Next creature set tracked for card-art follow-up:
+- Swamp Slime
+- Giggler
+- Screamer
+- Demon
+- Vexirk
+
+The finished creature cards in `assets/cards/creatures/` are used in the startup menu sidebar today, selected fresh each launch. The remaining five creatures are present in the repository as reference inputs and should be promoted to finished launcher cards before they are shown in the README gallery.
 
 ## What Firestaff is
 
