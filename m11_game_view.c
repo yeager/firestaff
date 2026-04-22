@@ -4885,7 +4885,32 @@ enum {
      * Ref: DEFS.H lines 2193-2196. */
     M11_GFX_SLOT_BOX_NORMAL      = 33, /* C033_GRAPHIC_SLOT_BOX_NORMAL */
     M11_GFX_SLOT_BOX_WOUNDED     = 34, /* C034_GRAPHIC_SLOT_BOX_WOUNDED */
-    M11_GFX_SLOT_BOX_ACTING_HAND = 35  /* C035_GRAPHIC_SLOT_BOX_ACTING_HAND */
+    M11_GFX_SLOT_BOX_ACTING_HAND = 35, /* C035_GRAPHIC_SLOT_BOX_ACTING_HAND */
+
+    /* Champion status box frames (67×29 each in GRAPHICS.DAT).
+     * Ref: DEFS.H lines 2171-2172, 2197-2199. */
+    M11_GFX_STATUS_BOX           =  7, /* C007_GRAPHIC_STATUS_BOX */
+    M11_GFX_STATUS_BOX_DEAD      =  8, /* C008_GRAPHIC_STATUS_BOX_DEAD_CHAMPION */
+
+    /* Champion portrait strip (256×87 in GRAPHICS.DAT).
+     * 8 columns × 3 rows of 32×29 portraits.
+     * Ref: DEFS.H line 2186, M027_PORTRAIT_X, M028_PORTRAIT_Y. */
+    M11_GFX_CHAMPION_PORTRAITS   = 26, /* C026_GRAPHIC_CHAMPION_PORTRAITS */
+    M11_PORTRAIT_W               = 32,
+    M11_PORTRAIT_H               = 29,
+
+    /* Food / water / poisoned labels.
+     * Ref: DEFS.H lines 2190-2192. */
+    M11_GFX_FOOD_LABEL           = 30, /* C030_GRAPHIC_FOOD_LABEL (34×9) */
+    M11_GFX_WATER_LABEL          = 31, /* C031_GRAPHIC_WATER_LABEL (46×9) */
+    M11_GFX_POISONED_LABEL       = 32, /* C032_GRAPHIC_POISONED_LABEL (96×15) */
+
+    /* Party shield border overlays (67×29 each in GRAPHICS.DAT).
+     * Drawn on top of champion status box when party effect is active.
+     * Ref: DEFS.H lines 2197-2199. */
+    M11_GFX_BORDER_PARTY_SHIELD      = 37, /* C037 */
+    M11_GFX_BORDER_PARTY_FIRESHIELD  = 38, /* C038 */
+    M11_GFX_BORDER_PARTY_SPELLSHIELD = 39  /* C039 */
 };
 
 /* ================================================================
@@ -6637,16 +6662,39 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         int x = M11_PARTY_PANEL_X + slot * M11_PARTY_SLOT_STEP;
         int y = M11_PARTY_PANEL_Y;
         char line[48];
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x, y, 71, 28, M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x, y, 71, 28,
-                      slot < state->world.party.championCount ? M11_COLOR_LIGHT_CYAN : M11_COLOR_DARK_GRAY);
+        int drewStatusBox = 0;
+
         if (slot < state->world.party.championCount && state->world.party.champions[slot].present) {
             char name[16];
             const struct ChampionState_Compat* champ = &state->world.party.champions[slot];
+            int isDead = (champ->hp.current == 0);
             m11_format_champion_name(champ->name, name, sizeof(name));
-            /* Active champion: double yellow border + brighter name
+
+            /* GRAPHICS.DAT-backed status box frame (67×29).
+             * Use graphic 8 (dead) or graphic 7 (normal) as the
+             * status box background.  Falls back to procedural. */
+            if (state->assetsAvailable) {
+                unsigned int boxGfx = isDead ? M11_GFX_STATUS_BOX_DEAD
+                                             : M11_GFX_STATUS_BOX;
+                const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader, boxGfx);
+                if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
+                    M11_AssetLoader_BlitRegion(boxAsset,
+                        0, 0, 67, 29,
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        x, y, 0);
+                    drewStatusBox = 1;
+                }
+            }
+            if (!drewStatusBox) {
+                /* Procedural fallback */
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x, y, 71, 28, M11_COLOR_BLACK);
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x, y, 71, 28, M11_COLOR_LIGHT_CYAN);
+            }
+
+            /* Active champion: double yellow highlight border
              * (ReDMCSB highlights the active champion status box) */
             if (slot == activeIndex) {
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -6655,8 +6703,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                               x + 2, y + 2, 67, 24, M11_COLOR_YELLOW);
             }
 
-            /* P6 champion icon from GRAPHICS.DAT graphic 28 (19×14 per
-             * champion).  Blit into the left side of the party slot box,
+            /* Champion icon from GRAPHICS.DAT graphic 28 (19×14 per
+             * champion).  Blit into the left side of the status box,
              * with the name to the right. Falls back to text-only. */
             {
                 int drewIcon = 0;
@@ -6673,7 +6721,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                 framebuffer, framebufferWidth, framebufferHeight,
                                 x + 3, y + 3, 0);
                             drewIcon = 1;
-                            nameOffX = 3 + M11_CHAMPION_ICON_W + 2; /* shift name right of icon */
+                            nameOffX = 3 + M11_CHAMPION_ICON_W + 2;
                         }
                     }
                 }
@@ -6690,7 +6738,6 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
             int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
             int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
-            int isDead = (champ->hp.current == 0);
             if (isDead) {
                 M11_TextStyle ds = g_text_small;
                 ds.color = M11_COLOR_RED;
@@ -6711,6 +6758,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                           x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
             }
         } else {
+            /* Empty slot: procedural placeholder */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x, y, 71, 28, M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x, y, 71, 28, M11_COLOR_DARK_GRAY);
             snprintf(line, sizeof(line), "SLOT %d", slot + 1);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 6, line, &g_text_small);
@@ -7107,10 +7159,11 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     portY = panelY + 4;
     m11_get_active_champion_label(state, champion, sizeof(champion));
 
-    /* Portrait box — GRAPHICS.DAT champion icon (graphic 28, ReDMCSB:
-     * GRAPHIC_CHAMPION_ICONS, 19×14 per directional frame).  We blit the
-     * icon for the active champion scaled to the 32×29 portrait area.
-     * Falls back to a coloured silhouette if the asset is unavailable. */
+    /* Portrait box — GRAPHICS.DAT champion portrait (graphic 26,
+     * C026_GRAPHIC_CHAMPION_PORTRAITS, 256×87 strip of 32×29 portraits).
+     * M027_PORTRAIT_X(index) = (index & 7) * 32
+     * M028_PORTRAIT_Y(index) = (index >> 3) * 29
+     * Falls back to small icon (graphic 28) or silhouette. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   portX, portY, PORT_W, PORT_H, M11_COLOR_DARK_GRAY);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -7119,19 +7172,36 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     {
         int drewPortrait = 0;
         if (state->assetsAvailable) {
-            const M11_AssetSlot* iconStrip = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_ICONS);
-            if (iconStrip && iconStrip->width > 0 && iconStrip->height > 0) {
-                /* Champion icon index within the strip: use portraitIndex
-                 * (0–3) as the column.  Each icon is 19px wide. */
-                int iconCol = champ->portraitIndex & 3;
-                int srcX = iconCol * M11_CHAMPION_ICON_W;
-                if (srcX + M11_CHAMPION_ICON_W <= (int)iconStrip->width) {
-                    M11_AssetLoader_BlitRegion(iconStrip,
-                        srcX, 0, M11_CHAMPION_ICON_W, M11_CHAMPION_ICON_H,
+            /* Try full 32×29 portrait from graphic 26 first */
+            const M11_AssetSlot* portraits = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_PORTRAITS);
+            if (portraits && portraits->width >= 256 && portraits->height >= 29) {
+                int pIdx = champ->portraitIndex & 0x1F; /* 0–23 range */
+                int srcPX = (pIdx & 7) * M11_PORTRAIT_W;
+                int srcPY = (pIdx >> 3) * M11_PORTRAIT_H;
+                if (srcPX + M11_PORTRAIT_W <= (int)portraits->width &&
+                    srcPY + M11_PORTRAIT_H <= (int)portraits->height) {
+                    M11_AssetLoader_BlitRegion(portraits,
+                        srcPX, srcPY, M11_PORTRAIT_W, M11_PORTRAIT_H,
                         framebuffer, framebufferWidth, framebufferHeight,
-                        portX + 1, portY + 1, 0);
+                        portX, portY, 0);
                     drewPortrait = 1;
+                }
+            }
+            /* Fallback: small icon from graphic 28 */
+            if (!drewPortrait) {
+                const M11_AssetSlot* iconStrip = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_ICONS);
+                if (iconStrip && iconStrip->width > 0 && iconStrip->height > 0) {
+                    int iconCol = champ->portraitIndex & 3;
+                    int srcX = iconCol * M11_CHAMPION_ICON_W;
+                    if (srcX + M11_CHAMPION_ICON_W <= (int)iconStrip->width) {
+                        M11_AssetLoader_BlitRegion(iconStrip,
+                            srcX, 0, M11_CHAMPION_ICON_W, M11_CHAMPION_ICON_H,
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            portX + 1, portY + 1, 0);
+                        drewPortrait = 1;
+                    }
                 }
             }
         }
@@ -7296,17 +7366,53 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                    panelX + 3, panelBottom - 2, panelW - 6, M11_COLOR_DARK_GRAY);
     {
-        char foodWater[48];
-        int avgFood = 0, avgWater = 0;
-        M11_TextStyle fwStyle = g_text_small;
-        fwStyle.color = M11_COLOR_LIGHT_GRAY;
-        avgFood = (int)champ->food;
-        avgWater = (int)champ->water;
-        snprintf(foodWater, sizeof(foodWater), "FOOD %d  WATER %d",
-                 avgFood > 999 ? 999 : avgFood,
-                 avgWater > 999 ? 999 : avgWater);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      panelX + 5, panelBottom, foodWater, &fwStyle);
+        int avgFood = (int)champ->food;
+        int avgWater = (int)champ->water;
+        int labelDrawn = 0;
+        int fwX = panelX + 5;
+        int fwY = panelBottom;
+
+        /* GRAPHICS.DAT-backed food/water labels (graphics 30, 31).
+         * Food label: 34×9, Water label: 46×9.
+         * Falls back to text rendering when assets unavailable. */
+        if (state->assetsAvailable) {
+            const M11_AssetSlot* foodLbl = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_FOOD_LABEL);
+            const M11_AssetSlot* waterLbl = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_WATER_LABEL);
+            if (foodLbl && foodLbl->width > 0 && foodLbl->height > 0 &&
+                waterLbl && waterLbl->width > 0 && waterLbl->height > 0) {
+                char numBuf[8];
+                M11_TextStyle fwNumStyle = g_text_small;
+                fwNumStyle.color = M11_COLOR_LIGHT_GRAY;
+                M11_AssetLoader_BlitRegion(foodLbl,
+                    0, 0, (int)foodLbl->width, (int)foodLbl->height,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    fwX, fwY, 0);
+                snprintf(numBuf, sizeof(numBuf), "%d", avgFood > 999 ? 999 : avgFood);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              fwX + (int)foodLbl->width + 2, fwY, numBuf, &fwNumStyle);
+                fwX += (int)foodLbl->width + 30;
+                M11_AssetLoader_BlitRegion(waterLbl,
+                    0, 0, (int)waterLbl->width, (int)waterLbl->height,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    fwX, fwY, 0);
+                snprintf(numBuf, sizeof(numBuf), "%d", avgWater > 999 ? 999 : avgWater);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              fwX + (int)waterLbl->width + 2, fwY, numBuf, &fwNumStyle);
+                labelDrawn = 1;
+            }
+        }
+        if (!labelDrawn) {
+            char foodWater[48];
+            M11_TextStyle fwStyle = g_text_small;
+            fwStyle.color = M11_COLOR_LIGHT_GRAY;
+            snprintf(foodWater, sizeof(foodWater), "FOOD %d  WATER %d",
+                     avgFood > 999 ? 999 : avgFood,
+                     avgWater > 999 ? 999 : avgWater);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          fwX, fwY, foodWater, &fwStyle);
+        }
     }
 
     /* ── Footer — minimal DM-style key hints ── */

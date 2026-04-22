@@ -4162,6 +4162,71 @@ int main(int argc, char** argv) {
                      "panel 20: skipped (no GRAPHICS.DAT)");
     }
 
+    /* INV_GV_205: Status box frame (graphic 7) loads as 67×29. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* box7 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 7);
+        probe_record(&tally,
+                     "INV_GV_205",
+                     box7 != NULL && box7->width == 67 && box7->height == 29,
+                     "status box frame (graphic 7) loads as 67x29 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_205", 1,
+                     "status box 7: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_206: Dead champion status box (graphic 8) loads as 67×29. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* box8 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 8);
+        probe_record(&tally,
+                     "INV_GV_206",
+                     box8 != NULL && box8->width == 67 && box8->height == 29,
+                     "status box dead (graphic 8) loads as 67x29 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_206", 1,
+                     "status box 8: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_207: Champion portrait strip (graphic 26) loads as 256×87. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* port26 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 26);
+        probe_record(&tally,
+                     "INV_GV_207",
+                     port26 != NULL && port26->width == 256 && port26->height == 87,
+                     "champion portraits (graphic 26) loads as 256x87 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_207", 1,
+                     "portraits 26: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_208: Food label (graphic 30) loads as 34×9. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* food30 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 30);
+        probe_record(&tally,
+                     "INV_GV_208",
+                     food30 != NULL && food30->width == 34 && food30->height == 9,
+                     "food label (graphic 30) loads as 34x9 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_208", 1,
+                     "food label 30: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_209: Water label (graphic 31) loads as 46×9. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* water31 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 31);
+        probe_record(&tally,
+                     "INV_GV_209",
+                     water31 != NULL && water31->width == 46 && water31->height == 9,
+                     "water label (graphic 31) loads as 46x9 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_209", 1,
+                     "water label 31: skipped (no GRAPHICS.DAT)");
+    }
+
     /* ── Screenshot: dump inventory panel to PGM for visual verification ── */
     {
         M11_GameViewState ssView;
@@ -4185,6 +4250,36 @@ int main(int argc, char** argv) {
             char ssPath[512];
             FILE* ssFile;
             snprintf(ssPath, sizeof(ssPath), "%s/inventory_slotbox_gfx.pgm", ssDir);
+            ssFile = fopen(ssPath, "wb");
+            if (ssFile) {
+                int px;
+                fprintf(ssFile, "P5\n320 200\n255\n");
+                for (px = 0; px < 320 * 200; ++px) {
+                    unsigned char gray = (unsigned char)(ssFb[px] * 17);
+                    fwrite(&gray, 1, 1, ssFile);
+                }
+                fclose(ssFile);
+                printf("Screenshot: %s\n", ssPath);
+            }
+        }
+    }
+
+    /* ── Screenshot: dump party HUD with status box frames to PGM ── */
+    {
+        M11_GameViewState ssView;
+        unsigned char ssFb[320 * 200];
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+        memcpy(&ssView, &gameView, sizeof(ssView));
+        ssView.inventoryPanelActive = 0;
+        ssView.mapOverlayActive = 0;
+        if (ssView.world.party.activeChampionIndex < 0)
+            ssView.world.party.activeChampionIndex = 0;
+        memset(ssFb, 0, sizeof(ssFb));
+        M11_GameView_Draw(&ssView, ssFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            char ssPath[512];
+            FILE* ssFile;
+            snprintf(ssPath, sizeof(ssPath), "%s/party_hud_statusbox_gfx.pgm", ssDir);
             ssFile = fopen(ssPath, "wb");
             if (ssFile) {
                 int px;
