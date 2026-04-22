@@ -55,6 +55,20 @@ static int make_file_with_text(const char* path, const char* text) {
     return 1;
 }
 
+static void force_dm1_version_ready(M12_StartupMenuState* state, size_t versionIndex) {
+    M12_AssetVersionStatus* version;
+    if (!state || versionIndex >= M12_AssetStatus_GetVersionCount("dm1")) {
+        return;
+    }
+    state->assetStatus.dm1Available = 1;
+    state->entries[0].available = 1;
+    version = &state->assetStatus.versions[0][versionIndex];
+    version->matched = 1;
+    snprintf(version->matchedPath, sizeof(version->matchedPath), "%s", "smoke://forced-dm1");
+    snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s", "forced");
+    state->gameOptions[0].versionIndex = (int)versionIndex;
+}
+
 int main(void) {
     unsigned char framebufferA[320 * 200];
     unsigned char framebufferB[320 * 200];
@@ -102,6 +116,7 @@ int main(void) {
     }
 
     M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    force_dm1_version_ready(&state, 0U);
     M11_ApplyStartupMenuRuntime(&state);
 
     smoke_record(&tally,
@@ -149,6 +164,7 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     M12_StartupMenu_Draw(&state, framebufferC, 320, 200);
