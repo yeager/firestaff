@@ -4861,7 +4861,24 @@ enum {
      * Used for champion visual in the inventory portrait and HUD. */
     M11_GFX_CHAMPION_ICONS = 28,
     M11_CHAMPION_ICON_W    = 19,
-    M11_CHAMPION_ICON_H    = 14
+    M11_CHAMPION_ICON_H    = 14,
+
+    /* Spell area background (graphic 9 in original CSB/DM).
+     * Drawn as the grid backdrop behind the 6 rune symbol buttons.
+     * 87×25 in GRAPHICS.DAT.
+     * Ref: DEFS.H line 2216 C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND.
+     * Graphic 11 (C011_GRAPHIC_MENU_SPELL_AREA_LINES, 14×39) holds
+     * the rune symbol line overlays drawn on top of this background. */
+    M11_GFX_SPELL_AREA_BG = 9,
+    M11_GFX_SPELL_AREA_LINES = 11,
+
+    /* Action area background (graphic 10 in original CSB/DM).
+     * 87×45 in GRAPHICS.DAT. Ref: C010_GRAPHIC_MENU_ACTION_AREA. */
+    M11_GFX_ACTION_AREA = 10,
+
+    /* Empty panel background (graphic 20 in original CSB/DM).
+     * 144×73 in GRAPHICS.DAT. Ref: C020_GRAPHIC_PANEL_EMPTY. */
+    M11_GFX_PANEL_EMPTY = 20
 };
 
 /* ================================================================
@@ -6629,11 +6646,38 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                               x + 1, y + 1, 69, 26, M11_COLOR_YELLOW);
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                               x + 2, y + 2, 67, 24, M11_COLOR_YELLOW);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 3, name, &g_text_shadow);
-            } else {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 3, name, &g_text_small);
+            }
+
+            /* P6 champion icon from GRAPHICS.DAT graphic 28 (19×14 per
+             * champion).  Blit into the left side of the party slot box,
+             * with the name to the right. Falls back to text-only. */
+            {
+                int drewIcon = 0;
+                int nameOffX = 4;
+                if (state->assetsAvailable) {
+                    const M11_AssetSlot* iconStrip = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_ICONS);
+                    if (iconStrip && iconStrip->width > 0 && iconStrip->height > 0) {
+                        int iconCol = champ->portraitIndex & 3;
+                        int srcX = iconCol * M11_CHAMPION_ICON_W;
+                        if (srcX + M11_CHAMPION_ICON_W <= (int)iconStrip->width) {
+                            M11_AssetLoader_BlitRegion(iconStrip,
+                                srcX, 0, M11_CHAMPION_ICON_W, M11_CHAMPION_ICON_H,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                x + 3, y + 3, 0);
+                            drewIcon = 1;
+                            nameOffX = 3 + M11_CHAMPION_ICON_W + 2; /* shift name right of icon */
+                        }
+                    }
+                }
+                if (slot == activeIndex) {
+                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + nameOffX, y + 3, name, &g_text_shadow);
+                } else {
+                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + nameOffX, y + 3, name, &g_text_small);
+                }
+                (void)drewIcon;
             }
             {
             int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
@@ -7446,13 +7490,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
 
     /* Spell panel overlay */
     if (state->spellPanelOpen) {
-        /* ── P4 V1 Presentation: DM1-style rune-dominant spell panel ── */
+        /* ── P4+P6 V1 Presentation: DM1-style rune-dominant spell panel
+         * with GRAPHICS.DAT-backed spell area grid ── */
         int spI;
         int pnlX = 24, pnlY = 36, pnlW = 180, pnlH = 110;
         int row = state->spellRuneRow < 4 ? state->spellRuneRow : 3;
         const char* rowNames[4] = { "POWER", "ELEMENT", "FORM", "CLASS" };
 
-        /* Panel background with DM1-style double border */
+        /* Panel background — DM1-style double-bordered rectangle.
+         * The original spell panel is drawn on top of the action area, not
+         * using graphic 20 (C020_GRAPHIC_PANEL_EMPTY) which is the inventory
+         * panel background and has a different layout.  The spell casting UI
+         * in the original uses the game's default panel region with the
+         * spell area background (graphic 9) as a sub-region for the rune
+         * buttons.  We preserve the procedural panel frame here. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       pnlX, pnlY, pnlW, pnlH, M11_COLOR_BLACK);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -7493,23 +7544,53 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       pnlX + 6, pnlY + 22, pnlW - 12, 1, M11_COLOR_BROWN);
 
-        /* ── Active rune row: category label + large rune buttons ── */
+        /* ── Active rune row: category label + GRAPHICS.DAT-backed button grid ── */
         if (state->spellBuffer.runeCount < 4) {
             int runeW = 26, runeH = 20;
             int rowStartX = pnlX + 6;
             int runeY = pnlY + 38;
+            int gridW = 6 * (runeW + 2) - 2; /* total rune button grid width */
             M11_TextStyle catStyle = g_text_small;
             catStyle.color = M11_COLOR_YELLOW;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           pnlX + 8, pnlY + 26, rowNames[row], &catStyle);
+
+            /* Blit the spell area background (graphic 9) as the rune button
+             * grid backdrop.  DEFS.H:2216 C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND.
+             * The original DM1 draws this 87×25 bitmap as the base, then overlays
+             * graphic 11 (C011_GRAPHIC_MENU_SPELL_AREA_LINES) for the symbol rows.
+             * We blit graphic 9 scaled to the button area.  Graphic 11 overlay is
+             * deferred: its 14×39 layout requires per-row extraction matching the
+             * original F0397_MENUS_DrawAvailableSymbols scanline logic. */
+            {
+                int drewGrid = 0;
+                if (state->assetsAvailable) {
+                    const M11_AssetSlot* spellBg = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader, M11_GFX_SPELL_AREA_BG);
+                    if (spellBg && spellBg->width > 0 && spellBg->height > 0) {
+                        M11_AssetLoader_BlitScaled(spellBg,
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            rowStartX, runeY, gridW, runeH, -1);
+                        drewGrid = 1;
+                    }
+                }
+                if (!drewGrid) {
+                    /* Fallback: individual coloured rune button rects */
+                    for (spI = 0; spI < 6; ++spI) {
+                        int bx = rowStartX + spI * (runeW + 2);
+                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      bx, runeY, runeW, runeH, M11_COLOR_NAVY);
+                        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      bx, runeY, runeW, runeH, M11_COLOR_LIGHT_BLUE);
+                    }
+                }
+            }
+            /* Overlay rune names on top of the grid (text on graphic,
+             * matching original DM1 F0397_MENUS_DrawAvailableSymbols) */
             for (spI = 0; spI < 6; ++spI) {
                 int bx = rowStartX + spI * (runeW + 2);
                 M11_TextStyle runeStyle = g_text_shadow;
                 runeStyle.color = M11_COLOR_WHITE;
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              bx, runeY, runeW, runeH, M11_COLOR_NAVY);
-                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              bx, runeY, runeW, runeH, M11_COLOR_LIGHT_BLUE);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               bx + 3, runeY + 6, g_rune_names[row][spI],
                               &runeStyle);
