@@ -1,4 +1,5 @@
 #include "config_m12.h"
+#include "fs_portable_compat.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -62,74 +63,13 @@ static int m12_parse_int(const char* value, int fallback) {
     return (int)parsed;
 }
 
-static int m12_build_parent_dir(char* out, size_t outSize, const char* path) {
-    const char* slash;
-    size_t len;
-    if (!out || outSize == 0U || !path) {
-        return 0;
-    }
-    slash = strrchr(path, '/');
-#if defined(_WIN32)
-    {
-        const char* backslash = strrchr(path, '\\');
-        if (!slash || (backslash && backslash > slash)) {
-            slash = backslash;
-        }
-    }
-#endif
-    if (!slash) {
-        return 0;
-    }
-    len = (size_t)(slash - path);
-    if (len == 0U || len >= outSize) {
-        return 0;
-    }
-    memcpy(out, path, len);
-    out[len] = '\0';
-    return 1;
-}
-
-static int m12_ensure_directory(const char* path) {
-    struct stat st;
-    if (!path || path[0] == '\0') {
-        return 0;
-    }
-    if (stat(path, &st) == 0) {
-        return (st.st_mode & S_IFDIR) != 0;
-    }
-#if defined(_WIN32)
-    return _mkdir(path) == 0 || errno == EEXIST;
-#else
-    return mkdir(path, 0777) == 0 || errno == EEXIST;
-#endif
-}
-
-static void m12_default_data_dir(char* out, size_t outSize) {
-    const char* envData = getenv("FIRESTAFF_DATA");
-    const char* home = getenv("HOME");
-    if (envData && envData[0] != '\0') {
-        m12_copy_string(out, outSize, envData);
-        return;
-    }
-    if (home && home[0] != '\0') {
-        snprintf(out, outSize, "%s/.firestaff/data", home);
-        return;
-    }
-    m12_copy_string(out, outSize, ".");
-}
+/* m12_build_parent_dir, m12_ensure_directory, m12_default_data_dir,
+ * m12_default_config_path — replaced by fs_portable_compat. */
 
 static void m12_default_config_path(char* out, size_t outSize) {
-#if defined(_WIN32)
-    const char* appData = getenv("APPDATA");
-    if (appData && appData[0] != '\0') {
-        snprintf(out, outSize, "%s\\Firestaff\\startup-menu.toml", appData);
-        return;
-    }
-#endif
-    {
-        const char* home = getenv("HOME");
-        if (home && home[0] != '\0') {
-            snprintf(out, outSize, "%s/.firestaff/startup-menu.toml", home);
+    char configDir[FSP_PATH_MAX];
+    if (FSP_GetUserConfigDir(configDir, sizeof(configDir))) {
+        if (FSP_JoinPath(out, outSize, configDir, "startup-menu.toml")) {
             return;
         }
     }
@@ -182,7 +122,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->languageIndex = 0;
     config->graphicsIndex = 0;
     config->windowModeIndex = 0;
-    m12_default_data_dir(config->dataDir, sizeof(config->dataDir));
+    FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
     m12_default_config_path(config->path, sizeof(config->path));
 }
 
@@ -233,8 +173,8 @@ int M12_Config_Save(const M12_Config* config) {
     if (!config || config->path[0] == '\0') {
         return 0;
     }
-    if (m12_build_parent_dir(parentDir, sizeof(parentDir), config->path)) {
-        if (!m12_ensure_directory(parentDir)) {
+    if (FSP_ParentDir(parentDir, sizeof(parentDir), config->path)) {
+        if (!FSP_CreateDirectory(parentDir)) {
             return 0;
         }
     }
@@ -287,7 +227,7 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
         M12_Config_Save(config);
     }
     if (config->dataDir[0] == '\0') {
-        m12_default_data_dir(config->dataDir, sizeof(config->dataDir));
+        FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
         M12_Config_Save(config);
     }
     return hadExistingFile;

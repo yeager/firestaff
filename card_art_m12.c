@@ -1,4 +1,5 @@
 #include "card_art_m12.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -50,29 +51,7 @@ static void m12_copy_text(char* out, size_t outSize, const char* value) {
     snprintf(out, outSize, "%s", value ? value : "");
 }
 
-static int m12_join_path(char* out,
-                         size_t outSize,
-                         const char* dir,
-                         const char* leaf) {
-    int rc;
-    size_t dirLen;
-    if (!out || outSize == 0U || !dir || !leaf) {
-        return 0;
-    }
-    dirLen = strlen(dir);
-    rc = snprintf(out,
-                  outSize,
-                  "%s%s%s",
-                  dir,
-                  (dirLen > 0U && dir[dirLen - 1U] == '/') ? "" : "/",
-                  leaf);
-    return rc > 0 && (size_t)rc < outSize;
-}
-
-static int m12_file_exists(const char* path) {
-    struct stat st;
-    return path && path[0] != '\0' && stat(path, &st) == 0 && S_ISREG(st.st_mode);
-}
+/* m12_join_path and m12_file_exists replaced by fs_portable_compat. */
 
 static const M12_CardArtSpec* m12_find_card_spec(const char* gameId) {
     size_t i;
@@ -284,13 +263,13 @@ void M12_CardArt_Resolve(M12_GameCardArt* art,
         return;
     }
     for (i = 0U; spec->candidates[i] != NULL; ++i) {
-        if (!m12_join_path(art->resolvedPath,
+        if (!FSP_JoinPath(art->resolvedPath,
                            sizeof(art->resolvedPath),
                            dataDir,
                            spec->candidates[i])) {
             continue;
         }
-        if (m12_file_exists(art->resolvedPath)) {
+        if (FSP_FileExists(art->resolvedPath)) {
             art->hasExternalFile = 1;
             m12_copy_text(art->fileName,
                           sizeof(art->fileName),

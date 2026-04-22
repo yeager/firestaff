@@ -55,6 +55,7 @@ set(M11_SOURCES
     audio_sdl_m11.c
     asset_loader_m11.c
     font_m11.c
+    fs_portable_compat.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -107,6 +108,13 @@ add_executable(firestaff_m11_audio_probe probes/m11/firestaff_m11_audio_probe.c)
 target_link_libraries(firestaff_m11_audio_probe PRIVATE firestaff_m11 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_audio_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# M11 FS Portable probe (cross-platform filesystem helpers)
+add_executable(firestaff_m11_fs_portable_probe probes/m11/firestaff_m11_fs_portable_probe.c)
+target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_fs_portable_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # M12 Startup Menu probe

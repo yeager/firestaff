@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 
 #include "asset_status_m12.h"
+#include "fs_portable_compat.h"
 #include "render_sdl_m11.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -411,22 +412,7 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
     state->audioEventCount += 1;
 }
 
-static int m11_join_path(char* out,
-                         size_t outSize,
-                         const char* left,
-                         const char* right) {
-    int rc;
-    size_t leftLen;
-    if (!out || outSize == 0U || !left || !right) {
-        return 0;
-    }
-    leftLen = strlen(left);
-    rc = snprintf(out, outSize, "%s%s%s",
-                  left,
-                  (leftLen > 0U && left[leftLen - 1U] == '/') ? "" : "/",
-                  right);
-    return rc > 0 && (size_t)rc < outSize;
-}
+/* m11_join_path replaced by FSP_JoinPath from fs_portable_compat. */
 
 static void m11_write_u32_le(unsigned char* dst, uint32_t value) {
     if (!dst) {
@@ -481,13 +467,13 @@ static int m11_resolve_builtin_dungeon_path(char* out,
         return 0;
     }
     if (strcmp(gameId, "dm1") == 0) {
-        return m11_join_path(out, outSize, dataDir, "DUNGEON.DAT");
+        return FSP_JoinPath(out, outSize, dataDir, "DUNGEON.DAT");
     }
     if (strcmp(gameId, "csb") == 0) {
-        return m11_join_path(out, outSize, dataDir, "CSB.DAT");
+        return FSP_JoinPath(out, outSize, dataDir, "CSB.DAT");
     }
     if (strcmp(gameId, "dm2") == 0) {
-        return m11_join_path(out, outSize, dataDir, "DM2DUNGEON.DAT");
+        return FSP_JoinPath(out, outSize, dataDir, "DM2DUNGEON.DAT");
     }
     return 0;
 }

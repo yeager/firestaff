@@ -1,4 +1,5 @@
 #include "asset_status_m12.h"
+#include "fs_portable_compat.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -272,39 +273,7 @@ static void m12_md5_final(M12_Md5Context* ctx, char outHex[33]) {
     outHex[32] = '\0';
 }
 
-static int m12_join_path(char* out,
-                         size_t outSize,
-                         const char* dir,
-                         const char* leaf) {
-    int rc;
-    if (!out || outSize == 0U || !dir || !leaf) {
-        return 0;
-    }
-    rc = snprintf(out,
-                  outSize,
-                  "%s%s%s",
-                  dir,
-                  (dir[0] != '\0' && dir[strlen(dir) - 1] == '/') ? "" : "/",
-                  leaf);
-    return rc > 0 && (size_t)rc < outSize;
-}
-
-static void m12_copy_data_dir(char* out,
-                              size_t outSize,
-                              const char* requestedDataDir) {
-    const char* envDataDir = getenv("FIRESTAFF_DATA");
-    const char* resolved = requestedDataDir;
-    if (!out || outSize == 0U) {
-        return;
-    }
-    if (!resolved || resolved[0] == '\0') {
-        resolved = envDataDir;
-    }
-    if (!resolved || resolved[0] == '\0') {
-        resolved = ".";
-    }
-    snprintf(out, outSize, "%s", resolved);
-}
+/* m12_join_path and m12_copy_data_dir replaced by fs_portable_compat. */
 
 static int m12_file_md5_hex(const char* path, char outHex[33]) {
     unsigned char buffer[4096];
@@ -414,7 +383,7 @@ static int m12_match_known_asset(const char* dir, const M12_AssetFileSpec* spec)
         return 0;
     }
     for (i = 0U; spec->names[i] != NULL; ++i) {
-        if (!m12_join_path(path, sizeof(path), dir, spec->names[i])) {
+        if (!FSP_JoinPath(path, sizeof(path), dir, spec->names[i])) {
             continue;
         }
         if (!m12_file_md5_hex(path, md5Hex)) {
@@ -446,7 +415,7 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
     }
 
     memset(status, 0, sizeof(*status));
-    m12_copy_data_dir(status->dataDir, sizeof(status->dataDir), requestedDataDir);
+    FSP_ResolveDataDir(status->dataDir, sizeof(status->dataDir), requestedDataDir);
 
     status->dm1Available = m12_detect_game(status->dataDir, &g_gameSpecs[0]);
     status->csbAvailable = m12_detect_game(status->dataDir, &g_gameSpecs[1]);

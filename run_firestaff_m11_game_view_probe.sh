@@ -50,6 +50,7 @@ cc $CFLAGS_COMMON \
     "$HERE/audio_sdl_m11.c" \
     "$HERE/asset_loader_m11.c" \
     "$HERE/font_m11.c" \
+    "$HERE/fs_portable_compat.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
     "$HERE/branding_logo_m12.c" \
