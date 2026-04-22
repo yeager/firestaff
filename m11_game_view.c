@@ -3034,6 +3034,35 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 m11_award_magic_xp(state, sChamp, sKind, sPow);
                 break;
             }
+            case EMIT_GAME_WON:
+                if (!state->gameWon) {
+                    state->gameWon = 1;
+                    state->gameWonTick = state->world.gameTick;
+                    m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                                  "T%u: THE QUEST IS COMPLETE!",
+                                  (unsigned int)state->world.gameTick);
+                    m11_set_status(state, "ENDGAME", "VICTORY!");
+                    snprintf(state->inspectTitle,
+                             sizeof(state->inspectTitle), "VICTORY");
+                    snprintf(state->inspectDetail,
+                             sizeof(state->inspectDetail),
+                             "LORD CHAOS IS DEFEATED. THE FIRESTAFF IS RESTORED.");
+                }
+                break;
+            case EMIT_PARTY_DEAD:
+                if (!state->partyDead) {
+                    state->partyDead = 1;
+                    m11_log_event(state, M11_COLOR_LIGHT_RED,
+                                  "T%u: ALL CHAMPIONS HAVE FALLEN",
+                                  (unsigned int)state->world.gameTick);
+                    m11_set_status(state, "DEATH", "PARTY WIPED");
+                    snprintf(state->inspectTitle,
+                             sizeof(state->inspectTitle), "GAME OVER");
+                    snprintf(state->inspectDetail,
+                             sizeof(state->inspectDetail),
+                             "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU.");
+                }
+                break;
             default:
                 break;
         }
@@ -3320,6 +3349,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    /* No idle ticks once the game is won or dialog is showing. */
+    if (state->gameWon || state->dialogOverlayActive) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     if (!m11_apply_tick(state, CMD_NONE, "WAIT")) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -3349,13 +3382,20 @@ static int m11_apply_tick(M11_GameViewState* state,
         input.commandArg2 = (uint8_t)state->world.party.direction;
     }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
-    if (F0884_ORCH_AdvanceOneTick_Compat(&state->world, &input, &state->lastTickResult) == 0) {
-        m11_set_status(state, actionLabel, "TICK REJECTED");
-        return 0;
+    {
+        int orchResult = F0884_ORCH_AdvanceOneTick_Compat(
+            &state->world, &input, &state->lastTickResult);
+        if (orchResult == ORCH_FAIL) {
+            m11_set_status(state, actionLabel, "TICK REJECTED");
+            return 0;
+        }
+        /* ORCH_PARTY_DEAD and ORCH_GAME_WON are handled via emissions
+         * below — the tick was still successfully processed. */
     }
     state->lastWorldHash = state->lastTickResult.worldHashPost;
 
-    /* Process emissions into the message log */
+    /* Process emissions into the message log (also sets gameWon/partyDead
+     * via EMIT_GAME_WON / EMIT_PARTY_DEAD handling). */
     M11_GameView_ProcessTickEmissions(state);
 
     /* Apply survival mechanics */
@@ -3432,6 +3472,30 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+
+    /* Dialog overlay: any input dismisses it, then return to gameplay. */
+    if (state->dialogOverlayActive) {
+        if (input == M12_MENU_INPUT_BACK) {
+            M11_GameView_DismissDialogOverlay(state);
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (input != M12_MENU_INPUT_NONE) {
+            M11_GameView_DismissDialogOverlay(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* Endgame: only ESC (return to menu) and quickload accepted. */
+    if (state->gameWon) {
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     switch (input) {
         case M12_MENU_INPUT_UP:
             command = m11_forward_command_for_direction(state->world.party.direction);
@@ -3569,6 +3633,17 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
     int slot;
 
     if (!state || !state->active || !primaryButton) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* Click dismisses dialog overlay. */
+    if (state->dialogOverlayActive) {
+        M11_GameView_DismissDialogOverlay(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    /* In endgame, clicks are ignored (use ESC). */
+    if (state->gameWon) {
         return M11_GAME_INPUT_IGNORED;
     }
 
@@ -4240,6 +4315,9 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
                                      detail, sizeof(detail))) {
         m11_set_status(state, "INSPECT", "READ TEXT");
         m11_set_inspect_readout(state, title, detail);
+        /* Show a dialog overlay so the text plaque is prominently
+         * displayed; the player dismisses it with any key. */
+        M11_GameView_ShowDialogOverlay(state, detail);
         return 1;
     }
 
@@ -6850,6 +6928,71 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
     }
 
+    /* Endgame victory overlay */
+    if (state->gameWon) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      40, 40, 240, 120, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      40, 40, 240, 120, M11_COLOR_LIGHT_GREEN);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      42, 42, 236, 116, M11_COLOR_LIGHT_GREEN);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      90, 52, "QUEST COMPLETE", &g_text_title);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      56, 80, "LORD CHAOS IS DEFEATED.", &g_text_shadow);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      52, 92, "THE FIRESTAFF IS RESTORED.", &g_text_shadow);
+        {
+            char wonLine[48];
+            snprintf(wonLine, sizeof(wonLine), "VICTORY AT TICK %u",
+                     (unsigned int)state->gameWonTick);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          80, 112, wonLine, &g_text_small);
+        }
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      80, 132, "ESC TO RETURN TO MENU", &g_text_small);
+    }
+
+    /* Dialog box overlay for text plaque inspection */
+    if (state->dialogOverlayActive && state->dialogOverlayText[0] != '\0') {
+        int dlgX = 30, dlgY = 50, dlgW = 260, dlgH = 80;
+        int textY;
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      dlgX, dlgY, dlgW, dlgH, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      dlgX, dlgY, dlgW, dlgH, M11_COLOR_YELLOW);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      dlgX + 2, dlgY + 2, dlgW - 4, dlgH - 4, M11_COLOR_BROWN);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
+        /* Word-wrap the dialog text into the box (simple two-line split) */
+        textY = dlgY + 28;
+        if (strlen(state->dialogOverlayText) <= 40) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX + 12, textY, state->dialogOverlayText,
+                          &g_text_shadow);
+        } else {
+            /* Split at nearest space before character 40 */
+            char line1[48], line2[80];
+            int splitPos = 40;
+            while (splitPos > 0 && state->dialogOverlayText[splitPos] != ' ') {
+                --splitPos;
+            }
+            if (splitPos == 0) splitPos = 40;
+            memcpy(line1, state->dialogOverlayText, (size_t)splitPos);
+            line1[splitPos] = '\0';
+            snprintf(line2, sizeof(line2), "%s",
+                     state->dialogOverlayText + splitPos + (state->dialogOverlayText[splitPos] == ' ' ? 1 : 0));
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX + 12, textY, line1, &g_text_shadow);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX + 12, textY + 14, line2, &g_text_shadow);
+        }
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      dlgX + 50, dlgY + dlgH - 16,
+                      "PRESS ANY KEY TO DISMISS", &g_text_small);
+    }
+
     /* Rest / death overlay */
     if (state->partyDead) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -6954,4 +7097,34 @@ int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,
 
 int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state) {
     return state ? state->attackCueCreatureType : -1;
+}
+
+/* ── Dialog / endgame query API ── */
+
+int M11_GameView_IsGameWon(const M11_GameViewState* state) {
+    return state ? state->gameWon : 0;
+}
+
+uint32_t M11_GameView_GetGameWonTick(const M11_GameViewState* state) {
+    return state ? state->gameWonTick : 0;
+}
+
+int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {
+    return state ? state->dialogOverlayActive : 0;
+}
+
+int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
+    if (!state || !state->dialogOverlayActive) return 0;
+    state->dialogOverlayActive = 0;
+    state->dialogOverlayText[0] = '\0';
+    return 1;
+}
+
+int M11_GameView_ShowDialogOverlay(M11_GameViewState* state,
+                                   const char* text) {
+    if (!state || !text) return 0;
+    state->dialogOverlayActive = 1;
+    snprintf(state->dialogOverlayText, sizeof(state->dialogOverlayText),
+             "%s", text);
+    return 1;
 }

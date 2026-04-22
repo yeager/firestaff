@@ -9,7 +9,8 @@ extern "C" {
 
 enum {
     M12_CONFIG_PATH_CAPACITY = 512,
-    M12_CONFIG_DATA_DIR_CAPACITY = 512
+    M12_CONFIG_DATA_DIR_CAPACITY = 512,
+    M12_CONFIG_GAME_COUNT = 3  /* DM1, CSB, DM2 */
 };
 
 typedef struct {
@@ -18,6 +19,13 @@ typedef struct {
     int windowModeIndex;
     char dataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     char path[M12_CONFIG_PATH_CAPACITY];
+
+    /* Per-game options (indexed by game slot 0..M12_CONFIG_GAME_COUNT-1) */
+    int gameUsePatch[M12_CONFIG_GAME_COUNT];
+    int gameCheatsEnabled[M12_CONFIG_GAME_COUNT];
+    int gameSpeed[M12_CONFIG_GAME_COUNT];
+    int gameAspectRatio[M12_CONFIG_GAME_COUNT];
+    int gameResolution[M12_CONFIG_GAME_COUNT];
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

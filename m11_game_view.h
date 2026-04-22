@@ -111,6 +111,19 @@ typedef struct {
 
     /* Creature type that last attacked (for attack-cue sprite). */
     int attackCueCreatureType;
+
+    /* ── Endgame / dialog flow state ── */
+    /* Set to 1 when ORCH_GAME_WON / EMIT_GAME_WON fires.  Blocks all
+     * gameplay input; only ESC (return to menu) is accepted. */
+    int gameWon;
+    uint32_t gameWonTick;  /* tick when victory was detected */
+
+    /* Dialog box overlay for text-plaque inspection.
+     * When dialogOverlayActive is 1, a styled dialog panel is rendered
+     * on top of the viewport showing dialogOverlayText.  The user
+     * dismisses it with any key or click. */
+    int dialogOverlayActive;
+    char dialogOverlayText[128];
 } M11_GameViewState;
 
 /* Spell casting API */
@@ -214,6 +227,24 @@ int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,
 
 /* Return the attack-cue creature type (-1 if no active attack). */
 int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state);
+
+/* ── Dialog / endgame query API ── */
+
+/* Return 1 if the game has been won (Firestaff placed correctly). */
+int M11_GameView_IsGameWon(const M11_GameViewState* state);
+
+/* Return the tick at which the game was won (0 if not won). */
+uint32_t M11_GameView_GetGameWonTick(const M11_GameViewState* state);
+
+/* Return 1 if a dialog overlay is currently displayed. */
+int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state);
+
+/* Dismiss the dialog overlay if active.  Returns 1 if dismissed. */
+int M11_GameView_DismissDialogOverlay(M11_GameViewState* state);
+
+/* Show a dialog overlay with the given text.  Returns 1 on success. */
+int M11_GameView_ShowDialogOverlay(M11_GameViewState* state,
+                                   const char* text);
 
 #ifdef __cplusplus
 }

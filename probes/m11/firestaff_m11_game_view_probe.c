@@ -3607,6 +3607,204 @@ int main(int argc, char** argv) {
                      "Game view Draw uses original DM1 font when available");
     }
 
+    /* ── Endgame / dialog flow invariants ── */
+
+    /* Re-open game view for endgame/dialog flow tests. */
+    M11_GameView_Init(&gameView);
+    (void)M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState);
+
+    /* INV_GV_162: IsGameWon returns 0 initially. */
+    probe_record(&tally,
+                 "INV_GV_162",
+                 M11_GameView_IsGameWon(&gameView) == 0,
+                 "IsGameWon returns 0 for fresh game view");
+
+    /* INV_GV_163: GetGameWonTick returns 0 initially. */
+    probe_record(&tally,
+                 "INV_GV_163",
+                 M11_GameView_GetGameWonTick(&gameView) == 0,
+                 "GetGameWonTick returns 0 for fresh game view");
+
+    /* INV_GV_164: Setting gameWon flag is queryable. */
+    {
+        M11_GameViewState endgameView;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.gameWonTick = 42;
+        probe_record(&tally,
+                     "INV_GV_164",
+                     M11_GameView_IsGameWon(&endgameView) == 1 &&
+                     M11_GameView_GetGameWonTick(&endgameView) == 42,
+                     "gameWon flag and tick are queryable");
+    }
+
+    /* INV_GV_165: Endgame Draw renders victory overlay. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        unsigned char fb_normal[320 * 200];
+        int diff = 0, i;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.gameWonTick = 100;
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        memset(fb_normal, 0, sizeof(fb_normal));
+        M11_GameView_Draw(&gameView, fb_normal, 320, 200);
+        for (i = 40 * 320; i < 160 * 320; ++i) {
+            if (fb_won[i] != fb_normal[i]) { diff = 1; break; }
+        }
+        probe_record(&tally,
+                     "INV_GV_165",
+                     diff,
+                     "Endgame victory overlay renders differently from normal");
+    }
+
+    /* INV_GV_166: HandleInput in gameWon state ignores movement. */
+    {
+        M11_GameViewState endgameView;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        probe_record(&tally,
+                     "INV_GV_166",
+                     M11_GameView_HandleInput(&endgameView, M12_MENU_INPUT_UP) == M11_GAME_INPUT_IGNORED,
+                     "HandleInput ignores movement when game is won");
+    }
+
+    /* INV_GV_167: HandleInput in gameWon state accepts ESC. */
+    {
+        M11_GameViewState endgameView;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        probe_record(&tally,
+                     "INV_GV_167",
+                     M11_GameView_HandleInput(&endgameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_RETURN_TO_MENU,
+                     "HandleInput accepts ESC to return to menu when game won");
+    }
+
+    /* INV_GV_168: AdvanceIdleTick blocked when gameWon. */
+    {
+        M11_GameViewState endgameView;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        probe_record(&tally,
+                     "INV_GV_168",
+                     M11_GameView_AdvanceIdleTick(&endgameView) == M11_GAME_INPUT_IGNORED,
+                     "AdvanceIdleTick blocked when game is won");
+    }
+
+    /* INV_GV_169: IsDialogOverlayActive returns 0 initially. */
+    probe_record(&tally,
+                 "INV_GV_169",
+                 M11_GameView_IsDialogOverlayActive(&gameView) == 0,
+                 "IsDialogOverlayActive returns 0 for fresh game view");
+
+    /* INV_GV_170: ShowDialogOverlay activates overlay. */
+    {
+        M11_GameViewState dlgView;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        probe_record(&tally,
+                     "INV_GV_170",
+                     M11_GameView_ShowDialogOverlay(&dlgView, "TEST") == 1 &&
+                     M11_GameView_IsDialogOverlayActive(&dlgView) == 1,
+                     "ShowDialogOverlay activates overlay");
+    }
+
+    /* INV_GV_171: DismissDialogOverlay clears overlay. */
+    {
+        M11_GameViewState dlgView;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        M11_GameView_ShowDialogOverlay(&dlgView, "TEST");
+        probe_record(&tally,
+                     "INV_GV_171",
+                     M11_GameView_DismissDialogOverlay(&dlgView) == 1 &&
+                     M11_GameView_IsDialogOverlayActive(&dlgView) == 0,
+                     "DismissDialogOverlay clears overlay");
+    }
+
+    /* INV_GV_172: Dialog overlay Draw renders differently. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned char fb_normal[320 * 200];
+        int diff = 0, i;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        memset(fb_normal, 0, sizeof(fb_normal));
+        M11_GameView_Draw(&gameView, fb_normal, 320, 200);
+        for (i = 50 * 320; i < 130 * 320; ++i) {
+            if (fb_dlg[i] != fb_normal[i]) { diff = 1; break; }
+        }
+        probe_record(&tally,
+                     "INV_GV_172",
+                     diff,
+                     "Dialog overlay renders differently from normal");
+    }
+
+    /* INV_GV_173: HandleInput dismisses dialog overlay. */
+    {
+        M11_GameViewState dlgView;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        M11_GameView_ShowDialogOverlay(&dlgView, "TEST");
+        probe_record(&tally,
+                     "INV_GV_173",
+                     M11_GameView_HandleInput(&dlgView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
+                     M11_GameView_IsDialogOverlayActive(&dlgView) == 0,
+                     "HandleInput dismisses dialog overlay on keypress");
+    }
+
+    /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
+    {
+        M11_GameViewState dlgView;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        M11_GameView_ShowDialogOverlay(&dlgView, "TEST");
+        probe_record(&tally,
+                     "INV_GV_174",
+                     M11_GameView_AdvanceIdleTick(&dlgView) == M11_GAME_INPUT_IGNORED,
+                     "AdvanceIdleTick blocked during dialog overlay");
+    }
+
+    /* INV_GV_175: EMIT_GAME_WON emission sets gameWon flag. */
+    {
+        M11_GameViewState wonView;
+        memcpy(&wonView, &gameView, sizeof(wonView));
+        wonView.world.gameWon = 1;
+        wonView.lastTickResult.emissionCount = 1;
+        wonView.lastTickResult.emissions[0].kind = EMIT_GAME_WON;
+        M11_GameView_ProcessTickEmissions(&wonView);
+        probe_record(&tally,
+                     "INV_GV_175",
+                     wonView.gameWon == 1,
+                     "EMIT_GAME_WON emission sets gameWon flag");
+    }
+
+    /* INV_GV_176: EMIT_PARTY_DEAD emission sets partyDead flag. */
+    {
+        M11_GameViewState deadView;
+        memcpy(&deadView, &gameView, sizeof(deadView));
+        deadView.lastTickResult.emissionCount = 1;
+        deadView.lastTickResult.emissions[0].kind = EMIT_PARTY_DEAD;
+        M11_GameView_ProcessTickEmissions(&deadView);
+        probe_record(&tally,
+                     "INV_GV_176",
+                     deadView.partyDead == 1,
+                     "EMIT_PARTY_DEAD emission sets partyDead flag");
+    }
+
+    /* INV_GV_177: NULL-safety for dialog/endgame query APIs. */
+    probe_record(&tally,
+                 "INV_GV_177",
+                 M11_GameView_IsGameWon(NULL) == 0 &&
+                 M11_GameView_GetGameWonTick(NULL) == 0 &&
+                 M11_GameView_IsDialogOverlayActive(NULL) == 0 &&
+                 M11_GameView_DismissDialogOverlay(NULL) == 0 &&
+                 M11_GameView_ShowDialogOverlay(NULL, "X") == 0,
+                 "Dialog/endgame query APIs are NULL-safe");
+
+    M11_GameView_Shutdown(&gameView);
+
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
 }
