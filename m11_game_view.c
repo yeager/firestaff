@@ -6453,14 +6453,82 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int depthIndex,
                                        int sideHint);
 
+/* ── DM1 Creature Replacement Color Sets (G0220_as_Graphic558) ──
+ * In the original VGA driver, VIDRV_12_SetCreatureReplacementColors
+ * remaps palette entries 9 and 10 to creature-specific colors before
+ * drawing.  Each set index (0-12) maps to a target palette index for
+ * color 9 and another for color 10.
+ *
+ * Values reconstructed from ReDMCSB VIDEODRV.C and visual matching
+ * against original DM1 PC v3.4 screenshots.
+ *
+ * Index 0 is unused (indicates no replacement).  Indices 1-12 are
+ * assigned to creature types via replacementColorSetIndices in the
+ * aspect table.
+ */
+static const unsigned char s_replColor9[13] = {
+    0,  /* 0: unused */
+    4,  /* 1: GiantScorpion  — dark red / brown */
+    2,  /* 2: Giggler        — dark green */
+    1,  /* 3: PainRat        — dark blue */
+    4,  /* 4: Ruster         — dark red / brown */
+    5,  /* 5: GhostRive      — dark magenta */
+    3,  /* 6: Couatl         — dark cyan */
+    6,  /* 7: Mummy          — brown */
+    5,  /* 8: MagentaWorm    — dark magenta */
+    6,  /* 9: Trolin         — brown */
+    4,  /* 10: Antman        — dark red */
+    1,  /* 11: Vexirk        — dark blue */
+   12   /* 12: Demon         — light red */
+};
+static const unsigned char s_replColor10[13] = {
+    0,  /* 0: unused */
+   14,  /* 1: GiantScorpion  — yellow */
+   14,  /* 2: Giggler        — yellow */
+   12,  /* 3: PainRat        — light red */
+   14,  /* 4: Ruster         — yellow */
+   15,  /* 5: GhostRive      — white */
+    9,  /* 6: Couatl         — light blue */
+   14,  /* 7: Mummy          — yellow */
+   13,  /* 8: MagentaWorm    — light magenta */
+   14,  /* 9: Trolin         — yellow */
+   12,  /* 10: Antman        — light red */
+   13,  /* 11: Vexirk        — light magenta */
+   14   /* 12: Demon         — yellow */
+};
+
+/* Query replacement palette indices for a creature type.
+ * Returns 1 if the creature uses replacement colors, 0 if not. */
+static int m11_creature_replacement_colors(int creatureType,
+                                           int* outReplDst9,
+                                           int* outReplDst10) {
+    int setIdx9, setIdx10;
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    setIdx9  = M11_CREATURE_REPL_COLOR9(&s_creatureAspects[creatureType]);
+    setIdx10 = M11_CREATURE_REPL_COLOR10(&s_creatureAspects[creatureType]);
+    if (setIdx9 == 0 && setIdx10 == 0) return 0; /* no replacement */
+    if (outReplDst9) {
+        *outReplDst9 = (setIdx9 > 0 && setIdx9 < 13)
+                     ? (int)s_replColor9[setIdx9] : 9;
+    }
+    if (outReplDst10) {
+        *outReplDst10 = (setIdx10 > 0 && setIdx10 < 13)
+                      ? (int)s_replColor10[setIdx10] : 10;
+    }
+    return 1;
+}
+
 static unsigned int m11_creature_sprite_base(int creatureType) {
     /* ReDMCSB creature graphic set mapping.
      * Each creature type has a specific graphic set index (column 2 in
-     * G0243_as_Graphic559_CreatureInfo).  Each set has 3 sprites:
-     * small, medium, large at consecutive GRAPHICS.DAT indices.
-     * Sets 0-3: base 246 + set*3 (indices 246-257)
-     * Sets 4-18: irregular spacing in the 439+ range.
-     * Ref: ReDMCSB DEFS.H, G0243_as_Graphic559_CreatureInfo. */
+     * G0243_as_Graphic559_CreatureInfo).  Each set has 3 sprites
+     * (D3-far, D2-mid, D1-near) at consecutive GRAPHICS.DAT indices.
+     *
+     * Sets 0-3 store bitmaps in ASCENDING size order: base+0=D3, +1=D2, +2=D1.
+     * Sets 4-18 store bitmaps in DESCENDING size order: base+0=D1, +1=D2, +2=D3.
+     *
+     * Ref: ReDMCSB DEFS.H, G0243_as_Graphic559_CreatureInfo,
+     *      GRAPHICS.DAT bitmap dimensions verified via diag_creature_bitmaps. */
     static const unsigned int s_set_bases[] = {
         246,  /* set 0 */
         249,  /* set 1 */
@@ -6520,6 +6588,46 @@ static unsigned int m11_creature_sprite_base(int creatureType) {
     return s_set_bases[setIdx];
 }
 
+/* Return the GRAPHICS.DAT index for a creature sprite at a given depth.
+ * depthIndex: 0 = nearest/D1 (largest), 1 = mid/D2, 2 = far/D3 (smallest).
+ * Accounts for ascending (sets 0-3) vs descending (sets 4-18) bitmap order
+ * within GRAPHICS.DAT.
+ * Returns 0 if the creature type is invalid. */
+static unsigned int m11_creature_sprite_for_depth(int creatureType, int depthIndex) {
+    static const unsigned char s_set_descending[] = {
+        0, 0, 0, 0,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1
+    };
+    static const int s_type_to_set[27] = {
+         4, 14, 6, 0, 18, 17, 3, 7, 2, 10, 13, 0, 11, 9, 16, 5,
+        10, 15, 12, 0, 8, 3, 16, 0, 1, 0, 0
+    };
+    unsigned int base;
+    int setIdx;
+    int offset;
+    if (creatureType < 0 || creatureType > 26) return 0;
+    base = m11_creature_sprite_base(creatureType);
+    if (base == 0) return 0;
+    setIdx = s_type_to_set[creatureType];
+    if (setIdx < 0 || setIdx >= 19) return 0;
+
+    if (s_set_descending[setIdx]) {
+        /* Descending: base+0=D1(large), base+1=D2(mid), base+2=D3(small) */
+        switch (depthIndex) {
+            case 0:  offset = 0; break; /* D1 nearest = base+0 */
+            case 1:  offset = 1; break; /* D2 mid     = base+1 */
+            default: offset = 2; break; /* D3 far     = base+2 */
+        }
+    } else {
+        /* Ascending: base+0=D3(small), base+1=D2(mid), base+2=D1(large) */
+        switch (depthIndex) {
+            case 0:  offset = 2; break; /* D1 nearest = base+2 */
+            case 1:  offset = 1; break; /* D2 mid     = base+1 */
+            default: offset = 0; break; /* D3 far     = base+0 */
+        }
+    }
+    return base + (unsigned int)offset;
+}
+
 /* Draw a creature sprite from GRAPHICS.DAT at the given viewport position.
  * depthIndex 0 = near (large sprite), 1 = mid, 2 = far (small sprite).
  * sideHint: 0 = center, -1 = left side cell, +1 = right side cell.
@@ -6552,17 +6660,23 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int creatureType,
                                        int depthIndex,
                                        int sideHint) {
-    unsigned int base;
     unsigned int spriteIdx;
     const M11_AssetSlot* slot;
     int spriteW, spriteH;
     int drawW, drawH, drawX, drawY;
     int useAttackPose = 0;
     int useMirror = 0;
+    int hasReplColors = 0;
+    int replDst9 = 9, replDst10 = 10;
 
     if (!state->assetsAvailable || creatureType < 0) return 0;
-    base = m11_creature_sprite_base(creatureType);
-    if (base == 0) return 0;
+
+    /* Use depth-aware sprite index that handles ascending/descending
+     * bitmap order within GRAPHICS.DAT per graphic set.
+     * Sets 0-3 (base 246-257): ascending (base+0=D3, +2=D1)
+     * Sets 4-18 (base 439+):   descending (base+0=D1, +2=D3) */
+    spriteIdx = m11_creature_sprite_for_depth(creatureType, depthIndex);
+    if (spriteIdx == 0) return 0;
 
     /* Check if this creature is currently attacking (attack cue active
      * and matches the creature type at depth 0).
@@ -6576,12 +6690,13 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
         useAttackPose = 1;
     }
 
-    /* Depth 0 = large (offset +2), depth 1 = mid (+1), depth 2 = small (+0) */
-    switch (depthIndex) {
-        case 0: spriteIdx = base + 2; break; /* 96x88 */
-        case 1: spriteIdx = base + 1; break; /* 64x61 */
-        default: spriteIdx = base;    break; /* 44x38 */
-    }
+    /* Query replacement colors from the creature aspect data.
+     * In DM1, creatures that share the same graphic set are
+     * differentiated by replacing palette indices 9 and 10 with
+     * creature-specific colors during compositing.
+     * Ref: ReDMCSB VIDEODRV.C VIDRV_12_SetCreatureReplacementColors. */
+    hasReplColors = m11_creature_replacement_colors(creatureType,
+                                                    &replDst9, &replDst10);
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
@@ -6670,19 +6785,39 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
         }
     }
 
-    /* Use creature aspect transparent color for sprite compositing.
+    /* Composite the creature sprite with transparent color keying and
+     * optional replacement color remapping.
+     *
      * In DM1, each creature type specifies its transparent (key) color
      * index via the CoordinateSet_TransparentColor field.  Most creatures
-     * use color index 10 (light green / magenta), but some use 0 (black)
-     * or other indices.  Ref: ReDMCSB DEFS.H M072_TRANSPARENT_COLOR. */
+     * use color index 10, but some use 0 (black) or other indices.
+     * Ref: ReDMCSB DEFS.H M072_TRANSPARENT_COLOR.
+     *
+     * Creature types that share graphic sets are differentiated by
+     * replacing palette indices 9 and 10 with creature-specific colors.
+     * This is how e.g. PainRat and Mummy share set 0 but look different. */
     {
         int transpColor = m11_creature_transparent_color(creatureType);
-        if (useMirror) {
-            M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
-                                             drawX, drawY, drawW, drawH, transpColor);
+        if (hasReplColors) {
+            if (useMirror) {
+                M11_AssetLoader_BlitScaledMirrorReplace(
+                    slot, framebuffer, fbW, fbH,
+                    drawX, drawY, drawW, drawH, transpColor,
+                    9, replDst9, 10, replDst10);
+            } else {
+                M11_AssetLoader_BlitScaledReplace(
+                    slot, framebuffer, fbW, fbH,
+                    drawX, drawY, drawW, drawH, transpColor,
+                    9, replDst9, 10, replDst10);
+            }
         } else {
-            M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                       drawX, drawY, drawW, drawH, transpColor);
+            if (useMirror) {
+                M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
+                                                 drawX, drawY, drawW, drawH, transpColor);
+            } else {
+                M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                           drawX, drawY, drawW, drawH, transpColor);
+            }
         }
     }
     return 1;
@@ -9647,6 +9782,16 @@ int M11_GameView_GetCreatureCoordinateSet(int creatureType) {
 
 int M11_GameView_GetCreatureTransparentColor(int creatureType) {
     return m11_creature_transparent_color(creatureType);
+}
+
+unsigned int M11_GameView_GetCreatureSpriteForDepth(int creatureType, int depthIndex) {
+    return m11_creature_sprite_for_depth(creatureType, depthIndex);
+}
+
+int M11_GameView_GetCreatureReplacementColors(int creatureType,
+                                               int* outReplDst9,
+                                               int* outReplDst10) {
+    return m11_creature_replacement_colors(creatureType, outReplDst9, outReplDst10);
 }
 
 int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,

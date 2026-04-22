@@ -123,6 +123,41 @@ void M11_AssetLoader_BlitScaledMirror(const M11_AssetSlot* slot,
                                       int dstH,
                                       int transparentColor);
 
+/* Blit with scaling and DM1 creature replacement colors.
+ * Replaces pixel values matching replSrc9/replSrc10 (normally 9 and 10)
+ * with replDst9/replDst10 during compositing.  Pass replSrc < 0 to
+ * skip that replacement channel.  Used for creature types that share
+ * the same graphic set but use different coloring.
+ * Ref: ReDMCSB VIDEODRV.C VIDRV_12_SetCreatureReplacementColors. */
+void M11_AssetLoader_BlitScaledReplace(const M11_AssetSlot* slot,
+                                      unsigned char* framebuffer,
+                                      int fbWidth,
+                                      int fbHeight,
+                                      int dstX,
+                                      int dstY,
+                                      int dstW,
+                                      int dstH,
+                                      int transparentColor,
+                                      int replSrc9,
+                                      int replDst9,
+                                      int replSrc10,
+                                      int replDst10);
+
+/* Blit with scaling, mirror, AND replacement colors. */
+void M11_AssetLoader_BlitScaledMirrorReplace(const M11_AssetSlot* slot,
+                                             unsigned char* framebuffer,
+                                             int fbWidth,
+                                             int fbHeight,
+                                             int dstX,
+                                             int dstY,
+                                             int dstW,
+                                             int dstH,
+                                             int transparentColor,
+                                             int replSrc9,
+                                             int replDst9,
+                                             int replSrc10,
+                                             int replDst10);
+
 #ifdef __cplusplus
 }
 #endif

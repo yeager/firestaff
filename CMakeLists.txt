@@ -72,6 +72,7 @@ set(M12_SOURCES
     asset_status_m12.c
     card_art_m12.c
     branding_logo_m12.c
+    creature_art_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
@@ -164,3 +165,4 @@ endif()
 
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
+

@@ -360,6 +360,18 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
                                             int* outCenterX,
                                             int* outBottomY);
 
+/* Return the GRAPHICS.DAT sprite index for a creature at a given depth.
+ * Accounts for ascending (sets 0-3) vs descending (sets 4+) bitmap
+ * order within GRAPHICS.DAT.  Returns 0 for invalid inputs. */
+unsigned int M11_GameView_GetCreatureSpriteForDepth(int creatureType, int depthIndex);
+
+/* Query replacement color palette indices for a creature type.
+ * Returns 1 if the creature uses replacement colors, 0 if not.
+ * outReplDst9/outReplDst10 receive the target palette indices. */
+int M11_GameView_GetCreatureReplacementColors(int creatureType,
+                                               int* outReplDst9,
+                                               int* outReplDst10);
+
 /* Return the floor ornament ordinal for a viewport cell position.
  * relForward/relSide are relative to party position/facing. */
 int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,

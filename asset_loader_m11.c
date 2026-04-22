@@ -491,3 +491,91 @@ void M11_AssetLoader_BlitScaledMirror(const M11_AssetSlot* slot,
         }
     }
 }
+
+/* ── Replacement-color blit variants ── */
+
+static unsigned char m11_apply_replacement(unsigned char pixel,
+                                           int replSrc9, int replDst9,
+                                           int replSrc10, int replDst10) {
+    if (replSrc9 >= 0 && pixel == (unsigned char)replSrc9)
+        return (unsigned char)replDst9;
+    if (replSrc10 >= 0 && pixel == (unsigned char)replSrc10)
+        return (unsigned char)replDst10;
+    return pixel;
+}
+
+void M11_AssetLoader_BlitScaledReplace(const M11_AssetSlot* slot,
+                                      unsigned char* framebuffer,
+                                      int fbWidth,
+                                      int fbHeight,
+                                      int dstX,
+                                      int dstY,
+                                      int dstW,
+                                      int dstH,
+                                      int transparentColor,
+                                      int replSrc9,
+                                      int replDst9,
+                                      int replSrc10,
+                                      int replDst10) {
+    int dy, dx;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = dy * (int)slot->height / dstH;
+        int fbY = dstY + dy;
+        if (fbY < 0 || fbY >= fbHeight) continue;
+        for (dx = 0; dx < dstW; ++dx) {
+            int sx = dx * (int)slot->width / dstW;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbWidth) continue;
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor)
+                continue;
+            pixel = m11_apply_replacement(pixel, replSrc9, replDst9,
+                                          replSrc10, replDst10);
+            framebuffer[fbY * fbWidth + fbX] = pixel;
+        }
+    }
+}
+
+void M11_AssetLoader_BlitScaledMirrorReplace(const M11_AssetSlot* slot,
+                                             unsigned char* framebuffer,
+                                             int fbWidth,
+                                             int fbHeight,
+                                             int dstX,
+                                             int dstY,
+                                             int dstW,
+                                             int dstH,
+                                             int transparentColor,
+                                             int replSrc9,
+                                             int replDst9,
+                                             int replSrc10,
+                                             int replDst10) {
+    int dy, dx;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = dy * (int)slot->height / dstH;
+        int fbY = dstY + dy;
+        if (fbY < 0 || fbY >= fbHeight) continue;
+        for (dx = 0; dx < dstW; ++dx) {
+            int sx = dx * (int)slot->width / dstW;
+            int mirrorSx = (int)slot->width - 1 - sx;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbWidth) continue;
+            if (mirrorSx < 0) mirrorSx = 0;
+            pixel = slot->pixels[sy * (int)slot->width + mirrorSx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor)
+                continue;
+            pixel = m11_apply_replacement(pixel, replSrc9, replDst9,
+                                          replSrc10, replDst10);
+            framebuffer[fbY * fbWidth + fbX] = pixel;
+        }
+    }
+}
