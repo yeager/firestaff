@@ -1,0 +1,23 @@
+# Firestaff — csb domain template.
+# Canonical source-string template for Chaos Strikes Back.
+#
+# Domain: csb
+# Covers: CSB-specific runtime flow, launcher/runtime text,
+#         champion selection, utility, new-adventure, resume semantics,
+#         Hint Oracle text (future).
+#
+# NOTE: Seed file (Slice 1). CSB runtime strings will be populated
+# in Slice 5, once CSB runtime flow exists.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-csb\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 05:00+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"

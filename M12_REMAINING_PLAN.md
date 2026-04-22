@@ -170,32 +170,37 @@ cc -std=c99 -Wall -O2 -I. -o firestaff_m12_bug_flags_probe_bin \
 
 **Goal:** Runtime string lookup with language switching, .po file parsing.
 
+> **Layout update (Slice 1 landed):** The i18n filesystem contract has moved from
+> the old monolithic `locale/<lang>/firestaff.po` layout to **per-domain catalogs
+> under `po/`**. See `I18N_PO_LAYOUT_PLAN.md` for the full specification and
+> `po/README.md` for domain/file summary.
+
 **Files involved:**
 - `i18n_compat.h` (new)
 - `i18n_compat.c` (new)
 - `i18n_po_loader_m12.h` (new)
 - `i18n_po_loader_m12.c` (new)
-- `locale/en/firestaff.po` (new)
-- `locale/sv/firestaff.po` (new)
+- `po/startup-menu.en.po` (seed exists — populate fully)
+- `po/dm1.en.po` (seed exists — populate fully)
 
 **Implementation notes:**
 - .po parser: handle `msgid`/`msgstr`, multi-line (continuation with `"`), `#` comments, escape sequences.
 - String table: FNV-1a hash map with ~512 buckets. Keys are msgid strings.
-- API: `i18n_init()`, `i18n_set_language(lang_code)`, `tr(key)` → returns translated string.
-- Fallback chain: current language → English → key itself.
+- API: per-domain loading via `i18n_compat_load_domain(domain, lang_code)`, lookup via `i18n_compat_tr(key)` or `i18n_compat_tr(domain, key)`.
+- Fallback chain: active domain in active language → same domain in English → key itself. No cross-domain fallback.
 - `i18n_set_language` switches without restart (hot-reload for menu).
-- Start with ~80 strings covering all M12 UI elements.
-- Swedish translations by Daniel.
+- Launcher loads `po/startup-menu.<lang>.po`; entering DM1 loads `po/dm1.<lang>.po`.
+- Swedish catalogs arrive in Slice 4.
 
 **Invariants to add (8):**
-- `INV_I18N_01`: English catalog has ≥80 entries
-- `INV_I18N_02`: `tr("menu.title")` in English returns "Select Game" (or similar)
-- `INV_I18N_03`: `tr("menu.title")` in Swedish returns Swedish string
+- `INV_I18N_01`: English startup-menu catalog has expected entry count
+- `INV_I18N_02`: `tr("startup.title")` in English returns "Firestaff"
+- `INV_I18N_03`: `tr("startup.title")` in Swedish returns Swedish string
 - `INV_I18N_04`: Unknown key returns the key itself
 - `INV_I18N_05`: Language switch en → sv → en produces same results
 - `INV_I18N_06`: Malformed .po file returns error without crash
 - `INV_I18N_07`: Empty .po file loads without crash
-- `INV_I18N_08`: All English keys exist in Swedish catalog
+- `INV_I18N_08`: All English keys exist in Swedish catalog (per domain)
 
 **Effort:** 4 days
 

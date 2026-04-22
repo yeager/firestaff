@@ -1,0 +1,22 @@
+# Firestaff — dm2 domain template.
+# Canonical source-string template for Dungeon Master 2.
+#
+# Domain: dm2
+# Covers: DM2-specific runtime/UI content once DM2 is implemented.
+#
+# NOTE: Seed file (Slice 1). DM2 is not yet implemented;
+# this domain is present for structural stability.
+# Strings will be populated in Slice 6.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-dm2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 05:00+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
