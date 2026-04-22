@@ -34,8 +34,26 @@ typedef struct {
     const char* dataDir;
     const char* sourceId;
     const char* dungeonPath;
+    int languageIndex;
     M11_GameSourceKind sourceKind;
 } M11_GameLaunchSpec;
+
+enum {
+    M11_RUNTIME_CATALOG_MAX_ENTRIES = 1024,
+    M11_RUNTIME_CATALOG_MSGID_CAPACITY = 96,
+    M11_RUNTIME_CATALOG_MSGSTR_CAPACITY = 128
+};
+
+typedef struct {
+    char msgid[M11_RUNTIME_CATALOG_MSGID_CAPACITY];
+    char msgstr[M11_RUNTIME_CATALOG_MSGSTR_CAPACITY];
+} M11_RuntimeCatalogEntry;
+
+typedef struct {
+    M11_RuntimeCatalogEntry entries[M11_RUNTIME_CATALOG_MAX_ENTRIES];
+    int entryCount;
+    int loaded;
+} M11_RuntimeCatalog;
 
 enum {
     M11_MESSAGE_LOG_CAPACITY = 6,
@@ -146,6 +164,9 @@ typedef struct {
      * dismisses it with any key or click. */
     int dialogOverlayActive;
     char dialogOverlayText[128];
+    char localeCode[8];
+    M11_RuntimeCatalog localizedCatalog;
+    M11_RuntimeCatalog englishCatalog;
 
     /* V1 presentation mode: when showDebugHUD is 0 (default), the
      * in-game screen omits developer-facing metadata, keybinding

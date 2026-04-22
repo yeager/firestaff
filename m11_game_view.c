@@ -5006,14 +5006,11 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         return;
     }
 
-    /* ── Multi-creature stacking ──
-     * DM1 draws up to 4 creature groups per square, offset horizontally
-     * so they visually stack.  Each subsequent group is shifted right
-     * by a fraction of the face width, giving a crowd appearance. */
+    /* Multi-creature stacking with sprite duplication.
+     * Up to 4 per group rendered as stacked sprites. Ref: ReDMCSB. */
     if (cell->creatureGroupCount > 0) {
         int gi;
         int groupCount = cell->creatureGroupCount;
-        /* Width per creature slot: divide face among groups with overlap */
         int slotW = (groupCount > 1) ? (faceW - 8) * 2 / (groupCount + 1) : faceW - 8;
         int slotH = faceH - 10;
         int stepX = (groupCount > 1) ? ((faceW - 8) - slotW) / (groupCount - 1) : 0;
@@ -5021,19 +5018,45 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
             int cx = faceX + 4 + gi * stepX;
             int cy = faceY + 5;
             int countInGroup = cell->creatureCountsPerGroup[gi];
+            int visibleDups, di;
             if (cell->creatureTypes[gi] < 0) continue;
-            if (!g_drawState ||
-                !m11_draw_creature_sprite(g_drawState, framebuffer,
-                                          framebufferWidth, framebufferHeight,
-                                          cx, cy, slotW, slotH,
-                                          cell->creatureTypes[gi], depthIndex)) {
-                m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                      cx, cy, slotW, slotH, depthIndex);
+            visibleDups = countInGroup;
+            if (visibleDups > 4) visibleDups = 4;
+            if (visibleDups < 1) visibleDups = 1;
+            if (visibleDups == 1) {
+                if (!g_drawState ||
+                    !m11_draw_creature_sprite(g_drawState, framebuffer,
+                                              framebufferWidth, framebufferHeight,
+                                              cx, cy, slotW, slotH,
+                                              cell->creatureTypes[gi], depthIndex)) {
+                    m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                          cx, cy, slotW, slotH, depthIndex);
+                }
+            } else {
+                int dupOffX[4], dupOffY[4];
+                int dupW = slotW * 3 / 4;
+                int dupH = slotH * 3 / 4;
+                int ofsX = (slotW - dupW) / 2;
+                int ofsY = (slotH - dupH) / 2;
+                if (ofsX < 1) ofsX = 1;
+                if (ofsY < 1) ofsY = 1;
+                dupOffX[0] = 0;        dupOffY[0] = 0;
+                dupOffX[1] = ofsX * 2; dupOffY[1] = 0;
+                dupOffX[2] = 0;        dupOffY[2] = ofsY * 2;
+                dupOffX[3] = ofsX * 2; dupOffY[3] = ofsY * 2;
+                for (di = 0; di < visibleDups; ++di) {
+                    int dx = cx + dupOffX[di];
+                    int dy = cy + dupOffY[di];
+                    if (!g_drawState ||
+                        !m11_draw_creature_sprite(g_drawState, framebuffer,
+                                                  framebufferWidth, framebufferHeight,
+                                                  dx, dy, dupW, dupH,
+                                                  cell->creatureTypes[gi], depthIndex)) {
+                        m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                              dx, dy, dupW, dupH, depthIndex);
+                    }
+                }
             }
-            /* DM1-faithful creature count indicator.
-             * When a group contains multiple creatures (count > 1),
-             * draw a small numeric badge in the bottom-right of the
-             * creature's slot. */
             if (countInGroup > 1 && slotW >= 12 && slotH >= 12) {
                 char countStr[4];
                 int badgeX = cx + slotW - 8;
@@ -6013,6 +6036,19 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                       paneX, paneY, paneW, paneH, accent);
     }
 
+    /* Side-pane wall ornaments: DM1 renders wall ornaments on side walls */
+    if (cell->elementType == DUNGEON_ELEMENT_WALL && cell->wallOrnamentOrdinal >= 0 && g_drawState) {
+        M11_ViewRect sideWallOrnRect;
+        sideWallOrnRect.x = paneX;
+        sideWallOrnRect.y = paneY;
+        sideWallOrnRect.w = paneW;
+        sideWallOrnRect.h = paneH;
+        m11_draw_wall_ornament(g_drawState, framebuffer,
+                               framebufferWidth, framebufferHeight,
+                               &sideWallOrnRect, cell->wallOrnamentOrdinal,
+                               depthIndex);
+    }
+
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
         /* Try real door side pillar graphic first */
         if (!g_drawState ||
@@ -6043,9 +6079,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 
     if (m11_viewport_cell_is_open(cell)) {
-        /* ── Multi-creature stacking in side cells ──
-         * DM1 stacks creature groups vertically in side panes.
-         * Each subsequent group is drawn slightly lower. */
+        /* Multi-creature stacking with duplication in side cells.
+         * Duplicate sprites with vertical offsets in narrow pane. */
         if (cell->creatureGroupCount > 0) {
             int gi;
             int groupCount = cell->creatureGroupCount;
@@ -6058,19 +6093,42 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             for (gi = 0; gi < groupCount; ++gi) {
                 int cy = paneY + 1 + gi * stepY;
                 int countInGroup = cell->creatureCountsPerGroup[gi];
+                int visibleDups, di;
                 if (cell->creatureTypes[gi] < 0) continue;
-                if (!g_drawState ||
-                    !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
-                                                 framebufferWidth, framebufferHeight,
-                                                 paneX + 1, cy,
-                                                 paneW - 2, slotH,
-                                                 cell->creatureTypes[gi], depthIndex,
-                                                 side)) {
-                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  paneX + paneW / 2 - 1, cy + slotH / 2 - 2,
-                                  3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                visibleDups = countInGroup;
+                if (visibleDups > 3) visibleDups = 3;
+                if (visibleDups < 1) visibleDups = 1;
+                if (visibleDups == 1) {
+                    if (!g_drawState ||
+                        !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
+                                                     framebufferWidth, framebufferHeight,
+                                                     paneX + 1, cy,
+                                                     paneW - 2, slotH,
+                                                     cell->creatureTypes[gi], depthIndex,
+                                                     side)) {
+                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      paneX + paneW / 2 - 1, cy + slotH / 2 - 2,
+                                      3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                    }
+                } else {
+                    int dupH = slotH * 2 / 3;
+                    int ofsY = (slotH - dupH) / (visibleDups > 1 ? visibleDups - 1 : 1);
+                    if (ofsY < 1) ofsY = 1;
+                    for (di = 0; di < visibleDups; ++di) {
+                        int dy = cy + di * ofsY;
+                        if (!g_drawState ||
+                            !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
+                                                         framebufferWidth, framebufferHeight,
+                                                         paneX + 1, dy,
+                                                         paneW - 2, dupH,
+                                                         cell->creatureTypes[gi], depthIndex,
+                                                         side)) {
+                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                          paneX + paneW / 2 - 1, dy + dupH / 2 - 2,
+                                          3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                        }
+                    }
                 }
-                /* Multi-creature group count badge in side panes */
                 if (countInGroup > 1 && paneW >= 10 && slotH >= 10) {
                     char countStr[4];
                     int badgeX = paneX + paneW - 9;
@@ -6112,9 +6170,31 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                           paneX + paneW / 2 - 2, paneY + paneH - 4,
                           5, 2, M11_COLOR_YELLOW);
         }
-        if (cell->summary.projectiles > 0 || cell->summary.explosions > 0) {
-            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
-                          paneX + paneW / 2, paneY + paneH / 2, M11_COLOR_LIGHT_CYAN);
+        /* Side-pane projectile sprites: real GRAPHICS.DAT sprites */
+        if (cell->summary.projectiles > 0) {
+            int projArea = paneH / 3;
+            int projY = paneY + (paneH - projArea) / 2;
+            if (projArea < 6) projArea = 6;
+            if (!g_drawState ||
+                !m11_draw_projectile_sprite(g_drawState, framebuffer,
+                                            framebufferWidth, framebufferHeight,
+                                            paneX + 1, projY,
+                                            paneW - 2, projArea,
+                                            cell->firstProjectileGfxIndex,
+                                            depthIndex + 1)) {
+                int pcx = paneX + paneW / 2;
+                int pcy = paneY + paneH / 2;
+                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                               pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
+                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                               pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
+            }
+        }
+        if (cell->summary.explosions > 0 && cell->summary.projectiles == 0) {
+            int ecx = paneX + paneW / 2;
+            int ecy = paneY + paneH / 2;
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          ecx - 1, ecy - 1, 3, 3, M11_COLOR_LIGHT_RED);
         }
     }
 }
