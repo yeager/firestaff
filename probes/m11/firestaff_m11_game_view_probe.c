@@ -3492,6 +3492,121 @@ int main(int argc, char** argv) {
                      "M11_FB_ENCODE/DECODE round-trip for all index/level combos");
     }
 
+    /* ── Original DM1 font invariants ── */
+
+    /* INV_GV_156: M11_Font_Init zeroes font state. */
+    {
+        M11_FontState fontTest;
+        M11_Font_Init(&fontTest);
+        probe_record(&tally,
+                     "INV_GV_156",
+                     !M11_Font_IsLoaded(&fontTest),
+                     "Font init produces unloaded state");
+    }
+
+    /* INV_GV_157: Font loads from GRAPHICS.DAT when assets available. */
+    {
+        int fontLoaded = 0;
+        if (gameView.assetsAvailable) {
+            fontLoaded = gameView.originalFontAvailable;
+        } else {
+            /* If no assets, skip — not a failure */
+            fontLoaded = 1; /* vacuously true */
+        }
+        probe_record(&tally,
+                     "INV_GV_157",
+                     fontLoaded,
+                     "Original DM1 font loads from GRAPHICS.DAT");
+    }
+
+    /* INV_GV_158: Font DrawChar produces non-zero pixels. */
+    {
+        int hasPixels = 0;
+        if (gameView.originalFontAvailable) {
+            unsigned char fb_font[64 * 16];
+            int i;
+            memset(fb_font, 0, sizeof(fb_font));
+            M11_Font_DrawChar(&gameView.originalFont,
+                fb_font, 64, 16, 2, 2, 'A', 15, -1, 1);
+            for (i = 0; i < 64 * 16; ++i) {
+                if (fb_font[i] != 0) { hasPixels = 1; break; }
+            }
+        } else {
+            hasPixels = 1; /* vacuously true */
+        }
+        probe_record(&tally,
+                     "INV_GV_158",
+                     hasPixels,
+                     "Font DrawChar 'A' produces visible pixels");
+    }
+
+    /* INV_GV_159: Font DrawString renders complete text. */
+    {
+        int textOk = 0;
+        if (gameView.originalFontAvailable) {
+            unsigned char fb_str[128 * 16];
+            int nonzero = 0, i;
+            memset(fb_str, 0, sizeof(fb_str));
+            M11_Font_DrawString(&gameView.originalFont,
+                fb_str, 128, 16, 0, 0, "HELLO", 15, -1, 1);
+            for (i = 0; i < 128 * 16; ++i) {
+                if (fb_str[i] != 0) ++nonzero;
+            }
+            textOk = (nonzero >= 5); /* at least a few pixels per char */
+        } else {
+            textOk = 1;
+        }
+        probe_record(&tally,
+                     "INV_GV_159",
+                     textOk,
+                     "Font DrawString 'HELLO' renders visible text");
+    }
+
+    /* INV_GV_160: Font MeasureString returns correct width. */
+    {
+        int measured = M11_Font_MeasureString("ABC");
+        probe_record(&tally,
+                     "INV_GV_160",
+                     measured == 3 * M11_FONT_CHAR_VISIBLE_W,
+                     "Font MeasureString('ABC') == 18 pixels");
+    }
+
+    /* INV_GV_161: Game view Draw uses original font when available.
+     * Check that the text region in the rendered framebuffer differs
+     * when the original font is active vs not.  The original font has
+     * different glyph shapes than the builtin 5x7 font. */
+    {
+        int fontUsed = 0;
+        if (gameView.originalFontAvailable) {
+            unsigned char fb_with[320 * 200];
+            unsigned char fb_without[320 * 200];
+            M11_GameViewState noFontView;
+            int diff = 0, i;
+
+            /* Render with original font */
+            memset(fb_with, 0, sizeof(fb_with));
+            M11_GameView_Draw(&gameView, fb_with, 320, 200);
+
+            /* Render without: create a copy with font disabled */
+            memcpy(&noFontView, &gameView, sizeof(noFontView));
+            noFontView.originalFontAvailable = 0;
+            memset(fb_without, 0, sizeof(fb_without));
+            M11_GameView_Draw(&noFontView, fb_without, 320, 200);
+
+            /* Compare the bottom panel text area */
+            for (i = 146 * 320; i < 190 * 320; ++i) {
+                if (fb_with[i] != fb_without[i]) { diff = 1; break; }
+            }
+            fontUsed = diff;
+        } else {
+            fontUsed = 1;
+        }
+        probe_record(&tally,
+                     "INV_GV_161",
+                     fontUsed,
+                     "Game view Draw uses original DM1 font when available");
+    }
+
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
 }

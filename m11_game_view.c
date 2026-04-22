@@ -133,6 +133,12 @@ static const M11_TextStyle g_text_small = {1, 1, M11_COLOR_WHITE, 0, 0, M11_COLO
 static const M11_TextStyle g_text_shadow = {1, 1, M11_COLOR_WHITE, 1, 1, M11_COLOR_BLACK};
 static const M11_TextStyle g_text_title = {2, 1, M11_COLOR_YELLOW, 1, 1, M11_COLOR_BLACK};
 
+/* Thread-local-ish pointer to the original DM1 font for the current
+ * render pass.  Set at the top of M11_GameView_Render and cleared
+ * after.  Allows m11_draw_text to automatically use the original
+ * font when assets are available without changing every call site. */
+static const M11_FontState* g_activeOriginalFont = NULL;
+
 static void m11_put_pixel(unsigned char* framebuffer,
                           int framebufferWidth,
                           int framebufferHeight,
@@ -266,6 +272,17 @@ static void m11_draw_glyph(unsigned char* framebuffer,
     }
 }
 
+/* Forward declaration for original-font text renderer */
+static void m11_draw_text_original(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    const char* text,
+    const M11_TextStyle* style);
+
 static void m11_draw_text(unsigned char* framebuffer,
                           int framebufferWidth,
                           int framebufferHeight,
@@ -279,12 +296,48 @@ static void m11_draw_text(unsigned char* framebuffer,
     if (!text) {
         return;
     }
+    /* Use original DM1 font when available */
+    if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
+        m11_draw_text_original(g_activeOriginalFont, framebuffer,
+            framebufferWidth, framebufferHeight, x, y, text, style);
+        return;
+    }
     for (i = 0; text[i] != '\0'; ++i) {
         m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
                        cursor, y, text[i], s, 1);
         m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
                        cursor, y, text[i], s, 0);
         cursor += (5 * s->scale) + s->tracking;
+    }
+}
+
+/* Draw text using the original DM1 font when available, with shadow.
+ * Falls back to the builtin hardcoded font otherwise. */
+static void m11_draw_text_original(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    const char* text,
+    const M11_TextStyle* style)
+{
+    const M11_TextStyle* s = style ? style : &g_text_small;
+    if (!text) return;
+    if (font && M11_Font_IsLoaded(font)) {
+        /* Shadow pass */
+        if (s->shadowDx != 0 || s->shadowDy != 0) {
+            M11_Font_DrawString(font, framebuffer, framebufferWidth,
+                framebufferHeight, x + s->shadowDx, y + s->shadowDy,
+                text, s->shadowColor, -1, s->scale);
+        }
+        /* Foreground pass */
+        M11_Font_DrawString(font, framebuffer, framebufferWidth,
+            framebufferHeight, x, y, text, s->color, -1, s->scale);
+    } else {
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, text, style);
     }
 }
 
@@ -3058,6 +3111,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             memcpy(graphicsDatPath + slashPos, "GRAPHICS.DAT", 13);
             if (M11_AssetLoader_Init(&state->assetLoader, graphicsDatPath)) {
                 state->assetsAvailable = 1;
+                /* Try to load the original DM1 font from GRAPHICS.DAT */
+                M11_Font_Init(&state->originalFont);
+                if (M11_Font_LoadFromGraphicsDat(
+                        &state->originalFont,
+                        state->assetLoader.fileState,
+                        state->assetLoader.runtimeState)) {
+                    state->originalFontAvailable = 1;
+                }
             }
         }
     }
@@ -6586,10 +6647,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
     /* Set file-scope draw state for asset-backed rendering helpers */
     g_drawState = state;
+    /* Activate original DM1 font for this render pass */
+    g_activeOriginalFont = state->originalFontAvailable
+        ? &state->originalFont : NULL;
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight, M11_COLOR_NAVY);
     if (!state || !state->active) {
         g_drawState = NULL;
+        g_activeOriginalFont = NULL;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       18, 18, "NO GAME VIEW", &g_text_title);
         return;
@@ -6845,6 +6910,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
 
     g_drawState = NULL;
+    g_activeOriginalFont = NULL;
 }
 
 /* ── Creature animation implementation ── */

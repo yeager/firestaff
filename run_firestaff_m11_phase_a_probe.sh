@@ -18,6 +18,13 @@ mkdir -p "$OUT_DIR"
 
 PROBE_BIN="$HERE/firestaff_m11_phase_a_probe_bin"
 MAIN_BIN="$HERE/firestaff"
+PROBE_SRC_LOCAL="$HERE/firestaff_m11_phase_a_probe.c"
+PROBE_SRC_NESTED="$HERE/probes/m11/firestaff_m11_phase_a_probe.c"
+if [ -f "$PROBE_SRC_LOCAL" ]; then
+    PROBE_SRC="$PROBE_SRC_LOCAL"
+else
+    PROBE_SRC="$PROBE_SRC_NESTED"
+fi
 
 # Select SDL via pkg-config. Prefer SDL3, fall back to SDL2.
 SDL_FLAG=""
@@ -85,7 +92,7 @@ done
 
 cc $CFLAGS_M11 \
     -o "$PROBE_BIN" \
-    "$HERE/firestaff_m11_phase_a_probe.c" \
+    "$PROBE_SRC" \
     "$HERE/render_sdl_m11.c" \
     "$VGA_OBJ" \
     $SDL_LIBS
@@ -95,7 +102,9 @@ cc $CFLAGS_M11 \
     "$HERE/firestaff_main_m11.c" \
     "$HERE/main_loop_m11.c" \
     "$HERE/m11_game_view.c" \
+    "$HERE/audio_sdl_m11.c" \
     "$HERE/asset_loader_m11.c" \
+    "$HERE/font_m11.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
     "$HERE/branding_logo_m12.c" \

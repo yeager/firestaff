@@ -5,6 +5,8 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include "asset_loader_m11.h"
+#include "audio_sdl_m11.h"
+#include "font_m11.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,6 +75,10 @@ typedef struct {
     /* Asset loader for GRAPHICS.DAT-backed rendering */
     M11_AssetLoader assetLoader;
     int assetsAvailable; /* 1 if assetLoader is ready */
+    M11_FontState originalFont; /* DM1 font from GRAPHICS.DAT */
+    int originalFontAvailable;
+    M11_AudioState audioState;
+    int audioEventCount;
 
     /* Torch fuel burn-down tracking.
      * Each weapon index that is a lit torch has its remaining fuel

@@ -8,6 +8,13 @@ mkdir -p "$OUT_DIR"
 
 PROBE_BIN="$HERE/firestaff_m11_game_view_probe_bin"
 LOG="$OUT_DIR/game_view_probe.log"
+PROBE_SRC_LOCAL="$HERE/firestaff_m11_game_view_probe.c"
+PROBE_SRC_NESTED="$HERE/probes/m11/firestaff_m11_game_view_probe.c"
+if [ -f "$PROBE_SRC_LOCAL" ]; then
+    PROBE_SRC="$PROBE_SRC_LOCAL"
+else
+    PROBE_SRC="$PROBE_SRC_NESTED"
+fi
 
 CFLAGS_COMMON="-std=c99 -Wall -Wextra -O2 -I $HERE"
 CFLAGS_M10="$CFLAGS_COMMON -DCOMPILE_H -DSTATICFUNCTION=static -DSEPARATOR=, -DFINAL_SEPARATOR=)"
@@ -38,9 +45,11 @@ done
 
 cc $CFLAGS_COMMON \
     -o "$PROBE_BIN" \
-    "$HERE/firestaff_m11_game_view_probe.c" \
+    "$PROBE_SRC" \
     "$HERE/m11_game_view.c" \
+    "$HERE/audio_sdl_m11.c" \
     "$HERE/asset_loader_m11.c" \
+    "$HERE/font_m11.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
     "$HERE/branding_logo_m12.c" \
