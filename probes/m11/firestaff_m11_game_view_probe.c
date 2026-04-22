@@ -3615,6 +3615,168 @@ int main(int argc, char** argv) {
                      "back-facing D1 PainRat selects native back bitmap (446+18+2=466)");
     }
 
+    /* INV_GV_270-296: source-backed CREATURE_INFO.GraphicInfo
+     * MASK0x0003_ADDITIONAL, MASK0x0080_SPECIAL_D2_FRONT,
+     * MASK0x0100_SPECIAL_D2_FRONT_IS_FLIPPED_FRONT,
+     * MASK0x0400_FLIP_DURING_ATTACK, and M052/M053 offset amplitudes
+     * verified against ReDMCSB G0243_as_Graphic559_CreatureInfo[] for
+     * every creature type.  Also verifies that the native/derived
+     * bitmap-slot counts returned by the M11 helper match the
+     * F097_xxxx_DUNGEONVIEW_LoadGraphics (DUNVIEW.C) and
+     * F460_xxxx_START_CalculateDerivedBitmapCacheSizes (START.C)
+     * allocation loops. */
+    {
+        /* Column order: GI, ADD, hasSpecialD2, hasD2IsFlipped,
+         *               hasFlipDuringAttack, maxHOffset, maxVOffset,
+         *               nativeCount, derivedCount. */
+        struct {
+            const char* name;
+            unsigned int gi;
+            int additional;
+            int hasSpecialD2;
+            int hasD2Flipped;
+            int hasFlipDuringAttack;
+            int maxH;
+            int maxV;
+            int nativeCount;
+            int derivedCount;
+        } table[27] = {
+            { "GiantScorpion", 0x0482, 2, 1, 0, 1, 0, 0, 4, 8 },
+            { "SwampSlime",    0x0480, 0, 1, 0, 1, 0, 0, 2, 2 },
+            { "Giggler",       0x4510, 0, 0, 1, 1, 0, 1, 2, 4 },
+            { "PainRat",       0x04B4, 0, 1, 0, 1, 0, 0, 4, 6 },
+            { "Ruster",        0x0701, 1, 0, 1, 1, 0, 0, 2, 5 },
+            { "Screamer",      0x0581, 1, 1, 1, 1, 0, 0, 2, 5 },
+            { "Rockpile",      0x070C, 0, 0, 1, 1, 0, 0, 2, 4 },
+            { "GhostRive",     0x0300, 0, 0, 1, 0, 0, 0, 1, 2 },
+            { "WaterElemental",0x5864, 0, 0, 0, 0, 1, 1, 2, 4 },
+            { "Couatl",        0x0282, 2, 1, 0, 0, 0, 0, 4, 8 },
+            { "StoneGolem",    0x1480, 0, 1, 0, 1, 1, 0, 2, 2 },
+            { "Mummy",         0x18C6, 2, 1, 0, 0, 1, 0, 2, 8 },
+            { "Skeleton",      0x1280, 0, 1, 0, 0, 1, 0, 2, 2 },
+            { "MagentaWorm",   0x14A2, 2, 1, 0, 1, 1, 0, 5, 10 },
+            { "Trolin",        0x05B8, 0, 1, 1, 1, 0, 0, 4, 8 },
+            { "GiantWasp",     0x0381, 1, 1, 1, 0, 0, 0, 2, 5 },
+            { "Antman",        0x0680, 0, 1, 0, 1, 0, 0, 2, 2 },
+            { "Vexirk",        0x04A0, 0, 1, 0, 1, 0, 0, 3, 4 },
+            { "AnimatedArmour",0x0280, 0, 1, 0, 0, 0, 0, 2, 2 },
+            { "Materializer",  0x4060, 0, 0, 0, 0, 0, 1, 2, 4 },
+            { "RedDragon",     0x10DE, 2, 1, 0, 0, 1, 0, 4, 12 },
+            { "Oitu",          0x0082, 2, 1, 0, 0, 0, 0, 4, 8 },
+            { "Demon",         0x1480, 0, 1, 0, 1, 1, 0, 2, 2 },
+            { "LordChaos",     0x78AA, 2, 1, 0, 0, 3, 1, 6, 12 },
+            { "LordOrder",     0x068A, 2, 1, 0, 1, 0, 0, 5, 10 },
+            { "GreyLord",      0x78AA, 2, 1, 0, 0, 3, 1, 6, 12 },
+            { "LordChaosRedDragon", 0x78AA, 2, 1, 0, 0, 3, 1, 6, 12 }
+        };
+        int i;
+        int invId = 270;
+        for (i = 0; i < 27; ++i) {
+            char invName[32];
+            char desc[160];
+            int ok = 1;
+            unsigned int gi = M11_GameView_GetCreatureGraphicInfo(i);
+            if (gi != table[i].gi) ok = 0;
+            if (M11_GameView_GetCreatureAdditional(i) != table[i].additional) ok = 0;
+            if (M11_GameView_CreatureHasSpecialD2Front(i) != table[i].hasSpecialD2) ok = 0;
+            if (M11_GameView_CreatureHasD2FrontIsFlippedFront(i) != table[i].hasD2Flipped) ok = 0;
+            if (M11_GameView_CreatureHasFlipDuringAttack(i) != table[i].hasFlipDuringAttack) ok = 0;
+            if (M11_GameView_GetCreatureMaxHorizontalOffset(i) != table[i].maxH) ok = 0;
+            if (M11_GameView_GetCreatureMaxVerticalOffset(i) != table[i].maxV) ok = 0;
+            if (M11_GameView_GetCreatureNativeBitmapCount(i) != table[i].nativeCount) ok = 0;
+            if (M11_GameView_GetCreatureDerivedBitmapCount(i) != table[i].derivedCount) ok = 0;
+            snprintf(invName, sizeof(invName), "INV_GV_%d", invId + i);
+            snprintf(desc, sizeof(desc),
+                     "creature %d (%s) GI=0x%04X: ADD=%d SPECIAL_D2=%d D2_FLIPPED=%d FLIP_DURING_ATTACK=%d maxH=%d maxV=%d nativeCount=%d derivedCount=%d",
+                     i, table[i].name, table[i].gi,
+                     table[i].additional, table[i].hasSpecialD2,
+                     table[i].hasD2Flipped, table[i].hasFlipDuringAttack,
+                     table[i].maxH, table[i].maxV,
+                     table[i].nativeCount, table[i].derivedCount);
+            probe_record(&tally, invName, ok, desc);
+        }
+    }
+
+    /* INV_GV_297: out-of-range creature type returns zero for all
+     * source-backed queries (no out-of-bounds aspect read). */
+    {
+        int safe = 1;
+        safe = safe && (M11_GameView_GetCreatureAdditional(-1) == 0);
+        safe = safe && (M11_GameView_GetCreatureAdditional(27) == 0);
+        safe = safe && (M11_GameView_CreatureHasSpecialD2Front(-1) == 0);
+        safe = safe && (M11_GameView_CreatureHasSpecialD2Front(27) == 0);
+        safe = safe && (M11_GameView_CreatureHasD2FrontIsFlippedFront(-1) == 0);
+        safe = safe && (M11_GameView_CreatureHasD2FrontIsFlippedFront(27) == 0);
+        safe = safe && (M11_GameView_CreatureHasFlipDuringAttack(-1) == 0);
+        safe = safe && (M11_GameView_CreatureHasFlipDuringAttack(27) == 0);
+        safe = safe && (M11_GameView_GetCreatureMaxHorizontalOffset(-1) == 0);
+        safe = safe && (M11_GameView_GetCreatureMaxHorizontalOffset(27) == 0);
+        safe = safe && (M11_GameView_GetCreatureMaxVerticalOffset(-1) == 0);
+        safe = safe && (M11_GameView_GetCreatureMaxVerticalOffset(27) == 0);
+        safe = safe && (M11_GameView_GetCreatureNativeBitmapCount(-1) == 0);
+        safe = safe && (M11_GameView_GetCreatureNativeBitmapCount(27) == 0);
+        safe = safe && (M11_GameView_GetCreatureDerivedBitmapCount(-1) == 0);
+        safe = safe && (M11_GameView_GetCreatureDerivedBitmapCount(27) == 0);
+        probe_record(&tally,
+                     "INV_GV_297",
+                     safe,
+                     "out-of-range creature type returns 0 for all source-backed GraphicInfo queries");
+    }
+
+    /* INV_GV_298: total native-bitmap slots across all 27 creatures
+     * matches the DEFS.H creature-bitmap range size (C533_GRAPHIC_FIRST_SOUND
+     * - C446_GRAPHIC_FIRST_CREATURE = 87) minus any trailing unused
+     * entries.  We only assert a lower bound here because the target
+     * GRAPHICS.DAT may vary across DM1/CSBwin builds; we verify the
+     * source-backed count is internally consistent and non-zero. */
+    {
+        int i;
+        int totalNative = 0;
+        int totalDerived = 0;
+        int anyZero = 0;
+        for (i = 0; i < 27; ++i) {
+            int nc = M11_GameView_GetCreatureNativeBitmapCount(i);
+            int dc = M11_GameView_GetCreatureDerivedBitmapCount(i);
+            totalNative += nc;
+            totalDerived += dc;
+            if (nc == 0 || dc == 0) anyZero = 1;
+        }
+        probe_record(&tally,
+                     "INV_GV_298",
+                     !anyZero && totalNative >= 27 && totalDerived >= 54,
+                     "every creature has ≥ 1 native + ≥ 2 derived slots (source-backed cumulative totals)");
+    }
+
+    /* INV_GV_299: F097-order self-consistency: for every creature, the
+     * allocated native slots are exactly 1(front) + has_side + has_back
+     * + (has_special_d2 && !has_d2_flipped) + has_attack + additional*
+     * !flip_non_attack.  Cross-checks the helper against an
+     * independent recomputation of the F097 loop. */
+    {
+        int i;
+        int allMatch = 1;
+        for (i = 0; i < 27; ++i) {
+            unsigned int gi = M11_GameView_GetCreatureGraphicInfo(i);
+            int add = M11_GameView_GetCreatureAdditional(i);
+            int flipNonAttack = M11_GameView_CreatureHasFlipNonAttack(i);
+            int recomputed = 1
+                + (M11_GameView_CreatureHasSideBitmap(i) ? 1 : 0)
+                + (M11_GameView_CreatureHasBackBitmap(i) ? 1 : 0)
+                + ((M11_GameView_CreatureHasSpecialD2Front(i)
+                    && !M11_GameView_CreatureHasD2FrontIsFlippedFront(i)) ? 1 : 0)
+                + (M11_GameView_CreatureHasAttackBitmap(i) ? 1 : 0)
+                + ((add > 0 && !flipNonAttack) ? add : 0);
+            (void)gi;
+            if (recomputed != M11_GameView_GetCreatureNativeBitmapCount(i)) {
+                allMatch = 0;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_299",
+                     allMatch,
+                     "native-bitmap count matches independent F097_xxxx_DUNGEONVIEW_LoadGraphics recomputation for all 27 creatures");
+    }
+
     /* ── Original DM1 font invariants ── */
 
     /* INV_GV_156: M11_Font_Init zeroes font state. */

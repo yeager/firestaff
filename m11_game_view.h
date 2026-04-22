@@ -398,6 +398,36 @@ int M11_GameView_CreatureHasAttackBitmap(int creatureType);
 int M11_GameView_CreatureHasFlipNonAttack(int creatureType);
 int M11_GameView_CreatureHasFlipAttack(int creatureType);
 
+/* Source-backed queries for MASK0x0003_ADDITIONAL,
+ * MASK0x0080_SPECIAL_D2_FRONT, MASK0x0100_SPECIAL_D2_FRONT_IS_FLIPPED_FRONT,
+ * MASK0x0400_FLIP_DURING_ATTACK, and the M052/M053 offset amplitude
+ * fields of CREATURE_INFO.GraphicInfo.  Reference:
+ * ReDMCSB DUNVIEW.C F097 (_LoadGraphics) native-bitmap allocation loop
+ * and F1512-render offset computation, plus F0179_GROUP_GetCreature-
+ * AspectUpdateTime (GROUP2.C) for runtime flip behaviour. */
+int M11_GameView_GetCreatureAdditional(int creatureType);
+int M11_GameView_CreatureHasSpecialD2Front(int creatureType);
+int M11_GameView_CreatureHasD2FrontIsFlippedFront(int creatureType);
+int M11_GameView_CreatureHasFlipDuringAttack(int creatureType);
+int M11_GameView_GetCreatureMaxHorizontalOffset(int creatureType);
+int M11_GameView_GetCreatureMaxVerticalOffset(int creatureType);
+
+/* Total GRAPHICS.DAT native-bitmap slots F097_xxxx_DUNGEONVIEW_LoadGraphics
+ * allocates for this creature in order:
+ *   [Front] [Side?] [Back?] [SpecialD2?] [Attack?] [AdditionalFront x N?]
+ * The SpecialD2 slot is present when MASK0x0080_SPECIAL_D2_FRONT is set
+ * and MASK0x0100_SPECIAL_D2_FRONT_IS_FLIPPED_FRONT is clear (guarded by
+ * the C06_COMPILE_DM10aEN..DM13bFR block in DUNVIEW.C; BUG0_00 notes
+ * this slot is allocated but never read by the renderer).
+ * Additional-front slots are only allocated when MASK0x0004_FLIP_NON_ATTACK
+ * is clear. */
+int M11_GameView_GetCreatureNativeBitmapCount(int creatureType);
+
+/* Total derived-bitmap cache slots F460_xxxx_START_CalculateDerivedBitmap-
+ * CacheSizes reserves for this creature (Front D3 + Front D2 always,
+ * +2 for each pose with a dedicated bitmap, +3 per additional front). */
+int M11_GameView_GetCreatureDerivedBitmapCount(int creatureType);
+
 /* Return the floor ornament ordinal for a viewport cell position.
  * relForward/relSide are relative to party position/facing. */
 int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,

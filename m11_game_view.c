@@ -835,8 +835,65 @@ typedef struct {
 #define M11_CREATURE_GI_MASK_D2_FRONT_IS_FLIPPED 0x0100u
 #define M11_CREATURE_GI_MASK_FLIP_ATTACK         0x0200u
 #define M11_CREATURE_GI_MASK_FLIP_DURING_ATTACK  0x0400u
+#define M11_CREATURE_GI_ADDITIONAL(gi)            ((gi) & M11_CREATURE_GI_MASK_ADDITIONAL)
 #define M11_CREATURE_GI_MAX_HORIZONTAL_OFFSET(gi) (((gi) >> 12) & 0x0003u)
 #define M11_CREATURE_GI_MAX_VERTICAL_OFFSET(gi)   (((gi) >> 14) & 0x0003u)
+
+/* ── Source-backed native/derived bitmap-count helpers (ReDMCSB) ──
+ * These mirror ReDMCSB's F097_xxxx_DUNGEONVIEW_LoadGraphics_COPYPROTECTIONF
+ * native-bitmap allocation loop (DUNVIEW.C ~L555-L585) and
+ * F460_xxxx_START_CalculateDerivedBitmapCacheSizes (START.C ~L165-L205)
+ * derived-bitmap allocation loop.
+ *
+ * Native bitmap sequence per creature (variable length):
+ *   [Front] [Side?] [Back?] [SpecialD2?] [Attack?] [AdditionalFront x N?]
+ *   where:
+ *     - Front is always present (1 slot)
+ *     - Side present iff MASK0x0008_SIDE
+ *     - Back present iff MASK0x0010_BACK
+ *     - SpecialD2 slot present iff (MASK0x0080_SPECIAL_D2_FRONT
+ *       && !MASK0x0100_SPECIAL_D2_FRONT_IS_FLIPPED_FRONT) for the
+ *       C06_COMPILE_DM10aEN..DM13bFR versions (DM1 Atari ST family).
+ *       Guarded by BUG0_00 note in ReDMCSB: this slot is allocated but
+ *       never read by F1512-render ("Useless code").  The allocation
+ *       still consumes a bitmap-index position.
+ *     - Attack present iff MASK0x0020_ATTACK
+ *     - AdditionalFront present iff (ADDITIONAL > 0 &&
+ *       !MASK0x0004_FLIP_NON_ATTACK); count = ADDITIONAL
+ *
+ * Derived bitmap sequence per creature (variable length):
+ *   [FrontD3] [FrontD2] [SideD3 SideD2?] [BackD3 BackD2?] [AttackD3 AttackD2?]
+ *     [AdditionalFrontD1 AdditionalFrontD3 AdditionalFrontD2 x N?]
+ *   No SpecialD2 extra slot in the derived cache (only F097 allocates
+ *   that in the native list).  Additional fronts get 3 derived slots
+ *   each (D1-cache, D3, D2) regardless of FLIP_NON_ATTACK.
+ */
+static int m11_creature_native_bitmap_count_from_gi(unsigned int gi) {
+    int count = 1; /* Front is always present */
+    int hasSpecialD2 = 0;
+    int additional = (int)M11_CREATURE_GI_ADDITIONAL(gi);
+    if (gi & M11_CREATURE_GI_MASK_SIDE)   count += 1;
+    if (gi & M11_CREATURE_GI_MASK_BACK)   count += 1;
+    hasSpecialD2 = ((gi & M11_CREATURE_GI_MASK_SPECIAL_D2_FRONT) != 0) &&
+                   ((gi & M11_CREATURE_GI_MASK_D2_FRONT_IS_FLIPPED) == 0);
+    if (hasSpecialD2) count += 1;
+    if (gi & M11_CREATURE_GI_MASK_ATTACK) count += 1;
+    if (additional && !(gi & M11_CREATURE_GI_MASK_FLIP_NON_ATTACK)) {
+        count += additional;
+    }
+    return count;
+}
+
+static int m11_creature_derived_bitmap_count_from_gi(unsigned int gi) {
+    int count = 2; /* Front D3 + Front D2 always present */
+    int additional = (int)M11_CREATURE_GI_ADDITIONAL(gi);
+    if (gi & M11_CREATURE_GI_MASK_SIDE)   count += 2;
+    if (gi & M11_CREATURE_GI_MASK_BACK)   count += 2;
+    if (gi & M11_CREATURE_GI_MASK_ATTACK) count += 2;
+    /* Additional fronts each get D1 cache + D3 + D2 derived slots */
+    count += additional * 3;
+    return count;
+}
 
 static const M11_CreatureAspect s_creatureAspects[27] = {
     /* Fields: firstNative, firstDerived, coordSet_transparent, replColors, graphicInfo
@@ -9911,6 +9968,54 @@ unsigned int M11_GameView_GetCreatureSpriteForView(int creatureType,
 unsigned int M11_GameView_GetCreatureGraphicInfo(int creatureType) {
     if (creatureType < 0 || creatureType >= 27) return 0u;
     return (unsigned int)s_creatureAspects[creatureType].graphicInfo;
+}
+
+int M11_GameView_GetCreatureAdditional(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (int)M11_CREATURE_GI_ADDITIONAL(
+        (unsigned int)s_creatureAspects[creatureType].graphicInfo);
+}
+
+int M11_GameView_CreatureHasSpecialD2Front(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_SPECIAL_D2_FRONT) ? 1 : 0;
+}
+
+int M11_GameView_CreatureHasD2FrontIsFlippedFront(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_D2_FRONT_IS_FLIPPED) ? 1 : 0;
+}
+
+int M11_GameView_CreatureHasFlipDuringAttack(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_FLIP_DURING_ATTACK) ? 1 : 0;
+}
+
+int M11_GameView_GetCreatureNativeBitmapCount(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return m11_creature_native_bitmap_count_from_gi(
+        (unsigned int)s_creatureAspects[creatureType].graphicInfo);
+}
+
+int M11_GameView_GetCreatureDerivedBitmapCount(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return m11_creature_derived_bitmap_count_from_gi(
+        (unsigned int)s_creatureAspects[creatureType].graphicInfo);
+}
+
+int M11_GameView_GetCreatureMaxHorizontalOffset(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (int)M11_CREATURE_GI_MAX_HORIZONTAL_OFFSET(
+        (unsigned int)s_creatureAspects[creatureType].graphicInfo);
+}
+
+int M11_GameView_GetCreatureMaxVerticalOffset(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (int)M11_CREATURE_GI_MAX_VERTICAL_OFFSET(
+        (unsigned int)s_creatureAspects[creatureType].graphicInfo);
 }
 
 int M11_GameView_CreatureHasSideBitmap(int creatureType) {
