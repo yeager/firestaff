@@ -195,6 +195,7 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     }
 
     M11_GameView_Init(state);
+    state->showDebugHUD = 1; /* probes verify all HUD elements */
     state->active = 1;
     state->sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
     snprintf(state->title, sizeof(state->title), "SYNTHETIC");
@@ -401,6 +402,7 @@ int main(int argc, char** argv) {
                  "launcher exposes DM1 as the default builtin launch source with verified assets");
 
     M11_GameView_Init(&gameView);
+    gameView.showDebugHUD = 1; /* probes verify all HUD elements */
     probe_record(&tally,
                  "INV_GV_02",
                  M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState) == 1 &&
@@ -901,6 +903,7 @@ int main(int argc, char** argv) {
     /* Re-open for feature probes */
     M11_GameView_Shutdown(&gameView);
     M11_GameView_Init(&gameView);
+    gameView.showDebugHUD = 1;
     (void)M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState);
 
     /* INV_GV_22: Rest toggle changes state and is visible */

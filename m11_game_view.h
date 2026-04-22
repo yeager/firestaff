@@ -129,6 +129,12 @@ typedef struct {
      * dismisses it with any key or click. */
     int dialogOverlayActive;
     char dialogOverlayText[128];
+
+    /* V1 presentation mode: when showDebugHUD is 0 (default), the
+     * in-game screen omits developer-facing metadata, keybinding
+     * helpers, tick counters, and diagnostic square summaries.
+     * Set to 1 via FIRESTAFF_DEBUG_HUD=1 environment variable. */
+    int showDebugHUD;
 } M11_GameViewState;
 
 /* Spell casting API */

@@ -3061,6 +3061,11 @@ void M11_GameView_Init(M11_GameViewState* state) {
     }
     memset(state, 0, sizeof(*state));
     (void)M11_Audio_Init(&state->audioState);
+    /* V1 presentation: debug HUD off by default, opt-in via env */
+    {
+        const char* dbg = getenv("FIRESTAFF_DEBUG_HUD");
+        state->showDebugHUD = (dbg && dbg[0] == '1') ? 1 : 0;
+    }
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 }
@@ -3099,8 +3104,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                                 spec->gameId)) {
         return 0;
     }
-    M11_GameView_Shutdown(state);
-    M11_GameView_Init(state);
+    {
+        int savedDebugHUD = state->showDebugHUD;
+        M11_GameView_Shutdown(state);
+        M11_GameView_Init(state);
+        state->showDebugHUD = savedDebugHUD;
+    }
     if (F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 0xF1A5U, &state->world) != 1) {
         m11_set_status(state, "BOOT", "FAILED TO LOAD DUNGEON.DAT");
         return 0;
@@ -6171,13 +6180,21 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
                   M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_LIGHT_CYAN);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  222, 34, "MENU", &g_text_small);
 
     m11_get_active_champion_label(state, champion, sizeof(champion));
-    snprintf(line, sizeof(line), "%s %s", m11_source_name(state->sourceKind), champion);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  250, 34, line, &g_text_small);
+
+    if (state->showDebugHUD) {
+        /* Debug mode: show MENU label, source kind, full metadata */
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      222, 34, "MENU", &g_text_small);
+        snprintf(line, sizeof(line), "%s %s", m11_source_name(state->sourceKind), champion);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      250, 34, line, &g_text_small);
+    } else {
+        /* V1 mode: champion name only, centered in panel */
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      222, 34, champion, &g_text_small);
+    }
 
     if (activeChampion) {
         snprintf(line, sizeof(line), "L%d HP%u ST%u",
@@ -6190,21 +6207,24 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   222, 44, line, &g_text_small);
 
-    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
-                            M11_UTILITY_INSPECT_X, M11_UTILITY_BUTTON_Y,
-                            M11_UTILITY_INSPECT_W, M11_UTILITY_BUTTON_H,
-                            "I", -1,
-                            accent, M11_COLOR_BLACK);
-    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
-                            M11_UTILITY_SAVE_X, M11_UTILITY_BUTTON_Y,
-                            M11_UTILITY_SAVE_W, M11_UTILITY_BUTTON_H,
-                            "S", -1,
-                            M11_COLOR_YELLOW, M11_COLOR_BLACK);
-    m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
-                            M11_UTILITY_LOAD_X, M11_UTILITY_BUTTON_Y,
-                            M11_UTILITY_LOAD_W, M11_UTILITY_BUTTON_H,
-                            "L", -1,
-                            M11_COLOR_LIGHT_BLUE, M11_COLOR_BLACK);
+    if (state->showDebugHUD) {
+        /* Debug mode: show I/S/L button labels */
+        m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                                M11_UTILITY_INSPECT_X, M11_UTILITY_BUTTON_Y,
+                                M11_UTILITY_INSPECT_W, M11_UTILITY_BUTTON_H,
+                                "I", -1,
+                                accent, M11_COLOR_BLACK);
+        m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                                M11_UTILITY_SAVE_X, M11_UTILITY_BUTTON_Y,
+                                M11_UTILITY_SAVE_W, M11_UTILITY_BUTTON_H,
+                                "S", -1,
+                                M11_COLOR_YELLOW, M11_COLOR_BLACK);
+        m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
+                                M11_UTILITY_LOAD_X, M11_UTILITY_BUTTON_Y,
+                                M11_UTILITY_LOAD_W, M11_UTILITY_BUTTON_H,
+                                "L", -1,
+                                M11_COLOR_LIGHT_BLUE, M11_COLOR_BLACK);
+    }
 
     /* Light level indicator: a small bar and label below the buttons.
      * Bright = YELLOW, normal = BROWN, dim = DARK_GRAY, dark = BLACK. */
@@ -6989,100 +7009,133 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                  focusHint,
                                  sizeof(focusHint));
 
+    /* ── V1 screen layout ──
+     * Three major zones (DM-like composition):
+     *   1. Top bar:     thin title strip (dungeon name only)
+     *   2. Middle:      viewport (left) + right status column
+     *   3. Bottom:      party panel + single message line
+     *
+     * Debug/helper elements are only drawn when showDebugHUD is set. */
+
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_YELLOW);
+
+    /* Top title bar — dungeon title only (no keybinding helpers) */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   12, 12, framebufferWidth - 24, 12, M11_COLOR_BLACK);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  18, 13, state->title[0] != '\0' ? state->title : "DUNGEON MASTER", &g_text_shadow);
+
+    if (state->showDebugHUD) {
+        snprintf(line, sizeof(line), "L%d %s %s%s",
+                 state->world.party.mapIndex + 1,
+                 m11_direction_name(state->world.party.direction),
+                 state->lastAction,
+                 state->resting ? " ZZZ" : "");
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      140, 13, line, &g_text_small);
+        snprintf(line, sizeof(line), "G GRAB P DROP R REST 1-6 RUNE C CAST");
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      240, 13, line, &g_text_small);
+    }
+
+    /* Viewport zone — large, left side */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   12, 24, 196, 120, M11_COLOR_BLACK);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  214, 24, 94, 120, M11_COLOR_BLACK);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, 146, 296, 46, M11_COLOR_BLACK);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 13, state->title[0] != '\0' ? state->title : "GAME VIEW", &g_text_shadow);
-
-    snprintf(line, sizeof(line), "L%d %s %s%s",
-             state->world.party.mapIndex + 1,
-             m11_direction_name(state->world.party.direction),
-             state->lastAction,
-             state->resting ? " ZZZ" : "");
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  140, 13, line, &g_text_small);
-
-    snprintf(line, sizeof(line), "G GRAB P DROP R REST 1-6 RUNE C CAST");
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  240, 13, line, &g_text_small);
-
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
 
     /* Overlay UI frame border elements from GRAPHICS.DAT */
     m11_draw_ui_frame_assets(state, framebuffer, framebufferWidth, framebufferHeight);
 
+    /* Right status column — simplified: direction, champion, light */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  214, 24, 94, 120, M11_COLOR_BLACK);
     m11_draw_utility_panel(state, framebuffer, framebufferWidth, framebufferHeight, mapDesc);
 
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 74, 86, 68, M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  218, 74, 86, 68, M11_COLOR_LIGHT_BLUE);
-    m11_draw_map_panel(state, framebuffer, framebufferWidth, framebufferHeight);
-
-    m11_format_square_summary(&currentCell, line, sizeof(line));
-    m11_format_square_things(firstThing, squareThingCount, line3, sizeof(line3));
-    snprintf(line2, sizeof(line2), "HERE  %s", line);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 149, line2, &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 122, 149, line3, &g_text_small);
-    snprintf(line, sizeof(line), "TICK %u", (unsigned int)state->world.gameTick);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 240, 149, line, &g_text_small);
-
-    m11_format_square_summary(&aheadCell, line, sizeof(line));
-    snprintf(line2, sizeof(line2), "AHEAD %s", line);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 157, line2, &g_text_small);
-    snprintf(line, sizeof(line), "%s F%03d W%03d",
-             champion,
-             avgFood,
-             avgWater);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 154, 157, line, &g_text_small);
-
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_PROMPT_STRIP_X, M11_PROMPT_STRIP_Y,
-                  M11_PROMPT_STRIP_W, M11_PROMPT_STRIP_H, M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_PROMPT_STRIP_X, M11_PROMPT_STRIP_Y,
-                  M11_PROMPT_STRIP_W, M11_PROMPT_STRIP_H, m11_focus_color(&aheadCell));
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  108, 168, focusAction, &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  197, 168, focusHint, &g_text_small);
-
-    m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
-    m11_draw_focus_card(framebuffer, framebufferWidth, framebufferHeight, state, &aheadCell);
-
-    m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_feedback_strip(framebuffer, framebufferWidth, framebufferHeight,
-                            state, &aheadCell);
-
-    /* Message log overlay — draw the last few events in the sidebar */
-    {
-        int logI;
-        int logY = 108;
-        int logCount = state->messageLog.count;
-        int logMax = 4;
-        if (logCount > logMax) {
-            logCount = logMax;
-        }
-        for (logI = 0; logI < logCount; ++logI) {
-            const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, logI);
-            if (entry && entry->text[0] != '\0') {
-                M11_TextStyle logStyle = g_text_small;
-                logStyle.color = entry->color;
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              222, logY + logI * 8, entry->text, &logStyle);
+    if (state->showDebugHUD) {
+        /* Map mini-panel, focus card, message log — debug only */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      218, 74, 86, 68, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      218, 74, 86, 68, M11_COLOR_LIGHT_BLUE);
+        m11_draw_map_panel(state, framebuffer, framebufferWidth, framebufferHeight);
+        m11_draw_focus_card(framebuffer, framebufferWidth, framebufferHeight, state, &aheadCell);
+        {
+            int logI;
+            int logY = 108;
+            int logCount = state->messageLog.count;
+            int logMax = 4;
+            if (logCount > logMax) {
+                logCount = logMax;
+            }
+            for (logI = 0; logI < logCount; ++logI) {
+                const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, logI);
+                if (entry && entry->text[0] != '\0') {
+                    M11_TextStyle logStyle = g_text_small;
+                    logStyle.color = entry->color;
+                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                  222, logY + logI * 8, entry->text, &logStyle);
+                }
             }
         }
     }
+
+    /* Bottom zone — party panel is the dominant element */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  12, 146, 296, 46, M11_COLOR_BLACK);
+
+    if (state->showDebugHUD) {
+        /* Diagnostic square summary lines — debug only */
+        m11_format_square_summary(&currentCell, line, sizeof(line));
+        m11_format_square_things(firstThing, squareThingCount, line3, sizeof(line3));
+        snprintf(line2, sizeof(line2), "HERE  %s", line);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 149, line2, &g_text_small);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 122, 149, line3, &g_text_small);
+        snprintf(line, sizeof(line), "TICK %u", (unsigned int)state->world.gameTick);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 240, 149, line, &g_text_small);
+
+        m11_format_square_summary(&aheadCell, line, sizeof(line));
+        snprintf(line2, sizeof(line2), "AHEAD %s", line);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 16, 157, line2, &g_text_small);
+        snprintf(line, sizeof(line), "%s F%03d W%03d",
+                 champion,
+                 avgFood,
+                 avgWater);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight, 154, 157, line, &g_text_small);
+
+        /* Prompt strip and focus helpers — debug only */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_PROMPT_STRIP_X, M11_PROMPT_STRIP_Y,
+                      M11_PROMPT_STRIP_W, M11_PROMPT_STRIP_H, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_PROMPT_STRIP_X, M11_PROMPT_STRIP_Y,
+                      M11_PROMPT_STRIP_W, M11_PROMPT_STRIP_H, m11_focus_color(&aheadCell));
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      108, 168, focusAction, &g_text_small);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      197, 168, focusHint, &g_text_small);
+
+        m11_draw_feedback_strip(framebuffer, framebufferWidth, framebufferHeight,
+                                state, &aheadCell);
+    } else {
+        /* V1 mode: single contextual message line in the bottom area,
+         * placed where DM1 shows brief status text. */
+        {
+            const M11_LogEntry* lastMsg = (state->messageLog.count > 0)
+                ? m11_log_entry_at(&state->messageLog, 0) : NULL;
+            if (lastMsg && lastMsg->text[0] != '\0') {
+                M11_TextStyle msgStyle = g_text_small;
+                msgStyle.color = lastMsg->color;
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              16, 149, lastMsg->text, &msgStyle);
+            }
+        }
+    }
+
+    m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
+    m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
     /* Spell panel overlay */
     if (state->spellPanelOpen) {
