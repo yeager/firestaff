@@ -88,6 +88,13 @@ The project is built around portable C, explicit data structures, and aggressive
 
 ## Running Firestaff
 
+### Quick start for macOS preview
+
+1. Put your legal original game files under `~/.firestaff/originals/`
+2. Launch Firestaff
+3. Pick a game and version in the startup menu
+4. Look for a green checkmark before launch
+
 Launcher / game view:
 
 ```sh
@@ -98,6 +105,11 @@ Original-data search order:
 1. an explicit path, if provided
 2. `~/.firestaff/originals/` on macOS/Linux, or `<installation-directory>\originals` on Windows
 3. legacy Firestaff data-dir fallback such as `~/.firestaff/data/`
+
+Version status in the startup menu:
+- green checkmark = matching original file(s) found for the selected version
+- red cross = selected version is missing or does not match the expected checksum
+- unmatched versions stay visible, but launch is blocked honestly until matching originals are found
 
 In the game view: `Enter` inspects, `Space` acts or waits, `Tab` cycles the active champion, `Esc` returns to the launcher. You can also click the viewport to inspect, click the control strip to move/act, and click a party card to arm a champion directly.
 
