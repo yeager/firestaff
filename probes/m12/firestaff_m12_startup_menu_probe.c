@@ -128,6 +128,24 @@ int main(void) {
     make_file_with_text(graphicsPath, "ok");
     make_file_with_text(dungeonPath, "ok");
 
+    unsetenv("LC_ALL");
+    unsetenv("LC_MESSAGES");
+    setenv("LANG", "sv_SE.UTF-8", 1);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    probe_record(&tally,
+                 "INV_M12_00A",
+                 state.settings.languageIndex == 1 &&
+                     state.languageExplicit == 0 &&
+                     state.view == M12_MENU_VIEW_MESSAGE &&
+                     strcmp(state.messageLine1, "ENDAST VALIDERINGSSTOMME") == 0 &&
+                     file_contains(configPath, "language_explicit = 0"),
+                 "system Swedish auto-selects the startup-menu language when no explicit override exists");
+
+    remove_if_present(configPath);
+    setenv("LANG", "C", 1);
     M12_StartupMenu_InitWithDataDir(&state, dataDir);
 
     probe_record(&tally,
@@ -309,6 +327,7 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_11",
                  reloaded.settings.languageIndex == 1 &&
+                     reloaded.languageExplicit == 1 &&
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.windowModeIndex == 1 &&
                      reloaded.gameOptions[0].usePatch == 1 &&
@@ -326,10 +345,42 @@ int main(void) {
                      reloaded.gameOptions[2].cheatsEnabled == 0 &&
                      reloaded.gameOptions[2].gameSpeed == 1 &&
                      M12_StartupMenu_GetRenderPaletteLevel(&reloaded) == 1 &&
+                     file_contains(configPath, "language_explicit = 1") &&
                      file_contains(configPath, "game_0_language_index = 1") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
                  "settings and per-game options persist across reloads without cross-game bleed, including presentation mode and per-game language");
+
+    remove_if_present(configPath);
+    unsetenv("LC_ALL");
+    unsetenv("LC_MESSAGES");
+    setenv("LANG", "fr_FR.UTF-8", 1);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    probe_record(&tally,
+                 "INV_M12_11B",
+                 state.settings.languageIndex == 2 &&
+                     state.languageExplicit == 0 &&
+                     state.view == M12_MENU_VIEW_MESSAGE &&
+                     strcmp(state.messageLine1, "VALIDATEUR SEULEMENT") == 0,
+                 "system French auto-selects the startup-menu language and loads the runtime French catalog");
+
+    remove_if_present(configPath);
+    setenv("LANG", "C", 1);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir);
+    state.settings.languageIndex = 3;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    probe_record(&tally,
+                 "INV_M12_11C",
+                 state.view == M12_MENU_VIEW_MESSAGE &&
+                     strcmp(state.messageLine1, "VALIDATOR SCAFFOLD ONLY") == 0,
+                 "missing runtime catalog falls back to English for startup-menu strings");
+
+    remove_if_present(configPath);
+    setenv("LANG", "C", 1);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir);
 
     M12_StartupMenu_Draw(&state, framebuffer, 320, 200);
     for (i = 0; i < sizeof(framebuffer); ++i) {
@@ -347,9 +398,10 @@ int main(void) {
         unsigned char english[320 * 200];
         unsigned long checksumA = 0UL;
         unsigned long checksumB = 0UL;
-        for (i = 0; i < sizeof(localized); ++i) {
-            localized[i] = framebuffer[i];
-        }
+        M12_StartupMenu_InitWithDataDir(&reloaded, dataDir);
+        reloaded.settings.languageIndex = 1;
+        reloaded.settings.graphicsIndex = 1;
+        M12_StartupMenu_Draw(&reloaded, localized, 320, 200);
         reloaded.settings.languageIndex = 0;
         reloaded.settings.graphicsIndex = 0;
         M12_StartupMenu_Draw(&reloaded, english, 320, 200);
@@ -390,9 +442,9 @@ int main(void) {
         }
         probe_record(&tally,
                      "INV_M12_24",
-                     cEN != cSV && cEN != cFR && cEN != cDE &&
-                         cSV != cFR && cSV != cDE && cFR != cDE,
-                     "all four languages (EN/SV/FR/DE) produce visually distinct startup menu renders (flag + text)");
+                     cEN != cSV && cEN != cFR && cSV != cFR &&
+                         cDE != cSV && cDE != cFR,
+                     "runtime Swedish and French renders differ from English, while uncatalogued locales still fall back safely");
 
         /* Per-game language selector: each game has independent language */
         M12_StartupMenu_InitWithDataDir(&langState, dataDir);

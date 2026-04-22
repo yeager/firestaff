@@ -1,0 +1,250 @@
+# Firestaff — startup-menu domain, Swedish catalog.
+# Swedish translations for the startup menu / launcher domain.
+#
+# Domain: startup-menu
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-startup-menu\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 11:20+0200\n"
+"PO-Revision-Date: 2026-04-22 11:49+0200\n"
+"Last-Translator: OpenClaw\n"
+"Language-Team: Swedish\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Launcher title / eyebrow
+msgid "FRONTEND PREVIEW"
+msgstr "FÖRHANDSVISNING AV GRÄNSSNITTET"
+
+#. Main menu heading
+msgid "SELECT A DESTINATION"
+msgstr "VÄLJ ETT MÅL"
+
+#. Settings panel title
+msgid "SETTINGS"
+msgstr "INSTÄLLNINGAR"
+
+#. Status label
+msgid "STATUS"
+msgstr "STATUS"
+
+#. Section heading for launcher entries
+msgid "LAUNCHER DESTINATIONS"
+msgstr "STARTMENYNS VAL"
+
+#. Data directory label
+msgid "DATA DIR"
+msgstr "DATAKATALOG"
+
+#. Main menu footer / navigation hint
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "UPP/NED FLYTTAR   ENTER ÖPPNAR   ESC AVSLUTAR"
+
+#. Settings section heading
+msgid "PERSISTED OPTIONS"
+msgstr "SPARADE ALTERNATIV"
+
+#. Settings row label
+msgid "LANGUAGE"
+msgstr "SPRÅK"
+
+#. Settings row label
+msgid "PRESENTATION MODE"
+msgstr "PRESENTATIONSLÄGE"
+
+#. Settings row label
+msgid "WINDOW MODE"
+msgstr "FÖNSTERLÄGE"
+
+#. Settings save confirmation
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "ÄNDRINGAR SPARAS DIREKT I KONFIGURATIONEN"
+
+#. Settings footer / navigation hint
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "VÄNSTER/HÖGER VÄXLAR   ENTER GÅR VIDARE   ESC TILLBAKA"
+
+#. Message view return hint
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER ELLER ESC ÅTERGÅR TILL MENYN"
+
+#. Launch confirmation
+msgid "READY TO LAUNCH"
+msgstr "REDO ATT STARTA"
+
+#. Escape hint in messages
+msgid "ESC RETURNS TO MENU"
+msgstr "ESC ÅTERGÅR TILL MENYN"
+
+#. Missing hash-verified data message
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "ENDAST VALIDERINGSSTOMME"
+
+#. Missing hash-verified data detail
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "LÄGG TILL VERIFIERADE RETAIL-HASHAR"
+
+#. Missing game data message
+msgid "GAME DATA NOT FOUND"
+msgstr "SPELDATA HITTADES INTE"
+
+#. Missing game data detail
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "KONTROLLERA FIRESTAFFS DATAKATALOG"
+
+#. Card art slot status
+msgid "ART SLOT READY"
+msgstr "BILDPLATS REDO"
+
+#. Card art slot status
+msgid "ART SLOT EMPTY"
+msgstr "BILDPLATS TOM"
+
+#. Card art slot instruction
+msgid "DROP ART INTO SLOT"
+msgstr "SLÄPP IN EN BILD HÄR"
+
+#. Card art active label
+msgid "CARD ART ACTIVE"
+msgstr "KORTBILD AKTIV"
+
+#. Card art slot label
+msgid "CARD ART SLOT"
+msgstr "PLATS FÖR KORTBILD"
+
+#. Game card label
+msgid "Dungeon Master"
+msgstr "Dungeon Master"
+
+#. Game card label
+msgid "Chaos Strikes Back"
+msgstr "Chaos Strikes Back"
+
+#. Game card label
+msgid "Dungeon Master II"
+msgstr "Dungeon Master II"
+
+#. Launcher title
+msgid "Firestaff"
+msgstr "Firestaff"
+
+#. Game options row label
+msgid "PATCH"
+msgstr "PATCH"
+
+#. Game options value: original version
+msgid "ORIGINAL"
+msgstr "ORIGINAL"
+
+#. Game options value: patched version
+msgid "PATCHED"
+msgstr "PATCHAD"
+
+#. Game options row label
+msgid "CHEATS"
+msgstr "FUSK"
+
+#. Game options value: off
+msgid "OFF"
+msgstr "AV"
+
+#. Game options value: on
+msgid "ON"
+msgstr "PÅ"
+
+#. Game options row label
+msgid "SPEED"
+msgstr "HASTIGHET"
+
+#. Game options value: slower
+msgid "SLOWER"
+msgstr "LÅNGSAMMARE"
+
+#. Game options value: normal
+msgid "NORMAL"
+msgstr "NORMAL"
+
+#. Game options value: faster
+msgid "FASTER"
+msgstr "SNABBARE"
+
+#. Game options row label
+msgid "ASPECT RATIO"
+msgstr "BILDFORMAT"
+
+#. Game options row label
+msgid "RESOLUTION"
+msgstr "UPPLÖSNING"
+
+#. Game options action
+msgid "LAUNCH"
+msgstr "STARTA"
+
+#. Presentation mode name
+msgid "V1 ORIGINAL"
+msgstr "V1 ORIGINAL"
+
+#. Presentation mode name
+msgid "V2 ENHANCED 2D"
+msgstr "V2 FÖRBÄTTRAD 2D"
+
+#. Presentation mode name
+msgid "V3 MODERN/3D"
+msgstr "V3 MODERN/3D"
+
+#. V3 unavailable message
+msgid "COMING SOON"
+msgstr "KOMMER SNART"
+
+#. Language names
+msgid "ENGLISH"
+msgstr "ENGELSKA"
+
+#. Language names
+msgid "SVENSKA"
+msgstr "SVENSKA"
+
+#. Language names
+msgid "FRANCAIS"
+msgstr "FRANSKA"
+
+#. Language names
+msgid "DEUTSCH"
+msgstr "TYSKA"
+
+#. Window mode values
+msgid "WINDOWED"
+msgstr "FÖNSTER"
+
+#. Window mode values
+msgid "FULLSCREEN"
+msgstr "HELSKÄRM"
+
+#. Game options panel title
+msgid "GAME OPTIONS"
+msgstr "SPELALTERNATIV"
+
+#. Launch row with leading pointer
+msgid "> LAUNCH"
+msgstr "> STARTA"
+
+#. Launch row when V3 is unavailable
+msgid "> COMING SOON"
+msgstr "> KOMMER SNART"
+
+#. Footer hint in the game-options panel
+msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
+msgstr "ESC: TILLBAKA  PILAR: NAVIGERA  ENTER: VÄLJ"
+
+#. Helper text when speed is dimmed
+msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
+msgstr "AKTIVERA FUSK FÖR ATT LÅSA UPP HASTIGHET / SNABBKNAPPAR"
+
+#. Helper text when V1 locks rows
+msgid "LOCKED BY V1 ORIGINAL MODE"
+msgstr "LÅST AV V1 ORIGINAL-LÄGET"

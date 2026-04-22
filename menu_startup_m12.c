@@ -2,9 +2,12 @@
 
 #include "branding_logo_m12.h"
 #include "config_m12.h"
+#include "fs_portable_compat.h"
 
+#include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -209,7 +212,7 @@ static const M12_Glyph g_font[] = {
 };
 
 static const char* g_presentationModes[] = {
-    "V1 ORIGINAL-FAITHFUL",
+    "V1 ORIGINAL",
     "V2 ENHANCED 2D",
     "V3 MODERN/3D"
 };
@@ -259,116 +262,53 @@ typedef struct {
     int overlayMode;
 } M12_GraphicsTheme;
 
-static const char* const g_localeText[4][M12_TEXT_COUNT] = {
-    {
-        "FRONTEND PREVIEW",
-        "SELECT A DESTINATION",
-        "SETTINGS",
-        "STATUS",
-        "LAUNCHER DESTINATIONS",
-        "DATA DIR",
-        "UP/DOWN MOVE   ENTER OPEN   ESC EXIT",
-        "PERSISTED OPTIONS",
-        "LANGUAGE",
-        "PRESENTATION MODE",
-        "WINDOW MODE",
-        "CHANGES SAVE IMMEDIATELY TO CONFIG",
-        "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK",
-        "ENTER OR ESC RETURNS TO MENU",
-        "READY TO LAUNCH",
-        "ESC RETURNS TO MENU",
-        "VALIDATOR SCAFFOLD ONLY",
-        "ADD VERIFIED RETAIL HASHES",
-        "GAME DATA NOT FOUND",
-        "CHECK FIRESTAFF DATA DIR",
-        "ART SLOT READY",
-        "ART SLOT EMPTY",
-        "DROP ART INTO SLOT",
-        "CARD ART ACTIVE",
-        "CARD ART SLOT"
-    },
-    {
-        "FRONTEND FORHANDSGLIMPSE",
-        "VALJ MAL",
-        "INSTALLNINGAR",
-        "STATUS",
-        "STARTMAL",
-        "DATAKATALOG",
-        "UPP/NED FLYTTA   ENTER OPPNA   ESC AVSLUTA",
-        "SPARADE VAL",
-        "SPRAK",
-        "PRESENTATION MODE",
-        "FONSTERLAGE",
-        "ANDRINGAR SPARAS DIREKT I KONFIG",
-        "VANSTER/HOGER VAXLA   ENTER NASTA   ESC TILLBAKA",
-        "ENTER ELLER ESC TILL MENYN",
-        "KLAR ATT STARTA",
-        "ESC TILL MENYN",
-        "ENDAST VALIDATOR-SKELETT",
-        "LAGG TILL VERIFIERADE RETAILHASHAR",
-        "SPELDATA SAKNAS",
-        "KONTROLLERA FIRESTAFF DATAKATALOG",
-        "KONSTFACK REDO",
-        "KONSTFACK TOMT",
-        "LAGG KONST I FACKET",
-        "KORTBILD AKTIV",
-        "KORTBILDSFACK"
-    },
-    {
-        "APERCU DU LANCEUR",
-        "CHOISIR UNE DESTINATION",
-        "REGLAGES",
-        "STATUT",
-        "DESTINATIONS DU LANCEUR",
-        "DOSSIER DATA",
-        "HAUT/BAS DEPLACER   ENTREE OUVRIR   ESC QUITTER",
-        "OPTIONS ENREGISTREES",
-        "LANGUE",
-        "PRESENTATION MODE",
-        "MODE FENETRE",
-        "LES MODIFS SONT SAUVEES TOUT DE SUITE",
-        "GAUCHE/DROITE CHANGER   ENTREE AVANCER   ESC RETOUR",
-        "ENTREE OU ESC RETOUR MENU",
-        "PRET AU LANCEMENT",
-        "ESC RETOUR MENU",
-        "VALIDATEUR SEULEMENT",
-        "AJOUTER LES HACHAGES RETAIL VERIFIES",
-        "DONNEES DE JEU ABSENTES",
-        "VERIFIER LE DOSSIER DATA FIRESTAFF",
-        "EMPLACEMENT ART PRET",
-        "EMPLACEMENT ART VIDE",
-        "DEPOSER L ART DANS LE SLOT",
-        "ART DE CARTE ACTIF",
-        "EMPLACEMENT ART"
-    },
-    {
-        "LAUNCHER-VORSCHAU",
-        "ZIEL AUSWAHLEN",
-        "EINSTELLUNGEN",
-        "STATUS",
-        "LAUNCHER-ZIELE",
-        "DATENORDNER",
-        "HOCH/RUNTER BEWEGEN   ENTER OFFNEN   ESC ENDE",
-        "GESPEICHERTE OPTIONEN",
-        "SPRACHE",
-        "PRESENTATION MODE",
-        "FENSTERMODUS",
-        "ANDERUNGEN WERDEN SOFORT GESPEICHERT",
-        "LINKS/RECHTS WECHSELN   ENTER WEITER   ESC ZURUCK",
-        "ENTER ODER ESC ZUM MENU",
-        "BEREIT ZUM START",
-        "ESC ZUM MENU",
-        "NUR VALIDATOR-GERUST",
-        "GEPRUFTE RETAIL-HASHES HINZUFUGEN",
-        "SPIELDATEN FEHLEN",
-        "FIRESTAFF DATENORDNER PRUFEN",
-        "ART-SLOT BEREIT",
-        "ART-SLOT LEER",
-        "ART IM SLOT ABLEGEN",
-        "KARTENART AKTIV",
-        "KARTENART-SLOT"
-    }
+enum {
+    M12_RUNTIME_CATALOG_MAX_ENTRIES = 128,
+    M12_RUNTIME_CATALOG_MSGID_CAPACITY = 128,
+    M12_RUNTIME_CATALOG_MSGSTR_CAPACITY = 256
 };
+
+typedef struct {
+    char msgid[M12_RUNTIME_CATALOG_MSGID_CAPACITY];
+    char msgstr[M12_RUNTIME_CATALOG_MSGSTR_CAPACITY];
+} M12_RuntimeCatalogEntry;
+
+typedef struct {
+    int attempted;
+    int loaded;
+    int entryCount;
+    M12_RuntimeCatalogEntry entries[M12_RUNTIME_CATALOG_MAX_ENTRIES];
+} M12_RuntimeCatalog;
+
+static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
+    "FRONTEND PREVIEW",
+    "SELECT A DESTINATION",
+    "SETTINGS",
+    "STATUS",
+    "LAUNCHER DESTINATIONS",
+    "DATA DIR",
+    "UP/DOWN MOVE   ENTER OPEN   ESC EXIT",
+    "PERSISTED OPTIONS",
+    "LANGUAGE",
+    "PRESENTATION MODE",
+    "WINDOW MODE",
+    "CHANGES SAVE IMMEDIATELY TO CONFIG",
+    "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK",
+    "ENTER OR ESC RETURNS TO MENU",
+    "READY TO LAUNCH",
+    "ESC RETURNS TO MENU",
+    "VALIDATOR SCAFFOLD ONLY",
+    "ADD VERIFIED RETAIL HASHES",
+    "GAME DATA NOT FOUND",
+    "CHECK FIRESTAFF DATA DIR",
+    "ART SLOT READY",
+    "ART SLOT EMPTY",
+    "DROP ART INTO SLOT",
+    "CARD ART ACTIVE",
+    "CARD ART SLOT"
+};
+
+static M12_RuntimeCatalog g_runtimeCatalogs[4];
 
 static const M12_GraphicsTheme g_graphicsThemes[] = {
     {M12_COLOR_NAVY, M12_COLOR_DARK_GRAY, M12_COLOR_BROWN, M12_COLOR_YELLOW, 0},
@@ -421,6 +361,273 @@ static int m12_clamp_index(int value, int count) {
     return value;
 }
 
+static void m12_copy_string(char* out, size_t outSize, const char* value) {
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!value) {
+        value = "";
+    }
+    snprintf(out, outSize, "%s", value);
+}
+
+static int m12_starts_with(const char* text, const char* prefix) {
+    size_t i;
+    if (!text || !prefix) {
+        return 0;
+    }
+    for (i = 0U; prefix[i] != '\0'; ++i) {
+        if (text[i] != prefix[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int m12_parse_po_quoted(char* out, size_t outSize, const char* text) {
+    size_t src = 0U;
+    size_t dst = 0U;
+    if (!out || outSize == 0U || !text) {
+        return 0;
+    }
+    while (text[src] != '\0' && isspace((unsigned char)text[src])) {
+        ++src;
+    }
+    if (text[src] != '"') {
+        return 0;
+    }
+    ++src;
+    while (text[src] != '\0') {
+        unsigned char ch = (unsigned char)text[src++];
+        if (ch == '"') {
+            out[dst] = '\0';
+            return 1;
+        }
+        if (ch == '\\' && text[src] != '\0') {
+            unsigned char esc = (unsigned char)text[src++];
+            switch (esc) {
+                case 'n': ch = '\n'; break;
+                case 'r': ch = '\r'; break;
+                case 't': ch = '\t'; break;
+                case '\\': ch = '\\'; break;
+                case '"': ch = '"'; break;
+                default: ch = esc; break;
+            }
+        }
+        if (dst + 1U >= outSize) {
+            break;
+        }
+        out[dst++] = (char)ch;
+    }
+    out[dst] = '\0';
+    return 1;
+}
+
+static void m12_append_string(char* out, size_t outSize, const char* value) {
+    size_t len;
+    if (!out || outSize == 0U || !value) {
+        return;
+    }
+    len = strlen(out);
+    if (len >= outSize - 1U) {
+        return;
+    }
+    snprintf(out + len, outSize - len, "%s", value);
+}
+
+static char m12_fold_utf8_char(const unsigned char* src, int* consumed) {
+    if (!src || !consumed) {
+        return '\0';
+    }
+    *consumed = 1;
+    if (src[0] < 0x80U) {
+        unsigned char ch = src[0];
+        if (ch >= 'a' && ch <= 'z') {
+            ch = (unsigned char)(ch - 'a' + 'A');
+        }
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
+            ch == ' ' || ch == '-' || ch == '.' || ch == ':' || ch == '/' || ch == '>') {
+            return (char)ch;
+        }
+        if (ch == '\'' || ch == '`') {
+            return ' ';
+        }
+        return ' ';
+    }
+    if (src[0] == 0xC3U) {
+        *consumed = 2;
+        switch (src[1]) {
+            case 0x80U: case 0x82U: case 0x84U: case 0x85U:
+            case 0x87U:
+            case 0xA0U: case 0xA2U: case 0xA4U: case 0xA5U:
+                return (src[1] == 0x87U) ? 'C' : 'A';
+            case 0x89U: case 0x88U: case 0x8AU: case 0x8BU:
+            case 0xA9U: case 0xA8U: case 0xAAU: case 0xABU:
+                return 'E';
+            case 0x8EU: case 0x8FU: case 0xAEU: case 0xAFU:
+                return 'I';
+            case 0x94U: case 0x96U: case 0xB4U: case 0xB6U:
+                return 'O';
+            case 0x99U: case 0x9BU: case 0x9CU: case 0xB9U: case 0xBBU: case 0xBCU:
+                return 'U';
+            default:
+                return ' ';
+        }
+    }
+    return ' ';
+}
+
+static void m12_sanitize_display_text(char* out, size_t outSize, const char* value) {
+    size_t dst = 0U;
+    size_t src = 0U;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    if (!value) {
+        return;
+    }
+    while (value[src] != '\0' && dst + 1U < outSize) {
+        int consumed = 1;
+        char folded = m12_fold_utf8_char((const unsigned char*)&value[src], &consumed);
+        if (folded != '\0') {
+            out[dst++] = folded;
+        }
+        src += (size_t)(consumed > 0 ? consumed : 1);
+    }
+    out[dst] = '\0';
+}
+
+static int m12_store_catalog_entry(M12_RuntimeCatalog* catalog,
+                                   const char* msgid,
+                                   const char* msgstr) {
+    char sanitized[M12_RUNTIME_CATALOG_MSGSTR_CAPACITY];
+    if (!catalog || !msgid || !msgstr || msgid[0] == '\0' || msgstr[0] == '\0' ||
+        catalog->entryCount >= M12_RUNTIME_CATALOG_MAX_ENTRIES) {
+        return 0;
+    }
+    m12_sanitize_display_text(sanitized, sizeof(sanitized), msgstr);
+    if (sanitized[0] == '\0') {
+        return 0;
+    }
+    m12_copy_string(catalog->entries[catalog->entryCount].msgid,
+                    sizeof(catalog->entries[catalog->entryCount].msgid),
+                    msgid);
+    m12_copy_string(catalog->entries[catalog->entryCount].msgstr,
+                    sizeof(catalog->entries[catalog->entryCount].msgstr),
+                    sanitized);
+    catalog->entryCount += 1;
+    return 1;
+}
+
+static int m12_resolve_catalog_path(int localeIndex, char* out, size_t outSize) {
+    char path[FSP_PATH_MAX];
+    if (!out || outSize == 0U || localeIndex < 0 || localeIndex >= 4) {
+        return 0;
+    }
+    if (snprintf(path, sizeof(path), "po/startup-menu.%s.po", g_languages[localeIndex]) <= 0) {
+        return 0;
+    }
+    path[sizeof(path) - 1U] = '\0';
+    for (size_t i = 0U; path[i] != '\0'; ++i) {
+        path[i] = (char)tolower((unsigned char)path[i]);
+    }
+    if (FSP_FileExists(path)) {
+        m12_copy_string(out, outSize, path);
+        return 1;
+    }
+    return 0;
+}
+
+static void m12_load_runtime_catalog(int localeIndex) {
+    M12_RuntimeCatalog* catalog;
+    char path[FSP_PATH_MAX];
+    FILE* fp;
+    char line[1024];
+    char msgid[M12_RUNTIME_CATALOG_MSGID_CAPACITY] = "";
+    char msgstr[M12_RUNTIME_CATALOG_MSGSTR_CAPACITY] = "";
+    int inMsgid = 0;
+    int inMsgstr = 0;
+    if (localeIndex < 0 || localeIndex >= 4) {
+        return;
+    }
+    catalog = &g_runtimeCatalogs[localeIndex];
+    if (catalog->attempted) {
+        return;
+    }
+    catalog->attempted = 1;
+    catalog->loaded = 0;
+    catalog->entryCount = 0;
+    if (localeIndex == 0 || !m12_resolve_catalog_path(localeIndex, path, sizeof(path))) {
+        return;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return;
+    }
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char parsed[M12_RUNTIME_CATALOG_MSGSTR_CAPACITY];
+        char* trimmed = line;
+        while (*trimmed != '\0' && isspace((unsigned char)*trimmed)) {
+            ++trimmed;
+        }
+        if (m12_starts_with(trimmed, "msgid ")) {
+            if (msgid[0] != '\0' && msgstr[0] != '\0') {
+                m12_store_catalog_entry(catalog, msgid, msgstr);
+            }
+            msgid[0] = '\0';
+            msgstr[0] = '\0';
+            inMsgid = m12_parse_po_quoted(parsed, sizeof(parsed), trimmed + 5);
+            inMsgstr = 0;
+            if (inMsgid) {
+                m12_append_string(msgid, sizeof(msgid), parsed);
+            }
+        } else if (m12_starts_with(trimmed, "msgstr ")) {
+            msgstr[0] = '\0';
+            inMsgstr = m12_parse_po_quoted(parsed, sizeof(parsed), trimmed + 6);
+            inMsgid = 0;
+            if (inMsgstr) {
+                m12_append_string(msgstr, sizeof(msgstr), parsed);
+            }
+        } else if (trimmed[0] == '"') {
+            if (m12_parse_po_quoted(parsed, sizeof(parsed), trimmed)) {
+                if (inMsgid) {
+                    m12_append_string(msgid, sizeof(msgid), parsed);
+                } else if (inMsgstr) {
+                    m12_append_string(msgstr, sizeof(msgstr), parsed);
+                }
+            }
+        }
+    }
+    if (msgid[0] != '\0' && msgstr[0] != '\0') {
+        m12_store_catalog_entry(catalog, msgid, msgstr);
+    }
+    fclose(fp);
+    catalog->loaded = catalog->entryCount > 0 ? 1 : 0;
+}
+
+static const char* m12_translate_for_locale(int localeIndex, const char* english) {
+    int i;
+    M12_RuntimeCatalog* catalog;
+    if (!english || english[0] == '\0') {
+        return "";
+    }
+    if (localeIndex <= 0 || localeIndex >= 4) {
+        return english;
+    }
+    m12_load_runtime_catalog(localeIndex);
+    catalog = &g_runtimeCatalogs[localeIndex];
+    if (!catalog->loaded) {
+        return english;
+    }
+    for (i = 0; i < catalog->entryCount; ++i) {
+        if (strcmp(catalog->entries[i].msgid, english) == 0) {
+            return catalog->entries[i].msgstr;
+        }
+    }
+    return english;
+}
+
 static int m12_locale_index(const M12_StartupMenuState* state) {
     return state ? m12_clamp_index(state->settings.languageIndex, 4) : 0;
 }
@@ -430,7 +637,11 @@ static const char* m12_text(const M12_StartupMenuState* state, M12_TextId id) {
     if (id < 0 || id >= M12_TEXT_COUNT) {
         return "";
     }
-    return g_localeText[locale][id];
+    return m12_translate_for_locale(locale, g_localeTextEnglish[id]);
+}
+
+static const char* m12_tr(const M12_StartupMenuState* state, const char* english) {
+    return m12_translate_for_locale(m12_locale_index(state), english);
 }
 
 static const M12_GraphicsTheme* m12_theme(const M12_StartupMenuState* state) {
@@ -474,6 +685,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     }
     M12_Config_SetDefaults(&config);
     config.languageIndex = state->settings.languageIndex;
+    config.languageExplicit = state->languageExplicit ? 1 : 0;
     config.graphicsIndex = state->settings.graphicsIndex;
     config.windowModeIndex = state->settings.windowModeIndex;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -499,6 +711,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     M12_Config_Load(&config, dataDirOverride);
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+    state->languageExplicit = config.languageExplicit ? 1 : 0;
     state->settings.graphicsIndex = m12_clamp_index(config.graphicsIndex,
                                                     (int)(sizeof(g_presentationModes) /
                                                           sizeof(g_presentationModes[0])));
@@ -552,19 +765,20 @@ static const char* m12_settings_value_language(const M12_StartupMenuState* state
     return g_languages[state->settings.languageIndex];
 }
 
-static const char* m12_game_value_language_name(const M12_GameOptions* opts) {
+static const char* m12_game_value_language_name(const M12_StartupMenuState* state,
+                                                const M12_GameOptions* opts) {
     int index = opts ? m12_clamp_index(opts->languageIndex,
                                        (int)(sizeof(g_languageNames) / sizeof(g_languageNames[0])))
                      : 0;
-    return g_languageNames[index];
+    return m12_tr(state, g_languageNames[index]);
 }
 
 static const char* m12_settings_value_graphics(const M12_StartupMenuState* state) {
-    return g_presentationModes[state->settings.graphicsIndex];
+    return m12_tr(state, g_presentationModes[state->settings.graphicsIndex]);
 }
 
 static const char* m12_settings_value_window_mode(const M12_StartupMenuState* state) {
-    return g_windowModes[state->settings.windowModeIndex];
+    return m12_tr(state, g_windowModes[state->settings.windowModeIndex]);
 }
 
 static void m12_activate_selected(M12_StartupMenuState* state) {
@@ -611,6 +825,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.languageIndex,
                 delta,
                 (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+            state->languageExplicit = 1;
             break;
         case M12_SETTINGS_ROW_GRAPHICS:
                 state->settings.graphicsIndex = m12_cycle_index(
@@ -688,8 +903,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     /* Launch row — V3 blocks launch with coming-soon message */
                     if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
                         state->view = M12_MENU_VIEW_MESSAGE;
-                        state->messageLine1 = "V3 MODERN/3D";
-                        state->messageLine2 = "COMING SOON";
+                        state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
+                        state->messageLine2 = m12_tr(state, "COMING SOON");
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else {
                         state->view = M12_MENU_VIEW_MESSAGE;
@@ -2947,7 +3162,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   framebufferHeight,
                   panelX + 10,
                   contentY + 10,
-                  "GAME OPTIONS",
+                  m12_tr(state, "GAME OPTIONS"),
                   &g_textSmallAccent);
     /* Mode badge */
     m12_draw_text(framebuffer,
@@ -2955,7 +3170,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   framebufferHeight,
                   panelX + 10,
                   contentY + 20,
-                  g_presentationModes[pmode],
+                  m12_tr(state, g_presentationModes[pmode]),
                   pmode == M12_PRESENTATION_V3_MODERN_3D ? &g_textSmallMuted : &g_textSmallShadow);
     rowY = contentY + 38;
     m12_draw_game_opt_row(framebuffer,
@@ -2964,8 +3179,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           panelX + 10,
                           rowY,
                           panelW - 20,
-                          "ENGINE",
-                          g_patchModes[opts->usePatch],
+                          m12_tr(state, "PATCH"),
+                          m12_tr(state, g_patchModes[opts->usePatch]),
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_PATCH,
                           0,
                           0,
@@ -2977,8 +3192,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           panelX + 10,
                           rowY,
                           panelW - 20,
-                          "GAME LANGUAGE",
-                          m12_game_value_language_name(opts),
+                          m12_tr(state, "LANGUAGE"),
+                          m12_game_value_language_name(state, opts),
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_LANGUAGE,
                           0,
                           opts->languageIndex,
@@ -2990,8 +3205,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           panelX + 10,
                           rowY,
                           panelW - 20,
-                          "CHEATS",
-                          g_cheatsToggle[opts->cheatsEnabled],
+                          m12_tr(state, "CHEATS"),
+                          m12_tr(state, g_cheatsToggle[opts->cheatsEnabled]),
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_CHEATS,
                           0,
                           0,
@@ -3003,8 +3218,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           panelX + 10,
                           rowY,
                           panelW - 20,
-                          "GAME SPEED",
-                          g_speedLabels[m12_clamp_index(opts->gameSpeed, 3)],
+                          m12_tr(state, "SPEED"),
+                          m12_tr(state, g_speedLabels[m12_clamp_index(opts->gameSpeed, 3)]),
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_SPEED,
                           speedDimmed,
                           0,
@@ -3015,7 +3230,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                       framebufferHeight,
                       panelX + 10,
                       rowY + 28,
-                      "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS",
+                      m12_tr(state, "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"),
                       &g_textSmallMuted);
     }
     rowY += speedDimmed ? 42 : 32;
@@ -3025,8 +3240,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           panelX + 10,
                           rowY,
                           panelW - 20,
-                          "ASPECT RATIO",
-                          g_aspectRatios[m12_clamp_index(opts->aspectRatio, M12_ASPECT_COUNT)],
+                          m12_tr(state, "ASPECT RATIO"),
+                          m12_tr(state, g_aspectRatios[m12_clamp_index(opts->aspectRatio, M12_ASPECT_COUNT)]),
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_ASPECT,
                           aspectLocked,
                           0,
@@ -3037,7 +3252,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                       framebufferHeight,
                       panelX + 10,
                       rowY + 28,
-                      "LOCKED BY V1 ORIGINAL MODE",
+                      m12_tr(state, "LOCKED BY V1 ORIGINAL MODE"),
                       &g_textSmallMuted);
     }
     rowY += aspectLocked ? 42 : 32;
@@ -3047,8 +3262,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           panelX + 10,
                           rowY,
                           panelW - 20,
-                          "RESOLUTION",
-                          g_resolutions[m12_clamp_index(opts->resolution, M12_RES_COUNT)],
+                          m12_tr(state, "RESOLUTION"),
+                          m12_tr(state, g_resolutions[m12_clamp_index(opts->resolution, M12_RES_COUNT)]),
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_RESOLUTION,
                           resLocked,
                           0,
@@ -3059,7 +3274,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                       framebufferHeight,
                       panelX + 10,
                       rowY + 28,
-                      "LOCKED BY V1 ORIGINAL MODE",
+                      m12_tr(state, "LOCKED BY V1 ORIGINAL MODE"),
                       &g_textSmallMuted);
     }
     rowY += resLocked ? 42 : 36;
@@ -3078,8 +3293,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                        launchFill);
         {
             const char* launchLabel = (pmode == M12_PRESENTATION_V3_MODERN_3D)
-                                          ? "> COMING SOON"
-                                          : "> LAUNCH";
+                                          ? m12_tr(state, "> COMING SOON")
+                                          : m12_tr(state, "> LAUNCH");
             m12_draw_text(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
@@ -3092,7 +3307,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
-                    "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT");
+                    m12_tr(state, "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"));
 }
 
 static void m12_draw_message_view_modern(const M12_StartupMenuState* state,

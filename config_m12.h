@@ -15,6 +15,7 @@ enum {
 
 typedef struct {
     int languageIndex;
+    int languageExplicit;
     int graphicsIndex;
     int windowModeIndex;
     char dataDir[M12_CONFIG_DATA_DIR_CAPACITY];
@@ -33,6 +34,7 @@ void M12_Config_SetDefaults(M12_Config* config);
 int M12_Config_Load(M12_Config* config, const char* dataDirOverride);
 int M12_Config_Save(const M12_Config* config);
 const char* M12_Config_GetPath(const M12_Config* config);
+int M12_Config_GetAutoLanguageIndex(void);
 
 #ifdef __cplusplus
 }

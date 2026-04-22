@@ -74,7 +74,9 @@ int main(void) {
         perror("mkdtemp");
         return 2;
     }
-    if (setenv("HOME", rootDir, 1) != 0 || setenv("SDL_VIDEODRIVER", "dummy", 1) != 0) {
+    if (setenv("HOME", rootDir, 1) != 0 ||
+        setenv("SDL_VIDEODRIVER", "dummy", 1) != 0 ||
+        setenv("LANG", "fr_FR.UTF-8", 1) != 0) {
         perror("setenv");
         return 2;
     }
@@ -103,6 +105,11 @@ int main(void) {
     M11_ApplyStartupMenuRuntime(&state);
 
     smoke_record(&tally,
+                 "SMOKE_00",
+                 state.settings.languageIndex == 2 && state.languageExplicit == 0,
+                 "system French auto-detection selects the startup-menu runtime locale before any explicit override");
+
+    smoke_record(&tally,
                  "SMOKE_01",
                  M11_Render_GetWindowMode() == M11_WINDOW_MODE_WINDOWED &&
                      M11_Render_GetPaletteLevel() == 0,
@@ -114,7 +121,7 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_LEFT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);

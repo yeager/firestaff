@@ -1,6 +1,7 @@
 #include "config_m12.h"
 #include "fs_portable_compat.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,6 +64,44 @@ static int m12_parse_int(const char* value, int fallback) {
     return (int)parsed;
 }
 
+static int m12_starts_with_lang(const char* value, const char* langCode) {
+    size_t i;
+    if (!value || !langCode) {
+        return 0;
+    }
+    for (i = 0U; langCode[i] != '\0'; ++i) {
+        if (value[i] == '\0') {
+            return 0;
+        }
+        if (tolower((unsigned char)value[i]) != tolower((unsigned char)langCode[i])) {
+            return 0;
+        }
+    }
+    return value[i] == '\0' || value[i] == '_' || value[i] == '-' || value[i] == '.' || value[i] == '@';
+}
+
+int M12_Config_GetAutoLanguageIndex(void) {
+    const char* candidates[] = {
+        getenv("LC_ALL"),
+        getenv("LC_MESSAGES"),
+        getenv("LANG")
+    };
+    size_t i;
+    for (i = 0U; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
+        const char* value = candidates[i];
+        if (!value || value[0] == '\0') {
+            continue;
+        }
+        if (m12_starts_with_lang(value, "sv")) {
+            return 1;
+        }
+        if (m12_starts_with_lang(value, "fr")) {
+            return 2;
+        }
+    }
+    return 0;
+}
+
 /* m12_build_parent_dir, m12_ensure_directory, m12_default_data_dir,
  * m12_default_config_path — replaced by fs_portable_compat. */
 
@@ -119,7 +158,8 @@ void M12_Config_SetDefaults(M12_Config* config) {
         return;
     }
     memset(config, 0, sizeof(*config));
-    config->languageIndex = 0;
+    config->languageIndex = M12_Config_GetAutoLanguageIndex();
+    config->languageExplicit = 0;
     config->graphicsIndex = 0;
     config->windowModeIndex = 0;
     FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
@@ -150,6 +190,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
 
     if (m12_string_equals(key, "language_index")) {
         config->languageIndex = m12_parse_int(value, config->languageIndex);
+        return;
+    }
+    if (m12_string_equals(key, "language_explicit")) {
+        config->languageExplicit = m12_parse_int(value, config->languageExplicit) ? 1 : 0;
         return;
     }
     if (m12_string_equals(key, "graphics_index") ||
@@ -217,6 +261,7 @@ int M12_Config_Save(const M12_Config* config) {
     }
     fprintf(fp, "# Firestaff startup menu config\n");
     fprintf(fp, "language_index = %d\n", config->languageIndex);
+    fprintf(fp, "language_explicit = %d\n", config->languageExplicit ? 1 : 0);
     fprintf(fp, "presentation_mode_index = %d\n", config->graphicsIndex);
     fprintf(fp, "graphics_index = %d\n", config->graphicsIndex);
     fprintf(fp, "window_mode_index = %d\n", config->windowModeIndex);
@@ -249,6 +294,7 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
     FILE* fp;
     char line[1024];
     int hadExistingFile;
+    int shouldSave = 0;
     if (!config) {
         return 0;
     }
@@ -266,12 +312,22 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
         m12_parse_line(config, line);
     }
     fclose(fp);
+    if (!config->languageExplicit) {
+        int autoLanguage = M12_Config_GetAutoLanguageIndex();
+        if (config->languageIndex != autoLanguage) {
+            config->languageIndex = autoLanguage;
+            shouldSave = 1;
+        }
+    }
     if (dataDirOverride && dataDirOverride[0] != '\0') {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), dataDirOverride);
-        M12_Config_Save(config);
+        shouldSave = 1;
     }
     if (config->dataDir[0] == '\0') {
         FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
+        shouldSave = 1;
+    }
+    if (shouldSave) {
         M12_Config_Save(config);
     }
     return hadExistingFile;

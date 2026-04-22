@@ -141,6 +141,7 @@ typedef struct M12_StartupMenuState {
     const char* messageLine2;
     const char* messageLine3;
     M12_MenuSettingsState settings;
+    int languageExplicit;
     M12_AssetStatus assetStatus;
     M12_GameOptions gameOptions[3];
     int gameOptSelectedRow;

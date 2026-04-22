@@ -1,0 +1,250 @@
+# Firestaff — startup-menu domain, French catalog.
+# French translations for the startup menu / launcher domain.
+#
+# Domain: startup-menu
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-startup-menu\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 11:20+0200\n"
+"PO-Revision-Date: 2026-04-22 11:56+0200\n"
+"Last-Translator: OpenClaw\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. Launcher title / eyebrow
+msgid "FRONTEND PREVIEW"
+msgstr "APERÇU DE L'INTERFACE"
+
+#. Main menu heading
+msgid "SELECT A DESTINATION"
+msgstr "CHOISIR UNE DESTINATION"
+
+#. Settings panel title
+msgid "SETTINGS"
+msgstr "RÉGLAGES"
+
+#. Status label
+msgid "STATUS"
+msgstr "ÉTAT"
+
+#. Section heading for launcher entries
+msgid "LAUNCHER DESTINATIONS"
+msgstr "DESTINATIONS DU LANCEUR"
+
+#. Data directory label
+msgid "DATA DIR"
+msgstr "DOSSIER DE DONNÉES"
+
+#. Main menu footer / navigation hint
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "HAUT/BAS DÉPLACER   ENTRÉE OUVRIR   ÉCHAP QUITTER"
+
+#. Settings section heading
+msgid "PERSISTED OPTIONS"
+msgstr "OPTIONS ENREGISTRÉES"
+
+#. Settings row label
+msgid "LANGUAGE"
+msgstr "LANGUE"
+
+#. Settings row label
+msgid "PRESENTATION MODE"
+msgstr "MODE DE PRÉSENTATION"
+
+#. Settings row label
+msgid "WINDOW MODE"
+msgstr "MODE FENÊTRE"
+
+#. Settings save confirmation
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "LES MODIFICATIONS SONT ENREGISTRÉES IMMÉDIATEMENT"
+
+#. Settings footer / navigation hint
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "GAUCHE/DROITE CHANGER   ENTRÉE AVANCER   ÉCHAP RETOUR"
+
+#. Message view return hint
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTRÉE OU ÉCHAP REVIENT AU MENU"
+
+#. Launch confirmation
+msgid "READY TO LAUNCH"
+msgstr "PRÊT À LANCER"
+
+#. Escape hint in messages
+msgid "ESC RETURNS TO MENU"
+msgstr "ÉCHAP REVIENT AU MENU"
+
+#. Missing hash-verified data message
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "VALIDATEUR SEULEMENT"
+
+#. Missing hash-verified data detail
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "AJOUTER LES HASHES RETAIL VÉRIFIÉS"
+
+#. Missing game data message
+msgid "GAME DATA NOT FOUND"
+msgstr "DONNÉES DE JEU INTROUVABLES"
+
+#. Missing game data detail
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "VÉRIFIEZ LE DOSSIER DE DONNÉES FIRESTAFF"
+
+#. Card art slot status
+msgid "ART SLOT READY"
+msgstr "EMPLACEMENT D'ILLUSTRATION PRÊT"
+
+#. Card art slot status
+msgid "ART SLOT EMPTY"
+msgstr "EMPLACEMENT D'ILLUSTRATION VIDE"
+
+#. Card art slot instruction
+msgid "DROP ART INTO SLOT"
+msgstr "DÉPOSEZ UNE ILLUSTRATION DANS L'EMPLACEMENT"
+
+#. Card art active label
+msgid "CARD ART ACTIVE"
+msgstr "ILLUSTRATION DE CARTE ACTIVE"
+
+#. Card art slot label
+msgid "CARD ART SLOT"
+msgstr "EMPLACEMENT D'ILLUSTRATION"
+
+#. Game card label
+msgid "Dungeon Master"
+msgstr "Dungeon Master"
+
+#. Game card label
+msgid "Chaos Strikes Back"
+msgstr "Chaos Strikes Back"
+
+#. Game card label
+msgid "Dungeon Master II"
+msgstr "Dungeon Master II"
+
+#. Launcher title
+msgid "Firestaff"
+msgstr "Firestaff"
+
+#. Game options row label
+msgid "PATCH"
+msgstr "PATCH"
+
+#. Game options value: original version
+msgid "ORIGINAL"
+msgstr "ORIGINAL"
+
+#. Game options value: patched version
+msgid "PATCHED"
+msgstr "PATCHÉ"
+
+#. Game options row label
+msgid "CHEATS"
+msgstr "TRICHES"
+
+#. Game options value: off
+msgid "OFF"
+msgstr "DÉSACTIVÉ"
+
+#. Game options value: on
+msgid "ON"
+msgstr "ACTIVÉ"
+
+#. Game options row label
+msgid "SPEED"
+msgstr "VITESSE"
+
+#. Game options value: slower
+msgid "SLOWER"
+msgstr "PLUS LENT"
+
+#. Game options value: normal
+msgid "NORMAL"
+msgstr "NORMALE"
+
+#. Game options value: faster
+msgid "FASTER"
+msgstr "PLUS RAPIDE"
+
+#. Game options row label
+msgid "ASPECT RATIO"
+msgstr "FORMAT D'IMAGE"
+
+#. Game options row label
+msgid "RESOLUTION"
+msgstr "RÉSOLUTION"
+
+#. Game options action
+msgid "LAUNCH"
+msgstr "LANCER"
+
+#. Presentation mode name
+msgid "V1 ORIGINAL"
+msgstr "V1 ORIGINAL"
+
+#. Presentation mode name
+msgid "V2 ENHANCED 2D"
+msgstr "V2 2D AMÉLIORÉE"
+
+#. Presentation mode name
+msgid "V3 MODERN/3D"
+msgstr "V3 MODERNE/3D"
+
+#. V3 unavailable message
+msgid "COMING SOON"
+msgstr "BIENTÔT DISPONIBLE"
+
+#. Language names
+msgid "ENGLISH"
+msgstr "ANGLAIS"
+
+#. Language names
+msgid "SVENSKA"
+msgstr "SUÉDOIS"
+
+#. Language names
+msgid "FRANCAIS"
+msgstr "FRANÇAIS"
+
+#. Language names
+msgid "DEUTSCH"
+msgstr "ALLEMAND"
+
+#. Window mode values
+msgid "WINDOWED"
+msgstr "FENÊTRÉ"
+
+#. Window mode values
+msgid "FULLSCREEN"
+msgstr "PLEIN ÉCRAN"
+
+#. Game options panel title
+msgid "GAME OPTIONS"
+msgstr "OPTIONS DE JEU"
+
+#. Launch row with leading pointer
+msgid "> LAUNCH"
+msgstr "> LANCER"
+
+#. Launch row when V3 is unavailable
+msgid "> COMING SOON"
+msgstr "> BIENTÔT DISPONIBLE"
+
+#. Footer hint in the game-options panel
+msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
+msgstr "ÉCHAP: RETOUR  FLÈCHES: NAVIGUER  ENTRÉE: SÉLECTIONNER"
+
+#. Helper text when speed is dimmed
+msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
+msgstr "ACTIVEZ LES TRICHES POUR DÉVERROUILLER LA VITESSE / LES RACCOURCIS"
+
+#. Helper text when V1 locks rows
+msgid "LOCKED BY V1 ORIGINAL MODE"
+msgstr "VERROUILLÉ PAR LE MODE V1 ORIGINAL"
