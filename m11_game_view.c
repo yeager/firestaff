@@ -4853,7 +4853,15 @@ enum {
     M11_GFX_STAIRS_DOWN_D2 = 93,  /* 33x136 */
     M11_GFX_STAIRS_DOWN_D1 = 95,  /* 60x111 */
     M11_GFX_STAIRS_UP_D2   = 94,  /* 33x136 */
-    M11_GFX_STAIRS_UP_D1   = 96   /* 60x111 */
+    M11_GFX_STAIRS_UP_D1   = 96,  /* 60x111 */
+
+    /* Champion icon strip (graphic 28 in original CSB/DM).
+     * Horizontal strip of 4×4 = 16 directional icons, each 19×14.
+     * Icon index = ((championCell - partyDirection) & 3) * 4 + frame.
+     * Used for champion visual in the inventory portrait and HUD. */
+    M11_GFX_CHAMPION_ICONS = 28,
+    M11_CHAMPION_ICON_W    = 19,
+    M11_CHAMPION_ICON_H    = 14
 };
 
 /* ================================================================
@@ -5025,6 +5033,47 @@ static unsigned int m11_item_sprite_index(int thingType, int subtype) {
     }
     if ((unsigned int)subtype > maxSubtype) subtype = 0;
     return base + (unsigned int)subtype;
+}
+
+/* Resolve an inventory thingId to a GRAPHICS.DAT item sprite index.
+ * Returns the graphic index suitable for M11_AssetLoader_Load, or 0
+ * if the thing type/subtype cannot be mapped.  This is the inventory
+ * counterpart of the viewport floor-item m11_item_sprite_index(). */
+static unsigned int m11_inventory_thing_sprite_index(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingId) {
+    int thingType, thingIndex, subtype;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) return 0;
+    thingType  = THING_GET_TYPE(thingId);
+    thingIndex = THING_GET_INDEX(thingId);
+    subtype = 0;
+    switch (thingType) {
+        case THING_TYPE_WEAPON:
+            if (things->weapons && thingIndex >= 0 && thingIndex < things->weaponCount)
+                subtype = things->weapons[thingIndex].type;
+            break;
+        case THING_TYPE_ARMOUR:
+            if (things->armours && thingIndex >= 0 && thingIndex < things->armourCount)
+                subtype = things->armours[thingIndex].type;
+            break;
+        case THING_TYPE_SCROLL:
+            return M11_GFX_ITEM_SCROLL_BASE;
+        case THING_TYPE_POTION:
+            if (things->potions && thingIndex >= 0 && thingIndex < things->potionCount)
+                subtype = things->potions[thingIndex].type;
+            break;
+        case THING_TYPE_CONTAINER:
+            if (things->containers && thingIndex >= 0 && thingIndex < things->containerCount)
+                subtype = things->containers[thingIndex].type;
+            break;
+        case THING_TYPE_JUNK:
+            if (things->junks && thingIndex >= 0 && thingIndex < things->junkCount)
+                subtype = things->junks[thingIndex].type;
+            break;
+        default:
+            return 0;
+    }
+    return m11_item_sprite_index(thingType, subtype);
 }
 
 /* Draw an item sprite from GRAPHICS.DAT at the given viewport position.
@@ -6851,21 +6900,39 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
     m11_draw_rect(fb, fbW, fbH, sx, sy, SZ, SZ, borderColor);
 
     if (thingId != THING_NONE && thingId != THING_ENDOFLIST) {
-        /* Occupied — show short type tag centered in box */
-        int thingType = THING_GET_TYPE(thingId);
-        const char* tag = "?";
-        M11_TextStyle s = g_text_small;
-        s.color = M11_COLOR_WHITE;
-        switch (thingType) {
-            case THING_TYPE_WEAPON:    tag = "Wp"; break;
-            case THING_TYPE_ARMOUR:    tag = "Ar"; break;
-            case THING_TYPE_SCROLL:    tag = "Sc"; break;
-            case THING_TYPE_POTION:    tag = "Po"; break;
-            case THING_TYPE_CONTAINER: tag = "Ch"; break;
-            case THING_TYPE_JUNK:      tag = "Jk"; break;
-            default: break;
+        /* Occupied — attempt GRAPHICS.DAT sprite, fall back to type tag */
+        int drewSprite = 0;
+        if (state->assetsAvailable && state->world.things) {
+            unsigned int gfxIdx = m11_inventory_thing_sprite_index(
+                state->world.things, thingId);
+            if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
+                const M11_AssetSlot* slot = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader, gfxIdx);
+                if (slot && slot->width > 0 && slot->height > 0) {
+                    /* Scale item sprite into the 16×16 slot box (1px inset) */
+                    M11_AssetLoader_BlitScaled(slot, fb, fbW, fbH,
+                                              sx + 1, sy + 1, SZ - 2, SZ - 2, 0);
+                    drewSprite = 1;
+                }
+            }
         }
-        m11_draw_text(fb, fbW, fbH, sx + 3, sy + 4, tag, &s);
+        if (!drewSprite) {
+            /* Fallback: 2-char type tag */
+            int thingType = THING_GET_TYPE(thingId);
+            const char* tag = "?";
+            M11_TextStyle s = g_text_small;
+            s.color = M11_COLOR_WHITE;
+            switch (thingType) {
+                case THING_TYPE_WEAPON:    tag = "Wp"; break;
+                case THING_TYPE_ARMOUR:    tag = "Ar"; break;
+                case THING_TYPE_SCROLL:    tag = "Sc"; break;
+                case THING_TYPE_POTION:    tag = "Po"; break;
+                case THING_TYPE_CONTAINER: tag = "Ch"; break;
+                case THING_TYPE_JUNK:      tag = "Jk"; break;
+                default: break;
+            }
+            m11_draw_text(fb, fbW, fbH, sx + 3, sy + 4, tag, &s);
+        }
     } else {
         /* Empty — faint position hint */
         M11_TextStyle dim = g_text_small;
@@ -6924,21 +6991,45 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     portY = panelY + 4;
     m11_get_active_champion_label(state, champion, sizeof(champion));
 
-    /* Portrait box (ReDMCSB: native bitmap blitted from GRAPHIC_CHAMPION_PORTRAITS,
-     * 32×29.  We draw a placeholder frame until actual portrait assets arrive.) */
+    /* Portrait box — GRAPHICS.DAT champion icon (graphic 28, ReDMCSB:
+     * GRAPHIC_CHAMPION_ICONS, 19×14 per directional frame).  We blit the
+     * icon for the active champion scaled to the 32×29 portrait area.
+     * Falls back to a coloured silhouette if the asset is unavailable. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   portX, portY, PORT_W, PORT_H, M11_COLOR_DARK_GRAY);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   portX, portY, PORT_W, PORT_H,
                   isDead ? M11_COLOR_RED : M11_COLOR_LIGHT_CYAN);
-    /* Minimal face silhouette inside portrait */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  portX + 9,  portY + 8, 3, 3, M11_COLOR_WHITE);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  portX + 20, portY + 8, 3, 3, M11_COLOR_WHITE);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  portX + 10, portY + 19, 12, 2,
-                  isDead ? M11_COLOR_RED : M11_COLOR_LIGHT_GRAY);
+    {
+        int drewPortrait = 0;
+        if (state->assetsAvailable) {
+            const M11_AssetSlot* iconStrip = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_ICONS);
+            if (iconStrip && iconStrip->width > 0 && iconStrip->height > 0) {
+                /* Champion icon index within the strip: use portraitIndex
+                 * (0–3) as the column.  Each icon is 19px wide. */
+                int iconCol = champ->portraitIndex & 3;
+                int srcX = iconCol * M11_CHAMPION_ICON_W;
+                if (srcX + M11_CHAMPION_ICON_W <= (int)iconStrip->width) {
+                    M11_AssetLoader_BlitRegion(iconStrip,
+                        srcX, 0, M11_CHAMPION_ICON_W, M11_CHAMPION_ICON_H,
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        portX + 1, portY + 1, 0);
+                    drewPortrait = 1;
+                }
+            }
+        }
+        if (!drewPortrait) {
+            /* Fallback: minimal face silhouette */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          portX + 9,  portY + 8, 3, 3, M11_COLOR_WHITE);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          portX + 20, portY + 8, 3, 3, M11_COLOR_WHITE);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          portX + 10, portY + 19, 12, 2,
+                          isDead ? M11_COLOR_RED : M11_COLOR_LIGHT_GRAY);
+        }
+    }
 
     /* Champion name — prominent, right of portrait */
     nameX = portX + PORT_W + 6;
