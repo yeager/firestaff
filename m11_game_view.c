@@ -775,19 +775,32 @@ static int m11_compute_floor_ornament_ordinal(
  * The coordinate set selects which of 11 pre-defined viewport position
  * tables to use for placing the creature at each depth/sub-cell.
  *
- * Values extracted from ReDMCSB DEFS.H / disassembly of DM1 PC v3.4.
+ * We additionally carry the GraphicInfo field from the CREATURE_INFO
+ * table (G0243_as_Graphic559_CreatureInfo[].GraphicInfo, 16 bits).
+ * GraphicInfo controls which poses have dedicated bitmaps
+ * (side/back/attack) and the flip semantics used when falling back to
+ * the front bitmap.  Without these flags the renderer was blindly
+ * indexing into every creature's native+derived bitmap sequence and
+ * producing unrelated sprites for any pose beyond the front — this
+ * table fixes that by letting the pose lookup fall back to front
+ * whenever the per-creature flag is clear.
+ *
+ * Values extracted from ReDMCSB DEFS.H / disassembly of DM1 PC v3.4
+ * (see firestaff_extracted_frontends_probe.c G0243_as_Graphic559_CreatureInfo).
  * The front/side/attack width+height fields exist only in later versions
  * (S10+) and are not needed for our rendering — we use GRAPHICS.DAT
  * bitmap dimensions directly.
  *
  * Format: { FirstNativeBitmapRelativeIndex, FirstDerivedBitmapIndex,
- *           CoordinateSet_TransparentColor, ReplacementColorSetIndices }
+ *           CoordinateSet_TransparentColor, ReplacementColorSetIndices,
+ *           GraphicInfo }
  */
 typedef struct {
     unsigned short firstNativeBitmapRelativeIndex;
     unsigned short firstDerivedBitmapIndex;
     unsigned char  coordinateSet_transparentColor;
     unsigned char  replacementColorSetIndices;
+    unsigned short graphicInfo;
 } M11_CreatureAspect;
 
 #define M11_CREATURE_COORD_SET(a) (((a)->coordinateSet_transparentColor >> 4) & 0x0F)
@@ -795,61 +808,94 @@ typedef struct {
 #define M11_CREATURE_REPL_COLOR9(a) ((a)->replacementColorSetIndices & 0x0F)
 #define M11_CREATURE_REPL_COLOR10(a) (((a)->replacementColorSetIndices >> 4) & 0x0F)
 
+/* Creature GraphicInfo masks — source-backed from ReDMCSB DEFS.H.
+ * Bit 0..1: MASK0x0003_ADDITIONAL (reserved extra derived bitmaps; only
+ *           value 1 is ever meaningful, values 2/3 are unused).
+ * Bit 2:    MASK0x0004_FLIP_NON_ATTACK — flip front bitmap for non-attack
+ *           poses when no side/back bitmap exists.
+ * Bit 3:    MASK0x0008_SIDE — dedicated side bitmap exists.
+ * Bit 4:    MASK0x0010_BACK — dedicated back bitmap exists.
+ * Bit 5:    MASK0x0020_ATTACK — dedicated attack bitmap exists.
+ * Bit 6:    unreferenced.
+ * Bit 7:    MASK0x0080_SPECIAL_D2_FRONT — alternate front bitmap at D2.
+ * Bit 8:    MASK0x0100_SPECIAL_D2_FRONT_IS_FLIPPED_FRONT — the alternate
+ *           D2 front uses the flipped front bitmap.
+ * Bit 9:    MASK0x0200_FLIP_ATTACK — flip attack bitmap.
+ * Bit 10:   MASK0x0400_FLIP_DURING_ATTACK — flip sprite during attack.
+ * Bit 11:   unreferenced.
+ * Bits 12-13: M052_MAXIMUM_HORIZONTAL_OFFSET (creature wobble range).
+ * Bits 14-15: M053_MAXIMUM_VERTICAL_OFFSET.
+ */
+#define M11_CREATURE_GI_MASK_ADDITIONAL          0x0003u
+#define M11_CREATURE_GI_MASK_FLIP_NON_ATTACK     0x0004u
+#define M11_CREATURE_GI_MASK_SIDE                0x0008u
+#define M11_CREATURE_GI_MASK_BACK                0x0010u
+#define M11_CREATURE_GI_MASK_ATTACK              0x0020u
+#define M11_CREATURE_GI_MASK_SPECIAL_D2_FRONT    0x0080u
+#define M11_CREATURE_GI_MASK_D2_FRONT_IS_FLIPPED 0x0100u
+#define M11_CREATURE_GI_MASK_FLIP_ATTACK         0x0200u
+#define M11_CREATURE_GI_MASK_FLIP_DURING_ATTACK  0x0400u
+#define M11_CREATURE_GI_MAX_HORIZONTAL_OFFSET(gi) (((gi) >> 12) & 0x0003u)
+#define M11_CREATURE_GI_MAX_VERTICAL_OFFSET(gi)   (((gi) >> 14) & 0x0003u)
+
 static const M11_CreatureAspect s_creatureAspects[27] = {
-    /* Type  0: GiantScorpion   — coordSet 1, transparent 10, repl 0x11 */
-    { 0,  495, 0x1A, 0x11 },
-    /* Type  1: SwampSlime       — coordSet 0, transparent  2, repl 0x00 */
-    { 6,  507, 0x02, 0x00 },
-    /* Type  2: Giggler          — coordSet 1, transparent 10, repl 0x22 */
-    { 12, 519, 0x1A, 0x22 },
-    /* Type  3: PainRat          — coordSet 0, transparent 10, repl 0x33 */
-    { 18, 531, 0x0A, 0x33 },
-    /* Type  4: Ruster           — coordSet 1, transparent 10, repl 0x44 */
-    { 24, 543, 0x1A, 0x44 },
-    /* Type  5: Screamer         — coordSet 0, transparent 10, repl 0x00 */
-    { 30, 555, 0x0A, 0x00 },
-    /* Type  6: Rockpile         — coordSet 2, transparent  0, repl 0x00 */
-    { 36, 567, 0x20, 0x00 },
-    /* Type  7: GhostRive        — coordSet 1, transparent 10, repl 0x55 */
-    { 42, 579, 0x1A, 0x55 },
-    /* Type  8: WaterElemental   — coordSet 0, transparent 10, repl 0x00 */
-    { 48, 591, 0x0A, 0x00 },
-    /* Type  9: Couatl           — coordSet 1, transparent 10, repl 0x66 */
-    { 54, 603, 0x1A, 0x66 },
-    /* Type 10: StoneGolem       — coordSet 2, transparent 10, repl 0x00 */
-    { 60, 615, 0x2A, 0x00 },
-    /* Type 11: Mummy            — coordSet 0, transparent 10, repl 0x77 */
-    { 66, 627, 0x0A, 0x77 },
-    /* Type 12: Skeleton         — coordSet 1, transparent 10, repl 0x00 */
-    { 72, 639, 0x1A, 0x00 },
-    /* Type 13: MagentaWorm      — coordSet 0, transparent 10, repl 0x88 */
-    { 78, 651, 0x0A, 0x88 },
-    /* Type 14: Trolin           — coordSet 1, transparent 10, repl 0x99 */
-    { 84, 663, 0x1A, 0x99 },
-    /* Type 15: GiantWasp        — coordSet 1, transparent 10, repl 0x00 */
-    { 90, 675, 0x1A, 0x00 },
-    /* Type 16: Antman           — coordSet 1, transparent 10, repl 0xAA */
-    { 54, 687, 0x1A, 0xAA },
-    /* Type 17: Vexirk           — coordSet 0, transparent 10, repl 0xBB */
-    { 96, 699, 0x0A, 0xBB },
-    /* Type 18: AnimatedArmour   — coordSet 2, transparent 10, repl 0x00 */
-    { 102, 711, 0x2A, 0x00 },
-    /* Type 19: Materializer     — coordSet 0, transparent 10, repl 0x00 */
-    { 108, 723, 0x0A, 0x00 },
-    /* Type 20: RedDragon        — coordSet 2, transparent 10, repl 0x00 */
-    { 114, 735, 0x2A, 0x00 },
-    /* Type 21: Oitu             — coordSet 2, transparent  0, repl 0x00 */
-    { 120, 747, 0x20, 0x00 },
-    /* Type 22: Demon            — coordSet 1, transparent 10, repl 0xCC */
-    { 126, 759, 0x1A, 0xCC },
-    /* Type 23: LordChaos        — coordSet 2, transparent 10, repl 0x00 */
-    { 132, 771, 0x2A, 0x00 },
-    /* Type 24: LordOrder        — coordSet 2, transparent 10, repl 0x00 */
-    { 138, 783, 0x2A, 0x00 },
-    /* Type 25: GreyLord         — coordSet 2, transparent 10, repl 0x00 */
-    { 144, 795, 0x2A, 0x00 },
-    /* Type 26: LordChaosRedDragon — coordSet 2, transparent 10, repl 0x00 */
-    { 114, 807, 0x2A, 0x00 }
+    /* Fields: firstNative, firstDerived, coordSet_transparent, replColors, graphicInfo
+     * graphicInfo values reproduced verbatim from ReDMCSB
+     * G0243_as_Graphic559_CreatureInfo[].GraphicInfo. */
+    /* Type  0: GiantScorpion — no side/back/attack bitmaps. */
+    { 0,  495, 0x1A, 0x11, 0x0482 },
+    /* Type  1: SwampSlime — no side/back/attack bitmaps. */
+    { 6,  507, 0x02, 0x00, 0x0480 },
+    /* Type  2: Giggler — back bitmap only. */
+    { 12, 519, 0x1A, 0x22, 0x4510 },
+    /* Type  3: PainRat — back + attack bitmaps. */
+    { 18, 531, 0x0A, 0x33, 0x04B4 },
+    /* Type  4: Ruster — no side/back/attack bitmaps. */
+    { 24, 543, 0x1A, 0x44, 0x0701 },
+    /* Type  5: Screamer — no side/back/attack bitmaps. */
+    { 30, 555, 0x0A, 0x00, 0x0581 },
+    /* Type  6: Rockpile — side bitmap only. */
+    { 36, 567, 0x20, 0x00, 0x070C },
+    /* Type  7: GhostRive — no side/back/attack bitmaps. */
+    { 42, 579, 0x1A, 0x55, 0x0300 },
+    /* Type  8: WaterElemental — attack bitmap only. */
+    { 48, 591, 0x0A, 0x00, 0x5864 },
+    /* Type  9: Couatl — no side/back/attack bitmaps. */
+    { 54, 603, 0x1A, 0x66, 0x0282 },
+    /* Type 10: StoneGolem — no side/back/attack bitmaps. */
+    { 60, 615, 0x2A, 0x00, 0x1480 },
+    /* Type 11: Mummy — no side/back/attack bitmaps. */
+    { 66, 627, 0x0A, 0x77, 0x18C6 },
+    /* Type 12: Skeleton — no side/back/attack bitmaps. */
+    { 72, 639, 0x1A, 0x00, 0x1280 },
+    /* Type 13: MagentaWorm — attack bitmap only. */
+    { 78, 651, 0x0A, 0x88, 0x14A2 },
+    /* Type 14: Trolin — side + back + attack bitmaps. */
+    { 84, 663, 0x1A, 0x99, 0x05B8 },
+    /* Type 15: GiantWasp — no side/back/attack bitmaps. */
+    { 90, 675, 0x1A, 0x00, 0x0381 },
+    /* Type 16: Antman — no side/back/attack bitmaps. */
+    { 54, 687, 0x1A, 0xAA, 0x0680 },
+    /* Type 17: Vexirk — attack bitmap only. */
+    { 96, 699, 0x0A, 0xBB, 0x04A0 },
+    /* Type 18: AnimatedArmour — no side/back/attack bitmaps. */
+    { 102, 711, 0x2A, 0x00, 0x0280 },
+    /* Type 19: Materializer — attack bitmap only. */
+    { 108, 723, 0x0A, 0x00, 0x4060 },
+    /* Type 20: RedDragon — side + back bitmaps (no attack). */
+    { 114, 735, 0x2A, 0x00, 0x10DE },
+    /* Type 21: Oitu — no side/back/attack bitmaps. */
+    { 120, 747, 0x20, 0x00, 0x0082 },
+    /* Type 22: Demon — no side/back/attack bitmaps. */
+    { 126, 759, 0x1A, 0xCC, 0x1480 },
+    /* Type 23: LordChaos — side + attack bitmaps. */
+    { 132, 771, 0x2A, 0x00, 0x78AA },
+    /* Type 24: LordOrder — side bitmap only. */
+    { 138, 783, 0x2A, 0x00, 0x068A },
+    /* Type 25: GreyLord — side + attack bitmaps. */
+    { 144, 795, 0x2A, 0x00, 0x78AA },
+    /* Type 26: LordChaosRedDragon — side + attack bitmaps. */
+    { 114, 807, 0x2A, 0x00, 0x78AA }
 };
 
 /* ── DM1 Creature Viewport Coordinate Sets (G0224) ──
@@ -6539,6 +6585,16 @@ enum {
  * Derived D2/D3 bitmaps start at FirstDerivedBitmapIndex and are ordered:
  *   Front D3, Front D2, Side D3, Side D2, Back D3, Back D2,
  *   Attack D3, Attack D2.
+ *
+ * Creatures do not all have every pose bitmap.  The CREATURE_INFO
+ * GraphicInfo field flags which poses have dedicated bitmaps:
+ *   MASK0x0008_SIDE  — side bitmap present
+ *   MASK0x0010_BACK  — back bitmap present
+ *   MASK0x0020_ATTACK — attack bitmap present
+ * When a flag is clear the original engine draws the FRONT bitmap for
+ * that pose (optionally flipped via the FLIP_* bits).  Without that
+ * fallback the renderer indexes into the next creature's bitmap set or
+ * unrelated graphic slots — a well-known fidelity bug we fix here.
  */
 static unsigned int m11_creature_sprite_for_pose(int creatureType,
                                                  int depthIndex,
@@ -6552,6 +6608,7 @@ static unsigned int m11_creature_sprite_for_pose(int creatureType,
         {6, 7}  /* attack D3/D2 */
     };
     const M11_CreatureAspect* aspect;
+    unsigned int gi;
     int dIdx;
 
     if (creatureType < 0 || creatureType > 26) return 0;
@@ -6559,6 +6616,23 @@ static unsigned int m11_creature_sprite_for_pose(int creatureType,
         pose = M11_CREATURE_POSE_FRONT;
     }
     aspect = &s_creatureAspects[creatureType];
+    gi = (unsigned int)aspect->graphicInfo;
+
+    /* Source-backed fallback: if the creature lacks a dedicated bitmap
+     * for the requested pose, fall back to FRONT.  This matches the
+     * original DM1 engine behavior in F0115_DUNGEONVIEW_DrawObjects-
+     * CreaturesProjectilesExplosions_CPSEF. */
+    if (pose == M11_CREATURE_POSE_SIDE &&
+        !(gi & M11_CREATURE_GI_MASK_SIDE)) {
+        pose = M11_CREATURE_POSE_FRONT;
+    } else if (pose == M11_CREATURE_POSE_BACK &&
+               !(gi & M11_CREATURE_GI_MASK_BACK)) {
+        pose = M11_CREATURE_POSE_FRONT;
+    } else if (pose == M11_CREATURE_POSE_ATTACK &&
+               !(gi & M11_CREATURE_GI_MASK_ATTACK)) {
+        pose = M11_CREATURE_POSE_FRONT;
+    }
+
     if (depthIndex <= 0) {
         return kFirstNativeCreatureGraphic +
                (unsigned int)aspect->firstNativeBitmapRelativeIndex +
@@ -6590,6 +6664,61 @@ static int m11_creature_pose_mirror(int relFacing, int pose) {
     if (pose == M11_CREATURE_POSE_SIDE) {
         return (relFacing & 3) == 1;
     }
+    return 0;
+}
+
+/* Source-backed mirror selection.  When a pose falls back to FRONT
+ * because the creature lacks a dedicated bitmap, the original engine
+ * consults MASK0x0004_FLIP_NON_ATTACK / MASK0x0200_FLIP_ATTACK to decide
+ * whether to mirror the front bitmap.  relFacing==1 means the creature
+ * is facing the party from its right — the engine flips for that case
+ * when the corresponding flag is set.  See ReDMCSB DUNGEON.C
+ * F0178_GROUP_GetCreatureAspect / F0115 orientation logic. */
+static int m11_creature_pose_mirror_with_info(int creatureType,
+                                              int relFacing,
+                                              int pose,
+                                              int attacking) {
+    unsigned int gi;
+    if (creatureType < 0 || creatureType > 26) {
+        return m11_creature_pose_mirror(relFacing, pose);
+    }
+    gi = (unsigned int)s_creatureAspects[creatureType].graphicInfo;
+
+    if (pose == M11_CREATURE_POSE_SIDE) {
+        if (gi & M11_CREATURE_GI_MASK_SIDE) {
+            /* Dedicated side bitmap: mirror when creature is facing
+             * from the party's right. */
+            return (relFacing & 3) == 1;
+        }
+        /* Side fell back to front.  Use FLIP_NON_ATTACK to decide. */
+        if (gi & M11_CREATURE_GI_MASK_FLIP_NON_ATTACK) {
+            return (relFacing & 3) == 1;
+        }
+        return 0;
+    }
+
+    if (pose == M11_CREATURE_POSE_BACK) {
+        /* Back never mirrors in the original; if fell back to front via
+         * MASK0x0010_BACK clear, still do not mirror. */
+        return 0;
+    }
+
+    if (pose == M11_CREATURE_POSE_ATTACK) {
+        if (gi & M11_CREATURE_GI_MASK_ATTACK) {
+            /* Dedicated attack bitmap: honor FLIP_ATTACK on that bitmap. */
+            if ((gi & M11_CREATURE_GI_MASK_FLIP_ATTACK) &&
+                !(gi & M11_CREATURE_GI_MASK_FLIP_DURING_ATTACK)) {
+                return (relFacing & 3) == 1;
+            }
+            return 0;
+        }
+        /* Attack fell back to front. */
+        if (attacking && (gi & M11_CREATURE_GI_MASK_FLIP_ATTACK)) {
+            return (relFacing & 3) == 1;
+        }
+        return 0;
+    }
+
     return 0;
 }
 
@@ -6672,8 +6801,13 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
 
     /* Mirror only when the original pose needs it.
      * Side pose orientation comes from creature direction relative to the
-     * party, not from which pane the creature happens to occupy. */
-    useMirror = m11_creature_pose_mirror(relFacing, pose);
+     * party, not from which pane the creature happens to occupy.
+     * When the pose fell back to FRONT because no dedicated bitmap
+     * exists, the GraphicInfo FLIP_NON_ATTACK/FLIP_ATTACK flags decide
+     * whether the front bitmap should be mirrored for this view. */
+    useMirror = m11_creature_pose_mirror_with_info(creatureType,
+                                                   relFacing, pose,
+                                                   useAttackPose);
 
     /* Scale to fit within the face rect while preserving aspect ratio.
      * DM1 perspective fidelity: side-cell creatures are drawn smaller
@@ -9767,9 +9901,46 @@ unsigned int M11_GameView_GetCreatureSpriteForView(int creatureType,
     int relFacing = m11_creature_relative_facing(creatureDir, partyDir);
     int pose = m11_creature_pose_for_view(relFacing, attacking);
     if (outMirror) {
-        *outMirror = m11_creature_pose_mirror(relFacing, pose);
+        *outMirror = m11_creature_pose_mirror_with_info(creatureType,
+                                                        relFacing, pose,
+                                                        attacking);
     }
     return m11_creature_sprite_for_pose(creatureType, depthIndex, pose);
+}
+
+unsigned int M11_GameView_GetCreatureGraphicInfo(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0u;
+    return (unsigned int)s_creatureAspects[creatureType].graphicInfo;
+}
+
+int M11_GameView_CreatureHasSideBitmap(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_SIDE) ? 1 : 0;
+}
+
+int M11_GameView_CreatureHasBackBitmap(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_BACK) ? 1 : 0;
+}
+
+int M11_GameView_CreatureHasAttackBitmap(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_ATTACK) ? 1 : 0;
+}
+
+int M11_GameView_CreatureHasFlipNonAttack(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_FLIP_NON_ATTACK) ? 1 : 0;
+}
+
+int M11_GameView_CreatureHasFlipAttack(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return (s_creatureAspects[creatureType].graphicInfo
+            & M11_CREATURE_GI_MASK_FLIP_ATTACK) ? 1 : 0;
 }
 
 int M11_GameView_GetCreatureReplacementColors(int creatureType,

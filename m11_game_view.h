@@ -381,6 +381,23 @@ int M11_GameView_GetCreatureReplacementColors(int creatureType,
                                                int* outReplDst9,
                                                int* outReplDst10);
 
+/* Return the CREATURE_INFO GraphicInfo bitfield for a creature type.
+ * Values are extracted verbatim from ReDMCSB
+ * G0243_as_Graphic559_CreatureInfo[].GraphicInfo (DM1 PC v3.4).
+ * Returns 0 for invalid creature types.
+ * See m11_game_view.c for M11_CREATURE_GI_MASK_* bit definitions. */
+unsigned int M11_GameView_GetCreatureGraphicInfo(int creatureType);
+
+/* Boolean queries on the source-backed GraphicInfo table.  These mirror
+ * the DEFS.H flags that control whether dedicated side/back/attack
+ * bitmaps exist and whether the FRONT bitmap should be mirrored when
+ * falling back. */
+int M11_GameView_CreatureHasSideBitmap(int creatureType);
+int M11_GameView_CreatureHasBackBitmap(int creatureType);
+int M11_GameView_CreatureHasAttackBitmap(int creatureType);
+int M11_GameView_CreatureHasFlipNonAttack(int creatureType);
+int M11_GameView_CreatureHasFlipAttack(int creatureType);
+
 /* Return the floor ornament ordinal for a viewport cell position.
  * relForward/relSide are relative to party position/facing. */
 int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,
