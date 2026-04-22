@@ -38,6 +38,14 @@ enum {
 
 static int m12_cycle_index(int value, int delta, int count);
 static int m12_clamp_index(int value, int count);
+static int m12_game_slot_from_id(const char* gameId);
+static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex);
+static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex);
+static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
+                                                                 int gameIndex);
+static const char* m12_selected_version_label(const M12_StartupMenuState* state,
+                                              int gameIndex,
+                                              int shortLabel);
 static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
@@ -71,6 +79,7 @@ static void m12_init_game_options(M12_GameOptions* opts) {
     if (!opts) {
         return;
     }
+    opts->versionIndex = 0;
     opts->usePatch = 0;
     opts->languageIndex = 0;
     opts->cheatsEnabled = 0;
@@ -88,6 +97,8 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
         return;
     }
     switch (row) {
+        case M12_GAME_OPT_ROW_VERSION:
+            break;
         case M12_GAME_OPT_ROW_PATCH:
             opts->usePatch = m12_cycle_index(opts->usePatch, delta, 2);
             break;
@@ -131,6 +142,9 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
 static void m12_clamp_game_options(M12_GameOptions* opts) {
     if (!opts) {
         return;
+    }
+    if (opts->versionIndex < 0) {
+        opts->versionIndex = 0;
     }
     opts->usePatch = m12_clamp_index(opts->usePatch, 2);
     opts->languageIndex = m12_clamp_index(opts->languageIndex,
@@ -691,6 +705,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         M12_GameOptions opts = state->gameOptions[gi];
         m12_clamp_game_options(&opts);
+        config.gameVersionIndex[gi] = opts.versionIndex;
         config.gameUsePatch[gi] = opts.usePatch;
         config.gameLanguageIndex[gi] = opts.languageIndex;
         config.gameCheatsEnabled[gi] = opts.cheatsEnabled;
@@ -718,6 +733,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.windowModeIndex = m12_clamp_index(config.windowModeIndex,
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        state->gameOptions[gi].versionIndex = config.gameVersionIndex[gi];
         state->gameOptions[gi].usePatch = config.gameUsePatch[gi];
         state->gameOptions[gi].languageIndex = config.gameLanguageIndex[gi];
         state->gameOptions[gi].cheatsEnabled = config.gameCheatsEnabled[gi];
@@ -727,6 +743,9 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
         m12_clamp_game_options(&state->gameOptions[gi]);
     }
     M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        m12_normalize_game_version_index(state, gi);
+    }
 }
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
@@ -781,6 +800,64 @@ static const char* m12_settings_value_window_mode(const M12_StartupMenuState* st
     return m12_tr(state, g_windowModes[state->settings.windowModeIndex]);
 }
 
+static int m12_game_slot_from_id(const char* gameId) {
+    if (!gameId) {
+        return -1;
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return 0;
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return 1;
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return 2;
+    }
+    return -1;
+}
+
+static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2"};
+    if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
+        return 1;
+    }
+    {
+        size_t count = M12_AssetStatus_GetVersionCount(gameIds[gameIndex]);
+        return count > 0U ? (int)count : 1;
+    }
+}
+
+static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex) {
+    int count;
+    if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
+        return;
+    }
+    count = m12_game_version_count(state, gameIndex);
+    state->gameOptions[gameIndex].versionIndex = m12_clamp_index(state->gameOptions[gameIndex].versionIndex,
+                                                                 count);
+}
+
+static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
+                                                                 int gameIndex) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2"};
+    if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
+        return NULL;
+    }
+    return M12_AssetStatus_GetVersion(&state->assetStatus,
+                                      gameIds[gameIndex],
+                                      (size_t)state->gameOptions[gameIndex].versionIndex);
+}
+
+static const char* m12_selected_version_label(const M12_StartupMenuState* state,
+                                              int gameIndex,
+                                              int shortLabel) {
+    const M12_AssetVersionStatus* version = m12_selected_version_status(state, gameIndex);
+    if (!version) {
+        return "UNKNOWN";
+    }
+    return shortLabel ? version->shortLabel : version->label;
+}
+
 static void m12_activate_selected(M12_StartupMenuState* state) {
     const M12_MenuEntry* entry;
     if (!state) {
@@ -798,6 +875,7 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     if (entry->available) {
         int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
         int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+        m12_normalize_game_version_index(state, gi);
         m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
         state->view = M12_MENU_VIEW_GAME_OPTIONS;
         state->gameOptSelectedRow = 0;
@@ -871,6 +949,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
         int gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
         int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+        int versionCount = m12_game_version_count(state, gi);
         switch (input) {
             case M12_MENU_INPUT_UP:
                 state->gameOptSelectedRow = m12_cycle_index(
@@ -886,15 +965,27 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 break;
             case M12_MENU_INPUT_LEFT:
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
-                    m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
-                                       state->gameOptSelectedRow, -1, pmode);
+                    if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
+                        state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
+                                                                              -1,
+                                                                              versionCount);
+                    } else {
+                        m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
+                                           state->gameOptSelectedRow, -1, pmode);
+                    }
                     m12_save_config(state);
                 }
                 break;
             case M12_MENU_INPUT_RIGHT:
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
-                    m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
-                                       state->gameOptSelectedRow, 1, pmode);
+                    if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
+                        state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
+                                                                              1,
+                                                                              versionCount);
+                    } else {
+                        m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
+                                           state->gameOptSelectedRow, 1, pmode);
+                    }
                     m12_save_config(state);
                 }
                 break;
@@ -906,6 +997,12 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
                         state->messageLine2 = m12_tr(state, "COMING SOON");
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    } else if (!m12_selected_version_status(state, gi) ||
+                               !m12_selected_version_status(state, gi)->matched) {
+                        state->view = M12_MENU_VIEW_MESSAGE;
+                        state->messageLine1 = m12_tr(state, "SELECTED VERSION NOT FOUND");
+                        state->messageLine2 = m12_selected_version_label(state, gi, 0);
+                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else {
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
@@ -913,8 +1010,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     }
                 } else {
-                    m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
-                                       state->gameOptSelectedRow, 1, pmode);
+                    if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
+                        state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
+                                                                              1,
+                                                                              versionCount);
+                    } else {
+                        m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
+                                           state->gameOptSelectedRow, 1, pmode);
+                    }
                     m12_save_config(state);
                 }
                 break;
@@ -1479,39 +1582,55 @@ static const char* m12_game_card_line1(const M12_MenuEntry* entry) {
     return "GAME";
 }
 
-static const char* m12_game_card_line2(const M12_MenuEntry* entry) {
-    if (!entry) {
+static const char* m12_game_card_line2(const M12_StartupMenuState* state,
+                                       const M12_MenuEntry* entry,
+                                       int gameIndex) {
+    if (!entry || !state) {
         return "PERSISTED";
     }
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         return "PERSISTED";
     }
-    if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
-        return "LEGACY EDITION";
-    }
-    if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
-        return "CHAOS CAMPAIGN";
-    }
-    if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
-        return "SKULLKEEP ERA";
-    }
-    return "READY";
+    return m12_selected_version_label(state, gameIndex, 1);
 }
 
-static const char* m12_game_card_line3(const M12_MenuEntry* entry) {
-    if (!entry) {
+static const char* m12_game_card_line3(const M12_StartupMenuState* state,
+                                       const M12_MenuEntry* entry,
+                                       int gameIndex) {
+    const M12_AssetVersionStatus* version;
+    if (!entry || !state) {
         return "SETTINGS";
     }
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         return "SETTINGS";
     }
-    if (entry->available) {
+    version = m12_selected_version_status(state, gameIndex);
+    if (version && version->matched) {
         return "READY TO LAUNCH";
     }
-    if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
-        return "ASSETS MISSING";
+    return "MISSING OR MISMATCHED";
+}
+
+static void m12_draw_status_icon(unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight,
+                                 int x,
+                                 int y,
+                                 int matched) {
+    unsigned char color = matched ? M12_COLOR_LIGHT_GREEN : M12_COLOR_LIGHT_RED;
+    if (matched) {
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 1, y + 4, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 4, y + 7, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 7, y + 2, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 10, y - 1, 3, 3, color);
+    } else {
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 1, y + 1, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 4, y + 4, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 7, y + 7, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 7, y + 1, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 4, y + 4, 3, 3, color);
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 1, y + 7, 3, 3, color);
     }
-    return "HASH COVERAGE PENDING";
 }
 
 static void m12_format_hash_summary(const M12_MenuEntry* entry,
@@ -1541,9 +1660,11 @@ static void m12_format_hash_summary(const M12_MenuEntry* entry,
     }
     snprintf(out,
              outSize,
-             "%lu KNOWN MD5%s",
+             "%lu VERSION%s / %lu FILE%s",
              hashCount,
-             hashCount == 1UL ? "" : "S");
+             hashCount == 1UL ? "" : "S",
+             requiredFiles,
+             requiredFiles == 1UL ? "" : "S");
 }
 
 static void m12_draw_box_motif(unsigned char* framebuffer,
@@ -1634,6 +1755,7 @@ static void m12_draw_box_art(const M12_StartupMenuState* state,
     unsigned char accent = entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED;
     unsigned char statusFill = m12_entry_status_fill(entry, 0);
     unsigned char statusText = m12_entry_status_text_color(entry, 0);
+    int gameIndex = m12_game_slot_from_id(entry ? entry->gameId : NULL);
     char hashSummary[64];
 
     m12_format_hash_summary(entry, hashSummary, sizeof(hashSummary));
@@ -1709,7 +1831,7 @@ static void m12_draw_box_art(const M12_StartupMenuState* state,
                            framebufferWidth,
                            framebufferHeight,
                            151,
-                           m12_game_card_line2(entry),
+                           m12_game_card_line2(state, entry, gameIndex),
                            &g_textSmallShadow);
     m12_draw_status_chip(framebuffer,
                          framebufferWidth,
@@ -1723,8 +1845,22 @@ static void m12_draw_box_art(const M12_StartupMenuState* state,
                            framebufferWidth,
                            framebufferHeight,
                            164,
-                           m12_game_card_line3(entry),
-                           entry && entry->available ? &g_textSmallAccent : &g_textSmallMuted);
+                           m12_game_card_line3(state, entry, gameIndex),
+                           entry && gameIndex >= 0 && m12_selected_version_status(state, gameIndex) &&
+                               m12_selected_version_status(state, gameIndex)->matched
+                               ? &g_textSmallAccent
+                               : &g_textSmallMuted);
+    if (gameIndex >= 0) {
+        const M12_AssetVersionStatus* version = m12_selected_version_status(state, gameIndex);
+        if (version) {
+            m12_draw_status_icon(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 88,
+                                 146,
+                                 version->matched);
+        }
+    }
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
@@ -2423,7 +2559,7 @@ static const char* m12_entry_detail_line(const M12_MenuEntry* entry) {
     return "KNOWN SLOT, HASH COVERAGE STILL GROWING";
 }
 
-static void m12_draw_modern_sidebar(const M12_StartupMenuState* unusedState,
+static void m12_draw_modern_sidebar(const M12_StartupMenuState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight,
@@ -2439,8 +2575,8 @@ static void m12_draw_modern_sidebar(const M12_StartupMenuState* unusedState,
                              ? M12_COLOR_DARK_GRAY
                              : m12_game_card_fill(entry ? entry->gameId : NULL);
     unsigned char accent = entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED;
+    int gameIndex = m12_game_slot_from_id(entry ? entry->gameId : NULL);
     char hashSummary[64];
-    (void)unusedState;
     m12_format_hash_summary(entry, hashSummary, sizeof(hashSummary));
     m12_draw_frame(framebuffer,
                    framebufferWidth,
@@ -2490,15 +2626,29 @@ static void m12_draw_modern_sidebar(const M12_StartupMenuState* unusedState,
                   framebufferHeight,
                   x + 10,
                   y + h / 2 + 18,
-                  entry ? m12_game_card_line2(entry) : "NO PROFILE",
+                  entry ? m12_game_card_line2(state, entry, gameIndex) : "NO PROFILE",
                   &g_textSmallShadow);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   x + 10,
                   y + h / 2 + 31,
-                  entry ? m12_game_card_line3(entry) : "",
-                  entry && entry->available ? &g_textSmallAccent : &g_textSmallMuted);
+                  entry ? m12_game_card_line3(state, entry, gameIndex) : "",
+                  entry && gameIndex >= 0 && m12_selected_version_status(state, gameIndex) &&
+                      m12_selected_version_status(state, gameIndex)->matched
+                      ? &g_textSmallAccent
+                      : &g_textSmallMuted);
+    if (gameIndex >= 0) {
+        const M12_AssetVersionStatus* version = m12_selected_version_status(state, gameIndex);
+        if (version) {
+            m12_draw_status_icon(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 x + w - 24,
+                                 y + h / 2 + 20,
+                                 version->matched);
+        }
+    }
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
@@ -3081,6 +3231,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     int pmode;
     int aspectLocked;
     int resLocked;
+    const M12_AssetVersionStatus* version;
     unsigned char gameFill;
     if (margin < 12) {
         margin = 12;
@@ -3097,6 +3248,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
     aspectLocked = M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, pmode);
     resLocked = M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, pmode);
+    version = m12_selected_version_status(state, gi);
 
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
     m12_draw_modern_hero(state,
@@ -3137,7 +3289,7 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   contentY + (framebufferHeight - contentY - 28) / 2 + 16,
                   entry ? entry->title : "UNKNOWN",
                   &g_textSmallShadow);
-    if (entry && entry->available) {
+    if (entry && version && version->matched) {
         m12_draw_text(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
@@ -3173,6 +3325,27 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   m12_tr(state, g_presentationModes[pmode]),
                   pmode == M12_PRESENTATION_V3_MODERN_3D ? &g_textSmallMuted : &g_textSmallShadow);
     rowY = contentY + 38;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
+                          m12_tr(state, "VERSION"),
+                          version ? m12_tr(state, version->shortLabel) : "UNKNOWN",
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION,
+                          0,
+                          0,
+                          0);
+    if (version) {
+        m12_draw_status_icon(framebuffer,
+                             framebufferWidth,
+                             framebufferHeight,
+                             panelX + panelW - 132,
+                             rowY + 8,
+                             version->matched);
+    }
+    rowY += 32;
     m12_draw_game_opt_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
@@ -3457,6 +3630,7 @@ const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState*
 
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
+    const M12_AssetVersionStatus* version;
     int gi;
     int pmode;
     memset(&intent, 0, sizeof(intent));
@@ -3470,11 +3644,13 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         return intent;
     }
     gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
+    version = m12_selected_version_status(state, gi);
     intent.gameId = state->entries[state->activatedIndex].gameId;
+    intent.versionId = version ? version->versionId : NULL;
     intent.presentationMode = pmode;
     intent.options = state->gameOptions[gi];
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);
-    intent.valid = state->entries[state->activatedIndex].available ? 1 : 0;
+    intent.valid = state->entries[state->activatedIndex].available && version && version->matched ? 1 : 0;
     return intent;
 }

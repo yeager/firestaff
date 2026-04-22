@@ -162,7 +162,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->languageExplicit = 0;
     config->graphicsIndex = 0;
     config->windowModeIndex = 0;
-    FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
+    FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
 
@@ -212,6 +212,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
             gameIndex >= 0 && gameIndex < M12_CONFIG_GAME_COUNT) {
             if (m12_string_equals(field, "use_patch")) {
                 config->gameUsePatch[gameIndex] = m12_parse_int(value, config->gameUsePatch[gameIndex]);
+                return;
+            }
+            if (m12_string_equals(field, "version_index")) {
+                config->gameVersionIndex[gameIndex] = m12_parse_int(value, config->gameVersionIndex[gameIndex]);
                 return;
             }
             if (m12_string_equals(field, "language_index")) {
@@ -269,6 +273,7 @@ int M12_Config_Save(const M12_Config* config) {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
             fprintf(fp, "game_%d_use_patch = %d\n", gi, config->gameUsePatch[gi]);
+            fprintf(fp, "game_%d_version_index = %d\n", gi, config->gameVersionIndex[gi]);
             fprintf(fp, "game_%d_language_index = %d\n", gi, config->gameLanguageIndex[gi]);
             fprintf(fp, "game_%d_cheats_enabled = %d\n", gi, config->gameCheatsEnabled[gi]);
             fprintf(fp, "game_%d_speed = %d\n", gi, config->gameSpeed[gi]);

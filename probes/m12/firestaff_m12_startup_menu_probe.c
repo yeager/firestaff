@@ -71,6 +71,20 @@ static void remove_if_present(const char* path) {
     }
 }
 
+static void force_dm1_version_ready(M12_StartupMenuState* state, size_t versionIndex) {
+    M12_AssetVersionStatus* version;
+    if (!state || versionIndex >= M12_AssetStatus_GetVersionCount("dm1")) {
+        return;
+    }
+    state->assetStatus.dm1Available = 1;
+    state->entries[0].available = 1;
+    version = &state->assetStatus.versions[0][versionIndex];
+    version->matched = 1;
+    snprintf(version->matchedPath, sizeof(version->matchedPath), "%s", "probe://forced-dm1");
+    snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s", "forced");
+    state->gameOptions[0].versionIndex = (int)versionIndex;
+}
+
 int main(void) {
     unsigned char framebuffer[320 * 200];
     M12_StartupMenuState state;
@@ -140,7 +154,7 @@ int main(void) {
                  state.settings.languageIndex == 1 &&
                      state.languageExplicit == 0 &&
                      state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "ENDAST VALIDERINGSSTOMME") == 0 &&
+                     strcmp(state.messageLine1, "SPELDATA HITTADES INTE") == 0 &&
                      file_contains(configPath, "language_explicit = 0"),
                  "system Swedish auto-selects the startup-menu language when no explicit override exists");
 
@@ -160,9 +174,10 @@ int main(void) {
                      state.shouldExit == 0 &&
                      M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
                      M12_CardArt_HasExternalFile(&state.cardArt[0]) == 0 &&
+                     strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataDir) == 0 &&
                      state.entries[1].available == 0 &&
                      state.entries[2].available == 0,
-                 "startup state loads defaults, writes config, seeds built-in card art, MD5-based detection applies");
+                 "startup state loads defaults, writes config, seeds built-in card art, and points the validator at the requested originals directory");
 
     make_file_with_text(cardPath, "future art slot");
     M12_StartupMenu_InitWithDataDir(&state, dataDir);
@@ -181,15 +196,18 @@ int main(void) {
     M12_AssetStatus_Scan(&state.assetStatus, dataDir);
     probe_record(&tally,
                  "INV_M12_03",
-                 state.assetStatus.dm1Available == 1 &&
+                 state.assetStatus.dm1Available == 0 &&
                      state.assetStatus.csbAvailable == 0 &&
                      state.assetStatus.dm2Available == 0 &&
                      M12_AssetStatus_GameHasCompleteHashSet("dm1") == 1 &&
-                     M12_AssetStatus_GameHasCompleteHashSet("csb") == 0 &&
-                     M12_AssetStatus_GameHasCompleteHashSet("dm2") == 0 &&
-                     M12_AssetStatus_GameKnownHashCount("csb") == 8U &&
-                     M12_AssetStatus_GameKnownHashCount("dm2") == 19U,
-                 "asset scan uses MD5 matches and exposes expanded graphics checksum coverage");
+                     M12_AssetStatus_GameHasCompleteHashSet("csb") == 1 &&
+                     M12_AssetStatus_GameHasCompleteHashSet("dm2") == 1 &&
+                     M12_AssetStatus_GameKnownHashCount("dm1") == 3U &&
+                     M12_AssetStatus_GameKnownHashCount("csb") == 3U &&
+                     M12_AssetStatus_GameKnownHashCount("dm2") == 3U,
+                 "asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable");
+
+    force_dm1_version_ready(&state, 0U);
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     probe_record(&tally,
@@ -212,12 +230,14 @@ int main(void) {
 
     probe_record(&tally,
                  "INV_M12_06B",
+                 state.gameOptions[0].versionIndex == 0 &&
                  state.gameOptions[0].languageIndex == 0 &&
-                 state.gameOptions[0].cheatsEnabled == 0 &&
+                     state.gameOptions[0].cheatsEnabled == 0 &&
                      state.gameOptions[0].gameSpeed == 1 &&
                      M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 0,
-                 "game options default to English, cheats off, speed normal, hotkeys disabled");
+                 "game options default to the first supported version, English, cheats off, speed normal, and hotkeys disabled");
 
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* patch row */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* language row */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT); /* EN -> SV */
     probe_record(&tally,
@@ -229,7 +249,7 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_LEFT); /* SV -> EN */
 
     /* Enable cheats and verify speed hotkeys unlock.
-     * Cursor is on LANGUAGE row (1) after INV_M12_06B2. One DOWN reaches CHEATS (2). */
+     * Cursor is on LANGUAGE row after INV_M12_06B2. One DOWN reaches CHEATS. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* cheats row */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* toggle on */
     probe_record(&tally,
@@ -257,7 +277,7 @@ int main(void) {
                  "disabling cheats resets speed to normal and disables hotkeys");
 
     /* Navigate to launch and press accept.
-     * Cursor is on CHEATS (2) after INV_M12_06E. Navigate: speed(3), aspect(4), res(5), launch(6). */
+     * Cursor is on CHEATS after INV_M12_06E. Navigate: speed, aspect, res, launch. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* speed */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* aspect */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* resolution */
@@ -280,8 +300,8 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_08",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "VALIDATOR SCAFFOLD ONLY") == 0,
-                 "enter on scaffold-only entry explains missing verified hashes");
+                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0,
+                 "enter on an unmatched entry explains that the selected version files were not found");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
@@ -309,6 +329,8 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* csb */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm1 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* open DM1 options */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);  /* version: 0 -> 1 */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* patch */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* patch: ORIGINAL -> PATCHED */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* language */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* EN -> SV */
@@ -330,26 +352,30 @@ int main(void) {
                      reloaded.languageExplicit == 1 &&
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.windowModeIndex == 1 &&
+                     reloaded.gameOptions[0].versionIndex == 1 &&
                      reloaded.gameOptions[0].usePatch == 1 &&
                      reloaded.gameOptions[0].languageIndex == 1 &&
                      reloaded.gameOptions[0].cheatsEnabled == 1 &&
                      reloaded.gameOptions[0].gameSpeed == 2 &&
                      reloaded.gameOptions[0].aspectRatio == 1 &&
                      reloaded.gameOptions[0].resolution == 1 &&
+                     reloaded.gameOptions[1].versionIndex == 0 &&
                      reloaded.gameOptions[1].usePatch == 0 &&
                      reloaded.gameOptions[1].languageIndex == 0 &&
                      reloaded.gameOptions[1].cheatsEnabled == 0 &&
                      reloaded.gameOptions[1].gameSpeed == 1 &&
+                     reloaded.gameOptions[2].versionIndex == 0 &&
                      reloaded.gameOptions[2].usePatch == 0 &&
                      reloaded.gameOptions[2].languageIndex == 0 &&
                      reloaded.gameOptions[2].cheatsEnabled == 0 &&
                      reloaded.gameOptions[2].gameSpeed == 1 &&
                      M12_StartupMenu_GetRenderPaletteLevel(&reloaded) == 1 &&
                      file_contains(configPath, "language_explicit = 1") &&
+                     file_contains(configPath, "game_0_version_index = 1") &&
                      file_contains(configPath, "game_0_language_index = 1") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game options persist across reloads without cross-game bleed, including presentation mode and per-game language");
+                 "settings and per-game version selection persist across reloads without cross-game bleed, including presentation mode and per-game language");
 
     remove_if_present(configPath);
     unsetenv("LC_ALL");
@@ -363,7 +389,7 @@ int main(void) {
                  state.settings.languageIndex == 2 &&
                      state.languageExplicit == 0 &&
                      state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "VALIDATEUR SEULEMENT") == 0,
+                     strcmp(state.messageLine1, "DONNEES DE JEU INTROUVABLES") == 0,
                  "system French auto-selects the startup-menu language and loads the runtime French catalog");
 
     remove_if_present(configPath);
@@ -375,7 +401,7 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_11C",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "VALIDATOR SCAFFOLD ONLY") == 0,
+                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0,
                  "missing runtime catalog falls back to English for startup-menu strings");
 
     remove_if_present(configPath);
@@ -467,6 +493,7 @@ int main(void) {
 
         /* V1 mode: aspect and resolution locked to original */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         /* Select DM1 (available) and open game options */
         modeState.selectedIndex = 0;
@@ -506,6 +533,7 @@ int main(void) {
 
         /* V2 mode: aspect and resolution cycle freely */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
@@ -521,6 +549,7 @@ int main(void) {
 
         /* Launch intent for V1 */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
@@ -530,12 +559,14 @@ int main(void) {
                      intent.valid == 1 &&
                          intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
                          strcmp(intent.gameId, "dm1") == 0 &&
+                         strcmp(intent.versionId, "pc34-en") == 0 &&
                          intent.options.aspectRatio == M12_ASPECT_ORIGINAL &&
                          intent.options.resolution == M12_RES_320x200,
-                     "V1 launch intent carries correct mode and constrained options");
+                     "V1 launch intent carries the selected version, correct mode, and constrained options");
 
         /* Launch intent for V2 with explicit resolution set */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
         /* Reset DM1 resolution to 0 so we can verify cycling works */
         modeState.gameOptions[0].resolution = M12_RES_320x200;
@@ -549,11 +580,13 @@ int main(void) {
                      intent.valid == 1 &&
                          intent.presentationMode == M12_PRESENTATION_V2_ENHANCED_2D &&
                          strcmp(intent.gameId, "dm1") == 0 &&
+                         strcmp(intent.versionId, "pc34-en") == 0 &&
                          intent.options.resolution == M12_RES_640x400,
-                     "V2 launch intent carries enhanced resolution options");
+                     "V2 launch intent carries the selected version and enhanced resolution options");
 
         /* V3 launch intent is invalid (coming soon) */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V3_MODERN_3D;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);

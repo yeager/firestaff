@@ -15,6 +15,7 @@
 #include <sys/types.h>
 
 #if defined(_WIN32)
+#include <windows.h>
 #include <direct.h>
 #define FSP_SEP '\\'
 #define FSP_ALT_SEP '/'
@@ -271,6 +272,39 @@ int FSP_GetUserConfigDir(char* out, size_t outSize) {
 
     fsp_copy(out, outSize, ".");
     return 1;
+}
+
+int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
+    int rc;
+    if (!out || outSize == 0U) {
+        return 0;
+    }
+
+#if defined(_WIN32)
+    {
+        char modulePath[FSP_PATH_MAX];
+        DWORD len = GetModuleFileNameA(NULL, modulePath, (DWORD)sizeof(modulePath));
+        if (len > 0U && len < (DWORD)sizeof(modulePath)) {
+            char installDir[FSP_PATH_MAX];
+            FSP_NormalizeSeparators(modulePath);
+            if (FSP_ParentDir(installDir, sizeof(installDir), modulePath)) {
+                return FSP_JoinPath(out, outSize, installDir, "originals");
+            }
+        }
+    }
+    fsp_copy(out, outSize, ".\\originals");
+    return 1;
+#else
+    {
+        const char* home = getenv("HOME");
+        if (home && home[0] != '\0') {
+            rc = snprintf(out, outSize, "%s/.firestaff/originals", home);
+            return rc > 0 && (size_t)rc < outSize;
+        }
+    }
+    fsp_copy(out, outSize, "./originals");
+    return 1;
+#endif
 }
 
 int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {

@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
+
+#define M12_SEARCH_ROOT_COUNT 3
 
 typedef struct {
     uint32_t state[4];
@@ -16,119 +17,64 @@ typedef struct {
 
 typedef struct {
     const char* gameId;
+    const char* versionId;
     const char* label;
+    const char* shortLabel;
     const char* const* names;
-    const char* const* md5List;
-} M12_AssetFileSpec;
+    const char* md5;
+} M12_VersionSpec;
 
 typedef struct {
     const char* gameId;
-    const M12_AssetFileSpec* files;
-    size_t fileCount;
-} M12_GameSpec;
+    const M12_VersionSpec* versions;
+    size_t versionCount;
+} M12_GameVersionSpec;
 
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
-static const char* const g_dm1DungeonNames[] = {"DUNGEON.DAT", NULL};
 static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
-static const char* const g_csbDungeonNames[] = {"CSB.DAT", "CSB_DUNGEON.DAT", NULL};
 static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
-static const char* const g_dm2DungeonNames[] = {"DM2DUNGEON.DAT", "SKULLKEEP.DAT", NULL};
 
-/*
- * Seeded from Daniel's 2026-04-20 checksum mail and normalized in
- * asset_validator_checksums_m12.json. We wire the reliable GRAPHICS.DAT hashes
- * directly into the runtime validator here, while keeping the broader mail dump
- * as reference data for future file-by-file expansion.
- */
-static const char* const g_dm1GraphicsHashes[] = {
-    "0679e39da9dcc2e855cb33c6c64ddcb5",
-    "444bcb3a3fcf8389296c49467f27e1d6",
-    "0d7af44dd14f383464288abdcec76afc",
-    "2bdc5f431f84c0ece738f54dbd787c3b",
-    "3e3b9b1800c67b4ce850e087813c325d",
-    "491ca939f9abb33ceeb26619b841fe91",
-    "5095a13692702235d2e74f6b2b1367a9",
-    "6a2f135b53c2220f0251fa103e2a6e7e",
-    "7eee396993745e8af212f44d75ff6c1a",
-    "7f9458e4a3972d06e649a6fa85a7f34b",
-    "9ce2eaf7a9e78620e3f17594437caffa",
-    "b35931b55db649a1bd2d415b61b29801",
-    "b3cfd84e44cdf07ce2eeba47e87f772b",
-    "c10c512f63461ebe79b5ac365115b61b",
-    "dd373954b3fb127db7387946131ea322",
-    "eaec2131541573658da99c13865c2e67",
-    "edf47d7da5de8184604d6d80477ef01f",
-    "f934d97e43e1ba6e5159839acbcd0611",
-    "fa6b1aa29e191418713bf2cda93d962e",
-    "fe08a97c64766614b71164fa06eda545",
-    NULL
-};
-static const char* const g_dm1DungeonHashes[] = {
-    "766450c940651fc021c92fe5d0d0b3a6",
-    "444bcb3a3fcf8389296c49467f27e1d6",
-    NULL
+static const M12_VersionSpec g_dm1Versions[] = {
+    {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e"},
+    {"dm1", "pc34-multi", "PC 3.4 Multilanguage", "PC 3.4 ML", g_dm1GraphicsNames, "f934d97e43e1ba6e5159839acbcd0611"},
+    {"dm1", "st12-en", "Atari ST 1.2 English", "ST 1.2 EN", g_dm1GraphicsNames, "9ce2eaf7a9e78620e3f17594437caffa"}
 };
 
-/*
- * The broader mail dump includes utility-disk sidecars and a few human-format
- * artifacts, so for runtime matching we currently hook in the reliable
- * GRAPHICS.DAT hashes and keep dungeon-file hashes explicit but still empty
- * until they are curated with the same level of confidence.
- */
-static const char* const g_csbGraphicsHashes[] = {
-    "21197b1d4994fd835c403d5a33dcac2b",
-    "291e1bc6803e3dc4b974c60117ca5d68",
-    "405b757038eea3c263e60f240854d6de",
-    "61fbfd56887c94adc26888a9491c6611",
-    "761d6fc588b31aeaaa9caf3725e111b9",
-    "8fe59d4f2af5b57a4cb14447c011d3f1",
-    "cefaddfdf5651df2c91f61b5611a8362",
-    "ebf6a57af3f27782e358c0490bfd2f2e",
-    NULL
-};
-static const char* const g_csbDungeonHashes[] = {NULL};
-static const char* const g_dm2GraphicsHashes[] = {
-    "027ff3b8ddc2c4c4cdda7ada0b0bc46c",
-    "0a63e22cd83fe3c90aacffda5c0f062c",
-    "1c940ea95703eaea0ecdf84d17e954b9",
-    "25247ede4dabb6a71e5dabdfbcd5907d",
-    "283d5456c4f676609489e200219605bb",
-    "43cf7e8579e83e9f1fa9b411695842fd",
-    "4bf28b3d84e6799d7686c6aaf96cbf23",
-    "5cab25f6b975957eae4a203174e7f2a6",
-    "9a6aa706ae9bed5ddd68ffd730524476",
-    "a0277195099b2ace51d4e085f7eef835",
-    "a31023db49d5d85e469c9323671812c7",
-    "a654ba19e9a6919f46818ecd23d7ea9d",
-    "a669adf2a6ff887e0d451d93c846f57f",
-    "a80c555a858ef7770e1d7f3d2e37fec3",
-    "b4d733576ea60c41737f79f212faf528",
-    "bd2d316eb77c6d6d217bfb76bd0d7e41",
-    "dbced13a38d3036f42b9797175b7ec88",
-    "e52ab5e01715042b16a4dcff02052e5d",
-    "f926a7554bdfb5852105179e67b8a264",
-    NULL
-};
-static const char* const g_dm2DungeonHashes[] = {NULL};
-
-static const M12_AssetFileSpec g_dm1Files[] = {
-    {"dm1", "graphics", g_dm1GraphicsNames, g_dm1GraphicsHashes},
-    {"dm1", "dungeon", g_dm1DungeonNames, g_dm1DungeonHashes}
-};
-static const M12_AssetFileSpec g_csbFiles[] = {
-    {"csb", "graphics", g_csbGraphicsNames, g_csbGraphicsHashes},
-    {"csb", "dungeon", g_csbDungeonNames, g_csbDungeonHashes}
-};
-static const M12_AssetFileSpec g_dm2Files[] = {
-    {"dm2", "graphics", g_dm2GraphicsNames, g_dm2GraphicsHashes},
-    {"dm2", "dungeon", g_dm2DungeonNames, g_dm2DungeonHashes}
+static const M12_VersionSpec g_csbVersions[] = {
+    {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e"},
+    {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68"},
+    {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362"}
 };
 
-static const M12_GameSpec g_gameSpecs[] = {
-    {"dm1", g_dm1Files, sizeof(g_dm1Files) / sizeof(g_dm1Files[0])},
-    {"csb", g_csbFiles, sizeof(g_csbFiles) / sizeof(g_csbFiles[0])},
-    {"dm2", g_dm2Files, sizeof(g_dm2Files) / sizeof(g_dm2Files[0])}
+static const M12_VersionSpec g_dm2Versions[] = {
+    {"dm2", "pc-en", "PC English", "PC EN", g_dm2GraphicsNames, "25247ede4dabb6a71e5dabdfbcd5907d"},
+    {"dm2", "pc-fr", "PC French", "PC FR", g_dm2GraphicsNames, "b4d733576ea60c41737f79f212faf528"},
+    {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d"}
 };
+
+static const M12_GameVersionSpec g_games[] = {
+    {"dm1", g_dm1Versions, sizeof(g_dm1Versions) / sizeof(g_dm1Versions[0])},
+    {"csb", g_csbVersions, sizeof(g_csbVersions) / sizeof(g_csbVersions[0])},
+    {"dm2", g_dm2Versions, sizeof(g_dm2Versions) / sizeof(g_dm2Versions[0])}
+};
+
+static int m12_game_index_from_id(const char* gameId) {
+    size_t i;
+    if (!gameId) {
+        return -1;
+    }
+    for (i = 0U; i < sizeof(g_games) / sizeof(g_games[0]); ++i) {
+        if (strcmp(g_games[i].gameId, gameId) == 0) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+static const M12_GameVersionSpec* m12_find_game_spec(const char* gameId) {
+    int index = m12_game_index_from_id(gameId);
+    return index >= 0 ? &g_games[index] : NULL;
+}
 
 static void m12_md5_init(M12_Md5Context* ctx) {
     if (!ctx) {
@@ -257,7 +203,9 @@ static void m12_md5_final(M12_Md5Context* ctx, char outHex[33]) {
     for (i = 0; i < 8U; ++i) {
         length[i] = (unsigned char)((ctx->bitCount >> (8U * i)) & 0xffU);
     }
-    m12_md5_update(ctx, padding, (ctx->bufferSize < 56U) ? (56U - ctx->bufferSize) : (120U - ctx->bufferSize));
+    m12_md5_update(ctx,
+                   padding,
+                   (ctx->bufferSize < 56U) ? (56U - ctx->bufferSize) : (120U - ctx->bufferSize));
     m12_md5_update(ctx, length, sizeof(length));
     for (i = 0; i < 4U; ++i) {
         digest[i * 4U] = (unsigned char)(ctx->state[i] & 0xffU);
@@ -272,8 +220,6 @@ static void m12_md5_final(M12_Md5Context* ctx, char outHex[33]) {
     }
     outHex[32] = '\0';
 }
-
-/* m12_join_path and m12_copy_data_dir replaced by fs_portable_compat. */
 
 static int m12_file_md5_hex(const char* path, char outHex[33]) {
     unsigned char buffer[4096];
@@ -300,126 +246,138 @@ static int m12_file_md5_hex(const char* path, char outHex[33]) {
     return 1;
 }
 
-static int m12_hash_list_contains(const char* const* hashes, const char* md5Hex) {
-    size_t i;
-    if (!hashes || !md5Hex) {
-        return 0;
+static void m12_copy_string(char* out, size_t outSize, const char* value) {
+    if (!out || outSize == 0U) {
+        return;
     }
-    for (i = 0U; hashes[i] != NULL; ++i) {
-        if (strcmp(hashes[i], md5Hex) == 0) {
-            return 1;
+    if (!value) {
+        value = "";
+    }
+    snprintf(out, outSize, "%s", value);
+}
+
+static int m12_same_path(const char* a, const char* b) {
+    return a && b && strcmp(a, b) == 0;
+}
+
+static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+                                     const char* requestedDataDir,
+                                     char legacyFallbackDir[M12_ASSET_DATA_DIR_CAPACITY]) {
+    char defaultOriginals[M12_ASSET_DATA_DIR_CAPACITY];
+    char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
+    size_t count = 0U;
+
+    legacyFallbackDir[0] = '\0';
+    defaultOriginals[0] = '\0';
+    legacyData[0] = '\0';
+
+    if (requestedDataDir && requestedDataDir[0] != '\0') {
+        m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, requestedDataDir);
+    }
+    if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
+        if (count == 0U || !m12_same_path(roots[count - 1U], defaultOriginals)) {
+            m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, defaultOriginals);
         }
     }
-    return 0;
-}
-
-static size_t m12_hash_list_count(const char* const* hashes) {
-    size_t i;
-    if (!hashes) {
-        return 0U;
-    }
-    for (i = 0U; hashes[i] != NULL; ++i) {
-    }
-    return i;
-}
-
-static const M12_GameSpec* m12_find_game_spec(const char* gameId) {
-    size_t i;
-    if (!gameId) {
-        return NULL;
-    }
-    for (i = 0U; i < sizeof(g_gameSpecs) / sizeof(g_gameSpecs[0]); ++i) {
-        if (strcmp(g_gameSpecs[i].gameId, gameId) == 0) {
-            return &g_gameSpecs[i];
+    if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
+        m12_copy_string(legacyFallbackDir, M12_ASSET_DATA_DIR_CAPACITY, legacyData);
+        if ((count == 0U || !m12_same_path(roots[count - 1U], legacyData)) && count < M12_SEARCH_ROOT_COUNT) {
+            m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, legacyData);
         }
     }
-    return NULL;
+    if (count == 0U) {
+        m12_copy_string(roots[count++], M12_ASSET_DATA_DIR_CAPACITY, ".");
+    }
+    return count;
 }
 
-static int m12_game_has_complete_hash_set(const M12_GameSpec* spec) {
-    size_t i;
-    if (!spec || !spec->files || spec->fileCount == 0U) {
-        return 0;
-    }
-    for (i = 0U; i < spec->fileCount; ++i) {
-        if (m12_hash_list_count(spec->files[i].md5List) == 0U) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-static size_t m12_game_known_hash_count(const M12_GameSpec* spec) {
-    size_t i;
-    size_t total = 0U;
-    if (!spec || !spec->files) {
-        return 0U;
-    }
-    for (i = 0U; i < spec->fileCount; ++i) {
-        total += m12_hash_list_count(spec->files[i].md5List);
-    }
-    return total;
-}
-
-static size_t m12_game_verified_file_count(const M12_GameSpec* spec) {
-    size_t i;
-    size_t total = 0U;
-    if (!spec || !spec->files) {
-        return 0U;
-    }
-    for (i = 0U; i < spec->fileCount; ++i) {
-        if (m12_hash_list_count(spec->files[i].md5List) > 0U) {
-            total += 1U;
-        }
-    }
-    return total;
-}
-
-static int m12_match_known_asset(const char* dir, const M12_AssetFileSpec* spec) {
+static int m12_try_match_version(const char* root,
+                                 const M12_VersionSpec* spec,
+                                 char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+                                 char matchedMd5[M12_ASSET_MD5_CAPACITY]) {
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
-    char md5Hex[33];
+    char md5Hex[M12_ASSET_MD5_CAPACITY];
     size_t i;
-    if (!dir || !spec || !spec->names || !spec->md5List || spec->md5List[0] == NULL) {
+    if (!root || !spec || !spec->names || !spec->md5) {
         return 0;
     }
     for (i = 0U; spec->names[i] != NULL; ++i) {
-        if (!FSP_JoinPath(path, sizeof(path), dir, spec->names[i])) {
+        if (!FSP_JoinPath(path, sizeof(path), root, spec->names[i])) {
             continue;
         }
         if (!m12_file_md5_hex(path, md5Hex)) {
             continue;
         }
-        if (m12_hash_list_contains(spec->md5List, md5Hex)) {
+        if (strcmp(md5Hex, spec->md5) == 0) {
+            m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+            m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5Hex);
             return 1;
         }
     }
     return 0;
 }
 
-static int m12_detect_game(const char* dir, const M12_GameSpec* spec) {
+static void m12_fill_game_versions(M12_AssetStatus* status,
+                                   int gameIndex,
+                                   const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+                                   size_t rootCount) {
     size_t i;
-    if (!dir || !spec || !spec->files || !m12_game_has_complete_hash_set(spec)) {
-        return 0;
+    size_t rootIndex;
+    int matchedAny = 0;
+    const M12_GameVersionSpec* gameSpec;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
+        return;
     }
-    for (i = 0U; i < spec->fileCount; ++i) {
-        if (!m12_match_known_asset(dir, &spec->files[i])) {
-            return 0;
+    gameSpec = &g_games[gameIndex];
+    for (i = 0U; i < gameSpec->versionCount; ++i) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        const M12_VersionSpec* spec = &gameSpec->versions[i];
+        memset(version, 0, sizeof(*version));
+        version->gameId = spec->gameId;
+        version->versionId = spec->versionId;
+        version->label = spec->label;
+        version->shortLabel = spec->shortLabel;
+        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+            if (m12_try_match_version(roots[rootIndex],
+                                      spec,
+                                      version->matchedPath,
+                                      version->matchedMd5)) {
+                version->matched = 1;
+                matchedAny = 1;
+                if (status->dataDir[0] == '\0') {
+                    m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[rootIndex]);
+                }
+                break;
+            }
         }
     }
-    return 1;
+
+    if (strcmp(gameSpec->gameId, "dm1") == 0) {
+        status->dm1Available = matchedAny;
+    } else if (strcmp(gameSpec->gameId, "csb") == 0) {
+        status->csbAvailable = matchedAny;
+    } else if (strcmp(gameSpec->gameId, "dm2") == 0) {
+        status->dm2Available = matchedAny;
+    }
 }
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir) {
+    char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
+    size_t rootCount;
+    int i;
     if (!status) {
         return;
     }
-
     memset(status, 0, sizeof(*status));
-    FSP_ResolveDataDir(status->dataDir, sizeof(status->dataDir), requestedDataDir);
-
-    status->dm1Available = m12_detect_game(status->dataDir, &g_gameSpecs[0]);
-    status->csbAvailable = m12_detect_game(status->dataDir, &g_gameSpecs[1]);
-    status->dm2Available = m12_detect_game(status->dataDir, &g_gameSpecs[2]);
+    rootCount = m12_build_search_roots(roots, requestedDataDir, status->legacyFallbackDir);
+    if (requestedDataDir && requestedDataDir[0] != '\0') {
+        m12_copy_string(status->dataDir, sizeof(status->dataDir), requestedDataDir);
+    } else if (rootCount > 0U) {
+        m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[0]);
+    }
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        m12_fill_game_versions(status, i, roots, rootCount);
+    }
 }
 
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
@@ -440,20 +398,23 @@ int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
 }
 
 int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId) {
-    return m12_game_has_complete_hash_set(m12_find_game_spec(gameId));
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    return spec && spec->versionCount > 0U ? 1 : 0;
 }
 
 size_t M12_AssetStatus_GameKnownHashCount(const char* gameId) {
-    return m12_game_known_hash_count(m12_find_game_spec(gameId));
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    return spec ? spec->versionCount : 0U;
 }
 
 size_t M12_AssetStatus_GameVerifiedFileCount(const char* gameId) {
-    return m12_game_verified_file_count(m12_find_game_spec(gameId));
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    return spec && spec->versionCount > 0U ? 1U : 0U;
 }
 
 size_t M12_AssetStatus_GameRequiredFileCount(const char* gameId) {
-    const M12_GameSpec* spec = m12_find_game_spec(gameId);
-    return spec ? spec->fileCount : 0U;
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    return spec && spec->versionCount > 0U ? 1U : 0U;
 }
 
 const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status) {
@@ -461,4 +422,41 @@ const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status) {
         return ".";
     }
     return status->dataDir;
+}
+
+const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status) {
+    if (!status || status->legacyFallbackDir[0] == '\0') {
+        return "";
+    }
+    return status->legacyFallbackDir;
+}
+
+size_t M12_AssetStatus_GetVersionCount(const char* gameId) {
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    return spec ? spec->versionCount : 0U;
+}
+
+const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* status,
+                                                         const char* gameId,
+                                                         size_t index) {
+    int gameIndex = m12_game_index_from_id(gameId);
+    size_t count = M12_AssetStatus_GetVersionCount(gameId);
+    if (!status || gameIndex < 0 || index >= count) {
+        return NULL;
+    }
+    return &status->versions[gameIndex][index];
+}
+
+int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId) {
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    size_t i;
+    if (!spec || !versionId) {
+        return -1;
+    }
+    for (i = 0U; i < spec->versionCount; ++i) {
+        if (strcmp(spec->versions[i].versionId, versionId) == 0) {
+            return (int)i;
+        }
+    }
+    return -1;
 }
