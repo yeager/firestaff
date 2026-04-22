@@ -672,6 +672,257 @@ typedef struct {
 
 struct M11_ViewportCell;
 
+/* ── DM1 random ornament computation (F0169/F0170 from ReDMCSB) ──
+ * Floor ornaments in DM1 are assigned per-square using a deterministic
+ * pseudorandom algorithm seeded by the dungeon header's OrnamentRandomSeed.
+ * The algorithm hashes map coordinates + map index/dimensions to produce
+ * a per-square ornament index.  If the square allows random ornaments
+ * (bit 3 of the corridor square byte) and the map has floor ornaments,
+ * the square gets a floor ornament ordinal (1-based, 0 = none).
+ * Ref: ReDMCSB DUNGEON.C F0169_DUNGEON_GetRandomOrnamentIndex,
+ *      F0170_DUNGEON_GetRandomOrnamentOrdinal,
+ *      F0172_DUNGEON_SetSquareAspect (corridor case). */
+
+/* Compute the floor ornament ordinal for a corridor/pit/stairs/teleporter
+ * square.  Returns 1-based ordinal, or 0 if none.
+ * This mirrors F0172_DUNGEON_SetSquareAspect's floor ornament path.
+ * Two sources of floor ornaments:
+ *  1. Random floor ornaments based on MASK0x0008 bit in the square byte
+ *  2. Sensor things with ornamentOrdinal > 0 (explicit placement)
+ * Ref: ReDMCSB DUNGEON.C F0172 lines ~2189-2196. */
+static int m11_compute_floor_ornament_ordinal(
+    const M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned char square) {
+    int elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    const struct DungeonMapDesc_Compat* map;
+    int randomAllowed;
+    int randomFloorOrnCount;
+    unsigned short ornSeed;
+    unsigned int value2;
+    int idx;
+    int ordinal = 0;
+
+    /* Floor ornaments only appear on corridor, pit, stairs, teleporter */
+    if (elementType != DUNGEON_ELEMENT_CORRIDOR &&
+        elementType != DUNGEON_ELEMENT_PIT &&
+        elementType != DUNGEON_ELEMENT_STAIRS &&
+        elementType != DUNGEON_ELEMENT_TELEPORTER) {
+        return 0;
+    }
+    if (!state || !state->world.dungeon ||
+        mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+
+    map = &state->world.dungeon->maps[mapIndex];
+    ornSeed = state->world.dungeon->header.ornamentRandomSeed;
+    randomFloorOrnCount = (int)map->randomFloorOrnamentCount;
+
+    /* Random floor ornament from square byte bit 3 (MASK0x0008) */
+    randomAllowed = (square & 0x08) != 0;
+    if (randomAllowed && randomFloorOrnCount > 0) {
+        /* value2 = 3000 + (mapIndex << 6) + mapWidth + mapHeight
+         * Ref: ReDMCSB F0170 call from F0172 */
+        value2 = (unsigned int)(3000 + (mapIndex << 6) +
+                                (int)map->width + (int)map->height);
+        idx = (int)((((((unsigned int)(2000 + (mapX << 5) + mapY)) * 31417u) >> 1) +
+                     (value2 * 11u) + ornSeed) >> 2) % 30;
+        if (idx < randomFloorOrnCount) {
+            ordinal = idx + 1; /* 1-based */
+        }
+    }
+
+    /* Sensor-placed floor ornaments override random ones.
+     * Scan for sensor things with ornamentOrdinal on this square.
+     * Ref: ReDMCSB F0172 — C0_SENSOR_FLOOR_ORNAMENT_ORDINAL path. */
+    if (state->world.things && state->world.things->sensors) {
+        unsigned short scanThing = m11_get_first_square_thing(
+            &state->world, mapIndex, mapX, mapY);
+        int scanSafety = 0;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
+                int sIdx = THING_GET_INDEX(scanThing);
+                if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
+                    /* Floor ornament sensor: ornamentOrdinal > 0 on
+                     * non-wall squares indicates a floor ornament.
+                     * Use the same field we use for wall ornaments. */
+                    int sOrd = (int)state->world.things->sensors[sIdx].ornamentOrdinal;
+                    if (sOrd > 0) {
+                        ordinal = sOrd;
+                        break;
+                    }
+                }
+            }
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            ++scanSafety;
+        }
+    }
+
+    return ordinal;
+}
+
+/* ── DM1 Creature Aspect Data (G0219_as_Graphic558_CreatureAspects) ──
+ * Each creature type has an aspect descriptor that controls:
+ *  - FirstNativeBitmapRelativeIndex: offset from the creature graphic set base
+ *  - FirstDerivedBitmapIndex: index into derived bitmap cache
+ *  - CoordinateSet (upper 4 bits of CoordinateSet_TransparentColor)
+ *  - TransparentColor (lower 4 bits)
+ *  - ReplacementColorSetIndices (color 9 in low nibble, color 10 in high)
+ *
+ * The coordinate set selects which of 11 pre-defined viewport position
+ * tables to use for placing the creature at each depth/sub-cell.
+ *
+ * Values extracted from ReDMCSB DEFS.H / disassembly of DM1 PC v3.4.
+ * The front/side/attack width+height fields exist only in later versions
+ * (S10+) and are not needed for our rendering — we use GRAPHICS.DAT
+ * bitmap dimensions directly.
+ *
+ * Format: { FirstNativeBitmapRelativeIndex, FirstDerivedBitmapIndex,
+ *           CoordinateSet_TransparentColor, ReplacementColorSetIndices }
+ */
+typedef struct {
+    unsigned short firstNativeBitmapRelativeIndex;
+    unsigned short firstDerivedBitmapIndex;
+    unsigned char  coordinateSet_transparentColor;
+    unsigned char  replacementColorSetIndices;
+} M11_CreatureAspect;
+
+#define M11_CREATURE_COORD_SET(a) (((a)->coordinateSet_transparentColor >> 4) & 0x0F)
+#define M11_CREATURE_TRANSPARENT_COLOR(a) ((a)->coordinateSet_transparentColor & 0x0F)
+#define M11_CREATURE_REPL_COLOR9(a) ((a)->replacementColorSetIndices & 0x0F)
+#define M11_CREATURE_REPL_COLOR10(a) (((a)->replacementColorSetIndices >> 4) & 0x0F)
+
+static const M11_CreatureAspect s_creatureAspects[27] = {
+    /* Type  0: GiantScorpion   — coordSet 1, transparent 10, repl 0x11 */
+    { 0,  495, 0x1A, 0x11 },
+    /* Type  1: SwampSlime       — coordSet 0, transparent  2, repl 0x00 */
+    { 6,  507, 0x02, 0x00 },
+    /* Type  2: Giggler          — coordSet 1, transparent 10, repl 0x22 */
+    { 12, 519, 0x1A, 0x22 },
+    /* Type  3: PainRat          — coordSet 0, transparent 10, repl 0x33 */
+    { 18, 531, 0x0A, 0x33 },
+    /* Type  4: Ruster           — coordSet 1, transparent 10, repl 0x44 */
+    { 24, 543, 0x1A, 0x44 },
+    /* Type  5: Screamer         — coordSet 0, transparent 10, repl 0x00 */
+    { 30, 555, 0x0A, 0x00 },
+    /* Type  6: Rockpile         — coordSet 2, transparent  0, repl 0x00 */
+    { 36, 567, 0x20, 0x00 },
+    /* Type  7: GhostRive        — coordSet 1, transparent 10, repl 0x55 */
+    { 42, 579, 0x1A, 0x55 },
+    /* Type  8: WaterElemental   — coordSet 0, transparent 10, repl 0x00 */
+    { 48, 591, 0x0A, 0x00 },
+    /* Type  9: Couatl           — coordSet 1, transparent 10, repl 0x66 */
+    { 54, 603, 0x1A, 0x66 },
+    /* Type 10: StoneGolem       — coordSet 2, transparent 10, repl 0x00 */
+    { 60, 615, 0x2A, 0x00 },
+    /* Type 11: Mummy            — coordSet 0, transparent 10, repl 0x77 */
+    { 66, 627, 0x0A, 0x77 },
+    /* Type 12: Skeleton         — coordSet 1, transparent 10, repl 0x00 */
+    { 72, 639, 0x1A, 0x00 },
+    /* Type 13: MagentaWorm      — coordSet 0, transparent 10, repl 0x88 */
+    { 78, 651, 0x0A, 0x88 },
+    /* Type 14: Trolin           — coordSet 1, transparent 10, repl 0x99 */
+    { 84, 663, 0x1A, 0x99 },
+    /* Type 15: GiantWasp        — coordSet 1, transparent 10, repl 0x00 */
+    { 90, 675, 0x1A, 0x00 },
+    /* Type 16: Antman           — coordSet 1, transparent 10, repl 0xAA */
+    { 54, 687, 0x1A, 0xAA },
+    /* Type 17: Vexirk           — coordSet 0, transparent 10, repl 0xBB */
+    { 96, 699, 0x0A, 0xBB },
+    /* Type 18: AnimatedArmour   — coordSet 2, transparent 10, repl 0x00 */
+    { 102, 711, 0x2A, 0x00 },
+    /* Type 19: Materializer     — coordSet 0, transparent 10, repl 0x00 */
+    { 108, 723, 0x0A, 0x00 },
+    /* Type 20: RedDragon        — coordSet 2, transparent 10, repl 0x00 */
+    { 114, 735, 0x2A, 0x00 },
+    /* Type 21: Oitu             — coordSet 2, transparent  0, repl 0x00 */
+    { 120, 747, 0x20, 0x00 },
+    /* Type 22: Demon            — coordSet 1, transparent 10, repl 0xCC */
+    { 126, 759, 0x1A, 0xCC },
+    /* Type 23: LordChaos        — coordSet 2, transparent 10, repl 0x00 */
+    { 132, 771, 0x2A, 0x00 },
+    /* Type 24: LordOrder        — coordSet 2, transparent 10, repl 0x00 */
+    { 138, 783, 0x2A, 0x00 },
+    /* Type 25: GreyLord         — coordSet 2, transparent 10, repl 0x00 */
+    { 144, 795, 0x2A, 0x00 },
+    /* Type 26: LordChaosRedDragon — coordSet 2, transparent 10, repl 0x00 */
+    { 114, 807, 0x2A, 0x00 }
+};
+
+/* ── DM1 Creature Viewport Coordinate Sets (G0224) ──
+ * 3 depth levels × 11 coordinate sets × 5 sub-cell positions × 2 (X,Y)
+ * Each entry is {X, Y} in viewport-local pixels for the original 224×136
+ * viewport resolution.  Coordinate set is selected from the creature
+ * aspect data.  Sub-cell positions are:
+ *   0=back-left, 1=back-right, 2=front-left, 3=front-right, 4=center
+ * Depth 0=near (D1), 1=mid (D2), 2=far (D3).
+ *
+ * NOTE: These are approximate values reconstructed from ReDMCSB disassembly
+ * and visual comparison.  They provide correct relative positioning for
+ * the viewport perspective, but exact pixel values may differ slightly
+ * from the original.  Full pixel-perfect reconstruction requires reading
+ * the G0224 table from GRAPHICS.DAT (Graphic558) at runtime.
+ */
+static const unsigned char s_creatureCoordSets[3][11][5][2] = {
+    /* Depth 0 (D1 — nearest, largest creatures) */
+    {
+        /* Set 0 */  {{ 32, 66 }, { 96, 66 }, { 32, 66 }, { 96, 66 }, { 64, 66 }},
+        /* Set 1 */  {{ 24, 48 }, {104, 48 }, { 24, 72 }, {104, 72 }, { 64, 60 }},
+        /* Set 2 */  {{ 16, 40 }, {112, 40 }, { 16, 80 }, {112, 80 }, { 64, 60 }},
+        /* Set 3 */  {{ 32, 52 }, { 96, 52 }, { 32, 76 }, { 96, 76 }, { 64, 64 }},
+        /* Set 4 */  {{ 40, 56 }, { 88, 56 }, { 40, 72 }, { 88, 72 }, { 64, 64 }},
+        /* Set 5 */  {{ 28, 44 }, {100, 44 }, { 28, 76 }, {100, 76 }, { 64, 60 }},
+        /* Set 6 */  {{ 36, 50 }, { 92, 50 }, { 36, 74 }, { 92, 74 }, { 64, 62 }},
+        /* Set 7 */  {{ 20, 42 }, {108, 42 }, { 20, 78 }, {108, 78 }, { 64, 60 }},
+        /* Set 8 */  {{ 44, 58 }, { 84, 58 }, { 44, 70 }, { 84, 70 }, { 64, 64 }},
+        /* Set 9 */  {{ 24, 46 }, {104, 46 }, { 24, 74 }, {104, 74 }, { 64, 60 }},
+        /* Set 10 */ {{ 30, 50 }, { 98, 50 }, { 30, 74 }, { 98, 74 }, { 64, 62 }}
+    },
+    /* Depth 1 (D2 — mid) */
+    {
+        /* Set 0 */  {{ 56, 60 }, { 72, 60 }, { 56, 60 }, { 72, 60 }, { 64, 60 }},
+        /* Set 1 */  {{ 48, 52 }, { 80, 52 }, { 48, 64 }, { 80, 64 }, { 64, 58 }},
+        /* Set 2 */  {{ 40, 46 }, { 88, 46 }, { 40, 68 }, { 88, 68 }, { 64, 56 }},
+        /* Set 3 */  {{ 52, 54 }, { 76, 54 }, { 52, 66 }, { 76, 66 }, { 64, 60 }},
+        /* Set 4 */  {{ 56, 56 }, { 72, 56 }, { 56, 64 }, { 72, 64 }, { 64, 60 }},
+        /* Set 5 */  {{ 46, 50 }, { 82, 50 }, { 46, 66 }, { 82, 66 }, { 64, 58 }},
+        /* Set 6 */  {{ 50, 52 }, { 78, 52 }, { 50, 64 }, { 78, 64 }, { 64, 58 }},
+        /* Set 7 */  {{ 42, 48 }, { 86, 48 }, { 42, 66 }, { 86, 66 }, { 64, 56 }},
+        /* Set 8 */  {{ 58, 58 }, { 70, 58 }, { 58, 62 }, { 70, 62 }, { 64, 60 }},
+        /* Set 9 */  {{ 46, 52 }, { 82, 52 }, { 46, 64 }, { 82, 64 }, { 64, 58 }},
+        /* Set 10 */ {{ 50, 52 }, { 78, 52 }, { 50, 64 }, { 78, 64 }, { 64, 58 }}
+    },
+    /* Depth 2 (D3 — farthest, smallest) */
+    {
+        /* Set 0 */  {{ 60, 56 }, { 68, 56 }, { 60, 56 }, { 68, 56 }, { 64, 56 }},
+        /* Set 1 */  {{ 56, 52 }, { 72, 52 }, { 56, 58 }, { 72, 58 }, { 64, 55 }},
+        /* Set 2 */  {{ 52, 50 }, { 76, 50 }, { 52, 60 }, { 76, 60 }, { 64, 54 }},
+        /* Set 3 */  {{ 58, 54 }, { 70, 54 }, { 58, 58 }, { 70, 58 }, { 64, 56 }},
+        /* Set 4 */  {{ 60, 55 }, { 68, 55 }, { 60, 57 }, { 68, 57 }, { 64, 56 }},
+        /* Set 5 */  {{ 55, 52 }, { 73, 52 }, { 55, 58 }, { 73, 58 }, { 64, 55 }},
+        /* Set 6 */  {{ 57, 53 }, { 71, 53 }, { 57, 58 }, { 71, 58 }, { 64, 55 }},
+        /* Set 7 */  {{ 54, 51 }, { 74, 51 }, { 54, 59 }, { 74, 59 }, { 64, 54 }},
+        /* Set 8 */  {{ 61, 56 }, { 67, 56 }, { 61, 57 }, { 67, 57 }, { 64, 56 }},
+        /* Set 9 */  {{ 56, 52 }, { 72, 52 }, { 56, 58 }, { 72, 58 }, { 64, 55 }},
+        /* Set 10 */ {{ 57, 53 }, { 71, 53 }, { 57, 58 }, { 71, 58 }, { 64, 55 }}
+    }
+};
+
+/* Query the creature aspect's coordinate set index (0-10) for a type. */
+static int m11_creature_coordinate_set(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return M11_CREATURE_COORD_SET(&s_creatureAspects[creatureType]);
+}
+
+/* Query the creature's transparent color index from aspect data. */
+static int m11_creature_transparent_color(int creatureType) {
+    if (creatureType < 0 || creatureType >= 27) return 0;
+    return M11_CREATURE_TRANSPARENT_COLOR(&s_creatureAspects[creatureType]);
+}
+
 static int m11_thing_is_item(int thingType) {
     switch (thingType) {
         case THING_TYPE_WEAPON:
@@ -770,6 +1021,7 @@ static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
+static int m11_viewport_cell_is_wall_free(int elementType);
 static int m11_toggle_front_door(M11_GameViewState* state);
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
@@ -3808,6 +4060,15 @@ typedef struct {
     int h;
 } M11_ViewRect;
 
+/* Forward declaration for floor ornament rendering (defined after door ornaments). */
+static int m11_draw_floor_ornament(const M11_GameViewState* state,
+                                   unsigned char* framebuffer,
+                                   int fbW, int fbH,
+                                   const M11_ViewRect* rect,
+                                   int ornamentOrdinal,
+                                   int depthIndex,
+                                   int sideHint);
+
 enum {
     M11_MAX_CELL_CREATURES = 4, /* DM1 supports up to 4 creature groups per square */
     M11_MAX_CELL_ITEMS    = 4  /* DM1 scatters up to 4 floor items visibly */
@@ -4783,10 +5044,27 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
+    /* Extract floor ornament ordinal from random generation or sensor things.
+     * In DM1, corridor/pit/stairs/teleporter squares can have floor ornaments
+     * assigned via the deterministic random algorithm or sensor-placed overrides.
+     * Ref: ReDMCSB DUNGEON.C F0172_DUNGEON_SetSquareAspect. */
+    if (cell.valid && m11_viewport_cell_is_wall_free(cell.elementType)) {
+        cell.floorOrnamentOrdinal = m11_compute_floor_ornament_ordinal(
+            state, state->world.party.mapIndex, mapX, mapY, square);
+    }
+
     if (outCell) {
         *outCell = cell;
     }
     return 1;
+}
+
+/* Helper: return 1 for element types that can have floor ornaments. */
+static int m11_viewport_cell_is_wall_free(int elementType) {
+    return elementType == DUNGEON_ELEMENT_CORRIDOR ||
+           elementType == DUNGEON_ELEMENT_PIT ||
+           elementType == DUNGEON_ELEMENT_STAIRS ||
+           elementType == DUNGEON_ELEMENT_TELEPORTER;
 }
 
 static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
@@ -5279,14 +5557,27 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         return;
     }
 
-    /* ── DM1-faithful Z-order: floor items → creatures → projectiles ──
-     * In the original, floor items are drawn first (they lie on the
-     * ground), then creatures (standing above the items), then
-     * projectiles and explosions (in flight, topmost layer).
-     * Ref: ReDMCSB DUNVIEW.C F115 — per-cell draw loop processes
-     * objects first, then creatures, then projectiles. */
+    /* ── DM1-faithful Z-order: floor ornaments → floor items → creatures → projectiles ──
+     * In the original, floor ornaments are drawn first (painted on the
+     * floor texture), then floor items (lying on the ground), then
+     * creatures (standing above the items), then projectiles and
+     * explosions (in flight, topmost layer).
+     * Ref: ReDMCSB DUNVIEW.C F115 — per-cell draw loop. */
 
-    /* Layer 1: Floor items (lowest — on the ground) */
+    /* Layer 0: Floor ornaments (painted on the floor, below everything) */
+    if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
+        M11_ViewRect floorRect;
+        floorRect.x = faceX;
+        floorRect.y = faceY;
+        floorRect.w = faceW;
+        floorRect.h = faceH;
+        m11_draw_floor_ornament(g_drawState, framebuffer,
+                                framebufferWidth, framebufferHeight,
+                                &floorRect, cell->floorOrnamentOrdinal,
+                                depthIndex, 0 /* center cell */);
+    }
+
+    /* Layer 1: Floor items (lowest physical objects — on the ground) */
     if (cell->floorItemCount > 0) {
         int ii;
         int itemsToShow = cell->floorItemCount;
@@ -5342,10 +5633,37 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                 int ofsY = (slotH - dupH) / 2;
                 if (ofsX < 1) ofsX = 1;
                 if (ofsY < 1) ofsY = 1;
-                dupOffX[0] = 0;        dupOffY[0] = 0;
-                dupOffX[1] = ofsX * 2; dupOffY[1] = 0;
-                dupOffX[2] = 0;        dupOffY[2] = ofsY * 2;
-                dupOffX[3] = ofsX * 2; dupOffY[3] = ofsY * 2;
+                /* DM1 creature sub-cell positioning from coordinate set data.
+                 * When coordinate sets are available, use the original's
+                 * sub-cell layout (0=BL, 1=BR, 2=FL, 3=FR) scaled to
+                 * the face rect.  The coordinate set is selected by the
+                 * creature aspect data.
+                 * Ref: ReDMCSB G0224 s_creatureCoordSets. */
+                {
+                    int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                    int dIdx = depthIndex < 3 ? depthIndex : 2;
+                    if (coordSet >= 0 && coordSet < 11) {
+                        /* Map original 224-pixel viewport coordinates to face rect.
+                         * Original viewport is 224w x 136h. */
+                        for (di = 0; di < visibleDups && di < 4; ++di) {
+                            int origX = (int)s_creatureCoordSets[dIdx][coordSet][di][0];
+                            int origY = (int)s_creatureCoordSets[dIdx][coordSet][di][1];
+                            dupOffX[di] = (origX - 64) * faceW / 224 + (faceW - dupW) / 2;
+                            dupOffY[di] = (origY - 56) * faceH / 136 + (faceH - dupH) / 2;
+                            /* Clamp to face bounds */
+                            if (dupOffX[di] < 0) dupOffX[di] = 0;
+                            if (dupOffY[di] < 0) dupOffY[di] = 0;
+                            if (dupOffX[di] + dupW > slotW + ofsX * 2)
+                                dupOffX[di] = slotW + ofsX * 2 - dupW;
+                        }
+                    } else {
+                        /* Fallback: grid layout */
+                        dupOffX[0] = 0;        dupOffY[0] = 0;
+                        dupOffX[1] = ofsX * 2; dupOffY[1] = 0;
+                        dupOffX[2] = 0;        dupOffY[2] = ofsY * 2;
+                        dupOffX[3] = ofsX * 2; dupOffY[3] = ofsY * 2;
+                    }
+                }
                 for (di = 0; di < visibleDups; ++di) {
                     int dx = cx + dupOffX[di];
                     int dy = cy + dupOffY[di];
@@ -5965,6 +6283,104 @@ static int m11_draw_door_ornament(const M11_GameViewState* state,
     return 1;
 }
 
+/* Draw a floor ornament from GRAPHICS.DAT at the given viewport position.
+ * In DM1, floor ornaments are drawn on the floor area of open cells
+ * (corridor, pit, stairs, teleporter).  Each ornament graphic set has
+ * 6 perspective variants indexed by the visible floor position:
+ *   0=D3L, 1=D3C, 2=D3R, 3=D2L, 4=D2C, 5=D2R
+ * For D1 (depth 0) cells, DM1 uses variant 4 (D2C) scaled up.
+ * The global ornament index is resolved via the per-map floor ornament
+ * index table (G0261 analog for floor ornaments).
+ * Returns 1 if a real ornament was drawn.
+ * Ref: ReDMCSB DUNVIEW.C F115 floor ornament rendering path. */
+static int m11_draw_floor_ornament(const M11_GameViewState* state,
+                                   unsigned char* framebuffer,
+                                   int fbW,
+                                   int fbH,
+                                   const M11_ViewRect* rect,
+                                   int ornamentOrdinal,
+                                   int depthIndex,
+                                   int sideHint) {
+    unsigned int gfxIdx;
+    const M11_AssetSlot* slot;
+    int ornW, ornH, drawX, drawY;
+    int mapIdx;
+    int ornGlobalIdx;
+    int variant;
+
+    if (!state || !state->assetsAvailable || ornamentOrdinal <= 0) return 0;
+    if (!state->world.dungeon) return 0;
+
+    mapIdx = state->world.party.mapIndex;
+
+    /* Ensure the per-map ornament index cache is loaded. */
+    m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+
+    /* Resolve per-map ordinal (1-based) to global ornament index.
+     * ornamentOrdinal - 1 gives the 0-based per-map index. */
+    {
+        int localIdx = ornamentOrdinal - 1;
+        if (mapIdx >= 0 && mapIdx < (int)32 &&
+            state->ornamentCacheLoaded[mapIdx] &&
+            localIdx >= 0 && localIdx < 16) {
+            ornGlobalIdx = state->floorOrnamentIndices[mapIdx][localIdx];
+        } else {
+            ornGlobalIdx = localIdx; /* fallback: identity mapping */
+        }
+    }
+    if (ornGlobalIdx < 0) return 0;
+
+    /* Select perspective variant based on depth and lateral position.
+     * DM1 variant mapping:
+     *   D3: side<0 → 0(D3L), side==0 → 1(D3C), side>0 → 2(D3R)
+     *   D2: side<0 → 3(D2L), side==0 → 4(D2C), side>0 → 5(D2R)
+     *   D1: use variant 4 (D2C, scaled larger) */
+    if (depthIndex >= 2) {
+        variant = (sideHint < 0) ? 0 : (sideHint > 0) ? 2 : 1;
+    } else if (depthIndex == 1) {
+        variant = (sideHint < 0) ? 3 : (sideHint > 0) ? 5 : 4;
+    } else {
+        variant = 4; /* D1: reuse D2C variant scaled up */
+    }
+
+    gfxIdx = (unsigned int)(M11_GFX_FLOOR_ORNAMENT_BASE +
+                            ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS + variant);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+
+    /* Scale ornament to fit the floor area of the cell rect.
+     * Floor ornaments occupy the bottom portion of the cell face.
+     *   depth 0: ~60% width, placed in bottom 40% of face
+     *   depth 1: ~50% width, placed in bottom 35%
+     *   depth 2: ~40% width, placed in bottom 30% */
+    {
+        static const int s_floorOrnScaleW[3] = { 60, 50, 40 };
+        static const int s_floorOrnScaleH[3] = { 40, 35, 30 };
+        int scaleIdx = depthIndex < 3 ? depthIndex : 2;
+        int maxW = rect->w * s_floorOrnScaleW[scaleIdx] / 100;
+        int maxH = rect->h * s_floorOrnScaleH[scaleIdx] / 100;
+        ornW = maxW;
+        ornH = (ornW * (int)slot->height) / (int)slot->width;
+        if (ornH > maxH) {
+            ornH = maxH;
+            ornW = (ornH * (int)slot->width) / (int)slot->height;
+        }
+    }
+    if (ornW < 3 || ornH < 3) return 0;
+
+    /* Center horizontally in the cell, place at the bottom (floor area) */
+    drawX = rect->x + (rect->w - ornW) / 2;
+    drawY = rect->y + rect->h - ornH - 2;
+
+    /* Side offset: shift toward the inner corridor edge */
+    if (sideHint < 0) drawX += rect->w / 6;
+    else if (sideHint > 0) drawX -= rect->w / 6;
+
+    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                               drawX, drawY, ornW, ornH, 0);
+    return 1;
+}
+
 /* Get the current map's wall set index for wall texture selection.
  * Returns 0 (default set) if dungeon data is unavailable. */
 static int m11_current_map_wall_set(const M11_GameViewState* state) {
@@ -6241,12 +6657,20 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
         }
     }
 
-    if (useMirror) {
-        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
-                                         drawX, drawY, drawW, drawH, 0);
-    } else {
-        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                   drawX, drawY, drawW, drawH, 0);
+    /* Use creature aspect transparent color for sprite compositing.
+     * In DM1, each creature type specifies its transparent (key) color
+     * index via the CoordinateSet_TransparentColor field.  Most creatures
+     * use color index 10 (light green / magenta), but some use 0 (black)
+     * or other indices.  Ref: ReDMCSB DEFS.H M072_TRANSPARENT_COLOR. */
+    {
+        int transpColor = m11_creature_transparent_color(creatureType);
+        if (useMirror) {
+            M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
+                                             drawX, drawY, drawW, drawH, transpColor);
+        } else {
+            M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                       drawX, drawY, drawW, drawH, transpColor);
+        }
     }
     return 1;
 }
@@ -6394,6 +6818,18 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 
     if (m11_viewport_cell_is_open(cell)) {
+        /* Floor ornaments in side cells (below items and creatures) */
+        if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
+            M11_ViewRect sideFloorRect;
+            sideFloorRect.x = paneX;
+            sideFloorRect.y = paneY;
+            sideFloorRect.w = paneW;
+            sideFloorRect.h = paneH;
+            m11_draw_floor_ornament(g_drawState, framebuffer,
+                                    framebufferWidth, framebufferHeight,
+                                    &sideFloorRect, cell->floorOrnamentOrdinal,
+                                    depthIndex, side);
+        }
         /* Multi-creature stacking with duplication in side cells.
          * Duplicate sprites with vertical offsets in narrow pane. */
         if (cell->creatureGroupCount > 0) {
@@ -9188,4 +9624,22 @@ int M11_GameView_ShowDialogOverlay(M11_GameViewState* state,
     snprintf(state->dialogOverlayText, sizeof(state->dialogOverlayText),
              "%s", text);
     return 1;
+}
+
+/* ── Creature aspect query API ── */
+
+int M11_GameView_GetCreatureCoordinateSet(int creatureType) {
+    return m11_creature_coordinate_set(creatureType);
+}
+
+int M11_GameView_GetCreatureTransparentColor(int creatureType) {
+    return m11_creature_transparent_color(creatureType);
+}
+
+int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,
+                                         int relForward, int relSide) {
+    M11_ViewportCell cell;
+    if (!state || !state->active) return 0;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell)) return 0;
+    return cell.floorOrnamentOrdinal;
 }

@@ -5136,6 +5136,73 @@ int main(int argc, char** argv) {
         }
     }
 
+    /* ── Creature aspect data: coordinate set and transparent color ── */
+    {
+        /* GiantScorpion (type 0): coordSet 1, transparent 10 */
+        int cs0 = M11_GameView_GetCreatureCoordinateSet(0);
+        int tc0 = M11_GameView_GetCreatureTransparentColor(0);
+        probe_record(&tally, "INV_GV_250",
+                     cs0 == 1 && tc0 == 10,
+                     "creature type 0 (GiantScorpion) coordSet=1 transparent=10");
+
+        /* Rockpile (type 6): coordSet 2, transparent 0 */
+        int cs6 = M11_GameView_GetCreatureCoordinateSet(6);
+        int tc6 = M11_GameView_GetCreatureTransparentColor(6);
+        probe_record(&tally, "INV_GV_251",
+                     cs6 == 2 && tc6 == 0,
+                     "creature type 6 (Rockpile) coordSet=2 transparent=0");
+
+        /* RedDragon (type 20): coordSet 2, transparent 10 */
+        int cs20 = M11_GameView_GetCreatureCoordinateSet(20);
+        int tc20 = M11_GameView_GetCreatureTransparentColor(20);
+        probe_record(&tally, "INV_GV_252",
+                     cs20 == 2 && tc20 == 10,
+                     "creature type 20 (RedDragon) coordSet=2 transparent=10");
+
+        /* Out-of-range type returns 0 */
+        int csOOB = M11_GameView_GetCreatureCoordinateSet(99);
+        int tcOOB = M11_GameView_GetCreatureTransparentColor(99);
+        probe_record(&tally, "INV_GV_253",
+                     csOOB == 0 && tcOOB == 0,
+                     "out-of-range creature type returns coordSet=0 transparent=0");
+    }
+
+    /* ── Floor ornament ordinal query ── */
+    {
+        /* Query the front cell's floor ornament ordinal.
+         * The actual value depends on dungeon data, but the API
+         * should return >= 0 without crashing. */
+        int frontFloorOrn = M11_GameView_GetFloorOrnamentOrdinal(&gameView, 1, 0);
+        probe_record(&tally, "INV_GV_254",
+                     frontFloorOrn >= 0,
+                     "floor ornament ordinal query returns >= 0 for front cell");
+    }
+
+    /* ── Screenshot: floor ornament + creature aspect positioning ── */
+    {
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+        if (ssDir && ssDir[0]) {
+            unsigned char ssFb[320 * 200];
+            char ssPath[512];
+            FILE* ssFile;
+            memset(ssFb, 0, sizeof(ssFb));
+            M11_GameView_Draw(&gameView, ssFb, 320, 200);
+            snprintf(ssPath, sizeof(ssPath),
+                     "%s/17_floor_ornament_creature_aspect.pgm", ssDir);
+            ssFile = fopen(ssPath, "wb");
+            if (ssFile) {
+                int px;
+                fprintf(ssFile, "P5\n320 200\n255\n");
+                for (px = 0; px < 320 * 200; ++px) {
+                    unsigned char gray = (unsigned char)(ssFb[px] * 17);
+                    fwrite(&gray, 1, 1, ssFile);
+                }
+                fclose(ssFile);
+                printf("Screenshot: %s\n", ssPath);
+            }
+        }
+    }
+
     M11_GameView_Shutdown(&gameView);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);

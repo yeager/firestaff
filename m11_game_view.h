@@ -342,6 +342,19 @@ int M11_GameView_GetInventorySelectedSlot(const M11_GameViewState* state);
 /* Return human-readable label for an inventory slot index. */
 const char* M11_GameView_SlotName(int slotIndex);
 
+/* ── Creature aspect query API (for probes) ── */
+
+/* Return the coordinate set index (0-10) for a creature type. */
+int M11_GameView_GetCreatureCoordinateSet(int creatureType);
+
+/* Return the transparent color index for a creature type. */
+int M11_GameView_GetCreatureTransparentColor(int creatureType);
+
+/* Return the floor ornament ordinal for a viewport cell position.
+ * relForward/relSide are relative to party position/facing. */
+int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,
+                                         int relForward, int relSide);
+
 #ifdef __cplusplus
 }
 #endif
