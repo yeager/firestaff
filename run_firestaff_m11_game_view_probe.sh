@@ -16,7 +16,19 @@ else
     PROBE_SRC="$PROBE_SRC_NESTED"
 fi
 
-CFLAGS_COMMON="-std=c99 -Wall -Wextra -O2 -I $HERE"
+# SDL3 flags for audio_sdl_m11.c (needs SDL3/SDL.h)
+SDL3_CFLAGS=""
+SDL3_LIBS=""
+if pkg-config --exists sdl3 2>/dev/null; then
+    SDL3_CFLAGS=$(pkg-config --cflags sdl3)
+    SDL3_LIBS="$(pkg-config --libs sdl3) -lm"
+else
+    # No SDL3 — compile audio in fallback mode
+    SDL3_CFLAGS="-DFIRESTAFF_NO_SDL_AUDIO"
+    SDL3_LIBS="-lm"
+fi
+
+CFLAGS_COMMON="-std=c99 -Wall -Wextra -O2 -I $HERE $SDL3_CFLAGS"
 CFLAGS_M10="$CFLAGS_COMMON -DCOMPILE_H -DSTATICFUNCTION=static -DSEPARATOR=, -DFINAL_SEPARATOR=)"
 
 # Compile M10 GRAPHICS.DAT pipeline objects (need COMPILE_H bypass)
@@ -69,7 +81,8 @@ cc $CFLAGS_COMMON \
     "$HERE/memory_movement_pc34_compat.c" \
     "$HERE/memory_champion_state_pc34_compat.c" \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
-    $GFX_OBJS
+    $GFX_OBJS \
+    $SDL3_LIBS
 
 FIRESTAFF_DATA="$DATA_DIR" "$PROBE_BIN" "$DATA_DIR" | tee "$LOG"
 

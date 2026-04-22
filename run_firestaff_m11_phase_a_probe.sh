@@ -127,7 +127,7 @@ cc $CFLAGS_M11 \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
     "$VGA_OBJ" \
     $GFX_OBJS \
-    $SDL_LIBS
+    $SDL_LIBS -lm
 
 # Headless by default. If the caller already set SDL_VIDEODRIVER we
 # respect that.

@@ -60,7 +60,7 @@ set(M11_SOURCES
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m11 PUBLIC firestaff_m10 SDL3::SDL3)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_m10 SDL3::SDL3 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
 endif()
