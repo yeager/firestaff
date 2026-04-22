@@ -106,6 +106,7 @@ typedef struct {
      * here, loaded lazily from DUNGEON.DAT the first time a map is
      * visited.  Ref: ReDMCSB G0261_auc_CurrentMapWallOrnamentIndices. */
     int wallOrnamentIndices[32][16];   /* [mapIndex][ordinal] -> graphic index */
+    int floorOrnamentIndices[32][16];  /* [mapIndex][ordinal] -> graphic index */
     int doorOrnamentIndices[32][16];
     int ornamentCacheLoaded[32];       /* 1 if loaded for this map */
 

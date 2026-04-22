@@ -3848,6 +3848,18 @@ typedef struct M11_ViewportCell {
      * 3 = moving left.  -1 if no projectile or direction unknown.
      * Used for DM1-faithful projectile sprite mirroring. */
     int firstProjectileRelDir;
+    /* First projectile sub-cell position (0-3, or -1 if none).
+     * In DM1, projectiles occupy a specific sub-cell (quadrant) within
+     * the tile.  0=NW, 1=NE, 2=SW, 3=SE (absolute).  The relative
+     * sub-cell position (relative to party facing) determines the
+     * projectile's viewport offset within the cell face area.
+     * Ref: ReDMCSB DUNVIEW.C F115 — M11_CELL(P141_T_Thing) positioning. */
+    int firstProjectileCell;
+    /* Floor ornament ordinal for this square (1-based ordinal, 0 = none).
+     * In DM1, corridor/pit/stair/teleporter squares may have floor
+     * ornaments assigned via random generation or sensor things.
+     * Ref: ReDMCSB DUNGEON.C F169 — SquareAspect[C4_FLOOR_ORNAMENT_ORDINAL]. */
+    int floorOrnamentOrdinal;
     /* First explosion type (0-50), or -1 */
     int firstExplosionType;
     M11_SquareThingSummary summary;
@@ -3911,12 +3923,19 @@ static void m11_draw_item_cue(unsigned char* framebuffer,
     }
 }
 
-/* Draw a GRAPHICS.DAT-backed projectile sprite centered in the given area.
+/* Draw a GRAPHICS.DAT-backed projectile sprite in the given area.
  * relativeDir: projectile direction relative to party facing (0-3), or -1.
  *   0 = flying away, 1 = flying right, 2 = flying toward, 3 = flying left.
+ * relativeCell: projectile sub-cell relative to party facing (0-3), or -1.
+ *   0 = back-left, 1 = back-right, 2 = front-left, 3 = front-right.
+ *   When >= 0, the sprite is offset within the face area to match the
+ *   DM1 quadrant-based projectile positioning.  When -1, centered.
  * In DM1, projectile sprites are mirrored horizontally when the relative
  * direction is 1 (right-bound); left-bound (3) and forward/backward (0,2)
  * use the normal sprite orientation.
+ * Ref: ReDMCSB DUNVIEW.C F115 — projectile coordinate lookup uses
+ * G218_aaaauc_Graphic558_ObjectCoordinateSets to position projectiles
+ * within the viewport cell based on their sub-cell.
  * Returns 1 if a real sprite was drawn, 0 for fallback. */
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
@@ -3924,7 +3943,8 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       int framebufferHeight,
                                       int x, int y, int w, int h,
                                       int gfxIndex, int depthIndex,
-                                      int relativeDir) {
+                                      int relativeDir,
+                                      int relativeCell) {
     const M11_AssetSlot* slot;
     int drawW, drawH, drawX, drawY;
     int scale;
@@ -3941,8 +3961,48 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
     if (drawH < 3) drawH = 3;
     if (drawW > w) drawW = w;
     if (drawH > h) drawH = h;
-    drawX = x + (w - drawW) / 2;
-    drawY = y + (h - drawH) / 2;
+    /* DM1 sub-cell projectile positioning.
+     * In the original, each projectile is drawn at a specific quadrant
+     * of the viewport cell face.  The relative cell (0-3) maps to:
+     *   0 = back-left:   upper-left quadrant
+     *   1 = back-right:  upper-right quadrant
+     *   2 = front-left:  lower-left quadrant
+     *   3 = front-right: lower-right quadrant
+     * We offset the sprite center toward the appropriate quadrant.
+     * At greater depth the offset is reduced proportionally. */
+    if (relativeCell >= 0 && relativeCell <= 3) {
+        int qx = w / 4;  /* quarter-width offset */
+        int qy = h / 4;  /* quarter-height offset */
+        /* Reduce offset at depth to match perspective convergence */
+        if (depthIndex >= 1) { qx = qx * 2 / 3; qy = qy * 2 / 3; }
+        if (depthIndex >= 2) { qx = qx / 2;     qy = qy / 2; }
+        switch (relativeCell) {
+            case 0: /* back-left: upper-left */
+                drawX = x + (w / 2 - qx) - drawW / 2;
+                drawY = y + (h / 2 - qy) - drawH / 2;
+                break;
+            case 1: /* back-right: upper-right */
+                drawX = x + (w / 2 + qx) - drawW / 2;
+                drawY = y + (h / 2 - qy) - drawH / 2;
+                break;
+            case 2: /* front-left: lower-left */
+                drawX = x + (w / 2 - qx) - drawW / 2;
+                drawY = y + (h / 2 + qy) - drawH / 2;
+                break;
+            default: /* front-right: lower-right */
+                drawX = x + (w / 2 + qx) - drawW / 2;
+                drawY = y + (h / 2 + qy) - drawH / 2;
+                break;
+        }
+        /* Clamp to face bounds */
+        if (drawX < x) drawX = x;
+        if (drawY < y) drawY = y;
+        if (drawX + drawW > x + w) drawX = x + w - drawW;
+        if (drawY + drawH > y + h) drawY = y + h - drawH;
+    } else {
+        drawX = x + (w - drawW) / 2;
+        drawY = y + (h - drawH) / 2;
+    }
     /* DM1 projectile facing: mirror horizontally for right-bound (relDir 1).
      * Ref: ReDMCSB VIEWPORT.C — projectile sprites are stored facing left
      * and flipped for right-ward travel relative to party facing. */
@@ -4041,7 +4101,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                         x, y, w, h,
                                         cell->firstProjectileGfxIndex,
                                         depthIndex,
-                                        cell->firstProjectileRelDir)) {
+                                        cell->firstProjectileRelDir,
+                                        cell->firstProjectileCell)) {
             /* Fallback: cyan crosshair */
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
@@ -4415,7 +4476,19 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     }
     offset += (int)m->wallOrnamentCount + 1; /* +1 for inscription ornament */
 
-    /* Skip floor ornament indices */
+    /* Read floor ornament indices.
+     * Ref: ReDMCSB DUNGEON.C F173 — G262_auc_CurrentMapFloorOrnamentIndices.
+     * Each byte is a global floor ornament graphic set index.  In the
+     * original, floor ornaments start at graphic index 247 and each
+     * ornament has 6 perspective variants (D3L..D1R).
+     * Floor ornament graphic = 247 + globalIndex * 6 + viewOffset. */
+    for (i = 0; i < 16; ++i) {
+        if (i < (int)m->floorOrnamentCount && (offset + i) < metaSize) {
+            state->floorOrnamentIndices[mapIndex][i] = (int)metaBuf[offset + i];
+        } else {
+            state->floorOrnamentIndices[mapIndex][i] = -1; /* no ornament */
+        }
+    }
     offset += (int)m->floorOrnamentCount;
 
     /* Read door ornament indices */
@@ -4461,6 +4534,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
     cell.firstProjectileRelDir = -1;
+    cell.firstProjectileCell = -1;
+    cell.floorOrnamentOrdinal = 0;
     cell.firstExplosionType = -1;
 
     if (!state || !state->active) {
@@ -4675,6 +4750,16 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (rp->slotIndex < 0) continue;
             if (rp->mapIndex == partyMap && rp->mapX == mapX && rp->mapY == mapY) {
                 cell.firstProjectileRelDir = (rp->direction - partyDir) & 3;
+                /* Extract sub-cell position (0-3) for DM1-faithful
+                 * projectile viewport offset.  The cell field in the
+                 * runtime data is absolute (0=NW,1=NE,2=SW,3=SE).
+                 * We store the relative sub-cell: rotate by party
+                 * facing so 0 = back-left, 1 = back-right,
+                 * 2 = front-left, 3 = front-right from the party's
+                 * perspective.  This matches DM1's view-cell mapping.
+                 * Ref: ReDMCSB DUNVIEW.C L0139_i_Cell = M21_NORMALIZE(
+                 *   A0126_i_ViewCell + P142_i_Direction). */
+                cell.firstProjectileCell = (rp->cell - partyDir) & 3;
                 break;
             }
         }
@@ -5194,8 +5279,37 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         return;
     }
 
-    /* Multi-creature stacking with sprite duplication.
-     * Up to 4 per group rendered as stacked sprites. Ref: ReDMCSB. */
+    /* ── DM1-faithful Z-order: floor items → creatures → projectiles ──
+     * In the original, floor items are drawn first (they lie on the
+     * ground), then creatures (standing above the items), then
+     * projectiles and explosions (in flight, topmost layer).
+     * Ref: ReDMCSB DUNVIEW.C F115 — per-cell draw loop processes
+     * objects first, then creatures, then projectiles. */
+
+    /* Layer 1: Floor items (lowest — on the ground) */
+    if (cell->floorItemCount > 0) {
+        int ii;
+        int itemsToShow = cell->floorItemCount;
+        for (ii = 0; ii < itemsToShow; ++ii) {
+            if (cell->floorItemTypes[ii] < 0) continue;
+            if (!g_drawState ||
+                !m11_draw_item_sprite(g_drawState, framebuffer,
+                                      framebufferWidth, framebufferHeight,
+                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                                      cell->floorItemTypes[ii],
+                                      cell->floorItemSubtypes[ii],
+                                      depthIndex)) {
+                /* Fallback cue only for the first item to avoid clutter */
+                if (ii == 0) {
+                    m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                                      cell->summary.items);
+                }
+            }
+        }
+    }
+
+    /* Layer 2: Creatures (standing on the floor, above items) */
     if (cell->creatureGroupCount > 0) {
         int gi;
         int groupCount = cell->creatureGroupCount;
@@ -5258,30 +5372,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         }
     }
 
-    /* ── Multi-item floor scatter ──
-     * DM1 scatters floor items across 4 sub-cell positions.  We render
-     * up to M11_MAX_CELL_ITEMS items, each at its own scatter offset. */
-    if (cell->floorItemCount > 0) {
-        int ii;
-        int itemsToShow = cell->floorItemCount;
-        for (ii = 0; ii < itemsToShow; ++ii) {
-            if (cell->floorItemTypes[ii] < 0) continue;
-            if (!g_drawState ||
-                !m11_draw_item_sprite(g_drawState, framebuffer,
-                                      framebufferWidth, framebufferHeight,
-                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                                      cell->floorItemTypes[ii],
-                                      cell->floorItemSubtypes[ii],
-                                      depthIndex)) {
-                /* Fallback cue only for the first item to avoid clutter */
-                if (ii == 0) {
-                    m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                                      cell->summary.items);
-                }
-            }
-        }
-    }
+    /* Layer 3: Projectiles and explosions (in flight, topmost) */
     m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
                         faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
                         depthIndex);
@@ -5356,6 +5447,15 @@ enum {
     M11_GFX_WALL_ORNAMENTS_PER_SET = 16,
     M11_GFX_DOOR_ORNAMENT_BASE = 165, /* first door ornament graphic */
     M11_GFX_DOOR_ORNAMENTS_PER_SET = 16,
+
+    /* Floor ornament graphics.
+     * In DM1, floor ornaments start at graphic index 247 and each
+     * ornament has 6 perspective variants for the 6 visible floor
+     * positions (D3L, D3C, D3R, D2L, D2C, D2R).
+     * Graphic index = 247 + globalOrnamentIndex * 6 + viewOffset.
+     * Ref: ReDMCSB DEFS.H C247_GRAPHIC_FIRST_FLOOR_ORNAMENT. */
+    M11_GFX_FLOOR_ORNAMENT_BASE = 247,
+    M11_GFX_FLOOR_ORNAMENT_VARIANTS = 6,
 
     /* Stair graphics */
     M11_GFX_STAIRS_DOWN_D2 = 93,  /* 33x136 */
@@ -6397,7 +6497,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                             paneW - 2, projArea,
                                             cell->firstProjectileGfxIndex,
                                             depthIndex + 1,
-                                            cell->firstProjectileRelDir)) {
+                                            cell->firstProjectileRelDir,
+                                            cell->firstProjectileCell)) {
                 int pcx = paneX + paneW / 2;
                 int pcy = paneY + paneH / 2;
                 m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
