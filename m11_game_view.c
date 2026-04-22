@@ -3349,8 +3349,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    /* No idle ticks once the game is won or dialog is showing. */
-    if (state->gameWon || state->dialogOverlayActive) {
+    /* No idle ticks during overlays, endgame, or dialog. */
+    if (state->gameWon || state->dialogOverlayActive ||
+        state->mapOverlayActive || state->inventoryPanelActive) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!m11_apply_tick(state, CMD_NONE, "WAIT")) {
@@ -3492,6 +3493,39 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (input == M12_MENU_INPUT_BACK) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* Map/inventory toggle — always available (closes overlay if other open). */
+    if (input == M12_MENU_INPUT_MAP_TOGGLE) {
+        state->inventoryPanelActive = 0;
+        M11_GameView_ToggleMapOverlay(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_INVENTORY_TOGGLE) {
+        state->mapOverlayActive = 0;
+        M11_GameView_ToggleInventoryPanel(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    /* While an overlay is open, block gameplay input; ESC/BACK closes it. */
+    if (state->mapOverlayActive || state->inventoryPanelActive) {
+        if (input == M12_MENU_INPUT_BACK) {
+            state->mapOverlayActive = 0;
+            state->inventoryPanelActive = 0;
+            return M11_GAME_INPUT_REDRAW;
+        }
+        /* In inventory panel, accept up/down/left/right to navigate slots */
+        if (state->inventoryPanelActive) {
+            if (input == M12_MENU_INPUT_UP && state->inventorySelectedSlot > 0) {
+                state->inventorySelectedSlot--;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input == M12_MENU_INPUT_DOWN && state->inventorySelectedSlot < 20) {
+                state->inventorySelectedSlot++;
+                return M11_GAME_INPUT_REDRAW;
+            }
         }
         return M11_GAME_INPUT_IGNORED;
     }
@@ -6649,6 +6683,213 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     snprintf(outHint, outHintSize, "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH");
 }
 
+/* ── Full-screen map overlay (M key) ── */
+static void m11_draw_fullscreen_map(const M11_GameViewState* state,
+                                   unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight) {
+    int panelX = 16, panelY = 16;
+    int panelW = framebufferWidth - 32;
+    int panelH = framebufferHeight - 32;
+    const struct DungeonMapDesc_Compat* mapDesc = NULL;
+    int mapW = 0, mapH = 0;
+    int cellSize;
+    int offsetX, offsetY;
+    int gx, gy;
+
+    if (!state || !state->active || !state->world.dungeon) return;
+    if (state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount) return;
+    mapDesc = &state->world.dungeon->maps[state->world.party.mapIndex];
+    mapW = (int)mapDesc->width;
+    mapH = (int)mapDesc->height;
+    if (mapW <= 0 || mapH <= 0) return;
+
+    /* Background panel */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX, panelY, panelW, panelH, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX, panelY, panelW, panelH, M11_COLOR_YELLOW);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_BROWN);
+
+    /* Title */
+    {
+        char mapTitle[48];
+        snprintf(mapTitle, sizeof(mapTitle), "LEVEL %d MAP (%dx%d)",
+                 state->world.party.mapIndex + 1, mapW, mapH);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 6, panelY + 4, mapTitle, &g_text_title);
+    }
+
+    /* Compute cell size to fit map in available area */
+    {
+        int availW = panelW - 12;
+        int availH = panelH - 26;
+        int cw = availW / mapW;
+        int ch = availH / mapH;
+        cellSize = cw < ch ? cw : ch;
+        if (cellSize < 2) cellSize = 2;
+        if (cellSize > 12) cellSize = 12;
+        offsetX = panelX + 6 + (availW - mapW * cellSize) / 2;
+        offsetY = panelY + 20 + (availH - mapH * cellSize) / 2;
+    }
+
+    /* Draw each tile */
+    for (gy = 0; gy < mapH; ++gy) {
+        for (gx = 0; gx < mapW; ++gx) {
+            unsigned char square = 0;
+            unsigned char fill = M11_COLOR_BLACK;
+            int drawX = offsetX + gx * cellSize;
+            int drawY = offsetY + gy * cellSize;
+            int ok = m11_get_square_byte(&state->world,
+                                         state->world.party.mapIndex,
+                                         gx, gy, &square);
+            if (ok) {
+                if (m11_is_explored(state, gx, gy)) {
+                    fill = m11_tile_color(square >> 5);
+                } else {
+                    fill = M11_COLOR_NAVY;
+                }
+            }
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          drawX, drawY, cellSize - 1, cellSize - 1, fill);
+
+            /* Party position marker */
+            if (gx == state->world.party.mapX && gy == state->world.party.mapY) {
+                int cx = drawX + cellSize / 2 - 1;
+                int cy = drawY + cellSize / 2 - 1;
+                int ms = cellSize > 4 ? cellSize - 3 : 2;
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cx, cy, ms, ms, M11_COLOR_LIGHT_GREEN);
+                if (cellSize >= 6) {
+                    m11_draw_party_arrow(framebuffer, framebufferWidth, framebufferHeight,
+                                         cx - 1, cy - 1, ms + 2,
+                                         state->world.party.direction, M11_COLOR_WHITE);
+                }
+            }
+        }
+    }
+
+    /* Footer */
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX + 6, panelY + panelH - 14,
+                  "M CLOSE  ESC MENU  ARROWS EXPLORE", &g_text_small);
+}
+
+/* ── Full inventory panel (I key) ── */
+static void m11_draw_inventory_panel(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight) {
+    int panelX = 16, panelY = 16;
+    int panelW = framebufferWidth - 32;
+    int panelH = framebufferHeight - 32;
+    const struct ChampionState_Compat* champ;
+    int slot;
+    int row;
+    int slotX, slotY;
+    char champion[32];
+    static const int SLOT_W = 66;
+    static const int SLOT_H = 12;
+    static const int COLS = 4;
+    static const int startX = 24;
+    static const int startY = 40;
+
+    if (!state || !state->active) return;
+    if (state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) return;
+    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+
+    /* Background */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX, panelY, panelW, panelH, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX, panelY, panelW, panelH, M11_COLOR_YELLOW);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_BROWN);
+
+    /* Title with champion name */
+    m11_get_active_champion_label(state, champion, sizeof(champion));
+    {
+        char title[64];
+        snprintf(title, sizeof(title), "INVENTORY: %s", champion);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 6, panelY + 4, title, &g_text_title);
+    }
+
+    /* Stats line */
+    {
+        char stats[96];
+        snprintf(stats, sizeof(stats), "HP %d/%d  STA %d/%d  MANA %d/%d",
+                 (int)champ->hp.current, (int)champ->hp.maximum,
+                 (int)champ->stamina.current, (int)champ->stamina.maximum,
+                 (int)champ->mana.current, (int)champ->mana.maximum);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 6, panelY + 18, stats, &g_text_small);
+    }
+
+    /* Draw slot grid: display first 21 named slots in a grid */
+    row = 0;
+    for (slot = 0; slot <= CHAMPION_SLOT_HAND_RIGHT; ++slot) {
+        unsigned short thingId = champ->inventory[slot];
+        const char* slotLabel = M11_GameView_SlotName(slot);
+        unsigned char borderColor;
+        unsigned char fillColor;
+        int col = row % COLS;
+        int r = row / COLS;
+        char label[48];
+
+        slotX = startX + col * (SLOT_W + 2);
+        slotY = startY + r * (SLOT_H + 2);
+
+        /* Highlight selected slot */
+        if (slot == state->inventorySelectedSlot) {
+            borderColor = M11_COLOR_LIGHT_GREEN;
+            fillColor = M11_COLOR_DARK_GRAY;
+        } else {
+            borderColor = M11_COLOR_LIGHT_BLUE;
+            fillColor = M11_COLOR_BLACK;
+        }
+
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      slotX, slotY, SLOT_W, SLOT_H, fillColor);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      slotX, slotY, SLOT_W, SLOT_H, borderColor);
+
+        if (thingId != THING_NONE && thingId != THING_ENDOFLIST) {
+            int thingType = THING_GET_TYPE(thingId);
+            const char* typeLabel = "ITEM";
+            switch (thingType) {
+                case THING_TYPE_WEAPON:    typeLabel = "WEAPON"; break;
+                case THING_TYPE_ARMOUR:    typeLabel = "ARMOUR"; break;
+                case THING_TYPE_SCROLL:    typeLabel = "SCROLL"; break;
+                case THING_TYPE_POTION:    typeLabel = "POTION"; break;
+                case THING_TYPE_CONTAINER: typeLabel = "CHEST"; break;
+                case THING_TYPE_JUNK:      typeLabel = "JUNK"; break;
+                default: break;
+            }
+            snprintf(label, sizeof(label), "%-7s %s", slotLabel, typeLabel);
+            {
+                M11_TextStyle itemStyle = g_text_small;
+                itemStyle.color = M11_COLOR_WHITE;
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              slotX + 2, slotY + 2, label, &itemStyle);
+            }
+        } else {
+            snprintf(label, sizeof(label), "%-7s ---", slotLabel);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          slotX + 2, slotY + 2, label, &g_text_small);
+        }
+        row++;
+    }
+
+    /* Footer */
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX + 6, panelY + panelH - 14,
+                  "I CLOSE  UP/DN SELECT  TAB CHAMPION  ESC MENU", &g_text_small);
+}
+
 static void m11_draw_map_panel(const M11_GameViewState* state,
                                unsigned char* framebuffer,
                                int framebufferWidth,
@@ -7052,6 +7293,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
     }
 
+    /* ── Full-screen overlay panels (drawn last, on top of everything) ── */
+    if (state->mapOverlayActive) {
+        m11_draw_fullscreen_map(state, framebuffer, framebufferWidth, framebufferHeight);
+    }
+    if (state->inventoryPanelActive) {
+        m11_draw_inventory_panel(state, framebuffer, framebufferWidth, framebufferHeight);
+    }
+
     g_drawState = NULL;
     g_activeOriginalFont = NULL;
 }
@@ -7097,6 +7346,64 @@ int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,
 
 int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state) {
     return state ? state->attackCueCreatureType : -1;
+}
+
+/* ── Full-screen map overlay API ── */
+
+int M11_GameView_ToggleMapOverlay(M11_GameViewState* state) {
+    if (!state) return 0;
+    state->mapOverlayActive = !state->mapOverlayActive;
+    return state->mapOverlayActive;
+}
+
+int M11_GameView_IsMapOverlayActive(const M11_GameViewState* state) {
+    return state ? state->mapOverlayActive : 0;
+}
+
+/* ── Full inventory panel API ── */
+
+int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
+    if (!state) return 0;
+    state->inventoryPanelActive = !state->inventoryPanelActive;
+    if (state->inventoryPanelActive) {
+        state->inventorySelectedSlot = 0;
+    }
+    return state->inventoryPanelActive;
+}
+
+int M11_GameView_IsInventoryPanelActive(const M11_GameViewState* state) {
+    return state ? state->inventoryPanelActive : 0;
+}
+
+int M11_GameView_GetInventorySelectedSlot(const M11_GameViewState* state) {
+    return state ? state->inventorySelectedSlot : -1;
+}
+
+const char* M11_GameView_SlotName(int slotIndex) {
+    switch (slotIndex) {
+        case CHAMPION_SLOT_HEAD:       return "HEAD";
+        case CHAMPION_SLOT_NECK:       return "NECK";
+        case CHAMPION_SLOT_TORSO:      return "TORSO";
+        case CHAMPION_SLOT_LEGS:       return "LEGS";
+        case CHAMPION_SLOT_FEET:       return "FEET";
+        case CHAMPION_SLOT_POUCH_1:    return "POUCH 1";
+        case CHAMPION_SLOT_POUCH_2:    return "POUCH 2";
+        case CHAMPION_SLOT_QUIVER_1:   return "QUIVER 1";
+        case CHAMPION_SLOT_QUIVER_2:   return "QUIVER 2";
+        case CHAMPION_SLOT_QUIVER_3:   return "QUIVER 3";
+        case CHAMPION_SLOT_QUIVER_4:   return "QUIVER 4";
+        case CHAMPION_SLOT_BACKPACK_1: return "BACK 1";
+        case CHAMPION_SLOT_BACKPACK_2: return "BACK 2";
+        case CHAMPION_SLOT_BACKPACK_3: return "BACK 3";
+        case CHAMPION_SLOT_BACKPACK_4: return "BACK 4";
+        case CHAMPION_SLOT_BACKPACK_5: return "BACK 5";
+        case CHAMPION_SLOT_BACKPACK_6: return "BACK 6";
+        case CHAMPION_SLOT_BACKPACK_7: return "BACK 7";
+        case CHAMPION_SLOT_BACKPACK_8: return "BACK 8";
+        case CHAMPION_SLOT_HAND_LEFT:  return "L HAND";
+        case CHAMPION_SLOT_HAND_RIGHT: return "R HAND";
+        default: return "SLOT";
+    }
 }
 
 /* ── Dialog / endgame query API ── */

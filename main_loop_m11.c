@@ -305,6 +305,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     if (gameView && gameView->active)
                         return M12_MENU_INPUT_USE_ITEM;
                     return M12_MENU_INPUT_NONE;
+                case SDLK_M:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_MAP_TOGGLE;
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_I:
+                    if (gameView && gameView->active)
+                        return M12_MENU_INPUT_INVENTORY_TOGGLE;
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
                     M11_Render_CycleScaleMode();
                     return M12_MENU_INPUT_NONE;

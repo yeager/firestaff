@@ -3803,6 +3803,310 @@ int main(int argc, char** argv) {
                  M11_GameView_ShowDialogOverlay(NULL, "X") == 0,
                  "Dialog/endgame query APIs are NULL-safe");
 
+    /* ================================================================
+     * FULL-SCREEN MAP OVERLAY (M key)
+     * ================================================================ */
+
+    /* INV_GV_178: Map overlay is initially inactive. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        probe_record(&tally,
+                     "INV_GV_178",
+                     M11_GameView_IsMapOverlayActive(&mv) == 0,
+                     "Map overlay is initially inactive");
+    }
+
+    /* INV_GV_179: ToggleMapOverlay activates map. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        probe_record(&tally,
+                     "INV_GV_179",
+                     M11_GameView_ToggleMapOverlay(&mv) == 1 &&
+                     M11_GameView_IsMapOverlayActive(&mv) == 1,
+                     "ToggleMapOverlay activates map");
+    }
+
+    /* INV_GV_180: ToggleMapOverlay twice deactivates map. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        M11_GameView_ToggleMapOverlay(&mv);
+        M11_GameView_ToggleMapOverlay(&mv);
+        probe_record(&tally,
+                     "INV_GV_180",
+                     M11_GameView_IsMapOverlayActive(&mv) == 0,
+                     "ToggleMapOverlay twice deactivates map");
+    }
+
+    /* INV_GV_181: MAP_TOGGLE input activates map overlay. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        M11_GameView_HandleInput(&mv, M12_MENU_INPUT_MAP_TOGGLE);
+        probe_record(&tally,
+                     "INV_GV_181",
+                     mv.mapOverlayActive == 1,
+                     "MAP_TOGGLE input activates map overlay");
+    }
+
+    /* INV_GV_182: Movement blocked while map overlay active. */
+    {
+        M11_GameViewState mv;
+        uint32_t tickBefore;
+        memcpy(&mv, &gameView, sizeof(mv));
+        mv.mapOverlayActive = 1;
+        tickBefore = mv.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_182",
+                     M11_GameView_HandleInput(&mv, M12_MENU_INPUT_UP) == M11_GAME_INPUT_IGNORED &&
+                     mv.world.gameTick == tickBefore,
+                     "Movement blocked while map overlay active");
+    }
+
+    /* INV_GV_183: ESC closes map overlay without leaving game. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        mv.mapOverlayActive = 1;
+        probe_record(&tally,
+                     "INV_GV_183",
+                     M11_GameView_HandleInput(&mv, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_REDRAW &&
+                     mv.mapOverlayActive == 0,
+                     "ESC closes map overlay");
+    }
+
+    /* INV_GV_184: Map overlay renders differently from normal view. */
+    {
+        M11_GameViewState mv;
+        unsigned char fb_map[320 * 200];
+        unsigned char fb_normal[320 * 200];
+        int diff = 0;
+        int i;
+        memcpy(&mv, &gameView, sizeof(mv));
+        memset(fb_normal, 0, sizeof(fb_normal));
+        M11_GameView_Draw(&mv, fb_normal, 320, 200);
+        mv.mapOverlayActive = 1;
+        memset(fb_map, 0, sizeof(fb_map));
+        M11_GameView_Draw(&mv, fb_map, 320, 200);
+        for (i = 0; i < 320 * 200; ++i) {
+            if (fb_map[i] != fb_normal[i]) { diff = 1; break; }
+        }
+        probe_record(&tally,
+                     "INV_GV_184",
+                     diff,
+                     "Map overlay renders differently from normal view");
+    }
+
+    /* INV_GV_185: AdvanceIdleTick blocked during map overlay. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        mv.mapOverlayActive = 1;
+        probe_record(&tally,
+                     "INV_GV_185",
+                     M11_GameView_AdvanceIdleTick(&mv) == M11_GAME_INPUT_IGNORED,
+                     "AdvanceIdleTick blocked during map overlay");
+    }
+
+    /* INV_GV_186: MAP_TOGGLE while map active deactivates it. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        mv.mapOverlayActive = 1;
+        M11_GameView_HandleInput(&mv, M12_MENU_INPUT_MAP_TOGGLE);
+        probe_record(&tally,
+                     "INV_GV_186",
+                     mv.mapOverlayActive == 0,
+                     "MAP_TOGGLE while map active deactivates it");
+    }
+
+    /* ================================================================
+     * FULL INVENTORY PANEL (I key)
+     * ================================================================ */
+
+    /* INV_GV_187: Inventory panel is initially inactive. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        probe_record(&tally,
+                     "INV_GV_187",
+                     M11_GameView_IsInventoryPanelActive(&iv) == 0,
+                     "Inventory panel is initially inactive");
+    }
+
+    /* INV_GV_188: ToggleInventoryPanel activates inventory. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        probe_record(&tally,
+                     "INV_GV_188",
+                     M11_GameView_ToggleInventoryPanel(&iv) == 1 &&
+                     M11_GameView_IsInventoryPanelActive(&iv) == 1,
+                     "ToggleInventoryPanel activates inventory");
+    }
+
+    /* INV_GV_189: ToggleInventoryPanel twice deactivates inventory. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        M11_GameView_ToggleInventoryPanel(&iv);
+        M11_GameView_ToggleInventoryPanel(&iv);
+        probe_record(&tally,
+                     "INV_GV_189",
+                     M11_GameView_IsInventoryPanelActive(&iv) == 0,
+                     "ToggleInventoryPanel twice deactivates inventory");
+    }
+
+    /* INV_GV_190: INVENTORY_TOGGLE input activates inventory panel. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        M11_GameView_HandleInput(&iv, M12_MENU_INPUT_INVENTORY_TOGGLE);
+        probe_record(&tally,
+                     "INV_GV_190",
+                     iv.inventoryPanelActive == 1,
+                     "INVENTORY_TOGGLE input activates inventory panel");
+    }
+
+    /* INV_GV_191: Inventory panel renders differently from normal view. */
+    {
+        M11_GameViewState iv;
+        M11_GameViewState iv2;
+        unsigned char fb_inv[320 * 200];
+        unsigned char fb_normal[320 * 200];
+        int diff = 0;
+        int i;
+        memcpy(&iv, &gameView, sizeof(iv));
+        memset(fb_normal, 0, sizeof(fb_normal));
+        M11_GameView_Draw(&iv, fb_normal, 320, 200);
+        memcpy(&iv2, &gameView, sizeof(iv2));
+        iv2.inventoryPanelActive = 1;
+        iv2.inventorySelectedSlot = 0;
+        if (iv2.world.party.activeChampionIndex < 0)
+            iv2.world.party.activeChampionIndex = 0;
+        memset(fb_inv, 0, sizeof(fb_inv));
+        M11_GameView_Draw(&iv2, fb_inv, 320, 200);
+        for (i = 0; i < 320 * 200; ++i) {
+            if (fb_inv[i] != fb_normal[i]) { diff = 1; break; }
+        }
+        probe_record(&tally,
+                     "INV_GV_191",
+                     diff,
+                     "Inventory panel renders differently from normal view");
+    }
+
+    /* INV_GV_192: Movement blocked while inventory panel active. */
+    {
+        M11_GameViewState iv;
+        uint32_t tickBefore;
+        memcpy(&iv, &gameView, sizeof(iv));
+        iv.inventoryPanelActive = 1;
+        tickBefore = iv.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_192",
+                     M11_GameView_HandleInput(&iv, M12_MENU_INPUT_UP) == M11_GAME_INPUT_IGNORED &&
+                     iv.world.gameTick == tickBefore,
+                     "Movement blocked while inventory panel active");
+    }
+
+    /* INV_GV_193: ESC closes inventory panel. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        iv.inventoryPanelActive = 1;
+        probe_record(&tally,
+                     "INV_GV_193",
+                     M11_GameView_HandleInput(&iv, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_REDRAW &&
+                     iv.inventoryPanelActive == 0,
+                     "ESC closes inventory panel");
+    }
+
+    /* INV_GV_194: AdvanceIdleTick blocked during inventory panel. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        iv.inventoryPanelActive = 1;
+        probe_record(&tally,
+                     "INV_GV_194",
+                     M11_GameView_AdvanceIdleTick(&iv) == M11_GAME_INPUT_IGNORED,
+                     "AdvanceIdleTick blocked during inventory panel");
+    }
+
+    /* INV_GV_195: Selected slot starts at 0 when inventory opens. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        M11_GameView_ToggleInventoryPanel(&iv);
+        probe_record(&tally,
+                     "INV_GV_195",
+                     M11_GameView_GetInventorySelectedSlot(&iv) == 0,
+                     "Selected slot starts at 0 when inventory opens");
+    }
+
+    /* INV_GV_196: DOWN input in inventory advances selected slot. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        iv.inventoryPanelActive = 1;
+        iv.inventorySelectedSlot = 0;
+        M11_GameView_HandleInput(&iv, M12_MENU_INPUT_DOWN);
+        probe_record(&tally,
+                     "INV_GV_196",
+                     iv.inventorySelectedSlot == 1,
+                     "DOWN input in inventory advances selected slot");
+    }
+
+    /* INV_GV_197: MAP_TOGGLE closes inventory and opens map. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        iv.inventoryPanelActive = 1;
+        M11_GameView_HandleInput(&iv, M12_MENU_INPUT_MAP_TOGGLE);
+        probe_record(&tally,
+                     "INV_GV_197",
+                     iv.inventoryPanelActive == 0 && iv.mapOverlayActive == 1,
+                     "MAP_TOGGLE closes inventory and opens map");
+    }
+
+    /* INV_GV_198: INVENTORY_TOGGLE closes map and opens inventory. */
+    {
+        M11_GameViewState iv;
+        memcpy(&iv, &gameView, sizeof(iv));
+        iv.mapOverlayActive = 1;
+        M11_GameView_HandleInput(&iv, M12_MENU_INPUT_INVENTORY_TOGGLE);
+        probe_record(&tally,
+                     "INV_GV_198",
+                     iv.mapOverlayActive == 0 && iv.inventoryPanelActive == 1,
+                     "INVENTORY_TOGGLE closes map and opens inventory");
+    }
+
+    /* INV_GV_199: SlotName returns non-NULL for all named slots. */
+    {
+        int allOk = 1;
+        int s;
+        for (s = 0; s <= CHAMPION_SLOT_HAND_RIGHT; ++s) {
+            if (M11_GameView_SlotName(s) == NULL || M11_GameView_SlotName(s)[0] == '\0') {
+                allOk = 0; break;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_199",
+                     allOk,
+                     "SlotName returns non-NULL for all named slots");
+    }
+
+    /* INV_GV_200: NULL-safety for map/inventory query APIs. */
+    probe_record(&tally,
+                 "INV_GV_200",
+                 M11_GameView_IsMapOverlayActive(NULL) == 0 &&
+                 M11_GameView_ToggleMapOverlay(NULL) == 0 &&
+                 M11_GameView_IsInventoryPanelActive(NULL) == 0 &&
+                 M11_GameView_ToggleInventoryPanel(NULL) == 0 &&
+                 M11_GameView_GetInventorySelectedSlot(NULL) == -1,
+                 "Map/inventory query APIs are NULL-safe");
+
     M11_GameView_Shutdown(&gameView);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);

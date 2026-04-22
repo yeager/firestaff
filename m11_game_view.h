@@ -112,6 +112,11 @@ typedef struct {
     /* Creature type that last attacked (for attack-cue sprite). */
     int attackCueCreatureType;
 
+    /* ── Full-screen overlay state ── */
+    int mapOverlayActive;        /* 1 when full-screen map is displayed */
+    int inventoryPanelActive;    /* 1 when full inventory grid is displayed */
+    int inventorySelectedSlot;   /* currently highlighted slot index (-1 = none) */
+
     /* ── Endgame / dialog flow state ── */
     /* Set to 1 when ORCH_GAME_WON / EMIT_GAME_WON fires.  Blocks all
      * gameplay input; only ESC (return to menu) is accepted. */
@@ -245,6 +250,28 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state);
 /* Show a dialog overlay with the given text.  Returns 1 on success. */
 int M11_GameView_ShowDialogOverlay(M11_GameViewState* state,
                                    const char* text);
+
+/* ── Full-screen map overlay API ── */
+
+/* Toggle the full-screen map overlay.  Returns 1 if now visible. */
+int M11_GameView_ToggleMapOverlay(M11_GameViewState* state);
+
+/* Return 1 if the map overlay is currently displayed. */
+int M11_GameView_IsMapOverlayActive(const M11_GameViewState* state);
+
+/* ── Full inventory panel API ── */
+
+/* Toggle the full inventory panel.  Returns 1 if now visible. */
+int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state);
+
+/* Return 1 if the inventory panel is currently displayed. */
+int M11_GameView_IsInventoryPanelActive(const M11_GameViewState* state);
+
+/* Return the currently selected inventory slot index (-1 = none). */
+int M11_GameView_GetInventorySelectedSlot(const M11_GameViewState* state);
+
+/* Return human-readable label for an inventory slot index. */
+const char* M11_GameView_SlotName(int slotIndex);
 
 #ifdef __cplusplus
 }
