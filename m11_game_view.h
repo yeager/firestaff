@@ -104,6 +104,15 @@ typedef struct {
      * While > 0, the viewport border flashes red. */
     int damageFlashTimer;
 
+    /* Per-champion damage indicator state.
+     * When a champion takes damage, the corresponding timer is set to
+     * M11_DAMAGE_FLASH_DURATION and the amount is recorded.  While > 0,
+     * the GRAPHICS.DAT damage-to-champion overlay (graphic 15, 45×7)
+     * is drawn on top of the champion's status box with the damage
+     * number.  Ref: ReDMCSB CHAMPION.C F0291. */
+    int championDamageTimer[4];  /* per-slot countdown */
+    int championDamageAmount[4]; /* last damage dealt */
+
     /* Front-cell attack indicator timer.  Set to M11_ATTACK_CUE_DURATION
      * when a creature in the front cell (depth 0) attacks.  Decremented
      * each tick.  While > 0, draw slash-mark overlay on the viewport. */
@@ -229,6 +238,12 @@ void M11_GameView_NotifyDamageFlash(M11_GameViewState* state,
 /* Query animation state (for probes). */
 int M11_GameView_GetDamageFlashTimer(const M11_GameViewState* state);
 int M11_GameView_GetAttackCueTimer(const M11_GameViewState* state);
+
+/* Trigger a per-champion damage indicator overlay (GRAPHICS.DAT graphic 15).
+ * The indicator displays for M11_DAMAGE_FLASH_DURATION ticks. */
+void M11_GameView_NotifyChampionDamage(M11_GameViewState* state,
+                                       int championSlot,
+                                       int damageAmount);
 uint32_t M11_GameView_GetAnimTick(const M11_GameViewState* state);
 
 /* Return the idle-animation frame index (0 or 1) for a given

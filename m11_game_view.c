@@ -4910,7 +4910,16 @@ enum {
      * Ref: DEFS.H lines 2197-2199. */
     M11_GFX_BORDER_PARTY_SHIELD      = 37, /* C037 */
     M11_GFX_BORDER_PARTY_FIRESHIELD  = 38, /* C038 */
-    M11_GFX_BORDER_PARTY_SPELLSHIELD = 39  /* C039 */
+    M11_GFX_BORDER_PARTY_SPELLSHIELD = 39, /* C039 */
+
+    /* Damage indicator overlays.
+     * C014: 88×45, drawn on viewport when creature takes damage.
+     * C015: 45×7,  drawn on champion status box for non-inventory champion.
+     * C016: 32×29, drawn on inventory view for the active champion.
+     * Ref: ReDMCSB CHAMPION.C F0291 / MELEE.C display code. */
+    M11_GFX_DAMAGE_TO_CREATURE        = 14, /* C014_GRAPHIC_DAMAGE_TO_CREATURE (88×45) */
+    M11_GFX_DAMAGE_TO_CHAMPION_SMALL  = 15, /* C015_GRAPHIC_DAMAGE_TO_CHAMPION_SMALL (45×7) */
+    M11_GFX_DAMAGE_TO_CHAMPION_BIG    = 16  /* C016_GRAPHIC_DAMAGE_TO_CHAMPION_BIG (32×29) */
 };
 
 /* ================================================================
@@ -6757,6 +6766,87 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
             }
+
+            /* GRAPHICS.DAT-backed shield border overlays (67×29).
+             * Drawn with transparency on top of the status box when the
+             * party has an active shield spell.
+             * Ref: ReDMCSB INVNTORY.C — G0310_i_ShieldDefenseType selects
+             *   C037 (party shield), C038 (fire shield), or C039 (spell shield).
+             * Priority: spell > fire > party (highest active wins). */
+            if (state->assetsAvailable && !isDead) {
+                unsigned int borderGfx = 0;
+                if (state->world.magic.spellShieldDefense > 0)
+                    borderGfx = M11_GFX_BORDER_PARTY_SPELLSHIELD;
+                else if (state->world.magic.fireShieldDefense > 0)
+                    borderGfx = M11_GFX_BORDER_PARTY_FIRESHIELD;
+                else if (state->world.magic.partyShieldDefense > 0)
+                    borderGfx = M11_GFX_BORDER_PARTY_SHIELD;
+                if (borderGfx) {
+                    const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader, borderGfx);
+                    if (borderAsset && borderAsset->width == 67 &&
+                        borderAsset->height == 29) {
+                        M11_AssetLoader_BlitRegion(borderAsset,
+                            0, 0, 67, 29,
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            x, y, 0); /* transparentColor=0 (black) */
+                    }
+                }
+            }
+
+            /* GRAPHICS.DAT-backed POISONED label (96×15, graphic 32).
+             * Drawn below the status box when champion is poisoned.
+             * Ref: ReDMCSB INVNTORY.C — drawn when poisonDose > 0. */
+            if (state->assetsAvailable && champ->poisonDose > 0) {
+                const M11_AssetSlot* poisonLbl = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    M11_GFX_POISONED_LABEL);
+                if (poisonLbl && poisonLbl->width > 0 &&
+                    poisonLbl->height > 0) {
+                    /* Center the 96-wide label within the 67-wide slot;
+                     * in DM1 this spills across adjacent boxes, which is
+                     * the correct original behaviour. */
+                    int lblX = x + ((int)67 - (int)poisonLbl->width) / 2;
+                    int lblY = y + 29; /* just below the status box */
+                    M11_AssetLoader_BlitRegion(poisonLbl,
+                        0, 0, (int)poisonLbl->width, (int)poisonLbl->height,
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        lblX, lblY, 0);
+                }
+            }
+
+            /* GRAPHICS.DAT-backed damage indicator (45×7, graphic 15).
+             * Overlaid on the status box when the champion just took
+             * damage (timer > 0).  The damage number is drawn on top.
+             * Ref: ReDMCSB CHAMPION.C F0291. */
+            if (state->championDamageTimer[slot] > 0) {
+                if (state->assetsAvailable) {
+                    const M11_AssetSlot* dmgAsset = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader,
+                        M11_GFX_DAMAGE_TO_CHAMPION_SMALL);
+                    if (dmgAsset && dmgAsset->width == 45 &&
+                        dmgAsset->height == 7) {
+                        int dmgX = x + (67 - 45) / 2;
+                        int dmgY = y + (29 - 7) / 2;
+                        M11_AssetLoader_BlitRegion(dmgAsset,
+                            0, 0, 45, 7,
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            dmgX, dmgY, 0);
+                    }
+                }
+                /* Always draw the damage number (even without assets) */
+                {
+                    char dmgNum[8];
+                    M11_TextStyle dmgStyle = g_text_small;
+                    dmgStyle.color = M11_COLOR_WHITE;
+                    snprintf(dmgNum, sizeof(dmgNum), "%d",
+                             state->championDamageAmount[slot]);
+                    m11_draw_text(framebuffer, framebufferWidth,
+                                  framebufferHeight,
+                                  x + 67 / 2 - 4, y + 29 / 2 - 3,
+                                  dmgNum, &dmgStyle);
+                }
+            }
         } else {
             /* Empty slot: procedural placeholder */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -7968,6 +8058,9 @@ void M11_GameView_TickAnimation(M11_GameViewState* state) {
     state->animTick++;
     if (state->damageFlashTimer > 0) state->damageFlashTimer--;
     if (state->attackCueTimer > 0)   state->attackCueTimer--;
+    { int ci; for (ci = 0; ci < 4; ++ci) {
+        if (state->championDamageTimer[ci] > 0) state->championDamageTimer[ci]--;
+    }}
 }
 
 void M11_GameView_NotifyDamageFlash(M11_GameViewState* state,
@@ -7984,6 +8077,14 @@ int M11_GameView_GetDamageFlashTimer(const M11_GameViewState* state) {
 
 int M11_GameView_GetAttackCueTimer(const M11_GameViewState* state) {
     return state ? state->attackCueTimer : 0;
+}
+
+void M11_GameView_NotifyChampionDamage(M11_GameViewState* state,
+                                       int championSlot,
+                                       int damageAmount) {
+    if (!state || championSlot < 0 || championSlot >= 4) return;
+    state->championDamageTimer[championSlot] = M11_DAMAGE_FLASH_DURATION;
+    state->championDamageAmount[championSlot] = damageAmount;
 }
 
 uint32_t M11_GameView_GetAnimTick(const M11_GameViewState* state) {

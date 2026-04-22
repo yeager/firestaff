@@ -4227,6 +4227,187 @@ int main(int argc, char** argv) {
                      "water label 31: skipped (no GRAPHICS.DAT)");
     }
 
+    /* INV_GV_210: POISONED label (graphic 32) loads as 96×15. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* poison32 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 32);
+        probe_record(&tally,
+                     "INV_GV_210",
+                     poison32 != NULL && poison32->width == 96 && poison32->height == 15,
+                     "poisoned label (graphic 32) loads as 96x15 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_210", 1,
+                     "poisoned label 32: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_211: Shield border - party shield (graphic 37) loads as 67×29. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* shield37 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 37);
+        probe_record(&tally,
+                     "INV_GV_211",
+                     shield37 != NULL && shield37->width == 67 && shield37->height == 29,
+                     "party shield border (graphic 37) loads as 67x29 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_211", 1,
+                     "shield border 37: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_212: Shield border - fire shield (graphic 38) loads as 67×29. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* fire38 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 38);
+        probe_record(&tally,
+                     "INV_GV_212",
+                     fire38 != NULL && fire38->width == 67 && fire38->height == 29,
+                     "fire shield border (graphic 38) loads as 67x29 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_212", 1,
+                     "shield border 38: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_213: Shield border - spell shield (graphic 39) loads as 67×29. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* spell39 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 39);
+        probe_record(&tally,
+                     "INV_GV_213",
+                     spell39 != NULL && spell39->width == 67 && spell39->height == 29,
+                     "spell shield border (graphic 39) loads as 67x29 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_213", 1,
+                     "shield border 39: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_214: Shield border drawn when partyShieldDefense > 0. */
+    {
+        unsigned char shFb[320 * 200];
+        unsigned char refFb[320 * 200];
+        int differs = 0;
+        int px;
+        /* Ensure party has a live champion for the test */
+        gameView.world.party.championCount = 2;
+        gameView.world.party.champions[0].present = 1;
+        gameView.world.party.champions[0].hp.current = 72;
+        gameView.world.party.champions[0].hp.maximum = 100;
+        gameView.world.magic.partyShieldDefense = 0;
+        gameView.world.magic.fireShieldDefense = 0;
+        gameView.world.magic.spellShieldDefense = 0;
+        memset(refFb, 0, sizeof(refFb));
+        M11_GameView_Draw(&gameView, refFb, 320, 200);
+        /* Now set shield active and redraw */
+        gameView.world.magic.partyShieldDefense = 50;
+        memset(shFb, 0, sizeof(shFb));
+        M11_GameView_Draw(&gameView, shFb, 320, 200);
+        for (px = 0; px < 320 * 200; ++px) {
+            if (shFb[px] != refFb[px]) { differs = 1; break; }
+        }
+        /* Restore */
+        gameView.world.magic.partyShieldDefense = 0;
+        probe_record(&tally,
+                     "INV_GV_214",
+                     differs || !gameView.assetsAvailable,
+                     "shield border drawn when partyShieldDefense > 0");
+    }
+
+    /* INV_GV_215: POISONED label drawn when champion poisonDose > 0. */
+    {
+        unsigned char pFb[320 * 200];
+        unsigned char refFb[320 * 200];
+        int differs = 0;
+        int px;
+        /* Ensure party has a live champion */
+        gameView.world.party.championCount = 2;
+        gameView.world.party.champions[0].present = 1;
+        gameView.world.party.champions[0].hp.current = 72;
+        gameView.world.party.champions[0].poisonDose = 0;
+        memset(refFb, 0, sizeof(refFb));
+        M11_GameView_Draw(&gameView, refFb, 320, 200);
+        /* Now set poison active and redraw */
+        gameView.world.party.champions[0].poisonDose = 100;
+        memset(pFb, 0, sizeof(pFb));
+        M11_GameView_Draw(&gameView, pFb, 320, 200);
+        for (px = 0; px < 320 * 200; ++px) {
+            if (pFb[px] != refFb[px]) { differs = 1; break; }
+        }
+        /* Restore */
+        gameView.world.party.champions[0].poisonDose = 0;
+        probe_record(&tally,
+                     "INV_GV_215",
+                     differs || !gameView.assetsAvailable,
+                     "POISONED label drawn when champion poisonDose > 0");
+    }
+
+    /* INV_GV_216: Damage-to-champion small (graphic 15) loads as 45×7. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* dmg15 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 15);
+        probe_record(&tally,
+                     "INV_GV_216",
+                     dmg15 != NULL && dmg15->width == 45 && dmg15->height == 7,
+                     "damage to champion small (graphic 15) loads as 45x7 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_216", 1,
+                     "damage graphic 15: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_217: Damage-to-champion big (graphic 16) loads as 32×29. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* dmg16 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 16);
+        probe_record(&tally,
+                     "INV_GV_217",
+                     dmg16 != NULL && dmg16->width == 32 && dmg16->height == 29,
+                     "damage to champion big (graphic 16) loads as 32x29 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_217", 1,
+                     "damage graphic 16: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_218: Damage-to-creature (graphic 14) loads as 88×45. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* dmg14 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 14);
+        probe_record(&tally,
+                     "INV_GV_218",
+                     dmg14 != NULL && dmg14->width == 88 && dmg14->height == 45,
+                     "damage to creature (graphic 14) loads as 88x45 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_218", 1,
+                     "damage graphic 14: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_219: Per-champion damage indicator drawn when timer > 0. */
+    {
+        unsigned char dFb[320 * 200];
+        unsigned char refFb[320 * 200];
+        int differs = 0;
+        int px;
+        /* Ensure party has a live champion */
+        gameView.world.party.championCount = 2;
+        gameView.world.party.champions[0].present = 1;
+        gameView.world.party.champions[0].hp.current = 72;
+        memset(gameView.championDamageTimer, 0, sizeof(gameView.championDamageTimer));
+        memset(gameView.championDamageAmount, 0, sizeof(gameView.championDamageAmount));
+        memset(refFb, 0, sizeof(refFb));
+        M11_GameView_Draw(&gameView, refFb, 320, 200);
+        /* Set damage indicator on champion 0 */
+        gameView.championDamageTimer[0] = 3;
+        gameView.championDamageAmount[0] = 42;
+        memset(dFb, 0, sizeof(dFb));
+        M11_GameView_Draw(&gameView, dFb, 320, 200);
+        for (px = 0; px < 320 * 200; ++px) {
+            if (dFb[px] != refFb[px]) { differs = 1; break; }
+        }
+        /* Restore */
+        gameView.championDamageTimer[0] = 0;
+        gameView.championDamageAmount[0] = 0;
+        probe_record(&tally,
+                     "INV_GV_219",
+                     differs,
+                     "per-champion damage indicator drawn when timer > 0");
+    }
+
     /* ── Screenshot: dump inventory panel to PGM for visual verification ── */
     {
         M11_GameViewState ssView;
@@ -4333,6 +4514,34 @@ int main(int argc, char** argv) {
                 fprintf(ssFile, "P5\n320 200\n255\n");
                 for (px = 0; px < 320 * 200; ++px) {
                     unsigned char gray = (unsigned char)(ssFb[px] * 17);
+                    fwrite(&gray, 1, 1, ssFile);
+                }
+                fclose(ssFile);
+                printf("Screenshot: %s\n", ssPath);
+            }
+        }
+    }
+
+    /* ── Screenshot: party HUD with shield border and poison overlay ── */
+    {
+        M11_GameViewState shView;
+        unsigned char shFb[320 * 200];
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+        memcpy(&shView, &gameView, sizeof(shView));
+        shView.world.magic.partyShieldDefense = 50;
+        shView.world.party.champions[0].poisonDose = 100;
+        memset(shFb, 0, sizeof(shFb));
+        M11_GameView_Draw(&shView, shFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            char ssPath[512];
+            FILE* ssFile;
+            snprintf(ssPath, sizeof(ssPath), "%s/shield_poison_hud.pgm", ssDir);
+            ssFile = fopen(ssPath, "wb");
+            if (ssFile) {
+                int px;
+                fprintf(ssFile, "P5\n320 200\n255\n");
+                for (px = 0; px < 320 * 200; ++px) {
+                    unsigned char gray = (unsigned char)(shFb[px] * 17);
                     fwrite(&gray, 1, 1, ssFile);
                 }
                 fclose(ssFile);
