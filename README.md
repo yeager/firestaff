@@ -18,13 +18,16 @@ An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Bac
 
 ## Status
 
-Firestaff already has a real launcher, a real in-game DM1 slice, and a growing verified engine core.
+**Firestaff 0.1.0 is an early macOS preview release.**
+
+It already has a real launcher, a real in-game DM1 slice, bounded original-version detection, and a growing verified engine core.
 
 **Working today:**
-- launcher with game selection
+- launcher with DM1 / CSB / DM2 entries
 - persistent startup settings
-- DM1 asset validation via MD5
-- explicit launcher/game/settings flow
+- selected-version status in the startup menu
+- MD5-based original-data detection for bounded DM1 / CSB / DM2 version sets
+- explicit launcher / game / settings flow
 - real dungeon loading from `DUNGEON.DAT`
 - real movement / facing / ticking backed by world state
 - melee attack, item, spell, stair, pit, teleporter, XP, save/load, and survival slices wired through the game core
@@ -36,6 +39,7 @@ Firestaff already has a real launcher, a real in-game DM1 slice, and a growing v
 - complete CSB / DM2 runtime support
 - audio layer finished end to end
 - full endgame / dialog / launcher-product polish
+- final cross-platform packaging
 
 ## Creature Art
 
@@ -89,6 +93,11 @@ Launcher / game view:
 ```sh
 ./firestaff --data-dir "$HOME/.firestaff/data"
 ```
+
+Original-data search order:
+1. an explicit path, if provided
+2. `~/.firestaff/originals/` on macOS/Linux, or `<installation-directory>\originals` on Windows
+3. legacy Firestaff data-dir fallback such as `~/.firestaff/data/`
 
 In the game view: `Enter` inspects, `Space` acts or waits, `Tab` cycles the active champion, `Esc` returns to the launcher. You can also click the viewport to inspect, click the control strip to move/act, and click a party card to arm a champion directly.
 
