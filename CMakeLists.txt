@@ -69,6 +69,7 @@ endif()
 set(M12_SOURCES
     menu_startup_m12.c
     menu_startup_render_modern_m12.c
+    menu_hit_m12.c
     config_m12.c
     asset_status_m12.c
     card_art_m12.c
