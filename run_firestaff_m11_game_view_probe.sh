@@ -67,6 +67,7 @@ cc $CFLAGS_COMMON \
     "$HERE/asset_status_m12.c" \
     "$HERE/branding_logo_m12.c" \
     "$HERE/card_art_m12.c" \
+    "$HERE/creature_art_m12.c" \
     "$HERE/menu_startup_m12.c" \
     "$HERE/memory_tick_orchestrator_pc34_compat.c" \
     "$HERE/memory_champion_lifecycle_pc34_compat.c" \

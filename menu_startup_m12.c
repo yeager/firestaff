@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 enum {
     M12_COLOR_BLACK = 0,
@@ -41,6 +42,8 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
 static const char* g_aspectRatios[] = {"ORIGINAL", "4:3", "16:9", "16:10"};
 static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
 static const char* g_patchModes[] = {"ORIGINAL", "PATCHED"};
+static const char* g_languages[] = {"EN", "SV", "FR", "DE"};
+static const char* g_languageNames[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
 static const char* g_cheatsToggle[] = {"OFF", "ON"};
 static const char* g_speedLabels[] = {"SLOWER", "NORMAL", "FASTER"};
 
@@ -66,6 +69,7 @@ static void m12_init_game_options(M12_GameOptions* opts) {
         return;
     }
     opts->usePatch = 0;
+    opts->languageIndex = 0;
     opts->cheatsEnabled = 0;
     opts->gameSpeed = 1; /* index into g_speedLabels: NORMAL */
     opts->aspectRatio = 0;
@@ -83,6 +87,11 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
     switch (row) {
         case M12_GAME_OPT_ROW_PATCH:
             opts->usePatch = m12_cycle_index(opts->usePatch, delta, 2);
+            break;
+        case M12_GAME_OPT_ROW_LANGUAGE:
+            opts->languageIndex = m12_cycle_index(opts->languageIndex,
+                                                  delta,
+                                                  (int)(sizeof(g_languages) / sizeof(g_languages[0])));
             break;
         case M12_GAME_OPT_ROW_CHEATS:
             opts->cheatsEnabled = m12_cycle_index(opts->cheatsEnabled, delta, 2);
@@ -121,6 +130,8 @@ static void m12_clamp_game_options(M12_GameOptions* opts) {
         return;
     }
     opts->usePatch = m12_clamp_index(opts->usePatch, 2);
+    opts->languageIndex = m12_clamp_index(opts->languageIndex,
+                                          (int)(sizeof(g_languages) / sizeof(g_languages[0])));
     opts->cheatsEnabled = m12_clamp_index(opts->cheatsEnabled, 2);
     if (opts->cheatsEnabled) {
         opts->gameSpeed = m12_clamp_index(opts->gameSpeed, 3);
@@ -197,7 +208,6 @@ static const M12_Glyph g_font[] = {
     {'Z', {31, 1, 2, 4, 8, 16, 31}}
 };
 
-static const char* g_languages[] = {"EN", "SV", "FR", "DE"};
 static const char* g_presentationModes[] = {
     "V1 ORIGINAL-FAITHFUL",
     "V2 ENHANCED 2D",
@@ -470,6 +480,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
         M12_GameOptions opts = state->gameOptions[gi];
         m12_clamp_game_options(&opts);
         config.gameUsePatch[gi] = opts.usePatch;
+        config.gameLanguageIndex[gi] = opts.languageIndex;
         config.gameCheatsEnabled[gi] = opts.cheatsEnabled;
         config.gameSpeed[gi] = opts.gameSpeed;
         config.gameAspectRatio[gi] = opts.aspectRatio;
@@ -495,6 +506,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         state->gameOptions[gi].usePatch = config.gameUsePatch[gi];
+        state->gameOptions[gi].languageIndex = config.gameLanguageIndex[gi];
         state->gameOptions[gi].cheatsEnabled = config.gameCheatsEnabled[gi];
         state->gameOptions[gi].gameSpeed = config.gameSpeed[gi];
         state->gameOptions[gi].aspectRatio = config.gameAspectRatio[gi];
@@ -523,6 +535,9 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     m12_apply_loaded_config(state, dataDir);
     m12_sync_entries_from_assets(state);
     m12_sync_card_art(state);
+    M12_CreatureArt_Init(&state->creatureArt,
+                         M12_AssetStatus_GetDataDir(&state->assetStatus),
+                         (unsigned int)time(NULL));
     state->selectedIndex = 0;
     state->settingsSelectedIndex = 0;
     state->gameOptSelectedRow = 0;
@@ -535,6 +550,20 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
 
 static const char* m12_settings_value_language(const M12_StartupMenuState* state) {
     return g_languages[state->settings.languageIndex];
+}
+
+static const char* m12_game_value_language(const M12_GameOptions* opts) {
+    int index = opts ? m12_clamp_index(opts->languageIndex,
+                                       (int)(sizeof(g_languages) / sizeof(g_languages[0])))
+                     : 0;
+    return g_languages[index];
+}
+
+static const char* m12_game_value_language_name(const M12_GameOptions* opts) {
+    int index = opts ? m12_clamp_index(opts->languageIndex,
+                                       (int)(sizeof(g_languageNames) / sizeof(g_languageNames[0])))
+                     : 0;
+    return g_languageNames[index];
 }
 
 static const char* m12_settings_value_graphics(const M12_StartupMenuState* state) {
@@ -794,6 +823,57 @@ static void m12_draw_frame(unsigned char* framebuffer,
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y + h - 1, w, 1, borderColor);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x, y, 1, h, borderColor);
     m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + w - 1, y, 1, h, borderColor);
+}
+
+static void m12_draw_language_flag(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   int x,
+                                   int y,
+                                   int languageIndex) {
+    int idx = m12_clamp_index(languageIndex,
+                              (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   x, y, 18, 12, M12_COLOR_WHITE, M12_COLOR_BLACK);
+    switch (idx) {
+        case 1: /* Sweden */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_BLUE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 1, 2, 10, M12_COLOR_YELLOW);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 4, 16, 2, M12_COLOR_YELLOW);
+            break;
+        case 2: /* France */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 5, 10, M12_COLOR_LIGHT_BLUE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 1, 6, 10, M12_COLOR_WHITE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 12, y + 1, 5, 10, M12_COLOR_LIGHT_RED);
+            break;
+        case 3: /* Germany */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 3, M12_COLOR_BLACK);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 4, 16, 3, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 7, 16, 4, M12_COLOR_YELLOW);
+            break;
+        case 0:
+        default: /* UK-ish English marker, bounded and recognisable */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_BLUE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 5, 16, 2, M12_COLOR_WHITE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 8, y + 1, 2, 10, M12_COLOR_WHITE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 5, 16, 1, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 8, y + 1, 1, 10, M12_COLOR_LIGHT_RED);
+            break;
+    }
 }
 
 static const unsigned char* m12_find_glyph(char ch) {
@@ -1636,7 +1716,9 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
                                   int y,
                                   const char* label,
                                   const char* value,
-                                  int selected) {
+                                  int selected,
+                                  int languageIndex,
+                                  int showFlag) {
     unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
     unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
     unsigned char valueFill = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
@@ -1675,6 +1757,14 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
                          value,
                          valueFill,
                          valueText);
+    if (showFlag) {
+        m12_draw_language_flag(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               212,
+                               y + 6,
+                               languageIndex);
+    }
 }
 
 static void m12_draw_settings_view(const M12_StartupMenuState* state,
@@ -1722,21 +1812,27 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                           84,
                           m12_text(state, M12_TEXT_LANGUAGE),
                           m12_settings_value_language(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE);
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE,
+                          state->settings.languageIndex,
+                          1);
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
                           112,
                           m12_text(state, M12_TEXT_PRESENTATION_MODE),
                           m12_settings_value_graphics(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS);
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS,
+                          0,
+                          0);
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
                           140,
                           m12_text(state, M12_TEXT_WINDOW_MODE),
                           m12_settings_value_window_mode(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE);
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
+                          0,
+                          0);
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
@@ -2219,7 +2315,9 @@ static void m12_draw_modern_settings_row(unsigned char* framebuffer,
                                          int w,
                                          const char* label,
                                          const char* value,
-                                         int selected) {
+                                         int selected,
+                                         int languageIndex,
+                                         int showFlag) {
     unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
     unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
     unsigned char valueFill = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
@@ -2250,6 +2348,14 @@ static void m12_draw_modern_settings_row(unsigned char* framebuffer,
                                 valueFill,
                                 border,
                                 valueText);
+    if (showFlag) {
+        m12_draw_language_flag(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               x + w - 116,
+                               y + 8,
+                               languageIndex);
+    }
 }
 
 static void m12_draw_game_card(const M12_StartupMenuState* state,
@@ -2329,6 +2435,14 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
                                 m12_entry_status_fill(entry, selected),
                                 M12_COLOR_BLACK,
                                 m12_entry_status_text_color(entry, selected));
+    if (entry && entry->kind == M12_MENU_ENTRY_GAME && entryIndex >= 0 && entryIndex < M12_CONFIG_GAME_COUNT) {
+        m12_draw_language_flag(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               x + w - 28,
+                               y + 10,
+                               state->gameOptions[entryIndex].languageIndex);
+    }
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
@@ -2460,6 +2574,28 @@ static void m12_draw_info_sidebar(const M12_StartupMenuState* state,
                       x + 8 + (w - 16 - sw2) / 2, btnY + 8,
                       "SETTINGS", sStyle);
     }
+    /* Creature art showcase above data dir */
+    if (M12_CreatureArt_HasSelection(&state->creatureArt)) {
+        int creatureY = btnY + 30;
+        int creatureH = y + h - 48 - creatureY;
+        if (creatureH > 20) {
+            M12_CreatureArt_Draw(&state->creatureArt,
+                                framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                x + 8,
+                                creatureY,
+                                w - 16,
+                                creatureH);
+            m12_draw_text(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          x + 8,
+                          creatureY + creatureH + 2,
+                          M12_CreatureArt_GetSelectedName(&state->creatureArt),
+                          &g_textSmallMuted);
+        }
+    }
     /* Data dir at bottom */
     m12_draw_text(framebuffer,
                   framebufferWidth,
@@ -2467,6 +2603,19 @@ static void m12_draw_info_sidebar(const M12_StartupMenuState* state,
                   x + 6,
                   y + h - 24,
                   m12_text(state, M12_TEXT_DATA_DIR),
+                  &g_textSmallMuted);
+    m12_draw_language_flag(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           x + 6,
+                           y + h - 40,
+                           state->settings.languageIndex);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 28,
+                  y + h - 37,
+                  "LAUNCHER",
                   &g_textSmallMuted);
     m12_draw_text(framebuffer,
                   framebufferWidth,
@@ -2611,7 +2760,9 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  framebufferWidth - margin - panelX - 20,
                                  m12_text(state, M12_TEXT_LANGUAGE),
                                  m12_settings_value_language(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE);
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE,
+                                 state->settings.languageIndex,
+                                 1);
     m12_draw_modern_settings_row(framebuffer,
                                  framebufferWidth,
                                  framebufferHeight,
@@ -2620,7 +2771,9 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  framebufferWidth - margin - panelX - 20,
                                  m12_text(state, M12_TEXT_PRESENTATION_MODE),
                                  m12_settings_value_graphics(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS);
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS,
+                                 0,
+                                 0);
     m12_draw_modern_settings_row(framebuffer,
                                  framebufferWidth,
                                  framebufferHeight,
@@ -2629,7 +2782,9 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  framebufferWidth - margin - panelX - 20,
                                  m12_text(state, M12_TEXT_WINDOW_MODE),
                                  m12_settings_value_window_mode(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE);
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
+                                 0,
+                                 0);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
@@ -2652,7 +2807,9 @@ static void m12_draw_game_opt_row(unsigned char* framebuffer,
                                   const char* label,
                                   const char* value,
                                   int selected,
-                                  int dimmed) {
+                                  int dimmed,
+                                  int languageIndex,
+                                  int showFlag) {
     unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
     unsigned char border = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
     unsigned char valueFill = dimmed ? M12_COLOR_DARK_GRAY
@@ -2685,6 +2842,14 @@ static void m12_draw_game_opt_row(unsigned char* framebuffer,
                                 valueFill,
                                 border,
                                 valueTextC);
+    if (showFlag) {
+        m12_draw_language_flag(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               x + w - 116,
+                               y + 8,
+                               languageIndex);
+    }
 }
 
 static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
@@ -2809,7 +2974,22 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           "ENGINE",
                           g_patchModes[opts->usePatch],
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_PATCH,
+                          0,
+                          0,
                           0);
+    rowY += 32;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
+                          "GAME LANGUAGE",
+                          m12_game_value_language_name(opts),
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_LANGUAGE,
+                          0,
+                          opts->languageIndex,
+                          1);
     rowY += 32;
     m12_draw_game_opt_row(framebuffer,
                           framebufferWidth,
@@ -2820,6 +3000,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           "CHEATS",
                           g_cheatsToggle[opts->cheatsEnabled],
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_CHEATS,
+                          0,
+                          0,
                           0);
     rowY += 32;
     m12_draw_game_opt_row(framebuffer,
@@ -2831,7 +3013,9 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           "GAME SPEED",
                           g_speedLabels[m12_clamp_index(opts->gameSpeed, 3)],
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_SPEED,
-                          speedDimmed);
+                          speedDimmed,
+                          0,
+                          0);
     if (speedDimmed) {
         m12_draw_text(framebuffer,
                       framebufferWidth,
@@ -2851,7 +3035,9 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           "ASPECT RATIO",
                           g_aspectRatios[m12_clamp_index(opts->aspectRatio, M12_ASPECT_COUNT)],
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_ASPECT,
-                          aspectLocked);
+                          aspectLocked,
+                          0,
+                          0);
     if (aspectLocked) {
         m12_draw_text(framebuffer,
                       framebufferWidth,
@@ -2871,7 +3057,9 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           "RESOLUTION",
                           g_resolutions[m12_clamp_index(opts->resolution, M12_RES_COUNT)],
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_RESOLUTION,
-                          resLocked);
+                          resLocked,
+                          0,
+                          0);
     if (resLocked) {
         m12_draw_text(framebuffer,
                       framebufferWidth,

@@ -3,6 +3,7 @@
 
 #include "asset_status_m12.h"
 #include "card_art_m12.h"
+#include "creature_art_m12.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +102,7 @@ typedef enum {
 
 typedef enum {
     M12_GAME_OPT_ROW_PATCH = 0,
+    M12_GAME_OPT_ROW_LANGUAGE,
     M12_GAME_OPT_ROW_CHEATS,
     M12_GAME_OPT_ROW_SPEED,
     M12_GAME_OPT_ROW_ASPECT,
@@ -110,6 +112,7 @@ typedef enum {
 
 typedef struct {
     int usePatch;
+    int languageIndex;
     int cheatsEnabled;
     int gameSpeed;
     int aspectRatio;
@@ -141,6 +144,7 @@ typedef struct M12_StartupMenuState {
     M12_AssetStatus assetStatus;
     M12_GameOptions gameOptions[3];
     int gameOptSelectedRow;
+    M12_CreatureArtState creatureArt;
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);

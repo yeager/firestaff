@@ -37,6 +37,22 @@ Firestaff already has a real launcher, a real in-game DM1 slice, and a growing v
 - audio layer finished end to end
 - full endgame / dialog / launcher-product polish
 
+## Creature Art
+
+Firestaff includes generated creature artwork used in the launcher and card art system.
+
+<p align="center">
+  <img src="assets/cards/creatures/red-dragon.png" alt="Red Dragon" width="240">
+  <img src="assets/cards/creatures/skeleton.png" alt="Skeleton" width="240">
+  <img src="assets/cards/creatures/stone-golem.png" alt="Stone Golem" width="240">
+</p>
+<p align="center">
+  <img src="assets/cards/creatures/giant-scorpion.png" alt="Giant Scorpion" width="240">
+  <img src="assets/cards/creatures/mummy.png" alt="Mummy" width="240">
+</p>
+
+These creatures appear as random decorative art in the startup menu sidebar, selected fresh each launch.
+
 ## What Firestaff is
 
 Firestaff is a deterministic, modular re-implementation of the FTL Games engine, designed to run on **macOS, Linux, and Windows**.
