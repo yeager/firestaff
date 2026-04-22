@@ -84,7 +84,7 @@ cc $CFLAGS_COMMON \
     $GFX_OBJS \
     $SDL3_LIBS
 
-FIRESTAFF_DATA="$DATA_DIR" "$PROBE_BIN" "$DATA_DIR" | tee "$LOG"
+PROBE_SCREENSHOT_DIR="$OUT_DIR" FIRESTAFF_DATA="$DATA_DIR" "$PROBE_BIN" "$DATA_DIR" | tee "$LOG"
 
 SUMMARY=$(grep '^# summary: ' "$LOG" | tail -n 1)
 PASSED=$(printf '%s\n' "$SUMMARY" | awk '{print $3}' | cut -d/ -f1)
