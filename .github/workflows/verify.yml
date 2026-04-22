@@ -34,6 +34,18 @@ jobs:
           fi
           echo "Phase A probe: PASS ($PASSED/$TOTAL)"
 
+      - name: Run Audio probe (no SDL3_mixer needed)
+        run: |
+          ./build/firestaff_m11_audio_probe 2>&1 | tee audio.log
+          grep '^# summary: ' audio.log
+          PASSED=$(grep '^# summary: ' audio.log | awk '{print $3}' | cut -d/ -f1)
+          TOTAL=$(grep '^# summary: ' audio.log | awk '{print $3}' | cut -d/ -f2)
+          if [ "$PASSED" != "$TOTAL" ]; then
+            echo "::error::Audio probe: $PASSED/$TOTAL"
+            exit 1
+          fi
+          echo "Audio probe: PASS ($PASSED/$TOTAL)"
+
   verify:
     strategy:
       fail-fast: false

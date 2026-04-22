@@ -1,8 +1,8 @@
 # M11 — Remaining Work to Practical Completion
 
-**Updated:** 2026-04-21
-**Baseline:** 115/115 game-view invariants + 18/18 Phase-A invariants passing
-**Status:** ~70% complete — core gameplay loop works, graphics pipeline works, remaining work is audio, CMake, CI, packaging, and polish
+**Updated:** 2026-04-22
+**Baseline:** 175/175 game-view invariants + 18/18 Phase-A invariants + 4/4 Audio invariants passing
+**Status:** ~85% complete — core gameplay, graphics, audio scaffold, CMake, and CI all landed; remaining work is real audio playback, cross-platform CI, packaging, and polish
 
 ---
 
@@ -48,9 +48,9 @@
 
 | Area | Status | Notes |
 |------|--------|-------|
-| **Audio** | ❌ Not started | No SDL3_mixer integration. Sound emissions are recognized but silently consumed. |
-| **CMake build system** | ❌ Not started | Build uses shell scripts only. No CMakeLists.txt exists. |
-| **CI build on Linux/Windows** | ❌ Not started | CI only runs M10 probes. M11 probes are macOS-only shell scripts. |
+| **Audio** | 🟡 Scaffold landed | `audio_sdl_m11.{h,c}` tracked, fallback-safe marker pipeline verified (4/4). SDL3_mixer real playback not yet wired. |
+| **CMake build system** | ✅ Done | `CMakeLists.txt` with `firestaff`, `firestaff_headless`, all probes, CTest. |
+| **CI build (CMake + probes)** | ✅ Done | GitHub Actions: CMake build on macOS-14, Phase A + Audio probes in CI. M10 verify on 3 platforms. |
 | **Cross-platform filesystem** | 🟡 Partial | `fs_portable_compat` is spec'd but not a standalone module; paths are handled ad-hoc via `FIRESTAFF_DATA` env var. |
 | **Configurable key bindings** | 🟡 Partial | Keys are hardcoded in probe/game-view. No runtime rebinding UI. Config stores some values but doesn't drive bindings. |
 | **Inventory UI panel** | 🟡 Partial | Items show in party strip. No full grid-based inventory with drag-drop. |
