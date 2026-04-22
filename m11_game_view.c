@@ -2948,12 +2948,15 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
         switch (e->kind) {
             case EMIT_DAMAGE_DEALT: {
                 int champIdx = state->world.party.activeChampionIndex;
+                int dmgDealt = (int)e->payload[2];
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: DAMAGE %d DEALT",
                               (unsigned int)state->world.gameTick,
-                              (int)e->payload[2]);
+                              dmgDealt);
                 /* Award combat XP to the active champion */
-                m11_award_combat_xp(state, champIdx, (int)e->payload[2]);
+                m11_award_combat_xp(state, champIdx, dmgDealt);
+                /* Trigger GRAPHICS.DAT graphic 14 viewport overlay */
+                M11_GameView_NotifyCreatureHit(state, dmgDealt);
                 break;
             }
             case EMIT_KILL_NOTIFY: {
@@ -5354,15 +5357,69 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int sideHint);
 
 static unsigned int m11_creature_sprite_base(int creatureType) {
-    /* CSB has 8 creature graphic sets.
-     * Sets 0-3: indices 246, 249, 252, 255 (each set = 3 consecutive indices)
-     * Sets 4-7: indices 439, 443, 448, 451 (irregular spacing) */
-    static const unsigned int s_set_bases[8] = {
-        246, 249, 252, 255, 439, 443, 448, 451
+    /* ReDMCSB creature graphic set mapping.
+     * Each creature type has a specific graphic set index (column 2 in
+     * G0243_as_Graphic559_CreatureInfo).  Each set has 3 sprites:
+     * small, medium, large at consecutive GRAPHICS.DAT indices.
+     * Sets 0-3: base 246 + set*3 (indices 246-257)
+     * Sets 4-18: irregular spacing in the 439+ range.
+     * Ref: ReDMCSB DEFS.H, G0243_as_Graphic559_CreatureInfo. */
+    static const unsigned int s_set_bases[] = {
+        246,  /* set 0 */
+        249,  /* set 1 */
+        252,  /* set 2 */
+        255,  /* set 3 */
+        439,  /* set 4 */
+        442,  /* set 5 */
+        445,  /* set 6 */
+        448,  /* set 7 */
+        451,  /* set 8 */
+        454,  /* set 9 */
+        457,  /* set 10 */
+        460,  /* set 11 */
+        463,  /* set 12 */
+        466,  /* set 13 */
+        469,  /* set 14 */
+        472,  /* set 15 */
+        475,  /* set 16 */
+        478,  /* set 17 */
+        481   /* set 18 */
+    };
+    /* Creature type -> graphic set index from ReDMCSB
+     * G0243_as_Graphic559_CreatureInfo (second column). */
+    static const int s_type_to_set[27] = {
+         4,  /* 0  GiantScorpionScorpion */
+        14,  /* 1  SwampSlimeSlimeDevil */
+         6,  /* 2  Giggler */
+         0,  /* 3  PainRatHellHound */
+        18,  /* 4  Ruster */
+        17,  /* 5  Screamer */
+         3,  /* 6  Rockpile */
+         7,  /* 7  GhostRive */
+         2,  /* 8  WaterElemental */
+        10,  /* 9  Couatl */
+        13,  /* 10 StoneGolem */
+         0,  /* 11 Mummy */
+        11,  /* 12 Skeleton */
+         9,  /* 13 MagentaWormWorm */
+        16,  /* 14 Trolin */
+         5,  /* 15 GiantWaspMuncher */
+        10,  /* 16 Antman */
+        15,  /* 17 Vexirk */
+        12,  /* 18 AnimatedArmourDethKnight */
+         0,  /* 19 MaterializerZytaz */
+         8,  /* 20 RedDragon */
+         3,  /* 21 Oitu */
+        16,  /* 22 Demon */
+         0,  /* 23 LordChaos */
+         1,  /* 24 LordOrder */
+         0,  /* 25 GreyLord */
+         0   /* 26 LordChaosRedDragon */
     };
     int setIdx;
     if (creatureType < 0 || creatureType > 26) return 0;
-    setIdx = creatureType % 8;
+    setIdx = s_type_to_set[creatureType];
+    if (setIdx < 0 || setIdx >= (int)(sizeof(s_set_bases)/sizeof(s_set_bases[0]))) return 0;
     return s_set_bases[setIdx];
 }
 
@@ -7505,6 +7562,47 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         }
     }
 
+    /* ── Inventory damage overlay: GRAPHICS.DAT graphic 16 (32×29) ── */
+    /* In DM1, when the inventory view is open and the active champion
+     * takes damage, graphic 16 ("damage to champion big", 32×29) is
+     * drawn on the portrait area instead of graphic 15 (small).
+     * Ref: ReDMCSB CHAMPION.C F0291 — G0423_i_InventoryChampionOrdinal. */
+    {
+        int activeSlot = state->world.party.activeChampionIndex;
+        if (activeSlot >= 0 && activeSlot < 4 &&
+            state->championDamageTimer[activeSlot] > 0) {
+            int dmgDrawn = 0;
+            if (state->assetsAvailable) {
+                const M11_AssetSlot* dmg16 = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    M11_GFX_DAMAGE_TO_CHAMPION_BIG);
+                if (dmg16 && dmg16->width == 32 && dmg16->height == 29) {
+                    M11_AssetLoader_BlitRegion(dmg16,
+                        0, 0, 32, 29,
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        portX, portY, 0);
+                    dmgDrawn = 1;
+                }
+            }
+            if (!dmgDrawn) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              portX, portY, PORT_W, PORT_H, M11_COLOR_LIGHT_RED);
+            }
+            /* Damage number centered on portrait */
+            {
+                char dmgNum[8];
+                M11_TextStyle dmgStyle = g_text_small;
+                dmgStyle.color = M11_COLOR_WHITE;
+                snprintf(dmgNum, sizeof(dmgNum), "%d",
+                         state->championDamageAmount[activeSlot]);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              portX + PORT_W / 2 - 4,
+                              portY + PORT_H / 2 - 3,
+                              dmgNum, &dmgStyle);
+            }
+        }
+    }
+
     /* ── Footer — minimal DM-style key hints ── */
     {
         M11_TextStyle footStyle = g_text_small;
@@ -8039,6 +8137,53 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
     }
 
+    /* ── Creature-hit overlay: GRAPHICS.DAT graphic 14 on viewport ── */
+    /* In the original DM1, when the party deals melee damage to a
+     * creature, the "damage to creature" graphic (C014, 88×45) is
+     * drawn centered in the viewport's action-result zone with the
+     * damage number overlaid.  Size scales with damage magnitude:
+     * >40 = full (88×45), 15-40 = medium (64×37), <15 = small (42×37).
+     * Ref: ReDMCSB MELEE.C, G2093-G2096. */
+    if (state->creatureHitOverlayTimer > 0) {
+        int vCX = 110, vCY = 78; /* viewport center */
+        int drawn = 0;
+        if (state->assetsAvailable) {
+            const M11_AssetSlot* dmg14 = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                M11_GFX_DAMAGE_TO_CREATURE);
+            if (dmg14 && dmg14->width > 0 && dmg14->height > 0) {
+                int blitW, blitH;
+                if (state->creatureHitDamageAmount > 40) {
+                    blitW = 88; blitH = 45;
+                } else if (state->creatureHitDamageAmount > 15) {
+                    blitW = 64; blitH = 37;
+                } else {
+                    blitW = 42; blitH = 37;
+                }
+                M11_AssetLoader_BlitScaled(dmg14, framebuffer,
+                    framebufferWidth, framebufferHeight,
+                    vCX - blitW / 2, vCY - blitH / 2,
+                    blitW, blitH, 0);
+                drawn = 1;
+            }
+        }
+        if (!drawn) {
+            /* Fallback: tinted rectangle */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          vCX - 32, vCY - 16, 64, 32, M11_COLOR_LIGHT_RED);
+        }
+        /* Damage number centered on overlay */
+        {
+            char hitNum[8];
+            M11_TextStyle hitStyle = g_text_small;
+            hitStyle.color = M11_COLOR_WHITE;
+            snprintf(hitNum, sizeof(hitNum), "%d",
+                     state->creatureHitDamageAmount);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          vCX - 6, vCY - 3, hitNum, &hitStyle);
+        }
+    }
+
     /* ── Full-screen overlay panels (drawn last, on top of everything) ── */
     if (state->mapOverlayActive) {
         m11_draw_fullscreen_map(state, framebuffer, framebufferWidth, framebufferHeight);
@@ -8058,6 +8203,7 @@ void M11_GameView_TickAnimation(M11_GameViewState* state) {
     state->animTick++;
     if (state->damageFlashTimer > 0) state->damageFlashTimer--;
     if (state->attackCueTimer > 0)   state->attackCueTimer--;
+    if (state->creatureHitOverlayTimer > 0) state->creatureHitOverlayTimer--;
     { int ci; for (ci = 0; ci < 4; ++ci) {
         if (state->championDamageTimer[ci] > 0) state->championDamageTimer[ci]--;
     }}
@@ -8089,6 +8235,17 @@ void M11_GameView_NotifyChampionDamage(M11_GameViewState* state,
 
 uint32_t M11_GameView_GetAnimTick(const M11_GameViewState* state) {
     return state ? state->animTick : 0;
+}
+
+void M11_GameView_NotifyCreatureHit(M11_GameViewState* state,
+                                    int damageAmount) {
+    if (!state) return;
+    state->creatureHitOverlayTimer = M11_CREATURE_HIT_OVERLAY_DURATION;
+    state->creatureHitDamageAmount = damageAmount;
+}
+
+int M11_GameView_GetCreatureHitOverlayTimer(const M11_GameViewState* state) {
+    return state ? state->creatureHitOverlayTimer : 0;
 }
 
 int M11_GameView_CreatureAnimFrame(const M11_GameViewState* state,

@@ -121,6 +121,14 @@ typedef struct {
     /* Creature type that last attacked (for attack-cue sprite). */
     int attackCueCreatureType;
 
+    /* Creature-hit overlay state (GRAPHICS.DAT graphic 14).
+     * When the party deals melee damage to a creature, this timer is set
+     * and the damage amount recorded.  While > 0, graphic 14 is drawn
+     * centered on the viewport with the damage number overlaid.
+     * Ref: ReDMCSB MELEE.C — C014_GRAPHIC_DAMAGE_TO_CREATURE. */
+    int creatureHitOverlayTimer;
+    int creatureHitDamageAmount;
+
     /* ── Full-screen overlay state ── */
     int mapOverlayActive;        /* 1 when full-screen map is displayed */
     int inventoryPanelActive;    /* 1 when full inventory grid is displayed */
@@ -223,6 +231,7 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state);
 /* Durations in game ticks. */
 #define M11_DAMAGE_FLASH_DURATION   4
 #define M11_ATTACK_CUE_DURATION     3
+#define M11_CREATURE_HIT_OVERLAY_DURATION 5  /* ticks to show graphic-14 overlay */
 #define M11_CREATURE_ANIM_PERIOD    6  /* ticks per idle-frame cycle */
 
 /* Advance the animation frame counter and decrement timers.
@@ -245,6 +254,12 @@ void M11_GameView_NotifyChampionDamage(M11_GameViewState* state,
                                        int championSlot,
                                        int damageAmount);
 uint32_t M11_GameView_GetAnimTick(const M11_GameViewState* state);
+
+/* Signal that the party just dealt melee damage to a creature.
+ * Starts the graphic-14 viewport overlay timer. */
+void M11_GameView_NotifyCreatureHit(M11_GameViewState* state,
+                                    int damageAmount);
+int M11_GameView_GetCreatureHitOverlayTimer(const M11_GameViewState* state);
 
 /* Return the idle-animation frame index (0 or 1) for a given
  * creature type based on the current animTick. */

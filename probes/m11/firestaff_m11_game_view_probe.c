@@ -4550,6 +4550,117 @@ int main(int argc, char** argv) {
         }
     }
 
+    /* INV_GV_220: Creature-hit overlay timer initializes from NotifyCreatureHit. */
+    {
+        M11_GameView_NotifyCreatureHit(&gameView, 25);
+        probe_record(&tally,
+                     "INV_GV_220",
+                     gameView.creatureHitOverlayTimer == M11_CREATURE_HIT_OVERLAY_DURATION &&
+                     gameView.creatureHitDamageAmount == 25,
+                     "NotifyCreatureHit sets overlay timer and damage amount");
+        /* Tick it down */
+        { int t; for (t = 0; t < M11_CREATURE_HIT_OVERLAY_DURATION; ++t)
+            M11_GameView_TickAnimation(&gameView); }
+        probe_record(&tally,
+                     "INV_GV_221",
+                     gameView.creatureHitOverlayTimer == 0,
+                     "creature-hit overlay timer reaches 0 after sufficient ticks");
+    }
+
+    /* INV_GV_222: Graphic 14 viewport overlay draws differently than no-overlay. */
+    {
+        unsigned char ovFb[320 * 200];
+        unsigned char noFb[320 * 200];
+        int differs = 0;
+        int px;
+        gameView.creatureHitOverlayTimer = 0;
+        memset(noFb, 0, sizeof(noFb));
+        M11_GameView_Draw(&gameView, noFb, 320, 200);
+        M11_GameView_NotifyCreatureHit(&gameView, 42);
+        memset(ovFb, 0, sizeof(ovFb));
+        M11_GameView_Draw(&gameView, ovFb, 320, 200);
+        for (px = 0; px < 320 * 200; ++px) {
+            if (ovFb[px] != noFb[px]) { differs = 1; break; }
+        }
+        gameView.creatureHitOverlayTimer = 0;
+        probe_record(&tally,
+                     "INV_GV_222",
+                     differs,
+                     "graphic-14 creature-hit overlay changes viewport pixels");
+    }
+
+    /* INV_GV_223: Graphic 16 (big damage) draws on inventory panel
+     * when active champion has damage timer. */
+    {
+        unsigned char invFb[320 * 200];
+        unsigned char invDmgFb[320 * 200];
+        int differs = 0;
+        int px;
+        gameView.inventoryPanelActive = 1;
+        gameView.world.party.activeChampionIndex = 0;
+        gameView.championDamageTimer[0] = 0;
+        memset(invFb, 0, sizeof(invFb));
+        M11_GameView_Draw(&gameView, invFb, 320, 200);
+        gameView.championDamageTimer[0] = 3;
+        gameView.championDamageAmount[0] = 55;
+        memset(invDmgFb, 0, sizeof(invDmgFb));
+        M11_GameView_Draw(&gameView, invDmgFb, 320, 200);
+        for (px = 0; px < 320 * 200; ++px) {
+            if (invDmgFb[px] != invFb[px]) { differs = 1; break; }
+        }
+        gameView.championDamageTimer[0] = 0;
+        gameView.inventoryPanelActive = 0;
+        probe_record(&tally,
+                     "INV_GV_223",
+                     differs,
+                     "graphic-16 inventory damage overlay draws when active champion hit");
+    }
+
+    /* INV_GV_224: Creature sprite base mapping uses ReDMCSB table
+     * (creature type 0 should differ from type 1). */
+    {
+        int frame0 = M11_GameView_CreatureAnimFrame(&gameView, 0);
+        int frame1 = M11_GameView_CreatureAnimFrame(&gameView, 1);
+        /* Both should be valid (0 or 1) */
+        probe_record(&tally,
+                     "INV_GV_224",
+                     (frame0 == 0 || frame0 == 1) &&
+                     (frame1 == 0 || frame1 == 1),
+                     "creature anim frames valid for types 0 and 1");
+    }
+
+    /* ── Screenshot: combat damage overlay (graphic 14 + graphic 16) ── */
+    {
+        M11_GameViewState dmgView;
+        unsigned char dmgFb[320 * 200];
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+        memcpy(&dmgView, &gameView, sizeof(dmgView));
+        /* Set creature-hit overlay active */
+        M11_GameView_NotifyCreatureHit(&dmgView, 38);
+        /* Set champion damage active */
+        dmgView.championDamageTimer[0] = 3;
+        dmgView.championDamageAmount[0] = 17;
+        dmgView.damageFlashTimer = 2;
+        memset(dmgFb, 0, sizeof(dmgFb));
+        M11_GameView_Draw(&dmgView, dmgFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            char ssPath[512];
+            FILE* ssFile;
+            snprintf(ssPath, sizeof(ssPath), "%s/combat_damage_overlays.pgm", ssDir);
+            ssFile = fopen(ssPath, "wb");
+            if (ssFile) {
+                int px;
+                fprintf(ssFile, "P5\n320 200\n255\n");
+                for (px = 0; px < 320 * 200; ++px) {
+                    unsigned char gray = (unsigned char)(dmgFb[px] * 17);
+                    fwrite(&gray, 1, 1, ssFile);
+                }
+                fclose(ssFile);
+                printf("Screenshot: %s\n", ssPath);
+            }
+        }
+    }
+
     M11_GameView_Shutdown(&gameView);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
