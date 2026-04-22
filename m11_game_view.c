@@ -4878,7 +4878,14 @@ enum {
 
     /* Empty panel background (graphic 20 in original CSB/DM).
      * 144×73 in GRAPHICS.DAT. Ref: C020_GRAPHIC_PANEL_EMPTY. */
-    M11_GFX_PANEL_EMPTY = 20
+    M11_GFX_PANEL_EMPTY = 20,
+
+    /* Slot box graphics (18×18 each in GRAPHICS.DAT).
+     * Used by DrawIconInSlotBox (ReDMCSB INVNTORY.C / OBJECT.C).
+     * Ref: DEFS.H lines 2193-2196. */
+    M11_GFX_SLOT_BOX_NORMAL      = 33, /* C033_GRAPHIC_SLOT_BOX_NORMAL */
+    M11_GFX_SLOT_BOX_WOUNDED     = 34, /* C034_GRAPHIC_SLOT_BOX_WOUNDED */
+    M11_GFX_SLOT_BOX_ACTING_HAND = 35  /* C035_GRAPHIC_SLOT_BOX_ACTING_HAND */
 };
 
 /* ================================================================
@@ -6928,20 +6935,64 @@ static void m11_draw_fullscreen_map(const M11_GameViewState* state,
  *                      Panel: Food/Water or object details
  */
 
-/* Helper: draw one 16×16 equipment slot box.  Matches the ReDMCSB
- * SlotBox model: fixed-size icon cell, thin border, icon or empty. */
+/* Helper: draw one equipment slot box using original GRAPHICS.DAT
+ * slot box bitmaps (18×18).  Falls back to procedural 16×16 box
+ * when the asset is unavailable.
+ *
+ * Original DM1 uses three slot box variants:
+ *   graphic 33 = normal slot (C033_GRAPHIC_SLOT_BOX_NORMAL)
+ *   graphic 34 = wounded champion slot (C034_GRAPHIC_SLOT_BOX_WOUNDED)
+ *   graphic 35 = acting-hand slot (C035_GRAPHIC_SLOT_BOX_ACTING_HAND)
+ *
+ * Ref: DEFS.H lines 2193-2195, ReDMCSB INVNTORY.C DrawIconInSlotBox. */
 static void m11_draw_inv_slot(const M11_GameViewState* state,
                               const struct ChampionState_Compat* champ,
                               unsigned char* fb, int fbW, int fbH,
                               int sx, int sy,
                               int slotIdx, const char* shortLabel) {
-    static const int SZ = 16; /* icon box size — matches ReDMCSB 16×16 */
+    /* Original slot boxes are 18×18 in GRAPHICS.DAT */
+    static const int SZ_ORIG = 18;
+    static const int SZ = 16; /* fallback procedural size */
     unsigned short thingId = champ->inventory[slotIdx];
     int selected = (slotIdx == state->inventorySelectedSlot);
-    unsigned char borderColor = selected ? M11_COLOR_LIGHT_GREEN : M11_COLOR_DARK_GRAY;
+    int isDead = (champ->hp.current == 0);
+    int isActingHand = (slotIdx == CHAMPION_SLOT_HAND_LEFT ||
+                        slotIdx == CHAMPION_SLOT_HAND_RIGHT);
+    int drewSlotBox = 0;
+    int slotBoxW = SZ, slotBoxH = SZ; /* effective size for item overlay */
 
-    m11_fill_rect(fb, fbW, fbH, sx, sy, SZ, SZ, M11_COLOR_BLACK);
-    m11_draw_rect(fb, fbW, fbH, sx, sy, SZ, SZ, borderColor);
+    /* Try original GRAPHICS.DAT slot box graphic */
+    if (state->assetsAvailable) {
+        unsigned int gfxIdx;
+        if (isActingHand)
+            gfxIdx = M11_GFX_SLOT_BOX_ACTING_HAND;
+        else if (isDead)
+            gfxIdx = M11_GFX_SLOT_BOX_WOUNDED;
+        else
+            gfxIdx = M11_GFX_SLOT_BOX_NORMAL;
+
+        const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, gfxIdx);
+        if (boxSlot && boxSlot->width == SZ_ORIG && boxSlot->height == SZ_ORIG) {
+            M11_AssetLoader_Blit(boxSlot, fb, fbW, fbH, sx, sy, 0);
+            drewSlotBox = 1;
+            slotBoxW = SZ_ORIG;
+            slotBoxH = SZ_ORIG;
+        }
+    }
+
+    if (!drewSlotBox) {
+        /* Procedural fallback */
+        unsigned char borderColor = selected ? M11_COLOR_LIGHT_GREEN : M11_COLOR_DARK_GRAY;
+        m11_fill_rect(fb, fbW, fbH, sx, sy, SZ, SZ, M11_COLOR_BLACK);
+        m11_draw_rect(fb, fbW, fbH, sx, sy, SZ, SZ, borderColor);
+    }
+
+    /* Selection highlight: bright border around the slot box */
+    if (selected) {
+        m11_draw_rect(fb, fbW, fbH, sx, sy, slotBoxW, slotBoxH,
+                      M11_COLOR_LIGHT_GREEN);
+    }
 
     if (thingId != THING_NONE && thingId != THING_ENDOFLIST) {
         /* Occupied — attempt GRAPHICS.DAT sprite, fall back to type tag */
@@ -6953,9 +7004,10 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
                 const M11_AssetSlot* slot = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader, gfxIdx);
                 if (slot && slot->width > 0 && slot->height > 0) {
-                    /* Scale item sprite into the 16×16 slot box (1px inset) */
+                    /* Scale item sprite into the slot box (1px inset) */
                     M11_AssetLoader_BlitScaled(slot, fb, fbW, fbH,
-                                              sx + 1, sy + 1, SZ - 2, SZ - 2, 0);
+                                              sx + 1, sy + 1,
+                                              slotBoxW - 2, slotBoxH - 2, 0);
                     drewSprite = 1;
                 }
             }
@@ -6977,8 +7029,8 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
             }
             m11_draw_text(fb, fbW, fbH, sx + 3, sy + 4, tag, &s);
         }
-    } else {
-        /* Empty — faint position hint */
+    } else if (!drewSlotBox) {
+        /* Empty + no original graphic — faint position hint */
         M11_TextStyle dim = g_text_small;
         dim.color = M11_COLOR_DARK_GRAY;
         m11_draw_text(fb, fbW, fbH, sx + 2, sy + 4, shortLabel, &dim);
@@ -7002,8 +7054,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     /* Portrait proportions from ReDMCSB: 32×29 pixels */
     static const int PORT_W = 32;
     static const int PORT_H = 29;
-    /* Uniform slot size (ReDMCSB: 16×16 icon boxes) */
-    static const int SZ = 16;
+    /* Slot box size: 18×18 when using original GRAPHICS.DAT assets,
+     * 16×16 as procedural fallback. */
+    int SZ = 16;
     static const int GAP = 2; /* spacing between adjacent slot boxes */
 
     /* Layout anchors */
@@ -7022,9 +7075,28 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     champ = &state->world.party.champions[state->world.party.activeChampionIndex];
     isDead = (champ->hp.current == 0);
 
-    /* ── Panel background — double-border like ReDMCSB panels ── */
+    /* Use 18×18 slot boxes when GRAPHICS.DAT assets are available */
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* testBox = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, M11_GFX_SLOT_BOX_NORMAL);
+        if (testBox && testBox->width == 18 && testBox->height == 18)
+            SZ = 18;
+    }
+
+    /* ── Panel background — original graphic 20 (144×73), or
+     * procedural double-border as fallback ── */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   panelX, panelY, panelW, panelH, M11_COLOR_BLACK);
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* panelBg = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, M11_GFX_PANEL_EMPTY);
+        if (panelBg && panelBg->width > 0 && panelBg->height > 0) {
+            /* Blit the original panel background scaled to fit */
+            M11_AssetLoader_BlitScaled(panelBg,
+                framebuffer, framebufferWidth, framebufferHeight,
+                panelX, panelY, panelW, panelH, 0);
+        }
+    }
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   panelX, panelY, panelW, panelH, M11_COLOR_BROWN);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,

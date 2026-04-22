@@ -4110,6 +4110,58 @@ int main(int argc, char** argv) {
                  M11_GameView_GetInventorySelectedSlot(NULL) == -1,
                  "Map/inventory query APIs are NULL-safe");
 
+    /* INV_GV_201: Slot box normal graphic (33) loads as 18×18 bitmap. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* box33 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 33);
+        probe_record(&tally,
+                     "INV_GV_201",
+                     box33 != NULL && box33->width == 18 && box33->height == 18,
+                     "slot box normal (graphic 33) loads as 18x18 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_201", 1,
+                     "slot box 33: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_202: Slot box wounded graphic (34) loads as 18×18 bitmap. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* box34 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 34);
+        probe_record(&tally,
+                     "INV_GV_202",
+                     box34 != NULL && box34->width == 18 && box34->height == 18,
+                     "slot box wounded (graphic 34) loads as 18x18 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_202", 1,
+                     "slot box 34: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_203: Slot box acting-hand graphic (35) loads as 18×18 bitmap. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* box35 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 35);
+        probe_record(&tally,
+                     "INV_GV_203",
+                     box35 != NULL && box35->width == 18 && box35->height == 18,
+                     "slot box acting-hand (graphic 35) loads as 18x18 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_203", 1,
+                     "slot box 35: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_204: Panel empty background (graphic 20) loads as 144×73. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* panel20 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 20);
+        probe_record(&tally,
+                     "INV_GV_204",
+                     panel20 != NULL && panel20->width == 144 && panel20->height == 73,
+                     "panel empty (graphic 20) loads as 144x73 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_204", 1,
+                     "panel 20: skipped (no GRAPHICS.DAT)");
+    }
+
     /* ── Screenshot: dump inventory panel to PGM for visual verification ── */
     {
         M11_GameViewState ssView;
@@ -4132,7 +4184,7 @@ int main(int argc, char** argv) {
         if (ssDir && ssDir[0]) {
             char ssPath[512];
             FILE* ssFile;
-            snprintf(ssPath, sizeof(ssPath), "%s/inventory_panel_p3.pgm", ssDir);
+            snprintf(ssPath, sizeof(ssPath), "%s/inventory_slotbox_gfx.pgm", ssDir);
             ssFile = fopen(ssPath, "wb");
             if (ssFile) {
                 int px;
