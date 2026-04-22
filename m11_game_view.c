@@ -13,6 +13,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Forward declaration: set by M11_GameView_Draw to give nested draw
+ * helpers access to the current game state for asset-backed rendering. */
+static const M11_GameViewState* g_drawState = NULL;
+
 enum {
     M11_COLOR_BLACK = 0,
     M11_COLOR_NAVY = 1,
@@ -3824,6 +3828,10 @@ typedef struct M11_ViewportCell {
     /* Wall/door ornament ordinal from thing data (0-15, -1 if none) */
     int wallOrnamentOrdinal;
     int doorOrnamentOrdinal;
+    /* First projectile graphic index (416-438) from GRAPHICS.DAT, or -1 */
+    int firstProjectileGfxIndex;
+    /* First explosion type (0-50), or -1 */
+    int firstExplosionType;
     M11_SquareThingSummary summary;
 } M11_ViewportCell;
 
@@ -3885,6 +3893,92 @@ static void m11_draw_item_cue(unsigned char* framebuffer,
     }
 }
 
+/* Draw a GRAPHICS.DAT-backed projectile sprite centered in the given area.
+ * Returns 1 if a real sprite was drawn, 0 for fallback. */
+static int m11_draw_projectile_sprite(const M11_GameViewState* state,
+                                      unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight,
+                                      int x, int y, int w, int h,
+                                      int gfxIndex, int depthIndex) {
+    const M11_AssetSlot* slot;
+    int drawW, drawH, drawX, drawY;
+    int scale;
+    if (!state || !state->assetsAvailable || gfxIndex < 416 ||
+        gfxIndex >= 439) return 0;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* Scale projectile sprite by depth: 100% at depth 0, 66% at 1, 40% at 2 */
+    scale = depthIndex == 0 ? 100 : (depthIndex == 1 ? 66 : 40);
+    drawW = (int)slot->width * scale / 100;
+    drawH = (int)slot->height * scale / 100;
+    if (drawW < 3) drawW = 3;
+    if (drawH < 3) drawH = 3;
+    if (drawW > w) drawW = w;
+    if (drawH > h) drawH = h;
+    drawX = x + (w - drawW) / 2;
+    drawY = y + (h - drawH) / 2;
+    M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth, framebufferHeight,
+                               drawX, drawY, drawW, drawH, -1);
+    return 1;
+}
+
+/* Draw a pit visual effect: darkened floor area with depth gradient.
+ * In DM1, pits appear as dark openings in the floor.  We darken the
+ * lower portion of the cell face to simulate the pit opening. */
+static void m11_draw_pit_effect(unsigned char* framebuffer,
+                                int framebufferWidth,
+                                int framebufferHeight,
+                                int x, int y, int w, int h,
+                                int depthIndex) {
+    int pitY = y + h / 3;
+    int pitH = h - h / 3;
+    (void)depthIndex;
+    /* Draw dark pit opening on the floor area */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x + 2, pitY, w - 4, pitH - 2, M11_COLOR_BLACK);
+    /* Outline for definition — dark gray border around the pit */
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x + 1, pitY - 1, w - 2, pitH, M11_COLOR_DARK_GRAY);
+    /* Inner shadow lines for depth perception */
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                   x + 3, x + w - 4, pitY + 2, M11_COLOR_NAVY);
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                   x + 4, x + w - 5, pitY + pitH - 4, M11_COLOR_NAVY);
+}
+
+/* Draw a teleporter visual effect: colored shimmer/rift.
+ * In DM1, teleporters have a distinctive visual presence in the
+ * viewport — a shimmering effect.  We render a colored frame with
+ * an inner glow pattern. */
+static void m11_draw_teleporter_effect(unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight,
+                                       int x, int y, int w, int h,
+                                       int depthIndex) {
+    int cx = x + w / 2;
+    int cy = y + h / 2;
+    int rw = w * 2 / 3;
+    int rh = h * 2 / 3;
+    unsigned char color = depthIndex == 0 ? M11_COLOR_LIGHT_CYAN :
+                          (depthIndex == 1 ? M11_COLOR_CYAN : M11_COLOR_NAVY);
+    /* Outer shimmer frame */
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  cx - rw / 2, cy - rh / 2, rw, rh, color);
+    /* Inner cross pattern */
+    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                   cx - rw / 4, cx + rw / 4, cy, color);
+    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                   cx, cy - rh / 4, cy + rh / 4, color);
+    /* Corner dots for shimmer */
+    if (rw > 8 && rh > 8) {
+        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                      cx - rw / 3, cy - rh / 3, M11_COLOR_WHITE);
+        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                      cx + rw / 3, cy + rh / 3, M11_COLOR_WHITE);
+    }
+}
+
 static void m11_draw_effect_cue(unsigned char* framebuffer,
                                 int framebufferWidth,
                                 int framebufferHeight,
@@ -3892,17 +3986,37 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                 int y,
                                 int w,
                                 int h,
-                                const M11_ViewportCell* cell) {
+                                const M11_ViewportCell* cell,
+                                int depthIndex) {
     int cx = x + w / 2;
     int cy = y + h / 2;
     if (!cell) {
         return;
     }
-    if (cell->summary.projectiles > 0 || cell->summary.teleporters > 0) {
-        m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                       cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
-        m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                       cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
+    /* Projectile sprite from GRAPHICS.DAT, or fallback crosshair */
+    if (cell->summary.projectiles > 0) {
+        if (!g_drawState ||
+            !m11_draw_projectile_sprite(g_drawState, framebuffer,
+                                        framebufferWidth, framebufferHeight,
+                                        x, y, w, h,
+                                        cell->firstProjectileGfxIndex,
+                                        depthIndex)) {
+            /* Fallback: cyan crosshair */
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
+        }
+    }
+    /* Teleporter shimmer effect */
+    if (cell->summary.teleporters > 0) {
+        m11_draw_teleporter_effect(framebuffer, framebufferWidth, framebufferHeight,
+                                   x, y, w, h, depthIndex);
+    }
+    /* Pit darkness effect */
+    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+        m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
+                            x, y, w, h, depthIndex);
     }
     if (cell->summary.explosions > 0 || cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -4113,6 +4227,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.firstItemSubtype = -1;
     cell.wallOrnamentOrdinal = -1;
     cell.doorOrnamentOrdinal = -1;
+    cell.firstProjectileGfxIndex = -1;
+    cell.firstExplosionType = -1;
 
     if (!state || !state->active) {
         if (outCell) {
@@ -4257,6 +4373,52 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                         break;
                     }
                 }
+            }
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            ++scanSafety;
+        }
+    }
+
+    /* Extract first projectile graphic index from GRAPHICS.DAT.
+     * In DM1, projectile graphics 416-438 map to the projectile's
+     * associated object type.  The projectile thing's slot field
+     * references the thrown object.  We use a simplified mapping:
+     * projectile slot & 0x1F gives a subtype index into the 23
+     * projectile graphic range.  Ref: ReDMCSB DUNGEON.C projectile
+     * rendering, G0249_aui_PROJECTILE_GRAPHIC_INDEX lookup. */
+    if (cell.summary.projectiles > 0 && state->world.things &&
+        state->world.things->projectiles) {
+        unsigned short scanThing = firstThing;
+        int scanSafety = 0;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            if (THING_GET_TYPE(scanThing) == THING_TYPE_PROJECTILE) {
+                int pIdx = THING_GET_INDEX(scanThing);
+                if (pIdx >= 0 && pIdx < state->world.things->projectileCount) {
+                    /* Map projectile slot to graphic index 416..438 */
+                    int slot = (int)state->world.things->projectiles[pIdx].slot;
+                    int gfxOff = slot & 0x1F;
+                    if (gfxOff > 22) gfxOff = 0; /* clamp to 23 entries */
+                    cell.firstProjectileGfxIndex = 416 + gfxOff;
+                }
+                break;
+            }
+            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            ++scanSafety;
+        }
+    }
+
+    /* Extract first explosion type */
+    if (cell.summary.explosions > 0 && state->world.things &&
+        state->world.things->explosions) {
+        unsigned short scanThing = firstThing;
+        int scanSafety = 0;
+        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            if (THING_GET_TYPE(scanThing) == THING_TYPE_EXPLOSION) {
+                int eIdx = THING_GET_INDEX(scanThing);
+                if (eIdx >= 0 && eIdx < state->world.things->explosionCount) {
+                    cell.firstExplosionType = (int)state->world.things->explosions[eIdx].type;
+                }
+                break;
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
             ++scanSafety;
@@ -4578,10 +4740,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                    const M11_ViewportCell* cell,
                                    int depthIndex);
 
-/* Forward declaration — m11_draw_wall_face needs access to the game state
- * for asset-backed rendering, but the state pointer is threaded through
- * the Draw call chain. We use a file-scope pointer set during Draw. */
-static const M11_GameViewState* g_drawState = NULL;
+/* NOTE: g_drawState forward-declared near file top. */
 
 /* Forward declarations for asset-backed rendering helpers */
 static int m11_draw_door_frame_asset(const M11_GameViewState* state,
@@ -4787,7 +4946,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         }
     }
     m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
-                        faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell);
+                        faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
+                        depthIndex);
 }
 
 /* Known GRAPHICS.DAT indices for rendering assets in CSB PC 3.4. */
@@ -4842,6 +5002,14 @@ enum {
     M11_GFX_ITEM_CONTAINER_BASE = 361, /* 3 container subtypes */
     M11_GFX_ITEM_JUNK_BASE   = 364, /* 52 junk subtypes */
     M11_GFX_ITEM_SPRITE_END  = 416, /* safety cap */
+
+    /* Projectile viewport sprites (416-438, 23 entries).
+     * In DM1 these are the small flying-object graphics drawn in the
+     * corridor when a missile is in flight.  Sizes range from 9x7 to
+     * 60x25.  Ref: ReDMCSB DEFS.H C416..C438. */
+    M11_GFX_PROJECTILE_BASE = 416,
+    M11_GFX_PROJECTILE_COUNT = 23,
+    M11_GFX_PROJECTILE_END  = 439,
 
     /* Wall ornament graphics (per wall set, 16 ornaments each).
      * In CSB/DM, wall ornaments start at graphic index 321 and are

@@ -4629,6 +4629,72 @@ int main(int argc, char** argv) {
                      "creature anim frames valid for types 0 and 1");
     }
 
+    /* INV_GV_225: Projectile sprite graphics 416-438 load from GRAPHICS.DAT.
+     * At least the first entry (416, 26x6) should be loadable. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* projSlot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 416);
+        probe_record(&tally,
+                     "INV_GV_225",
+                     projSlot && projSlot->width == 26 && projSlot->height == 6,
+                     "projectile sprite (graphic 416) loads as 26x6 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally,
+                     "INV_GV_225",
+                     0,
+                     "projectile sprite (graphic 416) loads as 26x6 from GRAPHICS.DAT [SKIP: no assets]");
+    }
+
+    /* INV_GV_226: Projectile sprite range fully loadable (416-438, 23 entries). */
+    if (gameView.assetsAvailable) {
+        int projOk = 1;
+        int pi;
+        for (pi = 416; pi <= 438; ++pi) {
+            const M11_AssetSlot* ps = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&gameView.assetLoader, (unsigned int)pi);
+            if (!ps || ps->width == 0 || ps->height == 0) { projOk = 0; break; }
+        }
+        probe_record(&tally,
+                     "INV_GV_226",
+                     projOk,
+                     "all 23 projectile sprites (416-438) load from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally,
+                     "INV_GV_226",
+                     0,
+                     "all 23 projectile sprites (416-438) load from GRAPHICS.DAT [SKIP: no assets]");
+    }
+
+    /* INV_GV_227: Largest projectile sprite (graphic 420, 60x25) loads correctly. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* proj420 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 420);
+        probe_record(&tally,
+                     "INV_GV_227",
+                     proj420 && proj420->width == 60 && proj420->height == 25,
+                     "projectile sprite (graphic 420) loads as 60x25 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally,
+                     "INV_GV_227",
+                     0,
+                     "projectile sprite (graphic 420) loads as 60x25 from GRAPHICS.DAT [SKIP: no assets]");
+    }
+
+    /* INV_GV_228: Smallest projectile sprite (graphic 437, 9x7) loads correctly. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* proj437 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 437);
+        probe_record(&tally,
+                     "INV_GV_228",
+                     proj437 && proj437->width == 9 && proj437->height == 7,
+                     "projectile sprite (graphic 437) loads as 9x7 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally,
+                     "INV_GV_228",
+                     0,
+                     "projectile sprite (graphic 437) loads as 9x7 from GRAPHICS.DAT [SKIP: no assets]");
+    }
+
     /* ── Screenshot: combat damage overlay (graphic 14 + graphic 16) ── */
     {
         M11_GameViewState dmgView;
