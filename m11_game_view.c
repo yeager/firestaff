@@ -6688,14 +6688,38 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
     snprintf(outHint, outHintSize, "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH");
 }
 
-/* ── Full-screen map overlay (M key) ── */
+/* ── Full-screen map overlay (M key) ──
+ *
+ * Period-faithful presentation modeled after DM1 / ReDMCSB automap style:
+ * - Full-screen black fill to guarantee no HUD bleed-through
+ * - Stone-gray single border (not bright yellow/brown double frame)
+ * - Compact title without debug dimensions
+ * - Muted tile palette: walls dark, corridors mid-gray, specials subdued
+ * - Minimal footer — just the dismiss key, not a keybinding reference card
+ */
+
+/* Map-specific muted tile colors — period-faithful restraint.
+ * Walls blend into the background; corridors are the primary readable
+ * feature.  Special tiles (doors, stairs, pits) use subdued accents
+ * rather than the saturated utility-palette colors. */
+static unsigned char m11_map_tile_color(int elementType) {
+    switch (elementType) {
+        case DUNGEON_ELEMENT_WALL:       return M11_COLOR_BLACK;      /* walls vanish into bg */
+        case DUNGEON_ELEMENT_CORRIDOR:   return M11_COLOR_DARK_GRAY;  /* explored floor */
+        case DUNGEON_ELEMENT_PIT:        return M11_COLOR_BROWN;      /* subtle hazard */
+        case DUNGEON_ELEMENT_STAIRS:     return M11_COLOR_LIGHT_GRAY; /* notable but muted */
+        case DUNGEON_ELEMENT_DOOR:       return M11_COLOR_BROWN;      /* structural feature */
+        case DUNGEON_ELEMENT_TELEPORTER: return M11_COLOR_NAVY;       /* arcane, not neon */
+        case DUNGEON_ELEMENT_FAKEWALL:   return M11_COLOR_DARK_GRAY;  /* blends with corridor */
+        default: return M11_COLOR_BLACK;
+    }
+}
+
 static void m11_draw_fullscreen_map(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
                                    int framebufferHeight) {
-    int panelX = 16, panelY = 16;
-    int panelW = framebufferWidth - 32;
-    int panelH = framebufferHeight - 32;
+    int panelX, panelY, panelW, panelH;
     const struct DungeonMapDesc_Compat* mapDesc = NULL;
     int mapW = 0, mapH = 0;
     int cellSize;
@@ -6710,34 +6734,45 @@ static void m11_draw_fullscreen_map(const M11_GameViewState* state,
     mapH = (int)mapDesc->height;
     if (mapW <= 0 || mapH <= 0) return;
 
-    /* Background panel */
+    /* Full-screen black fill — guarantees no HUD content leaks through
+     * at any edge, regardless of panel inset.  This is the primary
+     * clipping-cleanliness measure (S2.3). */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX, panelY, panelW, panelH, M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX, panelY, panelW, panelH, M11_COLOR_YELLOW);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_BROWN);
+                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
 
-    /* Title */
+    /* Panel inset — generous margins for a deliberate, composed feel
+     * rather than an edge-to-edge utility window. */
+    panelX = 8;
+    panelY = 6;
+    panelW = framebufferWidth - 16;
+    panelH = framebufferHeight - 12;
+
+    /* Single stone-gray border — period-appropriate, not flashy */
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panelX, panelY, panelW, panelH, M11_COLOR_DARK_GRAY);
+
+    /* Title — compact, no debug dimensions */
     {
-        char mapTitle[48];
-        snprintf(mapTitle, sizeof(mapTitle), "LEVEL %d MAP (%dx%d)",
-                 state->world.party.mapIndex + 1, mapW, mapH);
+        char mapTitle[32];
+        M11_TextStyle titleStyle = g_text_shadow;
+        titleStyle.color = M11_COLOR_LIGHT_GRAY;
+        snprintf(mapTitle, sizeof(mapTitle), "LEVEL %d",
+                 state->world.party.mapIndex + 1);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      panelX + 6, panelY + 4, mapTitle, &g_text_title);
+                      panelX + 6, panelY + 4, mapTitle, &titleStyle);
     }
 
     /* Compute cell size to fit map in available area */
     {
         int availW = panelW - 12;
-        int availH = panelH - 26;
+        int availH = panelH - 28; /* title + footer headroom */
         int cw = availW / mapW;
         int ch = availH / mapH;
         cellSize = cw < ch ? cw : ch;
         if (cellSize < 2) cellSize = 2;
         if (cellSize > 12) cellSize = 12;
         offsetX = panelX + 6 + (availW - mapW * cellSize) / 2;
-        offsetY = panelY + 20 + (availH - mapH * cellSize) / 2;
+        offsetY = panelY + 18 + (availH - mapH * cellSize) / 2;
     }
 
     /* Draw each tile */
@@ -6752,34 +6787,38 @@ static void m11_draw_fullscreen_map(const M11_GameViewState* state,
                                          gx, gy, &square);
             if (ok) {
                 if (m11_is_explored(state, gx, gy)) {
-                    fill = m11_tile_color(square >> 5);
+                    fill = m11_map_tile_color(square >> 5);
                 } else {
-                    fill = M11_COLOR_NAVY;
+                    /* Unexplored: pure black — indistinguishable from void */
+                    fill = M11_COLOR_BLACK;
                 }
             }
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           drawX, drawY, cellSize - 1, cellSize - 1, fill);
 
-            /* Party position marker */
+            /* Party position marker — white dot, restrained */
             if (gx == state->world.party.mapX && gy == state->world.party.mapY) {
                 int cx = drawX + cellSize / 2 - 1;
                 int cy = drawY + cellSize / 2 - 1;
                 int ms = cellSize > 4 ? cellSize - 3 : 2;
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx, cy, ms, ms, M11_COLOR_LIGHT_GREEN);
+                              cx, cy, ms, ms, M11_COLOR_WHITE);
                 if (cellSize >= 6) {
                     m11_draw_party_arrow(framebuffer, framebufferWidth, framebufferHeight,
                                          cx - 1, cy - 1, ms + 2,
-                                         state->world.party.direction, M11_COLOR_WHITE);
+                                         state->world.party.direction, M11_COLOR_LIGHT_GRAY);
                 }
             }
         }
     }
 
-    /* Footer */
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX + 6, panelY + panelH - 14,
-                  "M CLOSE  ESC MENU  ARROWS EXPLORE", &g_text_small);
+    /* Footer — minimal dismiss hint, not a keybinding cheat sheet */
+    {
+        M11_TextStyle footerStyle = g_text_small;
+        footerStyle.color = M11_COLOR_DARK_GRAY;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 6, panelY + panelH - 12, "PRESS M", &footerStyle);
+    }
 }
 
 /* ── Full inventory panel (I key) ──

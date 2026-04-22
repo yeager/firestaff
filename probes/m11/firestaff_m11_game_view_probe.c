@@ -4147,6 +4147,53 @@ int main(int argc, char** argv) {
         }
     }
 
+    /* ── Screenshot: dump map overlay to PGM for visual verification ── */
+    {
+        M11_GameViewState ssView;
+        unsigned char ssFb[320 * 200];
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+        memcpy(&ssView, &gameView, sizeof(ssView));
+        ssView.mapOverlayActive = 1;
+        ssView.inventoryPanelActive = 0;
+        /* Mark some tiles as explored for visual richness */
+        {
+            int ex;
+            for (ex = 0; ex < 8; ++ex) {
+                int bx = ssView.world.party.mapX + ex - 4;
+                int by = ssView.world.party.mapY + ex - 4;
+                if (bx >= 0 && bx < 32 && by >= 0 && by < 32) {
+                    int word = (by * 32 + bx) / 32;
+                    int bit  = (by * 32 + bx) % 32;
+                    ssView.exploredBits[word] |= (1u << bit);
+                }
+            }
+            /* Also mark party position explored */
+            {
+                int pw = (ssView.world.party.mapY * 32 + ssView.world.party.mapX) / 32;
+                int pb = (ssView.world.party.mapY * 32 + ssView.world.party.mapX) % 32;
+                if (pw < 32) ssView.exploredBits[pw] |= (1u << pb);
+            }
+        }
+        memset(ssFb, 0, sizeof(ssFb));
+        M11_GameView_Draw(&ssView, ssFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            char ssPath[512];
+            FILE* ssFile;
+            snprintf(ssPath, sizeof(ssPath), "%s/map_overlay_p5.pgm", ssDir);
+            ssFile = fopen(ssPath, "wb");
+            if (ssFile) {
+                int px;
+                fprintf(ssFile, "P5\n320 200\n255\n");
+                for (px = 0; px < 320 * 200; ++px) {
+                    unsigned char gray = (unsigned char)(ssFb[px] * 17);
+                    fwrite(&gray, 1, 1, ssFile);
+                }
+                fclose(ssFile);
+                printf("Screenshot: %s\n", ssPath);
+            }
+        }
+    }
+
     M11_GameView_Shutdown(&gameView);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
