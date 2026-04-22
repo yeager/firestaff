@@ -14,6 +14,10 @@ typedef struct {
     int passed;
 } SmokeTally;
 
+unsigned short G2157_;
+unsigned char* G2159_puc_Bitmap_Source;
+unsigned char* G2160_puc_Bitmap_Destination;
+
 static void smoke_record(SmokeTally* tally,
                          const char* id,
                          int ok,
@@ -130,7 +134,7 @@ int main(void) {
                  "SMOKE_03",
                  smoke_checksum(framebufferA, sizeof(framebufferA)) !=
                      smoke_checksum(framebufferB, sizeof(framebufferB)),
-                 "language and graphics changes alter launcher output");
+                 "language and presentation mode changes alter launcher output");
 
     smoke_record(&tally,
                  "SMOKE_04",

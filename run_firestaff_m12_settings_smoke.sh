@@ -7,6 +7,8 @@ mkdir -p "$OUT_DIR"
 
 BIN="$OUT_DIR/firestaff_m12_settings_smoke_bin"
 VGA_OBJ="$OUT_DIR/vga_palette_pc34_compat.o"
+CFLAGS_COMMON="-std=c99 -Wall -Wextra -O2 -I $HERE"
+CFLAGS_M10="$CFLAGS_COMMON -DCOMPILE_H -DSTATICFUNCTION=static -DSEPARATOR=, -DFINAL_SEPARATOR=)"
 
 SDL_FLAG=""
 SDL_CFLAGS=""
@@ -30,11 +32,36 @@ cc -std=c99 -O2 \
     -c "$HERE/vga_palette_pc34_compat.c" \
     -o "$VGA_OBJ"
 
-cc -std=c99 -Wall -Wextra -O2 -I "$HERE" $SDL_FLAG $SDL_CFLAGS \
+GFX_OBJS=""
+for src in \
+    memory_graphics_dat_pc34_compat \
+    memory_graphics_dat_state_pc34_compat \
+    memory_graphics_dat_header_pc34_compat \
+    memory_graphics_dat_select_pc34_compat \
+    memory_graphics_dat_metadata_pc34_compat \
+    memory_frontend_pc34_compat \
+    memory_cache_frontend_pc34_compat \
+    expand_frontend_pc34_compat \
+    bitmap_call_pc34_compat \
+    image_expand_pc34_compat \
+    image_backend_pc34_compat \
+    graphics_dat_entry_classify_pc34_compat \
+    late_special_dispatch_pc34_compat \
+    memory_graphics_dat_transaction_pc34_compat \
+    memory_load_expand_pc34_compat \
+    bitmap_copy_pc34_compat; do
+    OBJ="$OUT_DIR/${src}.o"
+    cc $CFLAGS_M10 -c "$HERE/${src}.c" -o "$OBJ"
+    GFX_OBJS="$GFX_OBJS $OBJ"
+done
+
+cc $CFLAGS_COMMON $SDL_FLAG $SDL_CFLAGS \
     -o "$BIN" \
-    "$HERE/firestaff_m12_settings_smoke.c" \
+    "$HERE/probes/m12/firestaff_m12_settings_smoke.c" \
     "$HERE/main_loop_m11.c" \
     "$HERE/m11_game_view.c" \
+    "$HERE/audio_sdl_m11.c" \
+    "$HERE/asset_loader_m11.c" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
     "$HERE/branding_logo_m12.c" \
@@ -55,6 +82,7 @@ cc -std=c99 -Wall -Wextra -O2 -I "$HERE" $SDL_FLAG $SDL_CFLAGS \
     "$HERE/memory_champion_state_pc34_compat.c" \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
     "$VGA_OBJ" \
+    $GFX_OBJS \
     $SDL_LIBS
 
 export SDL_VIDEODRIVER=dummy

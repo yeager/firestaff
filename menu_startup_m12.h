@@ -68,6 +68,13 @@ typedef struct {
 } M12_MenuSettingsState;
 
 typedef enum {
+    M12_PRESENTATION_V1_ORIGINAL = 0,
+    M12_PRESENTATION_V2_ENHANCED_2D,
+    M12_PRESENTATION_V3_MODERN_3D,
+    M12_PRESENTATION_MODE_COUNT
+} M12_PresentationMode;
+
+typedef enum {
     M12_ASPECT_ORIGINAL = 0,
     M12_ASPECT_4_3,
     M12_ASPECT_16_9,
@@ -108,6 +115,14 @@ typedef struct {
 } M12_GameOptions;
 
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts);
+int M12_GameOptions_RowLockedByMode(int row, int presentationMode);
+
+typedef struct {
+    const char* gameId;
+    int presentationMode;
+    M12_GameOptions options;
+    int valid;
+} M12_LaunchIntent;
 
 typedef struct M12_StartupMenuState {
     M12_MenuEntry entries[4];
@@ -140,6 +155,9 @@ int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
                                               int index);
 int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state);
+int M12_StartupMenu_GetPresentationMode(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState* state);
+M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
 
 #ifdef __cplusplus
 }

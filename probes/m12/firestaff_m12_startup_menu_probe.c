@@ -45,6 +45,26 @@ static int file_exists(const char* path) {
     return path && path[0] != '\0' && stat(path, &st) == 0;
 }
 
+static int file_contains(const char* path, const char* needle) {
+    FILE* fp;
+    char line[1024];
+    if (!path || !needle || needle[0] == '\0') {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (strstr(line, needle) != NULL) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
 static void remove_if_present(const char* path) {
     if (path && path[0] != '\0') {
         unlink(path);
@@ -250,6 +270,22 @@ int main(void) {
                      state.settings.windowModeIndex == 1,
                  "settings screen cycles persisted values from keyboard input");
 
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK); /* to main */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm2 */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* csb */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm1 */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* open DM1 options */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* patch: ORIGINAL -> PATCHED */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* cheats */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* OFF -> ON */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* speed */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* NORMAL -> FASTER */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* aspect */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* ORIGINAL -> 4:3 */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* resolution */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* 320x200 -> 640x400 */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);   /* back to main */
+
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_Init(&reloaded);
     probe_record(&tally,
@@ -257,9 +293,21 @@ int main(void) {
                  reloaded.settings.languageIndex == 1 &&
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.windowModeIndex == 1 &&
+                     reloaded.gameOptions[0].usePatch == 1 &&
+                     reloaded.gameOptions[0].cheatsEnabled == 1 &&
+                     reloaded.gameOptions[0].gameSpeed == 2 &&
+                     reloaded.gameOptions[0].aspectRatio == 1 &&
+                     reloaded.gameOptions[0].resolution == 1 &&
+                     reloaded.gameOptions[1].usePatch == 0 &&
+                     reloaded.gameOptions[1].cheatsEnabled == 0 &&
+                     reloaded.gameOptions[1].gameSpeed == 1 &&
+                     reloaded.gameOptions[2].usePatch == 0 &&
+                     reloaded.gameOptions[2].cheatsEnabled == 0 &&
+                     reloaded.gameOptions[2].gameSpeed == 1 &&
                      M12_StartupMenu_GetRenderPaletteLevel(&reloaded) == 1 &&
+                     file_contains(configPath, "presentation_mode_index = 1") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings, runtime palette mapping, and data dir persist across reloads");
+                 "settings and per-game options persist across reloads without cross-game bleed, including presentation mode");
 
     M12_StartupMenu_Draw(&state, framebuffer, 320, 200);
     for (i = 0; i < sizeof(framebuffer); ++i) {
@@ -290,7 +338,128 @@ int main(void) {
         probe_record(&tally,
                      "INV_M12_12B",
                      checksumA != checksumB,
-                     "language and graphics selections change the rendered launcher output");
+                     "language and presentation mode selections change the rendered launcher output");
+    }
+
+    /* === Mode-constraint and launch-intent tests === */
+    {
+        M12_StartupMenuState modeState;
+        M12_LaunchIntent intent;
+
+        /* V1 mode: aspect and resolution locked to original */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        /* Select DM1 (available) and open game options */
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        probe_record(&tally,
+                     "INV_M12_14",
+                     modeState.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                         modeState.gameOptions[0].aspectRatio == M12_ASPECT_ORIGINAL &&
+                         modeState.gameOptions[0].resolution == M12_RES_320x200,
+                     "V1 mode enforces original aspect and 320x200 resolution on entry");
+
+        /* Try cycling aspect in V1 — should stay locked */
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_ASPECT;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+        probe_record(&tally,
+                     "INV_M12_15",
+                     modeState.gameOptions[0].aspectRatio == M12_ASPECT_ORIGINAL,
+                     "V1 mode blocks aspect ratio cycling");
+
+        /* Try cycling resolution in V1 — should stay locked */
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_RESOLUTION;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+        probe_record(&tally,
+                     "INV_M12_16",
+                     modeState.gameOptions[0].resolution == M12_RES_320x200,
+                     "V1 mode blocks resolution cycling");
+
+        /* Row-locked query */
+        probe_record(&tally,
+                     "INV_M12_17",
+                     M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_PATCH, M12_PRESENTATION_V1_ORIGINAL) == 0 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V2_ENHANCED_2D) == 0 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V2_ENHANCED_2D) == 0,
+                     "RowLockedByMode reports correct constraints per mode");
+
+        /* V2 mode: aspect and resolution cycle freely */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_ASPECT;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_RESOLUTION;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+        probe_record(&tally,
+                     "INV_M12_18",
+                     modeState.gameOptions[0].aspectRatio == M12_ASPECT_4_3 &&
+                         modeState.gameOptions[0].resolution == M12_RES_640x400,
+                     "V2 mode allows free aspect and resolution cycling");
+
+        /* Launch intent for V1 */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_19",
+                     intent.valid == 1 &&
+                         intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
+                         strcmp(intent.gameId, "dm1") == 0 &&
+                         intent.options.aspectRatio == M12_ASPECT_ORIGINAL &&
+                         intent.options.resolution == M12_RES_320x200,
+                     "V1 launch intent carries correct mode and constrained options");
+
+        /* Launch intent for V2 with explicit resolution set */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        /* Reset DM1 resolution to 0 so we can verify cycling works */
+        modeState.gameOptions[0].resolution = M12_RES_320x200;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_RESOLUTION;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_20",
+                     intent.valid == 1 &&
+                         intent.presentationMode == M12_PRESENTATION_V2_ENHANCED_2D &&
+                         strcmp(intent.gameId, "dm1") == 0 &&
+                         intent.options.resolution == M12_RES_640x400,
+                     "V2 launch intent carries enhanced resolution options");
+
+        /* V3 launch intent is invalid (coming soon) */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V3_MODERN_3D;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_21",
+                     intent.valid == 0,
+                     "V3 launch intent is invalid (coming soon)");
+
+        /* V3 launch button shows coming-soon message */
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT; /* launch row */
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        probe_record(&tally,
+                     "INV_M12_22",
+                     modeState.view == M12_MENU_VIEW_MESSAGE &&
+                         strcmp(modeState.messageLine2, "COMING SOON") == 0,
+                     "V3 launch attempt shows COMING SOON message");
+
+        /* Presentation mode API */
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        probe_record(&tally,
+                     "INV_M12_23",
+                     M12_StartupMenu_GetPresentationMode(&modeState) == M12_PRESENTATION_V2_ENHANCED_2D &&
+                         strcmp(M12_StartupMenu_GetPresentationModeLabel(&modeState), "V2 ENHANCED 2D") == 0,
+                     "presentation mode API returns correct mode and label");
     }
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);

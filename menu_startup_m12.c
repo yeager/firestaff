@@ -34,6 +34,9 @@ enum {
 
 static int m12_cycle_index(int value, int delta, int count);
 static int m12_clamp_index(int value, int count);
+static void m12_init_game_options(M12_GameOptions* opts);
+static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
+static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
 
 static const char* g_aspectRatios[] = {"ORIGINAL", "4:3", "16:9", "16:10"};
 static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
@@ -48,6 +51,16 @@ int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     return opts->cheatsEnabled ? 1 : 0;
 }
 
+int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
+    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+        /* V1 locks aspect ratio and resolution to original values */
+        if (row == M12_GAME_OPT_ROW_ASPECT || row == M12_GAME_OPT_ROW_RESOLUTION) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void m12_init_game_options(M12_GameOptions* opts) {
     if (!opts) {
         return;
@@ -59,8 +72,12 @@ static void m12_init_game_options(M12_GameOptions* opts) {
     opts->resolution = 0;
 }
 
-static void m12_cycle_game_opt(M12_GameOptions* opts, int row, int delta) {
+static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode) {
     if (!opts) {
+        return;
+    }
+    /* Reject cycling on mode-locked rows */
+    if (presentationMode >= 0 && M12_GameOptions_RowLockedByMode(row, presentationMode)) {
         return;
     }
     switch (row) {
@@ -87,6 +104,31 @@ static void m12_cycle_game_opt(M12_GameOptions* opts, int row, int delta) {
         default:
             break;
     }
+}
+
+static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode) {
+    if (!opts) {
+        return;
+    }
+    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+        opts->aspectRatio = M12_ASPECT_ORIGINAL;
+        opts->resolution = M12_RES_320x200;
+    }
+}
+
+static void m12_clamp_game_options(M12_GameOptions* opts) {
+    if (!opts) {
+        return;
+    }
+    opts->usePatch = m12_clamp_index(opts->usePatch, 2);
+    opts->cheatsEnabled = m12_clamp_index(opts->cheatsEnabled, 2);
+    if (opts->cheatsEnabled) {
+        opts->gameSpeed = m12_clamp_index(opts->gameSpeed, 3);
+    } else {
+        opts->gameSpeed = 1;
+    }
+    opts->aspectRatio = m12_clamp_index(opts->aspectRatio, M12_ASPECT_COUNT);
+    opts->resolution = m12_clamp_index(opts->resolution, M12_RES_COUNT);
 }
 
 static const M12_MenuEntry g_entryTemplate[] = {
@@ -156,7 +198,11 @@ static const M12_Glyph g_font[] = {
 };
 
 static const char* g_languages[] = {"EN", "SV", "FR", "DE"};
-static const char* g_graphicsLevels[] = {"ORIGINAL", "UPSCALED", "AI/HD"};
+static const char* g_presentationModes[] = {
+    "V1 ORIGINAL-FAITHFUL",
+    "V2 ENHANCED 2D",
+    "V3 MODERN/3D"
+};
 static const char* g_windowModes[] = {"WINDOWED", "FULLSCREEN"};
 
 static const M12_TextStyle g_textSmall = {1, 1, M12_COLOR_WHITE, 0, 0, M12_COLOR_BLACK};
@@ -176,7 +222,7 @@ typedef enum {
     M12_TEXT_MAIN_FOOTER,
     M12_TEXT_PERSISTED_OPTIONS,
     M12_TEXT_LANGUAGE,
-    M12_TEXT_GRAPHICS_LEVEL,
+    M12_TEXT_PRESENTATION_MODE,
     M12_TEXT_WINDOW_MODE,
     M12_TEXT_SETTINGS_SAVED,
     M12_TEXT_SETTINGS_FOOTER,
@@ -214,7 +260,7 @@ static const char* const g_localeText[4][M12_TEXT_COUNT] = {
         "UP/DOWN MOVE   ENTER OPEN   ESC EXIT",
         "PERSISTED OPTIONS",
         "LANGUAGE",
-        "GRAPHICS LEVEL",
+        "PRESENTATION MODE",
         "WINDOW MODE",
         "CHANGES SAVE IMMEDIATELY TO CONFIG",
         "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK",
@@ -241,7 +287,7 @@ static const char* const g_localeText[4][M12_TEXT_COUNT] = {
         "UPP/NED FLYTTA   ENTER OPPNA   ESC AVSLUTA",
         "SPARADE VAL",
         "SPRAK",
-        "GRAFIKNIVA",
+        "PRESENTATION MODE",
         "FONSTERLAGE",
         "ANDRINGAR SPARAS DIREKT I KONFIG",
         "VANSTER/HOGER VAXLA   ENTER NASTA   ESC TILLBAKA",
@@ -268,7 +314,7 @@ static const char* const g_localeText[4][M12_TEXT_COUNT] = {
         "HAUT/BAS DEPLACER   ENTREE OUVRIR   ESC QUITTER",
         "OPTIONS ENREGISTREES",
         "LANGUE",
-        "NIVEAU GRAPHIQUE",
+        "PRESENTATION MODE",
         "MODE FENETRE",
         "LES MODIFS SONT SAUVEES TOUT DE SUITE",
         "GAUCHE/DROITE CHANGER   ENTREE AVANCER   ESC RETOUR",
@@ -295,7 +341,7 @@ static const char* const g_localeText[4][M12_TEXT_COUNT] = {
         "HOCH/RUNTER BEWEGEN   ENTER OFFNEN   ESC ENDE",
         "GESPEICHERTE OPTIONEN",
         "SPRACHE",
-        "GRAFIKSTUFE",
+        "PRESENTATION MODE",
         "FENSTERMODUS",
         "ANDERUNGEN WERDEN SOFORT GESPEICHERT",
         "LINKS/RECHTS WECHSELN   ENTER WEITER   ESC ZURUCK",
@@ -410,8 +456,9 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
-static void m12_save_settings(const M12_StartupMenuState* state) {
+static void m12_save_config(const M12_StartupMenuState* state) {
     M12_Config config;
+    int gi;
     if (!state) {
         return;
     }
@@ -419,12 +466,22 @@ static void m12_save_settings(const M12_StartupMenuState* state) {
     config.languageIndex = state->settings.languageIndex;
     config.graphicsIndex = state->settings.graphicsIndex;
     config.windowModeIndex = state->settings.windowModeIndex;
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        M12_GameOptions opts = state->gameOptions[gi];
+        m12_clamp_game_options(&opts);
+        config.gameUsePatch[gi] = opts.usePatch;
+        config.gameCheatsEnabled[gi] = opts.cheatsEnabled;
+        config.gameSpeed[gi] = opts.gameSpeed;
+        config.gameAspectRatio[gi] = opts.aspectRatio;
+        config.gameResolution[gi] = opts.resolution;
+    }
     snprintf(config.dataDir, sizeof(config.dataDir), "%s", M12_AssetStatus_GetDataDir(&state->assetStatus));
     M12_Config_Save(&config);
 }
 
 static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dataDirOverride) {
     M12_Config config;
+    int gi;
     if (!state) {
         return;
     }
@@ -432,9 +489,18 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     (int)(sizeof(g_languages) / sizeof(g_languages[0])));
     state->settings.graphicsIndex = m12_clamp_index(config.graphicsIndex,
-                                                    (int)(sizeof(g_graphicsLevels) / sizeof(g_graphicsLevels[0])));
+                                                    (int)(sizeof(g_presentationModes) /
+                                                          sizeof(g_presentationModes[0])));
     state->settings.windowModeIndex = m12_clamp_index(config.windowModeIndex,
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        state->gameOptions[gi].usePatch = config.gameUsePatch[gi];
+        state->gameOptions[gi].cheatsEnabled = config.gameCheatsEnabled[gi];
+        state->gameOptions[gi].gameSpeed = config.gameSpeed[gi];
+        state->gameOptions[gi].aspectRatio = config.gameAspectRatio[gi];
+        state->gameOptions[gi].resolution = config.gameResolution[gi];
+        m12_clamp_game_options(&state->gameOptions[gi]);
+    }
     M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
 }
 
@@ -448,6 +514,12 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
         return;
     }
     memset(state, 0, sizeof(*state));
+    {
+        int gi;
+        for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+            m12_init_game_options(&state->gameOptions[gi]);
+        }
+    }
     m12_apply_loaded_config(state, dataDir);
     m12_sync_entries_from_assets(state);
     m12_sync_card_art(state);
@@ -459,12 +531,6 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
-    {
-        int gi;
-        for (gi = 0; gi < 3; ++gi) {
-            m12_init_game_options(&state->gameOptions[gi]);
-        }
-    }
 }
 
 static const char* m12_settings_value_language(const M12_StartupMenuState* state) {
@@ -472,7 +538,7 @@ static const char* m12_settings_value_language(const M12_StartupMenuState* state
 }
 
 static const char* m12_settings_value_graphics(const M12_StartupMenuState* state) {
-    return g_graphicsLevels[state->settings.graphicsIndex];
+    return g_presentationModes[state->settings.graphicsIndex];
 }
 
 static const char* m12_settings_value_window_mode(const M12_StartupMenuState* state) {
@@ -494,6 +560,9 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     }
     state->activatedIndex = state->selectedIndex;
     if (entry->available) {
+        int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
+        int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+        m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
         state->view = M12_MENU_VIEW_GAME_OPTIONS;
         state->gameOptSelectedRow = 0;
         return;
@@ -522,10 +591,11 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 (int)(sizeof(g_languages) / sizeof(g_languages[0])));
             break;
         case M12_SETTINGS_ROW_GRAPHICS:
-            state->settings.graphicsIndex = m12_cycle_index(
-                state->settings.graphicsIndex,
-                delta,
-                (int)(sizeof(g_graphicsLevels) / sizeof(g_graphicsLevels[0])));
+                state->settings.graphicsIndex = m12_cycle_index(
+                    state->settings.graphicsIndex,
+                    delta,
+                    (int)(sizeof(g_presentationModes) /
+                          sizeof(g_presentationModes[0])));
             break;
         case M12_SETTINGS_ROW_WINDOW_MODE:
             state->settings.windowModeIndex = m12_cycle_index(
@@ -536,7 +606,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
         default:
             break;
     }
-    m12_save_settings(state);
+    m12_save_config(state);
 }
 
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
@@ -562,7 +632,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     }
 
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
-        int gi = m12_clamp_index(state->activatedIndex, 3);
+        int gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
+        int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
         switch (input) {
             case M12_MENU_INPUT_UP:
                 state->gameOptSelectedRow = m12_cycle_index(
@@ -578,26 +649,36 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 break;
             case M12_MENU_INPUT_LEFT:
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
-                    m12_cycle_game_opt(&state->gameOptions[gi],
-                                       state->gameOptSelectedRow, -1);
+                    m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
+                                       state->gameOptSelectedRow, -1, pmode);
+                    m12_save_config(state);
                 }
                 break;
             case M12_MENU_INPUT_RIGHT:
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
-                    m12_cycle_game_opt(&state->gameOptions[gi],
-                                       state->gameOptSelectedRow, 1);
+                    m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
+                                       state->gameOptSelectedRow, 1, pmode);
+                    m12_save_config(state);
                 }
                 break;
             case M12_MENU_INPUT_ACCEPT:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
-                    /* Launch row */
-                    state->view = M12_MENU_VIEW_MESSAGE;
-                    state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
-                    state->messageLine2 = state->entries[state->activatedIndex].title;
-                    state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    /* Launch row — V3 blocks launch with coming-soon message */
+                    if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
+                        state->view = M12_MENU_VIEW_MESSAGE;
+                        state->messageLine1 = "V3 MODERN/3D";
+                        state->messageLine2 = "COMING SOON";
+                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    } else {
+                        state->view = M12_MENU_VIEW_MESSAGE;
+                        state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
+                        state->messageLine2 = state->entries[state->activatedIndex].title;
+                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    }
                 } else {
-                    m12_cycle_game_opt(&state->gameOptions[gi],
-                                       state->gameOptSelectedRow, 1);
+                    m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
+                                       state->gameOptSelectedRow, 1, pmode);
+                    m12_save_config(state);
                 }
                 break;
             case M12_MENU_INPUT_BACK:
@@ -1646,7 +1727,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                           framebufferWidth,
                           framebufferHeight,
                           112,
-                          m12_text(state, M12_TEXT_GRAPHICS_LEVEL),
+                          m12_text(state, M12_TEXT_PRESENTATION_MODE),
                           m12_settings_value_graphics(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS);
     m12_draw_settings_row(framebuffer,
@@ -2537,7 +2618,7 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  panelX + 10,
                                  contentY + 60,
                                  framebufferWidth - margin - panelX - 20,
-                                 m12_text(state, M12_TEXT_GRAPHICS_LEVEL),
+                                 m12_text(state, M12_TEXT_PRESENTATION_MODE),
                                  m12_settings_value_graphics(state),
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS);
     m12_draw_modern_settings_row(framebuffer,
@@ -2624,6 +2705,9 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     int panelW;
     int rowY;
     int speedDimmed;
+    int pmode;
+    int aspectLocked;
+    int resLocked;
     unsigned char gameFill;
     if (margin < 12) {
         margin = 12;
@@ -2637,6 +2721,9 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     panelW = framebufferWidth - margin - panelX;
     gameFill = entry ? m12_game_card_fill(entry->gameId) : M12_COLOR_DARK_GRAY;
     speedDimmed = !opts->cheatsEnabled;
+    pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+    aspectLocked = M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, pmode);
+    resLocked = M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, pmode);
 
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
     m12_draw_modern_hero(state,
@@ -2704,7 +2791,15 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   contentY + 10,
                   "GAME OPTIONS",
                   &g_textSmallAccent);
-    rowY = contentY + 28;
+    /* Mode badge */
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  panelX + 10,
+                  contentY + 20,
+                  g_presentationModes[pmode],
+                  pmode == M12_PRESENTATION_V3_MODERN_3D ? &g_textSmallMuted : &g_textSmallShadow);
+    rowY = contentY + 38;
     m12_draw_game_opt_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
@@ -2756,8 +2851,17 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           "ASPECT RATIO",
                           g_aspectRatios[m12_clamp_index(opts->aspectRatio, M12_ASPECT_COUNT)],
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_ASPECT,
-                          0);
-    rowY += 32;
+                          aspectLocked);
+    if (aspectLocked) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      panelX + 10,
+                      rowY + 28,
+                      "LOCKED BY V1 ORIGINAL MODE",
+                      &g_textSmallMuted);
+    }
+    rowY += aspectLocked ? 42 : 32;
     m12_draw_game_opt_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
@@ -2767,8 +2871,17 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           "RESOLUTION",
                           g_resolutions[m12_clamp_index(opts->resolution, M12_RES_COUNT)],
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_RESOLUTION,
-                          0);
-    rowY += 36;
+                          resLocked);
+    if (resLocked) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      panelX + 10,
+                      rowY + 28,
+                      "LOCKED BY V1 ORIGINAL MODE",
+                      &g_textSmallMuted);
+    }
+    rowY += resLocked ? 42 : 36;
     {
         int launchSelected = state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT;
         unsigned char launchFill = launchSelected ? M12_COLOR_GREEN : M12_COLOR_DARK_GRAY;
@@ -2782,13 +2895,18 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                        28,
                        launchBorder,
                        launchFill);
-        m12_draw_text(framebuffer,
-                      framebufferWidth,
-                      framebufferHeight,
-                      panelX + 10 + (panelW - 20) / 2 - 24,
-                      rowY + 10,
-                      "> LAUNCH",
-                      launchSelected ? &g_textSmallShadow : &g_textSmallMuted);
+        {
+            const char* launchLabel = (pmode == M12_PRESENTATION_V3_MODERN_3D)
+                                          ? "> COMING SOON"
+                                          : "> LAUNCH";
+            m12_draw_text(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10 + (panelW - 20) / 2 - 24,
+                          rowY + 10,
+                          launchLabel,
+                          launchSelected ? &g_textSmallShadow : &g_textSmallMuted);
+        }
     }
     m12_draw_footer(framebuffer,
                     framebufferWidth,
@@ -2916,7 +3034,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
 
 int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state) {
     int graphicsIndex = state ? m12_clamp_index(state->settings.graphicsIndex,
-                                                (int)(sizeof(g_graphicsLevels) / sizeof(g_graphicsLevels[0])))
+                                                (int)(sizeof(g_presentationModes) /
+                                                      sizeof(g_presentationModes[0])))
                               : 0;
     switch (graphicsIndex) {
         case 0:
@@ -2926,4 +3045,40 @@ int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state) {
         default:
             return 2;
     }
+}
+
+int M12_StartupMenu_GetPresentationMode(const M12_StartupMenuState* state) {
+    if (!state) {
+        return M12_PRESENTATION_V1_ORIGINAL;
+    }
+    return m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+}
+
+const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState* state) {
+    int mode = M12_StartupMenu_GetPresentationMode(state);
+    return g_presentationModes[mode];
+}
+
+M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
+    M12_LaunchIntent intent;
+    int gi;
+    int pmode;
+    memset(&intent, 0, sizeof(intent));
+    intent.valid = 0;
+    if (!state || state->activatedIndex < 0 || state->activatedIndex >= m12_entry_count()) {
+        return intent;
+    }
+    pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+    /* V3 is not launchable yet */
+    if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
+        return intent;
+    }
+    gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
+    intent.gameId = state->entries[state->activatedIndex].gameId;
+    intent.presentationMode = pmode;
+    intent.options = state->gameOptions[gi];
+    /* Enforce constraints on the returned options */
+    m12_enforce_mode_constraints(&intent.options, pmode);
+    intent.valid = state->entries[state->activatedIndex].available ? 1 : 0;
+    return intent;
 }
