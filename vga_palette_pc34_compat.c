@@ -4,104 +4,101 @@
 #include "vga_palette_pc34_compat.h"
 
 /*
- * CSB PC 3.4 VGA palette — brightest level (palette index 0).
+ * DM/CSB PC 3.4 VGA palette — original VGA DAC values.
  *
- * These are the standard EGA-derived 16-color palette values used by
- * DM/CSB PC. The video driver programs the VGA DAC with 6-bit values;
- * here they are pre-scaled to 8-bit:
- *   Color 0:  Black           (0,0,0)
- *   Color 1:  Dark Blue       (0,0,170)
- *   Color 2:  Dark Green      (0,170,0)
- *   Color 3:  Dark Cyan       (0,170,170)
- *   Color 4:  Dark Red        (170,0,0)
- *   Color 5:  Dark Magenta / Brown  (170,85,0) — EGA brown, not magenta
- *   Color 6:  Light Gray      (170,170,170)
- *   Color 7:  Medium Gray     (85,85,85)
- *   Color 8:  Red             (255,85,85)
- *   Color 9:  Blue            (85,85,255)
- *   Color 10: Light Green     (85,255,85)
- *   Color 11: Yellow          (255,255,85)
- *   Color 12: Darkest Gray    (40,40,40)
- *   Color 13: Lightest Gray   (200,200,200)
- *   Color 14: Dark medium     (100,100,100)
- *   Color 15: White           (255,255,255)
+ * Source: VIDEODRV.C from ReDMCSB (G8149_ICON, G8151–G8156 LIGHT0–LIGHT5).
+ * Verified against palette-recovery/recovered_palette.json.
  *
- * Note: Colors 5-7 and 12-14 deviate from standard EGA because DM/CSB
- * uses a customized palette. The exact values are from the PC 3.4 video
- * driver binary analysis. Colors 0-4, 8-11, 15 match standard EGA/CGA.
+ * The DM PC VGA palette is NOT standard EGA. It is a custom 16-color palette
+ * programmed via VGA DAC ports 0x3C8/0x3C9 by the video driver TSR.
  *
- * The darker palette levels (1-5) reduce brightness progressively for
- * dungeon darkness. The exact attenuation is driven by the video driver's
- * SetMultipleColorsInPalette function.
+ * VGA 6-bit to 8-bit conversion: rgb8 = (vga6 << 2) | (vga6 >> 4)
  *
- * Since the video driver binary is not available for direct extraction,
- * the darker levels here use a simple linear attenuation model:
- *   level N: rgb = brightest_rgb * (5 - N) / 5
- * This is approximate but produces visually plausible dungeon darkness.
+ *   Color  0: Black        (  0,  0,  0)  VGA6 ( 0, 0, 0)
+ *   Color  1: Gray          (109,109,109)  VGA6 (27,27,27)
+ *   Color  2: Light Gray    (146,146,146)  VGA6 (36,36,36)
+ *   Color  3: Brown         (109, 36,  0)  VGA6 (27, 9, 0)
+ *   Color  4: Cyan          (  0,219,219)  VGA6 ( 0,54,54)  — invariant across all brightness levels
+ *   Color  5: Dark Brown    (146, 73,  0)  VGA6 (36,18, 0)
+ *   Color  6: Dark Green    (  0,146,  0)  VGA6 ( 0,36, 0)
+ *   Color  7: Green         (  0,219,  0)  VGA6 ( 0,54, 0)
+ *   Color  8: Red           (255,  0,  0)  VGA6 (63, 0, 0)
+ *   Color  9: Orange/Gold   (255,182,  0)  VGA6 (63,45, 0)
+ *   Color 10: Tan/Skin      (219,146,109)  VGA6 (54,36,27)
+ *   Color 11: Yellow        (255,255,  0)  VGA6 (63,63, 0)
+ *   Color 12: Dark Gray     ( 73, 73, 73)  VGA6 (18,18,18)
+ *   Color 13: Silver        (182,182,182)  VGA6 (45,45,45)
+ *   Color 14: Blue          (  0,  0,255)  VGA6 ( 0, 0,63)
+ *   Color 15: White         (255,255,255)  VGA6 (63,63,63)
+ *
+ * Brightness levels LIGHT0 (brightest) through LIGHT5 (near-black) are
+ * NOT linearly attenuated — each level has independently tuned per-color
+ * values from the original VIDEODRV.C source. Color 4 (Cyan) is invariant
+ * across all six levels (used for water/special effects).
  */
 
 const unsigned char G9010_auc_VgaPaletteBrightest_Compat[16][3] = {
         {  0,   0,   0},   /*  0: Black */
-        {  0,   0, 170},   /*  1: Dark Blue */
-        {  0, 170,   0},   /*  2: Dark Green */
-        {  0, 170, 170},   /*  3: Dark Cyan */
-        {170,   0,   0},   /*  4: Dark Red */
-        {170,  85,   0},   /*  5: Brown (DM/CSB specific) */
-        {170, 170, 170},   /*  6: Light Gray */
-        { 85,  85,  85},   /*  7: Medium Gray (dark gray in EGA) */
-        {255,  85,  85},   /*  8: Red / Light Red */
-        { 85,  85, 255},   /*  9: Blue / Light Blue */
-        { 85, 255,  85},   /* 10: Light Green */
-        {255, 255,  85},   /* 11: Yellow */
-        { 40,  40,  40},   /* 12: Darkest Gray (DM/CSB specific) */
-        {200, 200, 200},   /* 13: Lightest Gray (DM/CSB specific) */
-        {100, 100, 100},   /* 14: Dark Medium (DM/CSB specific) */
+        {109, 109, 109},   /*  1: Gray */
+        {146, 146, 146},   /*  2: Light Gray */
+        {109,  36,   0},   /*  3: Brown */
+        {  0, 219, 219},   /*  4: Cyan (invariant) */
+        {146,  73,   0},   /*  5: Dark Brown */
+        {  0, 146,   0},   /*  6: Dark Green */
+        {  0, 219,   0},   /*  7: Green */
+        {255,   0,   0},   /*  8: Red */
+        {255, 182,   0},   /*  9: Orange/Gold */
+        {219, 146, 109},   /* 10: Tan/Skin */
+        {255, 255,   0},   /* 11: Yellow */
+        { 73,  73,  73},   /* 12: Dark Gray */
+        {182, 182, 182},   /* 13: Silver */
+        {  0,   0, 255},   /* 14: Blue */
         {255, 255, 255}    /* 15: White */
 };
 
-/* Darker levels: approximate linear attenuation */
+/* All 6 brightness levels: original per-level lookup from VIDEODRV.C */
 const unsigned char G9010_auc_VgaPaletteAll_Compat[6][16][3] = {
-        /* Level 0: brightest (title/menu) */
+        /* LIGHT0: brightest (title/menu/max brightness viewport) */
         {
-                {  0,   0,   0}, {  0,   0, 170}, {  0, 170,   0}, {  0, 170, 170},
-                {170,   0,   0}, {170,  85,   0}, {170, 170, 170}, { 85,  85,  85},
-                {255,  85,  85}, { 85,  85, 255}, { 85, 255,  85}, {255, 255,  85},
-                { 40,  40,  40}, {200, 200, 200}, {100, 100, 100}, {255, 255, 255}
+                {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {109,  36,   0},
+                {  0, 219, 219}, {146,  73,   0}, {  0, 146,   0}, {  0, 219,   0},
+                {255,   0,   0}, {255, 182,   0}, {219, 146, 109}, {255, 255,   0},
+                { 73,  73,  73}, {182, 182, 182}, {  0,   0, 255}, {255, 255, 255}
         },
-        /* Level 1 */
+        /* LIGHT1 — G8152 */
         {
-                {  0,   0,   0}, {  0,   0, 136}, {  0, 136,   0}, {  0, 136, 136},
-                {136,   0,   0}, {136,  68,   0}, {136, 136, 136}, { 68,  68,  68},
-                {204,  68,  68}, { 68,  68, 204}, { 68, 204,  68}, {204, 204,  68},
-                { 32,  32,  32}, {160, 160, 160}, { 80,  80,  80}, {204, 204, 204}
+                {  0,   0,   0}, { 73,  73,  73}, {109, 109, 109}, {109,  36,   0},
+                {  0, 219, 219}, {146,  36,   0}, {  0, 109,   0}, {  0, 182,   0},
+                {219,   0,   0}, {219, 146,   0}, {182, 109,  73}, {255, 219,   0},
+                { 36,  36,  36}, {146, 146, 146}, {  0,   0, 219}, {219, 219, 219}
         },
-        /* Level 2 */
+        /* LIGHT2 — G8153 */
         {
-                {  0,   0,   0}, {  0,   0, 102}, {  0, 102,   0}, {  0, 102, 102},
-                {102,   0,   0}, {102,  51,   0}, {102, 102, 102}, { 51,  51,  51},
-                {153,  51,  51}, { 51,  51, 153}, { 51, 153,  51}, {153, 153,  51},
-                { 24,  24,  24}, {120, 120, 120}, { 60,  60,  60}, {153, 153, 153}
+                {  0,   0,   0}, { 36,  36,  36}, { 73,  73,  73}, { 73,  36,   0},
+                {  0, 219, 219}, {109,  36,   0}, {  0,  73,   0}, {  0, 146,   0},
+                {182,   0,   0}, {182, 109,   0}, {146,  73,  36}, {255, 182,   0},
+                {  0,   0,   0}, {109, 109, 109}, {  0,   0, 182}, {182, 182, 182}
         },
-        /* Level 3 */
+        /* LIGHT3 — G8154 */
         {
-                {  0,   0,   0}, {  0,   0,  68}, {  0,  68,   0}, {  0,  68,  68},
-                { 68,   0,   0}, { 68,  34,   0}, { 68,  68,  68}, { 34,  34,  34},
-                {102,  34,  34}, { 34,  34, 102}, { 34, 102,  34}, {102, 102,  34},
-                { 16,  16,  16}, { 80,  80,  80}, { 40,  40,  40}, {102, 102, 102}
+                {  0,   0,   0}, {  0,   0,   0}, { 36,  36,  36}, { 36,   0,   0},
+                {  0, 219, 219}, { 73,  36,   0}, {  0,  36,   0}, {  0, 109,   0},
+                {146,   0,   0}, {146,  73,   0}, {109,  36,   0}, {219, 146,   0},
+                {  0,   0,   0}, { 73,  73,  73}, {  0,   0, 146}, {146, 146, 146}
         },
-        /* Level 4 */
-        {
-                {  0,   0,   0}, {  0,   0,  34}, {  0,  34,   0}, {  0,  34,  34},
-                { 34,   0,   0}, { 34,  17,   0}, { 34,  34,  34}, { 17,  17,  17},
-                { 51,  17,  17}, { 17,  17,  51}, { 17,  51,  17}, { 51,  51,  17},
-                {  8,   8,   8}, { 40,  40,  40}, { 20,  20,  20}, { 51,  51,  51}
-        },
-        /* Level 5: darkest */
+        /* LIGHT4 — G8155 */
         {
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
+                {  0, 219, 219}, { 36,   0,   0}, {  0,   0,   0}, {  0,  73,   0},
+                {109,   0,   0}, {109,  36,   0}, { 73,   0,   0}, {182, 109,   0},
+                {  0,   0,   0}, { 36,  36,  36}, {  0,   0, 109}, {109, 109, 109}
+        },
+        /* LIGHT5: near-black — G8156 (NOT all-zero: 8 colors have residual light) */
+        {
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
-                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
-                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}
+                {  0, 219, 219}, {  0,   0,   0}, {  0,   0,   0}, {  0,  36,   0},
+                { 73,   0,   0}, { 73,   0,   0}, { 36,   0,   0}, {109,  73,   0},
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,  73}, { 73,  73,  73}
         }
 };
 

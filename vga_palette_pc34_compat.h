@@ -2,17 +2,18 @@
 #define REDMCSB_VGA_PALETTE_PC34_COMPAT_H
 
 /*
- * VGA palette for CSB PC 3.4, brightest dungeon view palette (index 0).
+ * VGA palette for DM/CSB PC 3.4 — original VGA DAC values.
  *
- * The original game uses a 16-color VGA palette derived from the standard
- * EGA palette. The video driver (loaded as a TSR before the game) sets the
- * VGA DAC registers to these RGB values. Six brightness levels exist for
- * dungeon darkness; this provides the brightest (palette index 0) which is
- * also what is used for the title screen and menus.
+ * Source: VIDEODRV.C from ReDMCSB (G8149_ICON, G8151–G8156 LIGHT0–LIGHT5).
+ * The original game uses a CUSTOM 16-color VGA palette (NOT EGA).
+ * The video driver TSR programs the VGA DAC via ports 0x3C8/0x3C9.
  *
- * RGB values are 6-bit VGA DAC values (0-63) scaled to 8-bit (0-255).
- * The scaling is: rgb8 = (vga6 * 255 + 31) / 63, which matches the
- * standard VGA-to-truecolor conversion.
+ * RGB values are VGA 6-bit DAC values (0-63) scaled to 8-bit (0-255)
+ * via: rgb8 = (vga6 << 2) | (vga6 >> 4).
+ *
+ * Six brightness levels exist for dungeon darkness. Each level has
+ * independently tuned per-color values (NOT linear attenuation).
+ * Color 4 (Cyan) is invariant across all six brightness levels.
  */
 
 #define VGA_PALETTE_PC34_COLOR_COUNT 16
