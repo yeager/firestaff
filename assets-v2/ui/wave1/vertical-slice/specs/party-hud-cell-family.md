@@ -8,8 +8,9 @@
 Create one reusable V2 HUD cell family for hand/inventory-style slot usage, with enough detail headroom to survive downscale and repeated on-screen use.
 
 ## Source anchor
-- DM1 slot-cell family from `GRAPHICS.DAT` graphics `0033`, `0034`, and `0035`
-- Preserve the role and compact framed-cell logic, not literal low-res pixel texture
+- DM1 slot-cell family from verified `GRAPHICS.DAT` graphics `0033` and `0035`
+- `0033` is the normal slot box; `0035` is the acting-hand slot box used for the bounded active-emphasis asset
+- `0034` wounded slot-box semantics remain intentionally outside this current bounded V2 family
 
 ## Size contract
 - **4K master:** 216×216
@@ -22,7 +23,8 @@ Create one reusable V2 HUD cell family for hand/inventory-style slot usage, with
 - Clean enough for repeated placement in a party HUD strip
 
 ### `fs.v2.slice.party-hud-cell.highlight-overlay`
-- Selection / hover emphasis for the same cell
+- Legacy filename preserved for pipeline stability
+- Semantically rebuilt from the acting-hand slot state, not a generic `0034` highlight
 - Must not obscure later icon content
 
 ## Visual direction

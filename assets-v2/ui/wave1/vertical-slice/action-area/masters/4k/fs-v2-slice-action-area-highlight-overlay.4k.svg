@@ -1,6 +1,3 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="870" height="450" viewBox="0 0 870 450">
-  <rect width="100%" height="100%" fill="none"/>
-  <rect x="58" y="54" width="754" height="342" rx="20" fill="none" stroke="#f0c57b" stroke-opacity="0.34" stroke-width="8"/>
-  <rect x="84" y="84" width="702" height="284" rx="16" fill="#f0c57b" fill-opacity="0.06" stroke="#f0c57b" stroke-opacity="0.22" stroke-width="4"/>
-  <path d="M100 100h670" stroke="#fff2c0" stroke-opacity="0.2" stroke-width="6"/>
+  <image href="fs-v2-slice-action-area-highlight-overlay.4k.png" width="870" height="450" image-rendering="pixelated" preserveAspectRatio="none"/>
 </svg>

@@ -36,9 +36,9 @@ Create the right-column action panel shell as a layered V2 UI asset that can lat
 - Stronger than highlight, but still non-destructive
 
 ## Visual direction
-- Painterly dark-fantasy control panel
+- DM-faithful preserve-scale repaint rooted in verified `0010`
 - Strongly readable shape language, not fussy decoration
-- Wear should collect on outer edges and contact zones, not in the content bed
+- Wear should stay restrained and subordinate to the original partitioning
 - Interior subdivisions should stay calm enough for future glyphs and labels
 
 ## Hard constraints
@@ -62,3 +62,4 @@ Create the right-column action panel shell as a layered V2 UI asset that can lat
 ## Acceptance gate
 - A UI mock can place placeholder icons over the recess bed immediately
 - Highlight and active overlays remain visually distinct after downscale
+- The rebuilt panel still reads as the original DM1 action-area structure before it reads as new ornament

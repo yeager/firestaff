@@ -1,32 +1,34 @@
 # Firestaff V2 Wave 1 Vertical Slice
 
-This directory now contains the first **real first-pass V2 asset pack** for the bounded Wave 1 slice.
+This directory now contains the current bounded Wave 1 slice asset pack, including the 2026-04-23 trusted-family rebuild.
 
 Included families:
-- viewport-frame
+- viewport-frame (still provisional / blocked for trusted DM1-faithful use)
 - action-area
 - spell-area
 - status-box-family
 - party-hud-cell-family
+- party-hud-four-slot
 
 ## What is real in-repo now
 
-Each shipped slice asset exists as:
-- editable **4K SVG master**
+Each rebuilt shipped slice asset exists as:
+- companion **4K SVG master**
 - rendered **4K PNG master**
 - derived **1080p PNG export** from exact 50% downscale
 
-These assets are usable for an early visual integration pass, but they are still **first-pass art**, not final paintovers.
+The 2026-04-23 rebuild intentionally replaced the earlier ornate first-pass shells for the trusted families with more DM-faithful preserve-scale repaint assets.
 
 ## Current quality bar
 
 What these files are:
-- coherent dark-fantasy V2 UI shells
-- production-sized assets that respect the approved DM1 geometry role
+- restrained DM-like V2 UI rebuilds for the trusted audited families
+- production-sized assets that respect verified DM1 geometry roles where mapping is locked
 - practical integration targets for compositing and layout tests
 
 What these files are not:
 - final art approval
+- proof that every existing semantic mapping is settled
 - portrait, icon, text, or runtime-state system completion
 - full Wave 1 coverage beyond this bounded slice
 
@@ -52,3 +54,4 @@ Integrated in this pass:
 - 4K masters are canonical.
 - 1080p exports are exact 50% derivatives.
 - English only for tracked repo content.
+- Treat `viewport-frame` as blocked/provisional until `0000` is re-locked against Greatstone/SCK and ReDMCSB.

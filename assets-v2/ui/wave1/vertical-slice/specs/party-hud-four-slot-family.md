@@ -9,8 +9,8 @@ Add a bounded next-pass expansion on top of the existing party HUD cell family s
 
 ## Source anchor
 - DM1 four-champion party row layout
-- Existing Firestaff V2 status-box family and party HUD cell family spacing
-- Preserve the compact DM1 bottom-row footprint while improving shared structure
+- Trusted rebuilt status-box and party-HUD-cell families only
+- Preserve the compact DM1 bottom-row footprint while adding an honest derived shared structure
 
 ## Size contract
 - `fs.v2.slice.party-hud-four-slot.base`
@@ -32,7 +32,7 @@ Add a bounded next-pass expansion on top of the existing party HUD cell family s
 - Must strengthen focus without forcing a typography or portrait redesign
 
 ## Visual direction
-- Same dark bronze / muted gold language as the viewport, status boxes, and party HUD cell family
+- Same restrained DM-like palette language as the rebuilt status boxes and party HUD cell family
 - Shared strip should feel structural, not ornamental clutter
 - Repeated slot pods should be clear at gameplay size
 - Focus treatment should stay warm and restrained
@@ -48,3 +48,4 @@ Add a bounded next-pass expansion on top of the existing party HUD cell family s
 - Existing per-champion payloads still fit without a new layout system
 - Active champion is easier to pick out at a glance
 - The added strip still reads cleanly after the exact 50% downscale
+- The asset is documented as a derived grouping module, not as a falsely claimed one-to-one original bitmap repaint

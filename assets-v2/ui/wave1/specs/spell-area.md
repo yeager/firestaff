@@ -15,9 +15,10 @@
 - Active spell-state overlay
 
 ## Art direction stub
-- Arcane but readable
+- DM-faithful preserve-scale repaint rooted in verified `0009`
 - Must pair visually with the action area without looking identical
 - Keep enough calm negative space for rune readability
+- Prefer restrained dark bronze / stone values over ornate fantasy polish
 
 ## Guardrails
 - Preserve DM1 proportions
@@ -25,5 +26,6 @@
 - Keep final export compatible with later UI compositing
 
 ## Current status
-- First-pass real assets now exist for `base`, `rune-bed`, `highlight-overlay`, and `active-overlay`.
+- 2026-04-23 rebuild assets now exist for `base`, `rune-bed`, `highlight-overlay`, and `active-overlay`.
+- The rebuild supersedes the earlier ornate shell pass with a verified-geometry preserve-scale repaint.
 - The current pass deliberately stops short of full rune glyph production, typography, or final spell FX.

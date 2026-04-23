@@ -14,8 +14,9 @@ This directory is the production foundation for the first V2 UI asset wave.
 - 1080p assets are approved derivatives at exactly 50% scale.
 
 ## Current bounded progress
-- `viewport-frame`, `action-area`, `status-boxes`, and `party-hud-cells` already have first-pass real slice assets in `vertical-slice/`.
-- `spell-area` now has first-pass real family assets in its canonical family directory.
+- `spell-area`, `action-area`, `status-boxes`, `party-hud-cells`, and `party-hud-four-slot` now have 2026-04-23 rebuilt 4K/1080p assets based on the trusted DM1 subset documented in `GRAPHICS_DAT_EXPORT_MAPPING_AUDIT.md`.
+- `viewport-frame` remains present in `vertical-slice/`, but it is provisional and not re-approved because `0000` is still mapping-suspicious.
 
 ## Important constraint
 These folders track production work, but they still do not imply finished art.
+Legacy filenames may remain for pipeline stability even where the trusted semantic meaning was corrected in the rebuild note and manifests.

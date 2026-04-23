@@ -5,11 +5,11 @@
 - `fs.v2.slice.viewport-frame.inner-mask`
 
 ## Purpose
-Create the V2 world viewport frame that anchors the whole screen composition while leaving a clean opening for dynamic world rendering.
+This spec remains as legacy slice context only. The viewport-frame family is currently blocked for trusted DM1-faithful rebuild work until `0000` is semantically re-locked.
 
 ## Source anchor
-- DM1 viewport frame role from `GRAPHICS.DAT` graphic `0000`
-- Preserve original frame proportions and aperture hierarchy
+- Current provisional source candidate: `GRAPHICS.DAT` graphic `0000`
+- `GRAPHICS_DAT_EXPORT_MAPPING_AUDIT.md` still marks `0000` as mapping-suspicious, so do not treat the current files as authoritative viewport-frame truth
 
 ## Deliverables
 
@@ -48,5 +48,5 @@ Create the V2 world viewport frame that anchors the whole screen composition whi
 - Outer corners and bevels feel hand-authored rather than mirrored by default
 
 ## Acceptance gate
-- Viewport opening is clean enough to drop a render plate behind it immediately
-- No edge chatter, alpha fringing, or muddy inner lip at 1080p
+- [blocked] No new acceptance claim should be made until `0000` is verified against Greatstone/SCK and ReDMCSB
+- Existing files may still be used for temporary slice integration only

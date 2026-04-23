@@ -8,8 +8,9 @@
 Create one usable status-box family for the slice: a designed left/right pair that can later receive portraits, names, bars, and status overlays.
 
 ## Source anchor
-- DM1 status box shells from `GRAPHICS.DAT` graphics `0007` and `0008`
-- Preserve family proportions and pair relationship
+- DM1 status box shells from verified `GRAPHICS.DAT` graphics `0007` and `0008`
+- Trusted semantics are `0007` alive/normal status box and `0008` dead-champion status box
+- Legacy left/right filenames may remain only as pipeline aliases
 
 ## Size contract
 - **4K master:** 670×290 each
@@ -18,12 +19,12 @@ Create one usable status-box family for the slice: a designed left/right pair th
 ## Deliverables
 
 ### `fs.v2.slice.status-box.left-frame`
-- Left shell only
+- Legacy filename preserved for the `0007` alive/normal shell alias
 - Framed portrait/stat container with calm payload areas
 
 ### `fs.v2.slice.status-box.right-frame`
-- Right shell only
-- Must feel paired with the left version
+- Legacy filename preserved for the `0008` dead-champion shell alias
+- Must feel paired with the left version without pretending the original semantics were left/right
 
 ## Visual direction
 - Painterly dark-fantasy shell with controlled detail
@@ -49,3 +50,4 @@ Create one usable status-box family for the slice: a designed left/right pair th
 
 ## Acceptance gate
 - A mock portrait and mock text block can be composited into both variants without additional cleanup
+- The rebuilt pair is documented with the correct alive/dead semantics rather than the earlier incorrect left/right mapping claim
