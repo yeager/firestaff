@@ -422,6 +422,38 @@ const char* M11_GameView_GetActionName(unsigned char actionIndex);
 int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                                   int actionListIndex);
 
+/* Probe-visibility helpers for DM1 projectile / spell action
+ * downstream effects.  These let probes observe that action-menu
+ * projectile rows (FIREBALL / LIGHTNING / DISPELL / INVOKE /
+ * SHOOT / THROW) actually spawn a projectile into world.projectiles
+ * without needing to wire a full ObjectInfo action-hand harness.
+ *
+ * GetProjectileCount returns the count of live entries in
+ * GameWorld.projectiles (wraps world.projectiles.count).
+ *
+ * TriggerNonMeleeActionByIndex invokes the F0407-style handler
+ * for a chosen action-name index (0..43) against the acting
+ * champion, bypassing the ActionSet-from-hand resolution.  This
+ * is a test helper that mirrors exactly the same dispatch path
+ * M11_GameView_TriggerActionRow uses when F0391 selects a
+ * non-melee action from the champion's action list: it emits
+ * the "CHAMPION: ACTION" log line, runs the bounded V1 handler
+ * (which may spawn a projectile, adjust MagicState, etc.),
+ * advances a CMD_NONE tick, and clears the acting champion.
+ * Melee-contact actions are not routed here (they require the
+ * CMD_ATTACK orchestrator path, which already has coverage via
+ * the row-click probe invariants).
+ *
+ * Returns 1 when the handler reported AL1245_B_ActionPerformed=
+ * TRUE (i.e. the projectile was spawned, mana was deducted, or
+ * a deterministic effect was applied), 0 otherwise.
+ *
+ * Ref: ReDMCSB MENU.C F0407_MENUS_IsActionPerformed. */
+int M11_GameView_GetProjectileCount(const M11_GameViewState* state);
+int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
+                                              int championIndex,
+                                              int actionIndex);
+
 /* ── Creature aspect query API (for probes) ── */
 
 /* Return the coordinate set index (0-10) for a creature type. */

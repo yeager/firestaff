@@ -6069,6 +6069,214 @@ int main(int argc, char** argv) {
                              strcmp(M11_GameView_GetActionName(11),
                                     "FREEZE LIFE") == 0,
                          "non-melee action: action name 11 is FREEZE LIFE per G0490 table");
+
+            /* ── INV_GV_332..340: DM1 projectile / spell action
+             * row downstream effects (F0407 bounded slice).
+             *
+             * Previously the action-menu FIREBALL / LIGHTNING /
+             * DISPELL / INVOKE / SHOOT / THROW rows only emitted
+             * a log line before closing the menu.  They now route
+             * through m11_spawn_action_projectile which populates
+             * GameWorld.projectiles via the source-backed F0810
+             * projectile-create path, deducts mana, and schedules
+             * the first TIMELINE_EVENT_PROJECTILE_MOVE via F0721.
+             * The viewport already renders world.projectiles, so
+             * the player visibly sees the correct projectile
+             * sprite appear at the party cell facing their
+             * direction when an action fires.
+             *
+             * These invariants verify:
+             *   - the action name table maps the projectile rows
+             *     correctly (20/21/23/27/32/42)
+             *   - each bounded projectile action actually spawns
+             *     a projectile slot (observable via
+             *     M11_GameView_GetProjectileCount)
+             *   - each projectile row correctly selects its
+             *     source-backed subtype
+             *
+             * Ref: ReDMCSB MENU.C F0407 cases C020/C021/C023/C027/
+             *      C032/C042; PROJEXPL.C F0212. */
+            {
+                int projCountBefore;
+                int projCountAfter;
+                int spawned;
+                int slotSubtype;
+
+                probe_record(&tally, "INV_GV_332",
+                             M11_GameView_GetActionName(20) != NULL &&
+                                 strcmp(M11_GameView_GetActionName(20),
+                                        "FIREBALL") == 0 &&
+                                 M11_GameView_GetActionName(23) != NULL &&
+                                 strcmp(M11_GameView_GetActionName(23),
+                                        "LIGHTNING") == 0 &&
+                                 M11_GameView_GetActionName(21) != NULL &&
+                                 strcmp(M11_GameView_GetActionName(21),
+                                        "DISPELL") == 0,
+                             "projectile action: rows 20/23/21 are FIREBALL/"
+                             "LIGHTNING/DISPELL per G0490 table");
+                probe_record(&tally, "INV_GV_333",
+                             M11_GameView_GetActionName(27) != NULL &&
+                                 strcmp(M11_GameView_GetActionName(27),
+                                        "INVOKE") == 0 &&
+                                 M11_GameView_GetActionName(32) != NULL &&
+                                 strcmp(M11_GameView_GetActionName(32),
+                                        "SHOOT") == 0 &&
+                                 M11_GameView_GetActionName(42) != NULL &&
+                                 strcmp(M11_GameView_GetActionName(42),
+                                        "THROW") == 0,
+                             "projectile action: rows 27/32/42 are INVOKE/"
+                             "SHOOT/THROW per G0490 table");
+
+                /* FIREBALL: spawns a magical projectile with
+                 * subtype PROJECTILE_SUBTYPE_FIREBALL (0x80). */
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                /* Ensure enough mana for the cast. */
+                menuView.world.party.champions[0].mana.current =
+                    menuView.world.party.champions[0].mana.maximum;
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 20);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                slotSubtype =
+                    (projCountAfter > 0)
+                        ? menuView.world.projectiles.entries[projCountBefore]
+                              .projectileSubtype
+                        : 0;
+                probe_record(&tally, "INV_GV_334",
+                             spawned == 1 &&
+                                 projCountAfter == projCountBefore + 1 &&
+                                 slotSubtype == PROJECTILE_SUBTYPE_FIREBALL,
+                             "projectile action: FIREBALL spawns subtype 0x80");
+
+                /* LIGHTNING: spawns subtype LIGHTNING_BOLT (0x82). */
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                menuView.world.party.champions[0].mana.current =
+                    menuView.world.party.champions[0].mana.maximum;
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 23);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                slotSubtype =
+                    (projCountAfter > projCountBefore)
+                        ? menuView.world.projectiles.entries[projCountBefore]
+                              .projectileSubtype
+                        : 0;
+                probe_record(
+                    &tally, "INV_GV_335",
+                    spawned == 1 &&
+                        projCountAfter == projCountBefore + 1 &&
+                        slotSubtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT,
+                    "projectile action: LIGHTNING spawns subtype 0x82");
+
+                /* DISPELL: spawns subtype HARM_NON_MATERIAL (0x83). */
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                menuView.world.party.champions[0].mana.current =
+                    menuView.world.party.champions[0].mana.maximum;
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 21);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                slotSubtype =
+                    (projCountAfter > projCountBefore)
+                        ? menuView.world.projectiles.entries[projCountBefore]
+                              .projectileSubtype
+                        : 0;
+                probe_record(
+                    &tally, "INV_GV_336",
+                    spawned == 1 &&
+                        projCountAfter == projCountBefore + 1 &&
+                        slotSubtype == PROJECTILE_SUBTYPE_HARM_NON_MATERIAL,
+                    "projectile action: DISPELL spawns subtype 0x83");
+
+                /* INVOKE: always spawns one of the 4 magical
+                 * subtypes; we only verify that a projectile
+                 * is created and the subtype is a valid
+                 * F0407 C027 outcome. */
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                menuView.world.party.champions[0].mana.current =
+                    menuView.world.party.champions[0].mana.maximum;
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 27);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                slotSubtype =
+                    (projCountAfter > projCountBefore)
+                        ? menuView.world.projectiles.entries[projCountBefore]
+                              .projectileSubtype
+                        : 0;
+                probe_record(
+                    &tally, "INV_GV_337",
+                    spawned == 1 &&
+                        projCountAfter == projCountBefore + 1 &&
+                        (slotSubtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+                         slotSubtype == PROJECTILE_SUBTYPE_POISON_CLOUD ||
+                         slotSubtype == PROJECTILE_SUBTYPE_HARM_NON_MATERIAL ||
+                         slotSubtype == PROJECTILE_SUBTYPE_FIREBALL),
+                    "projectile action: INVOKE spawns one of the 4 F0407 "
+                    "C027 subtypes");
+
+                /* SHOOT with an empty ready hand: should NOT
+                 * spawn a projectile and should log the
+                 * "NO AMMUNITION" cue (handler returns 0). */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 32);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                probe_record(&tally, "INV_GV_338",
+                             spawned == 0 &&
+                                 projCountAfter == projCountBefore,
+                             "projectile action: SHOOT with empty ready hand "
+                             "emits NO AMMUNITION and spawns nothing");
+
+                /* SHOOT with any ready-hand item spawns a
+                 * kinetic projectile (category KINETIC, subtype
+                 * KINETIC_ARROW = 0). */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_LEFT] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 32);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                {
+                    int slotCat =
+                        (projCountAfter > projCountBefore)
+                            ? menuView.world.projectiles
+                                  .entries[projCountBefore]
+                                  .projectileCategory
+                            : -1;
+                    probe_record(
+                        &tally, "INV_GV_339",
+                        spawned == 1 &&
+                            projCountAfter == projCountBefore + 1 &&
+                            slotCat == PROJECTILE_CATEGORY_KINETIC,
+                        "projectile action: SHOOT with ready-hand ammo "
+                        "spawns kinetic projectile");
+                }
+
+                /* THROW with the action-hand holding an item
+                 * spawns a kinetic projectile. */
+                menuView.world.party.champions[0]
+                    .inventory[CHAMPION_SLOT_HAND_RIGHT] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+                projCountBefore = M11_GameView_GetProjectileCount(&menuView);
+                spawned = M11_GameView_TriggerNonMeleeActionByIndex(
+                    &menuView, 0, 42);
+                projCountAfter = M11_GameView_GetProjectileCount(&menuView);
+                {
+                    int slotCat =
+                        (projCountAfter > projCountBefore)
+                            ? menuView.world.projectiles
+                                  .entries[projCountBefore]
+                                  .projectileCategory
+                            : -1;
+                    probe_record(
+                        &tally, "INV_GV_340",
+                        spawned == 1 &&
+                            projCountAfter == projCountBefore + 1 &&
+                            slotCat == PROJECTILE_CATEGORY_KINETIC,
+                        "projectile action: THROW with item in action hand "
+                        "spawns kinetic projectile");
+                }
+            }
         }
 
         M11_GameView_Shutdown(&menuView);

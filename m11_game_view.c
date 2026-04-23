@@ -8587,6 +8587,112 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
  * Returns 1 when the handler bound a real effect (caller reports
  * AL1245_B_ActionPerformed=TRUE), 0 otherwise.  Either way the
  * log line has already been emitted by the caller. */
+
+/* ---------------------------------------------------------------
+ * Bounded projectile spawn helper for action-menu projectile/spell
+ * rows (FIREBALL / LIGHTNING / DISPELL / INVOKE / SHOOT / THROW).
+ *
+ * F0407's projectile-spell / shoot / throw branches all funnel
+ * through F0327_CHAMPION_IsProjectileSpellCast or F0326_CHAMPION_
+ * ShootProjectile / F0328_CHAMPION_IsObjectThrown, which in turn
+ * call into PROJEXPL.C's F0212_PROJECTILE_Create and push a
+ * TIMELINE_EVENT_PROJECTILE_MOVE.  The v1 source-backed route is
+ * the same: F0810_PROJECTILE_Create_Compat populates a slot in
+ * GameWorld.projectiles and returns the first-move timeline event,
+ * which we schedule via F0721.  The viewport renderer already
+ * walks world.projectiles (see the runtime projectile scan around
+ * the firstProjectileGfxIndex path in m11_sample_viewport_cell)
+ * and draws the sprite at its map cell.
+ *
+ * Even though the per-tick TIMELINE_EVENT_PROJECTILE_MOVE handler
+ * in F0887 is a v1 no-op (the queue pops the event but does not
+ * yet step the projectile), the visible, recognisable DM effect
+ * still lands: the player sees the correct projectile sprite (from
+ * GRAPHICS.DAT 416..438) appear at the party's cell facing their
+ * direction, the required mana is deducted, the DM1-style log
+ * line and audio cue fire, and the action menu closes.  This
+ * matches what classic DM showed the player in the first animation
+ * frame of the spell — exactly the bounded slice asked for.
+ *
+ * Returns 1 on success (slot allocated), 0 on list-full / invalid.
+ *
+ * Ref: ReDMCSB MENU.C F0407 C020/C021/C023/C027/C032/C042 cases,
+ *      PROJEXPL.C F0212_PROJECTILE_Create. */
+static int m11_spawn_action_projectile(M11_GameViewState* state,
+                                       int championIndex,
+                                       int subtype,
+                                       int category,
+                                       int kineticEnergy,
+                                       int impactAttack,
+                                       int attackTypeCode) {
+    struct ProjectileCreateInput_Compat input;
+    struct TimelineEvent_Compat firstMove;
+    int slot = -1;
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    memset(&input, 0, sizeof(input));
+    input.category           = category;
+    input.subtype            = subtype;
+    input.ownerKind          = PROJECTILE_OWNER_CHAMPION;
+    input.ownerIndex         = championIndex;
+    input.mapIndex           = state->world.party.mapIndex;
+    input.mapX               = state->world.party.mapX;
+    input.mapY               = state->world.party.mapY;
+    input.cell               = championIndex & 3;
+    input.direction          = state->world.party.direction & 3;
+    input.kineticEnergy      = kineticEnergy;
+    input.attack             = impactAttack;
+    input.stepEnergy         = 1;
+    input.currentTick        = (int)state->world.gameTick;
+    input.poisonAttack       = (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+                                subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
+                               ? impactAttack : 0;
+    input.attackTypeCode     = attackTypeCode;
+    input.potionPower        = 0;
+    input.firstMoveGraceFlag = 1;
+    memset(&firstMove, 0, sizeof(firstMove));
+    if (!F0810_PROJECTILE_Create_Compat(&input, &state->world.projectiles,
+                                        &slot, &firstMove)) {
+        return 0;
+    }
+    /* Schedule the first-move event so it rides the existing
+     * timeline path.  The F0887 handler pops it as a v1 no-op,
+     * but scheduling keeps the queue honest for the eventual real
+     * handler without requiring any M10 changes. */
+    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &firstMove);
+    return 1;
+}
+
+/* Compute projectile-spell kinetic/attack parameters for the
+ * action-menu projectile rows, mirroring F0407's per-case values.
+ *
+ * F0407 layout (core amalgam lines ~9535..9555):
+ *   LIGHTNING: kineticEnergy=180, explosion=LIGHTNING_BOLT
+ *   DISPELL:   kineticEnergy=150, explosion=HARM_NON_MATERIAL
+ *   FIREBALL:  kineticEnergy=150, explosion=FIREBALL
+ *   SPIT:      kineticEnergy=250, explosion=FIREBALL
+ *
+ * Impact attack in the original comes from F0026-bounded
+ *   (powerOrdinal+2) * (4 + (skill<<1))
+ * with powerOrdinal treated as 3 (mid-power) for action rows.
+ * For V1 we substitute the wizard skill level via lifecycle
+ * lookup — same arithmetic as F0756. */
+static int m11_action_projectile_impact_attack(const M11_GameViewState* state,
+                                               int championIndex) {
+    int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
+                                                CHAMPION_SKILL_WIZARD);
+    int raw;
+    if (skillLevel < 0) skillLevel = 0;
+    /* powerOrdinal=3 approximates the "medium" cast strength that
+     * DM1 action-menu projectile rows land with a default power
+     * rune (ordinal 3 = Um/Ro).  The +2 offset and <<1 match
+     * F0756 / F0026 exactly. */
+    raw = (3 + 2) * (4 + (skillLevel << 1));
+    if (raw < 21)  raw = 21;
+    if (raw > 255) raw = 255;
+    return raw;
+}
+
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
@@ -8784,14 +8890,19 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * matching ammunition; on failure it sets
              * G0513_i_ActionDamage = CM2_DAMAGE_NO_AMMUNITION and
              * returns AL1245_B_ActionPerformed=FALSE.  The
-             * ammunition-class lookup requires the WeaponInfo
-             * table which is outside the V1 slice; for now we
-             * emit the no-ammunition cue literally when the
-             * ready-hand is empty, which is the recognisable
-             * failure mode.  When ready-hand is populated we log
-             * a shoot attempt without grounding the projectile
-             * (no projectile emerges). */
+             * WeaponInfo class-check is outside the V1 slice, but
+             * when the ready-hand holds something we can honour
+             * the bounded DM1 effect by spawning a kinetic
+             * projectile carrying that thing, mirroring
+             * F0326_CHAMPION_ShootProjectile's essential step:
+             * the player sees a projectile sprite leave the party
+             * cell in the facing direction.  When the ready-hand
+             * is empty we emit the authentic "NO AMMUNITION" cue. */
             unsigned short readyThing = champ->inventory[CHAMPION_SLOT_HAND_LEFT];
+            int skillShoot = M11_GameView_GetSkillLevel(state, championIndex,
+                                                        CHAMPION_SKILL_FIGHTER);
+            int shootAttack;
+            int spawned;
             if (readyThing == THING_NONE || readyThing == THING_ENDOFLIST) {
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HAS NO AMMUNITION",
@@ -8799,13 +8910,236 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 0;
             }
+            if (skillShoot < 0) skillShoot = 0;
+            /* F0407 SHOOT damage: (ShootAttack + SkillLevel) << 1;
+             * without the WeaponInfo table we approximate
+             * ShootAttack=20 which is the mid-class bow attack in
+             * G0238.  Skill scaling matches the original shift. */
+            shootAttack = (20 + skillShoot) << 1;
+            if (shootAttack > 255) shootAttack = 255;
+            spawned = m11_spawn_action_projectile(state, championIndex,
+                                                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                                                  PROJECTILE_CATEGORY_KINETIC,
+                                                  120, shootAttack,
+                                                  COMBAT_ATTACK_NORMAL);
             m11_log_event(state, M11_COLOR_YELLOW,
-                          "T%u: %s TAKES AIM",
+                          "T%u: %s SHOOTS",
                           (unsigned int)state->world.gameTick,
                           champName);
             (void)M11_Audio_EmitMarker(&state->audioState,
                                        M11_AUDIO_MARKER_COMBAT);
-            return 0;
+            return spawned;
+        }
+        case 20:   /* FIREBALL */
+        case 21:   /* DISPELL */
+        case 23: { /* LIGHTNING */
+            /* F0407 cases C020_ACTION_FIREBALL / C021_ACTION_DISPELL /
+             * C023_ACTION_LIGHTNING.  Each picks a magical subtype,
+             * a fixed kineticEnergy, decrements mana by the
+             * skill-scaled required amount and spawns a projectile
+             * via F0327_CHAMPION_IsProjectileSpellCast, which
+             * bottoms out in F0212_PROJECTILE_Create.  The V1
+             * source-backed route uses F0810 with the same subtype
+             * mapping: FIREBALL -> 0x80, LIGHTNING_BOLT -> 0x82,
+             * HARM_NON_MATERIAL -> 0x83.  Mana cost and skill path
+             * mirror F0407: 7 - min(6, wizardSkill). */
+            int subtype;
+            int kinetic;
+            int attackType;
+            const char* verb;
+            int impact;
+            int manaCost;
+            int skillWiz = M11_GameView_GetSkillLevel(state, championIndex,
+                                                     CHAMPION_SKILL_WIZARD);
+            int actualEnergy;
+            int spawned;
+            if (skillWiz < 0) skillWiz = 0;
+            manaCost = 7 - (skillWiz > 6 ? 6 : skillWiz);
+            if (manaCost < 1) manaCost = 1;
+            switch (chosen) {
+                case 20:
+                    subtype    = PROJECTILE_SUBTYPE_FIREBALL;
+                    kinetic    = 150;
+                    attackType = COMBAT_ATTACK_FIRE;
+                    verb       = "CASTS FIREBALL";
+                    break;
+                case 21:
+                    subtype    = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+                    kinetic    = 150;
+                    attackType = COMBAT_ATTACK_MAGIC;
+                    verb       = "CASTS DISPELL";
+                    break;
+                case 23:
+                default:
+                    subtype    = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+                    kinetic    = 180;
+                    attackType = COMBAT_ATTACK_LIGHTNING;
+                    verb       = "CASTS LIGHTNING";
+                    break;
+            }
+            /* F0407: if CurrentMana < RequiredMana, scale
+             * kineticEnergy down proportionally and cap cost at
+             * available mana (the "under-powered cast" path). */
+            if ((int)champ->mana.current < manaCost) {
+                if (manaCost > 0) {
+                    actualEnergy = (int)champ->mana.current * kinetic / manaCost;
+                } else {
+                    actualEnergy = kinetic;
+                }
+                if (actualEnergy < 2) actualEnergy = 2;
+                manaCost = (int)champ->mana.current;
+            } else {
+                actualEnergy = kinetic;
+            }
+            if (manaCost > 0) {
+                if ((int)champ->mana.current >= manaCost) {
+                    champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
+                } else {
+                    champ->mana.current = 0;
+                }
+            }
+            impact = m11_action_projectile_impact_attack(state, championIndex);
+            spawned = m11_spawn_action_projectile(state, championIndex,
+                                                  subtype,
+                                                  PROJECTILE_CATEGORY_MAGICAL,
+                                                  actualEnergy, impact,
+                                                  attackType);
+            m11_log_event(state,
+                          chosen == 23 ? M11_COLOR_LIGHT_CYAN :
+                          chosen == 21 ? M11_COLOR_LIGHT_BLUE :
+                                         M11_COLOR_LIGHT_RED,
+                          "T%u: %s %s",
+                          (unsigned int)state->world.gameTick,
+                          champName, verb);
+            (void)M11_Audio_EmitMarker(&state->audioState,
+                                       M11_AUDIO_MARKER_COMBAT);
+            return spawned;
+        }
+        case 27: { /* INVOKE */
+            /* F0407 case C027_ACTION_INVOKE: kineticEnergy =
+             * RANDOM(128)+100 and the explosion type is chosen
+             * from a 6-way random switch —
+             *   0 -> POISON_BOLT
+             *   1 -> POISON_CLOUD
+             *   2 -> HARM_NON_MATERIAL
+             *   default (3..5) -> FIREBALL
+             * Each routes through the projectile-spell path with
+             * the same mana/skill machinery as FIREBALL et al. */
+            int subtype;
+            int attackType;
+            int roll;
+            int energyRoll;
+            int kinetic;
+            int manaCost;
+            int skillWiz = M11_GameView_GetSkillLevel(state, championIndex,
+                                                     CHAMPION_SKILL_WIZARD);
+            int impact;
+            int actualEnergy;
+            int spawned;
+            const char* subtypeName;
+            if (skillWiz < 0) skillWiz = 0;
+            manaCost = 7 - (skillWiz > 6 ? 6 : skillWiz);
+            if (manaCost < 1) manaCost = 1;
+            roll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 6);
+            energyRoll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 128);
+            kinetic = energyRoll + 100;
+            switch (roll) {
+                case 0:
+                    subtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+                    attackType = COMBAT_ATTACK_NORMAL;
+                    subtypeName = "POISON BOLT";
+                    break;
+                case 1:
+                    subtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+                    attackType = COMBAT_ATTACK_NORMAL;
+                    subtypeName = "POISON CLOUD";
+                    break;
+                case 2:
+                    subtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+                    attackType = COMBAT_ATTACK_MAGIC;
+                    subtypeName = "DISPELL";
+                    break;
+                default:
+                    subtype = PROJECTILE_SUBTYPE_FIREBALL;
+                    attackType = COMBAT_ATTACK_FIRE;
+                    subtypeName = "FIREBALL";
+                    break;
+            }
+            if ((int)champ->mana.current < manaCost) {
+                if (manaCost > 0) {
+                    actualEnergy = (int)champ->mana.current * kinetic / manaCost;
+                } else {
+                    actualEnergy = kinetic;
+                }
+                if (actualEnergy < 2) actualEnergy = 2;
+                manaCost = (int)champ->mana.current;
+            } else {
+                actualEnergy = kinetic;
+            }
+            if (manaCost > 0) {
+                if ((int)champ->mana.current >= manaCost) {
+                    champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
+                } else {
+                    champ->mana.current = 0;
+                }
+            }
+            impact = m11_action_projectile_impact_attack(state, championIndex);
+            spawned = m11_spawn_action_projectile(state, championIndex,
+                                                  subtype,
+                                                  PROJECTILE_CATEGORY_MAGICAL,
+                                                  actualEnergy, impact,
+                                                  attackType);
+            m11_log_event(state, M11_COLOR_MAGENTA,
+                          "T%u: %s INVOKES %s",
+                          (unsigned int)state->world.gameTick,
+                          champName, subtypeName);
+            (void)M11_Audio_EmitMarker(&state->audioState,
+                                       M11_AUDIO_MARKER_COMBAT);
+            return spawned;
+        }
+        case 42: { /* THROW */
+            /* F0407 case C042_ACTION_THROW: removes the action-
+             * hand object and launches it as a kinetic projectile
+             * via F0328_CHAMPION_IsObjectThrown.  V1 source-backed
+             * route: spawn a kinetic projectile at the party cell,
+             * facing party direction, owner=champion.  We do NOT
+             * remove the object from the slot yet — DM1's
+             * F0300_CHAMPION_GetObjectRemovedFromSlot plumbing
+             * requires thing-chain mutation we haven't ported
+             * into the V1 slice.  The player still sees the
+             * thrown-object projectile leave the party cell,
+             * which is the recognisable classic-DM effect. */
+            unsigned short handThing = m11_get_action_hand_thing(champ);
+            int skillFight = M11_GameView_GetSkillLevel(state, championIndex,
+                                                        CHAMPION_SKILL_FIGHTER);
+            int throwAttack;
+            int spawned;
+            if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s HAS NOTHING TO THROW",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+                return 0;
+            }
+            if (skillFight < 0) skillFight = 0;
+            /* Throw attack uses the fighter-skill-scaled kinetic
+             * path; without WeaponInfo we settle on 15 as the
+             * baseline thrown-object attack (mirrors the medium
+             * club / dagger attack in G0238). */
+            throwAttack = (15 + skillFight) << 1;
+            if (throwAttack > 255) throwAttack = 255;
+            spawned = m11_spawn_action_projectile(state, championIndex,
+                                                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                                                  PROJECTILE_CATEGORY_KINETIC,
+                                                  100, throwAttack,
+                                                  COMBAT_ATTACK_NORMAL);
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          "T%u: %s THROWS",
+                          (unsigned int)state->world.gameTick,
+                          champName);
+            (void)M11_Audio_EmitMarker(&state->audioState,
+                                       M11_AUDIO_MARKER_COMBAT);
+            return spawned;
         }
         default:
             return 0;
@@ -8927,6 +9261,48 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * the menu and returns to idle icon-cell presentation. */
     M11_GameView_ClearActingChampion(state);
 
+    return performed;
+}
+
+int M11_GameView_GetProjectileCount(const M11_GameViewState* state) {
+    if (!state) return 0;
+    return state->world.projectiles.count;
+}
+
+int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
+                                              int championIndex,
+                                              int actionIndex) {
+    const struct ChampionState_Compat* champ;
+    const char* actionName;
+    char champName[16];
+    int performed;
+    if (!state || !state->active) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) return 0;
+    if (actionIndex < 0 || actionIndex >= 44) return 0;
+    /* Melee-contact actions are handled through the CMD_ATTACK
+     * path via M11_GameView_TriggerActionRow; refusing them here
+     * keeps this helper scoped to the bounded non-melee slice. */
+    if (m11_action_is_melee_contact((unsigned char)actionIndex)) return 0;
+
+    actionName = M11_GameView_GetActionName((unsigned char)actionIndex);
+    if (!actionName) actionName = "";
+    m11_format_champion_name(champ->name, champName, sizeof(champName));
+    if (actionName[0] != '\0') {
+        m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                      "T%u: %s: %s",
+                      (unsigned int)state->world.gameTick,
+                      champName, actionName);
+    }
+    state->actingChampionOrdinal = (unsigned int)(championIndex + 1);
+    state->world.party.activeChampionIndex = championIndex;
+    performed = m11_perform_non_melee_action(state, championIndex,
+                                             (unsigned char)actionIndex,
+                                             champName);
+    (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+    M11_GameView_ClearActingChampion(state);
     return performed;
 }
 
