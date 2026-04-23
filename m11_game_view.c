@@ -6656,9 +6656,16 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
             return;
         }
     }
-    /* Fallback: solid fills */
+    /* Fallback: solid fills.
+     *
+     * Classic DM1 draws the ceiling strip as black (it is simply unlit
+     * space above the visible corridor) and the floor strip as the
+     * darkest stone gray when no asset is available.  The pre-correction
+     * behaviour filled the ceiling with NAVY (slot 14 = 0,0,255 pure
+     * blue) which read as a neon sky band, far from DM's unlit black
+     * ceilings.  Ref: ReDMCSB DUNVIEW.C ceiling/floor strip zones. */
     m11_fill_rect(framebuffer, fbW, fbH,
-                  vpX + 2, vpY + 2, vpW - 4, vpH / 2, M11_COLOR_NAVY);
+                  vpX + 2, vpY + 2, vpW - 4, vpH / 2, M11_COLOR_BLACK);
     m11_fill_rect(framebuffer, fbW, fbH,
                   vpX + 2, vpY + vpH / 2, vpW - 4, vpH / 2 - 2,
                   M11_COLOR_DARK_GRAY);
@@ -12175,8 +12182,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     /* Activate original DM1 font for this render pass */
     g_activeOriginalFont = state->originalFontAvailable
         ? &state->originalFont : NULL;
+    /* Base background is BLACK (DM PC VGA slot 0).  The pre-correction
+     * base was NAVY (slot 14, pure blue), which produced the bright-blue
+     * outermost frame strip the player saw around the whole game view.
+     * Classic DM1 renders the area outside the HUD chrome as solid
+     * black; only the HUD frame itself carries stone/bronze shading. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_NAVY);
+                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
     if (!state || !state->active) {
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
@@ -12217,10 +12229,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      *
      * Debug/helper elements are only drawn when showDebugHUD is set. */
 
+    /* HUD chrome background: DARK_GRAY (slot 12 = 73,73,73) is the
+     * darkest stone tone in the DM PC VGA palette and matches the
+     * muted slate shade classic DM1 uses for the outer HUD frame.
+     * The perimeter outline is drawn in the same DARK_GRAY so it
+     * blends cleanly with the fill — the pre-correction version drew
+     * a harsh YELLOW (slot 11) outline around the entire screen,
+     * which produced the bright-gold arcade-y rectangle seen in the
+     * April 23 capture.  Classic DM1 has no yellow outer frame; only
+     * the dungeon name title and occasional status text use yellow. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_YELLOW);
+                  8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
 
     /* Top title bar — dungeon title only (no keybinding helpers) */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
