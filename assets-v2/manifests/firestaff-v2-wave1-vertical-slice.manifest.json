@@ -27,9 +27,10 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/viewport-frame/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/viewport-frame.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
-        "The viewport opening must remain clean for later world-render compositing.",
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "The viewport opening remains clean for later world-render compositing.",
         "Use with fs.v2.slice.viewport-frame.inner-mask during integration."
       ]
     },
@@ -52,9 +53,10 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/viewport-frame/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/viewport-frame.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
-        "Mask should export with sharp, artifact-free alpha edges.",
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Mask exports with sharp high-contrast aperture geometry for integration.",
         "This is integration support, not painted ornament."
       ]
     },
@@ -77,8 +79,9 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Container only; final action icon set is out of scope for this slice."
       ]
     },
@@ -101,8 +104,9 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Separate layer for clean icon/text placement and reuse."
       ]
     },
@@ -125,8 +129,9 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Must read at 1080p without crushing the base values."
       ]
     },
@@ -149,8 +154,9 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Selection emphasis only; final gameplay iconography is still future work."
       ]
     },
@@ -173,8 +179,9 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/status-box-family/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/status-box-family.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Portrait and stats remain future overlays; this slice only defines the shell."
       ]
     },
@@ -197,9 +204,10 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/status-box-family/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/status-box-family.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
-        "Must feel designed as a pair with the left-frame asset, not as a lazy mirror."
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Designed as a paired variant, not just a trivial mirror of the left frame."
       ]
     },
     {
@@ -221,8 +229,9 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/party-hud-cell-family/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/party-hud-cell-family.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "216x216 master is intentional to preserve bevel and wear detail after downscale."
       ]
     },
@@ -245,8 +254,9 @@
         "derivedDir": "assets-v2/ui/wave1/vertical-slice/party-hud-cell-family/exports/1080p",
         "spec": "assets-v2/ui/wave1/vertical-slice/specs/party-hud-cell-family.md"
       },
-      "status": "planned",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Overlay should improve state readability without reducing item/icon legibility."
       ]
     }

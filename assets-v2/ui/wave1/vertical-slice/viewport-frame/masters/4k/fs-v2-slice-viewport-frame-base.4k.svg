@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2240" height="1360" viewBox="0 0 2240 1360">
+
+  <defs>
+    <linearGradient id="stoneGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6f5544"/>
+      <stop offset="52%" stop-color="#3a2a22"/>
+      <stop offset="100%" stop-color="#221814"/>
+    </linearGradient>
+    <linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c39b61"/>
+      <stop offset="45%" stop-color="#8b653d"/>
+      <stop offset="100%" stop-color="#4d3926"/>
+    </linearGradient>
+    <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d221c"/>
+      <stop offset="100%" stop-color="#120d0b"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#f0c57b" stop-opacity="0.7"/>
+      <stop offset="70%" stop-color="#d79a4e" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#d79a4e" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="innerShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feOffset dx="0" dy="10"/>
+      <feGaussianBlur stdDeviation="12" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="arithmetic" k2="1" k3="-1"/>
+    </filter>
+  </defs>
+
+  <rect width="100%" height="100%" fill="none"/>
+  <path d="M60 54h2120v1252H60z M290 178h1660v1004H290z" fill="url(#stoneGrad)" fill-rule="evenodd"/>
+  <path d="M110 102h2020v1156H110z M242 136h1756v1088H242z" fill="none" stroke="#0a0706" stroke-width="24" opacity="0.85" fill-rule="evenodd"/>
+  <path d="M144 134h1952v1092H144z M268 160h1704v1040H268z" fill="none" stroke="url(#bronzeGrad)" stroke-width="28" opacity="0.95" fill-rule="evenodd"/>
+  <rect x="216" y="116" width="1808" height="1128" rx="34" fill="none" stroke="#dbc08a" stroke-opacity="0.22" stroke-width="12"/>
+  <rect x="290" y="178" width="1660" height="1004" rx="18" fill="url(#innerGrad)"/>
+  <rect x="308" y="196" width="1624" height="968" rx="12" fill="none" stroke="#0f0a09" stroke-width="8" opacity="0.75"/>
+  <rect x="324" y="212" width="1592" height="936" rx="8" fill="url(#glowGrad)" opacity="0.24"/>
+  <g opacity="0.72">
+    <path d="M118 148l132 -56 118 56" fill="none" stroke="url(#bronzeGrad)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M1872 148l132 -56 118 56" fill="none" stroke="url(#bronzeGrad)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M118 1212l132 56 118 -56" fill="none" stroke="url(#bronzeGrad)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M1872 1212l132 56 118 -56" fill="none" stroke="url(#bronzeGrad)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g opacity="0.36" stroke="#f0c57b" stroke-width="8" fill="none">
+    <path d="M190 330c70 -34 126 -52 188 -56"/>
+    <path d="M1850 330c-70 -34 -126 -52 -188 -56"/>
+    <path d="M190 1030c70 34 126 52 188 56"/>
+    <path d="M1850 1030c-70 34 -126 52 -188 56"/>
+  </g>
+</svg>
