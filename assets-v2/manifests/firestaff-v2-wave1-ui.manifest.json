@@ -1,0 +1,184 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-wave1-ui",
+  "description": "Wave 1 Firestaff V2 production foundation for the core gameplay frame, viewport base, action area, spell area, status boxes, and party HUD slot cells.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": ["1080p"],
+    "layoutSkeleton": "dm1-320x200"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.ui.core-gameplay-frame.base",
+      "family": "core_gameplay_frame",
+      "role": "canonical gameplay field container",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "DM1 full gameplay screen geometry",
+        "originalSize": { "width": 320, "height": 200 }
+      },
+      "sizes": {
+        "master4k": { "width": 3200, "height": 2000 },
+        "derived1080p": { "width": 1600, "height": 1000 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/viewport-frame/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/viewport-frame/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/viewport-frame.md"
+      },
+      "status": "stubbed",
+      "notes": [
+        "Centered inside 3840x2160 with 320 px left/right margins and 80 px top/bottom margins.",
+        "Centered inside 1920x1080 with 320 px left/right margins and 40 px top/bottom margins."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.viewport-base.frame",
+      "family": "viewport_base",
+      "role": "world viewport frame and composition anchor",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0000",
+        "graphicsDatIndices": [0],
+        "originalSize": { "width": 224, "height": 136 }
+      },
+      "sizes": {
+        "master4k": { "width": 2240, "height": 1360 },
+        "derived1080p": { "width": 1120, "height": 680 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/viewport-frame/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/viewport-frame/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/viewport-frame.md"
+      },
+      "status": "stubbed",
+      "notes": [
+        "Must preserve DM1 silhouette and viewport dominance.",
+        "Treat as reusable frame, not a flattened screenshot background."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.action-area.base",
+      "family": "action_area",
+      "role": "party action panel base container",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0010",
+        "graphicsDatIndices": [10],
+        "originalSize": { "width": 87, "height": 45 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 450 },
+        "derived1080p": { "width": 435, "height": 225 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/action-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/action-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/action-area.md"
+      },
+      "status": "stubbed",
+      "notes": [
+        "Container only; action glyph/icon production is not part of this pack.",
+        "Reserved for layered overlays and state highlights."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.spell-area.base",
+      "family": "spell_area",
+      "role": "spell interaction panel base container",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0009",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "stubbed",
+      "notes": [
+        "Container only; rune and text systems are future work.",
+        "Interior should stay readable after 50% downscale."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.status-box.left-frame",
+      "family": "status_box_frame",
+      "role": "left status box shell",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0007",
+        "graphicsDatIndices": [7],
+        "originalSize": { "width": 67, "height": 29 }
+      },
+      "sizes": {
+        "master4k": { "width": 670, "height": 290 },
+        "derived1080p": { "width": 335, "height": 145 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/status-boxes/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/status-boxes/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/status-boxes.md"
+      },
+      "status": "stubbed",
+      "notes": [
+        "Keep portrait/text payload area available for later integration."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.status-box.right-frame",
+      "family": "status_box_frame",
+      "role": "right status box shell",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0008",
+        "graphicsDatIndices": [8],
+        "originalSize": { "width": 67, "height": 29 }
+      },
+      "sizes": {
+        "master4k": { "width": 670, "height": 290 },
+        "derived1080p": { "width": 335, "height": 145 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/status-boxes/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/status-boxes/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/status-boxes.md"
+      },
+      "status": "stubbed",
+      "notes": [
+        "Treat as a separate asset even if it shares most paint logic with the left variant."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.party-hud-slot.standard",
+      "family": "party_hud_slot_cell",
+      "role": "standard inventory or hand slot cell",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphics 0033, 0034, 0035",
+        "graphicsDatIndices": [33, 34, 35],
+        "originalSize": { "width": 18, "height": 18 }
+      },
+      "sizes": {
+        "master4k": { "width": 216, "height": 216 },
+        "derived1080p": { "width": 108, "height": 108 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/party-hud-cells/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/party-hud-cells/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/party-hud-cells.md"
+      },
+      "status": "stubbed",
+      "notes": [
+        "Uses a richer master than strict 10x parity for better bevel and wear detail.",
+        "Variant states can branch from this ID family later."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# V2 Wave 1 Spec: Spell Area
+
+## Scope
+- Spell panel shell only
+- No rune set, no typography system, no final spell FX
+
+## Canonical sizes
+- 4K master: **870×250**
+- 1080p derived: **435×125**
+
+## Required layers
+- Base panel
+- Rune/text bed
+- Highlight overlay
+- Active spell-state overlay
+
+## Art direction stub
+- Arcane but readable
+- Must pair visually with the action area without looking identical
+- Keep enough calm negative space for rune readability
+
+## Guardrails
+- Preserve DM1 proportions
+- Avoid ornamental clutter that collapses at 1080p
+- Keep final export compatible with later UI compositing

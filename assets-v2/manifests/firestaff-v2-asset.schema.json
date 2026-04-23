@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firestaff.example/schemas/firestaff-v2-asset.schema.json",
+  "title": "Firestaff V2 Asset Manifest Entry",
+  "type": "object",
+  "required": [
+    "manifestVersion",
+    "packId",
+    "targetPolicy",
+    "assets"
+  ],
+  "properties": {
+    "manifestVersion": { "type": "string" },
+    "packId": { "type": "string" },
+    "description": { "type": "string" },
+    "targetPolicy": {
+      "type": "object",
+      "required": ["masterResolution", "derivedResolutions", "layoutSkeleton"],
+      "properties": {
+        "masterResolution": { "type": "string" },
+        "derivedResolutions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "layoutSkeleton": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "family",
+          "role",
+          "productionClass",
+          "sourceReference",
+          "sizes",
+          "paths",
+          "status"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "family": { "type": "string" },
+          "role": { "type": "string" },
+          "productionClass": {
+            "type": "string",
+            "enum": [
+              "preserve-scale-repaint",
+              "redraw-native",
+              "system-rebuild"
+            ]
+          },
+          "sourceReference": {
+            "type": "object",
+            "required": ["origin", "originalSize"],
+            "properties": {
+              "origin": { "type": "string" },
+              "graphicsDatIndices": {
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0 }
+              },
+              "originalSize": {
+                "type": "object",
+                "required": ["width", "height"],
+                "properties": {
+                  "width": { "type": "integer", "minimum": 1 },
+                  "height": { "type": "integer", "minimum": 1 }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "sizes": {
+            "type": "object",
+            "required": ["master4k", "derived1080p"],
+            "properties": {
+              "master4k": { "$ref": "#/$defs/size" },
+              "derived1080p": { "$ref": "#/$defs/size" }
+            },
+            "additionalProperties": false
+          },
+          "paths": {
+            "type": "object",
+            "required": ["masterDir", "derivedDir", "spec"],
+            "properties": {
+              "masterDir": { "type": "string" },
+              "derivedDir": { "type": "string" },
+              "spec": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "stubbed", "in-progress", "approved", "shipped"]
+          },
+          "notes": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "size": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}
