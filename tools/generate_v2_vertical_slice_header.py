@@ -39,6 +39,26 @@ TARGETS = {
         "png": "fs-v2-slice-action-area-base.1080p.png",
         "size": (87, 45),
     },
+    "fs.v2.slice.spell-area.base": {
+        "symbol": "spell_area_base",
+        "png": "fs-v2-spell-area-base.1080p.png",
+        "size": (87, 25),
+    },
+    "fs.v2.slice.spell-area.rune-bed": {
+        "symbol": "spell_area_rune_bed",
+        "png": "fs-v2-spell-area-rune-bed.1080p.png",
+        "size": (87, 25),
+    },
+    "fs.v2.slice.spell-area.highlight-overlay": {
+        "symbol": "spell_area_highlight",
+        "png": "fs-v2-spell-area-highlight-overlay.1080p.png",
+        "size": (87, 25),
+    },
+    "fs.v2.slice.spell-area.active-overlay": {
+        "symbol": "spell_area_active",
+        "png": "fs-v2-spell-area-active-overlay.1080p.png",
+        "size": (87, 25),
+    },
     "fs.v2.slice.status-box.left-frame": {
         "symbol": "status_box_left",
         "png": "fs-v2-slice-status-box-left-frame.1080p.png",

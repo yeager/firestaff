@@ -10621,6 +10621,17 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         m11_blit_v2_slice_asset(&m11_v2_action_area_base,
                                 framebuffer, framebufferWidth, framebufferHeight,
                                 224, 45, 1);
+        m11_blit_v2_slice_asset(&m11_v2_spell_area_base,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y, 1);
+        m11_blit_v2_slice_asset(&m11_v2_spell_area_rune_bed,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y, 1);
+        m11_blit_v2_slice_asset(state->spellPanelOpen
+                                    ? &m11_v2_spell_area_active
+                                    : &m11_v2_spell_area_highlight,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y, 1);
         drewAuthenticFrames = 1;
     }
 

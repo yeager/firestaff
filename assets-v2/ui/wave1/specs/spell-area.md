@@ -23,3 +23,7 @@
 - Preserve DM1 proportions
 - Avoid ornamental clutter that collapses at 1080p
 - Keep final export compatible with later UI compositing
+
+## Current status
+- First-pass real assets now exist for `base`, `rune-bed`, `highlight-overlay`, and `active-overlay`.
+- The current pass deliberately stops short of full rune glyph production, typography, or final spell FX.

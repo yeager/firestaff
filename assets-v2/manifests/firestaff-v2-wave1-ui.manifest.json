@@ -101,10 +101,86 @@
         "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
         "spec": "assets-v2/ui/wave1/specs/spell-area.md"
       },
-      "status": "stubbed",
+      "status": "approved",
       "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Container only; rune and text systems are future work.",
-        "Interior should stay readable after 50% downscale."
+        "Interior stays readable after the exact 50% downscale."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.spell-area.rune-bed",
+      "family": "spell_area",
+      "role": "separate rune/text bed inside the spell panel shell",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived from GRAPHICS.DAT graphic 0009 interior geometry",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Provides a calmer interior bed for future rune-row and text payload work."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.spell-area.highlight-overlay",
+      "family": "spell_area",
+      "role": "non-destructive readability and hover-state accent layer",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived interaction-state layer for GRAPHICS.DAT graphic 0009",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Intended for restrained emphasis without crushing future rune legibility."
+      ]
+    },
+    {
+      "id": "fs.v2.ui.spell-area.active-overlay",
+      "family": "spell_area",
+      "role": "active cast-state emphasis layer",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived active-state layer for GRAPHICS.DAT graphic 0009",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Blue-tinted emphasis is intentionally bounded and may be art-directed further in later passes."
       ]
     },
     {

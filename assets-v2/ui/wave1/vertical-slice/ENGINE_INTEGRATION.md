@@ -8,6 +8,10 @@ Enabled with `FIRESTAFF_V2_VERTICAL_SLICE=1`, the M11 game view draws these V2 a
 
 - `fs.v2.slice.viewport-frame.base`
 - `fs.v2.slice.action-area.base`
+- `fs.v2.slice.spell-area.base`
+- `fs.v2.slice.spell-area.rune-bed`
+- `fs.v2.slice.spell-area.highlight-overlay`
+- `fs.v2.slice.spell-area.active-overlay`
 - `fs.v2.slice.status-box.left-frame`
 - `fs.v2.slice.status-box.right-frame`
 - `fs.v2.slice.party-hud-cell.standard-base`
@@ -17,6 +21,7 @@ The current integration is intentionally partial:
 
 - viewport frame is a V2 shell over the live M11 viewport
 - action area is a V2 shell under the existing right-column/action text
+- spell area is a V2 shell and layered bed at the original DM strip, with an extra active accent when the spell panel is open
 - status-box family is used as the party HUD frame skin
 - party HUD cells are composited inside each champion slot, with the highlight overlay on the active champion
 
@@ -53,5 +58,5 @@ Not yet wired in this pass:
 
 - viewport inner-mask compositing
 - action recess/highlight/active overlays
-- portraits, spell area, text/icon payloads
+- portraits and full text/icon payloads
 - runtime state matrices beyond the active champion HUD-cell highlight

@@ -5,6 +5,7 @@ This directory now contains the first **real first-pass V2 asset pack** for the 
 Included families:
 - viewport-frame
 - action-area
+- spell-area
 - status-box-family
 - party-hud-cell-family
 
@@ -32,11 +33,20 @@ What these files are not:
 ## Still pending outside this pass
 
 Not produced here:
-- spell-area slice assets
 - portrait payloads
 - stat text systems
 - action glyph/icon sets
 - broader state matrices beyond the included overlays
+
+## Spell-area note for this pass
+
+The spell-area expansion uses the canonical family directory at `assets-v2/ui/wave1/spell-area/` and is now referenced by the bounded vertical-slice manifest and engine path.
+
+Integrated in this pass:
+- spell-area base shell
+- spell-area rune-bed layer
+- spell-area highlight overlay
+- spell-area active overlay
 
 ## Rules
 - 4K masters are canonical.

@@ -1,7 +1,7 @@
 {
   "manifestVersion": "1.0.0",
   "packId": "firestaff-v2-wave1-vertical-slice",
-  "description": "Bounded Firestaff V2 Wave 1 vertical slice for viewport frame, action area, status-box family, and party HUD cell family.",
+  "description": "Bounded Firestaff V2 Wave 1 vertical slice for viewport frame, action area, spell area, status-box family, and party HUD cell family.",
   "targetPolicy": {
     "masterResolution": "4k-first",
     "derivedResolutions": ["1080p"],
@@ -158,6 +158,106 @@
       "notes": [
         "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Selection emphasis only; final gameplay iconography is still future work."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.spell-area.base",
+      "family": "spell_area",
+      "role": "painted spell panel shell",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0009",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Built to read as the next bounded Wave 1 family after the initial vertical-slice shell set."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.spell-area.rune-bed",
+      "family": "spell_area",
+      "role": "separate rune/text bed for later payload placement",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived from GRAPHICS.DAT graphic 0009 interior geometry",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Provides bounded groundwork for later rune and text population without committing to the final system."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.spell-area.highlight-overlay",
+      "family": "spell_area",
+      "role": "non-destructive readability or hover-state accent layer",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived interaction-state layer for graphic 0009",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Used in-engine as a restrained V2 readability pass over the spell strip."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.spell-area.active-overlay",
+      "family": "spell_area",
+      "role": "active cast-state emphasis layer",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived active-state layer for graphic 0009",
+        "graphicsDatIndices": [9],
+        "originalSize": { "width": 87, "height": 25 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 250 },
+        "derived1080p": { "width": 435, "height": 125 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/spell-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/spell-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/specs/spell-area.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Currently used as a bounded cast-state accent when the spell panel is open."
       ]
     },
     {
