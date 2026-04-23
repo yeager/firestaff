@@ -2,6 +2,7 @@
 
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
+#include "m11_v2_vertical_slice_assets.h"
 #include "render_sdl_m11.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -1228,6 +1229,41 @@ static int m11_point_in_utility_button(int x,
                              M11_UTILITY_BUTTON_Y,
                              buttonWidth,
                              M11_UTILITY_BUTTON_H);
+}
+
+static int m11_v2_vertical_slice_enabled(void) {
+    static int cached = -1;
+    const char* env;
+    if (cached >= 0) {
+        return cached;
+    }
+    env = getenv("FIRESTAFF_V2_VERTICAL_SLICE");
+    cached = (env && env[0] != '\0' && strcmp(env, "0") != 0) ? 1 : 0;
+    return cached;
+}
+
+static void m11_blit_v2_slice_asset(const M11_V2SliceAsset* asset,
+                                    unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    int dstX,
+                                    int dstY,
+                                    int transparentZero) {
+    int y;
+    int x;
+    if (!asset || !asset->pixels || !framebuffer) {
+        return;
+    }
+    for (y = 0; y < (int)asset->height; ++y) {
+        for (x = 0; x < (int)asset->width; ++x) {
+            unsigned char px = asset->pixels[y * (int)asset->width + x];
+            if (transparentZero && px == 0U) {
+                continue;
+            }
+            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                          dstX + x, dstY + y, px);
+        }
+    }
 }
 
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state) {
@@ -7534,6 +7570,12 @@ static int m11_draw_ui_frame_assets(const M11_GameViewState* state,
                                     int fbH) {
     const M11_AssetSlot* ceilSlot;
     const M11_AssetSlot* floorSlot;
+    if (m11_v2_vertical_slice_enabled()) {
+        m11_blit_v2_slice_asset(&m11_v2_viewport_frame_base,
+                                framebuffer, fbW, fbH,
+                                0, 16, 1);
+        return 1;
+    }
     if (!state->assetsAvailable) return 0;
 
     ceilSlot = M11_AssetLoader_Load(
@@ -10575,6 +10617,13 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         return;
     }
 
+    if (m11_v2_vertical_slice_enabled()) {
+        m11_blit_v2_slice_asset(&m11_v2_action_area_base,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                224, 45, 1);
+        drewAuthenticFrames = 1;
+    }
+
     /* V1 mode: replace the procedural utility-panel backdrop with the
      * original GRAPHICS.DAT action area (graphic 10, 87x45) and the
      * spell area backdrop (graphic 9, 87x25) blitted at their
@@ -10588,7 +10637,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
      * the previously empty space above the party HUD (y=70..146).
      * Reference: ReDMCSB ACTIDRAW.C / CASTER.C and C011_ZONE_ACTION_AREA /
      * C013_ZONE_SPELL_AREA in ZONES.H. */
-    if (!state->showDebugHUD) {
+    if (!state->showDebugHUD && !m11_v2_vertical_slice_enabled()) {
         int drewAction = m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
             M11_GFX_ACTION_AREA, M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
@@ -11067,6 +11116,31 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             const struct ChampionState_Compat* champ = &state->world.party.champions[slot];
             int isDead = (champ->hp.current == 0);
             m11_format_champion_name(champ->name, name, sizeof(name));
+
+            if (m11_v2_vertical_slice_enabled()) {
+                const M11_V2SliceAsset* statusAsset = isDead
+                    ? &m11_v2_status_box_right
+                    : ((slot & 1) ? &m11_v2_status_box_right : &m11_v2_status_box_left);
+                int cellBaseX = x + 47;
+                int cellY = y + 6;
+                int cell;
+                m11_blit_v2_slice_asset(statusAsset,
+                                        framebuffer, framebufferWidth, framebufferHeight,
+                                        x, y, 1);
+                for (cell = 0; cell < 3; ++cell) {
+                    m11_blit_v2_slice_asset(&m11_v2_party_hud_cell_base,
+                                            framebuffer, framebufferWidth, framebufferHeight,
+                                            cellBaseX + cell * 6,
+                                            cellY + (cell == 1 ? 1 : 0), 1);
+                }
+                if (slot == activeIndex) {
+                    m11_blit_v2_slice_asset(&m11_v2_party_hud_cell_highlight,
+                                            framebuffer, framebufferWidth, framebufferHeight,
+                                            cellBaseX,
+                                            cellY, 1);
+                }
+                drewStatusBox = 1;
+            }
 
             /* GRAPHICS.DAT-backed status box frame (67×29).
              * Use graphic 8 (dead) or graphic 7 (normal) as the
