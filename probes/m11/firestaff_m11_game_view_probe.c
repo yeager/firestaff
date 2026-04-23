@@ -6502,10 +6502,131 @@ int main(int argc, char** argv) {
                                  && e->explosionType == C000_EXPLOSION_FIREBALL,
                              "projectile detonation: explosion is fireball "
                              "type and appears in viewport cell summary");
+
+                /* INV_GV_348: explosion aftermath advances frame.
+                 * Snapshot position, advance one tick via the public
+                 * explosion advance, and verify that either the slot
+                 * has despawned (one-shot fireball) or currentFrame
+                 * incremented.  This proves F0822 is driven and the
+                 * burst aftermath is not frozen on frame 0. */
+                {
+                    int eMap = e->mapIndex;
+                    int eX = e->mapX;
+                    int eY = e->mapY;
+                    int frameBefore = e->currentFrame;
+                    int slotBefore = e->slotIndex;
+                    int ei2;
+                    int advanced = 0;
+                    int despawned = 0;
+                    flightView.world.gameTick += 1;
+                    M11_GameView_AdvanceExplosionsOnce(&flightView);
+                    for (ei2 = 0; ei2 < EXPLOSION_LIST_CAPACITY; ++ei2) {
+                        const struct ExplosionInstance_Compat* e2 =
+                            &flightView.world.explosions.entries[ei2];
+                        if (e2->slotIndex < 0) continue;
+                        if (e2->mapIndex != eMap) continue;
+                        if (e2->mapX != eX || e2->mapY != eY) continue;
+                        if (e2->slotIndex == slotBefore
+                                && e2->currentFrame > frameBefore) {
+                            advanced = 1;
+                        }
+                    }
+                    /* Fireball is a one-shot, so F0822 despawns the slot
+                     * on the first advance; either behaviour proves the
+                     * advance pipeline ran. */
+                    if (flightView.world.explosions.entries[slotBefore].reserved0 == 0) {
+                        despawned = 1;
+                    }
+                    probe_record(&tally, "INV_GV_348",
+                                 advanced || despawned,
+                                 "explosion aftermath: F0822 advance ran "
+                                 "(frame incremented or one-shot despawned)");
+
+                    /* Screenshot artifact: viewport frame right after
+                     * the first explosion advance so the bloom/fade
+                     * visual is captured. */
+                    {
+                        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+                        if (ssDir && ssDir[0]) {
+                            unsigned char fbA[320 * 200];
+                            char ssPath[512];
+                            FILE* ssFile;
+                            memset(fbA, 0, sizeof(fbA));
+                            M11_GameView_Draw(&flightView, fbA, 320, 200);
+                            snprintf(ssPath, sizeof(ssPath),
+                                     "%s/22_explosion_after_advance.pgm", ssDir);
+                            ssFile = fopen(ssPath, "wb");
+                            if (ssFile) {
+                                int px;
+                                fprintf(ssFile, "P5\n320 200\n255\n");
+                                for (px = 0; px < 320 * 200; ++px) {
+                                    unsigned char gray =
+                                        (unsigned char)(fbA[px] * 17);
+                                    fwrite(&gray, 1, 1, ssFile);
+                                }
+                                fclose(ssFile);
+                            }
+                        }
+                    }
+                }
             } else {
                 probe_record(&tally, "INV_GV_347", 0,
                              "projectile detonation: expected fireball "
                              "explosion slot not found");
+                probe_record(&tally, "INV_GV_348", 0,
+                             "explosion aftermath: F0822 advance ran "
+                             "(no explosion slot to test)");
+            }
+        }
+
+        /* INV_GV_349: persistent explosion (smoke) actually advances
+         * frame and reduces attack across multiple ticks rather than
+         * despawning on the first advance.  Create a C040_SMOKE slot
+         * directly via F0821 with max-attack so the F0822 decay path
+         * runs through several frames before dropping below the 55
+         * threshold.  Validates the ADVANCED_FRAME branch of F0822. */
+        {
+            struct ExplosionCreateInput_Compat eIn;
+            struct TimelineEvent_Compat eFirst;
+            int eSlot = -1;
+            int attackStart;
+            int attackAfter;
+            int frameAfter;
+            uint32_t t0 = flightView.world.gameTick;
+
+            memset(&eIn, 0, sizeof(eIn));
+            eIn.explosionType = C040_EXPLOSION_SMOKE;
+            eIn.mapIndex      = 0;
+            eIn.mapX          = 2;
+            eIn.mapY          = 1;
+            eIn.cell          = EXPLOSION_CELL_CENTERED;
+            eIn.centered      = 1;
+            eIn.attack        = 200;
+            eIn.ownerKind     = PROJECTILE_OWNER_CHAMPION;
+            eIn.ownerIndex    = 0;
+            eIn.currentTick   = (int)t0;
+            eIn.creatorProjectileSlot = -1;
+
+            if (F0821_EXPLOSION_Create_Compat(&eIn, &flightView.world.explosions,
+                                              &eSlot, &eFirst) == 1
+                    && eSlot >= 0) {
+                attackStart = flightView.world.explosions.entries[eSlot].attack;
+                /* Advance twice so the smoke has decayed at least one frame. */
+                flightView.world.gameTick += 1;
+                M11_GameView_AdvanceExplosionsOnce(&flightView);
+                flightView.world.gameTick += 1;
+                M11_GameView_AdvanceExplosionsOnce(&flightView);
+                attackAfter = flightView.world.explosions.entries[eSlot].attack;
+                frameAfter  = flightView.world.explosions.entries[eSlot].currentFrame;
+                probe_record(&tally, "INV_GV_349",
+                             flightView.world.explosions.entries[eSlot].reserved0 == 1
+                                 && attackAfter < attackStart
+                                 && frameAfter >= 1,
+                             "persistent smoke: F0822 decays attack and "
+                             "increments currentFrame across ticks");
+            } else {
+                probe_record(&tally, "INV_GV_349", 0,
+                             "persistent smoke: F0821 create failed");
             }
         }
 

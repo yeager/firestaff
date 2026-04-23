@@ -3441,6 +3441,13 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
  * once per orchestrator tick from inside ProcessTickEmissions. */
 static void m11_advance_projectiles_v1(M11_GameViewState* state);
 
+/* Forward decl for explosion advance; implementation lives with other
+ * projectile-action helpers.  Drives F0822 for each live explosion
+ * once per orchestrator tick from inside ProcessTickEmissions so the
+ * post-detonation aftermath progresses through its frame sequence
+ * rather than freezing at the first burst frame. */
+static void m11_advance_explosions_v1(M11_GameViewState* state);
+
 void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     int i;
     if (!state) {
@@ -3567,6 +3574,15 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
      * instead of freezing at its spawn cell.  Runs exactly once per
      * orchestrator tick; no-op when no projectiles are live. */
     m11_advance_projectiles_v1(state);
+
+    /* V1 explosion cycle: after projectiles have stepped (and may have
+     * spawned new first-frame explosions on impact), advance every
+     * live explosion one frame via F0822.  This turns the post-
+     * detonation aftermath into the classic DM1 multi-frame progression
+     * (poison/smoke clouds decay and dissipate; fireball/lightning
+     * emit their damage action on the first advance and despawn the
+     * slot) rather than leaving a single frozen burst frame. */
+    m11_advance_explosions_v1(state);
 }
 
 void M11_GameView_Init(M11_GameViewState* state) {
@@ -4458,6 +4474,16 @@ typedef struct M11_ViewportCell {
     int floorOrnamentOrdinal;
     /* First explosion type (0-50), or -1 */
     int firstExplosionType;
+    /* First explosion currentFrame (0..maxFrames-1), or -1 if none. */
+    int firstExplosionFrame;
+    /* First explosion maxFrames (from Phase17_ExplosionMaxFrames), or
+     * 0 if none.  Used by the viewport burst renderer to modulate
+     * size/intensity across the classic DM1 multi-frame aftermath. */
+    int firstExplosionMaxFrames;
+    /* First explosion residual attack (0..255), or -1 if none.  Poison
+     * cloud and smoke decay this per frame; the burst renderer uses it
+     * to fade the cloud as it dissipates. */
+    int firstExplosionAttack;
     M11_SquareThingSummary summary;
 } M11_ViewportCell;
 
@@ -4728,33 +4754,83 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
     if (cell->summary.explosions > 0) {
         unsigned char expColor;
         int expType = cell->firstExplosionType;
-        int expR = 5 + (depthIndex == 0 ? 2 : 0);
-        if (expType >= 0 && expType <= 7) {
-            /* Fire/fireball explosions: orange-red burst */
-            expColor = M11_COLOR_LIGHT_RED;
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-            /* Inner bright core */
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR / 2, cy - expR / 2,
-                          expR + 1, expR + 1, M11_COLOR_YELLOW);
-        } else if (expType >= 8 && expType <= 11) {
-            /* Poison cloud: green haze */
-            expColor = M11_COLOR_GREEN;
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR / 2, cy - expR / 2,
-                          expR + 1, expR + 1, M11_COLOR_LIGHT_GREEN);
-        } else if (expType >= 12 && expType <= 18) {
-            /* Lightning/energy: cyan-white flash */
+        int baseR   = 5 + (depthIndex == 0 ? 2 : 0);
+        int expR    = baseR;
+        int frame   = cell->firstExplosionFrame;
+        int maxF    = cell->firstExplosionMaxFrames;
+        int atk     = cell->firstExplosionAttack;
+        /* Multi-frame aftermath progression (DM1-style bloom-then-fade):
+         *   - Fireball / lightning / dispell: short ~3-frame bloom that
+         *     peaks at frame 1 and fades by frame 2+ (radius 120/90/60%
+         *     of base).
+         *   - Poison cloud / smoke: large cloud whose radius tracks the
+         *     residual attack (larger when thick, smaller as it decays).
+         *   - Other types: single frame at base radius. */
+        if (frame >= 0 && maxF > 0) {
+            if (expType == C000_EXPLOSION_FIREBALL
+                    || expType == C002_EXPLOSION_LIGHTNING_BOLT
+                    || expType == C003_EXPLOSION_HARM_NON_MATERIAL) {
+                if (frame == 0)      expR = (baseR * 6) / 5;  /* 120% */
+                else if (frame == 1) expR = baseR;            /* 100% */
+                else                 expR = (baseR * 3) / 5;  /* 60%  */
+                if (expR < 2) expR = 2;
+            } else if (expType == C007_EXPLOSION_POISON_CLOUD
+                    || expType == C040_EXPLOSION_SMOKE) {
+                /* Radius tracks residual attack: full at spawn, shrinks
+                 * as F0822 decays the cloud.  Attack starts up to 255
+                 * and decays by 3 (poison) or 40 (smoke) per frame;
+                 * normalise to baseR range. */
+                if (atk > 0) {
+                    int num = (baseR * (atk > 128 ? 128 : atk)) / 64;
+                    expR = baseR / 2 + num / 2;
+                    if (expR < baseR / 2) expR = baseR / 2;
+                    if (expR > baseR + 2) expR = baseR + 2;
+                }
+            }
+        }
+        if (expType == C002_EXPLOSION_LIGHTNING_BOLT) {
+            /* Lightning/energy: cyan-white flash that dims on fade. */
+            unsigned char cross = (frame >= 1) ? M11_COLOR_LIGHT_CYAN
+                                               : M11_COLOR_WHITE;
             expColor = M11_COLOR_LIGHT_CYAN;
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx - expR, cx + expR, cy, M11_COLOR_WHITE);
+                           cx - expR, cx + expR, cy, cross);
             m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx, cy - expR, cy + expR, M11_COLOR_WHITE);
+                           cx, cy - expR, cy + expR, cross);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
+        } else if (expType == C007_EXPLOSION_POISON_CLOUD) {
+            /* Poison cloud: green haze that thins as the cloud decays. */
+            int coreR = expR / 2;
+            int thinning = (atk >= 0 && atk < 40);
+            expColor = thinning ? M11_COLOR_DARK_GRAY : M11_COLOR_GREEN;
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
+            if (!thinning && coreR > 0) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cx - coreR, cy - coreR,
+                              coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_LIGHT_GREEN);
+            }
+        } else if (expType == C040_EXPLOSION_SMOKE) {
+            /* Smoke: dark-gray cloud that thins and fades. */
+            expColor = (atk >= 0 && atk < 80) ? M11_COLOR_DARK_GRAY
+                                              : M11_COLOR_LIGHT_GRAY;
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cx - expR, cy - expR,
+                          expR * 2 + 1, expR * 2 + 1, expColor);
+        } else if (expType >= 0 && expType <= 7) {
+            /* Fire/fireball explosions: orange-red burst with yellow core
+             * that shrinks on fade frames. */
+            int coreR = expR / 2;
+            if (frame >= 0 && maxF > 0 && frame >= maxF - 1) coreR = 0;
+            expColor = (frame >= 2) ? M11_COLOR_BROWN : M11_COLOR_LIGHT_RED;
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
+            if (coreR > 0) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cx - coreR, cy - coreR,
+                              coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_YELLOW);
+            }
         } else {
             /* All other explosion types: generic magenta burst */
             expColor = M11_COLOR_MAGENTA;
@@ -5133,6 +5209,9 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.firstProjectileCell = -1;
     cell.floorOrnamentOrdinal = 0;
     cell.firstExplosionType = -1;
+    cell.firstExplosionFrame = -1;
+    cell.firstExplosionMaxFrames = 0;
+    cell.firstExplosionAttack = -1;
 
     if (!state || !state->active) {
         if (outCell) {
@@ -5398,6 +5477,12 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                 int eIdx = THING_GET_INDEX(scanThing);
                 if (eIdx >= 0 && eIdx < state->world.things->explosionCount) {
                     cell.firstExplosionType = (int)state->world.things->explosions[eIdx].type;
+                    /* Dungeon-thing explosions do not carry a live frame
+                     * counter in M10's compact layout; seed the render
+                     * fields so the single-frame burst still draws. */
+                    cell.firstExplosionFrame     = 0;
+                    cell.firstExplosionMaxFrames = 1;
+                    cell.firstExplosionAttack    = -1;
                 }
                 break;
             }
@@ -5410,7 +5495,9 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * V1 projectile-impact path (F0821_EXPLOSION_Create_Compat) lives
      * in world.explosions rather than the dungeon thing chain.  Pick
      * the type from the first runtime explosion at this cell so the
-     * viewport's type-specific burst visual still lands. */
+     * viewport's type-specific burst visual still lands, and pull
+     * currentFrame / maxFrames / attack so the burst renderer can
+     * bloom / fade across the classic DM1 multi-frame aftermath. */
     if (cell.summary.explosions > 0 && cell.firstExplosionType < 0) {
         int ei;
         for (ei = 0; ei < state->world.explosions.count; ++ei) {
@@ -5419,7 +5506,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (re->slotIndex < 0) continue;
             if (re->mapIndex != state->world.party.mapIndex) continue;
             if (re->mapX != mapX || re->mapY != mapY) continue;
-            cell.firstExplosionType = re->explosionType;
+            cell.firstExplosionType      = re->explosionType;
+            cell.firstExplosionFrame     = re->currentFrame;
+            cell.firstExplosionMaxFrames = re->maxFrames > 0 ? re->maxFrames : 1;
+            cell.firstExplosionAttack    = re->attack;
             break;
         }
     }
@@ -9202,6 +9292,222 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
  * deterministically without needing to replay an orchestrator tick. */
 void M11_GameView_AdvanceProjectilesOnce(M11_GameViewState* state) {
     m11_advance_projectiles_v1(state);
+}
+
+/* Build a CellContentDigest_Compat for an explosion's current cell so
+ * F0822_EXPLOSION_Advance_Compat can classify champion / creature-group
+ * presence and door state at the AoE target square.  Returns 1 on
+ * success.  Mirrors m11_build_projectile_digest but centred on the
+ * explosion's cell (source == dest for a stationary explosion). */
+static int m11_build_explosion_digest(
+    const struct GameWorld_Compat* world,
+    const struct ExplosionInstance_Compat* e,
+    struct CellContentDigest_Compat* out) {
+    unsigned char sq = 0;
+    int hasSquare = 0;
+    int i;
+    if (!world || !e || !out) return 0;
+    if (!world->dungeon || e->mapIndex < 0
+        || e->mapIndex >= (int)world->dungeon->header.mapCount) return 0;
+    /* Explosions can land on wall / boundary cells (projectile
+     * detonation on impact with a wall), so a missing squareByte is
+     * fine — classify as a wall-cell burst and let F0822 run with a
+     * minimal digest.  Matches ReDMCSB where a fireball bursting on
+     * a wall still progresses through F0822's frame logic. */
+    hasSquare = m11_get_square_byte(world, e->mapIndex, e->mapX, e->mapY, &sq);
+
+    memset(out, 0, sizeof(*out));
+    out->sourceMapIndex    = e->mapIndex;
+    out->sourceMapX        = e->mapX;
+    out->sourceMapY        = e->mapY;
+    out->sourceSquareType  = hasSquare ? ((sq >> 5) & 7) : PROJECTILE_ELEMENT_WALL;
+    out->destMapIndex      = e->mapIndex;
+    out->destMapX          = e->mapX;
+    out->destMapY          = e->mapY;
+    out->destSquareType    = hasSquare ? ((sq >> 5) & 7) : PROJECTILE_ELEMENT_WALL;
+    out->destIsMapBoundary = hasSquare ? 0 : 1;
+    out->destTeleporterNewDirection = -1;
+    if (!hasSquare) {
+        /* Off-map / unreadable cell: no champion, no creature, no door;
+         * just let F0822 despawn a one-shot or decay a persistent type. */
+        return 1;
+    }
+
+    if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
+        int doorAttr = sq & 0x07;
+        if (doorAttr == 0) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_OPEN;
+        } else if (doorAttr <= 4) {
+            out->destDoorState = doorAttr;
+        } else if (doorAttr == 5) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
+            out->destDoorIsDestroyed = 1;
+        } else {
+            out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        }
+    } else {
+        out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    }
+
+    /* Party presence on the explosion cell. */
+    if (world->party.mapIndex == e->mapIndex
+            && world->party.mapX == e->mapX
+            && world->party.mapY == e->mapY) {
+        out->destHasChampion      = 1;
+        out->destPartyDirection   = world->party.direction & 3;
+        out->destChampionCellMask = 0x0F;
+    }
+
+    /* Creature group on the explosion cell. */
+    for (i = 0; i < world->creatureAICount
+                && i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i) {
+        const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
+        if (ai->groupMapIndex == e->mapIndex
+                && ai->groupMapX == e->mapX
+                && ai->groupMapY == e->mapY) {
+            const struct CreatureBehaviorProfile_Compat* profile =
+                CREATURE_GetProfile_Compat(ai->creatureType);
+            out->destHasCreatureGroup = 1;
+            out->destCreatureType     = ai->creatureType;
+            out->destCreatureCellMask = 0x0F;
+            out->destCreatureIsNonMaterial = (profile != NULL)
+                && ((profile->attributes
+                     & CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
+            break;
+        }
+    }
+
+    return 1;
+}
+
+/* Apply the per-frame combat actions that F0822 emitted for this
+ * explosion advance.  Mirrors the bounded V1 damage path used for
+ * projectile impacts: champion HP direct write for party hits,
+ * F0738_COMBAT_ApplyDamageToGroup_Compat for creature-group hits.
+ * Pure data mutation, no M10 edits. */
+static void m11_explosion_apply_tick_result(
+    M11_GameViewState* state,
+    const struct ExplosionInstance_Compat* e,
+    const struct ExplosionTickResult_Compat* r) {
+    const char* typeName = "EXPLOSION";
+    if (e->explosionType == C000_EXPLOSION_FIREBALL)           typeName = "FIREBALL";
+    else if (e->explosionType == C002_EXPLOSION_LIGHTNING_BOLT) typeName = "LIGHTNING";
+    else if (e->explosionType == C007_EXPLOSION_POISON_CLOUD)   typeName = "POISON CLOUD";
+    else if (e->explosionType == C040_EXPLOSION_SMOKE)          typeName = "SMOKE";
+
+    /* Champion damage. */
+    if (r->emittedCombatActionPartyCount > 0) {
+        int ci = r->outActionParty.defenderSlotOrCreatureIndex;
+        int dmg = r->outActionParty.rawAttackValue;
+        if (ci >= 0 && ci < CHAMPION_MAX_PARTY
+                && state->world.party.champions[ci].present) {
+            int hp = (int)state->world.party.champions[ci].hp.current;
+            if (dmg < 0) dmg = 0;
+            if (dmg > hp) dmg = hp;
+            state->world.party.champions[ci].hp.current =
+                (unsigned short)(hp - dmg);
+            m11_log_event(state, M11_COLOR_LIGHT_RED,
+                          "T%u: %s BURNS PARTY FOR %d",
+                          (unsigned int)state->world.gameTick,
+                          typeName, dmg);
+        }
+    }
+
+    /* Creature group damage. */
+    if (r->emittedCombatActionGroupCount > 0 && state->world.things) {
+        unsigned short groupThing = m11_find_group_on_square(
+            &state->world,
+            r->outActionGroup.targetMapIndex,
+            r->outActionGroup.targetMapX,
+            r->outActionGroup.targetMapY);
+        if (groupThing != THING_NONE && groupThing != THING_ENDOFLIST) {
+            int gIdx = THING_GET_INDEX(groupThing);
+            if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
+                struct DungeonGroup_Compat* g = &state->world.things->groups[gIdx];
+                struct CombatResult_Compat res;
+                int outcome = 0;
+                int slotI;
+                memset(&res, 0, sizeof(res));
+                res.damageApplied = r->outActionGroup.rawAttackValue;
+                for (slotI = 0; slotI < 4; ++slotI) {
+                    if (g->health[slotI] > 0) {
+                        F0738_COMBAT_ApplyDamageToGroup_Compat(
+                            &res, g, slotI, &outcome);
+                        break;
+                    }
+                }
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s SEARS %s",
+                              (unsigned int)state->world.gameTick,
+                              typeName,
+                              m11_creature_name((int)g->creatureType));
+            }
+        }
+    }
+}
+
+/* V1 explosion tick advance — drives F0822 per live explosion whose
+ * scheduledAtTick has arrived.  Called once per orchestrator tick
+ * (right after the projectile advance) so a fireball detonation
+ * progresses through its frame sequence instead of freezing at the
+ * first burst frame.  The persistent types (poison cloud / smoke)
+ * reduce attack per frame and despawn when attack drops below the
+ * type-specific threshold; one-shot types (fireball / lightning)
+ * emit damage on the first advance and despawn immediately.  Idle
+ * on empty lists.  Mirrors ReDMCSB TIMELINE.C's EXPLOSION_ADVANCE
+ * timeline-event dispatch to F0822. */
+static void m11_advance_explosions_v1(M11_GameViewState* state) {
+    int i;
+    uint32_t now;
+    if (!state || !state->active) return;
+    if (!state->world.dungeon || !state->world.dungeon->tilesLoaded) return;
+    now = state->world.gameTick;
+
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        struct ExplosionInstance_Compat* e = &state->world.explosions.entries[i];
+        struct ExplosionInstance_Compat newState;
+        struct ExplosionTickResult_Compat result;
+        struct CellContentDigest_Compat digest;
+
+        if (e->reserved0 == 0) continue;
+        if ((uint32_t)e->scheduledAtTick > now) continue;
+
+        if (!m11_build_explosion_digest(&state->world, e, &digest)) {
+            continue;
+        }
+
+        if (!F0822_EXPLOSION_Advance_Compat(e, &digest, now,
+                                             &state->world.masterRng,
+                                             &newState, &result)) {
+            F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, i);
+            continue;
+        }
+
+        /* Apply AoE effects before the slot is reused on despawn. */
+        m11_explosion_apply_tick_result(state, e, &result);
+
+        if (result.despawn) {
+            F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, i);
+        } else {
+            /* Commit advanced state (new frame, possibly reduced attack,
+             * possibly promoted rebirth step 1 -> step 2).  Re-schedule
+             * per F0826: 1 tick default, 5 ticks for REBIRTH_STEP1
+             * -> STEP2.  newAttack already reflects F0822's decay for
+             * poison/smoke. */
+            int delay = (e->explosionType == C100_EXPLOSION_REBIRTH_STEP1)
+                ? 5 : 1;
+            newState.reserved0 = 1; /* preserve occupied flag */
+            newState.slotIndex = i;
+            newState.scheduledAtTick = (int)now + delay;
+            *e = newState;
+        }
+    }
+}
+
+/* Probe-visible wrapper so game_view_probe.c can drive the explosion
+ * advance deterministically without replaying an orchestrator tick. */
+void M11_GameView_AdvanceExplosionsOnce(M11_GameViewState* state) {
+    m11_advance_explosions_v1(state);
 }
 
 int M11_GameView_CountCellProjectiles(

@@ -464,6 +464,18 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
  * log cue as the bounded V1 slice).  Safe on empty lists. */
 void M11_GameView_AdvanceProjectilesOnce(M11_GameViewState* state);
 
+/* V1 explosion cycle probe hook: drive one tick of the V1 explosion
+ * advance over all live explosion slots.  Normally invoked from
+ * M11_GameView_ProcessTickEmissions each orchestrator tick right after
+ * the projectile advance; exposed here so probes can deterministically
+ * step explosion aftermath without replaying the orchestrator pipeline.
+ * Calls F0822_EXPLOSION_Advance_Compat per live slot, applies its
+ * champion/group damage actions, and either despawns (one-shot: fire-
+ * ball, lightning) or commits the advanced state with the new
+ * currentFrame / decayed attack (persistent: poison cloud, smoke).
+ * Safe on empty lists. */
+void M11_GameView_AdvanceExplosionsOnce(M11_GameViewState* state);
+
 /* Probe shim for the internal m11_summarize_square_things helper so
  * probes can verify that runtime-only projectiles / explosions show
  * up in the viewport cell summary (this is what drives the sprite
