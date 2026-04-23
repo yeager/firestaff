@@ -8563,6 +8563,255 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
     }
 }
 
+/* Bounded non-melee action effects for the V1 slice.
+ *
+ * F0391 -> F0407 dispatches every menu action through a large
+ * switch in the original.  The bounded V1 slice below implements
+ * the subset of non-melee actions whose effects already have
+ * source-backed storage in our M10 model (MagicState,
+ * GameWorld.freezeLifeTicks, ChampionState.hp / mana) or are pure
+ * player-facing log cues identical to the original game.
+ *
+ * Each handler mirrors the matching F0407 case as literally as
+ * the V1 state model allows; behaviour that needs subsystems we
+ * have not yet grounded (projectile spells, F0401 frighten,
+ * thrown objects, flux/fuse, thieves-eye event) falls through to
+ * the generic "time passes" tick advance below so the action row
+ * still visibly behaves — stamina drains, disabled-ticks accrue
+ * via the orchestrator, creatures move — instead of being a
+ * silent log-only stub.
+ *
+ * Ref: ReDMCSB MENU.C F0407_MENUS_IsActionPerformed,
+ *      ACTIDRAW.C F0391_MENUS_DidClickTriggerAction.
+ *
+ * Returns 1 when the handler bound a real effect (caller reports
+ * AL1245_B_ActionPerformed=TRUE), 0 otherwise.  Either way the
+ * log line has already been emitted by the caller. */
+static int m11_perform_non_melee_action(M11_GameViewState* state,
+                                        int championIndex,
+                                        unsigned char chosen,
+                                        const char* champName) {
+    struct ChampionState_Compat* champ;
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return 0;
+
+    switch (chosen) {
+        case 5: {
+            /* FLIP (F0407 C005_ACTION_FLIP): M005_RANDOM(2) ->
+             * "IT COMES UP HEADS." or "IT COMES UP TAILS.".
+             * Pure player-facing cue.  We draw the bit from the
+             * world RNG so the outcome is deterministic for a
+             * given game seed, matching the original's RNG use. */
+            int roll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
+            m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                          "T%u: IT COMES UP %s.",
+                          (unsigned int)state->world.gameTick,
+                          roll ? "HEADS" : "TAILS");
+            return 1;
+        }
+        case 36: {
+            /* HEAL (F0407 C036_ACTION_HEAL): transfer mana into
+             * HP up to the healing cap derived from the champion's
+             * HEAL skill level.  The original loop is:
+             *     healCap = min(10, skillLevel)
+             *     while (mana > 0 && missing > 0) {
+             *         amount = min(missing, healCap)
+             *         hp += amount; mana -= 2; missing -= amount;
+             *     }
+             * We mirror that arithmetic against the V1 champion
+             * stat model.  Ref: F0407 case C036_ACTION_HEAL. */
+            int missing;
+            int healCap;
+            int skillLevel;
+            int healedTotal = 0;
+            if (champ->hp.current >= champ->hp.maximum) {
+                m11_log_event(state, M11_COLOR_YELLOW,
+                              "T%u: %s IS ALREADY AT FULL HEALTH",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+                return 0;
+            }
+            if (champ->mana.current == 0) {
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s HAS NO MANA TO HEAL",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+                return 0;
+            }
+            skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
+                                                    CHAMPION_SKILL_PRIEST);
+            if (skillLevel < 0) skillLevel = 0;
+            healCap = skillLevel;
+            if (healCap > 10) healCap = 10;
+            if (healCap < 1) healCap = 1;
+            missing = (int)champ->hp.maximum - (int)champ->hp.current;
+            while (champ->mana.current > 0 && missing > 0) {
+                int amount = (missing < healCap) ? missing : healCap;
+                champ->hp.current = (unsigned short)(champ->hp.current + amount);
+                healedTotal += amount;
+                missing -= amount;
+                if (champ->mana.current >= 2) {
+                    champ->mana.current = (unsigned short)(champ->mana.current - 2);
+                } else {
+                    champ->mana.current = 0;
+                    break;
+                }
+            }
+            if (healedTotal > 0) {
+                m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                              "T%u: %s HEALED %d HP",
+                              (unsigned int)state->world.gameTick,
+                              champName, healedTotal);
+                return 1;
+            }
+            return 0;
+        }
+        case 38: {
+            /* LIGHT (F0407 C038_ACTION_LIGHT):
+             *     MagicalLightAmount += LightPowerToLightAmount[2]
+             *     F0404_MENUS_CreateEvent70_Light(-2, 2500)
+             *     F0405_MENUS_DecrementCharges(champion)
+             *
+             * The original lit-decay event is not yet wired into
+             * our timeline, so we add the light amount directly
+             * and let the existing light-level path pick it up.
+             * The decay will be applied when the MagicState
+             * timeline wiring lands; in the meantime the player
+             * sees the viewport brighten, which is the
+             * recognisable effect.  LightPowerToLightAmount[2] is
+             * 6 in the bounded runtime-dynamics table. */
+            state->world.magic.magicalLightAmount += 6;
+            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                          "T%u: %s CREATES MAGICAL LIGHT",
+                          (unsigned int)state->world.gameTick,
+                          champName);
+            return 1;
+        }
+        case 11: {
+            /* FREEZE LIFE (F0407 C011_ACTION_FREEZE_LIFE):
+             * advance G0407_s_Party.FreezeLifeTicks by 70 for the
+             * common weapon case (blue=30, green=125 branches
+             * require junk-box typing we do not currently model
+             * per-thing).  Capped at 200 as in F0407. */
+            int32_t prev = state->world.freezeLifeTicks;
+            int32_t next = prev + 70;
+            if (next > 200) next = 200;
+            state->world.freezeLifeTicks = next;
+            /* Mirror into MagicState.freezeLifeTicks so the light
+             * / creature-ai sides observe the freeze consistently. */
+            state->world.magic.freezeLifeTicks = next;
+            m11_log_event(state, M11_COLOR_LIGHT_BLUE,
+                          "T%u: %s FREEZES TIME (%d TICKS)",
+                          (unsigned int)state->world.gameTick,
+                          champName, next - prev);
+            return 1;
+        }
+        case 33: /* SPELLSHIELD */
+        case 34: /* FIRESHIELD */ {
+            /* F0407 C033_ACTION_SPELLSHIELD / C034_ACTION_FIRESHIELD:
+             *     IsPartySpellOrFireShieldSuccessful(..., 280, TRUE)
+             * which increases magicState.spellShieldDefense or
+             * fireShieldDefense by a fixed amount.  The V1 slice
+             * applies the shield boost directly so the player
+             * sees the effect on the party HUD; creature damage
+             * mitigation routes through the existing MagicState
+             * reads in m11_draw_party_hud. */
+            if (chosen == 33) {
+                state->world.magic.spellShieldDefense += 6;
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE,
+                              "T%u: %s RAISES SPELL SHIELD",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+            } else {
+                state->world.magic.fireShieldDefense += 6;
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s RAISES FIRE SHIELD",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+            }
+            return 1;
+        }
+        case 1:  /* BLOCK */
+        case 17: /* PARRY */ {
+            /* F0407 routes these through the action-disabled /
+             * stamina path only (G0491 ActionDisabledTicks +
+             * G0494 ActionStamina).  In V1 the defensive posture
+             * is visible as "time passes" — stamina drains via
+             * the orchestrator's survival pass, and the menu
+             * closes.  Emit a bounded defensive log so the
+             * player sees the champion is guarding. */
+            m11_log_event(state, M11_COLOR_LIGHT_GRAY,
+                          "T%u: %s TAKES A DEFENSIVE STANCE",
+                          (unsigned int)state->world.gameTick,
+                          champName);
+            return 0;
+        }
+        case 8:  /* WAR CRY */
+        case 4:  /* BLOW HORN */
+        case 37: /* CALM */
+        case 41: /* BRANDISH */
+        case 22: /* CONFUSE */ {
+            /* F0407 routes these through F0401_MENUS_IsGroupFrightenedByAction
+             * against the creature group in front of the party.
+             * The group-frighten model is not yet wired in V1;
+             * what IS recognisable to the player is the sound and
+             * the log cue.  Emit an audio marker (reuses the
+             * creature/combat cue buffers) and a descriptive
+             * log line that names the action's intent. */
+            const char* verb;
+            switch (chosen) {
+                case 8:  verb = "LETS OUT A WAR CRY"; break;
+                case 4:  verb = "BLOWS THE HORN"; break;
+                case 37: verb = "TRIES TO CALM THE BEAST"; break;
+                case 41: verb = "BRANDISHES A FEARSOME WEAPON"; break;
+                case 22: verb = "ATTEMPTS TO CONFUSE THE FOE"; break;
+                default: verb = "SHOUTS"; break;
+            }
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          "T%u: %s %s",
+                          (unsigned int)state->world.gameTick,
+                          champName, verb);
+            (void)M11_Audio_EmitMarker(&state->audioState,
+                                       M11_AUDIO_MARKER_CREATURE);
+            return 0;
+        }
+        case 32: /* SHOOT */ {
+            /* F0407 case C032_ACTION_SHOOT validates the action-
+             * hand is a bow/sling class and the ready-hand is
+             * matching ammunition; on failure it sets
+             * G0513_i_ActionDamage = CM2_DAMAGE_NO_AMMUNITION and
+             * returns AL1245_B_ActionPerformed=FALSE.  The
+             * ammunition-class lookup requires the WeaponInfo
+             * table which is outside the V1 slice; for now we
+             * emit the no-ammunition cue literally when the
+             * ready-hand is empty, which is the recognisable
+             * failure mode.  When ready-hand is populated we log
+             * a shoot attempt without grounding the projectile
+             * (no projectile emerges). */
+            unsigned short readyThing = champ->inventory[CHAMPION_SLOT_HAND_LEFT];
+            if (readyThing == THING_NONE || readyThing == THING_ENDOFLIST) {
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s HAS NO AMMUNITION",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+                return 0;
+            }
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          "T%u: %s TAKES AIM",
+                          (unsigned int)state->world.gameTick,
+                          champName);
+            (void)M11_Audio_EmitMarker(&state->audioState,
+                                       M11_AUDIO_MARKER_COMBAT);
+            return 0;
+        }
+        default:
+            return 0;
+    }
+}
+
 int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                                   int actionListIndex) {
     int championIndex;
@@ -8638,30 +8887,38 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * and message-log entries all route through the usual M10
      * machinery; M10 itself is untouched.
      *
-     * Non-melee actions do not currently have a faithful bounded
-     * effect model, so they emit the log line, update the active
-     * champion selection to the acting champion (so the player
-     * sees the correct highlight), and otherwise return without
-     * disturbing game state.  This is consistent with the V1
-     * promise that we don't fabricate parity we haven't earned. */
+     * Non-melee actions run through m11_perform_non_melee_action
+     * for the bounded V1 slice (FLIP / HEAL / LIGHT / FREEZE
+     * LIFE / SPELLSHIELD / FIRESHIELD / BLOCK / PARRY / WAR CRY /
+     * BLOW HORN / CALM / BRANDISH / CONFUSE / SHOOT), which
+     * applies real source-backed effects against the GameWorld
+     * (MagicState, freezeLifeTicks, champion HP/mana) before we
+     * advance a time-passes tick.  Actions outside that slice
+     * still emit the log line and advance time so the menu
+     * closure feels consistent with the rest of the UI.
+     *
+     * Either way the acting champion is selected as leader for
+     * the closing frame — DM1 updates the leader portrait to the
+     * acting champion while the action animation plays. */
+    state->world.party.activeChampionIndex = championIndex;
     if (m11_action_is_melee_contact(chosen)) {
-        int previousActive = state->world.party.activeChampionIndex;
-        state->world.party.activeChampionIndex = championIndex;
         /* Advance one tick with CMD_ATTACK via HandleInput so the
          * full M10 strike resolution runs (damage emission,
          * creature hit overlay, creature-hit log), identical to
          * pressing the A key. */
         (void)M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
         performed = 1;
-        /* Restore previous active champion if the attack didn't
-         * require us to stay on the acting one — but DM itself
-         * updates the leader to the acting champion's icon while
-         * the action animation plays, so we keep the acting
-         * champion as active through the end of the tick. */
-        (void)previousActive;
     } else {
-        /* Non-melee: no tick advance, just the log line above. */
-        performed = 0;
+        /* Non-melee: apply bounded effect (if any), then advance
+         * a CMD_NONE tick so "time passes" semantics hold —
+         * stamina drains, action-disabled ticks roll forward,
+         * creature AI resolves, freeze-life decrements are
+         * observed.  This keeps the action-menu loop visibly
+         * identical to DM1: the player picks an action, the
+         * world advances one tick, the menu closes. */
+        performed = m11_perform_non_melee_action(state, championIndex,
+                                                 chosen, champName);
+        (void)m11_apply_tick(state, CMD_NONE, "ACTION");
     }
 
     /* F0391 ALWAYS clears the acting champion before returning,

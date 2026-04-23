@@ -5997,6 +5997,80 @@ int main(int argc, char** argv) {
             }
         }
 
+        /* ── INV_GV_326..331: DM1 non-melee action effects
+         * (F0407 bounded slice).
+         *
+         * This pass wires source-backed effects for the
+         * non-projectile subset of F0407:
+         *   - FLIP      (coin toss log cue)
+         *   - HEAL      (HP/mana transfer loop)
+         *   - LIGHT     (MagicalLightAmount bump)
+         *   - FREEZE LIFE (party freeze-life ticks)
+         *   - SPELLSHIELD / FIRESHIELD (defence bumps)
+         *   - BLOCK / PARRY (defensive stance log)
+         *   - WAR CRY / BLOW HORN / CALM / BRANDISH / CONFUSE
+         *     (audio marker + log cue)
+         *   - SHOOT (no-ammunition check for empty ready hand)
+         *
+         * These invariants exercise the effect path we can drive
+         * end-to-end with the empty-hand ActionSet (set 2 =
+         * PUNCH/KICK/WAR CRY): the WAR CRY row.  It exercises
+         * the shared non-melee plumbing (menu close, tick
+         * advance, leader update, audio marker) and the bounded
+         * effect path, which is the most visible "action does
+         * something" change a DM player will recognise.  The
+         * handlers for FLIP/HEAL/LIGHT/FREEZE LIFE fire through
+         * the same m11_perform_non_melee_action dispatch when
+         * the champion's action-hand carries the corresponding
+         * ObjectInfo.ActionSetIndex; their arithmetic is
+         * documented on the handler itself and mirrors F0407
+         * case-by-case.  Cross-checked source-backed names
+         * confirm the handler indexes the canonical action
+         * table. */
+        {
+            int audioBefore;
+            int audioAfter;
+            uint32_t tickBeforeCry;
+            uint32_t tickAfterCry;
+            int leaderAfterCry;
+
+            (void)M11_GameView_SetActingChampion(&menuView, 0);
+            audioBefore = menuView.audioState.playedMarkerCount;
+            tickBeforeCry = menuView.world.gameTick;
+            (void)M11_GameView_TriggerActionRow(&menuView, 2); /* WAR CRY */
+            audioAfter = menuView.audioState.playedMarkerCount;
+            tickAfterCry = menuView.world.gameTick;
+            leaderAfterCry = menuView.world.party.activeChampionIndex;
+
+            probe_record(&tally, "INV_GV_326",
+                         audioAfter > audioBefore,
+                         "non-melee action: WAR CRY emits an audio marker");
+            probe_record(&tally, "INV_GV_327",
+                         tickAfterCry > tickBeforeCry,
+                         "non-melee action: WAR CRY advances a time-passes tick");
+            probe_record(&tally, "INV_GV_328",
+                         leaderAfterCry == 0,
+                         "non-melee action: acting champion becomes party leader");
+
+            /* Source-backed action names verify the handler's
+             * table indexing matches G0490_ac_Graphic560_
+             * ActionNames.  If these drift the effect dispatch
+             * would fire on the wrong action. */
+            probe_record(&tally, "INV_GV_329",
+                         M11_GameView_GetActionName(36) != NULL &&
+                             strcmp(M11_GameView_GetActionName(36), "HEAL") == 0,
+                         "non-melee action: action name 36 is HEAL per G0490 table");
+            probe_record(&tally, "INV_GV_330",
+                         M11_GameView_GetActionName(38) != NULL &&
+                             strcmp(M11_GameView_GetActionName(38), "LIGHT") == 0,
+                         "non-melee action: action name 38 is LIGHT per G0490 table");
+            probe_record(&tally, "INV_GV_331",
+                         M11_GameView_GetActionName(11) != NULL &&
+                             strcmp(M11_GameView_GetActionName(11),
+                                    "FREEZE LIFE") == 0,
+                         "non-melee action: action name 11 is FREEZE LIFE per G0490 table");
+        }
+
         M11_GameView_Shutdown(&menuView);
     }
 
