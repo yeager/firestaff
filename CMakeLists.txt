@@ -106,6 +106,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# V2 initial 4K capture scene (real M11 draw path for offline 4K composition)
+add_executable(firestaff_m11_v2_initial_4k_capture probes/m11/firestaff_m11_v2_initial_4k_capture.c)
+target_link_libraries(firestaff_m11_v2_initial_4k_capture PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_v2_initial_4k_capture PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M11 Audio probe (fallback-safe audio marker pipeline)
 add_executable(firestaff_m11_audio_probe probes/m11/firestaff_m11_audio_probe.c)
 target_link_libraries(firestaff_m11_audio_probe PRIVATE firestaff_m11 firestaff_m10)

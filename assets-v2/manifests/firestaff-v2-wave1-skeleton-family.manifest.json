@@ -1,0 +1,55 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-wave1-skeleton-family",
+  "description": "Bounded first-pass V2 creature family for an initial in-game 4K screenshot path. This pass only covers a skeleton front-view family at three distance scales.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": ["1080p"],
+    "usage": "offline initial in-game render composition"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.creature.skeleton.front-near",
+      "family": "skeleton_family",
+      "role": "first-pass near front-view skeleton for initial 4K in-game renders",
+      "sizes": { "master4k": { "width": 1200, "height": 1200 }, "derived1080p": { "width": 600, "height": 600 } },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
+        "readme": "assets-v2/creatures/wave1/skeleton-family/README.md"
+      },
+      "status": "first-pass",
+      "notes": [
+        "Derived from the existing skeleton creature card art as a bounded first V2 repaint base.",
+        "Used only in the initial 4K offline composition path in this pass.",
+        "Still placeholder relative to a full pose-complete in-engine creature set."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.skeleton.front-mid",
+      "family": "skeleton_family",
+      "role": "first-pass mid-distance front-view skeleton",
+      "sizes": { "master4k": { "width": 860, "height": 860 }, "derived1080p": { "width": 430, "height": 430 } },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
+        "readme": "assets-v2/creatures/wave1/skeleton-family/README.md"
+      },
+      "status": "first-pass",
+      "notes": ["Bounded scale variant for the same initial family."]
+    },
+    {
+      "id": "fs.v2.creature.skeleton.front-far",
+      "family": "skeleton_family",
+      "role": "first-pass far front-view skeleton",
+      "sizes": { "master4k": { "width": 560, "height": 560 }, "derived1080p": { "width": 280, "height": 280 } },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
+        "readme": "assets-v2/creatures/wave1/skeleton-family/README.md"
+      },
+      "status": "first-pass",
+      "notes": ["Bounded scale variant for the same initial family."]
+    }
+  ]
+}

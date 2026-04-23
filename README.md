@@ -166,6 +166,7 @@ Planned direction:
 Current bounded V2 UI slice status:
 - real Wave 1 assets exist for the viewport frame, action area, spell area, status-box family, party HUD cell family, and a first shared four-slot party HUD strip expansion
 - the current engine-side V2 slice remains opt-in behind `FIRESTAFF_V2_VERTICAL_SLICE=1`
+- a first bounded initial in-game 4K capture/composition path now exists; see `assets-v2/ui/wave1/vertical-slice/FIRST_4K_RENDER.md`
 - portraits and a full final HUD typography system are still pending future V2 passes
 
 ### V3, Modern / 3D

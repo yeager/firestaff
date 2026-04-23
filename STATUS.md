@@ -34,6 +34,7 @@ The porting work has moved from pure mapping into a first working layer structur
 
 Bounded V2 note:
 - the opt-in `FIRESTAFF_V2_VERTICAL_SLICE=1` path now includes a first shared four-slot party HUD strip expansion on top of the earlier status-box and party-HUD-cell slice assets; this is a bounded presentation pass only, not a full portrait or typography system
+- a first bounded V2 initial-4K render path now exists via `firestaff_m11_v2_initial_4k_capture` + `tools/render_v2_initial_4k.py`, using the Wave 1 4K UI shells and a first-pass skeleton creature family for an honest offline in-game composition
 
 ### Available now
 - reproducible syntax probes

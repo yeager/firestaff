@@ -1,0 +1,9 @@
+viewport_rect=12,24,196,112
+screen_scale=10
+viewport_frame_origin=0,16
+action_area_origin=224,45
+spell_area_origin=224,90
+party_hud_origin=12,160
+creature_family=skeleton
+creature_type=12
+assets_available=1
