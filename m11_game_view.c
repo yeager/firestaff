@@ -8090,6 +8090,128 @@ static unsigned short m11_get_action_hand_thing(
     return champ->inventory[CHAMPION_SLOT_HAND_LEFT];
 }
 
+/* Source-backed ActionSetIndex lookups extracted from
+ * G0237_as_Graphic559_ObjectInfo (ReDMCSB DUNGLOB.C, 180 entries).
+ *
+ * F0386_MENUS_DrawActionIcon checks:
+ *   if (G0237_as_Graphic559_ObjectInfo[ObjectInfoIndex].ActionSetIndex)
+ *     -> blit the object icon from GRAPHICS.DAT
+ *   else
+ *     -> fill the 16x16 icon bitmap with C04_COLOR_CYAN (no icon)
+ *
+ * Items with ActionSetIndex==0 (food, most junk, potions, armour,
+ * chests, scrolls) therefore appear as a PLAIN CYAN cell in the
+ * classic DM1 action area — the object icon is intentionally
+ * suppressed.  Only items with a defined ActionSet (weapons,
+ * shields, bombs with combat actions, magical boxes, rope, coins,
+ * magical rings) get their icon drawn.
+ *
+ * Without this gating, our V1 renderer previously drew any item's
+ * sprite into the cell, which caused e.g. bread, bones, and keys
+ * to show where DM1 would show an empty cyan cell.  This table
+ * restores the authentic F0386 behaviour, matching the source
+ * exactly.  Table is indexed by (thing-type, subtype) via
+ * m11_action_set_index_for_thing().
+ *
+ * Ref: ReDMCSB DUNGLOB.C G0237_as_Graphic559_ObjectInfo[180] and
+ *      MENUS.C F0386_MENUS_DrawActionIcon. */
+static const unsigned char M11_ACTION_SET_INDEX_POTION[20] = {
+    /* idx 2..21 in ObjectInfo: Mon, Um, Des, Ven, Sar, Zo, Ros, Ku,
+     * Dane, Neta, Bro, Ma, Ya, Ee, Vi, Water, Kath, Pew, Ra, Ful.
+     * Only Ven (subtype 3) and Ful (subtype 19) have ActionSet 42. */
+     0, 0, 0, 42, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 42
+};
+static const unsigned char M11_ACTION_SET_INDEX_WEAPON[46] = {
+    /* idx 23..68 in ObjectInfo: Eye Of Time..Firestaff Complete.
+     * Verbatim ActionSetIndex column from G0237_as_Graphic559_ObjectInfo. */
+    43,  7,  5,  6,  8,  9, 10, 11, 12, 13,
+    13, 14, 15, 15, 16, 17, 18, 19, 20, 21,
+    22, 22, 23, 24, 24, 27, 27, 26, 26, 27,
+    42, 40, 42,  5,  5, 28, 29, 30, 31, 32,
+    33,  5, 35, 36, 27,  1
+};
+static const unsigned char M11_ACTION_SET_INDEX_ARMOUR[58] = {
+    /* idx 69..126 in ObjectInfo.  Mostly 0; only shield-class armour
+     * entries (Buckler..Shield of Darc) have ActionSet 41 (BLOCK). */
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0, 41, 41,
+    41, 41,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0, 41,  0,  0,  0,  0, 41,  0,  0,
+     0,  0, 41,  0,  0,  0,  0,  0
+};
+static const unsigned char M11_ACTION_SET_INDEX_JUNK[53] = {
+    /* idx 127..179 in ObjectInfo: Compass, Water, Jewel Symal...
+     * Non-zero entries: Copper/Silver/Gold Coin (ActionSet 37),
+     * Magical Box Blue/Green (38), Rope (39). */
+     0,  0,  0,  0,  0,  0, 37, 37, 37,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0, 38, 38,  0, 39,  0,  0,  0,  0,
+     0,  0,  0
+};
+
+/* Resolve the F0386-relevant ActionSetIndex for a thing held in an
+ * action hand.  Returns 0 for items DM1 paints as a plain cyan icon
+ * cell (ActionSetIndex==0), non-zero for items whose icon DM1 blits
+ * into the cell.  thing=THING_NONE/ENDOFLIST returns 0 (empty hand
+ * also paints cyan-only in our pipeline; a proper
+ * C201_ICON_ACTION_ICON_EMPTY_HAND glyph requires wiring graphic
+ * C042_GRAPHIC_OBJECT_ICONS_000_TO_031, which is intentionally
+ * out-of-scope for this bounded pass). */
+static unsigned int m11_action_set_index_for_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingId) {
+    int thingType, thingIndex, subtype;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) return 0;
+    thingType  = THING_GET_TYPE(thingId);
+    thingIndex = THING_GET_INDEX(thingId);
+    switch (thingType) {
+        case THING_TYPE_SCROLL:
+            /* ObjectInfo index 0: Scroll, ActionSetIndex=0. */
+            return 0;
+        case THING_TYPE_CONTAINER:
+            /* ObjectInfo idx 1..: Chest, all ActionSetIndex=0. */
+            return 0;
+        case THING_TYPE_POTION:
+            if (!things->potions || thingIndex < 0 ||
+                thingIndex >= things->potionCount) return 0;
+            subtype = things->potions[thingIndex].type;
+            if (subtype < 0 || subtype >= (int)(sizeof(M11_ACTION_SET_INDEX_POTION) /
+                                                sizeof(M11_ACTION_SET_INDEX_POTION[0])))
+                return 0;
+            return M11_ACTION_SET_INDEX_POTION[subtype];
+        case THING_TYPE_WEAPON:
+            if (!things->weapons || thingIndex < 0 ||
+                thingIndex >= things->weaponCount) return 0;
+            subtype = things->weapons[thingIndex].type;
+            if (subtype < 0 || subtype >= (int)(sizeof(M11_ACTION_SET_INDEX_WEAPON) /
+                                                sizeof(M11_ACTION_SET_INDEX_WEAPON[0])))
+                return 0;
+            return M11_ACTION_SET_INDEX_WEAPON[subtype];
+        case THING_TYPE_ARMOUR:
+            if (!things->armours || thingIndex < 0 ||
+                thingIndex >= things->armourCount) return 0;
+            subtype = things->armours[thingIndex].type;
+            if (subtype < 0 || subtype >= (int)(sizeof(M11_ACTION_SET_INDEX_ARMOUR) /
+                                                sizeof(M11_ACTION_SET_INDEX_ARMOUR[0])))
+                return 0;
+            return M11_ACTION_SET_INDEX_ARMOUR[subtype];
+        case THING_TYPE_JUNK:
+            if (!things->junks || thingIndex < 0 ||
+                thingIndex >= things->junkCount) return 0;
+            subtype = things->junks[thingIndex].type;
+            if (subtype < 0 || subtype >= (int)(sizeof(M11_ACTION_SET_INDEX_JUNK) /
+                                                sizeof(M11_ACTION_SET_INDEX_JUNK[0])))
+                return 0;
+            return M11_ACTION_SET_INDEX_JUNK[subtype];
+        default:
+            return 0;
+    }
+}
+
 /* Draw the four DM1 action-hand icon cells across the right column,
  * matching F0386_MENUS_DrawActionIcon for every present champion.
  * Returns the number of cells drawn.
@@ -8159,18 +8281,30 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         handThing = m11_get_action_hand_thing(champ);
         if (handThing != THING_NONE && handThing != THING_ENDOFLIST &&
             state->assetsAvailable && state->world.things) {
-            unsigned int gfxIdx = m11_inventory_thing_sprite_index(
+            /* F0386 branch: only objects with a non-zero
+             * ActionSetIndex get an icon blitted; everything else
+             * (food, plain potions, armour, keys, chests, scrolls,
+             * most junk) stays on the plain cyan icon backdrop.
+             * This matches ReDMCSB MENUS.C F0386_MENUS_DrawActionIcon
+             * exactly: when ActionSetIndex==0 the code fills the
+             * icon bitmap with C04_COLOR_CYAN and jumps past
+             * F0036_OBJECT_ExtractIconFromBitmap (no icon blit). */
+            unsigned int actionSet = m11_action_set_index_for_thing(
                 state->world.things, handThing);
-            if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
-                const M11_AssetSlot* spr = M11_AssetLoader_Load(
-                    (M11_AssetLoader*)&state->assetLoader, gfxIdx);
-                if (spr && spr->width > 0 && spr->height > 0) {
-                    M11_AssetLoader_BlitScaled(spr,
-                        framebuffer, framebufferWidth, framebufferHeight,
-                        innerX, M11_DM_ACTION_ICON_INNER_Y,
-                        M11_DM_ACTION_ICON_INNER_W,
-                        M11_DM_ACTION_ICON_INNER_H, 0);
-                    drewSprite = 1;
+            if (actionSet != 0) {
+                unsigned int gfxIdx = m11_inventory_thing_sprite_index(
+                    state->world.things, handThing);
+                if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
+                    const M11_AssetSlot* spr = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader, gfxIdx);
+                    if (spr && spr->width > 0 && spr->height > 0) {
+                        M11_AssetLoader_BlitScaled(spr,
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            innerX, M11_DM_ACTION_ICON_INNER_Y,
+                            M11_DM_ACTION_ICON_INNER_W,
+                            M11_DM_ACTION_ICON_INNER_H, 0);
+                        drewSprite = 1;
+                    }
                 }
             }
         }

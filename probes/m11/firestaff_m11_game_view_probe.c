@@ -5646,6 +5646,51 @@ int main(int argc, char** argv) {
                          "action-hand icon cells: rightmost cell ends at x=318 (in-bounds)");
         }
 
+        /* INV_GV_304: F0386_MENUS_DrawActionIcon ActionSetIndex gate.
+         * Give the alive champion in slot 0 a junk thing with
+         * subtype 0 (Compass) in its action hand.  ObjectInfo entry
+         * 127 (Compass) has ActionSetIndex=0, so DM1 paints NO icon
+         * and the inner cell stays fully cyan (256 cyan pixels in
+         * the 16x16 inner box).  This guards against regression
+         * into the pre-change behaviour where any thingId blitted
+         * its sprite unconditionally. */
+        {
+            struct DungeonThings_Compat localThings;
+            struct DungeonJunk_Compat junk;
+            unsigned char fb2[320 * 200];
+            int x, y;
+            int cyanInner0 = 0;
+            int cellX0 = 0 * 22 + 233;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&junk, 0, sizeof(junk));
+            /* Junk subtype 0 = Compass -> ObjectInfo idx 127,
+             * ActionSetIndex = 0.  Whatever junkCount we declare,
+             * index 0 is valid. */
+            junk.type = 0;
+            localThings.junks = &junk;
+            localThings.junkCount = 1;
+            iconView.world.things = &localThings;
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] =
+                (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+            memset(fb2, 0, sizeof(fb2));
+            M11_GameView_Draw(&iconView, fb2, 320, 200);
+            for (y = 95; y < 111; ++y) {
+                for (x = cellX0 + 2; x < cellX0 + 18; ++x) {
+                    if ((fb2[y * 320 + x] & 0x0F) == 3) ++cyanInner0;
+                }
+            }
+            probe_record(&tally, "INV_GV_304",
+                         iconView.assetsAvailable ? (cyanInner0 == 256) : 1,
+                         "action-hand icon cells: ActionSetIndex==0 item "
+                         "(Compass) leaves inner cell fully cyan");
+            /* Restore inventory/things so the screenshot artifact
+             * still reflects the baseline icon scene. */
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+            iconView.world.things = NULL;
+        }
+
         /* Save a screenshot artifact showing the populated right
          * column so the visual improvement is reproducible. */
         {
