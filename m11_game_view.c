@@ -8027,6 +8027,159 @@ static int m11_blit_panel_asset_native(const M11_GameViewState* state,
     return 1;
 }
 
+/* ---------------------------------------------------------------
+ * DM1 action-hand icon cells (F0386_MENUS_DrawActionIcon).
+ *
+ * In the classic DM1 idle state (G509_B_ActionAreaContainsIcons = TRUE,
+ * no champion is "acting"), the action area is cleared to black and
+ * each living party champion's action-hand object is drawn as a
+ * 16×16 icon inside a cyan-filled cell.  The cell geometry from
+ * ReDMCSB MENUS.C F0386_MENUS_DrawActionIcon:
+ *
+ *   L1184_s_Box.X1 = (championIndex * 22) + 233;
+ *   L1184_s_Box.X2 = X1 + 19;      -> cell is 20 wide (X1..X2 inclusive)
+ *   L1184_s_Box.Y1 = 86;
+ *   L1184_s_Box.Y2 = 120;          -> cell is 35 tall (Y1..Y2 inclusive)
+ *   FillBox cell, C04_COLOR_CYAN          (cyan if alive, black if dead)
+ *   Icon inner box X1+2, Y1=95  –  X2-2, Y2=110    -> 16×16 icon inset
+ *   Blit 16×16 action-hand object icon into inner box
+ *
+ * The four cells span x=233..321 (overflowing the 224..311 action-area
+ * frame on the right by 7 px, which is authentic DM1 behaviour on the
+ * 320-wide logical screen — the rightmost cell hugs the right edge of
+ * the screen).  Vertically the cells cover y=86..120, which straddles
+ * the bottom rows of the action-area frame (y=86..89), the whole
+ * spell-area frame (y=90..114), and spills slightly below it
+ * (y=115..120).  DM1 draws over the frames in the same way: icon
+ * mode fills the action area black first (effectively hiding the
+ * frame) and then paints the cyan icon cells.  We keep the
+ * authentic ceec03b frame blits in place as the static right-column
+ * chrome, and paint the icon cells on top, matching DM1's
+ * frame-then-icons stacking order as observed in live
+ * screenshots of the idle action area.
+ *
+ * Ref: ReDMCSB SOURCE/ENGINE/MENUS.C F0386_MENUS_DrawActionIcon,
+ *      F0387_MENUS_DrawActionArea (icon-mode branch).
+ * --------------------------------------------------------------- */
+#define M11_DM_ACTION_ICON_CELL_Y      86
+#define M11_DM_ACTION_ICON_CELL_H      35   /* Y1..Y2 inclusive = 120-86+1 */
+#define M11_DM_ACTION_ICON_CELL_W      20   /* X1..X2 inclusive = 19 + 1  */
+#define M11_DM_ACTION_ICON_CELL_STEP   22
+#define M11_DM_ACTION_ICON_CELL_X0    233
+#define M11_DM_ACTION_ICON_INNER_X_OFF  2
+#define M11_DM_ACTION_ICON_INNER_Y     95
+#define M11_DM_ACTION_ICON_INNER_W     16
+#define M11_DM_ACTION_ICON_INNER_H     16
+
+/* Which inventory slot a champion is currently treating as the
+ * action hand.  ReDMCSB stores this in G407.Champions[i].Slots[
+ * C01_SLOT_ACTION_HAND], with the MASK0x8000_ACTION_HAND bit of
+ * Attributes selecting which physical hand maps to it.  Our compat
+ * layer does not yet mirror that bit, so fall back to the DM1
+ * default for a fresh party: right hand first, then left hand. */
+static unsigned short m11_get_action_hand_thing(
+    const struct ChampionState_Compat* champ) {
+    unsigned short t;
+    if (!champ) return THING_NONE;
+    /* Prefer the CHAMPION_SLOT_ACTION_HAND alias if populated. */
+    t = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
+    if (t != THING_NONE && t != THING_ENDOFLIST) return t;
+    /* DM1 default acting hand is the right hand. */
+    t = champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
+    if (t != THING_NONE && t != THING_ENDOFLIST) return t;
+    return champ->inventory[CHAMPION_SLOT_HAND_LEFT];
+}
+
+/* Draw the four DM1 action-hand icon cells across the right column,
+ * matching F0386_MENUS_DrawActionIcon for every present champion.
+ * Returns the number of cells drawn.
+ *
+ * Dead champions get a plain black cell (DM1: FillBox BLACK, return).
+ * Living champions get a cyan-filled cell; the inner 16×16 icon box
+ * is filled cyan as the icon backdrop, then the action-hand item
+ * sprite is blitted scaled to 16×16 when a GRAPHICS.DAT sprite is
+ * available.  Empty hands keep the plain cyan backdrop (DM1 draws
+ * C201_ICON_ACTION_ICON_EMPTY_HAND, which we approximate with the
+ * cyan backdrop only when no mapped sprite is available; this keeps
+ * the geometry authentic while staying within the bounded slice).
+ */
+static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight) {
+    int drawn = 0;
+    int slot;
+    if (!state) return 0;
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        int cellX;
+        int isDead;
+        int innerX;
+        int drewSprite = 0;
+        const struct ChampionState_Compat* champ;
+        unsigned short handThing;
+
+        if (slot >= state->world.party.championCount) break;
+        champ = &state->world.party.champions[slot];
+        if (!champ->present) continue;
+
+        cellX = M11_DM_ACTION_ICON_CELL_X0 + slot * M11_DM_ACTION_ICON_CELL_STEP;
+        isDead = (champ->hp.current == 0);
+
+        if (isDead) {
+            /* DM1: FillBox BLACK then return — no icon for dead. */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          cellX, M11_DM_ACTION_ICON_CELL_Y,
+                          M11_DM_ACTION_ICON_CELL_W,
+                          M11_DM_ACTION_ICON_CELL_H,
+                          M11_COLOR_BLACK);
+            ++drawn;
+            continue;
+        }
+
+        /* Living champion: cyan cell backdrop. */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      cellX, M11_DM_ACTION_ICON_CELL_Y,
+                      M11_DM_ACTION_ICON_CELL_W,
+                      M11_DM_ACTION_ICON_CELL_H,
+                      M11_COLOR_CYAN);
+
+        innerX = cellX + M11_DM_ACTION_ICON_INNER_X_OFF;
+
+        /* Inner icon backdrop: DM1 fills the 16×16 bitmap with
+         * C04_COLOR_CYAN when the hand has an object without an
+         * action set (e.g. food) and then blits the icon on top.
+         * We fill the inner box cyan too, so empty hands and
+         * non-weapon items both read as the authentic cyan cell. */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      innerX, M11_DM_ACTION_ICON_INNER_Y,
+                      M11_DM_ACTION_ICON_INNER_W,
+                      M11_DM_ACTION_ICON_INNER_H,
+                      M11_COLOR_CYAN);
+
+        handThing = m11_get_action_hand_thing(champ);
+        if (handThing != THING_NONE && handThing != THING_ENDOFLIST &&
+            state->assetsAvailable && state->world.things) {
+            unsigned int gfxIdx = m11_inventory_thing_sprite_index(
+                state->world.things, handThing);
+            if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
+                const M11_AssetSlot* spr = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader, gfxIdx);
+                if (spr && spr->width > 0 && spr->height > 0) {
+                    M11_AssetLoader_BlitScaled(spr,
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        innerX, M11_DM_ACTION_ICON_INNER_Y,
+                        M11_DM_ACTION_ICON_INNER_W,
+                        M11_DM_ACTION_ICON_INNER_H, 0);
+                    drewSprite = 1;
+                }
+            }
+        }
+        (void)drewSprite;
+        ++drawn;
+    }
+    return drawn;
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -8130,6 +8283,20 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                       statX, statY, line, &g_text_small);
     }
 
+    /* DM1 action-hand icon cells — source-backed V1 fill for the
+     * otherwise-empty bottom of the right column.  Only drawn in the
+     * V1 idle state (authentic frames blitted and debug HUD off),
+     * which matches DM1's G509_B_ActionAreaContainsIcons = TRUE
+     * default.  The cells span x=233..321, y=86..120 which overlaps
+     * the bottom of the action-area frame, all of the spell-area
+     * frame, and a few rows below — authentic DM1 stacking as per
+     * F0386_MENUS_DrawActionIcon / F0387_MENUS_DrawActionArea. */
+    if (drewAuthenticFrames && !state->showDebugHUD) {
+        (void)m11_draw_dm_action_icon_cells(state, framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight);
+    }
+
     if (state->showDebugHUD) {
         /* Debug mode: show I/S/L button labels */
         m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
@@ -8170,11 +8337,13 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
             lightLabel = "DARK";
         }
         /* Draw light bar (max 80px wide, scaled to light level).
-         * When the authentic action+spell graphics are blitted, move
-         * the bar inside the spell-area band (y=104) so it doesn't
-         * paint over the action-area header.  Debug HUD keeps the
-         * legacy y=67 position next to the I/S/L buttons. */
-        int barY = (drewAuthenticFrames && !state->showDebugHUD) ? 104 : 67;
+         * When the authentic action+spell graphics are blitted and
+         * the DM1 action-hand icon cells fill y=86..120, the bar
+         * must sit ABOVE the icon cells.  We place it at y=68 inside
+         * the action-area frame body, just below the HP/ST row at
+         * y=59, so the cyan icon row stays clean.  Debug HUD keeps
+         * the legacy y=67 position next to the I/S/L buttons. */
+        int barY = (drewAuthenticFrames && !state->showDebugHUD) ? 68 : 67;
         int barFillY = barY + 1;
         barW = (lightLevel * 80) / M11_LIGHT_MAX;
         if (barW < 1 && lightLevel > 0) barW = 1;
