@@ -7977,6 +7977,56 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
     }
 }
 
+/* Classic-DM right column geometry (320x200 screen).
+ *
+ *   ZONE_ACTION_AREA = (224, 45, 311, 89)   — 88x45, origin of graphic 10
+ *     (C010_GRAPHIC_MENU_ACTION_AREA, 87x45 in GRAPHICS.DAT).
+ *   ZONE_SPELL_AREA  = (233, 90, 319, 125)  — spell area backdrop below
+ *     action area.  Graphic 9 (C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND,
+ *     87x25) is used when the spell casting UI is active; we reuse it
+ *     here as the structural backdrop strip so the right column
+ *     presents the authentic carved-panel frame rather than empty black
+ *     space above the party HUD.  Reference: ReDMCSB DEFS.H:2216,
+ *     F0387_MENUS_DrawActionArea and F0394_MENUS_SetMagicCasterAndDrawSpellArea.
+ */
+#define M11_DM_ACTION_AREA_X    224
+#define M11_DM_ACTION_AREA_Y     45
+#define M11_DM_ACTION_AREA_W     87
+#define M11_DM_ACTION_AREA_H     45
+#define M11_DM_SPELL_AREA_X     224
+#define M11_DM_SPELL_AREA_Y      90
+#define M11_DM_SPELL_AREA_W      87
+#define M11_DM_SPELL_AREA_H      25
+
+/* Try to blit GRAPHICS.DAT graphic `gfxIdx` at its native size anchored
+ * at (x,y).  Returns 1 on success, 0 if the asset was unavailable or
+ * had unexpected dimensions. */
+static int m11_blit_panel_asset_native(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight,
+                                       unsigned int gfxIdx,
+                                       int expectedW,
+                                       int expectedH,
+                                       int x,
+                                       int y) {
+    const M11_AssetSlot* slot;
+    if (!state || !state->assetsAvailable) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || slot->width <= 0 || slot->height <= 0) {
+        return 0;
+    }
+    if ((int)slot->width != expectedW || (int)slot->height != expectedH) {
+        return 0;
+    }
+    M11_AssetLoader_BlitRegion(slot, 0, 0, expectedW, expectedH,
+                               framebuffer, framebufferWidth, framebufferHeight,
+                               x, y, -1);
+    return 1;
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -7986,17 +8036,56 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     char champion[16];
     const struct ChampionState_Compat* activeChampion = m11_get_active_champion(state);
     unsigned char accent = activeChampion ? M11_COLOR_LIGHT_GREEN : M11_COLOR_LIGHT_CYAN;
+    int drewAuthenticFrames = 0;
 
     if (!state) {
         return;
     }
 
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
-                  M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
-                  M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_LIGHT_CYAN);
+    /* V1 mode: replace the procedural utility-panel backdrop with the
+     * original GRAPHICS.DAT action area (graphic 10, 87x45) and the
+     * spell area backdrop (graphic 9, 87x25) blitted at their
+     * classic-DM screen coordinates.  This gives the right column the
+     * authentic carved frame and avoids the flat-fill + hairline rect
+     * that read as procedural.  Debug HUD keeps the procedural panel
+     * so the ad-hoc I/S/L buttons still have a dark backdrop.
+     *
+     * The combined action+spell strip covers y=45..114, which lines up
+     * with the utility panel's current vertical band (y=28..70) plus
+     * the previously empty space above the party HUD (y=70..146).
+     * Reference: ReDMCSB ACTIDRAW.C / CASTER.C and C011_ZONE_ACTION_AREA /
+     * C013_ZONE_SPELL_AREA in ZONES.H. */
+    if (!state->showDebugHUD) {
+        int drewAction = m11_blit_panel_asset_native(state,
+            framebuffer, framebufferWidth, framebufferHeight,
+            M11_GFX_ACTION_AREA, M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
+            M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y);
+        int drewSpell = m11_blit_panel_asset_native(state,
+            framebuffer, framebufferWidth, framebufferHeight,
+            M11_GFX_SPELL_AREA_BG, M11_DM_SPELL_AREA_W, M11_DM_SPELL_AREA_H,
+            M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y);
+        if (drewAction && drewSpell) {
+            drewAuthenticFrames = 1;
+        } else {
+            /* If only part loaded, clear and fall back to procedural so
+             * we don't leave a half-original frame. */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y,
+                          M11_DM_ACTION_AREA_W,
+                          (M11_DM_SPELL_AREA_Y + M11_DM_SPELL_AREA_H) -
+                              M11_DM_ACTION_AREA_Y,
+                          M11_COLOR_BLACK);
+        }
+    }
+
+    if (!drewAuthenticFrames) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
+                      M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
+                      M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_LIGHT_CYAN);
+    }
 
     m11_get_active_champion_label(state, champion, sizeof(champion));
 
@@ -8008,11 +8097,14 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       250, 34, line, &g_text_small);
     } else if (activeChampion) {
-        /* V1 mode: champion name only, centered in panel, only when
-         * there is a real active champion. "LEADER" placeholder is
-         * hidden in V1 so the screen doesn't read like a tool. */
+        /* V1 mode: champion name only, aligned on top of the action
+         * area frame.  When the authentic graphic is blitted at y=45,
+         * place the name inside the header band (y ~ 49) so it reads
+         * as the action-area title, matching
+         * F0387_MENUS_DrawActionArea's 80,85 name print. */
+        int nameY = drewAuthenticFrames ? 49 : 34;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      222, 34, champion, &g_text_small);
+                      227, nameY, champion, &g_text_small);
     }
 
     line[0] = '\0';
@@ -8032,8 +8124,10 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                  state->lastOutcome[0] != '\0' ? state->lastOutcome : "READY");
     }
     if (line[0] != '\0') {
+        int statY = (drewAuthenticFrames && !state->showDebugHUD) ? 59 : 44;
+        int statX = (drewAuthenticFrames && !state->showDebugHUD) ? 227 : 222;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      222, 44, line, &g_text_small);
+                      statX, statY, line, &g_text_small);
     }
 
     if (state->showDebugHUD) {
@@ -8075,16 +8169,22 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
             lightColor = M11_COLOR_BLACK;
             lightLabel = "DARK";
         }
-        /* Draw light bar (max 80px wide, scaled to light level) */
+        /* Draw light bar (max 80px wide, scaled to light level).
+         * When the authentic action+spell graphics are blitted, move
+         * the bar inside the spell-area band (y=104) so it doesn't
+         * paint over the action-area header.  Debug HUD keeps the
+         * legacy y=67 position next to the I/S/L buttons. */
+        int barY = (drewAuthenticFrames && !state->showDebugHUD) ? 104 : 67;
+        int barFillY = barY + 1;
         barW = (lightLevel * 80) / M11_LIGHT_MAX;
         if (barW < 1 && lightLevel > 0) barW = 1;
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      222, 67, 80, 5, M11_COLOR_DARK_GRAY);
+                      222, barY, 80, 5, M11_COLOR_DARK_GRAY);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      222, 68, 80, 3, M11_COLOR_DARK_GRAY);
+                      222, barFillY, 80, 3, M11_COLOR_DARK_GRAY);
         if (barW > 0) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          222, 68, barW, 3, lightColor);
+                          222, barFillY, barW, 3, lightColor);
         }
         if (state->showDebugHUD) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
