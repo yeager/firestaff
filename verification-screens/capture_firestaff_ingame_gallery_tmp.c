@@ -13,56 +13,54 @@ unsigned char* G2160_puc_Bitmap_Destination;
 #define FB_H 200
 
 /*
- * DM/CSB PC 3.4 VGA palette — authoritative source.
+ * DM/CSB PC 3.4 VGA palette - authoritative source.
  *
  * Mirrors G9010_auc_VgaPaletteAll_Compat in vga_palette_pc34_compat.c,
- * which itself reproduces VIDEODRV.C / ReDMCSB G8149/G8151–G8156 exactly.
- * The previous array here used the IBM VGA 16-color legacy palette (the
- * standard EGA-compatible DAC defaults), which produced a "neon CGA"
- * look on PPM capture: floors read as saturated lime green, reds and
- * blues were mis-toned, and the screenshots did not match what classic
- * DM players recognize.  Using the real DM PC VGA palette gives the
- * muted, earthy, stone-colored look the game is supposed to have.
- *
- * VGA 6-bit → 8-bit: rgb8 = (vga6 << 2) | (vga6 >> 4).
+ * which itself reproduces VIDEODRV.C / ReDMCSB G8149/G8151-G8156 exactly.
+ * The previous array here used the IBM VGA 16-color legacy palette, which
+ * produced a "neon CGA" look on PPM capture: floors read as saturated
+ * lime green, reds/blues were mis-toned, and screenshots did not match
+ * what classic DM players recognize.  Using the real DM PC VGA palette
+ * gives the muted, earthy, stone-colored look the game is supposed to
+ * have.
  */
 static const unsigned char kPalette[6][16][3] = {
-    /* LIGHT0: brightest (title/menu/max brightness viewport) */
+    /* LIGHT0: brightest */
     {
         {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {109,  36,   0},
         {  0, 219, 219}, {146,  73,   0}, {  0, 146,   0}, {  0, 219,   0},
         {255,   0,   0}, {255, 182,   0}, {219, 146, 109}, {255, 255,   0},
         { 73,  73,  73}, {182, 182, 182}, {  0,   0, 255}, {255, 255, 255}
     },
-    /* LIGHT1 — G8152 */
+    /* LIGHT1 - G8152 */
     {
         {  0,   0,   0}, { 73,  73,  73}, {109, 109, 109}, {109,  36,   0},
         {  0, 219, 219}, {146,  36,   0}, {  0, 109,   0}, {  0, 182,   0},
         {219,   0,   0}, {219, 146,   0}, {182, 109,  73}, {255, 219,   0},
         { 36,  36,  36}, {146, 146, 146}, {  0,   0, 219}, {219, 219, 219}
     },
-    /* LIGHT2 — G8153 */
+    /* LIGHT2 - G8153 */
     {
         {  0,   0,   0}, { 36,  36,  36}, { 73,  73,  73}, { 73,  36,   0},
         {  0, 219, 219}, {109,  36,   0}, {  0,  73,   0}, {  0, 146,   0},
         {182,   0,   0}, {182, 109,   0}, {146,  73,  36}, {255, 182,   0},
         {  0,   0,   0}, {109, 109, 109}, {  0,   0, 182}, {182, 182, 182}
     },
-    /* LIGHT3 — G8154 */
+    /* LIGHT3 - G8154 */
     {
         {  0,   0,   0}, {  0,   0,   0}, { 36,  36,  36}, { 36,   0,   0},
         {  0, 219, 219}, { 73,  36,   0}, {  0,  36,   0}, {  0, 109,   0},
         {146,   0,   0}, {146,  73,   0}, {109,  36,   0}, {219, 146,   0},
         {  0,   0,   0}, { 73,  73,  73}, {  0,   0, 146}, {146, 146, 146}
     },
-    /* LIGHT4 — G8155 */
+    /* LIGHT4 - G8155 */
     {
         {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
         {  0, 219, 219}, { 36,   0,   0}, {  0,   0,   0}, {  0,  73,   0},
         {109,   0,   0}, {109,  36,   0}, { 73,   0,   0}, {182, 109,   0},
         {  0,   0,   0}, { 36,  36,  36}, {  0,   0, 109}, {109, 109, 109}
     },
-    /* LIGHT5: near-black — G8156 (residual light on 8 colors) */
+    /* LIGHT5: near-black - G8156 */
     {
         {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
         {  0, 219, 219}, {  0,   0,   0}, {  0,   0,   0}, {  0,  36,   0},
@@ -72,9 +70,7 @@ static const unsigned char kPalette[6][16][3] = {
 };
 
 static const unsigned char* get_rgb(unsigned char idx, unsigned int paletteLevel) {
-    if (paletteLevel >= 6U) {
-        paletteLevel = 0;
-    }
+    if (paletteLevel >= 6U) paletteLevel = 0;
     return kPalette[paletteLevel][idx & 0x0F];
 }
 
@@ -125,47 +121,17 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (!save_game(outDir, "01_ingame_start_latest", &game, paletteLevel)) return 1;
-    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
-    if (!save_game(outDir, "02_ingame_turn_right_latest", &game, paletteLevel)) return 1;
-    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
-    if (!save_game(outDir, "03_ingame_move_forward_latest", &game, paletteLevel)) return 1;
-    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_1);
-    if (!save_game(outDir, "04_ingame_spell_panel_latest", &game, paletteLevel)) return 1;
-    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_CAST);
-    if (!save_game(outDir, "05_ingame_after_cast_latest", &game, paletteLevel)) return 1;
-
-    /* Close spell panel via SPELL_CLEAR, then open the inventory panel.
-     * DM1 starts with no recruited champions, so synthesize one for
-     * the screenshot if needed. */
-    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_CLEAR);
-    if (game.world.party.championCount == 0) {
-        /* Synthesize a test champion for inventory screenshot */
-        struct ChampionState_Compat* c = &game.world.party.champions[0];
-        memset(c, 0, sizeof(*c));
-        c->present = 1;
-        memcpy(c->name, "HALK\0\0\0\0", 8);
-        c->hp.current = 42; c->hp.maximum = 60;
-        c->stamina.current = 35; c->stamina.maximum = 50;
-        c->mana.current = 20; c->mana.maximum = 40;
-        c->food = 80; c->water = 70;
-        c->portraitIndex = 0;
-        /* Give the champion a TORCH in the ready hand (weapon subtype 4) */
-        if (game.world.things && game.world.things->weapons &&
-            game.world.things->weaponCount > 0) {
-            /* Find a weapon thing or create a synthetic thingId */
-            unsigned short weaponThing = (THING_TYPE_WEAPON << 10) | 0;
-            c->inventory[0] = weaponThing; /* HAND_LEFT = slot 0 */
-        }
-        game.world.party.championCount = 1;
-        game.world.party.activeChampionIndex = 0;
-    } else {
-        (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_CYCLE_CHAMPION);
-    }
+    if (!save_game(outDir, "01_ingame_start", &game, paletteLevel)) return 1;
+    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_MAP_TOGGLE);
+    if (!save_game(outDir, "02_ingame_map_overlay", &game, paletteLevel)) return 1;
+    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_MAP_TOGGLE);
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_INVENTORY_TOGGLE);
-    if (!save_game(outDir, "06_ingame_inventory_panel_latest", &game, paletteLevel)) return 1;
+    if (!save_game(outDir, "03_ingame_inventory_overlay", &game, paletteLevel)) return 1;
+    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_INVENTORY_TOGGLE);
+    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_1);
+    if (!save_game(outDir, "04_ingame_spell_panel", &game, paletteLevel)) return 1;
 
     M11_GameView_Shutdown(&game);
-    printf("wrote 6 in-game screenshots to %s\n", outDir);
+    printf("wrote gallery screenshots to %s\n", outDir);
     return 0;
 }

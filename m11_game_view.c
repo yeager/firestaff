@@ -18,22 +18,54 @@
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
 
+/*
+ * M11 in-game palette indices.
+ *
+ * The framebuffer is interpreted by render_sdl_m11.c through the DM PC VGA
+ * palette (vga_palette_pc34_compat.c; source: VIDEODRV.C / ReDMCSB G8149,
+ * G8151–G8156).  That palette is NOT standard CGA/EGA: it is a 16-entry
+ * DAC-programmed palette where the numeric slots carry different roles
+ * than the IBM VGA 16-color legacy palette.
+ *
+ * The enum below was originally authored with CGA/EGA semantics (e.g. 2 =
+ * green, 7 = light gray, 13 = magenta) which, under the DM VGA palette,
+ * produced very wrong in-game colors (index 7 = pure green – the "toxic
+ * green floor" seen in V1 screenshots – index 2 = light gray, index 1 =
+ * mid gray, etc.).
+ *
+ * We fix the palette path at the source by binding each symbolic color
+ * name to the correct DM PC VGA slot, matching VIDEODRV.C:
+ *
+ *   0  Black         1  Gray          2  Light Gray    3  Brown
+ *   4  Cyan          5  Dark Brown    6  Dark Green    7  Green
+ *   8  Red           9  Orange/Gold  10  Tan/Skin     11  Yellow
+ *  12  Dark Gray    13  Silver       14  Blue         15  White
+ *
+ * This preserves M10 semantics (data layer untouched), keeps M11
+ * interaction/rendering intact, and only corrects which palette slot each
+ * existing call site already asked for.  Every existing name keeps its
+ * intended color meaning; only the stored index changes.
+ */
 enum {
-    M11_COLOR_BLACK = 0,
-    M11_COLOR_NAVY = 1,
-    M11_COLOR_GREEN = 2,
-    M11_COLOR_CYAN = 3,
-    M11_COLOR_RED = 4,
-    M11_COLOR_BROWN = 6,
-    M11_COLOR_LIGHT_GRAY = 7,
-    M11_COLOR_DARK_GRAY = 8,
-    M11_COLOR_LIGHT_BLUE = 9,
-    M11_COLOR_LIGHT_GREEN = 10,
-    M11_COLOR_LIGHT_CYAN = 11,
-    M11_COLOR_LIGHT_RED = 12,
-    M11_COLOR_MAGENTA = 13,
-    M11_COLOR_YELLOW = 14,
-    M11_COLOR_WHITE = 15
+    M11_COLOR_BLACK = 0,        /* DM PC VGA slot 0  — Black          */
+    M11_COLOR_NAVY = 14,        /* DM PC VGA slot 14 — Blue           */
+    M11_COLOR_GREEN = 6,        /* DM PC VGA slot 6  — Dark Green     */
+    M11_COLOR_CYAN = 4,         /* DM PC VGA slot 4  — Cyan           */
+    M11_COLOR_RED = 8,          /* DM PC VGA slot 8  — Red            */
+    M11_COLOR_BROWN = 3,        /* DM PC VGA slot 3  — Brown          */
+    M11_COLOR_LIGHT_GRAY = 2,   /* DM PC VGA slot 2  — Light Gray     */
+    M11_COLOR_DARK_GRAY = 12,   /* DM PC VGA slot 12 — Dark Gray      */
+    M11_COLOR_LIGHT_BLUE = 14,  /* DM PC VGA slot 14 — Blue (sole blue)*/
+    M11_COLOR_LIGHT_GREEN = 7,  /* DM PC VGA slot 7  — Green          */
+    M11_COLOR_LIGHT_CYAN = 4,   /* DM PC VGA slot 4  — Cyan (invariant)*/
+    M11_COLOR_LIGHT_RED = 9,    /* DM PC VGA slot 9  — Orange/Gold    */
+    M11_COLOR_MAGENTA = 10,     /* DM PC VGA slot 10 — Tan/Skin       */
+    M11_COLOR_YELLOW = 11,      /* DM PC VGA slot 11 — Yellow         */
+    M11_COLOR_WHITE = 15,       /* DM PC VGA slot 15 — White          */
+    M11_COLOR_GRAY = 1,         /* DM PC VGA slot 1  — Gray           */
+    M11_COLOR_DARK_BROWN = 5,   /* DM PC VGA slot 5  — Dark Brown     */
+    M11_COLOR_ORANGE = 9,       /* DM PC VGA slot 9  — Orange/Gold    */
+    M11_COLOR_SILVER = 13       /* DM PC VGA slot 13 — Silver         */
 };
 
 enum {

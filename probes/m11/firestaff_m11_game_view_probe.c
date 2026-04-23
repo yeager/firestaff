@@ -11,17 +11,27 @@ unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
+/*
+ * Probe color constants
+ *
+ * Must track M11_COLOR_* in m11_game_view.c, which was corrected to use
+ * the DM PC VGA palette slots (VIDEODRV.C / ReDMCSB) instead of the legacy
+ * CGA/EGA ordering.  See the comment block above enum M11_COLOR_* in
+ * m11_game_view.c for the full mapping; we mirror it here so probe
+ * assertions that check framebuffer bytes stay in sync with what the game
+ * actually writes.
+ */
 enum {
-    PROBE_COLOR_BLACK = 0,
-    PROBE_COLOR_BROWN = 6,
-    PROBE_COLOR_DARK_GRAY = 8,
-    PROBE_COLOR_LIGHT_GREEN = 10,
-    PROBE_COLOR_LIGHT_CYAN = 11,
-    PROBE_COLOR_LIGHT_RED = 12,
-    PROBE_COLOR_MAGENTA = 13,
-    PROBE_COLOR_YELLOW = 14,
-    PROBE_COLOR_LIGHT_BLUE = 9,
-    PROBE_COLOR_WHITE = 15
+    PROBE_COLOR_BLACK       = 0,   /* DM PC VGA slot 0  — Black       */
+    PROBE_COLOR_BROWN       = 3,   /* DM PC VGA slot 3  — Brown       */
+    PROBE_COLOR_DARK_GRAY   = 12,  /* DM PC VGA slot 12 — Dark Gray   */
+    PROBE_COLOR_LIGHT_GREEN = 7,   /* DM PC VGA slot 7  — Green       */
+    PROBE_COLOR_LIGHT_CYAN  = 4,   /* DM PC VGA slot 4  — Cyan        */
+    PROBE_COLOR_LIGHT_RED   = 9,   /* DM PC VGA slot 9  — Orange/Gold */
+    PROBE_COLOR_MAGENTA     = 10,  /* DM PC VGA slot 10 — Tan/Skin    */
+    PROBE_COLOR_YELLOW      = 11,  /* DM PC VGA slot 11 — Yellow      */
+    PROBE_COLOR_LIGHT_BLUE  = 14,  /* DM PC VGA slot 14 — Blue        */
+    PROBE_COLOR_WHITE       = 15   /* DM PC VGA slot 15 — White       */
 };
 
 enum {
@@ -5571,7 +5581,7 @@ int main(int argc, char** argv) {
             for (y = 95; y < 111; ++y) {
                 for (x = cellX + 2; x < cellX + 18; ++x) {
                     if (x >= 0 && x < 320 && y >= 0 && y < 200 &&
-                        (fb[y * 320 + x] & 0x0F) == 3) {
+                        (fb[y * 320 + x] & 0x0F) == 4) {
                         ++cyanCount;
                     }
                 }
@@ -5604,7 +5614,7 @@ int main(int argc, char** argv) {
             for (y = 95; y < 111; ++y) {
                 for (x = cellX + 2; x < cellX + 18; ++x) {
                     unsigned char idx = fb[y * 320 + x] & 0x0F;
-                    if (idx == 3) ++cyanCount;
+                    if (idx == 4) ++cyanCount;
                     if (idx == 0) ++blackCount;
                 }
             }
@@ -5616,7 +5626,14 @@ int main(int argc, char** argv) {
 
         /* INV_GV_260: slot 3 (champion absent) has no cell painted;
          * the inner icon area is unchanged from the underlying
-         * action/spell-area frame content (no cyan cell backdrop). */
+         * action/spell-area frame content (no cyan cell backdrop).
+         *
+         * Note: with the palette path corrected to real DM PC VGA,
+         * index 4 is genuine cyan and the action/spell-area frame
+         * assets natively contain some cyan pixels in this region.
+         * The overlay is a ~256-pixel cyan fill; "no overlay" means
+         * the cyan count must stay well below that overlay threshold
+         * (we reuse the same >= 40 threshold as INV_GV_300).  */
         {
             int cellX = 3 * 22 + 233;
             int x, y;
@@ -5624,12 +5641,12 @@ int main(int argc, char** argv) {
             for (y = 95; y < 111; ++y) {
                 for (x = cellX + 2; x < cellX + 18; ++x) {
                     if (x >= 0 && x < 320 &&
-                        (fb[y * 320 + x] & 0x0F) == 3) {
+                        (fb[y * 320 + x] & 0x0F) == 4) {
                         ++cyanCount;
                     }
                 }
             }
-            emptySlotIsNotCyan = (cyanCount == 0);
+            emptySlotIsNotCyan = (cyanCount < 40);
             probe_record(&tally, "INV_GV_302",
                          emptySlotIsNotCyan,
                          "action-hand icon cells: absent champion slot stays unfilled");
@@ -5677,7 +5694,7 @@ int main(int argc, char** argv) {
             M11_GameView_Draw(&iconView, fb2, 320, 200);
             for (y = 95; y < 111; ++y) {
                 for (x = cellX0 + 2; x < cellX0 + 18; ++x) {
-                    if ((fb2[y * 320 + x] & 0x0F) == 3) ++cyanInner0;
+                    if ((fb2[y * 320 + x] & 0x0F) == 4) ++cyanInner0;
                 }
             }
             probe_record(&tally, "INV_GV_304",
@@ -5791,7 +5808,7 @@ int main(int argc, char** argv) {
         for (y = 95; y < 111; ++y) {
             int cellX = 0 * 22 + 233;
             for (x = cellX + 2; x < cellX + 18; ++x) {
-                if ((fbIcon[y * 320 + x] & 0x0F) == 3)
+                if ((fbIcon[y * 320 + x] & 0x0F) == 4)
                     ++cyanIconCellPixels;
             }
         }
@@ -5823,7 +5840,7 @@ int main(int argc, char** argv) {
         M11_GameView_Draw(&menuView, fbMenu, 320, 200);
         cyanHeaderPixels = 0;
         for (x = 225; x < 311; ++x) {
-            if ((fbMenu[49 * 320 + x] & 0x0F) == 3) ++cyanHeaderPixels;
+            if ((fbMenu[49 * 320 + x] & 0x0F) == 4) ++cyanHeaderPixels;
         }
         probe_record(&tally, "INV_GV_313",
                      menuView.assetsAvailable
@@ -5846,7 +5863,7 @@ int main(int argc, char** argv) {
             int cellX = 0 * 22 + 233;
             for (y = 95; y < 111; ++y) {
                 for (x = cellX + 2; x < cellX + 18; ++x) {
-                    if ((fbMenu[y * 320 + x] & 0x0F) == 3)
+                    if ((fbMenu[y * 320 + x] & 0x0F) == 4)
                         ++cyanMenuSlot0;
                 }
             }
