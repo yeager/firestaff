@@ -32,6 +32,9 @@ Product/legal stance update:
 
 The porting work has moved from pure mapping into a first working layer structure, and the active M9 work now has a real beta-facing harness instead of only isolated probes.
 
+Bounded V2 note:
+- the opt-in `FIRESTAFF_V2_VERTICAL_SLICE=1` path now includes a first shared four-slot party HUD strip expansion on top of the earlier status-box and party-HUD-cell slice assets; this is a bounded presentation pass only, not a full portrait or typography system
+
 ### Available now
 - reproducible syntax probes
 - auto-flattening for internall `.C` includes

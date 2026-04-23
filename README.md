@@ -163,6 +163,11 @@ Planned direction:
 - richer 2D assets and UI polish
 - improved readability without losing the underlying game feel
 
+Current bounded V2 UI slice status:
+- real Wave 1 assets exist for the viewport frame, action area, spell area, status-box family, party HUD cell family, and a first shared four-slot party HUD strip expansion
+- the current engine-side V2 slice remains opt-in behind `FIRESTAFF_V2_VERTICAL_SLICE=1`
+- portraits and a full final HUD typography system are still pending future V2 passes
+
 ### V3, Modern / 3D
 A later reinterpretation track.
 

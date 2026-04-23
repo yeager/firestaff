@@ -79,6 +79,16 @@ TARGETS = {
         "png": "fs-v2-slice-party-hud-cell-highlight-overlay.1080p.png",
         "size": (18, 18),
     },
+    "fs.v2.slice.party-hud-four-slot.base": {
+        "symbol": "party_hud_four_slot_base",
+        "png": "fs-v2-slice-party-hud-four-slot-base.1080p.png",
+        "size": (302, 28),
+    },
+    "fs.v2.slice.party-hud-four-slot.active-slot-overlay": {
+        "symbol": "party_hud_four_slot_active_overlay",
+        "png": "fs-v2-slice-party-hud-four-slot-active-slot-overlay.1080p.png",
+        "size": (71, 28),
+    },
 }
 
 

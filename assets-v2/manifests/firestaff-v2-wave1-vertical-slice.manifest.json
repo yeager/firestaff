@@ -1,7 +1,7 @@
 {
   "manifestVersion": "1.0.0",
   "packId": "firestaff-v2-wave1-vertical-slice",
-  "description": "Bounded Firestaff V2 Wave 1 vertical slice for viewport frame, action area, spell area, status-box family, and party HUD cell family.",
+  "description": "Bounded Firestaff V2 Wave 1 vertical slice for viewport frame, action area, spell area, status-box family, party HUD cell family, and a first shared four-slot party HUD expansion.",
   "targetPolicy": {
     "masterResolution": "4k-first",
     "derivedResolutions": ["1080p"],
@@ -358,6 +358,58 @@
       "notes": [
         "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
         "Overlay should improve state readability without reducing item/icon legibility."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.party-hud-four-slot.base",
+      "family": "party_hud_four_slot_family",
+      "role": "shared four-slot party HUD strip that groups the champion row into one bounded module",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived from the DM1 four-champion party row layout using the existing Wave 1 status-box and HUD-cell spacing",
+        "graphicsDatIndices": [7, 8, 33, 34, 35],
+        "originalSize": { "width": 302, "height": 28 }
+      },
+      "sizes": {
+        "master4k": { "width": 3020, "height": 280 },
+        "derived1080p": { "width": 1510, "height": 140 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/party-hud-four-slot/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/party-hud-four-slot/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/party-hud-four-slot-family.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "This bounded expansion adds shared structure behind the four champion slots without committing to portraits or final typography.",
+        "The strip keeps the existing slot payload areas readable while making the party row read as one module."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.party-hud-four-slot.active-slot-overlay",
+      "family": "party_hud_four_slot_family",
+      "role": "warm focus overlay for the active champion inside the four-slot party HUD strip",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived focus-state layer for the bounded four-slot party HUD expansion",
+        "graphicsDatIndices": [7, 8, 33, 34, 35],
+        "originalSize": { "width": 71, "height": 28 }
+      },
+      "sizes": {
+        "master4k": { "width": 710, "height": 280 },
+        "derived1080p": { "width": 355, "height": 140 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/party-hud-four-slot/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/party-hud-four-slot/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/party-hud-four-slot-family.md"
+      },
+      "status": "approved",
+      "notes": [
+        "First-pass real asset now exists as 4K SVG master, 4K PNG master, and 1080p PNG export.",
+        "Used to strengthen active-slot readability inside the shared four-slot strip.",
+        "Intentionally stays warm and restrained rather than introducing a full state system."
       ]
     }
   ]

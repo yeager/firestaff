@@ -10902,6 +10902,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
 
     m11_draw_focus_brackets(framebuffer, framebufferWidth, framebufferHeight,
                             &frames[1], &cells[0][1]);
+
     m11_draw_viewport_feedback_frame(framebuffer, framebufferWidth, framebufferHeight,
                                      state, &cells[0][1]);
     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -11113,8 +11114,15 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                  int framebufferHeight) {
     int slot;
     int activeIndex = -1;
+    int useV2PartyHud = 0;
     if (state) {
         activeIndex = state->world.party.activeChampionIndex;
+        useV2PartyHud = m11_v2_vertical_slice_enabled();
+    }
+    if (useV2PartyHud) {
+        m11_blit_v2_slice_asset(&m11_v2_party_hud_four_slot_base,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                M11_PARTY_PANEL_X, M11_PARTY_PANEL_Y, 1);
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         int x = M11_PARTY_PANEL_X + slot * M11_PARTY_SLOT_STEP;
@@ -11128,16 +11136,15 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             int isDead = (champ->hp.current == 0);
             m11_format_champion_name(champ->name, name, sizeof(name));
 
-            if (m11_v2_vertical_slice_enabled()) {
-                const M11_V2SliceAsset* statusAsset = isDead
-                    ? &m11_v2_status_box_right
-                    : ((slot & 1) ? &m11_v2_status_box_right : &m11_v2_status_box_left);
+            if (useV2PartyHud) {
                 int cellBaseX = x + 47;
                 int cellY = y + 6;
                 int cell;
-                m11_blit_v2_slice_asset(statusAsset,
-                                        framebuffer, framebufferWidth, framebufferHeight,
-                                        x, y, 1);
+                if (slot == activeIndex) {
+                    m11_blit_v2_slice_asset(&m11_v2_party_hud_four_slot_active_overlay,
+                                            framebuffer, framebufferWidth, framebufferHeight,
+                                            x, y, 1);
+                }
                 for (cell = 0; cell < 3; ++cell) {
                     m11_blit_v2_slice_asset(&m11_v2_party_hud_cell_base,
                                             framebuffer, framebufferWidth, framebufferHeight,
@@ -11156,7 +11163,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             /* GRAPHICS.DAT-backed status box frame (67×29).
              * Use graphic 8 (dead) or graphic 7 (normal) as the
              * status box background.  Falls back to procedural. */
-            if (state->assetsAvailable) {
+            if (!useV2PartyHud && state->assetsAvailable) {
                 unsigned int boxGfx = isDead ? M11_GFX_STATUS_BOX_DEAD
                                              : M11_GFX_STATUS_BOX;
                 const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
@@ -11179,7 +11186,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
 
             /* Active champion: double yellow highlight border
              * (ReDMCSB highlights the active champion status box) */
-            if (slot == activeIndex) {
+            if (!useV2PartyHud && slot == activeIndex) {
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                               x + 1, y + 1, 69, 26, M11_COLOR_YELLOW);
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
