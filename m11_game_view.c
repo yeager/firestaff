@@ -1115,6 +1115,46 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
         thing = m11_raw_next_thing(world->things, thing);
     }
 
+    /* V1 projectile-cycle visibility: runtime-only projectiles and
+     * explosions spawned via F0810 / F0821 (action-menu projectile
+     * rows) are not in the dungeon-thing linked list.  The viewport
+     * renderer and side-pane code gate their sprites on
+     * summary.projectiles / summary.explosions, so we fold the
+     * GameWorld runtime lists into the same totals here so the
+     * newly-spawned projectile is drawn at its current cell from
+     * the first tick, and keeps being drawn at the cell it has
+     * travelled to after each F0811 advance.  Matches DM1 where
+     * a thrown arrow / fireball appears on the square it is flying
+     * through for each visible frame of the cast animation.
+     *
+     * Ref: ReDMCSB DUNGEON.C viewport projectile scan walks the
+     * ACTIVE_PROJECTILE list per tick in exactly the same way. */
+    if (world) {
+        int i;
+        for (i = 0; i < world->projectiles.count
+                    && i < PROJECTILE_LIST_CAPACITY; ++i) {
+            const struct ProjectileInstance_Compat* p =
+                &world->projectiles.entries[i];
+            if (p->slotIndex < 0) continue;
+            if (p->mapIndex == mapIndex && p->mapX == mapX
+                    && p->mapY == mapY) {
+                ++summary.projectiles;
+                ++summary.total;
+            }
+        }
+        for (i = 0; i < world->explosions.count
+                    && i < EXPLOSION_LIST_CAPACITY; ++i) {
+            const struct ExplosionInstance_Compat* e =
+                &world->explosions.entries[i];
+            if (e->slotIndex < 0) continue;
+            if (e->mapIndex == mapIndex && e->mapX == mapX
+                    && e->mapY == mapY) {
+                ++summary.explosions;
+                ++summary.total;
+            }
+        }
+    }
+
     if (outSummary) {
         *outSummary = summary;
     }
@@ -3396,6 +3436,11 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
     return 0;
 }
 
+/* Forward declaration: defined later in file, alongside the other
+ * projectile-action helpers.  Drives F0811 for each live projectile
+ * once per orchestrator tick from inside ProcessTickEmissions. */
+static void m11_advance_projectiles_v1(M11_GameViewState* state);
+
 void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     int i;
     if (!state) {
@@ -3515,6 +3560,13 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 break;
         }
     }
+
+    /* V1 projectile cycle: after the M10 orchestrator has advanced
+     * one tick and its emissions have been processed, step each live
+     * projectile via F0811 so the cast visibly travels and detonates
+     * instead of freezing at its spawn cell.  Runs exactly once per
+     * orchestrator tick; no-op when no projectiles are live. */
+    m11_advance_projectiles_v1(state);
 }
 
 void M11_GameView_Init(M11_GameViewState* state) {
@@ -5280,6 +5332,31 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
+    /* Runtime-only projectile fallback.  When the summary reports a
+     * projectile but the things-linked-list has no matching slot
+     * (because the projectile was spawned into world.projectiles via
+     * F0810 rather than written into the dungeon-things chain), pick
+     * the graphic index from the first runtime projectile at this
+     * cell.  Runtime subtypes map to the same 416..438 range via the
+     * low 5 bits of the subtype, matching G0249 ordering.  This is
+     * what actually lets the player see the projectile both when it
+     * first appears and at every tick of its travel. */
+    if (cell.summary.projectiles > 0 && cell.firstProjectileGfxIndex < 0) {
+        int pi;
+        for (pi = 0; pi < state->world.projectiles.count; ++pi) {
+            const struct ProjectileInstance_Compat* rp =
+                &state->world.projectiles.entries[pi];
+            int gfxOff;
+            if (rp->slotIndex < 0) continue;
+            if (rp->mapIndex != state->world.party.mapIndex) continue;
+            if (rp->mapX != mapX || rp->mapY != mapY) continue;
+            gfxOff = rp->projectileSubtype & 0x1F;
+            if (gfxOff > 22) gfxOff = 0;
+            cell.firstProjectileGfxIndex = 416 + gfxOff;
+            break;
+        }
+    }
+
     /* Extract first projectile direction from the runtime projectile list.
      * Match a runtime ProjectileInstance_Compat to this cell's map position
      * and compute the direction relative to party facing.
@@ -5326,6 +5403,24 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
             ++scanSafety;
+        }
+    }
+
+    /* Runtime-only explosion fallback.  An explosion spawned via the
+     * V1 projectile-impact path (F0821_EXPLOSION_Create_Compat) lives
+     * in world.explosions rather than the dungeon thing chain.  Pick
+     * the type from the first runtime explosion at this cell so the
+     * viewport's type-specific burst visual still lands. */
+    if (cell.summary.explosions > 0 && cell.firstExplosionType < 0) {
+        int ei;
+        for (ei = 0; ei < state->world.explosions.count; ++ei) {
+            const struct ExplosionInstance_Compat* re =
+                &state->world.explosions.entries[ei];
+            if (re->slotIndex < 0) continue;
+            if (re->mapIndex != state->world.party.mapIndex) continue;
+            if (re->mapX != mapX || re->mapY != mapY) continue;
+            cell.firstExplosionType = re->explosionType;
+            break;
         }
     }
 
@@ -8691,6 +8786,442 @@ static int m11_action_projectile_impact_attack(const M11_GameViewState* state,
     if (raw < 21)  raw = 21;
     if (raw > 255) raw = 255;
     return raw;
+}
+
+/* ---------------------------------------------------------------
+ * V1 projectile tick advance — drives F0811 per live projectile.
+ *
+ * M10 ships F0811_PROJECTILE_Advance_Compat (mirror of
+ * F0219_PROJECTILE_ProcessEvents48To49) fully implemented and
+ * verified by the M10 projectile probe: cell flip, cross-cell
+ * step, kinetic/energy decay, wall / door / boundary / fluxcage
+ * hit classification, impact-attack computation, explosion spawn
+ * on magical hit, and next-move rescheduling.  The V1 orchestrator
+ * dispatcher (F0887) currently pops TIMELINE_EVENT_PROJECTILE_MOVE
+ * as a no-op — M10 policy forbids editing that dispatch — so the
+ * per-tick advance has to be driven from the V1 game-view layer
+ * itself, which is what this function does.
+ *
+ * Each active projectile is advanced once per game tick as long
+ * as its `scheduledAtTick` has arrived.  The function builds a
+ * CellContentDigest_Compat from the dungeon tile data, party
+ * position and live creature-AI state, calls F0811, then applies
+ * the returned new state back to the slot.  On impact it despawns
+ * the slot via F0813, optionally spawns a source-backed explosion
+ * via F0821, applies damage to any DungeonGroup at the dest via
+ * F0738 for HIT_CREATURE, decrements champion HP for HIT_CHAMPION,
+ * and emits DM1-style log cues so the player sees the cast through
+ * to its recognisable conclusion instead of only the first frame.
+ *
+ * M10 functions are CALLED here, never edited; the M10 orchestrator
+ * dispatch path (F0887) and M10 per-tick behaviour remain untouched.
+ *
+ * Ref: ReDMCSB PROJEXPL.C F0219_PROJECTILE_ProcessEvents48To49
+ *      (per-tick advance), F0220_EXPLOSION_ProcessEvent25 (per-
+ *      tick explosion; v1 explosion-advance is covered by spawning
+ *      the explosion into world.explosions so it is rendered by
+ *      the viewport for one visible burst frame). */
+
+/* Helper: which direction does cell X lie in?  Destination cell on a
+ * cross-cell step is determined by F0811 internally; what we need is
+ * the destination SQUARE (mapX, mapY) adjacent to the source square
+ * in the projectile's direction.  Exact mirror of Fontanel step
+ * table: NORTH=-Y, EAST=+X, SOUTH=+Y, WEST=-X. */
+static void m11_projectile_step(int dir, int* dx, int* dy) {
+    switch (dir & 3) {
+        case 0: *dx = 0;  *dy = -1; break;  /* NORTH */
+        case 1: *dx = +1; *dy =  0; break;  /* EAST  */
+        case 2: *dx = 0;  *dy = +1; break;  /* SOUTH */
+        case 3: *dx = -1; *dy =  0; break;  /* WEST  */
+        default:*dx = 0;  *dy =  0; break;
+    }
+}
+
+/* Build a CellContentDigest_Compat capturing everything F0811
+ * needs to know about the source and destination squares.  Returns
+ * 1 on success, 0 if the source square cannot be sampled (should
+ * never happen for a live projectile).  Populates destIsMapBoundary
+ * on off-map destinations so F0811 classifies them as HIT_WALL. */
+static int m11_build_projectile_digest(
+    const struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* p,
+    int otherProjectileIndex,
+    struct CellContentDigest_Compat* out) {
+    unsigned char sourceSq = 0;
+    unsigned char destSq = 0;
+    int dx = 0, dy = 0;
+    int destX, destY;
+    const struct DungeonMapDesc_Compat* map;
+    int i;
+    if (!world || !p || !out) return 0;
+    if (!world->dungeon || p->mapIndex < 0
+        || p->mapIndex >= (int)world->dungeon->header.mapCount) return 0;
+    map = &world->dungeon->maps[p->mapIndex];
+    if (!m11_get_square_byte(world, p->mapIndex, p->mapX, p->mapY,
+                             &sourceSq)) return 0;
+    m11_projectile_step(p->direction, &dx, &dy);
+    destX = p->mapX + dx;
+    destY = p->mapY + dy;
+
+    memset(out, 0, sizeof(*out));
+    out->sourceMapIndex   = p->mapIndex;
+    out->sourceMapX       = p->mapX;
+    out->sourceMapY       = p->mapY;
+    out->sourceSquareType = (sourceSq >> 5) & 7;
+
+    /* Check for other projectiles on source square (to detect
+     * in-flight collisions when two projectiles converge). */
+    for (i = 0; i < world->projectiles.count; ++i) {
+        const struct ProjectileInstance_Compat* q = &world->projectiles.entries[i];
+        if (i == otherProjectileIndex) continue;
+        if (q->slotIndex < 0) continue;
+        if (q->mapIndex == p->mapIndex && q->mapX == p->mapX
+                && q->mapY == p->mapY) {
+            out->sourceHasOtherProjectile = 1;
+            break;
+        }
+    }
+
+    /* Map boundary check. */
+    if (destX < 0 || destY < 0
+        || destX >= (int)map->width || destY >= (int)map->height) {
+        out->destMapIndex      = p->mapIndex;
+        out->destMapX          = destX;
+        out->destMapY          = destY;
+        out->destIsMapBoundary = 1;
+        out->destSquareType    = PROJECTILE_ELEMENT_WALL;
+        out->destDoorState     = PROJECTILE_DOOR_STATE_NONE;
+        out->destTeleporterNewDirection = -1;
+        return 1;
+    }
+    if (!m11_get_square_byte(world, p->mapIndex, destX, destY, &destSq)) {
+        out->destMapIndex      = p->mapIndex;
+        out->destMapX          = destX;
+        out->destMapY          = destY;
+        out->destIsMapBoundary = 1;
+        out->destSquareType    = PROJECTILE_ELEMENT_WALL;
+        out->destDoorState     = PROJECTILE_DOOR_STATE_NONE;
+        out->destTeleporterNewDirection = -1;
+        return 1;
+    }
+
+    out->destMapIndex  = p->mapIndex;
+    out->destMapX      = destX;
+    out->destMapY      = destY;
+    out->destSquareType = (destSq >> 5) & 7;
+    out->destTeleporterNewDirection = -1;
+
+    /* Door state — DM1 encodes door state in the low bits of the
+     * square attribute byte.  0 = open, 4 = fully closed. */
+    if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
+        int doorAttr = destSq & 0x07;
+        if (doorAttr == 0) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_OPEN;
+        } else if (doorAttr <= 4) {
+            out->destDoorState = doorAttr;  /* CLOSED_ONE_FOURTH..CLOSED_FULL */
+        } else if (doorAttr == 5) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
+            out->destDoorIsDestroyed = 1;
+        } else {
+            out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        }
+        /* Magical projectiles pass through normal doors; v1 leaves
+         * the per-door MASK0x0002 flag unset so F0816 uses its
+         * per-subtype override only. */
+        out->destDoorAllowsProjectilePassThrough = 0;
+    } else {
+        out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    }
+
+    /* Party presence on destination square. */
+    if (world->party.mapIndex == p->mapIndex
+            && world->party.mapX == destX
+            && world->party.mapY == destY) {
+        out->destHasChampion       = 1;
+        out->destPartyDirection    = world->party.direction & 3;
+        /* Party occupies all 4 sub-cells for F0811's cell-mask gate. */
+        out->destChampionCellMask  = 0x0F;
+    }
+
+    /* Creature group on destination square (via AI state slots).  v1
+     * uses cellMask=0x0F so a projectile that enters a creature's
+     * square resolves as HIT_CREATURE regardless of which sub-cell
+     * the creature occupies.  NEEDS DISASSEMBLY REVIEW: per-sub-cell
+     * hit mask from DungeonGroup_Compat.cells; kept full until the
+     * V1 creature-drawing pass grounds sub-cell positioning. */
+    for (i = 0; i < world->creatureAICount
+                && i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i) {
+        const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
+        if (ai->groupMapIndex == p->mapIndex
+                && ai->groupMapX == destX
+                && ai->groupMapY == destY) {
+            const struct CreatureBehaviorProfile_Compat* profile =
+                CREATURE_GetProfile_Compat(ai->creatureType);
+            out->destHasCreatureGroup = 1;
+            out->destCreatureType     = ai->creatureType;
+            out->destCreatureCellMask = 0x0F;
+            out->destCreatureIsNonMaterial = (profile != NULL)
+                && ((profile->attributes
+                     & CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
+            break;
+        }
+    }
+
+    /* Other projectiles on destination square. */
+    for (i = 0; i < world->projectiles.count; ++i) {
+        const struct ProjectileInstance_Compat* q = &world->projectiles.entries[i];
+        if (i == otherProjectileIndex) continue;
+        if (q->slotIndex < 0) continue;
+        if (q->mapIndex == p->mapIndex && q->mapX == destX
+                && q->mapY == destY) {
+            out->destHasOtherProjectile = 1;
+            break;
+        }
+    }
+
+    return 1;
+}
+
+/* Short DM1-style projectile subtype name for log cues. */
+static const char* m11_projectile_subtype_name(int subtype) {
+    switch (subtype) {
+        case PROJECTILE_SUBTYPE_FIREBALL:          return "FIREBALL";
+        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:    return "LIGHTNING BOLT";
+        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL: return "DISPELL";
+        case PROJECTILE_SUBTYPE_POISON_BOLT:       return "POISON BOLT";
+        case PROJECTILE_SUBTYPE_POISON_CLOUD:      return "POISON CLOUD";
+        case PROJECTILE_SUBTYPE_OPEN_DOOR:         return "MAGIC";
+        case PROJECTILE_SUBTYPE_SLIME:             return "SLIME";
+        case PROJECTILE_SUBTYPE_KINETIC_ARROW:     return "MISSILE";
+        default:                                   return "PROJECTILE";
+    }
+}
+
+/* Apply bounded V1 impact side-effects: explosion spawn, creature
+ * damage, champion damage, and DM1-style log cue.  Designed to
+ * touch only data the M10 layer already owns (world.explosions via
+ * F0821, world.things->groups via F0738, party champion HP direct
+ * write) and to NEVER edit M10 code paths.  Returns nothing. */
+static void m11_projectile_apply_impact(
+    M11_GameViewState* state,
+    const struct ProjectileInstance_Compat* p,
+    const struct ProjectileTickResult_Compat* r) {
+    const char* name = m11_projectile_subtype_name(p->projectileSubtype);
+
+    /* Explosion spawn — magical hits on fireball / lightning /
+     * harm-non-material / poison-* subtypes.  F0820 populated
+     * r->outExplosion for us; push it into world.explosions via
+     * F0821_EXPLOSION_Create_Compat so the viewport's
+     * type-specific burst colour renders on the impact cell. */
+    if (r->emittedExplosion) {
+        struct ExplosionCreateInput_Compat eIn;
+        struct TimelineEvent_Compat eFirst;
+        int eSlot = -1;
+        memset(&eIn, 0, sizeof(eIn));
+        eIn.explosionType         = r->outExplosion.explosionType;
+        eIn.attack                = r->outExplosion.attack;
+        eIn.mapIndex              = r->outExplosion.mapIndex;
+        eIn.mapX                  = r->outExplosion.mapX;
+        eIn.mapY                  = r->outExplosion.mapY;
+        eIn.cell                  = r->outExplosion.cell;
+        eIn.centered              = r->outExplosion.centered;
+        eIn.poisonAttack          = r->outExplosion.poisonAttack;
+        eIn.currentTick           = (int)state->world.gameTick;
+        eIn.ownerKind             = r->outExplosion.ownerKind;
+        eIn.ownerIndex            = r->outExplosion.ownerIndex;
+        eIn.creatorProjectileSlot = r->outExplosion.creatorProjectileSlot;
+        (void)F0821_EXPLOSION_Create_Compat(&eIn, &state->world.explosions,
+                                            &eSlot, &eFirst);
+    }
+
+    /* Apply damage on HIT_CREATURE to the DungeonGroup at the impact
+     * cell.  We find the group thing at (destMap, destX, destY), use
+     * F0738_COMBAT_ApplyDamageToGroup_Compat on creature slot 0 with
+     * the impact attack as damage.  DM1's group damage scatters hits
+     * across live sub-cells; v1 settles for slot 0 so projectiles
+     * that reach a creature square visibly chip or kill the creature
+     * rather than vanishing silently.  F0738 is a pure M10 mutator
+     * and is not modified here. */
+    if (r->resultKind == PROJECTILE_RESULT_HIT_CREATURE
+            && r->emittedCombatAction) {
+        unsigned short groupThing = m11_find_group_on_square(
+            &state->world, p->mapIndex,
+            r->newMapX != 0 || r->newMapY != 0 ? r->newMapX : p->mapX,
+            r->newMapX != 0 || r->newMapY != 0 ? r->newMapY : p->mapY);
+        if (groupThing != THING_NONE && groupThing != THING_ENDOFLIST
+                && state->world.things) {
+            int gIdx = THING_GET_INDEX(groupThing);
+            if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
+                struct DungeonGroup_Compat* g = &state->world.things->groups[gIdx];
+                struct CombatResult_Compat res;
+                int outcome = 0;
+                int slotI;
+                memset(&res, 0, sizeof(res));
+                res.damageApplied = r->outAction.rawAttackValue;
+                for (slotI = 0; slotI < 4; ++slotI) {
+                    if (g->health[slotI] > 0) {
+                        F0738_COMBAT_ApplyDamageToGroup_Compat(
+                            &res, g, slotI, &outcome);
+                        break;
+                    }
+                }
+                m11_log_event(state, M11_COLOR_LIGHT_RED,
+                              "T%u: %s HITS %s",
+                              (unsigned int)state->world.gameTick,
+                              name,
+                              m11_creature_name((int)g->creatureType));
+                return;
+            }
+        }
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: %s STRIKES CREATURE",
+                      (unsigned int)state->world.gameTick, name);
+        return;
+    }
+
+    if (r->resultKind == PROJECTILE_RESULT_HIT_CHAMPION
+            && r->emittedCombatAction) {
+        int ci = r->outAction.defenderSlotOrCreatureIndex;
+        if (ci >= 0 && ci < CHAMPION_MAX_PARTY
+                && state->world.party.champions[ci].present) {
+            int hp = (int)state->world.party.champions[ci].hp.current;
+            int dmg = r->outAction.rawAttackValue;
+            if (dmg < 0) dmg = 0;
+            if (dmg > hp) dmg = hp;
+            state->world.party.champions[ci].hp.current =
+                (unsigned short)(hp - dmg);
+            m11_log_event(state, M11_COLOR_LIGHT_RED,
+                          "T%u: %s HITS PARTY FOR %d",
+                          (unsigned int)state->world.gameTick, name, dmg);
+        } else {
+            m11_log_event(state, M11_COLOR_LIGHT_RED,
+                          "T%u: %s HITS PARTY",
+                          (unsigned int)state->world.gameTick, name);
+        }
+        return;
+    }
+
+    switch (r->resultKind) {
+        case PROJECTILE_RESULT_HIT_WALL:
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          "T%u: %s HITS WALL",
+                          (unsigned int)state->world.gameTick, name);
+            break;
+        case PROJECTILE_RESULT_HIT_DOOR:
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          "T%u: %s HITS DOOR",
+                          (unsigned int)state->world.gameTick, name);
+            break;
+        case PROJECTILE_RESULT_HIT_FLUXCAGE:
+            m11_log_event(state, M11_COLOR_MAGENTA,
+                          "T%u: %s ABSORBED BY FLUXCAGE",
+                          (unsigned int)state->world.gameTick, name);
+            break;
+        case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
+            m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                          "T%u: %s COLLIDES IN FLIGHT",
+                          (unsigned int)state->world.gameTick, name);
+            break;
+        case PROJECTILE_RESULT_DESPAWN_ENERGY:
+            m11_log_event(state, M11_COLOR_DARK_GRAY,
+                          "T%u: %s FADES",
+                          (unsigned int)state->world.gameTick, name);
+            break;
+        case PROJECTILE_RESULT_DESPAWN_BOUNDS:
+            m11_log_event(state, M11_COLOR_DARK_GRAY,
+                          "T%u: %s OUT OF BOUNDS",
+                          (unsigned int)state->world.gameTick, name);
+            break;
+        default:
+            break;
+    }
+}
+
+/* Public per-tick advance: iterate live projectiles, drive F0811
+ * once per projectile whose scheduled tick has arrived, apply the
+ * new state or despawn + impact side-effects.  Called from
+ * M11_GameView_ProcessTickEmissions so every orchestrator tick
+ * (movement, attack, rest, action menu) steps active projectiles
+ * through the world exactly once.  Idempotent on empty lists. */
+static void m11_advance_projectiles_v1(M11_GameViewState* state) {
+    int i;
+    uint32_t now;
+    if (!state || !state->active) return;
+    /* No dungeon = no reliable cell-content digest.  This is the
+     * case for probe harnesses that exercise action-menu dispatch
+     * without wiring a full dungeon; for those the correct V1
+     * behaviour is to leave projectile slots undisturbed so the
+     * probe can still verify spawn side-effects.  In real gameplay
+     * the dungeon is always loaded before projectiles can fire. */
+    if (!state->world.dungeon || !state->world.dungeon->tilesLoaded) return;
+    now = state->world.gameTick;
+
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        struct ProjectileInstance_Compat* p = &state->world.projectiles.entries[i];
+        struct ProjectileInstance_Compat newState;
+        struct ProjectileTickResult_Compat result;
+        struct CellContentDigest_Compat digest;
+
+        if (p->slotIndex < 0) continue;
+        if ((uint32_t)p->scheduledAtTick > now) continue;
+
+        if (!m11_build_projectile_digest(&state->world, p, i, &digest)) {
+            /* Can't classify the digest this tick (e.g. transient
+             * dungeon state).  Skip rather than despawn so the slot
+             * stays visible and can be advanced on a later tick. */
+            continue;
+        }
+
+        if (!F0811_PROJECTILE_Advance_Compat(p, &digest, now,
+                                             &state->world.masterRng,
+                                             &newState, &result)) {
+            F0813_PROJECTILE_Despawn_Compat(&state->world.projectiles, i);
+            continue;
+        }
+
+        if (result.despawn) {
+            /* Apply impact side effects (explosion, damage, log cue)
+             * before freeing the slot so the cue references the
+             * right projectile type. */
+            m11_projectile_apply_impact(state, p, &result);
+            F0813_PROJECTILE_Despawn_Compat(&state->world.projectiles, i);
+        } else {
+            /* Commit the flown state.  F0811 fills outNewState with
+             * the updated cell/map/direction/energy; we also advance
+             * scheduledAtTick per F0825 semantics (1 tick on party
+             * map, 3 ticks off-map).  The timeline queue itself is
+             * untouched — M10 policy. */
+            newState.scheduledAtTick = (int)now +
+                ((newState.mapIndex == (int)state->world.partyMapIndex) ? 1 : 3);
+            *p = newState;
+        }
+    }
+}
+
+/* Probe-visible wrapper so game_view_probe.c can drive the advance
+ * deterministically without needing to replay an orchestrator tick. */
+void M11_GameView_AdvanceProjectilesOnce(M11_GameViewState* state) {
+    m11_advance_projectiles_v1(state);
+}
+
+int M11_GameView_CountCellProjectiles(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    M11_SquareThingSummary summary;
+    m11_summarize_square_things(world, mapIndex, mapX, mapY, &summary);
+    return summary.projectiles;
+}
+
+int M11_GameView_CountCellExplosions(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    M11_SquareThingSummary summary;
+    m11_summarize_square_things(world, mapIndex, mapX, mapY, &summary);
+    return summary.explosions;
 }
 
 static int m11_perform_non_melee_action(M11_GameViewState* state,

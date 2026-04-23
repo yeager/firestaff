@@ -454,6 +454,31 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
                                               int championIndex,
                                               int actionIndex);
 
+/* V1 projectile cycle probe hook: drive one tick of the V1
+ * projectile advance over all live projectiles.  Normally invoked
+ * from M11_GameView_ProcessTickEmissions each orchestrator tick;
+ * exposed here so probes can deterministically step projectiles
+ * without replaying the full orchestrator pipeline.  Calls
+ * F0811_PROJECTILE_Advance_Compat per live slot, applies the new
+ * state or despawns on impact (with explosion spawn + damage +
+ * log cue as the bounded V1 slice).  Safe on empty lists. */
+void M11_GameView_AdvanceProjectilesOnce(M11_GameViewState* state);
+
+/* Probe shim for the internal m11_summarize_square_things helper so
+ * probes can verify that runtime-only projectiles / explosions show
+ * up in the viewport cell summary (this is what drives the sprite
+ * being drawn as the projectile travels across cells). */
+int M11_GameView_CountCellProjectiles(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
+int M11_GameView_CountCellExplosions(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 /* ── Creature aspect query API (for probes) ── */
 
 /* Return the coordinate set index (0-10) for a creature type. */

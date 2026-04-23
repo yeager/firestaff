@@ -6282,6 +6282,242 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&menuView);
     }
 
+    /* ================================================================
+     * INV_GV_341..347: V1 projectile travel + detonation
+     *
+     * After the action-menu projectile-spawn path (verified above in
+     * INV_GV_334..340), the remaining classic DM cast-cycle gap was
+     * that the projectile stayed on the caster's cell for the rest of
+     * its lifetime because the V1 layer never actually advanced it.
+     * This block verifies the new V1 per-tick advance (driven from
+     * M11_GameView_ProcessTickEmissions via F0811) actually:
+     *
+     *   - moves the projectile to the adjacent cell in its direction
+     *     after a single tick (cross-cell step per F0811 motion rule);
+     *   - keeps moving on subsequent ticks until it hits something;
+     *   - despawns cleanly on wall impact and emits a log cue;
+     *   - spawns an explosion into world.explosions for magical
+     *     subtypes on impact (so the detonation burst can render);
+     *   - preserves viewport visibility throughout by reflecting
+     *     runtime-only projectiles / explosions in the viewport cell
+     *     summary.
+     *
+     * Test layout: a 5x5 map with a long corridor column running
+     * north from the party cell, a wall at the northern end so the
+     * projectile eventually detonates, everything else wall.
+     * =============================================================== */
+    {
+        M11_GameViewState flightView;
+        struct DungeonDatState_Compat* fDungeon;
+        struct DungeonThings_Compat* fThings;
+        const int mapW = 5;
+        const int mapH = 5;
+        const int fSquareCount = mapW * mapH;
+        int fi;
+        int slot0;
+        int startX, startY, startMap;
+        struct ProjectileCreateInput_Compat pcIn;
+        struct TimelineEvent_Compat pcFirst;
+
+        memset(&flightView, 0, sizeof(flightView));
+        M11_GameView_Init(&flightView);
+        flightView.active = 1;
+
+        fDungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*fDungeon));
+        fThings  = (struct DungeonThings_Compat*)calloc(1, sizeof(*fThings));
+        fDungeon->header.mapCount = 1;
+        fDungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*fDungeon->maps));
+        fDungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(1, sizeof(*fDungeon->tiles));
+        fDungeon->maps[0].width = (unsigned char)mapW;
+        fDungeon->maps[0].height = (unsigned char)mapH;
+        fDungeon->tiles[0].squareCount = fSquareCount;
+        fDungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)fSquareCount, 1);
+        fDungeon->loaded = 1;
+        fDungeon->tilesLoaded = 1;
+
+        fThings->squareFirstThingCount = fSquareCount;
+        fThings->squareFirstThings = (unsigned short*)calloc((size_t)fSquareCount,
+                                                             sizeof(unsigned short));
+        for (fi = 0; fi < fSquareCount; ++fi) {
+            fThings->squareFirstThings[fi] = THING_ENDOFLIST;
+            fDungeon->tiles[0].squareData[fi] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+        }
+        fThings->loaded = 1;
+
+        /* Corridor column at x=2, y=0..4 (including party cell). */
+        for (fi = 0; fi < mapH; ++fi) {
+            fDungeon->tiles[0].squareData[2 * mapH + fi] =
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        }
+
+        flightView.world.dungeon = fDungeon;
+        flightView.world.things  = fThings;
+        flightView.world.party.mapIndex = 0;
+        flightView.world.party.mapX = 2;
+        flightView.world.party.mapY = 4;      /* south end of corridor */
+        flightView.world.party.direction = 0; /* NORTH */
+        flightView.world.party.championCount = 1;
+        flightView.world.party.activeChampionIndex = 0;
+        flightView.world.party.champions[0].present = 1;
+        flightView.world.party.champions[0].hp.current = 100;
+        flightView.world.party.champions[0].hp.maximum = 100;
+        flightView.world.partyMapIndex = 0;
+        flightView.world.gameTick = 100;
+
+        startX   = 2;
+        startY   = 4;
+        startMap = 0;
+
+        /* Spawn a FIREBALL directly via F0810, bypassing the action
+         * menu path to isolate advance-only behaviour. */
+        memset(&pcIn, 0, sizeof(pcIn));
+        pcIn.category           = PROJECTILE_CATEGORY_MAGICAL;
+        pcIn.subtype            = PROJECTILE_SUBTYPE_FIREBALL;
+        pcIn.ownerKind          = PROJECTILE_OWNER_CHAMPION;
+        pcIn.ownerIndex         = 0;
+        pcIn.mapIndex           = 0;
+        pcIn.mapX               = startX;
+        pcIn.mapY               = startY;
+        pcIn.cell               = 0;
+        pcIn.direction          = 0;   /* NORTH */
+        pcIn.kineticEnergy      = 150;
+        pcIn.attack             = 60;
+        pcIn.stepEnergy         = 1;
+        pcIn.currentTick        = (int)flightView.world.gameTick;
+        pcIn.firstMoveGraceFlag = 1;
+        pcIn.attackTypeCode     = 0;
+        slot0 = -1;
+        probe_record(&tally, "INV_GV_341",
+                     F0810_PROJECTILE_Create_Compat(&pcIn,
+                         &flightView.world.projectiles,
+                         &slot0, &pcFirst) == 1
+                         && slot0 >= 0
+                         && flightView.world.projectiles.entries[slot0].mapY
+                            == startY,
+                     "projectile travel: FIREBALL spawns at party cell (startY)");
+
+        /* Single advance should move the projectile one square north
+         * because grace flag is on and (dir==cell) crosses immediately.
+         * F0810 set scheduledAtTick = spawn_tick + 1; bump gameTick so
+         * the advance is due. */
+        flightView.world.gameTick += 1;
+        M11_GameView_AdvanceProjectilesOnce(&flightView);
+        probe_record(&tally, "INV_GV_342",
+                     flightView.world.projectiles.entries[slot0].slotIndex >= 0
+                         && flightView.world.projectiles.entries[slot0].mapY
+                            == startY - 1,
+                     "projectile travel: first advance steps fireball one "
+                     "cell north (mapY = startY - 1)");
+
+        /* After another two advances (one intra-cell flip, one
+         * cross), the projectile should be at mapY == startY - 2. */
+        flightView.world.gameTick += 1;
+        M11_GameView_AdvanceProjectilesOnce(&flightView);
+        flightView.world.gameTick += 1;
+        M11_GameView_AdvanceProjectilesOnce(&flightView);
+        probe_record(&tally, "INV_GV_343",
+                     flightView.world.projectiles.entries[slot0].slotIndex >= 0
+                         && flightView.world.projectiles.entries[slot0].mapY
+                            == startY - 2,
+                     "projectile travel: second cross-cell step reaches "
+                     "mapY = startY - 2");
+
+        /* Runtime projectile must also be visible through the viewport
+         * cell summary, or the player never sees the travel.  Sample
+         * the cell the projectile currently sits on and confirm the
+         * summary reports exactly one projectile there. */
+        {
+            int curY = flightView.world.projectiles.entries[slot0].mapY;
+            int cellProj = M11_GameView_CountCellProjectiles(
+                &flightView.world, 0, 2, curY);
+            probe_record(&tally, "INV_GV_344",
+                         cellProj >= 1,
+                         "projectile travel: runtime-only projectile is "
+                         "reflected in viewport cell summary");
+
+            /* Screenshot artifact: viewport frame with the fireball
+             * travelling one square ahead of the party.  Written
+             * only when PROBE_SCREENSHOT_DIR is set (phase-a + game-
+             * view runners do). */
+            {
+                const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+                if (ssDir && ssDir[0]) {
+                    unsigned char fbFlight[320 * 200];
+                    char ssPath[512];
+                    FILE* ssFile;
+                    memset(fbFlight, 0, sizeof(fbFlight));
+                    M11_GameView_Draw(&flightView, fbFlight, 320, 200);
+                    snprintf(ssPath, sizeof(ssPath),
+                             "%s/21_projectile_in_flight.pgm", ssDir);
+                    ssFile = fopen(ssPath, "wb");
+                    if (ssFile) {
+                        int px;
+                        fprintf(ssFile, "P5\n320 200\n255\n");
+                        for (px = 0; px < 320 * 200; ++px) {
+                            unsigned char gray =
+                                (unsigned char)(fbFlight[px] * 17);
+                            fwrite(&gray, 1, 1, ssFile);
+                        }
+                        fclose(ssFile);
+                    }
+                }
+            }
+        }
+
+        /* Keep advancing until the projectile has exited the corridor
+         * and struck the northern wall, which should despawn the slot
+         * and (for a magical subtype that creates an explosion) push
+         * an entry into world.explosions. */
+        for (fi = 0; fi < 40; ++fi) {
+            if (flightView.world.projectiles.entries[slot0].slotIndex < 0)
+                break;
+            flightView.world.gameTick += 1;
+            M11_GameView_AdvanceProjectilesOnce(&flightView);
+        }
+        probe_record(&tally, "INV_GV_345",
+                     flightView.world.projectiles.entries[slot0].slotIndex < 0,
+                     "projectile detonation: fireball eventually impacts "
+                     "and is removed from world.projectiles");
+        probe_record(&tally, "INV_GV_346",
+                     flightView.world.explosions.count >= 1,
+                     "projectile detonation: magical impact spawns an "
+                     "explosion into world.explosions");
+
+        /* Explosion is at a corridor square and visible via the
+         * summary so the viewport's explosion burst visual renders. */
+        {
+            const struct ExplosionInstance_Compat* e = NULL;
+            int ei;
+            for (ei = 0; ei < flightView.world.explosions.count; ++ei) {
+                if (flightView.world.explosions.entries[ei].slotIndex >= 0) {
+                    e = &flightView.world.explosions.entries[ei];
+                    break;
+                }
+            }
+            if (e) {
+                int cellExp = M11_GameView_CountCellExplosions(
+                    &flightView.world, e->mapIndex, e->mapX, e->mapY);
+                probe_record(&tally, "INV_GV_347",
+                             cellExp >= 1
+                                 && e->explosionType == C000_EXPLOSION_FIREBALL,
+                             "projectile detonation: explosion is fireball "
+                             "type and appears in viewport cell summary");
+            } else {
+                probe_record(&tally, "INV_GV_347", 0,
+                             "projectile detonation: expected fireball "
+                             "explosion slot not found");
+            }
+        }
+
+        free(fDungeon->tiles[0].squareData);
+        free(fDungeon->tiles);
+        free(fDungeon->maps);
+        free(fDungeon);
+        free(fThings->squareFirstThings);
+        free(fThings);
+        M11_GameView_Shutdown(&flightView);
+    }
+
     M11_GameView_Shutdown(&gameView);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
