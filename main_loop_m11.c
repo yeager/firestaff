@@ -751,6 +751,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     menuState.view == M12_MENU_VIEW_MAIN) {
                     launchHandled = 1;
                     if (M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState)) {
+                        /* Keep V1 in-game colors at the original bright base
+                         * palette so launcher palette settings do not leak
+                         * into gameplay rendering. */
+                        (void)M11_Render_SetPaletteLevel(0);
                         idleAccumulatorMs = 0;
                         M11_GameView_Draw(&gameView,
                                           M11_Render_GetFramebuffer(),

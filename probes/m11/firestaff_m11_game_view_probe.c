@@ -2386,6 +2386,7 @@ int main(int argc, char** argv) {
         /* Re-open game view with real dungeon to test asset loading */
         M11_GameViewState assetView;
         M11_GameView_Init(&assetView);
+        assetView.showDebugHUD = 1; /* probes verify all HUD elements */
         (void)M11_GameView_OpenSelectedMenuEntry(&assetView, &menuState);
 
         /* Set a normal light level so existing rendering tests see the

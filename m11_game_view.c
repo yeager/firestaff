@@ -1223,6 +1223,74 @@ static const M11_LogEntry* m11_log_entry_at(const M11_MessageLog* log, int rever
     return &log->entries[idx];
 }
 
+/* Format a player-facing V1 message from a raw log line.
+ * Strips developer-like tick prefixes ("T123: ") while preserving the
+ * underlying event wording. */
+static void m11_format_v1_message(const char* raw, char* out, size_t outSize) {
+    const char* src;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    if (!raw || raw[0] == '\0') {
+        return;
+    }
+    src = raw;
+    if (src[0] == 'T') {
+        size_t i = 1;
+        while (src[i] >= '0' && src[i] <= '9') {
+            ++i;
+        }
+        if (i > 1 && src[i] == ':') {
+            ++i;
+            while (src[i] == ' ') {
+                ++i;
+            }
+            src += i;
+        }
+    }
+    snprintf(out, outSize, "%s", src);
+}
+
+/* V1 whitelist: only surface genuinely player-facing events as the
+ * single bottom-screen message. Debug-like narration (LOADED, PARTY
+ * MOVED, SPELL PANEL OPENED, RUNE <x> (<n>), DOOR STATE CHANGED, etc.)
+ * is suppressed in V1 so the screen reads like classic DM rather than
+ * an event log. Matching is done on the raw log text AFTER tick-prefix
+ * stripping. */
+static int m11_v1_message_is_player_facing(const char* stripped) {
+    static const char* const kSuppress[] = {
+        "DUNGEON MASTER LOADED",
+        "CHAOS STRIKES BACK LOADED",
+        "DUNGEON MASTER II LOADED",
+        "PARTY MOVED TO",
+        "PARTY MOVED",
+        "SPELL PANEL OPENED",
+        "SPELL CLEARED",
+        "RUNE ",                 /* "RUNE LO (96)" */
+        "DOOR STATE CHANGED",
+        "IDLE TICK",
+        "GAME VIEW NOT STARTED",
+        "GAME DATA LOADED",
+        "FACING UPDATED",
+        "TURN IGNORED",
+        "MOVEMENT BLOCKED",
+        "STRIKE COMMITTED",
+        "SPELL COMMITTED",
+        NULL
+    };
+    int i;
+    if (!stripped || stripped[0] == '\0') {
+        return 0;
+    }
+    for (i = 0; kSuppress[i] != NULL; ++i) {
+        if (strstr(stripped, kSuppress[i]) != NULL) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void m11_log_event(M11_GameViewState* state, unsigned char color, const char* fmt, ...) {
     char buf[M11_MESSAGE_MAX_LENGTH];
     va_list ap;
@@ -7683,8 +7751,9 @@ static void m11_draw_control_strip(unsigned char* framebuffer,
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             86, 167, 12, 10, "", -1,
                             accent, M11_COLOR_BLACK);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  88, 169, "A", &g_text_small);
+    /* V1: avoid explicit hotkey text on controls; draw a small action pip. */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  90, 170, 4, 4, M11_COLOR_YELLOW);
 }
 
 static const char* m11_focus_badge_label(const M11_ViewportCell* cell) {
@@ -7938,22 +8007,34 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         snprintf(line, sizeof(line), "%s %s", m11_source_name(state->sourceKind), champion);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       250, 34, line, &g_text_small);
-    } else {
-        /* V1 mode: champion name only, centered in panel */
+    } else if (activeChampion) {
+        /* V1 mode: champion name only, centered in panel, only when
+         * there is a real active champion. "LEADER" placeholder is
+         * hidden in V1 so the screen doesn't read like a tool. */
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       222, 34, champion, &g_text_small);
     }
 
+    line[0] = '\0';
     if (activeChampion) {
-        snprintf(line, sizeof(line), "L%d HP%u ST%u",
-                 mapDesc ? (int)mapDesc->level : 0,
-                 (unsigned int)activeChampion->hp.current,
-                 (unsigned int)activeChampion->stamina.current);
-    } else {
-        snprintf(line, sizeof(line), "%s", state->lastOutcome[0] != '\0' ? state->lastOutcome : "READY");
+        if (state->showDebugHUD) {
+            snprintf(line, sizeof(line), "L%d HP%u ST%u",
+                     mapDesc ? (int)mapDesc->level : 0,
+                     (unsigned int)activeChampion->hp.current,
+                     (unsigned int)activeChampion->stamina.current);
+        } else {
+            snprintf(line, sizeof(line), "HP%u ST%u",
+                     (unsigned int)activeChampion->hp.current,
+                     (unsigned int)activeChampion->stamina.current);
+        }
+    } else if (state->showDebugHUD) {
+        snprintf(line, sizeof(line), "%s",
+                 state->lastOutcome[0] != '\0' ? state->lastOutcome : "READY");
     }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  222, 44, line, &g_text_small);
+    if (line[0] != '\0') {
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      222, 44, line, &g_text_small);
+    }
 
     if (state->showDebugHUD) {
         /* Debug mode: show I/S/L button labels */
@@ -7997,14 +8078,18 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         /* Draw light bar (max 80px wide, scaled to light level) */
         barW = (lightLevel * 80) / M11_LIGHT_MAX;
         if (barW < 1 && lightLevel > 0) barW = 1;
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      222, 67, 80, 5, M11_COLOR_DARK_GRAY);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      222, 68, 80, 3, M11_COLOR_BLACK);
+                      222, 68, 80, 3, M11_COLOR_DARK_GRAY);
         if (barW > 0) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           222, 68, barW, 3, lightColor);
         }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      222, 73, lightLabel, &g_text_small);
+        if (state->showDebugHUD) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          222, 73, lightLabel, &g_text_small);
+        }
     }
 }
 
@@ -8489,16 +8574,40 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
             }
         } else {
-            /* Empty slot: procedural placeholder */
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x, y, 71, 28, M11_COLOR_BLACK);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x, y, 71, 28, M11_COLOR_DARK_GRAY);
-            snprintf(line, sizeof(line), "SLOT %d", slot + 1);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 6, line, &g_text_small);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 16, "EMPTY", &g_text_small);
+            /* Empty slot — classic DM1 behaviour: no prototype
+             * "SLOT N / EMPTY" text. Draw a flat black cell with a
+             * DARK_GRAY hairline border (inner + outer) as a structural
+             * anchor, then, when the status-box background asset is
+             * available, blit it on top to preserve the original panel
+             * geometry. The outer border remains visible around the
+             * asset’s 67×29 footprint on the full 71×28 cell. */
+            m11_fill_rect(framebuffer, framebufferWidth,
+                          framebufferHeight, x, y, 71, 28,
+                          M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth,
+                          framebufferHeight, x, y, 71, 28,
+                          M11_COLOR_DARK_GRAY);
+            m11_draw_rect(framebuffer, framebufferWidth,
+                          framebufferHeight, x + 1, y + 1, 69, 26,
+                          M11_COLOR_DARK_GRAY);
+            if (state->assetsAvailable) {
+                const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    M11_GFX_STATUS_BOX);
+                if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
+                    M11_AssetLoader_BlitRegion(boxAsset,
+                        0, 0, 67, 29,
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        x, y, 0);
+                }
+            }
+            if (state->showDebugHUD) {
+                snprintf(line, sizeof(line), "SLOT %d", slot + 1);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 6, line, &g_text_small);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 16, "EMPTY", &g_text_small);
+            }
         }
     }
 }
@@ -9187,8 +9296,10 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         }
     }
 
-    /* ── Footer — minimal DM-style key hints ── */
-    {
+    /* Footer — key hints are debug-only. The original inventory panel
+     * does not put helper text at the bottom edge; it relies on the
+     * player knowing the controls. In V1 we honour that. */
+    if (state->showDebugHUD) {
         M11_TextStyle footStyle = g_text_small;
         footStyle.color = M11_COLOR_DARK_GRAY;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
@@ -9268,6 +9379,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     int avgFood = 0;
     int avgWater = 0;
     char champion[24];
+    char v1Message[M11_MESSAGE_MAX_LENGTH];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
@@ -9422,15 +9534,27 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                 state, &aheadCell);
     } else {
         /* V1 mode: single contextual message line in the bottom area,
-         * placed where DM1 shows brief status text. */
+         * placed where DM1 shows brief status text. Scan up to the last
+         * few log entries and surface the most recent one that reads
+         * like a genuine player event (combat, pickups, spell feedback,
+         * environment transitions). Debug-style narration is hidden. */
         {
-            const M11_LogEntry* lastMsg = (state->messageLog.count > 0)
-                ? m11_log_entry_at(&state->messageLog, 0) : NULL;
-            if (lastMsg && lastMsg->text[0] != '\0') {
-                M11_TextStyle msgStyle = g_text_small;
-                msgStyle.color = lastMsg->color;
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              16, 149, lastMsg->text, &msgStyle);
+            int scan;
+            int maxScan = state->messageLog.count;
+            if (maxScan > 8) { maxScan = 8; }
+            v1Message[0] = '\0';
+            for (scan = 0; scan < maxScan; ++scan) {
+                const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, scan);
+                if (!entry || entry->text[0] == '\0') { continue; }
+                m11_format_v1_message(entry->text, v1Message, sizeof(v1Message));
+                if (m11_v1_message_is_player_facing(v1Message)) {
+                    M11_TextStyle msgStyle = g_text_small;
+                    msgStyle.color = entry->color;
+                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                  16, 149, v1Message, &msgStyle);
+                    break;
+                }
+                v1Message[0] = '\0';
             }
         }
     }
