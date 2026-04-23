@@ -399,6 +399,29 @@ int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
  * G0490_ac_Graphic560_ActionNames (ReDMCSB MENU.C). */
 const char* M11_GameView_GetActionName(unsigned char actionIndex);
 
+/* Trigger the DM1 action-row click pathway for the currently acting
+ * champion.  Mirrors F0391_MENUS_DidClickTriggerAction for the
+ * bounded V1 slice we currently model:
+ *
+ *   - Returns 0 immediately when no champion is acting or when the
+ *     chosen row resolves to C0xFF_ACTION_NONE (DM1 aborts without
+ *     clearing the menu so the player can pick a valid row).
+ *   - Emits a player-facing "CHAMPION: ACTION" log line in cyan.
+ *   - For melee-contact actions (CHOP, PUNCH, KICK, STAB, SWING,
+ *     HIT, THRUST, SLASH, BASH, JAB, STUN, HACK, BERZERK, CLEAVE,
+ *     MELEE) advances one CMD_ATTACK tick through the existing M10
+ *     orchestrator, which resolves damage, creature hit overlays
+ *     and combat emissions exactly as the keyboard strike path.
+ *   - ALWAYS clears the acting champion at the end (F0391 /
+ *     F0388_MENUS_ClearActingChampion semantics), closing the
+ *     action menu and restoring idle icon-cell presentation.
+ *
+ * actionListIndex must be 0..2.  Returns 1 when a tick-level
+ * action was committed, 0 otherwise (including the NONE-row early
+ * exit).  Ref: ReDMCSB MENU.C F0391, F0407; ACTIDRAW.C F0387. */
+int M11_GameView_TriggerActionRow(M11_GameViewState* state,
+                                  int actionListIndex);
+
 /* ── Creature aspect query API (for probes) ── */
 
 /* Return the coordinate set index (0-10) for a creature type. */

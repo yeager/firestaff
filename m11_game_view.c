@@ -82,7 +82,18 @@ enum {
     M11_DM_ACTION_ICON_CELL_H_FWD    = 35,
     M11_DM_ACTION_ICON_CELL_W_FWD    = 20,
     M11_DM_ACTION_ICON_CELL_STEP_FWD = 22,
-    M11_DM_ACTION_ICON_CELL_X0_FWD   = 233
+    M11_DM_ACTION_ICON_CELL_X0_FWD   = 233,
+    /* Action-menu row geometry forward declarations so
+     * M11_GameView_HandlePointer can hit-test the three
+     * DM1 action rows while the authoritative definitions
+     * (M11_DM_ACTION_MENU_ROW_*) live next to the renderer
+     * later in the file.  Ref: ReDMCSB ACTIDRAW.C
+     * F0387_MENUS_DrawActionArea menu-mode zones 85/86/87. */
+    M11_DM_ACTION_MENU_AREA_X_FWD      = 224,
+    M11_DM_ACTION_MENU_AREA_W_FWD      = 87,
+    M11_DM_ACTION_MENU_ROW_Y0_FWD      = 58,
+    M11_DM_ACTION_MENU_ROW_STEP_FWD    = 11,
+    M11_DM_ACTION_MENU_ROW_H_FWD       = 9
 };
 
 static const unsigned char g_m11_quicksave_magic[8] = {
@@ -4127,27 +4138,38 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    if (m11_point_in_utility_button(x, y, M11_UTILITY_INSPECT_X, M11_UTILITY_INSPECT_W)) {
-        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
-    }
-    if (m11_point_in_utility_button(x, y, M11_UTILITY_SAVE_X, M11_UTILITY_SAVE_W)) {
-        if (M11_GameView_QuickSave(state)) {
-            return M11_GAME_INPUT_REDRAW;
+    /* The procedural utility-panel buttons (inspect / save /
+     * load / back header) exist only in the debug HUD.  In V1
+     * mode the right column shows the authentic DM1 action +
+     * spell frames, so clicks in y=28..66 must fall through to
+     * the DM1 action-menu and icon-cell hit tests below instead
+     * of being intercepted by invisible hotspots.  Without this
+     * gate a click on action-row 0 (y=58..66) lands inside the
+     * invisible save/load button row (y=56..65) and is silently
+     * swallowed. */
+    if (state->showDebugHUD) {
+        if (m11_point_in_utility_button(x, y, M11_UTILITY_INSPECT_X, M11_UTILITY_INSPECT_W)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
         }
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (m11_point_in_utility_button(x, y, M11_UTILITY_LOAD_X, M11_UTILITY_LOAD_W)) {
-        if (M11_GameView_QuickLoad(state)) {
-            return M11_GAME_INPUT_REDRAW;
+        if (m11_point_in_utility_button(x, y, M11_UTILITY_SAVE_X, M11_UTILITY_SAVE_W)) {
+            if (M11_GameView_QuickSave(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
         }
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (m11_point_in_rect(x, y,
-                          M11_UTILITY_PANEL_X,
-                          M11_UTILITY_PANEL_Y,
-                          M11_UTILITY_PANEL_W,
-                          12)) {
-        return M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK);
+        if (m11_point_in_utility_button(x, y, M11_UTILITY_LOAD_X, M11_UTILITY_LOAD_W)) {
+            if (M11_GameView_QuickLoad(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_point_in_rect(x, y,
+                              M11_UTILITY_PANEL_X,
+                              M11_UTILITY_PANEL_Y,
+                              M11_UTILITY_PANEL_W,
+                              12)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK);
+        }
     }
 
     /* DM1 action-hand icon cell hits — clicking a champion's
@@ -4162,6 +4184,40 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
      * the visible-cells gate used in m11_draw_utility_panel. */
     if (!state->showDebugHUD) {
         int slotHit;
+
+        /* When in action-menu mode, clicks on the three action
+         * rows drive F0391_MENUS_DidClickTriggerAction: the
+         * chosen action is resolved against the ActionList, the
+         * action is performed (within our bounded model), and
+         * the acting champion is always cleared afterwards — even
+         * when the row is empty (ACTION_NONE) the click still
+         * falls through to the icon-cell test below so the user
+         * can switch champions without first hitting an icon.
+         *
+         * Row hit geometry matches ACTIDRAW.C F0387 zones 85/86/87
+         * (y0=58, step=11, h=9) within the 87×45 action area at
+         * x=224..310.  We test the rows BEFORE the icon cells so
+         * a click at the bottom of an action row (which is above
+         * the icon cells at y=86) is resolved as a row-click first.
+         *
+         * Ref: ReDMCSB MENU.C F0391_MENUS_DidClickTriggerAction. */
+        if (state->actingChampionOrdinal != 0) {
+            int rowIdx;
+            for (rowIdx = 0; rowIdx < 3; ++rowIdx) {
+                int rowY = M11_DM_ACTION_MENU_ROW_Y0_FWD +
+                           rowIdx * M11_DM_ACTION_MENU_ROW_STEP_FWD;
+                if (!m11_point_in_rect(x, y,
+                                       M11_DM_ACTION_MENU_AREA_X_FWD,
+                                       rowY,
+                                       M11_DM_ACTION_MENU_AREA_W_FWD,
+                                       M11_DM_ACTION_MENU_ROW_H_FWD)) {
+                    continue;
+                }
+                (void)M11_GameView_TriggerActionRow(state, rowIdx);
+                return M11_GAME_INPUT_REDRAW;
+            }
+        }
+
         for (slotHit = 0; slotHit < CHAMPION_MAX_PARTY; ++slotHit) {
             int cellX = M11_DM_ACTION_ICON_CELL_X0_FWD +
                         slotHit * M11_DM_ACTION_ICON_CELL_STEP_FWD;
@@ -8470,6 +8526,151 @@ int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
     outIndices[1] = M11_ACTION_SET_ACTIONS[setIdx][1];
     outIndices[2] = M11_ACTION_SET_ACTIONS[setIdx][2];
     return 1;
+}
+
+/* DM1 melee-style action flags.  When an action-name index appears
+ * in this table it represents a damaging melee-contact strike that
+ * classic DM resolves against the creature in the party's front
+ * cell.  The original F0391 -> F0407 chain dispatches every action
+ * through a larger G0492_ac_Graphic560_ActionDamage table and the
+ * per-skill logic in F0407_MENUS_IsActionPerformed; for the bounded
+ * V1 slice we only need to know which names are melee-contact so
+ * the click fires a CMD_ATTACK tick and the creature in front takes
+ * damage via the existing orchestrator path.
+ *
+ * Non-melee actions (WAR CRY, BLOCK, BLOW HORN, PARRY, LIGHT, HEAL,
+ * CALM, CLIMB DOWN, FIREBALL, LIGHTNING, SHOOT, THROW, etc.) still
+ * emit the DM1 "CHAMPION: ACTION" log line and clear the acting
+ * champion; they simply do not advance the tick as a contact
+ * strike.  This keeps the visible recognisability honest — the
+ * player sees the expected feedback — without fabricating effects
+ * we don't yet model.
+ *
+ * Ref: ReDMCSB MENU.C G0492_ac_Graphic560_ActionDamage (non-zero
+ * entries) cross-referenced against the ActionSet tables. */
+static int m11_action_is_melee_contact(unsigned char actionIndex) {
+    switch (actionIndex) {
+        /* CHOP=2, PUNCH=6, KICK=7, STAB=9 or 14, HIT=12,
+         * SWING=13, THRUST=15, JAB=16, HACK=18, BERZERK=19,
+         * MELEE=25, SLASH=28, CLEAVE=29, BASH=30, STUN=31. */
+        case 2:  case 6:  case 7:  case 9:  case 12:
+        case 13: case 14: case 15: case 16: case 18:
+        case 19: case 25: case 28: case 29: case 30:
+        case 31:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int M11_GameView_TriggerActionRow(M11_GameViewState* state,
+                                  int actionListIndex) {
+    int championIndex;
+    unsigned char actions[3];
+    int gotActions;
+    unsigned char chosen;
+    const char* actionName;
+    const struct ChampionState_Compat* champ;
+    char champName[16];
+    int performed = 0;
+
+    if (!state || !state->active) {
+        return 0;
+    }
+    if (actionListIndex < 0 || actionListIndex >= 3) {
+        /* DM1 F0391 silently returns FALSE for out-of-range
+         * indices; preserve that behaviour here. */
+        return 0;
+    }
+    if (state->actingChampionOrdinal == 0) {
+        /* F0391 early exit: no acting champion, no action. */
+        return 0;
+    }
+
+    championIndex = (int)state->actingChampionOrdinal - 1;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    if (championIndex >= state->world.party.championCount) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) {
+        return 0;
+    }
+
+    gotActions = M11_GameView_GetActingActionIndices(state, actions);
+    if (!gotActions) {
+        /* Matches F0391's "ActionList empty" early-exit path:
+         * the menu is visible but the ActionSet resolved to NONE,
+         * so we simply clear the menu without performing anything. */
+        M11_GameView_ClearActingChampion(state);
+        return 0;
+    }
+    chosen = actions[actionListIndex];
+    if (chosen == 0xFF) {
+        /* F0391: when the chosen list entry is ACTION_NONE the
+         * function returns FALSE WITHOUT clearing the acting
+         * champion — the menu stays open so the player can pick a
+         * real action. */
+        return 0;
+    }
+
+    actionName = M11_GameView_GetActionName(chosen);
+    if (!actionName) actionName = "";
+
+    /* DM1-style log line.  F0391 itself does not emit a message but
+     * F0407_MENUS_IsActionPerformed and its downstream damage
+     * resolution do; this is the visible cue the player gets that
+     * the action actually fired. */
+    m11_format_champion_name(champ->name, champName, sizeof(champName));
+    if (actionName[0] != '\0') {
+        m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                      "T%u: %s: %s",
+                      (unsigned int)state->world.gameTick,
+                      champName,
+                      actionName);
+    }
+
+    /* Melee-contact actions advance one CMD_ATTACK tick with the
+     * chosen champion as the attacker.  This reuses the existing
+     * orchestrator strike path so damage, creature hit overlay,
+     * and message-log entries all route through the usual M10
+     * machinery; M10 itself is untouched.
+     *
+     * Non-melee actions do not currently have a faithful bounded
+     * effect model, so they emit the log line, update the active
+     * champion selection to the acting champion (so the player
+     * sees the correct highlight), and otherwise return without
+     * disturbing game state.  This is consistent with the V1
+     * promise that we don't fabricate parity we haven't earned. */
+    if (m11_action_is_melee_contact(chosen)) {
+        int previousActive = state->world.party.activeChampionIndex;
+        state->world.party.activeChampionIndex = championIndex;
+        /* Advance one tick with CMD_ATTACK via HandleInput so the
+         * full M10 strike resolution runs (damage emission,
+         * creature hit overlay, creature-hit log), identical to
+         * pressing the A key. */
+        (void)M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
+        performed = 1;
+        /* Restore previous active champion if the attack didn't
+         * require us to stay on the acting one — but DM itself
+         * updates the leader to the acting champion's icon while
+         * the action animation plays, so we keep the acting
+         * champion as active through the end of the tick. */
+        (void)previousActive;
+    } else {
+        /* Non-melee: no tick advance, just the log line above. */
+        performed = 0;
+    }
+
+    /* F0391 ALWAYS clears the acting champion before returning,
+     * regardless of whether the action itself succeeded.  This is
+     * the behaviour players recognise — picking an action closes
+     * the menu and returns to idle icon-cell presentation. */
+    M11_GameView_ClearActingChampion(state);
+
+    return performed;
 }
 
 /* ---------------------------------------------------------------

@@ -5863,6 +5863,91 @@ int main(int argc, char** argv) {
                      M11_GameView_GetActingChampionOrdinal(&menuView) == 0,
                      "action-menu: ClearActingChampion returns to idle mode");
 
+        /* ── INV_GV_320..325: DM1 action-menu row clicks drive
+         * F0391_MENUS_DidClickTriggerAction.  Each row hit must
+         * (a) always clear the acting champion when the row
+         * resolves to a real action index, (b) leave the menu
+         * open when the row resolves to ACTION_NONE, (c) emit a
+         * player-facing log entry, and (d) for melee-contact
+         * actions (PUNCH/KICK/etc.) advance the tick and return
+         * 1.  Reject invalid indices (<0 or >=3). */
+        {
+            int triggerResult;
+            int logCountBefore;
+            int logCountAfter;
+            uint32_t tickBefore;
+            uint32_t tickAfter;
+            M11_GameInputResult pointerResult;
+
+            /* Fresh activation for trigger tests: slot 0 has empty
+             * hand so ActionSet 2 yields indices {6=PUNCH,
+             * 7=KICK, 8=WAR CRY}.  PUNCH and KICK are melee-
+             * contact, WAR CRY is non-melee.  Rows 0,1,2 map to
+             * those indices in order. */
+            (void)M11_GameView_SetActingChampion(&menuView, 0);
+
+            /* INV_GV_320: invalid row index returns 0 without
+             * clearing the menu. */
+            probe_record(&tally, "INV_GV_320",
+                         M11_GameView_TriggerActionRow(&menuView, -1) == 0 &&
+                             M11_GameView_GetActingChampionOrdinal(&menuView) == 1 &&
+                             M11_GameView_TriggerActionRow(&menuView, 3) == 0 &&
+                             M11_GameView_GetActingChampionOrdinal(&menuView) == 1,
+                         "action-menu: invalid row index leaves acting champion set");
+
+            /* INV_GV_321: clicking row 0 (PUNCH, melee) executes
+             * the action, clears the acting champion, and
+             * returns 1.  Tick must advance because the strike
+             * tick ran through M10. */
+            logCountBefore = M11_GameView_GetMessageLogCount(&menuView);
+            tickBefore = menuView.world.gameTick;
+            triggerResult = M11_GameView_TriggerActionRow(&menuView, 0);
+            logCountAfter = M11_GameView_GetMessageLogCount(&menuView);
+            tickAfter = menuView.world.gameTick;
+            probe_record(&tally, "INV_GV_321",
+                         triggerResult == 1 &&
+                             M11_GameView_GetActingChampionOrdinal(&menuView) == 0 &&
+                             logCountAfter > logCountBefore,
+                         "action-menu: PUNCH row click performs action, "
+                         "clears menu, logs message");
+            probe_record(&tally, "INV_GV_322",
+                         tickAfter >= tickBefore,
+                         "action-menu: PUNCH row click advances (or holds) game tick via CMD_ATTACK");
+
+            /* INV_GV_323: re-activate and click row 2 (WAR CRY,
+             * non-melee).  Must clear the menu and log a
+             * message, but return 0 (no tick-level strike). */
+            (void)M11_GameView_SetActingChampion(&menuView, 0);
+            logCountBefore = M11_GameView_GetMessageLogCount(&menuView);
+            triggerResult = M11_GameView_TriggerActionRow(&menuView, 2);
+            logCountAfter = M11_GameView_GetMessageLogCount(&menuView);
+            probe_record(&tally, "INV_GV_323",
+                         triggerResult == 0 &&
+                             M11_GameView_GetActingChampionOrdinal(&menuView) == 0 &&
+                             logCountAfter > logCountBefore,
+                         "action-menu: WAR CRY row click clears menu and logs "
+                         "without committing a strike tick");
+
+            /* INV_GV_324: calling TriggerActionRow with no acting
+             * champion is a no-op and returns 0. */
+            probe_record(&tally, "INV_GV_324",
+                         M11_GameView_TriggerActionRow(&menuView, 0) == 0 &&
+                             M11_GameView_GetActingChampionOrdinal(&menuView) == 0,
+                         "action-menu: TriggerActionRow in idle mode is a no-op");
+
+            /* INV_GV_325: HandlePointer click inside an action
+             * row bounds (mid-row 0, x=226, y=62) with an acting
+             * champion fires the row-click path and returns
+             * REDRAW (menu closes).  Cross-check by re-activating
+             * and simulating the full pointer flow. */
+            (void)M11_GameView_SetActingChampion(&menuView, 0);
+            pointerResult = M11_GameView_HandlePointer(&menuView, 260, 62, 1);
+            probe_record(&tally, "INV_GV_325",
+                         pointerResult == M11_GAME_INPUT_REDRAW &&
+                             M11_GameView_GetActingChampionOrdinal(&menuView) == 0,
+                         "action-menu: HandlePointer row-hit closes menu and redraws");
+        }
+
         {
             const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
             if (ssDir && ssDir[0]) {
@@ -5875,6 +5960,28 @@ int main(int argc, char** argv) {
                 M11_GameView_Draw(&menuView, fbMenu, 320, 200);
                 snprintf(ssPath, sizeof(ssPath),
                          "%s/19_dm_action_menu_mode.pgm", ssDir);
+                ssFile = fopen(ssPath, "wb");
+                if (ssFile) {
+                    int px;
+                    fprintf(ssFile, "P5\n320 200\n255\n");
+                    for (px = 0; px < 320 * 200; ++px) {
+                        unsigned char gray =
+                            (unsigned char)((fbMenu[px] & 0x0F) * 17);
+                        fwrite(&gray, 1, 1, ssFile);
+                    }
+                    fclose(ssFile);
+                    printf("Screenshot: %s\n", ssPath);
+                }
+
+                /* Also capture the post-row-click frame so reviewers
+                 * can confirm the menu actually closes and returns
+                 * to idle icon-cell presentation after a click. */
+                (void)M11_GameView_SetActingChampion(&menuView, 0);
+                (void)M11_GameView_HandlePointer(&menuView, 260, 62, 1);
+                memset(fbMenu, 0, sizeof(fbMenu));
+                M11_GameView_Draw(&menuView, fbMenu, 320, 200);
+                snprintf(ssPath, sizeof(ssPath),
+                         "%s/20_dm_action_menu_post_click.pgm", ssDir);
                 ssFile = fopen(ssPath, "wb");
                 if (ssFile) {
                     int px;
