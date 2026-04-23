@@ -5718,6 +5718,181 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&iconView);
     }
 
+    /* ── INV_GV_310..315: DM1 action-menu mode (F0387 menu branch).
+     *
+     * When G0506_ui_ActingChampionOrdinal is non-zero the action
+     * area switches from idle icon cells to a classic action
+     * menu: graphic 10 re-blitted, champion name printed in
+     * black-on-cyan at the header, and up to three action names
+     * from the action-hand item's ActionSet printed in cyan-on-
+     * black below.  These tests drive M11_GameView_Draw with the
+     * acting ordinal set and verify the right-column pixels
+     * switch from the icon-cell cyan pattern to the menu-mode
+     * pattern, and that the action index resolution matches the
+     * source-backed G0489_as_Graphic560_ActionSets table. */
+    {
+        M11_GameViewState menuView;
+        unsigned char fbIcon[320 * 200];
+        unsigned char fbMenu[320 * 200];
+        unsigned char actions[3];
+        int gotActions;
+        int slot;
+        int cyanHeaderPixels;
+        int cyanIconCellPixels;
+        int x, y;
+
+        memset(&menuView, 0, sizeof(menuView));
+        M11_GameView_Init(&menuView);
+        {
+            const char* dataDir = getenv("FIRESTAFF_DATA");
+            char graphicsDatPath[512];
+            if (dataDir && dataDir[0]) {
+                snprintf(graphicsDatPath, sizeof(graphicsDatPath),
+                         "%s/GRAPHICS.DAT", dataDir);
+                if (M11_AssetLoader_Init(&menuView.assetLoader,
+                                         graphicsDatPath)) {
+                    menuView.assetsAvailable = 1;
+                }
+            }
+        }
+        /* Two living champions; slot 0 has an empty hand (expected
+         * to map to ActionSet 2: PUNCH, KICK, WAR CRY), slot 1
+         * empty.  Explicit THING_NONE fill is required because the
+         * compat layer treats raw 0 as a valid type-0/index-0
+         * reference, not as "hand empty". */
+        menuView.world.party.championCount = 2;
+        menuView.world.party.activeChampionIndex = 0;
+        for (slot = 0; slot < 2; ++slot) {
+            struct ChampionState_Compat* c =
+                &menuView.world.party.champions[slot];
+            int invSlot;
+            memset(c, 0, sizeof(*c));
+            c->present = 1;
+            memcpy(c->name, "HERO\0\0\0\0", 8);
+            c->hp.maximum = 60;
+            c->hp.current = 40;
+            c->stamina.current = 30; c->stamina.maximum = 50;
+            c->portraitIndex = slot;
+            for (invSlot = 0;
+                 invSlot < (int)(sizeof(c->inventory) /
+                                 sizeof(c->inventory[0]));
+                 ++invSlot) {
+                c->inventory[invSlot] = THING_NONE;
+            }
+        }
+        menuView.active = 1;
+        menuView.showDebugHUD = 0;
+
+        /* Baseline frame: no acting champion -> icon-cell mode. */
+        menuView.actingChampionOrdinal = 0;
+        memset(fbIcon, 0, sizeof(fbIcon));
+        M11_GameView_Draw(&menuView, fbIcon, 320, 200);
+        cyanIconCellPixels = 0;
+        for (y = 95; y < 111; ++y) {
+            int cellX = 0 * 22 + 233;
+            for (x = cellX + 2; x < cellX + 18; ++x) {
+                if ((fbIcon[y * 320 + x] & 0x0F) == 3)
+                    ++cyanIconCellPixels;
+            }
+        }
+
+        /* Activate champion 0 (F0389 analog).  Empty hand triggers
+         * the PUNCH/KICK/WAR CRY set (index 2), so
+         * M11_GameView_SetActingChampion must succeed. */
+        probe_record(&tally, "INV_GV_310",
+                     M11_GameView_SetActingChampion(&menuView, 0) == 1,
+                     "action-menu: empty-hand champion activates with ActionSet 2");
+        probe_record(&tally, "INV_GV_311",
+                     M11_GameView_GetActingChampionOrdinal(&menuView) == 1,
+                     "action-menu: acting ordinal stored as DM1 1-based value");
+
+        /* Action indices resolve to the empty-hand triple
+         * (PUNCH=6, KICK=7, WAR CRY=8) from G0489 entry 2. */
+        gotActions = M11_GameView_GetActingActionIndices(&menuView, actions);
+        probe_record(&tally, "INV_GV_312",
+                     gotActions == 1 &&
+                         actions[0] == 6 && actions[1] == 7 && actions[2] == 8,
+                     "action-menu: empty-hand ActionSet yields PUNCH/KICK/WAR CRY indices");
+
+        /* Menu-mode frame: expect a CYAN header band at y=47..55
+         * spanning the action area width.  Count cyan pixels in
+         * the header row y=49 between x=224..310 as the signature
+         * of menu-mode (vs icon-mode which leaves y=47..55 as the
+         * graphic-10 frame, mostly non-cyan). */
+        memset(fbMenu, 0, sizeof(fbMenu));
+        M11_GameView_Draw(&menuView, fbMenu, 320, 200);
+        cyanHeaderPixels = 0;
+        for (x = 225; x < 311; ++x) {
+            if ((fbMenu[49 * 320 + x] & 0x0F) == 3) ++cyanHeaderPixels;
+        }
+        probe_record(&tally, "INV_GV_313",
+                     menuView.assetsAvailable
+                         ? (cyanHeaderPixels >= 60)
+                         : 1,
+                     "action-menu: header band is cyan when acting champion set");
+
+        /* Icon-cell region at y=95..110 in menu-mode should NOT
+         * have the classic cyan icon-cell backdrop for slot 0 —
+         * the menu overwrites the upper part of the action area
+         * but DM1's action cells spill below y=89 and are
+         * drawn independently only in icon-mode.  In menu-mode
+         * those rows come from the graphic-10 blit which has
+         * a different cyan signature and from the spell-area
+         * graphic below — not the 256-cyan-pixel inner-cell
+         * fill.  Require the inner cell cyan count to drop
+         * strictly below the icon-mode baseline. */
+        {
+            int cyanMenuSlot0 = 0;
+            int cellX = 0 * 22 + 233;
+            for (y = 95; y < 111; ++y) {
+                for (x = cellX + 2; x < cellX + 18; ++x) {
+                    if ((fbMenu[y * 320 + x] & 0x0F) == 3)
+                        ++cyanMenuSlot0;
+                }
+            }
+            probe_record(&tally, "INV_GV_314",
+                         menuView.assetsAvailable
+                             ? (cyanMenuSlot0 < cyanIconCellPixels)
+                             : 1,
+                         "action-menu: inner icon-cell cyan fill is suppressed vs icon-mode");
+        }
+
+        /* ClearActingChampion restores idle icon-cell mode. */
+        M11_GameView_ClearActingChampion(&menuView);
+        probe_record(&tally, "INV_GV_315",
+                     M11_GameView_GetActingChampionOrdinal(&menuView) == 0,
+                     "action-menu: ClearActingChampion returns to idle mode");
+
+        {
+            const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+            if (ssDir && ssDir[0]) {
+                char ssPath[512];
+                FILE* ssFile;
+                /* Re-activate before snapshot so the artifact
+                 * shows menu-mode, not the post-clear idle. */
+                (void)M11_GameView_SetActingChampion(&menuView, 0);
+                memset(fbMenu, 0, sizeof(fbMenu));
+                M11_GameView_Draw(&menuView, fbMenu, 320, 200);
+                snprintf(ssPath, sizeof(ssPath),
+                         "%s/19_dm_action_menu_mode.pgm", ssDir);
+                ssFile = fopen(ssPath, "wb");
+                if (ssFile) {
+                    int px;
+                    fprintf(ssFile, "P5\n320 200\n255\n");
+                    for (px = 0; px < 320 * 200; ++px) {
+                        unsigned char gray =
+                            (unsigned char)((fbMenu[px] & 0x0F) * 17);
+                        fwrite(&gray, 1, 1, ssFile);
+                    }
+                    fclose(ssFile);
+                    printf("Screenshot: %s\n", ssPath);
+                }
+            }
+        }
+
+        M11_GameView_Shutdown(&menuView);
+    }
+
     M11_GameView_Shutdown(&gameView);
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);

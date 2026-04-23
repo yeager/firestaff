@@ -71,6 +71,20 @@ enum {
     M11_QUICKSAVE_HEADER_SIZE = 16
 };
 
+/* DM1 action-hand icon cell geometry (duplicated as forward decls
+ * for M11_GameView_HandlePointer, which needs these before the
+ * #defines that originally introduced them near the drawing code
+ * lower down in this translation unit).  The downstream #defines
+ * remain authoritative — keep these two blocks in sync.  Ref:
+ * ReDMCSB MENUS.C F0386_MENUS_DrawActionIcon. */
+enum {
+    M11_DM_ACTION_ICON_CELL_Y_FWD    = 86,
+    M11_DM_ACTION_ICON_CELL_H_FWD    = 35,
+    M11_DM_ACTION_ICON_CELL_W_FWD    = 20,
+    M11_DM_ACTION_ICON_CELL_STEP_FWD = 22,
+    M11_DM_ACTION_ICON_CELL_X0_FWD   = 233
+};
+
 static const unsigned char g_m11_quicksave_magic[8] = {
     'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
 };
@@ -4134,6 +4148,40 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                           M11_UTILITY_PANEL_W,
                           12)) {
         return M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK);
+    }
+
+    /* DM1 action-hand icon cell hits — clicking a champion's
+     * action cell activates them (F0389_MENUS_SetActingChampion)
+     * and switches the right-column action area into menu mode.
+     * Clicking the acting champion's cell again clears it
+     * (F0388_MENUS_ClearActingChampion).  Cells are at
+     *   x = slot * 22 + 233  (w = 20)
+     *   y = 86..120          (h = 35)
+     * matching F0386_MENUS_DrawActionIcon geometry.  Only active
+     * in V1 mode once the authentic frames have rendered, mirroring
+     * the visible-cells gate used in m11_draw_utility_panel. */
+    if (!state->showDebugHUD) {
+        int slotHit;
+        for (slotHit = 0; slotHit < CHAMPION_MAX_PARTY; ++slotHit) {
+            int cellX = M11_DM_ACTION_ICON_CELL_X0_FWD +
+                        slotHit * M11_DM_ACTION_ICON_CELL_STEP_FWD;
+            if (!m11_point_in_rect(x, y, cellX,
+                                   M11_DM_ACTION_ICON_CELL_Y_FWD,
+                                   M11_DM_ACTION_ICON_CELL_W_FWD,
+                                   M11_DM_ACTION_ICON_CELL_H_FWD)) {
+                continue;
+            }
+            /* Toggle: click on already-acting champion clears. */
+            if (state->actingChampionOrdinal ==
+                    (unsigned int)(slotHit + 1)) {
+                M11_GameView_ClearActingChampion(state);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (M11_GameView_SetActingChampion(state, slotHit)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
 
     if (m11_point_in_rect(x, y,
@@ -8212,6 +8260,345 @@ static unsigned int m11_action_set_index_for_thing(
     }
 }
 
+/* ---------------------------------------------------------------
+ * DM1 ActionSet table (G0489_as_Graphic560_ActionSets[44]).
+ *
+ * Verbatim ActionIndices[0..2] column copied out of ReDMCSB
+ * MENU.C.  Each entry is a 3-tuple of action-name indices that
+ * F0387_MENUS_DrawActionArea (menu-mode branch) prints into
+ * zones 85, 86 and 87.  0xFF = C0xFF_ACTION_NONE (empty row,
+ * rendered as blank space; also short-circuits the 2-/1-action
+ * zone selection in F0387).
+ *
+ * Entry 0 is the all-none sentinel (matches items with
+ * ActionSetIndex == 0 after F0389 aborts).  Entry 2 is the
+ * empty-hand set (PUNCH, KICK, WAR CRY) — this is the default
+ * when a living champion with no action-hand object is activated,
+ * per F0389_MENUS_SetActingChampion.  Entries 1 and 3..43 follow
+ * the item's declared ActionSetIndex.
+ *
+ * Ref: ReDMCSB MENU.C lines 46..86 — "ACTION_SET
+ * G0489_as_Graphic560_ActionSets[44] = { ... };".  ReDMCSB stores
+ * 6 bytes per entry (action[0..2] + properties + useless byte);
+ * only the action-index triple is needed for F0387's menu-mode
+ * text rendering, so we store just that here. */
+static const unsigned char M11_ACTION_SET_ACTIONS[44][3] = {
+    /* 0 */  {255, 255, 255},
+    /* 1 */  { 27,  43,  35},
+    /* 2 */  {  6,   7,   8}, /* Empty hand: PUNCH, KICK, WAR CRY */
+    /* 3 */  {  0,   0,   0},
+    /* 4 */  {  0,   0,   0},
+    /* 5 */  { 13, 255, 255},
+    /* 6 */  { 13,  20, 255},
+    /* 7 */  { 13,  23, 255},
+    /* 8 */  { 28,  41,  22},
+    /* 9 */  { 16,   2,  23},
+    /* 10 */ {  2,  25,  20},
+    /* 11 */ { 17,  41,  34},
+    /* 12 */ { 42,   9,  28},
+    /* 13 */ { 13,  17,   2},
+    /* 14 */ { 16,  17,  15},
+    /* 15 */ { 28,  17,  25},
+    /* 16 */ {  2,  25,  15},
+    /* 17 */ {  9,   2,  29},
+    /* 18 */ { 16,  29,  24},
+    /* 19 */ { 13,  15,  19},
+    /* 20 */ { 13,   2,  25},
+    /* 21 */ {  2,  29,  19},
+    /* 22 */ { 13,  30,  31},
+    /* 23 */ { 13,  31,  25},
+    /* 24 */ { 42,  30, 255},
+    /* 25 */ {  0,   0,   0},
+    /* 26 */ { 42,   9, 255},
+    /* 27 */ { 32, 255, 255},
+    /* 28 */ { 37,  33,  36},
+    /* 29 */ { 37,  33,  34},
+    /* 30 */ { 17,  38,  21},
+    /* 31 */ { 13,  21,  34},
+    /* 32 */ { 36,  37,  41},
+    /* 33 */ { 13,  23,  39},
+    /* 34 */ { 13,  17,  40},
+    /* 35 */ { 17,  36,  38},
+    /* 36 */ {  4, 255, 255},
+    /* 37 */ {  5, 255, 255},
+    /* 38 */ { 11, 255, 255},
+    /* 39 */ { 10, 255, 255},
+    /* 40 */ { 42,   9, 255},
+    /* 41 */ {  1,  12, 255},
+    /* 42 */ { 42, 255, 255},
+    /* 43 */ {  6,  11, 255}
+};
+
+/* DM1 action-name strings (G0490_ac_Graphic560_ActionNames).
+ *
+ * Verbatim order from ReDMCSB MENU.C X431_I34E build — the
+ * null-delimited string "N\0BLOCK\0CHOP\0X\0BLOW HORN\0...\0FUSE"
+ * parsed out into a flat array.  Index 0 is "N" (placeholder used
+ * by action set 41 to print just the letter N — "Firestaff"
+ * activation).  Index 3 and 26 are the DM1 deprecated-entry
+ * placeholder "X".  255 is C0xFF_ACTION_NONE which
+ * F0384_MENUS_GetActionName returns as an empty string.
+ *
+ * These names are what F0387 prints in cyan-on-black into zones
+ * 85, 86, 87 during menu-mode.  They are fixed-case UPPERCASE
+ * strings in the original; we keep them exactly as in the source. */
+static const char* const M11_ACTION_NAMES[44] = {
+    /* 0  */ "N",
+    /* 1  */ "BLOCK",
+    /* 2  */ "CHOP",
+    /* 3  */ "X",
+    /* 4  */ "BLOW HORN",
+    /* 5  */ "FLIP",
+    /* 6  */ "PUNCH",
+    /* 7  */ "KICK",
+    /* 8  */ "WAR CRY",
+    /* 9  */ "STAB",
+    /* 10 */ "CLIMB DOWN",
+    /* 11 */ "FREEZE LIFE",
+    /* 12 */ "HIT",
+    /* 13 */ "SWING",
+    /* 14 */ "STAB",
+    /* 15 */ "THRUST",
+    /* 16 */ "JAB",
+    /* 17 */ "PARRY",
+    /* 18 */ "HACK",
+    /* 19 */ "BERZERK",
+    /* 20 */ "FIREBALL",
+    /* 21 */ "DISPELL",
+    /* 22 */ "CONFUSE",
+    /* 23 */ "LIGHTNING",
+    /* 24 */ "DISRUPT",
+    /* 25 */ "MELEE",
+    /* 26 */ "X",
+    /* 27 */ "INVOKE",
+    /* 28 */ "SLASH",
+    /* 29 */ "CLEAVE",
+    /* 30 */ "BASH",
+    /* 31 */ "STUN",
+    /* 32 */ "SHOOT",
+    /* 33 */ "SPELLSHIELD",
+    /* 34 */ "FIRESHIELD",
+    /* 35 */ "FLUXCAGE",
+    /* 36 */ "HEAL",
+    /* 37 */ "CALM",
+    /* 38 */ "LIGHT",
+    /* 39 */ "WINDOW",
+    /* 40 */ "SPIT",
+    /* 41 */ "BRANDISH",
+    /* 42 */ "THROW",
+    /* 43 */ "FUSE"
+};
+
+const char* M11_GameView_GetActionName(unsigned char actionIndex) {
+    if (actionIndex == 0xFF) return "";
+    if (actionIndex >= 44) return "";
+    return M11_ACTION_NAMES[actionIndex];
+}
+
+/* Resolve the ActionSet index for a given champion slot's action
+ * hand.  Returns 2 (empty-hand set: PUNCH, KICK, WAR CRY) when the
+ * hand is empty (DM1 F0389_MENUS_SetActingChampion fallback), the
+ * object's ActionSetIndex from the source table when held, or 0
+ * when the object has ActionSetIndex==0 (DM1 aborts F0389 entirely
+ * — we still emit a sentinel 0 so the caller renders three NONE
+ * rows).  DM1 explicitly returns BEFORE setting G0506 in that
+ * last case, so the caller must guard against it. */
+static unsigned int m11_resolve_action_set_for_champion(
+        const M11_GameViewState* state,
+        int championIndex) {
+    const struct ChampionState_Compat* champ;
+    unsigned short handThing;
+    unsigned int setIdx;
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return 0;
+    if (champ->hp.current == 0) return 0;
+    handThing = m11_get_action_hand_thing(champ);
+    if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
+        /* DM1 F0389: "Actions Punch, Kick and War Cry". */
+        return 2;
+    }
+    if (!state->world.things) return 0;
+    setIdx = m11_action_set_index_for_thing(state->world.things, handThing);
+    /* If ActionSetIndex == 0, DM1 F0389 returns without setting
+     * the acting ordinal.  We propagate 0 here so callers can
+     * treat it as "not activatable". */
+    return setIdx;
+}
+
+unsigned int M11_GameView_GetActingChampionOrdinal(const M11_GameViewState* state) {
+    if (!state) return 0;
+    return state->actingChampionOrdinal;
+}
+
+int M11_GameView_SetActingChampion(M11_GameViewState* state, int championIndex) {
+    unsigned int setIdx;
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    if (!state->world.party.champions[championIndex].present) return 0;
+    if (state->world.party.champions[championIndex].hp.current == 0) return 0;
+    /* DM1 F0389 aborts when the action-hand item has
+     * ActionSetIndex==0 (scrolls, food, most junk).  Mirror that
+     * here so the action-menu mode never appears for items that
+     * can't actually be used. */
+    setIdx = m11_resolve_action_set_for_champion(state, championIndex);
+    if (setIdx == 0) return 0;
+    /* DM1 stores an ORDINAL (1-based), matching G0506. */
+    state->actingChampionOrdinal = (unsigned int)(championIndex + 1);
+    return 1;
+}
+
+void M11_GameView_ClearActingChampion(M11_GameViewState* state) {
+    if (!state) return;
+    state->actingChampionOrdinal = 0;
+}
+
+int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
+                                        unsigned char outIndices[3]) {
+    int idx;
+    unsigned int setIdx;
+    if (!state || !outIndices) return 0;
+    if (state->actingChampionOrdinal == 0) return 0;
+    idx = (int)state->actingChampionOrdinal - 1;
+    if (idx < 0 || idx >= CHAMPION_MAX_PARTY) return 0;
+    setIdx = m11_resolve_action_set_for_champion(state, idx);
+    if (setIdx == 0 || setIdx >= 44) return 0;
+    outIndices[0] = M11_ACTION_SET_ACTIONS[setIdx][0];
+    outIndices[1] = M11_ACTION_SET_ACTIONS[setIdx][1];
+    outIndices[2] = M11_ACTION_SET_ACTIONS[setIdx][2];
+    return 1;
+}
+
+/* ---------------------------------------------------------------
+ * DM1 action-menu mode (F0387_MENUS_DrawActionArea, menu branch).
+ *
+ * When G0506_ui_ActingChampionOrdinal is non-zero the action area
+ * switches out of idle icon-cell mode and into a classic action
+ * menu: the action-area graphic (graphic 10) is blitted fresh,
+ * then the acting champion's name is printed into the header zone
+ * in BLACK-ON-CYAN, and up to three action names from the
+ * champion's action-hand ActionSet are printed into three action
+ * rows in CYAN-ON-BLACK.  DM1 selects one of three zones for the
+ * graphic blit depending on how many action rows are present:
+ *
+ *   all three actions      -> C011_ZONE_ACTION_AREA    (87×45)
+ *   only two actions       -> C077_ZONE_ACTION_AREA_TWO_ACTIONS_MENU
+ *   only one action        -> C079_ZONE_ACTION_AREA_ONE_ACTION_MENU
+ *
+ * We do not currently remap the graphic crop for the 1/2-action
+ * sub-zones — graphic 10's natural layout already reads correctly
+ * with the last one or two rows rendered as blank (NONE) cyan-on-
+ * black strips, and mirroring DM1's zone-based crop would require
+ * the ZONES graphic 555 table which we have not yet extracted.
+ * This stays within the bounded slice while still rendering the
+ * authentic header + action-row presentation.
+ *
+ * Geometry within the 87×45 action-area graphic (derived from live
+ * DM1 screenshots and the zone-80/85/86/87 print calls in F0387):
+ *
+ *   Header band (champion name, black-on-cyan): y = 47..55
+ *   Action row 0 (action name, cyan-on-black):  y = 58..66
+ *   Action row 1:                                y = 69..77
+ *   Action row 2:                                y = 80..88
+ *
+ * Text x-anchor is the action-area inner column at x=226 (2 px in
+ * from the left frame edge at x=224), printed left-aligned so the
+ * DM1 5px glyph fits within the 87px band.
+ *
+ * Ref: ReDMCSB ACTIDRAW.C F0387_MENUS_DrawActionArea menu-mode
+ *      branch (lines 110..141), MENU.C G0489_as_Graphic560_
+ *      ActionSets and G0490_ac_Graphic560_ActionNames. */
+#define M11_DM_ACTION_MENU_HEADER_Y   47
+#define M11_DM_ACTION_MENU_HEADER_H    9
+#define M11_DM_ACTION_MENU_ROW_Y0     58
+#define M11_DM_ACTION_MENU_ROW_STEP   11
+#define M11_DM_ACTION_MENU_ROW_H       9
+#define M11_DM_ACTION_MENU_TEXT_X    226
+
+static int m11_draw_dm_action_menu(const M11_GameViewState* state,
+                                   unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight) {
+    int actingIndex;
+    unsigned char actions[3];
+    int gotActions;
+    int row;
+    char nameBuf[16];
+    M11_TextStyle styleBlackOnCyan;
+    M11_TextStyle styleCyanOnBlack;
+    const struct ChampionState_Compat* champ;
+    if (!state) return 0;
+    if (state->actingChampionOrdinal == 0) return 0;
+    actingIndex = (int)state->actingChampionOrdinal - 1;
+    if (actingIndex < 0 || actingIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (actingIndex >= state->world.party.championCount) return 0;
+    champ = &state->world.party.champions[actingIndex];
+    if (!champ->present) return 0;
+
+    /* F0387 always fills the full action area with black before
+     * blitting the menu graphic.  We've already blitted graphic 10
+     * once at the top of m11_draw_utility_panel (as the right-
+     * column chrome); here we re-fill+re-blit to ensure we start
+     * from a clean action-mode surface regardless of any prior
+     * icon-cell overpaint from an earlier frame. */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y,
+                  M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
+                  M11_COLOR_BLACK);
+    (void)m11_blit_panel_asset_native(state,
+        framebuffer, framebufferWidth, framebufferHeight,
+        M11_GFX_ACTION_AREA, M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
+        M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y);
+
+    /* Header band: fill cyan and print the champion name in black.
+     * Matches F0387's zone-80 print (black text, cyan background). */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_DM_ACTION_AREA_X, M11_DM_ACTION_MENU_HEADER_Y,
+                  M11_DM_ACTION_AREA_W, M11_DM_ACTION_MENU_HEADER_H,
+                  M11_COLOR_CYAN);
+
+    m11_format_champion_name(champ->name, nameBuf, sizeof(nameBuf));
+    styleBlackOnCyan = g_text_small;
+    styleBlackOnCyan.color = M11_COLOR_BLACK;
+    styleBlackOnCyan.shadowDx = 0;
+    styleBlackOnCyan.shadowDy = 0;
+    styleBlackOnCyan.shadowColor = M11_COLOR_CYAN;
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_DM_ACTION_MENU_TEXT_X,
+                  M11_DM_ACTION_MENU_HEADER_Y + 1,
+                  nameBuf, &styleBlackOnCyan);
+
+    /* Action rows: each row is a black strip with cyan text.  Pull
+     * the 3-tuple from the champion's action-hand ActionSet; any
+     * C0xFF_ACTION_NONE entry is drawn as an empty strip (DM1's
+     * F0384_MENUS_GetActionName returns "" for 0xFF). */
+    styleCyanOnBlack = g_text_small;
+    styleCyanOnBlack.color = M11_COLOR_CYAN;
+    styleCyanOnBlack.shadowDx = 0;
+    styleCyanOnBlack.shadowDy = 0;
+    styleCyanOnBlack.shadowColor = M11_COLOR_BLACK;
+
+    gotActions = M11_GameView_GetActingActionIndices(state, actions);
+    for (row = 0; row < 3; ++row) {
+        int rowY = M11_DM_ACTION_MENU_ROW_Y0 + row * M11_DM_ACTION_MENU_ROW_STEP;
+        const char* name;
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_DM_ACTION_AREA_X, rowY,
+                      M11_DM_ACTION_AREA_W, M11_DM_ACTION_MENU_ROW_H,
+                      M11_COLOR_BLACK);
+        if (!gotActions) continue;
+        name = M11_GameView_GetActionName(actions[row]);
+        if (!name || name[0] == '\0') continue;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_DM_ACTION_MENU_TEXT_X, rowY + 1,
+                      name, &styleCyanOnBlack);
+    }
+    return 1;
+}
+
 /* Draw the four DM1 action-hand icon cells across the right column,
  * matching F0386_MENUS_DrawActionIcon for every present champion.
  * Returns the number of cells drawn.
@@ -8417,18 +8804,32 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                       statX, statY, line, &g_text_small);
     }
 
-    /* DM1 action-hand icon cells — source-backed V1 fill for the
-     * otherwise-empty bottom of the right column.  Only drawn in the
-     * V1 idle state (authentic frames blitted and debug HUD off),
-     * which matches DM1's G509_B_ActionAreaContainsIcons = TRUE
-     * default.  The cells span x=233..321, y=86..120 which overlaps
-     * the bottom of the action-area frame, all of the spell-area
-     * frame, and a few rows below — authentic DM1 stacking as per
-     * F0386_MENUS_DrawActionIcon / F0387_MENUS_DrawActionArea. */
+    /* DM1 action-area mode selection — mirror
+     * F0387_MENUS_DrawActionArea's branch on
+     * G0509_B_ActionAreaContainsIcons / G0506_ui_ActingChampionOrdinal.
+     *
+     *  actingChampionOrdinal == 0  -> icon-mode (four action-hand
+     *                                 cells, one per champion)
+     *  actingChampionOrdinal >  0  -> menu-mode (graphic 10 header
+     *                                 with champion name + up to
+     *                                 three action names)
+     *
+     * Both modes only engage once the authentic frame blits have
+     * succeeded and the V1 presentation is active.  Debug HUD keeps
+     * the legacy utility-panel rendering untouched. */
     if (drewAuthenticFrames && !state->showDebugHUD) {
-        (void)m11_draw_dm_action_icon_cells(state, framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight);
+        if (state->actingChampionOrdinal != 0 &&
+            m11_draw_dm_action_menu(state, framebuffer,
+                                    framebufferWidth,
+                                    framebufferHeight)) {
+            /* Menu mode rendered; icon cells are suppressed, matching
+             * DM1's F0387 menu-mode branch which fills the whole
+             * action area before drawing the menu. */
+        } else {
+            (void)m11_draw_dm_action_icon_cells(state, framebuffer,
+                                                framebufferWidth,
+                                                framebufferHeight);
+        }
     }
 
     if (state->showDebugHUD) {

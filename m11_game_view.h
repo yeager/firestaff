@@ -185,6 +185,26 @@ typedef struct {
      * helpers, tick counters, and diagnostic square summaries.
      * Set to 1 via FIRESTAFF_DEBUG_HUD=1 environment variable. */
     int showDebugHUD;
+
+    /* Acting-champion ordinal.  Mirrors DM1
+     * G0506_ui_ActingChampionOrdinal exactly: 0 = no champion is
+     * acting (idle action area with four action-hand icon cells,
+     * F0387 icon-mode branch).  1..N = champion at index N-1 has
+     * been activated by a click on their action-hand cell and the
+     * action area is in menu mode (F0387 menu-mode branch,
+     * rendering graphic 10 + champion name + up to three action
+     * names from the item's ActionSet).
+     *
+     * Toggled by M11_GameView_HandlePointer when a click falls
+     * inside an action-hand icon cell.  Cleared automatically
+     * when the acting champion dies, is replaced, or the party
+     * enters rest — matches F0388_MENUS_ClearActingChampion
+     * semantics (the subset we currently model).
+     *
+     * Ref: ReDMCSB MENU.C F0389_MENUS_SetActingChampion,
+     *      F0388_MENUS_ClearActingChampion,
+     *      ACTIDRAW.C F0387_MENUS_DrawActionArea menu-mode branch. */
+    unsigned int actingChampionOrdinal;
 } M11_GameViewState;
 
 /* Spell casting API */
@@ -341,6 +361,43 @@ int M11_GameView_GetInventorySelectedSlot(const M11_GameViewState* state);
 
 /* Return human-readable label for an inventory slot index. */
 const char* M11_GameView_SlotName(int slotIndex);
+
+/* ── Action-menu API (DM1 F0387 menu-mode) ── */
+
+/* Return the currently acting champion ordinal (DM1 G0506).
+ * 0 = no champion is acting (idle icon-cell mode).
+ * 1..N = champion at index N-1 has been activated and the action
+ * area is in menu mode. */
+unsigned int M11_GameView_GetActingChampionOrdinal(const M11_GameViewState* state);
+
+/* Set the acting champion by index (0..CHAMPION_MAX_PARTY-1).
+ * Returns 1 on success, 0 if the champion slot is empty/dead/out
+ * of range.  Mirrors F0389_MENUS_SetActingChampion for the bounded
+ * subset we currently model (action-area state only; does not yet
+ * emit the full champion-draw refresh or icon flag). */
+int M11_GameView_SetActingChampion(M11_GameViewState* state, int championIndex);
+
+/* Clear the acting champion, returning the action area to idle
+ * icon-cell mode.  Mirrors F0388_MENUS_ClearActingChampion for
+ * the bounded action-area subset. */
+void M11_GameView_ClearActingChampion(M11_GameViewState* state);
+
+/* Resolve the DM1 ActionSet indices for the currently acting
+ * champion.  Returns the 3 action-name indices (0..43, or 255 =
+ * C0xFF_ACTION_NONE) into outIndices[0..2].  Returns 1 when the
+ * action area is in menu mode and the indices were filled,
+ * 0 when idle (outIndices left untouched).
+ *
+ * Ref: ReDMCSB MENU.C G0489_as_Graphic560_ActionSets,
+ *      F0389_MENUS_SetActingChampion action-set lookup. */
+int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
+                                        unsigned char outIndices[3]);
+
+/* Look up the DM1 action name for an action index (0..43, or 255).
+ * Returns an empty string for C0xFF_ACTION_NONE and a pointer to a
+ * static string otherwise.  Verbatim names from
+ * G0490_ac_Graphic560_ActionNames (ReDMCSB MENU.C). */
+const char* M11_GameView_GetActionName(unsigned char actionIndex);
 
 /* ── Creature aspect query API (for probes) ── */
 
