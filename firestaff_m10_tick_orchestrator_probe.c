@@ -86,6 +86,114 @@ static int build_unit_world(struct GameWorld_Compat* w, uint32_t seed) {
     return 1;
 }
 
+static int build_post_move_env_world(struct GameWorld_Compat* w, uint32_t seed) {
+    struct DungeonDatState_Compat* dungeon;
+    struct DungeonThings_Compat* things;
+    int i;
+
+    if (!build_unit_world(w, seed)) {
+        return 0;
+    }
+
+    dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));
+    things = (struct DungeonThings_Compat*)calloc(1, sizeof(*things));
+    if (!dungeon || !things) {
+        free(dungeon);
+        free(things);
+        return 0;
+    }
+
+    dungeon->loaded = 1;
+    dungeon->tilesLoaded = 1;
+    dungeon->header.mapCount = 3;
+    dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(3, sizeof(*dungeon->maps));
+    dungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(3, sizeof(*dungeon->tiles));
+    if (!dungeon->maps || !dungeon->tiles) {
+        free(dungeon->maps);
+        free(dungeon->tiles);
+        free(dungeon);
+        free(things);
+        return 0;
+    }
+    for (i = 0; i < 3; ++i) {
+        dungeon->maps[i].width = 3;
+        dungeon->maps[i].height = 3;
+        dungeon->tiles[i].squareCount = 9;
+        dungeon->tiles[i].squareData = (unsigned char*)calloc(9, sizeof(unsigned char));
+        if (!dungeon->tiles[i].squareData) {
+            int j;
+            for (j = 0; j <= i; ++j) {
+                free(dungeon->tiles[j].squareData);
+            }
+            free(dungeon->maps);
+            free(dungeon->tiles);
+            free(dungeon);
+            free(things);
+            return 0;
+        }
+    }
+
+    things->loaded = 1;
+    things->squareFirstThingCount = 27;
+    things->squareFirstThings = (unsigned short*)calloc(27, sizeof(unsigned short));
+    things->teleporterCount = 2;
+    things->thingCounts[THING_TYPE_TELEPORTER] = 2;
+    things->teleporters = (struct DungeonTeleporter_Compat*)calloc(2, sizeof(*things->teleporters));
+    things->rawThingData[THING_TYPE_TELEPORTER] = (unsigned char*)calloc(12, sizeof(unsigned char));
+    if (!things->squareFirstThings || !things->teleporters || !things->rawThingData[THING_TYPE_TELEPORTER]) {
+        for (i = 0; i < 3; ++i) {
+            free(dungeon->tiles[i].squareData);
+        }
+        free(dungeon->maps);
+        free(dungeon->tiles);
+        free(things->squareFirstThings);
+        free(things->teleporters);
+        free(things->rawThingData[THING_TYPE_TELEPORTER]);
+        free(dungeon);
+        free(things);
+        return 0;
+    }
+    for (i = 0; i < things->squareFirstThingCount; ++i) {
+        things->squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    /* Map 0: step east onto teleporter -> map 1, square (1,1). */
+    dungeon->tiles[0].squareData[(2 * 3) + 1] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    things->squareFirstThings[(2 * 3) + 1] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
+    things->teleporters[0].next = THING_ENDOFLIST;
+    things->teleporters[0].targetMapIndex = 1;
+    things->teleporters[0].targetMapX = 1;
+    things->teleporters[0].targetMapY = 1;
+    things->teleporters[0].rotation = DIR_EAST;
+    things->teleporters[0].absoluteRotation = 1;
+    things->rawThingData[THING_TYPE_TELEPORTER][0] = 0xFEu;
+    things->rawThingData[THING_TYPE_TELEPORTER][1] = 0xFFu;
+
+    /* Map 1: destination square is a pit, so the party falls to map 2. */
+    dungeon->tiles[1].squareData[(1 * 3) + 1] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
+
+    /* Map 2: landing square contains another teleporter -> final floor cell. */
+    dungeon->tiles[2].squareData[(1 * 3) + 1] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    things->squareFirstThings[18 + (1 * 3) + 1] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 1);
+    things->teleporters[1].next = THING_ENDOFLIST;
+    things->teleporters[1].targetMapIndex = 2;
+    things->teleporters[1].targetMapX = 2;
+    things->teleporters[1].targetMapY = 2;
+    things->teleporters[1].rotation = DIR_SOUTH;
+    things->teleporters[1].absoluteRotation = 1;
+    things->rawThingData[THING_TYPE_TELEPORTER][6] = 0xFEu;
+    things->rawThingData[THING_TYPE_TELEPORTER][7] = 0xFFu;
+
+    w->dungeon = dungeon;
+    w->things = things;
+    w->ownsDungeon = 1;
+    w->party.mapIndex = 0;
+    w->party.mapX = 1;
+    w->party.mapY = 1;
+    w->party.direction = DIR_EAST;
+    return 1;
+}
+
 int main(int argc, char** argv) {
     const char* dungeonPath = (argc > 1) ? argv[1]
         : "./DUNGEON.DAT";
@@ -247,6 +355,33 @@ int main(int argc, char** argv) {
         CHECK(rc != 1 || found, "17: CMD_MOVE on walkable tile emits EMIT_PARTY_MOVED (or all dirs blocked)");
     }
     {
+        /* Added Pass 29 scenario: move -> teleporter -> pit -> teleporter
+         * resolves inside compat/runtime ownership and emits transition markers. */
+        struct GameWorld_Compat w;
+        struct TickInput_Compat in;
+        struct TickResult_Compat r;
+        int sawFall = 0;
+        int sawTeleport = 0;
+        int i;
+        int built = build_post_move_env_world(&w, 7u);
+        CHECK(built, "18: synthetic post-move environment world builds");
+        if (built) {
+            memset(&in, 0, sizeof(in));
+            in.command = CMD_MOVE_EAST;
+            F0884_ORCH_AdvanceOneTick_Compat(&w, &in, &r);
+            for (i = 0; i < r.emissionCount; ++i) {
+                if (r.emissions[i].kind == EMIT_PARTY_FELL) sawFall = 1;
+                if (r.emissions[i].kind == EMIT_PARTY_TELEPORTED) sawTeleport = 1;
+            }
+            CHECK(w.party.mapIndex == 2 && w.party.mapX == 2 && w.party.mapY == 2 &&
+                  w.party.direction == DIR_SOUTH && sawFall && sawTeleport,
+                  "19: compat move resolves chained teleporter/pit/teleporter ownership");
+            CHECK(w.party.champions[0].hp.current < 100 && w.party.champions[1].hp.current < 100,
+                  "20: chained pit fall applies champion damage in orchestrator path");
+            F0883_WORLD_Free_Compat(&w);
+        }
+    }
+    {
         /* Invariant 18: CMD_ATTACK emits EMIT_DAMAGE_DEALT. */
         struct GameWorld_Compat w;
         struct TickInput_Compat in;
@@ -261,7 +396,7 @@ int main(int argc, char** argv) {
         for (i = 0; i < r.emissionCount; i++) {
             if (r.emissions[i].kind == EMIT_DAMAGE_DEALT) { found = 1; break; }
         }
-        CHECK(found, "18: CMD_ATTACK emits EMIT_DAMAGE_DEALT");
+        CHECK(found, "21: CMD_ATTACK emits EMIT_DAMAGE_DEALT");
         F0883_WORLD_Free_Compat(&w);
     }
     {

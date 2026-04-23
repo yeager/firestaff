@@ -933,9 +933,44 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             memset(&mr, 0, sizeof(mr));
             F0702_MOVEMENT_TryMove_Compat(world->dungeon, &world->party, mv, &mr);
             if (mr.resultCode == MOVE_OK) {
-                world->party.mapX = mr.newMapX;
-                world->party.mapY = mr.newMapY;
-                world->party.direction = mr.newDirection;
+                struct PartyState_Compat movedParty = world->party;
+                struct PostMoveResolution_Compat postMove;
+                int i;
+
+                memset(&postMove, 0, sizeof(postMove));
+                movedParty.mapX = mr.newMapX;
+                movedParty.mapY = mr.newMapY;
+                movedParty.direction = mr.newDirection;
+                movedParty.mapIndex = mr.newMapIndex;
+                (void)F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                    world->dungeon,
+                    world->things,
+                    &movedParty,
+                    world->gameTick,
+                    &postMove);
+
+                world->party.mapX = postMove.finalMapX;
+                world->party.mapY = postMove.finalMapY;
+                world->party.direction = postMove.finalDirection;
+                world->party.mapIndex = postMove.finalMapIndex;
+                for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+                    if (postMove.championFallDamage[i] > 0 &&
+                        world->party.champions[i].present &&
+                        world->party.champions[i].hp.current > 0) {
+                        int hp = (int)world->party.champions[i].hp.current - postMove.championFallDamage[i];
+                        world->party.champions[i].hp.current = (int16_t)((hp > 0) ? hp : 0);
+                    }
+                }
+                if (postMove.pitCount > 0) {
+                    emit(result, EMIT_PARTY_FELL,
+                         world->party.mapIndex, world->party.mapX,
+                         world->party.mapY, postMove.pitCount);
+                }
+                if (postMove.teleporterCount > 0) {
+                    emit(result, EMIT_PARTY_TELEPORTED,
+                         world->party.mapIndex, world->party.mapX,
+                         world->party.mapY, postMove.teleporterCount);
+                }
                 emit(result, EMIT_PARTY_MOVED,
                      world->party.mapX, world->party.mapY,
                      world->party.direction, world->party.mapIndex);

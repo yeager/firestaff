@@ -1538,250 +1538,76 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
 }
 
 /* ================================================================
- * Pit transition — party falls to the level below
+ * Post-move environment transitions now belong to compat/runtime.
+ * This M11 shim exists only for probe coverage of the legacy public entry.
  * ================================================================ */
 
-static int m11_check_pit_fall(M11_GameViewState* state) {
-    unsigned char square = 0;
-    int elementType;
-    int targetLevel;
-    const struct DungeonMapDesc_Compat* targetMap;
+static int m11_apply_post_move_environment_from_compat(M11_GameViewState* state) {
+    struct PostMoveResolution_Compat resolution;
     int i;
-    int pitIsOpen;
 
     if (!state || !state->active || !state->world.dungeon) {
         return 0;
     }
-    if (!m11_get_square_byte(&state->world,
-                             state->world.party.mapIndex,
-                             state->world.party.mapX,
-                             state->world.party.mapY,
-                             &square)) {
+    memset(&resolution, 0, sizeof(resolution));
+    if (!F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+            state->world.dungeon,
+            state->world.things,
+            &state->world.party,
+            state->world.gameTick,
+            &resolution)) {
         return 0;
     }
-    elementType = (square >> 5) & 7;
-    if (elementType != DUNGEON_ELEMENT_PIT) {
-        return 0;
-    }
-
-    /* Pit open state: bit 0 of square low nibble.
-       In DM, pits have an "open" flag — an open pit is passable but
-       the party falls through. A closed (imaginary) pit is just floor. */
-    pitIsOpen = (square & 0x01) ? 1 : 1; /* In DM1, stepping on a pit
-       square always triggers the fall. The element type itself means
-       the pit exists. Bit 3 distinguishes open/closed in some versions
-       but the conservative approach: pit element = fall. */
-    if (!pitIsOpen) {
+    if (!resolution.transitioned) {
         return 0;
     }
 
-    /* Fall to the level below */
-    targetLevel = state->world.party.mapIndex + 1;
-    if (targetLevel >= (int)state->world.dungeon->header.mapCount) {
-        m11_log_event(state, M11_COLOR_YELLOW, "T%u: PIT LEADS NOWHERE",
-                      (unsigned int)state->world.gameTick);
-        return 0;
-    }
-
-    targetMap = &state->world.dungeon->maps[targetLevel];
-    state->world.party.mapIndex = targetLevel;
-
-    /* Keep X/Y the same — pit drops vertically. Clamp to map bounds. */
-    if (state->world.party.mapX >= (int)targetMap->width) {
-        state->world.party.mapX = (int)targetMap->width - 1;
-    }
-    if (state->world.party.mapY >= (int)targetMap->height) {
-        state->world.party.mapY = (int)targetMap->height - 1;
-    }
-
-    /* Apply fall damage: 5-15 HP to each living champion */
-    for (i = 0; i < state->world.party.championCount && i < CHAMPION_MAX_PARTY; ++i) {
-        struct ChampionState_Compat* champ = &state->world.party.champions[i];
-        if (champ->present && champ->hp.current > 0) {
-            int fallDamage = 5 + (int)(state->world.gameTick % 11U);
-            champ->hp.current -= (int16_t)fallDamage;
-            if (champ->hp.current < 0) {
-                champ->hp.current = 0;
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_RED,
-                          "T%u: %c%c TAKES %d FALL DAMAGE",
-                          (unsigned int)state->world.gameTick,
-                          champ->name[0] ? (char)champ->name[0] : '?',
-                          champ->name[1] ? (char)champ->name[1] : '?',
-                          fallDamage);
+    state->world.party.mapX = resolution.finalMapX;
+    state->world.party.mapY = resolution.finalMapY;
+    state->world.party.direction = resolution.finalDirection;
+    state->world.party.mapIndex = resolution.finalMapIndex;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (resolution.championFallDamage[i] > 0 &&
+            state->world.party.champions[i].present &&
+            state->world.party.champions[i].hp.current > 0) {
+            int hp = (int)state->world.party.champions[i].hp.current - resolution.championFallDamage[i];
+            state->world.party.champions[i].hp.current = (int16_t)((hp > 0) ? hp : 0);
         }
     }
-
     memset(state->exploredBits, 0, sizeof(state->exploredBits));
     m11_mark_explored(state);
     m11_refresh_hash(state);
-    m11_log_event(state, M11_COLOR_YELLOW, "T%u: FELL INTO PIT! LEVEL %d",
-                  (unsigned int)state->world.gameTick,
-                  targetLevel + 1);
-    m11_set_status(state, "PIT", "FELL TO NEXT LEVEL");
-    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "PIT FALL");
-    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "DROPPED TO LEVEL %d, MAP %dx%d",
-             targetLevel + 1,
-             (int)targetMap->width, (int)targetMap->height);
+    if (resolution.pitCount > 0) {
+        m11_log_event(state, M11_COLOR_YELLOW, "T%u: FELL INTO PIT! LEVEL %d",
+                      (unsigned int)state->world.gameTick,
+                      state->world.party.mapIndex + 1);
+        m11_set_status(state, "PIT", "FELL TO NEXT LEVEL");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "PIT FALL");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "DROPPED TO LEVEL %d, POSITION (%d,%d)",
+                 state->world.party.mapIndex + 1,
+                 state->world.party.mapX,
+                 state->world.party.mapY);
+    }
+    if (resolution.teleporterCount > 0) {
+        m11_log_event(state, M11_COLOR_LIGHT_CYAN, "T%u: TELEPORTED TO MAP %d (%d,%d)",
+                      (unsigned int)state->world.gameTick,
+                      state->world.party.mapIndex + 1,
+                      state->world.party.mapX,
+                      state->world.party.mapY);
+        m11_set_status(state, "TELEPORT", "PARTY TRANSPORTED");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "TELEPORTER");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "ARRIVED AT LEVEL %d, POSITION (%d,%d)",
+                 state->world.party.mapIndex + 1,
+                 state->world.party.mapX,
+                 state->world.party.mapY);
+    }
     return 1;
 }
 
-/* ================================================================
- * Teleporter transition — find teleporter thing and transport party
- * ================================================================ */
-
-static int m11_find_teleporter_on_square(
-    const struct GameWorld_Compat* world,
-    int mapIndex,
-    int mapX,
-    int mapY,
-    struct DungeonTeleporter_Compat* outTeleporter) {
-    unsigned short thing;
-    int safety = 0;
-
-    if (!world || !world->things || !outTeleporter) {
-        return 0;
-    }
-    thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
-    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 32) {
-        int thingType = THING_GET_TYPE(thing);
-        if (thingType == THING_TYPE_TELEPORTER) {
-            int idx = THING_GET_INDEX(thing);
-            if (idx >= 0 && idx < world->things->teleporterCount &&
-                world->things->teleporters) {
-                *outTeleporter = world->things->teleporters[idx];
-                return 1;
-            }
-        }
-        thing = m11_raw_next_thing(world->things, thing);
-        ++safety;
-    }
-    return 0;
-}
-
-static int m11_check_teleporter(M11_GameViewState* state) {
-    unsigned char square = 0;
-    int elementType;
-    struct DungeonTeleporter_Compat tp;
-    int targetMapIndex;
-    int targetX, targetY;
-    const struct DungeonMapDesc_Compat* targetMap;
-
-    if (!state || !state->active || !state->world.dungeon) {
-        return 0;
-    }
-    if (!m11_get_square_byte(&state->world,
-                             state->world.party.mapIndex,
-                             state->world.party.mapX,
-                             state->world.party.mapY,
-                             &square)) {
-        return 0;
-    }
-    elementType = (square >> 5) & 7;
-    if (elementType != DUNGEON_ELEMENT_TELEPORTER) {
-        return 0;
-    }
-
-    memset(&tp, 0, sizeof(tp));
-    if (!m11_find_teleporter_on_square(&state->world,
-                                       state->world.party.mapIndex,
-                                       state->world.party.mapX,
-                                       state->world.party.mapY,
-                                       &tp)) {
-        m11_log_event(state, M11_COLOR_LIGHT_CYAN,
-                      "T%u: TELEPORTER HAS NO THING DATA",
-                      (unsigned int)state->world.gameTick);
-        return 0;
-    }
-
-    targetMapIndex = (int)tp.targetMapIndex;
-    targetX = (int)tp.targetMapX;
-    targetY = (int)tp.targetMapY;
-
-    /* Validate target map */
-    if (targetMapIndex < 0 || targetMapIndex >= (int)state->world.dungeon->header.mapCount) {
-        m11_log_event(state, M11_COLOR_LIGHT_RED,
-                      "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE",
-                      (unsigned int)state->world.gameTick, targetMapIndex);
-        return 0;
-    }
-    targetMap = &state->world.dungeon->maps[targetMapIndex];
-
-    /* Clamp target coordinates */
-    if (targetX >= (int)targetMap->width) {
-        targetX = (int)targetMap->width - 1;
-    }
-    if (targetY >= (int)targetMap->height) {
-        targetY = (int)targetMap->height - 1;
-    }
-    if (targetX < 0) targetX = 0;
-    if (targetY < 0) targetY = 0;
-
-    /* Apply teleport */
-    state->world.party.mapIndex = targetMapIndex;
-    state->world.party.mapX = targetX;
-    state->world.party.mapY = targetY;
-
-    /* Apply rotation if specified */
-    if (tp.absoluteRotation) {
-        state->world.party.direction = (int)(tp.rotation & 3);
-    } else if (tp.rotation != 0) {
-        state->world.party.direction =
-            (state->world.party.direction + (int)(tp.rotation & 3)) & 3;
-    }
-
-    /* Reset explored bits if we changed maps */
-    memset(state->exploredBits, 0, sizeof(state->exploredBits));
-    m11_mark_explored(state);
-    m11_refresh_hash(state);
-
-    if (tp.audible) {
-        m11_log_event(state, M11_COLOR_LIGHT_CYAN,
-                      "T%u: TELEPORTED TO MAP %d (%d,%d)",
-                      (unsigned int)state->world.gameTick,
-                      targetMapIndex + 1, targetX, targetY);
-    } else {
-        /* Silent teleporters — player might not even notice */
-        m11_log_event(state, M11_COLOR_DARK_GRAY,
-                      "T%u: SHIFTED TO (%d,%d)",
-                      (unsigned int)state->world.gameTick,
-                      targetX, targetY);
-    }
-    m11_set_status(state, "TELEPORT", "PARTY TRANSPORTED");
-    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "TELEPORTER");
-    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "ARRIVED AT LEVEL %d, POSITION (%d,%d)",
-             targetMapIndex + 1, targetX, targetY);
-    return 1;
-}
-
-/* Check for environmental transitions after party movement.
- * Handles pits (fall) and teleporters (transport).
- * Returns 1 if a transition occurred. */
 static int m11_check_post_move_transitions(M11_GameViewState* state) {
-    int transitioned = 0;
-    int safetyLimit = 4; /* Prevent infinite teleporter chains */
-
-    if (!state || !state->active) {
-        return 0;
-    }
-
-    while (safetyLimit > 0) {
-        if (m11_check_pit_fall(state)) {
-            transitioned = 1;
-            --safetyLimit;
-            m11_check_party_death(state);
-            continue;
-        }
-        if (m11_check_teleporter(state)) {
-            transitioned = 1;
-            --safetyLimit;
-            continue;
-        }
-        break;
-    }
-    return transitioned;
+    return m11_apply_post_move_environment_from_compat(state);
 }
 
 int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state) {
@@ -3579,6 +3405,34 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                               state->world.party.mapX,
                               state->world.party.mapY);
                 break;
+            case EMIT_PARTY_FELL:
+                m11_log_event(state, M11_COLOR_YELLOW,
+                              "T%u: FELL INTO PIT! LEVEL %d",
+                              (unsigned int)state->world.gameTick,
+                              (int)e->payload[0] + 1);
+                m11_set_status(state, "PIT", "FELL TO NEXT LEVEL");
+                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "PIT FALL");
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "DROPPED TO LEVEL %d, POSITION (%d,%d)",
+                         (int)e->payload[0] + 1,
+                         (int)e->payload[1],
+                         (int)e->payload[2]);
+                break;
+            case EMIT_PARTY_TELEPORTED:
+                m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                              "T%u: TELEPORTED TO MAP %d (%d,%d)",
+                              (unsigned int)state->world.gameTick,
+                              (int)e->payload[0] + 1,
+                              (int)e->payload[1],
+                              (int)e->payload[2]);
+                m11_set_status(state, "TELEPORT", "PARTY TRANSPORTED");
+                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "TELEPORTER");
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "ARRIVED AT LEVEL %d, POSITION (%d,%d)",
+                         (int)e->payload[0] + 1,
+                         (int)e->payload[1],
+                         (int)e->payload[2]);
+                break;
             case EMIT_DOOR_STATE:
                 m11_log_event(state, M11_COLOR_YELLOW,
                               "T%u: DOOR STATE CHANGED",
@@ -4010,12 +3864,7 @@ static int m11_apply_tick(M11_GameViewState* state,
     /* Mark current cell as explored */
     m11_mark_explored(state);
 
-    /* Check for environmental transitions (pits, teleporters) after movement */
-    if (state->world.party.mapX != beforeParty.mapX ||
-        state->world.party.mapY != beforeParty.mapY ||
-        state->world.party.mapIndex != beforeParty.mapIndex) {
-        m11_check_post_move_transitions(state);
-    }
+    /* Post-move pit/teleporter ownership now lives in compat/runtime. */
 
     if (command == CMD_ATTACK) {
         char champion[16];

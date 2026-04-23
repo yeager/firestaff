@@ -110,6 +110,8 @@
 #define EMIT_GAME_WON         0x08
 #define EMIT_PARTY_DEAD       0x09
 #define EMIT_SPELL_EFFECT     0x0A
+#define EMIT_PARTY_FELL       0x0B
+#define EMIT_PARTY_TELEPORTED 0x0C
 
 /* ================================================================
  *  Capacities

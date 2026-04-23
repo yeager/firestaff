@@ -1,6 +1,97 @@
 #include "memory_movement_pc34_compat.h"
 #include <string.h>
 
+static const unsigned char s_movementThingDataByteCount[16] = {
+    4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+};
+
+static int movement_square_index(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int base = 0;
+    int i;
+
+    if (!dungeon || mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) {
+        return -1;
+    }
+    for (i = 0; i < mapIndex; ++i) {
+        base += (int)dungeon->maps[i].width * (int)dungeon->maps[i].height;
+    }
+    return base + mapX * (int)dungeon->maps[mapIndex].height + mapY;
+}
+
+static unsigned short movement_first_square_thing(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int squareIndex;
+
+    if (!dungeon || !things || !things->squareFirstThings) {
+        return THING_NONE;
+    }
+    squareIndex = movement_square_index(dungeon, mapIndex, mapX, mapY);
+    if (squareIndex < 0 || squareIndex >= things->squareFirstThingCount) {
+        return THING_NONE;
+    }
+    return things->squareFirstThings[squareIndex];
+}
+
+static unsigned short movement_next_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    int type;
+    int index;
+    const unsigned char* raw;
+
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_NONE;
+    }
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (type < 0 || type >= 16 || !things->rawThingData[type] ||
+        index < 0 || index >= things->thingCounts[type] ||
+        s_movementThingDataByteCount[type] < 2) {
+        return THING_NONE;
+    }
+    raw = things->rawThingData[type] + (index * s_movementThingDataByteCount[type]);
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
+
+static int movement_find_teleporter_on_square(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct DungeonTeleporter_Compat* outTeleporter)
+{
+    unsigned short thing;
+    int safety = 0;
+
+    if (!things || !outTeleporter) {
+        return 0;
+    }
+    thing = movement_first_square_thing(dungeon, things, mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_TELEPORTER && index >= 0 && index < things->teleporterCount) {
+            *outTeleporter = things->teleporters[index];
+            return 1;
+        }
+        thing = movement_next_thing(things, thing);
+        ++safety;
+    }
+    return 0;
+}
+
 /*
  * Movement implementation — pure functions, no side effects.
  * Source: MOVESENS.C direction/step logic.
@@ -283,4 +374,119 @@ int F0703_MOVEMENT_IdentifySensorsOnSquare_Compat(
 
     outSensor->totalSensorsOnSquare = sensorCount;
     return (sensorCount > 0) ? 1 : 0;
+}
+
+int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    const struct PartyState_Compat* party,
+    uint32_t gameTick,
+    struct PostMoveResolution_Compat* outResolution)
+{
+    struct PartyState_Compat cursor;
+    int remaining = MOVEMENT_POST_MOVE_CHAIN_LIMIT;
+
+    if (!dungeon || !party || !outResolution) {
+        return 0;
+    }
+
+    memset(outResolution, 0, sizeof(*outResolution));
+    cursor = *party;
+    outResolution->finalMapX = cursor.mapX;
+    outResolution->finalMapY = cursor.mapY;
+    outResolution->finalDirection = cursor.direction;
+    outResolution->finalMapIndex = cursor.mapIndex;
+
+    while (remaining-- > 0) {
+        const struct DungeonMapDesc_Compat* map;
+        unsigned char squareByte;
+        int squareIndex;
+        int elementType;
+
+        if (cursor.mapIndex < 0 || cursor.mapIndex >= (int)dungeon->header.mapCount) {
+            break;
+        }
+        map = &dungeon->maps[cursor.mapIndex];
+        if (cursor.mapX < 0 || cursor.mapX >= map->width ||
+            cursor.mapY < 0 || cursor.mapY >= map->height) {
+            break;
+        }
+        if (!dungeon->tilesLoaded || !dungeon->tiles || !dungeon->tiles[cursor.mapIndex].squareData) {
+            break;
+        }
+
+        squareIndex = cursor.mapX * map->height + cursor.mapY;
+        squareByte = dungeon->tiles[cursor.mapIndex].squareData[squareIndex];
+        elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+
+        if (elementType == DUNGEON_ELEMENT_PIT) {
+            int targetLevel = cursor.mapIndex + 1;
+            const struct DungeonMapDesc_Compat* targetMap;
+            int i;
+
+            if (targetLevel < 0 || targetLevel >= (int)dungeon->header.mapCount) {
+                break;
+            }
+            targetMap = &dungeon->maps[targetLevel];
+            cursor.mapIndex = targetLevel;
+            if (cursor.mapX >= targetMap->width) cursor.mapX = targetMap->width - 1;
+            if (cursor.mapY >= targetMap->height) cursor.mapY = targetMap->height - 1;
+            if (cursor.mapX < 0) cursor.mapX = 0;
+            if (cursor.mapY < 0) cursor.mapY = 0;
+            for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
+                if (party->champions[i].present && party->champions[i].hp.current > 0) {
+                    outResolution->championFallDamage[i] += 5 + (int)(gameTick % 11u);
+                }
+            }
+            outResolution->transitioned = 1;
+            outResolution->chainCount += 1;
+            outResolution->pitCount += 1;
+            continue;
+        }
+
+        if (elementType == DUNGEON_ELEMENT_TELEPORTER) {
+            struct DungeonTeleporter_Compat tp;
+            const struct DungeonMapDesc_Compat* targetMap;
+            int targetMapIndex;
+            int targetX;
+            int targetY;
+
+            if (!things || !things->teleporters ||
+                !movement_find_teleporter_on_square(dungeon, things,
+                    cursor.mapIndex, cursor.mapX, cursor.mapY, &tp)) {
+                break;
+            }
+            targetMapIndex = (int)tp.targetMapIndex;
+            if (targetMapIndex < 0 || targetMapIndex >= (int)dungeon->header.mapCount) {
+                break;
+            }
+            targetMap = &dungeon->maps[targetMapIndex];
+            targetX = (int)tp.targetMapX;
+            targetY = (int)tp.targetMapY;
+            if (targetX >= targetMap->width) targetX = targetMap->width - 1;
+            if (targetY >= targetMap->height) targetY = targetMap->height - 1;
+            if (targetX < 0) targetX = 0;
+            if (targetY < 0) targetY = 0;
+            cursor.mapIndex = targetMapIndex;
+            cursor.mapX = targetX;
+            cursor.mapY = targetY;
+            if (tp.absoluteRotation) {
+                cursor.direction = (int)(tp.rotation & 3);
+            } else if (tp.rotation != 0) {
+                cursor.direction = (cursor.direction + (int)(tp.rotation & 3)) & 3;
+            }
+            outResolution->transitioned = 1;
+            outResolution->chainCount += 1;
+            outResolution->teleporterCount += 1;
+            continue;
+        }
+
+        break;
+    }
+
+    outResolution->finalMapX = cursor.mapX;
+    outResolution->finalMapY = cursor.mapY;
+    outResolution->finalDirection = cursor.direction;
+    outResolution->finalMapIndex = cursor.mapIndex;
+    return 1;
 }

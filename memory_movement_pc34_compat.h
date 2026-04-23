@@ -13,6 +13,8 @@
  * Sensor identification is separate from execution.
  */
 
+#include <stdint.h>
+
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -39,6 +41,20 @@ struct MovementResult_Compat {
     int newMapY;          /* New Y after move */
     int newDirection;     /* New direction after move/turn */
     int newMapIndex;      /* New map index (same unless teleporter — future) */
+};
+
+#define MOVEMENT_POST_MOVE_CHAIN_LIMIT 4
+
+struct PostMoveResolution_Compat {
+    int transitioned;
+    int chainCount;
+    int pitCount;
+    int teleporterCount;
+    int finalMapX;
+    int finalMapY;
+    int finalDirection;
+    int finalMapIndex;
+    int championFallDamage[CHAMPION_MAX_PARTY];
 };
 
 /*
@@ -123,5 +139,12 @@ int F0703_MOVEMENT_IdentifySensorsOnSquare_Compat(
     int mapX,
     int mapY,
     struct SensorOnSquare_Compat* outSensor);
+
+int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    const struct PartyState_Compat* party,
+    uint32_t gameTick,
+    struct PostMoveResolution_Compat* outResolution);
 
 #endif
