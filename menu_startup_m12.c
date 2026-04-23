@@ -2260,6 +2260,211 @@ static void m12_draw_message_view(const M12_StartupMenuState* state,
                     m12_text(state, M12_TEXT_MESSAGE_FOOTER));
 }
 
+static int m12_is_original_sparse_path(const M12_StartupMenuState* state) {
+    return M12_StartupMenu_GetPresentationMode(state) == M12_PRESENTATION_V1_ORIGINAL;
+}
+
+static void m12_draw_sparse_menu_row(unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int x,
+                                     int y,
+                                     const char* label,
+                                     int selected) {
+    if (selected) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      x - 10,
+                      y,
+                      ">",
+                      &g_textSmallShadow);
+    }
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x,
+                  y,
+                  label,
+                  selected ? &g_textSmallShadow : &g_textSmallMuted);
+}
+
+static void m12_draw_sparse_main_view(const M12_StartupMenuState* state,
+                                      unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight) {
+    int centerX = framebufferWidth / 2;
+    int phase = (int)(state->frameTick / 16U);
+    int titleY = 88;
+    int menuX = centerX - 44;
+    int menuY = 108;
+    const char* languageCode = g_languages[m12_clamp_index(state ? state->settings.languageIndex : 0,
+                                                           (int)(sizeof(g_languages) / sizeof(g_languages[0])) )];
+
+    m12_put_pixel(framebuffer, framebufferWidth, framebufferHeight, 0, 0, M12_COLOR_DARK_GRAY);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  centerX - 62,
+                  titleY - 10,
+                  124,
+                  10,
+                  M12_COLOR_DARK_GRAY);
+    m12_fill_rect(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  centerX - 54,
+                  titleY + 18,
+                  108,
+                  34,
+                  M12_COLOR_DARK_GRAY);
+
+    if (phase >= 0) {
+        m12_draw_centered_text(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               titleY,
+                               "DUNGEON MASTER",
+                               &g_textMediumShadow);
+    }
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           titleY + 22,
+                           languageCode,
+                           &g_textSmallMuted);
+    if (phase >= 1) {
+        m12_draw_centered_text(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               titleY + 10,
+                               "CHAOS STRIKES BACK",
+                               &g_textSmallMuted);
+    }
+    if (phase >= 2) {
+        int maxRows = phase >= 3 ? m12_entry_count() : 2;
+        int i;
+        for (i = 0; i < maxRows; ++i) {
+            m12_draw_sparse_menu_row(framebuffer,
+                                     framebufferWidth,
+                                     framebufferHeight,
+                                     menuX,
+                                     menuY + i * 10,
+                                     state->entries[i].title,
+                                     i == state->selectedIndex);
+        }
+        m12_draw_centered_text(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               menuY + maxRows * 10 + 8,
+                               languageCode,
+                               &g_textSmallMuted);
+    }
+}
+
+static void m12_draw_sparse_center_box(unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight,
+                                       int boxWidth,
+                                       int boxHeight,
+                                       const char* line1,
+                                       const char* line2,
+                                       const char* line3,
+                                       unsigned char line1Color) {
+    int x = (framebufferWidth - boxWidth) / 2;
+    int y = (framebufferHeight - boxHeight) / 2;
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   boxWidth,
+                   boxHeight,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    if (line1 && line1[0] != '\0') {
+        m12_draw_centered_text(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               y + 16,
+                               line1,
+                               &(M12_TextStyle){1, 1, line1Color, 0, 0, M12_COLOR_BLACK});
+    }
+    if (line2 && line2[0] != '\0') {
+        m12_draw_centered_text(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               y + 28,
+                               line2,
+                               &g_textSmallShadow);
+    }
+    if (line3 && line3[0] != '\0') {
+        m12_draw_centered_text(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               y + 40,
+                               line3,
+                               &g_textSmallMuted);
+    }
+}
+
+static void m12_draw_sparse_settings_view(const M12_StartupMenuState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight) {
+    char line2[64];
+    char line3[64];
+    snprintf(line2, sizeof(line2), "LANGUAGE  %s", m12_settings_value_language(state));
+    snprintf(line3, sizeof(line3), "GRAPHICS  %s", m12_settings_value_graphics(state));
+    m12_draw_sparse_center_box(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               168,
+                               56,
+                               "SETTINGS",
+                               line2,
+                               line3,
+                               M12_COLOR_WHITE);
+}
+
+static void m12_draw_sparse_game_options_view(const M12_StartupMenuState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight) {
+    const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
+    char line2[64];
+    snprintf(line2, sizeof(line2), "PATCH  %s", state->gameOptions[m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT)].usePatch ? "PATCHED" : "ORIGINAL");
+    m12_draw_sparse_center_box(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               188,
+                               56,
+                               entry ? entry->title : "GAME OPTIONS",
+                               line2,
+                               "ENTER LAUNCH   ESC BACK",
+                               M12_COLOR_WHITE);
+}
+
+static void m12_draw_sparse_message_view(const M12_StartupMenuState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight) {
+    unsigned char messageColor = M12_COLOR_GREEN;
+    const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
+    if (entry && !entry->available) {
+        messageColor = M12_COLOR_LIGHT_RED;
+    }
+    m12_draw_sparse_center_box(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               196,
+                               60,
+                               state->messageLine1,
+                               state->messageLine2,
+                               state->messageLine3,
+                               messageColor);
+}
+
 static void m12_apply_graphics_overlay(const M12_StartupMenuState* state,
                                        unsigned char* framebuffer,
                                        int framebufferWidth,
@@ -3578,6 +3783,18 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
     memset(framebuffer,
            M12_COLOR_BLACK,
            (size_t)framebufferWidth * (size_t)framebufferHeight);
+    if (m12_is_original_sparse_path(state)) {
+        if (state->view == M12_MENU_VIEW_MESSAGE) {
+            m12_draw_sparse_message_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_SETTINGS) {
+            m12_draw_sparse_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
+            m12_draw_sparse_game_options_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else {
+            m12_draw_sparse_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        }
+        return;
+    }
     if (m12_use_modern_layout(framebufferWidth, framebufferHeight)) {
         if (state->view == M12_MENU_VIEW_MESSAGE) {
             m12_draw_message_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);

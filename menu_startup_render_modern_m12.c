@@ -1052,6 +1052,104 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
 }
 
 /* -------------------------------------------------------------------------- */
+/* Original-faithful sparse V1 path                                           */
+/* -------------------------------------------------------------------------- */
+
+static int modern_is_original_sparse_path(const M12_StartupMenuState* state) {
+    return M12_StartupMenu_GetPresentationMode(state) == M12_PRESENTATION_V1_ORIGINAL;
+}
+
+static void draw_sparse_background(M12_ModernCanvas* c) {
+    fill_rect(c, 0, 0, c->w, c->h, rgb(0, 0, 0));
+    for (int y = c->h / 2 - 20; y <= c->h / 2 + 20; ++y) {
+        int alpha = 16 - abs(y - c->h / 2) / 2;
+        if (alpha <= 0) continue;
+        for (int x = c->w / 2 - 140; x <= c->w / 2 + 140; ++x) {
+            blend_pixel(c, x, y, rgb(64, 64, 64), alpha);
+        }
+    }
+}
+
+static void draw_sparse_center_box_modern(M12_ModernCanvas* c,
+                                          int boxW,
+                                          int boxH,
+                                          const char* line1,
+                                          const char* line2,
+                                          const char* line3,
+                                          M12_RGB line1Color) {
+    int x = (c->w - boxW) / 2;
+    int y = (c->h - boxH) / 2;
+    stroke_rounded_rect(c, x, y, boxW, boxH, 4, rgb(70, 70, 70));
+    ModernTextStyle l1 = text_style_make(2, line1Color, 0);
+    ModernTextStyle l2 = text_style_make(2, rgb(210, 210, 210), 0);
+    ModernTextStyle l3 = text_style_make(2, rgb(120, 120, 120), 0);
+    if (line1 && line1[0]) draw_text_centered(c, c->w / 2, y + 18, line1, &l1);
+    if (line2 && line2[0]) draw_text_centered(c, c->w / 2, y + 42, line2, &l2);
+    if (line3 && line3[0]) draw_text_centered(c, c->w / 2, y + 66, line3, &l3);
+}
+
+static void draw_sparse_main_view_modern(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    int phase = (int)(state->frameTick / 16U);
+    ModernTextStyle title = text_style_make(3, rgb(214, 214, 214), 0);
+    ModernTextStyle sub = text_style_make(2, rgb(120, 120, 120), 0);
+    ModernTextStyle rowSel = text_style_make(2, rgb(240, 240, 240), 0);
+    ModernTextStyle row = text_style_make(2, rgb(126, 126, 126), 0);
+    int centerX = c->w / 2;
+    int baseY = c->h / 2 - 36;
+
+    draw_text_centered(c, centerX, baseY, "DUNGEON MASTER", &title);
+    if (phase >= 1) {
+        draw_text_centered(c, centerX, baseY + 26, "CHAOS STRIKES BACK", &sub);
+    }
+    if (phase >= 2) {
+        int rows = phase >= 3 ? 4 : 2;
+        for (int i = 0; i < rows; ++i) {
+            int y = baseY + 62 + i * 22;
+            ModernTextStyle* style = (i == state->selectedIndex) ? &rowSel : &row;
+            if (i == state->selectedIndex) {
+                draw_text(c, centerX - 160, y, ">", style);
+            }
+            draw_text(c, centerX - 132, y, state->entries[i].title, style);
+        }
+    }
+}
+
+static void draw_sparse_view_modern(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    switch (state->view) {
+        case M12_MENU_VIEW_SETTINGS: {
+            char line2[96];
+            char line3[96];
+            snprintf(line2, sizeof(line2), "LANGUAGE  %s", state->settings.languageIndex == 1 ? "SV" : state->settings.languageIndex == 2 ? "FR" : state->settings.languageIndex == 3 ? "DE" : "EN");
+            snprintf(line3, sizeof(line3), "GRAPHICS  V1 ORIGINAL");
+            draw_sparse_center_box_modern(c, 420, 110, "SETTINGS", line2, line3, rgb(240, 240, 240));
+            break;
+        }
+        case M12_MENU_VIEW_GAME_OPTIONS: {
+            const M12_MenuEntry* entry = &state->entries[state->selectedIndex];
+            draw_sparse_center_box_modern(c,
+                                          520,
+                                          110,
+                                          entry->title,
+                                          state->gameOptions[state->selectedIndex < 3 ? state->selectedIndex : 0].usePatch ? "PATCH  PATCHED" : "PATCH  ORIGINAL",
+                                          "ENTER LAUNCH   ESC BACK",
+                                          rgb(240, 240, 240));
+            break;
+        }
+        case M12_MENU_VIEW_MESSAGE: {
+            M12_RGB line1Color = rgb(120, 210, 120);
+            const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
+            if (entry && !entry->available) line1Color = rgb(210, 120, 120);
+            draw_sparse_center_box_modern(c, 540, 120, state->messageLine1, state->messageLine2, state->messageLine3, line1Color);
+            break;
+        }
+        case M12_MENU_VIEW_MAIN:
+        default:
+            draw_sparse_main_view_modern(c, state);
+            break;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
 /* Entrypoint                                                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -1066,6 +1164,11 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
         return;
     }
     M12_ModernCanvas c = {rgba, width, height};
+    if (modern_is_original_sparse_path(state)) {
+        draw_sparse_background(&c);
+        draw_sparse_view_modern(&c, state);
+        return;
+    }
     draw_background(&c);
     draw_title_centered(&c);
     draw_mode_badge(&c, state);
