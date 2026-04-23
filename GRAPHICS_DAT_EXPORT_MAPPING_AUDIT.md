@@ -264,19 +264,28 @@ Why:
 3. the PDF generator hard-codes semantic pairings without a locked reference table
 4. once source bindings are wrong, the PDF stops being a trustworthy original-vs-4K reference even if the rendered images themselves are real
 
+Most clearly affected PDF pages:
+
+- "Viewport frame base" / "Viewport aperture / inner mask" because they depend on the unsettled `0000` semantic claim
+- "Status box left frame" because `0007` is not a left-frame asset
+- "Status box right frame" because `0008` is not a right-frame asset
+- "Party HUD cell highlight" because `0034` is a wounded-slot variant, not a generic highlight overlay
+
 The PDF may still contain some visually useful pages, but it should **not** be used as an authoritative mapping/reference artifact.
 
 ## Compact trusted reference list for future comparison work
 
 Use this list as the safe starting set for future original-reference comparisons:
 
-- `0009` — spell area background
-- `0010` — action area background
-- `0020` — panel empty / inventory-panel background
-- `0033` — slot box normal
-- `0035` — slot box acting hand
-- `0303` — stone lock, left side
-- `0304` — stone lock, front
+| Index | Trusted label | Evidence floor |
+| --- | --- | --- |
+| `0009` | spell area background | ReDMCSB `C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND`, local export size/visual, Firestaff usage comments |
+| `0010` | action area background | ReDMCSB `C010_GRAPHIC_MENU_ACTION_AREA`, local export size/visual, Firestaff usage comments |
+| `0020` | panel empty / inventory-panel background | ReDMCSB `C020_GRAPHIC_PANEL_EMPTY`, repeated frontend usage, matching local export |
+| `0033` | slot box normal | ReDMCSB `C033_GRAPHIC_SLOT_BOX_NORMAL`, frontend slot-box selection logic |
+| `0035` | slot box acting hand | ReDMCSB `C035_GRAPHIC_SLOT_BOX_ACTING_HAND`, frontend slot-box selection logic |
+| `0303` | stone lock, left side | DMExtract/Greatstone agreement captured in local PC lock notes, matching local visual |
+| `0304` | stone lock, front | DMExtract/Greatstone agreement captured in local PC lock notes, matching local visual |
 
 Use with caution / re-verify first:
 
