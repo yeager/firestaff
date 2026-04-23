@@ -6566,6 +6566,49 @@ int main(int argc, char** argv) {
                                 }
                                 fclose(ssFile);
                             }
+
+                            /* Extra bitmap-path screenshot so the real
+                             * DM1 explosion bitmap (GRAPHICS.DAT 486) is
+                             * captured when a GRAPHICS.DAT is available.
+                             * This proves pass 26 actually renders the
+                             * classic DM bitmap rather than only the
+                             * cue-fallback the baseline probe captures. */
+                            {
+                                const char* gfxRoot = getenv("FIRESTAFF_DATA");
+                                char gfxPath[512];
+                                if (gfxRoot && gfxRoot[0]) {
+                                    snprintf(gfxPath, sizeof(gfxPath),
+                                             "%s/GRAPHICS.DAT", gfxRoot);
+                                    if (M11_AssetLoader_Init(
+                                            &flightView.assetLoader, gfxPath)) {
+                                        flightView.assetsAvailable = 1;
+                                        memset(fbA, 0, sizeof(fbA));
+                                        M11_GameView_Draw(&flightView,
+                                                          fbA, 320, 200);
+                                        snprintf(ssPath, sizeof(ssPath),
+                                            "%s/22_explosion_after_advance_bitmap.pgm",
+                                            ssDir);
+                                        ssFile = fopen(ssPath, "wb");
+                                        if (ssFile) {
+                                            int px;
+                                            fprintf(ssFile,
+                                                    "P5\n320 200\n255\n");
+                                            for (px = 0; px < 320 * 200; ++px) {
+                                                unsigned char gray =
+                                                    (unsigned char)(fbA[px] * 17);
+                                                fwrite(&gray, 1, 1, ssFile);
+                                            }
+                                            fclose(ssFile);
+                                        }
+                                        /* Shut down the loader so the
+                                         * synthetic cleanup below does
+                                         * not double-free. */
+                                        M11_AssetLoader_Shutdown(
+                                            &flightView.assetLoader);
+                                        flightView.assetsAvailable = 0;
+                                    }
+                                }
+                            }
                         }
                     }
                 }

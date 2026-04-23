@@ -4645,6 +4645,167 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
     return 1;
 }
 
+/* DM1 explosion-type -> explosion aspect index (0..3).
+ * Ref: ReDMCSB DUNVIEW.C F0141 explosion draw loop (lines 1850-1878):
+ *   FIREBALL / LIGHTNING_BOLT / REBIRTH_STEP2  -> C0_EXPLOSION_ASPECT_FIRE    (0)
+ *   POISON_BOLT / POISON_CLOUD                 -> C2_EXPLOSION_ASPECT_POISON  (2)
+ *   SMOKE                                      -> C3_EXPLOSION_ASPECT_SMOKE   (3)
+ *   everything else (HARM_NON_MATERIAL, OPEN_DOOR, dispell, etc.)
+ *                                              -> C1_EXPLOSION_ASPECT_SPELL   (1)
+ *
+ * Returns -1 for FLUXCAGE (not drawn through this path in DM1) and for
+ * REBIRTH_STEP1 (handled separately in the original). */
+static int m11_explosion_type_to_aspect(int expType) {
+    if (expType < 0) return -1;
+    if (expType == C050_EXPLOSION_FLUXCAGE) return -1;
+    if (expType == C100_EXPLOSION_REBIRTH_STEP1) return -1;
+    if (expType == C000_EXPLOSION_FIREBALL
+            || expType == C002_EXPLOSION_LIGHTNING_BOLT
+            || expType == C101_EXPLOSION_REBIRTH_STEP2) {
+        return 0; /* FIRE */
+    }
+    if (expType == C007_EXPLOSION_POISON_CLOUD) {
+        /* In DM1 POISON_BOLT (type 6) also maps to POISON aspect, but
+         * our V1 header does not define C006.  The POISON_CLOUD branch
+         * covers the only on-viewport explosion variant we spawn. */
+        return 2; /* POISON */
+    }
+    if (expType == C040_EXPLOSION_SMOKE) {
+        return 3; /* SMOKE */
+    }
+    return 1; /* SPELL (HARM_NON_MATERIAL / OPEN_DOOR / default) */
+}
+
+/* DM1 explosion aspect -> native GRAPHICS.DAT index.
+ * Ref: ReDMCSB DUNVIEW.C F0136 F0675_DUNGEONVIEW_GetScaledBitmap
+ *   bitmap index = M614_GRAPHIC_FIRST_EXPLOSION (=486)
+ *                + min(aspectIndex, C2_EXPLOSION_ASPECT_POISON)
+ * Aspect 0 (fire)   -> 486
+ * Aspect 1 (spell)  -> 487
+ * Aspect 2 (poison) -> 488
+ * Aspect 3 (smoke)  -> 488 (with smoke palette change on pixel values 6,7). */
+enum { M11_GFX_FIRST_EXPLOSION = 486 };
+static int m11_explosion_aspect_to_gfx(int aspect) {
+    if (aspect < 0) return -1;
+    if (aspect >= 2) return M11_GFX_FIRST_EXPLOSION + 2;
+    return M11_GFX_FIRST_EXPLOSION + aspect;
+}
+
+/* Draw a DM1 explosion bitmap from GRAPHICS.DAT.
+ *
+ * Replaces the previous cue-style palette-rect bloom with the real
+ * explosion bitmap frames Fontanel ships in GRAPHICS.DAT at indices
+ * 486 (fire), 487 (spell) and 488 (poison; also reused for smoke
+ * with palette changes).
+ *
+ * The DM1 original calls F0675_DUNGEONVIEW_GetScaledBitmap to request a
+ * cached scaled copy of the bitmap at a depth-specific pixel size.  We
+ * achieve the same visible result by loading the native bitmap once and
+ * blitting it with M11_AssetLoader_BlitScaled at a face-local size
+ * chosen from the depth slot, then modulating that size across
+ * currentFrame / maxFrames so the bitmap blooms on frame 0 and fades
+ * on later frames (fireball / lightning / dispell) or decays with the
+ * residual attack (poison / smoke), matching how F0822 progresses
+ * the aftermath tick-by-tick.
+ *
+ * Smoke reuses the poison bitmap with DM1's palette substitution
+ * G0212_auc_Graphic558_PaletteChanges_Smoke {0,1,2,3,4,5,12,1,...}
+ * which only changes pixel values 6 (-> 12 = DARK_GRAY) and 7 (-> 1 =
+ * NAVY); all other indices are identity.  We implement those two
+ * remaps via BlitScaledReplace's two replacement slots.
+ *
+ * Returns 1 if a real bitmap was blit, 0 if the loader is not ready
+ * (in which case callers draw the fallback palette-rect cue). */
+static int m11_draw_explosion_sprite(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int x, int y, int w, int h,
+                                     int expType,
+                                     int frame,
+                                     int maxFrames,
+                                     int attack,
+                                     int depthIndex) {
+    const M11_AssetSlot* slot;
+    int aspect;
+    int gfxIndex;
+    int baseScale;
+    int scale;
+    int drawW, drawH, drawX, drawY;
+    int isSmoke;
+    if (!state || !state->assetsAvailable) return 0;
+    aspect = m11_explosion_type_to_aspect(expType);
+    if (aspect < 0) return 0;
+    gfxIndex = m11_explosion_aspect_to_gfx(aspect);
+    if (gfxIndex < 0) return 0;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)gfxIndex);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+
+    /* Depth-based base scale: fills most of the face at depth 0, smaller
+     * at greater depths.  Matches the DM1 look where a point-blank
+     * fireball swallows the viewport cell while a distant one is a
+     * small orange blob. */
+    baseScale = (depthIndex == 0) ? 100
+               : (depthIndex == 1) ? 70
+               : 45;
+    scale = baseScale;
+
+    /* Per-frame bloom/fade modulation for the one-shot aspects
+     * (fire / spell).  DM1's F0822 ADVANCES the explosion frame
+     * counter and despawns one-shots after maxFrames; we bloom on
+     * frame 0, peak on frame 1, and fade on frame 2+. */
+    if (aspect == 0 || aspect == 1) {
+        if (frame >= 0 && maxFrames > 0) {
+            if (frame == 0)      scale = (baseScale * 110) / 100; /* 110% */
+            else if (frame == 1) scale = baseScale;                /* 100% */
+            else                 scale = (baseScale * 65) / 100;  /*  65% */
+        }
+    } else if (aspect == 2 || aspect == 3) {
+        /* Poison cloud / smoke: size tracks residual attack instead of
+         * the frame index.  F0822 decays attack by 3 (poison) or 40
+         * (smoke) per tick, so the cloud naturally shrinks as it
+         * dissipates.  Clamp to [60%, 115%] of baseScale. */
+        if (attack >= 0) {
+            int a = attack > 200 ? 200 : attack;
+            int pct = 60 + (a * 55) / 200;
+            if (pct < 60)  pct = 60;
+            if (pct > 115) pct = 115;
+            scale = (baseScale * pct) / 100;
+        }
+    }
+
+    drawW = (int)slot->width  * scale / 100;
+    drawH = (int)slot->height * scale / 100;
+    /* Minimum visible footprint so we never collapse to a single pixel. */
+    if (drawW < 4) drawW = 4;
+    if (drawH < 4) drawH = 4;
+    /* Clamp to the face box so we do not spill into neighbouring cells. */
+    if (drawW > w) drawW = w;
+    if (drawH > h) drawH = h;
+    drawX = x + (w - drawW) / 2;
+    drawY = y + (h - drawH) / 2;
+
+    isSmoke = (aspect == 3);
+    if (isSmoke) {
+        /* DM1 G0212_auc_Graphic558_PaletteChanges_Smoke identity-maps
+         * everything except pixel 6 -> 12 (DARK_GRAY) and 7 -> 1
+         * (NAVY).  BlitScaledReplace has two replacement slots; use
+         * them for exactly those two. */
+        M11_AssetLoader_BlitScaledReplace(
+            slot, framebuffer, framebufferWidth, framebufferHeight,
+            drawX, drawY, drawW, drawH,
+            /*transparentColor*/ 0,
+            /*replSrc9*/ 6,  /*replDst9*/ M11_COLOR_DARK_GRAY,
+            /*replSrc10*/ 7, /*replDst10*/ M11_COLOR_NAVY);
+    } else {
+        M11_AssetLoader_BlitScaled(
+            slot, framebuffer, framebufferWidth, framebufferHeight,
+            drawX, drawY, drawW, drawH, /*transparentColor*/ 0);
+    }
+    return 1;
+}
+
 /* Draw a pit visual effect: darkened floor area with depth gradient.
  * In DM1, pits appear as dark openings in the floor.  We darken the
  * lower portion of the cell face to simulate the pit opening. */
@@ -4743,14 +4904,23 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                             x, y, w, h, depthIndex);
     }
     /* DM1 explosion-type-specific viewport visual effects.
-     * In the original, different explosion types produce distinct visual
-     * feedback: fire explosions flash orange/red, lightning is cyan/white,
-     * poison is green, and "open door" / "spell" types use unique colors.
-     * Ref: ReDMCSB TIMELINE.C explosion type categories:
-     *   Types 0-7: fire/fireballs (orange/red)
-     *   Types 8-11: poison cloud (green)
-     *   Types 12-18: lightning/energy (cyan/white)
-     *   Types 40-50: special effects (magenta) */
+     *
+     * Primary path: load the real DM1 explosion bitmap from
+     * GRAPHICS.DAT at index 486 (fire), 487 (spell) or 488 (poison /
+     * smoke) and blit it with depth-scaled, frame-modulated size so
+     * the post-detonation aftermath looks like the classic DM1 burst
+     * rather than a palette-rect cue.  This replaces pass 25's cue-
+     * style fill with source-backed bitmap frames while preserving
+     * the F0822 advance/fade/despawn lifecycle from pass 25.
+     *
+     * Ref: ReDMCSB DUNVIEW.C F0136 F0675_DUNGEONVIEW_GetScaledBitmap
+     *      and F0141 explosion draw loop (lines 1842-1878) selecting
+     *      EXPLOSION_ASPECT {FIRE, SPELL, POISON, SMOKE} from the
+     *      explosion Type.
+     *
+     * Fallback: when no GRAPHICS.DAT loader is available (headless
+     * probes using synthetic worlds) we keep the palette-rect cue so
+     * probes keep asserting visible content at the cell. */
     if (cell->summary.explosions > 0) {
         unsigned char expColor;
         int expType = cell->firstExplosionType;
@@ -4759,86 +4929,104 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
         int frame   = cell->firstExplosionFrame;
         int maxF    = cell->firstExplosionMaxFrames;
         int atk     = cell->firstExplosionAttack;
-        /* Multi-frame aftermath progression (DM1-style bloom-then-fade):
-         *   - Fireball / lightning / dispell: short ~3-frame bloom that
-         *     peaks at frame 1 and fades by frame 2+ (radius 120/90/60%
-         *     of base).
-         *   - Poison cloud / smoke: large cloud whose radius tracks the
-         *     residual attack (larger when thick, smaller as it decays).
-         *   - Other types: single frame at base radius. */
-        if (frame >= 0 && maxF > 0) {
-            if (expType == C000_EXPLOSION_FIREBALL
-                    || expType == C002_EXPLOSION_LIGHTNING_BOLT
-                    || expType == C003_EXPLOSION_HARM_NON_MATERIAL) {
-                if (frame == 0)      expR = (baseR * 6) / 5;  /* 120% */
-                else if (frame == 1) expR = baseR;            /* 100% */
-                else                 expR = (baseR * 3) / 5;  /* 60%  */
-                if (expR < 2) expR = 2;
-            } else if (expType == C007_EXPLOSION_POISON_CLOUD
-                    || expType == C040_EXPLOSION_SMOKE) {
-                /* Radius tracks residual attack: full at spawn, shrinks
-                 * as F0822 decays the cloud.  Attack starts up to 255
-                 * and decays by 3 (poison) or 40 (smoke) per frame;
-                 * normalise to baseR range. */
-                if (atk > 0) {
-                    int num = (baseR * (atk > 128 ? 128 : atk)) / 64;
-                    expR = baseR / 2 + num / 2;
-                    if (expR < baseR / 2) expR = baseR / 2;
-                    if (expR > baseR + 2) expR = baseR + 2;
+        int drewBitmap = 0;
+        if (g_drawState) {
+            drewBitmap = m11_draw_explosion_sprite(
+                g_drawState, framebuffer, framebufferWidth,
+                framebufferHeight, x, y, w, h,
+                expType, frame, maxF, atk, depthIndex);
+        }
+        /* Cue-style palette-rect fallback for probes / headless
+         * environments without a GRAPHICS.DAT loader.  Real builds
+         * take the bitmap path above, matching classic DM1. */
+        if (!drewBitmap) {
+            /* Multi-frame aftermath progression (DM1-style bloom-then-fade):
+             *   - Fireball / lightning / dispell: short ~3-frame bloom that
+             *     peaks at frame 1 and fades by frame 2+ (radius 120/90/60%
+             *     of base).
+             *   - Poison cloud / smoke: large cloud whose radius tracks the
+             *     residual attack (larger when thick, smaller as it decays).
+             *   - Other types: single frame at base radius. */
+            if (frame >= 0 && maxF > 0) {
+                if (expType == C000_EXPLOSION_FIREBALL
+                        || expType == C002_EXPLOSION_LIGHTNING_BOLT
+                        || expType == C003_EXPLOSION_HARM_NON_MATERIAL) {
+                    if (frame == 0)      expR = (baseR * 6) / 5;  /* 120% */
+                    else if (frame == 1) expR = baseR;            /* 100% */
+                    else                 expR = (baseR * 3) / 5;  /* 60%  */
+                    if (expR < 2) expR = 2;
+                } else if (expType == C007_EXPLOSION_POISON_CLOUD
+                        || expType == C040_EXPLOSION_SMOKE) {
+                    /* Radius tracks residual attack: full at spawn, shrinks
+                     * as F0822 decays the cloud.  Attack starts up to 255
+                     * and decays by 3 (poison) or 40 (smoke) per frame;
+                     * normalise to baseR range. */
+                    if (atk > 0) {
+                        int num = (baseR * (atk > 128 ? 128 : atk)) / 64;
+                        expR = baseR / 2 + num / 2;
+                        if (expR < baseR / 2) expR = baseR / 2;
+                        if (expR > baseR + 2) expR = baseR + 2;
+                    }
                 }
             }
-        }
-        if (expType == C002_EXPLOSION_LIGHTNING_BOLT) {
-            /* Lightning/energy: cyan-white flash that dims on fade. */
-            unsigned char cross = (frame >= 1) ? M11_COLOR_LIGHT_CYAN
-                                               : M11_COLOR_WHITE;
-            expColor = M11_COLOR_LIGHT_CYAN;
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx - expR, cx + expR, cy, cross);
-            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx, cy - expR, cy + expR, cross);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-        } else if (expType == C007_EXPLOSION_POISON_CLOUD) {
-            /* Poison cloud: green haze that thins as the cloud decays. */
-            int coreR = expR / 2;
-            int thinning = (atk >= 0 && atk < 40);
-            expColor = thinning ? M11_COLOR_DARK_GRAY : M11_COLOR_GREEN;
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-            if (!thinning && coreR > 0) {
+            if (expType == C002_EXPLOSION_LIGHTNING_BOLT) {
+                /* Lightning/energy: cyan-white flash that dims on fade. */
+                unsigned char cross = (frame >= 1) ? M11_COLOR_LIGHT_CYAN
+                                                   : M11_COLOR_WHITE;
+                expColor = M11_COLOR_LIGHT_CYAN;
+                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                               cx - expR, cx + expR, cy, cross);
+                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                               cx, cy - expR, cy + expR, cross);
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
+            } else if (expType == C007_EXPLOSION_POISON_CLOUD) {
+                /* Poison cloud: green haze that thins as the cloud decays. */
+                int coreR = expR / 2;
+                int thinning = (atk >= 0 && atk < 40);
+                expColor = thinning ? M11_COLOR_DARK_GRAY : M11_COLOR_GREEN;
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - coreR, cy - coreR,
-                              coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_LIGHT_GREEN);
-            }
-        } else if (expType == C040_EXPLOSION_SMOKE) {
-            /* Smoke: dark-gray cloud that thins and fades. */
-            expColor = (atk >= 0 && atk < 80) ? M11_COLOR_DARK_GRAY
-                                              : M11_COLOR_LIGHT_GRAY;
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR, cy - expR,
-                          expR * 2 + 1, expR * 2 + 1, expColor);
-        } else if (expType >= 0 && expType <= 7) {
-            /* Fire/fireball explosions: orange-red burst with yellow core
-             * that shrinks on fade frames. */
-            int coreR = expR / 2;
-            if (frame >= 0 && maxF > 0 && frame >= maxF - 1) coreR = 0;
-            expColor = (frame >= 2) ? M11_COLOR_BROWN : M11_COLOR_LIGHT_RED;
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-            if (coreR > 0) {
+                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
+                if (!thinning && coreR > 0) {
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  cx - coreR, cy - coreR,
+                                  coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_LIGHT_GREEN);
+                }
+            } else if (expType == C040_EXPLOSION_SMOKE) {
+                /* Smoke: dark-gray cloud that thins and fades. */
+                expColor = (atk >= 0 && atk < 80) ? M11_COLOR_DARK_GRAY
+                                                  : M11_COLOR_LIGHT_GRAY;
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - coreR, cy - coreR,
-                              coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_YELLOW);
+                              cx - expR, cy - expR,
+                              expR * 2 + 1, expR * 2 + 1, expColor);
+            } else if (expType >= 0 && expType <= 7) {
+                /* Fire/fireball explosions: orange-red burst with yellow core
+                 * that shrinks on fade frames. */
+                int coreR = expR / 2;
+                if (frame >= 0 && maxF > 0 && frame >= maxF - 1) coreR = 0;
+                expColor = (frame >= 2) ? M11_COLOR_BROWN : M11_COLOR_LIGHT_RED;
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
+                if (coreR > 0) {
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  cx - coreR, cy - coreR,
+                                  coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_YELLOW);
+                }
+            } else {
+                /* All other explosion types: generic magenta burst */
+                expColor = M11_COLOR_MAGENTA;
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cx - expR / 2, cy - expR / 2,
+                              expR + 1, expR + 1, expColor);
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
             }
         } else {
-            /* All other explosion types: generic magenta burst */
-            expColor = M11_COLOR_MAGENTA;
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR / 2, cy - expR / 2,
-                          expR + 1, expR + 1, expColor);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
+            /* Silence unused-variable warnings: baseR / expR / expColor
+             * only matter in the cue-fallback branch; the bitmap path
+             * already draws the explosion. */
+            (void)baseR; (void)expR; (void)expColor;
+            (void)frame; (void)maxF; (void)atk; (void)expType;
         }
     }
     if (cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
