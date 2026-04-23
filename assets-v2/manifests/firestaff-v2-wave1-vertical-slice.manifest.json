@@ -1,0 +1,254 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-wave1-vertical-slice",
+  "description": "Bounded Firestaff V2 Wave 1 vertical slice for viewport frame, action area, status-box family, and party HUD cell family.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": ["1080p"],
+    "layoutSkeleton": "dm1-320x200"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.slice.viewport-frame.base",
+      "family": "viewport_frame",
+      "role": "painted main world viewport frame",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0000",
+        "graphicsDatIndices": [0],
+        "originalSize": { "width": 224, "height": 136 }
+      },
+      "sizes": {
+        "master4k": { "width": 2240, "height": 1360 },
+        "derived1080p": { "width": 1120, "height": 680 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/viewport-frame/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/viewport-frame/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/viewport-frame.md"
+      },
+      "status": "planned",
+      "notes": [
+        "The viewport opening must remain clean for later world-render compositing.",
+        "Use with fs.v2.slice.viewport-frame.inner-mask during integration."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.viewport-frame.inner-mask",
+      "family": "viewport_frame",
+      "role": "clean viewport opening mask aligned to the frame aperture",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived from GRAPHICS.DAT graphic 0000 aperture geometry",
+        "graphicsDatIndices": [0],
+        "originalSize": { "width": 224, "height": 136 }
+      },
+      "sizes": {
+        "master4k": { "width": 2240, "height": 1360 },
+        "derived1080p": { "width": 1120, "height": 680 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/viewport-frame/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/viewport-frame/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/viewport-frame.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Mask should export with sharp, artifact-free alpha edges.",
+        "This is integration support, not painted ornament."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.action-area.base",
+      "family": "action_area",
+      "role": "painted action panel shell",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0010",
+        "graphicsDatIndices": [10],
+        "originalSize": { "width": 87, "height": 45 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 450 },
+        "derived1080p": { "width": 435, "height": 225 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/action-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Container only; final action icon set is out of scope for this slice."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.action-area.recess-bed",
+      "family": "action_area",
+      "role": "separate interior content bed for later icon placement",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived from GRAPHICS.DAT graphic 0010 interior geometry",
+        "graphicsDatIndices": [10],
+        "originalSize": { "width": 87, "height": 45 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 450 },
+        "derived1080p": { "width": 435, "height": 225 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/action-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Separate layer for clean icon/text placement and reuse."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.action-area.highlight-overlay",
+      "family": "action_area",
+      "role": "non-destructive hover or affordance highlight layer",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived interaction state layer for graphic 0010",
+        "graphicsDatIndices": [10],
+        "originalSize": { "width": 87, "height": 45 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 450 },
+        "derived1080p": { "width": 435, "height": 225 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/action-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Must read at 1080p without crushing the base values."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.action-area.active-overlay",
+      "family": "action_area",
+      "role": "armed or selected action-state emphasis layer",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived active-state layer for graphic 0010",
+        "graphicsDatIndices": [10],
+        "originalSize": { "width": 87, "height": 45 }
+      },
+      "sizes": {
+        "master4k": { "width": 870, "height": 450 },
+        "derived1080p": { "width": 435, "height": 225 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/action-area/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/action-area/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/action-area.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Selection emphasis only; final gameplay iconography is still future work."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.status-box.left-frame",
+      "family": "status_box_family",
+      "role": "left member of the status-box pair",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0007",
+        "graphicsDatIndices": [7],
+        "originalSize": { "width": 67, "height": 29 }
+      },
+      "sizes": {
+        "master4k": { "width": 670, "height": 290 },
+        "derived1080p": { "width": 335, "height": 145 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/status-box-family/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/status-box-family/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/status-box-family.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Portrait and stats remain future overlays; this slice only defines the shell."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.status-box.right-frame",
+      "family": "status_box_family",
+      "role": "right member of the status-box pair",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphic 0008",
+        "graphicsDatIndices": [8],
+        "originalSize": { "width": 67, "height": 29 }
+      },
+      "sizes": {
+        "master4k": { "width": 670, "height": 290 },
+        "derived1080p": { "width": 335, "height": 145 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/status-box-family/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/status-box-family/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/status-box-family.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Must feel designed as a pair with the left-frame asset, not as a lazy mirror."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.party-hud-cell.standard-base",
+      "family": "party_hud_cell_family",
+      "role": "reusable standard framed HUD cell",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "GRAPHICS.DAT graphics 0033, 0034, 0035",
+        "graphicsDatIndices": [33, 34, 35],
+        "originalSize": { "width": 18, "height": 18 }
+      },
+      "sizes": {
+        "master4k": { "width": 216, "height": 216 },
+        "derived1080p": { "width": 108, "height": 108 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/party-hud-cell-family/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/party-hud-cell-family/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/party-hud-cell-family.md"
+      },
+      "status": "planned",
+      "notes": [
+        "216x216 master is intentional to preserve bevel and wear detail after downscale."
+      ]
+    },
+    {
+      "id": "fs.v2.slice.party-hud-cell.highlight-overlay",
+      "family": "party_hud_cell_family",
+      "role": "selection or hover emphasis overlay for the standard HUD cell",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "Derived interaction-state layer from the standard slot family",
+        "graphicsDatIndices": [33, 34, 35],
+        "originalSize": { "width": 18, "height": 18 }
+      },
+      "sizes": {
+        "master4k": { "width": 216, "height": 216 },
+        "derived1080p": { "width": 108, "height": 108 }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1/vertical-slice/party-hud-cell-family/masters/4k",
+        "derivedDir": "assets-v2/ui/wave1/vertical-slice/party-hud-cell-family/exports/1080p",
+        "spec": "assets-v2/ui/wave1/vertical-slice/specs/party-hud-cell-family.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Overlay should improve state readability without reducing item/icon legibility."
+      ]
+    }
+  ]
+}
