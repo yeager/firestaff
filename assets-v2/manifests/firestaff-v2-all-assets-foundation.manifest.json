@@ -1,0 +1,410 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-all-assets-foundation",
+  "description": "Cross-class Firestaff V2 foundation manifest that extends the current high-resolution classic-DM direction beyond creatures into all major discoverable asset classes.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": [
+      "1080p"
+    ],
+    "layoutSkeleton": "dm1-role-preserving"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.foundation.ui-hud-shells.wave1",
+      "family": "ui_hud_shells",
+      "role": "existing Wave 1 UI shell track kept under the all-assets style direction",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "Existing Firestaff V2 UI Wave 1 family manifests",
+        "originalSize": {
+          "width": 320,
+          "height": 200
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 3200,
+          "height": 2000
+        },
+        "derived1080p": {
+          "width": 1600,
+          "height": 1000
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/ui/wave1",
+        "derivedDir": "assets-v2/ui/wave1",
+        "spec": "assets-v2/ui/wave1/README.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Concrete per-family asset entries continue to live in the dedicated UI manifests.",
+        "Viewport-frame remains blocked/provisional until the trusted mapping relock is complete."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.creatures.wave1",
+      "family": "creatures",
+      "role": "existing Wave 1 creature track kept under the all-assets style direction",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing Firestaff V2 creature family inventory and manifests",
+        "originalSize": {
+          "width": 96,
+          "height": 88
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1",
+        "derivedDir": "assets-v2/creatures/wave1",
+        "spec": "assets-v2/creatures/wave1/CREATURE_PIPELINE.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Concrete per-family asset entries continue to live in the dedicated creature manifests.",
+        "All-assets style rules now lock creature polish to the same classic-DM restraint as other classes."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.environment.door-frame-standard",
+      "family": "environment_structural",
+      "role": "bounded starter structural repaint family for doors and traversal reads",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "V2 asset classification table door-frame family",
+        "originalSize": {
+          "width": 78,
+          "height": 74
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 780,
+          "height": 740
+        },
+        "derived1080p": {
+          "width": 390,
+          "height": 370
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/environment/wave1/door-frame/masters/4k",
+        "derivedDir": "assets-v2/environment/wave1/door-frame/exports/1080p",
+        "spec": "assets-v2/environment/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "No dedicated environment asset pack is checked in yet.",
+        "This manifest entry is a concrete next-step hook, not a claim of finished art."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.environment.stairs-standard",
+      "family": "environment_structural",
+      "role": "bounded traversal stairs family",
+      "productionClass": "preserve-scale-repaint",
+      "sourceReference": {
+        "origin": "V2 asset classification table stairs family",
+        "originalSize": {
+          "width": 60,
+          "height": 111
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 600,
+          "height": 1110
+        },
+        "derived1080p": {
+          "width": 300,
+          "height": 555
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/environment/wave1/stairs/masters/4k",
+        "derivedDir": "assets-v2/environment/wave1/stairs/exports/1080p",
+        "spec": "assets-v2/environment/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Sized from the current V2 classification table.",
+        "Keep classic DM depth and step readability ahead of texture richness."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.items.inventory-standard",
+      "family": "items_icons",
+      "role": "starter inventory item icon family",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "V2 asset classification table item sprite family",
+        "originalSize": {
+          "width": 90,
+          "height": 12
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 216,
+          "height": 216
+        },
+        "derived1080p": {
+          "width": 108,
+          "height": 108
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/items/wave1/inventory-icons/masters/4k",
+        "derivedDir": "assets-v2/items/wave1/inventory-icons/exports/1080p",
+        "spec": "assets-v2/items/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Use the slot-cell family as the practical display target, not the long source strip shape.",
+        "Keep silhouettes chunky and readable at HUD scale."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.items.action-hand-glyph",
+      "family": "items_icons",
+      "role": "starter action-hand and empty-hand glyph family",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "V2 asset classification table action-hand icon family",
+        "originalSize": {
+          "width": 18,
+          "height": 18
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 192,
+          "height": 192
+        },
+        "derived1080p": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/items/wave1/action-hand/masters/4k",
+        "derivedDir": "assets-v2/items/wave1/action-hand/exports/1080p",
+        "spec": "assets-v2/items/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Do not upscale old glyphs directly.",
+        "Treat as crisp redraw-native symbols for the current DM1 slot logic."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.effects.projectile-standard",
+      "family": "effects_magic",
+      "role": "starter projectile family",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "V2 asset classification table projectile family",
+        "originalSize": {
+          "width": 26,
+          "height": 6
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 208,
+          "height": 48
+        },
+        "derived1080p": {
+          "width": 104,
+          "height": 24
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/effects/wave1/projectiles/masters/4k",
+        "derivedDir": "assets-v2/effects/wave1/projectiles/exports/1080p",
+        "spec": "assets-v2/effects/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Keep projectile reads simple, dangerous, and game-readable.",
+        "Layer richer cast or trail behavior separately."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.effects.spell-impact-standard",
+      "family": "effects_magic",
+      "role": "starter impact and cast-state effect family",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "V2 asset classification table spell impact family",
+        "originalSize": {
+          "width": 64,
+          "height": 64
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 512,
+          "height": 512
+        },
+        "derived1080p": {
+          "width": 256,
+          "height": 256
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/effects/wave1/impacts/masters/4k",
+        "derivedDir": "assets-v2/effects/wave1/impacts/exports/1080p",
+        "spec": "assets-v2/effects/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "No dedicated original-size contract is locked yet; this is a bounded working target for a starter family.",
+        "Prefer layered clarity over bloom-heavy spectacle."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.portraits.champion-standard",
+      "family": "portraits",
+      "role": "starter champion portrait family",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "V2 asset classification table champion portrait atlas family",
+        "originalSize": {
+          "width": 256,
+          "height": 87
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 400,
+          "height": 520
+        },
+        "derived1080p": {
+          "width": 200,
+          "height": 260
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/portraits/wave1/champions/masters/4k",
+        "derivedDir": "assets-v2/portraits/wave1/champions/exports/1080p",
+        "spec": "assets-v2/portraits/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Treat the old atlas as a role reference only, not as final composition geometry.",
+        "Portraits must stay compact and HUD-readable."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.branding.title-screen-base",
+      "family": "title_end_branding",
+      "role": "starter title-screen family",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "V2 asset classification table title / intro screen family",
+        "originalSize": {
+          "width": 320,
+          "height": 200
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 3840,
+          "height": 2160
+        },
+        "derived1080p": {
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/branding/wave1/title-screen/masters/4k",
+        "derivedDir": "assets-v2/branding/wave1/title-screen/exports/1080p",
+        "spec": "assets-v2/branding/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Branding evidence exists, but no V2 title pack is checked in yet.",
+        "Keep the composition iconic and restrained rather than poster-busy."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.branding.end-screen-base",
+      "family": "title_end_branding",
+      "role": "starter end-state screen family",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "V2 asset classification table title / intro screen family",
+        "originalSize": {
+          "width": 320,
+          "height": 200
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 3840,
+          "height": 2160
+        },
+        "derived1080p": {
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/branding/wave1/end-screen/masters/4k",
+        "derivedDir": "assets-v2/branding/wave1/end-screen/exports/1080p",
+        "spec": "assets-v2/branding/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "This is a bounded hook only.",
+        "Do not infer that title/end art already exists in-repo."
+      ]
+    },
+    {
+      "id": "fs.v2.foundation.typography.hud-label-set",
+      "family": "typography_text",
+      "role": "starter HUD and action label set",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "V2 asset classification table bitmap-label replacement family",
+        "originalSize": {
+          "width": 96,
+          "height": 15
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 384,
+          "height": 80
+        },
+        "derived1080p": {
+          "width": 192,
+          "height": 40
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/typography/wave1/hud-labels/masters/4k",
+        "derivedDir": "assets-v2/typography/wave1/hud-labels/exports/1080p",
+        "spec": "assets-v2/typography/wave1/README.md"
+      },
+      "status": "planned",
+      "notes": [
+        "Replace old bitmap text with a restrained V2 text system.",
+        "Keep text secondary to the structural DM screen read."
+      ]
+    }
+  ]
+}

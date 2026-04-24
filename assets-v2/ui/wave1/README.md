@@ -20,3 +20,7 @@ This directory is the production foundation for the first V2 UI asset wave.
 ## Important constraint
 These folders track production work, but they still do not imply finished art.
 Legacy filenames may remain for pipeline stability even where the trusted semantic meaning was corrected in the rebuild note and manifests.
+
+## Cross-class style alignment
+UI work must now follow the shared all-assets V2 direction in `V2_ALL_ASSETS_STYLE_GUIDE.md`.
+That means higher-resolution repainting is welcome, but the result must stay classic-DM readable: weighty silhouettes, restrained surfaces, limited accent separation, and no glossy dashboard drift.

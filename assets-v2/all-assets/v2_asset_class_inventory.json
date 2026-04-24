@@ -1,0 +1,134 @@
+{
+  "inventoryVersion": "1.0.0",
+  "scope": "firestaff-v2-all-assets-foundation",
+  "styleGuide": "V2_ALL_ASSETS_STYLE_GUIDE.md",
+  "classes": [
+    {
+      "classId": "ui_hud_shells",
+      "displayName": "UI / HUD shells",
+      "discoverable": true,
+      "pipelineReady": true,
+      "status": "in-progress",
+      "evidence": [
+        "assets-v2/ui/wave1/README.md",
+        "assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json",
+        "assets-v2/manifests/firestaff-v2-wave1-vertical-slice.manifest.json"
+      ],
+      "productionHook": "assets-v2/ui/wave1/README.md",
+      "notes": [
+        "Viewport-frame remains blocked/provisional pending trusted mapping relock.",
+        "Action area, spell area, status boxes, and party HUD cells already have concrete V2 asset hooks."
+      ]
+    },
+    {
+      "classId": "creatures",
+      "displayName": "Creatures",
+      "discoverable": true,
+      "pipelineReady": true,
+      "status": "in-progress",
+      "evidence": [
+        "assets-v2/creatures/wave1/CREATURE_PIPELINE.md",
+        "assets-v2/creatures/wave1/creature_family_inventory.json",
+        "assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json"
+      ],
+      "productionHook": "assets-v2/creatures/wave1/CREATURE_PIPELINE.md",
+      "notes": [
+        "Existing family manifests remain the active concrete coverage for creatures.",
+        "All-assets style rules now explicitly align creature treatment with the broader V2 direction."
+      ]
+    },
+    {
+      "classId": "environment_structural",
+      "displayName": "Environment / structural",
+      "discoverable": true,
+      "pipelineReady": false,
+      "status": "planned",
+      "evidence": [
+        "V2_ASSET_CLASSIFICATION_TABLE.md"
+      ],
+      "productionHook": "assets-v2/environment/wave1/README.md",
+      "notes": [
+        "No dedicated V2 environment pack is checked in yet.",
+        "Current bounded hook is door/stairs/wall-module planning only."
+      ]
+    },
+    {
+      "classId": "items_icons",
+      "displayName": "Items / action icons",
+      "discoverable": true,
+      "pipelineReady": false,
+      "status": "planned",
+      "evidence": [
+        "V2_ASSET_CLASSIFICATION_TABLE.md"
+      ],
+      "productionHook": "assets-v2/items/wave1/README.md",
+      "notes": [
+        "No dedicated V2 item/icon pack is checked in yet.",
+        "Current bounded hook is a starter inventory/action-hand brief."
+      ]
+    },
+    {
+      "classId": "effects_magic",
+      "displayName": "Effects / projectiles / magic",
+      "discoverable": true,
+      "pipelineReady": false,
+      "status": "planned",
+      "evidence": [
+        "V2_ASSET_CLASSIFICATION_TABLE.md"
+      ],
+      "productionHook": "assets-v2/effects/wave1/README.md",
+      "notes": [
+        "No dedicated V2 effects pack is checked in yet.",
+        "Current bounded hook is a projectile/impact layer brief."
+      ]
+    },
+    {
+      "classId": "portraits",
+      "displayName": "Portraits",
+      "discoverable": true,
+      "pipelineReady": false,
+      "status": "planned",
+      "evidence": [
+        "V2_ASSET_CLASSIFICATION_TABLE.md",
+        "V2_WAVE1_PRODUCTION_PACK.md"
+      ],
+      "productionHook": "assets-v2/portraits/wave1/README.md",
+      "notes": [
+        "Portraits are explicitly out of scope in the current UI Wave 1 pack.",
+        "Current bounded hook is one portrait presentation contract."
+      ]
+    },
+    {
+      "classId": "title_end_branding",
+      "displayName": "Title / intro / end / branding",
+      "discoverable": true,
+      "pipelineReady": false,
+      "status": "planned",
+      "evidence": [
+        "assets/branding/firestaff-logo.png",
+        "V2_ASSET_CLASSIFICATION_TABLE.md"
+      ],
+      "productionHook": "assets-v2/branding/wave1/README.md",
+      "notes": [
+        "Repo evidence exists for branding, but not for a full V2 title/end pack.",
+        "Current bounded hook is a title/end branding brief only."
+      ]
+    },
+    {
+      "classId": "typography_text",
+      "displayName": "Typography / text-bearing UI",
+      "discoverable": true,
+      "pipelineReady": false,
+      "status": "planned",
+      "evidence": [
+        "V2_ASSET_CLASSIFICATION_TABLE.md",
+        "V2_WAVE1_PRODUCTION_PACK.md"
+      ],
+      "productionHook": "assets-v2/typography/wave1/README.md",
+      "notes": [
+        "No V2 typography pack is checked in yet.",
+        "Current bounded hook is a restrained HUD/action label contract."
+      ]
+    }
+  ]
+}

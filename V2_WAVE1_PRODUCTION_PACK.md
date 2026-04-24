@@ -138,6 +138,11 @@ This production pack does not yet include:
 - animation timing sheets
 - engine integration code
 
+Those broader classes are now tracked separately by:
+- `V2_ALL_ASSETS_STYLE_GUIDE.md`
+- `assets-v2/ALL_ASSETS_V2_COVERAGE.md`
+- `assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json`
+
 ## Assumptions used here
 
 - DM1 graphic references from the extracted V1 manifest are correct.

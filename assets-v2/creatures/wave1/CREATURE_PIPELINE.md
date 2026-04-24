@@ -74,6 +74,15 @@ Optional:
 - `--graphics-index <n>`
 - `--original-width <w> --original-height <h>`
 
+## Cross-class style alignment
+
+Creature work must now follow the shared all-assets V2 direction in `V2_ALL_ASSETS_STYLE_GUIDE.md`.
+That means creature polish can increase resolution and paint fidelity, but it must still preserve:
+- classic DM silhouette readability
+- restrained painted surfaces
+- limited color separation
+- some hard-edge chunkiness instead of glossy fantasy-poster rendering
+
 ## Boundaries
 
 - No V1 runtime wiring in this workflow.

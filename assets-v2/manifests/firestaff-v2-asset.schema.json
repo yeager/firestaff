@@ -94,7 +94,15 @@
           },
           "status": {
             "type": "string",
-            "enum": ["planned", "stubbed", "in-progress", "approved", "shipped"]
+            "enum": [
+              "planned",
+              "stubbed",
+              "in-progress",
+              "approved",
+              "shipped",
+              "blocked",
+              "rebuilt"
+            ]
           },
           "notes": {
             "type": "array",
