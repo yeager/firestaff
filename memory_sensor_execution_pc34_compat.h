@@ -112,4 +112,57 @@ int F0714_SENSOR_ListDeserialize_Compat(
     const unsigned char* buf,
     int bufSize);
 
+/* ---- Pass 32: multi-sensor enumeration + party enter/leave processing ---- */
+
+#define SENSOR_ENUM_CAPACITY 8
+
+/*
+ * Enumerate up to SENSOR_ENUM_CAPACITY sensors on a square, walking the
+ * thing linked list and collecting each sensor in list order.  Unlike
+ * F0703 (which reports only the first sensor), this populates one
+ * SensorOnSquare entry per sensor encountered.
+ *
+ * Returns the number of sensors actually populated (0..capacity).  The
+ * totalSensorsOnSquare field of each entry is set to the same total
+ * count the caller receives.  Safe against malformed thing lists: the
+ * walker bounds itself at 64 link steps.
+ *
+ * Source mapping: sensor traversal inside F0276_SENSOR_ProcessThingAdditionOrRemoval
+ * (MOVESENS.C).
+ */
+int F0717_SENSOR_EnumerateOnSquare_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct SensorOnSquare_Compat outSensors[SENSOR_ENUM_CAPACITY]);
+
+/*
+ * Process a party enter/leave event on a square.  Walks every sensor
+ * on the square in source order, runs F0710_SENSOR_Execute_Compat for
+ * the given event, and appends each produced effect onto outList (up
+ * to SENSOR_EFFECT_LIST_MAX_COUNT).  Pure: does not mutate world.
+ *
+ * v1 coverage note: for WALK_ON, teleport (type 0) and text (type 13)
+ * are fully modeled; other sensor types still produce SENSOR_EFFECT_UNSUPPORTED
+ * markers through F0710.  WALK_OFF currently surfaces no effects for any
+ * sensor type — matching the conservative policy in F0710.
+ *
+ * triggerEvent must be one of SENSOR_EVENT_WALK_ON or SENSOR_EVENT_WALK_OFF.
+ * Other events (ITEM_ON/OFF, CHAMPION_ACTION) are accepted but produce
+ * no effects.  Returns 1 on success (outList populated), 0 on invalid
+ * arguments.
+ *
+ * Source mapping: F0276_SENSOR_ProcessThingAdditionOrRemoval (MOVESENS.C).
+ */
+int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int triggerEvent,
+    struct SensorEffectList_Compat* outList);
+
 #endif

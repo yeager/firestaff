@@ -169,6 +169,201 @@ int F0713_SENSOR_ListSerialize_Compat(
     return 1;
 }
 
+/* ---- Pass 32: multi-sensor enumeration + party enter/leave ---- */
+
+static int sensor_find_sft_index(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    int squareIdx;
+    int m, sq, count, total = 0;
+
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->tiles) return -1;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return -1;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return -1;
+    if (!dungeon->tiles[mapIndex].squareData) return -1;
+    squareIdx = mapX * map->height + mapY;
+    if (!(dungeon->tiles[mapIndex].squareData[squareIdx] & DUNGEON_SQUARE_MASK_THING_LIST)) return -1;
+
+    /* Count thing-list squares across all maps up to and including the target. */
+    for (m = 0; m < mapIndex; ++m) {
+        count = dungeon->maps[m].width * dungeon->maps[m].height;
+        for (sq = 0; sq < count; ++sq) {
+            if (dungeon->tiles[m].squareData[sq] & DUNGEON_SQUARE_MASK_THING_LIST) ++total;
+        }
+    }
+    count = map->width * map->height;
+    for (sq = 0; sq <= squareIdx && sq < count; ++sq) {
+        if (dungeon->tiles[mapIndex].squareData[sq] & DUNGEON_SQUARE_MASK_THING_LIST) ++total;
+    }
+    return total - 1;
+}
+
+static unsigned short sensor_step_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingRef,
+    int* outType,
+    int* outIndex)
+{
+    int type = THING_GET_TYPE(thingRef);
+    int index = THING_GET_INDEX(thingRef);
+    unsigned short nextThing = THING_NONE;
+    if (outType) *outType = type;
+    if (outIndex) *outIndex = index;
+
+    switch (type) {
+        case THING_TYPE_DOOR:
+            if (index < things->doorCount) nextThing = things->doors[index].next;
+            break;
+        case THING_TYPE_TELEPORTER:
+            if (index < things->teleporterCount) nextThing = things->teleporters[index].next;
+            break;
+        case THING_TYPE_TEXTSTRING:
+            if (index < things->textStringCount) nextThing = things->textStrings[index].next;
+            break;
+        case THING_TYPE_SENSOR:
+            if (index < things->sensorCount) nextThing = things->sensors[index].next;
+            break;
+        case THING_TYPE_GROUP:
+            if (index < things->groupCount) nextThing = things->groups[index].next;
+            break;
+        case THING_TYPE_WEAPON:
+            if (index < things->weaponCount) nextThing = things->weapons[index].next;
+            break;
+        case THING_TYPE_ARMOUR:
+            if (index < things->armourCount) nextThing = things->armours[index].next;
+            break;
+        case THING_TYPE_SCROLL:
+            if (index < things->scrollCount) nextThing = things->scrolls[index].next;
+            break;
+        case THING_TYPE_POTION:
+            if (index < things->potionCount) nextThing = things->potions[index].next;
+            break;
+        case THING_TYPE_CONTAINER:
+            if (index < things->containerCount) nextThing = things->containers[index].next;
+            break;
+        case THING_TYPE_JUNK:
+            if (index < things->junkCount) nextThing = things->junks[index].next;
+            break;
+        case THING_TYPE_PROJECTILE:
+            if (index < things->projectileCount) nextThing = things->projectiles[index].next;
+            break;
+        case THING_TYPE_EXPLOSION:
+            if (index < things->explosionCount) nextThing = things->explosions[index].next;
+            break;
+        default:
+            nextThing = THING_NONE;
+            break;
+    }
+    return nextThing;
+}
+
+int F0717_SENSOR_EnumerateOnSquare_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct SensorOnSquare_Compat outSensors[SENSOR_ENUM_CAPACITY])
+{
+    int sftIdx;
+    unsigned short thingRef;
+    int count = 0;
+    int safety = 0;
+    int i;
+
+    if (!outSensors) return 0;
+    for (i = 0; i < SENSOR_ENUM_CAPACITY; ++i) {
+        memset(&outSensors[i], 0, sizeof(outSensors[i]));
+    }
+    if (!dungeon || !things || !things->loaded) return 0;
+
+    sftIdx = sensor_find_sft_index(dungeon, mapIndex, mapX, mapY);
+    if (sftIdx < 0 || sftIdx >= things->squareFirstThingCount) return 0;
+    thingRef = things->squareFirstThings[sftIdx];
+
+    while (thingRef != THING_NONE && thingRef != THING_ENDOFLIST && safety < 64) {
+        int type, index;
+        unsigned short nextThing = sensor_step_thing(things, thingRef, &type, &index);
+        if (type == THING_TYPE_SENSOR && index >= 0 && index < things->sensorCount) {
+            const struct DungeonSensor_Compat* sensor = &things->sensors[index];
+            if (count < SENSOR_ENUM_CAPACITY) {
+                struct SensorOnSquare_Compat* out = &outSensors[count];
+                out->found = 1;
+                out->sensorIndex = index;
+                out->sensorType = sensor->sensorType;
+                out->sensorData = sensor->sensorData;
+                out->isLocal = sensor->localEffect;
+                if (!sensor->localEffect) {
+                    out->targetMapX = sensor->targetMapX;
+                    out->targetMapY = sensor->targetMapY;
+                    out->targetCell = sensor->targetCell;
+                } else {
+                    out->targetMapX = mapX;
+                    out->targetMapY = mapY;
+                    out->targetCell = 0;
+                }
+            }
+            ++count;
+        }
+        thingRef = nextThing;
+        ++safety;
+    }
+
+    /* Back-fill totalSensorsOnSquare on every populated entry. */
+    for (i = 0; i < count && i < SENSOR_ENUM_CAPACITY; ++i) {
+        outSensors[i].totalSensorsOnSquare = count;
+    }
+    return (count > SENSOR_ENUM_CAPACITY) ? SENSOR_ENUM_CAPACITY : count;
+}
+
+int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int triggerEvent,
+    struct SensorEffectList_Compat* outList)
+{
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    int sensorCount, i;
+
+    if (!outList) return 0;
+    memset(outList, 0, sizeof(*outList));
+    if (!dungeon || !things) return 0;
+
+    /* Only WALK_ON / WALK_OFF are meaningful for party enter/leave in
+     * v1.  Other events are accepted but produce no effects. */
+    if (triggerEvent < 0 || triggerEvent >= SENSOR_EVENT_COUNT) return 0;
+
+    sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
+        dungeon, things, mapIndex, mapX, mapY, sensors);
+
+    for (i = 0; i < sensorCount && i < SENSOR_ENUM_CAPACITY; ++i) {
+        struct SensorEffectList_Compat tmp;
+        memset(&tmp, 0, sizeof(tmp));
+        if (!F0710_SENSOR_Execute_Compat(dungeon, things, &sensors[i],
+                                         triggerEvent, &tmp)) {
+            continue;
+        }
+        /* Append each effect from tmp onto outList while there's space. */
+        {
+            int j;
+            for (j = 0; j < tmp.count; ++j) {
+                if (outList->count >= SENSOR_EFFECT_LIST_MAX_COUNT) break;
+                outList->effects[outList->count++] = tmp.effects[j];
+            }
+        }
+        if (outList->count >= SENSOR_EFFECT_LIST_MAX_COUNT) break;
+    }
+    return 1;
+}
+
 int F0714_SENSOR_ListDeserialize_Compat(
     struct SensorEffectList_Compat* list,
     const unsigned char* buf,
