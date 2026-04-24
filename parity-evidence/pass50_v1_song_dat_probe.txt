@@ -1,0 +1,7 @@
+PASS INV_V1_SONG_01 manifest parsed
+PASS INV_V1_SONG_02 file size matches DM PC v3.4 EN canonical value
+PASS INV_V1_SONG_03 DMCSB2 signature=0x8001, 10 items, 84-byte header
+PASS INV_V1_SONG_04 all 10 item headers match verified table
+PASS INV_V1_SONG_05 SEQ2 music sequence matches verified 20-word pattern
+PASS INV_V1_SONG_06 all 9 SND8 items decode to exactly declared sample count at 11025 Hz
+# summary: 6/6 invariants passed

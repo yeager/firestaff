@@ -1,0 +1,37 @@
+SONG.DAT size: 162482 bytes
+Signature: 0x8001 (DMCSB2) confirmed
+Items:     10
+Header ends at offset: 84 (= 0x54)
+
+idx offset    comp      decomp    attr0   attr1   expected  
+0   84        40        40        0001    0002    SEQ2      
+1   124       3192      6374      e418    0000    SND8      
+2   3316      16504     29256     4672    3372    SND8      
+3   19820     5640      9787      3926    fe60    SND8      
+4   25460     29141     37890     0094    2261    SND8      
+5   54601     33315     43565     2baa    b080    SND8      
+6   87916     3506      7002      581b    708f    SND8      
+7   91422     272       537       1702    708f    SND8      
+8   91694     32740     38658     0097    1572    SND8      
+9   124434    38048     46367     1db5    57a2    SND8      
+
+Sum of compressed sizes: 162398
+Header bytes:            84
+Header + items total:    162482
+File size:               162482
+
+SEQ2 (item 0): 20 words of music sequence
+  raw:  ['0001', '0002', '0003', '0002', '0003', '0002', '0003', '0002', '0004', '0005', '0006', '0002', '0003', '0002', '0004', '0005', '0007', '0008', '0009', '8001']
+  parts:[1, 2, 3, 2, 3, 2, 3, 2, 4, 5, 6, 2, 3, 2, 4, 5, 7, 8, 9, 1]
+  length: 20 (final word 0x8001 has bit 15 set -> loop boundary)
+
+SND8 item 1: header samples=6372, decoded=6372 (577 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_01.wav
+SND8 item 2: header samples=29254, decoded=29254 (2653 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_02.wav
+SND8 item 3: header samples=9785, decoded=9785 (887 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_03.wav
+SND8 item 4: header samples=37888, decoded=37888 (3436 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_04.wav
+SND8 item 5: header samples=43563, decoded=43563 (3951 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_05.wav
+SND8 item 6: header samples=7000, decoded=7000 (634 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_06.wav
+SND8 item 7: header samples=535, decoded=535 (48 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_07.wav
+SND8 item 8: header samples=38656, decoded=38656 (3506 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_08.wav
+SND8 item 9: header samples=46365, decoded=46365 (4205 ms), WAV=/tmp/fs_pass50_extract/song_out/sample_09.wav
+

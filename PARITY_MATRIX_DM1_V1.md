@@ -120,9 +120,10 @@ V2/V3 differences must never appear in this matrix as accepted parity.
 | Area | Original/Reference Evidence | Firestaff Current State | Status | Next Action |
 |------|---------------------------|------------------------|--------|-------------|
 | Sound trigger points | No original capture | `verification-m11/audio/` suite exists | `UNPROVEN` | Map original sound events |
-| Sound samples (content) | `SONG.DAT` exists in original package; extraction not attempted | Procedural placeholders only | `KNOWN_DIFF` | Investigate SONG.DAT format and extraction |
+| Sound samples (content) — SONG.DAT music bank | `SONG.DAT` DM PC v3.4, 162482 bytes, DMCSB2, 10 items (1 SEQ2 + 9 SND8 at 11025 Hz DPCM); format verified (Pass 50, `DM1_SONG_DAT_FORMAT.md`, `parity-evidence/pass50_song_dat_header.txt`) | Format + decoder landed (`song_dat_loader_v1.[ch]`); 6/6 probe invariants PASS; **not** wired into the audio runtime yet | `KNOWN_DIFF` (narrowed) | Wire SND8+SEQ2 into the audio runtime (next pass) |
+| Sound samples (content) — GRAPHICS.DAT SND3 SFX bank | 33 SND3 items (indices 671-675, 677-685, 687-693, 701-712) at 6000 Hz, per dmweb | Procedural placeholders only | `KNOWN_DIFF` | Add `graphics_dat_snd3_loader_v1.[ch]` + probe (pass-51 or later) |
 | Sound cadence/overlap | No original capture | Unknown | `BLOCKED_ON_REFERENCE` | Capture via emulator with audio |
-| Music | `SONG.DAT` exists | Unknown if Firestaff has music | `UNPROVEN` | Investigate |
+| Music | `SONG.DAT` SEQ2 decoded; title-music playback driver not wired | Placeholder engine only | `KNOWN_DIFF` (narrowed) | Implement SEQ2-driven title-music playback on top of decoded SND8 buffers |
 
 ---
 
