@@ -1,0 +1,12 @@
+{
+  "family": "skeleton",
+  "clip": "idle_cycle",
+  "frameCount": 8,
+  "frameSize": {
+    "width": 420,
+    "height": 420
+  },
+  "cycleDurationMs": 400,
+  "frameDurationMs": 50,
+  "timingLock": "8 in-between frames keep a 400 ms total cycle so perceived speed does not drift slower than the base 4-beat motion."
+}

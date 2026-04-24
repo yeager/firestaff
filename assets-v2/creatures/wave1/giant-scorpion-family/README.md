@@ -7,6 +7,7 @@ This directory holds a bounded Wave 1 creature-family prototype for **Giant Scor
 - front-view distance set: near / mid / far
 - 4K masters in `masters/4k/`
 - exact 50% 1080p derivatives in `exports/1080p/`
+- manual cleanup workflow assets in `workflow/`
 - schema-compatible manifest entry for this family
 
 ## Workflow contract
@@ -22,7 +23,7 @@ This directory holds a bounded Wave 1 creature-family prototype for **Giant Scor
 - one front-view family only
 - no side, back, hit, or attack poses yet
 - no runtime wiring in the active V1 parity path
-- source isolation is still heuristic unless a manual mask is supplied
+- source isolation now includes a checked-in manual mask and clean cutout workflow for this family
 
 ## Generator
 

@@ -90,6 +90,7 @@ test_vga_palette
 *.png
 !assets/branding/*.png
 !assets/cards/creatures/*.png
+!assets-v2/creatures/wave1/**/*.png
 # Pass 47 reference artifacts — tracked (source-anchored composites
 # of extracted DM1 PC 3.4 GRAPHICS.DAT bitmaps + recovered VGA palette).
 !reference-artifacts/**/*.png

@@ -12,12 +12,14 @@ It exists to let creature-family experiments move forward without touching the a
 3. Isolate the subject with either:
    - a supplied manual mask, or
    - the generator's heuristic background-removal pass.
-4. Produce **4K-first** masters for the current depth ladder:
+4. When heuristic extraction is not clean enough, check in a manual mask and a paintover-safe workflow plate beside the family.
+5. Produce **4K-first** masters for the current depth ladder:
    - near: `1200x1200`
    - mid: `860x860`
    - far: `560x560`
-5. Export approved **1080p** assets by exact 50% downscale.
-6. Record provenance and scale intent in a family spec and manifest.
+6. Export approved **1080p** assets by exact 50% downscale.
+7. If a family gets animation frames, store a timing file beside the sheet and keep the total cycle duration locked.
+8. Record provenance and scale intent in a family spec and manifest.
 
 ## Directory contract
 
@@ -30,6 +32,9 @@ assets-v2/creatures/wave1/
     README.md
     masters/4k/
     exports/1080p/
+    workflow/
+    animations/   # only when a timing-locked sheet exists
+  previews/
 ```
 
 ## Timing contract

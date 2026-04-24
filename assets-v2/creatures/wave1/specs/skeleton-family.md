@@ -21,3 +21,8 @@ If later passes add in-between frames, keep the original action cycle duration a
 - first-pass generation may start from an existing project creature card reference
 - upgrade to manual masks or repaint layers when heuristic extraction loses silhouette detail
 - keep this family isolated from V1 runtime assets until a dedicated V2 render path is ready
+
+## Workflow coverage
+- checked-in manual mask for bounded offline cleanup
+- clean subject cutout for paintover-safe follow-up passes
+- idle animation sheet locked to a 400 ms total cycle in `skeleton-family/animations/`

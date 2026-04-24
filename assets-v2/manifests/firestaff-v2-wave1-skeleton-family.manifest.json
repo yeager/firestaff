@@ -40,7 +40,8 @@
       "status": "in-progress",
       "notes": [
         "Generated from a bounded first-pass creature workflow.",
-        "Animation smoothing in later passes must preserve original perceived timing."
+        "Animation smoothing in later passes must preserve original perceived timing.",
+        "Manual mask + clean-subject workflow assets are checked in for offline V2 paintover-safe cleanup."
       ]
     },
     {
@@ -73,7 +74,8 @@
       "status": "in-progress",
       "notes": [
         "Generated from a bounded first-pass creature workflow.",
-        "Animation smoothing in later passes must preserve original perceived timing."
+        "Animation smoothing in later passes must preserve original perceived timing.",
+        "Manual mask + clean-subject workflow assets are checked in for offline V2 paintover-safe cleanup."
       ]
     },
     {
@@ -106,7 +108,8 @@
       "status": "in-progress",
       "notes": [
         "Generated from a bounded first-pass creature workflow.",
-        "Animation smoothing in later passes must preserve original perceived timing."
+        "Animation smoothing in later passes must preserve original perceived timing.",
+        "Manual mask + clean-subject workflow assets are checked in for offline V2 paintover-safe cleanup."
       ]
     }
   ]
