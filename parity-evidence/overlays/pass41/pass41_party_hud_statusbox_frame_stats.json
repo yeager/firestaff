@@ -1,0 +1,77 @@
+{
+  "source_pgm_pre_pass41": {
+    "path": "parity-evidence/overlays/pass41/party_hud_statusbox_pre_pass41_stride77.pgm",
+    "git_tracked": false,
+    "reproduction": "checkout commit 09caa98 (pass 40), run ./run_firestaff_m11_game_view_probe.sh, copy verification-m11/game-view/party_hud_statusbox_gfx.pgm",
+    "description": "Party-HUD status-box row rendered by the full M11 game-view probe (361/361 invariants passed) on main at pass-40 (pre-pass-41), V1 default mode, stride 77 / slot W 71.",
+    "framebuffer": [320, 200],
+    "status_box_frame_row_y": 163,
+    "nonzero_x_ranges_at_y_163": [
+      [8, 78],
+      [80, 81],
+      [89, 90],
+      [92, 155],
+      [158, 159],
+      [166, 167],
+      [169, 232],
+      [235, 236],
+      [243, 244],
+      [246, 309]
+    ],
+    "interpretation": "Four status-box frames at x = 12..78, 89..155, 166..232, 243..309 (stride 77, slot W ~71). Right edge of last slot extends to x=309.",
+    "derived_slot_origins_x": [12, 89, 166, 243],
+    "derived_slot_step": 77,
+    "derived_slot_frame_width": 71
+  },
+  "source_pgm_post_pass41": {
+    "path": "parity-evidence/overlays/pass41/party_hud_statusbox_v1_stride69.pgm",
+    "git_tracked": false,
+    "reproduction": "on main after pass 41, run ./run_firestaff_m11_game_view_probe.sh, copy verification-m11/game-view/party_hud_statusbox_gfx.pgm",
+    "description": "Same probe, same screenshot, V1 default mode after pass 41: stride 69 / slot W 67.",
+    "framebuffer": [320, 200],
+    "status_box_frame_row_y": 163,
+    "nonzero_x_ranges_at_y_163": [
+      [8, 78],
+      [81, 82],
+      [84, 147],
+      [150, 151],
+      [153, 216],
+      [219, 220],
+      [222, 285],
+      [288, 289],
+      [308, 311]
+    ],
+    "interpretation": "Four status-box frames at x = 12..78, 81..147, 150..216, 219..285 (stride 69, slot W 67). 2-px black gap between adjacent slot frames (at x=79..80, 148..149, 217..218). Right edge of last slot at x=285 (saving 24 px vs pre-pass-41 x=309).",
+    "derived_slot_origins_x": [12, 81, 150, 219],
+    "derived_slot_step": 69,
+    "derived_slot_frame_width": 67
+  },
+  "drift_accounting": {
+    "stride_delta_per_slot_px": 8,
+    "slot_frame_width_delta_per_slot_px": 4,
+    "party_panel_total_width_pre_pass41_px": 302,
+    "party_panel_total_width_post_pass41_px": 274,
+    "party_panel_saving_px": 28,
+    "rightmost_status_box_right_edge_pre_pass41_x": 309,
+    "rightmost_status_box_right_edge_post_pass41_x": 285
+  },
+  "source_anchors": {
+    "stride_dm1_source": {
+      "name": "C69_CHAMPION_STATUS_BOX_SPACING",
+      "path": "dm7z-extract/Toolchains/Common/Source/DEFS.H",
+      "line": 2157,
+      "value": 69
+    },
+    "slot_frame_width_dm1_source": {
+      "name": "C007_GRAPHIC_STATUS_BOX",
+      "width_px": 67,
+      "height_px": 29,
+      "verified_by": "M11 asset-loader probe invariant INV_GV_205 (asserts graphic 7 decompresses to 67x29)"
+    }
+  },
+  "pass41_probe_summary": {
+    "script": "run_firestaff_m11_pass41_status_box_stride_probe.sh",
+    "invariants_total": 24,
+    "invariants_passed": 24
+  }
+}

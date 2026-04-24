@@ -1,6 +1,6 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 40 landed)
+Last updated: 2026-04-24 (pass 41 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
@@ -206,16 +206,52 @@ first, then visual parity, then typography / honesty.
   for source-faithful side-column placement).  Full dependency chain
   is in `parity-evidence/pass40_viewport_lock.md` §4.
 
-## 5. Champion status-box stride +8 px per slot vs DEFS.H C69
+## 5. Champion status-box stride +8 px per slot vs DEFS.H C69  — **LANDED (pass 41)**
 - **Area:** `VISUAL`
-- **Evidence:**
-  - Pass 34 `parity-evidence/pass34_sidepanel_rectangle_table.md` §3
-    — `M11_PARTY_SLOT_STEP=77` vs `C69_CHAMPION_STATUS_BOX_SPACING=69`
-    (DEFS.H:1756).
-  - `PARITY_MATRIX_DM1_V1.md` §1 "Party/champion region" now
-    `KNOWN_DIFF` (+8 px stride).
-- **Suggested pass:** pass-41 — set `M11_PARTY_SLOT_STEP` to 69 in V1
-  mode, measure downstream impact on slot contents.
+- **Status:** Resolved for V1 original-faithful mode.  Stride is now
+  bound to the DM1 DEFS.H anchor `C69_CHAMPION_STATUS_BOX_SPACING`
+  (69 px) via a mode-aware helper; slot width is bound to the
+  source graphic `C007_GRAPHIC_STATUS_BOX` (67 px).  V2 vertical-slice
+  mode keeps its 77/71 geometry for binary compatibility with the
+  pre-baked four-slot HUD sprite.
+- **Pass 41 (landed, 2026-04-24):**
+  - `m11_game_view.c` gained two new enum members,
+    `M11_V1_PARTY_SLOT_STEP = 69` and `M11_V1_PARTY_SLOT_W = 67`,
+    with source citations to DEFS.H:2157 and graphic C007.  The
+    legacy `M11_PARTY_SLOT_STEP = 77` / `M11_PARTY_SLOT_W = 71`
+    enum members are retained as the V2-mode fallback.
+  - Two new static helpers, `m11_party_slot_step()` and
+    `m11_party_slot_w()`, route the default (V1) path to the new
+    values and V2 (opt-in via `FIRESTAFF_V2_VERTICAL_SLICE`) to the
+    legacy values.
+  - Both call sites (hit test in `M11_GameView_HandlePointer`;
+    draw loop in `m11_draw_party_panel`) now go through the
+    helpers.  The procedural fallback and the V1 double yellow
+    active-champion highlight insets derive their widths from
+    `slotW`, keeping the highlight strictly inside the 67-wide
+    frame (outer 65, inner 63).
+  - Pass-41 probe
+    `run_firestaff_m11_pass41_status_box_stride_probe.sh` verifies
+    24/24 invariants including the DEFS.H anchor (C69 == 69,
+    C007 == 67x29), enum + helper wiring, non-overlapping V1 slot
+    rectangles (2-px gaps), right edge fit in the 320x200
+    framebuffer, and preservation of the pass-34 drift numbers
+    (stride delta 8 px/slot, width delta 4 px/slot, 28 px total
+    party-panel width saving).
+  - Empirical screenshot diff in
+    `parity-evidence/overlays/pass41/` shows the four V1 status
+    boxes at x = 12, 81, 150, 219 (stride 69) instead of the
+    previous x = 12, 89, 166, 243 (stride 77).
+  - Evidence: `parity-evidence/pass41_status_box_stride.md`.
+  - All baseline gates stay green: Phase A 18/18, M11 game-view
+    361/361, launcher smoke PASS, M10 verify 20/20 phases, M11
+    verify end-to-end.
+- **What pass 41 does NOT change:**
+  - Party-panel origin `(12, 160)` vs ZONES.H-anchored placement
+    remains `BLOCKED_ON_REFERENCE` (blocker §11 / pass 47b).
+  - No viewport, chrome, or bar-graph changes (blockers §4, §6, §7).
+  - No V2 vertical-slice geometry change (pre-baked sprite stays
+    aligned to 77 stride).
 
 ## 6. Firestaff-invented UI chrome (utility strip, control strip, prompt strip, status lozenge, inspect readout)
 - **Area:** `TEXT` (`VISUAL` adjacent)

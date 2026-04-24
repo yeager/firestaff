@@ -115,9 +115,26 @@ enum {
     M11_PROMPT_STRIP_H = 14,
     M11_PARTY_PANEL_X = 12,
     M11_PARTY_PANEL_Y = 160,
+    /* Legacy / V2-mode dimensions.  V2's pre-baked four-slot HUD
+     * sprite (m11_v2_party_hud_four_slot_base, 302x28) encodes
+     * these values directly: 4 * 77 - 6 = 302 (= step 77 * 3 +
+     * slot 71 + 13 padding), and the active overlay is 71x28.
+     * In V1 original-faithful mode these are overridden at the
+     * use site by the M11_V1_PARTY_SLOT_* constants below.  See
+     * pass 41 (parity-evidence/pass41_status_box_stride.md). */
     M11_PARTY_SLOT_W = 71,
     M11_PARTY_SLOT_H = 28,
     M11_PARTY_SLOT_STEP = 77,
+    /* DM1 PC 3.4 source-anchored champion status-box geometry
+     * for V1 original-faithful mode.  STEP == DEFS.H:2157
+     * C69_CHAMPION_STATUS_BOX_SPACING (69).  W == graphic
+     * C007_GRAPHIC_STATUS_BOX frame width (67, verified by the
+     * M11 asset-loader probe invariant INV_GV_205 which asserts
+     * graphic 7 is 67x29).  Pass 41 landed these as the active
+     * V1 values via m11_party_slot_step() / m11_party_slot_w().
+     * Ref: V1_BLOCKERS.md §5 / PARITY_MATRIX_DM1_V1.md §1. */
+    M11_V1_PARTY_SLOT_W    = 67,
+    M11_V1_PARTY_SLOT_STEP = 69,
     M11_UTILITY_PANEL_X = 218,
     M11_UTILITY_PANEL_Y = 28,
     M11_UTILITY_PANEL_W = 86,
@@ -1304,6 +1321,35 @@ static int m11_v2_vertical_slice_enabled(void) {
     env = getenv("FIRESTAFF_V2_VERTICAL_SLICE");
     cached = (env && env[0] != '\0' && strcmp(env, "0") != 0) ? 1 : 0;
     return cached;
+}
+
+/* Pass 41: mode-aware champion status-box stride / width.
+ *
+ * In V1 original-faithful mode (the default; V2 vertical slice not
+ * enabled) the runtime uses the DM1 DEFS.H-anchored stride of 69 px
+ * (C69_CHAMPION_STATUS_BOX_SPACING) and a slot width of 67 px (the
+ * C007_GRAPHIC_STATUS_BOX frame width).  This closes the +8 px per
+ * slot drift recorded in pass 34 (`parity-evidence/
+ * pass34_sidepanel_rectangle_table.md` §3).
+ *
+ * In V2 vertical-slice mode the pre-baked 302x28 four-slot HUD
+ * sprite (m11_v2_party_hud_four_slot_base) and 71x28 active
+ * overlay (m11_v2_party_hud_four_slot_active_overlay) assume the
+ * legacy 77/71 geometry, so we keep that here.  V2 mode is not on
+ * the V1 parity path (see V1_BLOCKERS.md §4 scope notes).
+ *
+ * Ref: V1_BLOCKERS.md §5; DEFS.H:2157; Pass 41 evidence file
+ * parity-evidence/pass41_status_box_stride.md. */
+static int m11_party_slot_step(void) {
+    return m11_v2_vertical_slice_enabled()
+        ? (int)M11_PARTY_SLOT_STEP
+        : (int)M11_V1_PARTY_SLOT_STEP;
+}
+
+static int m11_party_slot_w(void) {
+    return m11_v2_vertical_slice_enabled()
+        ? (int)M11_PARTY_SLOT_W
+        : (int)M11_V1_PARTY_SLOT_W;
 }
 
 static void m11_blit_v2_slice_asset(const M11_V2SliceAsset* asset,
@@ -4281,17 +4327,21 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         }
     }
 
-    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        int slotX = M11_PARTY_PANEL_X + slot * M11_PARTY_SLOT_STEP;
-        if (m11_point_in_rect(x, y,
-                              slotX,
-                              M11_PARTY_PANEL_Y + 20,
-                              M11_PARTY_SLOT_W,
-                              M11_PARTY_SLOT_H - 20)) {
-            if (m11_set_active_champion(state, slot)) {
-                return M11_GAME_INPUT_REDRAW;
+    {
+        int slotStep = m11_party_slot_step();
+        int slotW    = m11_party_slot_w();
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            int slotX = M11_PARTY_PANEL_X + slot * slotStep;
+            if (m11_point_in_rect(x, y,
+                                  slotX,
+                                  M11_PARTY_PANEL_Y + 20,
+                                  slotW,
+                                  M11_PARTY_SLOT_H - 20)) {
+                if (m11_set_active_champion(state, slot)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
             }
-            return M11_GAME_INPUT_IGNORED;
         }
     }
 
@@ -11079,17 +11129,21 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     int slot;
     int activeIndex = -1;
     int useV2PartyHud = 0;
+    int slotStep;
+    int slotW;
     if (state) {
         activeIndex = state->world.party.activeChampionIndex;
         useV2PartyHud = m11_v2_vertical_slice_enabled();
     }
+    slotStep = m11_party_slot_step();
+    slotW    = m11_party_slot_w();
     if (useV2PartyHud) {
         m11_blit_v2_slice_asset(&m11_v2_party_hud_four_slot_base,
                                 framebuffer, framebufferWidth, framebufferHeight,
                                 M11_PARTY_PANEL_X, M11_PARTY_PANEL_Y, 1);
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        int x = M11_PARTY_PANEL_X + slot * M11_PARTY_SLOT_STEP;
+        int x = M11_PARTY_PANEL_X + slot * slotStep;
         int y = M11_PARTY_PANEL_Y;
         char line[48];
         int drewStatusBox = 0;
@@ -11141,20 +11195,27 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
             }
             if (!drewStatusBox) {
-                /* Procedural fallback */
+                /* Procedural fallback.  Slot width is mode-aware so
+                 * V1 uses the DEFS.H-anchored 67-wide box and V2
+                 * keeps its legacy 71-wide shell.  Height is still
+                 * 28 (DM1 graphic 7 is 67x29 but the M11 slot is
+                 * 28 tall; the extra pixel row is absorbed by the
+                 * panel backdrop). */
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x, y, 71, 28, M11_COLOR_BLACK);
+                              x, y, slotW, M11_PARTY_SLOT_H, M11_COLOR_BLACK);
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x, y, 71, 28, M11_COLOR_LIGHT_CYAN);
+                              x, y, slotW, M11_PARTY_SLOT_H, M11_COLOR_LIGHT_CYAN);
             }
 
             /* Active champion: double yellow highlight border
-             * (ReDMCSB highlights the active champion status box) */
+             * (ReDMCSB highlights the active champion status box).
+             * V1 mode: inset 1 and 2 px from the 67-wide frame.
+             * V2 mode: inset 1 and 2 px from the 71-wide frame. */
             if (!useV2PartyHud && slot == activeIndex) {
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 1, y + 1, 69, 26, M11_COLOR_YELLOW);
+                              x + 1, y + 1, slotW - 2, 26, M11_COLOR_YELLOW);
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 2, y + 2, 67, 24, M11_COLOR_YELLOW);
+                              x + 2, y + 2, slotW - 4, 24, M11_COLOR_YELLOW);
             }
 
             /* Champion icon from GRAPHICS.DAT graphic 28 (19×14 per
