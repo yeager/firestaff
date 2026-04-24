@@ -561,23 +561,35 @@ first, then visual parity, then typography / honesty.
   - Full landing log and evidence pointers in
     `PASS51_AUDIO_FINDINGS.md`; PASS log in
     `parity-evidence/pass51_v1_graphics_dat_snd3_probe.txt`.
-- **Placeholder audio is still in use at runtime.**  Pass 50/51 did
+- **Pass 52 (landed, 2026-04-24):**
+  - Source-backed DM PC v3.4 sound-event → GRAPHICS.DAT SND3 mapping
+    landed in `sound_event_snd3_map_v1.[ch]`, anchored to ReDMCSB
+    `DEFS.H` (`M513_SOUND_COUNT = 35`, I34E sound macros) and
+    `DATA.C` (`MEDIA719_I34E_I34M G0060_as_Graphic562_Sounds`).
+  - V1 probe landed: `probes/v1/firestaff_v1_snd3_event_map_probe.c`
+    + `run_firestaff_v1_snd3_event_map_probe.sh`.  Against the real
+    `~/.firestaff/data/GRAPHICS.DAT` the probe passes 5/5 invariants:
+    35 sound-event entries, expected source order, lookup bounds,
+    coverage of all 33 SND3 items with only the source-backed door /
+    explosion aliases, and populated SND3 manifest metadata.
+  - Full landing log and evidence pointers in `PASS52_AUDIO_FINDINGS.md`;
+    PASS log in `parity-evidence/pass52_v1_snd3_event_map_probe.txt`.
+- **Placeholder audio is still in use at runtime.**  Pass 50/51/52 did
   not wire decoded buffers into `audio_sdl_m11.c`.
 - **Remaining gaps before V1 audio can be called
-  original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5 and
-  `PASS51_AUDIO_FINDINGS.md` §5):
-  1. Sound-event → SND3 index mapping table
-  2. Runtime integration in `audio_sdl_m11.c` (replace
+  original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
+  `PASS51_AUDIO_FINDINGS.md` §5, and `PASS52_AUDIO_FINDINGS.md` §5):
+  1. Runtime integration in `audio_sdl_m11.c` (replace
      procedural buffers with decoded ones, gated on presence
      of original assets)
-  3. Title-music playback driver that walks SEQ2 words and
+  2. Title-music playback driver that walks SEQ2 words and
      concatenates SND8 buffers with the bit-15 loop-back
-  4. Sample-rate handling (22050 stream vs 11025 SND8 vs
+  3. Sample-rate handling (22050 stream vs 11025 SND8 vs
      6000 SND3 — resample or per-source reconfig)
-  5. Bug-faithful playback quirks/cadence/overlap cataloged when relevant
-- **Suggested follow-up pass:** pass-52 — sound-event → SND3 index
-  mapping table, still without runtime playback unless evidence safely
-  supports it.
+  4. Bug-faithful playback quirks/cadence/overlap cataloged when relevant
+- **Suggested follow-up pass:** pass-53 — runtime SND3 playback wiring,
+  asset-gated with procedural fallback, only after preserving the pass-52
+  mapping/probe boundary.
 
 ---
 
@@ -591,8 +603,10 @@ first, then visual parity, then typography / honesty.
 - **Blocked / tooling (pass-47):** overlays need capture infra (#11).
 - **Lower (pass-48 … pass-50):** cosmetic tick prefix (#12, dup #13),
   behavioral probe binding (#14), audio (#15).
-- **Pass 50 landed (2026-04-24):** SONG.DAT DM PC v3.4 format +
-  decoder + probe (6/6 PASS) — see `PASS50_AUDIO_FINDINGS.md`.
+- **Passes 50–52 landed (2026-04-24):** SONG.DAT format/decoder
+  (7/7 PASS), GRAPHICS.DAT SND3 decoder (6/6 PASS), and sound-event
+  → SND3 mapping (5/5 PASS) — see `PASS50_AUDIO_FINDINGS.md`,
+  `PASS51_AUDIO_FINDINGS.md`, and `PASS52_AUDIO_FINDINGS.md`.
   Runtime wiring remains; placeholder audio is still in use.
 
 ---

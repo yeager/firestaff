@@ -1,0 +1,6 @@
+PASS INV_V1_SND3_EVENT_MAP_01 35 DM PC v3.4 sound-event entries exposed
+PASS INV_V1_SND3_EVENT_MAP_02 source table order maps expected sound indices to SND3 items/labels
+PASS INV_V1_SND3_EVENT_MAP_03 lookup API accepts 0..34 and rejects out-of-range/none values
+PASS INV_V1_SND3_EVENT_MAP_04 35 events cover all 33 SND3 items; only door-rattle and explosion aliases duplicate items
+PASS INV_V1_SND3_EVENT_MAP_05 mapping resolves to populated SND3 manifest entries with valid sample metadata
+# summary: 5/5 invariants passed
