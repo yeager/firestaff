@@ -1,7 +1,7 @@
 {
   "manifestVersion": "1.0.0",
-  "packId": "firestaff-v2-wave1-skeleton-family",
-  "description": "Bounded first-pass V2 skeleton creature family for offline asset prep and export workflow validation.",
+  "packId": "firestaff-v2-wave1-mummy-family",
+  "description": "Bounded first-pass V2 mummy creature family for offline asset prep and export workflow validation.",
   "targetPolicy": {
     "masterResolution": "4k-first",
     "derivedResolutions": [
@@ -11,12 +11,12 @@
   },
   "assets": [
     {
-      "id": "fs.v2.creature.skeleton.front-near",
-      "family": "skeleton_family",
-      "role": "first-pass front near skeleton sprite",
+      "id": "fs.v2.creature.mummy.front-near",
+      "family": "mummy_family",
+      "role": "first-pass front near mummy sprite",
       "productionClass": "redraw-native",
       "sourceReference": {
-        "origin": "Existing project creature card art",
+        "origin": "Existing project mummy creature card art",
         "originalSize": {
           "width": 1536,
           "height": 1024
@@ -33,9 +33,9 @@
         }
       },
       "paths": {
-        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
-        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
-        "spec": "assets-v2/creatures/wave1/specs/skeleton-family.md"
+        "masterDir": "assets-v2/creatures/wave1/mummy-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/mummy-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/mummy-family.md"
       },
       "status": "in-progress",
       "notes": [
@@ -44,12 +44,12 @@
       ]
     },
     {
-      "id": "fs.v2.creature.skeleton.front-mid",
-      "family": "skeleton_family",
-      "role": "first-pass front mid skeleton sprite",
+      "id": "fs.v2.creature.mummy.front-mid",
+      "family": "mummy_family",
+      "role": "first-pass front mid mummy sprite",
       "productionClass": "redraw-native",
       "sourceReference": {
-        "origin": "Existing project creature card art",
+        "origin": "Existing project mummy creature card art",
         "originalSize": {
           "width": 1536,
           "height": 1024
@@ -66,9 +66,9 @@
         }
       },
       "paths": {
-        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
-        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
-        "spec": "assets-v2/creatures/wave1/specs/skeleton-family.md"
+        "masterDir": "assets-v2/creatures/wave1/mummy-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/mummy-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/mummy-family.md"
       },
       "status": "in-progress",
       "notes": [
@@ -77,12 +77,12 @@
       ]
     },
     {
-      "id": "fs.v2.creature.skeleton.front-far",
-      "family": "skeleton_family",
-      "role": "first-pass front far skeleton sprite",
+      "id": "fs.v2.creature.mummy.front-far",
+      "family": "mummy_family",
+      "role": "first-pass front far mummy sprite",
       "productionClass": "redraw-native",
       "sourceReference": {
-        "origin": "Existing project creature card art",
+        "origin": "Existing project mummy creature card art",
         "originalSize": {
           "width": 1536,
           "height": 1024
@@ -99,9 +99,9 @@
         }
       },
       "paths": {
-        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
-        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
-        "spec": "assets-v2/creatures/wave1/specs/skeleton-family.md"
+        "masterDir": "assets-v2/creatures/wave1/mummy-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/mummy-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/mummy-family.md"
       },
       "status": "in-progress",
       "notes": [

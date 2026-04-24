@@ -1,6 +1,6 @@
-# Firestaff V2 skeleton family
+# Firestaff V2 mummy family
 
-This directory holds a bounded Wave 1 creature-family prototype for **Skeleton**.
+This directory holds a bounded Wave 1 creature-family prototype for **Mummy**.
 
 ## What exists now
 
