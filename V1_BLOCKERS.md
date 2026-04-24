@@ -548,23 +548,36 @@ first, then visual parity, then typography / honesty.
     explicit row tracks the GRAPHICS.DAT SND3 SFX bank gap.
   - Full landing log and evidence pointers in
     `PASS50_AUDIO_FINDINGS.md`.
-- **Placeholder audio is still in use at runtime.**  Pass 50 did
+- **Pass 51 (landed, 2026-04-24):**
+  - GRAPHICS.DAT DM PC v3.4 English SND3 in-game SFX bank decoded in
+    a standalone loader: `graphics_dat_snd3_loader_v1.[ch]`.
+  - V1 probe landed: `probes/v1/firestaff_v1_graphics_dat_snd3_probe.c`
+    + `run_firestaff_v1_snd3_probe.sh`.  Against the real
+    `~/.firestaff/data/GRAPHICS.DAT` the probe passes 6/6 invariants:
+    DMCSB2 signature/count/header, dmweb 33-item SND3 index set,
+    all 33 verified headers/attrs/sample counts, all 33 unsigned PCM
+    decodes at 6000 Hz (114157 total samples), and Greatstone
+    Sound 00..32 labels.
+  - Full landing log and evidence pointers in
+    `PASS51_AUDIO_FINDINGS.md`; PASS log in
+    `parity-evidence/pass51_v1_graphics_dat_snd3_probe.txt`.
+- **Placeholder audio is still in use at runtime.**  Pass 50/51 did
   not wire decoded buffers into `audio_sdl_m11.c`.
 - **Remaining gaps before V1 audio can be called
-  original-faithful** (enumerated in `PASS50_AUDIO_FINDINGS.md`
-  §5):
-  1. GRAPHICS.DAT SND3 loader + probe (in-game SFX bank)
-  2. Sound-event → SND3 index mapping table
-  3. Runtime integration in `audio_sdl_m11.c` (replace
+  original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5 and
+  `PASS51_AUDIO_FINDINGS.md` §5):
+  1. Sound-event → SND3 index mapping table
+  2. Runtime integration in `audio_sdl_m11.c` (replace
      procedural buffers with decoded ones, gated on presence
      of original assets)
-  4. Title-music playback driver that walks SEQ2 words and
+  3. Title-music playback driver that walks SEQ2 words and
      concatenates SND8 buffers with the bit-15 loop-back
-  5. Sample-rate handling (22050 stream vs 11025 SND8 vs
+  4. Sample-rate handling (22050 stream vs 11025 SND8 vs
      6000 SND3 — resample or per-source reconfig)
-  6. Bug-faithful playback quirks cataloged when relevant
-- **Suggested follow-up pass:** pass-51 — GRAPHICS.DAT SND3
-  loader + probe, mirrored on Pass 50's scope discipline.
+  5. Bug-faithful playback quirks/cadence/overlap cataloged when relevant
+- **Suggested follow-up pass:** pass-52 — sound-event → SND3 index
+  mapping table, still without runtime playback unless evidence safely
+  supports it.
 
 ---
 

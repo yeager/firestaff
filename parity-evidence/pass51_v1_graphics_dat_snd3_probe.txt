@@ -1,0 +1,7 @@
+PASS INV_V1_SND3_01 manifest parsed
+PASS INV_V1_SND3_02 DMCSB2 signature=0x8001, 713 items, 5708-byte header
+PASS INV_V1_SND3_03 dmweb SND3 item index set matches 33-item bank
+PASS INV_V1_SND3_04 all 33 SND3 headers match verified DM PC v3.4 table
+PASS INV_V1_SND3_05 all 33 SND3 items decode to unsigned PCM at 6000 Hz (114157 samples)
+PASS INV_V1_SND3_06 Greatstone per-sound labels present for Sound 00..32
+# summary: 6/6 invariants passed
