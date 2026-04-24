@@ -1,0 +1,1004 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-wave1-creatures",
+  "description": "Full currently discoverable Firestaff V2 Wave 1 creature-family pack for offline prep, upscale, and export workflow coverage.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": [
+      "1080p"
+    ],
+    "layoutSkeleton": "dm1-depth-ladder"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.creature.demon.front-near",
+      "family": "demon_family",
+      "role": "first-pass front near demon sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 34,
+          "height": 17
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/demon-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/demon-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/demon-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.demon.front-mid",
+      "family": "demon_family",
+      "role": "first-pass front mid demon sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 34,
+          "height": 17
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/demon-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/demon-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/demon-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.demon.front-far",
+      "family": "demon_family",
+      "role": "first-pass front far demon sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 34,
+          "height": 17
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/demon-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/demon-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/demon-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giant-scorpion.front-near",
+      "family": "giant-scorpion_family",
+      "role": "first-pass front near giant scorpion sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giant-scorpion-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giant-scorpion-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giant-scorpion-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giant-scorpion.front-mid",
+      "family": "giant-scorpion_family",
+      "role": "first-pass front mid giant scorpion sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giant-scorpion-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giant-scorpion-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giant-scorpion-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giant-scorpion.front-far",
+      "family": "giant-scorpion_family",
+      "role": "first-pass front far giant scorpion sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giant-scorpion-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giant-scorpion-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giant-scorpion-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giggler.front-near",
+      "family": "giggler_family",
+      "role": "first-pass front near giggler sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 30,
+          "height": 18
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giggler-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giggler-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giggler-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giggler.front-mid",
+      "family": "giggler_family",
+      "role": "first-pass front mid giggler sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 30,
+          "height": 18
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giggler-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giggler-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giggler-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giggler.front-far",
+      "family": "giggler_family",
+      "role": "first-pass front far giggler sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 30,
+          "height": 18
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giggler-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giggler-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giggler-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.mummy.front-near",
+      "family": "mummy_family",
+      "role": "first-pass front near mummy sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project mummy creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/mummy-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/mummy-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/mummy-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.mummy.front-mid",
+      "family": "mummy_family",
+      "role": "first-pass front mid mummy sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project mummy creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/mummy-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/mummy-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/mummy-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.mummy.front-far",
+      "family": "mummy_family",
+      "role": "first-pass front far mummy sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project mummy creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/mummy-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/mummy-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/mummy-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.red-dragon.front-near",
+      "family": "red-dragon_family",
+      "role": "first-pass front near red dragon sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/red-dragon-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/red-dragon-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/red-dragon-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.red-dragon.front-mid",
+      "family": "red-dragon_family",
+      "role": "first-pass front mid red dragon sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/red-dragon-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/red-dragon-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/red-dragon-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.red-dragon.front-far",
+      "family": "red-dragon_family",
+      "role": "first-pass front far red dragon sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/red-dragon-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/red-dragon-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/red-dragon-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.screamer.front-near",
+      "family": "screamer_family",
+      "role": "first-pass front near screamer sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 8,
+          "height": 14
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/screamer-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/screamer-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/screamer-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.screamer.front-mid",
+      "family": "screamer_family",
+      "role": "first-pass front mid screamer sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 8,
+          "height": 14
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/screamer-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/screamer-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/screamer-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.screamer.front-far",
+      "family": "screamer_family",
+      "role": "first-pass front far screamer sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 8,
+          "height": 14
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/screamer-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/screamer-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/screamer-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.skeleton.front-near",
+      "family": "skeleton_family",
+      "role": "first-pass front near skeleton sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/skeleton-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.skeleton.front-mid",
+      "family": "skeleton_family",
+      "role": "first-pass front mid skeleton sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/skeleton-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.skeleton.front-far",
+      "family": "skeleton_family",
+      "role": "first-pass front far skeleton sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/skeleton-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/skeleton-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/skeleton-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.stone-golem.front-near",
+      "family": "stone-golem_family",
+      "role": "first-pass front near stone golem sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/stone-golem-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/stone-golem-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/stone-golem-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.stone-golem.front-mid",
+      "family": "stone-golem_family",
+      "role": "first-pass front mid stone golem sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/stone-golem-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/stone-golem-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/stone-golem-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.stone-golem.front-far",
+      "family": "stone-golem_family",
+      "role": "first-pass front far stone golem sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature card art",
+        "originalSize": {
+          "width": 1536,
+          "height": 1024
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/stone-golem-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/stone-golem-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/stone-golem-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.swamp-slime.front-near",
+      "family": "swamp-slime_family",
+      "role": "first-pass front near swamp slime sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 38,
+          "height": 43
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/swamp-slime-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/swamp-slime-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/swamp-slime-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.swamp-slime.front-mid",
+      "family": "swamp-slime_family",
+      "role": "first-pass front mid swamp slime sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 38,
+          "height": 43
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/swamp-slime-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/swamp-slime-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/swamp-slime-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.swamp-slime.front-far",
+      "family": "swamp-slime_family",
+      "role": "first-pass front far swamp slime sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 38,
+          "height": 43
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/swamp-slime-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/swamp-slime-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/swamp-slime-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.vexirk.front-near",
+      "family": "vexirk_family",
+      "role": "first-pass front near vexirk sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 12,
+          "height": 8
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/vexirk-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/vexirk-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/vexirk-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.vexirk.front-mid",
+      "family": "vexirk_family",
+      "role": "first-pass front mid vexirk sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 12,
+          "height": 8
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/vexirk-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/vexirk-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/vexirk-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.vexirk.front-far",
+      "family": "vexirk_family",
+      "role": "first-pass front far vexirk sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 12,
+          "height": 8
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/vexirk-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/vexirk-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/vexirk-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    }
+  ]
+}

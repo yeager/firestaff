@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "demon",
+    "displayName": "Demon",
+    "source": "assets/cards/creature-refs/demon.png",
+    "origin": "Existing project creature reference sprite"
+  },
+  {
+    "slug": "giant-scorpion",
+    "displayName": "Giant Scorpion",
+    "source": "assets/cards/creatures/giant-scorpion.png",
+    "origin": "Existing project creature card art"
+  },
+  {
+    "slug": "giggler",
+    "displayName": "Giggler",
+    "source": "assets/cards/creature-refs/giggler.png",
+    "origin": "Existing project creature reference sprite"
+  },
+  {
+    "slug": "mummy",
+    "displayName": "Mummy",
+    "source": "assets/cards/creatures/mummy.png",
+    "origin": "Existing project mummy creature card art"
+  },
+  {
+    "slug": "red-dragon",
+    "displayName": "Red Dragon",
+    "source": "assets/cards/creatures/red-dragon.png",
+    "origin": "Existing project creature card art"
+  },
+  {
+    "slug": "screamer",
+    "displayName": "Screamer",
+    "source": "assets/cards/creature-refs/screamer.png",
+    "origin": "Existing project creature reference sprite"
+  },
+  {
+    "slug": "skeleton",
+    "displayName": "Skeleton",
+    "source": "assets/cards/creatures/skeleton.png",
+    "origin": "Existing project creature card art"
+  },
+  {
+    "slug": "stone-golem",
+    "displayName": "Stone Golem",
+    "source": "assets/cards/creatures/stone-golem.png",
+    "origin": "Existing project creature card art"
+  },
+  {
+    "slug": "swamp-slime",
+    "displayName": "Swamp Slime",
+    "source": "assets/cards/creature-refs/swamp_slime.png",
+    "origin": "Existing project creature reference sprite"
+  },
+  {
+    "slug": "vexirk",
+    "displayName": "Vexirk",
+    "source": "assets/cards/creature-refs/vexirk.png",
+    "origin": "Existing project creature reference sprite"
+  }
+]

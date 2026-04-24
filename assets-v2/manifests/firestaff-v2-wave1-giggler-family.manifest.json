@@ -1,0 +1,113 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-wave1-giggler-family",
+  "description": "Bounded first-pass V2 giggler creature family for offline asset prep and export workflow validation.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": [
+      "1080p"
+    ],
+    "layoutSkeleton": "dm1-depth-ladder"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.creature.giggler.front-near",
+      "family": "giggler_family",
+      "role": "first-pass front near giggler sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 30,
+          "height": 18
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 1200,
+          "height": 1200
+        },
+        "derived1080p": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giggler-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giggler-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giggler-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giggler.front-mid",
+      "family": "giggler_family",
+      "role": "first-pass front mid giggler sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 30,
+          "height": 18
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 860,
+          "height": 860
+        },
+        "derived1080p": {
+          "width": 430,
+          "height": 430
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giggler-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giggler-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giggler-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    },
+    {
+      "id": "fs.v2.creature.giggler.front-far",
+      "family": "giggler_family",
+      "role": "first-pass front far giggler sprite",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "Existing project creature reference sprite",
+        "originalSize": {
+          "width": 30,
+          "height": 18
+        }
+      },
+      "sizes": {
+        "master4k": {
+          "width": 560,
+          "height": 560
+        },
+        "derived1080p": {
+          "width": 280,
+          "height": 280
+        }
+      },
+      "paths": {
+        "masterDir": "assets-v2/creatures/wave1/giggler-family/masters/4k",
+        "derivedDir": "assets-v2/creatures/wave1/giggler-family/exports/1080p",
+        "spec": "assets-v2/creatures/wave1/specs/giggler-family.md"
+      },
+      "status": "in-progress",
+      "notes": [
+        "Generated from a bounded first-pass creature workflow.",
+        "Animation smoothing in later passes must preserve original perceived timing."
+      ]
+    }
+  ]
+}

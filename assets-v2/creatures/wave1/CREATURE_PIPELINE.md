@@ -46,7 +46,7 @@ When a family expands beyond stills, store the original cycle duration beside th
 
 ## Current generator
 
-Use:
+Single-family generation:
 
 ```bash
 python3 tools/generate_v2_creature_family.py \
@@ -55,6 +55,14 @@ python3 tools/generate_v2_creature_family.py \
   --display-name "<Name>" \
   --family-dir assets-v2/creatures/wave1/<slug>-family
 ```
+
+Full currently discoverable pack regeneration:
+
+```bash
+python3 tools/generate_v2_creature_wave1_pack.py
+```
+
+The full-pack generator reads `creature_family_inventory.json`, covers every currently inventoried Wave 1 creature family, refreshes per-family manifests, and rewrites the aggregate manifest `assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json`.
 
 Optional:
 - `--mask path/to/manual-mask.png`
@@ -67,3 +75,4 @@ Optional:
 - No claim that these first-pass families are final production art.
 - No repo reorganization.
 - Manifest/spec updates should stay in English and remain explicit about provenance and current limitations.
+- Families that exist only as tiny reference sprites are still valid for bounded workflow coverage, but should be upgraded to stronger source art before any production-quality paintover pass.
