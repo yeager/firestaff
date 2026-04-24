@@ -21,16 +21,20 @@ typedef enum {
 } M11_AudioMarker;
 
 /*
- * Pre-generated PCM buffer for one sound effect.
- * Stored as float samples at 22050 Hz mono.
+ * PCM buffer for one sound effect.
+ * Stored as mono float samples at the SDL stream rate (22050 Hz).
+ * Procedural fallbacks and decoded V1 SND3 assets share this format.
  */
 #define M11_AUDIO_SAMPLE_RATE 22050
+#define M11_AUDIO_SOURCE_SND3_SAMPLE_RATE 6000
 #define M11_AUDIO_MAX_SOUND_MS 300
 #define M11_AUDIO_MAX_SAMPLES  ((M11_AUDIO_SAMPLE_RATE * M11_AUDIO_MAX_SOUND_MS) / 1000)
+#define M11_AUDIO_ORIGINAL_SOUND_COUNT 35
 
 typedef struct {
-    float samples[M11_AUDIO_MAX_SAMPLES];
-    int   sampleCount;
+    float* samples;
+    int    sampleCount;
+    int    capacity;
 } M11_SoundBuffer;
 
 typedef struct {
@@ -43,12 +47,20 @@ typedef struct {
     int playedMarkerCount;
     int queuedSampleCount;    /* total samples queued to device */
     M11_AudioMarker lastMarker;
+    int lastSoundIndex;       /* DM PC v3.4 sound event index, or -1 */
+
+    /* Original V1 SND3 bank: loaded from GRAPHICS.DAT when available. */
+    int originalSnd3Available;
+    int originalSnd3LoadedCount;
 
     /* SDL3 native audio — opaque pointer to avoid exposing SDL headers */
     void* sdlStream;  /* SDL_AudioStream* */
 
-    /* Pre-generated sounds, one per marker type */
+    /* Pre-generated procedural sounds, one per marker type. */
     M11_SoundBuffer sounds[M11_AUDIO_MARKER_COUNT];
+
+    /* Decoded/resampled original sounds, one per DM sound event index. */
+    M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
 } M11_AudioState;
 
 int  M11_Audio_Init(M11_AudioState* state);
@@ -65,6 +77,8 @@ int  M11_Audio_GetVolumes(const M11_AudioState* state,
                           int* outMusic,
                           int* outUi);
 int  M11_Audio_EmitMarker(M11_AudioState* state, M11_AudioMarker marker);
+int  M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMarker fallbackMarker);
+int  M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 
 #ifdef __cplusplus
 }

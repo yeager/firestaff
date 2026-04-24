@@ -554,7 +554,13 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
     if (marker == M11_AUDIO_MARKER_NONE) {
         return;
     }
-    (void)M11_Audio_EmitMarker(&state->audioState, marker);
+    if (emission->kind == EMIT_SOUND_REQUEST) {
+        (void)M11_Audio_EmitSoundIndex(&state->audioState,
+                                       emission->payload[0],
+                                       marker);
+    } else {
+        (void)M11_Audio_EmitMarker(&state->audioState, marker);
+    }
     state->audioEventCount += 1;
 }
 

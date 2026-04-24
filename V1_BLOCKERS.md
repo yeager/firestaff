@@ -574,22 +574,37 @@ first, then visual parity, then typography / honesty.
     explosion aliases, and populated SND3 manifest metadata.
   - Full landing log and evidence pointers in `PASS52_AUDIO_FINDINGS.md`;
     PASS log in `parity-evidence/pass52_v1_snd3_event_map_probe.txt`.
-- **Placeholder audio is still in use at runtime.**  Pass 50/51/52 did
-  not wire decoded buffers into `audio_sdl_m11.c`.
+- **Pass 53 (landed, 2026-04-24):**
+  - `audio_sdl_m11.[ch]` now opportunistically loads the decoded/mapped
+    GRAPHICS.DAT SND3 bank when original assets are present, exposing 35
+    event-index buffers via the pass-52 sound namespace while preserving
+    procedural marker fallback when the asset is unavailable or disabled.
+  - `m11_game_view.c` routes `EMIT_SOUND_REQUEST` payloads through
+    `M11_Audio_EmitSoundIndex(...)`; non-`EMIT_SOUND_REQUEST` direct marker
+    calls remain procedural fallback unless later passes map them explicitly.
+  - Sample-rate policy is explicit: SND3 source PCM is 6000 Hz unsigned mono;
+    M11 SDL remains 22050 Hz float mono; pass 53 linearly resamples each SND3
+    buffer once at init and queues the resampled buffer at runtime.
+  - V1 probe landed: `probes/m11/firestaff_m11_pass53_snd3_runtime_probe.c`
+    + `run_firestaff_m11_pass53_snd3_runtime_probe.sh`.  Against the real
+    `~/.firestaff/data/GRAPHICS.DAT` it passes 5/5 invariants covering the
+    no-asset fallback, all-35 event-index load, resample count policy, and SDL
+    queueing of a mapped decoded SND3 buffer.  Evidence in
+    `PASS53_AUDIO_FINDINGS.md` and
+    `parity-evidence/pass53_v1_snd3_runtime_probe.txt`.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
-  `PASS51_AUDIO_FINDINGS.md` §5, and `PASS52_AUDIO_FINDINGS.md` §5):
-  1. Runtime integration in `audio_sdl_m11.c` (replace
-     procedural buffers with decoded ones, gated on presence
-     of original assets)
-  2. Title-music playback driver that walks SEQ2 words and
-     concatenates SND8 buffers with the bit-15 loop-back
-  3. Sample-rate handling (22050 stream vs 11025 SND8 vs
-     6000 SND3 — resample or per-source reconfig)
-  4. Bug-faithful playback quirks/cadence/overlap cataloged when relevant
-- **Suggested follow-up pass:** pass-53 — runtime SND3 playback wiring,
-  asset-gated with procedural fallback, only after preserving the pass-52
-  mapping/probe boundary.
+  `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5, and
+  `PASS53_AUDIO_FINDINGS.md` §4):
+  1. Title-music playback driver that walks SEQ2 words and concatenates
+     SND8 buffers with the bit-15 loop-back.
+  2. Original capture/proof of SFX cadence, prioritization, and overlap.
+  3. Convert or explicitly justify remaining non-`EMIT_SOUND_REQUEST` direct
+     marker calls in M11; pass 53 only wires mapped event-index emissions.
+  4. Bug-faithful playback quirks/cataloging when relevant.
+- **Suggested follow-up pass:** pass-54 — SONG.DAT title-music playback driver
+  or a source-backed audit of remaining direct M11 marker calls; do not claim
+  cadence/overlap without original capture.
 
 ---
 

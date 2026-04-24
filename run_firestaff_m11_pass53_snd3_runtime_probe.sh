@@ -2,22 +2,21 @@
 set -eu
 
 HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
-OUT_DIR=${1:-$HERE/verification-m11/audio}
+OUT_DIR=${1:-$HERE/verification-m11/pass53-snd3-runtime}
 mkdir -p "$OUT_DIR"
 
-PROBE_BIN="$OUT_DIR/firestaff_m11_audio_probe_bin"
+PROBE_BIN="$OUT_DIR/firestaff_m11_pass53_snd3_runtime_probe_bin"
 
-# SDL3 flags via pkg-config
 SDL3_CFLAGS=$(pkg-config --cflags sdl3 2>/dev/null || echo "-I/opt/homebrew/include")
 SDL3_LIBS=$(pkg-config --libs sdl3 2>/dev/null || echo "-L/opt/homebrew/lib -lSDL3")
 
 cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     $SDL3_CFLAGS \
     -o "$PROBE_BIN" \
-    "$HERE/probes/m11/firestaff_m11_audio_probe.c" \
+    "$HERE/probes/m11/firestaff_m11_pass53_snd3_runtime_probe.c" \
     "$HERE/audio_sdl_m11.c" \
     "$HERE/graphics_dat_snd3_loader_v1.c" \
     "$HERE/sound_event_snd3_map_v1.c" \
     $SDL3_LIBS -lm
 
-"$PROBE_BIN" | tee "$OUT_DIR/audio_probe.log"
+"$PROBE_BIN" | tee "$OUT_DIR/pass53_snd3_runtime_probe.log"

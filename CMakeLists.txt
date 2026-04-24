@@ -53,6 +53,8 @@ set(M11_SOURCES
     m11_game_view.c
     render_sdl_m11.c
     audio_sdl_m11.c
+    graphics_dat_snd3_loader_v1.c
+    sound_event_snd3_map_v1.c
     asset_loader_m11.c
     font_m11.c
     fs_portable_compat.c
