@@ -48,7 +48,7 @@ V2/V3 differences must never appear in this matrix as accepted parity.
 | Panel backgrounds/ornaments | Front-lock assets identified: 303–320 (walls-ornate category) | `by-category/walls-ornate/` symlinks exist | `UNPROVEN` — usage not verified against original screen composition | Map ornament assets to panel placement |
 | Title-side UI assets | DEFS.H defines: C001_GRAPHIC_TITLE(320×200), C002_ENTRANCE_LEFT_DOOR(105×161), C003_ENTRANCE_RIGHT_DOOR(128×161), C004_ENTRANCE(320×200), C005_CREDITS(320×200), C006_THE_END(80×14). All 6 extracted as BITMAP_SAFE with 0 decode failures. Symlinked in `by-category/title-ui/`. | Used in title boot sequence (M6/M7 verified). Asset-to-define mapping complete. | `MATCHED` (asset identification and extraction) / `UNPROVEN` (pixel-level rendering comparison) | Pixel-compare rendered title/entrance/credits against original emulator captures. See §E6. |
 | Placeholder entries | 131 placeholders identified and cataloged | Correctly skipped during decode/render | `MATCHED` | — |
-| Text-tag fallbacks | — | Unknown if V1 still uses text fallbacks where graphics should be | `UNPROVEN` | Audit all V1 screens for text-where-graphics-should-be |
+| Text-tag fallbacks | `TEXT.C`/`TEXT2.C`/`PANEL.C`/`CHAMPION.C`/`SPELDRAW.C` distinguish text-engine vs bar-graph vs graphic | Firestaff uses numeric strings for HP/stamina/mana (source uses bar graphs), text for rune labels (source uses `C011_GRAPHIC_MENU_SPELL_AREA_LINES`) | `KNOWN_DIFF` — enumerated in `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` (Pass 35) | Migrate numeric strip to bar-graph renderer; route rune labels through C011 graphic blit. Tracked for pass-37+. |
 
 ---
 
@@ -75,8 +75,8 @@ V2/V3 differences must never appear in this matrix as accepted parity.
 | Inventory labels | ReDMCSB source available | Unknown parity | `UNPROVEN` | Cross-reference with source |
 | Message log text | ReDMCSB source available | Unknown parity | `UNPROVEN` | Cross-reference with source |
 | Dialog/plaque text | `DUNGEON.C` source available | Unknown parity | `UNPROVEN` | Extract original strings from `DUNGEON.C` |
-| Over-labeling (invented strings in V1) | Original had minimal text | Unknown if Firestaff adds helper/debug text | `UNPROVEN` | Audit all V1 screens |
-| Font rendering | Original font data in GRAPHICS.DAT | Unknown parity | `UNPROVEN` | Compare rendered glyphs |
+| Over-labeling (invented strings in V1) | Original had minimal text | Firestaff invents: 82 `m11_set_status` strings (status lozenge surface), 68 `inspectTitle/inspectDetail` emissions (inspect overlay), 3 utility-strip captions (INSPECT/SAVE/LOAD), control + prompt chrome strips at y=165 | `KNOWN_DIFF` — enumerated in `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` (Pass 35) §2§2.2, §2.4, §2.5, §2.6 | Hide Firestaff-invented UI chrome in V1 mode; reroute relevant events to message log. Tracked for pass-37+. |
+| Font rendering | Original font data in GRAPHICS.DAT, rendered via `TEXT.C`/`TEXT2.C` | Firestaff uses a custom 7-pixel glyph bank; delegation to `g_activeOriginalFont` exists in `m11_draw_text` but is not wired. | `KNOWN_DIFF` — see `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` (Pass 35) §2.1 | Wire original GRAPHICS.DAT font atlas into `g_activeOriginalFont`. Tracked for pass-37+. |
 
 ---
 
