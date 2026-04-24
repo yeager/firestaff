@@ -55,6 +55,10 @@ map_redmcsb_*.py
 scan_redmcsb_*.py
 select_redmcsb_*.py
 split_redmcsb_*.py
+# Pass 47 reference-capture tooling is tracked (see
+# parity-evidence/pass47_reference_capture_tooling.md).
+!tools/redmcsb_reference_compose.py
+!tools/redmcsb_overlay_diff.py
 
 # -------------------------------------------------------------------------
 # Build artefacts (rebuilt by probe scripts)
