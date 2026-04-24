@@ -1,6 +1,6 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 45 landed)
+Last updated: 2026-04-24 (pass 58 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
@@ -664,6 +664,28 @@ first, then visual parity, then typography / honesty.
     (`0xb4e5d330`) and PL-applied RGB composites (`0x143fa969`).
   - No title frontend timing/cadence, wall-clock frame rate, palette-display
     timing, or title-menu handoff claim is made by pass 57.
+- **Pass 58 (landed, 2026-04-24):**
+  - Added `title_frontend_v1.[ch]`, a narrow adapter from the pass-57 original
+    `TITLE` renderer into the V1/M9 frontend's 320×200 packed-4bpp screen
+    bitmap format.  It uses the original-resolution local `TITLE` data only;
+    no V2/upscaled title assets are part of this path.
+  - `firestaff_m9_beta_harness.c --title-hold N` now attempts to publish the
+    original `TITLE` frames through that frontend adapter, using deterministic
+    implementation advance `((N-1) % 53) + 1`.  If no valid `TITLE` file is
+    found or rendering fails, it preserves the pre-existing GRAPHICS.DAT graphic
+    313 fallback path.
+  - New probe/evidence: `run_firestaff_v1_title_frontend_probe.sh` verifies
+    5/5 invariants: frontend use of original `TITLE` data, first/boundary/last
+    frame reachability, 37+16 palette segmentation, deterministic wrap behavior
+    labelled as implementation cadence, and packed-frame equality with sampled
+    pass-57 renderer output.  M9 title-hold evidence in
+    `parity-evidence/pass58_v1_title_frontend_m9_harness.txt` shows 54/54
+    frontend frames published and 0 fallback frames with the local original
+    `TITLE` present; `parity-evidence/pass58_v1_title_frontend_fallback_probe.txt`
+    forces an invalid TITLE path and verifies the existing graphic-313 fallback
+    remains reachable (0 original / 1 fallback frame).
+  - Pass 58 still makes no original wall-clock timing, palette-display timing,
+    or title-menu handoff parity claim.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -676,15 +698,15 @@ first, then visual parity, then typography / honesty.
      by source-backed event-index conversion or original runtime capture.
   4. Bug-faithful playback quirks/cataloging when relevant.
 - **Remaining gaps before V1 TITLE animation can be called original-faithful:**
-  1. Wire the pass-57 original-data renderer into the V1 title/frontend path
-     without using V2/upscaled assets.
-  2. Capture or source-prove frame timing/cadence, palette application timing,
-     and title-menu handoff.
-  3. Pixel-compare the wired frontend output against original emulator capture;
-     pass 57 only proves renderer output against Greatstone source PNG frames.
-- **Suggested follow-up pass:** pass-58 — bind the pass-57 renderer into the V1
-  title frontend, or capture/source-prove title animation cadence before making
-  frontend timing claims.
+  1. Capture or source-prove original frame timing/cadence, palette application
+     timing, and title-menu handoff.  Pass 58's deterministic frame advance is
+     implementation cadence only.
+  2. Pixel-compare the wired frontend output against original emulator capture;
+     pass 57 proves renderer output against Greatstone source PNG frames and
+     pass 58 proves the V1 frontend consumes that renderer, but neither proves
+     the original runtime presentation cadence.
+- **Suggested follow-up pass:** pass-59 — capture/source-prove title animation
+  cadence and handoff before making frontend timing claims.
 
 ---
 

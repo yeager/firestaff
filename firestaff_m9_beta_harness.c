@@ -13,6 +13,7 @@
 #include "screen_bitmap_present_pc34_compat.h"
 #include "host_video_pgm_backend_pc34_compat.h"
 #include "startup_runtime_driver_pc34_compat.h"
+#include "title_frontend_v1.h"
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -647,30 +648,104 @@ static int publish_session_step(
     printf("submenuAdvanceSuppressedCount[%u]=%u\n", stepIndex, session->lastSubmenuAdvanceSuppressedCount);
     return 1;
 }
-static int publish_repeated_graphic_with_runtime(
+static int file_exists_for_title_frontend(const char* path) {
+    FILE* f;
+    if (!path || !*path) return 0;
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
+
+static const char* find_title_dat_for_frontend(const char* graphicsDatPath,
+                                               char* outPath,
+                                               size_t outPathBytes) {
+    const char* envPath = getenv("FIRESTAFF_TITLE_DAT");
+    const char* home;
+    const char* slash;
+    if (file_exists_for_title_frontend(envPath)) return envPath;
+    if (graphicsDatPath && outPath && outPathBytes > 0) {
+        slash = strrchr(graphicsDatPath, '/');
+        if (slash) {
+            size_t dirLen = (size_t)(slash - graphicsDatPath);
+            if (dirLen + 7u < outPathBytes) {
+                memcpy(outPath, graphicsDatPath, dirLen);
+                memcpy(outPath + dirLen, "/TITLE", 7u);
+                if (file_exists_for_title_frontend(outPath)) return outPath;
+            }
+        }
+    }
+    if (file_exists_for_title_frontend("TITLE")) return "TITLE";
+    home = getenv("HOME");
+    if (home && outPath && outPathBytes > 0) {
+        int n = snprintf(outPath, outPathBytes, "%s/.firestaff/data/TITLE", home);
+        if (n > 0 && (size_t)n < outPathBytes && file_exists_for_title_frontend(outPath)) return outPath;
+    }
+    if (file_exists_for_title_frontend("/Users/bosse/.openclaw/data/redmcsb-original/TITLE")) {
+        return "/Users/bosse/.openclaw/data/redmcsb-original/TITLE";
+    }
+    return 0;
+}
+
+static int publish_repeated_title_or_fallback_with_runtime(
     const char* graphicsDatPath,
     const char* outputPrefix,
     unsigned int dialogGraphicIndex,
-    unsigned int graphicIndex,
+    unsigned int fallbackGraphicIndex,
     unsigned int repeatCount,
     unsigned int* ioFrameNumber,
     struct BetaHarnessPersistentRuntime_Compat* runtime) {
     unsigned int i;
+    unsigned int originalCount = 0;
+    unsigned int fallbackCount = 0;
     char outputPath[1024];
+    char titlePath[1024];
+    const char* resolvedTitlePath = find_title_dat_for_frontend(graphicsDatPath, titlePath, sizeof(titlePath));
 
     for (i = 0; i < repeatCount; ++i) {
+        int wroteOriginal = 0;
         snprintf(outputPath, sizeof(outputPath), "%s_hold_%04u.pgm", outputPrefix, *ioFrameNumber);
-        if (!render_graphic_with_runtime(
-                graphicsDatPath,
-                outputPath,
-                dialogGraphicIndex,
-                graphicIndex,
-                *ioFrameNumber,
-                runtime)) {
-            return 0;
+        if (resolvedTitlePath != 0) {
+            char err[256];
+            struct HostVideoPgmBackendResult_Compat hostResult;
+            V1_TitleFrontendRenderResult titleResult;
+            memset(runtime->screenStorage, 0, (size_t)runtime->screenBytes + 4U);
+            memset(&hostResult, 0, sizeof(hostResult));
+            memset(&titleResult, 0, sizeof(titleResult));
+            if (V1_TitleFrontend_RenderFrameToScreen(
+                    resolvedTitlePath,
+                    i + 1u,
+                    runtime->screenBitmap,
+                    &titleResult,
+                    err,
+                    sizeof(err)) &&
+                F9002_HOSTVIDEO_PublishFrameToPgm_Compat(
+                    runtime->screenBitmap,
+                    *ioFrameNumber,
+                    outputPath,
+                    &hostResult)) {
+                wroteOriginal = 1;
+                originalCount++;
+                printf("titleFrontendFrame[%u]=%u\n", i, titleResult.renderedFrameOrdinal);
+            }
+        }
+        if (!wroteOriginal) {
+            if (!render_graphic_with_runtime(
+                    graphicsDatPath,
+                    outputPath,
+                    dialogGraphicIndex,
+                    fallbackGraphicIndex,
+                    *ioFrameNumber,
+                    runtime)) {
+                return 0;
+            }
+            fallbackCount++;
         }
         (*ioFrameNumber)++;
     }
+    printf("titleFrontendOriginalFrameCount=%u\n", originalCount);
+    printf("titleFrontendFallbackFrameCount=%u\n", fallbackCount);
+    if (resolvedTitlePath != 0) printf("titleFrontendTitleDatPath=%s\n", resolvedTitlePath);
     return 1;
 }
 
@@ -997,7 +1072,7 @@ int main(int argc, char** argv) {
     if (unifiedBootEventSpec != 0) {
         if (unifiedBootEventSpec[0] == '\0') {
             if (titleHoldMode && (titleHoldRepeatCount > 0)) {
-                if (!publish_repeated_graphic_with_runtime(
+                if (!publish_repeated_title_or_fallback_with_runtime(
                         graphicsDatPath,
                         outputPrefix,
                         dialogGraphicIndex,

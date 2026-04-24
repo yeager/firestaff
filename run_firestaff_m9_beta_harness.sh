@@ -55,6 +55,8 @@ cc -std=c99 -Wall -Wextra -pedantic -DCOMPILE_H '-DSTATICFUNCTION=static' '-DSEP
   $HERE/image_expand_pc34_compat.c \
   $HERE/image_backend_pc34_compat.c \
   $HERE/bitmap_copy_pc34_compat.c \
+  $HERE/title_frontend_v1.c \
+  $HERE/title_dat_loader_v1.c \
   -o $HERE/firestaff_m9_beta_harness
 if [ $# -eq 0 ]; then
   echo "built: $HERE/firestaff_m9_beta_harness"

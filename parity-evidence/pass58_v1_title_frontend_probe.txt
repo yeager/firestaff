@@ -1,0 +1,8 @@
+# TITLE path: /Users/bosse/.openclaw/data/redmcsb-original/TITLE
+PASS P58_TITLE_FRONTEND_01 frontend renders from original TITLE data into a 320x200 V1 screen bitmap
+PASS P58_TITLE_FRONTEND_02 frontend can reach first frame, palette-break boundary frames, and last frame
+PASS P58_TITLE_FRONTEND_03 frontend preserves pass-57 TITLE segment palettes as 37 + 16 frames
+PASS P58_TITLE_FRONTEND_04 deterministic implementation advance wraps requested frame 54 to original frame 1; original timing remains unclaimed
+PASS P58_TITLE_FRONTEND_05 frontend-packed frames match pass-57 renderer palette-index output for sampled frames
+# pass58 frontend packed hashes: f1=0x83dafeeb f37=0xb2e34fca f38=0x1a882385 f53=0xb2e34fca f54wrap=0x83dafeeb
+# summary: 5/5 invariants passed
