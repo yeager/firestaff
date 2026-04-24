@@ -735,6 +735,21 @@ first, then visual parity, then typography / honesty.
     `parity-evidence/pass62_v1_title_dosbox_capture_blocker.md` documents the
     commands, artifact paths/sizes, and blocker.  No V1 runtime code changed,
     and no original timing/cadence claim was added.
+- **Pass 63 (landed, 2026-04-24):**
+  - Added `scripts/dosbox_dm1_title_input_pass63.sh`, a bounded DOSBox
+    Staging + `cliclick` wrapper that types the original setup selector
+    choices (`VGA Graphics`, `No Sound`, `Mouse`) as host keystrokes.
+  - Verified `--dry-run` and `--run`; the actual run reaches the graphical
+    original `Dungeon Master` TITLE screen and writes local evidence under
+    `verification-screens/pass63-dosbox-title-automation/`.
+  - AppleScript/System Events keystroke injection was tested and rejected as
+    not permitted on this Mac (`-1743`).  DOS redirection remains rejected per
+    pass 62.  The stable local selector-handoff path is `cliclick` host input.
+  - Evidence note:
+    `parity-evidence/pass63_v1_title_dosbox_input_automation.md` documents the
+    commands, failed methods, successful selector sequence, local artifact
+    paths, and remaining clean-capture/cadence gaps.  No V1 runtime code
+    changed, and no original timing/cadence claim was added.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -754,10 +769,14 @@ first, then visual parity, then typography / honesty.
      pass 57 proves renderer output against Greatstone source PNG frames and
      pass 58 proves the V1 frontend consumes that renderer, but neither proves
      the original runtime presentation cadence.
-- **Suggested follow-up pass:** source-prove or capture title animation cadence,
-  palette-display timing, and emulator handoff before making frontend timing
-  claims.  Targeted DOSBox/original capture is allowed when it materially
-  improves evidence, but avoid heavy video work.
+  3. Re-run the pass-63 DOSBox selector path with a clean host desktop or
+     DOSBox framebuffer/video capture so no unrelated macOS dialog obscures
+     the title pixels.
+- **Suggested follow-up pass:** use the pass-63 selector-handoff wrapper to
+  gather clean original TITLE frame/timing evidence, then source-prove or
+  capture title animation cadence, palette-display timing, and emulator
+  handoff before making frontend timing claims.  Avoid heavy video work until
+  the clean-frame path is proven.
 
 ---
 
