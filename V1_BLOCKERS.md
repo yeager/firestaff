@@ -720,6 +720,21 @@ first, then visual parity, then typography / honesty.
     steps, and 1 entered-menu step for a 54-step publication.
   - Pass 61 still makes no original wall-clock timing, palette-display timing,
     or emulator title-menu handoff parity claim.
+- **Pass 62 (landed, 2026-04-24):**
+  - Added a targeted DOSBox Staging evidence harness for the original TITLE
+    cadence/handoff investigation:
+    `scripts/dosbox_dm1_title_cadence_pass62.sh`.
+  - Gathered bounded raw DOSBox evidence under
+    `verification-screens/pass62-dosbox-title-cadence/` showing that current
+    automation reaches the DM PC 3.4 text selector, but does not cleanly reach
+    the graphical TITLE runtime without an interactive selector key.  `DM VGA`
+    still waits at the selector; simple input redirection either aborts on EOF
+    or loops in selector prompts; direct VGA overlay execution is not a valid
+    bypass.
+  - Evidence note:
+    `parity-evidence/pass62_v1_title_dosbox_capture_blocker.md` documents the
+    commands, artifact paths/sizes, and blocker.  No V1 runtime code changed,
+    and no original timing/cadence claim was added.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
