@@ -1,5 +1,6 @@
 /*
- * font_m11.c — Original DM1 font rendering from GRAPHICS.DAT graphic #653.
+ * font_m11.c — Original DM1 font rendering from the GRAPHICS.DAT
+ * interface-font entry.
  *
  * The font is stored as a 1-bit-per-pixel bitmap (768 bytes) in
  * GRAPHICS.DAT. Unlike normal 4bpp graphics, the font entry uses
@@ -21,9 +22,58 @@
 #include <string.h>
 #include <stdlib.h>
 
+const int g_m11_font_graphic_candidates[M11_FONT_GRAPHIC_CANDIDATE_COUNT] = {
+    M11_FONT_GRAPHIC_INDEX_PC34,
+    M11_FONT_GRAPHIC_INDEX_LEGACY,
+    M11_FONT_GRAPHIC_INDEX_FALLBACK
+};
+
+static int m11_font_pick_graphic_index(
+    const struct MemoryGraphicsDatRuntimeState_Compat* rt)
+{
+    size_t i;
+    int fallback = -1;
+
+    if (!rt) {
+        return -1;
+    }
+
+    for (i = 0; i < M11_FONT_GRAPHIC_CANDIDATE_COUNT; ++i) {
+        int idx = g_m11_font_graphic_candidates[i];
+        if (idx >= 0 && idx < rt->graphicCount &&
+            rt->decompressedByteCounts[idx] == M11_FONT_BITMAP_BYTES) {
+            return idx;
+        }
+    }
+
+    for (i = 0; i < (size_t)rt->graphicCount; ++i) {
+        if (rt->decompressedByteCounts[i] == M11_FONT_BITMAP_BYTES) {
+            if (fallback >= 0) {
+                return -1;
+            }
+            fallback = (int)i;
+        }
+    }
+
+    return fallback;
+}
+
 void M11_Font_Init(M11_FontState* font) {
     if (!font) return;
     memset(font, 0, sizeof(*font));
+    font->graphicIndex = -1;
+}
+
+int M11_Font_FindGraphicIndex(void* runtimeState) {
+    return m11_font_pick_graphic_index(
+        (const struct MemoryGraphicsDatRuntimeState_Compat*)runtimeState);
+}
+
+int M11_Font_ResolvedGraphicIndex(const M11_FontState* font) {
+    if (!font || !font->loaded) {
+        return -1;
+    }
+    return font->graphicIndex;
 }
 
 int M11_Font_LoadFromGraphicsDat(
@@ -38,6 +88,7 @@ int M11_Font_LoadFromGraphicsDat(
     unsigned char* rawBuf;
     long offset;
     int readSize;
+    int graphicIndex;
 
     if (!font || !fileState || !runtimeState) {
         return 0;
@@ -46,7 +97,8 @@ int M11_Font_LoadFromGraphicsDat(
     fs = (struct MemoryGraphicsDatState_Compat*)fileState;
     rt = (struct MemoryGraphicsDatRuntimeState_Compat*)runtimeState;
 
-    if (M11_FONT_GRAPHIC_INDEX >= rt->graphicCount) {
+    graphicIndex = m11_font_pick_graphic_index(rt);
+    if (graphicIndex < 0 || graphicIndex >= rt->graphicCount) {
         return 0;
     }
 
@@ -61,7 +113,7 @@ int M11_Font_LoadFromGraphicsDat(
 
     memset(&selection, 0, sizeof(selection));
     if (!F0490_MEMORY_SelectGraphicFromHeader_Compat(
-            &tempHeader, M11_FONT_GRAPHIC_INDEX, &selection)) {
+            &tempHeader, graphicIndex, &selection)) {
         return 0;
     }
 
@@ -90,6 +142,7 @@ int M11_Font_LoadFromGraphicsDat(
         /* Perfect match: raw 1bpp font data */
         memcpy(font->bitmap, rawBuf, M11_FONT_BITMAP_BYTES);
         font->loaded = 1;
+        font->graphicIndex = graphicIndex;
         free(rawBuf);
         return 1;
     }
@@ -145,6 +198,7 @@ int M11_Font_LoadFromGraphicsDat(
                 }
                 free(packedBuf);
                 font->loaded = 1;
+                font->graphicIndex = graphicIndex;
                 free(rawBuf);
                 return 1;
             }
@@ -159,6 +213,7 @@ int M11_Font_LoadFromGraphicsDat(
         if (headerSkip <= 8) {
             memcpy(font->bitmap, rawBuf + headerSkip, M11_FONT_BITMAP_BYTES);
             font->loaded = 1;
+            font->graphicIndex = graphicIndex;
             free(rawBuf);
             return 1;
         }

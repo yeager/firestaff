@@ -1,12 +1,34 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 42 landed)
+Last updated: 2026-04-24 (pass 45 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
 This is the **single source of truth** for what is still outstanding
 between Firestaff and DM1 PC 3.4 English in V1 original-faithful mode
 after Passes 29–35.  Every entry contains:
+
+Reference sources that should be consulted whenever they materially unblock a blocker:
+- `http://greatstone.free.fr/dm/db_data/dm_pc_34/graphics.dat/graphics.dat.html`
+- `http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/dungeon.html`
+- `http://greatstone.free.fr/dm/db_data/dm_pc_34/title/title.html`
+- `http://greatstone.free.fr/dm/db_data/dm_pc_34/end/end.html`
+- `http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html`
+- `http://dmweb.free.fr/community/redmcsb/`
+- `http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z`
+- `http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm`
+- Local unpacked ReDMCSB archive:
+  - `/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206`
+  - local Firestaff-facing analysis: `REDMCSB_LOCAL_ANALYSIS_2026-04-24.md`
+  - current V1 target label: `I34E` = DM PC 3.4 English; `I34M` = multilingual PC 3.4 comparison target only
+  - source roots: `Toolchains/Common/Source` plus `Toolchains/IBM PC/Source`
+  - binary facit: `Reference/Original/I34E`; rebuilt/non-perfect comparison: `Reference/ReDMCSB/I34E/FIRES`
+
+Use `BugsAndChanges.htm` to avoid treating ReDMCSB-only fixes as original DM1 PC 3.4 parity, and remember that ReDMCSB's broader DM/CSB source coverage is useful for later-version reconnaissance but does not override the DM1 PC 3.4 target in this ledger.
+
+Critical local-analysis guardrail: `Documentation/Engine.htm` and `Documentation/BugsAndChanges.htm` are explicitly Atari-ST-scoped. They can point to functions, limits, bugs, and source identifiers, but V1 blockers may not be closed from those docs alone; check the relevant `I34E` conditional/source path or original runtime before marking `MATCHED`.
+
+Every entry contains:
 
 - short title
 - area tag (`OWNERSHIP`, `VISUAL`, `BEHAVIOR`, `ASSET`, `TEXT`)
@@ -399,15 +421,34 @@ first, then visual parity, then typography / honesty.
   - No M10 behavior, save-format, palette, viewport, or party-panel
     geometry changes.
 
-## 9. Custom 7-pixel font used in place of original GRAPHICS.DAT font atlas
+## 9. Custom 7-pixel font used in place of original GRAPHICS.DAT font atlas — **LANDED (pass 45)**
 - **Area:** `TEXT`
-- **Evidence:**
-  - `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` Pass 35 §2.1 — `m11_draw_text`
-    has a delegation path through `g_activeOriginalFont` but it is
-    not wired to the extracted font bank.
-- **Suggested pass:** pass-45 — wire the extracted GRAPHICS.DAT font
-  atlas into `g_activeOriginalFont` and make the delegate the default
-  path.
+- **Status:** Resolved for the V1 default path when original assets are
+  present.  Firestaff now defaults `m11_draw_text(...)` to the original
+  DM1 GRAPHICS.DAT font atlas through the existing `g_activeOriginalFont`
+  delegation path, so generic panel text and the remaining spell-panel
+  rune abbreviations no longer fall back to the custom 7-pixel glyph bank
+  in normal V1 play.
+- **Pass 45 (landed, 2026-04-24):**
+  - Added bounded verification probe
+    `run_firestaff_m11_pass45_font_bank_probe.sh` +
+    `firestaff_m11_pass45_font_bank_probe.c`.
+  - The probe verifies 8/8 invariants covering: resolved interface-font
+    load success, `originalFontAvailable` activation, 6-pixel DM1 font
+    metrics, title-strip glyphs matching a direct render from the loaded
+    font atlas, and selected/available rune abbreviation text rendered
+    directly from that atlas at the pass-44 placements.  The probe is
+    intentionally font-focused and does not call `M11_GameView_Draw` with
+    an uninitialized world.
+  - Evidence: `parity-evidence/pass45_font_bank_wiring.md`.
+  - All baseline gates stay green: Phase A 18/18, M11 game view
+    361/361, M11 launcher smoke PASS, M10 verify 20/20 phases,
+    M11 verify end-to-end.
+- **What pass 45 does NOT change:**
+  - Text content parity / over-labeling questions are not retired by
+    this pass; only the font-bank rendering path is.
+  - No palette work (blocker §10 / pass 46), viewport change, or
+    M10 semantic change.
 
 ## 10. VGA palette compat layer still uses EGA-style colors
 - **Area:** `VISUAL` (`BEHAVIOR` adjacent for brightness)
@@ -521,7 +562,7 @@ first, then visual parity, then typography / honesty.
   37**), stairs/door edge cases (#2, #3), measurable visual drifts
   with DEFS.H anchors (#4, #5).
 - **Medium (pass-42 … pass-46):** invented chrome + text-as-graphic
-  rework (#6, #7, #8), font bank (#9), palette (#10).
+  rework (#6, #7, #8), font bank (#9 — **LANDED pass 45**), palette (#10).
 - **Blocked / tooling (pass-47):** overlays need capture infra (#11).
 - **Lower (pass-48 … pass-50):** cosmetic tick prefix (#12, dup #13),
   behavioral probe binding (#14), audio (#15).

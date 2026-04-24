@@ -7,6 +7,28 @@ Target: **Dungeon Master 1, PC DOS, VGA, English — 1:1 original-faithful behav
 This is the DM1 slice of the V1 parity ledger. CSB and DM2 will get their own matrices when reference data is acquired.
 V2/V3 differences must never appear in this matrix as accepted parity.
 
+Reference bank to consult actively when relevant:
+- Greatstone / dmweb:
+  - `http://greatstone.free.fr/dm/db_data/dm_pc_34/graphics.dat/graphics.dat.html`
+  - `http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/dungeon.html`
+  - `http://greatstone.free.fr/dm/db_data/dm_pc_34/title/title.html`
+  - `http://greatstone.free.fr/dm/db_data/dm_pc_34/end/end.html`
+  - `http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html`
+- ReDMCSB / dmweb:
+  - `http://dmweb.free.fr/community/redmcsb/`
+  - `http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z`
+  - `http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm`
+- Local ReDMCSB unpack/analysis:
+  - `/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206`
+  - `REDMCSB_LOCAL_ANALYSIS_2026-04-24.md`
+
+Rules for this matrix:
+- ReDMCSB is a structural reference, but DM1 PC 3.4 remains the target truth for this file.
+- `BugsAndChanges.htm` must be checked before promoting a ReDMCSB-observed behavior to `MATCHED` when that behavior could be a ReDMCSB-only fix.
+- For this PC/VGA/English target, use ReDMCSB label `I34E` unless a row explicitly says otherwise. `I34M` is multilingual comparison material only.
+- Prefer `Reference/Original/I34E` and original runtime captures over rebuilt `Reference/ReDMCSB/I34E/FIRES` for binary/runtime truth; use ReDMCSB source to locate structure, functions, and conditionals.
+- Treat `Documentation/Engine.htm` and `Documentation/BugsAndChanges.htm` as Atari-ST-scoped indexes. Do not mark PC 3.4 rows `MATCHED` from those docs alone; verify against `I34E` source/conditionals or original runtime.
+
 ---
 
 ## Status labels
@@ -48,7 +70,7 @@ V2/V3 differences must never appear in this matrix as accepted parity.
 | Panel backgrounds/ornaments | Front-lock assets identified: 303–320 (walls-ornate category) | `by-category/walls-ornate/` symlinks exist | `UNPROVEN` — usage not verified against original screen composition | Map ornament assets to panel placement |
 | Title-side UI assets | DEFS.H defines: C001_GRAPHIC_TITLE(320×200), C002_ENTRANCE_LEFT_DOOR(105×161), C003_ENTRANCE_RIGHT_DOOR(128×161), C004_ENTRANCE(320×200), C005_CREDITS(320×200), C006_THE_END(80×14). All 6 extracted as BITMAP_SAFE with 0 decode failures. Symlinked in `by-category/title-ui/`. | Used in title boot sequence (M6/M7 verified). Asset-to-define mapping complete. | `MATCHED` (asset identification and extraction) / `UNPROVEN` (pixel-level rendering comparison) | Pixel-compare rendered title/entrance/credits against original emulator captures. See §E6. |
 | Placeholder entries | 131 placeholders identified and cataloged | Correctly skipped during decode/render | `MATCHED` | — |
-| Text-tag fallbacks | `TEXT.C`/`TEXT2.C`/`PANEL.C`/`CHAMPION.C`/`SPELDRAW.C` distinguish text-engine vs bar-graph vs graphic | Pass 43 landed source-faithful V1 HP/stamina/mana bar graphs (`CHAMDRAW.C` / recovered ZONES.H geometry, source color table `{7,11,8,14}`); pass 44 landed the native `C011_GRAPHIC_MENU_SPELL_AREA_LINES` 14×13 cell blits for available-rune and selected-rune spell-panel labels. Current residual gap is the still-unwired original font atlas for the overlaid rune characters/abbreviations. | `KNOWN_DIFF` — narrowed again by pass 44; champion bar-graph and `C011` cell-art halves are landed, remaining text-path gap is now the font-bank work tracked in §4. | Retire the `C011` half; proceed to pass 45 font-bank wiring. |
+| Text-tag fallbacks | `TEXT.C`/`TEXT2.C`/`PANEL.C`/`CHAMPION.C`/`SPELDRAW.C` distinguish text-engine vs bar-graph vs graphic | Pass 43 landed source-faithful V1 HP/stamina/mana bar graphs (`CHAMDRAW.C` / recovered ZONES.H geometry, source color table `{7,11,8,14}`); pass 44 landed the native `C011_GRAPHIC_MENU_SPELL_AREA_LINES` 14×13 cell blits for available-rune and selected-rune spell-panel labels; pass 45 verified that the remaining generic text overlays now default to the original GRAPHICS.DAT font atlas instead of the custom builtin font. | `MATCHED` — text-vs-graphic routing for the currently visible V1 HUD surfaces is now source-faithful at the font/graphic layer. Remaining text-content questions stay tracked separately under over-labeling / string-parity rows. | Retire this row for the pass-45 scope; next medium blocker is the VGA palette swap in §3. |
 
 ---
 
@@ -76,7 +98,7 @@ V2/V3 differences must never appear in this matrix as accepted parity.
 | Message log text | ReDMCSB source available | Unknown parity | `UNPROVEN` | Cross-reference with source |
 | Dialog/plaque text | `DUNGEON.C` source available | Unknown parity | `UNPROVEN` | Extract original strings from `DUNGEON.C` |
 | Over-labeling (invented strings in V1) | Original had minimal text | Firestaff invents: 82 `m11_set_status` strings (status lozenge surface), 68 `inspectTitle/inspectDetail` emissions (inspect overlay), 3 utility-strip captions (INSPECT/SAVE/LOAD), control + prompt chrome strips at y=165 | `KNOWN_DIFF` — enumerated in `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` (Pass 35) §2§2.2, §2.4, §2.5, §2.6 | Hide Firestaff-invented UI chrome in V1 mode; reroute relevant events to message log. Tracked for pass-37+. |
-| Font rendering | Original font data in GRAPHICS.DAT, rendered via `TEXT.C`/`TEXT2.C` | Firestaff uses a custom 7-pixel glyph bank; delegation to `g_activeOriginalFont` exists in `m11_draw_text` but is not wired. | `KNOWN_DIFF` — see `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` (Pass 35) §2.1 | Wire original GRAPHICS.DAT font atlas into `g_activeOriginalFont`. Tracked for pass-37+. |
+| Font rendering | Original font data in GRAPHICS.DAT, rendered via `TEXT.C`/`TEXT2.C` | Firestaff resolves the original interface-font entry through `font_m11.[ch]`, activates `g_activeOriginalFont` during `M11_GameView_Draw`, and defaults `m11_draw_text(...)` to that original font when original assets are present. Builtin 7-pixel glyphs remain only as the no-assets fallback. | `MATCHED` — pass 45 probe-backed. See `parity-evidence/pass45_font_bank_wiring.md` and `run_firestaff_m11_pass45_font_bank_probe.sh`. | Retire font-bank blocker; proceed to palette work (pass 46). |
 
 ---
 
