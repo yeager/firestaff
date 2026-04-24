@@ -1,0 +1,22 @@
+{
+  "pass": 47,
+  "tool": "tools/redmcsb_overlay_diff.py",
+  "inputs": {
+    "firestaff": "verification-screens/01_ingame_start_latest.png",
+    "firestaff_sha256": "6a6cf813d97eec578ab7ff5f71089b3f0ebd4dc5509729d39dcc20c434f14606",
+    "reference": "reference-artifacts/redmcsb_reference_320x200.png",
+    "reference_sha256": "ffbbb75f37d459bc51fa55c4119b90c6a2b25371d6b1d7948abe4e7e448f2293"
+  },
+  "region_xywh": [
+    12,
+    24,
+    196,
+    118
+  ],
+  "tolerance_per_channel": 0,
+  "differing_pixels": 21886,
+  "total_pixels": 23128,
+  "delta_percent": 94.6299,
+  "mask_path": "parity-evidence/overlays/pass40/pass40_viewport_firestaff_current.mask.png",
+  "honesty": "A non-zero delta does not automatically mean Firestaff is wrong; interpretation must consider whether the reference region has source-anchored content (see reference-artifacts/provenance.json)."
+}

@@ -70,6 +70,36 @@ enum {
     M11_COLOR_SILVER = 13       /* DM PC VGA slot 13 — Silver         */
 };
 
+/*
+ * Pass 40 — source-anchored DM1 viewport constants (documentation-only).
+ *
+ * DM1 PC 3.4 viewport, from the local ReDMCSB dump:
+ *   DEFS.H:1997  #define C112_BYTE_WIDTH_VIEWPORT 112   (4-bpp => 224 px)
+ *   DEFS.H:2003  #define C136_HEIGHT_VIEWPORT     136
+ *   COORD.C:81   int16_t G2067_i_ViewportScreenX = 0;
+ *   COORD.C:82   int16_t G2068_i_ViewportScreenY = 33;
+ *
+ * The DM1-original viewport rectangle on the 320x200 framebuffer is
+ * therefore (x=0, y=33, w=224, h=136).  Firestaff's current active
+ * viewport (M11_VIEWPORT_* below) remains at (12, 24, 196, 118) for
+ * v1 because the surrounding HUD is still the Firestaff-invented
+ * chrome, not the DM1 side-column layout.  See V1_BLOCKERS.md entry 4
+ * and parity-evidence/pass40_viewport_lock.md for the full overlap /
+ * dependency analysis.  The DM1_* constants below exist so that a
+ * future pass (specifically pass 42 — invented-chrome reroute)
+ * can bind the viewport to its source-faithful rectangle without
+ * having to re-derive the anchor.  They intentionally do not replace
+ * M11_VIEWPORT_* at this pass; doing so would overlap the Firestaff
+ * utility panel, party slots, and prompt/control strips (quantified
+ * in the pass-40 probe) and therefore cannot land in isolation.
+ */
+enum {
+    M11_DM1_VIEWPORT_X = 0,    /* COORD.C G2067_i_ViewportScreenX        */
+    M11_DM1_VIEWPORT_Y = 33,   /* COORD.C G2068_i_ViewportScreenY        */
+    M11_DM1_VIEWPORT_W = 224,  /* DEFS.H C112_BYTE_WIDTH_VIEWPORT * 2    */
+    M11_DM1_VIEWPORT_H = 136   /* DEFS.H C136_HEIGHT_VIEWPORT            */
+};
+
 enum {
     M11_VIEWPORT_X = 12,
     M11_VIEWPORT_Y = 24,

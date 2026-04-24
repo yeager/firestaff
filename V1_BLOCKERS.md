@@ -1,6 +1,6 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 39 landed)
+Last updated: 2026-04-24 (pass 40 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
@@ -155,17 +155,56 @@ first, then visual parity, then typography / honesty.
     in DM1 PC 3.4 — creatures are blocked outright, which is the
     landed behavior).
 
-## 4. Viewport region −28×−18 px vs DM1 original
+## 4. Viewport region −28×−18 px vs DM1 original — **LOCKED (pass 40)**
 - **Area:** `VISUAL`
-- **Evidence:**
-  - Pass 33 `parity-evidence/pass33_viewport_coordinate_overlay.md` §3
-    — Firestaff viewport is 196×118; DM1 is 224×136 (DEFS.H
-    `C112_BYTE_WIDTH_VIEWPORT` / `C136_HEIGHT_VIEWPORT`).
-  - `PARITY_MATRIX_DM1_V1.md` §1 "Viewport region bounds" row now
-    `KNOWN_DIFF`.
-- **Suggested pass:** pass-40 — adjust the Firestaff viewport renderer
-  to target 224×136 or explicitly freeze the dimensional drift as a
-  V1 known-diff with a documented reason.
+- **Status:** Drift explicitly locked as a V1 `KNOWN_DIFF` with a
+  source-anchored rationale and a quantified structural dependency on
+  pass 42.  The DM1 viewport rectangle is now encoded as a named enum
+  in `m11_game_view.c` (`M11_DM1_VIEWPORT_*`) so pass 42 can bind to
+  the source anchor when it reroutes the invented chrome.
+- **Pass 40 (landed, 2026-04-24):**
+  - `m11_game_view.c` gained a new documentation enum
+    `M11_DM1_VIEWPORT_X/Y/W/H = 0/33/224/136` alongside the unchanged
+    runtime `M11_VIEWPORT_*`.  Source citation is in-line: DEFS.H
+    lines 1997/2003 and COORD.C lines 81/82 from the local ReDMCSB
+    dump at `redmcsb-output/I34E_I34M/`.
+  - New diagnostic probe
+    `firestaff_m11_pass40_viewport_lock_probe.c` +
+    `run_firestaff_m11_pass40_viewport_lock_probe.sh` verify 22/22
+    invariants including the DM1 anchor values, the measured
+    Firestaff drift (−28×−18 px, −7 336 px²), the exact
+    overlap rectangles between the DM1 viewport and every
+    Firestaff invented chrome surface (total 2 914 px² across 7
+    surfaces), and the correctness guard that the DM1 rectangle
+    does not overlap the DM1 side-panel (x ≥ 224) or leave the
+    320×200 framebuffer.
+  - Evidence: `parity-evidence/pass40_viewport_lock.md` (source
+    anchors, overlap table, dependency chain, reproducibility
+    inputs, honesty trail).
+  - Per-region overlay diffs refreshed under
+    `parity-evidence/overlays/pass40/` for both the DM1 anchor
+    rectangle and the current Firestaff rectangle against the
+    pass-47 reference canvas.  Both remain high-delta because the
+    reference canvas still carries no dungeon content (gated on
+    blocker §11.1 DOSBox keystroke automation); pass 40 does not
+    claim parity either way.
+  - All baseline gates stay green: Phase A 18/18, M11 game view
+    361/361, M11 launcher smoke PASS, M10 verify 20/20 phases, M11
+    verify end-to-end.
+- **What pass 40 does NOT change:**
+  - The runtime viewport rectangle is still `(12, 24, 196, 118)`.
+    Binding the renderer to `M11_DM1_VIEWPORT_*` requires the
+    invented chrome reroute tracked as blocker §6 (pass 42); doing
+    that at pass 40 would destroy 2 914 px² of clickable HUD.
+  - No HUD layout or hit-testing changes.  No M10 touch.  No change
+    to `PARITY_MATRIX_DM1_V1.md` status value for this row (it
+    remains `KNOWN_DIFF`); only the rationale is updated to cite
+    the new anchor + probe.
+- **Follow-up:** retirement of this entry is blocked on pass 42
+  (invented chrome reroute), which itself depends on pass 41
+  (portrait stride drop from +8 to C69) and pass 47b (ZONES.H parse
+  for source-faithful side-column placement).  Full dependency chain
+  is in `parity-evidence/pass40_viewport_lock.md` §4.
 
 ## 5. Champion status-box stride +8 px per slot vs DEFS.H C69
 - **Area:** `VISUAL`
