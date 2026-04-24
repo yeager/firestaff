@@ -24,7 +24,8 @@ Recent landed passes:
 - Pass 60: stabilized launcher smoke audio by using dummy SDL audio for headless smoke.
 - Pass 61: deterministic TITLE → menu handoff path.
 - Pass 62: documented the initial DOSBox TITLE capture blocker: `DM VGA` reaches the original text selector, but DOS redirection and direct VGA overlay attempts do not cleanly enter the graphical runtime.
-- Pass 63: added a reproducible local DOSBox Staging + `cliclick` selector-input wrapper that reaches the graphical original TITLE screen.  Clean timing/pixel capture is still pending because the first host screenshot was obstructed by an unrelated macOS Keychain prompt.
+- Pass 63: added a reproducible local DOSBox Staging + `cliclick` selector-input wrapper that reaches the graphical original TITLE screen.
+- Pass 64: replaced whole-screen capture with targeted DOSBox PID input and CGWindowID capture, producing clean unobstructed original TITLE window evidence.  Raw/cropped framebuffer timing and pixel comparison remain pending.
 
 ## Phase A — Finish DM1/V1 1:1 lock
 
@@ -33,8 +34,8 @@ Recent landed passes:
 Goal: make TITLE animation claims truthful and evidence-backed.
 
 Tasks:
-1. Use `scripts/dosbox_dm1_title_input_pass63.sh` as the current stable selector-handoff path for original runtime capture.
-2. Capture clean original TITLE frames without host-window obstruction; prefer DOSBox framebuffer/video capture once the selector handoff has run.
+1. Use `scripts/dosbox_dm1_title_clean_capture_pass64.sh` as the current clean original TITLE capture path.
+2. Convert the clean window capture into deterministic game-content pixels, or get DOSBox framebuffer/video capture working for raw frames.
 3. Extract timing/cadence evidence: frame progression, palette-display duration, transition to title menu.
 4. Pixel-compare wired V1 frontend frames against original runtime capture where possible.
 5. Adjust frontend timing/handoff policy only if evidence requires it.

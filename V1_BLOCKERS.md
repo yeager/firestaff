@@ -750,6 +750,22 @@ first, then visual parity, then typography / honesty.
     commands, failed methods, successful selector sequence, local artifact
     paths, and remaining clean-capture/cadence gaps.  No V1 runtime code
     changed, and no original timing/cadence claim was added.
+- **Pass 64 (landed, 2026-04-24):**
+  - Added `scripts/dosbox_dm1_title_clean_capture_pass64.sh`, a targeted
+    DOSBox Staging capture wrapper for original TITLE evidence.
+  - The wrapper keeps the pass-63 selector choices but posts the `1`/Return
+    sequence directly to the DOSBox process and captures the DOSBox window by
+    CGWindowID.  This avoids the detached-run foreground problem and unrelated
+    host desktop overlays without keychain edits or destructive cleanup.
+  - Verified `--dry-run` and `--run`; the run produced two clean, byte-identical
+    original TITLE window captures under
+    `verification-screens/pass64-clean-title-capture/`, each 137K, with SHA-256
+    `8cfa3f074c78e2f694be33d6e5e4fcab503f27241cb30cdc3bd1032f8cbfb56a`.
+  - Evidence note:
+    `parity-evidence/pass64_v1_title_clean_window_capture.md` documents the
+    method, commands, artifact paths/sizes, mode-13h log evidence, and remaining
+    raw/cropped framebuffer timing gap.  No V1 runtime code changed, and no
+    original timing/cadence claim was added.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -769,14 +785,14 @@ first, then visual parity, then typography / honesty.
      pass 57 proves renderer output against Greatstone source PNG frames and
      pass 58 proves the V1 frontend consumes that renderer, but neither proves
      the original runtime presentation cadence.
-  3. Re-run the pass-63 DOSBox selector path with a clean host desktop or
-     DOSBox framebuffer/video capture so no unrelated macOS dialog obscures
-     the title pixels.
-- **Suggested follow-up pass:** use the pass-63 selector-handoff wrapper to
-  gather clean original TITLE frame/timing evidence, then source-prove or
-  capture title animation cadence, palette-display timing, and emulator
-  handoff before making frontend timing claims.  Avoid heavy video work until
-  the clean-frame path is proven.
+  3. Turn the pass-64 clean window captures into deterministic game-content
+     pixels, or get DOSBox framebuffer/video capture working for raw 320x200
+     frames, so frontend pixel comparison is not polluted by emulator chrome.
+- **Suggested follow-up pass:** use the pass-64 clean capture wrapper to crop or
+  natively capture original TITLE frames, then source-prove or capture title
+  animation cadence, palette-display timing, and emulator handoff before making
+  frontend timing claims.  Avoid heavy video work until the raw/cropped frame
+  path is proven.
 
 ---
 
