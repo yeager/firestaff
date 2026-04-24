@@ -1,0 +1,11 @@
+# TITLE path: /Users/bosse/.openclaw/data/redmcsb-original/TITLE
+PASS P56_TITLE_01 local TITLE mapfile is 12002 bytes and parses to Greatstone's 59 items
+PASS P56_TITLE_02 control/palette records match Greatstone order: AN, BR, P8, PL, PL, DO
+PASS P56_TITLE_03 frame records match Greatstone: 2 ENcoded images plus 51 Delta Layers
+PASS P56_TITLE_04 record order aligns with Greatstone item numbers 0000..0058
+PASS P56_TITLE_05 every EN/DL frame advertises the original 320x200 V1 canvas
+PASS P56_TITLE_06 player yields 53 frames in item order with palette break: 37 + 16 frames
+PASS P56_TITLE_07 player consumes DOne and stops instead of looping or inventing cadence
+PASS P56_TITLE_08 record offsets/types/sizes/dimensions match the pass-56 TITLE fingerprint
+# pass56 title sequence fnv1a32: 0x6ce154a7
+# summary: 8/8 invariants passed

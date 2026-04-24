@@ -628,6 +628,24 @@ first, then visual parity, then typography / honesty.
     `CONFUSE`; `FIREBALL` / `DISPELL` / `LIGHTNING` cast-action cue; and
     `INVOKE` action cue.
   - Full landing log and evidence pointers in `PASS55_AUDIO_FINDINGS.md`.
+- **Pass 56 (landed, 2026-04-24):**
+  - Added bounded DM PC 3.4 `TITLE` mapfile loader/player support in
+    `title_dat_loader_v1.[ch]`, grounded in Greatstone's 59-item TITLE bank and
+    the local original 12002-byte `TITLE` file.
+  - The pass verifies 1:1 title-animation progression semantics only: item
+    order (`AN`, `BR`, `P8`, `PL`, `EN`, `DL`..., second `PL`/`EN` segment,
+    `DO`), 2 encoded images, 51 delta layers, 53 original 320×200 frame-bearing
+    records, palette break segmentation of 37 + 16 frames, and `DO` stop
+    handling.  No cadence/timing claim is made.
+  - New probes/evidence:
+    `run_firestaff_v1_title_dat_probe.sh` (8/8 invariants, real `TITLE`) and
+    optional `probes/v1/firestaff_v1_pass56_greatstone_png_probe.py` (3/3
+    invariants against local Greatstone source PNG reference when present), with
+    logs in `parity-evidence/pass56_v1_title_dat_probe.txt` and
+    `parity-evidence/pass56_v1_title_greatstone_png_probe.txt`.
+  - Runtime/frontend drawing is intentionally not wired in this pass: EN/DL
+    pixel payload decode/compositing, exact blit timing, and title-menu handoff
+    remain explicit next gaps.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -639,9 +657,15 @@ first, then visual parity, then typography / honesty.
   3. Resolve the four documented remaining direct-marker TODO buckets, either
      by source-backed event-index conversion or original runtime capture.
   4. Bug-faithful playback quirks/cataloging when relevant.
-- **Suggested follow-up pass:** pass-56 — original runtime capture for audio
-  cadence/looping, or source-backed resolution of one remaining direct-marker
-  TODO bucket; do not claim cadence/overlap without original capture.
+- **Remaining gaps before V1 TITLE animation can be called original-faithful:**
+  1. Decode/render EN/DL payload pixels, including delta compositing behavior,
+     into the V1 title frontend without using V2/upscaled assets.
+  2. Capture or source-prove frame timing/cadence, palette application timing,
+     and title-menu handoff.
+  3. Compare rendered V1 frames against original/Greatstone source frames.
+- **Suggested follow-up pass:** pass-57 — wire/decode the `TITLE` EN/DL pixel
+  payload into a V1 title animation renderer, or capture/source-prove title
+  animation cadence before frontend timing claims.
 
 ---
 

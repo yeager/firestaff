@@ -1,0 +1,5 @@
+PASS P56_TITLE_PNG_01 Greatstone PNG item numbers are P8/PL plus EN/DL image records only
+PASS P56_TITLE_PNG_02 all Greatstone EN/DL PNGs are original-resolution 320x200 frames
+PASS P56_TITLE_PNG_03 Greatstone source PNG filename/content fingerprint matches local pass-56 evidence
+# pass56 greatstone png tree sha256: f6003bfab3da12f1cfad790eff59867811162102474a69329423b529205c69bc
+# summary: 3/3 invariants passed
