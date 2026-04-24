@@ -1467,70 +1467,56 @@ static int m11_is_explored(const M11_GameViewState* state, int mapX, int mapY) {
  * Level transitions
  * ================================================================ */
 
+/*
+ * Thin UI/status delegation around the compat-owned stairs resolver
+ * F0705_MOVEMENT_ResolveStairsTransition_Compat (MOVESENS.C stairs branch).
+ * World mutation + level clamp live entirely in compat; this helper only
+ * applies the mutation to the world, resets explored bits, and emits the
+ * M11 status/log/inspect lines.
+ */
 static int m11_try_stairs_transition(M11_GameViewState* state) {
-    unsigned char square = 0;
-    int elementType;
-    int stairUp;
-    int targetLevel;
+    struct StairsTransitionResult_Compat stairs;
     const struct DungeonMapDesc_Compat* targetMap;
 
     if (!state || !state->active || !state->world.dungeon) {
         return 0;
     }
-    if (!m11_get_square_byte(&state->world,
-                             state->world.party.mapIndex,
-                             state->world.party.mapX,
-                             state->world.party.mapY,
-                             &square)) {
-        return 0;
-    }
-    elementType = (square >> 5) & 7;
-    if (elementType != DUNGEON_ELEMENT_STAIRS) {
-        return 0;
-    }
 
-    /* Attribute bit 0 of the low nibble selects direction:
-     *   0 = stairs down (mapIndex + 1)
-     *   1 = stairs up   (mapIndex - 1)
-     * This matches the Fontanel convention for DM1 stair encoding. */
-    stairUp = (square & 0x01);
-    if (stairUp) {
-        targetLevel = state->world.party.mapIndex - 1;
-    } else {
-        targetLevel = state->world.party.mapIndex + 1;
+    if (!F0705_MOVEMENT_ResolveStairsTransition_Compat(state->world.dungeon,
+                                                       &state->world.party,
+                                                       &stairs)) {
+        /* Not on stairs at all. */
+        return 0;
     }
-    if (targetLevel < 0 || targetLevel >= (int)state->world.dungeon->header.mapCount) {
+    if (!stairs.transitioned) {
+        /* On stairs but the target level is out of range. */
         m11_log_event(state, M11_COLOR_YELLOW, "T%u: STAIRS LEAD NOWHERE",
                       (unsigned int)state->world.gameTick);
         return 0;
     }
 
-    targetMap = &state->world.dungeon->maps[targetLevel];
-    state->world.party.mapIndex = targetLevel;
-
-    /* Clamp position to the new map bounds */
-    if (state->world.party.mapX >= (int)targetMap->width) {
-        state->world.party.mapX = (int)targetMap->width - 1;
-    }
-    if (state->world.party.mapY >= (int)targetMap->height) {
-        state->world.party.mapY = (int)targetMap->height - 1;
-    }
+    state->world.party.mapIndex = stairs.toMapIndex;
+    state->world.party.mapX = stairs.newMapX;
+    state->world.party.mapY = stairs.newMapY;
+    state->world.party.direction = stairs.newDirection;
 
     memset(state->exploredBits, 0, sizeof(state->exploredBits));
     m11_mark_explored(state);
     m11_refresh_hash(state);
-    if (stairUp) {
+    targetMap = &state->world.dungeon->maps[stairs.toMapIndex];
+    if (stairs.stairUp) {
         m11_log_event(state, M11_COLOR_YELLOW, "T%u: ASCENDED TO LEVEL %d",
                       (unsigned int)state->world.gameTick,
-                      targetLevel + 1);
+                      stairs.toMapIndex + 1);
         m11_set_status(state, "STAIRS", "ASCENDED TO PREVIOUS LEVEL");
     } else {
         m11_log_event(state, M11_COLOR_YELLOW, "T%u: DESCENDED TO LEVEL %d",
                       (unsigned int)state->world.gameTick,
-                      targetLevel + 1);
+                      stairs.toMapIndex + 1);
         m11_set_status(state, "STAIRS", "DESCENDED TO NEXT LEVEL");
     }
-    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "LEVEL %d", targetLevel + 1);
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+             "LEVEL %d", stairs.toMapIndex + 1);
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
              "MAP %dx%d, ENTERED FROM STAIRS",
              (int)targetMap->width, (int)targetMap->height);

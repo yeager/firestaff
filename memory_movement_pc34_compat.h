@@ -147,4 +147,54 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
     uint32_t gameTick,
     struct PostMoveResolution_Compat* outResolution);
 
+/* ---- Stairs transition resolution ---- */
+
+struct StairsTransitionResult_Compat {
+    int transitioned;   /* 1 if a stairs square was consumed */
+    int stairUp;        /* 1 = ascended, 0 = descended (only valid when transitioned) */
+    int fromMapIndex;   /* map index before the transition */
+    int toMapIndex;     /* map index after the transition */
+    int newMapX;        /* clamped destination X on the target map */
+    int newMapY;        /* clamped destination Y on the target map */
+    int newDirection;   /* unchanged from party (stairs do not rotate) */
+};
+
+/*
+ * If the party currently stands on a stairs square, resolve the level
+ * transition: decide ascend vs descend from the stairs attribute bit,
+ * clamp the destination into the target map bounds, and populate the
+ * result.  Pure function — does NOT mutate the party.  Returns 1 if a
+ * stairs transition was resolved (transitioned=1), 0 otherwise.
+ *
+ * Source mapping: the stairs consequence branch of
+ * F0267_MOVE_GetMoveResult_CPSCE in MOVESENS.C, plus the square-element
+ * decode helpers in DUNGEON.C.  The attribute bit 0 = stairs-up follows
+ * the Fontanel/ReDMCSB encoding already in use by m11_try_stairs_transition.
+ */
+int F0705_MOVEMENT_ResolveStairsTransition_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct PartyState_Compat* party,
+    struct StairsTransitionResult_Compat* outResult);
+
+/* ---- Shared square passability ---- */
+
+/*
+ * Shared source-faithful square passability helper used by both party
+ * movement legality and creature walkability decisions.  Corresponds to
+ * the square-element checks inside F0267_MOVE_GetMoveResult_CPSCE /
+ * DUNGEON.C: walls block, corridor/pit/teleporter/fake-wall are open,
+ * stairs are passable as a consequence square, doors are passable only
+ * when the door-state low nibble is fully open (0) or the door is
+ * destroyed (state 5).  No thing-list checks — those are for sensor
+ * processing in a later pass.
+ *
+ * Returns 1 if the square is passable, 0 otherwise.  Out-of-bounds or
+ * missing tile data returns 0.
+ */
+int F0706_MOVEMENT_IsSquarePassable_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 #endif

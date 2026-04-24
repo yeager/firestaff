@@ -145,6 +145,57 @@ void F0701_MOVEMENT_GetStepDelta_Compat(
     *outDy = s_dy[stepDir];
 }
 
+/*
+ * Shared square-passability owner.  Mirrors the square-element branches
+ * used by F0267_MOVE_GetMoveResult_CPSCE / DUNGEON.C helpers when deciding
+ * whether a party or creature step may enter a target square.
+ *
+ * Passable:
+ *   CORRIDOR, PIT, TELEPORTER, FAKEWALL, STAIRS (stairs act as a
+ *   consequence square, entering them triggers a map transition).
+ *   DOOR: only when the low 3 door-state bits are 0 (fully open) or the
+ *   door is destroyed (state 5).  Closed/opening/closing/animating doors
+ *   block movement.
+ * Blocked:
+ *   WALL, out-of-bounds, any unknown element type.
+ */
+int F0706_MOVEMENT_IsSquarePassable_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char squareByte;
+    int elementType;
+    int doorState;
+
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->tiles) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return 0;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return 0;
+    if (!dungeon->tiles[mapIndex].squareData) return 0;
+
+    squareByte = dungeon->tiles[mapIndex].squareData[mapX * map->height + mapY];
+    elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+
+    switch (elementType) {
+        case DUNGEON_ELEMENT_CORRIDOR:
+        case DUNGEON_ELEMENT_PIT:
+        case DUNGEON_ELEMENT_TELEPORTER:
+        case DUNGEON_ELEMENT_FAKEWALL:
+        case DUNGEON_ELEMENT_STAIRS:
+            return 1;
+        case DUNGEON_ELEMENT_DOOR:
+            doorState = squareByte & 0x07;
+            /* 0 = fully open, 5 = destroyed; other states block. */
+            return (doorState == 0 || doorState == 5) ? 1 : 0;
+        case DUNGEON_ELEMENT_WALL:
+        default:
+            return 0;
+    }
+}
+
 int F0702_MOVEMENT_TryMove_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct PartyState_Compat* party,
@@ -155,6 +206,7 @@ int F0702_MOVEMENT_TryMove_Compat(
     const struct DungeonMapDesc_Compat* map;
     int elementType;
     unsigned char squareByte;
+    int doorState;
 
     memset(outResult, 0, sizeof(*outResult));
     outResult->newMapX = party->mapX;
@@ -180,7 +232,8 @@ int F0702_MOVEMENT_TryMove_Compat(
     ny = party->mapY + dy;
 
     /* Bounds check */
-    if (party->mapIndex < 0 || party->mapIndex >= (int)dungeon->header.mapCount) {
+    if (!dungeon || party->mapIndex < 0 ||
+        party->mapIndex >= (int)dungeon->header.mapCount) {
         outResult->resultCode = MOVE_BLOCKED_BOUNDS;
         return 0;
     }
@@ -206,8 +259,19 @@ int F0702_MOVEMENT_TryMove_Compat(
         return 0;
     }
 
-    /* For now, treat all non-wall tiles as passable.
-     * Door open/closed checks and fake-wall logic are future phases. */
+    /* Source-semantic door passability check (MOVESENS.C / DUNGEON.C).
+     * A closed or animating door blocks the step. */
+    if (elementType == DUNGEON_ELEMENT_DOOR) {
+        doorState = squareByte & 0x07;
+        if (doorState != 0 && doorState != 5) {
+            outResult->resultCode = MOVE_BLOCKED_DOOR;
+            return 0;
+        }
+    }
+
+    /* Corridor / pit / teleporter / fake-wall / stairs / open door: pass.
+     * Stairs traversal consequence itself is resolved by F0705 after the
+     * step has been committed. */
     outResult->newMapX = nx;
     outResult->newMapY = ny;
     outResult->resultCode = MOVE_OK;
@@ -374,6 +438,66 @@ int F0703_MOVEMENT_IdentifySensorsOnSquare_Compat(
 
     outSensor->totalSensorsOnSquare = sensorCount;
     return (sensorCount > 0) ? 1 : 0;
+}
+
+int F0705_MOVEMENT_ResolveStairsTransition_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct PartyState_Compat* party,
+    struct StairsTransitionResult_Compat* outResult)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapDesc_Compat* targetMap;
+    unsigned char squareByte;
+    int elementType;
+    int targetLevel;
+    int stairUp;
+
+    if (!outResult) return 0;
+    memset(outResult, 0, sizeof(*outResult));
+
+    if (!dungeon || !party) return 0;
+    outResult->fromMapIndex = party->mapIndex;
+    outResult->toMapIndex = party->mapIndex;
+    outResult->newMapX = party->mapX;
+    outResult->newMapY = party->mapY;
+    outResult->newDirection = party->direction;
+
+    if (party->mapIndex < 0 || party->mapIndex >= (int)dungeon->header.mapCount) return 0;
+    map = &dungeon->maps[party->mapIndex];
+    if (party->mapX < 0 || party->mapX >= map->width ||
+        party->mapY < 0 || party->mapY >= map->height) return 0;
+    if (!dungeon->tilesLoaded || !dungeon->tiles ||
+        !dungeon->tiles[party->mapIndex].squareData) return 0;
+
+    squareByte = dungeon->tiles[party->mapIndex].squareData[
+        party->mapX * map->height + party->mapY];
+    elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    if (elementType != DUNGEON_ELEMENT_STAIRS) return 0;
+
+    /* Attribute bit 0 of the low nibble selects direction (Fontanel/ReDMCSB):
+     *   0 = stairs down (mapIndex + 1)
+     *   1 = stairs up   (mapIndex - 1)
+     */
+    stairUp = (squareByte & 0x01);
+    targetLevel = stairUp ? party->mapIndex - 1 : party->mapIndex + 1;
+    if (targetLevel < 0 || targetLevel >= (int)dungeon->header.mapCount) return 0;
+
+    targetMap = &dungeon->maps[targetLevel];
+    outResult->transitioned = 1;
+    outResult->stairUp = stairUp ? 1 : 0;
+    outResult->toMapIndex = targetLevel;
+    outResult->newMapX = party->mapX;
+    outResult->newMapY = party->mapY;
+    outResult->newDirection = party->direction;
+    if (outResult->newMapX >= (int)targetMap->width) {
+        outResult->newMapX = (int)targetMap->width - 1;
+    }
+    if (outResult->newMapY >= (int)targetMap->height) {
+        outResult->newMapY = (int)targetMap->height - 1;
+    }
+    if (outResult->newMapX < 0) outResult->newMapX = 0;
+    if (outResult->newMapY < 0) outResult->newMapY = 0;
+    return 1;
 }
 
 int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
