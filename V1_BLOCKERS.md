@@ -686,6 +686,22 @@ first, then visual parity, then typography / honesty.
     remains reachable (0 original / 1 fallback frame).
   - Pass 58 still makes no original wall-clock timing, palette-display timing,
     or title-menu handoff parity claim.
+- **Pass 59 (landed, 2026-04-24):**
+  - Added a finite TITLE presentation decision helper in `title_frontend_v1.[ch]`.
+    Steps 1..53 render the original source-backed TITLE frames once, step 53 is
+    marked handoff-ready at the source `DO` boundary, and later implementation
+    overrun steps hold frame 53 instead of wrapping back to frame 1.
+  - Updated M9 `--title-hold N` to use that finite sequence policy before
+    rendering, preserving original TITLE frame publication and the existing
+    GRAPHICS.DAT graphic-313 fallback path when TITLE is unavailable.
+  - New probe/evidence: `run_firestaff_v1_title_handoff_probe.sh` verifies 5/5
+    deterministic handoff invariants without claiming original wall-clock
+    cadence.  M9 evidence in
+    `parity-evidence/pass59_v1_title_handoff_m9_harness.txt` shows 54/54
+    frontend frames, 0 fallback frames, 2 handoff-ready frames, and 1 held-last
+    frame for a 54-step title hold.
+  - Pass 59 still makes no original wall-clock timing, palette-display timing,
+    or emulator title-menu handoff parity claim.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -699,8 +715,8 @@ first, then visual parity, then typography / honesty.
   4. Bug-faithful playback quirks/cataloging when relevant.
 - **Remaining gaps before V1 TITLE animation can be called original-faithful:**
   1. Capture or source-prove original frame timing/cadence, palette application
-     timing, and title-menu handoff.  Pass 58's deterministic frame advance is
-     implementation cadence only.
+     timing, and title-menu handoff.  Pass 59's finite sequence policy is
+     implementation cadence/handoff policy only.
   2. Pixel-compare the wired frontend output against original emulator capture;
      pass 57 proves renderer output against Greatstone source PNG frames and
      pass 58 proves the V1 frontend consumes that renderer, but neither proves

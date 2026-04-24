@@ -1,0 +1,15 @@
+ok
+graphicsDatPath=/Users/bosse/.firestaff/data/GRAPHICS.DAT
+outputPrefix=verification/pass59-title-handoff/fallback_invalid
+bootScript=m7_reachability_b
+bootPublishedFrameCount=50
+reachedMenuHeld=0
+sessionMode=0
+unifiedBootMode=1
+titleHoldMode=1
+titleFrontendOriginalFrameCount=0
+titleFrontendFallbackFrameCount=1
+titleFrontendHandoffReadyCount=0
+titleFrontendHeldLastFrameCount=0
+titleFrontendTitleDatPath=/tmp/firestaff-invalid-title-pass59
+titleHoldRepeatCount=1

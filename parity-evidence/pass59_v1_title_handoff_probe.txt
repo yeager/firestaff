@@ -1,0 +1,7 @@
+PASS P59_TITLE_HANDOFF_01 sequence step 0/1 maps deterministically to first TITLE source frame
+PASS P59_TITLE_HANDOFF_02 pre-final TITLE source frame is not marked handoff-ready
+PASS P59_TITLE_HANDOFF_03 source DO boundary marks frame 53 as handoff-ready without skipping it
+PASS P59_TITLE_HANDOFF_04 post-DO presentation holds the last TITLE source frame instead of wrapping to frame 1
+PASS P59_TITLE_HANDOFF_05 later overrun steps remain stable on last frame for deterministic menu handoff
+# pass59 handoff decisions: step0->1 step1->1 step52->52 step53->53/handoff=1 step54->53/action=1 step106->53
+# summary: 5/5 invariants passed

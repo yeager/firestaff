@@ -4,8 +4,9 @@
  * Bounded frontend binding for the pass-57 original TITLE renderer.  This
  * module adapts decoded 320x200 TITLE palette-index frames into the existing
  * PC34 4bpp screen-bitmap format used by the V1/M9 frontend.  It intentionally
- * does not infer original animation cadence; callers may advance the requested
- * ordinal deterministically while the parity ledger keeps timing open.
+ * does not infer original animation cadence.  Presentation callers can use the
+ * finite sequence decision helper to hold the final source frame at the handoff
+ * seam while the parity ledger keeps original timing open.
  */
 
 #include "title_frontend_v1.h"
@@ -81,6 +82,27 @@ static int title_frontend_on_frame(const V1_TitleRenderFrame* frame,
         capture->copied = 1;
     }
     return 1;
+}
+
+V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned int requestedStepOrdinal) {
+    V1_TitleFrontendSequenceDecision decision;
+    unsigned int step = requestedStepOrdinal;
+
+    memset(&decision, 0, sizeof(decision));
+    if (step == 0u) step = 1u;
+    decision.requestedStepOrdinal = requestedStepOrdinal;
+    if (step <= V1_TITLE_DAT_FRAME_MAX) {
+        decision.renderFrameOrdinal = step;
+        decision.action = V1_TITLE_FRONTEND_SEQUENCE_RENDER_TITLE;
+        decision.completedAnimationLoops = 0u;
+        decision.handoffReady = (step == V1_TITLE_DAT_FRAME_MAX) ? 1 : 0;
+    } else {
+        decision.renderFrameOrdinal = V1_TITLE_DAT_FRAME_MAX;
+        decision.action = V1_TITLE_FRONTEND_SEQUENCE_HOLD_LAST_FRAME;
+        decision.completedAnimationLoops = 1u;
+        decision.handoffReady = 1;
+    }
+    return decision;
 }
 
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,

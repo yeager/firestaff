@@ -698,6 +698,8 @@ static int publish_repeated_title_or_fallback_with_runtime(
     unsigned int i;
     unsigned int originalCount = 0;
     unsigned int fallbackCount = 0;
+    unsigned int handoffReadyCount = 0;
+    unsigned int heldLastFrameCount = 0;
     char outputPath[1024];
     char titlePath[1024];
     const char* resolvedTitlePath = find_title_dat_for_frontend(graphicsDatPath, titlePath, sizeof(titlePath));
@@ -709,12 +711,14 @@ static int publish_repeated_title_or_fallback_with_runtime(
             char err[256];
             struct HostVideoPgmBackendResult_Compat hostResult;
             V1_TitleFrontendRenderResult titleResult;
+            V1_TitleFrontendSequenceDecision titleDecision;
             memset(runtime->screenStorage, 0, (size_t)runtime->screenBytes + 4U);
             memset(&hostResult, 0, sizeof(hostResult));
             memset(&titleResult, 0, sizeof(titleResult));
+            titleDecision = V1_TitleFrontend_DecideSequenceStep(i + 1u);
             if (V1_TitleFrontend_RenderFrameToScreen(
                     resolvedTitlePath,
-                    i + 1u,
+                    titleDecision.renderFrameOrdinal,
                     runtime->screenBitmap,
                     &titleResult,
                     err,
@@ -726,7 +730,10 @@ static int publish_repeated_title_or_fallback_with_runtime(
                     &hostResult)) {
                 wroteOriginal = 1;
                 originalCount++;
+                if (titleDecision.handoffReady) handoffReadyCount++;
+                if (titleDecision.action == V1_TITLE_FRONTEND_SEQUENCE_HOLD_LAST_FRAME) heldLastFrameCount++;
                 printf("titleFrontendFrame[%u]=%u\n", i, titleResult.renderedFrameOrdinal);
+                printf("titleFrontendHandoffReady[%u]=%d\n", i, titleDecision.handoffReady);
             }
         }
         if (!wroteOriginal) {
@@ -745,6 +752,8 @@ static int publish_repeated_title_or_fallback_with_runtime(
     }
     printf("titleFrontendOriginalFrameCount=%u\n", originalCount);
     printf("titleFrontendFallbackFrameCount=%u\n", fallbackCount);
+    printf("titleFrontendHandoffReadyCount=%u\n", handoffReadyCount);
+    printf("titleFrontendHeldLastFrameCount=%u\n", heldLastFrameCount);
     if (resolvedTitlePath != 0) printf("titleFrontendTitleDatPath=%s\n", resolvedTitlePath);
     return 1;
 }
