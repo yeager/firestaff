@@ -612,20 +612,36 @@ first, then visual parity, then typography / honesty.
     all-9-part load, SEQ2 marker handling, 11025→22050 resample/concatenate,
     and SDL queueing.  Evidence in `PASS54_AUDIO_FINDINGS.md` and
     `parity-evidence/pass54_v1_song_runtime_probe.txt`.
+- **Pass 55 (landed, 2026-04-24):**
+  - Source-backed action cues in `m11_game_view.c` now use mapped sound-event
+    emissions instead of direct procedural markers where Pass 52 evidence is
+    strong: `WAR CRY` → sound event 17 (`M619_SOUND_WAR_CRY`), `BLOW HORN` →
+    sound event 18 (`M620_SOUND_BLOW_HORN`), and `SHOOT` / `THROW` → sound
+    event 13 (`M563_SOUND_COMBAT_ATTACK...`).
+  - New bounded audit script:
+    `scripts/audit_m11_direct_audio_markers_pass55.py`, with PASS log in
+    `parity-evidence/pass55_m11_direct_audio_marker_audit.txt`, verifies the
+    converted event-index paths and locks the remaining direct-marker TODO
+    buckets.
+  - Remaining direct marker buckets are explicit, not claimed faithful:
+    generic non-`EMIT_SOUND_REQUEST` tick emissions; `CALM` / `BRANDISH` /
+    `CONFUSE`; `FIREBALL` / `DISPELL` / `LIGHTNING` cast-action cue; and
+    `INVOKE` action cue.
+  - Full landing log and evidence pointers in `PASS55_AUDIO_FINDINGS.md`.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
-  `PASS53_AUDIO_FINDINGS.md` §4, and `PASS54_AUDIO_FINDINGS.md` §4):
+  `PASS53_AUDIO_FINDINGS.md` §4, `PASS54_AUDIO_FINDINGS.md` §4, and
+  `PASS55_AUDIO_FINDINGS.md` §4):
   1. Original capture/proof of SFX/title-music cadence, prioritization,
      continuous-loop timing, and overlap.
   2. Source-backed title frontend start/stop timing for the new queue API.
-  3. Convert or explicitly justify remaining non-`EMIT_SOUND_REQUEST` direct
-     marker calls in M11; pass 53 only wires mapped event-index emissions, and
-     pass 54 does not audit those calls.
+  3. Resolve the four documented remaining direct-marker TODO buckets, either
+     by source-backed event-index conversion or original runtime capture.
   4. Bug-faithful playback quirks/cataloging when relevant.
-- **Suggested follow-up pass:** pass-55 — source-backed audit of remaining
-  direct M11 marker calls, or original runtime capture for audio cadence/looping;
-  do not claim cadence/overlap without original capture.
+- **Suggested follow-up pass:** pass-56 — original runtime capture for audio
+  cadence/looping, or source-backed resolution of one remaining direct-marker
+  TODO bucket; do not claim cadence/overlap without original capture.
 
 ---
 

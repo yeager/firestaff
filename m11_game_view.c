@@ -544,6 +544,17 @@ static M11_AudioMarker m11_audio_marker_from_emission(const struct TickEmission_
     return M11_AUDIO_MARKER_NONE;
 }
 
+static void m11_audio_emit_source_sound(M11_GameViewState* state,
+                                        int soundIndex,
+                                        M11_AudioMarker fallbackMarker) {
+    if (!state) {
+        return;
+    }
+    (void)M11_Audio_EmitSoundIndex(&state->audioState,
+                                   soundIndex,
+                                   fallbackMarker);
+}
+
 static void m11_audio_emit_for_emission(M11_GameViewState* state,
                                         const struct TickEmission_Compat* emission) {
     M11_AudioMarker marker;
@@ -10386,8 +10397,21 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                           "T%u: %s %s",
                           (unsigned int)state->world.gameTick,
                           champName, verb);
-            (void)M11_Audio_EmitMarker(&state->audioState,
-                                       M11_AUDIO_MARKER_CREATURE);
+            if (chosen == 8) {
+                /* Pass 55: ReDMCSB I34E maps WAR CRY to sound event 17
+                 * (M619_SOUND_WAR_CRY / GRAPHICS.DAT SND3 item 707). */
+                m11_audio_emit_source_sound(state, 17, M11_AUDIO_MARKER_CREATURE);
+            } else if (chosen == 4) {
+                /* Pass 55: ReDMCSB I34E maps BLOW HORN to sound event 18
+                 * (M620_SOUND_BLOW_HORN / GRAPHICS.DAT SND3 item 704). */
+                m11_audio_emit_source_sound(state, 18, M11_AUDIO_MARKER_CREATURE);
+            } else {
+                /* CALM / BRANDISH / CONFUSE are still V1-slice cues only;
+                 * keep the honest marker fallback until their original
+                 * runtime sound requests are captured or source-backed. */
+                (void)M11_Audio_EmitMarker(&state->audioState,
+                                           M11_AUDIO_MARKER_CREATURE);
+            }
             return 0;
         }
         case 32: /* SHOOT */ {
@@ -10432,8 +10456,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                           "T%u: %s SHOOTS",
                           (unsigned int)state->world.gameTick,
                           champName);
-            (void)M11_Audio_EmitMarker(&state->audioState,
-                                       M11_AUDIO_MARKER_COMBAT);
+            /* Pass 55: ReDMCSB I34E maps party melee/shoot/throw to
+             * sound event 13 (M563_SOUND_COMBAT_ATTACK...). */
+            m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
             return spawned;
         }
         case 20:   /* FIREBALL */
@@ -10643,8 +10668,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                           "T%u: %s THROWS",
                           (unsigned int)state->world.gameTick,
                           champName);
-            (void)M11_Audio_EmitMarker(&state->audioState,
-                                       M11_AUDIO_MARKER_COMBAT);
+            /* Pass 55: ReDMCSB I34E maps party melee/shoot/throw to
+             * sound event 13 (M563_SOUND_COMBAT_ATTACK...). */
+            m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
             return spawned;
         }
         default:
