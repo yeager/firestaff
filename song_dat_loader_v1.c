@@ -11,6 +11,32 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* ── per-item canonical labels (Greatstone reference) ────────────── */
+
+/*
+ * Labels for SONG.DAT DM PC v3.4 items, verbatim from:
+ *   http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html
+ *
+ * Keep the array exactly 10 entries (V1_SONG_DAT_ITEM_COUNT).
+ */
+static const char* const kSongItemLabels[V1_SONG_DAT_ITEM_COUNT] = {
+    "Music Score (Sequence of Music Parts Numbers)",
+    "Music Part 1",
+    "Music Part 2",
+    "Music Part 3",
+    "Music Part 4",
+    "Music Part 5",
+    "Music Part 6",
+    "Music Part 7",
+    "Music Part 8",
+    "Music Part 9"
+};
+
+const char* V1_Song_ItemLabel(unsigned int itemIndex) {
+    if (itemIndex >= V1_SONG_DAT_ITEM_COUNT) return "(out of range)";
+    return kSongItemLabels[itemIndex];
+}
+
 /* ── small helpers ───────────────────────────────────────────────── */
 
 static void v1_set_err(char* dst, size_t cap, const char* msg) {

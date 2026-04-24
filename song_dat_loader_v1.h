@@ -34,6 +34,23 @@ extern "C" {
 #define V1_SONG_DAT_LAST_SND8_INDEX   9
 #define V1_SONG_DAT_SAMPLE_RATE_HZ    11025
 #define V1_SONG_DAT_EXPECTED_SIZE     162482u
+#define V1_SONG_DAT_MUSIC_PART_COUNT  9
+
+/*
+ * Canonical per-item semantic labels for SONG.DAT DM PC v3.4, sourced
+ * from Greatstone's extracted-items reference:
+ *
+ *   http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html
+ *
+ * The reference labels item 0 as "Music Score" (the sequence of music
+ * parts numbers) and items 1..9 as "Music Part 1" .. "Music Part 9".
+ * This confirms that SONG.DAT contains music only (no in-game SFX),
+ * which matches the dmweb SEQ2/SND8 typing.
+ *
+ * V1_Song_ItemLabel(i) returns a stable English label string.  Never
+ * returns NULL for 0 <= i < V1_SONG_DAT_ITEM_COUNT.
+ */
+const char* V1_Song_ItemLabel(unsigned int itemIndex);
 
 /* Item types used in SONG.DAT. */
 typedef enum {

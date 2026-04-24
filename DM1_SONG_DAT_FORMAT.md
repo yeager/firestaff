@@ -5,15 +5,21 @@ v3.4 `SONG.DAT` file, as a prerequisite to replacing Firestaff's V1
 procedural audio placeholders with original-faithful samples.
 
 All facts in this document are either (a) taken verbatim from the
-community format reference at
-<http://dmweb.free.fr/community/documentation/file-formats/data-files/>
+community format references at:
+
+- dmweb — DM/CSB/DMII data-files format spec (DMCSB2 container,
+  item-type map, SEQ2, SND8 decode algorithm)
+  <http://dmweb.free.fr/community/documentation/file-formats/data-files/>
+- Greatstone — per-item semantic labels for SONG.DAT DM PC v3.4
+  <http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html>
+
 or (b) empirically verified against the real file
 `DungeonMasterPC34/DATA/SONG.DAT` shipped in the DM1 DOS package
-(`original-games/Game,Dungeon_Master,DOS,Software.7z`, sha-1 unchanged
-since 1992-02-26) using the parser in `song_dat_loader_v1.c`.
+(`original-games/Game,Dungeon_Master,DOS,Software.7z`, dated
+1992-02-26) using the parser in `song_dat_loader_v1.c`.
 
-The file is **not** vendored into this repository.  Only its shape and
-the decoding algorithm are.
+The file is **not** vendored into this repository.  Only its shape,
+its decoding algorithm, and the public English per-item labels are.
 
 ---
 
@@ -71,6 +77,35 @@ Per the dmweb item-type map for SONG.DAT DM PC v3.4:
 
 - Item 0: **SEQ2** — music sequence (indices into items 1..9)
 - Items 1..9: **SND8** — DPCM-encoded mono 11025 Hz samples
+
+Greatstone's per-item label table for this exact file
+(<http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html>)
+gives the authoritative English semantic names:
+
+| # | Label                                             |
+|---|---------------------------------------------------|
+| 0 | Music Score (Sequence of Music Parts Numbers)     |
+| 1 | Music Part 1                                      |
+| 2 | Music Part 2                                      |
+| 3 | Music Part 3                                      |
+| 4 | Music Part 4                                      |
+| 5 | Music Part 5                                      |
+| 6 | Music Part 6                                      |
+| 7 | Music Part 7                                      |
+| 8 | Music Part 8                                      |
+| 9 | Music Part 9                                      |
+
+This confirms two things:
+
+1. Every SND8 item in SONG.DAT is a **music part**, not an in-game
+   SFX sample.  In-game SFX are the **SND3** items in GRAPHICS.DAT
+   (see §5 below).
+2. The SEQ2 word list in item 0 is the concert-piece score — a list
+   of indices into the 9 music parts.
+
+These labels are surfaced at runtime by `V1_Song_ItemLabel()` in
+`song_dat_loader_v1.h` and verified by probe invariant
+`INV_V1_SONG_07`.
 
 ---
 
@@ -156,7 +191,9 @@ before sequencing/looping.
 
 ## 5. Where SONG.DAT is used in original DM1
 
-SONG.DAT is the **title-music** source.  In-game sound-effect samples
+SONG.DAT is the **music** source only (title/menu + any in-game
+loop playback), as confirmed by Greatstone's per-item labelling
+(items 1..9 are all "Music Part N").  In-game sound-effect samples
 (footsteps, doors, swings, creature voices, spells …) are not in
 SONG.DAT — they are the **SND3** items in `GRAPHICS.DAT`:
 

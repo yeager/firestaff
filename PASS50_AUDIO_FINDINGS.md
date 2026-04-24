@@ -37,6 +37,20 @@ canonical DM PC v3.4 package already inventoried in
 
 Full format specification: `DM1_SONG_DAT_FORMAT.md`.
 
+Two independent external references back this pass:
+
+- dmweb — container, item-type map, SEQ2/SND8 algorithms:
+  <http://dmweb.free.fr/community/documentation/file-formats/data-files/>
+- Greatstone — per-item canonical English labels:
+  <http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html>
+
+The Greatstone reference gives item 0 = **Music Score** and items
+1..9 = **Music Part 1..9**.  These labels are now carried in
+`song_dat_loader_v1.h` via `V1_Song_ItemLabel()` and probe-checked by
+`INV_V1_SONG_07`.  Crucially, the label set confirms that **SONG.DAT
+contains no in-game SFX** — all 9 SND8 items are music parts.
+In-game SFX are the SND3 items in GRAPHICS.DAT.
+
 Header parse of the real file (see
 `parity-evidence/pass50_song_dat_header.txt`):
 
@@ -96,7 +110,8 @@ PASS INV_V1_SONG_03 DMCSB2 signature=0x8001, 10 items, 84-byte header
 PASS INV_V1_SONG_04 all 10 item headers match verified table
 PASS INV_V1_SONG_05 SEQ2 music sequence matches verified 20-word pattern
 PASS INV_V1_SONG_06 all 9 SND8 items decode to exactly declared sample count at 11025 Hz
-# summary: 6/6 invariants passed
+PASS INV_V1_SONG_07 Greatstone per-item labels present (Music Score + Music Part 1..9)
+# summary: 7/7 invariants passed
 ```
 
 When the original SONG.DAT is absent on a given machine, the probe

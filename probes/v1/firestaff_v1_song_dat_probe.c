@@ -231,6 +231,38 @@ int main(void) {
                     "all 9 SND8 items decode to exactly declared sample count at 11025 Hz");
     }
 
+    /*
+     * INV_V1_SONG_07 — Greatstone canonical labels.
+     * Source: http://greatstone.free.fr/dm/db_data/dm_pc_34/song.dat/song.dat.html
+     * Item 0 must be "Music Score…"; items 1..9 must be "Music Part N".
+     */
+    int labelsOk = 1;
+    {
+        const char* lbl0 = V1_Song_ItemLabel(0);
+        if (!lbl0 || !strstr(lbl0, "Music Score")) {
+            report_fail("INV_V1_SONG_07",
+                        "item 0 label is not the Greatstone 'Music Score'");
+            labelsOk = 0;
+        }
+        for (unsigned int i = 1; i <= 9 && labelsOk; ++i) {
+            char want[16];
+            snprintf(want, sizeof(want), "Music Part %u", i);
+            const char* got = V1_Song_ItemLabel(i);
+            if (!got || strcmp(got, want) != 0) {
+                char buf[96];
+                snprintf(buf, sizeof(buf),
+                         "item %u label = \"%s\", expected \"%s\"",
+                         i, got ? got : "(null)", want);
+                report_fail("INV_V1_SONG_07", buf);
+                labelsOk = 0;
+            }
+        }
+    }
+    if (labelsOk) {
+        report_pass("INV_V1_SONG_07",
+                    "Greatstone per-item labels present (Music Score + Music Part 1..9)");
+    }
+
     /* Summary. */
     int total = g_passCount + g_failCount;
     printf("# summary: %d/%d invariants passed\n", g_passCount, total);
