@@ -64,7 +64,8 @@ In the original ownership model, **movement and environment behavior are not UI 
 | `memory_tick_orchestrator_pc34_compat.c:cmd_to_move_action` | absolute command -> relative move action | `COMMAND.C`/movement bridge | already compat-owned |
 | `memory_movement_pc34_compat.c:F0702_MOVEMENT_TryMove_Compat` | bounds + wall + **door state + fake wall + stairs** (pass 30) | broader subset of `F0267_MOVE_GetMoveResult_CPSCE` | **compat-owned** (post pass 30); animating intermediate door states 1..3 now owned by the timeline stepper (pass 38), so “door blocks step” at state 2 remains honest |
 | `memory_movement_pc34_compat.c:F0705_MOVEMENT_ResolveStairsTransition_Compat` | stairs level change + bounds clamp (pass 30) | stairs branch of `F0267_MOVE_GetMoveResult_CPSCE` | **compat-owned** (post pass 30) |
-| `memory_movement_pc34_compat.c:F0706_MOVEMENT_IsSquarePassable_Compat` | shared square passability (pass 30) | square-element helpers in `DUNGEON.C` | **compat-owned** (post pass 30); creature AI walkability not yet delegating — V1 blocker #3 |
+| `memory_movement_pc34_compat.c:F0706_MOVEMENT_IsSquarePassable_Compat` | shared square passability (pass 30) | square-element helpers in `DUNGEON.C` | **compat-owned** (post pass 30); party-side behavior unchanged; creature-side now delegates via F0707 (pass 39) |
+| `memory_movement_pc34_compat.c:F0707_MOVEMENT_IsSquarePassableForContext_Compat` | context-aware square passability (PARTY / CREATURE) (pass 39) | square-element helpers in `DUNGEON.C` + creature legality in `GROUP.C` / `F0264_MOVE_IsSquareAccessibleForCreature` | **compat-owned** (post pass 39); shares element/door decoding with F0706, rejects stairs in CREATURE context |
 | `memory_movement_pc34_compat.c:F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat` | chained pit + teleporter post-move resolution (pass 29) | `F0267_MOVE_GetMoveResult_CPSCE` chained moves | **compat-owned** (post pass 29) |
 | `memory_movement_pc34_compat.c:F0703_MOVEMENT_IdentifySensorsOnSquare_Compat` | find first sensor on square | small probe subset of `MOVESENS.C` sensor traversal | retained (still first-sensor-only) |
 | `memory_sensor_execution_pc34_compat.c:F0710_SENSOR_Execute_Compat` | execute teleport/text for `WALK_ON` only | tiny subset of `F0276` sensor result path | probe-grade retained (other sensor types still `SENSOR_EFFECT_UNSUPPORTED`) |
@@ -81,7 +82,7 @@ In the original ownership model, **movement and environment behavior are not UI 
 | `m11_game_view.c:m11_check_pit_fall`, `m11_check_teleporter`, `m11_check_post_move_transitions` | former owners, now deprecated bodies | — | **no longer authoritative** (post pass 29); F0704 is the owner |
 | `m11_game_view.c:m11_toggle_front_door` | thin UI shim over F0715 (pass 31) | — | **reduced to UI delegation** (post pass 31); owns only status/inspect text + synthetic tick notifications + world-byte write |
 | `m11_game_view.c:m11_front_cell_is_door` | query helper; acceptable UI concern | — | viewport-local query, behavior-free |
-| `m11_game_view.c:m11_square_walkable_for_creature` | custom creature walkability semantics for doors/pits/fake walls/teleporters | shared `F0706` exists but not yet used | unchanged — V1 blocker #3 |
+| `m11_game_view.c:m11_square_walkable_for_creature` | thin delegation to F0707 with MOVEMENT_PASS_CTX_CREATURE (pass 39) | shared compat decoder via F0707 | **reduced to compat delegation** (post pass 39); no custom element/door switch remains |
 
 ---
 
@@ -339,6 +340,6 @@ Remaining ownership deltas now tracked as numbered V1 blockers rather than open 
 
 - Sensor enter/leave runtime wiring — `V1_BLOCKERS.md` #1.
 - Animating door states 1..3 flattened to 0/4 — `V1_BLOCKERS.md` #2.
-- Creature walkability not yet delegating to F0706 — `V1_BLOCKERS.md` #3.
+- Creature walkability not yet delegating to F0706 — **LANDED (pass 39)** as `F0707_MOVEMENT_IsSquarePassableForContext_Compat` + `m11_square_walkable_for_creature` delegation; `V1_BLOCKERS.md` #3 resolved.
 
 Everything else in this audit is either landed or out of scope for V1 per `PASSLIST_29_36.md` §1.

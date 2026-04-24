@@ -196,6 +196,62 @@ int F0706_MOVEMENT_IsSquarePassable_Compat(
     }
 }
 
+/*
+ * Pass 39: context-aware square passability.
+ *
+ * Shares element/door decoding with F0706 so creature and party
+ * walkability cannot drift.  The only behavioral difference vs F0706
+ * is that the creature context treats a stairs square as blocked, to
+ * match ReDMCSB creature-movement legality
+ * (GROUP.C / F0264_MOVE_IsSquareAccessibleForCreature): creatures in
+ * DM1 PC 3.4 never step onto stairs.  Party context is identical to
+ * F0706.
+ *
+ * This keeps M11 creature walkability source-faithful *and* unified
+ * with the compat movement legality path used by F0702 / F0706, which
+ * is the pass-39 acceptance requirement in V1_BLOCKERS.md §3.
+ */
+int F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int passContext)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char squareByte;
+    int elementType;
+    int doorState;
+
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->tiles) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return 0;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return 0;
+    if (!dungeon->tiles[mapIndex].squareData) return 0;
+
+    squareByte = dungeon->tiles[mapIndex].squareData[mapX * map->height + mapY];
+    elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+
+    switch (elementType) {
+        case DUNGEON_ELEMENT_CORRIDOR:
+        case DUNGEON_ELEMENT_PIT:
+        case DUNGEON_ELEMENT_TELEPORTER:
+        case DUNGEON_ELEMENT_FAKEWALL:
+            return 1;
+        case DUNGEON_ELEMENT_STAIRS:
+            /* Party: stairs are a legal consequence square.
+             * Creature: stairs are blocked. */
+            return (passContext == MOVEMENT_PASS_CTX_CREATURE) ? 0 : 1;
+        case DUNGEON_ELEMENT_DOOR:
+            doorState = squareByte & 0x07;
+            /* 0 = fully open, 5 = destroyed; other states block. */
+            return (doorState == 0 || doorState == 5) ? 1 : 0;
+        case DUNGEON_ELEMENT_WALL:
+        default:
+            return 0;
+    }
+}
+
 int F0702_MOVEMENT_TryMove_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct PartyState_Compat* party,

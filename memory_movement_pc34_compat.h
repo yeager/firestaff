@@ -197,4 +197,42 @@ int F0706_MOVEMENT_IsSquarePassable_Compat(
     int mapX,
     int mapY);
 
+/*
+ * Passability context flag.
+ *
+ * F0706 is the party-side square-passability owner: the party may step
+ * onto a stairs square because, per F0267_MOVE_GetMoveResult_CPSCE,
+ * stairs are a legal "consequence" square that triggers a map
+ * transition.  Creatures in DM1 PC 3.4, however, never enter stairs
+ * squares — the ReDMCSB creature-movement legality in GROUP.C /
+ * F0264_MOVE_IsSquareAccessibleForCreature treats stairs as blocked.
+ *
+ * MOVEMENT_PASS_CTX_PARTY preserves the existing F0706 behaviour.
+ * MOVEMENT_PASS_CTX_CREATURE rejects stairs and otherwise shares the
+ * same element/door decoding as F0706 so party and creature
+ * walkability stay in sync for walls, corridors, pits, teleporters,
+ * fake walls, and door-state bits.
+ */
+#define MOVEMENT_PASS_CTX_PARTY    0
+#define MOVEMENT_PASS_CTX_CREATURE 1
+
+/*
+ * Pass 39: shared square-passability owner with an explicit context.
+ *
+ * Creature context rejects stairs (source: ReDMCSB creature-movement
+ * legality in GROUP.C / F0264_MOVE_IsSquareAccessibleForCreature);
+ * every other element decodes identically to F0706.  This keeps one
+ * source-faithful decoder and prevents the divergent custom rules that
+ * used to live in m11_square_walkable_for_creature.
+ *
+ * Returns 1 if the square is passable for the given context, 0
+ * otherwise.  Out-of-bounds or missing tile data returns 0.
+ */
+int F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int passContext);
+
 #endif

@@ -8,6 +8,7 @@
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_movement_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -2503,32 +2504,31 @@ static int m11_find_group_position(
     return 0;
 }
 
-/* Check whether a square is walkable for a creature. */
+/*
+ * Check whether a square is walkable for a creature.
+ *
+ * Pass 39: delegates to the shared compat owner
+ * F0707_MOVEMENT_IsSquarePassableForContext_Compat with
+ * MOVEMENT_PASS_CTX_CREATURE so creature and party walkability share
+ * one source-faithful decoder for every element type.  The creature
+ * context rejects stairs (DM1 creatures cannot traverse stairs per
+ * GROUP.C / F0264_MOVE_IsSquareAccessibleForCreature), which matches
+ * the pre-pass-39 behaviour for stairs and therefore prevents the
+ * pass-30 stairs regression while still unifying every other element.
+ *
+ * Destroyed doors (state 5) are now walkable for creatures, matching
+ * F0706 / party rules; previously the custom M11 path rejected them
+ * which was a divergence from the shared compat path.
+ */
 static int m11_square_walkable_for_creature(
     const struct GameWorld_Compat* world,
     int mapIndex,
     int mapX,
     int mapY) {
-    unsigned char square = 0;
-    int elementType;
-    if (!m11_get_square_byte(world, mapIndex, mapX, mapY, &square)) {
-        return 0;
-    }
-    elementType = (square >> 5) & 7;
-    switch (elementType) {
-        case DUNGEON_ELEMENT_CORRIDOR:
-        case DUNGEON_ELEMENT_PIT:
-        case DUNGEON_ELEMENT_TELEPORTER:
-        case DUNGEON_ELEMENT_FAKEWALL:
-            return 1;
-        case DUNGEON_ELEMENT_DOOR: {
-            /* Open doors (low bits == 0) are walkable */
-            int doorState = square & 0x07;
-            return (doorState == 0) ? 1 : 0;
-        }
-        default:
-            return 0;
-    }
+    if (!world || !world->dungeon) return 0;
+    return F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+        world->dungeon, mapIndex, mapX, mapY,
+        MOVEMENT_PASS_CTX_CREATURE);
 }
 
 /* Move a creature one step toward the party. Returns 1 if moved. */

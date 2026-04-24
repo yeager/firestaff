@@ -1,6 +1,6 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 38 landed)
+Last updated: 2026-04-24 (pass 39 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
@@ -103,17 +103,57 @@ first, then visual parity, then typography / honesty.
   interaction are candidates for a future pass but are not tracked
   as a V1 blocker; the ledger entry is retired.
 
-## 3. Creature walkability not unified with party F0706
+## 3. Creature walkability not unified with party F0706 — **LANDED (pass 39)**
 - **Area:** `OWNERSHIP`
-- **Evidence:**
-  - Pass 30 kept `m11_square_walkable_for_creature` on legacy logic
-    because delegation to `F0706_MOVEMENT_IsSquarePassable_Compat` triggered
-    a game-view probe heap regression (changed creature walking
-    behavior for STAIRS squares).
-  - `memory_movement_pc34_compat.h` F0706 doc comment flags the
-    unification as deferred.
-- **Suggested pass:** pass-39 — add a `creature-context` variant of
-  F0706 (or a flag) that rejects STAIRS for creatures, then delegate.
+- **Status:** Resolved for square-element passability.  Creature and
+  party walkability now share one source-faithful decoder via the new
+  `F0707_MOVEMENT_IsSquarePassableForContext_Compat` owner; the pass-30
+  stairs regression is prevented by an explicit creature-context
+  branch.
+- **Pass 39 (landed, 2026-04-24):**
+  - `memory_movement_pc34_compat.h` / `.c` gained
+    `F0707_MOVEMENT_IsSquarePassableForContext_Compat(dungeon,
+    mapIndex, mapX, mapY, passContext)` with two contexts:
+    `MOVEMENT_PASS_CTX_PARTY` (element/door decoding identical to
+    F0706, stairs allowed as a party consequence square) and
+    `MOVEMENT_PASS_CTX_CREATURE` (same decoding, stairs explicitly
+    rejected per ReDMCSB GROUP.C / F0264_MOVE_IsSquareAccessibleForCreature
+    — DM1 PC 3.4 creatures never step onto stairs).
+  - `m11_game_view.c:m11_square_walkable_for_creature` is now a thin
+    delegation to `F0707(..., MOVEMENT_PASS_CTX_CREATURE)`; the
+    duplicated element/door switch has been removed.  Destroyed doors
+    (state 5) are now walkable for creatures, matching the shared
+    decoder (previously the custom M11 path rejected them, a
+    divergence from F0706 — now removed).
+  - `F0706_MOVEMENT_IsSquarePassable_Compat` itself is unchanged:
+    party-side passability (including stairs) is preserved, so the
+    pass-30 stairs behavior is intact.
+  - Pass-39 probe
+    `run_firestaff_m11_pass39_creature_walkability_probe.sh` drives
+    F0707 directly across a 4x4 fixture covering every element type
+    and door state 0..5; verifies 22/22 invariants including: party
+    context equals F0706 for every square, creature context equals
+    F0706 except stairs are blocked, creature context rejects both
+    stairs-up and stairs-down, creature context accepts corridor /
+    pit / teleporter / fakewall / open door / destroyed door,
+    creature context rejects walls / closed door / animating door
+    states 1..4, bounds and NULL safety match F0706, and F0706 itself
+    still treats both stairs squares as passable for the party.
+  - All baseline gates stay green: Phase A 18/18, M11 game view
+    361/361, M11 launcher smoke PASS, M10 verify 20/20 phases,
+    M11 verify end-to-end.  Previously-green pass-30 (15/15),
+    pass-37 (13/13), and pass-38 (29/29) probes stay green.
+- **What is NOT covered by pass 39:**
+  - Thing-list occupancy checks for creature legality (another group
+    on the square, party-square exceptions) remain in
+    `m11_creature_try_move` — Pass 39 is strictly about square-element
+    passability.  These AI-layer checks are not part of F0706/F0707
+    scope.
+  - Creature sensor enter/leave processing (Pass 32/37 are party-only,
+    unchanged).
+  - Creature interactions with stairs as a consequence square (none
+    in DM1 PC 3.4 — creatures are blocked outright, which is the
+    landed behavior).
 
 ## 4. Viewport region −28×−18 px vs DM1 original
 - **Area:** `VISUAL`
