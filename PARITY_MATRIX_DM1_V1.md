@@ -161,15 +161,15 @@ V2/V3 differences must never appear in this matrix as accepted parity.
 
 ---
 
-## Summary counts
+## Summary counts (after Pass 36 honesty lock)
 
 | Status | Count |
 |--------|-------|
-| `MATCHED` | 8 (7 prior + title-side UI asset mapping; mostly infrastructure/data, not visual parity) |
-| `KNOWN_DIFF` | 8 (prior 3 + base palette rendering, brightness rendering, creature palette rendering, cyan invariant, special palettes) |
-| `UNPROVEN` | ~41 (reduced from ~45: 4 rows reclassified to KNOWN_DIFF, 1 partially advanced to MATCHED/UNPROVEN) |
-| `BLOCKED_ON_REFERENCE` | ~12 (timing, audio, CSB data, DM2 data) |
+| `MATCHED` | 9 — GRAPHICS.DAT decode coverage, placeholder cataloging, title-side UI asset mapping, Champion portraits (pass 34), Spell-panel asset identity (pass 34), M9 gate infra, M10 suite infra, M11 suite infra, Submenu matrix infra. |
+| `KNOWN_DIFF` | 12 — prior palette + typography + Firestaff-invented UI chrome + viewport −28×−18 drift (pass 33) + champion status-box +8 px stride (pass 34). |
+| `UNPROVEN` | ~38 — reduced from ~41 after pass 33 (viewport), pass 34 (portraits + spell panel), pass 35 (text-tag fallbacks, over-labeling, font rendering) promotions. |
+| `BLOCKED_ON_REFERENCE` | ~12 — timing, audio, CSB data, DM2 data, plus pixel-overlay rows across §1–§2 that remain unblocked until a ReDMCSB headless rasteriser or emulator capture lands. |
 
-**Bottom line:** Firestaff has substantial infrastructure and implementation, but almost nothing is source-backed-verified against the original yet. The parity gap is not primarily missing code — it is missing original reference captures and systematic comparison.
+**Bottom line (after passes 29–36):** Firestaff has measured ownership progress (passes 29–32), measured visual drift (passes 33–34), and a complete text-vs-graphics enumeration (pass 35).  The remaining V1 gap is now a numbered ledger in `V1_BLOCKERS.md` rather than vague rows in this file.  **Executing passes 29–36 did not complete DM1/V1 parity**; it converted Firestaff's state from 'many reconstructed seams with under-measured visuals and mixed ownership' into 'source-backed ownership for movement/doors/env, measured visuals for viewport and side-panel, and an honest ledger of what remains' — which is exactly what `PASSLIST_29_36.md` said this program would do.
 
-**Pass 1 key finding (2026-04-22):** The VGA palette compat layer (`vga_palette_pc34_compat.c`) uses an EGA-style palette — 14 of 16 colors are wrong. The correct values exist in `recovered_palette.json` (from VIDEODRV.C) but are not wired into the rendering path. This affects every rendered frame. See `parity-evidence/dm1_v1_pass1_palette_and_assets.md` for full evidence.
+**Pass 1 key finding (2026-04-22):** The VGA palette compat layer (`vga_palette_pc34_compat.c`) uses an EGA-style palette — 14 of 16 colors are wrong. Tracked as V1 blocker #10 in `V1_BLOCKERS.md`.  See `parity-evidence/dm1_v1_pass1_palette_and_assets.md` for full evidence.

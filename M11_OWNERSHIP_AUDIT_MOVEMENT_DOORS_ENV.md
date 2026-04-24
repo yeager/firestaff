@@ -55,23 +55,29 @@ In the original ownership model, **movement and environment behavior are not UI 
 
 ---
 
-## Firestaff ownership map
+## Firestaff ownership map (POST passes 29–32, as of 2026-04-24)
 
 | Firestaff file/function | Current role | Closest ReDMCSB ownership area | Current ownership verdict |
 |---|---|---|---|
 | `memory_movement_pc34_compat.c:F0700_MOVEMENT_TurnDirection_Compat` | turn math | `MOVESENS.C` direction math | already compat-owned |
 | `memory_movement_pc34_compat.c:F0701_MOVEMENT_GetStepDelta_Compat` | relative step delta | `MOVESENS.C` direction/step logic | already compat-owned |
 | `memory_tick_orchestrator_pc34_compat.c:cmd_to_move_action` | absolute command -> relative move action | `COMMAND.C`/movement bridge | already compat-owned |
-| `memory_movement_pc34_compat.c:F0702_MOVEMENT_TryMove_Compat` | bounds + wall-only party move test | thin subset of `F0267_MOVE_GetMoveResult_CPSCE` | mixed, materially under-owned |
-| `memory_movement_pc34_compat.c:F0703_MOVEMENT_IdentifySensorsOnSquare_Compat` | find first sensor on square | small probe subset of `MOVESENS.C` sensor traversal | mixed, probe-grade |
-| `memory_sensor_execution_pc34_compat.c:F0710_SENSOR_Execute_Compat` | execute teleport/text for `WALK_ON` only | tiny subset of `F0276` sensor result path | mixed, probe-grade |
-| `m11_game_view.c:m11_try_stairs_transition` | direct stairs level change | environment/movement consequence logic that should sit with runtime movement/square semantics | custom-glue-owned |
-| `m11_game_view.c:m11_check_pit_fall` | direct pit fall + damage | `F0267_MOVE_GetMoveResult_CPSCE` chained movement/fall handling | custom-glue-owned |
-| `m11_game_view.c:m11_check_teleporter` | direct teleporter lookup, apply move/rotation | `F0267_MOVE_GetMoveResult_CPSCE` + sensor/teleporter movement semantics | custom-glue-owned |
-| `m11_game_view.c:m11_check_post_move_transitions` | chains pit/teleporter after move | `F0267_MOVE_GetMoveResult_CPSCE` chained moves | custom-glue-owned |
-| `m11_game_view.c:m11_toggle_front_door` | direct door square mutation + synthetic emissions | door actuation via source-faithful sensor/action/runtime path, not viewport-owned mutation | custom-glue-owned |
-| `m11_game_view.c:m11_front_cell_is_door` and door click handling | viewport-specific gating only | acceptable UI concern if it delegates behavior | mixed but acceptable only if behavior is delegated |
-| `m11_game_view.c:m11_square_walkable_for_creature` | custom creature walkability semantics for doors/pits/fake walls/teleporters | square semantics should match runtime helpers | unclear/mixed |
+| `memory_movement_pc34_compat.c:F0702_MOVEMENT_TryMove_Compat` | bounds + wall + **door state + fake wall + stairs** (pass 30) | broader subset of `F0267_MOVE_GetMoveResult_CPSCE` | **compat-owned** (post pass 30); animating door states still flattened to 0/4 — V1 blocker #2 |
+| `memory_movement_pc34_compat.c:F0705_MOVEMENT_ResolveStairsTransition_Compat` | stairs level change + bounds clamp (pass 30) | stairs branch of `F0267_MOVE_GetMoveResult_CPSCE` | **compat-owned** (post pass 30) |
+| `memory_movement_pc34_compat.c:F0706_MOVEMENT_IsSquarePassable_Compat` | shared square passability (pass 30) | square-element helpers in `DUNGEON.C` | **compat-owned** (post pass 30); creature AI walkability not yet delegating — V1 blocker #3 |
+| `memory_movement_pc34_compat.c:F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat` | chained pit + teleporter post-move resolution (pass 29) | `F0267_MOVE_GetMoveResult_CPSCE` chained moves | **compat-owned** (post pass 29) |
+| `memory_movement_pc34_compat.c:F0703_MOVEMENT_IdentifySensorsOnSquare_Compat` | find first sensor on square | small probe subset of `MOVESENS.C` sensor traversal | retained (still first-sensor-only) |
+| `memory_sensor_execution_pc34_compat.c:F0710_SENSOR_Execute_Compat` | execute teleport/text for `WALK_ON` only | tiny subset of `F0276` sensor result path | probe-grade retained (other sensor types still `SENSOR_EFFECT_UNSUPPORTED`) |
+| `memory_sensor_execution_pc34_compat.c:F0717_SENSOR_EnumerateOnSquare_Compat` | enumerate ALL sensors on a square (pass 32) | thing-list walker inside `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned** (post pass 32) |
+| `memory_sensor_execution_pc34_compat.c:F0718_SENSOR_ProcessPartyEnterLeave_Compat` | process enter/leave events over every sensor on a square (pass 32) | `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned** (surface) but tick orchestrator does NOT yet invoke it on every move — V1 blocker #1 |
+| `memory_door_action_pc34_compat.c:F0715_DOOR_ResolveToggleAction_Compat` | decide OPEN/CLOSE/DESTROYED target state (pass 31) | door actuator branch inside `MOVESENS.C` / `DUNGEON.C` | **compat-owned** (post pass 31) |
+| `memory_door_action_pc34_compat.c:F0716_DOOR_RouteFrontCellClick_Compat` | categorise click on front cell (pass 31) | `F0275_SENSOR_IsTriggeredByClickOnWall` | **compat-owned** (post pass 31) |
+| `m11_game_view.c:m11_try_stairs_transition` | thin UI shim over F0705 (pass 30) | — | **reduced to UI delegation** (post pass 30); only owns status/log/inspect text + explored-bits reset |
+| `m11_game_view.c:m11_apply_post_move_environment_from_compat` | thin UI shim over F0704 (pass 29) | — | **reduced to UI delegation** (post pass 29); only owns status/log/inspect text + explored-bits reset + champion fall-damage application |
+| `m11_game_view.c:m11_check_pit_fall`, `m11_check_teleporter`, `m11_check_post_move_transitions` | former owners, now deprecated bodies | — | **no longer authoritative** (post pass 29); F0704 is the owner |
+| `m11_game_view.c:m11_toggle_front_door` | thin UI shim over F0715 (pass 31) | — | **reduced to UI delegation** (post pass 31); owns only status/inspect text + synthetic tick notifications + world-byte write |
+| `m11_game_view.c:m11_front_cell_is_door` | query helper; acceptable UI concern | — | viewport-local query, behavior-free |
+| `m11_game_view.c:m11_square_walkable_for_creature` | custom creature walkability semantics for doors/pits/fake walls/teleporters | shared `F0706` exists but not yet used | unchanged — V1 blocker #3 |
 
 ---
 
@@ -313,3 +319,22 @@ The current state is:
 - **sensor/environment interaction runtime:** only partially compat-owned, mostly not integrated as the true owner
 
 If the goal is post-analysis parity, the next work should not start with more viewport polish. It should start by **moving environment consequences out of `m11_game_view.c` and into compat/runtime movement + sensor processing.**
+
+---
+
+## Post-migration status (after passes 29–32)
+
+As of commit `6062763` (pass 32), this audit's recommended next pass order (A → B → C → D, plus pass 32 sensor add/remove) is **fully landed as compat-side owners**, with three tracked runtime-integration deltas:
+
+- **Pass A (post-move environment migration)** — **LANDED** as `F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat`; commit `74253a2`.
+- **Pass B (movement legality migration)** — **LANDED** as extended `F0702_MOVEMENT_TryMove_Compat` + `F0705_MOVEMENT_ResolveStairsTransition_Compat` + `F0706_MOVEMENT_IsSquarePassable_Compat`; commit `8df70cc`.
+- **Pass D (front-door / wall interaction migration)** — **LANDED** as `F0715_DOOR_ResolveToggleAction_Compat` + `F0716_DOOR_RouteFrontCellClick_Compat`; commit `cb6f88d`.
+- **Pass C (sensor ownership migration)** — **LANDED (surface only)** as `F0717_SENSOR_EnumerateOnSquare_Compat` + `F0718_SENSOR_ProcessPartyEnterLeave_Compat`; commit `6062763`.  Tick orchestrator runtime wiring of enter/leave per party move is still outstanding — see `V1_BLOCKERS.md` #1.
+
+Remaining ownership deltas now tracked as numbered V1 blockers rather than open audit items:
+
+- Sensor enter/leave runtime wiring — `V1_BLOCKERS.md` #1.
+- Animating door states 1..3 flattened to 0/4 — `V1_BLOCKERS.md` #2.
+- Creature walkability not yet delegating to F0706 — `V1_BLOCKERS.md` #3.
+
+Everything else in this audit is either landed or out of scope for V1 per `PASSLIST_29_36.md` §1.

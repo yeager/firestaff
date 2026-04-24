@@ -281,6 +281,9 @@ Bounded V2 note:
 Keep widening the frozen M9 beta slice from the submenu side. The immediate focus is now richer submenu/game-state consequences above `memory_graphics_dat_submenu_consequence_pc34_compat.{c,h}`, especially explicit return/exit semantics or similarly honest state changes that can be guarded by `run_redmcsb_m9_verify.sh`. Keep the new split clear: last-event behavior class stays event-scoped, while cumulative behavior class and mask carry sequence semantics. Investigate the ordinary-runtime crash band at `671..675`, `677..685`, and `687` separately only when it blocks this beta-facing work, while continuing to treat `12`, `21`, `24`, `80..85`, the long wall `126..245`, and later placeholder singletons `676` and `686` as real non-published boundaries.
 
 ## Files to start with
+- **`V1_BLOCKERS.md`** — single source of truth for what is still outstanding between Firestaff and DM1/V1 original-faithful mode after Passes 29–36 (see that file for the numbered ledger of pass-37+ work).
+- `PARITY_MATRIX_DM1_V1.md` — V1 parity rows; post-pass-36 honesty lock applied.
+- `M11_OWNERSHIP_AUDIT_MOVEMENT_DOORS_ENV.md` — post-migration ownership table (passes 29–32).
 - `MILESTONES.md`
 - `NEXT_STEPS.md`
 - `redmcsb_pc34_port_roadmap_2026-04-16.md`
