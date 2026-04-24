@@ -450,17 +450,29 @@ first, then visual parity, then typography / honesty.
   - No palette work (blocker §10 / pass 46), viewport change, or
     M10 semantic change.
 
-## 10. VGA palette compat layer still uses EGA-style colors
+## 10. VGA palette compat layer still uses EGA-style colors — **LANDED (pass 46)**
 - **Area:** `VISUAL` (`BEHAVIOR` adjacent for brightness)
-- **Evidence:**
-  - `PARITY_MATRIX_DM1_V1.md` §3 "Base palette" / "Brightness levels"
-    / "Cyan invariant" / "Special palettes" rows — all `KNOWN_DIFF`
-    with concrete deltas in `parity-evidence/dm1_v1_pass1_palette_and_assets.md`.
-  - Predates Passes 29–36; left intentionally untouched so this work
-    does not bundle palette changes in.
-- **Suggested pass:** pass-46 — land the `recovered_palette.json`
-  values in `vga_palette_pc34_compat.c`.  This is a single bounded
-  swap; defer brightness / creature palettes to a follow-up.
+- **Status:** Resolved for the base 16-color palette and the six
+  brightness lookup tables exposed by `vga_palette_pc34_compat.c`.
+  The compat seam now uses the source-backed DM1 PC 3.4 VGA DAC values,
+  not the old EGA-style colors or a linear attenuation model.
+- **Pass 46 (landed, 2026-04-24):**
+  - Added bounded verification probe
+    `run_firestaff_m11_pass46_vga_palette_probe.sh` +
+    `firestaff_m11_pass46_vga_palette_probe.c`.
+  - The probe verifies 7/7 invariants: 16 colors × 6 brightness levels,
+    index 4 cyan `(0,219,219)` instead of EGA dark red, source-backed
+    brown/tan/blue base colors, cyan invariant across all brightness
+    levels, LIGHT5 retaining 8 residual non-black colors, sampled
+    LIGHT1–LIGHT5 values matching recovered VIDEODRV.C tables, and
+    rejection of out-of-range lookups.
+  - Evidence: `parity-evidence/pass46_vga_palette_lookup.md`.
+  - M10 VGA palette export probe remains green.
+- **What pass 46 does NOT change:**
+  - Creature palette replacement/rendering integration remains open.
+  - Special credits/entrance/swoosh palette switching remains open.
+  - No viewport/layout/pixel-overlay parity claim beyond the palette
+    lookup seam.
 
 ## 11. ReDMCSB pixel overlays missing for viewport and side panel
 - **Area:** `VISUAL`
@@ -562,7 +574,7 @@ first, then visual parity, then typography / honesty.
   37**), stairs/door edge cases (#2, #3), measurable visual drifts
   with DEFS.H anchors (#4, #5).
 - **Medium (pass-42 … pass-46):** invented chrome + text-as-graphic
-  rework (#6, #7, #8), font bank (#9 — **LANDED pass 45**), palette (#10).
+  rework (#6, #7, #8), font bank (#9 — **LANDED pass 45**), palette (#10 — **LANDED pass 46**).
 - **Blocked / tooling (pass-47):** overlays need capture infra (#11).
 - **Lower (pass-48 … pass-50):** cosmetic tick prefix (#12, dup #13),
   behavioral probe binding (#14), audio (#15).
