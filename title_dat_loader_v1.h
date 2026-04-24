@@ -2,6 +2,7 @@
 #define FIRESTAFF_TITLE_DAT_LOADER_V1_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define V1_TITLE_DAT_ITEM_COUNT 59u
 #define V1_TITLE_DAT_FRAME_MAX  53u
@@ -52,6 +53,26 @@ typedef struct V1_TitlePlayer {
     int done;
 } V1_TitlePlayer;
 
+typedef struct V1_TitlePalette {
+    uint8_t rgba[16][4];
+} V1_TitlePalette;
+
+typedef struct V1_TitleRenderFrame {
+    const V1_TitleRecord* record;
+    unsigned int frameOrdinal;
+    unsigned int paletteOrdinal;
+    unsigned int durationFrames;
+    unsigned int width;
+    unsigned int height;
+    const uint8_t* colorIndices;
+    const V1_TitlePalette* palette;
+} V1_TitleRenderFrame;
+
+typedef int (*V1_TitleFrameCallback)(const V1_TitleRenderFrame* frame,
+                                     void* userData,
+                                     char* errMsg,
+                                     size_t errMsgBytes);
+
 const char* V1_Title_TypeLabel(V1_TitleItemType type);
 
 int V1_Title_ParseManifest(const char* titleDatPath,
@@ -63,5 +84,11 @@ void V1_TitlePlayer_Init(V1_TitlePlayer* player,
                          const V1_TitleManifest* manifest);
 
 const V1_TitleRecord* V1_TitlePlayer_NextFrame(V1_TitlePlayer* player);
+
+int V1_Title_RenderFrames(const char* titleDatPath,
+                          V1_TitleFrameCallback callback,
+                          void* userData,
+                          char* errMsg,
+                          size_t errMsgBytes);
 
 #endif

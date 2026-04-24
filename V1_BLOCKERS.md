@@ -646,6 +646,24 @@ first, then visual parity, then typography / honesty.
   - Runtime/frontend drawing is intentionally not wired in this pass: EN/DL
     pixel payload decode/compositing, exact blit timing, and title-menu handoff
     remain explicit next gaps.
+- **Pass 57 (landed, 2026-04-24):**
+  - `title_dat_loader_v1.[ch]` now includes a bounded IMG1 renderer for the
+    original DM PC 3.4 `TITLE` EN/DL payloads.  It decodes EN base images,
+    applies DL transparent-skip delta compositing on one 320×200 V1 canvas,
+    applies the source PL palettes, and emits 53 rendered frames in source item
+    order.  It uses only the original local `TITLE` binary for V1 rendering.
+  - New probes/evidence:
+    `run_firestaff_v1_title_render_probe.sh` (6/6 invariants against the real
+    `TITLE`) and `run_firestaff_v1_title_render_png_compare_probe.sh` (6/6 C
+    renderer invariants plus 4/4 Greatstone-source PNG comparison invariants),
+    with logs in `parity-evidence/pass57_v1_title_render_probe.txt` and
+    `parity-evidence/pass57_v1_title_render_png_compare_probe.txt`.
+  - Pixel/compositing behavior is now source-proved for all 53 frames: rendered
+    RGB output matches the local Greatstone 320×200 EN/DL source PNG references
+    byte-for-byte, and pass-57 fingerprints lock both palette-index composites
+    (`0xb4e5d330`) and PL-applied RGB composites (`0x143fa969`).
+  - No title frontend timing/cadence, wall-clock frame rate, palette-display
+    timing, or title-menu handoff claim is made by pass 57.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -658,14 +676,15 @@ first, then visual parity, then typography / honesty.
      by source-backed event-index conversion or original runtime capture.
   4. Bug-faithful playback quirks/cataloging when relevant.
 - **Remaining gaps before V1 TITLE animation can be called original-faithful:**
-  1. Decode/render EN/DL payload pixels, including delta compositing behavior,
-     into the V1 title frontend without using V2/upscaled assets.
+  1. Wire the pass-57 original-data renderer into the V1 title/frontend path
+     without using V2/upscaled assets.
   2. Capture or source-prove frame timing/cadence, palette application timing,
      and title-menu handoff.
-  3. Compare rendered V1 frames against original/Greatstone source frames.
-- **Suggested follow-up pass:** pass-57 — wire/decode the `TITLE` EN/DL pixel
-  payload into a V1 title animation renderer, or capture/source-prove title
-  animation cadence before frontend timing claims.
+  3. Pixel-compare the wired frontend output against original emulator capture;
+     pass 57 only proves renderer output against Greatstone source PNG frames.
+- **Suggested follow-up pass:** pass-58 — bind the pass-57 renderer into the V1
+  title frontend, or capture/source-prove title animation cadence before making
+  frontend timing claims.
 
 ---
 

@@ -1,0 +1,16 @@
+# TITLE path: /Users/bosse/.openclaw/data/redmcsb-original/TITLE
+PASS P57_TITLE_RENDER_01 renderer emits 53 original TITLE frames: 2 EN base frames plus 51 DL composites
+PASS P57_TITLE_RENDER_02 renderer applies source PL break segmentation as 37 + 16 frames
+PASS P57_TITLE_RENDER_03 render callback order is frameOrdinal 1..53 with 320x200 canvas dimensions
+PASS P57_TITLE_RENDER_04 source EN/DL item attributes are one display frame each; no frontend cadence is inferred
+PASS P57_TITLE_RENDER_05 decoded TITLE palette-index composites match pass-57 original-data fingerprint
+PASS P57_TITLE_RENDER_06 decoded TITLE RGB composites match pass-57 PL-applied fingerprint
+# pass57 title index fnv1a32: 0xb4e5d330
+# pass57 title rgb fnv1a32: 0x143fa969
+# summary: 6/6 invariants passed
+PASS P57_TITLE_PNG_01 Greatstone EN/DL references and rendered TITLE outputs both contain 53 frames
+PASS P57_TITLE_PNG_02 rendered frame ordinal order and 320x200 dimensions match Greatstone EN/DL item order
+PASS P57_TITLE_PNG_03 rendered TITLE RGB pixels are identical to Greatstone source PNGs
+PASS P57_TITLE_PNG_04 pass-57 rendered frame tree fingerprint matches expected Greatstone-order RGB digest
+# pass57 rendered title rgb tree sha256: 248136ab58a8a3c8b57571d5cbe72be0ac09fc60a3f22761a0a9bfd126773cb6
+# summary: 4/4 invariants passed
