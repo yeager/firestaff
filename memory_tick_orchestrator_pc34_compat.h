@@ -112,6 +112,7 @@
 #define EMIT_SPELL_EFFECT     0x0A
 #define EMIT_PARTY_FELL       0x0B
 #define EMIT_PARTY_TELEPORTED 0x0C
+#define EMIT_SENSOR_EFFECT    0x0D  /* pass-37: party enter/leave sensor effects */
 
 /* ================================================================
  *  Capacities

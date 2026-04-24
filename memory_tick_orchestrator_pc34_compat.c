@@ -935,6 +935,9 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             if (mr.resultCode == MOVE_OK) {
                 struct PartyState_Compat movedParty = world->party;
                 struct PostMoveResolution_Compat postMove;
+                int oldMapX = world->party.mapX;
+                int oldMapY = world->party.mapY;
+                int oldMapIndex = world->party.mapIndex;
                 int i;
 
                 memset(&postMove, 0, sizeof(postMove));
@@ -974,6 +977,66 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 emit(result, EMIT_PARTY_MOVED,
                      world->party.mapX, world->party.mapY,
                      world->party.direction, world->party.mapIndex);
+                /*
+                 * Pass 37 — sensor enter/leave runtime wiring.
+                 *
+                 * Run F0718_SENSOR_ProcessPartyEnterLeave_Compat for the
+                 * pre-move square (WALK_OFF) and the post-resolve final
+                 * square (WALK_ON) and surface each produced effect as a
+                 * distinct EMIT_SENSOR_EFFECT emission.  v1 scope (per
+                 * V1_BLOCKERS.md #1):  bounded to the teleport + text
+                 * effects F0710 already models; other sensor types flow
+                 * through as SENSOR_EFFECT_UNSUPPORTED markers and are
+                 * emitted as such so downstream probes can observe them
+                 * without side effects on world state.
+                 *
+                 * The emitted payload is:
+                 *   payload[0] = SensorEffect.kind   (SENSOR_EFFECT_*)
+                 *   payload[1] = SensorEffect.sensorType
+                 *   payload[2] = triggerEvent        (SENSOR_EVENT_*)
+                 *   payload[3] = textIndex OR destMapIndex
+                 *
+                 * This is an EMISSION only; world mutation for teleport
+                 * effects is deferred to a dedicated pass (the v1 path
+                 * already covers tile-type teleporters through F0704).
+                 */
+                if (world->things) {
+                    struct SensorEffectList_Compat walkOff;
+                    struct SensorEffectList_Compat walkOn;
+                    int s;
+
+                    memset(&walkOff, 0, sizeof(walkOff));
+                    memset(&walkOn, 0, sizeof(walkOn));
+
+                    (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+                        world->dungeon, world->things,
+                        oldMapIndex, oldMapX, oldMapY,
+                        SENSOR_EVENT_WALK_OFF, &walkOff);
+                    for (s = 0; s < walkOff.count; ++s) {
+                        const struct SensorEffect_Compat* ef = &walkOff.effects[s];
+                        int32_t p3 = (ef->kind == SENSOR_EFFECT_TELEPORT)
+                            ? ef->destMapIndex
+                            : ef->textIndex;
+                        emit(result, EMIT_SENSOR_EFFECT,
+                             ef->kind, ef->sensorType,
+                             SENSOR_EVENT_WALK_OFF, p3);
+                    }
+
+                    (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+                        world->dungeon, world->things,
+                        world->party.mapIndex,
+                        world->party.mapX, world->party.mapY,
+                        SENSOR_EVENT_WALK_ON, &walkOn);
+                    for (s = 0; s < walkOn.count; ++s) {
+                        const struct SensorEffect_Compat* ef = &walkOn.effects[s];
+                        int32_t p3 = (ef->kind == SENSOR_EFFECT_TELEPORT)
+                            ? ef->destMapIndex
+                            : ef->textIndex;
+                        emit(result, EMIT_SENSOR_EFFECT,
+                             ef->kind, ef->sensorType,
+                             SENSOR_EVENT_WALK_ON, p3);
+                    }
+                }
             } else if (mr.resultCode == MOVE_TURN_ONLY) {
                 world->party.direction = mr.newDirection;
                 emit(result, EMIT_PARTY_MOVED,

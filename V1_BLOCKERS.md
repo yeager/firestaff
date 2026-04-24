@@ -1,8 +1,8 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24
+Last updated: 2026-04-24 (pass 37 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
-Primary consumers: pass-37+ planning, `STATUS.md`
+Primary consumers: pass-38+ planning, `STATUS.md`
 
 This is the **single source of truth** for what is still outstanding
 between Firestaff and DM1 PC 3.4 English in V1 original-faithful mode
@@ -19,21 +19,36 @@ first, then visual parity, then typography / honesty.
 
 ---
 
-## 1. Compat-runtime integration of sensor enter/leave events
+## 1. Compat-runtime integration of sensor enter/leave events  — **LANDED (pass 37)**
 - **Area:** `OWNERSHIP`
-- **Evidence:**
-  - Pass 32 landed the compat-side owner
-    `F0718_SENSOR_ProcessPartyEnterLeave_Compat` and probe-verified it
-    at 12/12 invariants, but
-    `memory_tick_orchestrator_pc34_compat.c:F0888_ORCH_ApplyPlayerInput_Compat`
-    does NOT yet invoke it on every party square change.
-  - `M11_OWNERSHIP_AUDIT_MOVEMENT_DOORS_ENV.md` §3 item "sensor
-    ownership migration" — the owner exists but is not the runtime
-    owner yet.
-- **Suggested pass:** pass-37 — wire `F0718` into the orchestrator's
-  enter/leave emission around the F0702/F0704 movement result, keeping
-  the effect list application bounded to teleport + text in v1 so
-  regressions are small.
+- **Status:** Resolved for emission-side wiring.  Remaining scope is
+  world mutation for sensor-effect teleports, which stays on the
+  existing F0704 tile-type teleporter path in v1.
+- **Pass 37 (landed, 2026-04-24):**
+  - `F0888_ORCH_ApplyPlayerInput_Compat` now invokes
+    `F0718_SENSOR_ProcessPartyEnterLeave_Compat` for the pre-move
+    square (`SENSOR_EVENT_WALK_OFF`) and the post-resolve final square
+    (`SENSOR_EVENT_WALK_ON`) on every successful party move.
+  - Each produced `SensorEffect_Compat` is surfaced as a new
+    `EMIT_SENSOR_EFFECT` (kind `0x0D`) emission on `TickResult_Compat`
+    with payload `[effect.kind, effect.sensorType, triggerEvent,
+    textIndex|destMapIndex]`.
+  - Pass-37 probe
+    `run_firestaff_m11_pass37_sensor_runtime_wiring_probe.sh` drives
+    the real orchestrator with a two-sensor destination and a
+    one-sensor origin and verifies 13/13 invariants including source
+    ordering, WALK_ON/WALK_OFF split, payload contents, and that
+    turn-only moves produce zero emissions.
+  - All baseline gates stay green: Phase A 18/18, game view 361/361,
+    M10 verify 20/20 phases, M11 verify end-to-end.
+- **What is still NOT landed by pass 37:**
+  - Teleport sensor effects do not yet mutate world state through
+    the sensor path; the v1 path covers tile-type teleporters via
+    F0704.  Sensor-type teleports still emit as markers only.
+  - Non-teleport / non-text sensor types still flow through
+    `SENSOR_EFFECT_UNSUPPORTED` by F0710 (unchanged since pass 32).
+  - Creature movement does not invoke `F0718` (party-only scope,
+    consistent with pass 32 §4.32.5).
 
 ## 2. Animating door states (1..3) still snapped to 0/4
 - **Area:** `OWNERSHIP`
@@ -232,9 +247,9 @@ first, then visual parity, then typography / honesty.
 
 ## Priority groupings
 
-- **High (pass-37 … pass-41):** ownership wiring (#1), stairs/door
-  edge cases (#2, #3), measurable visual drifts with DEFS.H anchors
-  (#4, #5).
+- **High (pass-37 … pass-41):** ownership wiring (#1 — **LANDED pass
+  37**), stairs/door edge cases (#2, #3), measurable visual drifts
+  with DEFS.H anchors (#4, #5).
 - **Medium (pass-42 … pass-46):** invented chrome + text-as-graphic
   rework (#6, #7, #8), font bank (#9), palette (#10).
 - **Blocked / tooling (pass-47):** overlays need capture infra (#11).
