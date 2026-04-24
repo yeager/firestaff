@@ -28,6 +28,7 @@ enum {
     PROBE_COLOR_LIGHT_GREEN = 7,   /* DM PC VGA slot 7  — Green       */
     PROBE_COLOR_LIGHT_CYAN  = 4,   /* DM PC VGA slot 4  — Cyan        */
     PROBE_COLOR_LIGHT_RED   = 9,   /* DM PC VGA slot 9  — Orange/Gold */
+    PROBE_COLOR_RED         = 8,   /* DM PC VGA slot 8  — Red (C08)   */
     PROBE_COLOR_MAGENTA     = 10,  /* DM PC VGA slot 10 — Tan/Skin    */
     PROBE_COLOR_YELLOW      = 11,  /* DM PC VGA slot 11 — Yellow      */
     PROBE_COLOR_LIGHT_BLUE  = 14,  /* DM PC VGA slot 14 — Blue        */
@@ -785,6 +786,15 @@ int main(int argc, char** argv) {
                                        PROBE_COLOR_DARK_GRAY) > 120U,
                  "bottom HUD renders a dedicated party/status strip instead of a single inspector blob");
 
+    /* Pass 43: champion status-box bar graphs are now source-faithful
+     * vertical bars per CHAMDRAW.C F0287_CHAMPION_DrawBarGraphs.  The
+     * bar fill color comes from DATA.C / G0046_auc_Graphic562_ChampionColor
+     * = {7, 11, 8, 14} -> GREEN, YELLOW, RED, BLUE by champion slot,
+     * replacing the invented per-stat LIGHT_RED/LIGHT_GREEN/LIGHT_BLUE
+     * strip.  The synthetic fixture has champions 0 and 1 present and
+     * slot 0 active, so the party strip shows GREEN bar fill for slot 0,
+     * YELLOW for slot 1, abundant DARK_GRAY blank-bar pixels, and still
+     * retains the active-slot yellow frame. */
     probe_record(&tally,
                  "INV_GV_15B",
                  probe_count_color(syntheticFramebuffer,
@@ -793,14 +803,14 @@ int main(int argc, char** argv) {
                                    PROBE_PARTY_PANEL_Y,
                                    PROBE_BOTTOM_PANEL_W,
                                    PROBE_PARTY_PANEL_H,
-                                   PROBE_COLOR_LIGHT_RED) > 30U &&
+                                   PROBE_COLOR_LIGHT_GREEN) > 20U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
                                        PROBE_BOTTOM_PANEL_X,
                                        PROBE_PARTY_PANEL_Y,
                                        PROBE_BOTTOM_PANEL_W,
                                        PROBE_PARTY_PANEL_H,
-                                       PROBE_COLOR_LIGHT_GREEN) > 30U &&
+                                       PROBE_COLOR_DARK_GRAY) > 30U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
                                        PROBE_BOTTOM_PANEL_X,
@@ -808,7 +818,7 @@ int main(int argc, char** argv) {
                                        PROBE_BOTTOM_PANEL_W,
                                        PROBE_PARTY_PANEL_H,
                                        PROBE_COLOR_YELLOW) > 20U,
-                 "party strip reflects real champion bars and active-slot framing when champion data exists");
+                 "party strip reflects source-colored champion bars and active-slot framing when champion data exists");
 
     probe_record(&tally,
                  "INV_GV_16",

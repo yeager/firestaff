@@ -135,6 +135,41 @@ enum {
      * Ref: V1_BLOCKERS.md §5 / PARITY_MATRIX_DM1_V1.md §1. */
     M11_V1_PARTY_SLOT_W    = 67,
     M11_V1_PARTY_SLOT_STEP = 69,
+    /* DM1 PC 3.4 source-anchored champion status-box bar-graph
+     * geometry for V1 original-faithful mode.  Derived from the
+     * ZONES.H layout table recovered in pass 47 tooling
+     * (zones_h_reconstruction.json, GRAPHICS.DAT entry 696) and
+     * from ReDMCSB CHAMDRAW.C F0287_CHAMPION_DrawBarGraphs.
+     *
+     * Zone hierarchy (relative to the 67x29 C007 status-box frame
+     * whose origin is the slot (x, y)):
+     *   zone 150 (dims 67x29) -> zone 151 (type 1, origin 0,0)
+     *     -> zone 183 (dims 24x29) at offset (0, 0)
+     *       -> zone 187 (type 1, origin 43, 0) — bar-graph region
+     *         -> zone 191 (dims 4x25) at offset 0, 0
+     *           -> zone 195 (type 7, bottom-center, offset 5, 26)  "HP"
+     *           -> zone 199 (type 7, bottom-center, offset 12, 26) "stamina"
+     *           -> zone 203 (type 7, bottom-center, offset 19, 26) "mana"
+     *
+     * Each bar is 4 px wide x 25 px tall, bottom-anchored inside a
+     * 4x25 container.  The three bars span x = 43..62 (HP centered
+     * at 43+5-2 = 46 column range; 4-wide; etc.) — see helper
+     * m11_v1_bar_graph_x() below for the exact per-bar origin.
+     *
+     * Pass 43: replaces the invented horizontal 59x{2,1,1} strip at
+     * slot-bottom with the source-faithful vertical 4x25 bars.
+     * Ref: V1_BLOCKERS.md §7; PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md
+     * Pass 35 §2.7; parity-evidence/pass43_bar_graphs.md. */
+    M11_V1_BAR_GRAPH_REGION_X = 43,
+    M11_V1_BAR_GRAPH_REGION_Y = 0,
+    M11_V1_BAR_GRAPH_REGION_W = 24,
+    M11_V1_BAR_GRAPH_REGION_H = 29,
+    M11_V1_BAR_CONTAINER_W   = 4,
+    M11_V1_BAR_CONTAINER_H   = 25,
+    M11_V1_BAR_HP_CX         = 5,   /* zone 195 d1 */
+    M11_V1_BAR_STAMINA_CX    = 12,  /* zone 199 d1 */
+    M11_V1_BAR_MANA_CX       = 19,  /* zone 203 d1 */
+    M11_V1_BAR_BOTTOM_OFFSET = 26,  /* zones 195/199/203 d2 (bottom anchor) */
     M11_UTILITY_PANEL_X = 218,
     M11_UTILITY_PANEL_Y = 28,
     M11_UTILITY_PANEL_W = 86,
@@ -1570,6 +1605,111 @@ static int m11_party_slot_w(void) {
     return m11_v2_vertical_slice_enabled()
         ? (int)M11_PARTY_SLOT_W
         : (int)M11_V1_PARTY_SLOT_W;
+}
+
+/* Pass 43: DM1 PC 3.4 source-faithful bar-graph mode switch.
+ *
+ * Default: ON in V1 original-faithful mode; OFF under V2
+ * vertical-slice (which composites a pre-baked HUD sprite that
+ * includes its own legacy horizontal strip).  Opt-out env var
+ * FIRESTAFF_V1_BAR_GRAPHS=0 for A/B measurement only.
+ *
+ * When ON, the champion status-box renders three vertical bars
+ * (HP/stamina/mana) using the ZONES.H-anchored geometry captured
+ * in the M11_V1_BAR_* enum above, matching the visible behavior
+ * of CHAMDRAW.C F0287_CHAMPION_DrawBarGraphs: blank portion is
+ * darkest-gray (C12), filled portion is the per-champion color
+ * (G0046_auc_Graphic562_ChampionColor[championIndex], reconstructed
+ * as m11_v1_champion_color() below), bar drains from the top.
+ *
+ * Ref: V1_BLOCKERS.md §7; firestaff_pc34_core_amalgam.c
+ * CHAMDRAW.C F0287; zones_h_reconstruction.json records 187..206;
+ * parity-evidence/pass43_bar_graphs.md. */
+static int m11_v1_bar_graphs_enabled(void) {
+    static int cached = -1;
+    const char* env;
+    if (cached >= 0) {
+        return cached;
+    }
+    if (m11_v2_vertical_slice_enabled()) {
+        cached = 0;
+        return cached;
+    }
+    env = getenv("FIRESTAFF_V1_BAR_GRAPHS");
+    if (env && env[0] != '\0' && strcmp(env, "0") == 0) {
+        cached = 0;
+    } else {
+        cached = 1;
+    }
+    return cached;
+}
+
+/* Pass 43: per-champion color reconstruction.
+ *
+ * In DM1 PC 3.4 the champion color table lives inside graphic 562
+ * (G0046_auc_Graphic562_ChampionColor, 4 entries of palette index
+ * bytes).  Extracting the exact bytes from GRAPHICS.DAT entry 562
+ * is out of pass-43 scope (blocker §15 / graphic 562 content map
+ * is a separate item).  The exact four palette indices are still
+ * recoverable from the local ReDMCSB DATA.C declaration for
+ * G0046_auc_Graphic562_ChampionColor, which defines
+ * `{ 7, 11, 8, 14 }`.  Those bytes are mirrored here directly so
+ * the visible bar colors match the source while the geometry stays
+ * bound to the recovered ZONES.H layout.
+ *
+ * Honesty trail: when graphic 562 itself is decoded semantically,
+ * this helper can swap from the DATA.C mirror to the extracted
+ * bytes without changing the rendered output. */
+static unsigned char m11_v1_champion_color(int championIndex) {
+    static const unsigned char colorTable[4] = {
+        (unsigned char)M11_COLOR_LIGHT_GREEN, /* DATA.C G0046[0] = 7  */
+        (unsigned char)M11_COLOR_YELLOW,      /* DATA.C G0046[1] = 11 */
+        (unsigned char)M11_COLOR_RED,         /* DATA.C G0046[2] = 8  */
+        (unsigned char)M11_COLOR_LIGHT_BLUE   /* DATA.C G0046[3] = 14 */
+    };
+    if (championIndex < 0 || championIndex > 3) {
+        return (unsigned char)M11_COLOR_SILVER; /* C13_COLOR_LIGHTEST_GRAY */
+    }
+    return colorTable[championIndex];
+}
+
+/* Pass 43: return the top-left pixel coordinate inside a 67x29
+ * status-box frame for the bar container at the given statIndex
+ * (0 = HP, 1 = stamina, 2 = mana).  Computed once here so tests
+ * and the probe can reproduce the exact pixel placement.
+ *
+ * Zone algebra (type 7 = bottom-center anchor within 4x25
+ * container, container anchored at region top-left):
+ *   container_top_y  = region_y + region_h - container_h
+ *                    = 0 + 29 - 25 = 4         [inside status box]
+ *   container_left_x = region_x + d1 - container_w/2 - offset
+ *                    ≈ region_x + d1 - 2
+ *                    = 43 + d1 - 2
+ *
+ * For the three bars d1 ∈ {5, 12, 19}, yielding container
+ * left edges at x = 46, 53, 60 inside the 67-wide status box.
+ * The bar container height is 25 and its bottom edge is at
+ * y = container_top_y + container_h = 29 (flush with the
+ * 29-tall status-box frame bottom). */
+static int m11_v1_bar_graph_x(int statIndex) {
+    int d1;
+    switch (statIndex) {
+        case 0: d1 = (int)M11_V1_BAR_HP_CX;      break;
+        case 1: d1 = (int)M11_V1_BAR_STAMINA_CX; break;
+        case 2: d1 = (int)M11_V1_BAR_MANA_CX;    break;
+        default: return -1;
+    }
+    /* Center the 4-wide bar on d1 inside region-x.  With
+     * COORD.C type-7 centering and (container_w+1)/2 = 2, the
+     * offset is d1 - 2. */
+    return (int)M11_V1_BAR_GRAPH_REGION_X + d1 - 2;
+}
+
+static int m11_v1_bar_graph_y_top(void) {
+    /* container_top = region_y + region_h - container_h */
+    return (int)M11_V1_BAR_GRAPH_REGION_Y +
+           (int)M11_V1_BAR_GRAPH_REGION_H -
+           (int)M11_V1_BAR_CONTAINER_H;
 }
 
 static void m11_blit_v2_slice_asset(const M11_V2SliceAsset* asset,
@@ -11469,28 +11609,102 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
                 (void)drewIcon;
             }
-            {
-            int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
-            int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
-            int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
             if (isDead) {
                 M11_TextStyle ds = g_text_small;
                 ds.color = M11_COLOR_RED;
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               x + 4, y + 12, "DEAD", &ds);
             }
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 20, 59, 2, M11_COLOR_DARK_GRAY);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 20, hpWidth, 2, isDead ? M11_COLOR_DARK_GRAY : M11_COLOR_LIGHT_RED);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 23, 59, 1, M11_COLOR_DARK_GRAY);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 23, staminaWidth, 1, M11_COLOR_LIGHT_GREEN);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 25, 59, 1, M11_COLOR_DARK_GRAY);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
+            /* Pass 43: champion HP/stamina/mana bar graphs.
+             *
+             * V1 mode (default): source-faithful vertical bars per
+             * CHAMDRAW.C F0287_CHAMPION_DrawBarGraphs.  Each of the
+             * three bars is a 4x25 rectangle bottom-anchored inside
+             * the 24x29 bar-graph region at the right side of the
+             * 67x29 status-box frame.  Blank portion is darkest-gray
+             * (C12), filled portion is the per-champion color.  Bar
+             * drains from the top: when current < maximum, the
+             * (max-current)/max fraction of the bar at the top is
+             * filled with darkest-gray first, and only the remaining
+             * bottom portion shows the champion color.  Dead
+             * champion (current==0) gets all darkest-gray and skips
+             * the colored fill entirely (matches F0287's
+             * L2254_i_Bars[...][0] != 0 guard).
+             *
+             * V2 vertical-slice / opt-out: legacy horizontal 59x{2,1,1}
+             * strip preserved so the pre-baked HUD sprite stays
+             * pixel-aligned.  Opt-out via FIRESTAFF_V1_BAR_GRAPHS=0.
+             *
+             * Ref: firestaff_pc34_core_amalgam.c l.11229..11260 for
+             * F0287; zones_h_reconstruction.json records 187..206;
+             * parity-evidence/pass43_bar_graphs.md. */
+            if (m11_v1_bar_graphs_enabled()) {
+                int statIdx;
+                int barTopY = y + m11_v1_bar_graph_y_top();
+                unsigned char champColor =
+                    isDead
+                        ? (unsigned char)M11_COLOR_DARK_GRAY
+                        : m11_v1_champion_color(slot);
+                long curs[3];
+                long maxs[3];
+                curs[0] = (long)champ->hp.current;
+                maxs[0] = (long)champ->hp.maximum;
+                curs[1] = (long)champ->stamina.current;
+                maxs[1] = (long)champ->stamina.maximum;
+                curs[2] = (long)champ->mana.current;
+                maxs[2] = (long)champ->mana.maximum;
+                for (statIdx = 0; statIdx < 3; ++statIdx) {
+                    int barX = x + m11_v1_bar_graph_x(statIdx);
+                    int blankHeight;
+                    int fillHeight;
+                    int barFullHeight = (int)M11_V1_BAR_CONTAINER_H;
+                    int barW          = (int)M11_V1_BAR_CONTAINER_W;
+                    /* Blank the whole container to darkest-gray
+                     * first (matches F0287's F0732_FillScreenArea
+                     * (L2004_ai_XYZBlankBar, C12_COLOR_DARKEST_GRAY)
+                     * combined with the colored overdraw). */
+                    m11_fill_rect(framebuffer, framebufferWidth,
+                                  framebufferHeight,
+                                  barX, barTopY, barW, barFullHeight,
+                                  M11_COLOR_DARK_GRAY);
+                    if (maxs[statIdx] > 0 && curs[statIdx] > 0) {
+                        /* F0287 scales fill height by cur/max,
+                         * min 1 px if any cur > 0.  Blank height is
+                         * reduced by this amount; the colored bar's
+                         * top moves down by blank-height. */
+                        long scaled = (long)barFullHeight *
+                                       curs[statIdx] / maxs[statIdx];
+                        if (scaled < 1) scaled = 1;
+                        if (scaled > barFullHeight) scaled = barFullHeight;
+                        fillHeight = (int)scaled;
+                        blankHeight = barFullHeight - fillHeight;
+                        if (fillHeight > 0) {
+                            m11_fill_rect(framebuffer, framebufferWidth,
+                                          framebufferHeight,
+                                          barX, barTopY + blankHeight,
+                                          barW, fillHeight, champColor);
+                        }
+                    }
+                    /* current == 0 leaves the container all-blank,
+                     * matching F0287's L2254_i_Bars[...][0] != 0
+                     * final-color guard. */
+                }
+            } else {
+                int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
+                int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
+                int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 20, 59, 2, M11_COLOR_DARK_GRAY);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 20, hpWidth, 2, isDead ? M11_COLOR_DARK_GRAY : M11_COLOR_LIGHT_RED);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 23, 59, 1, M11_COLOR_DARK_GRAY);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 23, staminaWidth, 1, M11_COLOR_LIGHT_GREEN);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 25, 59, 1, M11_COLOR_DARK_GRAY);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
             }
 
             /* GRAPHICS.DAT-backed shield border overlays (67×29).

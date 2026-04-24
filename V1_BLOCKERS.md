@@ -328,14 +328,42 @@ first, then visual parity, then typography / honesty.
   rune-label graphic (pass 44) are the next items on the V1
   parity path.
 
-## 7. Champion HP/stamina/mana shown as numeric strings instead of bar graphs
+## 7. Champion HP/stamina/mana shown as numeric strings instead of bar graphs — **LANDED (pass 43)**
 - **Area:** `VISUAL`
-- **Evidence:**
-  - `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` Pass 35 §2.7 — DM1 renders
-    these via `CHAMDRAW.C` bar graphs (ZONES C187..C190), Firestaff
-    renders numeric glyph strings.
-- **Suggested pass:** pass-43 — replace the numeric strip with the
-  bar-graph renderer.  Asset is already extracted.
+- **Status:** Resolved for the V1 default path.  Firestaff now renders
+  source-faithful vertical champion bar graphs in the 67×29 status box
+  instead of the invented horizontal strip, using the CHAMDRAW.C
+  fill-from-bottom behavior and the recovered ZONES.H placement.
+- **Pass 43 (landed, 2026-04-24):**
+  - `m11_game_view.c` gained V1-only bar-graph geometry constants for
+    the recovered status-box bar region (`x=43..66`, three 4×25
+    containers at local x = 46/53/60, top y = 4 inside the 29-high
+    frame) plus `m11_v1_bar_graphs_enabled()` to keep V2 vertical-slice
+    mode on its legacy horizontal strip.
+  - `m11_draw_party_panel` now renders HP/stamina/mana via three
+    vertical 4×25 bars per champion, matching
+    `CHAMDRAW.C:F0287_CHAMPION_DrawBarGraphs`: darkest-gray blank area,
+    champion-color fill from the bottom, minimum 1-pixel fill when
+    current > 0, and full blank for zero.
+  - The champion-color mapping is now source-backed from local ReDMCSB
+    `DATA.C:G0046_auc_Graphic562_ChampionColor = {7, 11, 8, 14}`
+    (green, yellow, red, blue by slot) instead of the prior invented
+    per-stat color scheme.
+  - New bounded probe
+    `run_firestaff_m11_pass43_bar_graph_probe.sh` verifies 10/10
+    invariants including the exact bar origins (58/65/72 at y=164 for
+    slot 0), the `{7,11,8,14}` source anchor, full-height / partial /
+    1-pixel fill cases, all four champion colors, and the absence of
+    the old left-anchored horizontal strip body.
+  - All baseline gates stay green: Phase A 18/18, M11 game view
+    361/361, M11 launcher smoke PASS, M10 verify 20/20 phases,
+    M11 verify end-to-end.
+- **What pass 43 does NOT change:**
+  - Spell-panel rune labels remain text instead of the `C011` graphic
+    blit (blocker §8 / pass 44).
+  - Font-bank wiring, palette, viewport, and party-panel origin are
+    unchanged (blockers §9, §10, §4, §11).
+  - No M10 behavior or save-format touch.
 
 ## 8. Spell-panel rune labels still text, not `C011` graphic blit
 - **Area:** `VISUAL`
