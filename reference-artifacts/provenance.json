@@ -1,0 +1,242 @@
+{
+  "pass": 47,
+  "tool": "tools/redmcsb_reference_compose.py",
+  "inputs": {
+    "graphics_dat_extraction_manifest": "extracted-graphics-v1/manifest.json",
+    "graphics_dat_source_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "palette_file": "palette-recovery/recovered_palette.json",
+    "redmcsb_source_dump": "../redmcsb-output/I34E_I34M/ (DEFS.H, COORD.C referenced)"
+  },
+  "outputs": {
+    "reference_canvas": {
+      "path": "reference-artifacts/redmcsb_reference_320x200.png",
+      "sha256": "ffbbb75f37d459bc51fa55c4119b90c6a2b25371d6b1d7948abe4e7e448f2293",
+      "wh": [
+        320,
+        200
+      ]
+    },
+    "anchors": [
+      {
+        "name": "viewport_full_frame",
+        "graphic_index": 0,
+        "path": "reference-artifacts/anchors/0000_viewport_full_frame.png",
+        "manifest_wh": [
+          224,
+          136
+        ],
+        "expected_wh": [
+          224,
+          136
+        ],
+        "size_match": true,
+        "defs_reference": "C000_DERIVED_BITMAP_VIEWPORT; full VGA viewport (content index 0)",
+        "sha256": "1550997418e9b93ed4439fac9edcbe111da48ac412f5ea3140733a32f95b94fb"
+      },
+      {
+        "name": "spell_area_backdrop",
+        "graphic_index": 9,
+        "path": "reference-artifacts/anchors/0009_spell_area_backdrop.png",
+        "manifest_wh": [
+          87,
+          25
+        ],
+        "expected_wh": [
+          87,
+          25
+        ],
+        "size_match": true,
+        "defs_reference": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (DEFS.H:1815)",
+        "sha256": "456032a7dca63ea1671113d58abe0b0f744a13895209b079a2db3aa556133715"
+      },
+      {
+        "name": "action_area",
+        "graphic_index": 10,
+        "path": "reference-artifacts/anchors/0010_action_area.png",
+        "manifest_wh": [
+          87,
+          45
+        ],
+        "expected_wh": [
+          87,
+          45
+        ],
+        "size_match": true,
+        "defs_reference": "C010_GRAPHIC_MENU_ACTION_AREA (in-code comment, m11_game_view.c:8385)",
+        "sha256": "0d13a614ad1f16a010543a5d1375d060c229e73f3f34c3efa33b1be4224ac7a2"
+      },
+      {
+        "name": "spell_area_lines",
+        "graphic_index": 11,
+        "path": "reference-artifacts/anchors/0011_spell_area_lines.png",
+        "manifest_wh": [
+          14,
+          39
+        ],
+        "expected_wh": [
+          14,
+          39
+        ],
+        "size_match": true,
+        "defs_reference": "C011_GRAPHIC_MENU_SPELL_AREA_LINES (DEFS.H:1816)",
+        "sha256": "6ebe9053557e5c8263fc693cf790de9bb1c96dc88b41ed36f05e8434142bb30a"
+      },
+      {
+        "name": "panel_empty",
+        "graphic_index": 20,
+        "path": "reference-artifacts/anchors/0020_panel_empty.png",
+        "manifest_wh": [
+          144,
+          73
+        ],
+        "expected_wh": [
+          144,
+          73
+        ],
+        "size_match": true,
+        "defs_reference": "C020_GRAPHIC_PANEL_EMPTY (DEFS.H:1780)",
+        "sha256": "481ce587681dac98d3c1ac6909fcfb5b6815949875eecd695c7cec4553493d7e"
+      },
+      {
+        "name": "champion_portraits",
+        "graphic_index": 26,
+        "path": "reference-artifacts/anchors/0026_champion_portraits.png",
+        "manifest_wh": [
+          256,
+          87
+        ],
+        "expected_wh": [
+          256,
+          87
+        ],
+        "size_match": true,
+        "defs_reference": "C026_GRAPHIC_CHAMPION_PORTRAITS (atlas; 8x3 of 32x29 portraits)",
+        "sha256": "42ebbbcb2ce48f9a3ddf4646ca39b2b0ff6923bcc21c06d900fa05ed19216cdb"
+      },
+      {
+        "name": "slot_box_normal",
+        "graphic_index": 33,
+        "path": "reference-artifacts/anchors/0033_slot_box_normal.png",
+        "manifest_wh": [
+          18,
+          18
+        ],
+        "expected_wh": [
+          18,
+          18
+        ],
+        "size_match": true,
+        "defs_reference": "slot box graphic, verified by INV_GV_201 probe",
+        "sha256": "b4cc08434c4ce1b69aca687f2d552d45b02daa989061152709e4a43be34a4209"
+      },
+      {
+        "name": "slot_box_wounded",
+        "graphic_index": 34,
+        "path": "reference-artifacts/anchors/0034_slot_box_wounded.png",
+        "manifest_wh": [
+          18,
+          18
+        ],
+        "expected_wh": [
+          18,
+          18
+        ],
+        "size_match": true,
+        "defs_reference": "slot box graphic, verified by INV_GV_202 probe",
+        "sha256": "860453dda198380df65a58e582a7ead667fa81b9ae2a1fe1b3a9526e6bac9939"
+      },
+      {
+        "name": "slot_box_acting_hand",
+        "graphic_index": 35,
+        "path": "reference-artifacts/anchors/0035_slot_box_acting_hand.png",
+        "manifest_wh": [
+          18,
+          18
+        ],
+        "expected_wh": [
+          18,
+          18
+        ],
+        "size_match": true,
+        "defs_reference": "slot box graphic, verified by INV_GV_203 probe",
+        "sha256": "fe031b19b09c6ae7b9c78073e323d05aea15d84c918239971de76b1a717b0124"
+      },
+      {
+        "name": "status_box_frame",
+        "graphic_index": 7,
+        "path": "reference-artifacts/anchors/0007_status_box_frame.png",
+        "manifest_wh": [
+          67,
+          29
+        ],
+        "expected_wh": [
+          67,
+          29
+        ],
+        "size_match": true,
+        "defs_reference": "status box frame, verified by INV_GV_205 probe",
+        "sha256": "22bf6dbeadc8825c496e20329913b3d2e11d530067663e92c22821a79c880e9b"
+      }
+    ]
+  },
+  "composition": {
+    "note": "Pass 47 reference composition: source-anchored regions only.",
+    "screen": {
+      "w": 320,
+      "h": 200
+    },
+    "palette_source": "palette-recovery/recovered_palette.json :: base_palette_icon (LIGHT0)",
+    "regions": [
+      {
+        "name": "viewport_rect_placeholder",
+        "rect_xywh": [
+          0,
+          33,
+          224,
+          136
+        ],
+        "status": "placeholder_alignment_grid",
+        "source_anchor": "COORD.C G2067=0, G2068=33; DEFS.H C112_BYTE_WIDTH_VIEWPORT*2=224, C136_HEIGHT_VIEWPORT=136",
+        "note": "Viewport CONTENT is DRAWVIEW.C/DUNVIEW.C runtime output; not synthesisable without an engine. Grid marks the exact DEFS.H-anchored viewport boundary for overlay calibration."
+      },
+      {
+        "name": "message_area_rect_placeholder",
+        "rect_xywh": [
+          0,
+          169,
+          320,
+          31
+        ],
+        "status": "placeholder_border_only",
+        "source_anchor": "COORD.C G2092_MessageAreaWidth=320, G2091 via M075 => line height 7; viewport end row=168",
+        "note": "Text content is runtime-produced; reference shows only the boundary strip."
+      }
+    ],
+    "blocked_on_zones_h": [
+      {
+        "name": "side_column_backdrop_position",
+        "reason": "ZONES.H layout record not in local ReDMCSB dump; side column width (96px) != panel graphic width (144px) => placement requires zone-level evidence.",
+        "suggested_followup": "extract ZONES.H (or parse PANEL.C + COORD.C layout-record init path) to recover pixel x/y for C101_ZONE_PANEL and the champion-box zones."
+      }
+    ]
+  },
+  "honesty": {
+    "what_this_is": "A source-anchored 320x200 reference canvas + per-graphic palettized PNGs suitable for pixel-diff overlays of panel chrome and individual graphic blits.",
+    "what_this_is_not": "A full ReDMCSB frame render, an emulator capture, or a claim that the viewport content is known without an engine. Viewport content placeholders are clearly marked.",
+    "blockers_remaining": [
+      {
+        "name": "side_column_backdrop_position",
+        "reason": "ZONES.H layout record not in local ReDMCSB dump; side column width (96px) != panel graphic width (144px) => placement requires zone-level evidence.",
+        "suggested_followup": "extract ZONES.H (or parse PANEL.C + COORD.C layout-record init path) to recover pixel x/y for C101_ZONE_PANEL and the champion-box zones."
+      },
+      {
+        "name": "viewport_dungeon_content",
+        "reason": "Requires a runnable engine (DM1 DOS binary under DOSBox or a ReDMCSB headless build). See scripts/dosbox_dm1_capture.sh for the DOSBox path."
+      },
+      {
+        "name": "runtime_text_content",
+        "reason": "TEXT.C / TEXT2.C glyph rendering is content-dependent; font atlas is extracted (GRAPHICS.DAT index varies) but string placement is zone-driven."
+      }
+    ]
+  }
+}

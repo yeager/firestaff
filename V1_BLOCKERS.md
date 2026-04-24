@@ -142,9 +142,27 @@ first, then visual parity, then typography / honesty.
   - Pass 33 §4 and Pass 34 §3 both have `BLOCKED_ON_REFERENCE` rows
     for pixel-level placements because no ReDMCSB headless rasteriser
     is in-tree and no reference emulator capture has been produced.
-- **Suggested pass:** pass-47 (blocked on tooling) — land a ReDMCSB
-  headless rasteriser OR capture original DM1 PC 3.4 VGA frames via
-  DOSBox with deterministic state.
+  - Pass 47 (`parity-evidence/pass47_reference_capture_tooling.md`)
+    landed a bounded tooling / reference path:
+    - in-tree reference compositor
+      `tools/redmcsb_reference_compose.py` + per-graphic palettised
+      anchor PNGs in `reference-artifacts/anchors/` (10/10 anchors
+      match DEFS.H pixel sizes);
+    - overlay-diff helper `tools/redmcsb_overlay_diff.py` with
+      DEFS.H-named regions;
+    - deterministic DOSBox capture harness
+      `scripts/dosbox_dm1_capture.sh` (config written, game staged;
+     launch blocked only on user installing DOSBox-Staging / DOSBox-X).
+  - Pass 47 does NOT unblock: (a) ZONES.H-driven side-column placement
+    (ZONES.H is not in the local ReDMCSB dump), (b) viewport dungeon
+    content without an emulator capture, (c) TEXT.C runtime strings.
+- **Status:** partially unblocked.  Panel-chrome pixel overlays and
+  the DEFS.H-anchored viewport bounding rect can now be diffed
+  honestly.  Full viewport content overlay still requires the
+  DOSBox path to run end-to-end (user must install DOSBox + we need
+  a KeyMapper / autoexec keystroke plan).
+- **Suggested pass:** pass-47b — ZONES.H parse (from `PANEL.C` +
+  `COORD.C` layout-record init) and DOSBox keystroke automation plan.
 
 ## 12. Tick-prefix (`Tn:`) on message log lines
 - **Area:** `TEXT`
@@ -165,13 +183,50 @@ first, then visual parity, then typography / honesty.
 - **Evidence:** `PARITY_MATRIX_DM1_V1.md` §5 rows all `UNPROVEN`.
 - **Suggested pass:** pass-49 — bind at least one high-value M10 probe
   (movement-champions or dungeon-doors-sensors) to a ReDMCSB-produced
-  expected log once pass-47 tooling lands.
+  expected log.  Pass 47 landed the panel-chrome pixel-overlay path
+  (`tools/redmcsb_overlay_diff.py` + `reference-artifacts/anchors/`),
+  so the chrome side is unblocked; the behavioral-log side still
+  needs either a DOSBox capture path or a state-dump walk of the
+  probed path in the ReDMCSB source.
 
 ## 15. Audio samples are procedural placeholders
 - **Area:** `ASSET`
-- **Evidence:** `PARITY_MATRIX_DM1_V1.md` §7 "Sound samples (content)"
-  already `KNOWN_DIFF`.
-- **Suggested pass:** pass-50 — investigate SONG.DAT extraction.
+- **Evidence:** `PARITY_MATRIX_DM1_V1.md` §7 rows "Sound samples
+  (content) — SONG.DAT" and "… GRAPHICS.DAT SND3".
+- **Pass 50 (landed, 2026-04-24):**
+  - SONG.DAT DM PC v3.4 format fully documented from
+    source (dmweb.free.fr) and empirically verified against the
+    real file: `DM1_SONG_DAT_FORMAT.md`.
+  - Standalone loader/decoder landed: `song_dat_loader_v1.[ch]`
+    (DMCSB2 header, SEQ2 sequence, SND8 DPCM at 11025 Hz).
+  - V1 probe landed: `probes/v1/firestaff_v1_song_dat_probe.c` +
+    `run_firestaff_v1_song_dat_probe.sh`.  Against the real
+    SONG.DAT the probe passes 6/6 invariants (header layout,
+    file size, 10-item table, SEQ2 20-word sequence with end
+    marker, all 9 SND8 items decode to exactly declared sample
+    count).
+  - `PARITY_MATRIX_DM1_V1.md` §7 narrowed: "Sound samples —
+    SONG.DAT" status annotated with landed progress; a new
+    explicit row tracks the GRAPHICS.DAT SND3 SFX bank gap.
+  - Full landing log and evidence pointers in
+    `PASS50_AUDIO_FINDINGS.md`.
+- **Placeholder audio is still in use at runtime.**  Pass 50 did
+  not wire decoded buffers into `audio_sdl_m11.c`.
+- **Remaining gaps before V1 audio can be called
+  original-faithful** (enumerated in `PASS50_AUDIO_FINDINGS.md`
+  §5):
+  1. GRAPHICS.DAT SND3 loader + probe (in-game SFX bank)
+  2. Sound-event → SND3 index mapping table
+  3. Runtime integration in `audio_sdl_m11.c` (replace
+     procedural buffers with decoded ones, gated on presence
+     of original assets)
+  4. Title-music playback driver that walks SEQ2 words and
+     concatenates SND8 buffers with the bit-15 loop-back
+  5. Sample-rate handling (22050 stream vs 11025 SND8 vs
+     6000 SND3 — resample or per-source reconfig)
+  6. Bug-faithful playback quirks cataloged when relevant
+- **Suggested follow-up pass:** pass-51 — GRAPHICS.DAT SND3
+  loader + probe, mirrored on Pass 50's scope discipline.
 
 ---
 
@@ -185,6 +240,9 @@ first, then visual parity, then typography / honesty.
 - **Blocked / tooling (pass-47):** overlays need capture infra (#11).
 - **Lower (pass-48 … pass-50):** cosmetic tick prefix (#12, dup #13),
   behavioral probe binding (#14), audio (#15).
+- **Pass 50 landed (2026-04-24):** SONG.DAT DM PC v3.4 format +
+  decoder + probe (6/6 PASS) — see `PASS50_AUDIO_FINDINGS.md`.
+  Runtime wiring remains; placeholder audio is still in use.
 
 ---
 
