@@ -1,6 +1,6 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 41 landed)
+Last updated: 2026-04-24 (pass 42 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
@@ -253,17 +253,80 @@ first, then visual parity, then typography / honesty.
   - No V2 vertical-slice geometry change (pre-baked sprite stays
     aligned to 77 stride).
 
-## 6. Firestaff-invented UI chrome (utility strip, control strip, prompt strip, status lozenge, inspect readout)
+## 6. Firestaff-invented UI chrome (utility strip, control strip, prompt strip, status lozenge, inspect readout) — **LANDED (pass 42)**
 - **Area:** `TEXT` (`VISUAL` adjacent)
-- **Evidence:**
-  - `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` Pass 35 §2.2, §2.4, §2.5,
-    §2.6 — 82 `m11_set_status` sites + 68 inspect-readout sites +
-    Inspect/Save/Load captions + control/prompt strips at y=165.
-  - `PARITY_MATRIX_DM1_V1.md` §4 "Over-labeling" now `KNOWN_DIFF`
-    with the enumeration.
-- **Suggested pass:** pass-42 — add a V1 chrome-mode switch that hides
-  these Firestaff-invented surfaces and reroutes their notifications
-  into the source-faithful message-log surface.
+- **Status:** Resolved for the V1 default path.  A V1 chrome-mode
+  switch hides the last invented chrome surface still drawn in V1
+  (the control strip at y=165) and reroutes player-facing status
+  and inspect notifications into the source-faithful message-log
+  surface at the bottom of the screen.
+- **Pass 42 (landed, 2026-04-24):**
+  - `m11_game_view.c` gained `m11_v1_chrome_mode_enabled()`,
+    defaulting ON and opt-out via `FIRESTAFF_V1_CHROME=0`.  V2
+    vertical-slice mode forces the switch OFF (V2 is not on the
+    V1 parity path; the pre-baked HUD sprite relies on the
+    legacy geometry).
+  - The renderer now guards `m11_draw_control_strip(...)` behind
+    the switch, suppressing the Firestaff-invented 88×14 px
+    control row at (14, 165) when V1 chrome mode is on.  This
+    retires the 352 px² control-strip overlap with the DM1
+    viewport rectangle recorded in pass 40.
+  - `m11_set_status` (82 sites) and `m11_set_inspect_readout`
+    (68 + 57 direct snprintf sites) gained a pass-42 reroute
+    path that pushes the player-facing payload into the rolling
+    message log (`M11_MessageLog`, capacity 6) with forms
+    `"ACTION - OUTCOME"` (yellow) and `"TITLE: DETAIL"`
+    (light cyan).  The filter is the existing
+    `m11_v1_message_is_player_facing` suppress list, so BOOT,
+    PARTY MOVED, SPELL PANEL OPENED, RUNE *, IDLE TICK, etc. do
+    not leak into the log.  A lookback against the last 3 log
+    entries prevents double-logging when a companion
+    `m11_log_event` call already surfaced the same key phrase
+    (stair transitions, pit falls, spells).
+  - The V1 bottom message surface is widened from 1 line at
+    `y=149` to 3 lines at `y=149, 157, 165` (stride 8 px,
+    matching DM1 TEXT.C).  The third line occupies the band
+    vacated by the suppressed control strip.
+  - Two new state fields `chromeRerouteLastStatus[96]` and
+    `chromeRerouteLastInspect[128]` track per-surface last
+    payload to suppress back-to-back duplicate pushes; they are
+    zero-initialised by `memset` in `M11_GameView_Init` and not
+    part of any save format.
+  - Pass-42 probe
+    `run_firestaff_m11_pass42_chrome_reduction_probe.sh` verifies
+    32/32 invariants covering env policy, V2 override, payload
+    form, key-phrase extraction, the player-facing suppress list
+    (8 in / 1 out cases), the lookback dedup, pass-40 and pass-41
+    enum preservation, the renderer call-site guard, the
+    bottom-surface line-count toggle, and the presence of the
+    pass-42 symbols in the source.
+  - Evidence: `parity-evidence/pass42_chrome_reduction.md`.
+  - All baseline gates stay green: Phase A 18/18, M11 game-view
+    361/361, launcher smoke PASS, M10 verify 20/20 phases
+    (M10 semantically untouched), M11 verify end-to-end.
+  - `INV_GV_69` (stairs-up transition logs ASCENDED message) had
+    its `logAfter > logBefore` guard relaxed to
+    `logAfter >= logBefore` because the ring buffer (capacity 6)
+    can saturate earlier in the stair sub-sequence after the
+    reroute adds entries.  The substring-match assertion is
+    unchanged; this is a probe-side correctness adjustment for
+    the new logging-volume regime, not a weakening of the
+    invariant.
+- **What pass 42 does NOT change:**
+  - The runtime viewport rectangle (still blocked on pass 47b
+    ZONES.H parse even with the chrome reroute — the four
+    pass-41 status-box rectangles still occupy the DM1
+    rectangle’s y=160..168 band; see §4 above).
+  - The numeric HP/stamina/mana readouts (§7, pass 43).
+  - Any movement, combat, sensor, door, spell, or projectile
+    behavior.  No M10 touch.
+  - The 82 `m11_set_status` and 68 `m11_set_inspect_readout`
+    call sites themselves — they still write the invented
+    surfaces so `showDebugHUD` continues to render the status
+    lozenge and inspect readout verbatim.
+- **Follow-up:** champion bar-graph HUD (pass 43) and spell
+  rune-label graphic (pass 44) are the next items on the V1
+  parity path.
 
 ## 7. Champion HP/stamina/mana shown as numeric strings instead of bar graphs
 - **Area:** `VISUAL`

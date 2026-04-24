@@ -82,6 +82,14 @@ typedef struct {
     char lastOutcome[64];
     char inspectTitle[64];
     char inspectDetail[128];
+    /* Pass 42: V1-chrome-mode reroute bookkeeping.  Last payload
+     * pushed into the message log from m11_set_status /
+     * m11_set_inspect_readout, used to suppress back-to-back
+     * duplicate pushes (the renderer may call the setters with
+     * identical strings across frames).  Not part of the save
+     * format; zero-initialised by memset in M11_GameView_Init. */
+    char chromeRerouteLastStatus[96];
+    char chromeRerouteLastInspect[128];
     uint32_t lastWorldHash;
     struct TickResult_Compat lastTickResult;
     struct GameWorld_Compat world;

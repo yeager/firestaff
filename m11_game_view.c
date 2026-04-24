@@ -1242,6 +1242,115 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
     }
 }
 
+/* Pass 42: V1-chrome-mode reroute.  In the original DM1 PC 3.4
+ * presentation, short status strings are surfaced via the TEXT.C
+ * message log, not via a dedicated "status lozenge" or "inspect
+ * readout" surface (neither exists in DM1).  Firestaff's 82
+ * m11_set_status sites and 68 m11_set_inspect_readout sites
+ * (PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md Pass 35 §2.2 / §2.4) are
+ * rerouted here: the invented surfaces are still written (they
+ * stay visible under showDebugHUD for diagnostics), but when V1
+ * chrome mode is enabled and the content is player-facing, the
+ * strings are additionally pushed into the rolling message log
+ * so the rerouted multi-line surface at the bottom of the screen
+ * can pick them up.
+ *
+ * The player-facing filter is the same suppress-list used by the
+ * existing v1 bottom-line scan (m11_v1_message_is_player_facing)
+ * so no debug chatter leaks into the log.  To avoid duplicate
+ * entries we track the last rerouted payload on the state and
+ * skip the push when the new payload is byte-identical to the
+ * previous one (per-surface). */
+
+/* Forward declarations for helpers defined later in this
+ * translation unit that the Pass 42 chrome reroute needs. */
+static int m11_v1_chrome_mode_enabled(void);
+static int m11_v1_message_is_player_facing(const char* stripped);
+static const M11_LogEntry* m11_log_entry_at(const M11_MessageLog* log, int reverseIndex);
+
+static int m11_chrome_reroute_is_player_facing_pass42(const char* text) {
+    if (!text || text[0] == '\0') {
+        return 0;
+    }
+    return m11_v1_message_is_player_facing(text);
+}
+
+/* Pass 42: return 1 when any of the last N message-log entries
+ * already contains the rerouted payload's key phrase.  This
+ * prevents the chrome reroute from double-logging events that a
+ * m11_log_event call immediately before already surfaced (e.g.
+ * stair transitions, pit falls, spell feedback all emit both an
+ * m11_log_event and a m11_set_status with overlapping wording).
+ *
+ * Matching is substring-based on the outcome half of the payload
+ * (text after " - " for status, text after ": " for inspect).
+ * A 3-entry lookback covers all call sites where a log_event is
+ * immediately followed by a status/inspect in DM1 flows (we never
+ * observe more than one intervening entry between the two). */
+static int m11_chrome_reroute_already_in_log_pass42(const M11_GameViewState* state,
+                                                    const char* text) {
+    const char* key = text;
+    const char* split;
+    int lookback;
+    if (!state || !text || text[0] == '\0') {
+        return 0;
+    }
+    /* Extract the "outcome" part of the payload (after " - " for
+     * status, after ": " for inspect).  If neither separator is
+     * present, match on the whole payload. */
+    split = strstr(text, " - ");
+    if (split && split[3] != '\0') {
+        key = split + 3;
+    } else {
+        split = strstr(text, ": ");
+        if (split && split[2] != '\0') {
+            key = split + 2;
+        }
+    }
+    if (!key || key[0] == '\0') {
+        return 0;
+    }
+    /* Look back up to 3 entries; if any contains the key substring
+     * (case-sensitive, matches tick-prefixed log_event entries
+     * verbatim), treat the reroute as already surfaced. */
+    for (lookback = 0; lookback < 3 && lookback < state->messageLog.count; ++lookback) {
+        const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, lookback);
+        if (!entry || entry->text[0] == '\0') {
+            continue;
+        }
+        if (strstr(entry->text, key) != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m11_chrome_reroute_push_pass42(M11_GameViewState* state,
+                                           unsigned char color,
+                                           const char* text,
+                                           char* lastSlot,
+                                           size_t lastSlotSize) {
+    if (!state || !text || text[0] == '\0') {
+        return;
+    }
+    if (!m11_chrome_reroute_is_player_facing_pass42(text)) {
+        return;
+    }
+    /* Suppress if this reroute duplicates a recent m11_log_event
+     * entry (avoids double-logging for call sites where both
+     * pathways fire, e.g. stair transitions, pit falls, spells). */
+    if (m11_chrome_reroute_already_in_log_pass42(state, text)) {
+        return;
+    }
+    if (lastSlot && lastSlotSize > 0 && strcmp(lastSlot, text) == 0) {
+        return;
+    }
+    M11_MessageLog_Push(&state->messageLog, text, color);
+    if (lastSlot && lastSlotSize > 0) {
+        snprintf(lastSlot, lastSlotSize, "%s", text);
+    }
+}
+
 static void m11_set_status(M11_GameViewState* state,
                            const char* action,
                            const char* outcome) {
@@ -1250,6 +1359,23 @@ static void m11_set_status(M11_GameViewState* state,
     }
     snprintf(state->lastAction, sizeof(state->lastAction), "%s", action ? action : "NONE");
     snprintf(state->lastOutcome, sizeof(state->lastOutcome), "%s", outcome ? outcome : "");
+
+    /* Pass 42: reroute into message log when V1 chrome mode is on. */
+    if (m11_v1_chrome_mode_enabled()) {
+        char payload[96];
+        const char* a = action ? action : "";
+        const char* o = outcome ? outcome : "";
+        if (a[0] != '\0' && o[0] != '\0') {
+            snprintf(payload, sizeof(payload), "%s - %s", a, o);
+        } else if (a[0] != '\0') {
+            snprintf(payload, sizeof(payload), "%s", a);
+        } else {
+            snprintf(payload, sizeof(payload), "%s", o);
+        }
+        m11_chrome_reroute_push_pass42(state, M11_COLOR_YELLOW, payload,
+                                       state->chromeRerouteLastStatus,
+                                       sizeof(state->chromeRerouteLastStatus));
+    }
 }
 
 static void m11_set_inspect_readout(M11_GameViewState* state,
@@ -1262,6 +1388,26 @@ static void m11_set_inspect_readout(M11_GameViewState* state,
              title ? title : "NO FOCUS");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail), "%s",
              detail ? detail : "PRESS ENTER ON A REAL FRONT-CELL TARGET");
+
+    /* Pass 42: reroute player-facing inspect readouts into the
+     * message log when V1 chrome mode is on.  The invented
+     * two-line surface is already debug-only; this gives the
+     * strings a DM1-style surface in V1 mode. */
+    if (m11_v1_chrome_mode_enabled()) {
+        char payload[96];
+        const char* t = title ? title : "";
+        const char* d = detail ? detail : "";
+        if (t[0] != '\0' && d[0] != '\0') {
+            snprintf(payload, sizeof(payload), "%s: %s", t, d);
+        } else if (t[0] != '\0') {
+            snprintf(payload, sizeof(payload), "%s", t);
+        } else {
+            snprintf(payload, sizeof(payload), "%s", d);
+        }
+        m11_chrome_reroute_push_pass42(state, M11_COLOR_LIGHT_CYAN, payload,
+                                       state->chromeRerouteLastInspect,
+                                       sizeof(state->chromeRerouteLastInspect));
+    }
 }
 
 static void m11_refresh_hash(M11_GameViewState* state) {
@@ -1322,6 +1468,80 @@ static int m11_v2_vertical_slice_enabled(void) {
     cached = (env && env[0] != '\0' && strcmp(env, "0") != 0) ? 1 : 0;
     return cached;
 }
+
+/* Pass 42: V1 chrome-mode switch.
+ *
+ * Closes V1_BLOCKERS.md §6 ("Firestaff-invented UI chrome ...") by
+ * exposing a single cached toggle that the renderer and the
+ * notification helpers consult.  When enabled (the default in V1
+ * mode) Firestaff-invented surfaces that have no DM1 PC 3.4
+ * equivalent are either suppressed entirely or reduced to the
+ * source-faithful message-log surface at the bottom of the screen.
+ *
+ * The following surfaces are affected in V1-chrome mode:
+ *
+ *   - Control strip at (14, 165, 88, 14)  -> SUPPRESSED
+ *     (Firestaff-invented per PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md
+ *      Pass 35 §2.6; no DM1 equivalent.)
+ *   - Status-lozenge + inspect-readout writes (m11_set_status /
+ *     m11_set_inspect_readout) are additionally rerouted into the
+ *     rolling message log when the content is player-facing
+ *     (m11_v1_message_is_player_facing).  The invented rendering
+ *     surfaces for those strings (utility panel overlay, focus
+ *     card) are already debug-only (showDebugHUD), so the reroute
+ *     gives the notifications a visible path in V1 while the
+ *     chrome remains hidden.
+ *   - Bottom message surface is expanded from a single line at
+ *     y=149 to a multi-line log region (up to 3 lines at y=149,
+ *     157, 165) stepping by 8 px, matching TEXT.C message-log
+ *     stride.  This is the source-faithful reroute target for the
+ *     status/inspect notifications.
+ *
+ * The following surfaces are NOT touched by pass 42 (they either
+ * already match DM1 source or are tracked as separate blockers):
+ *
+ *   - Viewport rectangle (V1_BLOCKERS.md §4; depends on pass 42
+ *     chrome removal *and* pass 47b ZONES.H parse before the
+ *     viewport can be bound to M11_DM1_VIEWPORT_*).
+ *   - Champion HP/stamina/mana numeric -> bar graph (§7, pass 43).
+ *   - Spell rune text -> C011 blit (§8, pass 44).
+ *   - Font atlas (§9, pass 45).
+ *   - VGA palette (§10, pass 46).
+ *
+ * Default: V1 chrome mode ON.  Disable via FIRESTAFF_V1_CHROME=0
+ * (kept for A/B measurement and compat with any legacy tooling
+ * that expected the control-strip overlay).  V2 vertical-slice
+ * mode forces V1 chrome OFF so the pre-baked HUD sprite layout is
+ * not visually stripped; V2 is not on the V1 parity path
+ * (V1_BLOCKERS.md scope notes).
+ *
+ * Ref: V1_BLOCKERS.md §6; PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md
+ * Pass 35 §2.2, §2.4, §2.5, §2.6; PARITY_MATRIX_DM1_V1.md §4;
+ * parity-evidence/pass42_chrome_reduction.md.
+ */
+static int m11_v1_chrome_mode_enabled(void) {
+    static int cached = -1;
+    const char* env;
+    if (cached >= 0) {
+        return cached;
+    }
+    /* V2 vertical-slice mode is not on the V1 parity path.  Force
+     * V1 chrome mode OFF when V2 is enabled so the pre-baked HUD
+     * sprite composition remains intact. */
+    if (m11_v2_vertical_slice_enabled()) {
+        cached = 0;
+        return cached;
+    }
+    env = getenv("FIRESTAFF_V1_CHROME");
+    if (env && env[0] != '\0' && strcmp(env, "0") == 0) {
+        cached = 0;
+    } else {
+        cached = 1;
+    }
+    return cached;
+}
+
+
 
 /* Pass 41: mode-aware champion status-box stride / width.
  *
@@ -12327,17 +12547,34 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_feedback_strip(framebuffer, framebufferWidth, framebufferHeight,
                                 state, &aheadCell);
     } else {
-        /* V1 mode: single contextual message line in the bottom area,
-         * placed where DM1 shows brief status text. Scan up to the last
-         * few log entries and surface the most recent one that reads
-         * like a genuine player event (combat, pickups, spell feedback,
-         * environment transitions). Debug-style narration is hidden. */
+        /* V1 mode: contextual message surface in the bottom area,
+         * placed where DM1 shows brief status text.  Scan log
+         * entries and surface the most recent player-facing ones.
+         *
+         * Pass 42 (V1_BLOCKERS.md §6, chrome reroute): when V1
+         * chrome mode is enabled, render up to 3 rerouted
+         * notification lines at y=149, 157, 165 (stride 8 px,
+         * matching the DM1 TEXT.C message-log stride).  This is
+         * the reroute surface for m11_set_status /
+         * m11_set_inspect_readout, which now push into the log
+         * from the chrome-mode reroute path.
+         *
+         * When V1 chrome mode is off (opt-out via
+         * FIRESTAFF_V1_CHROME=0) the original single-line
+         * behavior is preserved for A/B measurement and legacy
+         * tooling compat. */
         {
+            const int chromeMode = m11_v1_chrome_mode_enabled();
+            const int maxLines = chromeMode ? 3 : 1;
+            const int lineStep = 8;
+            int drawnLines = 0;
             int scan;
             int maxScan = state->messageLog.count;
-            if (maxScan > 8) { maxScan = 8; }
+            if (maxScan > (int)M11_MESSAGE_LOG_CAPACITY) {
+                maxScan = (int)M11_MESSAGE_LOG_CAPACITY;
+            }
             v1Message[0] = '\0';
-            for (scan = 0; scan < maxScan; ++scan) {
+            for (scan = 0; scan < maxScan && drawnLines < maxLines; ++scan) {
                 const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, scan);
                 if (!entry || entry->text[0] == '\0') { continue; }
                 m11_format_v1_message(entry->text, v1Message, sizeof(v1Message));
@@ -12345,15 +12582,26 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     M11_TextStyle msgStyle = g_text_small;
                     msgStyle.color = entry->color;
                     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                  16, 149, v1Message, &msgStyle);
-                    break;
+                                  16, 149 + drawnLines * lineStep,
+                                  v1Message, &msgStyle);
+                    ++drawnLines;
+                    if (!chromeMode) {
+                        break;
+                    }
                 }
                 v1Message[0] = '\0';
             }
         }
     }
 
-    m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
+    /* Pass 42: in V1 chrome mode the control strip at y=165 is a
+     * Firestaff-invented surface with no DM1 equivalent
+     * (PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md Pass 35 §2.6) and is
+     * suppressed.  The fourth message-log line at y=165 now
+     * occupies that band when player-facing events are present. */
+    if (!m11_v1_chrome_mode_enabled()) {
+        m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
+    }
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
     /* Spell panel overlay */
