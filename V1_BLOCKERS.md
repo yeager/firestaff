@@ -365,16 +365,39 @@ first, then visual parity, then typography / honesty.
     unchanged (blockers §9, §10, §4, §11).
   - No M10 behavior or save-format touch.
 
-## 8. Spell-panel rune labels still text, not `C011` graphic blit
+## 8. Spell-panel rune labels still text, not `C011` graphic blit — **LANDED (pass 44)**
 - **Area:** `VISUAL`
-- **Evidence:**
-  - `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` Pass 35 §2.8 — source uses
-    `C011_GRAPHIC_MENU_SPELL_AREA_LINES` (14×39) for rune glyphs.
-  - Pass 34 asset-usage map confirms index 11 is already wired as
-    `M11_GFX_SPELL_AREA_LINES` but currently as backdrop, not as
-    the per-rune label.
-- **Suggested pass:** pass-44 — route each entered-rune readout
-  through a sub-sprite of graphic 11.
+- **Status:** Resolved for the pass-44 visual target.  The spell-panel
+  overlay now blits the native `C011_GRAPHIC_MENU_SPELL_AREA_LINES`
+  14×13 cell slices for both the available-symbol row and the selected
+  champion-symbol row instead of relying on the prior text-over-grid
+  presentation alone.
+- **Pass 44 (landed, 2026-04-24):**
+  - `m11_game_view.c` gained pass-44 spell-label cell geometry
+    (`14×13`, sourced from `C011`) plus a bounded
+    `m11_blit_spell_label_cell(...)` helper that extracts line 2
+    (`y=13`) for available symbols and line 3 (`y=26`) for champion
+    symbols from graphic 11.
+  - The spell-panel overlay now draws four selected-rune cells centered
+    near the top of the panel and six available-rune cells centered in
+    the active row using the native `C011` slices.  Existing text
+    abbreviations remain overlaid as a temporary readability aid; the
+    pass-44 visual gain is the recovered DM1 cell art, not font-bank
+    parity.
+  - New bounded probe
+    `run_firestaff_m11_pass44_spell_label_probe.sh` verifies 8/8
+    invariants including the `14×39` source asset size, the exact
+    overlay placements (`selected x=83/y=43`, `available x=67/y=74`),
+    and direct framebuffer matches against the top bands of the line-2
+    and line-3 `C011` slices.
+  - All baseline gates stay green: Phase A 18/18, M11 game view
+    361/361, M11 launcher smoke PASS, M10 verify 20/20 phases,
+    M11 verify end-to-end.
+- **What pass 44 does NOT change:**
+  - The spell panel still uses Firestaff's current text path for the
+    overlaid rune abbreviations; pass 45 remains the font-bank pass.
+  - No M10 behavior, save-format, palette, viewport, or party-panel
+    geometry changes.
 
 ## 9. Custom 7-pixel font used in place of original GRAPHICS.DAT font atlas
 - **Area:** `TEXT`

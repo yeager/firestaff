@@ -2577,6 +2577,65 @@ static int m11_encode_rune(int row, int col) {
     return 0x60 + 6 * row + col;
 }
 
+enum {
+    M11_SPELL_LABEL_CELL_W = 14,
+    M11_SPELL_LABEL_CELL_H = 13,
+    M11_SPELL_LABEL_AVAILABLE_Y = 13,
+    M11_SPELL_LABEL_SELECTED_Y = 26
+};
+
+static void m11_get_rune_abbrev(int row, int col, char out[3]) {
+    const char* src;
+    if (!out) {
+        return;
+    }
+    out[0] = '?';
+    out[1] = '?';
+    out[2] = '\0';
+    if (row < 0 || row >= 4 || col < 0 || col >= 6) {
+        return;
+    }
+    src = g_rune_names[row][col];
+    if (!src || src[0] == '\0') {
+        return;
+    }
+    out[0] = src[0];
+    out[1] = src[1] ? src[1] : ' ';
+}
+
+static int m11_blit_spell_label_cell(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int dstX,
+                                     int dstY,
+                                     int selectedLine) {
+    const M11_AssetSlot* slot;
+    int srcY = selectedLine ? M11_SPELL_LABEL_SELECTED_Y
+                            : M11_SPELL_LABEL_AVAILABLE_Y;
+    if (!state || !state->assetsAvailable) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                11U /* C011_GRAPHIC_MENU_SPELL_AREA_LINES */);
+    if (!slot || (int)slot->width != M11_SPELL_LABEL_CELL_W ||
+        (int)slot->height != (M11_SPELL_LABEL_CELL_H * 3)) {
+        return 0;
+    }
+    M11_AssetLoader_BlitRegion(slot,
+                               0,
+                               srcY,
+                               M11_SPELL_LABEL_CELL_W,
+                               M11_SPELL_LABEL_CELL_H,
+                               framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               dstX,
+                               dstY,
+                               -1);
+    return 1;
+}
+
 int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
     if (!state || !state->active || state->partyDead) return 0;
     state->spellPanelOpen = 1;
@@ -12841,32 +12900,59 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       pnlX + 2, pnlY + 2, pnlW - 4, pnlH - 4, M11_COLOR_BROWN);
 
-        /* ── Selected rune sequence (prominent, top of panel) ── */
+        /* ── Selected rune sequence (pass 44: C011 rune-label cells) ── */
         {
-            char buf[64];
             int bI;
-            int seqY = pnlY + 6;
-            buf[0] = '\0';
-            for (bI = 0; bI < state->spellBuffer.runeCount; ++bI) {
-                int rv = state->spellBuffer.runes[bI];
-                int rr = (rv - 0x60) / 6;
-                int rc = (rv - 0x60) % 6;
-                if (rr >= 0 && rr < 4 && rc >= 0 && rc < 6) {
-                    if (bI > 0) strncat(buf, "  ", sizeof(buf) - strlen(buf) - 1);
-                    strncat(buf, g_rune_names[rr][rc], sizeof(buf) - strlen(buf) - 1);
+            int seqCellY = pnlY + 7;
+            int seqCellGap = 2;
+            int seqCellX = pnlX + ((pnlW - ((4 * M11_SPELL_LABEL_CELL_W) +
+                                            (3 * seqCellGap))) / 2);
+            int drewCells = 0;
+            for (bI = 0; bI < 4; ++bI) {
+                int cellX = seqCellX + bI * (M11_SPELL_LABEL_CELL_W + seqCellGap);
+                if (bI < state->spellBuffer.runeCount) {
+                    int rv = state->spellBuffer.runes[bI];
+                    int rr = (rv - 0x60) / 6;
+                    int rc = (rv - 0x60) % 6;
+                    char abbrev[3];
+                    M11_TextStyle seqStyle = g_text_small;
+                    if (!m11_blit_spell_label_cell(state,
+                                                   framebuffer,
+                                                   framebufferWidth,
+                                                   framebufferHeight,
+                                                   cellX,
+                                                   seqCellY,
+                                                   1)) {
+                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      cellX, seqCellY,
+                                      M11_SPELL_LABEL_CELL_W,
+                                      M11_SPELL_LABEL_CELL_H,
+                                      M11_COLOR_NAVY);
+                        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      cellX, seqCellY,
+                                      M11_SPELL_LABEL_CELL_W,
+                                      M11_SPELL_LABEL_CELL_H,
+                                      M11_COLOR_LIGHT_BLUE);
+                    } else {
+                        drewCells = 1;
+                    }
+                    m11_get_rune_abbrev(rr, rc, abbrev);
+                    seqStyle.color = M11_COLOR_LIGHT_GREEN;
+                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                  cellX + 1, seqCellY + 3, abbrev, &seqStyle);
+                } else {
+                    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  cellX, seqCellY,
+                                  M11_SPELL_LABEL_CELL_W,
+                                  M11_SPELL_LABEL_CELL_H,
+                                  M11_COLOR_DARK_GRAY);
                 }
             }
-            if (buf[0] != '\0') {
-                M11_TextStyle seqStyle = g_text_title;
-                seqStyle.color = M11_COLOR_LIGHT_GREEN;
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              pnlX + 8, seqY, buf, &seqStyle);
-            } else {
-                /* Empty sequence placeholder */
+            if (!drewCells && state->spellBuffer.runeCount == 0) {
                 M11_TextStyle dimStyle = g_text_small;
                 dimStyle.color = M11_COLOR_DARK_GRAY;
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              pnlX + 8, seqY + 2, "- - - -", &dimStyle);
+                              pnlX + 8, seqCellY + 2, "- - - -", &dimStyle);
             }
         }
 
@@ -12874,56 +12960,43 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       pnlX + 6, pnlY + 22, pnlW - 12, 1, M11_COLOR_BROWN);
 
-        /* ── Active rune row: category label + GRAPHICS.DAT-backed button grid ── */
+        /* ── Active rune row: category label + pass-44 C011 cell blits ── */
         if (state->spellBuffer.runeCount < 4) {
-            int runeW = 26, runeH = 20;
-            int rowStartX = pnlX + 6;
+            int runeGap = 2;
+            int rowWidth = 6 * M11_SPELL_LABEL_CELL_W + 5 * runeGap;
+            int rowStartX = pnlX + ((pnlW - rowWidth) / 2);
             int runeY = pnlY + 38;
-            int gridW = 6 * (runeW + 2) - 2; /* total rune button grid width */
             M11_TextStyle catStyle = g_text_small;
             catStyle.color = M11_COLOR_YELLOW;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           pnlX + 8, pnlY + 26, rowNames[row], &catStyle);
 
-            /* Blit the spell area background (graphic 9) as the rune button
-             * grid backdrop.  DEFS.H:2216 C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND.
-             * The original DM1 draws this 87×25 bitmap as the base, then overlays
-             * graphic 11 (C011_GRAPHIC_MENU_SPELL_AREA_LINES) for the symbol rows.
-             * We blit graphic 9 scaled to the button area.  Graphic 11 overlay is
-             * deferred: its 14×39 layout requires per-row extraction matching the
-             * original F0397_MENUS_DrawAvailableSymbols scanline logic. */
-            {
-                int drewGrid = 0;
-                if (state->assetsAvailable) {
-                    const M11_AssetSlot* spellBg = M11_AssetLoader_Load(
-                        (M11_AssetLoader*)&state->assetLoader, M11_GFX_SPELL_AREA_BG);
-                    if (spellBg && spellBg->width > 0 && spellBg->height > 0) {
-                        M11_AssetLoader_BlitScaled(spellBg,
-                            framebuffer, framebufferWidth, framebufferHeight,
-                            rowStartX, runeY, gridW, runeH, -1);
-                        drewGrid = 1;
-                    }
-                }
-                if (!drewGrid) {
-                    /* Fallback: individual coloured rune button rects */
-                    for (spI = 0; spI < 6; ++spI) {
-                        int bx = rowStartX + spI * (runeW + 2);
-                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      bx, runeY, runeW, runeH, M11_COLOR_NAVY);
-                        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      bx, runeY, runeW, runeH, M11_COLOR_LIGHT_BLUE);
-                    }
-                }
-            }
-            /* Overlay rune names on top of the grid (text on graphic,
-             * matching original DM1 F0397_MENUS_DrawAvailableSymbols) */
             for (spI = 0; spI < 6; ++spI) {
-                int bx = rowStartX + spI * (runeW + 2);
-                M11_TextStyle runeStyle = g_text_shadow;
+                int bx = rowStartX + spI * (M11_SPELL_LABEL_CELL_W + runeGap);
+                char abbrev[3];
+                M11_TextStyle runeStyle = g_text_small;
+                if (!m11_blit_spell_label_cell(state,
+                                               framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               bx,
+                                               runeY,
+                                               0)) {
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  bx, runeY,
+                                  M11_SPELL_LABEL_CELL_W,
+                                  M11_SPELL_LABEL_CELL_H,
+                                  M11_COLOR_NAVY);
+                    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  bx, runeY,
+                                  M11_SPELL_LABEL_CELL_W,
+                                  M11_SPELL_LABEL_CELL_H,
+                                  M11_COLOR_LIGHT_BLUE);
+                }
+                m11_get_rune_abbrev(row, spI, abbrev);
                 runeStyle.color = M11_COLOR_WHITE;
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              bx + 3, runeY + 6, g_rune_names[row][spI],
-                              &runeStyle);
+                              bx + 1, runeY + 3, abbrev, &runeStyle);
             }
         } else {
             /* All 4 runes selected — show cast-ready state */
