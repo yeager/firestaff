@@ -1,6 +1,6 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 37 landed)
+Last updated: 2026-04-24 (pass 38 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
@@ -50,17 +50,58 @@ first, then visual parity, then typography / honesty.
   - Creature movement does not invoke `F0718` (party-only scope,
     consistent with pass 32 §4.32.5).
 
-## 2. Animating door states (1..3) still snapped to 0/4
+## 2. Animating door states (1..3) still snapped to 0/4 — **LANDED (pass 38)**
 - **Area:** `OWNERSHIP`
-- **Evidence:**
-  - Pass 31 `F0715_DOOR_ResolveToggleAction_Compat` treats animating
-    door states 1..3 as synonymous with "closed" and always toggles
-    to 0 or 4.  `memory_door_action_pc34_compat.c` header comment
-    explicitly flags this as deferred.
-  - `PASSLIST_29_36.md` §4.31.5 "Explicitly out of scope" — animating
-    intermediate states.
-- **Suggested pass:** pass-38 — add a timeline-driven door-animation
-  compat owner modeled on `TIMELINE_EVENT_DOOR_ANIMATE`.
+- **Status:** Resolved for the party-toggle path.  Animating
+  intermediate states (1..3) are now owned by the compat layer via
+  a timeline-driven stepper modeled on
+  `F0241_TIMELINE_ProcessEvent1_DoorAnimation`.
+- **Pass 38 (landed, 2026-04-24):**
+  - `memory_door_action_pc34_compat.c/h` gained three new owners:
+    `F0714_DOOR_ResolveAnimationEffect_Compat` (TOGGLE/SET/CLEAR
+    resolution against current state), `F0713_DOOR_BuildAnimationEvent_Compat`
+    (builds a `TIMELINE_EVENT_DOOR_ANIMATE` event with aux1=effect
+    and fireAtTick=startTick), and `F0712_DOOR_StepAnimation_Compat`
+    (walks one state per invocation: SET decrements 4→3→2→1→0,
+    CLEAR increments 0→1→2→3→4; DESTROYED never animates).
+  - `memory_tick_orchestrator_pc34_compat.c:F0887_ORCH_DispatchTimeline
+    Events_Compat` now dispatches `TIMELINE_EVENT_DOOR_ANIMATE` through
+    `F0712_DOOR_StepAnimation_Compat`, emits a `EMIT_DOOR_STATE` per
+    step, emits a rattle `EMIT_SOUND_REQUEST` on every non-final step,
+    and reschedules the event at `gameTick+1` until the final state
+    is reached.  A defensive legacy-marker fallback keeps the M10 tick
+    orchestrator probe’s invariant-19 (queued DOOR_ANIMATE dispatch
+    on a dungeon-less unit world) green.
+  - `m11_game_view.c:m11_toggle_front_door` no longer writes door
+    state bits directly.  It resolves the effect, schedules the
+    animation event, and advances the world by one tick through the
+    real orchestrator; status/inspect text is now “DOOR OPENING” /
+    “DOOR CLOSING” to reflect that subsequent ticks finish the walk.
+  - Pass-38 probe
+    `run_firestaff_m11_pass38_door_animation_probe.sh` drives the
+    new owners directly and through the orchestrator; verifies 29/29
+    invariants including the full 4-tick SET walk (4→3→2→1→0), the
+    full 4-tick CLEAR walk (0→1→2→3→4), emission counts, rattle
+    counts, reschedule-then-stop behavior, and idempotency at target.
+  - All baseline gates stay green: Phase A 18/18, M11 game view
+    361/361, M11 launcher smoke PASS, M10 verify 20/20 phases
+    (including M10 tick orchestrator invariant 19), M11 verify
+    end-to-end.
+- **What is NOT covered by pass 38:**
+  - Hazard branches in F0241: champion damage from a closing
+    vertical/horizontal door on the party square, creature damage /
+    kills from a closing door on a creature square.  The Pass 38
+    stepper intentionally omits these; the BUG0_78 mask-parenthesis
+    subtlety is not re-litigated here.
+  - Sensor-driven door actuation re-entering the animation scheduler
+    (still routed through the M11 shim in Pass 31 scope).  When a
+    sensor effect of teleport/text fires on enter/leave (Pass 32/37
+    emission path), it does not yet trigger a door-animation event.
+  - Projectile-caused door *destruction* already flows through
+    `TIMELINE_EVENT_DOOR_DESTRUCTION` and is unchanged.
+- **Follow-up:** hazard branches + sensor-driven door actuation
+  interaction are candidates for a future pass but are not tracked
+  as a V1 blocker; the ledger entry is retired.
 
 ## 3. Creature walkability not unified with party F0706
 - **Area:** `OWNERSHIP`

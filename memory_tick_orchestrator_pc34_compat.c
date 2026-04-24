@@ -13,6 +13,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
+
 /* ================================================================
  *  Local LE helpers
  * ================================================================ */
@@ -1163,7 +1165,73 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         if (F0723_TIMELINE_Pop_Compat(&world->timeline, &ev) != 1) break;
         dispatched++;
         switch (ev.kind) {
-        case TIMELINE_EVENT_DOOR_ANIMATE:
+        case TIMELINE_EVENT_DOOR_ANIMATE: {
+            /* Pass 38 — step animating door through states 1..3.
+             *
+             * Mirror of F0241_TIMELINE_ProcessEvent1_DoorAnimation in
+             * TIMELINE.C (step + rattle sound + reschedule).  Hazard
+             * branches (champion damage / creature damage on a closing
+             * door) are explicitly out of Pass 38 scope.
+             *
+             * Event aux encoding (see F0713_DOOR_BuildAnimationEvent_Compat):
+             *   aux0 = new door state this step will drive to (set by
+             *          the dispatcher after stepping; -1 on the very
+             *          first step, where the dispatcher reads from the
+             *          square).
+             *   aux1 = effect (DOOR_EFFECT_SET=opening, DOOR_EFFECT_CLEAR=closing).
+             */
+            if (world->dungeon) {
+                struct DoorAnimationStep_Compat step;
+                int effect = ev.aux1;
+                memset(&step, 0, sizeof(step));
+                if (F0712_DOOR_StepAnimation_Compat(
+                        world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
+                        effect, 1 /* mutateSquare */, &step)) {
+                    if (step.kind == DOOR_ANIM_STEP_ADVANCED ||
+                        step.kind == DOOR_ANIM_STEP_REACHED_TARGET) {
+                        emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY,
+                             step.newDoorState, ev.mapIndex);
+                        /* Rattle sound on every non-final step, mirroring
+                         * F0064_SOUND_RequestPlay(C02_SOUND_DOOR_RATTLE)
+                         * in F0241. */
+                        if (step.kind == DOOR_ANIM_STEP_ADVANCED) {
+                            emit(result, EMIT_SOUND_REQUEST,
+                                 /* rattle sound id stand-in */ 2,
+                                 ev.mapX, ev.mapY, ev.mapIndex);
+                            /* Reschedule the same event one tick in the
+                             * future, preserving effect.  Mirror of the
+                             * F0238_TIMELINE_AddEvent_GetEventIndex_CPSE
+                             * tail call in F0241. */
+                            {
+                                struct TimelineEvent_Compat next;
+                                memset(&next, 0, sizeof(next));
+                                next.kind       = TIMELINE_EVENT_DOOR_ANIMATE;
+                                next.fireAtTick = world->gameTick + 1;
+                                next.mapIndex   = ev.mapIndex;
+                                next.mapX       = ev.mapX;
+                                next.mapY       = ev.mapY;
+                                next.cell       = ev.cell;
+                                next.aux0       = step.newDoorState;
+                                next.aux1       = effect;
+                                (void)F0721_TIMELINE_Schedule_Compat(
+                                    &world->timeline, &next);
+                            }
+                        }
+                    } else {
+                        /* NO_CHANGE — destroyed door or invalid state.
+                         * Emit nothing and do not reschedule. */
+                    }
+                }
+            } else {
+                /* Defensive fallback when the dungeon pointer is NULL
+                 * (headless unit-scope orchestrator): preserve the
+                 * legacy marker emission so earlier M10 probes that
+                 * manually drive the queue still observe a DOOR_STATE
+                 * marker for DOOR_ANIMATE events. */
+                emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, ev.aux0, ev.mapIndex);
+            }
+            break;
+        }
         case TIMELINE_EVENT_DOOR_DESTRUCTION:
             emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, ev.aux0, ev.mapIndex);
             break;

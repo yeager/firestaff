@@ -25,6 +25,7 @@ cc -Wall -Wextra -O1 \
     "$ROOT/memory_sensor_execution_pc34_compat.c" \
     "$ROOT/memory_movement_pc34_compat.c" \
     "$ROOT/memory_champion_state_pc34_compat.c" \
-    "$ROOT/memory_dungeon_dat_pc34_compat.c"
+    "$ROOT/memory_dungeon_dat_pc34_compat.c" \
+    "$ROOT/memory_door_action_pc34_compat.c"
 
 "$BIN" --dungeon "$DUNGEON_DAT" --seed 1234 --ticks 100

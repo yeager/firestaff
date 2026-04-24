@@ -5786,18 +5786,20 @@ static int m11_front_cell_is_door(const M11_GameViewState* state) {
 }
 
 /*
- * Thin shim over F0715_DOOR_ResolveToggleAction_Compat: compat decides
- * the target door state (open/close/destroyed), the viewport applies it
- * via the square accessor and emits the synthetic tick notifications +
- * status/inspect lines.  This removes direct door-state-bit policy from
- * the M11 glue layer.
+ * Thin shim over F0715_DOOR_ResolveToggleAction_Compat +
+ * F0713_DOOR_BuildAnimationEvent_Compat: compat decides whether to open
+ * or close, the viewport schedules a TIMELINE_EVENT_DOOR_ANIMATE event
+ * on the world timeline and then runs the tick orchestrator.  The
+ * animating intermediate states (1..3) are owned by the compat layer
+ * via F0712_DOOR_StepAnimation_Compat inside F0887 (Pass 38), not by
+ * this M11 shim.
  */
 static int m11_toggle_front_door(M11_GameViewState* state) {
     M11_ViewportCell frontCell;
-    unsigned char* squarePtr;
     struct DoorToggleResult_Compat action;
-    int newDoorState;
-    uint32_t preTick;
+    int doorEffect;
+    int currentState = -1;
+    int finalState;
 
     if (!state || !state->active || !m11_get_front_cell(state, &frontCell) ||
         !frontCell.valid || frontCell.elementType != DUNGEON_ELEMENT_DOOR) {
@@ -5822,46 +5824,83 @@ static int m11_toggle_front_door(M11_GameViewState* state) {
         return 0;
     }
 
-    squarePtr = m11_get_square_ptr(&state->world,
-                                   state->world.party.mapIndex,
-                                   frontCell.mapX,
-                                   frontCell.mapY);
-    if (!squarePtr) {
-        return 0;
+    /*
+     * Convert OPEN/CLOSE into a DOOR_EFFECT_SET/CLEAR and schedule an
+     * animation event.  The action.newDoorState (0 or 4) carried over
+     * from Pass 31 is still the final target; it is no longer applied
+     * directly.
+     */
+    finalState = action.newDoorState;
+    if (!F0714_DOOR_ResolveAnimationEffect_Compat(
+            state->world.dungeon,
+            state->world.party.mapIndex,
+            frontCell.mapX,
+            frontCell.mapY,
+            DOOR_EFFECT_TOGGLE,
+            &doorEffect,
+            &currentState)) {
+        /* Already at target (e.g. state==0 on OPEN / state==4 on CLOSE) —
+         * nothing to animate; still surface the status line so the UI
+         * reflects the user's intent. */
+        if (finalState == 0) {
+            m11_set_status(state, "DOOR", "DOOR OPENED");
+            m11_set_inspect_readout(state, "FRONT DOOR", "OPEN, PASSAGE CLEAR, CLICK CENTER OR PRESS UP TO CROSS");
+        } else {
+            m11_set_status(state, "DOOR", "DOOR CLOSED");
+            m11_set_inspect_readout(state, "FRONT DOOR", "SHUT, ENTER INSPECTS, SPACE TOGGLES AGAIN");
+        }
+        return 1;
     }
 
-    newDoorState = action.newDoorState;
-    *squarePtr = (unsigned char)((*squarePtr & ~0x07U) | (unsigned char)newDoorState);
+    {
+        struct TimelineEvent_Compat animEvent;
+        if (F0713_DOOR_BuildAnimationEvent_Compat(
+                state->world.party.mapIndex,
+                frontCell.mapX,
+                frontCell.mapY,
+                doorEffect,
+                state->world.gameTick,
+                &animEvent)) {
+            /* fireAtTick = gameTick + 1 — dispatches on the tick below. */
+            (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &animEvent);
+        }
+    }
 
-    preTick = state->world.gameTick;
-    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
-    state->world.gameTick += 1;
-    state->world.timeline.nowTick = state->world.gameTick;
-    state->lastTickResult.preTick = preTick;
-    state->lastTickResult.postTick = state->world.gameTick;
-    state->lastTickResult.emissionCount = 2;
-    state->lastTickResult.emissions[0].kind = EMIT_DOOR_STATE;
-    state->lastTickResult.emissions[0].payloadSize = 4;
-    state->lastTickResult.emissions[0].payload[0] = frontCell.mapX;
-    state->lastTickResult.emissions[0].payload[1] = frontCell.mapY;
-    state->lastTickResult.emissions[0].payload[2] = newDoorState;
-    state->lastTickResult.emissions[0].payload[3] = state->world.party.mapIndex;
-    state->lastTickResult.emissions[1].kind = EMIT_SOUND_REQUEST;
-    state->lastTickResult.emissions[1].payloadSize = 4;
-    state->lastTickResult.emissions[1].payload[0] = newDoorState == 0 ? 1 : 2;
-    state->lastTickResult.emissions[1].payload[1] = frontCell.mapX;
-    state->lastTickResult.emissions[1].payload[2] = frontCell.mapY;
-    state->lastTickResult.emissions[1].payload[3] = state->world.party.mapIndex;
+    /*
+     * Advance the world by one tick through the orchestrator so the
+     * scheduled TIMELINE_EVENT_DOOR_ANIMATE fires.  On each such tick
+     * F0887_ORCH_DispatchTimelineEvents_Compat calls the Pass-38 step
+     * handler, which walks the door state by one (4 -> 3, 3 -> 2, …)
+     * and reschedules the event for the next tick until the final
+     * state is reached.
+     */
+    {
+        struct TickInput_Compat input;
+        memset(&input, 0, sizeof(input));
+        input.tick    = state->world.gameTick;
+        input.command = CMD_NONE;
+        memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+        (void)F0884_ORCH_AdvanceOneTick_Compat(
+            &state->world, &input, &state->lastTickResult);
+    }
+    state->lastWorldHash = state->lastTickResult.worldHashPost;
     M11_GameView_ProcessTickEmissions(state);
     m11_refresh_hash(state);
     state->lastTickResult.worldHashPost = state->lastWorldHash;
 
-    if (newDoorState == 0) {
-        m11_set_status(state, "DOOR", "DOOR OPENED");
-        m11_set_inspect_readout(state, "FRONT DOOR", "OPEN, PASSAGE CLEAR, CLICK CENTER OR PRESS UP TO CROSS");
+    /*
+     * Status / inspect text reflects the player's *intent*, not the
+     * current in-flight state; the actual pixel-level animation is
+     * expressed by the EMIT_DOOR_STATE stream consumed by
+     * M11_GameView_ProcessTickEmissions.  This matches the original:
+     * TIMELINE.C does not emit text when it rattles a closing door.
+     */
+    if (finalState == 0) {
+        m11_set_status(state, "DOOR", "DOOR OPENING");
+        m11_set_inspect_readout(state, "FRONT DOOR", "OPENING, PASSAGE CLEARING, CLICK CENTER OR PRESS UP TO CROSS");
     } else {
-        m11_set_status(state, "DOOR", "DOOR CLOSED");
-        m11_set_inspect_readout(state, "FRONT DOOR", "SHUT, ENTER INSPECTS, SPACE TOGGLES AGAIN");
+        m11_set_status(state, "DOOR", "DOOR CLOSING");
+        m11_set_inspect_readout(state, "FRONT DOOR", "CLOSING, WAIT FOR RATTLE, SPACE TOGGLES AGAIN");
     }
     return 1;
 }

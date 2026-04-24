@@ -560,14 +560,24 @@ int main(int argc, char** argv) {
     syntheticView.world.party.mapY = 2;
     initialTick = syntheticView.world.gameTick;
     initialHash = syntheticView.lastWorldHash;
+    /*
+     * Pass 38 — animating door states (1..3).
+     *
+     * The front door at (3,2) is in attribute byte 0x0B (vertical bit
+     * set, low-nibble state = 3, i.e. CLOSED_THREE_FOURTH).  The first
+     * toggle no longer snaps to state 0; it schedules a
+     * TIMELINE_EVENT_DOOR_ANIMATE and advances one step via F0712 (state
+     * 3 -> 2), mirroring F0241_TIMELINE_ProcessEvent1_DoorAnimation.
+     * The M11 shim surfaces this as lastOutcome="DOOR OPENING".
+     */
     probe_record(&tally,
                  "INV_GV_07I",
                  M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACTION) == M11_GAME_INPUT_REDRAW &&
                      syntheticView.world.gameTick == initialTick + 1 &&
                      strcmp(syntheticView.lastAction, "DOOR") == 0 &&
-                     strcmp(syntheticView.lastOutcome, "DOOR OPENED") == 0 &&
-                     (syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] & 0x07) == 0,
-                 "space toggles a closed front door open and updates the real dungeon square");
+                     strcmp(syntheticView.lastOutcome, "DOOR OPENING") == 0 &&
+                     (syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] & 0x07) == 2,
+                 "space toggles a closed front door into an animating step and updates the real dungeon square one state closer to OPEN");
 
     probe_record(&tally,
                  "INV_GV_07M",
