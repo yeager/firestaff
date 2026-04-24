@@ -73,6 +73,7 @@ cc $CFLAGS_COMMON \
     "$HERE/memory_timeline_pc34_compat.c" \
     "$HERE/memory_sensor_execution_pc34_compat.c" \
     "$HERE/memory_movement_pc34_compat.c" \
+    "$HERE/memory_door_action_pc34_compat.c" \
     "$HERE/memory_champion_state_pc34_compat.c" \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
     $GFX_OBJS \

@@ -6,6 +6,7 @@
 #include "render_sdl_m11.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <ctype.h>
@@ -5784,14 +5785,40 @@ static int m11_front_cell_is_door(const M11_GameViewState* state) {
     return frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR;
 }
 
+/*
+ * Thin shim over F0715_DOOR_ResolveToggleAction_Compat: compat decides
+ * the target door state (open/close/destroyed), the viewport applies it
+ * via the square accessor and emits the synthetic tick notifications +
+ * status/inspect lines.  This removes direct door-state-bit policy from
+ * the M11 glue layer.
+ */
 static int m11_toggle_front_door(M11_GameViewState* state) {
     M11_ViewportCell frontCell;
     unsigned char* squarePtr;
+    struct DoorToggleResult_Compat action;
     int newDoorState;
     uint32_t preTick;
 
     if (!state || !state->active || !m11_get_front_cell(state, &frontCell) ||
         !frontCell.valid || frontCell.elementType != DUNGEON_ELEMENT_DOOR) {
+        return 0;
+    }
+
+    if (!F0715_DOOR_ResolveToggleAction_Compat(state->world.dungeon,
+                                               state->world.party.mapIndex,
+                                               frontCell.mapX,
+                                               frontCell.mapY,
+                                               &action)) {
+        return 0;
+    }
+
+    if (action.kind == DOOR_ACTION_DESTROYED) {
+        m11_set_status(state, "DOOR", "DOOR DESTROYED");
+        m11_set_inspect_readout(state, "FRONT DOOR", "DESTROYED, NO LONGER BLOCKING THE PASSAGE");
+        return 1;
+    }
+
+    if (action.kind != DOOR_ACTION_OPEN && action.kind != DOOR_ACTION_CLOSE) {
         return 0;
     }
 
@@ -5803,13 +5830,7 @@ static int m11_toggle_front_door(M11_GameViewState* state) {
         return 0;
     }
 
-    if (frontCell.doorState == 5) {
-        m11_set_status(state, "DOOR", "DOOR DESTROYED");
-        m11_set_inspect_readout(state, "FRONT DOOR", "DESTROYED, NO LONGER BLOCKING THE PASSAGE");
-        return 1;
-    }
-
-    newDoorState = (frontCell.doorState == 0) ? 4 : 0;
+    newDoorState = action.newDoorState;
     *squarePtr = (unsigned char)((*squarePtr & ~0x07U) | (unsigned char)newDoorState);
 
     preTick = state->world.gameTick;
