@@ -702,6 +702,24 @@ first, then visual parity, then typography / honesty.
     frame for a 54-step title hold.
   - Pass 59 still makes no original wall-clock timing, palette-display timing,
     or emulator title-menu handoff parity claim.
+- **Pass 61 (landed, 2026-04-24):**
+  - Added an opt-in deterministic TITLE→menu handoff decision helper in
+    `title_frontend_v1.[ch]`.  Pass-59 hold-last-frame behavior remains
+    available when callers do not request menu entry; callers that do request
+    menu entry switch to the menu surface on the first post-`DO` step while
+    retaining frame 53 as the final TITLE evidence frame.
+  - Added M9 `--title-menu-handoff N`, which publishes source-backed TITLE
+    frames through step 53 and then publishes the caller-owned menu surface
+    frame on step 54.  This is implementation policy only, not an emulator
+    timing/cadence claim.
+  - New probe/evidence: `run_firestaff_v1_title_menu_handoff_probe.sh` verifies
+    5/5 deterministic handoff invariants, including the opt-out hold path.
+    M9 evidence in
+    `parity-evidence/pass61_v1_title_menu_handoff_m9_harness.txt` shows 53/53
+    original TITLE frames, 0 fallback frames, 1 menu frame, 2 handoff-ready
+    steps, and 1 entered-menu step for a 54-step publication.
+  - Pass 61 still makes no original wall-clock timing, palette-display timing,
+    or emulator title-menu handoff parity claim.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -715,14 +733,16 @@ first, then visual parity, then typography / honesty.
   4. Bug-faithful playback quirks/cataloging when relevant.
 - **Remaining gaps before V1 TITLE animation can be called original-faithful:**
   1. Capture or source-prove original frame timing/cadence, palette application
-     timing, and title-menu handoff.  Pass 59's finite sequence policy is
+     timing, and title-menu handoff.  Passes 59 and 61 define deterministic
      implementation cadence/handoff policy only.
   2. Pixel-compare the wired frontend output against original emulator capture;
      pass 57 proves renderer output against Greatstone source PNG frames and
      pass 58 proves the V1 frontend consumes that renderer, but neither proves
      the original runtime presentation cadence.
-- **Suggested follow-up pass:** pass-59 — capture/source-prove title animation
-  cadence and handoff before making frontend timing claims.
+- **Suggested follow-up pass:** source-prove or capture title animation cadence,
+  palette-display timing, and emulator handoff before making frontend timing
+  claims.  Targeted DOSBox/original capture is allowed when it materially
+  improves evidence, but avoid heavy video work.
 
 ---
 

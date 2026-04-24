@@ -14,6 +14,11 @@ typedef enum V1_TitleFrontendSequenceAction {
     V1_TITLE_FRONTEND_SEQUENCE_HOLD_LAST_FRAME = 1
 } V1_TitleFrontendSequenceAction;
 
+typedef enum V1_TitleFrontendSurface {
+    V1_TITLE_FRONTEND_SURFACE_TITLE = 0,
+    V1_TITLE_FRONTEND_SURFACE_MENU = 1
+} V1_TitleFrontendSurface;
+
 typedef struct V1_TitleFrontendSequenceDecision {
     unsigned int requestedStepOrdinal;
     unsigned int renderFrameOrdinal;
@@ -21,6 +26,12 @@ typedef struct V1_TitleFrontendSequenceDecision {
     int handoffReady;
     V1_TitleFrontendSequenceAction action;
 } V1_TitleFrontendSequenceDecision;
+
+typedef struct V1_TitleFrontendHandoffDecision {
+    V1_TitleFrontendSequenceDecision title;
+    V1_TitleFrontendSurface surface;
+    int enteredMenuAfterHandoff;
+} V1_TitleFrontendHandoffDecision;
 
 typedef struct V1_TitleFrontendRenderResult {
     unsigned int requestedFrameOrdinal;
@@ -41,6 +52,17 @@ typedef struct V1_TitleFrontendRenderResult {
  * wall-clock cadence or emulator handoff timing.
  */
 V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned int requestedStepOrdinal);
+
+/*
+ * Deterministic implementation handoff for callers that want a finite
+ * TITLE->menu path.  With enterMenuAfterHandoff=0 this preserves the pass-59
+ * hold-last-frame policy.  With enterMenuAfterHandoff=1, steps after the
+ * source DO boundary (step 53) switch caller-owned presentation to the menu
+ * surface while retaining frame 53 as the last valid TITLE frame for evidence.
+ * This is not an original cadence or emulator handoff timing claim.
+ */
+V1_TitleFrontendHandoffDecision V1_TitleFrontend_DecideTitleMenuHandoffStep(unsigned int requestedStepOrdinal,
+                                                                            int enterMenuAfterHandoff);
 
 /*
  * Render one pass-57 decoded original TITLE frame into the PC34 4bpp

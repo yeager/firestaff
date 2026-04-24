@@ -687,6 +687,59 @@ static const char* find_title_dat_for_frontend(const char* graphicsDatPath,
     return 0;
 }
 
+static int publish_title_step_or_fallback_with_runtime(
+    const char* graphicsDatPath,
+    const char* outputPath,
+    unsigned int dialogGraphicIndex,
+    unsigned int fallbackGraphicIndex,
+    unsigned int frameNumber,
+    const char* resolvedTitlePath,
+    const V1_TitleFrontendSequenceDecision* titleDecision,
+    struct BetaHarnessPersistentRuntime_Compat* runtime,
+    int* outWroteOriginal,
+    V1_TitleFrontendRenderResult* outTitleResult) {
+    int wroteOriginal = 0;
+
+    if (outWroteOriginal) *outWroteOriginal = 0;
+    if (outTitleResult) memset(outTitleResult, 0, sizeof(*outTitleResult));
+    if (resolvedTitlePath != 0) {
+        char err[256];
+        struct HostVideoPgmBackendResult_Compat hostResult;
+        V1_TitleFrontendRenderResult localTitleResult;
+        V1_TitleFrontendRenderResult* titleResult = outTitleResult ? outTitleResult : &localTitleResult;
+        memset(runtime->screenStorage, 0, (size_t)runtime->screenBytes + 4U);
+        memset(&hostResult, 0, sizeof(hostResult));
+        memset(titleResult, 0, sizeof(*titleResult));
+        if (V1_TitleFrontend_RenderFrameToScreen(
+                resolvedTitlePath,
+                titleDecision->renderFrameOrdinal,
+                runtime->screenBitmap,
+                titleResult,
+                err,
+                sizeof(err)) &&
+            F9002_HOSTVIDEO_PublishFrameToPgm_Compat(
+                runtime->screenBitmap,
+                frameNumber,
+                outputPath,
+                &hostResult)) {
+            wroteOriginal = 1;
+        }
+    }
+    if (!wroteOriginal) {
+        if (!render_graphic_with_runtime(
+                graphicsDatPath,
+                outputPath,
+                dialogGraphicIndex,
+                fallbackGraphicIndex,
+                frameNumber,
+                runtime)) {
+            return 0;
+        }
+    }
+    if (outWroteOriginal) *outWroteOriginal = wroteOriginal;
+    return 1;
+}
+
 static int publish_repeated_title_or_fallback_with_runtime(
     const char* graphicsDatPath,
     const char* outputPrefix,
@@ -706,46 +759,29 @@ static int publish_repeated_title_or_fallback_with_runtime(
 
     for (i = 0; i < repeatCount; ++i) {
         int wroteOriginal = 0;
+        V1_TitleFrontendRenderResult titleResult;
+        V1_TitleFrontendSequenceDecision titleDecision = V1_TitleFrontend_DecideSequenceStep(i + 1u);
         snprintf(outputPath, sizeof(outputPath), "%s_hold_%04u.pgm", outputPrefix, *ioFrameNumber);
-        if (resolvedTitlePath != 0) {
-            char err[256];
-            struct HostVideoPgmBackendResult_Compat hostResult;
-            V1_TitleFrontendRenderResult titleResult;
-            V1_TitleFrontendSequenceDecision titleDecision;
-            memset(runtime->screenStorage, 0, (size_t)runtime->screenBytes + 4U);
-            memset(&hostResult, 0, sizeof(hostResult));
-            memset(&titleResult, 0, sizeof(titleResult));
-            titleDecision = V1_TitleFrontend_DecideSequenceStep(i + 1u);
-            if (V1_TitleFrontend_RenderFrameToScreen(
-                    resolvedTitlePath,
-                    titleDecision.renderFrameOrdinal,
-                    runtime->screenBitmap,
-                    &titleResult,
-                    err,
-                    sizeof(err)) &&
-                F9002_HOSTVIDEO_PublishFrameToPgm_Compat(
-                    runtime->screenBitmap,
-                    *ioFrameNumber,
-                    outputPath,
-                    &hostResult)) {
-                wroteOriginal = 1;
-                originalCount++;
-                if (titleDecision.handoffReady) handoffReadyCount++;
-                if (titleDecision.action == V1_TITLE_FRONTEND_SEQUENCE_HOLD_LAST_FRAME) heldLastFrameCount++;
-                printf("titleFrontendFrame[%u]=%u\n", i, titleResult.renderedFrameOrdinal);
-                printf("titleFrontendHandoffReady[%u]=%d\n", i, titleDecision.handoffReady);
-            }
+        if (!publish_title_step_or_fallback_with_runtime(
+                graphicsDatPath,
+                outputPath,
+                dialogGraphicIndex,
+                fallbackGraphicIndex,
+                *ioFrameNumber,
+                resolvedTitlePath,
+                &titleDecision,
+                runtime,
+                &wroteOriginal,
+                &titleResult)) {
+            return 0;
         }
-        if (!wroteOriginal) {
-            if (!render_graphic_with_runtime(
-                    graphicsDatPath,
-                    outputPath,
-                    dialogGraphicIndex,
-                    fallbackGraphicIndex,
-                    *ioFrameNumber,
-                    runtime)) {
-                return 0;
-            }
+        if (wroteOriginal) {
+            originalCount++;
+            if (titleDecision.handoffReady) handoffReadyCount++;
+            if (titleDecision.action == V1_TITLE_FRONTEND_SEQUENCE_HOLD_LAST_FRAME) heldLastFrameCount++;
+            printf("titleFrontendFrame[%u]=%u\n", i, titleResult.renderedFrameOrdinal);
+            printf("titleFrontendHandoffReady[%u]=%d\n", i, titleDecision.handoffReady);
+        } else {
             fallbackCount++;
         }
         (*ioFrameNumber)++;
@@ -755,6 +791,80 @@ static int publish_repeated_title_or_fallback_with_runtime(
     printf("titleFrontendHandoffReadyCount=%u\n", handoffReadyCount);
     printf("titleFrontendHeldLastFrameCount=%u\n", heldLastFrameCount);
     if (resolvedTitlePath != 0) printf("titleFrontendTitleDatPath=%s\n", resolvedTitlePath);
+    return 1;
+}
+
+static int publish_title_menu_handoff_with_runtime(
+    const char* graphicsDatPath,
+    const char* outputPrefix,
+    unsigned int dialogGraphicIndex,
+    unsigned int fallbackGraphicIndex,
+    unsigned int menuGraphicIndex,
+    unsigned int stepCount,
+    unsigned int* ioFrameNumber,
+    struct BetaHarnessPersistentRuntime_Compat* runtime) {
+    unsigned int i;
+    unsigned int originalCount = 0;
+    unsigned int fallbackCount = 0;
+    unsigned int menuFrameCount = 0;
+    unsigned int handoffReadyCount = 0;
+    unsigned int enteredMenuCount = 0;
+    char outputPath[1024];
+    char titlePath[1024];
+    const char* resolvedTitlePath = find_title_dat_for_frontend(graphicsDatPath, titlePath, sizeof(titlePath));
+
+    for (i = 0; i < stepCount; ++i) {
+        V1_TitleFrontendHandoffDecision handoff = V1_TitleFrontend_DecideTitleMenuHandoffStep(i + 1u, 1);
+        snprintf(outputPath, sizeof(outputPath), "%s_handoff_%04u.pgm", outputPrefix, *ioFrameNumber);
+        if (handoff.surface == V1_TITLE_FRONTEND_SURFACE_MENU) {
+            if (!render_graphic_with_runtime(
+                    graphicsDatPath,
+                    outputPath,
+                    dialogGraphicIndex,
+                    menuGraphicIndex,
+                    *ioFrameNumber,
+                    runtime)) {
+                return 0;
+            }
+            menuFrameCount++;
+            if (handoff.enteredMenuAfterHandoff) enteredMenuCount++;
+            printf("titleMenuHandoffSurface[%u]=MENU\n", i);
+            printf("titleMenuHandoffMenuGraphic[%u]=%u\n", i, menuGraphicIndex);
+        } else {
+            int wroteOriginal = 0;
+            V1_TitleFrontendRenderResult titleResult;
+            if (!publish_title_step_or_fallback_with_runtime(
+                    graphicsDatPath,
+                    outputPath,
+                    dialogGraphicIndex,
+                    fallbackGraphicIndex,
+                    *ioFrameNumber,
+                    resolvedTitlePath,
+                    &handoff.title,
+                    runtime,
+                    &wroteOriginal,
+                    &titleResult)) {
+                return 0;
+            }
+            if (wroteOriginal) {
+                originalCount++;
+                printf("titleMenuHandoffSurface[%u]=TITLE\n", i);
+                printf("titleMenuHandoffFrame[%u]=%u\n", i, titleResult.renderedFrameOrdinal);
+            } else {
+                fallbackCount++;
+                printf("titleMenuHandoffSurface[%u]=FALLBACK_TITLE\n", i);
+            }
+        }
+        if (handoff.title.handoffReady) handoffReadyCount++;
+        printf("titleMenuHandoffReady[%u]=%d\n", i, handoff.title.handoffReady);
+        (*ioFrameNumber)++;
+    }
+    printf("titleMenuHandoffOriginalFrameCount=%u\n", originalCount);
+    printf("titleMenuHandoffFallbackFrameCount=%u\n", fallbackCount);
+    printf("titleMenuHandoffMenuFrameCount=%u\n", menuFrameCount);
+    printf("titleMenuHandoffReadyCount=%u\n", handoffReadyCount);
+    printf("titleMenuHandoffEnteredMenuCount=%u\n", enteredMenuCount);
+    if (resolvedTitlePath != 0) printf("titleMenuHandoffTitleDatPath=%s\n", resolvedTitlePath);
     return 1;
 }
 
@@ -860,7 +970,9 @@ int main(int argc, char** argv) {
     const char* unifiedBootEventSpec = 0;
     unsigned int unifiedBootStepLimit = 0;
     int titleHoldMode = 0;
+    int titleMenuHandoffMode = 0;
     unsigned int titleHoldRepeatCount = 0;
+    unsigned int titleMenuHandoffStepCount = 54;
     const char* scriptName = "m7_reachability_b";
     unsigned int dialogGraphicIndex = 1;
     unsigned int viewportGraphicIndex = 0;
@@ -888,7 +1000,7 @@ int main(int argc, char** argv) {
     struct BetaHarnessPersistentRuntime_Compat runtime;
 
     if (argc < 3) {
-        fprintf(stderr, "usage: %s /path/to/GRAPHICS.DAT /path/to/output_prefix [event_spec|--session|--trusted-seam event_spec|--replay-tail step_count event_spec|--replay-tail-session step_count event_spec|--unified-boot event_spec|--unified-boot-stop step_count|--title-hold [repeat_count]]\n", argv[0]);
+        fprintf(stderr, "usage: %s /path/to/GRAPHICS.DAT /path/to/output_prefix [event_spec|--session|--trusted-seam event_spec|--replay-tail step_count event_spec|--replay-tail-session step_count event_spec|--unified-boot event_spec|--unified-boot-stop step_count|--title-hold [repeat_count]|--title-menu-handoff [step_count]]\n", argv[0]);
         fprintf(stderr, "event chars: f=frame n=advance a=activate i=idle\n");
         return 2;
     }
@@ -916,6 +1028,13 @@ int main(int argc, char** argv) {
             unifiedBootEventSpec = "";
             if (argc >= 5) {
                 titleHoldRepeatCount = (unsigned int)strtoul(argv[4], 0, 10);
+            }
+        } else if (strcmp(argv[3], "--title-menu-handoff") == 0) {
+            titleMenuHandoffMode = 1;
+            unifiedBootStepLimit = 50;
+            unifiedBootEventSpec = "";
+            if (argc >= 5) {
+                titleMenuHandoffStepCount = (unsigned int)strtoul(argv[4], 0, 10);
             }
         } else {
             eventSpec = argv[3];
@@ -1012,6 +1131,7 @@ int main(int argc, char** argv) {
     printf("sessionMode=%u\n", sessionMode);
     printf("unifiedBootMode=%d\n", unifiedBootEventSpec != 0);
     printf("titleHoldMode=%d\n", titleHoldMode);
+    printf("titleMenuHandoffMode=%d\n", titleMenuHandoffMode);
     if ((trustedSeamEventSpec != 0) || (replayTailEventSpec != 0)) {
         struct MemoryGraphicsDatMenuActivateConsequenceResult_Compat seamResult;
         const char* seamEventSpec = (replayTailEventSpec != 0) ? replayTailEventSpec : trustedSeamEventSpec;
@@ -1095,6 +1215,23 @@ int main(int argc, char** argv) {
                     return 1;
                 }
                 printf("titleHoldRepeatCount=%u\n", titleHoldRepeatCount);
+            }
+            if (titleMenuHandoffMode && (titleMenuHandoffStepCount > 0)) {
+                if (!publish_title_menu_handoff_with_runtime(
+                        graphicsDatPath,
+                        outputPrefix,
+                        dialogGraphicIndex,
+                        313,
+                        1,
+                        titleMenuHandoffStepCount,
+                        &frameNumber,
+                        &runtime)) {
+                    free_persistent_runtime(&runtime);
+                    F0479_MEMORY_FreeGraphicsDatHeader_Compat(&header);
+                    fprintf(stderr, "failed: title-menu handoff publish did not complete\n");
+                    return 1;
+                }
+                printf("titleMenuHandoffStepCount=%u\n", titleMenuHandoffStepCount);
             }
             free_persistent_runtime(&runtime);
             F0479_MEMORY_FreeGraphicsDatHeader_Compat(&header);

@@ -105,6 +105,22 @@ V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned in
     return decision;
 }
 
+V1_TitleFrontendHandoffDecision V1_TitleFrontend_DecideTitleMenuHandoffStep(unsigned int requestedStepOrdinal,
+                                                                            int enterMenuAfterHandoff) {
+    V1_TitleFrontendHandoffDecision decision;
+    unsigned int step = requestedStepOrdinal;
+
+    memset(&decision, 0, sizeof(decision));
+    if (step == 0u) step = 1u;
+    decision.title = V1_TitleFrontend_DecideSequenceStep(requestedStepOrdinal);
+    decision.surface = V1_TITLE_FRONTEND_SURFACE_TITLE;
+    if (enterMenuAfterHandoff && step > V1_TITLE_DAT_FRAME_MAX && decision.title.handoffReady) {
+        decision.surface = V1_TITLE_FRONTEND_SURFACE_MENU;
+        decision.enteredMenuAfterHandoff = 1;
+    }
+    return decision;
+}
+
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
                                          unsigned int requestedFrameOrdinal,
                                          unsigned char* screenBitmap,
