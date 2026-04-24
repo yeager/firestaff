@@ -1,0 +1,6 @@
+PASS P53_SND3_RUNTIME_01 fallback path does not require GRAPHICS.DAT/SND3 assets
+PASS P53_SND3_RUNTIME_02 EmitSoundIndex falls back to procedural marker playback when original SND3 is disabled/unavailable
+PASS P53_SND3_RUNTIME_03 original GRAPHICS.DAT SND3 bank loads all 35 event-index buffers when asset is present
+PASS P53_SND3_RUNTIME_04 6000 Hz SND3 source is linearly resampled once to the fixed 22050 Hz SDL stream rate
+PASS P53_SND3_RUNTIME_05 SDL3 runtime queues the decoded/resampled SND3 buffer for a mapped sound event
+# summary: 5/5 invariants passed

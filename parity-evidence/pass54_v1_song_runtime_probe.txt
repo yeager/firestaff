@@ -1,0 +1,7 @@
+PASS P54_SONG_RUNTIME_01 fallback/no-op path does not require SONG.DAT assets
+PASS P54_SONG_RUNTIME_02 PlayTitleMusic is a safe no-op when original SONG.DAT is unavailable/disabled
+PASS P54_SONG_RUNTIME_03 original SONG.DAT loads all 9 SND8 music-part buffers when asset is present
+PASS P54_SONG_RUNTIME_04 SEQ2 walk stops at the bit-15 loop-back marker and records loop target part 1
+PASS P54_SONG_RUNTIME_05 11025 Hz signed SND8 parts are linearly resampled/concatenated for the fixed 22050 Hz stream
+PASS P54_SONG_RUNTIME_06 SDL3 runtime queues the decoded/resampled one-cycle title-music phrase
+# summary: 6/6 invariants passed

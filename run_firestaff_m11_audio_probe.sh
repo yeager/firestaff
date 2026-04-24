@@ -17,6 +17,7 @@ cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     "$HERE/probes/m11/firestaff_m11_audio_probe.c" \
     "$HERE/audio_sdl_m11.c" \
     "$HERE/graphics_dat_snd3_loader_v1.c" \
+    "$HERE/song_dat_loader_v1.c" \
     "$HERE/sound_event_snd3_map_v1.c" \
     $SDL3_LIBS -lm
 

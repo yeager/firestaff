@@ -1,5 +1,6 @@
 #include "audio_sdl_m11.h"
 #include "graphics_dat_snd3_loader_v1.h"
+#include "song_dat_loader_v1.h"
 #include "sound_event_snd3_map_v1.h"
 
 #include <math.h>
@@ -177,6 +178,24 @@ static int m11_file_exists(const char* path) {
     return 1;
 }
 
+static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
+    const char* envPath = getenv("FIRESTAFF_SONG_DAT");
+    const char* legacyEnvPath = getenv("SONG_DAT_PATH");
+    const char* home;
+    if (m11_file_exists(envPath)) return envPath;
+    if (m11_file_exists(legacyEnvPath)) return legacyEnvPath;
+    if (m11_file_exists("SONG.DAT")) return "SONG.DAT";
+    home = getenv("HOME");
+    if (home && homeBuf && homeBufBytes > 0) {
+        int n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/SONG.DAT", home);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+    }
+    if (m11_file_exists("/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT")) {
+        return "/tmp/fs_pass50_extract/dm_dos/DungeonMasterPC34/DATA/SONG.DAT";
+    }
+    return NULL;
+}
+
 static const char* m11_find_graphics_dat_path(char* homeBuf, size_t homeBufBytes) {
     const char* envPath = getenv("FIRESTAFF_GRAPHICS_DAT");
     const char* home;
@@ -217,6 +236,118 @@ static int m11_resample_snd3_to_stream(M11_SoundBuffer* dst,
     }
     dst->sampleCount = outCount;
     return 1;
+}
+
+static int m11_resample_snd8_to_stream(M11_SoundBuffer* dst,
+                                       const V1_SndBuffer* src) {
+    int outCount;
+    int i;
+    if (!dst || !src || !src->samples || src->decodedSampleCount == 0) return 0;
+    outCount = (int)(((long long)src->decodedSampleCount * M11_AUDIO_SAMPLE_RATE +
+                      (M11_AUDIO_SOURCE_SND8_SAMPLE_RATE - 1)) /
+                     M11_AUDIO_SOURCE_SND8_SAMPLE_RATE);
+    if (outCount <= 0) return 0;
+    if (!m11_sound_reserve(dst, outCount)) return 0;
+    for (i = 0; i < outCount; ++i) {
+        double sourcePos = ((double)i * (double)M11_AUDIO_SOURCE_SND8_SAMPLE_RATE) /
+                           (double)M11_AUDIO_SAMPLE_RATE;
+        int base = (int)sourcePos;
+        double frac = sourcePos - (double)base;
+        int next = base + 1;
+        double a;
+        double b;
+        if (base < 0) base = 0;
+        if (base >= (int)src->decodedSampleCount) base = (int)src->decodedSampleCount - 1;
+        if (next >= (int)src->decodedSampleCount) next = (int)src->decodedSampleCount - 1;
+        a = (double)src->samples[base] / 128.0;
+        b = (double)src->samples[next] / 128.0;
+        dst->samples[i] = (float)(a + (b - a) * frac);
+    }
+    dst->sampleCount = outCount;
+    return 1;
+}
+
+static int m11_sound_append(M11_SoundBuffer* dst, const M11_SoundBuffer* src) {
+    int oldCount;
+    int i;
+    if (!dst || !src || src->sampleCount <= 0) return 0;
+    oldCount = dst->sampleCount;
+    if (!m11_sound_reserve(dst, oldCount + src->sampleCount)) return 0;
+    for (i = 0; i < src->sampleCount; ++i) {
+        dst->samples[oldCount + i] = src->samples[i];
+    }
+    dst->sampleCount = oldCount + src->sampleCount;
+    return 1;
+}
+
+static void m11_try_load_original_song(M11_AudioState* state) {
+    char homePath[1024];
+    const char* path;
+    V1_SongManifest manifest;
+    V1_SongSequence seq;
+    V1_SndBuffer raw[V1_SONG_DAT_ITEM_COUNT];
+    M11_SoundBuffer part[V1_SONG_DAT_ITEM_COUNT];
+    char err[256];
+    unsigned int i;
+    int ok = 1;
+    if (!state) return;
+    if (getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG")) return;
+    path = m11_find_song_dat_path(homePath, sizeof(homePath));
+    if (!path) return;
+    if (!V1_Song_ParseManifest(path, &manifest, err, sizeof(err))) return;
+    if (!V1_Song_DecodeSequence(path, &manifest, &seq, err, sizeof(err))) return;
+    if (!seq.hasEndMarker || seq.wordCount == 0) return;
+
+    memset(raw, 0, sizeof(raw));
+    memset(part, 0, sizeof(part));
+    for (i = V1_SONG_DAT_FIRST_SND8_INDEX; i <= V1_SONG_DAT_LAST_SND8_INDEX; ++i) {
+        if (!V1_Song_DecodeSnd8(path, &manifest, i, &raw[i], err, sizeof(err)) ||
+            raw[i].sampleRateHz != M11_AUDIO_SOURCE_SND8_SAMPLE_RATE ||
+            !m11_resample_snd8_to_stream(&part[i], &raw[i])) {
+            ok = 0;
+            break;
+        }
+        state->originalSongPartCount += 1;
+    }
+
+    if (ok) {
+        m11_sound_clear(&state->titleMusic);
+        for (i = 0; i < seq.wordCount; ++i) {
+            unsigned int word = seq.words[i];
+            unsigned int itemIndex = word & 0x7FFFu;
+            if (word & 0x8000u) {
+                state->originalSongLoopTargetPart = (int)itemIndex;
+                break;
+            }
+            if (itemIndex < V1_SONG_DAT_FIRST_SND8_INDEX ||
+                itemIndex > V1_SONG_DAT_LAST_SND8_INDEX ||
+                !m11_sound_append(&state->titleMusic, &part[itemIndex])) {
+                ok = 0;
+                break;
+            }
+            state->originalSongPlayablePartCount += 1;
+        }
+        state->originalSongSequenceWordCount = (int)seq.wordCount;
+    }
+
+    for (i = V1_SONG_DAT_FIRST_SND8_INDEX; i <= V1_SONG_DAT_LAST_SND8_INDEX; ++i) {
+        V1_Song_FreeSndBuffer(&raw[i]);
+        m11_sound_free(&part[i]);
+    }
+
+    if (ok && state->titleMusic.sampleCount > 0 &&
+        state->originalSongPartCount == V1_SONG_DAT_MUSIC_PART_COUNT &&
+        state->originalSongLoopTargetPart >= V1_SONG_DAT_FIRST_SND8_INDEX &&
+        state->originalSongLoopTargetPart <= V1_SONG_DAT_LAST_SND8_INDEX) {
+        state->originalSongAvailable = 1;
+    } else {
+        m11_sound_free(&state->titleMusic);
+        state->originalSongAvailable = 0;
+        state->originalSongPartCount = 0;
+        state->originalSongSequenceWordCount = 0;
+        state->originalSongPlayablePartCount = 0;
+        state->originalSongLoopTargetPart = 0;
+    }
 }
 
 static void m11_try_load_original_snd3(M11_AudioState* state) {
@@ -263,6 +394,14 @@ int M11_Audio_Init(M11_AudioState* state) {
 
     /* Pre-generate procedural sounds regardless of backend */
     m11_generate_sounds(state);
+    /* Pass 54: opportunistically load SONG.DAT title music.  Source SND8
+     * buffers are signed 8-bit mono at 11025 Hz; they are linearly resampled
+     * once at init to the fixed 22050 Hz SDL float stream and concatenated
+     * according to the SEQ2 words up to (not including) the bit-15 loop-back
+     * marker.  The loop target is recorded; continuous loop scheduling is not
+     * claimed without an original runtime capture. */
+    m11_try_load_original_song(state);
+
     /* Pass 53: opportunistically replace event-index playback with decoded
      * GRAPHICS.DAT SND3 buffers.  Source samples are unsigned 8-bit mono at
      * 6000 Hz; they are linearly resampled once at init to the fixed SDL
@@ -329,12 +468,19 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         for (i = 0; i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
             m11_sound_free(&state->originalSounds[i]);
         }
+        m11_sound_free(&state->titleMusic);
     }
 
     state->initialized = 0;
     state->backend = M11_AUDIO_BACKEND_NONE;
     state->originalSnd3Available = 0;
     state->originalSnd3LoadedCount = 0;
+    state->originalSongAvailable = 0;
+    state->originalSongPartCount = 0;
+    state->originalSongSequenceWordCount = 0;
+    state->originalSongPlayablePartCount = 0;
+    state->originalSongLoopTargetPart = 0;
+    state->titleMusicQueuedCount = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -445,6 +591,35 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMar
     return M11_Audio_EmitMarker(state, fallbackMarker);
 }
 
+int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
+    if (!state || !state->initialized) return 0;
+    if (!state->originalSongAvailable || state->titleMusic.sampleCount <= 0) return 0;
+
+    if (state->backend != M11_AUDIO_BACKEND_SDL3) {
+        return 0;
+    }
+
+#if M11_HAVE_SDL_AUDIO
+    if (state->sdlStream) {
+        int byteLen = state->titleMusic.sampleCount * (int)sizeof(float);
+        SDL_PutAudioStreamData(
+            (SDL_AudioStream*)state->sdlStream,
+            state->titleMusic.samples,
+            byteLen
+        );
+        state->queuedSampleCount += state->titleMusic.sampleCount;
+        state->titleMusicQueuedCount += 1;
+        return 1;
+    }
+#endif
+
+    return 0;
+}
+
 int M11_Audio_OriginalSnd3Available(const M11_AudioState* state) {
     return (state && state->originalSnd3Available) ? 1 : 0;
+}
+
+int M11_Audio_OriginalSongAvailable(const M11_AudioState* state) {
+    return (state && state->originalSongAvailable) ? 1 : 0;
 }

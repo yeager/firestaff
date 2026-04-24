@@ -27,6 +27,7 @@ typedef enum {
  */
 #define M11_AUDIO_SAMPLE_RATE 22050
 #define M11_AUDIO_SOURCE_SND3_SAMPLE_RATE 6000
+#define M11_AUDIO_SOURCE_SND8_SAMPLE_RATE 11025
 #define M11_AUDIO_MAX_SOUND_MS 300
 #define M11_AUDIO_MAX_SAMPLES  ((M11_AUDIO_SAMPLE_RATE * M11_AUDIO_MAX_SOUND_MS) / 1000)
 #define M11_AUDIO_ORIGINAL_SOUND_COUNT 35
@@ -53,6 +54,14 @@ typedef struct {
     int originalSnd3Available;
     int originalSnd3LoadedCount;
 
+    /* Original V1 title music: loaded from SONG.DAT when available. */
+    int originalSongAvailable;
+    int originalSongPartCount;
+    int originalSongSequenceWordCount;
+    int originalSongPlayablePartCount;
+    int originalSongLoopTargetPart;
+    int titleMusicQueuedCount;
+
     /* SDL3 native audio — opaque pointer to avoid exposing SDL headers */
     void* sdlStream;  /* SDL_AudioStream* */
 
@@ -61,6 +70,9 @@ typedef struct {
 
     /* Decoded/resampled original sounds, one per DM sound event index. */
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
+
+    /* Decoded/resampled SEQ2 title-music phrase, one pre-loop cycle. */
+    M11_SoundBuffer titleMusic;
 } M11_AudioState;
 
 int  M11_Audio_Init(M11_AudioState* state);
@@ -78,7 +90,9 @@ int  M11_Audio_GetVolumes(const M11_AudioState* state,
                           int* outUi);
 int  M11_Audio_EmitMarker(M11_AudioState* state, M11_AudioMarker marker);
 int  M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMarker fallbackMarker);
+int  M11_Audio_PlayTitleMusic(M11_AudioState* state);
 int  M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
+int  M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
 
 #ifdef __cplusplus
 }

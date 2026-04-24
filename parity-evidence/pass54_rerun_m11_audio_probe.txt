@@ -1,0 +1,10 @@
+PASS INV_M11_AUDIO_01 audio subsystem initializes (SDL3 or fallback)
+  backend: SDL3
+PASS INV_M11_AUDIO_02 procedural sound buffers generated for all marker types
+PASS INV_M11_AUDIO_03 marker emission records the marker type
+PASS INV_M11_AUDIO_04 SDL3 backend: emit plays sound and increments count
+PASS INV_M11_AUDIO_05 volume updates clamp to valid range
+PASS INV_M11_AUDIO_06 IsAvailable reflects backend state
+PASS INV_M11_AUDIO_07 20 rapid emissions succeed without crash (SDL3)
+PASS INV_M11_AUDIO_08 SDL3 backend: samples were queued to audio device
+# summary: 8/8 invariants passed

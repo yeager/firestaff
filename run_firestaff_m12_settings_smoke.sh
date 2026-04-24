@@ -62,6 +62,7 @@ cc $CFLAGS_COMMON $SDL_FLAG $SDL_CFLAGS \
     "$HERE/m11_game_view.c" \
     "$HERE/audio_sdl_m11.c" \
     "$HERE/graphics_dat_snd3_loader_v1.c" \
+    "$HERE/song_dat_loader_v1.c" \
     "$HERE/sound_event_snd3_map_v1.c" \
     "$HERE/asset_loader_m11.c" \
     "$HERE/font_m11.c" \

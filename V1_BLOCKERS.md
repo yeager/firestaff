@@ -592,19 +592,40 @@ first, then visual parity, then typography / honesty.
     queueing of a mapped decoded SND3 buffer.  Evidence in
     `PASS53_AUDIO_FINDINGS.md` and
     `parity-evidence/pass53_v1_snd3_runtime_probe.txt`.
+- **Pass 54 (landed, 2026-04-24):**
+  - `audio_sdl_m11.[ch]` now opportunistically loads original `SONG.DAT` when
+    present, decodes all 9 SND8 music parts through `song_dat_loader_v1`,
+    linearly resamples signed 11025 Hz mono PCM to the fixed 22050 Hz SDL float
+    stream, and concatenates one pre-loop title-music phrase by walking SEQ2
+    words.
+  - The documented/probed bit-15 SEQ2 marker is handled narrowly: normal words
+    append parts, the first bit-15 word stops the one-cycle build, and the low
+    15 bits are recorded as the loop target.  For DM PC v3.4 EN that marker is
+    `0x8001`, so the runtime records loop target part 1.  No continuous-loop
+    cadence claim is made without an original capture.
+  - New API: `M11_Audio_PlayTitleMusic(...)` queues the decoded/resampled
+    one-cycle phrase when SDL audio is available; absent/malformed/disabled
+    SONG.DAT remains a safe no-op (`FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG`).
+  - V1 probe landed: `probes/m11/firestaff_m11_pass54_song_runtime_probe.c` +
+    `run_firestaff_m11_pass54_song_runtime_probe.sh`.  Against the real
+    `SONG.DAT` it passes 6/6 invariants covering no-asset no-op fallback,
+    all-9-part load, SEQ2 marker handling, 11025→22050 resample/concatenate,
+    and SDL queueing.  Evidence in `PASS54_AUDIO_FINDINGS.md` and
+    `parity-evidence/pass54_v1_song_runtime_probe.txt`.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
-  `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5, and
-  `PASS53_AUDIO_FINDINGS.md` §4):
-  1. Title-music playback driver that walks SEQ2 words and concatenates
-     SND8 buffers with the bit-15 loop-back.
-  2. Original capture/proof of SFX cadence, prioritization, and overlap.
+  `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
+  `PASS53_AUDIO_FINDINGS.md` §4, and `PASS54_AUDIO_FINDINGS.md` §4):
+  1. Original capture/proof of SFX/title-music cadence, prioritization,
+     continuous-loop timing, and overlap.
+  2. Source-backed title frontend start/stop timing for the new queue API.
   3. Convert or explicitly justify remaining non-`EMIT_SOUND_REQUEST` direct
-     marker calls in M11; pass 53 only wires mapped event-index emissions.
+     marker calls in M11; pass 53 only wires mapped event-index emissions, and
+     pass 54 does not audit those calls.
   4. Bug-faithful playback quirks/cataloging when relevant.
-- **Suggested follow-up pass:** pass-54 — SONG.DAT title-music playback driver
-  or a source-backed audit of remaining direct M11 marker calls; do not claim
-  cadence/overlap without original capture.
+- **Suggested follow-up pass:** pass-55 — source-backed audit of remaining
+  direct M11 marker calls, or original runtime capture for audio cadence/looping;
+  do not claim cadence/overlap without original capture.
 
 ---
 
@@ -622,7 +643,9 @@ first, then visual parity, then typography / honesty.
   (7/7 PASS), GRAPHICS.DAT SND3 decoder (6/6 PASS), and sound-event
   → SND3 mapping (5/5 PASS) — see `PASS50_AUDIO_FINDINGS.md`,
   `PASS51_AUDIO_FINDINGS.md`, and `PASS52_AUDIO_FINDINGS.md`.
-  Runtime wiring remains; placeholder audio is still in use.
+  Passes 53–54 landed asset-backed SND3 SFX queueing and SONG.DAT one-cycle
+  title-music queueing, but cadence/overlap/continuous-loop proof remains
+  blocked on original runtime capture.
 
 ---
 
