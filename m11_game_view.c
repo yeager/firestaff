@@ -4489,8 +4489,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* Map/inventory toggle — always available (closes overlay if other open). */
+    /* Map/inventory toggle.
+     *
+     * The full-screen map overlay is a Firestaff convenience/debug
+     * surface, not a source-backed DM1 V1 UI (see
+     * PARITY_MATRIX_DM1_V1.md pass 102).  Keep it available to debug
+     * HUD sessions, but ignore the M-key in default V1 chrome mode so
+     * normal parity play cannot enter an invented screen. */
     if (input == M12_MENU_INPUT_MAP_TOGGLE) {
+        if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         state->inventoryPanelActive = 0;
         M11_GameView_ToggleMapOverlay(state);
         return M11_GAME_INPUT_REDRAW;

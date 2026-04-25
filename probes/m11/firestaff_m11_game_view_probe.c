@@ -5001,15 +5001,28 @@ int main(int argc, char** argv) {
                      "ToggleMapOverlay twice deactivates map");
     }
 
-    /* INV_GV_181: MAP_TOGGLE input activates map overlay. */
+    /* INV_GV_181: MAP_TOGGLE input activates debug map overlay. */
     {
         M11_GameViewState mv;
         memcpy(&mv, &gameView, sizeof(mv));
+        mv.showDebugHUD = 1;
         M11_GameView_HandleInput(&mv, M12_MENU_INPUT_MAP_TOGGLE);
         probe_record(&tally,
                      "INV_GV_181",
                      mv.mapOverlayActive == 1,
-                     "MAP_TOGGLE input activates map overlay");
+                     "MAP_TOGGLE input activates debug map overlay");
+    }
+
+    /* INV_GV_181B: default V1 parity input ignores invented map overlay. */
+    {
+        M11_GameViewState mv;
+        memcpy(&mv, &gameView, sizeof(mv));
+        mv.showDebugHUD = 0;
+        probe_record(&tally,
+                     "INV_GV_181B",
+                     M11_GameView_HandleInput(&mv, M12_MENU_INPUT_MAP_TOGGLE) == M11_GAME_INPUT_IGNORED &&
+                     mv.mapOverlayActive == 0,
+                     "default V1 parity input ignores invented map overlay");
     }
 
     /* INV_GV_182: Movement blocked while map overlay active. */
@@ -5075,6 +5088,7 @@ int main(int argc, char** argv) {
     {
         M11_GameViewState mv;
         memcpy(&mv, &gameView, sizeof(mv));
+        mv.showDebugHUD = 1;
         mv.mapOverlayActive = 1;
         M11_GameView_HandleInput(&mv, M12_MENU_INPUT_MAP_TOGGLE);
         probe_record(&tally,
@@ -5219,16 +5233,17 @@ int main(int argc, char** argv) {
                      "DOWN input in inventory advances selected slot");
     }
 
-    /* INV_GV_197: MAP_TOGGLE closes inventory and opens map. */
+    /* INV_GV_197: MAP_TOGGLE closes inventory and opens debug map. */
     {
         M11_GameViewState iv;
         memcpy(&iv, &gameView, sizeof(iv));
+        iv.showDebugHUD = 1;
         iv.inventoryPanelActive = 1;
         M11_GameView_HandleInput(&iv, M12_MENU_INPUT_MAP_TOGGLE);
         probe_record(&tally,
                      "INV_GV_197",
                      iv.inventoryPanelActive == 0 && iv.mapOverlayActive == 1,
-                     "MAP_TOGGLE closes inventory and opens map");
+                     "MAP_TOGGLE closes inventory and opens debug map");
     }
 
     /* INV_GV_198: INVENTORY_TOGGLE closes map and opens inventory. */
