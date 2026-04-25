@@ -3227,16 +3227,15 @@ int main(int argc, char** argv) {
                          "asset-backed full frame uses 10+ distinct palette entries");
         }
 
-        /* INV_GV_109: Item sprite graphic range: loading a potion icon
-         * (index 344 = potion base) from GRAPHICS.DAT returns a valid
-         * asset slot, proving the item sprite range is accessible. */
+        /* INV_GV_109: Object sprite graphic range starts at M612=498;
+         * a source potion aspect resolves inside the 498..583 family. */
         {
             const M11_AssetSlot* potSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&assetView.assetLoader, 344);
+                (M11_AssetLoader*)&assetView.assetLoader, 566);
             probe_record(&tally,
                          "INV_GV_109",
                          potSlot != NULL && potSlot->width > 0 && potSlot->height > 0,
-                         "item sprite graphic 344 (potion base) loads from GRAPHICS.DAT");
+                         "object sprite graphic 566 (M612 potion aspect) loads from GRAPHICS.DAT");
         }
 
         /* INV_GV_110: Per-map wall set selection reads dungeon map wallSet.
@@ -3277,40 +3276,40 @@ int main(int argc, char** argv) {
                          "per-map floor set index is in valid range");
         }
 
-        /* INV_GV_112: Junk item sprite graphic (index 364 = junk base)
-         * loads from GRAPHICS.DAT, verifying the full item sprite range. */
+        /* INV_GV_112: Object sprite graphic near the end of the M612
+         * family loads from GRAPHICS.DAT. */
         {
             const M11_AssetSlot* junkSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&assetView.assetLoader, 364);
+                (M11_AssetLoader*)&assetView.assetLoader, 583);
             probe_record(&tally,
                          "INV_GV_112",
                          junkSlot != NULL && junkSlot->width > 0 && junkSlot->height > 0,
-                         "item sprite graphic 364 (junk base) loads from GRAPHICS.DAT");
+                         "object sprite graphic 583 (end of M612 family) loads from GRAPHICS.DAT");
         }
 
-        /* INV_GV_113: Item sprite graphic index 267 (weapon base) loads
-         * from GRAPHICS.DAT when available. */
+        /* INV_GV_113: Object sprite graphic index 500 (scroll aspect)
+         * loads from GRAPHICS.DAT when available. */
         {
             const M11_AssetSlot* itemSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&assetView.assetLoader, 267);
+                (M11_AssetLoader*)&assetView.assetLoader, 500);
             probe_record(&tally,
                          "INV_GV_113",
                          itemSlot != NULL && itemSlot->width > 0 && itemSlot->height > 0,
-                         "item sprite graphic 267 loads from GRAPHICS.DAT");
+                         "object sprite graphic 500 (scroll aspect) loads from GRAPHICS.DAT");
         }
 
-        /* INV_GV_114: Wall ornament graphic range starts at index 101.
+        /* INV_GV_114: Wall ornament graphic range starts at index 259.
          * Load the first wall ornament graphic to verify availability. */
         {
             const M11_AssetSlot* ornSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&assetView.assetLoader, 101);
+                (M11_AssetLoader*)&assetView.assetLoader, 259);
             int ornOk = (ornSlot != NULL && ornSlot->width > 0 && ornSlot->height > 0);
             /* Ornament graphics may be zero-sized in some data files;
              * passing if the loader at least returns non-NULL. */
             probe_record(&tally,
                          "INV_GV_114",
                          ornSlot != NULL || !assetView.assetsAvailable,
-                         "wall ornament graphic 101 is loadable from GRAPHICS.DAT");
+                         "wall ornament graphic 259/M615 is loadable from GRAPHICS.DAT");
             (void)ornOk;
         }
 

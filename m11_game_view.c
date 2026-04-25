@@ -6959,14 +6959,14 @@ enum {
      * In CSB/DM, object list entries map thing types to graphic indices.
      * The mapping uses a base index per thing type; subtypes offset from
      * there.  Graphic indices 267+ hold the floor item icons. */
-    M11_GFX_ITEM_SPRITE_BASE = 267, /* pairs of 14x19/16x19 icons */
-    M11_GFX_ITEM_WEAPON_BASE = 267, /* 46 weapon subtypes */
-    M11_GFX_ITEM_ARMOUR_BASE = 313, /* 30 armour subtypes */
-    M11_GFX_ITEM_SCROLL_BASE = 343, /* 1 generic scroll icon */
-    M11_GFX_ITEM_POTION_BASE = 344, /* 17 potion subtypes */
-    M11_GFX_ITEM_CONTAINER_BASE = 361, /* 3 container subtypes */
-    M11_GFX_ITEM_JUNK_BASE   = 364, /* 52 junk subtypes */
-    M11_GFX_ITEM_SPRITE_END  = 416, /* safety cap */
+    M11_GFX_ITEM_SPRITE_BASE = 498, /* M612_GRAPHIC_FIRST_OBJECT */
+    M11_GFX_ITEM_WEAPON_BASE = 498,
+    M11_GFX_ITEM_ARMOUR_BASE = 498,
+    M11_GFX_ITEM_SCROLL_BASE = 500,
+    M11_GFX_ITEM_POTION_BASE = 501,
+    M11_GFX_ITEM_CONTAINER_BASE = 498,
+    M11_GFX_ITEM_JUNK_BASE   = 498,
+    M11_GFX_ITEM_SPRITE_END  = 584, /* before M618 creature family */
 
     /* Projectile viewport sprites (M613_GRAPHIC_FIRST_PROJECTILE=454).
      * In DM1 these are the small flying-object graphics drawn in the
@@ -8509,37 +8509,53 @@ static int m11_draw_door_side_asset(const M11_GameViewState* state,
 /* Map an item thing type + subtype to a GRAPHICS.DAT graphic index.
  * Returns the graphic index, or 0 if no mapping exists. */
 static unsigned int m11_item_sprite_index(int thingType, int subtype) {
-    unsigned int base;
-    unsigned int maxSubtype;
+    static const unsigned char kObjectInfoAspect[180] = {
+        1,0,67,67,67,67,67,67,2,2,2,2,2,2,2,2,2,2,68,68,
+        68,68,80,38,38,35,37,11,12,12,39,17,12,12,12,12,12,12,12,42,
+        12,13,13,21,21,33,43,44,14,45,16,46,11,47,48,49,50,11,31,31,
+        11,11,11,51,32,30,65,45,82,23,23,23,55,8,24,24,24,24,69,24,
+        24,69,7,7,57,23,23,29,69,69,24,24,53,53,9,9,9,54,54,10,
+        54,19,19,19,19,9,19,52,20,22,56,10,52,20,22,56,10,52,20,22,
+        56,10,52,19,22,81,84,34,6,15,15,40,41,4,83,4,18,18,18,18,
+        18,18,18,18,62,62,62,62,62,62,62,62,76,3,60,61,27,28,25,26,
+        71,70,5,66,15,15,58,59,59,79,63,64,72,73,74,75,77,78,74,41
+    };
+    int objectInfoIndex;
+    int aspectIndex;
     if (subtype < 0) subtype = 0;
     switch (thingType) {
         case THING_TYPE_WEAPON:
-            base = M11_GFX_ITEM_WEAPON_BASE;
-            maxSubtype = 45;
+            if (subtype > 45) subtype = 0;
+            objectInfoIndex = 23 + subtype;
             break;
         case THING_TYPE_ARMOUR:
-            base = M11_GFX_ITEM_ARMOUR_BASE;
-            maxSubtype = 29;
+            if (subtype > 57) subtype = 0;
+            objectInfoIndex = 69 + subtype;
             break;
         case THING_TYPE_SCROLL:
-            return M11_GFX_ITEM_SCROLL_BASE;
+            objectInfoIndex = 0;
+            break;
         case THING_TYPE_POTION:
-            base = M11_GFX_ITEM_POTION_BASE;
-            maxSubtype = 16;
+            if (subtype > 20) subtype = 0;
+            objectInfoIndex = 2 + subtype;
             break;
         case THING_TYPE_CONTAINER:
-            base = M11_GFX_ITEM_CONTAINER_BASE;
-            maxSubtype = 2;
+            if (subtype > 0) subtype = 0;
+            objectInfoIndex = 1 + subtype;
             break;
         case THING_TYPE_JUNK:
-            base = M11_GFX_ITEM_JUNK_BASE;
-            maxSubtype = 51;
+            if (subtype > 52) subtype = 0;
+            objectInfoIndex = 127 + subtype;
             break;
         default:
             return 0;
     }
-    if ((unsigned int)subtype > maxSubtype) subtype = 0;
-    return base + (unsigned int)subtype;
+    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return 0;
+    aspectIndex = kObjectInfoAspect[objectInfoIndex];
+    if (aspectIndex < 0 || aspectIndex >= 85) return 0;
+    /* G0209_as_Graphic558_ObjectAspects[].FirstNativeBitmapRelativeIndex
+     * is 0 for aspect 0, then aspectIndex+1 for aspect >= 1. */
+    return M11_GFX_ITEM_SPRITE_BASE + (unsigned int)(aspectIndex == 0 ? 0 : aspectIndex + 1);
 }
 
 /* Resolve an inventory thingId to a GRAPHICS.DAT item sprite index.
@@ -8665,7 +8681,7 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
     }
 
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                               drawX, drawY, drawW, drawH, 0);
+                               drawX, drawY, drawW, drawH, 10);
     return 1;
 }
 
