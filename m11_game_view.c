@@ -6948,13 +6948,12 @@ enum {
     M11_GFX_WALLSET0_D3R    = 105, /* 83x49  -> C706_ZONE_WALL_D3R */
     M11_GFX_WALLSET0_D3L    = 106, /* 83x49  -> C705_ZONE_WALL_D3L */
 
-    /* Creature front-view sprites (groups of 3: small/mid/large).
-     * Each group covers one creature graphic set:
-     *   set 0 = 246..248, set 1 = 249..251, etc. */
-    M11_GFX_CREATURE_BASE   = 246,
-    M11_GFX_CREATURE_SETS_A = 4,   /* 4 sets at 246-257 */
-    M11_GFX_CREATURE_BASE_B = 439, /* second batch */
-    M11_GFX_CREATURE_SETS_B = 4,   /* 4 more sets at 439+ (439,443,448,451 are 96x88) */
+    /* Creature sprites.  DM1/PC 3.4 uses
+     * M618_GRAPHIC_FIRST_CREATURE=584 plus G0219 first-native offsets. */
+    M11_GFX_CREATURE_BASE   = 584,
+    M11_GFX_CREATURE_SETS_A = 27,
+    M11_GFX_CREATURE_BASE_B = 584,
+    M11_GFX_CREATURE_SETS_B = 0,
 
     /* Item viewport sprites (small icons shown in corridor).
      * In CSB/DM, object list entries map thing types to graphic indices.
@@ -9072,7 +9071,7 @@ enum {
 static unsigned int m11_creature_sprite_for_pose(int creatureType,
                                                  int depthIndex,
                                                  int pose) {
-    static const unsigned int kFirstNativeCreatureGraphic = 446;
+    static const unsigned int kFirstNativeCreatureGraphic = 584;
     static const unsigned char s_nativePoseOffset[4] = {0, 1, 2, 3};
     static const unsigned char s_derivedPoseOffset[4][2] = {
         {0, 1}, /* front  D3/D2 */

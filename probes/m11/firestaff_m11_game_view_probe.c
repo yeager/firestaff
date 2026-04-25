@@ -3111,28 +3111,28 @@ int main(int argc, char** argv) {
                          "stair graphic 95 loads as 60x111");
         }
 
-        /* INV_GV_102: Creature sprite base 246 loads as 44x38 (far view) */
+        /* INV_GV_102: Creature sprite base M618=584 loads as 112x84. */
         {
             const M11_AssetSlot* creatSlot = M11_AssetLoader_Load(
-                &assetView.assetLoader, 246);
+                &assetView.assetLoader, 584);
             probe_record(&tally,
                          "INV_GV_102",
                          creatSlot != NULL &&
-                             creatSlot->width == 44 && creatSlot->height == 38 &&
+                             creatSlot->width == 112 && creatSlot->height == 84 &&
                              creatSlot->pixels != NULL,
-                         "creature sprite base 246 loads as 44x38 (far view)");
+                         "creature sprite base 584/M618 loads as 112x84");
         }
 
-        /* INV_GV_103: Creature sprite 248 loads as 96x88 (near view) */
+        /* INV_GV_103: Creature type 1 first native sprite 588 loads as 64x66. */
         {
             const M11_AssetSlot* creatNear = M11_AssetLoader_Load(
-                &assetView.assetLoader, 248);
+                &assetView.assetLoader, 588);
             probe_record(&tally,
                          "INV_GV_103",
                          creatNear != NULL &&
-                             creatNear->width == 96 && creatNear->height == 88 &&
+                             creatNear->width == 64 && creatNear->height == 66 &&
                              creatNear->pixels != NULL,
-                         "creature sprite 248 loads as 96x88 (near view)");
+                         "creature type 1 sprite 588 loads as 64x66");
         }
 
         /* INV_GV_104: Ceiling panel graphic 78 loads as 224x97 */
@@ -4001,12 +4001,13 @@ int main(int argc, char** argv) {
         int mirror = -1;
         probe_record(&tally,
                      "INV_GV_156",
-                     M11_GameView_GetCreatureSpriteForView(0, 0, 2, 0, 0, &mirror) == 446u &&
+                     M11_GameView_GetCreatureSpriteForView(0, 0, 2, 0, 0, &mirror) == 584u &&
                      mirror == 0,
-                     "front-facing D1 GiantScorpion view selects native front bitmap");
+                     "front-facing D1 GiantScorpion view selects native front bitmap (M618+0)"
+                     );
         probe_record(&tally,
                      "INV_GV_157",
-                     M11_GameView_GetCreatureSpriteForView(0, 0, 1, 0, 0, &mirror) == 446u &&
+                     M11_GameView_GetCreatureSpriteForView(0, 0, 1, 0, 0, &mirror) == 584u &&
                      mirror == 0,
                      "side-facing D1 GiantScorpion falls back to front (no SIDE bit, no FLIP_NON_ATTACK)");
         probe_record(&tally,
@@ -4016,7 +4017,7 @@ int main(int argc, char** argv) {
                      "back-facing D2 GiantScorpion falls back to derived front D2 (no BACK bit)");
         probe_record(&tally,
                      "INV_GV_159",
-                     M11_GameView_GetCreatureSpriteForView(0, 0, 2, 0, 1, &mirror) == 446u &&
+                     M11_GameView_GetCreatureSpriteForView(0, 0, 2, 0, 1, &mirror) == 584u &&
                      mirror == 0,
                      "front-facing attack GiantScorpion falls back to front (no ATTACK bit, no FLIP_ATTACK)");
     }
@@ -4050,9 +4051,9 @@ int main(int argc, char** argv) {
                      "Trolin has side/back/attack bitmaps (no FLIP_NON_ATTACK) per 0x05B8");
         probe_record(&tally,
                      "INV_GV_264",
-                     M11_GameView_GetCreatureSpriteForView(14, 0, 1, 0, 0, &mirror) == 531u &&
+                     M11_GameView_GetCreatureSpriteForView(14, 0, 1, 0, 0, &mirror) == 669u &&
                      mirror == 1,
-                     "side-facing D1 Trolin selects native side bitmap (446+84+1) with mirror for relFacing=1");
+                     "side-facing D1 Trolin selects native side bitmap (584+84+1) with mirror for relFacing=1");
         probe_record(&tally,
                      "INV_GV_265",
                      M11_GameView_GetCreatureSpriteForView(14, 1, 0, 0, 0, &mirror) == 668u &&
@@ -4060,9 +4061,9 @@ int main(int argc, char** argv) {
                      "back-facing D2 Trolin selects derived back D2 bitmap (663+5=668) without mirror");
         probe_record(&tally,
                      "INV_GV_266",
-                     M11_GameView_GetCreatureSpriteForView(14, 0, 2, 0, 1, &mirror) == 533u &&
+                     M11_GameView_GetCreatureSpriteForView(14, 0, 2, 0, 1, &mirror) == 671u &&
                      mirror == 0,
-                     "front-facing attack D1 Trolin selects native attack bitmap (446+84+3=533)");
+                     "front-facing attack D1 Trolin selects native attack bitmap (584+84+3=671)");
         /* PainRat (type 3) has GraphicInfo 0x04B4 — no SIDE but HAS
          * BACK and ATTACK, and FLIP_NON_ATTACK is set so side pose
          * falls back to front with mirror. */
@@ -4076,14 +4077,14 @@ int main(int argc, char** argv) {
                      "PainRat GraphicInfo 0x04B4: no SIDE, has BACK, has ATTACK, has FLIP_NON_ATTACK");
         probe_record(&tally,
                      "INV_GV_268",
-                     M11_GameView_GetCreatureSpriteForView(3, 0, 1, 0, 0, &mirror) == 464u &&
+                     M11_GameView_GetCreatureSpriteForView(3, 0, 1, 0, 0, &mirror) == 602u &&
                      mirror == 1,
-                     "side-facing D1 PainRat falls back to front (446+18) mirrored (FLIP_NON_ATTACK set)");
+                     "side-facing D1 PainRat falls back to front (584+18) mirrored (FLIP_NON_ATTACK set)");
         probe_record(&tally,
                      "INV_GV_269",
-                     M11_GameView_GetCreatureSpriteForView(3, 0, 0, 0, 0, &mirror) == 466u &&
+                     M11_GameView_GetCreatureSpriteForView(3, 0, 0, 0, 0, &mirror) == 604u &&
                      mirror == 0,
-                     "back-facing D1 PainRat selects native back bitmap (446+18+2=466)");
+                     "back-facing D1 PainRat selects native back bitmap (584+18+2=604)");
     }
 
     /* INV_GV_270-296: source-backed CREATURE_INFO.GraphicInfo
