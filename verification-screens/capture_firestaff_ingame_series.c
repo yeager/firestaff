@@ -162,12 +162,17 @@ int main(int argc, char** argv) {
         c->mana.current = 20; c->mana.maximum = 40;
         c->food = 80; c->water = 70;
         c->portraitIndex = 0;
-        /* Give the champion a TORCH in the ready hand (weapon subtype 4) */
+        /* Give the champion a deterministic DAGGER in the ready hand so
+         * the inventory screenshot exercises the source object-icon path
+         * (F0038_OBJECT_DrawIconInSlotBox semantics), not an arbitrary
+         * dungeon-loaded weapon subtype. */
         if (game.world.things && game.world.things->weapons &&
             game.world.things->weaponCount > 0) {
-            /* Find a weapon thing or create a synthetic thingId */
             unsigned short weaponThing = (THING_TYPE_WEAPON << 10) | 0;
-            c->inventory[0] = weaponThing; /* HAND_LEFT = slot 0 */
+            game.world.things->weapons[0].type = 8; /* dagger -> icon 32 */
+            game.world.things->weapons[0].chargeCount = 0;
+            game.world.things->weapons[0].lit = 0;
+            c->inventory[CHAMPION_SLOT_HAND_LEFT] = weaponThing;
         }
         game.world.party.championCount = 1;
         game.world.party.activeChampionIndex = 0;
