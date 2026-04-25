@@ -4997,6 +4997,33 @@ int main(int argc, char** argv) {
                      "V1 endgame prints source champion title after name");
     }
 
+    /* INV_GV_165K: V1 endgame prefers raw Champion.Title bytes when present. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        unsigned int titleGold;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        endgameView.world.party.championCount = 1;
+        endgameView.world.party.champions[0].present = 1;
+        memcpy(endgameView.world.party.champions[0].name, "ZZZZ    ", 8);
+        memcpy(endgameView.world.party.champions[0].title, "BLADECASTER         ", 20);
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        titleGold = probe_count_color(fb_won,
+                                      320,
+                                      117,
+                                      14,
+                                      100,
+                                      8,
+                                      PROBE_COLOR_LIGHT_RED);
+        probe_record(&tally,
+                     "INV_GV_165K",
+                     titleGold >= 6,
+                     "V1 endgame prefers raw Champion.Title bytes when present");
+    }
+
     /* INV_GV_165F: V1 endgame prints source skill title line. */
     {
         M11_GameViewState endgameView;

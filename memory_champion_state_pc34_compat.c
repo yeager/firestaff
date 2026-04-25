@@ -93,7 +93,8 @@ int F0601_CHAMPION_InitPartyFromDungeon_Compat(
  *   [130..131] maxLoad (u16 LE)
  *   [132..133] wounds (u16 LE)
  *   [134..135] poisonDose (u16 LE)
- *   [136..255] reserved (zero)
+ *   [136..155] title[20]
+ *   [156..255] reserved (zero)
  */
 
 int F0602_CHAMPION_Serialize_Compat(
@@ -149,6 +150,7 @@ int F0602_CHAMPION_Serialize_Compat(
     write_u16_le(&buf[130], champ->maxLoad);
     write_u16_le(&buf[132], champ->wounds);
     write_u16_le(&buf[134], champ->poisonDose);
+    memcpy(&buf[136], champ->title, CHAMPION_TITLE_LENGTH);
 
     return CHAMPION_SERIALIZED_SIZE;
 }
@@ -203,6 +205,7 @@ int F0603_CHAMPION_Deserialize_Compat(
     champ->maxLoad   = read_u16_le(&buf[130]);
     champ->wounds    = read_u16_le(&buf[132]);
     champ->poisonDose = read_u16_le(&buf[134]);
+    memcpy(champ->title, &buf[136], CHAMPION_TITLE_LENGTH);
 
     return CHAMPION_SERIALIZED_SIZE;
 }

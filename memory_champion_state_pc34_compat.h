@@ -26,6 +26,7 @@
 /* ---- Champion slot limits ---- */
 #define CHAMPION_MAX_PARTY   4
 #define CHAMPION_NAME_LENGTH 8  /* Packed name, 8 chars max (no NUL in original) */
+#define CHAMPION_TITLE_LENGTH 20 /* Packed title, 20 chars max (no NUL in original) */
 
 /* ---- Attribute indices (CHAMPION.C ordering) ---- */
 #define CHAMPION_ATTR_STRENGTH   0
@@ -87,6 +88,7 @@ struct ChampionState_Compat {
     /* Identity (portrait index is the canonical champion ID) */
     int            portraitIndex;           /* [DUNGEON.DAT] sensor data for mirror */
     unsigned char  name[CHAMPION_NAME_LENGTH]; /* [DUNGEON.DAT] packed 8-char name */
+    unsigned char  title[CHAMPION_TITLE_LENGTH]; /* [DUNGEON.DAT] packed title */
     int            present;                 /* 1 if this slot is occupied */
 
     /* Attributes: base values [DUNGEON.DAT], current [RUNTIME] */

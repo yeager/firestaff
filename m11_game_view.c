@@ -1756,6 +1756,9 @@ static void m11_get_active_champion_label(const M11_GameViewState* state,
 static void m11_format_champion_name(const unsigned char* raw,
                                      char* out,
                                      size_t outSize);
+static void m11_format_champion_title(const unsigned char* raw,
+                                      char* out,
+                                      size_t outSize);
 static const char* m11_source_champion_title_for_name(const char* name);
 static int m11_endgame_source_skill_level(const M11_GameViewState* state, int championIndex, int baseSkillIndex);
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
@@ -14117,6 +14120,24 @@ static void m11_format_champion_name(const unsigned char* raw,
     }
 }
 
+static void m11_format_champion_title(const unsigned char* raw,
+                                      char* out,
+                                      size_t outSize) {
+    size_t i;
+    size_t end = 0;
+    if (!out || outSize == 0U) return;
+    out[0] = ' ';
+    if (!raw) return;
+    for (i = 0; i + 1 < outSize && i < CHAMPION_TITLE_LENGTH; ++i) {
+        unsigned char ch = raw[i];
+        if (ch == 0U) break;
+        out[i] = isprint(ch) ? (char)ch : ' ';
+        if (out[i] != ' ') end = i + 1;
+    }
+    out[i < outSize ? i : outSize - 1] = ' ';
+    out[end] = ' ';
+}
+
 static const char* m11_source_champion_title_for_name(const char* name) {
     /* Source-backed endgame draws Champion.Title immediately after
      * Champion.Name (ENDGAME.C:F0444_STARTEND_Endgame).  The current
@@ -15761,7 +15782,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                                       87, 14 + (i * 48), champName, &nameStyle);
                         {
-                            const char* champTitle = m11_source_champion_title_for_name(champName);
+                            char rawTitle[CHAMPION_TITLE_LENGTH + 1];
+                            const char* champTitle;
+                            m11_format_champion_title(state->world.party.champions[i].title,
+                                                      rawTitle, sizeof(rawTitle));
+                            champTitle = rawTitle[0] ? rawTitle : m11_source_champion_title_for_name(champName);
                             if (champTitle && champTitle[0]) {
                                 int titleX = 87 + ((int)strlen(champName) * 6);
                                 char firstTitleChar = champTitle[0];
