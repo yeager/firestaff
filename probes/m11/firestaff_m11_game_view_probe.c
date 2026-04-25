@@ -6898,6 +6898,46 @@ int main(int argc, char** argv) {
             iconView.world.things = NULL;
         }
 
+        {
+            struct DungeonThings_Compat localThings;
+            struct DungeonWeapon_Compat weapon;
+            unsigned char fbInv[320 * 200];
+            int x, y;
+            int darkGrayCount = 0;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&weapon, 0, sizeof(weapon));
+            /* Weapon subtype 8 resolves to icon 32 (dagger), whose source
+             * icon has substantial color 12 coverage.  Inventory slot
+             * drawing uses F0038 semantics, so color 12 must NOT be
+             * remapped to action-area cyan here. */
+            weapon.type = 8;
+            localThings.weapons = &weapon;
+            localThings.weaponCount = 1;
+            iconView.world.things = &localThings;
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_HAND_LEFT] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            iconView.inventoryPanelActive = 1;
+            memset(fbInv, 0, sizeof(fbInv));
+            M11_GameView_Draw(&iconView, fbInv, 320, 200);
+            /* Inventory panel layout: panelX=8, portX=13, portY=12,
+             * hand slot left at (13,52), icon inset at (14,53). */
+            for (y = 53; y < 69; ++y) {
+                for (x = 14; x < 30; ++x) {
+                    if ((fbInv[y * 320 + x] & 0x0F) == PROBE_COLOR_DARK_GRAY) {
+                        ++darkGrayCount;
+                    }
+                }
+            }
+            probe_record(&tally, "INV_GV_309B",
+                         iconView.assetsAvailable ? (darkGrayCount > 180) : 1,
+                         "inventory slot icons use source object icons without action palette remap");
+            iconView.inventoryPanelActive = 0;
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+            iconView.world.things = NULL;
+        }
+
         /* Save a screenshot artifact showing the populated right
          * column so the visual improvement is reproducible. */
         {

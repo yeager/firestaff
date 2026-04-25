@@ -11054,7 +11054,8 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          int framebufferHeight,
                                          int iconIndex,
                                          int dstX,
-                                         int dstY) {
+                                         int dstY,
+                                         int applyActionPalette) {
     const M11_AssetSlot* slot;
     int graphicIndex;
     int localIndex;
@@ -11085,9 +11086,11 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
             unsigned char px;
             if (fbX < 0 || fbX >= framebufferWidth) continue;
             px = slot->pixels[(srcY + y) * (int)slot->width + srcX + x];
-            /* ACTIDRAW.C applies G0498 palette changes for action-area
-             * object icons: only color 12 is remapped, to C04 cyan. */
-            if ((px & 0x0F) == M11_COLOR_DARK_GRAY) {
+            /* ACTIDRAW.C applies G0498 palette changes only for
+             * action-area object icons: color 12 is remapped to C04 cyan.
+             * Inventory slot icons use F0038_OBJECT_DrawIconInSlotBox and
+             * are blitted directly, without this palette rewrite. */
+            if (applyActionPalette && (px & 0x0F) == M11_COLOR_DARK_GRAY) {
                 px = M11_COLOR_CYAN;
             }
             framebuffer[fbY * framebufferWidth + fbX] = px;
@@ -13323,7 +13326,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             drewSprite = m11_draw_dm_object_icon_index(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 M11_DM_OBJECT_ICON_EMPTY_HAND,
-                innerX, M11_DM_ACTION_ICON_INNER_Y);
+                innerX, M11_DM_ACTION_ICON_INNER_Y, 1);
         } else if (state->assetsAvailable && state->world.things) {
             /* F0386 branch: only objects with a non-zero
              * ActionSetIndex get an icon blitted; everything else
@@ -13340,7 +13343,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
                     state, state->world.things, handThing);
                 drewSprite = m11_draw_dm_object_icon_index(
                     state, framebuffer, framebufferWidth, framebufferHeight,
-                    iconIndex, innerX, M11_DM_ACTION_ICON_INNER_Y);
+                    iconIndex, innerX, M11_DM_ACTION_ICON_INNER_Y, 1);
             }
         }
         (void)drewSprite;
@@ -14517,16 +14520,25 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
     }
 
     if (thingId != THING_NONE && thingId != THING_ENDOFLIST) {
-        /* Occupied — attempt GRAPHICS.DAT sprite, fall back to type tag */
+        /* Occupied — DM1 draws the source 16×16 object icon in the
+         * slot box (F0038_OBJECT_DrawIconInSlotBox), not the larger
+         * viewport object sprite.  Fall back to the legacy sprite/tag
+         * path only when the icon atlas is unavailable. */
         int drewSprite = 0;
         if (state->assetsAvailable && state->world.things) {
+            int iconIndex = m11_object_icon_index_for_thing(
+                state, state->world.things, thingId);
+            drewSprite = m11_draw_dm_object_icon_index(
+                state, fb, fbW, fbH, iconIndex, sx + 1, sy + 1, 0);
+        }
+        if (!drewSprite && state->assetsAvailable && state->world.things) {
             unsigned int gfxIdx = m11_inventory_thing_sprite_index(
                 state->world.things, thingId);
             if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
                 const M11_AssetSlot* slot = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader, gfxIdx);
                 if (slot && slot->width > 0 && slot->height > 0) {
-                    /* Scale item sprite into the slot box (1px inset) */
+                    /* Compatibility fallback: scale item sprite into the slot box. */
                     M11_AssetLoader_BlitScaled(slot, fb, fbW, fbH,
                                               sx + 1, sy + 1,
                                               slotBoxW - 2, slotBoxH - 2, 0);
