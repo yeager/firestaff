@@ -89,6 +89,7 @@ struct ChampionState_Compat {
     int            portraitIndex;           /* [DUNGEON.DAT] sensor data for mirror */
     unsigned char  name[CHAMPION_NAME_LENGTH]; /* [DUNGEON.DAT] packed 8-char name */
     unsigned char  title[CHAMPION_TITLE_LENGTH]; /* [DUNGEON.DAT] packed title */
+    unsigned char  sex;                     /* [DUNGEON.DAT] champion sex byte ('M'/'F') */
     int            present;                 /* 1 if this slot is occupied */
 
     /* Attributes: base values [DUNGEON.DAT], current [RUNTIME] */
@@ -205,8 +206,8 @@ int F0605_PARTY_Deserialize_Compat(
 /*
  * Parse a DUNGEON.DAT champion mirror text string into identity fields.
  * Source text format is NAME|TITLE||SEX|... (decoded separator = '|').
- * Only the raw packed Name[8] and Title[20] bytes are written here; gameplay
- * stats remain owned by the lifecycle/recruitment path.
+ * Only the raw packed Name[8], Title[20], and sex byte are written here;
+ * gameplay stats remain owned by the lifecycle/recruitment path.
  */
 int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     const char* mirrorText,

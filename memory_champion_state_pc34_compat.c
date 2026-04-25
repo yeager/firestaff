@@ -61,6 +61,7 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     const char* nameEnd;
     const char* titleStart;
     const char* titleEnd;
+    const char* sexStart;
 
     if (!mirrorText || !champ) return 0;
 
@@ -75,6 +76,14 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
                     nameStart, (int)(nameEnd - nameStart));
     pack_text_field(champ->title, CHAMPION_TITLE_LENGTH,
                     titleStart, (int)(titleEnd - titleStart));
+
+    sexStart = titleEnd;
+    if (sexStart[0] == '|' && sexStart[1] == '|') {
+        sexStart += 2;
+        champ->sex = (unsigned char)sexStart[0];
+    } else {
+        champ->sex = 0;
+    }
     return 1;
 }
 
@@ -131,7 +140,8 @@ int F0601_CHAMPION_InitPartyFromDungeon_Compat(
  *   [132..133] wounds (u16 LE)
  *   [134..135] poisonDose (u16 LE)
  *   [136..155] title[20]
- *   [156..255] reserved (zero)
+ *   [156] sex ('M'/'F'/0)
+ *   [157..255] reserved (zero)
  */
 
 int F0602_CHAMPION_Serialize_Compat(
@@ -188,6 +198,7 @@ int F0602_CHAMPION_Serialize_Compat(
     write_u16_le(&buf[132], champ->wounds);
     write_u16_le(&buf[134], champ->poisonDose);
     memcpy(&buf[136], champ->title, CHAMPION_TITLE_LENGTH);
+    buf[156] = champ->sex;
 
     return CHAMPION_SERIALIZED_SIZE;
 }
@@ -243,6 +254,7 @@ int F0603_CHAMPION_Deserialize_Compat(
     champ->wounds    = read_u16_le(&buf[132]);
     champ->poisonDose = read_u16_le(&buf[134]);
     memcpy(champ->title, &buf[136], CHAMPION_TITLE_LENGTH);
+    champ->sex = buf[156];
 
     return CHAMPION_SERIALIZED_SIZE;
 }

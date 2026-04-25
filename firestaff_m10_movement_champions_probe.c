@@ -125,6 +125,7 @@ int main(int argc, char* argv[]) {
         orig.portraitIndex = 3;
         memcpy(orig.name, "TESTNAME", 8);
         memcpy(orig.title, "SOURCE TITLE        ", 20);
+        orig.sex = 'F';
         orig.attributes[0] = 50;
         orig.attributes[1] = 40;
         orig.attributes[2] = 30;
@@ -186,6 +187,7 @@ int main(int argc, char* argv[]) {
         origP.champions[0].portraitIndex = 5;
         memcpy(origP.champions[0].name, "HALK    ", 8);
         memcpy(origP.champions[0].title, "THE BARBARIAN       ", 20);
+        origP.champions[0].sex = 'M';
         origP.champions[0].hp.current = 90;
         origP.champions[0].hp.maximum = 100;
         origP.champions[0].hp.shifted = 200;
@@ -347,6 +349,7 @@ int main(int argc, char* argv[]) {
         orig.portraitIndex = 3;
         memcpy(orig.name, "TESTNAME", 8);
         memcpy(orig.title, "SOURCE TITLE        ", 20);
+        orig.sex = 'F';
         orig.attributes[0] = 50; orig.attributes[1] = 40;
         orig.attributes[2] = 30; orig.attributes[3] = 60;
         orig.attributes[4] = 20; orig.attributes[5] = 15;
@@ -379,6 +382,7 @@ int main(int argc, char* argv[]) {
         origP.champions[0].portraitIndex = 5;
         memcpy(origP.champions[0].name, "HALK    ", 8);
         memcpy(origP.champions[0].title, "THE BARBARIAN       ", 20);
+        origP.champions[0].sex = 'M';
         origP.champions[0].hp.current = 90;
         origP.champions[0].hp.maximum = 100;
         origP.champions[0].hp.shifted = 200;
@@ -401,6 +405,8 @@ int main(int argc, char* argv[]) {
               "Champion mirror parser packs source Name[8]");
         CHECK(memcmp(champ.title, "BLADECASTER         ", 20) == 0,
               "Champion mirror parser packs source Title[20]");
+        CHECK(champ.sex == 'M',
+              "Champion mirror parser carries source sex byte");
     }
 
     /* Test 8: Sensor identification */
