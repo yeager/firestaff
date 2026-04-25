@@ -3402,6 +3402,16 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectSpriteIndex(THING_TYPE_WEAPON, 43) == 565u,
                      "object sprite uses G0209 firstNative gap: weapon subtype 43 -> aspect 65 -> graphic 565");
 
+        /* INV_GV_114C: Object source scale table is G2030. */
+        probe_record(&tally,
+                     "INV_GV_114C",
+                     M11_GameView_GetObjectSourceScaleUnits(0) == 27 &&
+                     M11_GameView_GetObjectSourceScaleUnits(1) == 21 &&
+                     M11_GameView_GetObjectSourceScaleUnits(2) == 18 &&
+                     M11_GameView_GetObjectSourceScaleUnits(3) == 14 &&
+                     M11_GameView_GetObjectSourceScaleUnits(4) == 12,
+                     "object source scale units match G2030 table");
+
         /* INV_GV_115: Draw with item sprites on floor produces different
          * output from draw without items.  We place an item and compare. */
         {

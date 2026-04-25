@@ -8584,6 +8584,15 @@ static unsigned int m11_item_sprite_index(int thingType, int subtype) {
     return M11_GFX_ITEM_SPRITE_BASE + (unsigned int)kObjectAspectFirstNative[aspectIndex];
 }
 
+static int m11_object_source_scale_units(int scaleIndex) {
+    /* DUNVIEW.C G2030_auc_ObjectScales: source object scale units for
+     * the five distance/cell scale buckets used by F0115. */
+    static const unsigned char kObjectScales[5] = {27, 21, 18, 14, 12};
+    if (scaleIndex < 0) scaleIndex = 0;
+    if (scaleIndex > 4) scaleIndex = 4;
+    return kObjectScales[scaleIndex];
+}
+
 /* Resolve an inventory thingId to a GRAPHICS.DAT item sprite index.
  * Returns the graphic index suitable for M11_AssetLoader_Load, or 0
  * if the thing type/subtype cannot be mapped.  This is the inventory
@@ -11643,6 +11652,10 @@ int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
 
 unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
     return m11_item_sprite_index(thingType, subtype);
+}
+
+int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex) {
+    return m11_object_source_scale_units(scaleIndex);
 }
 
 static int m11_perform_non_melee_action(M11_GameViewState* state,

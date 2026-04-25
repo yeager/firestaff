@@ -510,6 +510,10 @@ int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
  * source data. Returns 0 for unsupported inputs. */
 unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype);
 
+/* Return DM1 G2030 object scale units for source object distance/cell
+ * scale bucket 0..4. Out-of-range inputs clamp like the renderer. */
+int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex);
+
 /* ── Creature aspect query API (for probes) ── */
 
 /* Return the coordinate set index (0-10) for a creature type. */
