@@ -766,6 +766,25 @@ first, then visual parity, then typography / honesty.
     method, commands, artifact paths/sizes, mode-13h log evidence, and remaining
     raw/cropped framebuffer timing gap.  No V1 runtime code changed, and no
     original timing/cadence claim was added.
+- **Pass 65 (landed, 2026-04-25):**
+  - Added `scripts/dosbox_dm1_title_crop_compare_pass65.py`, a deterministic
+    bridge from pass-64 clean DOSBox window captures to 320x200 original TITLE
+    evidence.
+  - The script reads the graphics-mode DOSBox log line (`320x200 mode 13h`,
+    scaled to `1067x667`), crops the centered game surface from the clean
+    window capture, scans legal vertical offsets for the lowest-MAE alignment
+    against the existing 53-frame source-backed Firestaff/Greatstone TITLE
+    render dump, rescales with nearest-neighbour sampling, and normalizes only
+    near-black DOSBox background pixels before metrics.
+  - Verified against the pass-64 captures: both clean windows crop to
+    `34,120,1067,667`, best-match `verification/pass58-title-render-dump/frame_0037.ppm`,
+    MAE `1.693047`, max delta `12`, and identical cropped-frame SHA-256
+    `965301f0786d829116ec53c81ad53efc8aa05cc9ec260113fd435b2692c63f6e`.
+  - Evidence note:
+    `parity-evidence/pass65_v1_title_crop_compare.md` documents the script,
+    commands, artifact paths/sizes, comparison metrics, and why cadence remains
+    unclaimed.  No V1 runtime code changed, and no original timing/cadence claim
+    was added.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -781,18 +800,18 @@ first, then visual parity, then typography / honesty.
   1. Capture or source-prove original frame timing/cadence, palette application
      timing, and title-menu handoff.  Passes 59 and 61 define deterministic
      implementation cadence/handoff policy only.
-  2. Pixel-compare the wired frontend output against original emulator capture;
-     pass 57 proves renderer output against Greatstone source PNG frames and
-     pass 58 proves the V1 frontend consumes that renderer, but neither proves
-     the original runtime presentation cadence.
-  3. Turn the pass-64 clean window captures into deterministic game-content
-     pixels, or get DOSBox framebuffer/video capture working for raw 320x200
-     frames, so frontend pixel comparison is not polluted by emulator chrome.
-- **Suggested follow-up pass:** use the pass-64 clean capture wrapper to crop or
-  natively capture original TITLE frames, then source-prove or capture title
-  animation cadence, palette-display timing, and emulator handoff before making
-  frontend timing claims.  Avoid heavy video work until the raw/cropped frame
-  path is proven.
+  2. Pixel-compare the wired frontend output against a timestamped original
+     emulator capture sequence; pass 65 proves the first clean still can be
+     cropped to a reproducible 320x200 evidence frame, but it is still a
+     window-derived still rather than a raw/timestamped framebuffer sequence.
+  3. Get either timestamped targeted-window sequence capture or native/raw
+     DOSBox screenshots working, so frontend cadence and handoff comparison is
+     not inferred from two byte-identical still captures.
+- **Suggested follow-up pass:** extend the pass-65 crop bridge to a timestamped
+  short sequence, or make native/raw DOSBox screenshots emit reliably in the
+  detached run, then measure title animation cadence, palette-display timing,
+  and emulator handoff before making frontend timing claims.  Avoid heavy video
+  work until the timestamped frame path is proven.
 
 ---
 
