@@ -5032,6 +5032,37 @@ int main(int argc, char** argv) {
                      "V1 dialog overlay prints source C450 version-zone text");
     }
 
+    /* INV_GV_172E: V1 dialog message is centered on source viewport. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned int centerWhite;
+        unsigned int oldLeftWhite;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        centerWhite = probe_count_color(fb_dlg,
+                                        320,
+                                        65,
+                                        104,
+                                        96,
+                                        14,
+                                        PROBE_COLOR_WHITE);
+        oldLeftWhite = probe_count_color(fb_dlg,
+                                         320,
+                                         40,
+                                         104,
+                                         24,
+                                         14,
+                                         PROBE_COLOR_WHITE);
+        probe_record(&tally,
+                     "INV_GV_172E",
+                     centerWhite > oldLeftWhite && centerWhite >= 8,
+                     "V1 dialog message text is centered in source viewport region");
+    }
+
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
     {
         M11_GameViewState dlgView;

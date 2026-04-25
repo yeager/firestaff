@@ -449,6 +449,32 @@ static void m11_draw_text(unsigned char* framebuffer,
     }
 }
 
+static int m11_measure_text_pixels(const char* text,
+                                   const M11_TextStyle* style) {
+    const M11_TextStyle* s = style ? style : &g_text_small;
+    size_t len = text ? strlen(text) : 0;
+    if (!text || len == 0) return 0;
+    if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return M11_Font_MeasureString(text);
+    }
+    return (int)(len * (size_t)((5 * s->scale) + s->tracking));
+}
+
+static void m11_draw_text_centered_in_rect(unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight,
+                                           int x,
+                                           int y,
+                                           int w,
+                                           const char* text,
+                                           const M11_TextStyle* style) {
+    int textW = m11_measure_text_pixels(text, style);
+    int drawX = x + ((w - textW) / 2);
+    if (drawX < x) drawX = x;
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  drawX, y, text, style);
+}
+
 /* Draw text using the original DM1 font when available, with shadow.
  * Falls back to the builtin hardcoded font otherwise. */
 static void m11_draw_text_original(
@@ -15486,9 +15512,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     ? (M11_VIEWPORT_Y + 72)
                     : (dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18));
         if (strlen(state->dialogOverlayText) <= 40) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          dlgX + 12, textY, state->dialogOverlayText,
-                          &g_text_shadow);
+            if (drewSourceBackdrop) {
+                m11_draw_text_centered_in_rect(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               M11_VIEWPORT_X,
+                                               textY,
+                                               M11_VIEWPORT_W,
+                                               state->dialogOverlayText,
+                                               &g_text_shadow);
+            } else {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              dlgX + 12, textY, state->dialogOverlayText,
+                              &g_text_shadow);
+            }
         } else {
             /* Split at nearest space before character 40 */
             char line1[48], line2[80];
@@ -15501,10 +15538,29 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             line1[splitPos] = '\0';
             snprintf(line2, sizeof(line2), "%s",
                      state->dialogOverlayText + splitPos + (state->dialogOverlayText[splitPos] == ' ' ? 1 : 0));
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          dlgX + 12, textY, line1, &g_text_shadow);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          dlgX + 12, textY + 14, line2, &g_text_shadow);
+            if (drewSourceBackdrop) {
+                m11_draw_text_centered_in_rect(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               M11_VIEWPORT_X,
+                                               textY,
+                                               M11_VIEWPORT_W,
+                                               line1,
+                                               &g_text_shadow);
+                m11_draw_text_centered_in_rect(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               M11_VIEWPORT_X,
+                                               textY + 14,
+                                               M11_VIEWPORT_W,
+                                               line2,
+                                               &g_text_shadow);
+            } else {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              dlgX + 12, textY, line1, &g_text_shadow);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              dlgX + 12, textY + 14, line2, &g_text_shadow);
+            }
         }
         if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
