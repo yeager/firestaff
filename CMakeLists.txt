@@ -180,6 +180,17 @@ if(BUILD_TESTING)
     set_tests_properties(m11_launcher_smoke PROPERTIES
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
+
+    # Deterministic in-game screenshot capture smoke. This guards the
+    # capture pipeline itself (CMake target wiring + palette decode), not
+    # pixel-perfect art parity.
+    add_test(
+        NAME m11_ingame_capture_smoke
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_firestaff_m11_ingame_capture_smoke.sh
+    )
+    set_tests_properties(m11_ingame_capture_smoke PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
 endif()
 
 # ── Install rules ────────────────────────────────────────────────────
