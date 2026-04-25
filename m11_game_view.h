@@ -527,6 +527,10 @@ int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
                                          int relativeCell,
                                          int* outX,
                                          int* outY);
+int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
+                                             int relativeCell,
+                                             int* outX,
+                                             int* outY);
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
                                             int* outXIndex,
                                             int* outYIndex);

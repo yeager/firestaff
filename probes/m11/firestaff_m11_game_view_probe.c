@@ -6069,6 +6069,19 @@ int main(int argc, char** argv) {
                  M11_GameView_GetProjectileAspectFlipFlags(10, 1, 0, 2, 3) == 0x00,
                  "projectile C0 back/rotation aspect applies horizontal+vertical flip flags while C3 fireball stays unflipped");
 
+    {
+        int x0 = 0, y0 = 0, x1 = 0, y1 = 0, x4 = 0, y4 = 0;
+        int ok0 = M11_GameView_GetC2900ProjectileZonePoint(0, 2, &x0, &y0);
+        int ok1 = M11_GameView_GetC2900ProjectileZonePoint(1, 3, &x1, &y1);
+        int ok4 = M11_GameView_GetC2900ProjectileZonePoint(4, 3, &x4, &y4);
+        probe_record(&tally,
+                     "INV_GV_245F",
+                     ok0 && x0 == 129 && y0 == 47 &&
+                     ok1 && x1 == 25 && y1 == 47 &&
+                     ok4 && x4 == 202 && y4 == 47,
+                     "projectile placement binds C2900 layout-696 source zone samples");
+    }
+
     /* INV_GV_246: projectile sub-cell positioning — the firstProjectileCell
      * field is populated from the runtime ProjectileInstance_Compat.cell
      * data, rotated by party direction.

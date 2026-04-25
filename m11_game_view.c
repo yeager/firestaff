@@ -4976,6 +4976,7 @@ static int m11_projectile_source_scale_units(int depthIndex, int relativeCell) {
 }
 
 static unsigned int m11_projectile_aspect_graphic_info(int aspectIndex);
+static int m11_object_source_scale_index(int depthIndex, int relativeCell);
 
 static void m11_blit_scaled_flip(const M11_AssetSlot* slot,
                                  unsigned char* framebuffer,
@@ -5042,6 +5043,35 @@ static int m11_projectile_aspect_flip_flags(int aspectIndex,
     return flags;
 }
 
+static int m11_c2900_projectile_zone_point(int scaleIndex,
+                                           int relativeCell,
+                                           int* outX,
+                                           int* outY) {
+    /* Layout-696 C2900_ZONE_ table used by DUNVIEW.C F0115 for
+     * projectile placement.  Five projectile scale buckets × four
+     * view cells, parallel to the C2500 object table but higher in
+     * the viewport (projectiles fly through the cell center rather
+     * than lying on the floor). */
+    static const short kC2900[5][4][2] = {
+        {{  0,  0}, {  0,  0}, {129, 47}, { 95, 47}},
+        {{  0,  0}, {  0,  0}, { 62, 47}, { 25, 47}},
+        {{  0,  0}, {  0,  0}, {200, 47}, {162, 47}},
+        {{  0,  0}, {  0,  0}, {  2, 47}, {-35, 47}},
+        {{  0,  0}, {  0,  0}, {258, 47}, {202, 47}}
+    };
+    int zx;
+    int zy;
+    if (scaleIndex < 0) scaleIndex = 0;
+    if (scaleIndex > 4) scaleIndex = 4;
+    if (relativeCell < 0 || relativeCell > 3) return 0;
+    zx = (int)kC2900[scaleIndex][relativeCell][0];
+    zy = (int)kC2900[scaleIndex][relativeCell][1];
+    if (zx == 0 && zy == 0) return 0;
+    if (outX) *outX = zx;
+    if (outY) *outY = zy;
+    return 1;
+}
+
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -5076,28 +5106,37 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
      * We offset the sprite center toward the appropriate quadrant.
      * At greater depth the offset is reduced proportionally. */
     if (relativeCell >= 0 && relativeCell <= 3) {
+        int zoneX = 0;
+        int zoneY = 0;
+        int scaleIndex = m11_object_source_scale_index(depthIndex, relativeCell);
         int qx = w / 4;  /* quarter-width offset */
         int qy = h / 4;  /* quarter-height offset */
-        /* Reduce offset at depth to match perspective convergence */
-        if (depthIndex >= 1) { qx = qx * 2 / 3; qy = qy * 2 / 3; }
-        if (depthIndex >= 2) { qx = qx / 2;     qy = qy / 2; }
-        switch (relativeCell) {
-            case 0: /* back-left: upper-left */
-                drawX = x + (w / 2 - qx) - drawW / 2;
-                drawY = y + (h / 2 - qy) - drawH / 2;
-                break;
-            case 1: /* back-right: upper-right */
-                drawX = x + (w / 2 + qx) - drawW / 2;
-                drawY = y + (h / 2 - qy) - drawH / 2;
-                break;
-            case 2: /* front-left: lower-left */
-                drawX = x + (w / 2 - qx) - drawW / 2;
-                drawY = y + (h / 2 + qy) - drawH / 2;
-                break;
-            default: /* front-right: lower-right */
-                drawX = x + (w / 2 + qx) - drawW / 2;
-                drawY = y + (h / 2 + qy) - drawH / 2;
-                break;
+        if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
+            m11_c2900_projectile_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)) {
+            drawX = M11_VIEWPORT_X + zoneX - drawW / 2;
+            drawY = M11_VIEWPORT_Y + zoneY - drawH / 2;
+        } else {
+            /* Reduce offset at depth to match perspective convergence */
+            if (depthIndex >= 1) { qx = qx * 2 / 3; qy = qy * 2 / 3; }
+            if (depthIndex >= 2) { qx = qx / 2;     qy = qy / 2; }
+            switch (relativeCell) {
+                case 0: /* back-left: upper-left */
+                    drawX = x + (w / 2 - qx) - drawW / 2;
+                    drawY = y + (h / 2 - qy) - drawH / 2;
+                    break;
+                case 1: /* back-right: upper-right */
+                    drawX = x + (w / 2 + qx) - drawW / 2;
+                    drawY = y + (h / 2 - qy) - drawH / 2;
+                    break;
+                case 2: /* front-left: lower-left */
+                    drawX = x + (w / 2 - qx) - drawW / 2;
+                    drawY = y + (h / 2 + qy) - drawH / 2;
+                    break;
+                default: /* front-right: lower-right */
+                    drawX = x + (w / 2 + qx) - drawW / 2;
+                    drawY = y + (h / 2 + qy) - drawH / 2;
+                    break;
+            }
         }
         /* Clamp to face bounds */
         if (drawX < x) drawX = x;
@@ -12068,6 +12107,13 @@ int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
                                          int* outX,
                                          int* outY) {
     return m11_c2500_object_zone_point(scaleIndex, relativeCell, outX, outY);
+}
+
+int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
+                                             int relativeCell,
+                                             int* outX,
+                                             int* outY) {
+    return m11_c2900_projectile_zone_point(scaleIndex, relativeCell, outX, outY);
 }
 
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
