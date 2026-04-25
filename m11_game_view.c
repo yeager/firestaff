@@ -6883,6 +6883,12 @@ enum {
     M11_GFX_FLOOR_PIT_D1C  = 55,
     M11_GFX_FLOOR_PIT_D0L  = 56,
     M11_GFX_FLOOR_PIT_D0C  = 57,
+    M11_GFX_FLOOR_PIT_INVISIBLE_D2L = 58,
+    M11_GFX_FLOOR_PIT_INVISIBLE_D2C = 59,
+    M11_GFX_FLOOR_PIT_INVISIBLE_D1L = 60,
+    M11_GFX_FLOOR_PIT_INVISIBLE_D1C = 61,
+    M11_GFX_FLOOR_PIT_INVISIBLE_D0L = 62,
+    M11_GFX_FLOOR_PIT_INVISIBLE_D0C = 63,
 
     /* DM1 wall-set 0 stairs graphics.  Source: M645_GRAPHIC_FIRST_STAIRS=108. */
     M11_GFX_DM1_STAIRS_UP_FRONT_D3L    = 108,
@@ -7539,22 +7545,24 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         int relForward;
         int relSide;
         M11_DM1ZoneBlit blit;
+        M11_DM1ZoneBlit invisibleBlit;
+        int hasInvisibleBlit;
     } M11_DM1PitSpec;
     static const M11_DM1PitSpec kPits[] = {
-        {3, -2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 0,   66, 22, 10}},
-        {3,  2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 202, 66, 22, 10}},
-        {3, -1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 4,   65, 78, 8}},
-        {3,  0, {M11_GFX_FLOOR_PIT_D3C,  0, 0, 79,  65, 64, 8}},
-        {3,  1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 142, 65, 78, 8}},
-        {2, -1, {M11_GFX_FLOOR_PIT_D2L,  1, 0, 0,   76, 71, 13}},
-        {2,  0, {M11_GFX_FLOOR_PIT_D2C,  0, 0, 66,  77, 92, 12}},
-        {2,  1, {M11_GFX_FLOOR_PIT_D2L,  0, 0, 153, 76, 71, 13}},
-        {1, -1, {M11_GFX_FLOOR_PIT_D1L,  3, 0, 0,   94, 54, 24}},
-        {1,  0, {M11_GFX_FLOOR_PIT_D1C,  0, 0, 43,  94, 139,24}},
-        {1,  1, {M11_GFX_FLOOR_PIT_D1L,  0, 0, 169, 94, 55, 24}},
-        {0, -1, {M11_GFX_FLOOR_PIT_D0L,  4, 0, 0,   126,20, 10}},
-        {0,  0, {M11_GFX_FLOOR_PIT_D0C,  0, 0, 27,  127,170,9}},
-        {0,  1, {M11_GFX_FLOOR_PIT_D0L,  0, 0, 200, 126,24, 10}}
+        {3, -2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 0,   66, 22, 10}, {0}, 0},
+        {3,  2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 202, 66, 22, 10}, {0}, 0},
+        {3, -1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 4,   65, 78, 8},  {0}, 0},
+        {3,  0, {M11_GFX_FLOOR_PIT_D3C,  0, 0, 79,  65, 64, 8},  {0}, 0},
+        {3,  1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 142, 65, 78, 8},  {0}, 0},
+        {2, -1, {M11_GFX_FLOOR_PIT_D2L,  1, 0, 0,   76, 71, 13}, {M11_GFX_FLOOR_PIT_INVISIBLE_D2L, 1,0,0,   76,71,12}, 1},
+        {2,  0, {M11_GFX_FLOOR_PIT_D2C,  0, 0, 66,  77, 92, 12}, {M11_GFX_FLOOR_PIT_INVISIBLE_D2C, 0,0,66,  77,92,12}, 1},
+        {2,  1, {M11_GFX_FLOOR_PIT_D2L,  0, 0, 153, 76, 71, 13}, {M11_GFX_FLOOR_PIT_INVISIBLE_D2L, 0,0,153, 76,71,12}, 1},
+        {1, -1, {M11_GFX_FLOOR_PIT_D1L,  3, 0, 0,   94, 54, 24}, {M11_GFX_FLOOR_PIT_INVISIBLE_D1L, 3,0,0,   94,49,24}, 1},
+        {1,  0, {M11_GFX_FLOOR_PIT_D1C,  0, 0, 43,  94, 139,24}, {M11_GFX_FLOOR_PIT_INVISIBLE_D1C, 0,0,41,  94,144,24},1},
+        {1,  1, {M11_GFX_FLOOR_PIT_D1L,  0, 0, 169, 94, 55, 24}, {M11_GFX_FLOOR_PIT_INVISIBLE_D1L, 0,0,174, 94,50,24}, 1},
+        {0, -1, {M11_GFX_FLOOR_PIT_D0L,  4, 0, 0,   126,20, 10}, {M11_GFX_FLOOR_PIT_INVISIBLE_D0L, 4,0,0,   126,14,10}, 1},
+        {0,  0, {M11_GFX_FLOOR_PIT_D0C,  0, 0, 27,  127,170,9},  {M11_GFX_FLOOR_PIT_INVISIBLE_D0C, 0,0,25,  127,174,9},1},
+        {0,  1, {M11_GFX_FLOOR_PIT_D0L,  0, 0, 200, 126,24, 10}, {M11_GFX_FLOOR_PIT_INVISIBLE_D0L, 0,0,206, 126,18,10}, 1}
     };
     size_t i;
     if (!state || !state->assetsAvailable) {
@@ -7568,8 +7576,16 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_PIT) {
             continue;
         }
-        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                     &kPits[i].blit, 10);
+        if (cell.square & 0x04) { /* MASK0x0004_PIT_INVISIBLE */
+            if (!kPits[i].hasInvisibleBlit) {
+                continue;
+            }
+            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                         &kPits[i].invisibleBlit, 10);
+        } else {
+            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                         &kPits[i].blit, 10);
+        }
     }
 }
 
