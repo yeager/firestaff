@@ -86,6 +86,7 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     sexStart = titleEnd;
     if (sexStart[0] == '|' && sexStart[1] == '|') {
         sexStart += 2;
+        if (sexStart[0] != 'M' && sexStart[0] != 'F') return 0;
         champ->sex = (unsigned char)sexStart[0];
         statStart = strchr(sexStart, '|');
         if (statStart) {

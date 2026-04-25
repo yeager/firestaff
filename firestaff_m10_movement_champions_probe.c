@@ -425,6 +425,9 @@ int main(int argc, char* argv[]) {
               "Champion mirror parser carries encoded source skill field");
         CHECK(memcmp(champ.mirrorInventoryText, "AAAAAA          ", 16) == 0,
               "Champion mirror parser carries encoded source inventory field");
+        CHECK(F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+                  "STAMM|BLADECASTER||X|AADFACNAAAAP|DHCGCDCLCNCKCI|AAAAAA", &champ) == 0,
+              "Champion mirror parser rejects non-source sex byte");
     }
 
     /* Test 8: Sensor identification */
