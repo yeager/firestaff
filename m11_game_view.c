@@ -6855,12 +6855,23 @@ enum {
     M11_GFX_DOOR_SIDE_D2    = 88,  /*  18x65  */
     M11_GFX_DOOR_SIDE_D3    = 89,  /*  10x42  */
 
-    /* DM1 wall-set 0 front wall graphics.  These are the source
-     * GRAPHICS.DAT wall panels that DUNVIEW.C draws into layout-696
-     * zones C704/C709/C712 for blocked front squares. */
+    /* DM1 wall-set 0 wall graphics.  These are the source GRAPHICS.DAT
+     * wall panels that DUNVIEW.C draws into layout-696 zones C702..C717. */
+    M11_GFX_WALLSET0_D0R    = 93,  /* 33x136 -> C717_ZONE_WALL_D0R */
+    M11_GFX_WALLSET0_D0L    = 94,  /* 33x136 -> C716_ZONE_WALL_D0L */
+    M11_GFX_WALLSET0_D1R    = 95,  /* 60x111 -> C714_ZONE_WALL_D1R */
+    M11_GFX_WALLSET0_D1L    = 96,  /* 60x111 -> C713_ZONE_WALL_D1L */
     M11_GFX_WALLSET0_D3C    = 107, /* 70x49  -> C704_ZONE_WALL_D3C */
     M11_GFX_WALLSET0_D2C    = 102, /* 106x74 -> C709_ZONE_WALL_D2C */
     M11_GFX_WALLSET0_D1C    = 97,  /* 160x111 -> C712_ZONE_WALL_D1C */
+    M11_GFX_WALLSET0_D2R2   = 98,  /* 8x52   -> C708_ZONE_WALL_D2R2 */
+    M11_GFX_WALLSET0_D2L2   = 99,  /* 8x52   -> C707_ZONE_WALL_D2L2 */
+    M11_GFX_WALLSET0_D2R    = 100, /* 78x74  -> C711_ZONE_WALL_D2R */
+    M11_GFX_WALLSET0_D2L    = 101, /* 78x74  -> C710_ZONE_WALL_D2L */
+    M11_GFX_WALLSET0_D3R2   = 103, /* 44x49  -> C703_ZONE_WALL_D3R2 */
+    M11_GFX_WALLSET0_D3L2   = 104, /* 44x49  -> C702_ZONE_WALL_D3L2 */
+    M11_GFX_WALLSET0_D3R    = 105, /* 83x49  -> C706_ZONE_WALL_D3R */
+    M11_GFX_WALLSET0_D3L    = 106, /* 83x49  -> C705_ZONE_WALL_D3L */
 
     /* Creature front-view sprites (groups of 3: small/mid/large).
      * Each group covers one creature graphic set:
@@ -7089,6 +7100,8 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
 
 typedef struct M11_DM1WallFrontBlit {
     int depthIndex;
+    int relForward;
+    int relSide;
     int graphicIndex;
     int dstX;
     int dstY;
@@ -7129,9 +7142,9 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
          *   graphic 97  -> C712_ZONE_WALL_D1C: x=32,y=9,w=160,h=111
          *   graphic 102 -> C709_ZONE_WALL_D2C: x=59,y=19,w=106,h=74
          *   graphic 107 -> C704_ZONE_WALL_D3C: x=77,y=25,w=70,h=49 */
-        {0, M11_GFX_WALLSET0_D1C, 32, 9, 160, 111},
-        {1, M11_GFX_WALLSET0_D2C, 59, 19, 106, 74},
-        {2, M11_GFX_WALLSET0_D3C, 77, 25, 70, 49}
+        {0, 1, 0, M11_GFX_WALLSET0_D1C, 32, 9, 160, 111},
+        {1, 2, 0, M11_GFX_WALLSET0_D2C, 59, 19, 106, 74},
+        {2, 3, 0, M11_GFX_WALLSET0_D3C, 77, 25, 70, 49}
     };
     int depth;
     int occluded = 0;
@@ -7146,6 +7159,47 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
             (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
                                                &kFrontBlits[depth]);
             occluded = 1;
+        }
+    }
+}
+
+static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW,
+                                    int fbH) {
+    static const M11_DM1WallFrontBlit kSideBlits[] = {
+        /* Far to near, matching the first source-bound subset of
+         * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
+         * coordinates name the viewed square; dst rects are layout-696
+         * F0635_-resolved viewport zones. */
+        {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},
+        {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},
+        {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},
+        {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},
+        {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},
+        {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},
+        {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   19, 78, 74},
+        {2, 2,  1, M11_GFX_WALLSET0_D2R,  146, 19, 78, 74},
+        {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111},
+        {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111},
+        {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136},
+        {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
+        M11_ViewportCell cell;
+        if (!m11_sample_viewport_cell(state,
+                                      kSideBlits[i].relForward,
+                                      kSideBlits[i].relSide,
+                                      &cell)) {
+            continue;
+        }
+        if (!m11_viewport_cell_is_open(&cell)) {
+            (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
+                                               &kSideBlits[i]);
         }
     }
 }
@@ -11379,10 +11433,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                       viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
     }
 
-    /* First source-bound wall pass: draw blocked front-square wall
+    /* First source-bound wall passes: draw blocked side/front square
      * panels using original wall-set bitmaps and original layout-696
-     * zones.  This is intentionally narrow: side walls/ornaments/doors
-     * still need the full DUNVIEW.C field-aspect pass. */
+     * zones.  This is still narrower than full DUNVIEW.C: ornaments,
+     * doors, pits, stairs, fields, and exact object order remain next. */
+    m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
