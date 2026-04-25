@@ -306,4 +306,105 @@ int F0626_PARTY_ContainsChampionName_Compat(
     const struct PartyState_Compat* party,
     const unsigned char packedName[CHAMPION_NAME_LENGTH]);
 
+int F0627_CHAMPION_PackedTrimLength_Compat(
+    const unsigned char* packed,
+    int packedLen);
+
+int F0628_CHAMPION_UnpackName_Compat(
+    const struct ChampionState_Compat* champ,
+    char* outName,
+    int outSize);
+
+int F0629_CHAMPION_UnpackTitle_Compat(
+    const struct ChampionState_Compat* champ,
+    char* outTitle,
+    int outSize);
+
+int F0630_CHAMPION_MirrorStatsTextLength_Compat(
+    const struct ChampionState_Compat* champ);
+
+int F0631_CHAMPION_MirrorSkillsTextLength_Compat(
+    const struct ChampionState_Compat* champ);
+
+int F0632_CHAMPION_MirrorInventoryTextLength_Compat(
+    const struct ChampionState_Compat* champ);
+
+int F0633_CHAMPION_IsEncodedMirrorField_Compat(
+    const unsigned char* packed,
+    int packedLen);
+
+int F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(
+    const struct ChampionState_Compat* champ);
+
+int F0635_CHAMPION_GetMirrorNameByOrdinal_Compat(
+    const struct DungeonThings_Compat* things,
+    int mirrorOrdinal,
+    char* outName,
+    int outSize);
+
+int F0636_CHAMPION_GetMirrorTitleByOrdinal_Compat(
+    const struct DungeonThings_Compat* things,
+    int mirrorOrdinal,
+    char* outTitle,
+    int outSize);
+
+int F0637_CHAMPION_FindMirrorTextStringByTitleString_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* title);
+
+int F0638_PARTY_CountOccupiedChampionSlots_Compat(
+    const struct PartyState_Compat* party);
+
+int F0639_PARTY_IsChampionSlotOccupied_Compat(
+    const struct PartyState_Compat* party,
+    int slot);
+
+int F0640_PARTY_RecountChampionSlots_Compat(
+    const struct PartyState_Compat* party);
+
+int F0641_PARTY_HasActiveChampion_Compat(
+    const struct PartyState_Compat* party);
+
+int F0642_PARTY_SetActiveChampionIfPresent_Compat(
+    struct PartyState_Compat* party,
+    int slot);
+
+int F0643_PARTY_ClearChampionSlot_Compat(
+    struct PartyState_Compat* party,
+    int slot);
+
+int F0644_PARTY_GetChampionSlotByName_Compat(
+    const struct PartyState_Compat* party,
+    const unsigned char packedName[CHAMPION_NAME_LENGTH]);
+
+int F0645_PARTY_GetChampionSlotByNameString_Compat(
+    const struct PartyState_Compat* party,
+    const char* name);
+
+int F0646_PARTY_AddChampionFromMirrorOrdinalIfAbsent_Compat(
+    const struct DungeonThings_Compat* things,
+    int mirrorOrdinal,
+    struct PartyState_Compat* party);
+
+int F0647_PARTY_AddChampionFromMirrorNameStringIfAbsent_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* name,
+    struct PartyState_Compat* party);
+
+int F0648_CHAMPION_GetMirrorOrdinalByNameString_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* name);
+
+int F0649_CHAMPION_GetMirrorOrdinalByTitleString_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* title);
+
+int F0650_CHAMPION_GetMirrorTextStringIndexByNameString_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* name);
+
+int F0651_CHAMPION_GetMirrorTextStringIndexByTitleString_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* title);
+
 #endif

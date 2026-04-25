@@ -591,7 +591,80 @@ int main(int argc, char* argv[]) {
               "Public party duplicate helper finds recruited packed Name[8]");
     }
 
-    /* Test 12: Sensor identification */
+    /* Test 12: Champion mirror presentation/state helpers */
+    {
+        struct ChampionState_Compat parsed;
+        char nameBuf[16];
+        char titleBuf[32];
+        unsigned char badField[CHAMPION_MIRROR_FIELD_LENGTH] = { 'A','A','a',' ' };
+        struct PartyState_Compat helperParty;
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        F0607_CHAMPION_ParseMirrorTextString_Compat(&things,
+            F0620_CHAMPION_FindMirrorTextStringByNameString_Compat(&things, "STAMM"),
+            &parsed);
+        memcpy(&helperParty, &party, sizeof(helperParty));
+
+        CHECK(F0627_CHAMPION_PackedTrimLength_Compat((const unsigned char*)"STAMM   ", 8) == 5,
+              "Packed trim helper returns source name length without pad spaces");
+        CHECK(F0628_CHAMPION_UnpackName_Compat(&parsed, nameBuf, sizeof(nameBuf)) == 5 && strcmp(nameBuf, "STAMM") == 0,
+              "Champion unpack-name helper returns display name string");
+        CHECK(F0629_CHAMPION_UnpackTitle_Compat(&parsed, titleBuf, sizeof(titleBuf)) == 11 && strcmp(titleBuf, "BLADECASTER") == 0,
+              "Champion unpack-title helper returns display title string");
+        CHECK(F0630_CHAMPION_MirrorStatsTextLength_Compat(&parsed) == 12,
+              "Mirror stats encoded field reports trimmed source length");
+        CHECK(F0631_CHAMPION_MirrorSkillsTextLength_Compat(&parsed) == 14,
+              "Mirror skills encoded field reports trimmed source length");
+        CHECK(F0632_CHAMPION_MirrorInventoryTextLength_Compat(&parsed) == 16,
+              "Mirror inventory encoded field reports trimmed source length");
+        CHECK(F0633_CHAMPION_IsEncodedMirrorField_Compat(parsed.mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH) == 1,
+              "Encoded mirror field validator accepts uppercase source field");
+        CHECK(F0633_CHAMPION_IsEncodedMirrorField_Compat(badField, CHAMPION_MIRROR_FIELD_LENGTH) == 0,
+              "Encoded mirror field validator rejects lowercase/non-source field");
+        CHECK(F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(&parsed) == 1,
+              "Champion mirror record validates all encoded source fields");
+        CHECK(F0635_CHAMPION_GetMirrorNameByOrdinal_Compat(&things, 0, nameBuf, sizeof(nameBuf)) > 0 && strcmp(nameBuf, "DAROOU") == 0,
+              "Mirror ordinal can produce display name string");
+        CHECK(F0636_CHAMPION_GetMirrorTitleByOrdinal_Compat(&things, 11, titleBuf, sizeof(titleBuf)) > 0 && strcmp(titleBuf, "BLADECASTER") == 0,
+              "Mirror ordinal can produce display title string");
+        CHECK(F0637_CHAMPION_FindMirrorTextStringByTitleString_Compat(&things, "BLADECASTER") >= 0,
+              "Mirror finder accepts plain C title string");
+        CHECK(F0638_PARTY_CountOccupiedChampionSlots_Compat(&helperParty) == 0,
+              "Occupied-slot counter reports empty party");
+        CHECK(F0639_PARTY_IsChampionSlotOccupied_Compat(&helperParty, 0) == 0,
+              "Slot-occupied helper reports empty slot");
+        F0621_PARTY_AddChampionFromMirrorNameString_Compat(&things, "STAMM", &helperParty);
+        CHECK(F0640_PARTY_RecountChampionSlots_Compat(&helperParty) == 1,
+              "Party recount helper reports recruited champion");
+        CHECK(F0641_PARTY_HasActiveChampion_Compat(&helperParty) == 1,
+              "Party active helper sees first recruited champion");
+        CHECK(F0642_PARTY_SetActiveChampionIfPresent_Compat(&helperParty, 0) == 1,
+              "Party active setter accepts present champion slot");
+        CHECK(F0644_PARTY_GetChampionSlotByName_Compat(&helperParty, parsed.name) == 0,
+              "Party slot lookup by packed name finds recruited champion");
+        CHECK(F0645_PARTY_GetChampionSlotByNameString_Compat(&helperParty, "STAMM") == 0,
+              "Party slot lookup by C name finds recruited champion");
+        CHECK(F0646_PARTY_AddChampionFromMirrorOrdinalIfAbsent_Compat(&things, F0648_CHAMPION_GetMirrorOrdinalByNameString_Compat(&things, "STAMM"), &helperParty) == 1 &&
+              F0638_PARTY_CountOccupiedChampionSlots_Compat(&helperParty) == 1,
+              "Add-if-absent by mirror ordinal is idempotent for existing champion");
+        CHECK(F0647_PARTY_AddChampionFromMirrorNameStringIfAbsent_Compat(&things, "HALK", &helperParty) == 1 &&
+              F0638_PARTY_CountOccupiedChampionSlots_Compat(&helperParty) == 2,
+              "Add-if-absent by C name recruits missing champion");
+        CHECK(F0648_CHAMPION_GetMirrorOrdinalByNameString_Compat(&things, "STAMM") == 11,
+              "Mirror ordinal by C name returns STAMM ordinal");
+        CHECK(F0649_CHAMPION_GetMirrorOrdinalByTitleString_Compat(&things, "BLADECASTER") == 11,
+              "Mirror ordinal by C title returns STAMM ordinal");
+        CHECK(F0650_CHAMPION_GetMirrorTextStringIndexByNameString_Compat(&things, "STAMM") ==
+              F0620_CHAMPION_FindMirrorTextStringByNameString_Compat(&things, "STAMM"),
+              "TextString index by C name matches name finder");
+        CHECK(F0651_CHAMPION_GetMirrorTextStringIndexByTitleString_Compat(&things, "BLADECASTER") ==
+              F0637_CHAMPION_FindMirrorTextStringByTitleString_Compat(&things, "BLADECASTER"),
+              "TextString index by C title matches title finder");
+        CHECK(F0643_PARTY_ClearChampionSlot_Compat(&helperParty, 0) == 1 &&
+              F0639_PARTY_IsChampionSlotOccupied_Compat(&helperParty, 0) == 0,
+              "Clear champion slot helper removes recruited slot");
+    }
+
+    /* Test 13: Sensor identification */
     {
         struct SensorOnSquare_Compat sensorResult;
         int foundAnySensor = 0;
