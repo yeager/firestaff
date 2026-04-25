@@ -6736,6 +6736,44 @@ int main(int argc, char** argv) {
             iconView.world.things = NULL;
         }
 
+        {
+            struct DungeonThings_Compat localThings;
+            struct DungeonWeapon_Compat weapon;
+            unsigned char fb3[320 * 200];
+            int x, y;
+            int diffInner0 = 0;
+            int cellX0 = 0 * 22 + 233;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&weapon, 0, sizeof(weapon));
+            /* Weapon subtype 8 = dagger. ObjectInfo index 31 has
+             * Type/IconIndex 32 and ActionSetIndex 12, so F0386 must
+             * blit object icon 32 rather than leaving the cell plain
+             * cyan or using the viewport M612 sprite. */
+            weapon.type = 8;
+            localThings.weapons = &weapon;
+            localThings.weaponCount = 1;
+            iconView.world.things = &localThings;
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            memset(fb3, 0, sizeof(fb3));
+            M11_GameView_Draw(&iconView, fb3, 320, 200);
+            for (y = 95; y < 111; ++y) {
+                for (x = cellX0 + 2; x < cellX0 + 18; ++x) {
+                    if ((fb3[y * 320 + x] & 0x0F) !=
+                        (fb[y * 320 + x] & 0x0F)) {
+                        ++diffInner0;
+                    }
+                }
+            }
+            probe_record(&tally, "INV_GV_305",
+                         iconView.assetsAvailable ? (diffInner0 > 20) : 1,
+                         "action-hand icon cells: ActionSetIndex>0 item blits source object icon");
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+            iconView.world.things = NULL;
+        }
+
         /* Save a screenshot artifact showing the populated right
          * column so the visual improvement is reproducible. */
         {

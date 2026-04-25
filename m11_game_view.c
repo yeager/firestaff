@@ -11237,6 +11237,68 @@ static unsigned int m11_action_set_index_for_thing(
     }
 }
 
+static int m11_object_info_index_for_thing(const struct DungeonThings_Compat* things,
+                                           unsigned short thingId) {
+    int thingType, thingIndex, subtype;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) return -1;
+    thingType  = THING_GET_TYPE(thingId);
+    thingIndex = THING_GET_INDEX(thingId);
+    switch (thingType) {
+        case THING_TYPE_SCROLL:
+            return 0;
+        case THING_TYPE_CONTAINER:
+            if (!things->containers || thingIndex < 0 ||
+                thingIndex >= things->containerCount) return -1;
+            subtype = things->containers[thingIndex].type;
+            if (subtype < 0 || subtype > 0) subtype = 0;
+            return 1 + subtype;
+        case THING_TYPE_POTION:
+            if (!things->potions || thingIndex < 0 ||
+                thingIndex >= things->potionCount) return -1;
+            subtype = things->potions[thingIndex].type;
+            if (subtype < 0 || subtype > 20) subtype = 0;
+            return 2 + subtype;
+        case THING_TYPE_WEAPON:
+            if (!things->weapons || thingIndex < 0 ||
+                thingIndex >= things->weaponCount) return -1;
+            subtype = things->weapons[thingIndex].type;
+            if (subtype < 0 || subtype > 45) subtype = 0;
+            return 23 + subtype;
+        case THING_TYPE_ARMOUR:
+            if (!things->armours || thingIndex < 0 ||
+                thingIndex >= things->armourCount) return -1;
+            subtype = things->armours[thingIndex].type;
+            if (subtype < 0 || subtype > 57) subtype = 0;
+            return 69 + subtype;
+        case THING_TYPE_JUNK:
+            if (!things->junks || thingIndex < 0 ||
+                thingIndex >= things->junkCount) return -1;
+            subtype = things->junks[thingIndex].type;
+            if (subtype < 0 || subtype > 52) subtype = 0;
+            return 127 + subtype;
+        default:
+            return -1;
+    }
+}
+
+static int m11_object_icon_index_for_thing(const struct DungeonThings_Compat* things,
+                                           unsigned short thingId) {
+    static const unsigned char kObjectInfoType[180] = {
+         30,144,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,
+        166,167,195, 16, 18,  4, 14, 20, 23, 25, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+         41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+         61, 62, 63, 64, 65, 66,135,143, 28, 80, 81, 82,112,114, 67, 83, 68, 84, 69, 70,
+         85, 86, 71, 87,119, 72, 88,113, 89, 73, 74, 90,103,104, 96, 97, 98,105,106,108,
+        107, 75, 91, 76, 92, 99,115,100, 77, 93,116,109,101, 78, 94,117,110,102, 79, 95,
+        118,111,140,141,142,194,196,  0,  8, 10, 12,146,147,125,126,127,176,177,178,179,
+        180,181,182,183,184,185,186,187,188,189,190,191,128,129,130,131,168,169,170,171,
+        172,173,174,175,120,121,122,123,124,132,133,134,136,137,138,139,192,193,197,198
+    };
+    int objectInfoIndex = m11_object_info_index_for_thing(things, thingId);
+    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return -1;
+    return (int)kObjectInfoType[objectInfoIndex];
+}
+
 /* ---------------------------------------------------------------
  * DM1 ActionSet table (G0489_as_Graphic560_ActionSets[44]).
  *
@@ -13236,20 +13298,11 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             unsigned int actionSet = m11_action_set_index_for_thing(
                 state->world.things, handThing);
             if (actionSet != 0) {
-                unsigned int gfxIdx = m11_inventory_thing_sprite_index(
+                int iconIndex = m11_object_icon_index_for_thing(
                     state->world.things, handThing);
-                if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
-                    const M11_AssetSlot* spr = M11_AssetLoader_Load(
-                        (M11_AssetLoader*)&state->assetLoader, gfxIdx);
-                    if (spr && spr->width > 0 && spr->height > 0) {
-                        M11_AssetLoader_BlitScaled(spr,
-                            framebuffer, framebufferWidth, framebufferHeight,
-                            innerX, M11_DM_ACTION_ICON_INNER_Y,
-                            M11_DM_ACTION_ICON_INNER_W,
-                            M11_DM_ACTION_ICON_INNER_H, 0);
-                        drewSprite = 1;
-                    }
-                }
+                drewSprite = m11_draw_dm_object_icon_index(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    iconIndex, innerX, M11_DM_ACTION_ICON_INNER_Y);
             }
         }
         (void)drewSprite;
