@@ -12284,6 +12284,14 @@ int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex) {
            (wallSet0GraphicIndex - M11_GFX_DOOR_SIDE_D0);
 }
 
+int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH) {
+    if (outX) *outX = M11_VIEWPORT_X;
+    if (outY) *outY = M11_VIEWPORT_Y;
+    if (outW) *outW = M11_VIEWPORT_W;
+    if (outH) *outH = M11_VIEWPORT_H;
+    return 1;
+}
+
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int depthIndex,
                                            int visibleCount,

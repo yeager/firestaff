@@ -787,6 +787,18 @@ int main(int argc, char** argv) {
                                        PROBE_COLOR_LIGHT_CYAN) > 10U,
                  "viewport item and effect cues appear when real thing chains include loot and projectiles");
 
+    {
+        int vx = -1, vy = -1, vw = -1, vh = -1;
+        probe_record(&tally,
+                     "INV_GV_12C",
+                     M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh) == 1 &&
+                     vx == PROBE_DM1_VIEWPORT_X &&
+                     vy == PROBE_DM1_VIEWPORT_Y &&
+                     vw == PROBE_DM1_VIEWPORT_W &&
+                     vh == PROBE_DM1_VIEWPORT_H,
+                     "runtime viewport rect API returns source DM1 viewport geometry");
+    }
+
     probe_record(&tally,
                  "INV_GV_13",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_RETURN_TO_MENU,

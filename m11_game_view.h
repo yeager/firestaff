@@ -532,6 +532,7 @@ int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
                                              int* outX,
                                              int* outY);
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
+int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int depthIndex,
                                            int visibleCount,
