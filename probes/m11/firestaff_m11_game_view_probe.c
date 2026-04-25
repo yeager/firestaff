@@ -1462,6 +1462,14 @@ int main(int argc, char** argv) {
             haveAssets = M11_AssetLoader_Init(&focusView.assetLoader, gfxPath);
             focusView.assetsAvailable = haveAssets ? 1 : 0;
         }
+        focusView.world.things->sensors =
+            (struct DungeonSensor_Compat*)calloc(1, sizeof(struct DungeonSensor_Compat));
+        if (focusView.world.things->sensors) {
+            focusView.world.things->sensorCount = 1;
+            focusView.world.things->thingCounts[THING_TYPE_SENSOR] = 1;
+            focusView.world.things->sensors[0].next = THING_ENDOFLIST;
+            focusView.world.things->sensors[0].ornamentOrdinal = 1;
+        }
 
         memset(baseFb, 0, sizeof(baseFb));
         M11_GameView_Draw(&focusView, baseFb, 320, 200);
@@ -1554,11 +1562,17 @@ int main(int argc, char** argv) {
                 {1,-1},{1,0},{1,1},
                 {0,-1},{0,0},{0,1}
             };
+            static const ProbeFocusedPos kFloorOrnamentPositions[] = {
+                {3,2},{3,-1},{3,0},{3,1},
+                {2,-1},{2,0},{2,1},
+                {1,-1},{1,0},{1,1}
+            };
             int changedPit = 0;
             int changedInvisiblePit = 0;
             int changedStairsFront = 0;
             int changedStairsSide = 0;
             int changedTeleporter = 0;
+            int changedFloorOrnament = 0;
             size_t pi;
             for (pi = 0; pi < sizeof(kPitPositions) / sizeof(kPitPositions[0]); ++pi) {
                 probe_reset_synthetic_view_to_corridor(&focusView);
@@ -1630,6 +1644,34 @@ int main(int argc, char** argv) {
                     ++changedTeleporter;
                 }
             }
+            for (pi = 0; pi < sizeof(kFloorOrnamentPositions) / sizeof(kFloorOrnamentPositions[0]); ++pi) {
+                int ornX;
+                int ornY;
+                int ornSquare;
+                probe_reset_synthetic_view_to_corridor(&focusView);
+                focusView.world.dungeon->maps[0].floorOrnamentCount = 1;
+                focusView.ornamentCacheLoaded[0] = 1;
+                focusView.floorOrnamentIndices[0][0] = 0;
+                memset(baseFb, 0, sizeof(baseFb));
+                M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                probe_set_square(focusView.world.dungeon,
+                                 focusView.world.party.mapX + kFloorOrnamentPositions[pi].relSide,
+                                 focusView.world.party.mapY - kFloorOrnamentPositions[pi].relForward,
+                                 (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+                ornX = focusView.world.party.mapX + kFloorOrnamentPositions[pi].relSide;
+                ornY = focusView.world.party.mapY - kFloorOrnamentPositions[pi].relForward;
+                ornSquare = ornX * (int)focusView.world.dungeon->maps[0].height + ornY;
+                if (focusView.world.things->sensors && ornSquare >= 0 &&
+                    ornSquare < focusView.world.things->squareFirstThingCount) {
+                    focusView.world.things->squareFirstThings[ornSquare] =
+                        (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+                }
+                memset(teleporterFb, 0, sizeof(teleporterFb));
+                M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
+                if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
+                    ++changedFloorOrnament;
+                }
+            }
             probe_record(&tally, "INV_GV_38E",
                          changedPit == (int)(sizeof(kPitPositions) / sizeof(kPitPositions[0])),
                          "focused viewport: all normal pit zone specs visibly change their corridor frames");
@@ -1643,6 +1685,9 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_38H",
                          changedTeleporter == (int)(sizeof(kTeleporterPositions) / sizeof(kTeleporterPositions[0])),
                          "focused viewport: all teleporter field zone specs visibly change their corridor frames");
+            probe_record(&tally, "INV_GV_38I",
+                         changedFloorOrnament == (int)(sizeof(kFloorOrnamentPositions) / sizeof(kFloorOrnamentPositions[0])),
+                         "focused viewport: all visibly drawable floor ornament positions change their corridor frames");
         } else {
             probe_record(&tally, "INV_GV_38E", 0,
                          "focused viewport: normal pit zone matrix requires GRAPHICS.DAT assets");
@@ -1652,12 +1697,17 @@ int main(int argc, char** argv) {
                          "focused viewport: stairs zone matrix requires GRAPHICS.DAT assets");
             probe_record(&tally, "INV_GV_38H", 0,
                          "focused viewport: teleporter zone matrix requires GRAPHICS.DAT assets");
+            probe_record(&tally, "INV_GV_38I", 0,
+                         "focused viewport: floor ornament matrix requires GRAPHICS.DAT assets");
         }
 
         if (haveAssets) {
             M11_AssetLoader_Shutdown(&focusView.assetLoader);
             focusView.assetsAvailable = 0;
         }
+        free(focusView.world.things->sensors);
+        focusView.world.things->sensors = NULL;
+        focusView.world.things->sensorCount = 0;
         probe_free_synthetic_view(&focusView);
     }
 

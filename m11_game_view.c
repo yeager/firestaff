@@ -7591,6 +7591,66 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int fbW,
+                                         int fbH) {
+    typedef struct M11_DM1FloorOrnSpec {
+        int relForward;
+        int relSide;
+        int increment;
+        M11_DM1ZoneBlit blit;
+    } M11_DM1FloorOrnSpec;
+    static const M11_DM1FloorOrnSpec kOrnaments[] = {
+        {3,-2,0,{0,39,0,0,   66,1, 6}},
+        {3, 2,0,{0,0, 0,223, 66,1, 6}},
+        {3,-1,0,{0,0, 0,32,  67,40,6}},
+        {3, 0,1,{0,0, 0,99,  67,26,6}},
+        {3, 1,0,{0,0, 0,153, 67,40,6}},
+        {2,-1,2,{0,0, 0,1,   77,60,11}},
+        {2, 0,3,{0,0, 0,91,  77,42,11}},
+        {2, 1,2,{0,0, 0,167, 77,57,11}},
+        {1,-1,4,{0,0, 0,0,   96,25,21}},
+        {1, 0,5,{0,0, 0,81,  94,62,23}},
+        {1, 1,4,{0,0, 0,199, 96,25,21}}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kOrnaments) / sizeof(kOrnaments[0]); ++i) {
+        M11_ViewportCell cell;
+        M11_DM1ZoneBlit blit;
+        int localIdx;
+        int mapIdx;
+        int ornGlobalIdx = -1;
+        if (!m11_sample_viewport_cell(state, kOrnaments[i].relForward, kOrnaments[i].relSide, &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.floorOrnamentOrdinal <= 0) {
+            continue;
+        }
+        mapIdx = state->world.party.mapIndex;
+        localIdx = cell.floorOrnamentOrdinal - 1;
+        m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+        if (mapIdx >= 0 && mapIdx < 32 &&
+            state->ornamentCacheLoaded[mapIdx] &&
+            localIdx >= 0 && localIdx < 16) {
+            ornGlobalIdx = state->floorOrnamentIndices[mapIdx][localIdx];
+        } else {
+            ornGlobalIdx = localIdx;
+        }
+        if (ornGlobalIdx < 0) {
+            continue;
+        }
+        blit = kOrnaments[i].blit;
+        blit.graphicIndex = M11_GFX_FLOOR_ORNAMENT_BASE +
+            ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS +
+            kOrnaments[i].increment;
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 10);
+    }
+}
+
 static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
                                        const M11_ViewportCell* cell) {
     int northSouth;
@@ -12501,6 +12561,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * zones.  This is still narrower than full DUNVIEW.C: ornaments,
      * doors, pits, stairs, fields, and exact object order remain next. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight);
