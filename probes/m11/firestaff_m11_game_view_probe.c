@@ -6821,6 +6821,48 @@ int main(int argc, char** argv) {
             iconView.world.things = NULL;
         }
 
+        {
+            struct DungeonThings_Compat localThings;
+            struct DungeonWeapon_Compat weapon;
+            unsigned char fbEmpty[320 * 200];
+            unsigned char fbCharged[320 * 200];
+            int x, y;
+            int diffInner0 = 0;
+            int cellX0 = 0 * 22 + 233;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&weapon, 0, sizeof(weapon));
+            /* Weapon subtype 3 = Flamitt. F0033_OBJECT_GetIconIndex
+             * advances chargeable empty/full icons by +1 when
+             * ChargeCount is non-zero. */
+            weapon.type = 3;
+            localThings.weapons = &weapon;
+            localThings.weaponCount = 1;
+            iconView.world.things = &localThings;
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            weapon.chargeCount = 0;
+            memset(fbEmpty, 0, sizeof(fbEmpty));
+            M11_GameView_Draw(&iconView, fbEmpty, 320, 200);
+            weapon.chargeCount = 1;
+            memset(fbCharged, 0, sizeof(fbCharged));
+            M11_GameView_Draw(&iconView, fbCharged, 320, 200);
+            for (y = 95; y < 111; ++y) {
+                for (x = cellX0 + 2; x < cellX0 + 18; ++x) {
+                    if ((fbEmpty[y * 320 + x] & 0x0F) !=
+                        (fbCharged[y * 320 + x] & 0x0F)) {
+                        ++diffInner0;
+                    }
+                }
+            }
+            probe_record(&tally, "INV_GV_308",
+                         iconView.assetsAvailable ? (diffInner0 > 10) : 1,
+                         "action-hand icon cells: charged weapon uses source +1 icon variant");
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+            iconView.world.things = NULL;
+        }
+
         /* Save a screenshot artifact showing the populated right
          * column so the visual improvement is reproducible. */
         {

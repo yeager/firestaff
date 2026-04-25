@@ -11305,6 +11305,10 @@ static int m11_object_icon_index_for_thing(const struct DungeonThings_Compat* th
                     0,1,1,1,2,2,2,2,3,3,3,3,3,3,3,3
                 };
                 iconIndex += kChargeCountToTorchIconOffset[weapon->chargeCount & 0x0F];
+            } else if (weapon->chargeCount &&
+                       (iconIndex == 14 || iconIndex == 16 || iconIndex == 18 ||
+                        iconIndex == 20 || iconIndex == 23 || iconIndex == 25)) {
+                iconIndex += 1;
             }
         }
     }
