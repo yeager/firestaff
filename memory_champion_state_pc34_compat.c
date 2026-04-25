@@ -250,7 +250,16 @@ int F0610_PARTY_AddChampionFromMirrorTextString_Compat(
     if (!F0607_CHAMPION_ParseMirrorTextString_Compat(things, textStringIndex, &parsed)) return 0;
     if (party_contains_champion_name(party, parsed.name)) return 0;
 
-    slot = party->championCount;
+    slot = -1;
+    {
+        int i;
+        for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+            if (!party->champions[i].present) {
+                slot = i;
+                break;
+            }
+        }
+    }
     if (slot < 0 || slot >= CHAMPION_MAX_PARTY) return 0;
     F0600_CHAMPION_InitEmpty_Compat(&party->champions[slot]);
     memcpy(party->champions[slot].name, parsed.name, CHAMPION_NAME_LENGTH);
@@ -277,6 +286,99 @@ int F0611_PARTY_AddChampionFromMirrorName_Compat(
     int idx = F0609_CHAMPION_FindMirrorTextStringByName_Compat(things, packedName);
     if (idx < 0) return 0;
     return F0610_PARTY_AddChampionFromMirrorTextString_Compat(things, idx, party);
+}
+
+
+int F0612_CHAMPION_CollectMirrorTextStrings_Compat(
+    const struct DungeonThings_Compat* things,
+    struct ChampionState_Compat* outChampions,
+    int* outTextStringIndices,
+    int capacity)
+{
+    int i;
+    int count = 0;
+    struct ChampionState_Compat parsed;
+    if (!things || capacity < 0) return 0;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed)) {
+            if (count < capacity) {
+                if (outChampions) memcpy(&outChampions[count], &parsed, sizeof(parsed));
+                if (outTextStringIndices) outTextStringIndices[count] = i;
+            }
+            ++count;
+        }
+    }
+    return count;
+}
+
+int F0613_CHAMPION_GetMirrorTextStringIndexByOrdinal_Compat(
+    const struct DungeonThings_Compat* things,
+    int mirrorOrdinal)
+{
+    int i;
+    int count = 0;
+    struct ChampionState_Compat parsed;
+    if (!things || mirrorOrdinal < 0) return -1;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed)) {
+            if (count == mirrorOrdinal) return i;
+            ++count;
+        }
+    }
+    return -1;
+}
+
+int F0614_PARTY_AddChampionFromMirrorOrdinal_Compat(
+    const struct DungeonThings_Compat* things,
+    int mirrorOrdinal,
+    struct PartyState_Compat* party)
+{
+    int idx = F0613_CHAMPION_GetMirrorTextStringIndexByOrdinal_Compat(things, mirrorOrdinal);
+    if (idx < 0) return 0;
+    return F0610_PARTY_AddChampionFromMirrorTextString_Compat(things, idx, party);
+}
+
+int F0615_CHAMPION_FindMirrorTextStringByTitle_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedTitle[CHAMPION_TITLE_LENGTH])
+{
+    int i;
+    struct ChampionState_Compat parsed;
+    if (!things || !packedTitle) return -1;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed) &&
+            memcmp(parsed.title, packedTitle, CHAMPION_TITLE_LENGTH) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int F0616_CHAMPION_CountMirrorTextStringsBySex_Compat(
+    const struct DungeonThings_Compat* things,
+    unsigned char sex)
+{
+    int i;
+    int count = 0;
+    struct ChampionState_Compat parsed;
+    if (!things || (sex != 'M' && sex != 'F')) return 0;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed) && parsed.sex == sex) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int F0617_CHAMPION_HasMirrorTextStringByName_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedName[CHAMPION_NAME_LENGTH])
+{
+    return F0609_CHAMPION_FindMirrorTextStringByName_Compat(things, packedName) >= 0;
 }
 
 /*

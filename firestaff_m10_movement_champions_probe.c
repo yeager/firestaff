@@ -500,7 +500,58 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    /* Test 10: Sensor identification */
+    /* Test 10: DUNGEON.DAT champion mirror collection helpers */
+    {
+        struct ChampionState_Compat mirrorRecords[32];
+        int mirrorIndices[32];
+        unsigned char titleBLADECASTER[CHAMPION_TITLE_LENGTH] = {
+            'B','L','A','D','E','C','A','S','T','E','R',' ',' ',' ',' ',' ',' ',' ',' ',' '
+        };
+        unsigned char nameDAROOU[CHAMPION_NAME_LENGTH] = { 'D','A','R','O','O','U',' ',' ' };
+        unsigned char nameHALK[CHAMPION_NAME_LENGTH] = { 'H','A','L','K',' ',' ',' ',' ' };
+        struct PartyState_Compat byOrdinal;
+        struct PartyState_Compat holeParty;
+        int collected = F0612_CHAMPION_CollectMirrorTextStrings_Compat(&things, mirrorRecords, mirrorIndices, 32);
+
+        memcpy(&byOrdinal, &party, sizeof(byOrdinal));
+        memcpy(&holeParty, &party, sizeof(holeParty));
+        holeParty.championCount = 1;
+        holeParty.champions[1].present = 1;
+        memcpy(holeParty.champions[1].name, "HALK    ", 8);
+
+        CHECK(collected == F0608_CHAMPION_CountMirrorTextStrings_Compat(&things),
+              "Mirror collection count matches mirror record counter");
+        CHECK(collected == 24,
+              "DM1 DUNGEON.DAT exposes 24 champion mirror records");
+        CHECK(mirrorIndices[0] == F0613_CHAMPION_GetMirrorTextStringIndexByOrdinal_Compat(&things, 0),
+              "Mirror ordinal 0 resolves to collected TextString index");
+        CHECK(memcmp(mirrorRecords[0].name, "DAROOU  ", 8) == 0,
+              "Mirror ordinal 0 carries first source champion name DAROOU");
+        CHECK(F0613_CHAMPION_GetMirrorTextStringIndexByOrdinal_Compat(&things, collected) < 0,
+              "Mirror ordinal helper rejects out-of-range ordinal");
+        CHECK(F0615_CHAMPION_FindMirrorTextStringByTitle_Compat(&things, titleBLADECASTER) >= 0,
+              "Mirror title finder locates BLADECASTER title");
+        CHECK(F0616_CHAMPION_CountMirrorTextStringsBySex_Compat(&things, 'M') +
+              F0616_CHAMPION_CountMirrorTextStringsBySex_Compat(&things, 'F') == collected,
+              "Mirror sex counters sum to total champion records");
+        CHECK(F0617_CHAMPION_HasMirrorTextStringByName_Compat(&things, nameDAROOU) == 1 &&
+              F0617_CHAMPION_HasMirrorTextStringByName_Compat(&things, titleBLADECASTER) == 0,
+              "Mirror name existence helper distinguishes packed names from titles");
+        CHECK(F0614_PARTY_AddChampionFromMirrorOrdinal_Compat(&things, 0, &byOrdinal) == 1 &&
+              memcmp(byOrdinal.champions[0].name, "DAROOU  ", 8) == 0,
+              "Party can recruit champion identity by mirror ordinal");
+        CHECK(F0611_PARTY_AddChampionFromMirrorName_Compat(&things, nameHALK, &holeParty) == 0 &&
+              holeParty.championCount == 1,
+              "Mirror recruitment detects duplicate name outside compact count range");
+        {
+            unsigned char nameSTAMM[CHAMPION_NAME_LENGTH] = { 'S','T','A','M','M',' ',' ',' ' };
+            CHECK(F0611_PARTY_AddChampionFromMirrorName_Compat(&things, nameSTAMM, &holeParty) == 1 &&
+                  holeParty.champions[0].present && memcmp(holeParty.champions[0].name, "STAMM   ", 8) == 0,
+                  "Mirror recruitment fills first empty slot instead of blindly appending");
+        }
+    }
+
+    /* Test 11: Sensor identification */
     {
         struct SensorOnSquare_Compat sensorResult;
         int foundAnySensor = 0;

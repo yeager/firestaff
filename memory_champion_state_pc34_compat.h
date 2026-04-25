@@ -244,4 +244,31 @@ int F0611_PARTY_AddChampionFromMirrorName_Compat(
     const unsigned char packedName[CHAMPION_NAME_LENGTH],
     struct PartyState_Compat* party);
 
+int F0612_CHAMPION_CollectMirrorTextStrings_Compat(
+    const struct DungeonThings_Compat* things,
+    struct ChampionState_Compat* outChampions,
+    int* outTextStringIndices,
+    int capacity);
+
+int F0613_CHAMPION_GetMirrorTextStringIndexByOrdinal_Compat(
+    const struct DungeonThings_Compat* things,
+    int mirrorOrdinal);
+
+int F0614_PARTY_AddChampionFromMirrorOrdinal_Compat(
+    const struct DungeonThings_Compat* things,
+    int mirrorOrdinal,
+    struct PartyState_Compat* party);
+
+int F0615_CHAMPION_FindMirrorTextStringByTitle_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedTitle[CHAMPION_TITLE_LENGTH]);
+
+int F0616_CHAMPION_CountMirrorTextStringsBySex_Compat(
+    const struct DungeonThings_Compat* things,
+    unsigned char sex);
+
+int F0617_CHAMPION_HasMirrorTextStringByName_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedName[CHAMPION_NAME_LENGTH]);
+
 #endif
