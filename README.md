@@ -8,6 +8,11 @@
   <a href="https://github.com/yeager/firestaff/actions/workflows/verify.yml"><img alt="CI" src="https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey">
+  <a href="https://github.com/sponsors/yeager"><img alt="GitHub Sponsors" src="https://img.shields.io/badge/GitHub%20Sponsors-support%20Firestaff-pink"></a>
+</p>
+
+<p align="center">
+  Firestaff is a long-haul reverse-engineering and parity project. If you want to help fund the verification runs, reference capture work, packaging, and token burn behind it, you can support it at <a href="https://github.com/sponsors/yeager">GitHub Sponsors</a>.
 </p>
 
 An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Back** (1989), and later **Dungeon Master II**, with a clear three-track product plan:
@@ -18,9 +23,9 @@ An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Bac
 
 ## Status
 
-**Firestaff 0.1.5 is an early macOS preview release.**
+**Firestaff 0.2.0 is an early macOS preview release.**
 
-It already has a real launcher, a real in-game DM1 slice, a modern high-resolution startup menu, bounded original-version detection, and a growing verified engine core.
+It already has a real launcher, a real in-game DM1 slice, a modern high-resolution startup menu, bounded original-version detection, and a growing verified engine core. Recent work has also tightened V1 parity honestly: movement / door / sensor ownership is being pushed into source-backed compat/runtime paths, original-reference tooling is now in-tree, and `SONG.DAT` decoding groundwork has landed.
 
 **Working today:**
 - launcher with DM1 / CSB / DM2 entries
@@ -33,14 +38,16 @@ It already has a real launcher, a real in-game DM1 slice, a modern high-resoluti
 - real dungeon loading from `DUNGEON.DAT`
 - real movement / facing / ticking backed by world state
 - melee attack, item, spell, stair, pit, teleporter, XP, save/load, and survival slices wired through the game core
-- creature rendering now uses source-backed `GraphicInfo` flags for side / back / attack pose fallback instead of blind pose guesses
+- source-backed ownership migration landed for post-move environment, movement legality, door actuation, sensor runtime wiring, animating door states, and creature walkability
 - increasingly asset-backed viewport rendering using real `GRAPHICS.DAT` data
+- original-reference capture / overlay tooling now exists for stricter V1 parity measurement
+- `SONG.DAT` format + loader/decoder groundwork is landed and probe-verified
 - deterministic verification suite still green
 
 **Not there yet:**
 - full V1 original-presentation parity
 - complete CSB / DM2 runtime support
-- audio layer finished end to end
+- runtime audio still uses placeholder playback paths even though `SONG.DAT` decoding groundwork exists
 - full endgame / dialog / launcher-product polish
 - final cross-platform packaging
 
@@ -150,6 +157,7 @@ Goal: make Firestaff feel like the original games first, with only a shared star
 Current focus:
 - original-facing presentation parity
 - original timing / animation / light behaviour
+- finishing the current V1 parity chain pass by pass, with source-backed blocker tracking instead of vague "close enough" claims
 - dialog and endgame runtime coverage
 - verified CSB and then DM2 runtime integration
 - bug/profile handling that preserves original behaviour where needed
@@ -197,6 +205,14 @@ The original Dungeon Master and Chaos Strikes Back games were designed by **Doug
 Firestaff is released under the **MIT Licence**. See [LICENSE](LICENSE).
 
 This licence covers **only the engine code**. Dungeon Master and Chaos Strikes Back are © FTL Games / Software Heaven, Inc. You must own a legal copy of the original games to use them with Firestaff. No original assets are distributed with this project.
+
+## Sponsorship
+
+If you want to help fund the absurd amount of reverse-engineering, verification, packaging, captures, and token burn behind Firestaff, you can sponsor the project on GitHub Sponsors.
+
+- GitHub Sponsors: **https://github.com/sponsors/yeager**
+
+It helps pay for the unglamorous but essential work: long parity passes, capture tooling, verification runs, and keeping the project moving without pretending the hard parts are already solved.
 
 ## Contributing
 
