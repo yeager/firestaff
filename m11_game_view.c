@@ -6962,12 +6962,11 @@ enum {
     M11_GFX_PROJECTILE_COUNT = 23,
     M11_GFX_PROJECTILE_END  = 439,
 
-    /* Wall ornament graphics (per wall set, 16 ornaments each).
-     * In CSB/DM, wall ornaments start at graphic index 321 and are
-     * organized as 16 ornaments per wall set.  We map using the map's
-     * wallSet + ornament ordinal. */
-    M11_GFX_WALL_ORNAMENT_BASE = 101, /* first wall ornament graphic */
-    M11_GFX_WALL_ORNAMENTS_PER_SET = 16,
+    /* Wall ornament graphics.  DM1/PC 3.4 uses
+     * M615_GRAPHIC_FIRST_WALL_ORNAMENT=259; each global wall ornament
+     * has two native graphics. */
+    M11_GFX_WALL_ORNAMENT_BASE = 259,
+    M11_GFX_WALL_ORNAMENTS_PER_SET = 2,
     M11_GFX_DOOR_ORNAMENT_BASE = 441, /* M617_GRAPHIC_FIRST_DOOR_ORNAMENT */
     M11_GFX_DOOR_ORNAMENTS_PER_SET = 16,
 
@@ -8630,9 +8629,10 @@ static int m11_draw_wall_ornament(const M11_GameViewState* state,
         if (mapIdx >= 0 && mapIdx < (int)state->world.dungeon->header.mapCount) {
             wallSet = (int)state->world.dungeon->maps[mapIdx].wallSet;
         }
-        ornGlobalIdx = wallSet * M11_GFX_WALL_ORNAMENTS_PER_SET + ornamentOrdinal;
+        ornGlobalIdx = wallSet * 16 + ornamentOrdinal;
     }
-    gfxIdx = (unsigned int)(M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx);
+    gfxIdx = (unsigned int)(M11_GFX_WALL_ORNAMENT_BASE +
+                            ornGlobalIdx * M11_GFX_WALL_ORNAMENTS_PER_SET);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
