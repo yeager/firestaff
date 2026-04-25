@@ -4966,8 +4966,8 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
     int drawW, drawH, drawX, drawY;
     int scale;
     int useMirror;
-    if (!state || !state->assetsAvailable || gfxIndex < 416 ||
-        gfxIndex >= 439) return 0;
+    if (!state || !state->assetsAvailable || gfxIndex < 454 ||
+        gfxIndex >= 486) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
     /* Scale projectile sprite by depth: 100% at depth 0, 66% at 1, 40% at 2 */
@@ -5758,6 +5758,30 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     state->ornamentCacheLoaded[mapIndex] = 1;
 }
 
+static int m11_projectile_subtype_to_graphic_index(int subtype) {
+    /* ReDMCSB F0142 + DUNVIEW.C G0210_as_Graphic558_ProjectileAspects.
+     * M613_GRAPHIC_FIRST_PROJECTILE is 454.  Spell/explosion-like
+     * projectile subtypes map to projectile aspect native graphics, not
+     * to the older object/weapon graphics around 416. */
+    switch (subtype) {
+        case PROJECTILE_SUBTYPE_FIREBALL:
+            return 454 + 28; /* C10_PROJECTILE_ASPECT_EXPLOSION_FIREBALL */
+        case PROJECTILE_SUBTYPE_SLIME:
+            return 454 + 30; /* C12_PROJECTILE_ASPECT_EXPLOSION_SLIME */
+        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
+            return 454 + 9;  /* C03_PROJECTILE_ASPECT_EXPLOSION_LIGHTNING_BOLT */
+        case PROJECTILE_SUBTYPE_POISON_BOLT:
+        case PROJECTILE_SUBTYPE_POISON_CLOUD:
+            return 454 + 31; /* C13_PROJECTILE_ASPECT_EXPLOSION_POISON */
+        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
+        case PROJECTILE_SUBTYPE_OPEN_DOOR:
+            return 454 + 29; /* C11_PROJECTILE_ASPECT_EXPLOSION_DEFAULT */
+        case PROJECTILE_SUBTYPE_KINETIC_ARROW:
+        default:
+            return 454;      /* first projectile aspect / safe kinetic fallback */
+    }
+}
+
 static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                     int relForward,
                                     int relSide,
@@ -5969,12 +5993,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     }
 
     /* Extract first projectile graphic index from GRAPHICS.DAT.
-     * In DM1, projectile graphics 416-438 map to the projectile's
-     * associated object type.  The projectile thing's slot field
-     * references the thrown object.  We use a simplified mapping:
-     * projectile slot & 0x1F gives a subtype index into the 23
-     * projectile graphic range.  Ref: ReDMCSB DUNGEON.C projectile
-     * rendering, G0249_aui_PROJECTILE_GRAPHIC_INDEX lookup. */
+     * Source-backed spell/magic projectiles use M613=454 plus the
+     * F0142/G0210 projectile-aspect native offset. */
     if (cell.summary.projectiles > 0 && state->world.things &&
         state->world.things->projectiles) {
         unsigned short scanThing = firstThing;
@@ -5983,11 +6003,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (THING_GET_TYPE(scanThing) == THING_TYPE_PROJECTILE) {
                 int pIdx = THING_GET_INDEX(scanThing);
                 if (pIdx >= 0 && pIdx < state->world.things->projectileCount) {
-                    /* Map projectile slot to graphic index 416..438 */
                     int slot = (int)state->world.things->projectiles[pIdx].slot;
-                    int gfxOff = slot & 0x1F;
-                    if (gfxOff > 22) gfxOff = 0; /* clamp to 23 entries */
-                    cell.firstProjectileGfxIndex = 416 + gfxOff;
+                    cell.firstProjectileGfxIndex = m11_projectile_subtype_to_graphic_index(slot);
                 }
                 break;
             }
@@ -6001,22 +6018,20 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * (because the projectile was spawned into world.projectiles via
      * F0810 rather than written into the dungeon-things chain), pick
      * the graphic index from the first runtime projectile at this
-     * cell.  Runtime subtypes map to the same 416..438 range via the
-     * low 5 bits of the subtype, matching G0249 ordering.  This is
-     * what actually lets the player see the projectile both when it
-     * first appears and at every tick of its travel. */
+     * cell.  Runtime subtypes are mapped through the same projectile
+     * aspect table path.  This is what actually lets the player see
+     * the projectile both when it first appears and at every tick of
+     * its travel. */
     if (cell.summary.projectiles > 0 && cell.firstProjectileGfxIndex < 0) {
         int pi;
         for (pi = 0; pi < state->world.projectiles.count; ++pi) {
             const struct ProjectileInstance_Compat* rp =
                 &state->world.projectiles.entries[pi];
-            int gfxOff;
             if (rp->slotIndex < 0) continue;
             if (rp->mapIndex != state->world.party.mapIndex) continue;
             if (rp->mapX != mapX || rp->mapY != mapY) continue;
-            gfxOff = rp->projectileSubtype & 0x1F;
-            if (gfxOff > 22) gfxOff = 0;
-            cell.firstProjectileGfxIndex = 416 + gfxOff;
+            cell.firstProjectileGfxIndex =
+                m11_projectile_subtype_to_graphic_index(rp->projectileSubtype);
             break;
         }
     }
@@ -6954,13 +6969,13 @@ enum {
     M11_GFX_ITEM_JUNK_BASE   = 364, /* 52 junk subtypes */
     M11_GFX_ITEM_SPRITE_END  = 416, /* safety cap */
 
-    /* Projectile viewport sprites (416-438, 23 entries).
+    /* Projectile viewport sprites (M613_GRAPHIC_FIRST_PROJECTILE=454).
      * In DM1 these are the small flying-object graphics drawn in the
-     * corridor when a missile is in flight.  Sizes range from 9x7 to
-     * 60x25.  Ref: ReDMCSB DEFS.H C416..C438. */
-    M11_GFX_PROJECTILE_BASE = 416,
-    M11_GFX_PROJECTILE_COUNT = 23,
-    M11_GFX_PROJECTILE_END  = 439,
+     * corridor when a missile is in flight.  Ref: ReDMCSB DEFS.H
+     * M613 and DUNVIEW.C G0210_as_Graphic558_ProjectileAspects. */
+    M11_GFX_PROJECTILE_BASE = 454,
+    M11_GFX_PROJECTILE_COUNT = 32,
+    M11_GFX_PROJECTILE_END  = 486,
 
     /* Wall ornament graphics.  DM1/PC 3.4 uses
      * M615_GRAPHIC_FIRST_WALL_ORNAMENT=259; each global wall ornament

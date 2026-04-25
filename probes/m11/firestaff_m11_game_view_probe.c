@@ -5386,27 +5386,27 @@ int main(int argc, char** argv) {
                      "creature anim frames valid for types 0 and 1");
     }
 
-    /* INV_GV_225: Projectile sprite graphics 416-438 load from GRAPHICS.DAT.
-     * At least the first entry (416, 26x6) should be loadable. */
+    /* INV_GV_225: Projectile sprite graphics start at M613=454.
+     * At least the first entry (454, 14x11) should be loadable. */
     if (gameView.assetsAvailable) {
         const M11_AssetSlot* projSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&gameView.assetLoader, 416);
+            (M11_AssetLoader*)&gameView.assetLoader, 454);
         probe_record(&tally,
                      "INV_GV_225",
-                     projSlot && projSlot->width == 26 && projSlot->height == 6,
-                     "projectile sprite (graphic 416) loads as 26x6 from GRAPHICS.DAT");
+                     projSlot && projSlot->width == 14 && projSlot->height == 11,
+                     "projectile sprite (graphic 454/M613) loads as 14x11 from GRAPHICS.DAT");
     } else {
         probe_record(&tally,
                      "INV_GV_225",
                      0,
-                     "projectile sprite (graphic 416) loads as 26x6 from GRAPHICS.DAT [SKIP: no assets]");
+                     "projectile sprite (graphic 454/M613) loads as 14x11 from GRAPHICS.DAT [SKIP: no assets]");
     }
 
-    /* INV_GV_226: Projectile sprite range fully loadable (416-438, 23 entries). */
+    /* INV_GV_226: Projectile sprite range fully loadable (454-485, 32 entries). */
     if (gameView.assetsAvailable) {
         int projOk = 1;
         int pi;
-        for (pi = 416; pi <= 438; ++pi) {
+        for (pi = 454; pi <= 485; ++pi) {
             const M11_AssetSlot* ps = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&gameView.assetLoader, (unsigned int)pi);
             if (!ps || ps->width == 0 || ps->height == 0) { projOk = 0; break; }
@@ -5414,42 +5414,42 @@ int main(int argc, char** argv) {
         probe_record(&tally,
                      "INV_GV_226",
                      projOk,
-                     "all 23 projectile sprites (416-438) load from GRAPHICS.DAT");
+                     "all 32 projectile sprites (454-485/M613 family) load from GRAPHICS.DAT");
     } else {
         probe_record(&tally,
                      "INV_GV_226",
                      0,
-                     "all 23 projectile sprites (416-438) load from GRAPHICS.DAT [SKIP: no assets]");
+                     "all 32 projectile sprites (454-485/M613 family) load from GRAPHICS.DAT [SKIP: no assets]");
     }
 
-    /* INV_GV_227: Largest projectile sprite (graphic 420, 60x25) loads correctly. */
+    /* INV_GV_227: Large projectile sprite (graphic 479, 84x18) loads correctly. */
     if (gameView.assetsAvailable) {
-        const M11_AssetSlot* proj420 = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&gameView.assetLoader, 420);
+        const M11_AssetSlot* proj479 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 479);
         probe_record(&tally,
                      "INV_GV_227",
-                     proj420 && proj420->width == 60 && proj420->height == 25,
-                     "projectile sprite (graphic 420) loads as 60x25 from GRAPHICS.DAT");
+                     proj479 && proj479->width == 84 && proj479->height == 18,
+                     "projectile sprite (graphic 479) loads as 84x18 from GRAPHICS.DAT");
     } else {
         probe_record(&tally,
                      "INV_GV_227",
                      0,
-                     "projectile sprite (graphic 420) loads as 60x25 from GRAPHICS.DAT [SKIP: no assets]");
+                     "projectile sprite (graphic 479) loads as 84x18 from GRAPHICS.DAT [SKIP: no assets]");
     }
 
-    /* INV_GV_228: Smallest projectile sprite (graphic 437, 9x7) loads correctly. */
+    /* INV_GV_228: Small projectile sprite (graphic 480, 8x14) loads correctly. */
     if (gameView.assetsAvailable) {
-        const M11_AssetSlot* proj437 = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&gameView.assetLoader, 437);
+        const M11_AssetSlot* proj480 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 480);
         probe_record(&tally,
                      "INV_GV_228",
-                     proj437 && proj437->width == 9 && proj437->height == 7,
-                     "projectile sprite (graphic 437) loads as 9x7 from GRAPHICS.DAT");
+                     proj480 && proj480->width == 8 && proj480->height == 14,
+                     "projectile sprite (graphic 480) loads as 8x14 from GRAPHICS.DAT");
     } else {
         probe_record(&tally,
                      "INV_GV_228",
                      0,
-                     "projectile sprite (graphic 437) loads as 9x7 from GRAPHICS.DAT [SKIP: no assets]");
+                     "projectile sprite (graphic 480) loads as 8x14 from GRAPHICS.DAT [SKIP: no assets]");
     }
 
     /* INV_GV_229: Side-cell creature perspective scaling reduces sprite
