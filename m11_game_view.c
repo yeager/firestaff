@@ -11287,10 +11287,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     /* Real viewport background from GRAPHICS.DAT, or solid fallback */
     m11_draw_viewport_background(state, framebuffer, framebufferWidth, framebufferHeight,
                                  viewport.x, viewport.y, viewport.w, viewport.h);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  viewport.x - 2, viewport.y - 2, viewport.w + 4, viewport.h + 4, M11_COLOR_YELLOW);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
+    if (state->showDebugHUD) {
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      viewport.x - 2, viewport.y - 2, viewport.w + 4, viewport.h + 4, M11_COLOR_YELLOW);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
+    }
 
     for (depth = 0; depth < 3; ++depth) {
         m11_draw_corridor_frame(framebuffer, framebufferWidth, framebufferHeight,
@@ -11322,34 +11324,36 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
 
-    m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
-                       viewport.x + 26, viewport.y + 6, 42, 11,
-                       &cells[0][0], "L");
-    m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
-                       viewport.x + 77, viewport.y + 6, 42, 11,
-                       &cells[0][1], "F");
-    m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
-                       viewport.x + 128, viewport.y + 6, 42, 11,
-                       &cells[0][2], "R");
+    if (state->showDebugHUD) {
+        m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
+                           viewport.x + 26, viewport.y + 6, 42, 11,
+                           &cells[0][0], "L");
+        m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
+                           viewport.x + 77, viewport.y + 6, 42, 11,
+                           &cells[0][1], "F");
+        m11_draw_lane_chip(framebuffer, framebufferWidth, framebufferHeight,
+                           viewport.x + 128, viewport.y + 6, 42, 11,
+                           &cells[0][2], "R");
 
-    m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
-                        viewport.x + 40, viewport.y + viewport.h - 24, 34, 10,
-                        &cells[0][1], 0);
-    m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
-                        viewport.x + 88, viewport.y + viewport.h - 24, 34, 10,
-                        &cells[1][1], 1);
-    m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
-                        viewport.x + 136, viewport.y + viewport.h - 24, 34, 10,
-                        &cells[2][1], 2);
+        m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
+                            viewport.x + 40, viewport.y + viewport.h - 24, 34, 10,
+                            &cells[0][1], 0);
+        m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
+                            viewport.x + 88, viewport.y + viewport.h - 24, 34, 10,
+                            &cells[1][1], 1);
+        m11_draw_depth_chip(framebuffer, framebufferWidth, framebufferHeight,
+                            viewport.x + 136, viewport.y + viewport.h - 24, 34, 10,
+                            &cells[2][1], 2);
 
-    m11_draw_focus_brackets(framebuffer, framebufferWidth, framebufferHeight,
-                            &frames[1], &cells[0][1]);
+        m11_draw_focus_brackets(framebuffer, framebufferWidth, framebufferHeight,
+                                &frames[1], &cells[0][1]);
 
-    m11_draw_viewport_feedback_frame(framebuffer, framebufferWidth, framebufferHeight,
-                                     state, &cells[0][1]);
-    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                   viewport.x + 6, viewport.x + viewport.w - 7,
-                   viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
+        m11_draw_viewport_feedback_frame(framebuffer, framebufferWidth, framebufferHeight,
+                                         state, &cells[0][1]);
+        m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                       viewport.x + 6, viewport.x + viewport.w - 7,
+                       viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
+    }
 
     /* Overlay real GRAPHICS.DAT wall textures when available.
      * Tiles wall-set strips into the corridor frame regions using
