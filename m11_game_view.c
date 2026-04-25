@@ -6873,6 +6873,17 @@ enum {
     M11_GFX_DOOR_BUTTON_BASE = 453, /* 8x9 */
     M11_GFX_DOOR_MASK_DESTROYED = 439, /* M649_GRAPHIC_DOOR_MASK_DESTROYED */
 
+    /* DM1 floor pit graphics. */
+    M11_GFX_FLOOR_PIT_D3L2 = 49,
+    M11_GFX_FLOOR_PIT_D3L  = 50,
+    M11_GFX_FLOOR_PIT_D3C  = 51,
+    M11_GFX_FLOOR_PIT_D2L  = 52,
+    M11_GFX_FLOOR_PIT_D2C  = 53,
+    M11_GFX_FLOOR_PIT_D1L  = 54,
+    M11_GFX_FLOOR_PIT_D1C  = 55,
+    M11_GFX_FLOOR_PIT_D0L  = 56,
+    M11_GFX_FLOOR_PIT_D0C  = 57,
+
     /* DM1 wall-set 0 wall graphics.  These are the source GRAPHICS.DAT
      * wall panels that DUNVIEW.C draws into layout-696 zones C702..C717. */
     M11_GFX_WALLSET0_D0R    = 93,  /* 33x136 -> C717_ZONE_WALL_D0R */
@@ -7421,6 +7432,48 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                                &kFrontBlits[depth]);
             occluded = 1;
         }
+    }
+}
+
+static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW,
+                                    int fbH) {
+    typedef struct M11_DM1PitSpec {
+        int relForward;
+        int relSide;
+        M11_DM1ZoneBlit blit;
+    } M11_DM1PitSpec;
+    static const M11_DM1PitSpec kPits[] = {
+        {3, -2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 0,   66, 22, 10}},
+        {3,  2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 202, 66, 22, 10}},
+        {3, -1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 4,   65, 78, 8}},
+        {3,  0, {M11_GFX_FLOOR_PIT_D3C,  0, 0, 79,  65, 64, 8}},
+        {3,  1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 142, 65, 78, 8}},
+        {2, -1, {M11_GFX_FLOOR_PIT_D2L,  1, 0, 0,   76, 71, 13}},
+        {2,  0, {M11_GFX_FLOOR_PIT_D2C,  0, 0, 66,  77, 92, 12}},
+        {2,  1, {M11_GFX_FLOOR_PIT_D2L,  0, 0, 153, 76, 71, 13}},
+        {1, -1, {M11_GFX_FLOOR_PIT_D1L,  3, 0, 0,   94, 54, 24}},
+        {1,  0, {M11_GFX_FLOOR_PIT_D1C,  0, 0, 43,  94, 139,24}},
+        {1,  1, {M11_GFX_FLOOR_PIT_D1L,  0, 0, 169, 94, 55, 24}},
+        {0, -1, {M11_GFX_FLOOR_PIT_D0L,  4, 0, 0,   126,20, 10}},
+        {0,  0, {M11_GFX_FLOOR_PIT_D0C,  0, 0, 27,  127,170,9}},
+        {0,  1, {M11_GFX_FLOOR_PIT_D0L,  0, 0, 200, 126,24, 10}}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kPits) / sizeof(kPits[0]); ++i) {
+        M11_ViewportCell cell;
+        if (!m11_sample_viewport_cell(state, kPits[i].relForward, kPits[i].relSide, &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_PIT) {
+            continue;
+        }
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                     &kPits[i].blit, 10);
     }
 }
 
@@ -12191,6 +12244,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * panels using original wall-set bitmaps and original layout-696
      * zones.  This is still narrower than full DUNVIEW.C: ornaments,
      * doors, pits, stairs, fields, and exact object order remain next. */
+    m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
