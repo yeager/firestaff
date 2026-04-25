@@ -7190,6 +7190,47 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
     return 1;
 }
 
+static void m11_blit_scaled_palette_map(const M11_AssetSlot* slot,
+                                        unsigned char* framebuffer,
+                                        int fbW,
+                                        int fbH,
+                                        int dstX,
+                                        int dstY,
+                                        int dstW,
+                                        int dstH,
+                                        int transparentColor,
+                                        const unsigned char paletteMap[16]) {
+    int dy;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = dy * (int)slot->height / dstH;
+        int fbY = dstY + dy;
+        int dx;
+        if (fbY < 0 || fbY >= fbH) {
+            continue;
+        }
+        for (dx = 0; dx < dstW; ++dx) {
+            int sx = dx * (int)slot->width / dstW;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) {
+                continue;
+            }
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            if (paletteMap) {
+                pixel = paletteMap[pixel & 0x0f];
+            }
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+}
+
 static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
                                       const M11_ViewportCell* cell,
                                       int depthIndex) {
@@ -7257,6 +7298,12 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
                                                 const M11_DM1ZoneBlit* panel,
                                                 int depthIndex,
                                                 int ornamentOrdinal) {
+    static const unsigned char kOrnD3Palette[16] = {
+        0, 12, 1, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 2, 0, 13
+    };
+    static const unsigned char kOrnD2Palette[16] = {
+        0, 1, 2, 3, 4, 3, 6, 7, 5, 9, 10, 11, 12, 13, 14, 15
+    };
     static const int kAnchorX[3][3] = {
         {28, 42, 63}, /* coordinate set 0: right-aligned anchors */
         {15, 22, 33}, /* coordinate set 1: left/top-ish anchors */
@@ -7310,12 +7357,14 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
         relX = kAnchorX[coordSet][viewIndex] - ornW;
         relY = kAnchorY[coordSet][viewIndex] - ornH;
     }
-    M11_AssetLoader_BlitScaled(slot,
-                               framebuffer, fbW, fbH,
-                               M11_VIEWPORT_X + panel->dstX + relX,
-                               M11_VIEWPORT_Y + panel->dstY + relY,
-                               ornW, ornH,
-                               9);
+    m11_blit_scaled_palette_map(slot,
+                                framebuffer, fbW, fbH,
+                                M11_VIEWPORT_X + panel->dstX + relX,
+                                M11_VIEWPORT_Y + panel->dstY + relY,
+                                ornW, ornH,
+                                9,
+                                depthIndex == 2 ? kOrnD3Palette :
+                                    (depthIndex == 1 ? kOrnD2Palette : NULL));
 }
 
 static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* state,
@@ -7613,6 +7662,12 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
                                              int fbW,
                                              int fbH,
                                              const M11_ViewportCell cells[3][3]) {
+    static const unsigned char kButtonD3Palette[16] = {
+        0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
+    };
+    static const unsigned char kButtonD2Palette[16] = {
+        0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
+    };
     static const M11_DM1ZoneBlit kButtons[3] = {
         /* C1950_ZONE_DOOR_BUTTON + C3_VIEW_DOOR_BUTTON_D1C */
         {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 167, 43, 8, 9},
@@ -7647,13 +7702,15 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
         if (!slot || slot->width <= 0 || slot->height <= 0) {
             continue;
         }
-        M11_AssetLoader_BlitScaled(slot,
-                                   framebuffer, fbW, fbH,
-                                   M11_VIEWPORT_X + kButtons[depth].dstX,
-                                   M11_VIEWPORT_Y + kButtons[depth].dstY,
-                                   kButtons[depth].width,
-                                   kButtons[depth].height,
-                                   10);
+        m11_blit_scaled_palette_map(slot,
+                                    framebuffer, fbW, fbH,
+                                    M11_VIEWPORT_X + kButtons[depth].dstX,
+                                    M11_VIEWPORT_Y + kButtons[depth].dstY,
+                                    kButtons[depth].width,
+                                    kButtons[depth].height,
+                                    10,
+                                    depth == 2 ? kButtonD3Palette :
+                                        (depth == 1 ? kButtonD2Palette : NULL));
         break;
     }
 }
@@ -7662,6 +7719,9 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
                                          int fbH) {
+    static const unsigned char kButtonD3Palette[16] = {
+        0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
+    };
     M11_ViewportCell cell;
     const M11_AssetSlot* slot;
     if (!state || !state->assetsAvailable) {
@@ -7688,12 +7748,13 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
         return;
     }
     /* C1950_ZONE_DOOR_BUTTON + C0_VIEW_DOOR_BUTTON_D3R, scaled 16/32. */
-    M11_AssetLoader_BlitScaled(slot,
-                               framebuffer, fbW, fbH,
-                               M11_VIEWPORT_X + 197,
-                               M11_VIEWPORT_Y + 39,
-                               4, 4,
-                               10);
+    m11_blit_scaled_palette_map(slot,
+                                framebuffer, fbW, fbH,
+                                M11_VIEWPORT_X + 197,
+                                M11_VIEWPORT_Y + 39,
+                                4, 4,
+                                10,
+                                kButtonD3Palette);
 }
 
 typedef struct M11_DM1SideDoorSpec {
