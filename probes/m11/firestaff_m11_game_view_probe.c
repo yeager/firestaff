@@ -64,6 +64,31 @@ static void probe_dump_m11_vga_ppm(const char* path,
     fclose(f);
 }
 
+static int probe_count_diffs_outside_rect(const unsigned char* a,
+                                          const unsigned char* b,
+                                          int width,
+                                          int height,
+                                          int rx,
+                                          int ry,
+                                          int rw,
+                                          int rh) {
+    int diffs = 0;
+    int y;
+    if (!a || !b || width <= 0 || height <= 0) {
+        return -1;
+    }
+    for (y = 0; y < height; ++y) {
+        int x;
+        for (x = 0; x < width; ++x) {
+            int inside = (x >= rx && x < rx + rw && y >= ry && y < ry + rh);
+            if (!inside && a[y * width + x] != b[y * width + x]) {
+                diffs++;
+            }
+        }
+    }
+    return diffs;
+}
+
 enum {
     PROBE_VIEWPORT_X = 12,
     PROBE_VIEWPORT_Y = 24,
@@ -1678,6 +1703,11 @@ int main(int argc, char** argv) {
                      haveAssets && memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
                      memcmp(creatureFb, sideCreatureFb, sizeof(creatureFb)) != 0,
                      "focused viewport: D1L side-cell Trolin creature differs from empty and center creature frames");
+        probe_record(&tally, "INV_GV_38S",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, sideCreatureFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: extreme C3200 side creature clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38M",
                      haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C fireball projectile sprite changes the corridor frame");
