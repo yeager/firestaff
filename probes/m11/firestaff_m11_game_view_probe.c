@@ -1450,6 +1450,7 @@ int main(int argc, char** argv) {
         unsigned char stairsFb[320 * 200];
         unsigned char teleporterFb[320 * 200];
         unsigned char creatureFb[320 * 200];
+        unsigned char sideCreatureFb[320 * 200];
         unsigned char projectileFb[320 * 200];
         unsigned char lightningFb[320 * 200];
         unsigned char objectFb[320 * 200];
@@ -1497,6 +1498,21 @@ int main(int argc, char** argv) {
                                     "35_focused_d1c_trolin_creature_vga");
         }
         focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+            THING_ENDOFLIST;
+
+        focusView.world.things->groups[0].creatureType = 14; /* Trolin */
+        focusView.world.things->groups[0].count = 0; /* one creature */
+        focusView.world.things->groups[0].health[0] = 50;
+        focusView.world.things->groups[0].direction = DIR_SOUTH;
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 1] =
+            (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+        memset(sideCreatureFb, 0, sizeof(sideCreatureFb));
+        M11_GameView_Draw(&focusView, sideCreatureFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "41_focused_d1l_trolin_creature_vga");
+        }
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 1] =
             THING_ENDOFLIST;
 
         focusView.world.projectiles.count = 1;
@@ -1658,6 +1674,10 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38L",
                      haveAssets && memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C Trolin creature sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38R",
+                     haveAssets && memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
+                     memcmp(creatureFb, sideCreatureFb, sizeof(creatureFb)) != 0,
+                     "focused viewport: D1L side-cell Trolin creature differs from empty and center creature frames");
         probe_record(&tally, "INV_GV_38M",
                      haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C fireball projectile sprite changes the corridor frame");
