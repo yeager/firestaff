@@ -6870,6 +6870,7 @@ enum {
     M11_GFX_DOOR_SET0_D3    = 246, /* 44x38 */
     M11_GFX_DOOR_SET0_D2    = 247, /* 64x61 */
     M11_GFX_DOOR_SET0_D1    = 248, /* 96x88 */
+    M11_GFX_DOOR_BUTTON_BASE = 453, /* 8x9 */
 
     /* DM1 wall-set 0 wall graphics.  These are the source GRAPHICS.DAT
      * wall panels that DUNVIEW.C draws into layout-696 zones C702..C717. */
@@ -7356,6 +7357,56 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                          &panel, 10);
         }
+        break;
+    }
+}
+
+static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
+                                             unsigned char* framebuffer,
+                                             int fbW,
+                                             int fbH,
+                                             const M11_ViewportCell cells[3][3]) {
+    static const M11_DM1ZoneBlit kButtons[3] = {
+        /* C1950_ZONE_DOOR_BUTTON + C3_VIEW_DOOR_BUTTON_D1C */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 167, 43, 8, 9},
+        /* D2 uses 20/32 scaled derived bitmap. */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 150, 42, 5, 5},
+        /* D3 uses 16/32 scaled derived bitmap. */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 137, 41, 4, 4}
+    };
+    int depth;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        const M11_ViewportCell* cell = &cells[depth][1];
+        const M11_AssetSlot* slot;
+        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
+            m11_viewport_cell_is_open(cell) || !cell->hasDoorThing) {
+            continue;
+        }
+        if (!state->world.things || !state->world.things->doors) {
+            continue;
+        }
+        {
+            int doorIdx = THING_GET_INDEX(cell->firstThing);
+            if (doorIdx < 0 || doorIdx >= state->world.things->doorCount ||
+                !state->world.things->doors[doorIdx].button) {
+                continue;
+            }
+        }
+        slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    M11_GFX_DOOR_BUTTON_BASE);
+        if (!slot || slot->width <= 0 || slot->height <= 0) {
+            continue;
+        }
+        M11_AssetLoader_BlitScaled(slot,
+                                   framebuffer, fbW, fbH,
+                                   M11_VIEWPORT_X + kButtons[depth].dstX,
+                                   M11_VIEWPORT_Y + kButtons[depth].dstY,
+                                   kButtons[depth].width,
+                                   kButtons[depth].height,
+                                   10);
         break;
     }
 }
@@ -11693,6 +11744,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal
