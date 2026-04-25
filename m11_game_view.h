@@ -95,6 +95,12 @@ typedef struct {
     struct GameWorld_Compat world;
     struct ChampionMirrorCatalog_Compat mirrorCatalog;
     int mirrorCatalogAvailable;
+    /* Source-backed champion mirror candidate panel.  Mirrors the
+     * G0299_ui_CandidateChampionOrdinal + M568_PANEL_RESURRECT_REINCARNATE
+     * flow at M11 state level: selecting a front-cell mirror records
+     * its DUNGEON.DAT mirror ordinal, then confirm/cancel consumes it. */
+    int candidateMirrorOrdinal;
+    int candidateMirrorPanelActive;
     M11_MessageLog messageLog;
     int resting;
     int partyDead;
@@ -685,6 +691,11 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
                                                 int mirrorOrdinal);
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name);
+int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
+int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
+int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
+                                        int reincarnate);
+int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
 
 #ifdef __cplusplus
 }

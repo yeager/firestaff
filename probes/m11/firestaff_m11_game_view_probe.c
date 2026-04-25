@@ -555,6 +555,78 @@ int main(int argc, char** argv) {
                      "M11 mirror ordinal recruit is idempotent for already-present champion");
         M11_GameView_Shutdown(&recruitView);
     }
+    {
+        M11_GameViewState mirrorView;
+        int found = 0;
+        int mapIdx;
+        int mirrorX = -1;
+        int mirrorY = -1;
+        int mirrorOrdinal = -1;
+        memset(&mirrorView, 0, sizeof(mirrorView));
+        M11_GameView_Init(&mirrorView);
+        mirrorView.showDebugHUD = 0;
+        if (M11_GameView_OpenSelectedMenuEntry(&mirrorView, &menuState) == 1) {
+            for (mapIdx = 0; !found && mapIdx < (int)mirrorView.world.dungeon->header.mapCount; ++mapIdx) {
+                const struct DungeonMapDesc_Compat* map = &mirrorView.world.dungeon->maps[mapIdx];
+                int base = 0;
+                int prev;
+                int x;
+                int y;
+                for (prev = 0; prev < mapIdx; ++prev) {
+                    base += (int)mirrorView.world.dungeon->maps[prev].width *
+                            (int)mirrorView.world.dungeon->maps[prev].height;
+                }
+                for (x = 0; !found && x < (int)map->width; ++x) {
+                    for (y = 0; !found && y < (int)map->height; ++y) {
+                        int idx = base + x * (int)map->height + y;
+                        unsigned short thing = mirrorView.world.things->squareFirstThings[idx];
+                        int guard = 0;
+                        while (thing != THING_ENDOFLIST && thing != THING_NONE && guard++ < 8) {
+                            int type = THING_GET_TYPE(thing);
+                            int thingIndex = THING_GET_INDEX(thing);
+                            if (type == THING_TYPE_TEXTSTRING) {
+                                int ord = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                                    &mirrorView.mirrorCatalog, thingIndex);
+                                if (ord >= 0) {
+                                    mirrorX = x;
+                                    mirrorY = y;
+                                    mirrorOrdinal = ord;
+                                    found = 1;
+                                    break;
+                                }
+                                thing = mirrorView.world.things->textStrings[thingIndex].next;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (found && mirrorY + 1 < (int)mirrorView.world.dungeon->maps[mapIdx - 1].height) {
+                mirrorView.world.party.mapIndex = mapIdx - 1;
+                mirrorView.world.party.mapX = mirrorX;
+                mirrorView.world.party.mapY = mirrorY + 1;
+                mirrorView.world.party.direction = DIR_NORTH;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_405",
+                     found && M11_GameView_GetFrontMirrorOrdinal(&mirrorView) == mirrorOrdinal,
+                     "M11 resolves the source mirror TextString in the front viewport cell");
+        probe_record(&tally,
+                     "INV_GV_406",
+                     M11_GameView_SelectFrontMirrorCandidate(&mirrorView) == 1 &&
+                         mirrorView.candidateMirrorPanelActive == 1 &&
+                         mirrorView.candidateMirrorOrdinal == mirrorOrdinal,
+                     "M11 mirror click opens a source-backed resurrect/reincarnate candidate panel");
+        probe_record(&tally,
+                     "INV_GV_407",
+                     M11_GameView_ConfirmMirrorCandidate(&mirrorView, 0) == 1 &&
+                         mirrorView.candidateMirrorPanelActive == 0 &&
+                         mirrorView.world.party.championCount == 1,
+                     "M11 mirror panel resurrect command recruits the selected champion");
+        M11_GameView_Shutdown(&mirrorView);
+    }
 
 
     memset(framebuffer, 0, sizeof(framebuffer));

@@ -1740,6 +1740,7 @@ static void m11_refresh_hash(M11_GameViewState* state) {
 static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
+static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
 static int m11_viewport_cell_is_wall_free(int elementType);
 static int m11_toggle_front_door(M11_GameViewState* state);
@@ -4261,6 +4262,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
         const char* dbg = getenv("FIRESTAFF_DEBUG_HUD");
         state->showDebugHUD = (dbg && dbg[0] == '1') ? 1 : 0;
     }
+    state->candidateMirrorOrdinal = -1;
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 }
@@ -4677,7 +4679,7 @@ int M11_GameView_GetMirrorNameByOrdinal(const M11_GameViewState* state,
                                         char* outName,
                                         int outSize) {
     if (!state || !state->mirrorCatalogAvailable) {
-        if (outName && outSize > 0) outName[0] = ' ';
+        if (outName && outSize > 0) outName[0] = '\0';
         return 0;
     }
     return F0660_CHAMPION_MirrorCatalogGetName_Compat(&state->mirrorCatalog,
@@ -4691,7 +4693,7 @@ int M11_GameView_GetMirrorTitleByOrdinal(const M11_GameViewState* state,
                                          char* outTitle,
                                          int outSize) {
     if (!state || !state->mirrorCatalogAvailable) {
-        if (outTitle && outSize > 0) outTitle[0] = ' ';
+        if (outTitle && outSize > 0) outTitle[0] = '\0';
         return 0;
     }
     return F0661_CHAMPION_MirrorCatalogGetTitle_Compat(&state->mirrorCatalog,
@@ -4712,6 +4714,88 @@ int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
     if (!state || !state->active || !state->mirrorCatalogAvailable) return 0;
     return F0674_CHAMPION_MirrorCatalogRecruitNameIfAbsent_Compat(
         &state->mirrorCatalog, name, &state->world.party);
+}
+
+int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
+    return m11_front_cell_mirror_ordinal(state);
+}
+
+int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
+    int mirrorOrdinal;
+    char mirrorName[16];
+    char mirrorTitle[32];
+
+    mirrorName[0] = '\0';
+    mirrorTitle[0] = '\0';
+    if (!state || !state->active) return 0;
+    mirrorOrdinal = m11_front_cell_mirror_ordinal(state);
+    if (mirrorOrdinal < 0) return 0;
+    if (state->world.party.championCount >= CHAMPION_MAX_PARTY) {
+        m11_set_status(state, "MIRROR", "PARTY FULL");
+        m11_set_inspect_readout(state, "CHAMPION MIRROR",
+                                "NO ROOM FOR ANOTHER CHAMPION");
+        return 0;
+    }
+
+    state->candidateMirrorOrdinal = mirrorOrdinal;
+    state->candidateMirrorPanelActive = 1;
+    (void)M11_GameView_GetMirrorNameByOrdinal(state, mirrorOrdinal,
+                                              mirrorName, sizeof(mirrorName));
+    (void)M11_GameView_GetMirrorTitleByOrdinal(state, mirrorOrdinal,
+                                               mirrorTitle, sizeof(mirrorTitle));
+    m11_set_status(state, "MIRROR", "RESURRECT OR REINCARNATE");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+             "MIRROR: %s", mirrorName[0] ? mirrorName : "CHAMPION");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "%s%s%s — CHOOSE RESURRECT, REINCARNATE, OR CANCEL",
+             mirrorName[0] ? mirrorName : "CHAMPION",
+             mirrorTitle[0] ? ", " : "",
+             mirrorTitle[0] ? mirrorTitle : "");
+    return 1;
+}
+
+int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
+                                        int reincarnate) {
+    int result;
+    char mirrorName[16];
+
+    mirrorName[0] = '\0';
+    if (!state || !state->active || !state->candidateMirrorPanelActive ||
+        state->candidateMirrorOrdinal < 0) {
+        return 0;
+    }
+    if (state->world.party.championCount >= CHAMPION_MAX_PARTY) {
+        m11_set_status(state, "MIRROR", "PARTY FULL");
+        return 0;
+    }
+    (void)M11_GameView_GetMirrorNameByOrdinal(state, state->candidateMirrorOrdinal,
+                                              mirrorName, sizeof(mirrorName));
+    result = M11_GameView_RecruitChampionByMirrorOrdinal(
+        state, state->candidateMirrorOrdinal);
+    if (result == 1) {
+        state->candidateMirrorPanelActive = 0;
+        state->candidateMirrorOrdinal = -1;
+        m11_refresh_hash(state);
+        m11_set_status(state, "MIRROR", reincarnate ? "REINCARNATED" : "RESURRECTED");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "%s JOINS", mirrorName[0] ? mirrorName : "CHAMPION");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "%s ADDED TO THE PARTY FROM THE SOURCE MIRROR RECORD",
+                 mirrorName[0] ? mirrorName : "CHAMPION");
+    }
+    return result;
+}
+
+int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
+    if (!state || !state->active || !state->candidateMirrorPanelActive) {
+        return 0;
+    }
+    state->candidateMirrorPanelActive = 0;
+    state->candidateMirrorOrdinal = -1;
+    m11_set_status(state, "MIRROR", "CANCELLED");
+    m11_set_inspect_readout(state, "CHAMPION MIRROR",
+                            "SELECTION CANCELLED");
+    return 1;
 }
 
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
@@ -4737,6 +4821,24 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (input != M12_MENU_INPUT_NONE) {
             M11_GameView_DismissDialogOverlay(state);
             return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* Source-backed champion mirror panel: CLIKCHAM routes
+     * C160/C161/C162 through the resurrect/reincarnate/cancel panel.
+     * M11 maps ACTION/ACCEPT to the default resurrect choice for now
+     * and BACK to cancel; the public confirm API keeps probes explicit. */
+    if (state->candidateMirrorPanelActive) {
+        if (input == M12_MENU_INPUT_BACK) {
+            return M11_GameView_CancelMirrorCandidate(state)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+            return M11_GameView_ConfirmMirrorCandidate(state, 0)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
         }
         return M11_GAME_INPUT_IGNORED;
     }
@@ -6773,6 +6875,11 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
     if (m11_build_front_text_readout(state, &frontCell,
                                      title, sizeof(title),
                                      detail, sizeof(detail))) {
+        int mirrorOrdinal = m11_front_cell_mirror_ordinal(state);
+        if (mirrorOrdinal >= 0 &&
+            M11_GameView_SelectFrontMirrorCandidate(state) == 1) {
+            return 1;
+        }
         m11_set_status(state, "INSPECT", "READ TEXT");
         m11_set_inspect_readout(state, title, detail);
         /* Show a dialog overlay so the text plaque is prominently
@@ -6817,6 +6924,33 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
     }
 
     return 0;
+}
+
+static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+    unsigned short thing;
+
+    if (!state || !state->active || !state->mirrorCatalogAvailable ||
+        !m11_get_front_cell(state, &frontCell) || !frontCell.valid ||
+        !state->world.things || !state->world.things->textStrings) {
+        return -1;
+    }
+
+    thing = frontCell.firstThing;
+    while (thing != THING_ENDOFLIST && thing != THING_NONE) {
+        int thingType = THING_GET_TYPE(thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
+            thingIndex < state->world.things->textStringCount) {
+            int mirrorOrdinal = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                &state->mirrorCatalog, thingIndex);
+            if (mirrorOrdinal >= 0) {
+                return mirrorOrdinal;
+            }
+        }
+        thing = m11_raw_next_thing(state->world.things, thing);
+    }
+    return -1;
 }
 
 static int m11_get_front_cell(const M11_GameViewState* state, M11_ViewportCell* outCell) {
