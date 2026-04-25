@@ -223,7 +223,7 @@ int F0609_CHAMPION_FindMirrorTextStringByName_Compat(
     return -1;
 }
 
-static int party_contains_champion_name(const struct PartyState_Compat* party,
+int F0626_PARTY_ContainsChampionName_Compat(const struct PartyState_Compat* party,
                                         const unsigned char packedName[CHAMPION_NAME_LENGTH]) {
     int i;
     if (!party || !packedName) return 0;
@@ -248,18 +248,9 @@ int F0610_PARTY_AddChampionFromMirrorTextString_Compat(
 
     F0600_CHAMPION_InitEmpty_Compat(&parsed);
     if (!F0607_CHAMPION_ParseMirrorTextString_Compat(things, textStringIndex, &parsed)) return 0;
-    if (party_contains_champion_name(party, parsed.name)) return 0;
+    if (F0626_PARTY_ContainsChampionName_Compat(party, parsed.name)) return 0;
 
-    slot = -1;
-    {
-        int i;
-        for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
-            if (!party->champions[i].present) {
-                slot = i;
-                break;
-            }
-        }
-    }
+    slot = F0624_PARTY_GetNextFreeChampionSlot_Compat(party);
     if (slot < 0 || slot >= CHAMPION_MAX_PARTY) return 0;
     F0600_CHAMPION_InitEmpty_Compat(&party->champions[slot]);
     memcpy(party->champions[slot].name, parsed.name, CHAMPION_NAME_LENGTH);
@@ -379,6 +370,96 @@ int F0617_CHAMPION_HasMirrorTextStringByName_Compat(
     const unsigned char packedName[CHAMPION_NAME_LENGTH])
 {
     return F0609_CHAMPION_FindMirrorTextStringByName_Compat(things, packedName) >= 0;
+}
+
+
+int F0618_CHAMPION_PackName_Compat(
+    const char* name,
+    unsigned char outName[CHAMPION_NAME_LENGTH])
+{
+    if (!name || !outName) return 0;
+    pack_text_field(outName, CHAMPION_NAME_LENGTH, name, (int)strlen(name));
+    return 1;
+}
+
+int F0619_CHAMPION_PackTitle_Compat(
+    const char* title,
+    unsigned char outTitle[CHAMPION_TITLE_LENGTH])
+{
+    if (!title || !outTitle) return 0;
+    pack_text_field(outTitle, CHAMPION_TITLE_LENGTH, title, (int)strlen(title));
+    return 1;
+}
+
+int F0620_CHAMPION_FindMirrorTextStringByNameString_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* name)
+{
+    unsigned char packed[CHAMPION_NAME_LENGTH];
+    if (!F0618_CHAMPION_PackName_Compat(name, packed)) return -1;
+    return F0609_CHAMPION_FindMirrorTextStringByName_Compat(things, packed);
+}
+
+int F0621_PARTY_AddChampionFromMirrorNameString_Compat(
+    const struct DungeonThings_Compat* things,
+    const char* name,
+    struct PartyState_Compat* party)
+{
+    unsigned char packed[CHAMPION_NAME_LENGTH];
+    if (!F0618_CHAMPION_PackName_Compat(name, packed)) return 0;
+    return F0611_PARTY_AddChampionFromMirrorName_Compat(things, packed, party);
+}
+
+int F0622_CHAMPION_GetMirrorOrdinalByName_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedName[CHAMPION_NAME_LENGTH])
+{
+    int i;
+    int count = 0;
+    struct ChampionState_Compat parsed;
+    if (!things || !packedName) return -1;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed)) {
+            if (memcmp(parsed.name, packedName, CHAMPION_NAME_LENGTH) == 0) return count;
+            ++count;
+        }
+    }
+    return -1;
+}
+
+int F0623_CHAMPION_GetMirrorOrdinalByTitle_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedTitle[CHAMPION_TITLE_LENGTH])
+{
+    int i;
+    int count = 0;
+    struct ChampionState_Compat parsed;
+    if (!things || !packedTitle) return -1;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed)) {
+            if (memcmp(parsed.title, packedTitle, CHAMPION_TITLE_LENGTH) == 0) return count;
+            ++count;
+        }
+    }
+    return -1;
+}
+
+int F0624_PARTY_GetNextFreeChampionSlot_Compat(
+    const struct PartyState_Compat* party)
+{
+    int i;
+    if (!party) return -1;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (!party->champions[i].present) return i;
+    }
+    return -1;
+}
+
+int F0625_PARTY_IsFull_Compat(const struct PartyState_Compat* party)
+{
+    return F0624_PARTY_GetNextFreeChampionSlot_Compat(party) < 0;
 }
 
 /*

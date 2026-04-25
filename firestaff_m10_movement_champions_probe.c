@@ -551,7 +551,47 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    /* Test 11: Sensor identification */
+    /* Test 11: Champion mirror UI-bridge helpers */
+    {
+        unsigned char packedName[CHAMPION_NAME_LENGTH];
+        unsigned char packedTitle[CHAMPION_TITLE_LENGTH];
+        struct PartyState_Compat stringParty;
+        struct PartyState_Compat slotProbe;
+        memcpy(&stringParty, &party, sizeof(stringParty));
+        memcpy(&slotProbe, &party, sizeof(slotProbe));
+
+        CHECK(F0618_CHAMPION_PackName_Compat("STAMM", packedName) == 1 &&
+              memcmp(packedName, "STAMM   ", 8) == 0,
+              "Champion name pack helper pads source Name[8]");
+        CHECK(F0619_CHAMPION_PackTitle_Compat("BLADECASTER", packedTitle) == 1 &&
+              memcmp(packedTitle, "BLADECASTER         ", 20) == 0,
+              "Champion title pack helper pads source Title[20]");
+        CHECK(F0620_CHAMPION_FindMirrorTextStringByNameString_Compat(&things, "STAMM") >= 0,
+              "Mirror finder accepts plain C champion name string");
+        CHECK(F0621_PARTY_AddChampionFromMirrorNameString_Compat(&things, "STAMM", &stringParty) == 1 &&
+              memcmp(stringParty.champions[0].name, "STAMM   ", 8) == 0,
+              "Party can recruit champion identity by plain C name string");
+        CHECK(F0622_CHAMPION_GetMirrorOrdinalByName_Compat(&things, packedName) >= 0,
+              "Mirror ordinal lookup works by packed Name[8]");
+        CHECK(F0623_CHAMPION_GetMirrorOrdinalByTitle_Compat(&things, packedTitle) ==
+              F0622_CHAMPION_GetMirrorOrdinalByName_Compat(&things, packedName),
+              "Mirror ordinal lookup by Title[20] matches same champion");
+        CHECK(F0624_PARTY_GetNextFreeChampionSlot_Compat(&slotProbe) == 0,
+              "Next-free party slot helper returns slot 0 for empty party");
+        slotProbe.champions[0].present = 1;
+        slotProbe.championCount = 1;
+        CHECK(F0624_PARTY_GetNextFreeChampionSlot_Compat(&slotProbe) == 1,
+              "Next-free party slot helper skips occupied slot");
+        slotProbe.champions[1].present = 1;
+        slotProbe.champions[2].present = 1;
+        slotProbe.champions[3].present = 1;
+        CHECK(F0625_PARTY_IsFull_Compat(&slotProbe) == 1,
+              "Party full helper detects all champion slots occupied");
+        CHECK(F0626_PARTY_ContainsChampionName_Compat(&stringParty, packedName) == 1,
+              "Public party duplicate helper finds recruited packed Name[8]");
+    }
+
+    /* Test 12: Sensor identification */
     {
         struct SensorOnSquare_Compat sensorResult;
         int foundAnySensor = 0;
