@@ -949,28 +949,31 @@ first, then visual parity, then typography / honesty.
   - Firestaff's current visible `TEXT PLAQUE`, `PRESS ANY KEY TO DISMISS`,
     `QUEST COMPLETE`, `VICTORY AT TICK ...`, and `ESC TO RETURN TO MENU` panels
     are classified as functional placeholders / `KNOWN_DIFF`, not visual parity.
-- **Dialog narrowing (passes 107–113):**
+- **Dialog narrowing (passes 107–121):**
   - Pass 107 keeps the most obvious placeholder/debug labels (`TEXT PLAQUE`,
     `PRESS ANY KEY TO DISMISS`, `VICTORY AT TICK ...`, `ESC TO RETURN TO MENU`)
     hidden from default V1 unless `showDebugHUD=1`.
-  - Pass 109 blits the source `C000_GRAPHIC_DIALOG_BOX` backdrop from
-    GRAPHICS.DAT graphic `17` (`224×136`) at the viewport origin.
-  - Pass 110 prints source version-zone text `V3.4` at reconstructed
-    `C450_ZONE_DIALOG_VERSION` coordinates `(192,40)`.
-  - Pass 112 centers dialog message text across the source viewport region using
-    text measurement instead of the old procedural left inset.
-  - Matrix status remains `KNOWN_DIFF (narrowed)`: source backdrop + version
-    zone + centered message are now wired, but full `F0427_DIALOG_Draw` parity is
-    not complete.
+  - Passes 109–121 wire the visible source dialog path: `C000_GRAPHIC_DIALOG_BOX`
+    backdrop (GRAPHICS.DAT graphic `17`, `224×136`), C450 `V3.4`, C469/C471
+    message zones, source-width split/line step, C462–C467 choice text zones,
+    M621/M622/M623 patch graphics, and choice hit/selection flow.
+  - Matrix status remains `KNOWN_DIFF (narrowed)`: dialog `F0427` is now
+    substantially source-backed, but original overlay comparison is still needed.
+- **Endgame narrowing (passes 122–123):**
+  - Default V1 game-won overlay no longer uses the invented victory panel when
+    source assets are available.
+  - Wired source endgame graphics: `C006_GRAPHIC_THE_END` (graphic `6`),
+    `C346_GRAPHIC_WALL_ORNAMENT_43_CHAMPION_MIRROR` (graphic `346`) in C412–C415,
+    restart/quit boxes from `DATA.C`, and champion names at x=87/y=14+48n.
+  - Remaining endgame gaps: champion portrait blits in C416–C419, champion title
+    text, skill-title/level list, timing/music/restart loop, and original overlay
+    comparison captures.
 - **Representative gates:**
-  - `firestaff_m11_game_view_probe`: `424/424 invariants passed` after the
-    dialog source-backdrop/version/centered-text work.
+  - `firestaff_m11_game_view_probe`: `437/437 invariants passed` after the
+    dialog/endgame source-backed overlay work.
   - `ctest`: `5/5 PASS`.
 - **Remaining gaps:**
-  - Wire source dialog patch/choice zones and choice input flow.
-  - Match exact C469/C471 vertical message placement and source line splitting.
-  - Wire source endgame frontend visuals or suppress placeholder overlays from
-    parity claims.
+  - Finish source endgame portrait/title/skill list or document exact blockers.
   - Capture original dialog/endgame frames and perform overlay comparison.
   - Keep the map overlay debug-only unless contrary source/runtime evidence is
     found.
