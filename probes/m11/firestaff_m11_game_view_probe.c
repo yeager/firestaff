@@ -6742,6 +6742,7 @@ int main(int argc, char** argv) {
             unsigned char fb3[320 * 200];
             int x, y;
             int diffInner0 = 0;
+            int cyanInner0 = 0;
             int cellX0 = 0 * 22 + 233;
             memset(&localThings, 0, sizeof(localThings));
             memset(&weapon, 0, sizeof(weapon));
@@ -6760,15 +6761,19 @@ int main(int argc, char** argv) {
             M11_GameView_Draw(&iconView, fb3, 320, 200);
             for (y = 95; y < 111; ++y) {
                 for (x = cellX0 + 2; x < cellX0 + 18; ++x) {
-                    if ((fb3[y * 320 + x] & 0x0F) !=
-                        (fb[y * 320 + x] & 0x0F)) {
+                    unsigned char idx = fb3[y * 320 + x] & 0x0F;
+                    if (idx != (fb[y * 320 + x] & 0x0F)) {
                         ++diffInner0;
                     }
+                    if (idx == PROBE_COLOR_LIGHT_CYAN) ++cyanInner0;
                 }
             }
             probe_record(&tally, "INV_GV_305",
                          iconView.assetsAvailable ? (diffInner0 > 20) : 1,
                          "action-hand icon cells: ActionSetIndex>0 item blits source object icon");
+            probe_record(&tally, "INV_GV_306",
+                         iconView.assetsAvailable ? (cyanInner0 > 180) : 1,
+                         "action-hand icon cells: source object icon applies G0498 color-12-to-cyan palette change");
             iconView.world.party.champions[0].inventory[
                 CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
             iconView.world.things = NULL;
