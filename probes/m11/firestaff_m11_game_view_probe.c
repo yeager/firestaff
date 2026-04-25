@@ -1687,18 +1687,43 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38A",
                      haveAssets && memcmp(baseFb, pitFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C normal pit source blit changes the corridor frame");
+        probe_record(&tally, "INV_GV_38X",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, pitFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C normal pit clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38B",
                      haveAssets && memcmp(pitFb, invisiblePitFb, sizeof(pitFb)) != 0,
                      "focused viewport: D1C invisible pit variant differs from normal pit");
+        probe_record(&tally, "INV_GV_38Y",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, invisiblePitFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C invisible pit clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38C",
                      haveAssets && memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C stairs zone blit changes the corridor frame");
+        probe_record(&tally, "INV_GV_38Z",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, stairsFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C stairs clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38D",
                      haveAssets && memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C teleporter field zone blit changes the corridor frame");
+        probe_record(&tally, "INV_GV_38AA",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, teleporterFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C teleporter field clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38L",
                      haveAssets && memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C Trolin creature sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38AB",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, creatureFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C Trolin creature clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38R",
                      haveAssets && memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
                      memcmp(creatureFb, sideCreatureFb, sizeof(creatureFb)) != 0,
