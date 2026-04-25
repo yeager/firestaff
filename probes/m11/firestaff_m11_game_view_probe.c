@@ -1097,6 +1097,44 @@ int main(int argc, char** argv) {
     syntheticView.world.party.champions[0].wounds = 0;
 
     probe_record(&tally,
+                 "INV_GV_15K",
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 212 &&
+                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 214,
+                 "V1 champion HUD empty normal hands use source icons 212/214");
+
+    syntheticView.world.party.champions[0].wounds = 0x0001u;
+    probe_record(&tally,
+                 "INV_GV_15L",
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 213 &&
+                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 214,
+                 "V1 champion HUD ready-hand wound advances empty icon to 213 only");
+
+    syntheticView.world.party.champions[0].wounds = 0x0002u;
+    probe_record(&tally,
+                 "INV_GV_15M",
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 212 &&
+                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 215,
+                 "V1 champion HUD action-hand wound advances empty icon to 215 only");
+
+    syntheticView.actingChampionOrdinal = 1;
+    probe_record(&tally,
+                 "INV_GV_15N",
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 215,
+                 "V1 champion HUD acting hand changes the box graphic but keeps the source wounded empty icon");
+    syntheticView.actingChampionOrdinal = 0;
+    syntheticView.world.party.champions[0].wounds = 0;
+
+    syntheticView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    syntheticView.world.party.champions[0].wounds = 0x0001u;
+    probe_record(&tally,
+                 "INV_GV_15O",
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 16,
+                 "V1 champion HUD occupied wounded hand uses F0033 object icon instead of empty-hand icon");
+    syntheticView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+    syntheticView.world.party.champions[0].wounds = 0;
+
+    probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,
                                    320,

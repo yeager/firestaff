@@ -13883,6 +13883,40 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
     return M11_GFX_SLOT_BOX_NORMAL;
 }
 
+int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
+                                          int championSlot,
+                                          int handIndex) {
+    const struct ChampionState_Compat* champ;
+    unsigned short thing;
+    int sourceSlotIndex;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        handIndex < 0 || handIndex > 1 ||
+        championSlot >= state->world.party.championCount) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    if (!champ->present || champ->hp.current == 0) return -1;
+
+    thing = m11_get_status_hand_thing(champ, handIndex);
+    if (thing != THING_NONE && thing != THING_ENDOFLIST) {
+        return m11_object_icon_index_for_thing(state, state->world.things, thing);
+    }
+
+    /* ReDMCSB CHAMDRAW.C F0291_CHAMPION_DrawSlot:
+     *   if empty and slot <= C05_SLOT_FEET:
+     *     IconIndex = C212_ICON_READY_HAND + (SlotIndex << 1);
+     *     if Wounds has (1 << SlotIndex), IconIndex++ and box=C034.
+     * For status boxes only C00_SLOT_READY_HAND and
+     * C01_SLOT_ACTION_HAND are drawn, so the exact empty-hand icons are:
+     *   ready normal/wounded  = 212/213
+     *   action normal/wounded = 214/215
+     * The later acting-champion override changes only the slot-box graphic
+     * (C035), not the selected empty-hand icon. */
+    sourceSlotIndex = handIndex; /* C00_SLOT_READY_HAND / C01_SLOT_ACTION_HAND */
+    return 212 + (sourceSlotIndex << 1) +
+           ((champ->wounds & (1u << sourceSlotIndex)) ? 1 : 0);
+}
+
 static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
                                         const struct ChampionState_Compat* champ,
                                         unsigned char* framebuffer,
@@ -13892,13 +13926,11 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
                                         int handIndex,
                                         int dstX,
                                         int dstY) {
-    unsigned short thing;
     int boxGfx;
     int drewBox = 0;
     int iconIndex;
 
     if (!state || !champ || !framebuffer) return 0;
-    thing = m11_get_status_hand_thing(champ, handIndex);
     boxGfx = M11_GameView_GetV1StatusHandSlotGraphic(
         state, championSlot, handIndex);
     if (boxGfx <= 0) return 0;
@@ -13925,13 +13957,9 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
                       M11_COLOR_DARK_GRAY);
     }
 
-    if (thing == THING_NONE || thing == THING_ENDOFLIST) {
-        /* Source F0291: empty ready/action hand icons are
-         * C212_ICON_READY_HAND and C214_ICON_ACTION_HAND. */
-        iconIndex = 212 + (handIndex * 2);
-    } else {
-        iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
-    }
+    iconIndex = M11_GameView_GetV1StatusHandIconIndex(
+        state, championSlot, handIndex);
+    if (iconIndex < 0) return drewBox;
 
     (void)m11_draw_dm_object_icon_index(
         state, framebuffer, framebufferWidth, framebufferHeight,

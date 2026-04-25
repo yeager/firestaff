@@ -699,6 +699,9 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                             int championSlot,
                                             int handIndex);
+int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
+                                          int championSlot,
+                                          int handIndex);
 
 #ifdef __cplusplus
 }
