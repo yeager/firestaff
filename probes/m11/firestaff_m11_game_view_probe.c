@@ -1451,6 +1451,7 @@ int main(int argc, char** argv) {
         unsigned char teleporterFb[320 * 200];
         unsigned char creatureFb[320 * 200];
         unsigned char projectileFb[320 * 200];
+        unsigned char lightningFb[320 * 200];
         unsigned char objectFb[320 * 200];
         unsigned char objectGapFb[320 * 200];
         unsigned char multiObjectFb[320 * 200];
@@ -1516,6 +1517,29 @@ int main(int argc, char** argv) {
         if (ssDir && ssDir[0]) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "36_focused_d1c_fireball_projectile_vga");
+        }
+        focusView.world.projectiles.count = 0;
+        memset(&focusView.world.projectiles.entries[0], 0,
+               sizeof(focusView.world.projectiles.entries[0]));
+
+        focusView.world.projectiles.count = 1;
+        memset(&focusView.world.projectiles.entries[0], 0,
+               sizeof(focusView.world.projectiles.entries[0]));
+        focusView.world.projectiles.entries[0].slotIndex = 0;
+        focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+        focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+        focusView.world.projectiles.entries[0].mapIndex = 0;
+        focusView.world.projectiles.entries[0].mapX = 2;
+        focusView.world.projectiles.entries[0].mapY = 2;
+        focusView.world.projectiles.entries[0].cell = 3;
+        focusView.world.projectiles.entries[0].direction = DIR_EAST;
+        focusView.world.projectiles.entries[0].kineticEnergy = 255;
+        focusView.world.projectiles.entries[0].attack = 128;
+        memset(lightningFb, 0, sizeof(lightningFb));
+        M11_GameView_Draw(&focusView, lightningFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "40_focused_d1c_lightning_projectile_vga");
         }
         focusView.world.projectiles.count = 0;
         memset(&focusView.world.projectiles.entries[0], 0,
@@ -1637,6 +1661,10 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38M",
                      haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C fireball projectile sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38Q",
+                     haveAssets && memcmp(baseFb, lightningFb, sizeof(baseFb)) != 0 &&
+                     memcmp(projectileFb, lightningFb, sizeof(projectileFb)) != 0,
+                     "focused viewport: D1C lightning projectile differs from empty and fireball frames");
         probe_record(&tally, "INV_GV_38N",
                      haveAssets && memcmp(baseFb, objectFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C dagger object sprite changes the corridor frame");
