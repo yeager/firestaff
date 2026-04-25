@@ -7396,6 +7396,16 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         {1,  1, 0, {M11_GFX_DOOR_SET0_D1, 0,  0, 192, 18, 32, 86},
                    {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 122, 14, 102, 4}, {0}, 1}
     };
+    static const int kDoorOpenSrcY[3][4] = {
+        {0, 65, 43, 21}, /* D1 */
+        {0, 44, 29, 14}, /* D2 */
+        {0, 27, 17, 7}   /* D3 */
+    };
+    static const int kDoorOpenHeight[3][4] = {
+        {0, 23, 45, 67}, /* D1 */
+        {0, 17, 32, 47}, /* D2 */
+        {0, 11, 21, 31}  /* D3 */
+    };
     size_t i;
     if (!state || !state->assetsAvailable) {
         return;
@@ -7423,6 +7433,24 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);
         if (panelGraphic >= 0) {
             panel.graphicIndex = panelGraphic;
+        }
+        if (cell.doorState >= 1 && cell.doorState <= 3) {
+            panel.srcY = kDoorOpenSrcY[kSpecs[i].depthIndex][cell.doorState];
+            panel.height = kDoorOpenHeight[kSpecs[i].depthIndex][cell.doorState];
+            if (kSpecs[i].depthIndex == 0) {
+                panel.dstY = 17;
+            } else if (kSpecs[i].depthIndex == 2) {
+                panel.dstY = (kSpecs[i].relSide == -1 || kSpecs[i].relSide == 1) ? 29 : 28;
+                if (kSpecs[i].relSide == -1) {
+                    panel.srcX = 0;
+                    panel.dstX = 30;
+                    panel.width = 44;
+                } else if (kSpecs[i].relSide == 1) {
+                    panel.srcX = 0;
+                    panel.dstX = 150;
+                    panel.width = 44;
+                }
+            }
         }
         (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &panel, 10);
     }
