@@ -6884,6 +6884,26 @@ enum {
     M11_GFX_FLOOR_PIT_D0L  = 56,
     M11_GFX_FLOOR_PIT_D0C  = 57,
 
+    /* DM1 wall-set 0 stairs graphics.  Source: M645_GRAPHIC_FIRST_STAIRS=108. */
+    M11_GFX_DM1_STAIRS_UP_FRONT_D3L    = 108,
+    M11_GFX_DM1_STAIRS_UP_FRONT_D3C    = 109,
+    M11_GFX_DM1_STAIRS_UP_FRONT_D2L    = 110,
+    M11_GFX_DM1_STAIRS_UP_FRONT_D2C    = 111,
+    M11_GFX_DM1_STAIRS_UP_FRONT_D1L    = 112,
+    M11_GFX_DM1_STAIRS_UP_FRONT_D1C    = 113,
+    M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L  = 114,
+    M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L  = 115,
+    M11_GFX_DM1_STAIRS_DOWN_FRONT_D3C  = 116,
+    M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L  = 117,
+    M11_GFX_DM1_STAIRS_DOWN_FRONT_D2C  = 118,
+    M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L  = 119,
+    M11_GFX_DM1_STAIRS_DOWN_FRONT_D1C  = 120,
+    M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L= 121,
+    M11_GFX_DM1_STAIRS_SIDE_D2L        = 122,
+    M11_GFX_DM1_STAIRS_UP_SIDE_D1L     = 123,
+    M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L   = 124,
+    M11_GFX_DM1_STAIRS_SIDE_D0L        = 125,
+
     /* DM1 wall-set 0 wall graphics.  These are the source GRAPHICS.DAT
      * wall panels that DUNVIEW.C draws into layout-696 zones C702..C717. */
     M11_GFX_WALLSET0_D0R    = 93,  /* 33x136 -> C717_ZONE_WALL_D0R */
@@ -7474,6 +7494,79 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         }
         (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                      &kPits[i].blit, 10);
+    }
+}
+
+static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
+                                       const M11_ViewportCell* cell) {
+    int northSouth;
+    if (!state || !cell) {
+        return 1;
+    }
+    /* ReDMCSB/DEFS.H: stairs bit 0x08 marks north/south orientation. */
+    northSouth = (cell->square & 0x08) ? 1 : 0;
+    return northSouth ?
+        (state->world.party.direction == DIR_NORTH || state->world.party.direction == DIR_SOUTH) :
+        (state->world.party.direction == DIR_EAST || state->world.party.direction == DIR_WEST);
+}
+
+static void m11_draw_dm1_stairs(const M11_GameViewState* state,
+                                unsigned char* framebuffer,
+                                int fbW,
+                                int fbH) {
+    typedef struct M11_DM1StairSpec {
+        int relForward;
+        int relSide;
+        int frontOnly;
+        int sideOnly;
+        int upGfx;
+        int downGfx;
+        M11_DM1ZoneBlit upBlit;
+        M11_DM1ZoneBlit downBlit;
+    } M11_DM1StairSpec;
+    static const M11_DM1StairSpec kStairs[] = {
+        {3,-2,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,0,   25,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,0,   25,75,41}},
+        {3, 2,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,161, 25,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,149, 25,75,41}},
+        {3,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,14,  26,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,13,  28,75,41}},
+        {3, 0,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3C,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3C,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3C,   0,0,78,  25,68,46}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3C,   0,0,75,  25,74,49}},
+        {3, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,147, 26,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,133, 28,75,41}},
+        {2,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   1,0,0,   24,59,62}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   0,0,0,   20,61,62}},
+        {2, 0,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D2C,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D2C,   {M11_GFX_DM1_STAIRS_UP_FRONT_D2C,   0,0,62,  20,100,63},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D2C,   0,0,63,  24,98,61}},
+        {2, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   0,0,165, 20,59,62}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   0,0,164, 24,60,62}},
+        {1,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   0,0,0,   9, 32,100},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   0,0,0,   17,32,91}},
+        {1, 0,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D1C,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D1C,   {M11_GFX_DM1_STAIRS_UP_FRONT_D1C,   0,0,32,  9, 160,100},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D1C,   0,0,35,  17,152,92}},
+        {1, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   0,0,192, 9, 32,100},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   0,0,192, 18,32,91}},
+        {0,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, {M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, 0,0,0,   58,30,44}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, 0,0,0,   76,30,60}},
+        {0, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, {M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, 0,0,194, 58,30,44}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, 0,0,194, 76,30,60}},
+        {2,-1,0,1,M11_GFX_DM1_STAIRS_SIDE_D2L,       M11_GFX_DM1_STAIRS_SIDE_D2L,         {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,60,  55,8, 5},  {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,60,  55,8, 5}},
+        {2, 1,0,1,M11_GFX_DM1_STAIRS_SIDE_D2L,       M11_GFX_DM1_STAIRS_SIDE_D2L,         {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,156, 56,8, 5},  {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,156, 56,8, 5}},
+        {1,-1,0,1,M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,    {M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    0,0,32,  58,20,43}, {M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,  0,0,32,  62,20,39}},
+        {1, 1,0,1,M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,    {M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    0,0,172, 57,20,43}, {M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,  0,0,172, 62,20,39}},
+        {0,-1,0,1,M11_GFX_DM1_STAIRS_SIDE_D0L,       M11_GFX_DM1_STAIRS_SIDE_D0L,         {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,0,   73,16,13}, {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,0,   73,16,13}},
+        {0, 1,0,1,M11_GFX_DM1_STAIRS_SIDE_D0L,       M11_GFX_DM1_STAIRS_SIDE_D0L,         {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,208, 73,16,13}, {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,208, 73,16,13}}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kStairs) / sizeof(kStairs[0]); ++i) {
+        M11_ViewportCell cell;
+        int frontFacing;
+        int stairUp;
+        if (!m11_sample_viewport_cell(state, kStairs[i].relForward, kStairs[i].relSide, &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_STAIRS) {
+            continue;
+        }
+        frontFacing = m11_dm1_stairs_front_facing(state, &cell);
+        if ((kStairs[i].frontOnly && !frontFacing) || (kStairs[i].sideOnly && frontFacing)) {
+            continue;
+        }
+        stairUp = (cell.square & 0x01) ? 1 : 0;
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                     stairUp ? &kStairs[i].upBlit : &kStairs[i].downBlit,
+                                     0);
     }
 }
 
@@ -12247,6 +12340,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight);
