@@ -29,6 +29,10 @@ checks = {
     'bootPublishedFrameCount': '50',
     'titleHoldMode': '1',
     'titleHoldRepeatCount': '2',
+    'titleFrontendOriginalFrameCount': '2',
+    'titleFrontendFallbackFrameCount': '0',
+    'titleFrontendHandoffReadyCount': '0',
+    'titleFrontendHeldLastFrameCount': '0',
 }
 expected_files = [
     out_dir / 'title_hold_hold_0051.pgm',
@@ -40,14 +44,19 @@ for key, expected in checks.items():
     value = m.group(1).strip() if m else None
     if value != expected:
         failures.append(f'title-hold: {key} expected {expected}, got {value}')
+for idx, expected_frame in enumerate(('1', '2')):
+    m = re.search(rf'titleFrontendFrame\[{idx}\]=([^\n]+)', log)
+    value = m.group(1).strip() if m else None
+    if value != expected_frame:
+        failures.append(f'title-hold: titleFrontendFrame[{idx}] expected {expected_frame}, got {value}')
 for path in expected_files:
     if not path.exists():
         failures.append(f'title-hold: missing artifact {path.name}')
 if not failures:
     a = expected_files[0].read_bytes()
     b = expected_files[1].read_bytes()
-    if a != b:
-        failures.append(f'title-hold: repeated hold artifacts differ ({expected_files[0].name} vs {expected_files[1].name})')
+    if a == b:
+        failures.append(f'title-hold: source-backed TITLE frames should advance for --title-hold 2 ({expected_files[0].name} == {expected_files[1].name})')
 text = ['# ReDMCSB M9 verification summary\n', '\n']
 if failures:
     text.append('## Title hold check: FAIL\n\n')
@@ -58,9 +67,13 @@ else:
     text.append('- bootPublishedFrameCount=50\n')
     text.append('- titleHoldMode=1\n')
     text.append('- titleHoldRepeatCount=2\n')
+    text.append('- titleFrontendOriginalFrameCount=2\n')
+    text.append('- titleFrontendFallbackFrameCount=0\n')
+    text.append('- titleFrontendFrame[0]=1\n')
+    text.append('- titleFrontendFrame[1]=2\n')
     for path in expected_files:
         text.append(f'- artifact present: {path.name}\n')
-    text.append(f'- repeated hold artifacts are byte-identical: {expected_files[0].name} == {expected_files[1].name}\n')
+    text.append(f'- source-backed TITLE artifacts advance as expected: {expected_files[0].name} != {expected_files[1].name}\n')
 out.write_text(''.join(text), encoding='utf-8')
 if failures:
     raise SystemExit(1)
