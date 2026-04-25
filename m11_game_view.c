@@ -7042,8 +7042,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                 int ofsY = (slotH - dupH) / 2;
                 if (ofsX < 1) ofsX = 1;
                 if (ofsY < 1) ofsY = 1;
-                /* DM1 creature front-cell positioning from original
-                 * Graphic558 coordinates. The stored points are center X and
+                /* DM1 creature front-cell positioning from layout-696
+                 * C3200 coordinates. The stored points are center X and
                  * bottom Y in the 224x136 viewport, so convert them into the
                  * local face rectangle and then anchor the duplicate sprite
                  * by its bottom center. */
@@ -7056,10 +7056,10 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                             int origBottomY;
                             int localCenterX;
                             int localBottomY;
-                            M11_GameView_GetCreatureFrontSlotPoint(coordSet, dIdx,
-                                                                   visibleDups, di,
-                                                                   &origCenterX,
-                                                                   &origBottomY);
+                            (void)m11_c3200_creature_zone_point(coordSet, dIdx,
+                                                                 visibleDups, di,
+                                                                 &origCenterX,
+                                                                 &origBottomY);
                             localCenterX = (origCenterX * faceW) / 224;
                             localBottomY = (origBottomY * faceH) / 136;
                             dupOffX[di] = localCenterX - dupW / 2;

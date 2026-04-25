@@ -6251,6 +6251,15 @@ int main(int argc, char** argv) {
                      "creature placement binds C3200 layout-696 source zone samples");
     }
 
+    {
+        int oldX = 0, oldY = 0, cX = 0, cY = 0;
+        M11_GameView_GetCreatureFrontSlotPoint(0, 0, 1, 0, &oldX, &oldY);
+        (void)M11_GameView_GetC3200CreatureZonePoint(0, 0, 1, 0, &cX, &cY);
+        probe_record(&tally, "INV_GV_256C",
+                     oldX == 109 && oldY == 111 && cX == 112 && cY == 111,
+                     "creature draw path prefers C3200 over older G0224 midpoint for single front slot");
+    }
+
     /* ── Floor ornament ordinal query ── */
     {
         /* Query the front cell's floor ornament ordinal.
