@@ -6862,6 +6862,11 @@ enum {
     M11_GFX_DOOR_SIDE_D1    = 87,  /*  25x94  */
     M11_GFX_DOOR_SIDE_D2    = 88,  /*  18x65  */
     M11_GFX_DOOR_SIDE_D3    = 89,  /*  10x42  */
+    M11_GFX_DOOR_FRAME_TOP_D1 = 91, /* 102x4 */
+    M11_GFX_DOOR_FRAME_TOP_D2 = 92, /* 70x3 */
+    M11_GFX_DOOR_SET0_D3    = 246, /* 44x38 */
+    M11_GFX_DOOR_SET0_D2    = 247, /* 64x61 */
+    M11_GFX_DOOR_SET0_D1    = 248, /* 96x88 */
 
     /* DM1 wall-set 0 wall graphics.  These are the source GRAPHICS.DAT
      * wall panels that DUNVIEW.C draws into layout-696 zones C702..C717. */
@@ -7117,6 +7122,16 @@ typedef struct M11_DM1WallFrontBlit {
     int height;
 } M11_DM1WallFrontBlit;
 
+typedef struct M11_DM1ZoneBlit {
+    int graphicIndex;
+    int srcX;
+    int srcY;
+    int dstX;
+    int dstY;
+    int width;
+    int height;
+} M11_DM1ZoneBlit;
+
 static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
@@ -7137,6 +7152,36 @@ static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
                                M11_VIEWPORT_X + blit->dstX,
                                M11_VIEWPORT_Y + blit->dstY,
                                -1);
+    return 1;
+}
+
+static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
+                                  unsigned char* framebuffer,
+                                  int fbW,
+                                  int fbH,
+                                  const M11_DM1ZoneBlit* blit,
+                                  int transparentColor) {
+    const M11_AssetSlot* slot;
+    if (!state || !state->assetsAvailable || !blit) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)blit->graphicIndex);
+    if (!slot || slot->width <= 0 || slot->height <= 0) {
+        return 0;
+    }
+    if (blit->srcX < 0 || blit->srcY < 0 ||
+        blit->srcX + blit->width > slot->width ||
+        blit->srcY + blit->height > slot->height) {
+        return 0;
+    }
+    M11_AssetLoader_BlitRegion(slot,
+                               blit->srcX, blit->srcY,
+                               blit->width, blit->height,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + blit->dstX,
+                               M11_VIEWPORT_Y + blit->dstY,
+                               transparentColor);
     return 1;
 }
 
@@ -7209,6 +7254,52 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
             (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
                                                &kSideBlits[i]);
         }
+    }
+}
+
+static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
+                                      unsigned char* framebuffer,
+                                      int fbW,
+                                      int fbH,
+                                      const M11_ViewportCell cells[3][3]) {
+    static const M11_DM1ZoneBlit kD1C[] = {
+        {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 61, 12, 102, 4},
+        {M11_GFX_DOOR_SIDE_D1,     0, 0, 44, 13, 25, 94},
+        {M11_GFX_DOOR_SIDE_D1,     0, 0, 155, 13, 25, 94},
+        {M11_GFX_DOOR_SET0_D1,     0, 0, 64, 16, 96, 86}
+    };
+    static const M11_DM1ZoneBlit kD2C[] = {
+        {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 77, 21, 70, 3},
+        {M11_GFX_DOOR_SIDE_D2,     0, 0, 65, 21, 18, 65},
+        {M11_GFX_DOOR_SIDE_D2,     0, 0, 141, 21, 18, 65},
+        {M11_GFX_DOOR_SET0_D2,     0, 0, 80, 24, 64, 59}
+    };
+    static const M11_DM1ZoneBlit kD3C[] = {
+        {M11_GFX_DOOR_SIDE_D3, 0, 0, 82, 27, 10, 42},
+        {M11_GFX_DOOR_SIDE_D3, 0, 0, 132, 27, 10, 42},
+        {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38}
+    };
+    static const struct { const M11_DM1ZoneBlit* blits; size_t count; } kByDepth[3] = {
+        {kD1C, sizeof(kD1C) / sizeof(kD1C[0])},
+        {kD2C, sizeof(kD2C) / sizeof(kD2C[0])},
+        {kD3C, sizeof(kD3C) / sizeof(kD3C[0])}
+    };
+    int depth;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        size_t i;
+        const M11_ViewportCell* cell = &cells[depth][1];
+        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
+            m11_viewport_cell_is_open(cell)) {
+            continue;
+        }
+        for (i = 0; i < kByDepth[depth].count; ++i) {
+            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                         &kByDepth[depth].blits[i], 10);
+        }
+        break;
     }
 }
 
@@ -11447,6 +11538,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * doors, pits, stairs, fields, and exact object order remain next. */
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal
