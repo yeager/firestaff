@@ -6133,6 +6133,14 @@ static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
     return 1;
 }
 
+static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
+    if (!cell || !cell->valid) {
+        return 0;
+    }
+    return cell->elementType == DUNGEON_ELEMENT_WALL ||
+           cell->elementType == DUNGEON_ELEMENT_FAKEWALL;
+}
+
 static int m11_build_front_text_readout(const M11_GameViewState* state,
                                         const M11_ViewportCell* cell,
                                         char* outTitle,
@@ -7155,7 +7163,7 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
         if (occluded) {
             break;
         }
-        if (!m11_viewport_cell_is_open(&cells[depth][1])) {
+        if (m11_viewport_cell_is_wall_like(&cells[depth][1])) {
             (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
                                                &kFrontBlits[depth]);
             occluded = 1;
@@ -7197,7 +7205,7 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                       &cell)) {
             continue;
         }
-        if (!m11_viewport_cell_is_open(&cell)) {
+        if (m11_viewport_cell_is_wall_like(&cell)) {
             (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
                                                &kSideBlits[i]);
         }
