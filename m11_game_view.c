@@ -7343,6 +7343,74 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
     }
 }
 
+typedef struct M11_DM1SideDoorSpec {
+    int relForward;
+    int relSide;
+    int depthIndex;
+    M11_DM1ZoneBlit panel;
+    M11_DM1ZoneBlit frameA;
+    M11_DM1ZoneBlit frameB;
+    int frameCount;
+} M11_DM1SideDoorSpec;
+
+static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int fbW,
+                                    int fbH) {
+    static const M11_DM1SideDoorSpec kSpecs[] = {
+        /* D3L2/R2 doors have only the clipped door panel in DUNVIEW.C. */
+        {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
+        {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
+        /* D3L/R side doors: side frame pair + clipped D3 panel. */
+        {3, -1, 2, {M11_GFX_DOOR_SET0_D3, 1,  0, 30,  29, 43, 38},
+                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 16, 27, 16, 43},
+                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 73, 27, 16, 43}, 2},
+        {3,  1, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 151, 29, 43, 38},
+                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 147, 27, 16, 43},
+                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 192, 26, 16, 43}, 2},
+        /* D2L/R: top frame + clipped D2 panel. */
+        {2, -1, 1, {M11_GFX_DOOR_SET0_D2, 4, 0, 0,   24, 60, 59},
+                   {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 6, 22, 70, 3}, {0}, 1},
+        {2,  1, 1, {M11_GFX_DOOR_SET0_D2, 0, 0, 164, 23, 60, 59},
+                   {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 160, 22, 64, 3}, {0}, 1},
+        /* D1L/R: top frame + clipped D1 panel. */
+        {1, -1, 0, {M11_GFX_DOOR_SET0_D1, 64, 0, 0,   18, 32, 86},
+                   {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 0, 14, 102, 4}, {0}, 1},
+        {1,  1, 0, {M11_GFX_DOOR_SET0_D1, 0,  0, 192, 18, 32, 86},
+                   {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 122, 14, 102, 4}, {0}, 1}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kSpecs) / sizeof(kSpecs[0]); ++i) {
+        M11_ViewportCell cell;
+        M11_DM1ZoneBlit panel;
+        int panelGraphic;
+        if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR ||
+            m11_viewport_cell_is_open(&cell)) {
+            continue;
+        }
+        if (kSpecs[i].frameCount >= 1) {
+            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                         &kSpecs[i].frameA, 10);
+        }
+        if (kSpecs[i].frameCount >= 2) {
+            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                         &kSpecs[i].frameB, 10);
+        }
+        panel = kSpecs[i].panel;
+        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);
+        if (panelGraphic >= 0) {
+            panel.graphicIndex = panelGraphic;
+        }
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &panel, 10);
+    }
+}
+
 /* Draw a real door frame from GRAPHICS.DAT at the given depth.
  * depthIndex 0 = nearest, 2 = farthest.
  * Falls back to the primitive line-based door rendering if unavailable. */
@@ -11578,6 +11646,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * doors, pits, stairs, fields, and exact object order remain next. */
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
