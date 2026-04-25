@@ -8537,6 +8537,14 @@ static unsigned int m11_item_sprite_index(int thingType, int subtype) {
         18,18,18,18,62,62,62,62,62,62,62,62,76,3,60,61,27,28,25,26,
         71,70,5,66,15,15,58,59,59,79,63,64,72,73,74,75,77,78,74,41
     };
+    static const unsigned char kObjectAspectFirstNative[85] = {
+         0,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+        33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+        49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
+        65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 82,
+        84, 85, 86, 87, 88
+    };
     int objectInfoIndex;
     int aspectIndex;
     if (subtype < 0) subtype = 0;
@@ -8571,8 +8579,9 @@ static unsigned int m11_item_sprite_index(int thingType, int subtype) {
     aspectIndex = kObjectInfoAspect[objectInfoIndex];
     if (aspectIndex < 0 || aspectIndex >= 85) return 0;
     /* G0209_as_Graphic558_ObjectAspects[].FirstNativeBitmapRelativeIndex
-     * is 0 for aspect 0, then aspectIndex+1 for aspect >= 1. */
-    return M11_GFX_ITEM_SPRITE_BASE + (unsigned int)(aspectIndex == 0 ? 0 : aspectIndex + 1);
+     * has gaps for aspects with alcove/right-facing alternates; do not
+     * synthesize it as aspectIndex+1. */
+    return M11_GFX_ITEM_SPRITE_BASE + (unsigned int)kObjectAspectFirstNative[aspectIndex];
 }
 
 /* Resolve an inventory thingId to a GRAPHICS.DAT item sprite index.
@@ -11630,6 +11639,10 @@ int M11_GameView_CountCellExplosions(
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
                                                int relativeCell) {
     return m11_projectile_source_scale_units(depthIndex, relativeCell);
+}
+
+unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
+    return m11_item_sprite_index(thingType, subtype);
 }
 
 static int m11_perform_non_melee_action(M11_GameViewState* state,

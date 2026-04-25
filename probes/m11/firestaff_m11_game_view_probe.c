@@ -1452,6 +1452,7 @@ int main(int argc, char** argv) {
         unsigned char creatureFb[320 * 200];
         unsigned char projectileFb[320 * 200];
         unsigned char objectFb[320 * 200];
+        unsigned char objectGapFb[320 * 200];
         char gfxPath[512];
         int haveAssets = 0;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
@@ -1532,6 +1533,19 @@ int main(int argc, char** argv) {
         focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
             THING_ENDOFLIST;
 
+        focusView.world.things->weapons[0].type = 43; /* source G0209 firstNative gap */
+        focusView.world.things->weapons[0].next = THING_ENDOFLIST;
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        memset(objectGapFb, 0, sizeof(objectGapFb));
+        M11_GameView_Draw(&focusView, objectGapFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "38_focused_d1c_object_native_gap_vga");
+        }
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+            THING_ENDOFLIST;
+
         probe_set_square(focusView.world.dungeon, 2, 2,
                          (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
         memset(pitFb, 0, sizeof(pitFb));
@@ -1589,6 +1603,9 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38N",
                      haveAssets && memcmp(baseFb, objectFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C dagger object sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38O",
+                     haveAssets && memcmp(baseFb, objectGapFb, sizeof(baseFb)) != 0,
+                     "focused viewport: D1C object sprite with G0209 native-index gap changes the corridor frame");
 
         /* Broader source-zone coverage: verify every currently-wired
          * focused position in the pit/stairs/teleporter families changes
@@ -3375,6 +3392,15 @@ int main(int argc, char** argv) {
                          "wall ornament graphic 259/M615 is loadable from GRAPHICS.DAT");
             (void)ornOk;
         }
+
+        /* INV_GV_114B: Object aspect native indices come from G0209,
+         * not from the stale aspectIndex+1 shortcut. Aspect 65 is the
+         * first source gap: G0209[65].FirstNativeBitmapRelativeIndex=67.
+         * ObjectInfo index 66 (weapon subtype 43) maps to aspect 65. */
+        probe_record(&tally,
+                     "INV_GV_114B",
+                     M11_GameView_GetObjectSpriteIndex(THING_TYPE_WEAPON, 43) == 565u,
+                     "object sprite uses G0209 firstNative gap: weapon subtype 43 -> aspect 65 -> graphic 565");
 
         /* INV_GV_115: Draw with item sprites on floor produces different
          * output from draw without items.  We place an item and compare. */

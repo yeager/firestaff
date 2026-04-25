@@ -505,6 +505,11 @@ int M11_GameView_CountCellExplosions(
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
                                                int relativeCell);
 
+/* Resolve a dungeon thing type/subtype to its M612 viewport object
+ * native graphic index using G0237 object-info -> G0209 object-aspect
+ * source data. Returns 0 for unsupported inputs. */
+unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype);
+
 /* ── Creature aspect query API (for probes) ── */
 
 /* Return the coordinate set index (0-10) for a creature type. */
