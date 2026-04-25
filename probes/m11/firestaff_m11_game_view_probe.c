@@ -3491,6 +3491,21 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectSourceScaleIndex(2, 0) == 4,
                      "object source scale-index selection follows F0115 front/back cells");
 
+        /* INV_GV_114C3: C2500 object/creature source zone points from
+         * layout-696 are bound for the non-alcove object placement path. */
+        {
+            int x0 = 0, y0 = 0, x1 = 0, y1 = 0, x4 = 0, y4 = 0;
+            int ok0 = M11_GameView_GetC2500ObjectZonePoint(0, 2, &x0, &y0);
+            int ok1 = M11_GameView_GetC2500ObjectZonePoint(1, 3, &x1, &y1);
+            int ok4 = M11_GameView_GetC2500ObjectZonePoint(4, 3, &x4, &y4);
+            probe_record(&tally,
+                         "INV_GV_114C3",
+                         ok0 && x0 == 127 && y0 == 70 &&
+                         ok1 && x1 == 25 && y1 == 70 &&
+                         ok4 && x4 == 222 && y4 == 70,
+                         "object placement binds C2500 layout-696 source zone samples");
+        }
+
         /* INV_GV_114D: Object pile shift index table is G0217. */
         {
             int x0 = -1, y0 = -1, x10 = -1, y10 = -1, x15 = -1, y15 = -1;

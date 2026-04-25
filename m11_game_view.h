@@ -523,6 +523,10 @@ unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype);
  * scale bucket 0..4. Out-of-range inputs clamp like the renderer. */
 int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex);
 int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell);
+int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
+                                         int relativeCell,
+                                         int* outX,
+                                         int* outY);
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
                                             int* outXIndex,
                                             int* outYIndex);
