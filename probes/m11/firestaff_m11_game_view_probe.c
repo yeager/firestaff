@@ -1451,6 +1451,7 @@ int main(int argc, char** argv) {
         unsigned char teleporterFb[320 * 200];
         unsigned char creatureFb[320 * 200];
         unsigned char projectileFb[320 * 200];
+        unsigned char objectFb[320 * 200];
         char gfxPath[512];
         int haveAssets = 0;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
@@ -1518,6 +1519,19 @@ int main(int argc, char** argv) {
         memset(&focusView.world.projectiles.entries[0], 0,
                sizeof(focusView.world.projectiles.entries[0]));
 
+        focusView.world.things->weapons[0].type = 8; /* dagger */
+        focusView.world.things->weapons[0].next = THING_ENDOFLIST;
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        memset(objectFb, 0, sizeof(objectFb));
+        M11_GameView_Draw(&focusView, objectFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "37_focused_d1c_dagger_object_vga");
+        }
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+            THING_ENDOFLIST;
+
         probe_set_square(focusView.world.dungeon, 2, 2,
                          (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
         memset(pitFb, 0, sizeof(pitFb));
@@ -1572,6 +1586,9 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38M",
                      haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C fireball projectile sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38N",
+                     haveAssets && memcmp(baseFb, objectFb, sizeof(baseFb)) != 0,
+                     "focused viewport: D1C dagger object sprite changes the corridor frame");
 
         /* Broader source-zone coverage: verify every currently-wired
          * focused position in the pit/stairs/teleporter families changes
