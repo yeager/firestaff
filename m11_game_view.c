@@ -4954,6 +4954,22 @@ static void m11_draw_item_cue(unsigned char* framebuffer,
  * G218_aaaauc_Graphic558_ObjectCoordinateSets to position projectiles
  * within the viewport cell based on their sub-cell.
  * Returns 1 if a real sprite was drawn, 0 for fallback. */
+static int m11_projectile_source_scale_units(int depthIndex, int relativeCell) {
+    /* DUNVIEW.C G0215_auc_Graphic558_ProjectileScales:
+     *   32 D1 back/native, 27 D2 front, 21 D2 back,
+     *   18 D3 front, 14 D3 back, 12 D4 front, 9 D4 back.
+     * Values are scale units out of 32. The normal V1 pass draws D1..D3;
+     * center sub-cells 0/1 are the back row and 2/3 are the front row. */
+    static const unsigned char kProjectileScales[7] = {32, 27, 21, 18, 14, 12, 9};
+    int frontRow = (relativeCell < 0) ? 1 : (relativeCell >= 2);
+    int idx;
+    if (depthIndex <= 0) return kProjectileScales[0];
+    idx = depthIndex * 2 - (frontRow ? 1 : 0);
+    if (idx < 1) idx = 1;
+    if (idx > 6) idx = 6;
+    return kProjectileScales[idx];
+}
+
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -4970,10 +4986,9 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
         gfxIndex >= 486) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
-    /* Scale projectile sprite by depth: 100% at depth 0, 66% at 1, 40% at 2 */
-    scale = depthIndex == 0 ? 100 : (depthIndex == 1 ? 66 : 40);
-    drawW = (int)slot->width * scale / 100;
-    drawH = (int)slot->height * scale / 100;
+    scale = m11_projectile_source_scale_units(depthIndex, relativeCell);
+    drawW = (int)slot->width * scale / 32;
+    drawH = (int)slot->height * scale / 32;
     if (drawW < 3) drawW = 3;
     if (drawH < 3) drawH = 3;
     if (drawW > w) drawW = w;
@@ -11610,6 +11625,11 @@ int M11_GameView_CountCellExplosions(
     M11_SquareThingSummary summary;
     m11_summarize_square_things(world, mapIndex, mapX, mapY, &summary);
     return summary.explosions;
+}
+
+int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
+                                               int relativeCell) {
+    return m11_projectile_source_scale_units(depthIndex, relativeCell);
 }
 
 static int m11_perform_non_melee_action(M11_GameViewState* state,

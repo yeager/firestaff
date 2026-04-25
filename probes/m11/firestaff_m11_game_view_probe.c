@@ -5839,6 +5839,18 @@ int main(int argc, char** argv) {
                      "projectile sprite transparency key is palette index 10 (C10_COLOR_FLESH)");
     }
 
+    /* INV_GV_245B: projectile scaling uses source G0215 units. */
+    {
+        probe_record(&tally,
+                     "INV_GV_245B",
+                     M11_GameView_GetProjectileSourceScaleUnits(0, 3) == 32 &&
+                     M11_GameView_GetProjectileSourceScaleUnits(1, 2) == 27 &&
+                     M11_GameView_GetProjectileSourceScaleUnits(1, 0) == 21 &&
+                     M11_GameView_GetProjectileSourceScaleUnits(2, 2) == 18 &&
+                     M11_GameView_GetProjectileSourceScaleUnits(2, 0) == 14,
+                     "projectile source scale units match G0215 for D1/D2/D3 front/back cells");
+    }
+
     /* INV_GV_246: projectile sub-cell positioning — the firstProjectileCell
      * field is populated from the runtime ProjectileInstance_Compat.cell
      * data, rotated by party direction.

@@ -499,6 +499,12 @@ int M11_GameView_CountCellExplosions(
     int mapX,
     int mapY);
 
+/* Return DM1 G0215 projectile scale units (out of 32) for a viewport
+ * depth and relative sub-cell. Exposed so probes can pin D2/D3 source
+ * scaling without depending on screenshot pixel dimensions. */
+int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
+                                               int relativeCell);
+
 /* ── Creature aspect query API (for probes) ── */
 
 /* Return the coordinate set index (0-10) for a creature type. */
