@@ -785,6 +785,27 @@ first, then visual parity, then typography / honesty.
     commands, artifact paths/sizes, comparison metrics, and why cadence remains
     unclaimed.  No V1 runtime code changed, and no original timing/cadence claim
     was added.
+- **Pass 66 (landed, 2026-04-25):**
+  - Added `scripts/dosbox_dm1_title_sequence_capture_pass66.sh` for timestamped
+    targeted-window PNG sequences and `scripts/dosbox_dm1_title_sequence_match_pass66.py`
+    to crop/downscale each captured still with the pass-65 bridge and match it
+    against the 53 source-backed Firestaff/Greatstone TITLE frames.
+  - Verified a 16-frame local sequence.  The manifest records before/after UTC
+    timestamps, epoch-ns timing, SHA-256, and byte size for each targeted
+    DOSBox-window capture.  The match report verifies the input SHA-256 values
+    before writing cropped 320x200 evidence.
+  - The run produced 16 captures, 6 unique window SHA-256 values, and 6 unique
+    cropped normalized frames.  Seven rows matched the TITLE dump within the
+    pass-65 tolerance envelope (`MAE <= 2.0`, max delta `12`), with best
+    references `frame_0039.ppm`, `frame_0046.ppm`, and `frame_0037.ppm`.
+  - Rows after that have high residuals (`MAE` about 16-53, max delta `255`) and
+    are recorded as transition/non-TITLE rows, not source-backed TITLE cadence
+    samples.
+  - Evidence note:
+    `parity-evidence/pass66_v1_title_timestamp_sequence.md` documents the new
+    scripts, command results, artifact paths/sizes, timestamped match table, and
+    why cadence remains unclaimed.  No V1 runtime code changed, and no original
+    timing/cadence claim was added.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -801,17 +822,18 @@ first, then visual parity, then typography / honesty.
      timing, and title-menu handoff.  Passes 59 and 61 define deterministic
      implementation cadence/handoff policy only.
   2. Pixel-compare the wired frontend output against a timestamped original
-     emulator capture sequence; pass 65 proves the first clean still can be
-     cropped to a reproducible 320x200 evidence frame, but it is still a
-     window-derived still rather than a raw/timestamped framebuffer sequence.
-  3. Get either timestamped targeted-window sequence capture or native/raw
-     DOSBox screenshots working, so frontend cadence and handoff comparison is
-     not inferred from two byte-identical still captures.
-- **Suggested follow-up pass:** extend the pass-65 crop bridge to a timestamped
-  short sequence, or make native/raw DOSBox screenshots emit reliably in the
-  detached run, then measure title animation cadence, palette-display timing,
-  and emulator handoff before making frontend timing claims.  Avoid heavy video
-  work until the timestamped frame path is proven.
+     emulator capture sequence; pass 66 proves the targeted-window bridge can
+     capture timestamped changes, but its sparse host-capture cadence is not a
+     raw framebuffer sequence and the low-residual TITLE samples are not a robust
+     monotonic timing trace.
+  3. Get native/raw DOSBox screenshots working, or make the targeted-window
+     sequence earlier/faster and monotonic, so frontend cadence and handoff
+     comparison is not inferred from sparse host stills.
+- **Suggested follow-up pass:** pursue native/raw DOSBox screenshots first; if
+  that remains blocked, tighten the pass-66 launch-time targeted-window sequence
+  so it starts before the observed TITLE-like window and proves monotonic
+  source-frame movement before making frontend timing claims.  Avoid heavy video
+  work until the raw/dense frame path is proven.
 
 ---
 
