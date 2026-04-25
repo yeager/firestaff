@@ -390,7 +390,7 @@ static int m11_map_window_to_launcher(int wx, int wy,
         return 0;
     }
     /* MapWindowToFramebuffer already maps into the current presented
-     * content dimensions (1280x720 for modern, 480x270 for legacy).
+     * content dimensions (1920x1080 for modern, 480x270 for legacy).
      * For the modern path we return the coords unchanged; for legacy
      * there is no mouse UI so we skip. */
     (void)useModern;

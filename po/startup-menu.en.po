@@ -35,3 +35,59 @@ msgstr "Chaos Strikes Back"
 #. Game card label for Dungeon Master 2
 msgid "startup.game.dm2"
 msgstr "Dungeon Master II"
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND"
+msgstr "RENDERER BACKEND"
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "RENDERER BACKEND UNAVAILABLE"
+
+#. Renderer/settings label
+msgid "RENDERER"
+msgstr "RENDERER"
+
+#. Renderer/settings label
+msgid "AUTO"
+msgstr "AUTO"
+
+#. Renderer/settings label
+msgid "SOFTWARE"
+msgstr "SOFTWARE"
+
+#. Renderer/settings label
+msgid "SDL"
+msgstr "SDL"
+
+#. Renderer/settings label
+msgid "OPENGL"
+msgstr "OPENGL"
+
+#. Renderer/settings label
+msgid "VULKAN"
+msgstr "VULKAN"
+
+#. Renderer/settings label
+msgid "AVAILABLE"
+msgstr "AVAILABLE"
+
+#. Renderer/settings label
+msgid "UNAVAILABLE"
+msgstr "UNAVAILABLE"
+
+#. Renderer/settings label
+msgid "SCALE"
+msgstr "SCALE"
+
+#. Renderer/settings label
+msgid "PIXEL SNAP"
+msgstr "PIXEL SNAP"
+
+#. Renderer/settings label
+msgid "FILTER"
+msgstr "FILTER"
+
+#. Renderer/settings label
+msgid "VSYNC"
+msgstr "VSYNC"

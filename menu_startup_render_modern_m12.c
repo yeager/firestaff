@@ -5,7 +5,7 @@
  * See menu_startup_render_modern_m12.h for the strict scope rules.
  *
  * Style goals:
- *   - 1280x720 HD canvas, 24-bit RGB.
+ *   - 1920x1080 HD canvas, 24-bit RGB.
  *   - Indigo -> violet vertical gradient background with subtle
  *     diagonal lighting so the output demonstrably exceeds the 16
  *     colour VGA palette (tens of thousands of distinct RGB values).
@@ -24,8 +24,9 @@
 #include "menu_startup_render_modern_m12.h"
 
 #include "asset_status_m12.h"
-#include "branding_logo_m12.h"
+#include "branding_logo_readme_m12.h"
 #include "card_art_m12.h"
+#include "card_art_generated_m12.h"
 #include "creature_art_m12.h"
 
 #include <ctype.h>
@@ -567,39 +568,73 @@ static M12_RGB muted_rgb(M12_RGB c) {
                clamp_u8(avg * 7 / 10 + 40));
 }
 
-static void draw_logo_bitmap(M12_ModernCanvas* c, int x, int y, int scale) {
-    if (scale < 1) scale = 1;
-    for (int sy = 0; sy < M12_BRANDING_LOGO_HEIGHT; ++sy) {
-        for (int sx = 0; sx < M12_BRANDING_LOGO_WIDTH; ++sx) {
-            size_t idx = (size_t)sy * (size_t)M12_BRANDING_LOGO_WIDTH + (size_t)sx;
-            if (!g_m12BrandingLogoMask[idx]) continue;
-            unsigned char pi = g_m12BrandingLogoPixels[idx] & 0x0F;
-            M12_RGB col;
-            switch (pi) {
-                case 4: col = rgb(204, 51, 51); break;
-                case 6: col = rgb(176, 112, 48); break;
-                case 7: col = rgb(204, 204, 204); break;
-                case 8: col = rgb(112, 112, 112); break;
-                case 12: col = rgb(255, 102, 102); break;
-                case 14: col = rgb(255, 255, 102); break;
-                case 15: col = rgb(255, 255, 255); break;
-                default: col = COLOR_ACCENT(); break;
-            }
-            fill_rect(c, x + sx * scale, y + sy * scale, scale, scale, col);
+static void draw_readme_logo_image(M12_ModernCanvas* c, int x, int y, int w, int h) {
+    if (!c || w <= 0 || h <= 0) return;
+    int drawW = w;
+    int drawH = drawW * M12_README_LOGO_HEIGHT / M12_README_LOGO_WIDTH;
+    if (drawH > h) {
+        drawH = h;
+        drawW = drawH * M12_README_LOGO_WIDTH / M12_README_LOGO_HEIGHT;
+    }
+    int dstX = x + (w - drawW) / 2;
+    int dstY = y + (h - drawH) / 2;
+    for (int yy = 0; yy < drawH; ++yy) {
+        int sy = yy * M12_README_LOGO_HEIGHT / drawH;
+        int py = dstY + yy;
+        if (py < 0 || py >= c->h) continue;
+        for (int xx = 0; xx < drawW; ++xx) {
+            int sx = xx * M12_README_LOGO_WIDTH / drawW;
+            int px = dstX + xx;
+            if (px < 0 || px >= c->w) continue;
+            const unsigned char* p = g_m12ReadmeLogoRgb + ((sy * M12_README_LOGO_WIDTH + sx) * 3);
+            put_pixel(c, px, py, rgb(p[0], p[1], p[2]));
         }
     }
 }
 
 static void draw_firestaff_logo_block(M12_ModernCanvas* c, int x, int y) {
-    int scale = 1;
-    int logoW = M12_BRANDING_LOGO_WIDTH * scale;
-    int logoH = M12_BRANDING_LOGO_HEIGHT * scale;
+    int logoW = 150;
+    int logoH = 150;
     fill_rounded_rect(c, x - 12, y - 10, logoW + 24, logoH + 20, 14, rgb(14, 12, 24));
     stroke_rounded_rect(c, x - 12, y - 10, logoW + 24, logoH + 20, 14, COLOR_ACCENT());
-    draw_logo_bitmap(c, x, y, scale);
+    draw_readme_logo_image(c, x, y, logoW, logoH);
+}
+
+static void draw_generated_card_art(M12_ModernCanvas* c,
+                                    const M12_GeneratedCardArt* art,
+                                    int x, int y, int w, int h,
+                                    int disabled) {
+    if (!c || !art || !art->rgb || art->width <= 0 || art->height <= 0 || w <= 0 || h <= 0) {
+        return;
+    }
+
+    int drawW = w;
+    int drawH = drawW * art->height / art->width;
+    if (drawH > h) {
+        drawH = h;
+        drawW = drawH * art->width / art->height;
+    }
+    int dstX = x + (w - drawW) / 2;
+    int dstY = y + (h - drawH) / 2;
+
+    for (int yy = 0; yy < drawH; ++yy) {
+        int sy = yy * art->height / drawH;
+        int py = dstY + yy;
+        if (py < 0 || py >= c->h) continue;
+        for (int xx = 0; xx < drawW; ++xx) {
+            int sx = xx * art->width / drawW;
+            int px = dstX + xx;
+            if (px < 0 || px >= c->w) continue;
+            const unsigned char* p = art->rgb + ((sy * art->width + sx) * 3);
+            M12_RGB col = rgb(p[0], p[1], p[2]);
+            if (disabled) col = muted_rgb(col);
+            put_pixel(c, px, py, col);
+        }
+    }
 }
 
 static void draw_box_art_panel(M12_ModernCanvas* c,
+                               const char* gameId,
                                int slotIdx,
                                int x, int y, int w, int h,
                                int disabled) {
@@ -628,7 +663,10 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
     stroke_rounded_rect(c, x, y, w, h, 10, disabled ? rgb(118, 118, 126) : accent);
     fill_rect(c, x + 12, y + 12, w - 24, 3, disabled ? rgb(116, 116, 116) : COLOR_ACCENT_HI());
 
-    if (slotIdx == 0) {
+    const M12_GeneratedCardArt* generated = M12_GeneratedCardArt_Find(gameId);
+    if (generated) {
+        draw_generated_card_art(c, generated, x + 8, y + 12, w - 16, h - 20, disabled);
+    } else if (slotIdx == 0) {
         /* Dungeon arch + Firestaff silhouette. */
         fill_rect(c, x + w/2 - 34, y + 42, 68, h - 72, ink);
         fill_rect(c, x + w/2 - 24, y + 32, 48, 18, ink);
@@ -653,9 +691,11 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         fill_rect(c, x + w - 44, y + 22, 18, 18, accent);
     }
 
-    ModernTextStyle lbl = text_style_make(2, disabled ? rgb(176,176,180) : COLOR_TEXT(), 1);
-    const char* text = slotIdx == 0 ? "BOX ART" : (slotIdx == 1 ? "CSB BOX ART" : "DM2 BOX ART");
-    draw_text_centered(c, x + w / 2, y + h - 28, text, &lbl);
+    if (!generated) {
+        ModernTextStyle lbl = text_style_make(2, disabled ? rgb(176,176,180) : COLOR_TEXT(), 1);
+        const char* text = slotIdx == 0 ? "BOX ART" : (slotIdx == 1 ? "CSB BOX ART" : "DM2 BOX ART");
+        draw_text_centered(c, x + w / 2, y + h - 28, text, &lbl);
+    }
 
     if (disabled) {
         for (int yy = y + 5; yy < y + h - 5; yy += 8) {
@@ -730,6 +770,36 @@ static int pulse_modulation(unsigned int frameTick) {
     int amp = (int)phase;
     if (amp > 30) amp = 60 - amp;
     return amp;
+}
+
+static void draw_firestaff_brand_card(M12_ModernCanvas* c,
+                                     const M12_StartupMenuState* state,
+                                     int x, int y, int w, int h) {
+    (void)state;
+    M12_RGB fill = COLOR_PANEL_FILL();
+    fill_vgradient(c, x, y, w, h,
+                   rgb(fill.r + 10, fill.g + 8, fill.b + 18),
+                   rgb(18, 14, 24));
+    stroke_rounded_rect(c, x, y, w, h, 12, COLOR_ACCENT());
+
+    fill_vgradient(c, x + 2, y + 2, w - 4, 46,
+                   rgb(86, 58, 28), rgb(42, 25, 13));
+    ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
+    draw_text(c, x + 16, y + 12, "FIRESTAFF", &title);
+
+    /* Cover-first brand card: use the exact same logo artwork as README.md
+     * (`assets/branding/firestaff-logo.png`) instead of the old tiny
+     * in-renderer emblem. */
+    int artX = x + 22;
+    int artY = y + 76;
+    int artW = w - 44;
+    int artH = h - 142;
+    fill_rounded_rect(c, artX, artY, artW, artH, 12, rgb(12, 10, 20));
+    stroke_rounded_rect(c, artX, artY, artW, artH, 12, COLOR_ACCENT());
+    draw_readme_logo_image(c, artX + 8, artY + 8, artW - 16, artH - 16);
+
+    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text(c, x + 32, y + h - 58, "ENTER THE FRONT DOOR", &sub);
 }
 
 static void draw_card(M12_ModernCanvas* c,
@@ -857,60 +927,21 @@ static void draw_card(M12_ModernCanvas* c,
         draw_text(c, pillX + (pillW - tw) / 2, pillY + 8, statusLabel, &s);
     }
 
-    /* Box-art panel: deterministic built-in placeholder art for all three
-     * games. It is intentionally drawn even without external artwork, and
-     * CSB/DM2 are greyed out because they are catalog-visible but not yet
-     * launch-supported. */
+    /* Cover-first main cards: show the art large here. Version,
+     * resolution, renderer, checksum and launch controls live in the
+     * per-game detail menu after selection. */
     {
         int artX = x + 22;
-        int artY = y + 88;
+        int artY = y + 84;
         int artW = w - 44;
-        int artH = h > 360 ? 168 : 132;
-        if (artH > h - 190) artH = h - 190;
-        if (artH < 96) artH = 96;
-        draw_box_art_panel(c, slotIdx, artX, artY, artW, artH, !game_supported(entry->gameId));
+        int artH = h - 150;
+        if (artH < 180) artH = 180;
+        draw_box_art_panel(c, entry->gameId, slotIdx, artX, artY, artW, artH, !game_supported(entry->gameId));
     }
 
-    /* Version list */
-    ModernTextStyle vlabel = text_style_make(1, COLOR_TEXT_FAINT(), 0);
-    int versionY = y + (h > 360 ? 270 : 230);
-    draw_text(c, x + 16, versionY, "VERSIONS DETECTED", &vlabel);
-
-    int countShown = 0;
-    int lineY = versionY + 20;
-    for (int i = 0; i < M12_ASSET_MAX_VERSIONS_PER_GAME; ++i) {
-        const M12_AssetVersionStatus* v = &state->assetStatus.versions[slotIdx][i];
-        if (!v->versionId) continue;
-        int sel = (state->gameOptions[slotIdx].versionIndex == i) ? 1 : 0;
-        M12_RGB dot = v->matched ? COLOR_OK() : COLOR_TEXT_FAINT();
-        fill_rect(c, x + 16, lineY + 5, 10, 10, dot);
-        ModernTextStyle vt = text_style_make(2,
-                                             sel ? COLOR_TEXT() : COLOR_TEXT_DIM(),
-                                             1);
-        const char* shown = v->shortLabel ? v->shortLabel
-                                          : (v->label ? v->label : v->versionId);
-        draw_text(c, x + 34, lineY, shown, &vt);
-        if (sel) {
-            ModernTextStyle arrow = text_style_make(2, COLOR_ACCENT(), 1);
-            draw_text(c, x + w - 42, lineY, ">", &arrow);
-        }
-        lineY += 24;
-        countShown++;
-    }
-    if (countShown == 0) {
-        ModernTextStyle m = text_style_make(2, COLOR_TEXT_FAINT(), 1);
-        draw_text(c, x + 16, lineY, "NO VERSIONS CONFIGURED", &m);
-    }
-
-    /* Art mini-slot hint */
     {
-        ModernTextStyle a = text_style_make(1, COLOR_TEXT_FAINT(), 0);
-        const M12_GameCardArt* art = &state->cardArt[slot];
-        const char* msg;
-        if (M12_CardArt_HasExternalFile(art)) msg = "ART SLOT READY";
-        else if (M12_CardArt_HasImage(art))   msg = "ART BUILT IN";
-        else                                  msg = "ART SLOT EMPTY";
-        draw_text(c, x + 16, y + h - 26, msg, &a);
+        ModernTextStyle hint = text_style_make(2, COLOR_TEXT_DIM(), 1);
+        draw_text(c, x + 24, y + h - 48, "ENTER FOR GAME MENU", &hint);
     }
 }
 
@@ -1014,22 +1045,29 @@ static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state
 }
 
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    /* Compute card layout: 5 cards in a row */
+    /* Four tall front-door cards per product direction:
+     * Firestaff brand, DM1, CSB, DM2. Settings remain available
+     * through the settings view/input path, but are no longer a main
+     * destination card in the modern front-door layout. */
     int gridTop = 170;
     int gridBottom = c->h - 130;
     int gridH = gridBottom - gridTop;
-    int cardCount = M12_StartupMenu_GetEntryCount();
-    int gap = 18;
+    int cardCount = 4;
+    int gap = 22;
     int sideMargin = 48;
-    if (cardCount < 1) cardCount = 1;
     int cardW = (c->w - 2 * sideMargin - gap * (cardCount - 1)) / cardCount;
     int cardH = gridH;
 
     for (int i = 0; i < cardCount; ++i) {
         int x = sideMargin + i * (cardW + gap);
         int y = gridTop;
-        int selected = (state->selectedIndex == i);
-        draw_card(c, state, i, x, y, cardW, cardH, selected);
+        if (i == 0) {
+            draw_firestaff_brand_card(c, state, x, y, cardW, cardH);
+        } else {
+            int entryIndex = i - 1;
+            int selected = (state->selectedIndex == entryIndex);
+            draw_card(c, state, entryIndex, x, y, cardW, cardH, selected);
+        }
     }
 
     /* Section title */

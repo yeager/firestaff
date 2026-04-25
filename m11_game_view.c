@@ -4392,6 +4392,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState) {
     const M12_MenuEntry* entry;
     M11_GameLaunchSpec spec;
+    int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     if (!state || !menuState) {
         return 0;
     }
@@ -4401,13 +4402,16 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             return 0;
         }
         entry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+        rendererBackend = intent.rendererBackend;
     } else {
         entry = M12_StartupMenu_GetEntry(menuState, menuState->selectedIndex);
+        rendererBackend = M12_StartupMenu_GetRendererBackend(menuState);
     }
     if (!entry || entry->kind != M12_MENU_ENTRY_GAME || !entry->available) {
         return 0;
     }
     memset(&spec, 0, sizeof(spec));
+    spec.rendererBackend = rendererBackend;
     spec.title = entry->title;
     spec.gameId = entry->gameId;
     spec.dataDir = M12_AssetStatus_GetDataDir(&menuState->assetStatus);
@@ -4425,6 +4429,7 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     spec.gameId = "dm1";
     spec.dataDir = dataDir;
     spec.sourceId = "dm1";
+    spec.rendererBackend = M12_RENDERER_BACKEND_AUTO;
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     return M11_GameView_Start(state, &spec);
 }

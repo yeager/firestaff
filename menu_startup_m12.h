@@ -69,6 +69,7 @@ typedef struct {
 typedef struct {
     int languageIndex;
     int graphicsIndex;
+    int rendererBackendIndex;
     int windowModeIndex;
     int scaleModeIndex;
     int integerScaling;
@@ -82,6 +83,15 @@ typedef enum {
     M12_PRESENTATION_V3_MODERN_3D,
     M12_PRESENTATION_MODE_COUNT
 } M12_PresentationMode;
+
+typedef enum {
+    M12_RENDERER_BACKEND_AUTO = 0,
+    M12_RENDERER_BACKEND_SOFTWARE,
+    M12_RENDERER_BACKEND_SDL,
+    M12_RENDERER_BACKEND_OPENGL,
+    M12_RENDERER_BACKEND_VULKAN,
+    M12_RENDERER_BACKEND_COUNT
+} M12_RendererBackend;
 
 typedef enum {
     M12_ASPECT_ORIGINAL = 0,
@@ -134,6 +144,8 @@ typedef struct {
     const char* gameId;
     const char* versionId;
     int presentationMode;
+    int rendererBackend;
+    int rendererBackendAvailable;
     M12_GameOptions options;
     int valid;
 } M12_LaunchIntent;
@@ -184,6 +196,10 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
 int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state);
 int M12_StartupMenu_GetPresentationMode(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState* state);
+int M12_StartupMenu_GetRendererBackend(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
+int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
 
 #ifdef __cplusplus

@@ -17,6 +17,7 @@ typedef struct {
     int languageIndex;
     int languageExplicit;
     int graphicsIndex;
+    int rendererBackendIndex;
     int windowModeIndex;
     int scaleModeIndex;
     int integerScaling;

@@ -248,3 +248,59 @@ msgstr "ACTIVEZ LES TRICHES POUR DÉVERROUILLER LA VITESSE / LES RACCOURCIS"
 #. Helper text when V1 locks rows
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "VERROUILLÉ PAR LE MODE V1 ORIGINAL"
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND"
+msgstr "MOTEUR DE RENDU"
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "MOTEUR DE RENDU INDISPONIBLE"
+
+#. Renderer/settings label
+msgid "RENDERER"
+msgstr "RENDU"
+
+#. Renderer/settings label
+msgid "AUTO"
+msgstr "AUTO"
+
+#. Renderer/settings label
+msgid "SOFTWARE"
+msgstr "LOGICIEL"
+
+#. Renderer/settings label
+msgid "SDL"
+msgstr "SDL"
+
+#. Renderer/settings label
+msgid "OPENGL"
+msgstr "OPENGL"
+
+#. Renderer/settings label
+msgid "VULKAN"
+msgstr "VULKAN"
+
+#. Renderer/settings label
+msgid "AVAILABLE"
+msgstr "DISPONIBLE"
+
+#. Renderer/settings label
+msgid "UNAVAILABLE"
+msgstr "INDISPONIBLE"
+
+#. Renderer/settings label
+msgid "SCALE"
+msgstr "ÉCHELLE"
+
+#. Renderer/settings label
+msgid "PIXEL SNAP"
+msgstr "ALIGNEMENT PIXEL"
+
+#. Renderer/settings label
+msgid "FILTER"
+msgstr "FILTRE"
+
+#. Renderer/settings label
+msgid "VSYNC"
+msgstr "VSYNC"

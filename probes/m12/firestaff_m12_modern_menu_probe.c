@@ -5,7 +5,7 @@
  * true-color startup-menu renderer and proves it meets the explicit
  * upgrade criteria:
  *
- *   INV_MODERN_01   Native canvas is 1280x720 (HD, modern).
+ *   INV_MODERN_01   Native canvas is 1920x1080 (HD, modern).
  *   INV_MODERN_02   Renderer produces a non-empty output across all
  *                   cardinal views.
  *   INV_MODERN_03   Output uses far more than the 16-entry VGA palette,
@@ -158,8 +158,8 @@ int main(void) {
     ensure_dir(outDir);
 
     /* ----- INV_MODERN_01: native canvas dimensions ----- */
-    record(&t, "INV_MODERN_01", W == 1280 && H == 720,
-           "native canvas is 1280x720");
+    record(&t, "INV_MODERN_01", W == 1920 && H == 1080,
+           "native canvas is 1920x1080");
 
     /* ----- Fresh default state ----- */
     M12_StartupMenuState state;
@@ -186,15 +186,16 @@ int main(void) {
     /* ----- INV_MODERN_09/10/11: logo, box art, and disabled greyout ----- */
     {
         int side = 48;
-        int gap = 18;
-        int cardCount = 5;
+        int gap = 22;
+        int cardCount = 4;
         int cardW = (W - 2 * side - gap * (cardCount - 1)) / cardCount;
-        int artY = 170 + 88;
+        int cardH = H - 170 - 130;
+        int artY = 170 + 84;
         int artW = cardW - 44;
-        int artH = 168;
-        int dm1X = side + 0 * (cardW + gap) + 22;
-        int csbX = side + 1 * (cardW + gap) + 22;
-        int dm2X = side + 2 * (cardW + gap) + 22;
+        int artH = cardH - 150;
+        int dm1X = side + 1 * (cardW + gap) + 22;
+        int csbX = side + 2 * (cardW + gap) + 22;
+        int dm2X = side + 3 * (cardW + gap) + 22;
         unsigned long dm1Sig = region_checksum(buf, W, H, dm1X, artY, artW, artH);
         unsigned long csbSig = region_checksum(buf, W, H, csbX, artY, artW, artH);
         unsigned long dm2Sig = region_checksum(buf, W, H, dm2X, artY, artW, artH);
@@ -278,9 +279,13 @@ int main(void) {
            "presentation mode V1/V2/V3 alters rendered output (mode badge is live)");
     write_ppm("verification-m12/modern-menu/05_mode_v3.ppm", buf, W, H);
 
-    /* ----- INV_MODERN_06: version selection changes output ----- */
+    /* ----- INV_MODERN_06: version selection changes output in game options ----- */
     M12_StartupMenuState state_verA = state;
     M12_StartupMenuState state_verB = state;
+    state_verA.view = M12_MENU_VIEW_GAME_OPTIONS;
+    state_verB.view = M12_MENU_VIEW_GAME_OPTIONS;
+    state_verA.selectedIndex = 0;
+    state_verB.selectedIndex = 0;
     state_verA.gameOptions[0].versionIndex = 0;
     state_verB.gameOptions[0].versionIndex = 1;
     memset(buf, 0, rgbaBytes); M12_ModernMenu_Render(&state_verA, buf, W, H);
@@ -288,7 +293,7 @@ int main(void) {
     memset(buf, 0, rgbaBytes); M12_ModernMenu_Render(&state_verB, buf, W, H);
     unsigned long sigVerB = checksum(buf, rgbaBytes);
     record(&t, "INV_MODERN_06", sigVerA != sigVerB,
-           "version selection alters rendered output (version row is live)");
+           "version selection alters rendered output in the game options menu");
 
     /* ----- INV_MODERN_07: checksum availability changes output ----- */
     M12_StartupMenuState state_missing = state;

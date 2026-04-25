@@ -154,12 +154,15 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     M11_ApplyStartupMenuRuntime(&state);
 
     smoke_record(&tally,
                  "SMOKE_02",
                  state.settings.languageIndex == 1 &&
                      state.settings.graphicsIndex == 1 &&
+                     state.settings.rendererBackendIndex == M12_RENDERER_BACKEND_SOFTWARE &&
                      state.settings.windowModeIndex == 1 &&
                      state.settings.scaleModeIndex == M11_SCALE_STRETCH &&
                      state.settings.integerScaling == 0 &&
@@ -171,7 +174,7 @@ int main(void) {
                      M11_Render_GetIntegerScaling() == 0 &&
                      M11_Render_GetScaleFilter() == M11_SCALE_FILTER_LINEAR &&
                      M11_Render_GetVSync() == M11_VSYNC_OFF,
-                 "changed settings update runtime window mode, palette, scale, filter, pixel snap, and vsync");
+                 "changed settings update runtime window mode, renderer backend state, palette, scale, filter, pixel snap, and vsync");
 
     M12_StartupMenu_Draw(&state, framebufferB, 320, 200);
     smoke_record(&tally,

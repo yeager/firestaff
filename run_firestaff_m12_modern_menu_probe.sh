@@ -14,7 +14,9 @@ cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
     "$HERE/config_m12.c" \
     "$HERE/asset_status_m12.c" \
     "$HERE/branding_logo_m12.c" \
+    "$HERE/branding_logo_readme_m12.c" \
     "$HERE/card_art_m12.c" \
+    "$HERE/card_art_generated_m12.c" \
     "$HERE/creature_art_m12.c" \
     "$HERE/menu_startup_m12.c" \
     "$HERE/menu_startup_render_modern_m12.c" \

@@ -32,6 +32,7 @@ enum {
 enum {
     M12_SETTINGS_ROW_LANGUAGE = 0,
     M12_SETTINGS_ROW_GRAPHICS,
+    M12_SETTINGS_ROW_RENDERER_BACKEND,
     M12_SETTINGS_ROW_WINDOW_MODE,
     M12_SETTINGS_ROW_SCALE_MODE,
     M12_SETTINGS_ROW_INTEGER_SCALING,
@@ -75,6 +76,8 @@ static const char* g_speedLabels[] = {"SLOWER", "NORMAL", "FASTER"};
 static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", "FIT", "STRETCH"};
 static const char* g_toggleModes[] = {"OFF", "ON"};
 static const char* g_scalingFilters[] = {"NEAREST", "LINEAR"};
+static const char* g_rendererBackendLabels[] = {"AUTO", "SOFTWARE", "SDL", "OPENGL", "VULKAN"};
+static const char* g_rendererBackendAvailable[] = {"AVAILABLE", "AVAILABLE", "AVAILABLE", "UNAVAILABLE", "UNAVAILABLE"};
 
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     if (!opts) {
@@ -329,6 +332,8 @@ typedef enum {
     M12_TEXT_PERSISTED_OPTIONS,
     M12_TEXT_LANGUAGE,
     M12_TEXT_PRESENTATION_MODE,
+    M12_TEXT_RENDERER_BACKEND,
+    M12_TEXT_RENDERER_BACKEND_UNAVAILABLE,
     M12_TEXT_WINDOW_MODE,
     M12_TEXT_SETTINGS_SAVED,
     M12_TEXT_SETTINGS_FOOTER,
@@ -384,6 +389,8 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     "PERSISTED OPTIONS",
     "LANGUAGE",
     "PRESENTATION MODE",
+    "RENDERER BACKEND",
+    "RENDERER BACKEND UNAVAILABLE",
     "WINDOW MODE",
     "CHANGES SAVE IMMEDIATELY TO CONFIG",
     "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK",
@@ -782,6 +789,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.languageIndex = state->settings.languageIndex;
     config.languageExplicit = state->languageExplicit ? 1 : 0;
     config.graphicsIndex = state->settings.graphicsIndex;
+    config.rendererBackendIndex = state->settings.rendererBackendIndex;
     config.windowModeIndex = state->settings.windowModeIndex;
     config.scaleModeIndex = state->settings.scaleModeIndex;
     config.integerScaling = state->settings.integerScaling;
@@ -815,6 +823,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.graphicsIndex = m12_clamp_index(config.graphicsIndex,
                                                     (int)(sizeof(g_presentationModes) /
                                                           sizeof(g_presentationModes[0])));
+    state->settings.rendererBackendIndex = m12_clamp_index(config.rendererBackendIndex,
+                                                           M12_RENDERER_BACKEND_COUNT);
     state->settings.windowModeIndex = m12_clamp_index(config.windowModeIndex,
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
     state->settings.scaleModeIndex = m12_clamp_index(config.scaleModeIndex,
@@ -892,6 +902,11 @@ static const char* m12_game_value_language_name(const M12_StartupMenuState* stat
 
 static const char* m12_settings_value_graphics(const M12_StartupMenuState* state) {
     return m12_tr(state, g_presentationModes[state->settings.graphicsIndex]);
+}
+
+static const char* m12_settings_value_renderer_backend(const M12_StartupMenuState* state) {
+    int backend = M12_StartupMenu_GetRendererBackend(state);
+    return m12_tr(state, g_rendererBackendLabels[backend]);
 }
 
 static const char* m12_settings_value_window_mode(const M12_StartupMenuState* state) {
@@ -997,6 +1012,8 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
                                                     (int)(sizeof(g_languages) / sizeof(g_languages[0])));
     state->settings.graphicsIndex = m12_clamp_index(state->settings.graphicsIndex,
                                                     M12_PRESENTATION_MODE_COUNT);
+    state->settings.rendererBackendIndex = m12_clamp_index(state->settings.rendererBackendIndex,
+                                                           M12_RENDERER_BACKEND_COUNT);
     state->settings.windowModeIndex = m12_clamp_index(state->settings.windowModeIndex,
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
     state->settings.scaleModeIndex = m12_clamp_index(state->settings.scaleModeIndex,
@@ -1093,6 +1110,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                     delta,
                     (int)(sizeof(g_presentationModes) /
                           sizeof(g_presentationModes[0])));
+            break;
+        case M12_SETTINGS_ROW_RENDERER_BACKEND:
+            state->settings.rendererBackendIndex = m12_cycle_index(
+                state->settings.rendererBackendIndex,
+                delta,
+                M12_RENDERER_BACKEND_COUNT);
             break;
         case M12_SETTINGS_ROW_WINDOW_MODE:
             state->settings.windowModeIndex = m12_cycle_index(
@@ -1208,6 +1231,12 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
                         state->messageLine2 = m12_tr(state, "COMING SOON");
+                        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    } else if (!M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex)) {
+                        state->launchRequested = 0;
+                        state->view = M12_MENU_VIEW_MESSAGE;
+                        state->messageLine1 = m12_text(state, M12_TEXT_RENDERER_BACKEND_UNAVAILABLE);
+                        state->messageLine2 = M12_StartupMenu_GetRendererBackendLabel(state);
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (!m12_selected_version_status(state, gi) ||
                                !m12_selected_version_status(state, gi)->matched) {
@@ -2432,6 +2461,15 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                           framebufferWidth,
                           framebufferHeight,
                           100,
+                          m12_text(state, M12_TEXT_RENDERER_BACKEND),
+                          m12_settings_value_renderer_backend(state),
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_RENDERER_BACKEND,
+                          0,
+                          0);
+    m12_draw_settings_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          118,
                           m12_text(state, M12_TEXT_WINDOW_MODE),
                           m12_settings_value_window_mode(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
@@ -2440,8 +2478,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          118,
-                          "SCALE",
+                          136,
+                          m12_tr(state, "SCALE"),
                           m12_settings_value_scale_mode(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALE_MODE,
                           0,
@@ -2449,8 +2487,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          136,
-                          "PIXEL SNAP",
+                          154,
+                          m12_tr(state, "PIXEL SNAP"),
                           m12_settings_value_integer_scaling(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_INTEGER_SCALING,
                           0,
@@ -2458,8 +2496,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          154,
-                          "FILTER",
+                          172,
+                          m12_tr(state, "FILTER"),
                           m12_settings_value_scaling_filter(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALING_FILTER,
                           0,
@@ -2467,8 +2505,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          172,
-                          "VSYNC",
+                          190,
+                          m12_tr(state, "VSYNC"),
                           m12_settings_value_vsync(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
                           0,
@@ -3662,6 +3700,17 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  panelX + 10,
                                  contentY + 92,
                                  framebufferWidth - margin - panelX - 20,
+                                 m12_text(state, M12_TEXT_RENDERER_BACKEND),
+                                 m12_settings_value_renderer_backend(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_RENDERER_BACKEND,
+                                 0,
+                                 0);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 124,
+                                 framebufferWidth - margin - panelX - 20,
                                  m12_text(state, M12_TEXT_WINDOW_MODE),
                                  m12_settings_value_window_mode(state),
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
@@ -3671,9 +3720,9 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  framebufferWidth,
                                  framebufferHeight,
                                  panelX + 10,
-                                 contentY + 124,
+                                 contentY + 156,
                                  framebufferWidth - margin - panelX - 20,
-                                 "SCALE",
+                                 m12_tr(state, "SCALE"),
                                  m12_settings_value_scale_mode(state),
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALE_MODE,
                                  0,
@@ -3682,9 +3731,9 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  framebufferWidth,
                                  framebufferHeight,
                                  panelX + 10,
-                                 contentY + 156,
+                                 contentY + 188,
                                  framebufferWidth - margin - panelX - 20,
-                                 "PIXEL SNAP",
+                                 m12_tr(state, "PIXEL SNAP"),
                                  m12_settings_value_integer_scaling(state),
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_INTEGER_SCALING,
                                  0,
@@ -3693,9 +3742,9 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  framebufferWidth,
                                  framebufferHeight,
                                  panelX + 10,
-                                 contentY + 188,
+                                 contentY + 220,
                                  framebufferWidth - margin - panelX - 20,
-                                 "FILTER",
+                                 m12_tr(state, "FILTER"),
                                  m12_settings_value_scaling_filter(state),
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALING_FILTER,
                                  0,
@@ -3704,9 +3753,9 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  framebufferWidth,
                                  framebufferHeight,
                                  panelX + 10,
-                                 contentY + 220,
+                                 contentY + 252,
                                  framebufferWidth - margin - panelX - 20,
-                                 "VSYNC",
+                                 m12_tr(state, "VSYNC"),
                                  m12_settings_value_vsync(state),
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
                                  0,
@@ -4032,7 +4081,17 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                   contentY + 20,
                   m12_tr(state, g_presentationModes[pmode]),
                   pmode == M12_PRESENTATION_V3_MODERN_3D ? &g_textSmallMuted : &g_textSmallShadow);
-    rowY = contentY + 38;
+    {
+        char rendererLine[96];
+        snprintf(rendererLine, sizeof(rendererLine), "%s: %s (%s)",
+                 m12_tr(state, "RENDERER"),
+                 m12_tr(state, M12_StartupMenu_GetRendererBackendLabel(state)),
+                 m12_tr(state, M12_StartupMenu_GetRendererBackendStatusLabel(state)));
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 10, contentY + 30, rendererLine,
+                      M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex) ? &g_textSmallAccent : &g_textSmallMuted);
+    }
+    rowY = contentY + 48;
     m12_draw_game_opt_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
@@ -4173,7 +4232,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                        launchBorder,
                        launchFill);
         {
-            const char* launchLabel = (pmode == M12_PRESENTATION_V3_MODERN_3D)
+            const char* launchLabel = (pmode == M12_PRESENTATION_V3_MODERN_3D ||
+                                       !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
                                           ? m12_tr(state, "> COMING SOON")
                                           : m12_tr(state, "> LAUNCH");
             m12_draw_text(framebuffer,
@@ -4354,6 +4414,30 @@ const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState*
     return g_presentationModes[mode];
 }
 
+int M12_StartupMenu_RendererBackendAvailable(int rendererBackend) {
+    rendererBackend = m12_clamp_index(rendererBackend, M12_RENDERER_BACKEND_COUNT);
+    return rendererBackend == M12_RENDERER_BACKEND_AUTO ||
+           rendererBackend == M12_RENDERER_BACKEND_SOFTWARE ||
+           rendererBackend == M12_RENDERER_BACKEND_SDL;
+}
+
+int M12_StartupMenu_GetRendererBackend(const M12_StartupMenuState* state) {
+    if (!state) {
+        return M12_RENDERER_BACKEND_AUTO;
+    }
+    return m12_clamp_index(state->settings.rendererBackendIndex, M12_RENDERER_BACKEND_COUNT);
+}
+
+const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* state) {
+    int backend = M12_StartupMenu_GetRendererBackend(state);
+    return g_rendererBackendLabels[backend];
+}
+
+const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state) {
+    int backend = M12_StartupMenu_GetRendererBackend(state);
+    return g_rendererBackendAvailable[backend];
+}
+
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
     const M12_AssetVersionStatus* version;
@@ -4374,10 +4458,13 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.gameId = state->entries[state->activatedIndex].gameId;
     intent.versionId = version ? version->versionId : NULL;
     intent.presentationMode = pmode;
+    intent.rendererBackend = M12_StartupMenu_GetRendererBackend(state);
+    intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);
     intent.valid = m12_game_supported(intent.gameId) &&
+                   intent.rendererBackendAvailable &&
                    state->entries[state->activatedIndex].available &&
                    version && version->matched ? 1 : 0;
     return intent;

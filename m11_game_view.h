@@ -35,6 +35,7 @@ typedef struct {
     const char* sourceId;
     const char* dungeonPath;
     int languageIndex;
+    int rendererBackend;
     M11_GameSourceKind sourceKind;
 } M11_GameLaunchSpec;
 

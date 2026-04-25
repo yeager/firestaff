@@ -224,3 +224,59 @@ msgstr ""
 #. Window mode values
 msgid "FULLSCREEN"
 msgstr ""
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND"
+msgstr ""
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr ""
+
+#. Renderer/settings label
+msgid "RENDERER"
+msgstr ""
+
+#. Renderer/settings label
+msgid "AUTO"
+msgstr ""
+
+#. Renderer/settings label
+msgid "SOFTWARE"
+msgstr ""
+
+#. Renderer/settings label
+msgid "SDL"
+msgstr ""
+
+#. Renderer/settings label
+msgid "OPENGL"
+msgstr ""
+
+#. Renderer/settings label
+msgid "VULKAN"
+msgstr ""
+
+#. Renderer/settings label
+msgid "AVAILABLE"
+msgstr ""
+
+#. Renderer/settings label
+msgid "UNAVAILABLE"
+msgstr ""
+
+#. Renderer/settings label
+msgid "SCALE"
+msgstr ""
+
+#. Renderer/settings label
+msgid "PIXEL SNAP"
+msgstr ""
+
+#. Renderer/settings label
+msgid "FILTER"
+msgstr ""
+
+#. Renderer/settings label
+msgid "VSYNC"
+msgstr ""

@@ -421,13 +421,16 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     probe_record(&tally,
                  "INV_M12_10",
                  state.settings.languageIndex == 1 &&
                      state.settings.graphicsIndex == 1 &&
+                     state.settings.rendererBackendIndex == M12_RENDERER_BACKEND_SOFTWARE &&
                      state.settings.windowModeIndex == 1,
-                 "settings screen cycles persisted values from keyboard input");
+                 "settings screen cycles persisted presentation, renderer backend, and window values from keyboard input");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK); /* to main */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* museum */
@@ -457,6 +460,7 @@ int main(void) {
                  reloaded.settings.languageIndex == 1 &&
                      reloaded.languageExplicit == 1 &&
                      reloaded.settings.graphicsIndex == 1 &&
+                     reloaded.settings.rendererBackendIndex == M12_RENDERER_BACKEND_SOFTWARE &&
                      reloaded.settings.windowModeIndex == 1 &&
                      reloaded.gameOptions[0].versionIndex == 1 &&
                      reloaded.gameOptions[0].usePatch == 1 &&
@@ -480,8 +484,9 @@ int main(void) {
                      file_contains(configPath, "game_0_version_index = 1") &&
                      file_contains(configPath, "game_0_language_index = 1") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
+                     file_contains(configPath, "renderer_backend_index = 1") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game version selection persist across reloads without cross-game bleed, including presentation mode and per-game language");
+                 "settings and per-game version selection persist across reloads without cross-game bleed, including presentation mode, renderer backend, and per-game language");
 
     remove_if_present(configPath);
     unsetenv("LC_ALL");
@@ -817,6 +822,35 @@ int main(void) {
                      M12_StartupMenu_GetPresentationMode(&modeState) == M12_PRESENTATION_V2_ENHANCED_2D &&
                          strcmp(M12_StartupMenu_GetPresentationModeLabel(&modeState), "V2 ENHANCED 2D") == 0,
                      "presentation mode API returns correct mode and label");
+
+        modeState.settings.rendererBackendIndex = M12_RENDERER_BACKEND_VULKAN;
+        probe_record(&tally,
+                     "INV_M12_30",
+                     M12_StartupMenu_GetRendererBackend(&modeState) == M12_RENDERER_BACKEND_VULKAN &&
+                         strcmp(M12_StartupMenu_GetRendererBackendLabel(&modeState), "VULKAN") == 0 &&
+                         strcmp(M12_StartupMenu_GetRendererBackendStatusLabel(&modeState), "UNAVAILABLE") == 0 &&
+                         M12_StartupMenu_RendererBackendAvailable(M12_RENDERER_BACKEND_VULKAN) == 0 &&
+                         M12_StartupMenu_RendererBackendAvailable(M12_RENDERER_BACKEND_SOFTWARE) == 1,
+                     "renderer backend API exposes selectable Vulkan with honest availability status");
+
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
+        modeState.settings.languageIndex = 0;
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        modeState.settings.rendererBackendIndex = M12_RENDERER_BACKEND_VULKAN;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_31",
+                     intent.valid == 0 &&
+                         intent.rendererBackend == M12_RENDERER_BACKEND_VULKAN &&
+                         intent.rendererBackendAvailable == 0 &&
+                         modeState.launchRequested == 0 &&
+                         strcmp(modeState.messageLine1, "RENDERER BACKEND UNAVAILABLE") == 0,
+                     "Vulkan selection is carried in launch intent but blocks runtime handoff until a real backend exists");
     }
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);

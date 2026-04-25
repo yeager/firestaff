@@ -10,7 +10,7 @@
  * experience.
  *
  * Output:
- *   - 1280x720 RGBA32 framebuffer, byte order R, G, B, A.
+ *   - 1920x1080 RGBA32 framebuffer, byte order R, G, B, A.
  *   - Caller provides the buffer (must be at least W*H*4 bytes).
  *   - Pixel format matches SDL_PIXELFORMAT_RGBA32 so the renderer
  *     can hand it directly to SDL for true-color presentation.
@@ -33,8 +33,8 @@ extern "C" {
 #endif
 
 enum {
-    M12_MODERN_MENU_NATIVE_WIDTH = 1280,
-    M12_MODERN_MENU_NATIVE_HEIGHT = 720
+    M12_MODERN_MENU_NATIVE_WIDTH = 1920,
+    M12_MODERN_MENU_NATIVE_HEIGHT = 1080
 };
 
 int M12_ModernMenu_NativeWidth(void);

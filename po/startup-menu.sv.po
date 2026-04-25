@@ -248,3 +248,59 @@ msgstr "AKTIVERA FUSK FÖR ATT LÅSA UPP HASTIGHET / SNABBKNAPPAR"
 #. Helper text when V1 locks rows
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "LÅST AV V1 ORIGINAL-LÄGET"
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND"
+msgstr "RENDERARBAKÄNDE"
+
+#. Renderer/settings label
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "RENDERARBAKÄNDE EJ TILLGÄNGLIG"
+
+#. Renderer/settings label
+msgid "RENDERER"
+msgstr "RENDERARE"
+
+#. Renderer/settings label
+msgid "AUTO"
+msgstr "AUTO"
+
+#. Renderer/settings label
+msgid "SOFTWARE"
+msgstr "MJUKVARA"
+
+#. Renderer/settings label
+msgid "SDL"
+msgstr "SDL"
+
+#. Renderer/settings label
+msgid "OPENGL"
+msgstr "OPENGL"
+
+#. Renderer/settings label
+msgid "VULKAN"
+msgstr "VULKAN"
+
+#. Renderer/settings label
+msgid "AVAILABLE"
+msgstr "TILLGÄNGLIG"
+
+#. Renderer/settings label
+msgid "UNAVAILABLE"
+msgstr "EJ TILLGÄNGLIG"
+
+#. Renderer/settings label
+msgid "SCALE"
+msgstr "SKALA"
+
+#. Renderer/settings label
+msgid "PIXEL SNAP"
+msgstr "PIXELSNÄPP"
+
+#. Renderer/settings label
+msgid "FILTER"
+msgstr "FILTER"
+
+#. Renderer/settings label
+msgid "VSYNC"
+msgstr "VSYNC"

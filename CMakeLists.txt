@@ -76,7 +76,9 @@ set(M12_SOURCES
     config_m12.c
     asset_status_m12.c
     card_art_m12.c
+    card_art_generated_m12.c
     branding_logo_m12.c
+    branding_logo_readme_m12.c
     creature_art_m12.c
 )
 

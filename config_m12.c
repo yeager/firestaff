@@ -161,6 +161,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->languageIndex = M12_Config_GetAutoLanguageIndex();
     config->languageExplicit = 0;
     config->graphicsIndex = 0;
+    config->rendererBackendIndex = 0;
     config->windowModeIndex = 0;
     config->scaleModeIndex = 4;
     config->integerScaling = 1;
@@ -203,6 +204,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
     if (m12_string_equals(key, "graphics_index") ||
         m12_string_equals(key, "presentation_mode_index")) {
         config->graphicsIndex = m12_parse_int(value, config->graphicsIndex);
+        return;
+    }
+    if (m12_string_equals(key, "renderer_backend_index")) {
+        config->rendererBackendIndex = m12_parse_int(value, config->rendererBackendIndex);
         return;
     }
     if (m12_string_equals(key, "window_mode_index")) {
@@ -288,6 +293,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "language_explicit = %d\n", config->languageExplicit ? 1 : 0);
     fprintf(fp, "presentation_mode_index = %d\n", config->graphicsIndex);
     fprintf(fp, "graphics_index = %d\n", config->graphicsIndex);
+    fprintf(fp, "renderer_backend_index = %d\n", config->rendererBackendIndex);
     fprintf(fp, "window_mode_index = %d\n", config->windowModeIndex);
     fprintf(fp, "scale_mode_index = %d\n", config->scaleModeIndex);
     fprintf(fp, "integer_scaling = %d\n", config->integerScaling ? 1 : 0);
