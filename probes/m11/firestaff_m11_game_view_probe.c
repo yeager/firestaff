@@ -1047,6 +1047,20 @@ int main(int argc, char** argv) {
                  "V1 champion HUD leaves unrecruited party slots undrawn");
 
     probe_record(&tally,
+                 "INV_GV_15E",
+                 probe_count_non_zero(syntheticFramebuffer,
+                                      320,
+                                      PROBE_BOTTOM_PANEL_X + 4,
+                                      PROBE_PARTY_PANEL_Y + 10,
+                                      18, 18) > 40U &&
+                     probe_count_non_zero(syntheticFramebuffer,
+                                          320,
+                                          PROBE_BOTTOM_PANEL_X + 24,
+                                          PROBE_PARTY_PANEL_Y + 10,
+                                          18, 18) > 40U,
+                 "V1 champion HUD draws source ready/action hand slot zones inside the status box");
+
+    probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,
                                    320,

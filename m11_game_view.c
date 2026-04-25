@@ -160,6 +160,16 @@ enum {
     M11_V1_BAR_HP_CX         = 5,   /* zone 195 d1 */
     M11_V1_BAR_STAMINA_CX    = 12,  /* zone 199 d1 */
     M11_V1_BAR_MANA_CX       = 19,  /* zone 203 d1 */
+    /* DM1 status-box hand slot zones from layout-696:
+     * C211/C213/C215/C217 ready hand  = parent champion box + (4,10)
+     * C212/C214/C216/C218 action hand = parent champion box + (24,10)
+     * Parent dimensions are 16x16; GRAPHICS.DAT slot-box bitmaps are
+     * 18x18 and intentionally overdraw the border like F0291. */
+    M11_V1_STATUS_READY_HAND_X = 4,
+    M11_V1_STATUS_ACTION_HAND_X = 24,
+    M11_V1_STATUS_HAND_Y = 10,
+    M11_V1_STATUS_HAND_ZONE_W = 16,
+    M11_V1_STATUS_HAND_ZONE_H = 16,
     M11_V1_BAR_BOTTOM_OFFSET = 26,  /* zones 195/199/203 d2 (bottom anchor) */
     M11_UTILITY_PANEL_X = 218,
     M11_UTILITY_PANEL_Y = 28,
@@ -1997,6 +2007,12 @@ static int m11_v1_bar_graph_y_top(void) {
     return (int)M11_V1_BAR_GRAPH_REGION_Y +
            (int)M11_V1_BAR_GRAPH_REGION_H -
            (int)M11_V1_BAR_CONTAINER_H;
+}
+
+static int m11_v1_status_hand_x(int handIndex) {
+    return handIndex == 0
+        ? (int)M11_V1_STATUS_READY_HAND_X
+        : (int)M11_V1_STATUS_ACTION_HAND_X;
 }
 
 static void m11_blit_v2_slice_asset(const M11_V2SliceAsset* asset,
@@ -13832,6 +13848,82 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
     return drawn;
 }
 
+static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compat* champ,
+                                                int handIndex) {
+    unsigned short t;
+    if (!champ) return THING_NONE;
+    if (handIndex == 0) {
+        return champ->inventory[CHAMPION_SLOT_HAND_LEFT];
+    }
+    t = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
+    if (t != THING_NONE && t != THING_ENDOFLIST) return t;
+    return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
+}
+
+static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
+                                        const struct ChampionState_Compat* champ,
+                                        unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight,
+                                        int championSlot,
+                                        int handIndex,
+                                        int dstX,
+                                        int dstY) {
+    unsigned short thing;
+    unsigned int boxGfx;
+    int drewBox = 0;
+    int iconIndex;
+
+    if (!state || !champ || !framebuffer) return 0;
+    thing = m11_get_status_hand_thing(champ, handIndex);
+
+    if (handIndex == 1 &&
+        state->actingChampionOrdinal == (unsigned int)(championSlot + 1)) {
+        boxGfx = M11_GFX_SLOT_BOX_ACTING_HAND;
+    } else {
+        /* Wound-specific graphic 34 is kept for the inventory/body pass;
+         * current M11 party state does not yet expose source C00/C01 wound
+         * bits distinctly enough for status hands, so normal source box is
+         * the safe non-invented default. */
+        boxGfx = M11_GFX_SLOT_BOX_NORMAL;
+    }
+
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* box = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, boxGfx);
+        if (box && box->width == 18 && box->height == 18) {
+            M11_AssetLoader_Blit(box, framebuffer, framebufferWidth,
+                                 framebufferHeight, dstX, dstY, 0);
+            drewBox = 1;
+        }
+    }
+    if (!drewBox) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      dstX, dstY,
+                      M11_V1_STATUS_HAND_ZONE_W,
+                      M11_V1_STATUS_HAND_ZONE_H,
+                      M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      dstX, dstY,
+                      M11_V1_STATUS_HAND_ZONE_W,
+                      M11_V1_STATUS_HAND_ZONE_H,
+                      M11_COLOR_DARK_GRAY);
+    }
+
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+        /* Source F0291: empty ready/action hand icons are
+         * C212_ICON_READY_HAND and C214_ICON_ACTION_HAND. */
+        iconIndex = 212 + (handIndex * 2);
+    } else {
+        iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
+    }
+
+    (void)m11_draw_dm_object_icon_index(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        iconIndex, dstX + 1, dstY + 1, 0);
+    return 1;
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -14661,6 +14753,21 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                               x + 4, y + 25, 59, 1, M11_COLOR_DARK_GRAY);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
+            }
+
+            /* V1 status-box hand slots.  Source F0292/F0291 draws
+             * ready/action hand slot boxes at zones C211..C218 for
+             * present living champions; these are separate from the
+             * right-column action icon cells. */
+            if (!useV2PartyHud && !isDead) {
+                (void)m11_draw_v1_status_hand_slot(
+                    state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                    slot, 0, x + m11_v1_status_hand_x(0),
+                    y + M11_V1_STATUS_HAND_Y);
+                (void)m11_draw_v1_status_hand_slot(
+                    state, champ, framebuffer, framebufferWidth, framebufferHeight,
+                    slot, 1, x + m11_v1_status_hand_x(1),
+                    y + M11_V1_STATUS_HAND_Y);
             }
 
             /* GRAPHICS.DAT-backed shield border overlays (67×29).
