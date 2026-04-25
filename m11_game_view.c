@@ -352,6 +352,28 @@ static void m11_draw_rect(unsigned char* framebuffer,
     }
 }
 
+static void m11_hatch_rect(unsigned char* framebuffer,
+                           int framebufferWidth,
+                           int framebufferHeight,
+                           int x,
+                           int y,
+                           int w,
+                           int h) {
+    int yy;
+    for (yy = y; yy < y + h; ++yy) {
+        int xx;
+        for (xx = x; xx < x + w; ++xx) {
+            /* DM1 PC VGA VIDEODRV.C F8155_VIDRV_06_HatchScreenBox:
+             * leave odd (x^y) pixels untouched and force even checker
+             * pixels to black. */
+            if (((xx ^ yy) & 1) == 0) {
+                m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                              xx, yy, M11_COLOR_BLACK);
+            }
+        }
+    }
+}
+
 static void m11_draw_hline(unsigned char* framebuffer,
                            int framebufferWidth,
                            int framebufferHeight,
@@ -13861,6 +13883,23 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             }
         }
         (void)drewSprite;
+
+        /* F0386 finishes by hatching the champion action cell when
+         * actions are globally disabled by champion-candidate selection
+         * or party resting (G0299_ui_CandidateChampionOrdinal /
+         * G0300_B_PartyIsResting).  The original VGA hatch is a black
+         * checker over the already-drawn cyan/icon cell.  M11 does not
+         * yet carry the source MASK0x0008_DISABLE_ACTION bitfield for
+         * per-champion cooldown, but the two global gates are present
+         * in GameView state and should visibly match DM1. */
+        if (state->candidateMirrorOrdinal > 0 ||
+            state->candidateMirrorPanelActive ||
+            state->resting) {
+            m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
+                           cellX, M11_DM_ACTION_ICON_CELL_Y,
+                           M11_DM_ACTION_ICON_CELL_W,
+                           M11_DM_ACTION_ICON_CELL_H);
+        }
         ++drawn;
     }
     return drawn;

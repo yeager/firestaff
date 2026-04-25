@@ -7529,6 +7529,7 @@ int main(int argc, char** argv) {
             }
         }
         /* Three champions: alive, dead, alive; slot 3 empty. */
+        iconView.active = 1;
         iconView.world.party.championCount = 3;
         iconView.world.party.activeChampionIndex = 0;
         for (slot = 0; slot < 3; ++slot) {
@@ -7664,6 +7665,63 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300B",
                          iconView.assetsAvailable ? (tanCount >= 40) : 1,
                          "action-hand icon cells: empty living hand blits source empty-hand icon");
+        }
+
+        {
+            M11_GameViewState hatchBaseView = iconView;
+            M11_GameViewState restView = iconView;
+            M11_GameViewState candidateView = iconView;
+            struct DungeonThings_Compat localThings;
+            struct DungeonWeapon_Compat weapon;
+            unsigned char fbHatchBase[320 * 200];
+            unsigned char fbRest[320 * 200];
+            unsigned char fbCandidate[320 * 200];
+            int cellX = 0 * 22 + 233;
+            int x, y;
+            int restEvenBlack = 0;
+            int candidateEvenBlack = 0;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&weapon, 0, sizeof(weapon));
+            weapon.type = 8; /* dagger: ActionSetIndex > 0, non-empty source icon */
+            localThings.weapons = &weapon;
+            localThings.weaponCount = 1;
+            hatchBaseView.world.things = &localThings;
+            restView.world.things = &localThings;
+            candidateView.world.things = &localThings;
+            hatchBaseView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            restView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            candidateView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            memset(fbHatchBase, 0, sizeof(fbHatchBase));
+            M11_GameView_Draw(&hatchBaseView, fbHatchBase, 320, 200);
+            restView.resting = 1;
+            memset(fbRest, 0, sizeof(fbRest));
+            M11_GameView_Draw(&restView, fbRest, 320, 200);
+            candidateView.candidateMirrorOrdinal = 1;
+            candidateView.candidateMirrorPanelActive = 1;
+            memset(fbCandidate, 0, sizeof(fbCandidate));
+            M11_GameView_Draw(&candidateView, fbCandidate, 320, 200);
+            for (y = 86; y < 121; ++y) {
+                for (x = cellX; x < cellX + 20; ++x) {
+                    if (((x ^ y) & 1) == 0 &&
+                        (fbRest[y * 320 + x] & 0x0F) == PROBE_COLOR_BLACK) {
+                        ++restEvenBlack;
+                    }
+                    if (((x ^ y) & 1) == 0 &&
+                        (fbCandidate[y * 320 + x] & 0x0F) == PROBE_COLOR_BLACK) {
+                        ++candidateEvenBlack;
+                    }
+                }
+            }
+            probe_record(&tally, "INV_GV_300C",
+                         iconView.assetsAvailable ?
+                             (restEvenBlack >= 340 && candidateEvenBlack >= 340) : 1,
+                         "action-hand icon cells hatch living cells during rest/candidate lockout");
         }
 
         /* INV_GV_259: the dead champion cell (slot 1) is painted

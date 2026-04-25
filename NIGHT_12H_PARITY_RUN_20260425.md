@@ -57,6 +57,13 @@ Completed batches:
   - Evidence: `parity-evidence/dm1_all_graphics_phase1097_1196_v1_action_icon_area_clear.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe -j2`; `ctest --test-dir build --output-on-failure`; `./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `471/471 invariants passed`.
 
+- Passes 1197–1216 — V1 action icon hatch lockout parity.
+  - Source-backed `F0386_MENUS_DrawActionIcon` hatch branch for resting/candidate lockout: living action-hand cells get the VGA black checker pattern from `F8155_VIDRV_06_HatchScreenBox`.
+  - Preserved dead-cell plain-black branch and normal idle/menu behavior.
+  - Added invariant `INV_GV_300C` and fixed the synthetic action-cell scene so CTest exercises the asset-backed path.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1197_1216_v1_action_icon_hatch.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `472/472`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
 Suggested next HUD targets:
 1. Status hand object icon parity hardening: exact empty/occupied hand icon indices and pixel-backed invariants.
 2. Name/title/status-box text zone placement/color parity.
