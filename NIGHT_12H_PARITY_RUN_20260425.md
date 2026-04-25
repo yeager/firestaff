@@ -44,6 +44,13 @@ Completed batches:
   - Evidence: `parity-evidence/dm1_all_graphics_phase897_996_v1_hud_name_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe -j2`; `ctest --test-dir build --output-on-failure`; `./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `469/469 invariants passed`.
 
+- Passes 997–1096 — V1 HUD dead champion name parity.
+  - Source-backed dead status-box branch: graphic `C008`, centered champion name in `C163+n`, color `C13` lightest gray over `C01` dark gray.
+  - Removed invented red `DEAD` label from V1 compact HUD; kept fallback/V2 behavior separate.
+  - Added invariant `INV_GV_15E5`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase997_1096_v1_hud_dead_name.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe -j2`; `ctest --test-dir build --output-on-failure`; `./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `470/470 invariants passed`.
+
 Suggested next HUD targets:
 1. Status hand object icon parity hardening: exact empty/occupied hand icon indices and pixel-backed invariants.
 2. Name/title/status-box text zone placement/color parity.

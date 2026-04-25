@@ -33,6 +33,7 @@ enum {
     PROBE_COLOR_RED         = 8,   /* DM PC VGA slot 8  — Red (C08)   */
     PROBE_COLOR_MAGENTA     = 10,  /* DM PC VGA slot 10 — Tan/Skin    */
     PROBE_COLOR_YELLOW      = 11,  /* DM PC VGA slot 11 — Yellow      */
+    PROBE_COLOR_SILVER      = 13,  /* DM PC VGA slot 13 — Silver      */
     PROBE_COLOR_LIGHT_BLUE  = 14,  /* DM PC VGA slot 14 — Blue        */
     PROBE_COLOR_WHITE       = 15   /* DM PC VGA slot 15 — White       */
 };
@@ -1087,6 +1088,20 @@ int main(int argc, char** argv) {
                                            nameX1, nameY1, nameW1, nameH1,
                                            PROBE_COLOR_ORANGE) > 0U,
                      "V1 champion HUD renders source-colored names inside the compact status name zones");
+        {
+            M11_GameViewState deadStatusView = syntheticView;
+            unsigned char deadStatusFramebuffer[320 * 200];
+            deadStatusView.world.party.champions[1].hp.current = 0;
+            memset(deadStatusFramebuffer, 0, sizeof(deadStatusFramebuffer));
+            M11_GameView_Draw(&deadStatusView, deadStatusFramebuffer, 320, 200);
+            probe_record(&tally,
+                         "INV_GV_15E5",
+                         M11_GameView_GetV1StatusNameColor(&deadStatusView, 1) == PROBE_COLOR_SILVER &&
+                             probe_count_color(deadStatusFramebuffer, 320,
+                                               nameX1, nameY1, nameW1, nameH1,
+                                               PROBE_COLOR_SILVER) > 0U,
+                         "V1 dead champion HUD prints source centered name in C13 lightest gray");
+        }
     }
 
     probe_record(&tally,

@@ -13900,11 +13900,15 @@ int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
                                       int championSlot) {
     if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
         championSlot >= state->world.party.championCount ||
-        !state->world.party.champions[championSlot].present ||
-        state->world.party.champions[championSlot].hp.current == 0) {
+        !state->world.party.champions[championSlot].present) {
         return -1;
     }
-    /* CHAMDRAW.C F0292: leader name C11 yellow, others C09 gold. */
+    /* CHAMDRAW.C F0292: dead status boxes print the champion name in
+     * C13 lightest gray.  Living leader name is C11 yellow; other
+     * living champions are C09 gold. */
+    if (state->world.party.champions[championSlot].hp.current == 0) {
+        return M11_COLOR_SILVER;
+    }
     return (championSlot == state->world.party.activeChampionIndex)
         ? M11_COLOR_YELLOW
         : M11_COLOR_ORANGE;
@@ -14715,7 +14719,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * status box.  It clears C159+n (43x7) to C01 dark gray
              * and prints the champion name centered in C163+n:
              * leader C11 yellow, other champions C09 gold. */
-            if (!useV2PartyHud && !isDead) {
+            if (!useV2PartyHud) {
                 M11_TextStyle nameStyle = g_text_small;
                 nameStyle.color = (unsigned char)M11_GameView_GetV1StatusNameColor(state, slot);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -14740,7 +14744,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                   x + nameOffX, y + 3, name, &g_text_small);
                 }
             }
-            if (isDead) {
+            if (isDead && useV2PartyHud) {
                 M11_TextStyle ds = g_text_small;
                 ds.color = M11_COLOR_RED;
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
