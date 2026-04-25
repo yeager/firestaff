@@ -22,6 +22,21 @@
 
 #if !SDL_VERSION_ATLEAST(3, 0, 0)
 #include <SDL.h>
+#define SDLK_A SDLK_a
+#define SDLK_C SDLK_c
+#define SDLK_D SDLK_d
+#define SDLK_E SDLK_e
+#define SDLK_G SDLK_g
+#define SDLK_I SDLK_i
+#define SDLK_M SDLK_m
+#define SDLK_P SDLK_p
+#define SDLK_Q SDLK_q
+#define SDLK_R SDLK_r
+#define SDLK_S SDLK_s
+#define SDLK_U SDLK_u
+#define SDLK_V SDLK_v
+#define SDLK_W SDLK_w
+#define SDLK_X SDLK_x
 #endif
 
 enum {
@@ -216,6 +231,106 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
     return M12_MENU_INPUT_NONE;
 }
 
+static int m11_script_keycode_from_name(const char* name) {
+    if (!name || name[0] == '\0') {
+        return 0;
+    }
+    if (strcmp(name, "up") == 0) return SDLK_UP;
+    if (strcmp(name, "down") == 0) return SDLK_DOWN;
+    if (strcmp(name, "left") == 0) return SDLK_LEFT;
+    if (strcmp(name, "right") == 0) return SDLK_RIGHT;
+    if (strcmp(name, "enter") == 0 || strcmp(name, "return") == 0) return SDLK_RETURN;
+    if (strcmp(name, "kp-enter") == 0) return SDLK_KP_ENTER;
+    if (strcmp(name, "space") == 0) return SDLK_SPACE;
+    if (strcmp(name, "tab") == 0) return SDLK_TAB;
+    if (strcmp(name, "esc") == 0 || strcmp(name, "escape") == 0) return SDLK_ESCAPE;
+    if (strcmp(name, "f5") == 0) return SDLK_F5;
+    if (strcmp(name, "f9") == 0) return SDLK_F9;
+    if (strcmp(name, "f10") == 0) return SDLK_F10;
+    if (strcmp(name, "f11") == 0) return SDLK_F11;
+    if (name[1] == '\0') {
+        switch (name[0]) {
+            case 'a': return SDLK_A;
+            case 'c': return SDLK_C;
+            case 'd': return SDLK_D;
+            case 'e': return SDLK_E;
+            case 'g': return SDLK_G;
+            case 'i': return SDLK_I;
+            case 'm': return SDLK_M;
+            case 'p': return SDLK_P;
+            case 'q': return SDLK_Q;
+            case 'r': return SDLK_R;
+            case 's': return SDLK_S;
+            case 'u': return SDLK_U;
+            case 'v': return SDLK_V;
+            case 'w': return SDLK_W;
+            case 'x': return SDLK_X;
+            case '1': return SDLK_1;
+            case '2': return SDLK_2;
+            case '3': return SDLK_3;
+            case '4': return SDLK_4;
+            case '5': return SDLK_5;
+            case '6': return SDLK_6;
+            default: break;
+        }
+    }
+    return 0x7fffffff;
+}
+
+static int m11_push_script_event_token(const char* token, size_t len) {
+    char buffer[128];
+    SDL_Event ev;
+    int x = 0;
+    int y = 0;
+    if (!token || len == 0U || len >= sizeof(buffer)) {
+        return 0;
+    }
+    memcpy(buffer, token, len);
+    buffer[len] = '\0';
+    memset(&ev, 0, sizeof(ev));
+
+    if (strncmp(buffer, "key:", 4) == 0) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        ev.type = SDL_EVENT_KEY_DOWN;
+        ev.key.key = (SDL_Keycode)m11_script_keycode_from_name(buffer + 4);
+#else
+        ev.type = SDL_KEYDOWN;
+        ev.key.keysym.sym = (SDL_Keycode)m11_script_keycode_from_name(buffer + 4);
+#endif
+        SDL_PushEvent(&ev);
+        return 1;
+    }
+    if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        ev.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+        ev.button.button = SDL_BUTTON_LEFT;
+        ev.button.x = (float)x;
+        ev.button.y = (float)y;
+#else
+        ev.type = SDL_MOUSEBUTTONDOWN;
+        ev.button.button = SDL_BUTTON_LEFT;
+        ev.button.x = x;
+        ev.button.y = y;
+#endif
+        SDL_PushEvent(&ev);
+        return 1;
+    }
+    if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        ev.type = SDL_EVENT_MOUSE_MOTION;
+        ev.motion.x = (float)x;
+        ev.motion.y = (float)y;
+#else
+        ev.type = SDL_MOUSEMOTION;
+        ev.motion.x = x;
+        ev.motion.y = y;
+#endif
+        SDL_PushEvent(&ev);
+        return 1;
+    }
+    return 0;
+}
+
 static M12_MenuInput m11_next_script_input(const char** cursor) {
     const char* start;
     const char* end;
@@ -235,6 +350,9 @@ static M12_MenuInput m11_next_script_input(const char** cursor) {
         ++end;
     }
     *cursor = end;
+    if (m11_push_script_event_token(start, (size_t)(end - start))) {
+        return M12_MENU_INPUT_NONE;
+    }
     return m11_map_script_token(start, (size_t)(end - start));
 }
 
