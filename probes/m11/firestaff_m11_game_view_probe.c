@@ -5046,14 +5046,14 @@ int main(int argc, char** argv) {
         centerWhite = probe_count_color(fb_dlg,
                                         320,
                                         65,
-                                        104,
+                                        96,
                                         96,
                                         14,
                                         PROBE_COLOR_WHITE);
         oldLeftWhite = probe_count_color(fb_dlg,
                                          320,
                                          40,
-                                         104,
+                                         96,
                                          24,
                                          14,
                                          PROBE_COLOR_WHITE);
@@ -5061,6 +5061,37 @@ int main(int argc, char** argv) {
                      "INV_GV_172E",
                      centerWhite > oldLeftWhite && centerWhite >= 8,
                      "V1 dialog message text is centered in source viewport region");
+    }
+
+    /* INV_GV_172F: V1 single-choice dialog message uses source C469 vertical zone. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned int c469BandWhite;
+        unsigned int oldBandWhite;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        c469BandWhite = probe_count_color(fb_dlg,
+                                          320,
+                                          65,
+                                          96,
+                                          96,
+                                          10,
+                                          PROBE_COLOR_WHITE);
+        oldBandWhite = probe_count_color(fb_dlg,
+                                         320,
+                                         65,
+                                         105,
+                                         96,
+                                         10,
+                                         PROBE_COLOR_WHITE);
+        probe_record(&tally,
+                     "INV_GV_172F",
+                     c469BandWhite >= 8 && c469BandWhite > oldBandWhite,
+                     "V1 single-choice dialog message uses reconstructed C469 vertical zone");
     }
 
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */

@@ -475,6 +475,17 @@ static void m11_draw_text_centered_in_rect(unsigned char* framebuffer,
                   drawX, y, text, style);
 }
 
+static int m11_dialog_source_c469_text_y(void) {
+    enum {
+        C469_TOP = 49,
+        C469_BOTTOM = 73,
+        SOURCE_TEXT_HEIGHT = 7
+    };
+    int zoneH = (C469_BOTTOM - C469_TOP) + 1;
+    int relativeY = C469_TOP + ((zoneH - SOURCE_TEXT_HEIGHT) / 2) + 6 - 1;
+    return M11_VIEWPORT_Y + relativeY;
+}
+
 /* Draw text using the original DM1 font when available, with shadow.
  * Falls back to the builtin hardcoded font otherwise. */
 static void m11_draw_text_original(
@@ -15509,7 +15520,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
         /* Word-wrap the dialog text into the box (simple two-line split) */
         textY = drewSourceBackdrop
-                    ? (M11_VIEWPORT_Y + 72)
+                    ? m11_dialog_source_c469_text_y()
                     : (dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18));
         if (strlen(state->dialogOverlayText) <= 40) {
             if (drewSourceBackdrop) {
