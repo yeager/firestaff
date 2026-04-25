@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,34 @@ enum {
     PROBE_COLOR_LIGHT_BLUE  = 14,  /* DM PC VGA slot 14 — Blue        */
     PROBE_COLOR_WHITE       = 15   /* DM PC VGA slot 15 — White       */
 };
+
+static void probe_dump_m11_vga_ppm(const char* path,
+                                   const unsigned char* fb,
+                                   int width,
+                                   int height) {
+    FILE* f;
+    int px;
+    if (!path || !fb || width <= 0 || height <= 0) {
+        return;
+    }
+    f = fopen(path, "wb");
+    if (!f) {
+        return;
+    }
+    fprintf(f, "P6\n%d %d\n255\n", width, height);
+    for (px = 0; px < width * height; ++px) {
+        unsigned char raw = fb[px];
+        unsigned char idx = M11_FB_DECODE_INDEX(raw);
+        int level = M11_FB_DECODE_LEVEL(raw);
+        const unsigned char* rgb;
+        if (level >= M11_PALETTE_LEVELS) {
+            level = M11_PALETTE_LEVELS - 1;
+        }
+        rgb = G9010_auc_VgaPaletteAll_Compat[level][idx];
+        fwrite(rgb, 1, 3, f);
+    }
+    fclose(f);
+}
 
 enum {
     PROBE_VIEWPORT_X = 12,
@@ -4814,6 +4843,7 @@ int main(int argc, char** argv) {
         M11_GameView_Draw(&ssView, ssFb, 320, 200);
         if (ssDir && ssDir[0]) {
             char ssPath[512];
+            char ssPpmPath[512];
             FILE* ssFile;
             snprintf(ssPath, sizeof(ssPath), "%s/party_hud_statusbox_gfx.pgm", ssDir);
             ssFile = fopen(ssPath, "wb");
@@ -4827,6 +4857,9 @@ int main(int argc, char** argv) {
                 fclose(ssFile);
                 printf("Screenshot: %s\n", ssPath);
             }
+            snprintf(ssPpmPath, sizeof(ssPpmPath), "%s/party_hud_statusbox_gfx_vga.ppm", ssDir);
+            probe_dump_m11_vga_ppm(ssPpmPath, ssFb, 320, 200);
+            printf("Screenshot: %s\n", ssPpmPath);
         }
     }
 

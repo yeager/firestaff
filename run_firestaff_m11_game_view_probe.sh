@@ -55,6 +55,10 @@ for src in \
     GFX_OBJS="$GFX_OBJS $OBJ"
 done
 
+VGA_OBJ="$OUT_DIR/vga_palette_pc34_compat.o"
+cc $CFLAGS_M10 -c "$HERE/vga_palette_pc34_compat.c" -o "$VGA_OBJ"
+GFX_OBJS="$GFX_OBJS $VGA_OBJ"
+
 cc $CFLAGS_COMMON \
     -o "$PROBE_BIN" \
     "$PROBE_SRC" \
