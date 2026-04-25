@@ -1449,6 +1449,7 @@ int main(int argc, char** argv) {
         unsigned char invisiblePitFb[320 * 200];
         unsigned char stairsFb[320 * 200];
         unsigned char teleporterFb[320 * 200];
+        unsigned char creatureFb[320 * 200];
         char gfxPath[512];
         int haveAssets = 0;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
@@ -1477,6 +1478,21 @@ int main(int argc, char** argv) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "30_focused_empty_corridor_vga");
         }
+
+        focusView.world.things->groups[0].creatureType = 14; /* Trolin */
+        focusView.world.things->groups[0].count = 0; /* one creature */
+        focusView.world.things->groups[0].health[0] = 50;
+        focusView.world.things->groups[0].direction = DIR_SOUTH;
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+            (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+        memset(creatureFb, 0, sizeof(creatureFb));
+        M11_GameView_Draw(&focusView, creatureFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "35_focused_d1c_trolin_creature_vga");
+        }
+        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+            THING_ENDOFLIST;
 
         probe_set_square(focusView.world.dungeon, 2, 2,
                          (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
@@ -1526,6 +1542,9 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38D",
                      haveAssets && memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C teleporter field zone blit changes the corridor frame");
+        probe_record(&tally, "INV_GV_38L",
+                     haveAssets && memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
+                     "focused viewport: D1C Trolin creature sprite changes the corridor frame");
 
         /* Broader source-zone coverage: verify every currently-wired
          * focused position in the pit/stairs/teleporter families changes
@@ -4050,9 +4069,9 @@ int main(int argc, char** argv) {
                      "Trolin has side/back/attack bitmaps (no FLIP_NON_ATTACK) per 0x05B8");
         probe_record(&tally,
                      "INV_GV_264",
-                     M11_GameView_GetCreatureSpriteForView(14, 0, 1, 0, 0, &mirror) == 669u &&
+                     M11_GameView_GetCreatureSpriteForView(14, 0, 1, 0, 0, &mirror) == 628u &&
                      mirror == 1,
-                     "side-facing D1 Trolin selects native side bitmap (584+84+1) with mirror for relFacing=1");
+                     "side-facing D1 Trolin selects native side bitmap (584+43+1) with mirror for relFacing=1");
         probe_record(&tally,
                      "INV_GV_265",
                      M11_GameView_GetCreatureSpriteForView(14, 1, 0, 0, 0, &mirror) == 668u &&
@@ -4060,9 +4079,9 @@ int main(int argc, char** argv) {
                      "back-facing D2 Trolin selects derived back D2 bitmap (663+5=668) without mirror");
         probe_record(&tally,
                      "INV_GV_266",
-                     M11_GameView_GetCreatureSpriteForView(14, 0, 2, 0, 1, &mirror) == 671u &&
+                     M11_GameView_GetCreatureSpriteForView(14, 0, 2, 0, 1, &mirror) == 630u &&
                      mirror == 0,
-                     "front-facing attack D1 Trolin selects native attack bitmap (584+84+3=671)");
+                     "front-facing attack D1 Trolin selects native attack bitmap (584+43+3=630)");
         /* PainRat (type 3) has GraphicInfo 0x04B4 — no SIDE but HAS
          * BACK and ATTACK, and FLIP_NON_ATTACK is set so side pose
          * falls back to front with mirror. */
@@ -4076,14 +4095,14 @@ int main(int argc, char** argv) {
                      "PainRat GraphicInfo 0x04B4: no SIDE, has BACK, has ATTACK, has FLIP_NON_ATTACK");
         probe_record(&tally,
                      "INV_GV_268",
-                     M11_GameView_GetCreatureSpriteForView(3, 0, 1, 0, 0, &mirror) == 602u &&
+                     M11_GameView_GetCreatureSpriteForView(3, 0, 1, 0, 0, &mirror) == 594u &&
                      mirror == 1,
-                     "side-facing D1 PainRat falls back to front (584+18) mirrored (FLIP_NON_ATTACK set)");
+                     "side-facing D1 PainRat falls back to front (584+10) mirrored (FLIP_NON_ATTACK set)");
         probe_record(&tally,
                      "INV_GV_269",
-                     M11_GameView_GetCreatureSpriteForView(3, 0, 0, 0, 0, &mirror) == 604u &&
+                     M11_GameView_GetCreatureSpriteForView(3, 0, 0, 0, 0, &mirror) == 596u &&
                      mirror == 0,
-                     "back-facing D1 PainRat selects native back bitmap (584+18+2=604)");
+                     "back-facing D1 PainRat selects native back bitmap (584+10+2=596)");
     }
 
     /* INV_GV_270-296: source-backed CREATURE_INFO.GraphicInfo
@@ -5870,26 +5889,26 @@ int main(int argc, char** argv) {
 
     /* ── Creature aspect data: coordinate set and transparent color ── */
     {
-        /* GiantScorpion (type 0): coordSet 1, transparent 10 */
+        /* GiantScorpion (type 0): coordSet 1, transparent 13 */
         int cs0 = M11_GameView_GetCreatureCoordinateSet(0);
         int tc0 = M11_GameView_GetCreatureTransparentColor(0);
         probe_record(&tally, "INV_GV_250",
-                     cs0 == 1 && tc0 == 10,
-                     "creature type 0 (GiantScorpion) coordSet=1 transparent=10");
+                     cs0 == 1 && tc0 == 13,
+                     "creature type 0 (GiantScorpion) coordSet=1 transparent=13");
 
-        /* Rockpile (type 6): coordSet 2, transparent 0 */
+        /* Rockpile (type 6): coordSet 0, transparent 13 */
         int cs6 = M11_GameView_GetCreatureCoordinateSet(6);
         int tc6 = M11_GameView_GetCreatureTransparentColor(6);
         probe_record(&tally, "INV_GV_251",
-                     cs6 == 2 && tc6 == 0,
-                     "creature type 6 (Rockpile) coordSet=2 transparent=0");
+                     cs6 == 0 && tc6 == 13,
+                     "creature type 6 (Rockpile) coordSet=0 transparent=13");
 
-        /* RedDragon (type 20): coordSet 2, transparent 10 */
+        /* RedDragon (type 20): coordSet 1, transparent 4 */
         int cs20 = M11_GameView_GetCreatureCoordinateSet(20);
         int tc20 = M11_GameView_GetCreatureTransparentColor(20);
         probe_record(&tally, "INV_GV_252",
-                     cs20 == 2 && tc20 == 10,
-                     "creature type 20 (RedDragon) coordSet=2 transparent=10");
+                     cs20 == 1 && tc20 == 4,
+                     "creature type 20 (RedDragon) coordSet=1 transparent=4");
 
         /* Out-of-range type returns 0 */
         int csOOB = M11_GameView_GetCreatureCoordinateSet(99);

@@ -1050,59 +1050,59 @@ static const M11_CreatureAspect s_creatureAspects[27] = {
      * graphicInfo values reproduced verbatim from ReDMCSB
      * G0243_as_Graphic559_CreatureInfo[].GraphicInfo. */
     /* Type  0: GiantScorpion — no side/back/attack bitmaps. */
-    { 0,  495, 0x1A, 0x11, 0x0482 },
+    { 0,   495, 0x1D, 0x01, 0x0482 },
     /* Type  1: SwampSlime — no side/back/attack bitmaps. */
-    { 6,  507, 0x02, 0x00, 0x0480 },
+    { 4,   507, 0x0B, 0x20, 0x0480 },
     /* Type  2: Giggler — back bitmap only. */
-    { 12, 519, 0x1A, 0x22, 0x4510 },
+    { 6,   519, 0x0B, 0x00, 0x4510 },
     /* Type  3: PainRat — back + attack bitmaps. */
-    { 18, 531, 0x0A, 0x33, 0x04B4 },
+    { 10,  531, 0x24, 0x31, 0x04B4 },
     /* Type  4: Ruster — no side/back/attack bitmaps. */
-    { 24, 543, 0x1A, 0x44, 0x0701 },
+    { 12,  543, 0x14, 0x34, 0x0701 },
     /* Type  5: Screamer — no side/back/attack bitmaps. */
-    { 30, 555, 0x0A, 0x00, 0x0581 },
+    { 16,  555, 0x18, 0x34, 0x0581 },
     /* Type  6: Rockpile — side bitmap only. */
-    { 36, 567, 0x20, 0x00, 0x070C },
+    { 19,  567, 0x0D, 0x00, 0x070C },
     /* Type  7: GhostRive — no side/back/attack bitmaps. */
-    { 42, 579, 0x1A, 0x55, 0x0300 },
+    { 21,  579, 0x04, 0x00, 0x0300 },
     /* Type  8: WaterElemental — attack bitmap only. */
-    { 48, 591, 0x0A, 0x00, 0x5864 },
+    { 23,  591, 0x04, 0x00, 0x5864 },
     /* Type  9: Couatl — no side/back/attack bitmaps. */
-    { 54, 603, 0x1A, 0x66, 0x0282 },
+    { 25,  603, 0x14, 0x00, 0x0282 },
     /* Type 10: StoneGolem — no side/back/attack bitmaps. */
-    { 60, 615, 0x2A, 0x00, 0x1480 },
+    { 29,  615, 0x04, 0x00, 0x1480 },
     /* Type 11: Mummy — no side/back/attack bitmaps. */
-    { 66, 627, 0x0A, 0x77, 0x18C6 },
+    { 33,  627, 0x14, 0x00, 0x18C6 },
     /* Type 12: Skeleton — no side/back/attack bitmaps. */
-    { 72, 639, 0x1A, 0x00, 0x1280 },
+    { 35,  639, 0x04, 0x00, 0x1280 },
     /* Type 13: MagentaWorm — attack bitmap only. */
-    { 78, 651, 0x0A, 0x88, 0x14A2 },
+    { 39,  651, 0x1D, 0x20, 0x14A2 },
     /* Type 14: Trolin — side + back + attack bitmaps. */
-    { 84, 663, 0x1A, 0x99, 0x05B8 },
+    { 43,  663, 0x04, 0x30, 0x05B8 },
     /* Type 15: GiantWasp — no side/back/attack bitmaps. */
-    { 90, 675, 0x1A, 0x00, 0x0381 },
+    { 47,  675, 0x14, 0x78, 0x0381 },
     /* Type 16: Antman — no side/back/attack bitmaps. */
-    { 54, 687, 0x1A, 0xAA, 0x0680 },
+    { 51,  687, 0x04, 0x65, 0x0680 },
     /* Type 17: Vexirk — attack bitmap only. */
-    { 96, 699, 0x0A, 0xBB, 0x04A0 },
+    { 55,  699, 0x24, 0x00, 0x04A0 },
     /* Type 18: AnimatedArmour — no side/back/attack bitmaps. */
-    { 102, 711, 0x2A, 0x00, 0x0280 },
+    { 59,  711, 0x04, 0x00, 0x0280 },
     /* Type 19: Materializer — attack bitmap only. */
-    { 108, 723, 0x0A, 0x00, 0x4060 },
+    { 63,  723, 0x0D, 0xA9, 0x4060 },
     /* Type 20: RedDragon — side + back bitmaps (no attack). */
-    { 114, 735, 0x2A, 0x00, 0x10DE },
+    { 67,  735, 0x14, 0x65, 0x10DE },
     /* Type 21: Oitu — no side/back/attack bitmaps. */
-    { 120, 747, 0x20, 0x00, 0x0082 },
+    { 69,  747, 0x14, 0xA9, 0x0082 },
     /* Type 22: Demon — no side/back/attack bitmaps. */
-    { 126, 759, 0x1A, 0xCC, 0x1480 },
+    { 73,  759, 0x04, 0xCB, 0x1480 },
     /* Type 23: LordChaos — side + attack bitmaps. */
-    { 132, 771, 0x2A, 0x00, 0x78AA },
+    { 77,  771, 0x14, 0x00, 0x78AA },
     /* Type 24: LordOrder — side bitmap only. */
-    { 138, 783, 0x2A, 0x00, 0x068A },
+    { 81,  783, 0x14, 0xCB, 0x068A },
     /* Type 25: GreyLord — side + attack bitmaps. */
-    { 144, 795, 0x2A, 0x00, 0x78AA },
+    { 85,  795, 0x14, 0xCB, 0x78AA },
     /* Type 26: LordChaosRedDragon — side + attack bitmaps. */
-    { 114, 807, 0x2A, 0x00, 0x78AA }
+    { 86,  807, 0x14, 0xCB, 0x78AA }
 };
 
 /* ── DM1 Creature Viewport Coordinate Sets (G0224) ──
@@ -12730,6 +12730,23 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight);
+
+    /* Until the full C2500/C3200 object+creature zone pass lands, keep
+     * visible center-lane objects and creatures alive in normal V1 by
+     * drawing the existing source-asset-backed contents layer over open
+     * center cells.  The old procedural wall geometry remains debug-only;
+     * this call only draws floor ornaments/items/creatures/projectiles for
+     * open cells and gives M612/M618 changes a visual gate. */
+    occluded = 0;
+    for (depth = 0; depth < 3; ++depth) {
+        if (!occluded) {
+            m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
+                                   &frames[depth + 1], &cells[depth][1], depth);
+            if (!m11_viewport_cell_is_open(&cells[depth][1])) {
+                occluded = 1;
+            }
+        }
+    }
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal
