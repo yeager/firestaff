@@ -504,19 +504,43 @@ static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
     return M11_VIEWPORT_Y + relativeY;
 }
 
+static int m11_dialog_source_c471_text_y_for_lines(int lineCount) {
+    enum {
+        C471_TOP = 32,
+        C471_BOTTOM = 36,
+        SOURCE_TEXT_HEIGHT = 6,
+        SOURCE_TEXT_PAD = 1,
+        SOURCE_TEXT_BASELINE = 6
+    };
+    int zoneH = (C471_BOTTOM - C471_TOP) + 1;
+    int count = lineCount < 1 ? 1 : lineCount;
+    int block = count * (SOURCE_TEXT_HEIGHT + (SOURCE_TEXT_PAD * 2) - 1 + 1);
+    int relativeY = C471_TOP + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
+                    SOURCE_TEXT_BASELINE - 1;
+    return M11_VIEWPORT_Y + relativeY;
+}
+
+static int m11_dialog_source_message_width_for_choices(int choiceCount) {
+    (void)choiceCount;
+    /* C469 and C471 both resolve to a 77 px source message band in the
+     * recovered layout (center x=112, right edge=188). */
+    return 77;
+}
+
 static int m11_dialog_source_split_two_lines(const char* text,
                                              char* line1,
                                              size_t line1Size,
                                              char* line2,
-                                             size_t line2Size) {
-    enum { C469_WIDTH = 77 };
+                                             size_t line2Size,
+                                             int zoneWidth) {
     int textW;
     int maxW;
     int best = -1;
     int i;
     if (!text || !line1 || !line2 || line1Size == 0 || line2Size == 0) return 0;
+    if (zoneWidth <= 0) zoneWidth = 77;
     textW = m11_measure_text_pixels(text, &g_text_shadow);
-    maxW = C469_WIDTH - (C469_WIDTH >> 3);
+    maxW = zoneWidth - (zoneWidth >> 3);
     if (textW <= maxW) {
         snprintf(line1, line1Size, "%s", text);
         line2[0] = '\0';
@@ -15642,8 +15666,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (drewSourceBackdrop) {
             char line1[80], line2[128];
             int lineCount = m11_dialog_source_split_two_lines(
-                state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2));
-            textY = m11_dialog_source_c469_text_y_for_lines(lineCount);
+                state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2),
+                m11_dialog_source_message_width_for_choices(state->dialogChoiceCount));
+            textY = (state->dialogChoiceCount > 1)
+                        ? m11_dialog_source_c471_text_y_for_lines(lineCount)
+                        : m11_dialog_source_c469_text_y_for_lines(lineCount);
             m11_draw_text_centered_in_rect(framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
