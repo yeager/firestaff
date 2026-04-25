@@ -5300,6 +5300,32 @@ int main(int argc, char** argv) {
                      "V1 four-choice dialog uses source C464-C467 zones");
     }
 
+    /* INV_GV_172L: V1 dialog accept selects first source choice. */
+    {
+        M11_GameViewState dlgView;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        M11_GameView_ShowDialogOverlayChoices(&dlgView, "PIT", "YES", "NO", NULL, NULL);
+        probe_record(&tally,
+                     "INV_GV_172L",
+                     M11_GameView_HandleInput(&dlgView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_REDRAW &&
+                     M11_GameView_IsDialogOverlayActive(&dlgView) == 0 &&
+                     M11_GameView_GetDialogSelectedChoice(&dlgView) == 1,
+                     "V1 dialog accept selects first source choice");
+    }
+
+    /* INV_GV_172M: V1 dialog mouse hit selects source choice zone. */
+    {
+        M11_GameViewState dlgView;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        M11_GameView_ShowDialogOverlayChoices(&dlgView, "PIT", "A", "B", "C", "D");
+        probe_record(&tally,
+                     "INV_GV_172M",
+                     M11_GameView_HandlePointer(&dlgView, 150, 140, 1) == M11_GAME_INPUT_REDRAW &&
+                     M11_GameView_IsDialogOverlayActive(&dlgView) == 0 &&
+                     M11_GameView_GetDialogSelectedChoice(&dlgView) == 4,
+                     "V1 dialog mouse hit selects source choice zone");
+    }
+
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
     {
         M11_GameViewState dlgView;

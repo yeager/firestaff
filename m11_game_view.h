@@ -185,6 +185,7 @@ typedef struct {
     int dialogOverlayActive;
     char dialogOverlayText[128];
     int dialogChoiceCount;
+    int dialogSelectedChoice;
     char dialogChoices[4][32];
     char localeCode[8];
     M11_RuntimeCatalog localizedCatalog;
@@ -357,6 +358,9 @@ int M11_GameView_ShowDialogOverlayChoices(M11_GameViewState* state,
                                           const char* choice2,
                                           const char* choice3,
                                           const char* choice4);
+
+/* Return 1..4 after a choice is selected, or 0 if none was selected. */
+int M11_GameView_GetDialogSelectedChoice(const M11_GameViewState* state);
 
 /* ── Full-screen map overlay API ── */
 

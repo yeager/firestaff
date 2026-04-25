@@ -475,17 +475,6 @@ static void m11_draw_text_centered_in_rect(unsigned char* framebuffer,
                   drawX, y, text, style);
 }
 
-static int m11_dialog_source_c469_text_y(void) {
-    enum {
-        C469_TOP = 49,
-        C469_BOTTOM = 73,
-        SOURCE_TEXT_HEIGHT = 7
-    };
-    int zoneH = (C469_BOTTOM - C469_TOP) + 1;
-    int relativeY = C469_TOP + ((zoneH - SOURCE_TEXT_HEIGHT) / 2) + 6 - 1;
-    return M11_VIEWPORT_Y + relativeY;
-}
-
 static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
     enum {
         C469_TOP = 49,
@@ -626,6 +615,34 @@ static void m11_draw_dialog_choices_source(const M11_GameViewState* state,
             m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
                                         123, 110, 86, state->dialogChoices[3]);
             break;
+    }
+}
+
+static int m11_dialog_choice_at_point(const M11_GameViewState* state,
+                                      int x,
+                                      int y) {
+    int vx = x - M11_VIEWPORT_X;
+    int vy = y - M11_VIEWPORT_Y;
+    if (!state || state->dialogChoiceCount <= 0) return 0;
+    if (vx < 0 || vy < 0 || vx >= M11_VIEWPORT_W || vy >= M11_VIEWPORT_H) return 0;
+    switch (state->dialogChoiceCount) {
+        case 1:
+            return (vx >= 16 && vx <= 207 && vy >= 104 && vy <= 120) ? 1 : 0;
+        case 2:
+            if (vx >= 16 && vx <= 207 && vy >= 67 && vy <= 83) return 1;
+            if (vx >= 16 && vx <= 207 && vy >= 104 && vy <= 120) return 2;
+            return 0;
+        case 3:
+            if (vx >= 16 && vx <= 207 && vy >= 67 && vy <= 83) return 1;
+            if (vx >= 16 && vx <= 101 && vy >= 104 && vy <= 120) return 2;
+            if (vx >= 123 && vx <= 208 && vy >= 104 && vy <= 120) return 3;
+            return 0;
+        default:
+            if (vx >= 16 && vx <= 101 && vy >= 67 && vy <= 83) return 1;
+            if (vx >= 123 && vx <= 208 && vy >= 67 && vy <= 83) return 2;
+            if (vx >= 16 && vx <= 101 && vy >= 104 && vy <= 120) return 3;
+            if (vx >= 123 && vx <= 208 && vy >= 104 && vy <= 120) return 4;
+            return 0;
     }
 }
 
@@ -4653,6 +4670,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
+        if (input == M12_MENU_INPUT_ACCEPT && state->dialogChoiceCount > 0) {
+            state->dialogSelectedChoice = 1;
+            M11_GameView_DismissDialogOverlay(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (input != M12_MENU_INPUT_NONE) {
             M11_GameView_DismissDialogOverlay(state);
             return M11_GAME_INPUT_REDRAW;
@@ -4853,6 +4875,10 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
 
     /* Click dismisses dialog overlay. */
     if (state->dialogOverlayActive) {
+        int choice = m11_dialog_choice_at_point(state, x, y);
+        if (choice > 0) {
+            state->dialogSelectedChoice = choice;
+        }
         M11_GameView_DismissDialogOverlay(state);
         return M11_GAME_INPUT_REDRAW;
     }
@@ -15980,6 +16006,10 @@ int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {
     return state ? state->dialogOverlayActive : 0;
 }
 
+int M11_GameView_GetDialogSelectedChoice(const M11_GameViewState* state) {
+    return state ? state->dialogSelectedChoice : 0;
+}
+
 int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     if (!state || !state->dialogOverlayActive) return 0;
     state->dialogOverlayActive = 0;
@@ -16004,6 +16034,7 @@ int M11_GameView_ShowDialogOverlayChoices(M11_GameViewState* state,
     int i;
     if (!state || !text) return 0;
     state->dialogOverlayActive = 1;
+    state->dialogSelectedChoice = 0;
     snprintf(state->dialogOverlayText, sizeof(state->dialogOverlayText),
              "%s", text);
     state->dialogChoiceCount = 0;
