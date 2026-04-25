@@ -96,6 +96,32 @@ void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
     M11_Render_SetWindowMode(menuState->settings.windowModeIndex);
 }
 
+static int m11_open_requested_launch(M11_GameViewState* gameView,
+                                     M12_StartupMenuState* menuState,
+                                     uint32_t* idleAccumulatorMs) {
+    if (!gameView || !menuState || !menuState->launchRequested) {
+        return 0;
+    }
+    if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
+        menuState->launchRequested = 0;
+        (void)M11_Render_SetPaletteLevel(0);
+        if (idleAccumulatorMs) {
+            *idleAccumulatorMs = 0;
+        }
+        M11_GameView_Draw(gameView,
+                          M11_Render_GetFramebuffer(),
+                          M11_FB_WIDTH,
+                          M11_FB_HEIGHT);
+        return 1;
+    }
+    menuState->launchRequested = 0;
+    menuState->view = M12_MENU_VIEW_MESSAGE;
+    menuState->messageLine1 = "DUNGEON LOAD FAILED";
+    menuState->messageLine2 = "CHECK DUNGEON.DAT";
+    menuState->messageLine3 = "ESC RETURNS TO MENU";
+    return 0;
+}
+
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     if (!opts) {
         return;
@@ -702,12 +728,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (menuState.shouldExit) {
                 break;
             }
+            if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+                continue;
+            }
             M11_ApplyStartupMenuRuntime(&menuState);
             m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
-            /* If the click flipped us into game-options and the user
-             * next triggers launch, we still need the game-view open
-             * path below, which requires an explicit ACCEPT. No harm
-             * done here — continue to let polling drive the rest. */
         }
         if (pointerResult != M11_GAME_INPUT_IGNORED) {
             if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
@@ -775,8 +800,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                 }
                 if (!launchHandled) {
-                    if (input == M12_MENU_INPUT_ACTION ||
-                        input == M12_MENU_INPUT_CYCLE_CHAMPION ||
+                    if (input == M12_MENU_INPUT_CYCLE_CHAMPION ||
                         input == M12_MENU_INPUT_STRAFE_LEFT ||
                         input == M12_MENU_INPUT_STRAFE_RIGHT ||
                         input == M12_MENU_INPUT_PICKUP_ITEM ||
@@ -786,6 +810,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     M12_StartupMenu_HandleInput(&menuState, input);
                     if (menuState.shouldExit) {
                         break;
+                    }
+                    if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+                        continue;
                     }
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);

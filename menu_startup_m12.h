@@ -138,6 +138,7 @@ typedef struct M12_StartupMenuState {
     int selectedIndex;
     int settingsSelectedIndex;
     int shouldExit;
+    int launchRequested;
     int activatedIndex;
     M12_MenuView view;
     const char* messageLine1;

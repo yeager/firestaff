@@ -41,6 +41,7 @@ static int m12_clamp_index(int value, int count);
 static int m12_game_slot_from_id(const char* gameId);
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex);
 static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex);
+static void m12_sanitize_runtime_state(M12_StartupMenuState* state);
 static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
                                                                  int gameIndex);
 static const char* m12_selected_version_label(const M12_StartupMenuState* state,
@@ -773,6 +774,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->selectedIndex = 0;
     state->settingsSelectedIndex = 0;
     state->gameOptSelectedRow = 0;
+    state->launchRequested = 0;
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
     state->messageLine1 = "";
@@ -861,6 +863,41 @@ static const char* m12_selected_version_label(const M12_StartupMenuState* state,
     return shortLabel ? version->shortLabel : version->label;
 }
 
+static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
+    int entryCount;
+    if (!state) {
+        return;
+    }
+    entryCount = m12_entry_count();
+    if (entryCount > 0) {
+        state->selectedIndex = m12_clamp_index(state->selectedIndex, entryCount);
+    } else {
+        state->selectedIndex = 0;
+    }
+    state->settingsSelectedIndex = m12_clamp_index(state->settingsSelectedIndex,
+                                                   M12_SETTINGS_ROW_COUNT);
+    state->settings.languageIndex = m12_clamp_index(state->settings.languageIndex,
+                                                    (int)(sizeof(g_languages) / sizeof(g_languages[0])));
+    state->settings.graphicsIndex = m12_clamp_index(state->settings.graphicsIndex,
+                                                    M12_PRESENTATION_MODE_COUNT);
+    state->settings.windowModeIndex = m12_clamp_index(state->settings.windowModeIndex,
+                                                       (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
+    state->gameOptSelectedRow = m12_clamp_index(state->gameOptSelectedRow,
+                                                M12_GAME_OPT_ROW_COUNT + 1);
+    if (state->activatedIndex < -1 || state->activatedIndex >= M12_CONFIG_GAME_COUNT) {
+        state->activatedIndex = -1;
+    }
+    if (state->view != M12_MENU_VIEW_MAIN &&
+        state->view != M12_MENU_VIEW_SETTINGS &&
+        state->view != M12_MENU_VIEW_MESSAGE &&
+        state->view != M12_MENU_VIEW_GAME_OPTIONS) {
+        state->view = M12_MENU_VIEW_MAIN;
+    }
+    if (state->view == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0) {
+        state->view = M12_MENU_VIEW_MAIN;
+    }
+}
+
 static void m12_activate_selected(M12_StartupMenuState* state) {
     const M12_MenuEntry* entry;
     if (!state) {
@@ -933,6 +970,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     if (!state) {
         return;
     }
+    m12_sanitize_runtime_state(state);
     count = m12_entry_count();
     if (count <= 0) {
         state->shouldExit = 1;
@@ -940,7 +978,10 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     }
 
     if (state->view == M12_MENU_VIEW_MESSAGE) {
-        if (input == M12_MENU_INPUT_BACK || input == M12_MENU_INPUT_ACCEPT) {
+        if (input == M12_MENU_INPUT_BACK ||
+            input == M12_MENU_INPUT_ACCEPT ||
+            input == M12_MENU_INPUT_ACTION) {
+            state->launchRequested = 0;
             state->view = M12_MENU_VIEW_MAIN;
             state->messageLine1 = "";
             state->messageLine2 = "";
@@ -993,23 +1034,30 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 }
                 break;
             case M12_MENU_INPUT_ACCEPT:
+            case M12_MENU_INPUT_ACTION:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
                     /* Launch row — V3 blocks launch with coming-soon message */
                     if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
+                        state->launchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
                         state->messageLine2 = m12_tr(state, "COMING SOON");
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (!m12_selected_version_status(state, gi) ||
                                !m12_selected_version_status(state, gi)->matched) {
+                        state->launchRequested = 0;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_tr(state, "SELECTED VERSION NOT FOUND");
                         state->messageLine2 = m12_selected_version_label(state, gi, 0);
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else {
+                        state->launchRequested = 1;
                         state->view = M12_MENU_VIEW_MESSAGE;
                         state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
-                        state->messageLine2 = state->entries[state->activatedIndex].title;
+                        state->messageLine2 = (state->activatedIndex >= 0 &&
+                                               state->activatedIndex < m12_entry_count())
+                                                  ? state->entries[state->activatedIndex].title
+                                                  : "";
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     }
                 } else {
@@ -1025,6 +1073,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 }
                 break;
             case M12_MENU_INPUT_BACK:
+                state->launchRequested = 0;
                 state->view = M12_MENU_VIEW_MAIN;
                 break;
             case M12_MENU_INPUT_NONE:
@@ -1073,6 +1122,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             state->selectedIndex = m12_cycle_index(state->selectedIndex, 1, count);
             break;
         case M12_MENU_INPUT_ACCEPT:
+        case M12_MENU_INPUT_ACTION:
         case M12_MENU_INPUT_RIGHT:
             m12_activate_selected(state);
             break;

@@ -1,4 +1,5 @@
 #include "asset_status_m12.h"
+#include "menu_hit_m12.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
@@ -83,6 +84,64 @@ static void force_dm1_version_ready(M12_StartupMenuState* state, size_t versionI
     snprintf(version->matchedPath, sizeof(version->matchedPath), "%s", "probe://forced-dm1");
     snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s", "forced");
     state->gameOptions[0].versionIndex = (int)versionIndex;
+}
+
+static void exercise_startup_input_matrix(M12_StartupMenuState seed) {
+    static const M12_MenuInput inputs[] = {
+        M12_MENU_INPUT_NONE,
+        M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_LEFT,
+        M12_MENU_INPUT_RIGHT,
+        M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_STRAFE_RIGHT,
+        M12_MENU_INPUT_ACCEPT,
+        M12_MENU_INPUT_BACK,
+        M12_MENU_INPUT_ACTION,
+        M12_MENU_INPUT_CYCLE_CHAMPION,
+        M12_MENU_INPUT_REST_TOGGLE,
+        M12_MENU_INPUT_USE_STAIRS,
+        M12_MENU_INPUT_PICKUP_ITEM,
+        M12_MENU_INPUT_DROP_ITEM,
+        M12_MENU_INPUT_SPELL_RUNE_1,
+        M12_MENU_INPUT_SPELL_RUNE_2,
+        M12_MENU_INPUT_SPELL_RUNE_3,
+        M12_MENU_INPUT_SPELL_RUNE_4,
+        M12_MENU_INPUT_SPELL_RUNE_5,
+        M12_MENU_INPUT_SPELL_RUNE_6,
+        M12_MENU_INPUT_SPELL_CAST,
+        M12_MENU_INPUT_SPELL_CLEAR,
+        M12_MENU_INPUT_USE_ITEM,
+        M12_MENU_INPUT_MAP_TOGGLE,
+        M12_MENU_INPUT_INVENTORY_TOGGLE,
+        (M12_MenuInput)-1,
+        (M12_MenuInput)9999
+    };
+    static const M12_MenuView views[] = {
+        M12_MENU_VIEW_MAIN,
+        M12_MENU_VIEW_SETTINGS,
+        M12_MENU_VIEW_MESSAGE,
+        M12_MENU_VIEW_GAME_OPTIONS,
+        (M12_MenuView)-1,
+        (M12_MenuView)9999
+    };
+    size_t vi;
+    size_t ii;
+    for (vi = 0; vi < sizeof(views) / sizeof(views[0]); ++vi) {
+        for (ii = 0; ii < sizeof(inputs) / sizeof(inputs[0]); ++ii) {
+            M12_StartupMenuState s = seed;
+            s.view = views[vi];
+            s.selectedIndex = (ii & 1U) ? -100 : 100;
+            s.activatedIndex = (ii & 2U) ? -100 : 100;
+            s.settingsSelectedIndex = (ii & 4U) ? -100 : 100;
+            s.gameOptSelectedRow = (ii & 8U) ? -100 : 100;
+            s.settings.languageIndex = (ii & 16U) ? -100 : 100;
+            s.settings.graphicsIndex = (ii & 32U) ? -100 : 100;
+            s.settings.windowModeIndex = (ii & 64U) ? -100 : 100;
+            M12_StartupMenu_HandleInput(&s, inputs[ii]);
+            (void)M12_StartupMenu_GetLaunchIntent(&s);
+        }
+    }
 }
 
 int main(void) {
@@ -602,8 +661,76 @@ int main(void) {
         probe_record(&tally,
                      "INV_M12_22",
                      modeState.view == M12_MENU_VIEW_MESSAGE &&
+                         modeState.launchRequested == 0 &&
                          strcmp(modeState.messageLine2, "COMING SOON") == 0,
-                     "V3 launch attempt shows COMING SOON message");
+                     "V3 launch attempt shows COMING SOON message without requesting launch");
+
+        /* Launch button requests runtime handoff for a matched V1/V2 game. */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_26",
+                     modeState.launchRequested == 1 &&
+                         modeState.view == M12_MENU_VIEW_MESSAGE &&
+                         intent.valid == 1 &&
+                         strcmp(intent.gameId, "dm1") == 0,
+                     "launch row marks a valid launch request for the runtime");
+
+        modeState.launchRequested = 0;
+        modeState.view = M12_MENU_VIEW_MESSAGE;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACTION);
+        probe_record(&tally,
+                     "INV_M12_26B",
+                     modeState.launchRequested == 0 &&
+                         modeState.view == M12_MENU_VIEW_MAIN,
+                     "space/action dismisses message view safely");
+
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACTION);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACTION);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_26C",
+                     modeState.launchRequested == 1 && intent.valid == 1,
+                     "space/action activates cards and launch row like enter");
+
+        modeState.launchRequested = 0;
+        modeState.view = M12_MENU_VIEW_GAME_OPTIONS;
+        modeState.gameOptSelectedRow = 0;
+        M12_ModernMenu_ApplyHit(&modeState,
+                                (M12_MouseHit){M12_HIT_GAMEOPT_LAUNCH, 0, 0});
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_27",
+                     modeState.launchRequested == 1 && intent.valid == 1,
+                     "mouse launch hit follows the same launch request path");
+
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        modeState.selectedIndex = 1;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        probe_record(&tally,
+                     "INV_M12_28",
+                     modeState.launchRequested == 0 &&
+                         modeState.view == M12_MENU_VIEW_MESSAGE,
+                     "missing selected assets report a menu error without requesting launch");
+
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
+        exercise_startup_input_matrix(modeState);
+        probe_record(&tally,
+                     "INV_M12_29",
+                     1,
+                     "startup input matrix covers arrows, accept/action/back, gameplay hotkeys, invalid keys, mouse launch, and corrupt state bounds without crashing");
 
         /* Presentation mode API */
         modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;

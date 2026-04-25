@@ -4113,7 +4113,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     if (!state || !menuState) {
         return 0;
     }
-    entry = M12_StartupMenu_GetEntry(menuState, menuState->selectedIndex);
+    if (menuState->launchRequested) {
+        M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
+        if (!intent.valid) {
+            return 0;
+        }
+        entry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+    } else {
+        entry = M12_StartupMenu_GetEntry(menuState, menuState->selectedIndex);
+    }
     if (!entry || entry->kind != M12_MENU_ENTRY_GAME || !entry->available) {
         return 0;
     }
