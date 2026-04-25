@@ -14125,7 +14125,7 @@ static void m11_format_champion_title(const unsigned char* raw,
     size_t i;
     size_t end = 0;
     if (!out || outSize == 0U) return;
-    out[0] = ' ';
+    out[0] = '\0';
     if (!raw) return;
     for (i = 0; i + 1 < outSize && i < CHAMPION_TITLE_LENGTH; ++i) {
         unsigned char ch = raw[i];
@@ -14133,8 +14133,8 @@ static void m11_format_champion_title(const unsigned char* raw,
         out[i] = isprint(ch) ? (char)ch : ' ';
         if (out[i] != ' ') end = i + 1;
     }
-    out[i < outSize ? i : outSize - 1] = ' ';
-    out[end] = ' ';
+    out[i < outSize ? i : outSize - 1] = '\0';
+    out[end] = '\0';
 }
 
 int M11_GameView_EndgameTitleXForSourceText(const char* name, const char* title) {
