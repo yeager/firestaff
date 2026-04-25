@@ -66,6 +66,8 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     const char* statEnd;
     const char* skillStart;
     const char* skillEnd;
+    const char* inventoryStart;
+    const char* inventoryEnd;
 
     if (!mirrorText || !champ) return 0;
 
@@ -97,6 +99,11 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
                 if (!skillEnd) skillEnd = skillStart + strlen(skillStart);
                 pack_text_field(champ->mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH,
                                 skillStart, (int)(skillEnd - skillStart));
+                inventoryStart = (*skillEnd == '|') ? skillEnd + 1 : skillEnd;
+                inventoryEnd = strchr(inventoryStart, '|');
+                if (!inventoryEnd) inventoryEnd = inventoryStart + strlen(inventoryStart);
+                pack_text_field(champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH,
+                                inventoryStart, (int)(inventoryEnd - inventoryStart));
             }
         }
     } else {
@@ -161,7 +168,8 @@ int F0601_CHAMPION_InitPartyFromDungeon_Compat(
  *   [156] sex ('M'/'F'/0)
  *   [157..172] mirrorStatsText[16]
  *   [173..188] mirrorSkillsText[16]
- *   [189..255] reserved (zero)
+ *   [189..220] mirrorInventoryText[32]
+ *   [221..255] reserved (zero)
  */
 
 int F0602_CHAMPION_Serialize_Compat(
@@ -221,6 +229,7 @@ int F0602_CHAMPION_Serialize_Compat(
     buf[156] = champ->sex;
     memcpy(&buf[157], champ->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH);
     memcpy(&buf[173], champ->mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH);
+    memcpy(&buf[189], champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
 
     return CHAMPION_SERIALIZED_SIZE;
 }
@@ -279,6 +288,7 @@ int F0603_CHAMPION_Deserialize_Compat(
     champ->sex = buf[156];
     memcpy(champ->mirrorStatsText, &buf[157], CHAMPION_MIRROR_FIELD_LENGTH);
     memcpy(champ->mirrorSkillsText, &buf[173], CHAMPION_MIRROR_FIELD_LENGTH);
+    memcpy(champ->mirrorInventoryText, &buf[189], CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
 
     return CHAMPION_SERIALIZED_SIZE;
 }
