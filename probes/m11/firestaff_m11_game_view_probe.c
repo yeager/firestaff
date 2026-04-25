@@ -1008,8 +1008,7 @@ int main(int argc, char** argv) {
      * replacing the invented per-stat LIGHT_RED/LIGHT_GREEN/LIGHT_BLUE
      * strip.  The synthetic fixture has champions 0 and 1 present and
      * slot 0 active, so the party strip shows GREEN bar fill for slot 0,
-     * YELLOW for slot 1, abundant DARK_GRAY blank-bar pixels, and still
-     * retains the active-slot yellow frame. */
+     * YELLOW for slot 1, and abundant DARK_GRAY blank-bar pixels. */
     probe_record(&tally,
                  "INV_GV_15B",
                  probe_count_color(syntheticFramebuffer,
@@ -1033,7 +1032,19 @@ int main(int argc, char** argv) {
                                        PROBE_BOTTOM_PANEL_W,
                                        PROBE_PARTY_PANEL_H,
                                        PROBE_COLOR_YELLOW) > 20U,
-                 "party strip reflects source-colored champion bars and active-slot framing when champion data exists");
+                 "party strip reflects source-colored champion bars when champion data exists");
+
+    probe_record(&tally,
+                 "INV_GV_15C",
+                 (syntheticFramebuffer[(PROBE_PARTY_PANEL_Y + 1) * 320 +
+                                      (PROBE_BOTTOM_PANEL_X + 1)] & 0x0F) != PROBE_COLOR_YELLOW,
+                 "V1 champion HUD does not draw an invented active-slot yellow rectangle");
+
+    probe_record(&tally,
+                 "INV_GV_15D",
+                 (syntheticFramebuffer[(PROBE_PARTY_PANEL_Y + 5) * 320 +
+                                      (PROBE_BOTTOM_PANEL_X + 2 * 69 + 8)] & 0x0F) == 0,
+                 "V1 champion HUD leaves unrecruited party slots undrawn");
 
     probe_record(&tally,
                  "INV_GV_16",

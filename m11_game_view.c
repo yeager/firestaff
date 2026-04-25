@@ -14491,19 +14491,28 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 drewStatusBox = 1;
             }
 
-            /* GRAPHICS.DAT-backed status box frame (67×29).
-             * Use graphic 8 (dead) or graphic 7 (normal) as the
-             * status box background.  Falls back to procedural. */
-            if (!useV2PartyHud && state->assetsAvailable) {
-                unsigned int boxGfx = isDead ? M11_GFX_STATUS_BOX_DEAD
-                                             : M11_GFX_STATUS_BOX;
-                const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
-                    (M11_AssetLoader*)&state->assetLoader, boxGfx);
-                if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
-                    M11_AssetLoader_BlitRegion(boxAsset,
-                        0, 0, 67, 29,
-                        framebuffer, framebufferWidth, framebufferHeight,
-                        x, y, 0);
+            /* V1 source status-box background.  ReDMCSB marks
+             * C007_GRAPHIC_STATUS_BOX as "never used"; alive champion
+             * status boxes are cleared to C12 darkest-gray, then name,
+             * bars, hands, and optional shield borders are drawn on top
+             * (CHAMPION.C F0292).  Dead champions still use graphic 8. */
+            if (!useV2PartyHud) {
+                if (isDead && state->assetsAvailable) {
+                    const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
+                        (M11_AssetLoader*)&state->assetLoader,
+                        M11_GFX_STATUS_BOX_DEAD);
+                    if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
+                        M11_AssetLoader_BlitRegion(boxAsset,
+                            0, 0, 67, 29,
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            x, y, 0);
+                        drewStatusBox = 1;
+                    }
+                }
+                if (!isDead) {
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  x, y, M11_V1_PARTY_SLOT_W, 29,
+                                  M11_COLOR_DARK_GRAY);
                     drewStatusBox = 1;
                 }
             }
@@ -14520,16 +14529,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                               x, y, slotW, M11_PARTY_SLOT_H, M11_COLOR_LIGHT_CYAN);
             }
 
-            /* Active champion: double yellow highlight border
-             * (ReDMCSB highlights the active champion status box).
-             * V1 mode: inset 1 and 2 px from the 67-wide frame.
-             * V2 mode: inset 1 and 2 px from the 71-wide frame. */
-            if (!useV2PartyHud && slot == activeIndex) {
-                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 1, y + 1, slotW - 2, 26, M11_COLOR_YELLOW);
-                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 2, y + 2, slotW - 4, 24, M11_COLOR_YELLOW);
-            }
+            /* No invented active-champion frame in V1.  The source
+             * indicates leader/active state through the champion-name
+             * text color (yellow for leader, gold otherwise), not a
+             * double rectangular border around the status box. */
 
             /* Champion icon from GRAPHICS.DAT graphic 28 (19×14 per
              * champion).  Blit into the left side of the status box,
@@ -14741,13 +14744,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
             }
         } else {
-            /* Empty slot — classic DM1 behaviour: no prototype
-             * "SLOT N / EMPTY" text. Draw a flat black cell with a
-             * DARK_GRAY hairline border (inner + outer) as a structural
-             * anchor, then, when the status-box background asset is
-             * available, blit it on top to preserve the original panel
-             * geometry. The outer border remains visible around the
-             * asset’s 67×29 footprint on the full 71×28 cell. */
+            /* Empty V1 party slots are not drawn by CHAMPION.C; only
+             * present champions have status boxes.  Keep the old
+             * structural empty cells for debug/V2 surfaces only. */
+            if (!useV2PartyHud && !state->showDebugHUD) {
+                continue;
+            }
             m11_fill_rect(framebuffer, framebufferWidth,
                           framebufferHeight, x, y, 71, 28,
                           M11_COLOR_BLACK);
