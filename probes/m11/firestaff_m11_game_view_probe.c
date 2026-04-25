@@ -1519,6 +1519,141 @@ int main(int argc, char** argv) {
                      haveAssets && memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C teleporter field zone blit changes the corridor frame");
 
+        /* Broader source-zone coverage: verify every currently-wired
+         * focused position in the pit/stairs/teleporter families changes
+         * an otherwise empty corridor frame.  This catches accidental
+         * dead specs when adding D0/D1/D2/D3 side/center variants. */
+        if (haveAssets) {
+            typedef struct ProbeFocusedPos {
+                int relForward;
+                int relSide;
+            } ProbeFocusedPos;
+            static const ProbeFocusedPos kPitPositions[] = {
+                {3,-2},{3,2},{3,-1},{3,0},{3,1},
+                {2,-1},{2,0},{2,1},
+                {1,-1},{1,0},{1,1},
+                {0,-1},{0,0},{0,1}
+            };
+            static const ProbeFocusedPos kInvisiblePitPositions[] = {
+                {2,-1},{2,0},{2,1},
+                {1,-1},{1,0},{1,1},
+                {0,-1},{0,0},{0,1}
+            };
+            static const ProbeFocusedPos kStairsFrontPositions[] = {
+                {3,-2},{3,2},{3,-1},{3,0},{3,1},
+                {2,-1},{2,0},{2,1},
+                {1,-1},{1,0},{1,1},
+                {0,-1},{0,1}
+            };
+            static const ProbeFocusedPos kStairsSidePositions[] = {
+                {2,-1},{2,1},{1,-1},{1,1},{0,-1},{0,1}
+            };
+            static const ProbeFocusedPos kTeleporterPositions[] = {
+                {3,-2},{3,2},{3,-1},{3,0},{3,1},
+                {2,-2},{2,2},{2,-1},{2,0},{2,1},
+                {1,-1},{1,0},{1,1},
+                {0,-1},{0,0},{0,1}
+            };
+            int changedPit = 0;
+            int changedInvisiblePit = 0;
+            int changedStairsFront = 0;
+            int changedStairsSide = 0;
+            int changedTeleporter = 0;
+            size_t pi;
+            for (pi = 0; pi < sizeof(kPitPositions) / sizeof(kPitPositions[0]); ++pi) {
+                probe_reset_synthetic_view_to_corridor(&focusView);
+                memset(baseFb, 0, sizeof(baseFb));
+                M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                probe_set_square(focusView.world.dungeon,
+                                 focusView.world.party.mapX + kPitPositions[pi].relSide,
+                                 focusView.world.party.mapY - kPitPositions[pi].relForward,
+                                 (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
+                memset(pitFb, 0, sizeof(pitFb));
+                M11_GameView_Draw(&focusView, pitFb, 320, 200);
+                if (memcmp(baseFb, pitFb, sizeof(baseFb)) != 0) {
+                    ++changedPit;
+                }
+            }
+            for (pi = 0; pi < sizeof(kInvisiblePitPositions) / sizeof(kInvisiblePitPositions[0]); ++pi) {
+                probe_reset_synthetic_view_to_corridor(&focusView);
+                memset(baseFb, 0, sizeof(baseFb));
+                M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                probe_set_square(focusView.world.dungeon,
+                                 focusView.world.party.mapX + kInvisiblePitPositions[pi].relSide,
+                                 focusView.world.party.mapY - kInvisiblePitPositions[pi].relForward,
+                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x04));
+                memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
+                M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
+                if (memcmp(baseFb, invisiblePitFb, sizeof(baseFb)) != 0) {
+                    ++changedInvisiblePit;
+                }
+            }
+            for (pi = 0; pi < sizeof(kStairsFrontPositions) / sizeof(kStairsFrontPositions[0]); ++pi) {
+                probe_reset_synthetic_view_to_corridor(&focusView);
+                memset(baseFb, 0, sizeof(baseFb));
+                M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                probe_set_square(focusView.world.dungeon,
+                                 focusView.world.party.mapX + kStairsFrontPositions[pi].relSide,
+                                 focusView.world.party.mapY - kStairsFrontPositions[pi].relForward,
+                                 (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x08));
+                memset(stairsFb, 0, sizeof(stairsFb));
+                M11_GameView_Draw(&focusView, stairsFb, 320, 200);
+                if (memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0) {
+                    ++changedStairsFront;
+                }
+            }
+            for (pi = 0; pi < sizeof(kStairsSidePositions) / sizeof(kStairsSidePositions[0]); ++pi) {
+                probe_reset_synthetic_view_to_corridor(&focusView);
+                memset(baseFb, 0, sizeof(baseFb));
+                M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                probe_set_square(focusView.world.dungeon,
+                                 focusView.world.party.mapX + kStairsSidePositions[pi].relSide,
+                                 focusView.world.party.mapY - kStairsSidePositions[pi].relForward,
+                                 (unsigned char)(DUNGEON_ELEMENT_STAIRS << 5));
+                memset(stairsFb, 0, sizeof(stairsFb));
+                M11_GameView_Draw(&focusView, stairsFb, 320, 200);
+                if (memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0) {
+                    ++changedStairsSide;
+                }
+            }
+            for (pi = 0; pi < sizeof(kTeleporterPositions) / sizeof(kTeleporterPositions[0]); ++pi) {
+                probe_reset_synthetic_view_to_corridor(&focusView);
+                memset(baseFb, 0, sizeof(baseFb));
+                M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                probe_set_square(focusView.world.dungeon,
+                                 focusView.world.party.mapX + kTeleporterPositions[pi].relSide,
+                                 focusView.world.party.mapY - kTeleporterPositions[pi].relForward,
+                                 (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x0c));
+                memset(teleporterFb, 0, sizeof(teleporterFb));
+                M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
+                if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
+                    ++changedTeleporter;
+                }
+            }
+            probe_record(&tally, "INV_GV_38E",
+                         changedPit == (int)(sizeof(kPitPositions) / sizeof(kPitPositions[0])),
+                         "focused viewport: all normal pit zone specs visibly change their corridor frames");
+            probe_record(&tally, "INV_GV_38F",
+                         changedInvisiblePit == (int)(sizeof(kInvisiblePitPositions) / sizeof(kInvisiblePitPositions[0])),
+                         "focused viewport: all invisible pit zone specs visibly change their corridor frames");
+            probe_record(&tally, "INV_GV_38G",
+                         changedStairsFront == (int)(sizeof(kStairsFrontPositions) / sizeof(kStairsFrontPositions[0])) &&
+                             changedStairsSide == (int)(sizeof(kStairsSidePositions) / sizeof(kStairsSidePositions[0])),
+                         "focused viewport: all stairs front/side zone specs visibly change their corridor frames");
+            probe_record(&tally, "INV_GV_38H",
+                         changedTeleporter == (int)(sizeof(kTeleporterPositions) / sizeof(kTeleporterPositions[0])),
+                         "focused viewport: all teleporter field zone specs visibly change their corridor frames");
+        } else {
+            probe_record(&tally, "INV_GV_38E", 0,
+                         "focused viewport: normal pit zone matrix requires GRAPHICS.DAT assets");
+            probe_record(&tally, "INV_GV_38F", 0,
+                         "focused viewport: invisible pit zone matrix requires GRAPHICS.DAT assets");
+            probe_record(&tally, "INV_GV_38G", 0,
+                         "focused viewport: stairs zone matrix requires GRAPHICS.DAT assets");
+            probe_record(&tally, "INV_GV_38H", 0,
+                         "focused viewport: teleporter zone matrix requires GRAPHICS.DAT assets");
+        }
+
         if (haveAssets) {
             M11_AssetLoader_Shutdown(&focusView.assetLoader);
             focusView.assetsAvailable = 0;
