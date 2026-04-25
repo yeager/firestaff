@@ -26,8 +26,14 @@ extern "C" {
 #endif
 
 /* Maximum number of cached expanded graphics.
-   Slots are allocated on first load. */
-#define M11_ASSET_CACHE_SLOTS 64
+   Slots are allocated on first load.
+
+   The public Load() contract returns cache-slot pointers that remain valid
+   until Shutdown. Do not use a small evicting cache here: the game-view
+   renderer keeps asset-slot pointers across additional loads during a draw.
+   DM1 PC 3.4 has 713 GRAPHICS.DAT entries, so 768 covers the complete bank
+   while preserving pointer stability. */
+#define M11_ASSET_CACHE_SLOTS 768
 
 typedef struct {
     int loaded;              /* 1 if pixels[] is valid */

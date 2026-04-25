@@ -138,15 +138,11 @@ static M11_AssetSlot* m11_alloc_slot(M11_AssetLoader* loader) {
     if (loader->cacheUsed < M11_ASSET_CACHE_SLOTS) {
         return &loader->cache[loader->cacheUsed++];
     }
-    /* Cache full — evict oldest (slot 0), shift down */
-    if (loader->cache[0].pixels) {
-        free(loader->cache[0].pixels);
-    }
-    memmove(&loader->cache[0], &loader->cache[1],
-            (M11_ASSET_CACHE_SLOTS - 1) * sizeof(M11_AssetSlot));
-    loader->cache[M11_ASSET_CACHE_SLOTS - 1].loaded = 0;
-    loader->cache[M11_ASSET_CACHE_SLOTS - 1].pixels = NULL;
-    return &loader->cache[M11_ASSET_CACHE_SLOTS - 1];
+    /* Load() returns slot pointers that callers may keep until Shutdown.
+     * Evicting here creates dangling pointers inside a single complex draw
+     * once enough GRAPHICS.DAT entries have been touched. Treat a full cache
+     * as a soft load miss instead. */
+    return NULL;
 }
 
 const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
@@ -298,6 +294,10 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
 
     /* Store in cache */
     slot = m11_alloc_slot(loader);
+    if (!slot) {
+        free(unpackedPixels);
+        return NULL;
+    }
     slot->loaded = 1;
     slot->graphicIndex = graphicIndex;
     slot->width = w;
