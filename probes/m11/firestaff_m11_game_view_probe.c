@@ -6237,6 +6237,20 @@ int main(int argc, char** argv) {
                      "coord set 0 single creature uses original D3 c5 center/bottom");
     }
 
+    /* INV_GV_256B: creature placement binds C3200 layout-696 source
+     * zone points, superseding the earlier Graphic558 approximation. */
+    {
+        int x0 = 0, y0 = 0, x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        int ok0 = M11_GameView_GetC3200CreatureZonePoint(0, 0, 1, 0, &x0, &y0);
+        int ok1 = M11_GameView_GetC3200CreatureZonePoint(1, 1, 2, 1, &x1, &y1);
+        int ok2 = M11_GameView_GetC3200CreatureZonePoint(2, 2, 1, 0, &x2, &y2);
+        probe_record(&tally, "INV_GV_256B",
+                     ok0 && x0 == 112 && y0 == 111 &&
+                     ok1 && x1 == 132 && y1 == 90 &&
+                     ok2 && x2 == 112 && y2 == 60,
+                     "creature placement binds C3200 layout-696 source zone samples");
+    }
+
     /* ── Floor ornament ordinal query ── */
     {
         /* Query the front cell's floor ornament ordinal.

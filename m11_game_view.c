@@ -1171,6 +1171,60 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
     if (outBottomY) *outBottomY = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][1];
 }
 
+static int m11_creature_front_point_index(int coordSet,
+                                          int visibleCount,
+                                          int slotIndex) {
+    int pointIndex = 4;
+    if (slotIndex < 0) slotIndex = 0;
+    if (slotIndex > 3) slotIndex = 3;
+    if (coordSet == 1) {
+        if (visibleCount > 1) {
+            pointIndex = slotIndex < 2 ? slotIndex : 4;
+        }
+    } else if (visibleCount > 1) {
+        pointIndex = slotIndex;
+        if (pointIndex > 3) pointIndex = 3;
+    }
+    return pointIndex;
+}
+
+static int m11_c3200_creature_zone_point(int coordSet,
+                                         int depthIndex,
+                                         int visibleCount,
+                                         int slotIndex,
+                                         int* outX,
+                                         int* outY) {
+    /* Layout-696 C3200_ZONE_ source points for center-lane creature
+     * placement.  We bind the three coordinate sets used by DM1 creature
+     * aspects and the D1/D2/D3 center groups.  Values are viewport-local
+     * center-X / bottom-Y, matching F0115's creature blit anchor. */
+    static const short kC3200Center[3][3][5][2] = {
+        {
+            {{ 83,106}, {141,106}, {148,119}, { 76,119}, {112,111}},
+            {{ 92, 83}, {131, 83}, {132, 90}, { 91, 90}, {112, 85}},
+            {{ 97, 67}, {125, 67}, {129, 72}, { 95, 72}, {112, 72}}
+        },
+        {
+            {{ 81,119}, {142,119}, {112,105}, {112,111}, {112,119}},
+            {{ 91, 90}, {132, 90}, {112, 83}, {112, 85}, {112, 89}},
+            {{ 94, 73}, {128, 73}, {112, 70}, {112, 70}, {112, 73}}
+        },
+        {
+            {{ 83, 79}, {141, 79}, {148, 85}, { 76, 85}, {112, 81}},
+            {{ 92, 65}, {131, 65}, {132, 67}, { 91, 67}, {112, 66}},
+            {{ 95, 59}, {127, 59}, {129, 61}, { 93, 61}, {112, 60}}
+        }
+    };
+    int pointIndex;
+    if (coordSet < 0 || coordSet > 2) return 0;
+    if (depthIndex < 0) depthIndex = 0;
+    if (depthIndex > 2) depthIndex = 2;
+    pointIndex = m11_creature_front_point_index(coordSet, visibleCount, slotIndex);
+    if (outX) *outX = (int)kC3200Center[coordSet][depthIndex][pointIndex][0];
+    if (outY) *outY = (int)kC3200Center[coordSet][depthIndex][pointIndex][1];
+    return 1;
+}
+
 /* Query the creature aspect's coordinate set index (0-10) for a type. */
 static int m11_creature_coordinate_set(int creatureType) {
     if (creatureType < 0 || creatureType >= 27) return 0;
@@ -6958,6 +7012,19 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
             if (visibleDups > 4) visibleDups = 4;
             if (visibleDups < 1) visibleDups = 1;
             if (visibleDups == 1) {
+                int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                int zoneX = 0;
+                int zoneY = 0;
+                if (m11_c3200_creature_zone_point(coordSet,
+                                                  depthIndex < 3 ? depthIndex : 2,
+                                                  1, 0, &zoneX, &zoneY)) {
+                    cx = M11_VIEWPORT_X + zoneX - slotW / 2;
+                    cy = M11_VIEWPORT_Y + zoneY - slotH;
+                    if (cx < faceX) cx = faceX;
+                    if (cy < faceY) cy = faceY;
+                    if (cx + slotW > faceX + faceW) cx = faceX + faceW - slotW;
+                    if (cy + slotH > faceY + faceH) cy = faceY + faceH - slotH;
+                }
                 if (!g_drawState ||
                     !m11_draw_creature_sprite(g_drawState, framebuffer,
                                               framebufferWidth, framebufferHeight,
@@ -12114,6 +12181,17 @@ int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
                                              int* outX,
                                              int* outY) {
     return m11_c2900_projectile_zone_point(scaleIndex, relativeCell, outX, outY);
+}
+
+int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
+                                           int depthIndex,
+                                           int visibleCount,
+                                           int slotIndex,
+                                           int* outX,
+                                           int* outY) {
+    return m11_c3200_creature_zone_point(coordSet, depthIndex,
+                                         visibleCount, slotIndex,
+                                         outX, outY);
 }
 
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
