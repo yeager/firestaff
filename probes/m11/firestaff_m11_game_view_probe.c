@@ -1450,6 +1450,7 @@ int main(int argc, char** argv) {
         unsigned char stairsFb[320 * 200];
         unsigned char teleporterFb[320 * 200];
         unsigned char creatureFb[320 * 200];
+        unsigned char projectileFb[320 * 200];
         char gfxPath[512];
         int haveAssets = 0;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
@@ -1493,6 +1494,29 @@ int main(int argc, char** argv) {
         }
         focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
             THING_ENDOFLIST;
+
+        focusView.world.projectiles.count = 1;
+        memset(&focusView.world.projectiles.entries[0], 0,
+               sizeof(focusView.world.projectiles.entries[0]));
+        focusView.world.projectiles.entries[0].slotIndex = 0;
+        focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+        focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+        focusView.world.projectiles.entries[0].mapIndex = 0;
+        focusView.world.projectiles.entries[0].mapX = 2;
+        focusView.world.projectiles.entries[0].mapY = 2;
+        focusView.world.projectiles.entries[0].cell = 3;
+        focusView.world.projectiles.entries[0].direction = DIR_SOUTH;
+        focusView.world.projectiles.entries[0].kineticEnergy = 255;
+        focusView.world.projectiles.entries[0].attack = 128;
+        memset(projectileFb, 0, sizeof(projectileFb));
+        M11_GameView_Draw(&focusView, projectileFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "36_focused_d1c_fireball_projectile_vga");
+        }
+        focusView.world.projectiles.count = 0;
+        memset(&focusView.world.projectiles.entries[0], 0,
+               sizeof(focusView.world.projectiles.entries[0]));
 
         probe_set_square(focusView.world.dungeon, 2, 2,
                          (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
@@ -1545,6 +1569,9 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38L",
                      haveAssets && memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C Trolin creature sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38M",
+                     haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
+                     "focused viewport: D1C fireball projectile sprite changes the corridor frame");
 
         /* Broader source-zone coverage: verify every currently-wired
          * focused position in the pit/stairs/teleporter families changes
@@ -5784,16 +5811,15 @@ int main(int argc, char** argv) {
                      "side-pane creature attack pose activates at depth 0 for both sides");
     }
 
-    /* INV_GV_245: projectile transparency key is 0 (black), matching
-     * DM1 palette index 0 transparency convention. */
+    /* INV_GV_245: projectile transparency key is C10_COLOR_FLESH.
+     * DM1's F0115 projectile-as-object path calls F0791 with
+     * C10_COLOR_FLESH as the transparent color. */
     {
-        /* The updated draw_projectile_sprite uses transparentColor=0
-         * for both normal and mirrored blit. Verify the constant. */
-        int transparentKey = 0; /* matches the code */
+        int transparentKey = 10; /* M11_COLOR_FLESH / C10_COLOR_FLESH */
         probe_record(&tally,
                      "INV_GV_245",
-                     transparentKey == 0,
-                     "projectile sprite transparency key is palette index 0 (black)");
+                     transparentKey == 10,
+                     "projectile sprite transparency key is palette index 10 (C10_COLOR_FLESH)");
     }
 
     /* INV_GV_246: projectile sub-cell positioning — the firstProjectileCell

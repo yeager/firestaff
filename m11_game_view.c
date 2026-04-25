@@ -5024,18 +5024,20 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
      * Ref: ReDMCSB VIEWPORT.C — projectile sprites are stored facing left
      * and flipped for right-ward travel relative to party facing. */
     useMirror = (relativeDir == 1) ? 1 : 0;
-    /* Use transparentColor=0 (palette index 0 = black) for projectile
-     * compositing, matching DM1 behaviour.  Previous code used -1
-     * (no transparency), which caused black-bordered projectile
-     * rectangles over corridor backgrounds. */
+    /* DM1 draws object/projectile bitmaps through F0791 with
+     * C10_COLOR_FLESH as the transparent key. Fireball native graphics
+     * have palette index 10 in their border, so keying on black leaves a
+     * visible square backing. */
     if (useMirror) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, framebufferWidth,
                                          framebufferHeight,
-                                         drawX, drawY, drawW, drawH, 0);
+                                         drawX, drawY, drawW, drawH,
+                                         M11_COLOR_MAGENTA);
     } else {
         M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
                                    framebufferHeight,
-                                   drawX, drawY, drawW, drawH, 0);
+                                   drawX, drawY, drawW, drawH,
+                                   M11_COLOR_MAGENTA);
     }
     return 1;
 }
