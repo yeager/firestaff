@@ -116,6 +116,7 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
         }
     } else {
         champ->sex = 0;
+        return 0;
     }
     return 1;
 }

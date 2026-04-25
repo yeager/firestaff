@@ -430,6 +430,9 @@ int main(int argc, char* argv[]) {
               "Champion mirror parser rejects non-source sex byte");
         CHECK(champ.sex == 0,
               "Champion mirror parser clears stale sex before rejecting malformed record");
+        CHECK(F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+                  "STAMM|BLADECASTER|M|AADFACNAAAAP", &champ) == 0,
+              "Champion mirror parser rejects missing empty source field before sex");
     }
 
     /* Test 8: Sensor identification */
