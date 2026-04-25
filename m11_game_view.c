@@ -7234,6 +7234,55 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
     return 1;
 }
 
+static int m11_draw_dm1_zone_blit_maybe_flip(const M11_GameViewState* state,
+                                             unsigned char* framebuffer,
+                                             int fbW,
+                                             int fbH,
+                                             const M11_DM1ZoneBlit* blit,
+                                             int transparentColor,
+                                             int flipHorizontal) {
+    const M11_AssetSlot* slot;
+    int y;
+    if (!flipHorizontal) {
+        return m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, blit, transparentColor);
+    }
+    if (!state || !state->assetsAvailable || !blit || !framebuffer) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)blit->graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels || slot->width <= 0 || slot->height <= 0) {
+        return 0;
+    }
+    if (blit->srcX < 0 || blit->srcY < 0 ||
+        blit->srcX + blit->width > slot->width ||
+        blit->srcY + blit->height > slot->height) {
+        return 0;
+    }
+    for (y = 0; y < blit->height; ++y) {
+        int x;
+        int fbY = M11_VIEWPORT_Y + blit->dstY + y;
+        if (fbY < 0 || fbY >= fbH) {
+            continue;
+        }
+        for (x = 0; x < blit->width; ++x) {
+            int fbX = M11_VIEWPORT_X + blit->dstX + x;
+            int sx = blit->srcX + (blit->width - 1 - x);
+            int sy = blit->srcY + y;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) {
+                continue;
+            }
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+    return 1;
+}
+
 static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int fbW,
@@ -7599,20 +7648,21 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         int relForward;
         int relSide;
         int increment;
+        int flipHorizontal;
         M11_DM1ZoneBlit blit;
     } M11_DM1FloorOrnSpec;
     static const M11_DM1FloorOrnSpec kOrnaments[] = {
-        {3,-2,0,{0,39,0,0,   66,1, 6}},
-        {3, 2,0,{0,0, 0,223, 66,1, 6}},
-        {3,-1,0,{0,0, 0,32,  67,40,6}},
-        {3, 0,1,{0,0, 0,99,  67,26,6}},
-        {3, 1,0,{0,0, 0,153, 67,40,6}},
-        {2,-1,2,{0,0, 0,1,   77,60,11}},
-        {2, 0,3,{0,0, 0,91,  77,42,11}},
-        {2, 1,2,{0,0, 0,167, 77,57,11}},
-        {1,-1,4,{0,0, 0,0,   96,25,21}},
-        {1, 0,5,{0,0, 0,81,  94,62,23}},
-        {1, 1,4,{0,0, 0,199, 96,25,21}}
+        {3,-2,0,0,{0,39,0,0,   66,1, 6}},
+        {3, 2,0,1,{0,0, 0,223, 66,1, 6}},
+        {3,-1,0,0,{0,0, 0,32,  67,40,6}},
+        {3, 0,1,0,{0,0, 0,99,  67,26,6}},
+        {3, 1,0,1,{0,0, 0,153, 67,40,6}},
+        {2,-1,2,0,{0,0, 0,1,   77,60,11}},
+        {2, 0,3,0,{0,0, 0,91,  77,42,11}},
+        {2, 1,2,1,{0,0, 0,167, 77,57,11}},
+        {1,-1,4,0,{0,0, 0,0,   96,25,21}},
+        {1, 0,5,0,{0,0, 0,81,  94,62,23}},
+        {1, 1,4,1,{0,0, 0,199, 96,25,21}}
     };
     size_t i;
     if (!state || !state->assetsAvailable) {
@@ -7647,7 +7697,9 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         blit.graphicIndex = M11_GFX_FLOOR_ORNAMENT_BASE +
             ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS +
             kOrnaments[i].increment;
-        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 10);
+        (void)m11_draw_dm1_zone_blit_maybe_flip(state, framebuffer, fbW, fbH,
+                                                &blit, 10,
+                                                kOrnaments[i].flipHorizontal);
     }
 }
 
