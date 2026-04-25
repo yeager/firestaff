@@ -6972,12 +6972,14 @@ enum {
     M11_GFX_DOOR_ORNAMENTS_PER_SET = 16,
 
     /* Floor ornament graphics.
-     * In DM1, floor ornaments start at graphic index 247 and each
+     * In DM1/PC 3.4, regular map floor ornaments start at graphic
+     * index 385 and each
      * ornament has 6 perspective variants for the 6 visible floor
      * positions (D3L, D3C, D3R, D2L, D2C, D2R).
-     * Graphic index = 247 + globalOrnamentIndex * 6 + viewOffset.
-     * Ref: ReDMCSB DEFS.H C247_GRAPHIC_FIRST_FLOOR_ORNAMENT. */
-    M11_GFX_FLOOR_ORNAMENT_BASE = 247,
+     * Graphic index = 385 + globalOrnamentIndex * 6 + G0191 increment.
+     * Ref: ReDMCSB DEFS.H M616_GRAPHIC_FIRST_FLOOR_ORNAMENT.
+     * Footprints are the special pre-base ornament at 379..384. */
+    M11_GFX_FLOOR_ORNAMENT_BASE = 385,
     M11_GFX_FLOOR_ORNAMENT_VARIANTS = 6,
 
     /* Stair graphics */
@@ -8627,6 +8629,12 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
                                    int ornamentOrdinal,
                                    int depthIndex,
                                    int sideHint) {
+    static const unsigned char kFloorOrnD3Palette[16] = {
+        0, 12, 1, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 2, 14, 13
+    };
+    static const unsigned char kFloorOrnD2Palette[16] = {
+        0, 1, 2, 3, 4, 3, 6, 7, 5, 9, 10, 11, 12, 13, 14, 15
+    };
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
     int ornW, ornH, drawX, drawY;
@@ -8656,17 +8664,19 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
     }
     if (ornGlobalIdx < 0) return 0;
 
-    /* Select perspective variant based on depth and lateral position.
-     * DM1 variant mapping:
-     *   D3: side<0 → 0(D3L), side==0 → 1(D3C), side>0 → 2(D3R)
-     *   D2: side<0 → 3(D2L), side==0 → 4(D2C), side>0 → 5(D2R)
-     *   D1: use variant 4 (D2C, scaled larger) */
+    /* Select the source native-bitmap increment through
+     * G0191_auc_Graphic558_FloorOrnamentNativeBitmapIndexIncrements:
+     *   D3L2/R2/D3L/D3R -> 0, D3C -> 1
+     *   D2L/D2R -> 2, D2C -> 3
+     *   D1L/D1R -> 4, D1C -> 5
+     * The old 0..5 lateral mapping accidentally used object/creature-like
+     * variants and pointed at the wrong GRAPHICS.DAT art. */
     if (depthIndex >= 2) {
-        variant = (sideHint < 0) ? 0 : (sideHint > 0) ? 2 : 1;
+        variant = (sideHint == 0) ? 1 : 0;
     } else if (depthIndex == 1) {
-        variant = (sideHint < 0) ? 3 : (sideHint > 0) ? 5 : 4;
+        variant = (sideHint == 0) ? 3 : 2;
     } else {
-        variant = 4; /* D1: reuse D2C variant scaled up */
+        variant = (sideHint == 0) ? 5 : 4;
     }
 
     gfxIdx = (unsigned int)(M11_GFX_FLOOR_ORNAMENT_BASE +
@@ -8702,8 +8712,10 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
     if (sideHint < 0) drawX += rect->w / 6;
     else if (sideHint > 0) drawX -= rect->w / 6;
 
-    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                               drawX, drawY, ornW, ornH, 0);
+    m11_blit_scaled_palette_map(slot, framebuffer, fbW, fbH,
+                                drawX, drawY, ornW, ornH, 0,
+                                depthIndex >= 2 ? kFloorOrnD3Palette :
+                                    (depthIndex == 1 ? kFloorOrnD2Palette : NULL));
     return 1;
 }
 
