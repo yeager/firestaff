@@ -7707,6 +7707,71 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
+                                        unsigned char* framebuffer,
+                                        int fbW,
+                                        int fbH) {
+    typedef struct M11_DM1WallOrnSpec {
+        int relForward;
+        int relSide;
+        int nativeOffset;
+        int flipHorizontal;
+        M11_DM1ZoneBlit blit;
+    } M11_DM1WallOrnSpec;
+    static const M11_DM1WallOrnSpec kWallOrnaments[] = {
+        {3,-2,0,1,{0,0,0,26,  21,10,42}},
+        {3, 2,0,1,{0,0,0,187, 22,10,42}},
+        {3,-1,0,0,{0,0,0,80,  22,10,42}},
+        {3, 1,0,1,{0,0,0,134, 22,10,42}},
+        {3,-1,1,0,{0,0,0,0,   16,90,56}},
+        {3, 0,1,0,{0,0,0,67,  16,90,56}},
+        {3, 1,1,0,{0,0,0,135, 16,89,56}},
+        {2,-1,0,0,{0,0,0,66,  24,10,42}},
+        {2, 1,0,1,{0,0,0,149, 24,10,42}},
+        {2,-1,1,0,{0,35,0,0,  19,55,56}},
+        {2, 0,1,0,{0,0,0,67,  19,90,56}},
+        {2, 1,1,0,{0,0,0,169, 19,55,56}},
+        {1,-1,0,0,{0,0,0,50,  28,10,42}},
+        {1, 1,0,1,{0,0,0,165, 28,10,42}},
+        {1, 0,1,0,{0,0,0,67,  22,90,56}}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kWallOrnaments) / sizeof(kWallOrnaments[0]); ++i) {
+        M11_ViewportCell cell;
+        M11_DM1ZoneBlit blit;
+        int localIdx;
+        int mapIdx;
+        int ornGlobalIdx = -1;
+        if (!m11_sample_viewport_cell(state, kWallOrnaments[i].relForward, kWallOrnaments[i].relSide, &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_WALL || cell.wallOrnamentOrdinal <= 0) {
+            continue;
+        }
+        mapIdx = state->world.party.mapIndex;
+        localIdx = cell.wallOrnamentOrdinal - 1;
+        m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+        if (mapIdx >= 0 && mapIdx < 32 && state->ornamentCacheLoaded[mapIdx] &&
+            localIdx >= 0 && localIdx < 16) {
+            ornGlobalIdx = state->wallOrnamentIndices[mapIdx][localIdx];
+        } else {
+            ornGlobalIdx = localIdx;
+        }
+        if (ornGlobalIdx < 0) {
+            continue;
+        }
+        blit = kWallOrnaments[i].blit;
+        blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 +
+            kWallOrnaments[i].nativeOffset;
+        (void)m11_draw_dm1_zone_blit_maybe_flip(state, framebuffer, fbW, fbH,
+                                                &blit, 10,
+                                                kWallOrnaments[i].flipHorizontal);
+    }
+}
+
 static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
                                        const M11_ViewportCell* cell) {
     int northSouth;
@@ -12624,6 +12689,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);

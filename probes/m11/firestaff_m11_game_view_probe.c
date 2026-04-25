@@ -1567,6 +1567,11 @@ int main(int argc, char** argv) {
                 {2,-1},{2,0},{2,1},
                 {1,-1},{1,0},{1,1}
             };
+            static const ProbeFocusedPos kWallOrnamentPositions[] = {
+                {3,-2},{3,2},{3,-1},{3,1},{3,-1},{3,0},{3,1},
+                {2,-1},{2,1},{2,-1},{2,0},{2,1},
+                {1,-1},{1,1},{1,0}
+            };
             int changedPit = 0;
             int changedInvisiblePit = 0;
             int changedStairsFront = 0;
@@ -1574,6 +1579,7 @@ int main(int argc, char** argv) {
             int changedTeleporter = 0;
             int changedFloorOrnament = 0;
             int changedFootprints = 0;
+            int changedWallOrnament = 0;
             size_t pi;
             for (pi = 0; pi < sizeof(kPitPositions) / sizeof(kPitPositions[0]); ++pi) {
                 probe_reset_synthetic_view_to_corridor(&focusView);
@@ -1707,6 +1713,35 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_38J",
                          changedFootprints,
                          "focused viewport: special footprints floor ornament family renders from pre-base graphics");
+            for (pi = 0; pi < sizeof(kWallOrnamentPositions) / sizeof(kWallOrnamentPositions[0]); ++pi) {
+                int ornX;
+                int ornY;
+                int ornSquare;
+                probe_reset_synthetic_view_to_corridor(&focusView);
+                focusView.world.dungeon->maps[0].wallOrnamentCount = 1;
+                focusView.ornamentCacheLoaded[0] = 1;
+                focusView.wallOrnamentIndices[0][0] = 0;
+                ornX = focusView.world.party.mapX + kWallOrnamentPositions[pi].relSide;
+                ornY = focusView.world.party.mapY - kWallOrnamentPositions[pi].relForward;
+                probe_set_square(focusView.world.dungeon, ornX, ornY,
+                                 (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+                memset(baseFb, 0, sizeof(baseFb));
+                M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                ornSquare = ornX * (int)focusView.world.dungeon->maps[0].height + ornY;
+                if (focusView.world.things->sensors && ornSquare >= 0 &&
+                    ornSquare < focusView.world.things->squareFirstThingCount) {
+                    focusView.world.things->squareFirstThings[ornSquare] =
+                        (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+                }
+                memset(teleporterFb, 0, sizeof(teleporterFb));
+                M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
+                if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
+                    ++changedWallOrnament;
+                }
+            }
+            probe_record(&tally, "INV_GV_38K",
+                         changedWallOrnament == (int)(sizeof(kWallOrnamentPositions) / sizeof(kWallOrnamentPositions[0])),
+                         "focused viewport: all source-bound wall ornament specs change their wall frames");
         } else {
             probe_record(&tally, "INV_GV_38E", 0,
                          "focused viewport: normal pit zone matrix requires GRAPHICS.DAT assets");
@@ -1720,6 +1755,8 @@ int main(int argc, char** argv) {
                          "focused viewport: floor ornament matrix requires GRAPHICS.DAT assets");
             probe_record(&tally, "INV_GV_38J", 0,
                          "focused viewport: footprints floor ornament requires GRAPHICS.DAT assets");
+            probe_record(&tally, "INV_GV_38K", 0,
+                         "focused viewport: wall ornament matrix requires GRAPHICS.DAT assets");
         }
 
         if (haveAssets) {
