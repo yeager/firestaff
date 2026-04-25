@@ -170,6 +170,19 @@ enum {
     M11_V1_STATUS_HAND_Y = 10,
     M11_V1_STATUS_HAND_ZONE_W = 16,
     M11_V1_STATUS_HAND_ZONE_H = 16,
+    /* DM1 status-box name zones from layout-696:
+     * C159..C162 clear zones are 43x7 at status-box origin + (0,0).
+     * C163..C166 text zones are type-18 children at +1, clipped to
+     * 42x7.  F0292 clears C159+n to C01 dark gray and centers the
+     * champion name in C163+n. */
+    M11_V1_STATUS_NAME_CLEAR_X = 0,
+    M11_V1_STATUS_NAME_CLEAR_Y = 0,
+    M11_V1_STATUS_NAME_CLEAR_W = 43,
+    M11_V1_STATUS_NAME_CLEAR_H = 7,
+    M11_V1_STATUS_NAME_TEXT_X = 1,
+    M11_V1_STATUS_NAME_TEXT_Y = 0,
+    M11_V1_STATUS_NAME_TEXT_W = 42,
+    M11_V1_STATUS_NAME_TEXT_H = 7,
     M11_V1_BAR_BOTTOM_OFFSET = 26,  /* zones 195/199/203 d2 (bottom anchor) */
     M11_UTILITY_PANEL_X = 218,
     M11_UTILITY_PANEL_Y = 28,
@@ -13883,6 +13896,34 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
     return M11_GFX_SLOT_BOX_NORMAL;
 }
 
+int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
+                                      int championSlot) {
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        championSlot >= state->world.party.championCount ||
+        !state->world.party.champions[championSlot].present ||
+        state->world.party.champions[championSlot].hp.current == 0) {
+        return -1;
+    }
+    /* CHAMDRAW.C F0292: leader name C11 yellow, others C09 gold. */
+    return (championSlot == state->world.party.activeChampionIndex)
+        ? M11_COLOR_YELLOW
+        : M11_COLOR_ORANGE;
+}
+
+int M11_GameView_GetV1StatusNameZone(int championSlot,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
+                      M11_V1_STATUS_NAME_CLEAR_X;
+    if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_CLEAR_Y;
+    if (outW) *outW = M11_V1_STATUS_NAME_CLEAR_W;
+    if (outH) *outH = M11_V1_STATUS_NAME_CLEAR_H;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex) {
@@ -14669,28 +14710,28 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * text color (yellow for leader, gold otherwise), not a
              * double rectangular border around the status box. */
 
-            /* Champion icon from GRAPHICS.DAT graphic 28 (19×14 per
-             * champion).  Blit into the left side of the status box,
-             * with the name to the right. Falls back to text-only. */
-            {
-                int drewIcon = 0;
+            /* V1 champion name/title status text.  Source F0292 does
+             * not draw the 19x14 champion icon inside the compact
+             * status box.  It clears C159+n (43x7) to C01 dark gray
+             * and prints the champion name centered in C163+n:
+             * leader C11 yellow, other champions C09 gold. */
+            if (!useV2PartyHud && !isDead) {
+                M11_TextStyle nameStyle = g_text_small;
+                nameStyle.color = (unsigned char)M11_GameView_GetV1StatusNameColor(state, slot);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + M11_V1_STATUS_NAME_CLEAR_X,
+                              y + M11_V1_STATUS_NAME_CLEAR_Y,
+                              M11_V1_STATUS_NAME_CLEAR_W,
+                              M11_V1_STATUS_NAME_CLEAR_H,
+                              M11_COLOR_GRAY);
+                m11_draw_text_centered_in_rect(
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    x + M11_V1_STATUS_NAME_TEXT_X,
+                    y + M11_V1_STATUS_NAME_TEXT_Y,
+                    M11_V1_STATUS_NAME_TEXT_W,
+                    name, &nameStyle);
+            } else {
                 int nameOffX = 4;
-                if (state->assetsAvailable) {
-                    const M11_AssetSlot* iconStrip = M11_AssetLoader_Load(
-                        (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_ICONS);
-                    if (iconStrip && iconStrip->width > 0 && iconStrip->height > 0) {
-                        int iconCol = champ->portraitIndex & 3;
-                        int srcX = iconCol * M11_CHAMPION_ICON_W;
-                        if (srcX + M11_CHAMPION_ICON_W <= (int)iconStrip->width) {
-                            M11_AssetLoader_BlitRegion(iconStrip,
-                                srcX, 0, M11_CHAMPION_ICON_W, M11_CHAMPION_ICON_H,
-                                framebuffer, framebufferWidth, framebufferHeight,
-                                x + 3, y + 3, 0);
-                            drewIcon = 1;
-                            nameOffX = 3 + M11_CHAMPION_ICON_W + 2;
-                        }
-                    }
-                }
                 if (slot == activeIndex) {
                     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                                   x + nameOffX, y + 3, name, &g_text_shadow);
@@ -14698,7 +14739,6 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                                   x + nameOffX, y + 3, name, &g_text_small);
                 }
-                (void)drewIcon;
             }
             if (isDead) {
                 M11_TextStyle ds = g_text_small;

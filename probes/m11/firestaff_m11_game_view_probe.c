@@ -29,6 +29,7 @@ enum {
     PROBE_COLOR_LIGHT_GREEN = 7,   /* DM PC VGA slot 7  — Green       */
     PROBE_COLOR_LIGHT_CYAN  = 4,   /* DM PC VGA slot 4  — Cyan        */
     PROBE_COLOR_LIGHT_RED   = 9,   /* DM PC VGA slot 9  — Orange/Gold */
+    PROBE_COLOR_ORANGE      = 9,   /* DM PC VGA slot 9  — Gold in DM UI */
     PROBE_COLOR_RED         = 8,   /* DM PC VGA slot 8  — Red (C08)   */
     PROBE_COLOR_MAGENTA     = 10,  /* DM PC VGA slot 10 — Tan/Skin    */
     PROBE_COLOR_YELLOW      = 11,  /* DM PC VGA slot 11 — Yellow      */
@@ -1059,6 +1060,34 @@ int main(int argc, char** argv) {
                                           PROBE_PARTY_PANEL_Y + 10,
                                           18, 18) > 40U,
                  "V1 champion HUD draws source ready/action hand slot zones inside the status box");
+
+    {
+        int nameX = 0, nameY = 0, nameW = 0, nameH = 0;
+        int nameX1 = 0, nameY1 = 0, nameW1 = 0, nameH1 = 0;
+        M11_GameView_GetV1StatusNameZone(0, &nameX, &nameY, &nameW, &nameH);
+        M11_GameView_GetV1StatusNameZone(1, &nameX1, &nameY1, &nameW1, &nameH1);
+        probe_record(&tally,
+                     "INV_GV_15E2",
+                     nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&
+                         nameW == 43 && nameH == 7 &&
+                         nameX1 == PROBE_BOTTOM_PANEL_X + 69 && nameY1 == PROBE_PARTY_PANEL_Y &&
+                         nameW1 == 43 && nameH1 == 7,
+                     "V1 champion HUD name clear zones match layout-696 C159..C162 geometry");
+        probe_record(&tally,
+                     "INV_GV_15E3",
+                     M11_GameView_GetV1StatusNameColor(&syntheticView, 0) == PROBE_COLOR_YELLOW &&
+                         M11_GameView_GetV1StatusNameColor(&syntheticView, 1) == PROBE_COLOR_ORANGE,
+                     "V1 champion HUD name colors follow F0292 leader yellow / non-leader gold");
+        probe_record(&tally,
+                     "INV_GV_15E4",
+                     probe_count_color(syntheticFramebuffer, 320,
+                                       nameX, nameY, nameW, nameH,
+                                       PROBE_COLOR_YELLOW) > 0U &&
+                         probe_count_color(syntheticFramebuffer, 320,
+                                           nameX1, nameY1, nameW1, nameH1,
+                                           PROBE_COLOR_ORANGE) > 0U,
+                     "V1 champion HUD renders source-colored names inside the compact status name zones");
+    }
 
     probe_record(&tally,
                  "INV_GV_15F",

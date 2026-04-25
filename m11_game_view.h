@@ -696,6 +696,13 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate);
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
+int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
+                                      int championSlot);
+int M11_GameView_GetV1StatusNameZone(int championSlot,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH);
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                             int championSlot,
                                             int handIndex);

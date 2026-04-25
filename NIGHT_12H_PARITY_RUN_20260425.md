@@ -37,6 +37,13 @@ Completed batches:
   - Evidence: `parity-evidence/dm1_all_graphics_phase797_896_v1_hud_empty_hand_icons.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe -j2`; `ctest --test-dir build --output-on-failure`; `./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `466/466 invariants passed`.
 
+- Passes 897–996 — V1 HUD champion name zone/color parity.
+  - Source-backed layout-696 `C159..C166` compact status-box name zones: 43×7 clear zone, 42×7 centered text child, 69 px champion stride.
+  - Replaced invented in-status-box portrait/name-offset treatment in V1 with `F0292_CHAMPION_DrawState` behavior: clear dark gray, centered name, leader yellow / non-leader gold.
+  - Added shared `M11_GameView_GetV1StatusNameZone(...)` / `M11_GameView_GetV1StatusNameColor(...)` and invariants `INV_GV_15E2`..`INV_GV_15E4`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase897_996_v1_hud_name_zones.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe -j2`; `ctest --test-dir build --output-on-failure`; `./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `469/469 invariants passed`.
+
 Suggested next HUD targets:
 1. Status hand object icon parity hardening: exact empty/occupied hand icon indices and pixel-backed invariants.
 2. Name/title/status-box text zone placement/color parity.
