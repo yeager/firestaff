@@ -8658,6 +8658,34 @@ static int m11_object_source_shift_value(int shiftSet, int shiftIndex) {
     return (int)kShiftSets[shiftSet][shiftIndex];
 }
 
+static unsigned int m11_object_aspect_graphic_info(int aspectIndex) {
+    /* DUNVIEW.C G0209_as_Graphic558_ObjectAspects[].GraphicInfo. */
+    static const unsigned char kGraphicInfo[85] = {
+        0x11,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
+        0x00,0x00,0x00,0x00,0x00
+    };
+    if (aspectIndex < 0 || aspectIndex >= 85) return 0u;
+    return (unsigned int)kGraphicInfo[aspectIndex];
+}
+
+static int m11_object_aspect_coordinate_set(int aspectIndex) {
+    /* DUNVIEW.C G0209_as_Graphic558_ObjectAspects[].CoordinateSet. */
+    static const unsigned char kCoordinateSet[85] = {
+        0,1,1,1,1,1,0,0,0,1,0,1,1,0,2,1,
+        1,0,1,2,2,1,2,0,0,1,1,1,1,0,1,1,
+        1,0,1,1,0,0,1,1,0,0,1,1,0,2,1,1,
+        1,1,1,0,0,1,0,0,0,0,1,1,1,1,1,1,
+        1,0,1,1,1,0,0,0,0,1,1,1,0,1,1,1,
+        1,0,1,1,0
+    };
+    if (aspectIndex < 0 || aspectIndex >= 85) return 0;
+    return (int)kCoordinateSet[aspectIndex];
+}
+
 static int m11_creature_source_palette_change(int depthPaletteIndex,
                                               int paletteIndex) {
     /* DUNVIEW.C G0221/G0222 creature palette-change tables for D3/D2
@@ -11750,6 +11778,14 @@ void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
 
 int M11_GameView_GetObjectShiftValue(int shiftSet, int shiftIndex) {
     return m11_object_source_shift_value(shiftSet, shiftIndex);
+}
+
+unsigned int M11_GameView_GetObjectAspectGraphicInfo(int aspectIndex) {
+    return m11_object_aspect_graphic_info(aspectIndex);
+}
+
+int M11_GameView_GetObjectAspectCoordinateSet(int aspectIndex) {
+    return m11_object_aspect_coordinate_set(aspectIndex);
 }
 
 int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,

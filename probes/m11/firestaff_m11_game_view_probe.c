@@ -3487,6 +3487,16 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectShiftValue(2, 7) == -1,
                      "object shift values match G0223 samples");
 
+        /* INV_GV_114E2: Object aspect GraphicInfo/CoordinateSet table is G0209. */
+        probe_record(&tally,
+                     "INV_GV_114E2",
+                     M11_GameView_GetObjectAspectGraphicInfo(0) == 0x11u &&
+                     M11_GameView_GetObjectAspectGraphicInfo(63) == 0x01u &&
+                     M11_GameView_GetObjectAspectGraphicInfo(79) == 0x01u &&
+                     M11_GameView_GetObjectAspectCoordinateSet(14) == 2 &&
+                     M11_GameView_GetObjectAspectCoordinateSet(45) == 2,
+                     "object aspect GraphicInfo and CoordinateSet samples match G0209");
+
         /* INV_GV_114F: Creature derived-bitmap palette change tables
          * match source G0221/G0222. */
         probe_record(&tally,
