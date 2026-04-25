@@ -1711,16 +1711,36 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38M",
                      haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C fireball projectile sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38T",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, projectileFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C fireball projectile clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38Q",
                      haveAssets && memcmp(baseFb, lightningFb, sizeof(baseFb)) != 0 &&
                      memcmp(projectileFb, lightningFb, sizeof(projectileFb)) != 0,
                      "focused viewport: D1C lightning projectile differs from empty and fireball frames");
+        probe_record(&tally, "INV_GV_38U",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, lightningFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C lightning projectile clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38N",
                      haveAssets && memcmp(baseFb, objectFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C dagger object sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38V",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, objectFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C dagger object clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38O",
                      haveAssets && memcmp(baseFb, objectGapFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C object sprite with G0209 native-index gap changes the corridor frame");
+        probe_record(&tally, "INV_GV_38W",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, multiObjectFb,
+                                                    320, 200, 0, 33, 224, 136) == 0,
+                     "focused viewport: D1C multi-object pile clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38P",
                      haveAssets && memcmp(objectFb, multiObjectFb, sizeof(objectFb)) != 0,
                      "focused viewport: D1C multi-object pile differs from single-object frame");
