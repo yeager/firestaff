@@ -5002,6 +5002,36 @@ int main(int argc, char** argv) {
                      "V1 dialog overlay blits source C000 dialog-box backdrop");
     }
 
+    /* INV_GV_172D: V1 dialog overlay prints source version-zone text. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned int versionPixels;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        versionPixels = probe_count_color(fb_dlg,
+                                          320,
+                                          192,
+                                          40,
+                                          28,
+                                          8,
+                                          PROBE_COLOR_DARK_GRAY) +
+                        probe_count_color(fb_dlg,
+                                          320,
+                                          192,
+                                          40,
+                                          28,
+                                          8,
+                                          13); /* C13_COLOR_LIGHTEST_GRAY */
+        probe_record(&tally,
+                     "INV_GV_172D",
+                     versionPixels >= 6,
+                     "V1 dialog overlay prints source C450 version-zone text");
+    }
+
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
     {
         M11_GameViewState dlgView;

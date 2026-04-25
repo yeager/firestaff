@@ -15467,6 +15467,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
         }
+        if (drewSourceBackdrop) {
+            M11_TextStyle versionStyle = g_text_small;
+            versionStyle.color = M11_COLOR_LIGHT_GRAY;
+            versionStyle.shadowColor = M11_COLOR_DARK_GRAY;
+            /* ReDMCSB DIALOG.C:F0427 prints "V3.4" into
+             * C450_ZONE_DIALOG_VERSION after expanding the source
+             * C000 dialog-box graphic.  ZONES.H reconstruction gives
+             * type 4 / parent 4 / d1=192 / d2=7; parent zone 4 is the
+             * 224×136 viewport, so screen origin is viewport + d1/d2. */
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + 192,
+                          M11_VIEWPORT_Y + 7,
+                          "V3.4", &versionStyle);
+        }
         /* Word-wrap the dialog text into the box (simple two-line split) */
         textY = drewSourceBackdrop
                     ? (M11_VIEWPORT_Y + 72)
