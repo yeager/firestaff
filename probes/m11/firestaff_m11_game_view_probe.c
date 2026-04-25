@@ -4821,6 +4821,34 @@ int main(int argc, char** argv) {
                      "Endgame victory overlay renders differently from normal");
     }
 
+    /* INV_GV_165B: V1 endgame overlay suppresses debug-only tick/help text. */
+    {
+        M11_GameViewState endgameDefault;
+        M11_GameViewState endgameDebug;
+        unsigned char fb_default[320 * 200];
+        unsigned char fb_debug[320 * 200];
+        int diff = 0, i;
+        memcpy(&endgameDefault, &gameView, sizeof(endgameDefault));
+        memcpy(&endgameDebug, &gameView, sizeof(endgameDebug));
+        endgameDefault.gameWon = 1;
+        endgameDefault.gameWonTick = 100;
+        endgameDefault.showDebugHUD = 0;
+        endgameDebug.gameWon = 1;
+        endgameDebug.gameWonTick = 100;
+        endgameDebug.showDebugHUD = 1;
+        memset(fb_default, 0, sizeof(fb_default));
+        M11_GameView_Draw(&endgameDefault, fb_default, 320, 200);
+        memset(fb_debug, 0, sizeof(fb_debug));
+        M11_GameView_Draw(&endgameDebug, fb_debug, 320, 200);
+        for (i = 108 * 320; i < 145 * 320; ++i) {
+            if (fb_default[i] != fb_debug[i]) { diff = 1; break; }
+        }
+        probe_record(&tally,
+                     "INV_GV_165B",
+                     diff,
+                     "V1 endgame overlay keeps tick/help text debug-only");
+    }
+
     /* INV_GV_166: HandleInput in gameWon state ignores movement. */
     {
         M11_GameViewState endgameView;
@@ -4902,6 +4930,32 @@ int main(int argc, char** argv) {
                      "INV_GV_172",
                      diff,
                      "Dialog overlay renders differently from normal");
+    }
+
+    /* INV_GV_172B: V1 dialog overlay suppresses placeholder title/footer. */
+    {
+        M11_GameViewState dlgDefault;
+        M11_GameViewState dlgDebug;
+        unsigned char fb_default[320 * 200];
+        unsigned char fb_debug[320 * 200];
+        int diff = 0, i;
+        memcpy(&dlgDefault, &gameView, sizeof(dlgDefault));
+        memcpy(&dlgDebug, &gameView, sizeof(dlgDebug));
+        dlgDefault.showDebugHUD = 0;
+        dlgDebug.showDebugHUD = 1;
+        M11_GameView_ShowDialogOverlay(&dlgDefault, "BEWARE THE PIT");
+        M11_GameView_ShowDialogOverlay(&dlgDebug, "BEWARE THE PIT");
+        memset(fb_default, 0, sizeof(fb_default));
+        M11_GameView_Draw(&dlgDefault, fb_default, 320, 200);
+        memset(fb_debug, 0, sizeof(fb_debug));
+        M11_GameView_Draw(&dlgDebug, fb_debug, 320, 200);
+        for (i = 55 * 320; i < 128 * 320; ++i) {
+            if (fb_default[i] != fb_debug[i]) { diff = 1; break; }
+        }
+        probe_record(&tally,
+                     "INV_GV_172B",
+                     diff,
+                     "V1 dialog overlay keeps placeholder title/footer debug-only");
     }
 
     /* INV_GV_173: HandleInput dismisses dialog overlay. */

@@ -15413,15 +15413,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       56, 80, "LORD CHAOS IS DEFEATED.", &g_text_shadow);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       52, 92, "THE FIRESTAFF IS RESTORED.", &g_text_shadow);
-        {
+        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
             char wonLine[48];
             snprintf(wonLine, sizeof(wonLine), "VICTORY AT TICK %u",
                      (unsigned int)state->gameWonTick);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           80, 112, wonLine, &g_text_small);
         }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      80, 132, "ESC TO RETURN TO MENU", &g_text_small);
+        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          80, 132, "ESC TO RETURN TO MENU", &g_text_small);
+        }
     }
 
     /* Dialog box overlay for text plaque inspection */
@@ -15434,10 +15436,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       dlgX, dlgY, dlgW, dlgH, M11_COLOR_YELLOW);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       dlgX + 2, dlgY + 2, dlgW - 4, dlgH - 4, M11_COLOR_BROWN);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
+        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
+        }
         /* Word-wrap the dialog text into the box (simple two-line split) */
-        textY = dlgY + 28;
+        textY = dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18);
         if (strlen(state->dialogOverlayText) <= 40) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 12, textY, state->dialogOverlayText,
@@ -15459,9 +15463,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 12, textY + 14, line2, &g_text_shadow);
         }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      dlgX + 50, dlgY + dlgH - 16,
-                      "PRESS ANY KEY TO DISMISS", &g_text_small);
+        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX + 50, dlgY + dlgH - 16,
+                          "PRESS ANY KEY TO DISMISS", &g_text_small);
+        }
     }
 
     /* Rest / death overlay */
