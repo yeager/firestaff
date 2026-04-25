@@ -7249,6 +7249,74 @@ static int m11_dm1_door_ornament_info(const M11_GameViewState* state,
     return 1;
 }
 
+static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
+                                                unsigned char* framebuffer,
+                                                int fbW,
+                                                int fbH,
+                                                const M11_DM1ZoneBlit* panel,
+                                                int depthIndex,
+                                                int ornamentOrdinal) {
+    static const int kAnchorX[3][3] = {
+        {28, 42, 63}, /* coordinate set 0: right-aligned anchors */
+        {15, 22, 33}, /* coordinate set 1: left/top-ish anchors */
+        {34, 50, 75}  /* coordinate set 2: right/bottom anchors */
+    };
+    static const int kAnchorY[3][3] = {
+        {13, 17, 22},
+        {23, 35, 53},
+        {37, 53, 80}
+    };
+    const M11_AssetSlot* slot;
+    int graphicIndex;
+    int coordSet;
+    int scale;
+    int viewIndex;
+    int ornW;
+    int ornH;
+    int relX;
+    int relY;
+    if (!state || !state->assetsAvailable || !panel || ornamentOrdinal <= 0) {
+        return;
+    }
+    if (depthIndex < 0 || depthIndex > 2) {
+        return;
+    }
+    if (!m11_dm1_door_ornament_info(state, ornamentOrdinal, &graphicIndex, &coordSet)) {
+        return;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)graphicIndex);
+    if (!slot || slot->width <= 0 || slot->height <= 0) {
+        return;
+    }
+    if (coordSet < 0 || coordSet > 2) {
+        coordSet = 1;
+    }
+    scale = (depthIndex == 0) ? 32 : ((depthIndex == 1) ? 21 : 14);
+    viewIndex = (depthIndex == 0) ? 2 : ((depthIndex == 1) ? 1 : 0);
+    ornW = m11_dm1_scaled_dimension(slot->width, scale);
+    ornH = m11_dm1_scaled_dimension(slot->height, scale);
+    if (ornW <= 0 || ornH <= 0) {
+        return;
+    }
+    if (coordSet == 0) {
+        relX = kAnchorX[coordSet][viewIndex] - ornW;
+        relY = kAnchorY[coordSet][viewIndex];
+    } else if (coordSet == 1) {
+        relX = kAnchorX[coordSet][viewIndex];
+        relY = kAnchorY[coordSet][viewIndex] - ornH;
+    } else {
+        relX = kAnchorX[coordSet][viewIndex] - ornW;
+        relY = kAnchorY[coordSet][viewIndex] - ornH;
+    }
+    M11_AssetLoader_BlitScaled(slot,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + panel->dstX + relX,
+                               M11_VIEWPORT_Y + panel->dstY + relY,
+                               ornW, ornH,
+                               9);
+}
+
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int fbW,
@@ -7668,6 +7736,74 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
             }
         }
         (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &panel, 10);
+    }
+}
+
+static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
+                                             unsigned char* framebuffer,
+                                             int fbW,
+                                             int fbH) {
+    static const M11_DM1SideDoorSpec kSpecs[] = {
+        {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
+        {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
+        {3, -1, 2, {M11_GFX_DOOR_SET0_D3, 1,  0, 30,  29, 43, 38}, {0}, {0}, 0},
+        {3,  1, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 151, 29, 43, 38}, {0}, {0}, 0},
+        {2, -1, 1, {M11_GFX_DOOR_SET0_D2, 4, 0, 0,   24, 60, 59}, {0}, {0}, 0},
+        {2,  1, 1, {M11_GFX_DOOR_SET0_D2, 0, 0, 164, 23, 60, 59}, {0}, {0}, 0},
+        {1, -1, 0, {M11_GFX_DOOR_SET0_D1, 64, 0, 0,   18, 32, 86}, {0}, {0}, 0},
+        {1,  1, 0, {M11_GFX_DOOR_SET0_D1, 0,  0, 192, 18, 32, 86}, {0}, {0}, 0}
+    };
+    static const int kDoorOpenSrcY[3][4] = {
+        {0, 65, 43, 21},
+        {0, 44, 29, 14},
+        {0, 27, 17, 7}
+    };
+    static const int kDoorOpenHeight[3][4] = {
+        {0, 23, 45, 67},
+        {0, 17, 32, 47},
+        {0, 11, 21, 31}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kSpecs) / sizeof(kSpecs[0]); ++i) {
+        M11_ViewportCell cell;
+        M11_DM1ZoneBlit panel;
+        int panelGraphic;
+        if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR ||
+            m11_viewport_cell_is_open(&cell) || cell.doorOrnamentOrdinal <= 0) {
+            continue;
+        }
+        panel = kSpecs[i].panel;
+        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);
+        if (panelGraphic >= 0) {
+            panel.graphicIndex = panelGraphic;
+        }
+        if (cell.doorState >= 1 && cell.doorState <= 3) {
+            panel.srcY = kDoorOpenSrcY[kSpecs[i].depthIndex][cell.doorState];
+            panel.height = kDoorOpenHeight[kSpecs[i].depthIndex][cell.doorState];
+            if (kSpecs[i].depthIndex == 0) {
+                panel.dstY = 17;
+            } else if (kSpecs[i].depthIndex == 2) {
+                panel.dstY = (kSpecs[i].relSide == -1 || kSpecs[i].relSide == 1) ? 29 : 28;
+                if (kSpecs[i].relSide == -1) {
+                    panel.srcX = 0;
+                    panel.dstX = 30;
+                    panel.width = 44;
+                } else if (kSpecs[i].relSide == 1) {
+                    panel.srcX = 0;
+                    panel.dstX = 150;
+                    panel.width = 44;
+                }
+            }
+        }
+        m11_draw_dm1_door_ornament_on_panel(state, framebuffer, fbW, fbH,
+                                            &panel, kSpecs[i].depthIndex,
+                                            cell.doorOrnamentOrdinal);
     }
 }
 
@@ -11907,6 +12043,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
