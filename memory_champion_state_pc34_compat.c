@@ -41,6 +41,43 @@ void F0600_CHAMPION_InitEmpty_Compat(struct ChampionState_Compat* champ) {
     }
 }
 
+static void pack_text_field(unsigned char* dst, int dstLen,
+                            const char* src, int srcLen) {
+    int i;
+    for (i = 0; i < dstLen; ++i) {
+        dst[i] = ' ';
+    }
+    for (i = 0; i < dstLen && i < srcLen; ++i) {
+        unsigned char ch = (unsigned char)src[i];
+        dst[i] = (ch >= 0x20 && ch <= 0x7e) ? ch : ' ';
+    }
+}
+
+int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+    const char* mirrorText,
+    struct ChampionState_Compat* champ)
+{
+    const char* nameStart;
+    const char* nameEnd;
+    const char* titleStart;
+    const char* titleEnd;
+
+    if (!mirrorText || !champ) return 0;
+
+    nameStart = mirrorText;
+    nameEnd = strchr(nameStart, '|');
+    if (!nameEnd || nameEnd == nameStart) return 0;
+    titleStart = nameEnd + 1;
+    titleEnd = strchr(titleStart, '|');
+    if (!titleEnd) return 0;
+
+    pack_text_field(champ->name, CHAMPION_NAME_LENGTH,
+                    nameStart, (int)(nameEnd - nameStart));
+    pack_text_field(champ->title, CHAMPION_TITLE_LENGTH,
+                    titleStart, (int)(titleEnd - titleStart));
+    return 1;
+}
+
 int F0601_CHAMPION_InitPartyFromDungeon_Compat(
     const struct DungeonDatState_Compat* dungeon,
     struct PartyState_Compat* party)

@@ -202,4 +202,14 @@ int F0605_PARTY_Deserialize_Compat(
     const unsigned char* buf,
     int bufSize);
 
+/*
+ * Parse a DUNGEON.DAT champion mirror text string into identity fields.
+ * Source text format is NAME|TITLE||SEX|... (decoded separator = '|').
+ * Only the raw packed Name[8] and Title[20] bytes are written here; gameplay
+ * stats remain owned by the lifecycle/recruitment path.
+ */
+int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+    const char* mirrorText,
+    struct ChampionState_Compat* champ);
+
 #endif

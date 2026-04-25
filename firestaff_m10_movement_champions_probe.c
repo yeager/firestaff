@@ -124,6 +124,7 @@ int main(int argc, char* argv[]) {
         orig.present = 1;
         orig.portraitIndex = 3;
         memcpy(orig.name, "TESTNAME", 8);
+        memcpy(orig.title, "SOURCE TITLE        ", 20);
         orig.attributes[0] = 50;
         orig.attributes[1] = 40;
         orig.attributes[2] = 30;
@@ -184,6 +185,7 @@ int main(int argc, char* argv[]) {
         origP.champions[0].present = 1;
         origP.champions[0].portraitIndex = 5;
         memcpy(origP.champions[0].name, "HALK    ", 8);
+        memcpy(origP.champions[0].title, "THE BARBARIAN       ", 20);
         origP.champions[0].hp.current = 90;
         origP.champions[0].hp.maximum = 100;
         origP.champions[0].hp.shifted = 200;
@@ -344,6 +346,7 @@ int main(int argc, char* argv[]) {
         orig.present = 1;
         orig.portraitIndex = 3;
         memcpy(orig.name, "TESTNAME", 8);
+        memcpy(orig.title, "SOURCE TITLE        ", 20);
         orig.attributes[0] = 50; orig.attributes[1] = 40;
         orig.attributes[2] = 30; orig.attributes[3] = 60;
         orig.attributes[4] = 20; orig.attributes[5] = 15;
@@ -375,6 +378,7 @@ int main(int argc, char* argv[]) {
         origP.champions[0].present = 1;
         origP.champions[0].portraitIndex = 5;
         memcpy(origP.champions[0].name, "HALK    ", 8);
+        memcpy(origP.champions[0].title, "THE BARBARIAN       ", 20);
         origP.champions[0].hp.current = 90;
         origP.champions[0].hp.maximum = 100;
         origP.champions[0].hp.shifted = 200;
@@ -386,7 +390,20 @@ int main(int argc, char* argv[]) {
               "Party round-trip serialisation is bit-identical");
     }
 
-    /* Test 7: Sensor identification */
+    /* Test 7: DUNGEON.DAT champion mirror text identity parse */
+    {
+        struct ChampionState_Compat champ;
+        F0600_CHAMPION_InitEmpty_Compat(&champ);
+        CHECK(F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+                  "STAMM|BLADECASTER||M|AADFACNAAAAP", &champ) == 1,
+              "Champion mirror text identity parser accepts NAME|TITLE||... source format");
+        CHECK(memcmp(champ.name, "STAMM   ", 8) == 0,
+              "Champion mirror parser packs source Name[8]");
+        CHECK(memcmp(champ.title, "BLADECASTER         ", 20) == 0,
+              "Champion mirror parser packs source Title[20]");
+    }
+
+    /* Test 8: Sensor identification */
     {
         struct SensorOnSquare_Compat sensorResult;
         int foundAnySensor = 0;
