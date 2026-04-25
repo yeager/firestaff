@@ -14,3 +14,5 @@ Identity targets: dark skin, stern angular face, pale eyes, red mouth, large bla
 - B: stricter source-lock attempt; preferred candidate for now if the goal is recognizability.
 
 - C: true-hybrid regeneration after Daniel rejected B as not hybrid enough. Stronger pixel-source foundation: blocky silhouette/color clusters retained, modern detail layered on top.
+
+- D/E: regenerated per Daniel's instruction to match the Nabi/Alex hybrid treatment instead of the too-blocky C. E is preferred over D: closer to polished modern fantasy while retaining source silhouette/color identity.
