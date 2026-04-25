@@ -462,6 +462,8 @@ static void draw_panel(M12_ModernCanvas* c, int x, int y, int w, int h,
 /* Header: logo + title + mode badge                                          */
 /* -------------------------------------------------------------------------- */
 
+static void draw_firestaff_logo_block(M12_ModernCanvas* c, int x, int y);
+
 static void draw_title_centered(M12_ModernCanvas* c) {
     /* Translucent band behind title */
     for (int y = 20; y < 128; ++y) {
@@ -470,6 +472,8 @@ static void draw_title_centered(M12_ModernCanvas* c) {
             blend_pixel(c, x, y, rgb(0, 0, 0), alpha < 0 ? 0 : alpha);
         }
     }
+    draw_firestaff_logo_block(c, 44, 28);
+
     int scale = 10;
     const char* label = "FIRESTAFF";
     ModernTextStyle probe = text_style_make(scale, COLOR_ACCENT_HI(), 0);
@@ -550,6 +554,120 @@ static int slot_for_game_id(const char* id) {
     if (strcmp(id, "csb") == 0) return 1;
     if (strcmp(id, "dm2") == 0) return 2;
     return -1;
+}
+
+static int game_supported(const char* id) {
+    return id && strcmp(id, "dm1") == 0;
+}
+
+static M12_RGB muted_rgb(M12_RGB c) {
+    int avg = ((int)c.r + (int)c.g + (int)c.b) / 3;
+    return rgb(clamp_u8(avg * 7 / 10 + 34),
+               clamp_u8(avg * 7 / 10 + 34),
+               clamp_u8(avg * 7 / 10 + 40));
+}
+
+static void draw_logo_bitmap(M12_ModernCanvas* c, int x, int y, int scale) {
+    if (scale < 1) scale = 1;
+    for (int sy = 0; sy < M12_BRANDING_LOGO_HEIGHT; ++sy) {
+        for (int sx = 0; sx < M12_BRANDING_LOGO_WIDTH; ++sx) {
+            size_t idx = (size_t)sy * (size_t)M12_BRANDING_LOGO_WIDTH + (size_t)sx;
+            if (!g_m12BrandingLogoMask[idx]) continue;
+            unsigned char pi = g_m12BrandingLogoPixels[idx] & 0x0F;
+            M12_RGB col;
+            switch (pi) {
+                case 4: col = rgb(204, 51, 51); break;
+                case 6: col = rgb(176, 112, 48); break;
+                case 7: col = rgb(204, 204, 204); break;
+                case 8: col = rgb(112, 112, 112); break;
+                case 12: col = rgb(255, 102, 102); break;
+                case 14: col = rgb(255, 255, 102); break;
+                case 15: col = rgb(255, 255, 255); break;
+                default: col = COLOR_ACCENT(); break;
+            }
+            fill_rect(c, x + sx * scale, y + sy * scale, scale, scale, col);
+        }
+    }
+}
+
+static void draw_firestaff_logo_block(M12_ModernCanvas* c, int x, int y) {
+    int scale = 1;
+    int logoW = M12_BRANDING_LOGO_WIDTH * scale;
+    int logoH = M12_BRANDING_LOGO_HEIGHT * scale;
+    fill_rounded_rect(c, x - 12, y - 10, logoW + 24, logoH + 20, 14, rgb(14, 12, 24));
+    stroke_rounded_rect(c, x - 12, y - 10, logoW + 24, logoH + 20, 14, COLOR_ACCENT());
+    draw_logo_bitmap(c, x, y, scale);
+}
+
+static void draw_box_art_panel(M12_ModernCanvas* c,
+                               int slotIdx,
+                               int x, int y, int w, int h,
+                               int disabled) {
+    M12_RGB top = rgb(80, 42, 24);
+    M12_RGB bot = rgb(18, 16, 24);
+    M12_RGB accent = COLOR_ACCENT();
+    M12_RGB ink = rgb(10, 9, 12);
+    if (slotIdx == 1) {
+        top = rgb(84, 28, 30);
+        bot = rgb(20, 10, 16);
+        accent = rgb(230, 88, 78);
+    } else if (slotIdx == 2) {
+        top = rgb(24, 58, 86);
+        bot = rgb(8, 18, 32);
+        accent = rgb(118, 190, 230);
+    }
+    if (disabled) {
+        top = muted_rgb(top);
+        bot = muted_rgb(bot);
+        accent = muted_rgb(accent);
+        ink = rgb(42, 42, 48);
+    }
+
+    fill_rounded_rect(c, x, y, w, h, 10, rgb(8, 8, 14));
+    fill_vgradient(c, x + 4, y + 4, w - 8, h - 8, top, bot);
+    stroke_rounded_rect(c, x, y, w, h, 10, disabled ? rgb(118, 118, 126) : accent);
+    fill_rect(c, x + 12, y + 12, w - 24, 3, disabled ? rgb(116, 116, 116) : COLOR_ACCENT_HI());
+
+    if (slotIdx == 0) {
+        /* Dungeon arch + Firestaff silhouette. */
+        fill_rect(c, x + w/2 - 34, y + 42, 68, h - 72, ink);
+        fill_rect(c, x + w/2 - 24, y + 32, 48, 18, ink);
+        for (int i = 0; i < 24; ++i) {
+            fill_rect(c, x + w/2 - 24 + i, y + 32 - i/3, 48 - 2*i, 2, ink);
+        }
+        fill_rect(c, x + w/2 - 3, y + 30, 6, 82, accent);
+        fill_rect(c, x + w/2 - 20, y + 70, 40, 7, accent);
+        fill_rect(c, x + w/2 - 10, y + 22, 20, 12, COLOR_ACCENT_HI());
+    } else if (slotIdx == 1) {
+        /* Chaos eye. */
+        fill_rect(c, x + 24, y + 46, w - 48, 56, rgb(210, 188, 150));
+        fill_rect(c, x + 34, y + 56, w - 68, 36, accent);
+        fill_rect(c, x + w/2 - 16, y + 60, 32, 28, ink);
+        fill_rect(c, x + 20, y + 68, w - 40, 10, top);
+    } else {
+        /* Skullkeep towers. */
+        fill_rect(c, x + 24, y + 50, w - 48, h - 78, rgb(88, 92, 104));
+        fill_rect(c, x + 34, y + 34, 28, h - 62, rgb(104, 110, 124));
+        fill_rect(c, x + w - 62, y + 34, 28, h - 62, rgb(104, 110, 124));
+        fill_rect(c, x + w/2 - 16, y + h - 54, 32, 42, ink);
+        fill_rect(c, x + w - 44, y + 22, 18, 18, accent);
+    }
+
+    ModernTextStyle lbl = text_style_make(2, disabled ? rgb(176,176,180) : COLOR_TEXT(), 1);
+    const char* text = slotIdx == 0 ? "BOX ART" : (slotIdx == 1 ? "CSB BOX ART" : "DM2 BOX ART");
+    draw_text_centered(c, x + w / 2, y + h - 28, text, &lbl);
+
+    if (disabled) {
+        for (int yy = y + 5; yy < y + h - 5; yy += 8) {
+            for (int xx = x + 5; xx < x + w - 5; xx += 8) {
+                blend_pixel(c, xx, yy, rgb(170, 170, 176), 120);
+            }
+        }
+        fill_rounded_rect(c, x + 18, y + h / 2 - 18, w - 36, 36, 8, rgb(42, 42, 48));
+        stroke_rounded_rect(c, x + 18, y + h / 2 - 18, w - 36, 36, 8, rgb(180, 180, 188));
+        ModernTextStyle soon = text_style_make(2, rgb(220, 220, 224), 1);
+        draw_text_centered(c, x + w / 2, y + h / 2 - 6, "COMING SOON", &soon);
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -661,6 +779,9 @@ static void draw_card(M12_ModernCanvas* c,
     if (text_width_px(entry->title, &title) > w - 32) {
         title = text_style_make(2, COLOR_TEXT(), 1);
     }
+    if (entry->kind == M12_MENU_ENTRY_GAME && !game_supported(entry->gameId)) {
+        title.color = rgb(174, 174, 182);
+    }
     draw_text(c, x + 16, y + 12, entry->title, &title);
 
     if (isSettings) {
@@ -709,7 +830,10 @@ static void draw_card(M12_ModernCanvas* c,
 
     M12_RGB statusColor;
     const char* statusLabel;
-    if (entry->available && status && status->matched) {
+    if (!game_supported(entry->gameId)) {
+        statusColor = rgb(168, 168, 176);
+        statusLabel = "UNSUPPORTED";
+    } else if (entry->available && status && status->matched) {
         statusColor = COLOR_OK();
         statusLabel = "VERIFIED";
     } else if (status) {
@@ -733,12 +857,27 @@ static void draw_card(M12_ModernCanvas* c,
         draw_text(c, pillX + (pillW - tw) / 2, pillY + 8, statusLabel, &s);
     }
 
+    /* Box-art panel: deterministic built-in placeholder art for all three
+     * games. It is intentionally drawn even without external artwork, and
+     * CSB/DM2 are greyed out because they are catalog-visible but not yet
+     * launch-supported. */
+    {
+        int artX = x + 22;
+        int artY = y + 88;
+        int artW = w - 44;
+        int artH = h > 360 ? 168 : 132;
+        if (artH > h - 190) artH = h - 190;
+        if (artH < 96) artH = 96;
+        draw_box_art_panel(c, slotIdx, artX, artY, artW, artH, !game_supported(entry->gameId));
+    }
+
     /* Version list */
     ModernTextStyle vlabel = text_style_make(1, COLOR_TEXT_FAINT(), 0);
-    draw_text(c, x + 16, y + 88, "VERSIONS DETECTED", &vlabel);
+    int versionY = y + (h > 360 ? 270 : 230);
+    draw_text(c, x + 16, versionY, "VERSIONS DETECTED", &vlabel);
 
     int countShown = 0;
-    int lineY = y + 108;
+    int lineY = versionY + 20;
     for (int i = 0; i < M12_ASSET_MAX_VERSIONS_PER_GAME; ++i) {
         const M12_AssetVersionStatus* v = &state->assetStatus.versions[slotIdx][i];
         if (!v->versionId) continue;

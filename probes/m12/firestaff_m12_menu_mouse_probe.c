@@ -120,18 +120,17 @@ int main(void) {
         int gap = 18;
         int count = 5;
         int cardW = (W - 2 * side - gap * (count - 1)) / count;
-        /* Click card 2 (DM2, unavailable). Selection should move to 2
-         * and activation should produce either game-options (if
-         * available) or a message view (if not). */
+        /* Click card 2 (DM2): visible in the catalog, but not launch-supported. */
         int cx = side + 2 * (cardW + gap) + cardW / 2;
         int cy = 400;
         int changed = M12_ModernMenu_HandlePointer(&s, cx, cy, 1, NULL);
         int ok = changed == 1 &&
                  s.selectedIndex == 2 &&
-                 (s.view == M12_MENU_VIEW_MESSAGE ||
-                  s.view == M12_MENU_VIEW_GAME_OPTIONS);
+                 s.view == M12_MENU_VIEW_MESSAGE &&
+                 s.launchRequested == 0 &&
+                 s.messageLine1 && s.messageLine1[0] != '\0';
         record(&t, "INV_MOUSE_02", ok,
-               "clicking a card selects and activates it");
+               "clicking an unsupported card selects it and shows coming-soon without launch");
 
         /* Card 0 is DM1 and it's forced-ready, click should open game-opts. */
         M12_StartupMenu_Init(&s);

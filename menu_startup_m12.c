@@ -48,6 +48,7 @@ enum {
 static int m12_cycle_index(int value, int delta, int count);
 static int m12_clamp_index(int value, int count);
 static int m12_game_slot_from_id(const char* gameId);
+static int m12_game_supported(const char* gameId);
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex);
 static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex);
 static void m12_sanitize_runtime_state(M12_StartupMenuState* state);
@@ -756,8 +757,10 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     for (i = 0; i < m12_entry_count(); ++i) {
         state->entries[i] = g_entryTemplate[i];
         if (state->entries[i].kind == M12_MENU_ENTRY_GAME) {
-            state->entries[i].available = M12_AssetStatus_GameAvailable(&state->assetStatus,
-                                                                        state->entries[i].gameId);
+            state->entries[i].available =
+                m12_game_supported(state->entries[i].gameId) &&
+                M12_AssetStatus_GameAvailable(&state->assetStatus,
+                                              state->entries[i].gameId);
         }
     }
 }
@@ -893,6 +896,14 @@ static int m12_game_slot_from_id(const char* gameId) {
     return -1;
 }
 
+static int m12_game_supported(const char* gameId) {
+    /* Only DM1 is launch-supported in the current runtime. CSB and DM2
+     * stay visible in the catalog but are disabled even when their data
+     * files hash-match, so the UI cannot promise a runtime that does not
+     * exist yet. */
+    return gameId && strcmp(gameId, "dm1") == 0;
+}
+
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex) {
     static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2"};
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
@@ -1007,7 +1018,12 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         return;
     }
     state->view = M12_MENU_VIEW_MESSAGE;
-    if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
+    state->launchRequested = 0;
+    if (!m12_game_supported(entry->gameId)) {
+        state->messageLine1 = m12_tr(state, "COMING SOON");
+        state->messageLine2 = m12_tr(state, "THIS GAME IS NOT SUPPORTED YET");
+        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+    } else if (!M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         state->messageLine1 = m12_text(state, M12_TEXT_VALIDATOR_SCAFFOLD_ONLY);
         state->messageLine2 = m12_text(state, M12_TEXT_ADD_VERIFIED_RETAIL_HASHES);
         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
@@ -4216,6 +4232,8 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.options = state->gameOptions[gi];
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);
-    intent.valid = state->entries[state->activatedIndex].available && version && version->matched ? 1 : 0;
+    intent.valid = m12_game_supported(intent.gameId) &&
+                   state->entries[state->activatedIndex].available &&
+                   version && version->matched ? 1 : 0;
     return intent;
 }

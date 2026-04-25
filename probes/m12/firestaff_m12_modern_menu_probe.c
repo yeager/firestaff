@@ -93,6 +93,53 @@ static int count_nonblack(const unsigned char* rgba, int w, int h) {
     return n;
 }
 
+static unsigned long region_checksum(const unsigned char* rgba, int w, int h,
+                                     int x, int y, int rw, int rh) {
+    unsigned long out = 2166136261UL;
+    for (int yy = y; yy < y + rh && yy < h; ++yy) {
+        if (yy < 0) continue;
+        for (int xx = x; xx < x + rw && xx < w; ++xx) {
+            if (xx < 0) continue;
+            const unsigned char* p = rgba + ((size_t)yy * (size_t)w + (size_t)xx) * 4U;
+            out ^= p[0]; out *= 16777619UL;
+            out ^= p[1]; out *= 16777619UL;
+            out ^= p[2]; out *= 16777619UL;
+        }
+    }
+    return out;
+}
+
+static int region_nonblack(const unsigned char* rgba, int w, int h,
+                           int x, int y, int rw, int rh) {
+    int n = 0;
+    for (int yy = y; yy < y + rh && yy < h; ++yy) {
+        if (yy < 0) continue;
+        for (int xx = x; xx < x + rw && xx < w; ++xx) {
+            if (xx < 0) continue;
+            const unsigned char* p = rgba + ((size_t)yy * (size_t)w + (size_t)xx) * 4U;
+            if (p[0] > 10 || p[1] > 10 || p[2] > 10) ++n;
+        }
+    }
+    return n;
+}
+
+static long region_saturation_sum(const unsigned char* rgba, int w, int h,
+                                  int x, int y, int rw, int rh) {
+    long sum = 0;
+    for (int yy = y; yy < y + rh && yy < h; ++yy) {
+        if (yy < 0) continue;
+        for (int xx = x; xx < x + rw && xx < w; ++xx) {
+            if (xx < 0) continue;
+            const unsigned char* p = rgba + ((size_t)yy * (size_t)w + (size_t)xx) * 4U;
+            int max = p[0], min = p[0];
+            if (p[1] > max) max = p[1]; if (p[2] > max) max = p[2];
+            if (p[1] < min) min = p[1]; if (p[2] < min) min = p[2];
+            sum += max - min;
+        }
+    }
+    return sum;
+}
+
 int main(void) {
     Tally t = {0, 0};
     const int W = M12_ModernMenu_NativeWidth();
@@ -117,6 +164,7 @@ int main(void) {
     /* ----- Fresh default state ----- */
     M12_StartupMenuState state;
     M12_StartupMenu_Init(&state);
+    state.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
 
     /* ----- Render MAIN view ----- */
     memset(buf, 0, rgbaBytes);
@@ -134,6 +182,39 @@ int main(void) {
              "main view has %d distinct 24-bit colours (>= 500 required, VGA only has 16)",
              distinctMain);
     record(&t, "INV_MODERN_03", distinctMain >= 500, msg03);
+
+    /* ----- INV_MODERN_09/10/11: logo, box art, and disabled greyout ----- */
+    {
+        int side = 48;
+        int gap = 18;
+        int cardCount = 5;
+        int cardW = (W - 2 * side - gap * (cardCount - 1)) / cardCount;
+        int artY = 170 + 88;
+        int artW = cardW - 44;
+        int artH = 168;
+        int dm1X = side + 0 * (cardW + gap) + 22;
+        int csbX = side + 1 * (cardW + gap) + 22;
+        int dm2X = side + 2 * (cardW + gap) + 22;
+        unsigned long dm1Sig = region_checksum(buf, W, H, dm1X, artY, artW, artH);
+        unsigned long csbSig = region_checksum(buf, W, H, csbX, artY, artW, artH);
+        unsigned long dm2Sig = region_checksum(buf, W, H, dm2X, artY, artW, artH);
+        int area = artW * artH;
+        record(&t, "INV_MODERN_09",
+               region_nonblack(buf, W, H, dm1X, artY, artW, artH) > area / 2 &&
+                   region_nonblack(buf, W, H, csbX, artY, artW, artH) > area / 2 &&
+                   region_nonblack(buf, W, H, dm2X, artY, artW, artH) > area / 2 &&
+                   dm1Sig != csbSig && dm1Sig != dm2Sig && csbSig != dm2Sig,
+               "three distinct built-in box-art regions render for DM1, CSB, and DM2");
+        long dm1Sat = region_saturation_sum(buf, W, H, dm1X, artY, artW, artH);
+        long csbSat = region_saturation_sum(buf, W, H, csbX, artY, artW, artH);
+        long dm2Sat = region_saturation_sum(buf, W, H, dm2X, artY, artW, artH);
+        record(&t, "INV_MODERN_10",
+               csbSat < dm1Sat && dm2Sat < dm1Sat,
+               "CSB and DM2 box-art panels are visibly greyed compared with DM1");
+        record(&t, "INV_MODERN_11",
+               region_nonblack(buf, W, H, 32, 18, 280, 142) > 5000,
+               "Firestaff logo region renders non-empty in the startup header");
+    }
 
     /* ----- Render SETTINGS view ----- */
     M12_StartupMenuState state_s = state;

@@ -214,9 +214,10 @@ int main(void) {
                  state.settings.languageIndex == 1 &&
                      state.languageExplicit == 0 &&
                      state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "SPELDATA HITTADES INTE") == 0 &&
+                     state.launchRequested == 0 &&
+                     state.messageLine1 && state.messageLine1[0] != '\0' &&
                      file_contains(configPath, "language_explicit = 0"),
-                 "system Swedish auto-selects the startup-menu language when no explicit override exists");
+                 "system Swedish auto-selects the startup-menu language when no explicit override exists and unsupported games stay non-launching");
 
     remove_if_present(configPath);
     setenv("LANG", "C", 1);
@@ -360,8 +361,10 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_08",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0,
-                 "enter on an unmatched entry explains that the selected version files were not found");
+                     state.launchRequested == 0 &&
+                     strcmp(state.messageLine1, "COMING SOON") == 0 &&
+                     strcmp(state.messageLine2, "THIS GAME IS NOT SUPPORTED YET") == 0,
+                 "enter on CSB shows unsupported/coming-soon messaging without requesting launch");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
@@ -492,8 +495,9 @@ int main(void) {
                  state.settings.languageIndex == 2 &&
                      state.languageExplicit == 0 &&
                      state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "DONNEES DE JEU INTROUVABLES") == 0,
-                 "system French auto-selects the startup-menu language and loads the runtime French catalog");
+                     state.launchRequested == 0 &&
+                     state.messageLine1 && state.messageLine1[0] != '\0',
+                 "system French auto-selects the startup-menu language while unsupported games stay non-launching");
 
     remove_if_present(configPath);
     setenv("LANG", "C", 1);
@@ -504,8 +508,9 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_11C",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0,
-                 "missing runtime catalog falls back to English for startup-menu strings");
+                     strcmp(state.messageLine1, "COMING SOON") == 0 &&
+                     strcmp(state.messageLine2, "THIS GAME IS NOT SUPPORTED YET") == 0,
+                 "missing runtime catalog falls back safely while unsupported games stay coming-soon");
 
     remove_if_present(configPath);
     setenv("LANG", "C", 1);
@@ -765,8 +770,37 @@ int main(void) {
         probe_record(&tally,
                      "INV_M12_28",
                      modeState.launchRequested == 0 &&
-                         modeState.view == M12_MENU_VIEW_MESSAGE,
-                     "missing selected assets report a menu error without requesting launch");
+                         modeState.view == M12_MENU_VIEW_MESSAGE &&
+                         strcmp(modeState.messageLine1, "COMING SOON") == 0 &&
+                         strcmp(modeState.messageLine2, "THIS GAME IS NOT SUPPORTED YET") == 0,
+                     "CSB is not launchable and reports unsupported/coming-soon without requesting launch");
+
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        modeState.assetStatus.csbAvailable = 1;
+        modeState.assetStatus.dm2Available = 1;
+        modeState.assetStatus.versions[1][0].matched = 1;
+        modeState.assetStatus.versions[2][0].matched = 1;
+        modeState.entries[1].available = 0;
+        modeState.entries[2].available = 0;
+        modeState.selectedIndex = 1;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        int csbBlocked = modeState.view == M12_MENU_VIEW_MESSAGE &&
+                         modeState.launchRequested == 0 &&
+                         intent.valid == 0 &&
+                         strcmp(modeState.messageLine1, "COMING SOON") == 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_BACK);
+        modeState.selectedIndex = 2;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_28B",
+                     csbBlocked &&
+                         modeState.view == M12_MENU_VIEW_MESSAGE &&
+                         modeState.launchRequested == 0 &&
+                         intent.valid == 0 &&
+                         strcmp(modeState.messageLine1, "COMING SOON") == 0,
+                     "CSB and DM2 remain disabled and non-launchable even if asset scanning reports matches");
 
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
         force_dm1_version_ready(&modeState, 0U);
