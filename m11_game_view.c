@@ -11137,19 +11137,19 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         snprintf(line, sizeof(line), "%s %s", m11_source_name(state->sourceKind), champion);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       250, 34, line, &g_text_small);
-    } else if (activeChampion) {
-        /* V1 mode: champion name only, aligned on top of the action
-         * area frame.  When the authentic graphic is blitted at y=45,
-         * place the name inside the header band (y ~ 49) so it reads
-         * as the action-area title, matching
-         * F0387_MENUS_DrawActionArea's 80,85 name print. */
-        int nameY = drewAuthenticFrames ? 49 : 34;
+    } else if (activeChampion && !drewAuthenticFrames) {
+        /* Legacy/procedural fallback only.  In normal V1 with the
+         * original action-area graphic active, the idle/icon branch is
+         * owned by F0386-style action-hand icon cells; champion names
+         * belong to F0387 menu mode and are drawn there after a fresh
+         * graphic-10 blit. */
+        int nameY = 34;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       227, nameY, champion, &g_text_small);
     }
 
     line[0] = '\0';
-    if (activeChampion) {
+    if (activeChampion && !(drewAuthenticFrames && !state->showDebugHUD)) {
         if (state->showDebugHUD) {
             snprintf(line, sizeof(line), "L%d HP%u ST%u",
                      mapDesc ? (int)mapDesc->level : 0,
@@ -11165,8 +11165,8 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                  state->lastOutcome[0] != '\0' ? state->lastOutcome : "READY");
     }
     if (line[0] != '\0') {
-        int statY = (drewAuthenticFrames && !state->showDebugHUD) ? 59 : 44;
-        int statX = (drewAuthenticFrames && !state->showDebugHUD) ? 227 : 222;
+        int statY = 44;
+        int statX = 222;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       statX, statY, line, &g_text_small);
     }
@@ -11218,9 +11218,10 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                                 M11_COLOR_LIGHT_BLUE, M11_COLOR_BLACK);
     }
 
-    /* Light level indicator: a small bar and label below the buttons.
-     * Bright = YELLOW, normal = BROWN, dim = DARK_GRAY, dark = BLACK. */
-    {
+    /* Light level indicator: debug/procedural fallback only.  The
+     * normal V1 action/spell strip is source-owned; invented light
+     * bars make the DM1 action area look like a debug utility panel. */
+    if (!drewAuthenticFrames || state->showDebugHUD) {
         int lightLevel = m11_compute_light_level(state);
         unsigned char lightColor;
         const char* lightLabel;
@@ -11238,14 +11239,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
             lightColor = M11_COLOR_BLACK;
             lightLabel = "DARK";
         }
-        /* Draw light bar (max 80px wide, scaled to light level).
-         * When the authentic action+spell graphics are blitted and
-         * the DM1 action-hand icon cells fill y=86..120, the bar
-         * must sit ABOVE the icon cells.  We place it at y=68 inside
-         * the action-area frame body, just below the HP/ST row at
-         * y=59, so the cyan icon row stays clean.  Debug HUD keeps
-         * the legacy y=67 position next to the I/S/L buttons. */
-        int barY = (drewAuthenticFrames && !state->showDebugHUD) ? 68 : 67;
+        int barY = 67;
         int barFillY = barY + 1;
         barW = (lightLevel * 80) / M11_LIGHT_MAX;
         if (barW < 1 && lightLevel > 0) barW = 1;
