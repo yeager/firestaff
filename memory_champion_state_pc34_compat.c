@@ -189,6 +189,96 @@ int F0607_CHAMPION_ParseMirrorTextString_Compat(
     return F0606_CHAMPION_ParseMirrorTextIdentity_Compat(decoded, champ);
 }
 
+
+int F0608_CHAMPION_CountMirrorTextStrings_Compat(
+    const struct DungeonThings_Compat* things)
+{
+    int i;
+    int count = 0;
+    struct ChampionState_Compat parsed;
+    if (!things) return 0;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed)) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int F0609_CHAMPION_FindMirrorTextStringByName_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedName[CHAMPION_NAME_LENGTH])
+{
+    int i;
+    struct ChampionState_Compat parsed;
+    if (!things || !packedName) return -1;
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed) &&
+            memcmp(parsed.name, packedName, CHAMPION_NAME_LENGTH) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int party_contains_champion_name(const struct PartyState_Compat* party,
+                                        const unsigned char packedName[CHAMPION_NAME_LENGTH]) {
+    int i;
+    if (!party || !packedName) return 0;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (party->champions[i].present &&
+            memcmp(party->champions[i].name, packedName, CHAMPION_NAME_LENGTH) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int F0610_PARTY_AddChampionFromMirrorTextString_Compat(
+    const struct DungeonThings_Compat* things,
+    int textStringIndex,
+    struct PartyState_Compat* party)
+{
+    struct ChampionState_Compat parsed;
+    int slot;
+    if (!things || !party) return 0;
+    if (party->championCount >= CHAMPION_MAX_PARTY) return 0;
+
+    F0600_CHAMPION_InitEmpty_Compat(&parsed);
+    if (!F0607_CHAMPION_ParseMirrorTextString_Compat(things, textStringIndex, &parsed)) return 0;
+    if (party_contains_champion_name(party, parsed.name)) return 0;
+
+    slot = party->championCount;
+    if (slot < 0 || slot >= CHAMPION_MAX_PARTY) return 0;
+    F0600_CHAMPION_InitEmpty_Compat(&party->champions[slot]);
+    memcpy(party->champions[slot].name, parsed.name, CHAMPION_NAME_LENGTH);
+    memcpy(party->champions[slot].title, parsed.title, CHAMPION_TITLE_LENGTH);
+    party->champions[slot].sex = parsed.sex;
+    memcpy(party->champions[slot].mirrorStatsText, parsed.mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH);
+    memcpy(party->champions[slot].mirrorSkillsText, parsed.mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH);
+    memcpy(party->champions[slot].mirrorInventoryText, parsed.mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
+    party->champions[slot].present = 1;
+    party->champions[slot].portraitIndex = textStringIndex;
+    party->champions[slot].direction = (unsigned char)party->direction;
+    party->championCount++;
+    if (party->activeChampionIndex < 0) {
+        party->activeChampionIndex = slot;
+    }
+    return 1;
+}
+
+int F0611_PARTY_AddChampionFromMirrorName_Compat(
+    const struct DungeonThings_Compat* things,
+    const unsigned char packedName[CHAMPION_NAME_LENGTH],
+    struct PartyState_Compat* party)
+{
+    int idx = F0609_CHAMPION_FindMirrorTextStringByName_Compat(things, packedName);
+    if (idx < 0) return 0;
+    return F0610_PARTY_AddChampionFromMirrorTextString_Compat(things, idx, party);
+}
+
 /*
  * Serialisation layout (little-endian):
  *

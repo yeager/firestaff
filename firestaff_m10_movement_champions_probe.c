@@ -454,7 +454,53 @@ int main(int argc, char* argv[]) {
               "DUNGEON.DAT TextString parser finds STAMM/BLADECASTER mirror record");
     }
 
-    /* Test 9: Sensor identification */
+    /* Test 9: DUNGEON.DAT champion mirror enumeration/recruitment helpers */
+    {
+        unsigned char stammName[CHAMPION_NAME_LENGTH] = { 'S','T','A','M','M',' ',' ',' ' };
+        unsigned char halkName[CHAMPION_NAME_LENGTH] = { 'H','A','L','K',' ',' ',' ',' ' };
+        unsigned char bogusName[CHAMPION_NAME_LENGTH] = { 'N','O','P','E',' ',' ',' ',' ' };
+        struct PartyState_Compat recruited;
+        int stammTextIndex = F0609_CHAMPION_FindMirrorTextStringByName_Compat(&things, stammName);
+        memcpy(&recruited, &party, sizeof(recruited));
+
+        CHECK(F0608_CHAMPION_CountMirrorTextStrings_Compat(&things) >= 20,
+              "DUNGEON.DAT mirror parser counts many champion records");
+        CHECK(stammTextIndex >= 0,
+              "DUNGEON.DAT mirror parser finds STAMM by packed Name[8]");
+        CHECK(F0609_CHAMPION_FindMirrorTextStringByName_Compat(&things, bogusName) < 0,
+              "DUNGEON.DAT mirror parser rejects unknown packed Name[8]");
+        CHECK(F0610_PARTY_AddChampionFromMirrorTextString_Compat(&things, stammTextIndex, &recruited) == 1,
+              "Party can recruit champion identity from DUNGEON.DAT TextString index");
+        CHECK(recruited.championCount == 1 && recruited.champions[0].present,
+              "Mirror recruitment marks first party slot present and increments count");
+        CHECK(recruited.activeChampionIndex == 0,
+              "Mirror recruitment selects first recruited champion as active");
+        CHECK(memcmp(recruited.champions[0].name, "STAMM   ", 8) == 0 &&
+              memcmp(recruited.champions[0].title, "BLADECASTER         ", 20) == 0,
+              "Mirror recruitment copies source name/title into party state");
+        CHECK(recruited.champions[0].sex == 'M' &&
+              memcmp(recruited.champions[0].mirrorStatsText, "AAELADCAAAAA    ", 16) == 0,
+              "Mirror recruitment copies source sex and encoded stat field");
+        CHECK(F0611_PARTY_AddChampionFromMirrorName_Compat(&things, halkName, &recruited) == 1 &&
+              recruited.championCount == 2 &&
+              memcmp(recruited.champions[1].name, "HALK    ", 8) == 0,
+              "Party can recruit champion identity by packed Name[8]");
+        CHECK(F0611_PARTY_AddChampionFromMirrorName_Compat(&things, stammName, &recruited) == 0 &&
+              recruited.championCount == 2,
+              "Mirror recruitment rejects duplicate champion name");
+        CHECK(recruited.mapX == party.mapX && recruited.mapY == party.mapY &&
+              recruited.direction == party.direction,
+              "Mirror recruitment preserves party map position and facing");
+        {
+            struct PartyState_Compat fullParty;
+            memcpy(&fullParty, &party, sizeof(fullParty));
+            fullParty.championCount = CHAMPION_MAX_PARTY;
+            CHECK(F0610_PARTY_AddChampionFromMirrorTextString_Compat(&things, stammTextIndex, &fullParty) == 0,
+                  "Mirror recruitment rejects full party");
+        }
+    }
+
+    /* Test 10: Sensor identification */
     {
         struct SensorOnSquare_Compat sensorResult;
         int foundAnySensor = 0;
