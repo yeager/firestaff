@@ -7213,6 +7213,48 @@ static void m11_apply_depth_dimming(unsigned char* framebuffer,
  * Older Firestaff code incorrectly used graphic 0 as a full viewport
  * background; that asset is a UI/panel graphic, which is why the
  * dungeon looked like a random room/control panel instead of DM1. */
+static void m11_blit_viewport_region_maybe_flip(const M11_AssetSlot* slot,
+                                                int srcX,
+                                                int srcY,
+                                                int srcW,
+                                                int srcH,
+                                                unsigned char* framebuffer,
+                                                int fbW,
+                                                int fbH,
+                                                int dstX,
+                                                int dstY,
+                                                int flipHorizontal) {
+    int y;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        srcW <= 0 || srcH <= 0) {
+        return;
+    }
+    if (!flipHorizontal) {
+        M11_AssetLoader_BlitRegion(slot, srcX, srcY, srcW, srcH,
+                                   framebuffer, fbW, fbH, dstX, dstY, -1);
+        return;
+    }
+    if (srcX < 0 || srcY < 0 ||
+        srcX + srcW > (int)slot->width ||
+        srcY + srcH > (int)slot->height) {
+        return;
+    }
+    for (y = 0; y < srcH; ++y) {
+        int fbY = dstY + y;
+        int x;
+        if (fbY < 0 || fbY >= fbH) continue;
+        for (x = 0; x < srcW; ++x) {
+            int fbX = dstX + x;
+            int sx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) continue;
+            sx = srcX + (srcW - 1 - x);
+            pixel = slot->pixels[(srcY + y) * (int)slot->width + sx];
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+}
+
 static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -7230,14 +7272,23 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
             ceilingSlot->width == 224 && ceilingSlot->height == 39 &&
             floorSlot->width == 224 && floorSlot->height == 97 &&
             vpW == 224 && vpH == 136) {
-            M11_AssetLoader_BlitRegion(ceilingSlot,
-                                       0, 0, 224, 39,
-                                       framebuffer, fbW, fbH,
-                                       vpX, vpY, -1);
-            M11_AssetLoader_BlitRegion(floorSlot,
-                                       0, 0, 224, 97,
-                                       framebuffer, fbW, fbH,
-                                       vpX, vpY + 39, -1);
+            int parityFlip = ((state->world.party.mapX +
+                               state->world.party.mapY +
+                               state->world.party.direction) & 1) ? 1 : 0;
+            /* ReDMCSB F0128 alternates horizontal flip between ceiling
+             * and floor based on (mapX + mapY + direction) parity.  This
+             * breaks repeated dither seams in the 224-wide viewport base
+             * and matches the original CPSF draw order. */
+            m11_blit_viewport_region_maybe_flip(ceilingSlot,
+                                                0, 0, 224, 39,
+                                                framebuffer, fbW, fbH,
+                                                vpX, vpY,
+                                                parityFlip ? 0 : 1);
+            m11_blit_viewport_region_maybe_flip(floorSlot,
+                                                0, 0, 224, 97,
+                                                framebuffer, fbW, fbH,
+                                                vpX, vpY + 39,
+                                                parityFlip ? 1 : 0);
             return;
         }
     }

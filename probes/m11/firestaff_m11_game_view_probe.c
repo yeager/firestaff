@@ -6321,6 +6321,34 @@ int main(int argc, char** argv) {
                                            PROBE_COLOR_YELLOW) == 0U,
                      "normal V1 top chrome strip contains no title/debug text pixels");
 
+        {
+            unsigned char fbParity[320 * 200];
+            int diffCount = 0;
+            int x;
+            iconView.world.party.mapX = 2;
+            iconView.world.party.mapY = 3;
+            iconView.world.party.direction = DIR_NORTH;
+            memset(fb, 0, sizeof(fb));
+            M11_GameView_Draw(&iconView, fb, 320, 200);
+            iconView.world.party.mapX = 3; /* toggles (x+y+dir)&1 */
+            memset(fbParity, 0, sizeof(fbParity));
+            M11_GameView_Draw(&iconView, fbParity, 320, 200);
+            for (x = 0; x < 224; ++x) {
+                if (fb[(24 + 8) * 320 + (12 + x)] !=
+                    fbParity[(24 + 8) * 320 + (12 + x)]) {
+                    ++diffCount;
+                }
+                if (fb[(24 + 80) * 320 + (12 + x)] !=
+                    fbParity[(24 + 80) * 320 + (12 + x)]) {
+                    ++diffCount;
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_351",
+                         iconView.assetsAvailable ? (diffCount > 0) : 1,
+                         "normal V1 viewport floor/ceiling obeys DM1 parity flip");
+        }
+
         /* Count cyan (palette index 3) pixels inside each cell body.
          * The body is the 16x16 inner icon backdrop at
          * X=cellX+2..cellX+18, Y=95..110. */
