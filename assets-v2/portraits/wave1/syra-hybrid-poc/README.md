@@ -1,8 +1,7 @@
 # Firestaff V2 hybrid hero portrait PoC — Syra variants
 
-Regenerated after the first Syra candidate read as the wrong age/gender.
+Regenerated after the first Syra candidate read as the wrong direction. Daniel clarified Syra should be a gubbe/older masculine figure, not female.
 
-- `fs-v2-hybrid-syra-female-poc-a.png`: female Syra variant. Clearly female, keeps white hood/cyan palette, but slightly polished/fashion-portrait.
-- `fs-v2-hybrid-syra-gubbe-poc-a.png`: older masculine/gubbe variant. Stronger source anchoring and silhouette, intentionally not the canonical female direction.
+- `fs-v2-hybrid-syra-gubbe-poc-a.png`: current kept candidate. Older masculine/gubbe variant with strong source anchoring: white hood, darker face, cyan/blue robe blocks, compact HUD bust.
 
-Both are exploratory proposals using the same source-anchored Nabi/Alex hybrid treatment.
+Female Syra artifacts were removed as wrong direction.
