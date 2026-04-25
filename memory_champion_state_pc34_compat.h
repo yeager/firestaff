@@ -131,6 +131,24 @@ struct ChampionState_Compat {
  *
  * Pure data, serializable.  No pointers to UI/render/config.
  */
+
+#define CHAMPION_MIRROR_CATALOG_MAX 32
+#define CHAMPION_NAME_TEXT_CAPACITY 9
+#define CHAMPION_TITLE_TEXT_CAPACITY 21
+
+struct ChampionMirrorRecord_Compat {
+    int textStringIndex;
+    int mirrorOrdinal;
+    struct ChampionState_Compat champion;
+    char nameText[CHAMPION_NAME_TEXT_CAPACITY];
+    char titleText[CHAMPION_TITLE_TEXT_CAPACITY];
+};
+
+struct ChampionMirrorCatalog_Compat {
+    struct ChampionMirrorRecord_Compat records[CHAMPION_MIRROR_CATALOG_MAX];
+    int count;
+};
+
 struct PartyState_Compat {
     /* Champions (up to 4, some may be .present=0) */
     struct ChampionState_Compat champions[CHAMPION_MAX_PARTY];
@@ -406,5 +424,109 @@ int F0650_CHAMPION_GetMirrorTextStringIndexByNameString_Compat(
 int F0651_CHAMPION_GetMirrorTextStringIndexByTitleString_Compat(
     const struct DungeonThings_Compat* things,
     const char* title);
+
+int F0652_CHAMPION_BuildMirrorCatalog_Compat(
+    const struct DungeonThings_Compat* things,
+    struct ChampionMirrorCatalog_Compat* catalog);
+
+int F0653_CHAMPION_MirrorCatalogFindByOrdinal_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal);
+
+int F0654_CHAMPION_MirrorCatalogFindByName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name);
+
+int F0655_CHAMPION_MirrorCatalogFindByTitle_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* title);
+
+int F0656_CHAMPION_MirrorCatalogCountBySex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    unsigned char sex);
+
+int F0657_CHAMPION_MirrorCatalogCountTitled_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog);
+
+int F0658_CHAMPION_MirrorCatalogCountUntitled_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog);
+
+int F0659_CHAMPION_MirrorCatalogNamesUnique_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog);
+
+int F0660_CHAMPION_MirrorCatalogGetName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    char* outName,
+    int outSize);
+
+int F0661_CHAMPION_MirrorCatalogGetTitle_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    char* outTitle,
+    int outSize);
+
+int F0662_CHAMPION_MirrorCatalogGetTextStringIndex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal);
+
+int F0663_CHAMPION_MirrorCatalogHasName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name);
+
+int F0664_CHAMPION_MirrorCatalogHasTitle_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* title);
+
+int F0665_CHAMPION_MirrorCatalogFirstOrdinalBySex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    unsigned char sex);
+
+int F0666_CHAMPION_MirrorCatalogLastOrdinalBySex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    unsigned char sex);
+
+int F0667_CHAMPION_MirrorCatalogOrdinalAfter_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal);
+
+int F0668_CHAMPION_MirrorCatalogOrdinalBefore_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal);
+
+int F0669_CHAMPION_MirrorCatalogRecordValid_Compat(
+    const struct ChampionMirrorRecord_Compat* record);
+
+int F0670_CHAMPION_MirrorCatalogAllRecordsValid_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog);
+
+int F0671_CHAMPION_MirrorCatalogRecruitOrdinal_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    struct PartyState_Compat* party);
+
+int F0672_CHAMPION_MirrorCatalogRecruitName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name,
+    struct PartyState_Compat* party);
+
+int F0673_CHAMPION_MirrorCatalogRecruitOrdinalIfAbsent_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    struct PartyState_Compat* party);
+
+int F0674_CHAMPION_MirrorCatalogRecruitNameIfAbsent_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name,
+    struct PartyState_Compat* party);
+
+int F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    struct ChampionState_Compat* outChampion);
+
+int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int textStringIndex);
 
 #endif

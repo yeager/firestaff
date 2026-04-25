@@ -728,6 +728,281 @@ int F0651_CHAMPION_GetMirrorTextStringIndexByTitleString_Compat(
     return F0637_CHAMPION_FindMirrorTextStringByTitleString_Compat(things, title);
 }
 
+
+static int catalog_find_record_index_by_ordinal(const struct ChampionMirrorCatalog_Compat* catalog,
+                                                int mirrorOrdinal) {
+    int i;
+    if (!catalog || mirrorOrdinal < 0) return -1;
+    for (i = 0; i < catalog->count; ++i) {
+        if (catalog->records[i].mirrorOrdinal == mirrorOrdinal) return i;
+    }
+    return -1;
+}
+
+static int catalog_recruit_record(const struct ChampionMirrorRecord_Compat* record,
+                                  struct PartyState_Compat* party,
+                                  int idempotent) {
+    int slot;
+    if (!record || !party || !F0669_CHAMPION_MirrorCatalogRecordValid_Compat(record)) return 0;
+    if (F0626_PARTY_ContainsChampionName_Compat(party, record->champion.name)) return idempotent ? 1 : 0;
+    if (F0625_PARTY_IsFull_Compat(party)) return 0;
+    slot = F0624_PARTY_GetNextFreeChampionSlot_Compat(party);
+    if (slot < 0 || slot >= CHAMPION_MAX_PARTY) return 0;
+    F0600_CHAMPION_InitEmpty_Compat(&party->champions[slot]);
+    memcpy(&party->champions[slot], &record->champion, sizeof(record->champion));
+    party->champions[slot].present = 1;
+    party->champions[slot].portraitIndex = record->textStringIndex;
+    party->champions[slot].direction = (unsigned char)party->direction;
+    party->championCount = F0638_PARTY_CountOccupiedChampionSlots_Compat(party) + 1;
+    if (party->activeChampionIndex < 0) party->activeChampionIndex = slot;
+    return 1;
+}
+
+int F0652_CHAMPION_BuildMirrorCatalog_Compat(
+    const struct DungeonThings_Compat* things,
+    struct ChampionMirrorCatalog_Compat* catalog)
+{
+    int i;
+    int ordinal = 0;
+    struct ChampionState_Compat parsed;
+    if (!things || !catalog) return 0;
+    memset(catalog, 0, sizeof(*catalog));
+    for (i = 0; i < things->textStringCount; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&parsed);
+        if (!F0607_CHAMPION_ParseMirrorTextString_Compat(things, i, &parsed)) continue;
+        if (catalog->count < CHAMPION_MIRROR_CATALOG_MAX) {
+            struct ChampionMirrorRecord_Compat* r = &catalog->records[catalog->count];
+            r->textStringIndex = i;
+            r->mirrorOrdinal = ordinal;
+            memcpy(&r->champion, &parsed, sizeof(parsed));
+            F0628_CHAMPION_UnpackName_Compat(&parsed, r->nameText, CHAMPION_NAME_TEXT_CAPACITY);
+            F0629_CHAMPION_UnpackTitle_Compat(&parsed, r->titleText, CHAMPION_TITLE_TEXT_CAPACITY);
+            catalog->count++;
+        }
+        ordinal++;
+    }
+    return catalog->count;
+}
+
+int F0653_CHAMPION_MirrorCatalogFindByOrdinal_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal)
+{ return catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal); }
+
+int F0654_CHAMPION_MirrorCatalogFindByName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name)
+{
+    int i;
+    if (!catalog || !name) return -1;
+    for (i = 0; i < catalog->count; ++i) if (strcmp(catalog->records[i].nameText, name) == 0) return i;
+    return -1;
+}
+
+int F0655_CHAMPION_MirrorCatalogFindByTitle_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* title)
+{
+    int i;
+    if (!catalog || !title) return -1;
+    for (i = 0; i < catalog->count; ++i) if (strcmp(catalog->records[i].titleText, title) == 0) return i;
+    return -1;
+}
+
+int F0656_CHAMPION_MirrorCatalogCountBySex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    unsigned char sex)
+{
+    int i, count = 0;
+    if (!catalog || (sex != 'M' && sex != 'F')) return 0;
+    for (i = 0; i < catalog->count; ++i) if (catalog->records[i].champion.sex == sex) ++count;
+    return count;
+}
+
+int F0657_CHAMPION_MirrorCatalogCountTitled_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog)
+{
+    int i, count = 0;
+    if (!catalog) return 0;
+    for (i = 0; i < catalog->count; ++i) if (catalog->records[i].titleText[0]) ++count;
+    return count;
+}
+
+int F0658_CHAMPION_MirrorCatalogCountUntitled_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog)
+{ return catalog ? catalog->count - F0657_CHAMPION_MirrorCatalogCountTitled_Compat(catalog) : 0; }
+
+int F0659_CHAMPION_MirrorCatalogNamesUnique_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog)
+{
+    int i, j;
+    if (!catalog) return 0;
+    for (i = 0; i < catalog->count; ++i) for (j = i + 1; j < catalog->count; ++j)
+        if (memcmp(catalog->records[i].champion.name, catalog->records[j].champion.name, CHAMPION_NAME_LENGTH) == 0) return 0;
+    return 1;
+}
+
+int F0660_CHAMPION_MirrorCatalogGetName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    char* outName,
+    int outSize)
+{
+    int idx;
+    if (!outName || outSize <= 0) return 0;
+    outName[0] = '\0';
+    idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    if (idx < 0) return 0;
+    snprintf(outName, (size_t)outSize, "%s", catalog->records[idx].nameText);
+    return (int)strlen(outName);
+}
+
+int F0661_CHAMPION_MirrorCatalogGetTitle_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    char* outTitle,
+    int outSize)
+{
+    int idx;
+    if (!outTitle || outSize <= 0) return 0;
+    outTitle[0] = '\0';
+    idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    if (idx < 0) return 0;
+    snprintf(outTitle, (size_t)outSize, "%s", catalog->records[idx].titleText);
+    return (int)strlen(outTitle);
+}
+
+int F0662_CHAMPION_MirrorCatalogGetTextStringIndex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal)
+{
+    int idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    return idx >= 0 ? catalog->records[idx].textStringIndex : -1;
+}
+
+int F0663_CHAMPION_MirrorCatalogHasName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name)
+{ return F0654_CHAMPION_MirrorCatalogFindByName_Compat(catalog, name) >= 0; }
+
+int F0664_CHAMPION_MirrorCatalogHasTitle_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* title)
+{ return F0655_CHAMPION_MirrorCatalogFindByTitle_Compat(catalog, title) >= 0; }
+
+int F0665_CHAMPION_MirrorCatalogFirstOrdinalBySex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    unsigned char sex)
+{
+    int i;
+    if (!catalog) return -1;
+    for (i = 0; i < catalog->count; ++i) if (catalog->records[i].champion.sex == sex) return catalog->records[i].mirrorOrdinal;
+    return -1;
+}
+
+int F0666_CHAMPION_MirrorCatalogLastOrdinalBySex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    unsigned char sex)
+{
+    int i;
+    if (!catalog) return -1;
+    for (i = catalog->count - 1; i >= 0; --i) if (catalog->records[i].champion.sex == sex) return catalog->records[i].mirrorOrdinal;
+    return -1;
+}
+
+int F0667_CHAMPION_MirrorCatalogOrdinalAfter_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal)
+{
+    int idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    if (!catalog || idx < 0 || idx + 1 >= catalog->count) return -1;
+    return catalog->records[idx + 1].mirrorOrdinal;
+}
+
+int F0668_CHAMPION_MirrorCatalogOrdinalBefore_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal)
+{
+    int idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    if (!catalog || idx <= 0) return -1;
+    return catalog->records[idx - 1].mirrorOrdinal;
+}
+
+int F0669_CHAMPION_MirrorCatalogRecordValid_Compat(
+    const struct ChampionMirrorRecord_Compat* record)
+{
+    if (!record) return 0;
+    return record->mirrorOrdinal >= 0 && record->textStringIndex >= 0 && record->nameText[0] != '\0' &&
+           (record->champion.sex == 'M' || record->champion.sex == 'F') &&
+           F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(&record->champion);
+}
+
+int F0670_CHAMPION_MirrorCatalogAllRecordsValid_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog)
+{
+    int i;
+    if (!catalog || catalog->count <= 0) return 0;
+    for (i = 0; i < catalog->count; ++i) if (!F0669_CHAMPION_MirrorCatalogRecordValid_Compat(&catalog->records[i])) return 0;
+    return 1;
+}
+
+int F0671_CHAMPION_MirrorCatalogRecruitOrdinal_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    struct PartyState_Compat* party)
+{
+    int idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    return idx >= 0 ? catalog_recruit_record(&catalog->records[idx], party, 0) : 0;
+}
+
+int F0672_CHAMPION_MirrorCatalogRecruitName_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name,
+    struct PartyState_Compat* party)
+{
+    int idx = F0654_CHAMPION_MirrorCatalogFindByName_Compat(catalog, name);
+    return idx >= 0 ? catalog_recruit_record(&catalog->records[idx], party, 0) : 0;
+}
+
+int F0673_CHAMPION_MirrorCatalogRecruitOrdinalIfAbsent_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    struct PartyState_Compat* party)
+{
+    int idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    return idx >= 0 ? catalog_recruit_record(&catalog->records[idx], party, 1) : 0;
+}
+
+int F0674_CHAMPION_MirrorCatalogRecruitNameIfAbsent_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    const char* name,
+    struct PartyState_Compat* party)
+{
+    int idx = F0654_CHAMPION_MirrorCatalogFindByName_Compat(catalog, name);
+    return idx >= 0 ? catalog_recruit_record(&catalog->records[idx], party, 1) : 0;
+}
+
+int F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int mirrorOrdinal,
+    struct ChampionState_Compat* outChampion)
+{
+    int idx = catalog_find_record_index_by_ordinal(catalog, mirrorOrdinal);
+    if (idx < 0 || !outChampion) return 0;
+    memcpy(outChampion, &catalog->records[idx].champion, sizeof(*outChampion));
+    return 1;
+}
+
+int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+    const struct ChampionMirrorCatalog_Compat* catalog,
+    int textStringIndex)
+{
+    int i;
+    if (!catalog) return -1;
+    for (i = 0; i < catalog->count; ++i) if (catalog->records[i].textStringIndex == textStringIndex) return catalog->records[i].mirrorOrdinal;
+    return -1;
+}
+
 /*
  * Serialisation layout (little-endian):
  *

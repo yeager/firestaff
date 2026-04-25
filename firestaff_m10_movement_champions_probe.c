@@ -664,7 +664,77 @@ int main(int argc, char* argv[]) {
               "Clear champion slot helper removes recruited slot");
     }
 
-    /* Test 13: Sensor identification */
+    /* Test 13: Champion mirror catalog helpers */
+    {
+        struct ChampionMirrorCatalog_Compat catalog;
+        struct PartyState_Compat catalogParty;
+        struct ChampionState_Compat copied;
+        char nameBuf[16];
+        char titleBuf[32];
+        int stammOrd;
+        int stammTextIndex;
+        memcpy(&catalogParty, &party, sizeof(catalogParty));
+        CHECK(F0652_CHAMPION_BuildMirrorCatalog_Compat(&things, &catalog) == 24,
+              "Mirror catalog builds 24 source champion records");
+        CHECK(catalog.count == 24,
+              "Mirror catalog count stores 24 records");
+        CHECK(F0653_CHAMPION_MirrorCatalogFindByOrdinal_Compat(&catalog, 0) == 0,
+              "Mirror catalog finds ordinal 0 at record 0");
+        CHECK(F0654_CHAMPION_MirrorCatalogFindByName_Compat(&catalog, "STAMM") >= 0,
+              "Mirror catalog finds STAMM by display name");
+        CHECK(F0655_CHAMPION_MirrorCatalogFindByTitle_Compat(&catalog, "BLADECASTER") >= 0,
+              "Mirror catalog finds BLADECASTER by display title");
+        CHECK(F0656_CHAMPION_MirrorCatalogCountBySex_Compat(&catalog, 'M') +
+              F0656_CHAMPION_MirrorCatalogCountBySex_Compat(&catalog, 'F') == catalog.count,
+              "Mirror catalog sex counts sum to catalog count");
+        CHECK(F0657_CHAMPION_MirrorCatalogCountTitled_Compat(&catalog) +
+              F0658_CHAMPION_MirrorCatalogCountUntitled_Compat(&catalog) == catalog.count,
+              "Mirror catalog titled/untitled counts sum to catalog count");
+        CHECK(F0659_CHAMPION_MirrorCatalogNamesUnique_Compat(&catalog) == 1,
+              "Mirror catalog packed names are unique");
+        CHECK(F0660_CHAMPION_MirrorCatalogGetName_Compat(&catalog, 0, nameBuf, sizeof(nameBuf)) > 0 && strcmp(nameBuf, "DAROOU") == 0,
+              "Mirror catalog gets display name by ordinal");
+        stammOrd = F0648_CHAMPION_GetMirrorOrdinalByNameString_Compat(&things, "STAMM");
+        CHECK(F0661_CHAMPION_MirrorCatalogGetTitle_Compat(&catalog, stammOrd, titleBuf, sizeof(titleBuf)) > 0 && strcmp(titleBuf, "BLADECASTER") == 0,
+              "Mirror catalog gets display title by ordinal");
+        stammTextIndex = F0662_CHAMPION_MirrorCatalogGetTextStringIndex_Compat(&catalog, stammOrd);
+        CHECK(stammTextIndex == F0650_CHAMPION_GetMirrorTextStringIndexByNameString_Compat(&things, "STAMM"),
+              "Mirror catalog gets original TextString index by ordinal");
+        CHECK(F0663_CHAMPION_MirrorCatalogHasName_Compat(&catalog, "STAMM") == 1 &&
+              F0663_CHAMPION_MirrorCatalogHasName_Compat(&catalog, "NOPE") == 0,
+              "Mirror catalog has-name helper distinguishes known and unknown names");
+        CHECK(F0664_CHAMPION_MirrorCatalogHasTitle_Compat(&catalog, "BLADECASTER") == 1,
+              "Mirror catalog has-title helper finds BLADECASTER");
+        CHECK(F0665_CHAMPION_MirrorCatalogFirstOrdinalBySex_Compat(&catalog, 'M') >= 0 &&
+              F0666_CHAMPION_MirrorCatalogLastOrdinalBySex_Compat(&catalog, 'F') >= 0,
+              "Mirror catalog first/last ordinal by sex helpers return records");
+        CHECK(F0667_CHAMPION_MirrorCatalogOrdinalAfter_Compat(&catalog, 0) == 1 &&
+              F0668_CHAMPION_MirrorCatalogOrdinalBefore_Compat(&catalog, 1) == 0,
+              "Mirror catalog before/after ordinal helpers walk records");
+        CHECK(F0669_CHAMPION_MirrorCatalogRecordValid_Compat(&catalog.records[0]) == 1,
+              "Mirror catalog validates individual source record");
+        CHECK(F0670_CHAMPION_MirrorCatalogAllRecordsValid_Compat(&catalog) == 1,
+              "Mirror catalog validates all source records");
+        CHECK(F0671_CHAMPION_MirrorCatalogRecruitOrdinal_Compat(&catalog, stammOrd, &catalogParty) == 1 &&
+              memcmp(catalogParty.champions[0].name, "STAMM   ", 8) == 0,
+              "Mirror catalog recruits by ordinal");
+        CHECK(F0672_CHAMPION_MirrorCatalogRecruitName_Compat(&catalog, "HALK", &catalogParty) == 1 &&
+              F0638_PARTY_CountOccupiedChampionSlots_Compat(&catalogParty) == 2,
+              "Mirror catalog recruits by display name");
+        CHECK(F0673_CHAMPION_MirrorCatalogRecruitOrdinalIfAbsent_Compat(&catalog, stammOrd, &catalogParty) == 1 &&
+              F0638_PARTY_CountOccupiedChampionSlots_Compat(&catalogParty) == 2,
+              "Mirror catalog recruit ordinal if-absent is idempotent");
+        CHECK(F0674_CHAMPION_MirrorCatalogRecruitNameIfAbsent_Compat(&catalog, "HALK", &catalogParty) == 1 &&
+              F0638_PARTY_CountOccupiedChampionSlots_Compat(&catalogParty) == 2,
+              "Mirror catalog recruit name if-absent is idempotent");
+        CHECK(F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(&catalog, stammOrd, &copied) == 1 &&
+              memcmp(copied.title, "BLADECASTER         ", 20) == 0,
+              "Mirror catalog copies champion source record by ordinal");
+        CHECK(F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(&catalog, stammTextIndex) == stammOrd,
+              "Mirror catalog resolves ordinal from TextString index");
+    }
+
+    /* Test 14: Sensor identification */
     {
         struct SensorOnSquare_Compat sensorResult;
         int foundAnySensor = 0;
