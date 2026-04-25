@@ -533,6 +533,8 @@ int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
                                              int* outY);
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
+int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
+                                            unsigned short thingId);
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int depthIndex,
                                            int visibleCount,

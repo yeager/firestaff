@@ -6863,6 +6863,41 @@ int main(int argc, char** argv) {
             iconView.world.things = NULL;
         }
 
+        {
+            struct DungeonThings_Compat localThings;
+            struct DungeonScroll_Compat scroll;
+            struct DungeonJunk_Compat junk;
+            unsigned short scrollThing = (unsigned short)((THING_TYPE_SCROLL << 10) | 0);
+            unsigned short junkThing = (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+            int scrollOpenIcon;
+            int scrollClosedIcon;
+            int compassEastIcon;
+            int waterChargedIcon;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&scroll, 0, sizeof(scroll));
+            memset(&junk, 0, sizeof(junk));
+            localThings.scrolls = &scroll;
+            localThings.scrollCount = 1;
+            localThings.junks = &junk;
+            localThings.junkCount = 1;
+            iconView.world.things = &localThings;
+            scroll.closed = 0;
+            scrollOpenIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, scrollThing);
+            scroll.closed = 1;
+            scrollClosedIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, scrollThing);
+            junk.type = 0; /* compass */
+            iconView.world.party.direction = DIR_EAST;
+            compassEastIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, junkThing);
+            junk.type = 1; /* water */
+            junk.chargeCount = 1;
+            waterChargedIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, junkThing);
+            probe_record(&tally, "INV_GV_309",
+                         scrollOpenIcon == 30 && scrollClosedIcon == 31 &&
+                         compassEastIcon == 1 && waterChargedIcon == 9,
+                         "object icon resolver follows source scroll, compass, and charged-junk variants");
+            iconView.world.things = NULL;
+        }
+
         /* Save a screenshot artifact showing the populated right
          * column so the visual improvement is reproducible. */
         {

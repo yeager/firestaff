@@ -11279,7 +11279,8 @@ static int m11_object_info_index_for_thing(const struct DungeonThings_Compat* th
     }
 }
 
-static int m11_object_icon_index_for_thing(const struct DungeonThings_Compat* things,
+static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
+                                           const struct DungeonThings_Compat* things,
                                            unsigned short thingId) {
     static const unsigned char kObjectInfoType[180] = {
          30,144,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,
@@ -11308,6 +11309,23 @@ static int m11_object_icon_index_for_thing(const struct DungeonThings_Compat* th
             } else if (weapon->chargeCount &&
                        (iconIndex == 14 || iconIndex == 16 || iconIndex == 18 ||
                         iconIndex == 20 || iconIndex == 23 || iconIndex == 25)) {
+                iconIndex += 1;
+            }
+        }
+    } else if (THING_GET_TYPE(thingId) == THING_TYPE_SCROLL) {
+        int thingIndex = THING_GET_INDEX(thingId);
+        if (things->scrolls && thingIndex >= 0 && thingIndex < things->scrollCount &&
+            iconIndex == 30 && things->scrolls[thingIndex].closed) {
+            iconIndex += 1;
+        }
+    } else if (THING_GET_TYPE(thingId) == THING_TYPE_JUNK) {
+        int thingIndex = THING_GET_INDEX(thingId);
+        if (things->junks && thingIndex >= 0 && thingIndex < things->junkCount) {
+            const struct DungeonJunk_Compat* junk = &things->junks[thingIndex];
+            if (iconIndex == 0 && state) {
+                iconIndex += state->world.party.direction & 0x03;
+            } else if (junk->chargeCount &&
+                       (iconIndex == 8 || iconIndex == 10 || iconIndex == 12)) {
                 iconIndex += 1;
             }
         }
@@ -12421,6 +12439,12 @@ int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH) {
     return 1;
 }
 
+int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
+                                            unsigned short thingId) {
+    if (!state || !state->world.things) return -1;
+    return m11_object_icon_index_for_thing(state, state->world.things, thingId);
+}
+
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int depthIndex,
                                            int visibleCount,
@@ -13313,7 +13337,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
                 state->world.things, handThing);
             if (actionSet != 0) {
                 int iconIndex = m11_object_icon_index_for_thing(
-                    state->world.things, handThing);
+                    state, state->world.things, handThing);
                 drewSprite = m11_draw_dm_object_icon_index(
                     state, framebuffer, framebufferWidth, framebufferHeight,
                     iconIndex, innerX, M11_DM_ACTION_ICON_INNER_Y);
