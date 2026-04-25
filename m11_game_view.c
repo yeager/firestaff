@@ -15692,6 +15692,23 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                          framebufferHeight, 19, 7 + (i * 48), 10);
                     if (i < state->world.party.championCount &&
                         state->world.party.champions[i].present) {
+                        const M11_AssetSlot* portraits = M11_AssetLoader_Load(
+                            (M11_AssetLoader*)&state->assetLoader,
+                            M11_GFX_CHAMPION_PORTRAITS);
+                        if (portraits && portraits->loaded && portraits->pixels &&
+                            portraits->width >= 256 && portraits->height >= 87) {
+                            int pIdx = state->world.party.champions[i].portraitIndex & 0x1F;
+                            int srcPX = (pIdx & 7) * M11_PORTRAIT_W;
+                            int srcPY = (pIdx >> 3) * M11_PORTRAIT_H;
+                            if (srcPX + M11_PORTRAIT_W <= (int)portraits->width &&
+                                srcPY + M11_PORTRAIT_H <= (int)portraits->height) {
+                                M11_AssetLoader_BlitRegion(portraits,
+                                    srcPX, srcPY,
+                                    M11_PORTRAIT_W, M11_PORTRAIT_H,
+                                    framebuffer, framebufferWidth, framebufferHeight,
+                                    27, 13 + (i * 48), M11_COLOR_DARK_GRAY);
+                            }
+                        }
                         char champName[16];
                         M11_TextStyle nameStyle = g_text_small;
                         nameStyle.color = M11_COLOR_LIGHT_RED;

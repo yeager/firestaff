@@ -4899,6 +4899,7 @@ int main(int argc, char** argv) {
                 for (x = 0; x < (int)mirror->width; ++x) {
                     unsigned char expected = mirror->pixels[y * (int)mirror->width + x] & 0x0F;
                     if (expected == 10) continue;
+                    if (x >= 8 && x < 40 && y >= 6 && y < 35) continue;
                     ++total;
                     if ((fb_won[(7 + y) * 320 + 19 + x] & 0x0F) == expected) ++matches;
                 }
@@ -4908,6 +4909,40 @@ int main(int argc, char** argv) {
                      "INV_GV_165D",
                      endgameView.assetsAvailable ? (total > 0 && matches > (total * 9 / 10)) : 1,
                      "V1 endgame uses source champion mirror graphic zone");
+    }
+
+    /* INV_GV_165H: V1 endgame blits source champion portrait into C416. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        const M11_AssetSlot* portraits;
+        int matches = 0;
+        int total = 0;
+        int x, y;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        endgameView.world.party.championCount = 1;
+        endgameView.world.party.champions[0].present = 1;
+        endgameView.world.party.champions[0].portraitIndex = 0;
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        portraits = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader,
+                                         26U);
+        if (portraits && portraits->loaded && portraits->pixels) {
+            for (y = 0; y < 29; ++y) {
+                for (x = 0; x < 32; ++x) {
+                    unsigned char expected = portraits->pixels[y * (int)portraits->width + x] & 0x0F;
+                    if (expected == PROBE_COLOR_DARK_GRAY) continue;
+                    ++total;
+                    if ((fb_won[(13 + y) * 320 + 27 + x] & 0x0F) == expected) ++matches;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_165H",
+                     endgameView.assetsAvailable ? (total > 0 && matches > (total * 9 / 10)) : 1,
+                     "V1 endgame blits source champion portrait into C416");
     }
 
     /* INV_GV_165E: V1 endgame prints champion name at source coordinate. */
