@@ -6855,6 +6855,13 @@ enum {
     M11_GFX_DOOR_SIDE_D2    = 88,  /*  18x65  */
     M11_GFX_DOOR_SIDE_D3    = 89,  /*  10x42  */
 
+    /* DM1 wall-set 0 front wall graphics.  These are the source
+     * GRAPHICS.DAT wall panels that DUNVIEW.C draws into layout-696
+     * zones C704/C709/C712 for blocked front squares. */
+    M11_GFX_WALLSET0_D3C    = 107, /* 70x49  -> C704_ZONE_WALL_D3C */
+    M11_GFX_WALLSET0_D2C    = 102, /* 106x74 -> C709_ZONE_WALL_D2C */
+    M11_GFX_WALLSET0_D1C    = 97,  /* 160x111 -> C712_ZONE_WALL_D1C */
+
     /* Creature front-view sprites (groups of 3: small/mid/large).
      * Each group covers one creature graphic set:
      *   set 0 = 246..248, set 1 = 249..251, etc. */
@@ -7078,6 +7085,69 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
     m11_fill_rect(framebuffer, fbW, fbH,
                   vpX + 2, vpY + vpH / 2, vpW - 4, vpH / 2 - 2,
                   M11_COLOR_DARK_GRAY);
+}
+
+typedef struct M11_DM1WallFrontBlit {
+    int depthIndex;
+    int graphicIndex;
+    int dstX;
+    int dstY;
+    int width;
+    int height;
+} M11_DM1WallFrontBlit;
+
+static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
+                                        unsigned char* framebuffer,
+                                        int fbW,
+                                        int fbH,
+                                        const M11_DM1WallFrontBlit* blit) {
+    const M11_AssetSlot* slot;
+    if (!state || !state->assetsAvailable || !blit) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)blit->graphicIndex);
+    if (!slot || slot->width != blit->width || slot->height != blit->height) {
+        return 0;
+    }
+    M11_AssetLoader_BlitRegion(slot,
+                               0, 0, blit->width, blit->height,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + blit->dstX,
+                               M11_VIEWPORT_Y + blit->dstY,
+                               -1);
+    return 1;
+}
+
+static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int fbW,
+                                     int fbH,
+                                     const M11_ViewportCell cells[3][3]) {
+    static const M11_DM1WallFrontBlit kFrontBlits[3] = {
+        /* Resolved from layout 696 via COORD.C F0635_ semantics:
+         *   graphic 97  -> C712_ZONE_WALL_D1C: x=32,y=9,w=160,h=111
+         *   graphic 102 -> C709_ZONE_WALL_D2C: x=59,y=19,w=106,h=74
+         *   graphic 107 -> C704_ZONE_WALL_D3C: x=77,y=25,w=70,h=49 */
+        {0, M11_GFX_WALLSET0_D1C, 32, 9, 160, 111},
+        {1, M11_GFX_WALLSET0_D2C, 59, 19, 106, 74},
+        {2, M11_GFX_WALLSET0_D3C, 77, 25, 70, 49}
+    };
+    int depth;
+    int occluded = 0;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        if (occluded) {
+            break;
+        }
+        if (!m11_viewport_cell_is_open(&cells[depth][1])) {
+            (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
+                                               &kFrontBlits[depth]);
+            occluded = 1;
+        }
+    }
 }
 
 /* Draw a real door frame from GRAPHICS.DAT at the given depth.
@@ -11308,6 +11378,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
     }
+
+    /* First source-bound wall pass: draw blocked front-square wall
+     * panels using original wall-set bitmaps and original layout-696
+     * zones.  This is intentionally narrow: side walls/ornaments/doors
+     * still need the full DUNVIEW.C field-aspect pass. */
+    m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal
