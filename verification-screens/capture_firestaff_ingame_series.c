@@ -111,6 +111,40 @@ static int save_game(const char* outDir, const char* name, M11_GameViewState* ga
     return write_ppm_from_indices(fb, FB_W, FB_H, paletteLevel, path);
 }
 
+static void ensure_deterministic_capture_champion(M11_GameViewState* game) {
+    struct ChampionState_Compat* c;
+    unsigned short weaponThing;
+    int invSlot;
+    if (!game) return;
+    c = &game->world.party.champions[0];
+    memset(c, 0, sizeof(*c));
+    for (invSlot = 0; invSlot < CHAMPION_SLOT_COUNT; ++invSlot) {
+        c->inventory[invSlot] = THING_NONE;
+    }
+    c->present = 1;
+    memcpy(c->name, "HALK\0\0\0\0", 8);
+    c->hp.current = 42; c->hp.maximum = 60;
+    c->stamina.current = 35; c->stamina.maximum = 50;
+    c->mana.current = 20; c->mana.maximum = 40;
+    c->food = 80; c->water = 70;
+    c->portraitIndex = 0;
+    game->world.party.championCount = 1;
+    game->world.party.activeChampionIndex = 0;
+
+    /* Deterministic DAGGER fixture: this makes both the right-side
+     * action icon cells and the inventory-panel slot box exercise the
+     * source object-icon path instead of whatever subtype the dungeon
+     * happened to load at weapon index 0. */
+    if (game->world.things && game->world.things->weapons &&
+        game->world.things->weaponCount > 0) {
+        weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        game->world.things->weapons[0].type = 8; /* dagger -> icon 32 */
+        game->world.things->weapons[0].chargeCount = 0;
+        game->world.things->weapons[0].lit = 0;
+        c->inventory[CHAMPION_SLOT_HAND_RIGHT] = weaponThing;
+    }
+}
+
 int main(int argc, char** argv) {
     const char* outDir;
     const char* dataDir;
@@ -136,6 +170,7 @@ int main(int argc, char** argv) {
      * resets the renderer palette level to 0 so indexed in-game pixels
      * are not globally dimmed by a startup-menu setting. */
     paletteLevel = 0U;
+    ensure_deterministic_capture_champion(&game);
 
     if (!save_game(outDir, "01_ingame_start_latest", &game, paletteLevel)) return 1;
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
@@ -147,38 +182,9 @@ int main(int argc, char** argv) {
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_CAST);
     if (!save_game(outDir, "05_ingame_after_cast_latest", &game, paletteLevel)) return 1;
 
-    /* Close spell panel via SPELL_CLEAR, then open the inventory panel.
-     * DM1 starts with no recruited champions, so synthesize one for
-     * the screenshot if needed. */
+    /* Close spell panel via SPELL_CLEAR, then open the inventory panel. */
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_CLEAR);
-    if (game.world.party.championCount == 0) {
-        /* Synthesize a test champion for inventory screenshot */
-        struct ChampionState_Compat* c = &game.world.party.champions[0];
-        memset(c, 0, sizeof(*c));
-        c->present = 1;
-        memcpy(c->name, "HALK\0\0\0\0", 8);
-        c->hp.current = 42; c->hp.maximum = 60;
-        c->stamina.current = 35; c->stamina.maximum = 50;
-        c->mana.current = 20; c->mana.maximum = 40;
-        c->food = 80; c->water = 70;
-        c->portraitIndex = 0;
-        /* Give the champion a deterministic DAGGER in the ready hand so
-         * the inventory screenshot exercises the source object-icon path
-         * (F0038_OBJECT_DrawIconInSlotBox semantics), not an arbitrary
-         * dungeon-loaded weapon subtype. */
-        if (game.world.things && game.world.things->weapons &&
-            game.world.things->weaponCount > 0) {
-            unsigned short weaponThing = (THING_TYPE_WEAPON << 10) | 0;
-            game.world.things->weapons[0].type = 8; /* dagger -> icon 32 */
-            game.world.things->weapons[0].chargeCount = 0;
-            game.world.things->weapons[0].lit = 0;
-            c->inventory[CHAMPION_SLOT_HAND_LEFT] = weaponThing;
-        }
-        game.world.party.championCount = 1;
-        game.world.party.activeChampionIndex = 0;
-    } else {
-        (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_CYCLE_CHAMPION);
-    }
+    ensure_deterministic_capture_champion(&game);
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_INVENTORY_TOGGLE);
     if (!save_game(outDir, "06_ingame_inventory_panel_latest", &game, paletteLevel)) return 1;
 
