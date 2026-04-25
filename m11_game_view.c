@@ -7411,6 +7411,44 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int fbW,
+                                         int fbH) {
+    M11_ViewportCell cell;
+    const M11_AssetSlot* slot;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    if (!m11_sample_viewport_cell(state, 3, 1, &cell)) {
+        return;
+    }
+    if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR ||
+        m11_viewport_cell_is_open(&cell) || !cell.hasDoorThing ||
+        !state->world.things || !state->world.things->doors) {
+        return;
+    }
+    {
+        int doorIdx = THING_GET_INDEX(cell.firstThing);
+        if (doorIdx < 0 || doorIdx >= state->world.things->doorCount ||
+            !state->world.things->doors[doorIdx].button) {
+            return;
+        }
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                M11_GFX_DOOR_BUTTON_BASE);
+    if (!slot || slot->width <= 0 || slot->height <= 0) {
+        return;
+    }
+    /* C1950_ZONE_DOOR_BUTTON + C0_VIEW_DOOR_BUTTON_D3R, scaled 16/32. */
+    M11_AssetLoader_BlitScaled(slot,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + 197,
+                               M11_VIEWPORT_Y + 39,
+                               4, 4,
+                               10);
+}
+
 typedef struct M11_DM1SideDoorSpec {
     int relForward;
     int relSide;
@@ -11745,6 +11783,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal
