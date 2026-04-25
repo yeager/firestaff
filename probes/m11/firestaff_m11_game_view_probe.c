@@ -1061,6 +1061,20 @@ int main(int argc, char** argv) {
                  "V1 champion HUD draws source ready/action hand slot zones inside the status box");
 
     probe_record(&tally,
+                 "INV_GV_15F",
+                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 33 &&
+                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 33,
+                 "V1 champion HUD ready/action hands use normal slot-box graphic when idle");
+
+    syntheticView.actingChampionOrdinal = 1;
+    probe_record(&tally,
+                 "INV_GV_15G",
+                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 33 &&
+                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 35,
+                 "V1 champion HUD action hand switches to graphic 35 for the acting champion");
+    syntheticView.actingChampionOrdinal = 0;
+
+    probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,
                                    320,

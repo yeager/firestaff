@@ -13860,6 +13860,28 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
     return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
 }
 
+int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
+                                               int championSlot,
+                                               int handIndex) {
+    const struct ChampionState_Compat* champ;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        handIndex < 0 || handIndex > 1 ||
+        championSlot >= state->world.party.championCount) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championSlot];
+    if (!champ->present || champ->hp.current == 0) return 0;
+    if (handIndex == 1 &&
+        state->actingChampionOrdinal == (unsigned int)(championSlot + 1)) {
+        return M11_GFX_SLOT_BOX_ACTING_HAND;
+    }
+    /* Wound-specific graphic 34 is kept for the inventory/body pass;
+     * current M11 party state does not yet expose source C00/C01 wound
+     * bits distinctly enough for status hands, so normal source box is
+     * the safe non-invented default. */
+    return M11_GFX_SLOT_BOX_NORMAL;
+}
+
 static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
                                         const struct ChampionState_Compat* champ,
                                         unsigned char* framebuffer,
@@ -13870,23 +13892,15 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
                                         int dstX,
                                         int dstY) {
     unsigned short thing;
-    unsigned int boxGfx;
+    int boxGfx;
     int drewBox = 0;
     int iconIndex;
 
     if (!state || !champ || !framebuffer) return 0;
     thing = m11_get_status_hand_thing(champ, handIndex);
-
-    if (handIndex == 1 &&
-        state->actingChampionOrdinal == (unsigned int)(championSlot + 1)) {
-        boxGfx = M11_GFX_SLOT_BOX_ACTING_HAND;
-    } else {
-        /* Wound-specific graphic 34 is kept for the inventory/body pass;
-         * current M11 party state does not yet expose source C00/C01 wound
-         * bits distinctly enough for status hands, so normal source box is
-         * the safe non-invented default. */
-        boxGfx = M11_GFX_SLOT_BOX_NORMAL;
-    }
+    boxGfx = M11_GameView_GetV1StatusHandSlotGraphic(
+        state, championSlot, handIndex);
+    if (boxGfx <= 0) return 0;
 
     if (state->assetsAvailable) {
         const M11_AssetSlot* box = M11_AssetLoader_Load(
