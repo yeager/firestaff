@@ -879,6 +879,55 @@ first, then visual parity, then typography / honesty.
 
 ---
 
+## All-graphics addendum: object icons, inventory fixture, and C011 capture gates — **LANDED (passes 84–99)**
+- **Area:** `VISUAL` / `CAPTURE_GATES`
+- **Status:** Resolved for the current action-hand, inventory-slot, and spell
+  label-cell surfaces.  Full original screenshot overlays are still open; this
+  addendum records the narrowed, source-backed parts so they do not regress into
+  vague `UNPROVEN` status.
+- **Passes 84–91 (landed, 2026-04-25):**
+  - Action-hand empty cells now draw source empty-hand icon
+    `C201_ICON_ACTION_ICON_EMPTY_HAND` from graphics `42..48`.
+  - Action-hand items with `ActionSetIndex > 0` now draw source object icons
+    through the `F0033_OBJECT_GetIconIndex` resolver instead of scaled viewport
+    sprites; `ActionSetIndex == 0` items intentionally remain plain cyan.
+  - The resolver covers source dynamic variants for lit torches (`G0029` charge
+    bucket), charged weapons (`+1`), closed scrolls, compass direction, and
+    charged water/Jewel Symal/Illumulet.
+  - Inventory slot boxes now use `F0038_OBJECT_DrawIconInSlotBox` semantics:
+    16×16 source object icons, direct blit, no action-area palette rewrite.
+  - Action-area object icons apply `G0498` (`12 -> C04 cyan`); inventory icons
+    preserve source colour 12.  This split is probe-backed.
+- **Passes 92–99 (landed, 2026-04-25):**
+  - `PARITY_MATRIX_DM1_V1.md` now records equipment/item icons as `MATCHED` for
+    icon selection / atlas extraction / palette distinction in the current
+    action + inventory slot surfaces.
+  - `capture_firestaff_ingame_series.c` has a deterministic capture champion
+    (`HALK`) with a dagger in the action/right hand, making both
+    `02_ingame_turn_right_latest` and `06_ingame_inventory_panel_latest`
+    reproducible object-icon fixtures.
+  - `run_firestaff_m11_ingame_capture_smoke.sh` now checks the action screenshot
+    for G0498 cyan dagger coverage and the inventory screenshot for preserved
+    source dark gray dagger coverage.
+  - The same capture smoke now checks `04_ingame_spell_panel_latest` for the
+    native selected-rune `C011_GRAPHIC_MENU_SPELL_AREA_LINES` brown/red pattern.
+  - Matrix counts were refreshed: equipment/item icons and C011 spell cells are
+    counted as matched for the current surfaces; inventory screen is
+    `KNOWN_DIFF (narrowed)` rather than generic `UNPROVEN`.
+- **Representative gates:**
+  - `firestaff_m11_game_view_probe`: `418/418 invariants passed`
+  - `ctest`: `5/5 PASS`
+  - `run_firestaff_m11_ingame_capture_smoke.sh`: `PASS` with action/inventory
+    icon palette split and C011 selected-rune checks.
+- **Remaining gaps:**
+  - Pointer/held-object icon surfaces are not implemented/audited yet.
+  - Exact inventory and spell-panel placement still require original overlay
+    evidence.
+  - Viewport content/draw-order parity remains separate from these right-panel
+    and capture-fixture improvements.
+
+---
+
 ## Priority groupings
 
 - **High (pass-37 … pass-41):** ownership wiring (#1 — **LANDED pass
