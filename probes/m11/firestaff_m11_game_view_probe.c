@@ -5922,6 +5922,19 @@ int main(int argc, char** argv) {
                      "projectile source scale units match G0215 for D1/D2/D3 front/back cells");
     }
 
+    /* INV_GV_245C: Projectile aspect table is source G0210. */
+    {
+        probe_record(&tally,
+                     "INV_GV_245C",
+                     M11_GameView_GetProjectileAspectFirstNative(0) == 0 &&
+                     M11_GameView_GetProjectileAspectFirstNative(3) == 9 &&
+                     M11_GameView_GetProjectileAspectFirstNative(10) == 28 &&
+                     M11_GameView_GetProjectileAspectFirstNative(13) == 31 &&
+                     M11_GameView_GetProjectileAspectGraphicInfo(3) == 0x0112u &&
+                     M11_GameView_GetProjectileAspectGraphicInfo(10) == 0x0103u,
+                     "projectile aspect firstNative/GraphicInfo samples match G0210");
+    }
+
     /* INV_GV_246: projectile sub-cell positioning — the firstProjectileCell
      * field is populated from the runtime ProjectileInstance_Compat.cell
      * data, rotated by party direction.

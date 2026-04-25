@@ -5799,6 +5799,23 @@ static int m11_projectile_subtype_to_graphic_index(int subtype) {
     }
 }
 
+static int m11_projectile_aspect_first_native(int aspectIndex) {
+    static const unsigned char kFirstNative[14] = {
+        0,3,6,9,11,14,17,20,23,26,28,29,30,31
+    };
+    if (aspectIndex < 0 || aspectIndex >= 14) return -1;
+    return (int)kFirstNative[aspectIndex];
+}
+
+static unsigned int m11_projectile_aspect_graphic_info(int aspectIndex) {
+    static const unsigned short kGraphicInfo[14] = {
+        0x0011,0x0011,0x0010,0x0112,0x0011,0x0010,0x0010,
+        0x0011,0x0011,0x0012,0x0103,0x0103,0x0103,0x0103
+    };
+    if (aspectIndex < 0 || aspectIndex >= 14) return 0u;
+    return (unsigned int)kGraphicInfo[aspectIndex];
+}
+
 static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                     int relForward,
                                     int relSide,
@@ -11694,6 +11711,14 @@ int M11_GameView_CountCellExplosions(
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
                                                int relativeCell) {
     return m11_projectile_source_scale_units(depthIndex, relativeCell);
+}
+
+int M11_GameView_GetProjectileAspectFirstNative(int aspectIndex) {
+    return m11_projectile_aspect_first_native(aspectIndex);
+}
+
+unsigned int M11_GameView_GetProjectileAspectGraphicInfo(int aspectIndex) {
+    return m11_projectile_aspect_graphic_info(aspectIndex);
 }
 
 unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
