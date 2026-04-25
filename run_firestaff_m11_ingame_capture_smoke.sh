@@ -46,11 +46,25 @@ for name in "${expected[@]}"; do
     echo "capture is not binary PPM/P6: $name" >&2
     exit 1
   fi
-  size=$(wc -c < "$path")
-  if (( size < 1000 )); then
-    echo "capture too small: $name ($size bytes)" >&2
-    exit 1
-  fi
+  python3 - "$path" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+data = path.read_bytes()
+parts = data.split(None, 4)
+if len(parts) < 5 or parts[0] != b"P6":
+    raise SystemExit(f"invalid PPM header: {path.name}")
+w = int(parts[1])
+h = int(parts[2])
+maxval = int(parts[3])
+payload = parts[4]
+expected = w * h * 3
+if (w, h, maxval) != (320, 200, 255):
+    raise SystemExit(f"unexpected PPM geometry in {path.name}: {w}x{h} max={maxval}")
+if len(payload) != expected:
+    raise SystemExit(f"unexpected PPM payload size in {path.name}: {len(payload)} != {expected}")
+PY
 done
 
 python3 - "$OUT_DIR/01_ingame_start_latest.ppm" <<'PY'
