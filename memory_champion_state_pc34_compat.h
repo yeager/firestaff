@@ -219,4 +219,12 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     const char* mirrorText,
     struct ChampionState_Compat* champ);
 
+/* Decode a DUNGEON.DAT TextString thing by index and parse it as a champion
+ * mirror record. Returns 1 only when the text string exists, decodes, and
+ * matches the source champion mirror shape. */
+int F0607_CHAMPION_ParseMirrorTextString_Compat(
+    const struct DungeonThings_Compat* things,
+    int textStringIndex,
+    struct ChampionState_Compat* champ);
+
 #endif

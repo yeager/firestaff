@@ -53,6 +53,19 @@ static void pack_text_field(unsigned char* dst, int dstLen,
     }
 }
 
+static int mirror_text_is_separator(char ch) {
+    return ch == '|' || ch == '\n';
+}
+
+static const char* mirror_text_find_separator(const char* s) {
+    if (!s) return 0;
+    while (*s) {
+        if (mirror_text_is_separator(*s)) return s;
+        ++s;
+    }
+    return 0;
+}
+
 int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     const char* mirrorText,
     struct ChampionState_Compat* champ)
@@ -79,10 +92,10 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     memset(champ->mirrorInventoryText, ' ', CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
 
     nameStart = mirrorText;
-    nameEnd = strchr(nameStart, '|');
+    nameEnd = mirror_text_find_separator(nameStart);
     if (!nameEnd || nameEnd == nameStart) return 0;
     titleStart = nameEnd + 1;
-    titleEnd = strchr(titleStart, '|');
+    titleEnd = mirror_text_find_separator(titleStart);
     if (!titleEnd) return 0;
 
     pack_text_field(champ->name, CHAMPION_NAME_LENGTH,
@@ -91,14 +104,14 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
                     titleStart, (int)(titleEnd - titleStart));
 
     sexStart = titleEnd;
-    if (sexStart[0] == '|' && sexStart[1] == '|') {
+    if (mirror_text_is_separator(sexStart[0]) && mirror_text_is_separator(sexStart[1])) {
         sexStart += 2;
         if (sexStart[0] != 'M' && sexStart[0] != 'F') return 0;
         champ->sex = (unsigned char)sexStart[0];
-        statStart = strchr(sexStart, '|');
+        statStart = mirror_text_find_separator(sexStart);
         if (statStart) {
             ++statStart;
-            statEnd = strchr(statStart, '|');
+            statEnd = mirror_text_find_separator(statStart);
             if (statEnd) {
                 pack_text_field(champ->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,
                                 statStart, (int)(statEnd - statStart));
@@ -107,8 +120,8 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
                 if (!skillEnd) skillEnd = skillStart + strlen(skillStart);
                 pack_text_field(champ->mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH,
                                 skillStart, (int)(skillEnd - skillStart));
-                inventoryStart = (*skillEnd == '|') ? skillEnd + 1 : skillEnd;
-                inventoryEnd = strchr(inventoryStart, '|');
+                inventoryStart = mirror_text_is_separator(*skillEnd) ? skillEnd + 1 : skillEnd;
+                inventoryEnd = mirror_text_find_separator(inventoryStart);
                 if (!inventoryEnd) inventoryEnd = inventoryStart + strlen(inventoryStart);
                 pack_text_field(champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH,
                                 inventoryStart, (int)(inventoryEnd - inventoryStart));
@@ -149,6 +162,31 @@ int F0601_CHAMPION_InitPartyFromDungeon_Compat(
     }
 
     return 1;
+}
+
+
+int F0607_CHAMPION_ParseMirrorTextString_Compat(
+    const struct DungeonThings_Compat* things,
+    int textStringIndex,
+    struct ChampionState_Compat* champ)
+{
+    char decoded[DUNGEON_TEXT_MAX_STRING_LEN];
+    const struct DungeonTextString_Compat* ts;
+    int len;
+
+    if (!things || !champ) return 0;
+    if (textStringIndex < 0 || textStringIndex >= things->textStringCount) return 0;
+    if (!things->textStrings || !things->textData || things->textDataWordCount <= 0) return 0;
+
+    ts = &things->textStrings[textStringIndex];
+    len = F0507_DUNGEON_DecodeTextAtOffset_Compat(
+        things->textData,
+        things->textDataWordCount,
+        ts->textDataWordOffset,
+        decoded,
+        (int)sizeof(decoded));
+    if (len <= 0) return 0;
+    return F0606_CHAMPION_ParseMirrorTextIdentity_Compat(decoded, champ);
 }
 
 /*

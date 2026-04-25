@@ -435,7 +435,26 @@ int main(int argc, char* argv[]) {
               "Champion mirror parser rejects missing empty source field before sex");
     }
 
-    /* Test 8: Sensor identification */
+    /* Test 8: DUNGEON.DAT TextString-to-champion parser integration */
+    {
+        int tsIndex;
+        int foundStamm = 0;
+        for (tsIndex = 0; tsIndex < things.textStringCount; ++tsIndex) {
+            struct ChampionState_Compat parsed;
+            F0600_CHAMPION_InitEmpty_Compat(&parsed);
+            if (F0607_CHAMPION_ParseMirrorTextString_Compat(&things, tsIndex, &parsed) &&
+                memcmp(parsed.name, "STAMM   ", 8) == 0 &&
+                memcmp(parsed.title, "BLADECASTER         ", 20) == 0 &&
+                parsed.sex == 'M') {
+                foundStamm = 1;
+                break;
+            }
+        }
+        CHECK(foundStamm,
+              "DUNGEON.DAT TextString parser finds STAMM/BLADECASTER mirror record");
+    }
+
+    /* Test 9: Sensor identification */
     {
         struct SensorOnSquare_Compat sensorResult;
         int foundAnySensor = 0;
