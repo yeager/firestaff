@@ -725,31 +725,6 @@ static int m11_get_square_byte(const struct GameWorld_Compat* world,
     return 1;
 }
 
-static unsigned char* m11_get_square_ptr(struct GameWorld_Compat* world,
-                                         int mapIndex,
-                                         int mapX,
-                                         int mapY) {
-    const struct DungeonMapDesc_Compat* map;
-    struct DungeonMapTiles_Compat* tiles;
-    int index;
-    if (!world || !world->dungeon || !world->dungeon->tilesLoaded) {
-        return NULL;
-    }
-    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
-        return NULL;
-    }
-    map = &world->dungeon->maps[mapIndex];
-    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) {
-        return NULL;
-    }
-    tiles = &world->dungeon->tiles[mapIndex];
-    index = mapX * (int)map->height + mapY;
-    if (!tiles->squareData || index < 0 || index >= tiles->squareCount) {
-        return NULL;
-    }
-    return &tiles->squareData[index];
-}
-
 static unsigned short m11_raw_next_thing(const struct DungeonThings_Compat* things,
                                          unsigned short thing) {
     int type;
@@ -7571,11 +7546,23 @@ static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
                                         int fbH,
                                         const M11_DM1WallFrontBlit* blit) {
     const M11_AssetSlot* slot;
+    unsigned int graphicIndex;
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
     }
+    graphicIndex = (unsigned int)blit->graphicIndex;
+    if (graphicIndex >= M11_GFX_WALLSET0_D0R &&
+        graphicIndex <= M11_GFX_WALLSET0_D3C &&
+        state->world.dungeon && state->world.dungeon->maps &&
+        state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        int wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
+        if (wallSet < 0) wallSet = 0;
+        graphicIndex = (unsigned int)(M11_GFX_WALLSET0_D0R +
+            wallSet * 15 + ((int)graphicIndex - M11_GFX_WALLSET0_D0R));
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)blit->graphicIndex);
+                                graphicIndex);
     if (!slot || slot->width != blit->width || slot->height != blit->height) {
         return 0;
     }
@@ -12261,6 +12248,16 @@ int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
                                              int* outX,
                                              int* outY) {
     return m11_c2900_projectile_zone_point(scaleIndex, relativeCell, outX, outY);
+}
+
+int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex) {
+    if (wallSet < 0) wallSet = 0;
+    if (wallSet0GraphicIndex < M11_GFX_WALLSET0_D0R ||
+        wallSet0GraphicIndex > M11_GFX_WALLSET0_D3C) {
+        return wallSet0GraphicIndex;
+    }
+    return M11_GFX_WALLSET0_D0R + wallSet * 15 +
+           (wallSet0GraphicIndex - M11_GFX_WALLSET0_D0R);
 }
 
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
