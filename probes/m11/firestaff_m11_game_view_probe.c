@@ -1453,6 +1453,7 @@ int main(int argc, char** argv) {
         unsigned char projectileFb[320 * 200];
         unsigned char objectFb[320 * 200];
         unsigned char objectGapFb[320 * 200];
+        unsigned char multiObjectFb[320 * 200];
         char gfxPath[512];
         int haveAssets = 0;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
@@ -1546,6 +1547,42 @@ int main(int argc, char** argv) {
         focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
             THING_ENDOFLIST;
 
+        {
+            struct DungeonWeapon_Compat* twoWeapons =
+                (struct DungeonWeapon_Compat*)realloc(focusView.world.things->weapons,
+                                                      2 * sizeof(struct DungeonWeapon_Compat));
+            unsigned char* twoWeaponRaw =
+                (unsigned char*)realloc(focusView.world.things->rawThingData[THING_TYPE_WEAPON], 8);
+            if (twoWeapons && twoWeaponRaw) {
+                focusView.world.things->weapons = twoWeapons;
+                focusView.world.things->rawThingData[THING_TYPE_WEAPON] = twoWeaponRaw;
+                memset(focusView.world.things->weapons, 0, 2 * sizeof(struct DungeonWeapon_Compat));
+                memset(focusView.world.things->rawThingData[THING_TYPE_WEAPON], 0, 8);
+                focusView.world.things->weaponCount = 2;
+                focusView.world.things->thingCounts[THING_TYPE_WEAPON] = 2;
+                focusView.world.things->weapons[0].type = 8;  /* dagger */
+                focusView.world.things->weapons[1].type = 43; /* G0209 native-gap object */
+                probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON],
+                               (unsigned short)((3u << 14) | (THING_TYPE_WEAPON << 10) | 1u));
+                probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON] + 4,
+                               THING_ENDOFLIST);
+                focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+                    (unsigned short)((0u << 14) | (THING_TYPE_WEAPON << 10) | 0u);
+                memset(multiObjectFb, 0, sizeof(multiObjectFb));
+                M11_GameView_Draw(&focusView, multiObjectFb, 320, 200);
+                if (ssDir && ssDir[0]) {
+                    probe_capture_vga_frame(&focusView, ssDir,
+                                            "39_focused_d1c_multi_object_shift_vga");
+                }
+                focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+                    THING_ENDOFLIST;
+            } else {
+                if (twoWeapons) focusView.world.things->weapons = twoWeapons;
+                if (twoWeaponRaw) focusView.world.things->rawThingData[THING_TYPE_WEAPON] = twoWeaponRaw;
+                memset(multiObjectFb, 0, sizeof(multiObjectFb));
+            }
+        }
+
         probe_set_square(focusView.world.dungeon, 2, 2,
                          (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
         memset(pitFb, 0, sizeof(pitFb));
@@ -1606,6 +1643,9 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38O",
                      haveAssets && memcmp(baseFb, objectGapFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C object sprite with G0209 native-index gap changes the corridor frame");
+        probe_record(&tally, "INV_GV_38P",
+                     haveAssets && memcmp(objectFb, multiObjectFb, sizeof(objectFb)) != 0,
+                     "focused viewport: D1C multi-object pile differs from single-object frame");
 
         /* Broader source-zone coverage: verify every currently-wired
          * focused position in the pit/stairs/teleporter families changes
