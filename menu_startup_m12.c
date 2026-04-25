@@ -36,6 +36,15 @@ enum {
     M12_SETTINGS_ROW_COUNT
 };
 
+enum {
+    M12_MUSEUM_CATEGORY_DM1 = 0,
+    M12_MUSEUM_CATEGORY_CSB,
+    M12_MUSEUM_CATEGORY_DM2,
+    M12_MUSEUM_CATEGORY_FIRESTAFF,
+    M12_MUSEUM_CATEGORY_TECH_ARCHIVE,
+    M12_MUSEUM_CATEGORY_COUNT
+};
+
 static int m12_cycle_index(int value, int delta, int count);
 static int m12_clamp_index(int value, int count);
 static int m12_game_slot_from_id(const char* gameId);
@@ -164,7 +173,68 @@ static const M12_MenuEntry g_entryTemplate[] = {
     {.title = "DUNGEON MASTER", .gameId = "dm1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "CHAOS STRIKES BACK", .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "DUNGEON MASTER II", .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = "MUSEUM OF LORE", .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
     {.title = "SETTINGS", .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
+};
+
+typedef struct {
+    const char* title;
+    const char* subtitle;
+    const char* pages[3][5];
+    int pageCount;
+} M12_MuseumCategory;
+
+static const M12_MuseumCategory g_museumCategories[M12_MUSEUM_CATEGORY_COUNT] = {
+    {
+        "DUNGEON MASTER",
+        "THE ORIGINAL DUNGEON CRAWL",
+        {
+            {"1987 FTL GAMES", "CHAMPIONS ENTER THE DUNGEON", "FOUR PORTRAITS BECOME A PARTY", "THE FIRESTAFF IS THE CENTRAL RELIC", "REAL TIME PRESSURE DEFINES THE LEGEND"},
+            {"KEY LORE THREADS", "LORD CHAOS SHATTERS ORDER", "THE GREY LORD IS DIVIDED", "RA RETURNS AS MASTER OF BALANCE", "THE DUNGEON IS BOTH TEST AND PRISON"},
+            {"PRESERVATION NOTES", "PC AND ATARI ST LINEAGE MATTERS", "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED", "HASHED ORIGINAL DATA STAYS USER SUPPLIED", "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"}
+        },
+        3
+    },
+    {
+        "CHAOS STRIKES BACK",
+        "THE CHAMPIONS RETURN",
+        {
+            {"EXPANSION AND SEQUEL DESIGN", "DUNGEON MASTER SYSTEMS BECOME DENSER", "THE CORBUM QUEST REPLACES SIMPLE DESCENT", "FOUR PATHS TEST MASTERY", "CSB REWARDS MAP MEMORY AND NERVE"},
+            {"LORE SHAPE", "CHAOS STILL CASTS A LONG SHADOW", "THE PLAYER HUNTS CORBUM MATERIAL", "RETURNING CHAMPIONS FACE A HARDER MAZE", "THE WORLD FEELS OLDER AND LESS SAFE"},
+            {"ARCHIVE STATUS", "CSBGRAPH DAT AND CSB DAT ARE TRACKED", "VERSION SLOTS USE HASH EVIDENCE", "LAUNCHER SHOWS READY ONLY WHEN MATCHED", "MUSEUM CONTENT STAYS STATIC AND BOUNDED"}
+        },
+        3
+    },
+    {
+        "DUNGEON MASTER II",
+        "THE LEGEND OUTSIDE THE FIRST DUNGEON",
+        {
+            {"THE SKULLKEEP ERA", "THE SERIES MOVES BEYOND THE ORIGINAL MAZE", "OUTDOOR AND SHOP SPACES EXPAND THE FORM", "MINIONS AND WEATHER CHANGE THE RHYTHM", "DM2 KEEPS THE PARTY SURVIVAL CORE"},
+            {"LORE SHAPE", "TECHNOLOGY AND MAGIC SHARE THE STAGE", "THE WORLD IS BROADER THAN MOUNT ANAIAS", "THE PLAYER ASSEMBLES AND SURVIVES", "THE TONE IS STRANGER AND MORE MECHANICAL"},
+            {"ARCHIVE STATUS", "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED", "SUPPORTED VERSIONS CAN GROW OVER TIME", "CONTENT HERE IS A GUIDE NOT A DATA DUMP", "BINARY ASSETS REMAIN OUTSIDE THIS PASS"}
+        },
+        3
+    },
+    {
+        "FIRESTAFF PROJECT",
+        "ABOUT AND CREDITS",
+        {
+            {"PROJECT PURPOSE", "OPEN DUNGEON MASTER ENGINE", "DETERMINISTIC MODULAR MUSEUM GRADE", "ORIGINAL DATA IS VERIFIED NOT BUNDLED", "V1 PRESERVES BASELINE BEHAVIOUR"},
+            {"CREDITS", "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS", "DOUG BELL AND ANDY JAROS LED THE CLASSIC DESIGN", "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY", "FIRESTAFF BUILDS ON PRESERVATION RESEARCH"},
+            {"PROJECT BOUNDARIES", "NO CLAIM OF OFFICIAL AFFILIATION", "USER SUPPLIED RETAIL DATA IS REQUIRED", "REGRESSION PROBES GUARD MENU STABILITY", "TRACKED TEXT STAYS ENGLISH IN THE REPO"}
+        },
+        3
+    },
+    {
+        "TECHNICAL ARCHIVE",
+        "SOURCE EVIDENCE AND VERIFICATION",
+        {
+            {"EVIDENCE MODEL", "KNOWN FILES ARE MATCHED BY HASH", "VERSION MATRICES STAY EXPLICIT", "RUNTIME PATHS REPORT MISSING DATA SAFELY", "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"},
+            {"STARTUP MENU", "KEYBOARD INPUT IS BOUNDED", "MOUSE HITS ROUTE THROUGH SHARED STATE", "UNKNOWN KEYS ARE NO OPS", "ESCAPE RETURNS BEFORE EXITING"},
+            {"FUTURE MUSEUM WORK", "ADD MANUAL EXCERPT REFERENCES", "ADD INTERVIEW AND TIMELINE SOURCES", "ADD SMALL CURATED SCREEN PANELS", "KEEP LARGE ASSETS OUT UNTIL LICENSED"}
+        },
+        3
+    }
 };
 
 typedef struct {
@@ -774,6 +844,8 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->selectedIndex = 0;
     state->settingsSelectedIndex = 0;
     state->gameOptSelectedRow = 0;
+    state->museumSelectedIndex = 0;
+    state->museumPageIndex = 0;
     state->launchRequested = 0;
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
@@ -884,13 +956,18 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
     state->gameOptSelectedRow = m12_clamp_index(state->gameOptSelectedRow,
                                                 M12_GAME_OPT_ROW_COUNT + 1);
+    state->museumSelectedIndex = m12_clamp_index(state->museumSelectedIndex,
+                                                 M12_MUSEUM_CATEGORY_COUNT);
+    state->museumPageIndex = m12_clamp_index(state->museumPageIndex,
+                                             g_museumCategories[state->museumSelectedIndex].pageCount);
     if (state->activatedIndex < -1 || state->activatedIndex >= M12_CONFIG_GAME_COUNT) {
         state->activatedIndex = -1;
     }
     if (state->view != M12_MENU_VIEW_MAIN &&
         state->view != M12_MENU_VIEW_SETTINGS &&
         state->view != M12_MENU_VIEW_MESSAGE &&
-        state->view != M12_MENU_VIEW_GAME_OPTIONS) {
+        state->view != M12_MENU_VIEW_GAME_OPTIONS &&
+        state->view != M12_MENU_VIEW_MUSEUM) {
         state->view = M12_MENU_VIEW_MAIN;
     }
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0) {
@@ -909,6 +986,14 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     }
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         state->view = M12_MENU_VIEW_SETTINGS;
+        return;
+    }
+    if (entry->kind == M12_MENU_ENTRY_MUSEUM) {
+        state->view = M12_MENU_VIEW_MUSEUM;
+        state->museumSelectedIndex = m12_clamp_index(state->museumSelectedIndex,
+                                                     M12_MUSEUM_CATEGORY_COUNT);
+        state->museumPageIndex = m12_clamp_index(state->museumPageIndex,
+                                                 g_museumCategories[state->museumSelectedIndex].pageCount);
         return;
     }
     state->activatedIndex = state->selectedIndex;
@@ -1074,6 +1159,47 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 break;
             case M12_MENU_INPUT_BACK:
                 state->launchRequested = 0;
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
+        }
+        return;
+    }
+
+    if (state->view == M12_MENU_VIEW_MUSEUM) {
+        const M12_MuseumCategory* category;
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                state->museumSelectedIndex = m12_cycle_index(state->museumSelectedIndex,
+                                                             -1,
+                                                             M12_MUSEUM_CATEGORY_COUNT);
+                state->museumPageIndex = 0;
+                break;
+            case M12_MENU_INPUT_DOWN:
+                state->museumSelectedIndex = m12_cycle_index(state->museumSelectedIndex,
+                                                             1,
+                                                             M12_MUSEUM_CATEGORY_COUNT);
+                state->museumPageIndex = 0;
+                break;
+            case M12_MENU_INPUT_LEFT:
+                category = &g_museumCategories[m12_clamp_index(state->museumSelectedIndex,
+                                                               M12_MUSEUM_CATEGORY_COUNT)];
+                state->museumPageIndex = m12_cycle_index(state->museumPageIndex,
+                                                         -1,
+                                                         category->pageCount);
+                break;
+            case M12_MENU_INPUT_RIGHT:
+            case M12_MENU_INPUT_ACCEPT:
+            case M12_MENU_INPUT_ACTION:
+                category = &g_museumCategories[m12_clamp_index(state->museumSelectedIndex,
+                                                               M12_MUSEUM_CATEGORY_COUNT)];
+                state->museumPageIndex = m12_cycle_index(state->museumPageIndex,
+                                                         1,
+                                                         category->pageCount);
+                break;
+            case M12_MENU_INPUT_BACK:
                 state->view = M12_MENU_VIEW_MAIN;
                 break;
             case M12_MENU_INPUT_NONE:
@@ -2495,6 +2621,26 @@ static void m12_draw_sparse_game_options_view(const M12_StartupMenuState* state,
                                M12_COLOR_WHITE);
 }
 
+static void m12_draw_sparse_museum_view(const M12_StartupMenuState* state,
+                                        unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight) {
+    int categoryIndex = m12_clamp_index(state ? state->museumSelectedIndex : 0,
+                                        M12_MUSEUM_CATEGORY_COUNT);
+    const M12_MuseumCategory* category = &g_museumCategories[categoryIndex];
+    int pageIndex = m12_clamp_index(state ? state->museumPageIndex : 0,
+                                    category->pageCount);
+    m12_draw_sparse_center_box(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               218,
+                               70,
+                               category->title,
+                               category->pages[pageIndex][0],
+                               "ARROWS NAVIGATE   ESC BACK",
+                               M12_COLOR_WHITE);
+}
+
 static void m12_draw_sparse_message_view(const M12_StartupMenuState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -2807,6 +2953,9 @@ static const char* m12_entry_detail_line(const M12_MenuEntry* entry) {
     }
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         return "PERSISTED OPTIONS AND DISPLAY MODE";
+    }
+    if (entry->kind == M12_MENU_ENTRY_MUSEUM) {
+        return "LORE, CREDITS, AND PRESERVATION NOTES";
     }
     if (entry->available) {
         return "VERIFIED DATA READY";
@@ -3270,7 +3419,7 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
     if (cardH < 100) {
         cardH = 100;
     }
-    settingsSelected = (state->selectedIndex == 3);
+    settingsSelected = (state->selectedIndex == 4);
 
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
 
@@ -3412,6 +3561,146 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                     framebufferWidth,
                     framebufferHeight,
                     m12_text(state, M12_TEXT_SETTINGS_FOOTER));
+}
+
+static void m12_draw_museum_category_row(unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         int x,
+                                         int y,
+                                         int w,
+                                         const char* title,
+                                         int selected) {
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   x,
+                   y,
+                   w,
+                   24,
+                   selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY,
+                   selected ? M12_COLOR_NAVY : M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x + 8,
+                  y + 8,
+                  title,
+                  selected ? &g_textSmallShadow : &g_textSmallMuted);
+}
+
+static void m12_draw_museum_view_modern(const M12_StartupMenuState* state,
+                                        unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight) {
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int leftW;
+    int panelX;
+    int panelW;
+    int categoryIndex = m12_clamp_index(state ? state->museumSelectedIndex : 0,
+                                        M12_MUSEUM_CATEGORY_COUNT);
+    const M12_MuseumCategory* category = &g_museumCategories[categoryIndex];
+    int pageIndex = m12_clamp_index(state ? state->museumPageIndex : 0,
+                                    category->pageCount);
+    int i;
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 64) {
+        heroH = 64;
+    }
+    contentY = margin + heroH + 10;
+    leftW = (framebufferWidth * 32) / 100;
+    panelX = margin + leftW + 12;
+    panelW = framebufferWidth - margin - panelX;
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         framebufferWidth - (margin * 2),
+                         heroH,
+                         "MUSEUM OF LORE");
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   margin,
+                   contentY,
+                   leftW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin + 10,
+                  contentY + 10,
+                  "ARCHIVE SECTIONS",
+                  &g_textSmallAccent);
+    for (i = 0; i < M12_MUSEUM_CATEGORY_COUNT; ++i) {
+        m12_draw_museum_category_row(framebuffer,
+                                     framebufferWidth,
+                                     framebufferHeight,
+                                     margin + 10,
+                                     contentY + 30 + i * 28,
+                                     leftW - 20,
+                                     g_museumCategories[i].title,
+                                     i == categoryIndex);
+    }
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   panelX,
+                   contentY,
+                   panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  panelX + 10,
+                  contentY + 10,
+                  category->title,
+                  &g_textMediumShadow);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  panelX + 10,
+                  contentY + 30,
+                  category->subtitle,
+                  &g_textSmallAccent);
+    {
+        char pageLine[32];
+        snprintf(pageLine, sizeof(pageLine), "PAGE %d/%d", pageIndex + 1, category->pageCount);
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      panelX + panelW - 72,
+                      contentY + 14,
+                      pageLine,
+                      &g_textSmallMuted);
+    }
+    for (i = 0; i < 5; ++i) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      panelX + 18,
+                      contentY + 58 + i * 20,
+                      category->pages[pageIndex][i],
+                      i == 0 ? &g_textSmallShadow : &g_textSmallMuted);
+    }
+    m12_draw_footer(framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    "ESC: BACK  UP/DOWN: SECTION  LEFT/RIGHT: PAGE");
 }
 
 static void m12_draw_game_opt_row(unsigned char* framebuffer,
@@ -3840,6 +4129,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_sparse_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
             m12_draw_sparse_game_options_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_MUSEUM) {
+            m12_draw_sparse_museum_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
             m12_draw_sparse_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
         }
@@ -3852,6 +4143,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_settings_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
             m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_MUSEUM) {
+            m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
             m12_draw_main_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         }
@@ -3865,6 +4158,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
         m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_MUSEUM) {
+        m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else {
         m12_draw_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
     }

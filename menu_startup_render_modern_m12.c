@@ -621,6 +621,7 @@ static void draw_card(M12_ModernCanvas* c,
                       int selected) {
     const M12_MenuEntry* entry = &state->entries[slot];
     int isSettings = entry->kind == M12_MENU_ENTRY_SETTINGS;
+    int isMuseum = entry->kind == M12_MENU_ENTRY_MUSEUM;
 
     /* Selected cards glow (pulse-modulated for a living feel). */
     int pulseBoost = selected ? pulse_modulation(state->frameTick) : 0;
@@ -628,7 +629,7 @@ static void draw_card(M12_ModernCanvas* c,
         for (int i = 1; i <= 10; ++i) {
             int alpha = 110 - i * 9 + pulseBoost;
             if (alpha > 255) alpha = 255;
-            M12_RGB glow = isSettings ? rgb(160, 180, 240) : COLOR_ACCENT();
+            M12_RGB glow = isSettings ? rgb(160, 180, 240) : (isMuseum ? rgb(230, 190, 110) : COLOR_ACCENT());
             for (int xx = x - i; xx < x + w + i; ++xx) {
                 blend_pixel(c, xx, y - i, glow, alpha);
                 blend_pixel(c, xx, y + h + i - 1, glow, alpha);
@@ -641,7 +642,7 @@ static void draw_card(M12_ModernCanvas* c,
     }
 
     M12_RGB fill = COLOR_PANEL_FILL();
-    M12_RGB edge = selected ? (isSettings ? rgb(160, 180, 240) : COLOR_ACCENT())
+    M12_RGB edge = selected ? (isSettings ? rgb(160, 180, 240) : (isMuseum ? rgb(230, 190, 110) : COLOR_ACCENT()))
                             : COLOR_PANEL_EDGE();
     /* Inner gradient */
     fill_vgradient(c, x, y, w, h,
@@ -650,8 +651,8 @@ static void draw_card(M12_ModernCanvas* c,
     stroke_rounded_rect(c, x, y, w, h, 12, edge);
 
     /* Header band */
-    M12_RGB bandTop = isSettings ? rgb(40, 50, 110) : rgb(70, 40, 24);
-    M12_RGB bandBot = isSettings ? rgb(24, 32, 78)  : rgb(42, 26, 16);
+    M12_RGB bandTop = isSettings ? rgb(40, 50, 110) : (isMuseum ? rgb(78, 58, 28) : rgb(70, 40, 24));
+    M12_RGB bandBot = isSettings ? rgb(24, 32, 78)  : (isMuseum ? rgb(44, 32, 18) : rgb(42, 26, 16));
     fill_vgradient(c, x + 2, y + 2, w - 4, 46, bandTop, bandBot);
 
     ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
@@ -685,6 +686,20 @@ static void draw_card(M12_ModernCanvas* c,
         ModernTextStyle hint = text_style_make(1, COLOR_TEXT_FAINT(), 0);
         draw_text(c, x + 16, y + h - 32,
                   "PRESS ENTER TO CONFIGURE SETTINGS", &hint);
+        return;
+    }
+
+    if (isMuseum) {
+        ModernTextStyle p = text_style_make(2, COLOR_TEXT_DIM(), 1);
+        ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
+        draw_text(c, x + 16, y + 72,  "DUNGEON MASTER", &p);
+        draw_text(c, x + 16, y + 108, "CHAOS STRIKES BACK", &p);
+        draw_text(c, x + 16, y + 144, "DUNGEON MASTER II", &p);
+        draw_text(c, x + 16, y + 180, "CREDITS AND ARCHIVE", &p);
+        draw_text(c, x + 16, y + 222, "5 SECTIONS", &v);
+        ModernTextStyle hint = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+        draw_text(c, x + 16, y + h - 32,
+                  "PRESS ENTER TO OPEN THE LORE MUSEUM", &hint);
         return;
     }
 
@@ -860,13 +875,14 @@ static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state
 }
 
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    /* Compute card layout: 4 cards in a row */
+    /* Compute card layout: 5 cards in a row */
     int gridTop = 170;
     int gridBottom = c->h - 130;
     int gridH = gridBottom - gridTop;
-    int cardCount = 4;
-    int gap = 24;
+    int cardCount = M12_StartupMenu_GetEntryCount();
+    int gap = 18;
     int sideMargin = 48;
+    if (cardCount < 1) cardCount = 1;
     int cardW = (c->w - 2 * sideMargin - gap * (cardCount - 1)) / cardCount;
     int cardH = gridH;
 
@@ -942,6 +958,93 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 1);
     draw_setting_row(c, rowX, rowY + 140, rowW, "WINDOW MODE",   win[wi],
                      state->settingsSelectedIndex == 2);
+}
+
+typedef struct {
+    const char* title;
+    const char* subtitle;
+    const char* pages[3][5];
+    int pageCount;
+} ModernMuseumCategory;
+
+static const ModernMuseumCategory g_modernMuseumCategories[] = {
+    {"DUNGEON MASTER", "THE ORIGINAL DUNGEON CRAWL",
+     {{"1987 FTL GAMES", "CHAMPIONS ENTER THE DUNGEON", "FOUR PORTRAITS BECOME A PARTY", "THE FIRESTAFF IS THE CENTRAL RELIC", "REAL TIME PRESSURE DEFINES THE LEGEND"},
+      {"KEY LORE THREADS", "LORD CHAOS SHATTERS ORDER", "THE GREY LORD IS DIVIDED", "RA RETURNS AS MASTER OF BALANCE", "THE DUNGEON IS BOTH TEST AND PRISON"},
+      {"PRESERVATION NOTES", "PC AND ATARI ST LINEAGE MATTERS", "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED", "HASHED ORIGINAL DATA STAYS USER SUPPLIED", "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"}}, 3},
+    {"CHAOS STRIKES BACK", "THE CHAMPIONS RETURN",
+     {{"EXPANSION AND SEQUEL DESIGN", "DUNGEON MASTER SYSTEMS BECOME DENSER", "THE CORBUM QUEST REPLACES SIMPLE DESCENT", "FOUR PATHS TEST MASTERY", "CSB REWARDS MAP MEMORY AND NERVE"},
+      {"LORE SHAPE", "CHAOS STILL CASTS A LONG SHADOW", "THE PLAYER HUNTS CORBUM MATERIAL", "RETURNING CHAMPIONS FACE A HARDER MAZE", "THE WORLD FEELS OLDER AND LESS SAFE"},
+      {"ARCHIVE STATUS", "CSBGRAPH DAT AND CSB DAT ARE TRACKED", "VERSION SLOTS USE HASH EVIDENCE", "LAUNCHER SHOWS READY ONLY WHEN MATCHED", "MUSEUM CONTENT STAYS STATIC AND BOUNDED"}}, 3},
+    {"DUNGEON MASTER II", "THE LEGEND OUTSIDE THE FIRST DUNGEON",
+     {{"THE SKULLKEEP ERA", "THE SERIES MOVES BEYOND THE ORIGINAL MAZE", "OUTDOOR AND SHOP SPACES EXPAND THE FORM", "MINIONS AND WEATHER CHANGE THE RHYTHM", "DM2 KEEPS THE PARTY SURVIVAL CORE"},
+      {"LORE SHAPE", "TECHNOLOGY AND MAGIC SHARE THE STAGE", "THE WORLD IS BROADER THAN MOUNT ANAIAS", "THE PLAYER ASSEMBLES AND SURVIVES", "THE TONE IS STRANGER AND MORE MECHANICAL"},
+      {"ARCHIVE STATUS", "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED", "SUPPORTED VERSIONS CAN GROW OVER TIME", "CONTENT HERE IS A GUIDE NOT A DATA DUMP", "BINARY ASSETS REMAIN OUTSIDE THIS PASS"}}, 3},
+    {"FIRESTAFF PROJECT", "ABOUT AND CREDITS",
+     {{"PROJECT PURPOSE", "OPEN DUNGEON MASTER ENGINE", "DETERMINISTIC MODULAR MUSEUM GRADE", "ORIGINAL DATA IS VERIFIED NOT BUNDLED", "V1 PRESERVES BASELINE BEHAVIOUR"},
+      {"CREDITS", "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS", "DOUG BELL AND ANDY JAROS LED THE CLASSIC DESIGN", "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY", "FIRESTAFF BUILDS ON PRESERVATION RESEARCH"},
+      {"PROJECT BOUNDARIES", "NO CLAIM OF OFFICIAL AFFILIATION", "USER SUPPLIED RETAIL DATA IS REQUIRED", "REGRESSION PROBES GUARD MENU STABILITY", "TRACKED TEXT STAYS ENGLISH IN THE REPO"}}, 3},
+    {"TECHNICAL ARCHIVE", "SOURCE EVIDENCE AND VERIFICATION",
+     {{"EVIDENCE MODEL", "KNOWN FILES ARE MATCHED BY HASH", "VERSION MATRICES STAY EXPLICIT", "RUNTIME PATHS REPORT MISSING DATA SAFELY", "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"},
+      {"STARTUP MENU", "KEYBOARD INPUT IS BOUNDED", "MOUSE HITS ROUTE THROUGH SHARED STATE", "UNKNOWN KEYS ARE NO OPS", "ESCAPE RETURNS BEFORE EXITING"},
+      {"FUTURE MUSEUM WORK", "ADD MANUAL EXCERPT REFERENCES", "ADD INTERVIEW AND TIMELINE SOURCES", "ADD SMALL CURATED SCREEN PANELS", "KEEP LARGE ASSETS OUT UNTIL LICENSED"}}, 3}
+};
+
+static void draw_museum_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    enum { CAT_COUNT = (int)(sizeof(g_modernMuseumCategories) / sizeof(g_modernMuseumCategories[0])) };
+    int cat = state->museumSelectedIndex;
+    if (cat < 0) cat = 0;
+    if (cat >= CAT_COUNT) cat = CAT_COUNT - 1;
+    const ModernMuseumCategory* section = &g_modernMuseumCategories[cat];
+    int page = state->museumPageIndex;
+    if (page < 0) page = 0;
+    if (page >= section->pageCount) page = section->pageCount - 1;
+
+    draw_back_button(c, 0);
+    ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
+    draw_text(c, 160, 130, "MUSEUM OF LORE", &h);
+    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text(c, 160, 210, "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS", &sub);
+
+    int panelX = 96;
+    int panelY = 260;
+    int panelW = c->w - 2 * panelX;
+    int panelH = 400;
+    draw_panel(c, panelX, panelY, panelW, panelH,
+               rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
+
+    int leftW = 330;
+    ModernTextStyle label = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+    draw_text(c, panelX + 30, panelY + 28, "ARCHIVE SECTIONS", &label);
+    for (int i = 0; i < CAT_COUNT; ++i) {
+        int y = panelY + 54 + i * 56;
+        int selected = (i == cat);
+        fill_rounded_rect(c, panelX + 24, y, leftW, 42, 10,
+                          selected ? rgb(48, 40, 76) : rgb(22, 22, 46));
+        stroke_rounded_rect(c, panelX + 24, y, leftW, 42, 10,
+                            selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE());
+        ModernTextStyle row = text_style_make(2, selected ? COLOR_ACCENT_HI() : COLOR_TEXT_DIM(), 1);
+        draw_text(c, panelX + 42, y + 13, g_modernMuseumCategories[i].title, &row);
+    }
+
+    int contentX = panelX + leftW + 70;
+    int contentW = panelW - leftW - 100;
+    ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
+    draw_text(c, contentX, panelY + 34, section->title, &title);
+    ModernTextStyle subtitle = text_style_make(2, COLOR_ACCENT(), 1);
+    draw_text(c, contentX, panelY + 78, section->subtitle, &subtitle);
+
+    char pageLine[32];
+    snprintf(pageLine, sizeof(pageLine), "PAGE %d/%d", page + 1, section->pageCount);
+    ModernTextStyle pageStyle = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+    draw_text(c, contentX + contentW - 120, panelY + 40, pageLine, &pageStyle);
+
+    for (int i = 0; i < 5; ++i) {
+        ModernTextStyle line = text_style_make(i == 0 ? 2 : 2,
+                                               i == 0 ? COLOR_TEXT() : COLOR_TEXT_DIM(),
+                                               1);
+        draw_text(c, contentX, panelY + 132 + i * 40, section->pages[page][i], &line);
+    }
 }
 
 static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
@@ -1102,7 +1205,7 @@ static void draw_sparse_main_view_modern(M12_ModernCanvas* c, const M12_StartupM
         draw_text_centered(c, centerX, baseY + 26, "CHAOS STRIKES BACK", &sub);
     }
     if (phase >= 2) {
-        int rows = phase >= 3 ? 4 : 2;
+        int rows = phase >= 3 ? M12_StartupMenu_GetEntryCount() : 2;
         for (int i = 0; i < rows; ++i) {
             int y = baseY + 62 + i * 22;
             ModernTextStyle* style = (i == state->selectedIndex) ? &rowSel : &row;
@@ -1140,6 +1243,17 @@ static void draw_sparse_view_modern(M12_ModernCanvas* c, const M12_StartupMenuSt
             const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
             if (entry && !entry->available) line1Color = rgb(210, 120, 120);
             draw_sparse_center_box_modern(c, 540, 120, state->messageLine1, state->messageLine2, state->messageLine3, line1Color);
+            break;
+        }
+        case M12_MENU_VIEW_MUSEUM: {
+            int cat = state->museumSelectedIndex;
+            if (cat < 0) cat = 0;
+            if (cat >= 5) cat = 4;
+            draw_sparse_center_box_modern(c, 560, 120,
+                                          g_modernMuseumCategories[cat].title,
+                                          g_modernMuseumCategories[cat].pages[0][0],
+                                          "ARROWS NAVIGATE   ESC BACK",
+                                          rgb(240, 240, 240));
             break;
         }
         case M12_MENU_VIEW_MAIN:
@@ -1183,6 +1297,10 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
         case M12_MENU_VIEW_GAME_OPTIONS:
             draw_game_options_view(&c, state);
             footerLeft = "UP DOWN MOVE    LEFT RIGHT CYCLE    ENTER LAUNCH    ESC BACK";
+            break;
+        case M12_MENU_VIEW_MUSEUM:
+            draw_museum_view(&c, state);
+            footerLeft = "UP DOWN SECTIONS    LEFT RIGHT PAGE    ESC BACK";
             break;
         case M12_MENU_VIEW_MESSAGE:
             draw_message_view(&c, state);

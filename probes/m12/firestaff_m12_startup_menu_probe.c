@@ -122,6 +122,7 @@ static void exercise_startup_input_matrix(M12_StartupMenuState seed) {
         M12_MENU_VIEW_SETTINGS,
         M12_MENU_VIEW_MESSAGE,
         M12_MENU_VIEW_GAME_OPTIONS,
+        M12_MENU_VIEW_MUSEUM,
         (M12_MenuView)-1,
         (M12_MenuView)9999
     };
@@ -223,8 +224,8 @@ int main(void) {
 
     probe_record(&tally,
                  "INV_M12_01",
-                 M12_StartupMenu_GetEntryCount() == 4,
-                 "startup menu exposes three games plus settings");
+                 M12_StartupMenu_GetEntryCount() == 5,
+                 "startup menu exposes three games, museum, and settings");
     probe_record(&tally,
                  "INV_M12_02",
                  file_exists(configPath) &&
@@ -367,6 +368,48 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     probe_record(&tally,
+                 "INV_M12_MUSEUM_01",
+                 state.view == M12_MENU_VIEW_MUSEUM &&
+                     state.museumSelectedIndex == 0 &&
+                     state.museumPageIndex == 0,
+                 "museum row opens the Museum of Lore from the startup menu");
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, (M12_MenuInput)9999);
+    probe_record(&tally,
+                 "INV_M12_MUSEUM_02",
+                 state.view == M12_MENU_VIEW_MUSEUM &&
+                     state.museumSelectedIndex == 1 &&
+                     state.museumPageIndex == 1,
+                 "museum keyboard navigation cycles sections and pages while unknown keys are no-ops");
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_LEFT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    probe_record(&tally,
+                 "INV_M12_MUSEUM_03",
+                 state.view == M12_MENU_VIEW_MAIN &&
+                     state.museumSelectedIndex == 1 &&
+                     state.museumPageIndex == 0,
+                 "museum left cycles pages backward and escape returns to main menu");
+
+    state.view = M12_MENU_VIEW_MUSEUM;
+    state.museumSelectedIndex = 0;
+    state.museumPageIndex = 0;
+    M12_ModernMenu_ApplyHit(&state, (M12_MouseHit){M12_HIT_MUSEUM_CATEGORY, 3, 0});
+    M12_ModernMenu_ApplyHit(&state, (M12_MouseHit){M12_HIT_MUSEUM_PAGE, 0, 1});
+    probe_record(&tally,
+                 "INV_M12_MUSEUM_04",
+                 state.view == M12_MENU_VIEW_MUSEUM &&
+                     state.museumSelectedIndex == 3 &&
+                     state.museumPageIndex == 1,
+                 "museum mouse hits select categories and cycle pages through shared menu state");
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    probe_record(&tally,
                  "INV_M12_09",
                  state.view == M12_MENU_VIEW_SETTINGS,
                  "settings row opens settings screen");
@@ -384,6 +427,7 @@ int main(void) {
                  "settings screen cycles persisted values from keyboard input");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK); /* to main */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* museum */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm2 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* csb */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm1 */

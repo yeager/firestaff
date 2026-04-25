@@ -135,6 +135,8 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_LEFT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
@@ -160,6 +162,7 @@ int main(void) {
                  "language and presentation mode changes alter launcher output");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);

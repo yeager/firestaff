@@ -42,12 +42,14 @@ typedef enum {
     M12_MENU_VIEW_MAIN = 0,
     M12_MENU_VIEW_SETTINGS,
     M12_MENU_VIEW_MESSAGE,
-    M12_MENU_VIEW_GAME_OPTIONS
+    M12_MENU_VIEW_GAME_OPTIONS,
+    M12_MENU_VIEW_MUSEUM
 } M12_MenuView;
 
 typedef enum {
     M12_MENU_ENTRY_GAME = 0,
-    M12_MENU_ENTRY_SETTINGS
+    M12_MENU_ENTRY_SETTINGS,
+    M12_MENU_ENTRY_MUSEUM
 } M12_MenuEntryKind;
 
 typedef enum {
@@ -133,8 +135,8 @@ typedef struct {
 } M12_LaunchIntent;
 
 typedef struct M12_StartupMenuState {
-    M12_MenuEntry entries[4];
-    M12_GameCardArt cardArt[4];
+    M12_MenuEntry entries[5];
+    M12_GameCardArt cardArt[5];
     int selectedIndex;
     int settingsSelectedIndex;
     int shouldExit;
@@ -149,6 +151,8 @@ typedef struct M12_StartupMenuState {
     M12_AssetStatus assetStatus;
     M12_GameOptions gameOptions[3];
     int gameOptSelectedRow;
+    int museumSelectedIndex;
+    int museumPageIndex;
     M12_CreatureArtState creatureArt;
     /* Monotonically-increasing animation tick consumed by the modern
      * renderer. Incremented by the runtime once per present. Safe to

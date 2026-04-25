@@ -17,8 +17,8 @@
 #define M12_HIT_MAIN_GRID_TOP       170
 #define M12_HIT_MAIN_GRID_BOTTOM    (M12_HIT_CANVAS_H - 130)
 #define M12_HIT_MAIN_SIDE_MARGIN    48
-#define M12_HIT_MAIN_CARD_GAP       24
-#define M12_HIT_MAIN_CARD_COUNT     4
+#define M12_HIT_MAIN_CARD_GAP       18
+#define M12_HIT_MAIN_CARD_COUNT     5
 
 /* --- Sub-view panel layout (shared by settings + game options) --- */
 #define M12_HIT_PANEL_X        96
@@ -41,6 +41,19 @@
 /* Settings view has exactly three rows: language, graphics, window mode.
  * Mirrors the private M12_SETTINGS_ROW_COUNT in menu_startup_m12.c. */
 #define M12_HIT_SETTINGS_ROW_COUNT  3
+
+/* Museum view mirrors the modern renderer: section rows in the left
+ * panel, broad content area on the right for page cycling. */
+#define M12_HIT_MUSEUM_CATEGORY_COUNT 5
+#define M12_HIT_MUSEUM_CAT_X          (M12_HIT_PANEL_X + 24)
+#define M12_HIT_MUSEUM_CAT_Y0         (M12_HIT_PANEL_Y + 54)
+#define M12_HIT_MUSEUM_CAT_W          330
+#define M12_HIT_MUSEUM_CAT_H          42
+#define M12_HIT_MUSEUM_CAT_STEP       56
+#define M12_HIT_MUSEUM_CONTENT_X      (M12_HIT_PANEL_X + M12_HIT_MUSEUM_CAT_W + 70)
+#define M12_HIT_MUSEUM_CONTENT_Y      (M12_HIT_PANEL_Y + 24)
+#define M12_HIT_MUSEUM_CONTENT_W      (M12_HIT_PANEL_W - M12_HIT_MUSEUM_CAT_W - 100)
+#define M12_HIT_MUSEUM_CONTENT_H      (M12_HIT_PANEL_H - 48)
 
 /* Launch button inside game options panel. */
 #define M12_HIT_LAUNCH_W     240
@@ -156,6 +169,32 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                 }
             }
             break;
+        case M12_MENU_VIEW_MUSEUM:
+            for (i = 0; i < M12_HIT_MUSEUM_CATEGORY_COUNT; ++i) {
+                if (rect_contains(M12_HIT_MUSEUM_CAT_X,
+                                  M12_HIT_MUSEUM_CAT_Y0 + i * M12_HIT_MUSEUM_CAT_STEP,
+                                  M12_HIT_MUSEUM_CAT_W,
+                                  M12_HIT_MUSEUM_CAT_H,
+                                  x,
+                                  y)) {
+                    hit.kind = M12_HIT_MUSEUM_CATEGORY;
+                    hit.index = i;
+                    return hit;
+                }
+            }
+            if (rect_contains(M12_HIT_MUSEUM_CONTENT_X,
+                              M12_HIT_MUSEUM_CONTENT_Y,
+                              M12_HIT_MUSEUM_CONTENT_W,
+                              M12_HIT_MUSEUM_CONTENT_H,
+                              x,
+                              y)) {
+                hit.kind = M12_HIT_MUSEUM_PAGE;
+                hit.delta = m12_hit_is_cycle_plus(M12_HIT_MUSEUM_CONTENT_X,
+                                                  M12_HIT_MUSEUM_CONTENT_W,
+                                                  x) ? 1 : -1;
+                return hit;
+            }
+            break;
         case M12_MENU_VIEW_GAME_OPTIONS:
             /* Launch button */
             if (rect_contains(M12_HIT_LAUNCH_X, M12_HIT_LAUNCH_Y,
@@ -215,6 +254,21 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
             return 1;
         }
+        case M12_HIT_MUSEUM_CATEGORY:
+            while (state->museumSelectedIndex != hit.index) {
+                int before = state->museumSelectedIndex;
+                M12_MenuInput mv = (hit.index > state->museumSelectedIndex)
+                                       ? M12_MENU_INPUT_DOWN
+                                       : M12_MENU_INPUT_UP;
+                M12_StartupMenu_HandleInput(state, mv);
+                if (state->museumSelectedIndex == before) break;
+            }
+            return 1;
+        case M12_HIT_MUSEUM_PAGE:
+            M12_StartupMenu_HandleInput(state,
+                                        hit.delta >= 0 ? M12_MENU_INPUT_RIGHT
+                                                       : M12_MENU_INPUT_LEFT);
+            return 1;
         case M12_HIT_SETTINGS_ROW:
             while (state->settingsSelectedIndex != hit.index) {
                 int before = state->settingsSelectedIndex;

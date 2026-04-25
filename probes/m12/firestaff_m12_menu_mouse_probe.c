@@ -4,8 +4,8 @@
  * Bounded M12 slice probe for startup-menu mouse/hover/keyboard
  * interaction on the modern high-resolution renderer.
  *
- *   INV_MOUSE_01   hit-test on the main view maps the 4 cards to
- *                  card 0..3.
+ *   INV_MOUSE_01   hit-test on the main view maps the 5 cards to
+ *                  card 0..4.
  *   INV_MOUSE_02   clicking the non-selected card moves selection and
  *                  activates it.
  *   INV_MOUSE_03   in settings view, clicking the right half of a row
@@ -20,7 +20,7 @@
  *   INV_MOUSE_06   hover coordinates are stored on the state when the
  *                  pointer moves without clicking.
  *   INV_MOUSE_07   keyboard UP/DOWN arrow navigation on the main view
- *                  cycles through all 4 cards deterministically.
+ *                  cycles through all 5 cards deterministically.
  *   INV_MOUSE_08   immediate language switch: mutating
  *                  settings.languageIndex changes the very next
  *                  rendered frame (no reinit required).
@@ -91,10 +91,10 @@ int main(void) {
     {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
-        /* Canvas: 4 cards across 1184 usable px starting at x=48. */
+        /* Canvas: 5 cards across 1184 usable px starting at x=48. */
         int side = 48;
-        int gap = 24;
-        int count = 4;
+        int gap = 18;
+        int count = 5;
         int cardW = (W - 2 * side - gap * (count - 1)) / count;
         int allOk = 1;
         for (int i = 0; i < count; ++i) {
@@ -108,7 +108,7 @@ int main(void) {
             }
         }
         record(&t, "INV_MOUSE_01", allOk,
-               "hit-test maps main view card centres to card indices 0..3");
+               "hit-test maps main view card centres to card indices 0..4");
     }
 
     /* ---------- INV_MOUSE_02 ---------- */
@@ -117,8 +117,8 @@ int main(void) {
         M12_StartupMenu_Init(&s);
         force_dm1_ready(&s);
         int side = 48;
-        int gap = 24;
-        int count = 4;
+        int gap = 18;
+        int count = 5;
         int cardW = (W - 2 * side - gap * (count - 1)) / count;
         /* Click card 2 (DM2, unavailable). Selection should move to 2
          * and activation should produce either game-options (if
@@ -234,27 +234,28 @@ int main(void) {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
         int ok = s.selectedIndex == 0;
-        int visits[4] = {0, 0, 0, 0};
-        for (int i = 0; i < 8; ++i) {
+        int visits[5] = {0, 0, 0, 0, 0};
+        for (int i = 0; i < 10; ++i) {
             visits[s.selectedIndex] = 1;
             M12_StartupMenu_HandleInput(&s, M12_MENU_INPUT_DOWN);
         }
-        for (int i = 0; i < 4; ++i) ok = ok && visits[i];
+        for (int i = 0; i < 5; ++i) ok = ok && visits[i];
         /* Now go back up through all */
-        for (int i = 0; i < 4; ++i) visits[i] = 0;
-        for (int i = 0; i < 8; ++i) {
+        for (int i = 0; i < 5; ++i) visits[i] = 0;
+        for (int i = 0; i < 10; ++i) {
             visits[s.selectedIndex] = 1;
             M12_StartupMenu_HandleInput(&s, M12_MENU_INPUT_UP);
         }
-        for (int i = 0; i < 4; ++i) ok = ok && visits[i];
+        for (int i = 0; i < 5; ++i) ok = ok && visits[i];
         record(&t, "INV_MOUSE_07", ok,
-               "keyboard UP/DOWN cycles through all 4 cards deterministically");
+               "keyboard UP/DOWN cycles through all 5 cards deterministically");
     }
 
     /* ---------- INV_MOUSE_08 ---------- */
     {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
+        s.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
         s.settings.languageIndex = 0;
         memset(a, 0, rgbaBytes);
         M12_ModernMenu_Render(&s, a, W, H);
@@ -283,6 +284,7 @@ int main(void) {
     {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
+        s.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
         s.selectedIndex = 1;
         s.frameTick = 0;
         memset(a, 0, rgbaBytes);

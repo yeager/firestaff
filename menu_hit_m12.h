@@ -24,8 +24,12 @@ extern "C" {
 
 typedef enum {
     M12_HIT_NONE = 0,
-    /* Main view: card 0..3 (0,1,2 = games, 3 = settings) */
+    /* Main view: card 0..4 (0,1,2 = games, 3 = museum, 4 = settings) */
     M12_HIT_MAIN_CARD,
+    /* Museum view: category 0..4 */
+    M12_HIT_MUSEUM_CATEGORY,
+    /* Museum view: page cycle button/region */
+    M12_HIT_MUSEUM_PAGE,
     /* Settings view: row 0..M12_SETTINGS_ROW_COUNT-1 */
     M12_HIT_SETTINGS_ROW,
     /* Settings view: row cycle button (left/right arrow area, delta +1 or -1) */
