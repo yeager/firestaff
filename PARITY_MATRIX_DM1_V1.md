@@ -1,6 +1,6 @@
 # Parity Matrix — DM1 V1 (Original-Compatible)
 
-Last updated: 2026-04-24
+Last updated: 2026-04-25
 
 Target: **Dungeon Master 1, PC DOS, VGA, English — 1:1 original-faithful behavior and presentation.**
 
@@ -83,7 +83,7 @@ Rules for this matrix:
 | Brightness levels (LIGHT0–5) | All 6 levels with per-color values extracted from `VIDEODRV.C` (G8151–G8156). NOT linearly attenuated — each level has independently tuned values. | `vga_palette_pc34_compat.c` exposes all six recovered per-level tables through `G9010_auc_VgaPaletteAll_Compat`; LIGHT5 retains 8 residual non-black colors. | `MATCHED` — pass 46 probe-backed for lookup data and sampled LIGHT1–LIGHT5 values. | Retire brightness lookup row. Runtime darkness/pixel comparisons remain separate visual work. |
 | Creature palettes | 14 creature palettes (G8175_CREAT_PAL) extracted from `VIDEODRV.C` — 14 types × 6 replacement colors (indices 1–6) | In `recovered_palette.json` with full VGA6 data; pass 46 does not wire creature palette replacement/rendering support. | `MATCHED` (data) / `KNOWN_DIFF` (rendering — not integrated into compat layer) | Wire creature palettes from `recovered_palette.json` into rendering path. See §E5. |
 | Cyan invariant (idx 4) | Confirmed invariant: VGA6 (0,54,54) = RGB8 (0,219,219) across all 6 brightness levels in `recovered_palette.json` (verified from VIDEODRV.C) | `F9010_VGA_GetColorRgb_Compat(4, level)` returns `(0,219,219)` for every level 0..5. | `MATCHED` — pass 46 probe-backed. | — |
-| Special palettes (credits, entrance, swoosh) | CREDITS (G8147, 16 colors) and ENTRANCE (G8148, 16 colors) fully extracted from `VIDEODRV.C` lines 62–117 (VGA section). Custom warm/outdoor tones. | **Not implemented.** No references to G8147/G8148 or special palette switching in `vga_palette_pc34_compat.{c,h}`. Credits/entrance screens render with (wrong) base palette only. | `KNOWN_DIFF` — special palettes not implemented | Add CREDITS and ENTRANCE palette arrays to compat layer; wire palette switching for credits/entrance screens. See §E4. |
+| Special palettes (credits, entrance, swoosh) | CREDITS (`G8147_CREDITS`) and ENTRANCE (`G8148_ENTRANCE`) are source-backed in local ReDMCSB `DRAWVIEW.C:25-59`; table entries at `DRAWVIEW.C:420-421` select them as palette ids 6/7. | Pass 68 exposes converted RGB8 arrays `G9011_auc_VgaPaletteCredits_Compat` and `G9012_auc_VgaPaletteEntrance_Compat`, plus `F9011_VGA_GetSpecialColorRgb_Compat(...)` / indexed table `G9013_auc_VgaPaletteSpecial_Compat`. Frontend call-site timing/palette selection is still not proven. | `KNOWN_DIFF` (narrowed) — source-backed data + lookup seam landed; full entrance/credits runtime palette switching and pixel overlays still open. | Wire and verify exact entrance/credits frontend palette selection timing; then compare rendered screens against original capture. See `parity-evidence/pass68_special_palettes.md`. |
 | Falsecolor vs. true-color | Current `ppm-falsecolor/` exports are inspection artifacts, not claimed final RGB | M10 VGA palette export uses the pass-46 source-backed palette lookup and still produces valid 320×200 PPM output. | `MATCHED` (palette export seam) / `UNPROVEN` (full pixel-overlay color parity) | Re-export comparison artifacts after viewport/layout capture paths are ready. |
 
 ---

@@ -102,6 +102,40 @@ const unsigned char G9010_auc_VgaPaletteAll_Compat[6][16][3] = {
         }
 };
 
+
+/* Special full-screen palettes: VIDEODRV.C / DRAWVIEW.C G8147_CREDITS and
+ * G8148_ENTRANCE.  Source stores VGA DAC 6-bit values in COLOR_DEF rows
+ * {index, r, g, b}; values below are converted to RGB8 with
+ * rgb8 = (vga6 << 2) | (vga6 >> 4). */
+const unsigned char G9011_auc_VgaPaletteCredits_Compat[16][3] = {
+        {  0,   0, 109}, {  0, 182, 182}, {255, 255, 109}, {146,  73,   0},
+        {255, 255, 146}, {  0,   0,   0}, {  0, 146,   0}, {182,   0,   0},
+        {219, 146,  73}, {255, 255, 182}, {255, 146,  73}, {255, 219,   0},
+        {255, 182,   0}, {  0,   0,   0}, {109,  36,   0}, {255, 255, 219}
+};
+
+const unsigned char G9012_auc_VgaPaletteEntrance_Compat[16][3] = {
+        {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {146,  73,   0},
+        {219, 182, 146}, {  0, 219,   0}, {  0, 146,   0}, {  0, 182,   0},
+        {146, 109,  73}, {255,   0,   0}, {182, 146, 109}, {109,  73,  36},
+        { 73,  73,  73}, {182, 182, 182}, {109,  36,   0}, {255, 255, 255}
+};
+
+const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT][16][3] = {
+        {
+                {  0,   0, 109}, {  0, 182, 182}, {255, 255, 109}, {146,  73,   0},
+                {255, 255, 146}, {  0,   0,   0}, {  0, 146,   0}, {182,   0,   0},
+                {219, 146,  73}, {255, 255, 182}, {255, 146,  73}, {255, 219,   0},
+                {255, 182,   0}, {  0,   0,   0}, {109,  36,   0}, {255, 255, 219}
+        },
+        {
+                {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {146,  73,   0},
+                {219, 182, 146}, {  0, 219,   0}, {  0, 146,   0}, {  0, 182,   0},
+                {146, 109,  73}, {255,   0,   0}, {182, 146, 109}, {109,  73,  36},
+                { 73,  73,  73}, {182, 182, 182}, {109,  36,   0}, {255, 255, 255}
+        }
+};
+
 const unsigned char* F9010_VGA_GetColorRgb_Compat(
 unsigned char colorIndex SEPARATOR
 unsigned int  paletteLevel FINAL_SEPARATOR
@@ -113,4 +147,17 @@ unsigned int  paletteLevel FINAL_SEPARATOR
                 return 0;
         }
         return G9010_auc_VgaPaletteAll_Compat[paletteLevel][colorIndex];
+}
+
+const unsigned char* F9011_VGA_GetSpecialColorRgb_Compat(
+unsigned char colorIndex SEPARATOR
+unsigned int  specialPalette FINAL_SEPARATOR
+{
+        if (colorIndex >= 16U) {
+                return 0;
+        }
+        if (specialPalette >= VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
+                return 0;
+        }
+        return G9013_auc_VgaPaletteSpecial_Compat[specialPalette][colorIndex];
 }

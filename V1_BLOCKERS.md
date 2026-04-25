@@ -1,6 +1,6 @@
 # V1 Blocker Ledger — Firestaff DM1/V1 original-faithful mode
 
-Last updated: 2026-04-24 (pass 58 landed)
+Last updated: 2026-04-25 (pass 58 landed)
 Owner of this file: Pass 36 "honesty lock" (see `PASSLIST_29_36.md` §4.36)
 Primary consumers: pass-38+ planning, `STATUS.md`
 
@@ -468,11 +468,27 @@ first, then visual parity, then typography / honesty.
     rejection of out-of-range lookups.
   - Evidence: `parity-evidence/pass46_vga_palette_lookup.md`.
   - M10 VGA palette export probe remains green.
-- **What pass 46 does NOT change:**
+- **Pass 68 (landed, 2026-04-25):**
+  - Added source-backed special palette arrays from local ReDMCSB
+    `DRAWVIEW.C` (`G8147_CREDITS`, `G8148_ENTRANCE`) to
+    `vga_palette_pc34_compat.c/h`.
+  - Added indexed special-palette lookup seam
+    `F9011_VGA_GetSpecialColorRgb_Compat(...)` /
+    `G9013_auc_VgaPaletteSpecial_Compat` so callers can select
+    credits vs entrance without falling back to the base palette.
+  - Added bounded verification probe
+    `run_firestaff_m11_pass68_special_palette_probe.sh` +
+    `firestaff_m11_pass68_special_palette_probe.c` (6/6 invariants).
+  - Evidence: `parity-evidence/pass68_special_palettes.md`.
+- **What pass 46/pass 68 do NOT change:**
   - Creature palette replacement/rendering integration remains open.
-  - Special credits/entrance/swoosh palette switching remains open.
+  - Exact entrance/credits frontend palette-selection timing and pixel
+    overlays remain open; pass 68 lands the source data + lookup seam
+    only, not a full rendered-screen parity claim.
+  - Swoosh palette behavior remains open if later evidence proves it is
+    a distinct PC/VGA palette path.
   - No viewport/layout/pixel-overlay parity claim beyond the palette
-    lookup seam.
+    lookup seams.
 
 ## 11. ReDMCSB pixel overlays missing for viewport and side panel
 - **Area:** `VISUAL`
