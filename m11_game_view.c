@@ -1759,7 +1759,6 @@ static void m11_format_champion_name(const unsigned char* raw,
 static void m11_format_champion_title(const unsigned char* raw,
                                       char* out,
                                       size_t outSize);
-static const char* m11_source_champion_title_for_name(const char* name);
 static int m11_endgame_source_skill_level(const M11_GameViewState* state, int championIndex, int baseSkillIndex);
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
 static int m11_cycle_active_champion(M11_GameViewState* state);
@@ -14138,24 +14137,6 @@ static void m11_format_champion_title(const unsigned char* raw,
     out[end] = ' ';
 }
 
-static const char* m11_source_champion_title_for_name(const char* name) {
-    /* Source-backed endgame draws Champion.Title immediately after
-     * Champion.Name (ENDGAME.C:F0444_STARTEND_Endgame).  The current
-     * Phase-10 ChampionState only stores packed names/portraits, so this
-     * bounded bridge covers the canonical DM1 champion titles currently
-     * exercised by V1 overlay parity until raw DUNGEON.DAT title bytes are
-     * carried through ChampionState_Compat. */
-    if (!name || !name[0]) return "";
-    if (strcmp(name, "ALEX") == 0) return "ANDER";
-    if (strcmp(name, "NABI") == 0) return "THE PROPHET";
-    if (strcmp(name, "HALK") == 0) return "THE BARBARIAN";
-    if (strcmp(name, "STAMM") == 0) return "BLADECASTER";
-    if (strcmp(name, "SYRA") == 0) return "CHILD OF NATURE";
-    if (strcmp(name, "TIGGY") == 0) return "TAMAL";
-    if (strcmp(name, "SONJA") == 0) return "SHE DEVIL";
-    return "";
-}
-
 static int m11_endgame_source_skill_level(const M11_GameViewState* state,
                                            int championIndex,
                                            int baseSkillIndex) {
@@ -15786,8 +15767,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                             const char* champTitle;
                             m11_format_champion_title(state->world.party.champions[i].title,
                                                       rawTitle, sizeof(rawTitle));
-                            champTitle = rawTitle[0] ? rawTitle : m11_source_champion_title_for_name(champName);
-                            if (champTitle && champTitle[0]) {
+                            champTitle = rawTitle;
+                            if (champTitle[0]) {
                                 int titleX = 87 + ((int)strlen(champName) * 6);
                                 char firstTitleChar = champTitle[0];
                                 if (firstTitleChar != ',' && firstTitleChar != ';' &&

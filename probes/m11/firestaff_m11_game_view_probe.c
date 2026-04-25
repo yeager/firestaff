@@ -4982,6 +4982,7 @@ int main(int argc, char** argv) {
         endgameView.world.party.championCount = 1;
         endgameView.world.party.champions[0].present = 1;
         memcpy(endgameView.world.party.champions[0].name, "HALK    ", 8);
+        memcpy(endgameView.world.party.champions[0].title, "THE BARBARIAN       ", 20);
         memset(fb_won, 0, sizeof(fb_won));
         M11_GameView_Draw(&endgameView, fb_won, 320, 200);
         titleGold = probe_count_color(fb_won,
@@ -4994,7 +4995,34 @@ int main(int argc, char** argv) {
         probe_record(&tally,
                      "INV_GV_165I",
                      titleGold >= 6,
-                     "V1 endgame prints source champion title after name");
+                     "V1 endgame prints raw source champion title after name");
+    }
+
+    /* INV_GV_165L: V1 endgame no longer invents canonical titles from name alone. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        unsigned int titleGold;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        endgameView.world.party.championCount = 1;
+        endgameView.world.party.champions[0].present = 1;
+        memcpy(endgameView.world.party.champions[0].name, "HALK    ", 8);
+        memset(endgameView.world.party.champions[0].title, 0, 20);
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        titleGold = probe_count_color(fb_won,
+                                      320,
+                                      117,
+                                      14,
+                                      110,
+                                      8,
+                                      PROBE_COLOR_LIGHT_RED);
+        probe_record(&tally,
+                     "INV_GV_165L",
+                     titleGold < 4,
+                     "V1 endgame does not invent champion title from name alone");
     }
 
     /* INV_GV_165K: V1 endgame prefers raw Champion.Title bytes when present. */
