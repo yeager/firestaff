@@ -126,6 +126,8 @@ int main(int argc, char* argv[]) {
         memcpy(orig.name, "TESTNAME", 8);
         memcpy(orig.title, "SOURCE TITLE        ", 20);
         orig.sex = 'F';
+        memcpy(orig.mirrorStatsText, "AADFACNAAAAP    ", 16);
+        memcpy(orig.mirrorSkillsText, "DHCGCDCLCNCKCI  ", 16);
         orig.attributes[0] = 50;
         orig.attributes[1] = 40;
         orig.attributes[2] = 30;
@@ -188,6 +190,8 @@ int main(int argc, char* argv[]) {
         memcpy(origP.champions[0].name, "HALK    ", 8);
         memcpy(origP.champions[0].title, "THE BARBARIAN       ", 20);
         origP.champions[0].sex = 'M';
+        memcpy(origP.champions[0].mirrorStatsText, "AADFACNAAAAP    ", 16);
+        memcpy(origP.champions[0].mirrorSkillsText, "DHCGCDCLCNCKCI  ", 16);
         origP.champions[0].hp.current = 90;
         origP.champions[0].hp.maximum = 100;
         origP.champions[0].hp.shifted = 200;
@@ -350,6 +354,8 @@ int main(int argc, char* argv[]) {
         memcpy(orig.name, "TESTNAME", 8);
         memcpy(orig.title, "SOURCE TITLE        ", 20);
         orig.sex = 'F';
+        memcpy(orig.mirrorStatsText, "AADFACNAAAAP    ", 16);
+        memcpy(orig.mirrorSkillsText, "DHCGCDCLCNCKCI  ", 16);
         orig.attributes[0] = 50; orig.attributes[1] = 40;
         orig.attributes[2] = 30; orig.attributes[3] = 60;
         orig.attributes[4] = 20; orig.attributes[5] = 15;
@@ -383,6 +389,8 @@ int main(int argc, char* argv[]) {
         memcpy(origP.champions[0].name, "HALK    ", 8);
         memcpy(origP.champions[0].title, "THE BARBARIAN       ", 20);
         origP.champions[0].sex = 'M';
+        memcpy(origP.champions[0].mirrorStatsText, "AADFACNAAAAP    ", 16);
+        memcpy(origP.champions[0].mirrorSkillsText, "DHCGCDCLCNCKCI  ", 16);
         origP.champions[0].hp.current = 90;
         origP.champions[0].hp.maximum = 100;
         origP.champions[0].hp.shifted = 200;
@@ -399,7 +407,7 @@ int main(int argc, char* argv[]) {
         struct ChampionState_Compat champ;
         F0600_CHAMPION_InitEmpty_Compat(&champ);
         CHECK(F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
-                  "STAMM|BLADECASTER||M|AADFACNAAAAP", &champ) == 1,
+                  "STAMM|BLADECASTER||M|AADFACNAAAAP|DHCGCDCLCNCKCI|", &champ) == 1,
               "Champion mirror text identity parser accepts NAME|TITLE||... source format");
         CHECK(memcmp(champ.name, "STAMM   ", 8) == 0,
               "Champion mirror parser packs source Name[8]");
@@ -407,6 +415,10 @@ int main(int argc, char* argv[]) {
               "Champion mirror parser packs source Title[20]");
         CHECK(champ.sex == 'M',
               "Champion mirror parser carries source sex byte");
+        CHECK(memcmp(champ.mirrorStatsText, "AADFACNAAAAP    ", 16) == 0,
+              "Champion mirror parser carries encoded source stat field");
+        CHECK(memcmp(champ.mirrorSkillsText, "DHCGCDCLCNCKCI  ", 16) == 0,
+              "Champion mirror parser carries encoded source skill field");
     }
 
     /* Test 8: Sensor identification */

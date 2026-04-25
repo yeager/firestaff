@@ -27,6 +27,7 @@
 #define CHAMPION_MAX_PARTY   4
 #define CHAMPION_NAME_LENGTH 8  /* Packed name, 8 chars max (no NUL in original) */
 #define CHAMPION_TITLE_LENGTH 20 /* Packed title, 20 chars max (no NUL in original) */
+#define CHAMPION_MIRROR_FIELD_LENGTH 16 /* Packed source mirror stat/skill text field */
 
 /* ---- Attribute indices (CHAMPION.C ordering) ---- */
 #define CHAMPION_ATTR_STRENGTH   0
@@ -90,6 +91,8 @@ struct ChampionState_Compat {
     unsigned char  name[CHAMPION_NAME_LENGTH]; /* [DUNGEON.DAT] packed 8-char name */
     unsigned char  title[CHAMPION_TITLE_LENGTH]; /* [DUNGEON.DAT] packed title */
     unsigned char  sex;                     /* [DUNGEON.DAT] champion sex byte ('M'/'F') */
+    unsigned char  mirrorStatsText[CHAMPION_MIRROR_FIELD_LENGTH];  /* [DUNGEON.DAT] encoded stat text */
+    unsigned char  mirrorSkillsText[CHAMPION_MIRROR_FIELD_LENGTH]; /* [DUNGEON.DAT] encoded skill text */
     int            present;                 /* 1 if this slot is occupied */
 
     /* Attributes: base values [DUNGEON.DAT], current [RUNTIME] */
@@ -206,8 +209,9 @@ int F0605_PARTY_Deserialize_Compat(
 /*
  * Parse a DUNGEON.DAT champion mirror text string into identity fields.
  * Source text format is NAME|TITLE||SEX|... (decoded separator = '|').
- * Only the raw packed Name[8], Title[20], and sex byte are written here;
- * gameplay stats remain owned by the lifecycle/recruitment path.
+ * Only the raw packed Name[8], Title[20], sex byte, and encoded mirror
+ * stat/skill fields are written here; gameplay stats remain owned by the
+ * lifecycle/recruitment path.
  */
 int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     const char* mirrorText,
