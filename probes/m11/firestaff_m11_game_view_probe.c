@@ -215,6 +215,43 @@ static void probe_set_square(struct DungeonDatState_Compat* dungeon,
     dungeon->tiles[0].squareData[mapX * height + mapY] = square;
 }
 
+static void probe_capture_vga_frame(const M11_GameViewState* state,
+                                    const char* dir,
+                                    const char* name) {
+    unsigned char fb[320 * 200];
+    char path[512];
+    if (!state || !dir || !dir[0] || !name || !name[0]) {
+        return;
+    }
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(state, fb, 320, 200);
+    snprintf(path, sizeof(path), "%s/%s.ppm", dir, name);
+    probe_dump_m11_vga_ppm(path, fb, 320, 200);
+}
+
+static void probe_reset_synthetic_view_to_corridor(M11_GameViewState* state) {
+    int i;
+    int squareCount;
+    if (!state || !state->world.dungeon || !state->world.dungeon->tiles ||
+        !state->world.dungeon->tiles[0].squareData || !state->world.things ||
+        !state->world.things->squareFirstThings) {
+        return;
+    }
+    squareCount = state->world.dungeon->tiles[0].squareCount;
+    for (i = 0; i < squareCount; ++i) {
+        state->world.dungeon->tiles[0].squareData[i] =
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        state->world.things->squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    state->showDebugHUD = 0;
+    state->active = 1;
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 2;
+    state->world.party.mapY = 3;
+    state->world.party.direction = DIR_NORTH;
+    state->world.magic.magicalLightAmount = 255;
+}
+
 static void probe_set_next(unsigned char* raw,
                            unsigned short nextThing) {
     if (!raw) {
@@ -1399,6 +1436,95 @@ int main(int argc, char** argv) {
     }
 
     probe_free_synthetic_view(&syntheticView);
+
+    /* Focused source-bound viewport artifact scenes.
+     *
+     * These captures intentionally isolate one D1C feature at a time so
+     * DM1 zone-blit work for pits/stairs/teleporter fields has a small,
+     * deterministic visual proof beyond the normal party screenshot. */
+    {
+        M11_GameViewState focusView;
+        unsigned char baseFb[320 * 200];
+        unsigned char pitFb[320 * 200];
+        unsigned char invisiblePitFb[320 * 200];
+        unsigned char stairsFb[320 * 200];
+        unsigned char teleporterFb[320 * 200];
+        char gfxPath[512];
+        int haveAssets = 0;
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+
+        memset(&focusView, 0, sizeof(focusView));
+        (void)probe_init_synthetic_view(&focusView);
+        probe_reset_synthetic_view_to_corridor(&focusView);
+
+        if (dataDir && dataDir[0]) {
+            snprintf(gfxPath, sizeof(gfxPath), "%s/GRAPHICS.DAT", dataDir);
+            haveAssets = M11_AssetLoader_Init(&focusView.assetLoader, gfxPath);
+            focusView.assetsAvailable = haveAssets ? 1 : 0;
+        }
+
+        memset(baseFb, 0, sizeof(baseFb));
+        M11_GameView_Draw(&focusView, baseFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "30_focused_empty_corridor_vga");
+        }
+
+        probe_set_square(focusView.world.dungeon, 2, 2,
+                         (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
+        memset(pitFb, 0, sizeof(pitFb));
+        M11_GameView_Draw(&focusView, pitFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "31_focused_d1c_normal_pit_vga");
+        }
+
+        probe_set_square(focusView.world.dungeon, 2, 2,
+                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x04));
+        memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
+        M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "32_focused_d1c_invisible_pit_vga");
+        }
+
+        probe_set_square(focusView.world.dungeon, 2, 2,
+                         (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x08));
+        memset(stairsFb, 0, sizeof(stairsFb));
+        M11_GameView_Draw(&focusView, stairsFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "33_focused_d1c_stairs_down_vga");
+        }
+
+        probe_set_square(focusView.world.dungeon, 2, 2,
+                         (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x0c));
+        memset(teleporterFb, 0, sizeof(teleporterFb));
+        M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "34_focused_d1c_teleporter_vga");
+        }
+
+        probe_record(&tally, "INV_GV_38A",
+                     haveAssets && memcmp(baseFb, pitFb, sizeof(baseFb)) != 0,
+                     "focused viewport: D1C normal pit source blit changes the corridor frame");
+        probe_record(&tally, "INV_GV_38B",
+                     haveAssets && memcmp(pitFb, invisiblePitFb, sizeof(pitFb)) != 0,
+                     "focused viewport: D1C invisible pit variant differs from normal pit");
+        probe_record(&tally, "INV_GV_38C",
+                     haveAssets && memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0,
+                     "focused viewport: D1C stairs zone blit changes the corridor frame");
+        probe_record(&tally, "INV_GV_38D",
+                     haveAssets && memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0,
+                     "focused viewport: D1C teleporter field zone blit changes the corridor frame");
+
+        if (haveAssets) {
+            M11_AssetLoader_Shutdown(&focusView.assetLoader);
+            focusView.assetsAvailable = 0;
+        }
+        probe_free_synthetic_view(&focusView);
+    }
 
     /* ================================================================
      * Pit and teleporter transition invariants (INV_GV_39 .. INV_GV_45)
