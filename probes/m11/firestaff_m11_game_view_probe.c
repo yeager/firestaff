@@ -6005,6 +6005,19 @@ int main(int argc, char** argv) {
                      "projectile aspect firstNative/GraphicInfo samples match G0210");
     }
 
+    /* INV_GV_245D: Projectile bitmap delta applies G0210 aspect type
+     * for rotating/no-back graphics. Lightning is C2: right/left travel
+     * selects native+1, front/back stays native. Fireball is C3 and never
+     * rotates. */
+    probe_record(&tally,
+                 "INV_GV_245D",
+                 M11_GameView_GetProjectileAspectBitmapDelta(3, 1) == 1 &&
+                 M11_GameView_GetProjectileGraphicForAspect(3, 1) == 464 &&
+                 M11_GameView_GetProjectileAspectBitmapDelta(3, 0) == 0 &&
+                 M11_GameView_GetProjectileGraphicForAspect(10, 1) == 482 &&
+                 M11_GameView_GetProjectileGraphicForAspect(10, 3) == 482,
+                 "projectile G0210 aspect bitmap delta handles lightning rotation and fireball no-rotation");
+
     /* INV_GV_246: projectile sub-cell positioning — the firstProjectileCell
      * field is populated from the runtime ProjectileInstance_Compat.cell
      * data, rotated by party direction.

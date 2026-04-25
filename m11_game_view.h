@@ -506,6 +506,8 @@ int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
                                                int relativeCell);
 int M11_GameView_GetProjectileAspectFirstNative(int aspectIndex);
 unsigned int M11_GameView_GetProjectileAspectGraphicInfo(int aspectIndex);
+int M11_GameView_GetProjectileAspectBitmapDelta(int aspectIndex, int relativeDir);
+int M11_GameView_GetProjectileGraphicForAspect(int aspectIndex, int relativeDir);
 
 /* Resolve a dungeon thing type/subtype to its M612 viewport object
  * native graphic index using G0237 object-info -> G0209 object-aspect

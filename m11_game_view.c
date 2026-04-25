@@ -4851,6 +4851,7 @@ typedef struct M11_ViewportCell {
     int doorOrnamentOrdinal;
     /* First projectile graphic index (416-438) from GRAPHICS.DAT, or -1 */
     int firstProjectileGfxIndex;
+    int firstProjectileSubtype;
     /* First projectile direction relative to party facing.
      * 0 = moving away from party, 1 = moving right, 2 = toward party,
      * 3 = moving left.  -1 if no projectile or direction unknown.
@@ -5800,6 +5801,20 @@ static int m11_projectile_subtype_to_graphic_index(int subtype) {
     }
 }
 
+static int m11_projectile_subtype_to_aspect_index(int subtype) {
+    switch (subtype) {
+        case PROJECTILE_SUBTYPE_FIREBALL: return 10;
+        case PROJECTILE_SUBTYPE_SLIME: return 12;
+        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT: return 3;
+        case PROJECTILE_SUBTYPE_POISON_BOLT:
+        case PROJECTILE_SUBTYPE_POISON_CLOUD: return 13;
+        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
+        case PROJECTILE_SUBTYPE_OPEN_DOOR: return 11;
+        case PROJECTILE_SUBTYPE_KINETIC_ARROW:
+        default: return 0;
+    }
+}
+
 static int m11_projectile_aspect_first_native(int aspectIndex) {
     static const unsigned char kFirstNative[14] = {
         0,3,6,9,11,14,17,20,23,26,28,29,30,31
@@ -5815,6 +5830,26 @@ static unsigned int m11_projectile_aspect_graphic_info(int aspectIndex) {
     };
     if (aspectIndex < 0 || aspectIndex >= 14) return 0u;
     return (unsigned int)kGraphicInfo[aspectIndex];
+}
+
+static int m11_projectile_aspect_bitmap_delta(int aspectIndex, int relativeDir) {
+    unsigned int info = m11_projectile_aspect_graphic_info(aspectIndex);
+    int aspectType = (int)(info & 0x0003u);
+    if (relativeDir < 0) relativeDir = 0;
+    relativeDir &= 3;
+    if (aspectType == 3) return 0;
+    if (relativeDir == 1 || relativeDir == 3) {
+        return aspectType == 2 ? 1 : 2;
+    }
+    if (aspectType >= 2) return 0;
+    if (aspectType == 1 && relativeDir != 0) return 0;
+    return 1;
+}
+
+static int m11_projectile_aspect_to_graphic_index(int aspectIndex, int relativeDir) {
+    int first = m11_projectile_aspect_first_native(aspectIndex);
+    if (first < 0) return -1;
+    return 454 + first + m11_projectile_aspect_bitmap_delta(aspectIndex, relativeDir);
 }
 
 static int m11_sample_viewport_cell(const M11_GameViewState* state,
@@ -5848,6 +5883,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.wallOrnamentOrdinal = -1;
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
+    cell.firstProjectileSubtype = -1;
     cell.firstProjectileRelDir = -1;
     cell.firstProjectileCell = -1;
     cell.floorOrnamentOrdinal = 0;
@@ -6040,6 +6076,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                 int pIdx = THING_GET_INDEX(scanThing);
                 if (pIdx >= 0 && pIdx < state->world.things->projectileCount) {
                     int slot = (int)state->world.things->projectiles[pIdx].slot;
+                    cell.firstProjectileSubtype = slot;
                     cell.firstProjectileGfxIndex = m11_projectile_subtype_to_graphic_index(slot);
                 }
                 break;
@@ -6066,6 +6103,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (rp->slotIndex < 0) continue;
             if (rp->mapIndex != state->world.party.mapIndex) continue;
             if (rp->mapX != mapX || rp->mapY != mapY) continue;
+            cell.firstProjectileSubtype = rp->projectileSubtype;
             cell.firstProjectileGfxIndex =
                 m11_projectile_subtype_to_graphic_index(rp->projectileSubtype);
             break;
@@ -6088,6 +6126,11 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (rp->slotIndex < 0) continue;
             if (rp->mapIndex == partyMap && rp->mapX == mapX && rp->mapY == mapY) {
                 cell.firstProjectileRelDir = (rp->direction - partyDir) & 3;
+                if (cell.firstProjectileSubtype >= 0) {
+                    cell.firstProjectileGfxIndex = m11_projectile_aspect_to_graphic_index(
+                        m11_projectile_subtype_to_aspect_index(cell.firstProjectileSubtype),
+                        cell.firstProjectileRelDir);
+                }
                 /* Extract sub-cell position (0-3) for DM1-faithful
                  * projectile viewport offset.  The cell field in the
                  * runtime data is absolute (0=NW,1=NE,2=SW,3=SE).
@@ -11812,6 +11855,14 @@ int M11_GameView_GetProjectileAspectFirstNative(int aspectIndex) {
 
 unsigned int M11_GameView_GetProjectileAspectGraphicInfo(int aspectIndex) {
     return m11_projectile_aspect_graphic_info(aspectIndex);
+}
+
+int M11_GameView_GetProjectileAspectBitmapDelta(int aspectIndex, int relativeDir) {
+    return m11_projectile_aspect_bitmap_delta(aspectIndex, relativeDir);
+}
+
+int M11_GameView_GetProjectileGraphicForAspect(int aspectIndex, int relativeDir) {
+    return m11_projectile_aspect_to_graphic_index(aspectIndex, relativeDir);
 }
 
 unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
