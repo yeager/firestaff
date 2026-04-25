@@ -3436,6 +3436,17 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectShiftValue(2, 7) == -1,
                      "object shift values match G0223 samples");
 
+        /* INV_GV_114F: Creature derived-bitmap palette change tables
+         * match source G0221/G0222. */
+        probe_record(&tally,
+                     "INV_GV_114F",
+                     M11_GameView_GetCreaturePaletteChange(0, 1) == 12 &&
+                     M11_GameView_GetCreaturePaletteChange(0, 13) == 2 &&
+                     M11_GameView_GetCreaturePaletteChange(0, 15) == 13 &&
+                     M11_GameView_GetCreaturePaletteChange(1, 8) == 5 &&
+                     M11_GameView_GetCreaturePaletteChange(1, 14) == 14,
+                     "creature D3/D2 palette-change samples match G0221/G0222");
+
         /* INV_GV_115: Draw with item sprites on floor produces different
          * output from draw without items.  We place an item and compare. */
         {

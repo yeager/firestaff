@@ -517,6 +517,8 @@ void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
                                             int* outXIndex,
                                             int* outYIndex);
 int M11_GameView_GetObjectShiftValue(int shiftSet, int shiftIndex);
+int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,
+                                          int paletteIndex);
 
 /* ── Creature aspect query API (for probes) ── */
 

@@ -8623,6 +8623,22 @@ static int m11_object_source_shift_value(int shiftSet, int shiftIndex) {
     return (int)kShiftSets[shiftSet][shiftIndex];
 }
 
+static int m11_creature_source_palette_change(int depthPaletteIndex,
+                                              int paletteIndex) {
+    /* DUNVIEW.C G0221/G0222 creature palette-change tables for D3/D2
+     * derived bitmaps. depthPaletteIndex 0=D3, 1=D2. */
+    static const unsigned char kCreaturePaletteD3[16] = {
+        0,12,1,3,4,3,0,6,3,0,0,11,0,2,0,13
+    };
+    static const unsigned char kCreaturePaletteD2[16] = {
+        0,1,2,3,4,3,6,7,5,0,0,11,12,13,14,15
+    };
+    if (paletteIndex < 0) paletteIndex = 0;
+    if (paletteIndex > 15) paletteIndex = 15;
+    return depthPaletteIndex == 0 ? (int)kCreaturePaletteD3[paletteIndex]
+                                  : (int)kCreaturePaletteD2[paletteIndex];
+}
+
 /* Resolve an inventory thingId to a GRAPHICS.DAT item sprite index.
  * Returns the graphic index suitable for M11_AssetLoader_Load, or 0
  * if the thing type/subtype cannot be mapped.  This is the inventory
@@ -11696,6 +11712,11 @@ void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
 
 int M11_GameView_GetObjectShiftValue(int shiftSet, int shiftIndex) {
     return m11_object_source_shift_value(shiftSet, shiftIndex);
+}
+
+int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,
+                                          int paletteIndex) {
+    return m11_creature_source_palette_change(depthPaletteIndex, paletteIndex);
 }
 
 static int m11_perform_non_melee_action(M11_GameViewState* state,
