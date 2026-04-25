@@ -4948,6 +4948,9 @@ int main(int argc, char** argv) {
         endgameView.world.party.champions[0].present = 1;
         memcpy(endgameView.world.party.champions[0].name, "HALK    ", 8);
         endgameView.world.party.champions[0].skillLevels[0] = 4;
+        endgameView.world.party.champions[0].skillLevels[1] = 5;
+        endgameView.world.party.champions[0].skillLevels[2] = 6;
+        endgameView.world.party.champions[0].skillLevels[3] = 7;
         memset(fb_won, 0, sizeof(fb_won));
         M11_GameView_Draw(&endgameView, fb_won, 320, 200);
         skillText = probe_count_color(fb_won,
@@ -4960,7 +4963,13 @@ int main(int argc, char** argv) {
         probe_record(&tally,
                      "INV_GV_165F",
                      skillText >= 6,
-                     "V1 endgame prints source skill-title line");
+                     "V1 endgame prints source fighter skill-title line");
+        probe_record(&tally,
+                     "INV_GV_165G",
+                     probe_count_color(fb_won, 320, 105, 31, 115, 8, 13) >= 6 &&
+                     probe_count_color(fb_won, 320, 105, 39, 115, 8, 13) >= 6 &&
+                     probe_count_color(fb_won, 320, 105, 47, 115, 8, 13) >= 6,
+                     "V1 endgame prints source ninja/priest/wizard skill-title lines");
     }
 
     /* INV_GV_166: HandleInput in gameWon state ignores movement. */
