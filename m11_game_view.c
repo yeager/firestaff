@@ -547,6 +547,64 @@ static int m11_dialog_source_split_two_lines(const char* text,
     return 2;
 }
 
+static void m11_draw_dialog_choice_text(unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight,
+                                        int viewportX,
+                                        int viewportY,
+                                        int width,
+                                        const char* text) {
+    M11_TextStyle choiceStyle = g_text_shadow;
+    choiceStyle.color = M11_COLOR_WHITE;
+    choiceStyle.shadowColor = M11_COLOR_BROWN;
+    if (!text || text[0] == '\0') return;
+    m11_draw_text_centered_in_rect(framebuffer,
+                                   framebufferWidth,
+                                   framebufferHeight,
+                                   M11_VIEWPORT_X + viewportX,
+                                   M11_VIEWPORT_Y + viewportY,
+                                   width,
+                                   text,
+                                   &choiceStyle);
+}
+
+static void m11_draw_dialog_choices_source(const M11_GameViewState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight) {
+    if (!state || state->dialogChoiceCount <= 0) return;
+    switch (state->dialogChoiceCount) {
+        case 1:
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        16, 110, 192, state->dialogChoices[0]);
+            break;
+        case 2:
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        16, 73, 192, state->dialogChoices[0]);
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        16, 110, 192, state->dialogChoices[1]);
+            break;
+        case 3:
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        16, 73, 192, state->dialogChoices[0]);
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        16, 110, 86, state->dialogChoices[1]);
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        123, 110, 86, state->dialogChoices[2]);
+            break;
+        default:
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        16, 73, 86, state->dialogChoices[0]);
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        123, 73, 86, state->dialogChoices[1]);
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        16, 110, 86, state->dialogChoices[2]);
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                        123, 110, 86, state->dialogChoices[3]);
+            break;
+    }
+}
+
 /* Draw text using the original DM1 font when available, with shadow.
  * Falls back to the builtin hardcoded font otherwise. */
 static void m11_draw_text_original(
@@ -15633,6 +15691,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           dlgX + 50, dlgY + dlgH - 16,
                           "PRESS ANY KEY TO DISMISS", &g_text_small);
         }
+        if (drewSourceBackdrop) {
+            m11_draw_dialog_choices_source(state, framebuffer,
+                                           framebufferWidth, framebufferHeight);
+        }
     }
 
     /* Rest / death overlay */
@@ -15895,15 +15957,42 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     if (!state || !state->dialogOverlayActive) return 0;
     state->dialogOverlayActive = 0;
     state->dialogOverlayText[0] = '\0';
+    state->dialogChoiceCount = 0;
+    memset(state->dialogChoices, 0, sizeof(state->dialogChoices));
     return 1;
 }
 
 int M11_GameView_ShowDialogOverlay(M11_GameViewState* state,
                                    const char* text) {
+    return M11_GameView_ShowDialogOverlayChoices(state, text, "OK", NULL, NULL, NULL);
+}
+
+int M11_GameView_ShowDialogOverlayChoices(M11_GameViewState* state,
+                                          const char* text,
+                                          const char* choice1,
+                                          const char* choice2,
+                                          const char* choice3,
+                                          const char* choice4) {
+    const char* choices[4];
+    int i;
     if (!state || !text) return 0;
     state->dialogOverlayActive = 1;
     snprintf(state->dialogOverlayText, sizeof(state->dialogOverlayText),
              "%s", text);
+    state->dialogChoiceCount = 0;
+    memset(state->dialogChoices, 0, sizeof(state->dialogChoices));
+    choices[0] = choice1;
+    choices[1] = choice2;
+    choices[2] = choice3;
+    choices[3] = choice4;
+    for (i = 0; i < 4; ++i) {
+        if (choices[i] && choices[i][0] != '\0') {
+            snprintf(state->dialogChoices[state->dialogChoiceCount],
+                     sizeof(state->dialogChoices[state->dialogChoiceCount]),
+                     "%s", choices[i]);
+            ++state->dialogChoiceCount;
+        }
+    }
     return 1;
 }
 

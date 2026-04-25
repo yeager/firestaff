@@ -184,6 +184,8 @@ typedef struct {
      * dismisses it with any key or click. */
     int dialogOverlayActive;
     char dialogOverlayText[128];
+    int dialogChoiceCount;
+    char dialogChoices[4][32];
     char localeCode[8];
     M11_RuntimeCatalog localizedCatalog;
     M11_RuntimeCatalog englishCatalog;
@@ -347,6 +349,14 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state);
 /* Show a dialog overlay with the given text.  Returns 1 on success. */
 int M11_GameView_ShowDialogOverlay(M11_GameViewState* state,
                                    const char* text);
+
+/* Show a dialog overlay with up to four source-style choice labels. */
+int M11_GameView_ShowDialogOverlayChoices(M11_GameViewState* state,
+                                          const char* text,
+                                          const char* choice1,
+                                          const char* choice2,
+                                          const char* choice3,
+                                          const char* choice4);
 
 /* ── Full-screen map overlay API ── */
 

@@ -5134,6 +5134,37 @@ int main(int argc, char** argv) {
                      "V1 long dialog message uses source-width two-line split");
     }
 
+    /* INV_GV_172H: V1 source dialog renders bottom choice text zone C462. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned int bottomChoiceWhite;
+        unsigned int offBandWhite;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlayChoices(&dlgView, "PIT", "OK", NULL, NULL, NULL);
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        bottomChoiceWhite = probe_count_color(fb_dlg,
+                                              320,
+                                              85,
+                                              140,
+                                              70,
+                                              10,
+                                              PROBE_COLOR_WHITE);
+        offBandWhite = probe_count_color(fb_dlg,
+                                         320,
+                                         85,
+                                         124,
+                                         70,
+                                         8,
+                                         PROBE_COLOR_WHITE);
+        probe_record(&tally,
+                     "INV_GV_172H",
+                     bottomChoiceWhite >= 3 && bottomChoiceWhite > offBandWhite,
+                     "V1 source dialog renders bottom C462 choice text zone");
+    }
+
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
     {
         M11_GameViewState dlgView;
