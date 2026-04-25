@@ -176,11 +176,17 @@ runtime viewport unchanged.
 | Champion status-box stride drop from +8 px to C69 | 41 | §5 | independent but adjacent; should land before pass 42 rewires the side-column |
 | ZONES.H parse (`PANEL.C` + `COORD.C` layout records) | 47b | §11 | required for source-faithful placement of the rerouted side-column surfaces |
 
-Until pass 42 lands (and ideally pass 41 + pass 47b with it), the
-Firestaff runtime viewport must remain at `(12, 24, 196, 118)` to
-keep the invented HUD visible and clickable.  This is why
-`PARITY_MATRIX_DM1_V1.md` §1 row "Viewport region bounds" must stay
-`KNOWN_DIFF` after pass 40; pass 40 only updates the rationale column.
+Historical pass-40 state: until pass 42 landed (and ideally pass 41 +
+pass 47b with it), the Firestaff runtime viewport had to remain at
+`(12, 24, 196, 118)` to keep the invented HUD visible and clickable.
+This is why `PARITY_MATRIX_DM1_V1.md` §1 row "Viewport region bounds"
+stayed `KNOWN_DIFF` immediately after pass 40; pass 40 only updated the
+rationale column.
+
+Superseded 2026-04-25: later all-graphics work rerouted enough normal V1
+chrome to bind runtime/probe gates to the DM1 source viewport
+`(0,33,224,136)`. The parity matrix now marks rectangle bounds as
+`MATCHED`; this section remains as the historical dependency rationale.
 
 ---
 
@@ -188,7 +194,7 @@ keep the invented HUD visible and clickable.  This is why
 
 | Row | Before pass 40 | After pass 40 |
 |---|---|---|
-| Viewport region bounds | `KNOWN_DIFF` — drift measured in pass 33 | `KNOWN_DIFF` **locked** — DM1 anchor `(0, 33, 224, 136)` now encoded as `M11_DM1_VIEWPORT_*`; retirement blocked on pass 42 chrome reroute per `parity-evidence/pass40_viewport_lock.md` §4 |
+| Viewport region bounds | `KNOWN_DIFF` — drift measured in pass 33 | Historical pass-40 result: `KNOWN_DIFF` **locked** — DM1 anchor `(0, 33, 224, 136)` encoded as `M11_DM1_VIEWPORT_*`; later superseded by all-graphics viewport migration to `MATCHED` rectangle bounds. |
 
 No other row changes in §1.
 
