@@ -6779,6 +6779,48 @@ int main(int argc, char** argv) {
             iconView.world.things = NULL;
         }
 
+        {
+            struct DungeonThings_Compat localThings;
+            struct DungeonWeapon_Compat weapon;
+            unsigned char fbUnlit[320 * 200];
+            unsigned char fbLit[320 * 200];
+            int x, y;
+            int diffInner0 = 0;
+            int cellX0 = 0 * 22 + 233;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&weapon, 0, sizeof(weapon));
+            /* Weapon subtype 2 = torch. F0033_OBJECT_GetIconIndex
+             * changes icon 4 by G0029 charge-count offset when lit. */
+            weapon.type = 2;
+            weapon.chargeCount = 8;
+            localThings.weapons = &weapon;
+            localThings.weaponCount = 1;
+            iconView.world.things = &localThings;
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            weapon.lit = 0;
+            memset(fbUnlit, 0, sizeof(fbUnlit));
+            M11_GameView_Draw(&iconView, fbUnlit, 320, 200);
+            weapon.lit = 1;
+            memset(fbLit, 0, sizeof(fbLit));
+            M11_GameView_Draw(&iconView, fbLit, 320, 200);
+            for (y = 95; y < 111; ++y) {
+                for (x = cellX0 + 2; x < cellX0 + 18; ++x) {
+                    if ((fbUnlit[y * 320 + x] & 0x0F) !=
+                        (fbLit[y * 320 + x] & 0x0F)) {
+                        ++diffInner0;
+                    }
+                }
+            }
+            probe_record(&tally, "INV_GV_307",
+                         iconView.assetsAvailable ? (diffInner0 > 10) : 1,
+                         "action-hand icon cells: lit torch uses source charge-count icon variant");
+            iconView.world.party.champions[0].inventory[
+                CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+            iconView.world.things = NULL;
+        }
+
         /* Save a screenshot artifact showing the populated right
          * column so the visual improvement is reproducible. */
         {

@@ -11293,8 +11293,22 @@ static int m11_object_icon_index_for_thing(const struct DungeonThings_Compat* th
         172,173,174,175,120,121,122,123,124,132,133,134,136,137,138,139,192,193,197,198
     };
     int objectInfoIndex = m11_object_info_index_for_thing(things, thingId);
+    int iconIndex;
     if (objectInfoIndex < 0 || objectInfoIndex >= 180) return -1;
-    return (int)kObjectInfoType[objectInfoIndex];
+    iconIndex = (int)kObjectInfoType[objectInfoIndex];
+    if (THING_GET_TYPE(thingId) == THING_TYPE_WEAPON) {
+        int thingIndex = THING_GET_INDEX(thingId);
+        if (things->weapons && thingIndex >= 0 && thingIndex < things->weaponCount) {
+            const struct DungeonWeapon_Compat* weapon = &things->weapons[thingIndex];
+            if (iconIndex == 4 && weapon->lit) {
+                static const unsigned char kChargeCountToTorchIconOffset[16] = {
+                    0,1,1,1,2,2,2,2,3,3,3,3,3,3,3,3
+                };
+                iconIndex += kChargeCountToTorchIconOffset[weapon->chargeCount & 0x0F];
+            }
+        }
+    }
+    return iconIndex;
 }
 
 /* ---------------------------------------------------------------
