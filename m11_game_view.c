@@ -8605,6 +8605,51 @@ static unsigned int m11_item_sprite_index(int thingType, int subtype) {
     return M11_GFX_ITEM_SPRITE_BASE + (unsigned int)kObjectAspectFirstNative[aspectIndex];
 }
 
+static int m11_item_aspect_index(int thingType, int subtype) {
+    static const unsigned char kObjectInfoAspect[180] = {
+        1,0,67,67,67,67,67,67,2,2,2,2,2,2,2,2,2,2,68,68,
+        68,68,80,38,38,35,37,11,12,12,39,17,12,12,12,12,12,12,12,42,
+        12,13,13,21,21,33,43,44,14,45,16,46,11,47,48,49,50,11,31,31,
+        11,11,11,51,32,30,65,45,82,23,23,23,55,8,24,24,24,24,69,24,
+        24,69,7,7,57,23,23,29,69,69,24,24,53,53,9,9,9,54,54,10,
+        54,19,19,19,19,9,19,52,20,22,56,10,52,20,22,56,10,52,20,22,
+        56,10,52,19,22,81,84,34,6,15,15,40,41,4,83,4,18,18,18,18,
+        18,18,18,18,62,62,62,62,62,62,62,62,76,3,60,61,27,28,25,26,
+        71,70,5,66,15,15,58,59,59,79,63,64,72,73,74,75,77,78,74,41
+    };
+    int objectInfoIndex;
+    if (subtype < 0) subtype = 0;
+    switch (thingType) {
+        case THING_TYPE_WEAPON:
+            if (subtype > 45) subtype = 0;
+            objectInfoIndex = 23 + subtype;
+            break;
+        case THING_TYPE_ARMOUR:
+            if (subtype > 57) subtype = 0;
+            objectInfoIndex = 69 + subtype;
+            break;
+        case THING_TYPE_SCROLL:
+            objectInfoIndex = 0;
+            break;
+        case THING_TYPE_POTION:
+            if (subtype > 20) subtype = 0;
+            objectInfoIndex = 2 + subtype;
+            break;
+        case THING_TYPE_CONTAINER:
+            if (subtype > 0) subtype = 0;
+            objectInfoIndex = 1 + subtype;
+            break;
+        case THING_TYPE_JUNK:
+            if (subtype > 52) subtype = 0;
+            objectInfoIndex = 127 + subtype;
+            break;
+        default:
+            return -1;
+    }
+    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return -1;
+    return (int)kObjectInfoAspect[objectInfoIndex];
+}
+
 static int m11_object_source_scale_units(int scaleIndex) {
     /* DUNVIEW.C G2030_auc_ObjectScales: source object scale units for
      * the five distance/cell scale buckets used by F0115. */
@@ -8767,10 +8812,16 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
     int shiftSet;
     int shiftXIndex = 0;
     int shiftYIndex = 0;
+    int aspectIndex;
+    int useMirror;
 
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
     gfxIdx = m11_item_sprite_index(thingType, subtype);
     if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
+    aspectIndex = m11_item_aspect_index(thingType, subtype);
+    useMirror = (aspectIndex >= 0 &&
+                 (m11_object_aspect_graphic_info(aspectIndex) & 0x0001u) &&
+                 (relativeCell == 1 || relativeCell == 3)) ? 1 : 0;
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
@@ -8814,8 +8865,13 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
         if (drawY + drawH > y + h) drawY = y + h - drawH;
     }
 
-    M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                               drawX, drawY, drawW, drawH, 10);
+    if (useMirror) {
+        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
+                                         drawX, drawY, drawW, drawH, 10);
+    } else {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                   drawX, drawY, drawW, drawH, 10);
+    }
     return 1;
 }
 
@@ -11786,6 +11842,14 @@ unsigned int M11_GameView_GetObjectAspectGraphicInfo(int aspectIndex) {
 
 int M11_GameView_GetObjectAspectCoordinateSet(int aspectIndex) {
     return m11_object_aspect_coordinate_set(aspectIndex);
+}
+
+int M11_GameView_ObjectUsesFlipOnRight(int thingType, int subtype,
+                                       int relativeCell) {
+    int aspectIndex = m11_item_aspect_index(thingType, subtype);
+    if (aspectIndex < 0) return 0;
+    return ((m11_object_aspect_graphic_info(aspectIndex) & 0x0001u) &&
+            (relativeCell == 1 || relativeCell == 3)) ? 1 : 0;
 }
 
 int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,

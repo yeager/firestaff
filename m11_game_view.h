@@ -522,6 +522,8 @@ void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
 int M11_GameView_GetObjectShiftValue(int shiftSet, int shiftIndex);
 unsigned int M11_GameView_GetObjectAspectGraphicInfo(int aspectIndex);
 int M11_GameView_GetObjectAspectCoordinateSet(int aspectIndex);
+int M11_GameView_ObjectUsesFlipOnRight(int thingType, int subtype,
+                                       int relativeCell);
 int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,
                                           int paletteIndex);
 

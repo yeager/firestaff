@@ -3497,6 +3497,15 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectAspectCoordinateSet(45) == 2,
                      "object aspect GraphicInfo and CoordinateSet samples match G0209");
 
+        /* INV_GV_114E3: MASK0x0001_FLIP_ON_RIGHT applies only on
+         * right-side relative cells for object aspects that request it. */
+        probe_record(&tally,
+                     "INV_GV_114E3",
+                     M11_GameView_ObjectUsesFlipOnRight(THING_TYPE_CONTAINER, 0, 3) == 1 &&
+                     M11_GameView_ObjectUsesFlipOnRight(THING_TYPE_CONTAINER, 0, 0) == 0 &&
+                     M11_GameView_ObjectUsesFlipOnRight(THING_TYPE_WEAPON, 8, 3) == 0,
+                     "object flip-on-right follows G0209 GraphicInfo and relative cell");
+
         /* INV_GV_114F: Creature derived-bitmap palette change tables
          * match source G0221/G0222. */
         probe_record(&tally,
