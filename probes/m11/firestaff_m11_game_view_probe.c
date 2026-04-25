@@ -1573,6 +1573,7 @@ int main(int argc, char** argv) {
             int changedStairsSide = 0;
             int changedTeleporter = 0;
             int changedFloorOrnament = 0;
+            int changedFootprints = 0;
             size_t pi;
             for (pi = 0; pi < sizeof(kPitPositions) / sizeof(kPitPositions[0]); ++pi) {
                 probe_reset_synthetic_view_to_corridor(&focusView);
@@ -1688,6 +1689,24 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_38I",
                          changedFloorOrnament == (int)(sizeof(kFloorOrnamentPositions) / sizeof(kFloorOrnamentPositions[0])),
                          "focused viewport: all visibly drawable floor ornament positions change their corridor frames");
+            probe_reset_synthetic_view_to_corridor(&focusView);
+            focusView.world.dungeon->maps[0].floorOrnamentCount = 1;
+            focusView.ornamentCacheLoaded[0] = 1;
+            focusView.floorOrnamentIndices[0][0] = 15;
+            memset(baseFb, 0, sizeof(baseFb));
+            M11_GameView_Draw(&focusView, baseFb, 320, 200);
+            probe_set_square(focusView.world.dungeon, 2, 2,
+                             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+            if (focusView.world.things->sensors) {
+                focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
+                    (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
+            }
+            memset(teleporterFb, 0, sizeof(teleporterFb));
+            M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
+            changedFootprints = (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) ? 1 : 0;
+            probe_record(&tally, "INV_GV_38J",
+                         changedFootprints,
+                         "focused viewport: special footprints floor ornament family renders from pre-base graphics");
         } else {
             probe_record(&tally, "INV_GV_38E", 0,
                          "focused viewport: normal pit zone matrix requires GRAPHICS.DAT assets");
@@ -1699,6 +1718,8 @@ int main(int argc, char** argv) {
                          "focused viewport: teleporter zone matrix requires GRAPHICS.DAT assets");
             probe_record(&tally, "INV_GV_38I", 0,
                          "focused viewport: floor ornament matrix requires GRAPHICS.DAT assets");
+            probe_record(&tally, "INV_GV_38J", 0,
+                         "focused viewport: footprints floor ornament requires GRAPHICS.DAT assets");
         }
 
         if (haveAssets) {

@@ -6979,6 +6979,8 @@ enum {
      * Graphic index = 385 + globalOrnamentIndex * 6 + G0191 increment.
      * Ref: ReDMCSB DEFS.H M616_GRAPHIC_FIRST_FLOOR_ORNAMENT.
      * Footprints are the special pre-base ornament at 379..384. */
+    M11_GFX_FLOOR_ORNAMENT_FOOTPRINTS_BASE = 379,
+    M11_FLOOR_ORNAMENT_FOOTPRINTS_INDEX = 15,
     M11_GFX_FLOOR_ORNAMENT_BASE = 385,
     M11_GFX_FLOOR_ORNAMENT_VARIANTS = 6,
 
@@ -7694,8 +7696,11 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
             continue;
         }
         blit = kOrnaments[i].blit;
-        blit.graphicIndex = M11_GFX_FLOOR_ORNAMENT_BASE +
-            ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS +
+        blit.graphicIndex =
+            (ornGlobalIdx == M11_FLOOR_ORNAMENT_FOOTPRINTS_INDEX
+                 ? M11_GFX_FLOOR_ORNAMENT_FOOTPRINTS_BASE
+                 : M11_GFX_FLOOR_ORNAMENT_BASE +
+                       ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS) +
             kOrnaments[i].increment;
         (void)m11_draw_dm1_zone_blit_maybe_flip(state, framebuffer, fbW, fbH,
                                                 &blit, 10,
@@ -8791,8 +8796,11 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
         variant = (sideHint == 0) ? 5 : 4;
     }
 
-    gfxIdx = (unsigned int)(M11_GFX_FLOOR_ORNAMENT_BASE +
-                            ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS + variant);
+    gfxIdx = (unsigned int)((ornGlobalIdx == M11_FLOOR_ORNAMENT_FOOTPRINTS_INDEX
+                                ? M11_GFX_FLOOR_ORNAMENT_FOOTPRINTS_BASE
+                                : M11_GFX_FLOOR_ORNAMENT_BASE +
+                                      ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS) +
+                            variant);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
