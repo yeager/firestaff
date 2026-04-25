@@ -71,6 +71,13 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
 
     if (!mirrorText || !champ) return 0;
 
+    memset(champ->name, ' ', CHAMPION_NAME_LENGTH);
+    memset(champ->title, ' ', CHAMPION_TITLE_LENGTH);
+    champ->sex = 0;
+    memset(champ->mirrorStatsText, ' ', CHAMPION_MIRROR_FIELD_LENGTH);
+    memset(champ->mirrorSkillsText, ' ', CHAMPION_MIRROR_FIELD_LENGTH);
+    memset(champ->mirrorInventoryText, ' ', CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
+
     nameStart = mirrorText;
     nameEnd = strchr(nameStart, '|');
     if (!nameEnd || nameEnd == nameStart) return 0;

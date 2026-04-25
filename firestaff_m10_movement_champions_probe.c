@@ -428,6 +428,8 @@ int main(int argc, char* argv[]) {
         CHECK(F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
                   "STAMM|BLADECASTER||X|AADFACNAAAAP|DHCGCDCLCNCKCI|AAAAAA", &champ) == 0,
               "Champion mirror parser rejects non-source sex byte");
+        CHECK(champ.sex == 0,
+              "Champion mirror parser clears stale sex before rejecting malformed record");
     }
 
     /* Test 8: Sensor identification */
