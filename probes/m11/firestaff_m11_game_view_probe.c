@@ -6046,6 +6046,14 @@ int main(int argc, char** argv) {
                  M11_GameView_GetProjectileGraphicForAspect(10, 3) == 482,
                  "projectile G0210 aspect bitmap delta handles lightning rotation and fireball no-rotation");
 
+    probe_record(&tally,
+                 "INV_GV_245E",
+                 M11_GameView_GetProjectileAspectFlipFlags(2, 1, 0, 2, 3) == 0x03 &&
+                 M11_GameView_GetProjectileAspectFlipFlags(2, 1, 0, 2, 4) == 0x00 &&
+                 M11_GameView_GetProjectileAspectFlipFlags(2, 0, 0, 2, 3) == 0x02 &&
+                 M11_GameView_GetProjectileAspectFlipFlags(10, 1, 0, 2, 3) == 0x00,
+                 "projectile C0 back/rotation aspect applies horizontal+vertical flip flags while C3 fireball stays unflipped");
+
     /* INV_GV_246: projectile sub-cell positioning — the firstProjectileCell
      * field is populated from the runtime ProjectileInstance_Compat.cell
      * data, rotated by party direction.

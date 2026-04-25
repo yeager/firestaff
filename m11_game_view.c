@@ -4864,6 +4864,9 @@ typedef struct M11_ViewportCell {
      * projectile's viewport offset within the cell face area.
      * Ref: ReDMCSB DUNVIEW.C F115 — M11_CELL(P141_T_Thing) positioning. */
     int firstProjectileCell;
+    /* DM1 F0115/F0791 flip flags for first projectile bitmap:
+     * bit0 = horizontal, bit1 = vertical. */
+    int firstProjectileFlipFlags;
     /* Floor ornament ordinal for this square (1-based ordinal, 0 = none).
      * In DM1, corridor/pit/stair/teleporter squares may have floor
      * ornaments assigned via random generation or sensor things.
@@ -4972,6 +4975,73 @@ static int m11_projectile_source_scale_units(int depthIndex, int relativeCell) {
     return kProjectileScales[idx];
 }
 
+static unsigned int m11_projectile_aspect_graphic_info(int aspectIndex);
+
+static void m11_blit_scaled_flip(const M11_AssetSlot* slot,
+                                 unsigned char* framebuffer,
+                                 int fbW,
+                                 int fbH,
+                                 int dstX,
+                                 int dstY,
+                                 int dstW,
+                                 int dstH,
+                                 int transparentColor,
+                                 int flipHorizontal,
+                                 int flipVertical) {
+    int dy;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = dy * (int)slot->height / dstH;
+        int fbY = dstY + dy;
+        int dx;
+        if (flipVertical) sy = (int)slot->height - 1 - sy;
+        if (fbY < 0 || fbY >= fbH) continue;
+        for (dx = 0; dx < dstW; ++dx) {
+            int sx = dx * (int)slot->width / dstW;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (flipHorizontal) sx = (int)slot->width - 1 - sx;
+            if (fbX < 0 || fbX >= fbW) continue;
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) continue;
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+}
+
+static int m11_projectile_aspect_flip_flags(int aspectIndex,
+                                            int relativeDir,
+                                            int relativeCell,
+                                            int mapX,
+                                            int mapY) {
+    unsigned int info = m11_projectile_aspect_graphic_info(aspectIndex);
+    int aspectType = (int)(info & 0x0003u);
+    int flags = 0;
+    if (relativeDir < 0) relativeDir = 0;
+    relativeDir &= 3;
+    if (aspectType == 3) return 0;
+
+    if (aspectType == 0) {
+        int parityVertical = ((mapX + mapY) & 1) ? 1 : 0;
+        if (relativeDir == 1 || relativeDir == 3) {
+            if (relativeCell == 0 || relativeCell == 2) flags |= 0x01;
+            if (parityVertical) flags |= 0x02;
+            else flags ^= 0x01;
+        } else {
+            if (parityVertical && relativeCell < 2) flags |= 0x02;
+        }
+    } else if (relativeDir == 1) {
+        flags |= 0x01;
+    }
+    if ((info & 0x0010u) && relativeDir == 3) {
+        flags |= 0x01;
+    }
+    return flags;
+}
+
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -4979,13 +5049,14 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       int x, int y, int w, int h,
                                       int gfxIndex, int depthIndex,
                                       int relativeDir,
-                                      int relativeCell) {
+                                      int relativeCell,
+                                      int flipFlags) {
     const M11_AssetSlot* slot;
     int drawW, drawH, drawX, drawY;
     int scale;
-    int useMirror;
     if (!state || !state->assetsAvailable || gfxIndex < 454 ||
         gfxIndex >= 486) return 0;
+    (void)relativeDir;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
     scale = m11_projectile_source_scale_units(depthIndex, relativeCell);
@@ -5037,15 +5108,17 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
         drawX = x + (w - drawW) / 2;
         drawY = y + (h - drawH) / 2;
     }
-    /* DM1 projectile facing: mirror horizontally for right-bound (relDir 1).
-     * Ref: ReDMCSB VIEWPORT.C — projectile sprites are stored facing left
-     * and flipped for right-ward travel relative to party facing. */
-    useMirror = (relativeDir == 1) ? 1 : 0;
     /* DM1 draws object/projectile bitmaps through F0791 with
      * C10_COLOR_FLESH as the transparent key. Fireball native graphics
      * have palette index 10 in their border, so keying on black leaves a
      * visible square backing. */
-    if (useMirror) {
+    if (flipFlags & 0x02) {
+        m11_blit_scaled_flip(slot, framebuffer, framebufferWidth, framebufferHeight,
+                             drawX, drawY, drawW, drawH,
+                             M11_COLOR_MAGENTA,
+                             (flipFlags & 0x01) ? 1 : 0,
+                             1);
+    } else if (flipFlags & 0x01) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, framebufferWidth,
                                          framebufferHeight,
                                          drawX, drawY, drawW, drawH,
@@ -5299,7 +5372,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                         cell->firstProjectileGfxIndex,
                                         depthIndex,
                                         cell->firstProjectileRelDir,
-                                        cell->firstProjectileCell)) {
+                                        cell->firstProjectileCell,
+                                        cell->firstProjectileFlipFlags)) {
             /* Fallback: cyan crosshair */
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
@@ -5886,6 +5960,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.firstProjectileSubtype = -1;
     cell.firstProjectileRelDir = -1;
     cell.firstProjectileCell = -1;
+    cell.firstProjectileFlipFlags = 0;
     cell.floorOrnamentOrdinal = 0;
     cell.firstExplosionType = -1;
     cell.firstExplosionFrame = -1;
@@ -6127,9 +6202,17 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (rp->mapIndex == partyMap && rp->mapX == mapX && rp->mapY == mapY) {
                 cell.firstProjectileRelDir = (rp->direction - partyDir) & 3;
                 if (cell.firstProjectileSubtype >= 0) {
+                    int aspectIndex = m11_projectile_subtype_to_aspect_index(
+                        cell.firstProjectileSubtype);
                     cell.firstProjectileGfxIndex = m11_projectile_aspect_to_graphic_index(
-                        m11_projectile_subtype_to_aspect_index(cell.firstProjectileSubtype),
+                        aspectIndex,
                         cell.firstProjectileRelDir);
+                    cell.firstProjectileFlipFlags = m11_projectile_aspect_flip_flags(
+                        aspectIndex,
+                        cell.firstProjectileRelDir,
+                        (rp->cell - partyDir) & 3,
+                        mapX,
+                        mapY);
                 }
                 /* Extract sub-cell position (0-3) for DM1-faithful
                  * projectile viewport offset.  The cell field in the
@@ -9964,7 +10047,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                             cell->firstProjectileGfxIndex,
                                             depthIndex + 1,
                                             cell->firstProjectileRelDir,
-                                            cell->firstProjectileCell)) {
+                                            cell->firstProjectileCell,
+                                            cell->firstProjectileFlipFlags)) {
                 int pcx = paneX + paneW / 2;
                 int pcy = paneY + paneH / 2;
                 m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -11914,6 +11998,18 @@ int M11_GameView_GetProjectileAspectBitmapDelta(int aspectIndex, int relativeDir
 
 int M11_GameView_GetProjectileGraphicForAspect(int aspectIndex, int relativeDir) {
     return m11_projectile_aspect_to_graphic_index(aspectIndex, relativeDir);
+}
+
+int M11_GameView_GetProjectileAspectFlipFlags(int aspectIndex,
+                                              int relativeDir,
+                                              int relativeCell,
+                                              int mapX,
+                                              int mapY) {
+    return m11_projectile_aspect_flip_flags(aspectIndex,
+                                            relativeDir,
+                                            relativeCell,
+                                            mapX,
+                                            mapY);
 }
 
 unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
