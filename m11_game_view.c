@@ -11181,11 +11181,9 @@ static const unsigned char M11_ACTION_SET_INDEX_JUNK[53] = {
 /* Resolve the F0386-relevant ActionSetIndex for a thing held in an
  * action hand.  Returns 0 for items DM1 paints as a plain cyan icon
  * cell (ActionSetIndex==0), non-zero for items whose icon DM1 blits
- * into the cell.  thing=THING_NONE/ENDOFLIST returns 0 (empty hand
- * also paints cyan-only in our pipeline; a proper
- * C201_ICON_ACTION_ICON_EMPTY_HAND glyph requires wiring graphic
- * C042_GRAPHIC_OBJECT_ICONS_000_TO_031, which is intentionally
- * out-of-scope for this bounded pass). */
+ * into the cell.  thing=THING_NONE/ENDOFLIST returns 0 here because
+ * empty-hand icon selection is handled explicitly by
+ * m11_draw_dm_action_icon_cells() using C201_ICON_ACTION_ICON_EMPTY_HAND. */
 static unsigned int m11_action_set_index_for_thing(
     const struct DungeonThings_Compat* things,
     unsigned short thingId) {
@@ -13220,12 +13218,10 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
  *
  * Dead champions get a plain black cell (DM1: FillBox BLACK, return).
  * Living champions get a cyan-filled cell; the inner 16×16 icon box
- * is filled cyan as the icon backdrop, then the action-hand item
- * sprite is blitted scaled to 16×16 when a GRAPHICS.DAT sprite is
- * available.  Empty hands keep the plain cyan backdrop (DM1 draws
- * C201_ICON_ACTION_ICON_EMPTY_HAND, which we approximate with the
- * cyan backdrop only when no mapped sprite is available; this keeps
- * the geometry authentic while staying within the bounded slice).
+ * is filled cyan as the icon backdrop.  Empty hands blit the source
+ * C201_ICON_ACTION_ICON_EMPTY_HAND icon from object-icon graphics 42..48;
+ * items with ActionSetIndex > 0 blit their source object icon from the
+ * same atlases; ActionSetIndex == 0 items intentionally remain plain cyan.
  */
 static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
