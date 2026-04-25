@@ -18,6 +18,10 @@ typedef struct {
     int languageExplicit;
     int graphicsIndex;
     int windowModeIndex;
+    int scaleModeIndex;
+    int integerScaling;
+    int scalingFilterIndex;
+    int vsyncIndex;
     char dataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     char path[M12_CONFIG_PATH_CAPACITY];
 

@@ -79,6 +79,12 @@ extern "C" {
 #define M11_WINDOW_MODE_WINDOWED     0
 #define M11_WINDOW_MODE_FULLSCREEN   1
 
+#define M11_SCALE_FILTER_NEAREST     0
+#define M11_SCALE_FILTER_LINEAR      1
+
+#define M11_VSYNC_OFF                0
+#define M11_VSYNC_ON                 1
+
 /* Lifecycle */
 int  M11_Render_Init(int windowWidth, int windowHeight, int scaleMode);
 void M11_Render_Shutdown(void);
@@ -135,6 +141,12 @@ int  M11_Render_MapWindowToFramebuffer(int windowX,
                                        int* outFbY);
 int  M11_Render_SetWindowMode(int windowModeIndex);
 int  M11_Render_GetWindowMode(void);
+int  M11_Render_SetIntegerScaling(int enabled);
+int  M11_Render_GetIntegerScaling(void);
+int  M11_Render_SetScaleFilter(int filterIndex);
+int  M11_Render_GetScaleFilter(void);
+int  M11_Render_SetVSync(int vsyncIndex);
+int  M11_Render_GetVSync(void);
 
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);

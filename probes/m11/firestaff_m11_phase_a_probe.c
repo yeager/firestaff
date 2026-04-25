@@ -207,6 +207,7 @@ int main(int argc, char** argv) {
     int rectH = 0;
     int fitOk = 0;
     M11_Render_HandleResize(1000, 700);
+    M11_Render_SetIntegerScaling(0);
     M11_Render_SetScaleMode(M11_SCALE_FIT);
     if (M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
         rectW == 1000 && rectH == 625 && rectX == 0 && rectY == 37) {
@@ -215,6 +216,18 @@ int main(int argc, char** argv) {
     record(&t, "INV_A14",
            fitOk,
            "fit mode keeps a centered 16:10 present rect");
+
+    /* ---------- INV_A14B: integer fit keeps exact pixel multiples --- */
+    int integerFitOk = 0;
+    M11_Render_SetIntegerScaling(1);
+    if (M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
+        rectW == 960 && rectH == 600 && rectX == 20 && rectY == 50) {
+        integerFitOk = 1;
+    }
+    record(&t, "INV_A14B",
+           integerFitOk,
+           "integer fit mode keeps exact 320x200 pixel multiples");
+    M11_Render_SetIntegerScaling(0);
 
     /* ---------- INV_A15: stretch mode fills entire window ---------- */
     M11_Render_SetScaleMode(M11_SCALE_STRETCH);

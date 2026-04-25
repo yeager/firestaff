@@ -40,6 +40,9 @@ typedef struct {
     int scaleMode;
     int paletteLevel;
     int windowMode;
+    int integerScaling;
+    int scaleFilter;
+    int vsync;
     int quitRequested;
     int contentW;
     int contentH;
@@ -71,6 +74,27 @@ static int m11_validate_scale(int mode) {
 
 static int m11_validate_window_mode(int mode) {
     return mode == M11_WINDOW_MODE_WINDOWED || mode == M11_WINDOW_MODE_FULLSCREEN;
+}
+
+static int m11_validate_binary_setting(int mode) {
+    return mode == 0 || mode == 1;
+}
+
+static void m11_apply_texture_scale_filter(SDL_Texture* texture) {
+    if (!texture) {
+        return;
+    }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_SetTextureScaleMode(texture,
+                            g_state.scaleFilter == M11_SCALE_FILTER_LINEAR
+                                ? SDL_SCALEMODE_LINEAR
+                                : SDL_SCALEMODE_NEAREST);
+#else
+    SDL_SetTextureScaleMode(texture,
+                            g_state.scaleFilter == M11_SCALE_FILTER_LINEAR
+                                ? SDL_ScaleModeLinear
+                                : SDL_ScaleModeNearest);
+#endif
 }
 
 static int m11_recreate_texture_if_needed(int logicalWidth,
@@ -113,6 +137,7 @@ static int m11_recreate_texture_if_needed(int logicalWidth,
     if (!texture) {
         return M11_RENDER_ERR_TEXTURE;
     }
+    m11_apply_texture_scale_filter(texture);
     g_state.texture = texture;
     g_state.textureW = logicalWidth;
     g_state.textureH = logicalHeight;
@@ -147,6 +172,16 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
                 if (fitH > g_state.windowH) {
                     fitH = g_state.windowH;
                     fitW = (fitH * contentW) / contentH;
+                }
+                if (g_state.integerScaling) {
+                    int factorW = g_state.windowW / contentW;
+                    int factorH = g_state.windowH / contentH;
+                    int factor = factorW < factorH ? factorW : factorH;
+                    if (factor < 1) {
+                        factor = 1;
+                    }
+                    fitW = contentW * factor;
+                    fitH = contentH * factor;
                 }
                 if (fitW < 1) fitW = 1;
                 if (fitH < 1) fitH = 1;
@@ -316,6 +351,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         SDL_QuitSubSystem(SDL_INIT_VIDEO);
         return M11_RENDER_ERR_TEXTURE;
     }
+    m11_apply_texture_scale_filter(g_state.texture);
 
     g_state.presentBuffer =
         (unsigned char*)calloc(M11_FB_BYTES, 4);
@@ -336,6 +372,9 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.scaleMode = scaleMode;
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
+    g_state.integerScaling = 1;
+    g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
+    g_state.vsync = M11_VSYNC_ON;
     g_state.quitRequested = 0;
     g_state.contentW = M11_FB_WIDTH;
     g_state.contentH = M11_FB_HEIGHT;
@@ -369,6 +408,9 @@ void M11_Render_Shutdown(void) {
     g_state.windowH = 0;
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
+    g_state.integerScaling = 1;
+    g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
+    g_state.vsync = M11_VSYNC_ON;
     g_state.contentW = 0;
     g_state.contentH = 0;
     g_state.textureW = 0;
@@ -706,6 +748,57 @@ int M11_Render_SetWindowMode(int windowModeIndex) {
 
 int M11_Render_GetWindowMode(void) {
     return g_state.windowMode;
+}
+
+int M11_Render_SetIntegerScaling(int enabled) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!m11_validate_binary_setting(enabled)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    g_state.integerScaling = enabled;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetIntegerScaling(void) {
+    return g_state.integerScaling;
+}
+
+int M11_Render_SetScaleFilter(int filterIndex) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!m11_validate_binary_setting(filterIndex)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    g_state.scaleFilter = filterIndex;
+    m11_apply_texture_scale_filter(g_state.texture);
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetScaleFilter(void) {
+    return g_state.scaleFilter;
+}
+
+int M11_Render_SetVSync(int vsyncIndex) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!m11_validate_binary_setting(vsyncIndex)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    (void)SDL_SetRenderVSync(g_state.renderer, vsyncIndex ? 1 : 0);
+#elif SDL_VERSION_ATLEAST(2, 0, 18)
+    (void)SDL_RenderSetVSync(g_state.renderer, vsyncIndex ? 1 : 0);
+#endif
+    g_state.vsync = vsyncIndex;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetVSync(void) {
+    return g_state.vsync;
 }
 
 int M11_Render_GetSdlMajorVersion(void) {

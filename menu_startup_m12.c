@@ -33,6 +33,10 @@ enum {
     M12_SETTINGS_ROW_LANGUAGE = 0,
     M12_SETTINGS_ROW_GRAPHICS,
     M12_SETTINGS_ROW_WINDOW_MODE,
+    M12_SETTINGS_ROW_SCALE_MODE,
+    M12_SETTINGS_ROW_INTEGER_SCALING,
+    M12_SETTINGS_ROW_SCALING_FILTER,
+    M12_SETTINGS_ROW_VSYNC,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -68,6 +72,9 @@ static const char* g_languages[] = {"EN", "SV", "FR", "DE"};
 static const char* g_languageNames[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
 static const char* g_cheatsToggle[] = {"OFF", "ON"};
 static const char* g_speedLabels[] = {"SLOWER", "NORMAL", "FASTER"};
+static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", "FIT", "STRETCH"};
+static const char* g_toggleModes[] = {"OFF", "ON"};
+static const char* g_scalingFilters[] = {"NEAREST", "LINEAR"};
 
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     if (!opts) {
@@ -776,6 +783,10 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.languageExplicit = state->languageExplicit ? 1 : 0;
     config.graphicsIndex = state->settings.graphicsIndex;
     config.windowModeIndex = state->settings.windowModeIndex;
+    config.scaleModeIndex = state->settings.scaleModeIndex;
+    config.integerScaling = state->settings.integerScaling;
+    config.scalingFilterIndex = state->settings.scalingFilterIndex;
+    config.vsyncIndex = state->settings.vsyncIndex;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         M12_GameOptions opts = state->gameOptions[gi];
         m12_clamp_game_options(&opts);
@@ -806,6 +817,13 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                                                           sizeof(g_presentationModes[0])));
     state->settings.windowModeIndex = m12_clamp_index(config.windowModeIndex,
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
+    state->settings.scaleModeIndex = m12_clamp_index(config.scaleModeIndex,
+                                                     (int)(sizeof(g_scaleModes) / sizeof(g_scaleModes[0])));
+    state->settings.integerScaling = config.integerScaling ? 1 : 0;
+    state->settings.scalingFilterIndex = m12_clamp_index(config.scalingFilterIndex,
+                                                         (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
+    state->settings.vsyncIndex = m12_clamp_index(config.vsyncIndex,
+                                                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         state->gameOptions[gi].versionIndex = config.gameVersionIndex[gi];
         state->gameOptions[gi].usePatch = config.gameUsePatch[gi];
@@ -878,6 +896,22 @@ static const char* m12_settings_value_graphics(const M12_StartupMenuState* state
 
 static const char* m12_settings_value_window_mode(const M12_StartupMenuState* state) {
     return m12_tr(state, g_windowModes[state->settings.windowModeIndex]);
+}
+
+static const char* m12_settings_value_scale_mode(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_scaleModes[state->settings.scaleModeIndex]);
+}
+
+static const char* m12_settings_value_integer_scaling(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state->settings.integerScaling ? 1 : 0]);
+}
+
+static const char* m12_settings_value_scaling_filter(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_scalingFilters[state->settings.scalingFilterIndex]);
+}
+
+static const char* m12_settings_value_vsync(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state->settings.vsyncIndex]);
 }
 
 static int m12_game_slot_from_id(const char* gameId) {
@@ -965,6 +999,13 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
                                                     M12_PRESENTATION_MODE_COUNT);
     state->settings.windowModeIndex = m12_clamp_index(state->settings.windowModeIndex,
                                                        (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
+    state->settings.scaleModeIndex = m12_clamp_index(state->settings.scaleModeIndex,
+                                                     (int)(sizeof(g_scaleModes) / sizeof(g_scaleModes[0])));
+    state->settings.integerScaling = state->settings.integerScaling ? 1 : 0;
+    state->settings.scalingFilterIndex = m12_clamp_index(state->settings.scalingFilterIndex,
+                                                         (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
+    state->settings.vsyncIndex = m12_clamp_index(state->settings.vsyncIndex,
+                                                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
     state->gameOptSelectedRow = m12_clamp_index(state->gameOptSelectedRow,
                                                 M12_GAME_OPT_ROW_COUNT + 1);
     state->museumSelectedIndex = m12_clamp_index(state->museumSelectedIndex,
@@ -1058,6 +1099,30 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.windowModeIndex,
                 delta,
                 (int)(sizeof(g_windowModes) / sizeof(g_windowModes[0])));
+            break;
+        case M12_SETTINGS_ROW_SCALE_MODE:
+            state->settings.scaleModeIndex = m12_cycle_index(
+                state->settings.scaleModeIndex,
+                delta,
+                (int)(sizeof(g_scaleModes) / sizeof(g_scaleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_INTEGER_SCALING:
+            state->settings.integerScaling = m12_cycle_index(
+                state->settings.integerScaling,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_SCALING_FILTER:
+            state->settings.scalingFilterIndex = m12_cycle_index(
+                state->settings.scalingFilterIndex,
+                delta,
+                (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
+            break;
+        case M12_SETTINGS_ROW_VSYNC:
+            state->settings.vsyncIndex = m12_cycle_index(
+                state->settings.vsyncIndex,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
         default:
             break;
@@ -2118,7 +2183,7 @@ static void m12_draw_main_row(unsigned char* framebuffer,
                    122,
                    y,
                    180,
-                   24,
+                   18,
                    border,
                    fill);
     m12_draw_frame(framebuffer,
@@ -2127,7 +2192,7 @@ static void m12_draw_main_row(unsigned char* framebuffer,
                    124,
                    y + 2,
                    176,
-                   20,
+                   14,
                    selected ? M12_COLOR_BROWN : M12_COLOR_BLACK,
                    fill);
     m12_fill_rect(framebuffer,
@@ -2198,9 +2263,9 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                    framebufferWidth,
                    framebufferHeight,
                    118,
-                   66,
+                   48,
                    188,
-                   108,
+                   138,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_text(framebuffer,
@@ -2285,14 +2350,14 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   130,
-                  y + 8,
+                  y + 5,
                   label,
                   &g_textSmallShadow);
     m12_draw_status_chip(framebuffer,
                          framebufferWidth,
                          framebufferHeight,
                          236,
-                         y + 6,
+                         y + 3,
                          value,
                          valueFill,
                          valueText);
@@ -2301,7 +2366,7 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
                                framebufferWidth,
                                framebufferHeight,
                                212,
-                               y + 6,
+                               y + 3,
                                languageIndex);
     }
 }
@@ -2342,13 +2407,13 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                   framebufferWidth,
                   framebufferHeight,
                   126,
-                  72,
+                  54,
                   m12_text(state, M12_TEXT_PERSISTED_OPTIONS),
                   &g_textSmallAccent);
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          84,
+                          64,
                           m12_text(state, M12_TEXT_LANGUAGE),
                           m12_settings_value_language(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE,
@@ -2357,7 +2422,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          112,
+                          82,
                           m12_text(state, M12_TEXT_PRESENTATION_MODE),
                           m12_settings_value_graphics(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS,
@@ -2366,26 +2431,62 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     m12_draw_settings_row(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          140,
+                          100,
                           m12_text(state, M12_TEXT_WINDOW_MODE),
                           m12_settings_value_window_mode(state),
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
+                          0,
+                          0);
+    m12_draw_settings_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          118,
+                          "SCALE",
+                          m12_settings_value_scale_mode(state),
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALE_MODE,
+                          0,
+                          0);
+    m12_draw_settings_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          136,
+                          "PIXEL SNAP",
+                          m12_settings_value_integer_scaling(state),
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_INTEGER_SCALING,
+                          0,
+                          0);
+    m12_draw_settings_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          154,
+                          "FILTER",
+                          m12_settings_value_scaling_filter(state),
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALING_FILTER,
+                          0,
+                          0);
+    m12_draw_settings_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          172,
+                          "VSYNC",
+                          m12_settings_value_vsync(state),
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
                           0,
                           0);
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
                    18,
-                   170,
+                   190,
                    framebufferWidth - 36,
-                   18,
+                   10,
                    M12_COLOR_DARK_GRAY,
                    M12_COLOR_BLACK);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   24,
-                  175,
+                  193,
                   m12_text(state, M12_TEXT_SETTINGS_SAVED),
                   &g_textSmallMuted);
     m12_draw_footer(framebuffer,
@@ -3566,11 +3667,55 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
                                  0,
                                  0);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 124,
+                                 framebufferWidth - margin - panelX - 20,
+                                 "SCALE",
+                                 m12_settings_value_scale_mode(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALE_MODE,
+                                 0,
+                                 0);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 156,
+                                 framebufferWidth - margin - panelX - 20,
+                                 "PIXEL SNAP",
+                                 m12_settings_value_integer_scaling(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_INTEGER_SCALING,
+                                 0,
+                                 0);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 188,
+                                 framebufferWidth - margin - panelX - 20,
+                                 "FILTER",
+                                 m12_settings_value_scaling_filter(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALING_FILTER,
+                                 0,
+                                 0);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 220,
+                                 framebufferWidth - margin - panelX - 20,
+                                 "VSYNC",
+                                 m12_settings_value_vsync(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
+                                 0,
+                                 0);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   panelX + 10,
-                  contentY + 126,
+                  contentY + 254,
                   m12_text(state, M12_TEXT_SETTINGS_SAVED),
                   &g_textSmallMuted);
     m12_draw_footer(framebuffer,

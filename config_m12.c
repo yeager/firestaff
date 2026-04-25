@@ -162,6 +162,10 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->languageExplicit = 0;
     config->graphicsIndex = 0;
     config->windowModeIndex = 0;
+    config->scaleModeIndex = 4;
+    config->integerScaling = 1;
+    config->scalingFilterIndex = 0;
+    config->vsyncIndex = 1;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -203,6 +207,22 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "window_mode_index")) {
         config->windowModeIndex = m12_parse_int(value, config->windowModeIndex);
+        return;
+    }
+    if (m12_string_equals(key, "scale_mode_index")) {
+        config->scaleModeIndex = m12_parse_int(value, config->scaleModeIndex);
+        return;
+    }
+    if (m12_string_equals(key, "integer_scaling")) {
+        config->integerScaling = m12_parse_int(value, config->integerScaling) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "scaling_filter_index")) {
+        config->scalingFilterIndex = m12_parse_int(value, config->scalingFilterIndex);
+        return;
+    }
+    if (m12_string_equals(key, "vsync_index")) {
+        config->vsyncIndex = m12_parse_int(value, config->vsyncIndex);
         return;
     }
     if (strncmp(key, "game_", 5) == 0) {
@@ -269,6 +289,10 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "presentation_mode_index = %d\n", config->graphicsIndex);
     fprintf(fp, "graphics_index = %d\n", config->graphicsIndex);
     fprintf(fp, "window_mode_index = %d\n", config->windowModeIndex);
+    fprintf(fp, "scale_mode_index = %d\n", config->scaleModeIndex);
+    fprintf(fp, "integer_scaling = %d\n", config->integerScaling ? 1 : 0);
+    fprintf(fp, "scaling_filter_index = %d\n", config->scalingFilterIndex);
+    fprintf(fp, "vsync_index = %d\n", config->vsyncIndex);
     {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {

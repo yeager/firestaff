@@ -70,6 +70,10 @@ typedef struct {
     int languageIndex;
     int graphicsIndex;
     int windowModeIndex;
+    int scaleModeIndex;
+    int integerScaling;
+    int scalingFilterIndex;
+    int vsyncIndex;
 } M12_MenuSettingsState;
 
 typedef enum {

@@ -109,6 +109,10 @@ void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
     }
     M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
     M11_Render_SetWindowMode(menuState->settings.windowModeIndex);
+    M11_Render_SetScaleMode(menuState->settings.scaleModeIndex);
+    M11_Render_SetIntegerScaling(menuState->settings.integerScaling);
+    M11_Render_SetScaleFilter(menuState->settings.scalingFilterIndex);
+    M11_Render_SetVSync(menuState->settings.vsyncIndex);
 }
 
 static int m11_open_requested_launch(M11_GameViewState* gameView,

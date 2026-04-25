@@ -127,8 +127,12 @@ int main(void) {
     smoke_record(&tally,
                  "SMOKE_01",
                  M11_Render_GetWindowMode() == M11_WINDOW_MODE_WINDOWED &&
-                     M11_Render_GetPaletteLevel() == 0,
-                 "default startup settings apply to render runtime");
+                     M11_Render_GetPaletteLevel() == 0 &&
+                     M11_Render_GetScaleMode() == M11_SCALE_FIT &&
+                     M11_Render_GetIntegerScaling() == 1 &&
+                     M11_Render_GetScaleFilter() == M11_SCALE_FILTER_NEAREST &&
+                     M11_Render_GetVSync() == M11_VSYNC_ON,
+                 "default startup settings apply SDL3 render runtime preferences");
 
     M12_StartupMenu_Draw(&state, framebufferA, 320, 200);
 
@@ -142,6 +146,14 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     M11_ApplyStartupMenuRuntime(&state);
 
     smoke_record(&tally,
@@ -149,9 +161,17 @@ int main(void) {
                  state.settings.languageIndex == 1 &&
                      state.settings.graphicsIndex == 1 &&
                      state.settings.windowModeIndex == 1 &&
+                     state.settings.scaleModeIndex == M11_SCALE_STRETCH &&
+                     state.settings.integerScaling == 0 &&
+                     state.settings.scalingFilterIndex == M11_SCALE_FILTER_LINEAR &&
+                     state.settings.vsyncIndex == M11_VSYNC_OFF &&
                      M11_Render_GetWindowMode() == M11_WINDOW_MODE_FULLSCREEN &&
-                     M11_Render_GetPaletteLevel() == 1,
-                 "changed settings update runtime window mode and palette");
+                     M11_Render_GetPaletteLevel() == 1 &&
+                     M11_Render_GetScaleMode() == M11_SCALE_STRETCH &&
+                     M11_Render_GetIntegerScaling() == 0 &&
+                     M11_Render_GetScaleFilter() == M11_SCALE_FILTER_LINEAR &&
+                     M11_Render_GetVSync() == M11_VSYNC_OFF,
+                 "changed settings update runtime window mode, palette, scale, filter, pixel snap, and vsync");
 
     M12_StartupMenu_Draw(&state, framebufferB, 320, 200);
     smoke_record(&tally,
