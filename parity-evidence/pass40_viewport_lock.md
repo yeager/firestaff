@@ -7,6 +7,13 @@ rectangle only.  Closes out V1_BLOCKERS.md §4 ("Viewport region
 source-anchored anchor plus a reproducible structural-overlap proof
 that a simple coordinate swap cannot land in isolation at this pass.
 
+> 2026-04-25 supersession note: this document is historical evidence for
+> pass 40. Later V1 all-graphics work moved normal V1 runtime/probe gates
+> to the source DM1 viewport `(0,33,224,136)` and removed the legacy
+> prototype probe constants in phases 76–79. Keep this file as the pass-40
+> honesty trail; do not treat its “runtime left unchanged” text as current
+> state.
+
 Pass 40 makes **no runtime visual change** and takes no position on
 "is Firestaff right".  It converts the pass-33 measurement into a
 permanent, source-anchored artifact so pass 42+ can pick it up.

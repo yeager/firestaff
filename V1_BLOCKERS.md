@@ -213,11 +213,15 @@ first, then visual parity, then typography / honesty.
   - All baseline gates stay green: Phase A 18/18, M11 game view
     361/361, M11 launcher smoke PASS, M10 verify 20/20 phases, M11
     verify end-to-end.
-- **What pass 40 does NOT change:**
-  - The runtime viewport rectangle is still `(12, 24, 196, 118)`.
-    Binding the renderer to `M11_DM1_VIEWPORT_*` requires the
-    invented chrome reroute tracked as blocker §6 (pass 42); doing
-    that at pass 40 would destroy 2 914 px² of clickable HUD.
+- **What pass 40 did NOT change at the time:**
+  - At pass 40, the runtime viewport rectangle was still
+    `(12, 24, 196, 118)`. This was later superseded by the V1
+    all-graphics work: normal V1 runtime now binds `M11_VIEWPORT_*`
+    to the source DM1 viewport `(0, 33, 224, 136)`, and phase 77/79
+    migrated/removed the old prototype probe geometry.
+  - Binding the renderer to `M11_DM1_VIEWPORT_*` required the invented
+    chrome reroute tracked as blocker §6 (pass 42); doing that at
+    pass 40 would have destroyed 2 914 px² of clickable HUD.
   - No HUD layout or hit-testing changes.  No M10 touch.  No change
     to `PARITY_MATRIX_DM1_V1.md` status value for this row (it
     remains `KNOWN_DIFF`); only the rationale is updated to cite

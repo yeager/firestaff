@@ -183,11 +183,11 @@ are **explicitly out of pass-41 scope**:
   §6).  Deferred to pass 42.
 - **HP/stamina/mana as numeric strings vs CHAMDRAW.C bar graphs
   (C187..C190)** — blocker §7.  Deferred to pass 43.
-- **Viewport rectangle** — still at `(12, 24, 196, 118)` per pass
-  40's locked `KNOWN_DIFF`.  Depends on pass 42 reroute of invented
-  chrome, which in turn is why pass 40 deliberately did not swap
-  the runtime viewport even though the DM1 anchor is now encoded
-  as `M11_DM1_VIEWPORT_*`.
+- **Viewport rectangle** — at pass 41 this was still
+  `(12, 24, 196, 118)` per pass 40's locked `KNOWN_DIFF`.  This is
+  historical: later all-graphics phases moved normal V1 to the DM1
+  source viewport `(0,33,224,136)` and migrated/removes probe use of
+  the prototype rectangle.
 
 None of these are regressed or paused by pass 41.
 

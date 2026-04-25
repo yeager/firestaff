@@ -5,6 +5,10 @@ Scope: **DM1 / PC 3.4 / English / V1 original-faithful mode** — right-column
 side panel (party HUD, action area, spell area, utility strip, etc.).
 Viewport is Pass 33.
 
+> 2026-04-25 supersession note: the viewport cross-reference below is the
+> pass-34 measured state. Later all-graphics phases moved normal V1 to the
+> source DM1 viewport `(0,33,224,136)`; see phase 76–79 evidence.
+
 This is the Pass 34 evidence file required by `PASSLIST_29_36.md` §4.34.
 It produces a **measured rectangle table** for every Firestaff side-panel
 component, compared against the corresponding ReDMCSB sources
@@ -24,7 +28,7 @@ anchor is available yet.
 
 | Component | Firestaff rect `(x, y, w, h)` | Source line |
 |---|---|---|
-| Viewport (for cross-ref) | (12, 24, 196, 118) | §73–76 |
+| Viewport (for cross-ref, pass-34 historical) | (12, 24, 196, 118) | §73–76 |
 | Control strip | (14, 165, 88, 14) | §77–80 |
 | Prompt strip | (104, 165, 202, 14) | §81–84 |
 | Party panel (4 slots, horizontal step 77) | (12, 160, 77 × 4, 28) | §85–89 |
