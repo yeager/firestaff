@@ -13873,12 +13873,13 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
     if (!champ->present || champ->hp.current == 0) return 0;
     if (handIndex == 1 &&
         state->actingChampionOrdinal == (unsigned int)(championSlot + 1)) {
+        /* Source F0291 assigns wounded/normal first, then acting hand
+         * overrides it for C01_SLOT_ACTION_HAND. */
         return M11_GFX_SLOT_BOX_ACTING_HAND;
     }
-    /* Wound-specific graphic 34 is kept for the inventory/body pass;
-     * current M11 party state does not yet expose source C00/C01 wound
-     * bits distinctly enough for status hands, so normal source box is
-     * the safe non-invented default. */
+    if (champ->wounds & (handIndex == 0 ? 0x0001u : 0x0002u)) {
+        return M11_GFX_SLOT_BOX_WOUNDED;
+    }
     return M11_GFX_SLOT_BOX_NORMAL;
 }
 

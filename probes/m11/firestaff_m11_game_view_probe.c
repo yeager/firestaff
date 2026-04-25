@@ -1074,6 +1074,28 @@ int main(int argc, char** argv) {
                  "V1 champion HUD action hand switches to graphic 35 for the acting champion");
     syntheticView.actingChampionOrdinal = 0;
 
+    syntheticView.world.party.champions[0].wounds = 0x0001u;
+    probe_record(&tally,
+                 "INV_GV_15H",
+                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 34 &&
+                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 33,
+                 "V1 champion HUD ready-hand wound selects graphic 34 only for ready hand");
+
+    syntheticView.world.party.champions[0].wounds = 0x0002u;
+    probe_record(&tally,
+                 "INV_GV_15I",
+                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 33 &&
+                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 34,
+                 "V1 champion HUD action-hand wound selects graphic 34 when idle");
+
+    syntheticView.actingChampionOrdinal = 1;
+    probe_record(&tally,
+                 "INV_GV_15J",
+                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 35,
+                 "V1 champion HUD acting action hand overrides wound graphic with graphic 35");
+    syntheticView.actingChampionOrdinal = 0;
+    syntheticView.world.party.champions[0].wounds = 0;
+
     probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,
