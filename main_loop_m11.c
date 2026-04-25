@@ -57,6 +57,18 @@ static int m11_legacy_menu_requested(void) {
     return 1;
 }
 
+static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState) {
+    if (m11_legacy_menu_requested()) {
+        return 0;
+    }
+    /* V1 original mode deliberately uses the sparse, palette-indexed
+     * ReDMCSB-style startup path. The high-resolution true-colour launcher
+     * belongs to the enhanced/modern presentation tracks, not the default
+     * original-faithful DM1 path. */
+    return menuState &&
+           M12_StartupMenu_GetPresentationMode(menuState) != M12_PRESENTATION_V1_ORIGINAL;
+}
+
 static void m11_draw_launcher_legacy(const M12_StartupMenuState* menuState,
                                      unsigned char* launcherFramebuffer) {
     if (!menuState || !launcherFramebuffer) {
@@ -761,7 +773,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const char* scriptCursor = o->script;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
-    int useModern = m11_legacy_menu_requested() ? 0 : 1;
+    int useModern = 0;
     int quitRequested = 0;
     uint32_t idleAccumulatorMs = 0;
 
@@ -776,6 +788,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_Render_Shutdown();
         return M11_RENDER_ERR_TEXTURE;
     }
+    M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
+    useModern = m11_should_use_modern_launcher(&menuState);
     if (useModern) {
         modernRgba = (unsigned char*)calloc((size_t)M11_LAUNCHER_MODERN_WIDTH *
                                                 (size_t)M11_LAUNCHER_MODERN_HEIGHT,
@@ -786,8 +800,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             useModern = 0;
         }
     }
-
-    M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
     M11_GameView_Init(&gameView);
     M11_ApplyStartupMenuRuntime(&menuState);
     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
