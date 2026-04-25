@@ -14155,6 +14155,14 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
              * DM1's F0387 menu-mode branch which fills the whole
              * action area before drawing the menu. */
         } else {
+            /* F0387 icon-mode branch fills C011_ZONE_ACTION_AREA black
+             * before drawing the four action-hand cells.  Keep the
+             * spell-area frame below intact; the tall cyan cells then
+             * overdraw y=86..120 exactly like F0386. */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y,
+                          M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
+                          M11_COLOR_BLACK);
             (void)m11_draw_dm_action_icon_cells(state, framebuffer,
                                                 framebufferWidth,
                                                 framebufferHeight);

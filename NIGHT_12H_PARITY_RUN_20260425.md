@@ -51,6 +51,12 @@ Completed batches:
   - Evidence: `parity-evidence/dm1_all_graphics_phase997_1096_v1_hud_dead_name.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe -j2`; `ctest --test-dir build --output-on-failure`; `./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `470/470 invariants passed`.
 
+- Passes 1097–1196 — V1 action icon area clear parity.
+  - Source-backed `F0387_MENUS_DrawActionArea` idle/icon branch: fill `C011_ZONE_ACTION_AREA` black before drawing champion action-hand cells.
+  - Added invariant `INV_GV_300A` proving the action-area top band is black in icon mode.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1097_1196_v1_action_icon_area_clear.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe -j2`; `ctest --test-dir build --output-on-failure`; `./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `471/471 invariants passed`.
+
 Suggested next HUD targets:
 1. Status hand object icon parity hardening: exact empty/occupied hand icon indices and pixel-backed invariants.
 2. Name/title/status-box text zone placement/color parity.

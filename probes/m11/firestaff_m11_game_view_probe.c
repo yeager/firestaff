@@ -7644,6 +7644,13 @@ int main(int argc, char** argv) {
                                               : (cyanCellsDrawn == 0),
                      "action-hand icon cells: both living champions get cyan backdrop (or no assets)");
 
+        probe_record(&tally, "INV_GV_300A",
+                     iconView.assetsAvailable ?
+                         (probe_count_color(fb, 320, 224, 45, 87, 40,
+                                            PROBE_COLOR_BLACK) > (87U * 40U * 9U) / 10U)
+                         : 1,
+                     "action icon mode fills the source action area top band black before drawing cells");
+
         {
             int cellX = 0 * 22 + 233;
             int x, y;
