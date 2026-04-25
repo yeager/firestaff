@@ -6828,13 +6828,20 @@ enum {
     M11_GFX_FLOOR_SET_0 = 76,
     M11_GFX_FLOOR_SET_1 = 77,
 
-    /* Viewport background (224x136) */
+    /* Legacy Firestaff misnomer: graphic 0 is not a DM1 dungeon
+     * viewport background; it is a UI/panel graphic.  Normal V1 must
+     * build the viewport from the original floor/ceiling strips and
+     * DRAWVIEW wall/object overlays instead. */
     M11_GFX_VIEWPORT_BG = 0,
     M11_GFX_VIEWPORT_BG_ALT = 17,
 
-    /* Viewport ceiling/floor panels */
-    M11_GFX_CEILING_PANEL = 78,  /* 224x97 */
-    M11_GFX_FLOOR_PANEL   = 79,  /* 224x39 */
+    /* DM1 floor/ceiling panels.
+     * ReDMCSB I34E DEFS.H:
+     *   M650_GRAPHIC_FLOOR_SET_0_FLOOR   = 78 (224x97)
+     *   M651_GRAPHIC_FLOOR_SET_0_CEILING = 79 (224x39)
+     * DUNVIEW.C F0128 draws ceiling into C700 and floor into C701. */
+    M11_GFX_FLOOR_PANEL   = 78,  /* 224x97 */
+    M11_GFX_CEILING_PANEL = 79,  /* 224x39 */
 
     /* Door frame graphics at depth (perspective-scaled sizes) */
     M11_GFX_DOOR_FRAME_D3   = 70,  /*  36x49  — far depth */
@@ -7022,8 +7029,14 @@ static void m11_apply_depth_dimming(unsigned char* framebuffer,
     }
 }
 
-/* Draw viewport background from GRAPHICS.DAT graphic 0 (224x136).
- * Falls back to solid NAVY if asset is unavailable. */
+/* Draw the source-backed DM1 floor/ceiling base for the 224x136
+ * viewport.  ReDMCSB DUNVIEW.C F0128_DUNGEONVIEW_Draw_CPSF draws
+ * graphic 79 (ceiling, 224x39) into C700_ZONE_VIEWPORT_CEILING_AREA
+ * and graphic 78 (floor, 224x97) into C701_ZONE_VIEWPORT_FLOOR_AREA.
+ *
+ * Older Firestaff code incorrectly used graphic 0 as a full viewport
+ * background; that asset is a UI/panel graphic, which is why the
+ * dungeon looked like a random room/control panel instead of DM1. */
 static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -7033,11 +7046,22 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          int vpW,
                                          int vpH) {
     if (state->assetsAvailable) {
-        const M11_AssetSlot* bgSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, M11_GFX_VIEWPORT_BG);
-        if (bgSlot && bgSlot->width > 0 && bgSlot->height > 0) {
-            M11_AssetLoader_BlitScaled(bgSlot, framebuffer, fbW, fbH,
-                                       vpX, vpY, vpW, vpH, -1);
+        const M11_AssetSlot* ceilingSlot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, M11_GFX_CEILING_PANEL);
+        const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
+        if (ceilingSlot && floorSlot &&
+            ceilingSlot->width == 224 && ceilingSlot->height == 39 &&
+            floorSlot->width == 224 && floorSlot->height == 97 &&
+            vpW == 224 && vpH == 136) {
+            M11_AssetLoader_BlitRegion(ceilingSlot,
+                                       0, 0, 224, 39,
+                                       framebuffer, fbW, fbH,
+                                       vpX, vpY, -1);
+            M11_AssetLoader_BlitRegion(floorSlot,
+                                       0, 0, 224, 97,
+                                       framebuffer, fbW, fbH,
+                                       vpX, vpY + 39, -1);
             return;
         }
     }
@@ -12747,17 +12771,27 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       240, 13, line, &g_text_small);
     }
 
-    /* Viewport zone — large, left side */
+    /* Viewport zone — source-faithful DM1 rectangle. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, 24, 196, 120, M11_COLOR_BLACK);
+                  M11_VIEWPORT_X, M11_VIEWPORT_Y,
+                  M11_VIEWPORT_W, M11_VIEWPORT_H, M11_COLOR_BLACK);
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
 
-    /* Overlay UI frame border elements from GRAPHICS.DAT */
-    m11_draw_ui_frame_assets(state, framebuffer, framebufferWidth, framebufferHeight);
+    /* Old Firestaff frame-strip assets are debug-only now; in normal
+     * V1 they overdraw the source viewport/floor/ceiling composition. */
+    if (state->showDebugHUD) {
+        m11_draw_ui_frame_assets(state, framebuffer, framebufferWidth, framebufferHeight);
+    }
 
-    /* Right status column — simplified: direction, champion, light */
+    /* Right status column — align normal V1 to the original viewport
+     * edge (x=224) so it does not erase the rightmost 10 px of the
+     * 224-wide dungeon view. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  214, 24, 94, 120, M11_COLOR_BLACK);
+                  state->showDebugHUD ? 214 : 224,
+                  state->showDebugHUD ? 24 : 33,
+                  state->showDebugHUD ? 94 : 87,
+                  state->showDebugHUD ? 120 : 136,
+                  M11_COLOR_BLACK);
     m11_draw_utility_panel(state, framebuffer, framebufferWidth, framebufferHeight, mapDesc);
 
     if (state->showDebugHUD) {
@@ -12788,9 +12822,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
     }
 
-    /* Bottom zone — party panel is the dominant element */
+    /* Bottom zone — in normal V1 keep it below the source viewport
+     * (viewport bottom is y=168). */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, 146, 296, 46, M11_COLOR_BLACK);
+                  12, state->showDebugHUD ? 146 : 169,
+                  296, state->showDebugHUD ? 46 : 23,
+                  M11_COLOR_BLACK);
 
     if (state->showDebugHUD) {
         /* Diagnostic square summary lines — debug only */
