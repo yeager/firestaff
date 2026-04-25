@@ -5033,6 +5033,36 @@ int main(int argc, char** argv) {
                      "V1 endgame prints source ninja/priest/wizard skill-title lines");
     }
 
+    /* INV_GV_165J: Endgame skill levels ignore temporary XP. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_temp[320 * 200];
+        unsigned char fb_perm[320 * 200];
+        unsigned int tempText;
+        unsigned int permText;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        endgameView.world.party.championCount = 1;
+        endgameView.world.party.champions[0].present = 1;
+        memcpy(endgameView.world.party.champions[0].name, "HALK    ", 8);
+        endgameView.world.party.champions[0].skillLevels[0] = 1;
+        endgameView.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_FIGHTER].experience = 0;
+        endgameView.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_FIGHTER].temporaryExperience = 30000;
+        memset(fb_temp, 0, sizeof(fb_temp));
+        M11_GameView_Draw(&endgameView, fb_temp, 320, 200);
+        tempText = probe_count_color(fb_temp, 320, 105, 23, 115, 8, 13);
+        endgameView.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_FIGHTER].experience = 64000;
+        endgameView.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_FIGHTER].temporaryExperience = 0;
+        memset(fb_perm, 0, sizeof(fb_perm));
+        M11_GameView_Draw(&endgameView, fb_perm, 320, 200);
+        permText = probe_count_color(fb_perm, 320, 105, 23, 115, 8, 13);
+        probe_record(&tally,
+                     "INV_GV_165J",
+                     tempText < 6 && permText >= 6,
+                     "V1 endgame skill levels ignore temporary XP");
+    }
+
     /* INV_GV_166: HandleInput in gameWon state ignores movement. */
     {
         M11_GameViewState endgameView;

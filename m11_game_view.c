@@ -1757,6 +1757,7 @@ static void m11_format_champion_name(const unsigned char* raw,
                                      char* out,
                                      size_t outSize);
 static const char* m11_source_champion_title_for_name(const char* name);
+static int m11_endgame_source_skill_level(const M11_GameViewState* state, int championIndex, int baseSkillIndex);
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
 static int m11_cycle_active_champion(M11_GameViewState* state);
 static int m11_set_active_champion(M11_GameViewState* state, int championIndex);
@@ -14134,6 +14135,29 @@ static const char* m11_source_champion_title_for_name(const char* name) {
     return "";
 }
 
+static int m11_endgame_source_skill_level(const M11_GameViewState* state,
+                                           int championIndex,
+                                           int baseSkillIndex) {
+    int lifecycleLevel = 1;
+    int storedLevel = 1;
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        baseSkillIndex < 0 || baseSkillIndex >= CHAMPION_SKILL_COUNT) {
+        return 1;
+    }
+    if (!state->world.party.champions[championIndex].present) {
+        return 1;
+    }
+    storedLevel = (int)state->world.party.champions[championIndex].skillLevels[baseSkillIndex];
+    lifecycleLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+        &state->world.lifecycle.champions[championIndex],
+        baseSkillIndex,
+        1); /* ENDGAME.C uses IGNORE_TEMPORARY_EXPERIENCE. */
+    if (lifecycleLevel < storedLevel) lifecycleLevel = storedLevel;
+    if (lifecycleLevel > 16) lifecycleLevel = 16;
+    if (lifecycleLevel < 1) lifecycleLevel = 1;
+    return lifecycleLevel;
+}
+
 static void m11_get_active_champion_label(const M11_GameViewState* state,
                                           char* out,
                                           size_t outSize) {
@@ -15765,7 +15789,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                             skillStyle.color = M11_COLOR_SILVER;
                             skillStyle.shadowColor = M11_COLOR_DARK_GRAY;
                             for (skillIndex = 0; skillIndex < CHAMPION_SKILL_COUNT; ++skillIndex) {
-                                int level = (int)state->world.party.champions[i].skillLevels[skillIndex];
+                                int level = m11_endgame_source_skill_level(state, i, skillIndex);
                                 char skillLine[32];
                                 if (level <= 1) {
                                     continue;
