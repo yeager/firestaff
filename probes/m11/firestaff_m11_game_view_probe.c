@@ -5213,6 +5213,93 @@ int main(int argc, char** argv) {
                      "V1 two-choice dialog uses source C471/C463/C462 zones");
     }
 
+    /* INV_GV_172J: V1 three-choice dialog uses source C463/C466/C467 zones. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned int topChoiceWhite;
+        unsigned int bottomLeftWhite;
+        unsigned int bottomRightWhite;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlayChoices(&dlgView, "PIT", "A", "B", "C", NULL);
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        topChoiceWhite = probe_count_color(fb_dlg,
+                                           320,
+                                           85,
+                                           102,
+                                           70,
+                                           10,
+                                           PROBE_COLOR_WHITE);
+        bottomLeftWhite = probe_count_color(fb_dlg,
+                                            320,
+                                            35,
+                                            140,
+                                            50,
+                                            10,
+                                            PROBE_COLOR_WHITE);
+        bottomRightWhite = probe_count_color(fb_dlg,
+                                             320,
+                                             145,
+                                             140,
+                                             50,
+                                             10,
+                                             PROBE_COLOR_WHITE);
+        probe_record(&tally,
+                     "INV_GV_172J",
+                     topChoiceWhite >= 2 && bottomLeftWhite >= 2 && bottomRightWhite >= 2,
+                     "V1 three-choice dialog uses source C463/C466/C467 zones");
+    }
+
+    /* INV_GV_172K: V1 four-choice dialog uses source C464-C467 zones. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned int topLeftWhite;
+        unsigned int topRightWhite;
+        unsigned int bottomLeftWhite;
+        unsigned int bottomRightWhite;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlayChoices(&dlgView, "PIT", "A", "B", "C", "D");
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        topLeftWhite = probe_count_color(fb_dlg,
+                                         320,
+                                         35,
+                                         102,
+                                         50,
+                                         10,
+                                         PROBE_COLOR_WHITE);
+        topRightWhite = probe_count_color(fb_dlg,
+                                          320,
+                                          145,
+                                          102,
+                                          50,
+                                          10,
+                                          PROBE_COLOR_WHITE);
+        bottomLeftWhite = probe_count_color(fb_dlg,
+                                            320,
+                                            35,
+                                            140,
+                                            50,
+                                            10,
+                                            PROBE_COLOR_WHITE);
+        bottomRightWhite = probe_count_color(fb_dlg,
+                                             320,
+                                             145,
+                                             140,
+                                             50,
+                                             10,
+                                             PROBE_COLOR_WHITE);
+        probe_record(&tally,
+                     "INV_GV_172K",
+                     topLeftWhite >= 2 && topRightWhite >= 2 &&
+                     bottomLeftWhite >= 2 && bottomRightWhite >= 2,
+                     "V1 four-choice dialog uses source C464-C467 zones");
+    }
+
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
     {
         M11_GameViewState dlgView;
