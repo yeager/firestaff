@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>

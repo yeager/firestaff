@@ -116,6 +116,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_v2_initial_4k_capture PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Deterministic in-game screenshot series used by parity evidence.
+add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
+target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+if(NOT MSVC)
+    target_compile_options(capture_ingame_series PRIVATE -Wall -Wextra -O2)
+endif()
+
 # M11 Audio probe (fallback-safe audio marker pipeline)
 add_executable(firestaff_m11_audio_probe probes/m11/firestaff_m11_audio_probe.c)
 target_link_libraries(firestaff_m11_audio_probe PRIVATE firestaff_m11 firestaff_m10)
@@ -177,4 +184,3 @@ endif()
 
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
-
