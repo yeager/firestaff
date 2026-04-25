@@ -7540,6 +7540,23 @@ typedef struct M11_DM1ZoneBlit {
     int height;
 } M11_DM1ZoneBlit;
 
+static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
+                                                        unsigned int wallSet0GraphicIndex) {
+    int wallSet = 0;
+    if (wallSet0GraphicIndex < (unsigned int)M11_GFX_DOOR_SIDE_D0 ||
+        wallSet0GraphicIndex > (unsigned int)M11_GFX_DM1_STAIRS_SIDE_D0L) {
+        return wallSet0GraphicIndex;
+    }
+    if (state && state->world.dungeon && state->world.dungeon->maps &&
+        state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
+        wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
+    }
+    if (wallSet < 0) wallSet = 0;
+    return (unsigned int)(M11_GFX_DOOR_SIDE_D0 + wallSet * 40 +
+                          ((int)wallSet0GraphicIndex - M11_GFX_DOOR_SIDE_D0));
+}
+
 static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* state,
                                                     unsigned char* framebuffer,
                                                     int fbW,
@@ -7551,17 +7568,8 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
     }
-    graphicIndex = (unsigned int)blit->graphicIndex;
-    if (graphicIndex >= M11_GFX_WALLSET0_D0R &&
-        graphicIndex <= M11_GFX_WALLSET0_D3C &&
-        state->world.dungeon && state->world.dungeon->maps &&
-        state->world.party.mapIndex >= 0 &&
-        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
-        int wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
-        if (wallSet < 0) wallSet = 0;
-        graphicIndex = (unsigned int)(M11_GFX_WALLSET0_D0R +
-            wallSet * 40 + ((int)graphicIndex - M11_GFX_WALLSET0_D0R));
-    }
+    graphicIndex = m11_wallset_graphic_index_for_state(state,
+                                                       (unsigned int)blit->graphicIndex);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
     if (!slot || slot->width != blit->width || slot->height != blit->height) {
@@ -7596,7 +7604,8 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
         return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)blit->graphicIndex);
+                                m11_wallset_graphic_index_for_state(state,
+                                    (unsigned int)blit->graphicIndex));
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
@@ -7631,7 +7640,8 @@ static int m11_draw_dm1_zone_blit_maybe_flip(const M11_GameViewState* state,
         return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)blit->graphicIndex);
+                                m11_wallset_graphic_index_for_state(state,
+                                    (unsigned int)blit->graphicIndex));
     if (!slot || !slot->loaded || !slot->pixels || slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
@@ -12266,12 +12276,12 @@ int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
 
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex) {
     if (wallSet < 0) wallSet = 0;
-    if (wallSet0GraphicIndex < M11_GFX_WALLSET0_D0R ||
-        wallSet0GraphicIndex > M11_GFX_WALLSET0_D3C) {
+    if (wallSet0GraphicIndex < M11_GFX_DOOR_SIDE_D0 ||
+        wallSet0GraphicIndex > M11_GFX_DM1_STAIRS_SIDE_D0L) {
         return wallSet0GraphicIndex;
     }
-    return M11_GFX_WALLSET0_D0R + wallSet * 40 +
-           (wallSet0GraphicIndex - M11_GFX_WALLSET0_D0R);
+    return M11_GFX_DOOR_SIDE_D0 + wallSet * 40 +
+           (wallSet0GraphicIndex - M11_GFX_DOOR_SIDE_D0);
 }
 
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
