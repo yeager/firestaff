@@ -7305,10 +7305,25 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
         {M11_GFX_DOOR_SIDE_D3, 0, 0, 82, 27, 10, 42},
         {M11_GFX_DOOR_SIDE_D3, 0, 0, 132, 27, 10, 42}
     };
-    static const M11_DM1ZoneBlit kDoorPanels[3] = {
-        {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
-        {M11_GFX_DOOR_SET0_D2, 0, 0, 80, 24, 64, 59},
-        {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38}
+    static const M11_DM1ZoneBlit kDoorPanels[3][4] = {
+        {
+            {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
+            {M11_GFX_DOOR_SET0_D1, 0, 65, 64, 15, 96, 23},
+            {M11_GFX_DOOR_SET0_D1, 0, 43, 64, 15, 96, 45},
+            {M11_GFX_DOOR_SET0_D1, 0, 21, 64, 15, 96, 67}
+        },
+        {
+            {M11_GFX_DOOR_SET0_D2, 0, 0, 80, 24, 64, 59},
+            {M11_GFX_DOOR_SET0_D2, 0, 44, 80, 24, 64, 17},
+            {M11_GFX_DOOR_SET0_D2, 0, 29, 80, 24, 64, 32},
+            {M11_GFX_DOOR_SET0_D2, 0, 14, 80, 24, 64, 47}
+        },
+        {
+            {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38},
+            {M11_GFX_DOOR_SET0_D3, 0, 27, 90, 29, 44, 11},
+            {M11_GFX_DOOR_SET0_D3, 0, 17, 90, 29, 44, 21},
+            {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
+        }
     };
     static const struct { const M11_DM1ZoneBlit* blits; size_t count; } kByDepth[3] = {
         {kD1C, sizeof(kD1C) / sizeof(kD1C[0])},
@@ -7331,7 +7346,9 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
                                          &kByDepth[depth].blits[i], 10);
         }
         {
-            M11_DM1ZoneBlit panel = kDoorPanels[depth];
+            int panelState = (cell->doorState >= 1 && cell->doorState <= 3) ?
+                cell->doorState : 0;
+            M11_DM1ZoneBlit panel = kDoorPanels[depth][panelState];
             int panelGraphic = m11_dm1_door_panel_graphic(state, cell, depth);
             if (panelGraphic >= 0) {
                 panel.graphicIndex = panelGraphic;
