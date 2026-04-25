@@ -95,11 +95,6 @@ enum {
     PROBE_DM1_VIEWPORT_W = 224,
     PROBE_DM1_VIEWPORT_H = 136,
 
-    /* Legacy prototype viewport used by older debug-HUD-era probes. */
-    PROBE_VIEWPORT_X = 12,
-    PROBE_VIEWPORT_Y = 24,
-    PROBE_VIEWPORT_W = 196,
-    PROBE_VIEWPORT_H = 118,
     PROBE_LANE_STRIP_X = 38,
     PROBE_LANE_STRIP_Y = 30,
     PROBE_LANE_STRIP_W = 148,
