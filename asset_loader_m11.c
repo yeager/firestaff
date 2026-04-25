@@ -154,6 +154,7 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     struct MemoryGraphicsDatHeader_Compat tempHeader;
     unsigned short w, h;
     unsigned long packedSize;
+    unsigned long expandedCapacity;
     unsigned long unpackedSize;
     unsigned char* compressedBuf = NULL;
     unsigned char* packedBitmap = NULL;
@@ -161,10 +162,15 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     M11_AssetSlot* slot;
     long offset;
     unsigned long ix, iy;
+    unsigned long packedStride;
+    unsigned long overrunFirst;
+    unsigned long overrunLast;
+    int traceAssets;
 
     if (!loader || !loader->initialized) {
         return NULL;
     }
+    traceAssets = (getenv("FIRESTAFF_ASSET_TRACE") != NULL);
 
     /* Check cache first */
     slot = m11_find_cached(loader, graphicIndex);
@@ -193,6 +199,12 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     if (w == 0 || h == 0) {
         return NULL;
     }
+    if (traceAssets) {
+        fprintf(stderr, "asset-load %u w=%u h=%u comp=%u dec=%u\n",
+                graphicIndex, (unsigned)w, (unsigned)h,
+                (unsigned)rt->compressedByteCounts[graphicIndex],
+                (unsigned)rt->decompressedByteCounts[graphicIndex]);
+    }
 
     /* Calculate buffer for the "fake header" approach:
      * We need to build a temporary header to select the graphic,
@@ -218,7 +230,9 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
 
     offset = selection.offset;
 
-    /* Allocate buffer for compressed data */
+    /* Allocate buffer for compressed data.  Even format-1 GRAPHICS.DAT keeps
+     * the legacy 4-byte width/height prefix in each graphic's compressed
+     * stream; the global header duplicates those dimensions for indexing. */
     compressedBuf = (unsigned char*)calloc(
         selection.compressedByteCount + 16, 1);
     if (!compressedBuf) {
@@ -235,16 +249,27 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
         return NULL;
     }
 
-    /* Packed bitmap: ceil(w/2) * h bytes + 4 bytes for width/height header.
-     * The expand function writes width/height at bitmap[-4] and bitmap[-2],
-     * so we allocate extra header space. */
-    packedSize = ((unsigned long)(w + 1) / 2) * (unsigned long)h;
+    /* Packed bitmap: IMG3 writes one 4-bit pixel per nibble and pads each
+     * scanline to an even pixel stride. Odd-width graphics (notably C010,
+     * the 87x45 action/PASS strip) therefore use ceil(evenStride/2) bytes
+     * per row, not a continuous width*height nibble stream. */
+    packedStride = (unsigned long)(((unsigned int)w + 1u) & ~1u) / 2u;
+    packedSize = packedStride * (unsigned long)h;
     /* 4 bytes header prefix + padded data */
-    packedBitmap = (unsigned char*)calloc(packedSize + 64, 1);
+    unpackedSize = (unsigned long)w * (unsigned long)h;
+    expandedCapacity = packedSize;
+    if (expandedCapacity < unpackedSize) {
+        expandedCapacity = unpackedSize;
+    }
+    packedBitmap = (unsigned char*)calloc(expandedCapacity + 64, 1);
     if (!packedBitmap) {
         free(compressedBuf);
         return NULL;
     }
+
+    memset(packedBitmap + 4 + expandedCapacity, 0xCD, 60);
+    overrunFirst = 60;
+    overrunLast = 0;
 
     /* The M10 expand writes width/height at negative offsets from the
      * bitmap pointer: bitmap[-4..-3] = width, bitmap[-2..-1] = height.
@@ -255,11 +280,23 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
         sizeInfo.Width = w;
         sizeInfo.Height = h;
         F0488_MEMORY_ExpandGraphicToBitmap_Compat(compressedBuf, bitmapBase, &sizeInfo);
+        {
+            unsigned long gi;
+            for (gi = 0; gi < 60; ++gi) {
+                if (packedBitmap[4 + expandedCapacity + gi] != 0xCD) {
+                    if (overrunFirst == 60) overrunFirst = gi;
+                    overrunLast = gi;
+                }
+            }
+            if (traceAssets && overrunFirst != 60) {
+                fprintf(stderr, "asset-overrun %u first=+%lu last=+%lu\n",
+                        graphicIndex, overrunFirst, overrunLast);
+            }
+        }
     }
     free(compressedBuf);
 
     /* Unpack from nibble-packed to 1-byte-per-pixel */
-    unpackedSize = (unsigned long)w * (unsigned long)h;
     unpackedPixels = (unsigned char*)calloc(unpackedSize, 1);
     if (!unpackedPixels) {
         free(packedBitmap);
@@ -270,18 +307,15 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
         unsigned char* bitmapBase = packedBitmap + 4;
         /* The packed format: each byte holds two pixels.
          * High nibble = left pixel (even X), low nibble = right pixel (odd X).
-         * Stride = ceil(w/2) bytes per row.
-         * But the IMG3 expander writes pixels in nibble order using the
-         * destination stride from the width parameter. The actual stride
-         * in the expanded buffer is ceil(w/2) bytes per scanline. */
-        (void)0; /* stride = ceil(w/2) but nibble indexing uses w directly */
+         * Each row is padded to an even pixel count; without respecting that
+         * row stride, every row after the first in an odd-width graphic is
+         * shifted by half a byte, visibly distorting text like PASS. */
         for (iy = 0; iy < (unsigned long)h; ++iy) {
             for (ix = 0; ix < (unsigned long)w; ++ix) {
-                unsigned long nibbleIndex = iy * (unsigned long)w + ix;
-                unsigned long byteIndex = nibbleIndex / 2;
+                unsigned long byteIndex = iy * packedStride + (ix / 2u);
                 unsigned char packed = bitmapBase[byteIndex];
                 unsigned char pixel;
-                if ((nibbleIndex & 1) == 0) {
+                if ((ix & 1u) == 0) {
                     pixel = (packed >> 4) & 0x0F;
                 } else {
                     pixel = packed & 0x0F;
@@ -303,6 +337,9 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     slot->width = w;
     slot->height = h;
     slot->pixels = unpackedPixels;
+    if (traceAssets) {
+        fprintf(stderr, "asset-done %u\n", graphicIndex);
+    }
     return slot;
 }
 

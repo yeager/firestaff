@@ -1811,35 +1811,6 @@ static const M11_LogEntry* m11_log_entry_at(const M11_MessageLog* log, int rever
     return &log->entries[idx];
 }
 
-/* Format a player-facing V1 message from a raw log line.
- * Strips developer-like tick prefixes ("T123: ") while preserving the
- * underlying event wording. */
-static void m11_format_v1_message(const char* raw, char* out, size_t outSize) {
-    const char* src;
-    if (!out || outSize == 0U) {
-        return;
-    }
-    out[0] = '\0';
-    if (!raw || raw[0] == '\0') {
-        return;
-    }
-    src = raw;
-    if (src[0] == 'T') {
-        size_t i = 1;
-        while (src[i] >= '0' && src[i] <= '9') {
-            ++i;
-        }
-        if (i > 1 && src[i] == ':') {
-            ++i;
-            while (src[i] == ' ') {
-                ++i;
-            }
-            src += i;
-        }
-    }
-    snprintf(out, outSize, "%s", src);
-}
-
 /* V1 whitelist: only surface genuinely player-facing events as the
  * single bottom-screen message. Debug-like narration (LOADED, PARTY
  * MOVED, SPELL PANEL OPENED, RUNE <x> (<n>), DOOR STATE CHANGED, etc.)
@@ -1865,6 +1836,10 @@ static int m11_v1_message_is_player_facing(const char* stripped) {
         "MOVEMENT BLOCKED",
         "STRIKE COMMITTED",
         "SPELL COMMITTED",
+        " FADES",
+        " OUT OF BOUNDS",
+        " COLLIDES IN FLIGHT",
+        "CAST SPELL #",
         NULL
     };
     int i;
@@ -12692,7 +12667,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     int avgFood = 0;
     int avgWater = 0;
     char champion[24];
-    char v1Message[M11_MESSAGE_MAX_LENGTH];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
@@ -12715,30 +12689,32 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       18, 18, "NO GAME VIEW", &g_text_title);
         return;
     }
-    firstThing = m11_get_first_square_thing(&state->world,
-                                            state->world.party.mapIndex,
-                                            state->world.party.mapX,
-                                            state->world.party.mapY);
-    squareThingCount = m11_count_square_things(&state->world,
-                                               state->world.party.mapIndex,
-                                               state->world.party.mapX,
-                                               state->world.party.mapY);
     memset(&currentCell, 0, sizeof(currentCell));
     memset(&aheadCell, 0, sizeof(aheadCell));
-    (void)m11_sample_viewport_cell(state, 0, 0, &currentCell);
-    (void)m11_sample_viewport_cell(state, 1, 0, &aheadCell);
     if (state->world.dungeon && state->world.party.mapIndex >= 0 &&
         state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
         mapDesc = &state->world.dungeon->maps[state->world.party.mapIndex];
     }
-    m11_get_food_water_average(&state->world.party, &avgFood, &avgWater);
-    m11_get_active_champion_label(state, champion, sizeof(champion));
-    m11_format_front_cell_prompt(state,
-                                 &aheadCell,
-                                 focusAction,
-                                 sizeof(focusAction),
-                                 focusHint,
-                                 sizeof(focusHint));
+    if (state->showDebugHUD) {
+        firstThing = m11_get_first_square_thing(&state->world,
+                                                state->world.party.mapIndex,
+                                                state->world.party.mapX,
+                                                state->world.party.mapY);
+        squareThingCount = m11_count_square_things(&state->world,
+                                                   state->world.party.mapIndex,
+                                                   state->world.party.mapX,
+                                                   state->world.party.mapY);
+        (void)m11_sample_viewport_cell(state, 0, 0, &currentCell);
+        (void)m11_sample_viewport_cell(state, 1, 0, &aheadCell);
+        m11_get_food_water_average(&state->world.party, &avgFood, &avgWater);
+        m11_get_active_champion_label(state, champion, sizeof(champion));
+        m11_format_front_cell_prompt(state,
+                                     &aheadCell,
+                                     focusAction,
+                                     sizeof(focusAction),
+                                     focusHint,
+                                     sizeof(focusHint));
+    }
 
     /* ── V1 screen layout ──
      * Three major zones (DM-like composition):
@@ -12859,60 +12835,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
 
         m11_draw_feedback_strip(framebuffer, framebufferWidth, framebufferHeight,
                                 state, &aheadCell);
-    } else {
-        /* V1 mode: contextual message surface in the bottom area,
-         * placed where DM1 shows brief status text.  Scan log
-         * entries and surface the most recent player-facing ones.
-         *
-         * Pass 42 (V1_BLOCKERS.md §6, chrome reroute): when V1
-         * chrome mode is enabled, render up to 3 rerouted
-         * notification lines at y=149, 157, 165 (stride 8 px,
-         * matching the DM1 TEXT.C message-log stride).  This is
-         * the reroute surface for m11_set_status /
-         * m11_set_inspect_readout, which now push into the log
-         * from the chrome-mode reroute path.
-         *
-         * When V1 chrome mode is off (opt-out via
-         * FIRESTAFF_V1_CHROME=0) the original single-line
-         * behavior is preserved for A/B measurement and legacy
-         * tooling compat. */
-        {
-            const int chromeMode = m11_v1_chrome_mode_enabled();
-            const int maxLines = chromeMode ? 3 : 1;
-            const int lineStep = 8;
-            int drawnLines = 0;
-            int scan;
-            int maxScan = state->messageLog.count;
-            if (maxScan > (int)M11_MESSAGE_LOG_CAPACITY) {
-                maxScan = (int)M11_MESSAGE_LOG_CAPACITY;
-            }
-            v1Message[0] = '\0';
-            for (scan = 0; scan < maxScan && drawnLines < maxLines; ++scan) {
-                const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, scan);
-                if (!entry || entry->text[0] == '\0') { continue; }
-                m11_format_v1_message(entry->text, v1Message, sizeof(v1Message));
-                if (m11_v1_message_is_player_facing(v1Message)) {
-                    M11_TextStyle msgStyle = g_text_small;
-                    msgStyle.color = entry->color;
-                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                  16, 149 + drawnLines * lineStep,
-                                  v1Message, &msgStyle);
-                    ++drawnLines;
-                    if (!chromeMode) {
-                        break;
-                    }
-                }
-                v1Message[0] = '\0';
-            }
-        }
     }
 
-    /* Pass 42: in V1 chrome mode the control strip at y=165 is a
-     * Firestaff-invented surface with no DM1 equivalent
-     * (PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md Pass 35 §2.6) and is
-     * suppressed.  The fourth message-log line at y=165 now
-     * occupies that band when player-facing events are present. */
-    if (!m11_v1_chrome_mode_enabled()) {
+    /* Normal V1 presentation intentionally renders no rolling event/debug
+     * text in the party panel.  DM1 does show a few modal/story messages,
+     * but Firestaff's messageLog is mostly synthetic telemetry (movement,
+     * projectiles, tick status, etc.), so drawing it here makes the game
+     * look like a debug build.  Keep all of that behind showDebugHUD until
+     * each real DM1 message surface is source-bound. */
+    if (state->showDebugHUD && !m11_v1_chrome_mode_enabled()) {
         m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
     }
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);

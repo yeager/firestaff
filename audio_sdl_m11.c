@@ -178,6 +178,17 @@ static int m11_file_exists(const char* path) {
     return 1;
 }
 
+static int m11_sdl_audio_backend_enabled(void) {
+    const char* value = getenv("FIRESTAFF_AUDIO_ENABLE_SDL");
+    if (!value || value[0] == '\0') {
+        return 0;
+    }
+    if (value[0] == '0' && value[1] == '\0') {
+        return 0;
+    }
+    return 1;
+}
+
 static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
     const char* envPath = getenv("FIRESTAFF_SONG_DAT");
     const char* legacyEnvPath = getenv("SONG_DAT_PATH");
@@ -414,6 +425,17 @@ int M11_Audio_Init(M11_AudioState* state) {
     {
         SDL_AudioSpec spec;
         SDL_AudioStream* stream;
+
+        /* Preview safety: real SDL3/CoreAudio playback is opt-in for now.
+         * The runtime still decodes original SONG.DAT/SND3 and records audio
+         * markers, but opening the live macOS audio device has produced
+         * delayed heap corruption in the interactive preview path.  Keep the
+         * game stable by default; use FIRESTAFF_AUDIO_ENABLE_SDL=1 when
+         * specifically testing the audio backend. */
+        if (!m11_sdl_audio_backend_enabled()) {
+            state->backend = M11_AUDIO_BACKEND_NONE;
+            return 1;
+        }
 
         if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
             /* Audio init failed — stay in fallback mode */

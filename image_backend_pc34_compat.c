@@ -164,7 +164,7 @@ unsigned short*      P3002_pui_DestinationOffset FINAL_SEPARATOR
         *P3002_pui_DestinationOffset = L3005_ui_DestinationOffset + L3003_ui_Count;
 }
 
-void IMG3_Compat_ExpandOneCommandPadded(
+unsigned short IMG3_Compat_ExpandOneCommandPadded(
 const unsigned char* P3000_puc_LocalPalette SEPARATOR
 unsigned short       P3001_ui_VisibleWidth   SEPARATOR
 unsigned short       P3002_ui_LineStride     SEPARATOR
@@ -192,6 +192,7 @@ unsigned short*      P3004_pui_RemainingInLine FINAL_SEPARATOR
                 L3003_ui_Count = 1;
         }
         IMG3_Compat_WriteRunPadded(L3002_uc_Kind, L3004_c_Color, L3003_ui_Count, P3001_ui_VisibleWidth, P3002_ui_LineStride, P3003_pui_DestinationOffset, P3004_pui_RemainingInLine);
+        return L3003_ui_Count;
 }
 
 void IMG3_Compat_ExpandCommandsSameStride(
@@ -218,18 +219,13 @@ unsigned short*      P3004_pui_DestinationOffset SEPARATOR
 unsigned short*      P3005_pui_RemainingInLine FINAL_SEPARATOR
 {
         unsigned short L3001_ui_TotalDone;
-        unsigned short L3002_ui_BeforeRemaining;
+        unsigned short L3002_ui_Consumed;
 
 
         L3001_ui_TotalDone = 0;
         while (L3001_ui_TotalDone < P3003_ui_TotalPixelCount) {
-                L3002_ui_BeforeRemaining = *P3005_pui_RemainingInLine;
-                IMG3_Compat_ExpandOneCommandPadded(P3000_puc_LocalPalette, P3001_ui_VisibleWidth, P3002_ui_LineStride, P3004_pui_DestinationOffset, P3005_pui_RemainingInLine);
-                if (*P3005_pui_RemainingInLine <= L3002_ui_BeforeRemaining) {
-                        L3001_ui_TotalDone += (unsigned short)(L3002_ui_BeforeRemaining - *P3005_pui_RemainingInLine);
-                } else {
-                        L3001_ui_TotalDone += (unsigned short)(L3002_ui_BeforeRemaining + (P3001_ui_VisibleWidth - *P3005_pui_RemainingInLine));
-                }
+                L3002_ui_Consumed = IMG3_Compat_ExpandOneCommandPadded(P3000_puc_LocalPalette, P3001_ui_VisibleWidth, P3002_ui_LineStride, P3004_pui_DestinationOffset, P3005_pui_RemainingInLine);
+                L3001_ui_TotalDone += L3002_ui_Consumed;
         }
 }
 

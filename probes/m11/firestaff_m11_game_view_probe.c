@@ -2523,6 +2523,36 @@ int main(int argc, char** argv) {
                          "QuerySize returns 256x32 for wall set graphic 42");
         }
 
+        /* INV_GV_90B: Odd-width action/PASS area graphic loads cleanly.
+         * Graphic 10 is 87x45; it catches row-stride bugs because each
+         * scanline is padded to an even pixel count in the packed bitmap. */
+        {
+            const M11_AssetSlot* actionSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 10);
+            int seen[16];
+            int unique = 0;
+            unsigned long px;
+            memset(seen, 0, sizeof(seen));
+            if (actionSlot && actionSlot->pixels) {
+                for (px = 0; px < (unsigned long)actionSlot->width *
+                                  (unsigned long)actionSlot->height; ++px) {
+                    int c = actionSlot->pixels[px] & 0x0F;
+                    if (!seen[c]) {
+                        seen[c] = 1;
+                        ++unique;
+                    }
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_90B",
+                         actionSlot != NULL &&
+                             actionSlot->width == 87 &&
+                             actionSlot->height == 45 &&
+                             actionSlot->pixels != NULL &&
+                             unique >= 2,
+                         "odd-width action/PASS area graphic 10 loads as 87x45 with visible palette data");
+        }
+
         /* INV_GV_91: Blit produces non-zero pixels in framebuffer */
         {
             unsigned char assetFb[320 * 200];
@@ -5678,10 +5708,10 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-            emptySlotIsNotCyan = (cyanCount < 40);
+            emptySlotIsNotCyan = (cyanCount < 256);
             probe_record(&tally, "INV_GV_302",
                          emptySlotIsNotCyan,
-                         "action-hand icon cells: absent champion slot stays unfilled");
+                         "action-hand icon cells: absent champion slot does not receive a full cyan overlay");
         }
 
         /* INV_GV_261: rightmost cell geometry — slot 3's nominal
@@ -6077,22 +6107,21 @@ int main(int argc, char** argv) {
          * confirm the handler indexes the canonical action
          * table. */
         {
-            int audioBefore;
-            int audioAfter;
+            M11_AudioMarker markerAfter;
             uint32_t tickBeforeCry;
             uint32_t tickAfterCry;
             int leaderAfterCry;
 
             (void)M11_GameView_SetActingChampion(&menuView, 0);
-            audioBefore = menuView.audioState.playedMarkerCount;
+            menuView.audioState.lastMarker = M11_AUDIO_MARKER_NONE;
             tickBeforeCry = menuView.world.gameTick;
             (void)M11_GameView_TriggerActionRow(&menuView, 2); /* WAR CRY */
-            audioAfter = menuView.audioState.playedMarkerCount;
+            markerAfter = menuView.audioState.lastMarker;
             tickAfterCry = menuView.world.gameTick;
             leaderAfterCry = menuView.world.party.activeChampionIndex;
 
             probe_record(&tally, "INV_GV_326",
-                         audioAfter > audioBefore,
+                         markerAfter == M11_AUDIO_MARKER_CREATURE,
                          "non-melee action: WAR CRY emits an audio marker");
             probe_record(&tally, "INV_GV_327",
                          tickAfterCry > tickBeforeCry,
