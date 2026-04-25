@@ -928,6 +928,40 @@ first, then visual parity, then typography / honesty.
 
 ---
 
+## All-graphics addendum: invented overlay classification — **LANDED (passes 102–105)**
+- **Area:** `VISUAL` / `V1_PARITY_SURFACES`
+- **Status:** The matrix now explicitly separates source-backed DM1 V1 surfaces
+  from Firestaff convenience/placeholder overlays so they cannot accidentally be
+  counted as parity wins.
+- **Map overlay (passes 102–104):**
+  - Local ReDMCSB PC `NEWMAP.C` is map-transition plumbing, not a player automap
+    renderer.
+  - Firestaff's `mapOverlayActive` / `m11_draw_fullscreen_map(...)` surface is
+    classified as `KNOWN_DIFF (debug-only)`.
+  - Pass 103 changed runtime behavior: default V1 chrome mode ignores
+    `M12_MENU_INPUT_MAP_TOGGLE` unless `showDebugHUD=1`.
+  - Probe gates `INV_GV_181`, `INV_GV_181B`, and `INV_GV_197` lock both the
+    debug path and the default ignored path.
+- **Dialog/endgame overlays (pass 105):**
+  - ReDMCSB `DIALOG.C:F0427_DIALOG_Draw` expands the source dialog-box graphic,
+    prints `V3.4`, applies dialog patch zones for 1/2/4 choices, and uses source
+    choice/text zones and colours.
+  - Firestaff's current visible `TEXT PLAQUE`, `PRESS ANY KEY TO DISMISS`,
+    `QUEST COMPLETE`, `VICTORY AT TICK ...`, and `ESC TO RETURN TO MENU` panels
+    are classified as functional placeholders / `KNOWN_DIFF`, not visual parity.
+- **Representative gates:**
+  - `firestaff_m11_game_view_probe`: `419/419 invariants passed` after the map
+    debug-only change.
+  - `ctest`: `5/5 PASS`.
+- **Remaining gaps:**
+  - Wire source dialog/endgame frontend visuals or suppress placeholder overlays
+    from parity claims.
+  - Capture original dialog/endgame frames and perform overlay comparison.
+  - Keep the map overlay debug-only unless contrary source/runtime evidence is
+    found.
+
+---
+
 ## Priority groupings
 
 - **High (pass-37 … pass-41):** ownership wiring (#1 — **LANDED pass
