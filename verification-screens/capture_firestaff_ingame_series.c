@@ -132,6 +132,10 @@ int main(int argc, char** argv) {
         fprintf(stderr, "failed to open DM1 game view\n");
         return 1;
     }
+    /* Match the real launcher path: once DM1 opens, main_loop_m11.c
+     * resets the renderer palette level to 0 so indexed in-game pixels
+     * are not globally dimmed by a startup-menu setting. */
+    paletteLevel = 0U;
 
     if (!save_game(outDir, "01_ingame_start_latest", &game, paletteLevel)) return 1;
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
