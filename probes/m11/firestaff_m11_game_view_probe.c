@@ -5326,6 +5326,75 @@ int main(int argc, char** argv) {
                      "V1 dialog mouse hit selects source choice zone");
     }
 
+    /* INV_GV_172N: V1 single-choice dialog applies source M621/C451 patch. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        const M11_AssetSlot* dialogSlot;
+        int matches = 0;
+        int total = 0;
+        int x, y;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlayChoices(&dlgView, "PIT", "OK", NULL, NULL, NULL);
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        dialogSlot = M11_AssetLoader_Load((M11_AssetLoader*)&dlgView.assetLoader, 17U);
+        if (dialogSlot && dialogSlot->loaded && dialogSlot->pixels) {
+            for (y = 0; y < 10; ++y) {
+                for (x = 0; x < 224; ++x) {
+                    unsigned char actual = fb_dlg[(33 + 51 + y) * 320 + x] & 0x0F;
+                    unsigned char expected = dialogSlot->pixels[(14 + y) * 224 + x] & 0x0F;
+                    ++total;
+                    if (actual == expected) ++matches;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_172N",
+                     dlgView.assetsAvailable ? (total > 0 && matches > 2100) : 1,
+                     "V1 single-choice dialog applies source M621/C451 patch");
+    }
+
+    /* INV_GV_172O: V1 two/four-choice dialogs apply source patch graphics. */
+    {
+        M11_GameViewState twoView;
+        M11_GameViewState fourView;
+        unsigned char fb_two[320 * 200];
+        unsigned char fb_four[320 * 200];
+        const M11_AssetSlot* dialogSlot;
+        int twoMatches = 0, fourMatches = 0, total = 0;
+        int x, y;
+        memcpy(&twoView, &gameView, sizeof(twoView));
+        memcpy(&fourView, &gameView, sizeof(fourView));
+        twoView.showDebugHUD = 0;
+        fourView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlayChoices(&twoView, "PIT", "YES", "NO", NULL, NULL);
+        M11_GameView_ShowDialogOverlayChoices(&fourView, "PIT", "A", "B", "C", "D");
+        memset(fb_two, 0, sizeof(fb_two));
+        memset(fb_four, 0, sizeof(fb_four));
+        M11_GameView_Draw(&twoView, fb_two, 320, 200);
+        M11_GameView_Draw(&fourView, fb_four, 320, 200);
+        dialogSlot = M11_AssetLoader_Load((M11_AssetLoader*)&twoView.assetLoader, 17U);
+        if (dialogSlot && dialogSlot->loaded && dialogSlot->pixels) {
+            for (y = 0; y < 21; ++y) {
+                for (x = 0; x < 21; ++x) {
+                    unsigned char expected2 = dialogSlot->pixels[(52 + y) * 224 + 102 + x] & 0x0F;
+                    unsigned char actual2 = fb_two[(33 + 89 + y) * 320 + 102 + x] & 0x0F;
+                    unsigned char expected4 = dialogSlot->pixels[(99 + y) * 224 + 102 + x] & 0x0F;
+                    unsigned char actual4 = fb_four[(33 + 62 + y) * 320 + 102 + x] & 0x0F;
+                    ++total;
+                    if (actual2 == expected2) ++twoMatches;
+                    if (actual4 == expected4) ++fourMatches;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_172O",
+                     twoView.assetsAvailable ? (total > 0 && twoMatches > 380 && fourMatches > 380) : 1,
+                     "V1 two/four-choice dialogs apply source M622/M623 patches");
+    }
+
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
     {
         M11_GameViewState dlgView;

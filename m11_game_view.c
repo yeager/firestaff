@@ -11334,6 +11334,58 @@ static int m11_draw_dm_dialog_backdrop(const M11_GameViewState* state,
     return 1;
 }
 
+static int m11_copy_dm_dialog_patch(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    int srcX,
+                                    int srcY,
+                                    int patchW,
+                                    int patchH,
+                                    int dstX,
+                                    int dstY) {
+    const M11_AssetSlot* slot;
+    int x, y;
+    if (!state || !state->assetsAvailable || !framebuffer) return 0;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)M11_GFX_DIALOG_BOX);
+    if (!slot || !slot->loaded || !slot->pixels) return 0;
+    if (patchW <= 0) patchW = (int)slot->width;
+    if (patchH <= 0) patchH = (int)slot->height;
+    for (y = 0; y < patchH; ++y) {
+        int sy = srcY + y;
+        int dy = M11_VIEWPORT_Y + dstY + y;
+        if (sy < 0 || sy >= (int)slot->height || dy < 0 || dy >= framebufferHeight) continue;
+        for (x = 0; x < patchW; ++x) {
+            int sx = srcX + x;
+            int dx = M11_VIEWPORT_X + dstX + x;
+            if (sx < 0 || sx >= (int)slot->width || dx < 0 || dx >= framebufferWidth) continue;
+            framebuffer[dy * framebufferWidth + dx] = slot->pixels[sy * (int)slot->width + sx] & 0x0F;
+        }
+    }
+    return 1;
+}
+
+static void m11_apply_dm_dialog_choice_patch(const M11_GameViewState* state,
+                                             unsigned char* framebuffer,
+                                             int framebufferWidth,
+                                             int framebufferHeight) {
+    if (!state || state->dialogChoiceCount == 3) return;
+    if (state->dialogChoiceCount <= 1) {
+        /* M621_NEGGRAPHIC_DIALOG_PATCH_1_CHOICE -> C451. */
+        m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
+                                 0, 14, 224, 75, 0, 51);
+    } else if (state->dialogChoiceCount == 2) {
+        /* M622_NEGGRAPHIC_DIALOG_PATCH_2_CHOICES -> C452. */
+        m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
+                                 102, 52, 21, 37, 102, 89);
+    } else {
+        /* M623_NEGGRAPHIC_DIALOG_PATCH_4_CHOICES -> C453. */
+        m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
+                                 102, 99, 21, 36, 102, 62);
+    }
+}
+
 /* Which inventory slot a champion is currently treating as the
  * action hand.  ReDMCSB stores this in G407.Champions[i].Slots[
  * C01_SLOT_ACTION_HAND], with the MASK0x8000_ACTION_HAND bit of
@@ -15674,6 +15726,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
         }
         if (drewSourceBackdrop) {
+            m11_apply_dm_dialog_choice_patch(state, framebuffer,
+                                             framebufferWidth, framebufferHeight);
             M11_TextStyle versionStyle = g_text_small;
             versionStyle.color = M11_COLOR_LIGHT_GRAY;
             versionStyle.shadowColor = M11_COLOR_DARK_GRAY;
