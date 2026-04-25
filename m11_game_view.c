@@ -1225,6 +1225,54 @@ static int m11_c3200_creature_zone_point(int coordSet,
     return 1;
 }
 
+static int m11_c3200_creature_side_zone_point(int coordSet,
+                                              int depthIndex,
+                                              int sideHint,
+                                              int visibleCount,
+                                              int slotIndex,
+                                              int* outX,
+                                              int* outY) {
+    /* Layout-696 C3200 side groups.  For each coordinate set the 65
+     * records are arranged as depth bands; within each band center is
+     * followed by left and right side-cell groups. */
+    static const short kC3200Side[3][3][2][5][2] = {
+        {
+            {{{-54,103}, { 18,108}, {  1,119}, {-99,119}, {-21,111}},
+             {{207,109}, {277,103}, {321,119}, {223,119}, {244,111}}},
+            {{{  4, 83}, { 46, 83}, { 35, 90}, {-20, 90}, { 20, 85}},
+             {{177, 83}, {224, 83}, {243, 90}, {189, 90}, {205, 85}}},
+            {{{ 35, 68}, { 63, 68}, { 58, 72}, { 27, 72}, { 45, 72}},
+             {{157, 68}, {181, 67}, {200, 72}, {166, 72}, {179, 72}}}
+        },
+        {
+            {{{-97,119}, {  1,119}, {-16,105}, {-30,111}, {-21,119}},
+             {{223,119}, {321,119}, {239,105}, {253,111}, {246,119}}},
+            {{{-20, 90}, { 35, 90}, { 25, 83}, { 20, 85}, { 26, 89}},
+             {{189, 90}, {243, 90}, {199, 83}, {205, 85}, {203, 89}}},
+            {{{ 28, 73}, { 58, 73}, { 49, 70}, { 45, 70}, { 49, 73}},
+             {{166, 73}, {198, 73}, {175, 70}, {179, 70}, {178, 73}}}
+        },
+        {
+            {{{-54, 79}, { 18, 79}, {  1, 85}, {-99, 85}, {-21, 81}},
+             {{207, 79}, {277, 79}, {321, 85}, {223, 85}, {244, 81}}},
+            {{{ -1, 65}, { 46, 65}, { 35, 67}, {-20, 67}, { 20, 66}},
+             {{177, 65}, {224, 65}, {243, 67}, {189, 67}, {205, 66}}},
+            {{{ 39, 59}, { 63, 59}, { 58, 61}, { 25, 61}, { 45, 60}},
+             {{159, 59}, {185, 59}, {201, 61}, {166, 61}, {179, 60}}}
+        }
+    };
+    int sideIndex;
+    int pointIndex;
+    if (coordSet < 0 || coordSet > 2) return 0;
+    if (depthIndex < 0) depthIndex = 0;
+    if (depthIndex > 2) depthIndex = 2;
+    sideIndex = sideHint < 0 ? 0 : 1;
+    pointIndex = m11_creature_front_point_index(coordSet, visibleCount, slotIndex);
+    if (outX) *outX = (int)kC3200Side[coordSet][depthIndex][sideIndex][pointIndex][0];
+    if (outY) *outY = (int)kC3200Side[coordSet][depthIndex][sideIndex][pointIndex][1];
+    return 1;
+}
+
 /* Query the creature aspect's coordinate set index (0-10) for a type. */
 static int m11_creature_coordinate_set(int creatureType) {
     if (creatureType < 0 || creatureType >= 27) return 0;
@@ -10105,13 +10153,29 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                 if (visibleDups > 3) visibleDups = 3;
                 if (visibleDups < 1) visibleDups = 1;
                 if (visibleDups == 1) {
+                    int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                    int zoneX = 0;
+                    int zoneY = 0;
+                    int drawPaneX = paneX + 1;
+                    int drawPaneY = cy;
+                    int drawPaneW = paneW - 2;
+                    int drawSideHint = side;
+                    if (m11_c3200_creature_side_zone_point(coordSet,
+                                                           depthIndex < 3 ? depthIndex : 2,
+                                                           side,
+                                                           1, 0,
+                                                           &zoneX, &zoneY)) {
+                        drawPaneX = M11_VIEWPORT_X + zoneX - drawPaneW / 2;
+                        drawPaneY = M11_VIEWPORT_Y + zoneY - slotH;
+                        drawSideHint = 0;
+                    }
                     if (!g_drawState ||
                         !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
                                                      framebufferWidth, framebufferHeight,
-                                                     paneX + 1, cy,
-                                                     paneW - 2, slotH,
+                                                     drawPaneX, drawPaneY,
+                                                     drawPaneW, slotH,
                                                      cell->creatureTypes[gi], depthIndex,
-                                                     side,
+                                                     drawSideHint,
                                                      cell->creatureDirections[gi])) {
                         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                       paneX + paneW / 2 - 1, cy + slotH / 2 - 2,
@@ -10123,13 +10187,29 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                     if (ofsY < 1) ofsY = 1;
                     for (di = 0; di < visibleDups; ++di) {
                         int dy = cy + di * ofsY;
+                        int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                        int zoneX = 0;
+                        int zoneY = 0;
+                        int drawPaneX = paneX + 1;
+                        int drawPaneY = dy;
+                        int drawPaneW = paneW - 2;
+                        int drawSideHint = side;
+                        if (m11_c3200_creature_side_zone_point(coordSet,
+                                                               depthIndex < 3 ? depthIndex : 2,
+                                                               side,
+                                                               visibleDups, di,
+                                                               &zoneX, &zoneY)) {
+                            drawPaneX = M11_VIEWPORT_X + zoneX - drawPaneW / 2;
+                            drawPaneY = M11_VIEWPORT_Y + zoneY - dupH;
+                            drawSideHint = 0;
+                        }
                         if (!g_drawState ||
                             !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
                                                          framebufferWidth, framebufferHeight,
-                                                         paneX + 1, dy,
-                                                         paneW - 2, dupH,
+                                                         drawPaneX, drawPaneY,
+                                                         drawPaneW, dupH,
                                                          cell->creatureTypes[gi], depthIndex,
-                                                         side,
+                                                         drawSideHint,
                                                          cell->creatureDirections[gi])) {
                             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                           paneX + paneW / 2 - 1, dy + dupH / 2 - 2,
@@ -12192,6 +12272,18 @@ int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
     return m11_c3200_creature_zone_point(coordSet, depthIndex,
                                          visibleCount, slotIndex,
                                          outX, outY);
+}
+
+int M11_GameView_GetC3200CreatureSideZonePoint(int coordSet,
+                                               int depthIndex,
+                                               int sideHint,
+                                               int visibleCount,
+                                               int slotIndex,
+                                               int* outX,
+                                               int* outY) {
+    return m11_c3200_creature_side_zone_point(coordSet, depthIndex,
+                                              sideHint, visibleCount,
+                                              slotIndex, outX, outY);
 }
 
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,

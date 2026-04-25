@@ -537,6 +537,13 @@ int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int slotIndex,
                                            int* outX,
                                            int* outY);
+int M11_GameView_GetC3200CreatureSideZonePoint(int coordSet,
+                                               int depthIndex,
+                                               int sideHint,
+                                               int visibleCount,
+                                               int slotIndex,
+                                               int* outX,
+                                               int* outY);
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
                                             int* outXIndex,
                                             int* outYIndex);

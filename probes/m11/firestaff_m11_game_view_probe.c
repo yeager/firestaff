@@ -6260,6 +6260,18 @@ int main(int argc, char** argv) {
                      "creature draw path prefers C3200 over older G0224 midpoint for single front slot");
     }
 
+    {
+        int lx = 0, ly = 0, rx = 0, ry = 0, sx = 0, sy = 0;
+        int okL = M11_GameView_GetC3200CreatureSideZonePoint(0, 0, -1, 1, 0, &lx, &ly);
+        int okR = M11_GameView_GetC3200CreatureSideZonePoint(0, 0,  1, 1, 0, &rx, &ry);
+        int okS = M11_GameView_GetC3200CreatureSideZonePoint(1, 1, -1, 2, 1, &sx, &sy);
+        probe_record(&tally, "INV_GV_256D",
+                     okL && lx == -21 && ly == 111 &&
+                     okR && rx == 244 && ry == 111 &&
+                     okS && sx == 35 && sy == 90,
+                     "side-cell creature placement binds C3200 left/right source zone samples");
+    }
+
     /* ── Floor ornament ordinal query ── */
     {
         /* Query the front cell's floor ornament ordinal.
