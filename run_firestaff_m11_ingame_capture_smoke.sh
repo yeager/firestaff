@@ -112,4 +112,51 @@ if ratio > 0.01:
     )
 PY
 
+python3 - "$OUT_DIR/02_ingame_turn_right_latest.ppm" "$OUT_DIR/06_ingame_inventory_panel_latest.ppm" <<'PY'
+from pathlib import Path
+import sys
+
+def read_ppm(path):
+    data = Path(path).read_bytes()
+    parts = data.split(None, 4)
+    if len(parts) < 5 or parts[0] != b"P6":
+        raise SystemExit(f"invalid PPM header: {Path(path).name}")
+    w = int(parts[1]); h = int(parts[2]); maxval = int(parts[3])
+    if (w, h, maxval) != (320, 200, 255):
+        raise SystemExit(f"unexpected PPM geometry in {Path(path).name}: {w}x{h} max={maxval}")
+    return w, h, parts[4]
+
+def count_rgb(pixels, w, x0, y0, x1, y1, rgb):
+    n = 0
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            i = (y * w + x) * 3
+            if tuple(pixels[i:i + 3]) == rgb:
+                n += 1
+    return n
+
+action_w, _, action_pixels = read_ppm(sys.argv[1])
+inv_w, _, inv_pixels = read_ppm(sys.argv[2])
+
+# The deterministic capture champion holds a dagger.  In the right-side
+# action cell, source dagger icon colour 12 must be remapped by G0498 to
+# cyan.  Slot 0 inner icon box is x=235..250, y=95..110.
+dm_cyan = (0, 219, 219)
+action_cyan = count_rgb(action_pixels, action_w, 235, 95, 251, 111, dm_cyan)
+if action_cyan < 180:
+    raise SystemExit(
+        f"action fixture dagger icon did not show G0498 cyan coverage: {action_cyan}/256"
+    )
+
+# In the inventory panel the same source dagger icon must be blitted without
+# the action-area palette rewrite.  Right-hand slot icon inset is x=34..49,
+# y=53..68; source colour 12 is DM dark gray in the capture palette.
+dm_dark_gray = (73, 73, 73)
+inv_dark_gray = count_rgb(inv_pixels, inv_w, 34, 53, 50, 69, dm_dark_gray)
+if inv_dark_gray < 180:
+    raise SystemExit(
+        f"inventory fixture dagger icon did not preserve source dark gray: {inv_dark_gray}/256"
+    )
+PY
+
 echo "In-game capture smoke PASS: ${#expected[@]} screenshots"
