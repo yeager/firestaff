@@ -737,24 +737,24 @@ int main(int argc, char** argv) {
                  "INV_GV_10",
                  probe_count_color(syntheticFramebuffer,
                                    320,
-                                   PROBE_VIEWPORT_X,
-                                   PROBE_VIEWPORT_Y,
-                                   PROBE_VIEWPORT_W,
-                                   PROBE_VIEWPORT_H,
+                                   PROBE_DM1_VIEWPORT_X,
+                                   PROBE_DM1_VIEWPORT_Y,
+                                   PROBE_DM1_VIEWPORT_W,
+                                   PROBE_DM1_VIEWPORT_H,
                                    PROBE_COLOR_LIGHT_RED) > 1U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
-                                       PROBE_VIEWPORT_X,
-                                       PROBE_VIEWPORT_Y,
-                                       PROBE_VIEWPORT_W,
-                                       PROBE_VIEWPORT_H,
+                                       PROBE_DM1_VIEWPORT_X,
+                                       PROBE_DM1_VIEWPORT_Y,
+                                       PROBE_DM1_VIEWPORT_W,
+                                       PROBE_DM1_VIEWPORT_H,
                                        PROBE_COLOR_YELLOW) > 20U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
-                                       PROBE_VIEWPORT_X,
-                                       PROBE_VIEWPORT_Y,
-                                       PROBE_VIEWPORT_W,
-                                       PROBE_VIEWPORT_H,
+                                       PROBE_DM1_VIEWPORT_X,
+                                       PROBE_DM1_VIEWPORT_Y,
+                                       PROBE_DM1_VIEWPORT_W,
+                                       PROBE_DM1_VIEWPORT_H,
                                        PROBE_COLOR_LIGHT_GREEN) > 0U,
                  "synthetic feature cells add door, stair, and occupancy cues inside the viewport");
 
@@ -767,8 +767,8 @@ int main(int argc, char** argv) {
     probe_record(&tally,
                  "INV_GV_12",
                  probe_count_non_zero(syntheticFramebuffer, 320,
-                                      PROBE_VIEWPORT_X, PROBE_VIEWPORT_Y,
-                                      PROBE_VIEWPORT_W, PROBE_VIEWPORT_H) > 4000U &&
+                                      PROBE_DM1_VIEWPORT_X, PROBE_DM1_VIEWPORT_Y,
+                                      PROBE_DM1_VIEWPORT_W, PROBE_DM1_VIEWPORT_H) > 4000U &&
                      probe_count_non_zero(syntheticFramebuffer, 320,
                                          PROBE_MAP_BOX_X, PROBE_MAP_BOX_Y,
                                          PROBE_MAP_BOX_W, PROBE_MAP_BOX_H) > 250U,
@@ -778,17 +778,17 @@ int main(int argc, char** argv) {
                  "INV_GV_12B",
                  probe_count_color(syntheticFramebuffer,
                                    320,
-                                   PROBE_VIEWPORT_X,
-                                   PROBE_VIEWPORT_Y,
-                                   PROBE_VIEWPORT_W,
-                                   PROBE_VIEWPORT_H,
+                                   PROBE_DM1_VIEWPORT_X,
+                                   PROBE_DM1_VIEWPORT_Y,
+                                   PROBE_DM1_VIEWPORT_W,
+                                   PROBE_DM1_VIEWPORT_H,
                                    PROBE_COLOR_WHITE) > 6U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
-                                       PROBE_VIEWPORT_X,
-                                       PROBE_VIEWPORT_Y,
-                                       PROBE_VIEWPORT_W,
-                                       PROBE_VIEWPORT_H,
+                                       PROBE_DM1_VIEWPORT_X,
+                                       PROBE_DM1_VIEWPORT_Y,
+                                       PROBE_DM1_VIEWPORT_W,
+                                       PROBE_DM1_VIEWPORT_H,
                                        PROBE_COLOR_LIGHT_CYAN) > 10U,
                  "viewport item and effect cues appear when real thing chains include loot and projectiles");
 
@@ -921,17 +921,17 @@ int main(int argc, char** argv) {
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,
                                    320,
-                                   PROBE_VIEWPORT_X,
-                                   PROBE_VIEWPORT_Y,
-                                   PROBE_VIEWPORT_W,
-                                   PROBE_VIEWPORT_H,
+                                   PROBE_DM1_VIEWPORT_X,
+                                   PROBE_DM1_VIEWPORT_Y,
+                                   PROBE_DM1_VIEWPORT_W,
+                                   PROBE_DM1_VIEWPORT_H,
                                    PROBE_COLOR_YELLOW) > 20U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
-                                       PROBE_VIEWPORT_X,
-                                       PROBE_VIEWPORT_Y,
-                                       PROBE_VIEWPORT_W,
-                                       PROBE_VIEWPORT_H,
+                                       PROBE_DM1_VIEWPORT_X,
+                                       PROBE_DM1_VIEWPORT_Y,
+                                       PROBE_DM1_VIEWPORT_W,
+                                       PROBE_DM1_VIEWPORT_H,
                                        PROBE_COLOR_LIGHT_CYAN) > 20U,
                  "viewport framing uses layered face bands and bright dungeon edges");
 
@@ -939,10 +939,10 @@ int main(int argc, char** argv) {
                  "INV_GV_17",
                  probe_count_color(syntheticFramebuffer,
                                    320,
-                                   PROBE_VIEWPORT_X,
-                                   PROBE_VIEWPORT_Y,
-                                   PROBE_VIEWPORT_W,
-                                   PROBE_VIEWPORT_H,
+                                   PROBE_DM1_VIEWPORT_X,
+                                   PROBE_DM1_VIEWPORT_Y,
+                                   PROBE_DM1_VIEWPORT_W,
+                                   PROBE_DM1_VIEWPORT_H,
                                    PROBE_COLOR_LIGHT_RED) > 8U &&
                      probe_count_color(syntheticFramebuffer,
                                        320,
@@ -3266,9 +3266,9 @@ int main(int argc, char** argv) {
             memset(assetFrame, 0, sizeof(assetFrame));
             M11_GameView_Draw(&assetView, assetFrame, 320, 200);
             memset(seen2, 0, sizeof(seen2));
-            for (px2 = 0; px2 < PROBE_VIEWPORT_W * PROBE_VIEWPORT_H; ++px2) {
-                int vy = PROBE_VIEWPORT_Y + px2 / PROBE_VIEWPORT_W;
-                int vx = PROBE_VIEWPORT_X + px2 % PROBE_VIEWPORT_W;
+            for (px2 = 0; px2 < PROBE_DM1_VIEWPORT_W * PROBE_DM1_VIEWPORT_H; ++px2) {
+                int vy = PROBE_DM1_VIEWPORT_Y + px2 / PROBE_DM1_VIEWPORT_W;
+                int vx = PROBE_DM1_VIEWPORT_X + px2 % PROBE_DM1_VIEWPORT_W;
                 int c = assetFrame[vy * 320 + vx] & 0x0F;
                 if (!seen2[c]) {
                     seen2[c] = 1;
