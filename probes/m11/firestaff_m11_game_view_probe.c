@@ -4970,6 +4970,38 @@ int main(int argc, char** argv) {
                      "HandleInput dismisses dialog overlay on keypress");
     }
 
+    /* INV_GV_172C: V1 dialog overlay uses source C000 dialog backdrop. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        const M11_AssetSlot* dialogSlot;
+        int matches = 0;
+        int total = 0;
+        int x, y;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        dialogSlot = M11_AssetLoader_Load((M11_AssetLoader*)&dlgView.assetLoader,
+                                          17U /* C000_GRAPHIC_DIALOG_BOX */);
+        if (dialogSlot && dialogSlot->loaded && dialogSlot->pixels &&
+            dialogSlot->width == 224 && dialogSlot->height == 136) {
+            for (y = 0; y < 12; ++y) {
+                for (x = 0; x < 224; ++x) {
+                    unsigned char actual = fb_dlg[(33 + y) * 320 + x] & 0x0F;
+                    unsigned char expected = dialogSlot->pixels[y * 224 + x] & 0x0F;
+                    ++total;
+                    if (actual == expected) ++matches;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_172C",
+                     dlgView.assetsAvailable ? (total > 0 && matches > 2500) : 1,
+                     "V1 dialog overlay blits source C000 dialog-box backdrop");
+    }
+
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
     {
         M11_GameViewState dlgView;

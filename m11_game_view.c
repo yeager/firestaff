@@ -7372,6 +7372,8 @@ enum {
     M11_GFX_DAMAGE_TO_CHAMPION_BIG    = 16  /* C016_GRAPHIC_DAMAGE_TO_CHAMPION_BIG (32×29) */
 };
 
+#define M11_GFX_DIALOG_BOX 17 /* C000_GRAPHIC_DIALOG_BOX, viewport-sized 224×136 */
+
 /* ================================================================
  * Asset-backed rendering helpers for GRAPHICS.DAT integration.
  *
@@ -11105,6 +11107,24 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
             framebuffer[fbY * framebufferWidth + fbX] = px;
         }
     }
+    return 1;
+}
+
+static int m11_draw_dm_dialog_backdrop(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight) {
+    const M11_AssetSlot* slot;
+    if (!state || !state->assetsAvailable || !framebuffer) return 0;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)M11_GFX_DIALOG_BOX);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        (int)slot->width != M11_VIEWPORT_W ||
+        (int)slot->height != M11_VIEWPORT_H) {
+        return 0;
+    }
+    M11_AssetLoader_Blit(slot, framebuffer, framebufferWidth, framebufferHeight,
+                         M11_VIEWPORT_X, M11_VIEWPORT_Y, 0);
     return 1;
 }
 
@@ -15430,18 +15450,27 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     if (state->dialogOverlayActive && state->dialogOverlayText[0] != '\0') {
         int dlgX = 30, dlgY = 50, dlgW = 260, dlgH = 80;
         int textY;
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      dlgX, dlgY, dlgW, dlgH, M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      dlgX, dlgY, dlgW, dlgH, M11_COLOR_YELLOW);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      dlgX + 2, dlgY + 2, dlgW - 4, dlgH - 4, M11_COLOR_BROWN);
+        int drewSourceBackdrop = 0;
+        if (m11_v1_chrome_mode_enabled()) {
+            drewSourceBackdrop = m11_draw_dm_dialog_backdrop(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+        }
+        if (!drewSourceBackdrop) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX, dlgY, dlgW, dlgH, M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX, dlgY, dlgW, dlgH, M11_COLOR_YELLOW);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          dlgX + 2, dlgY + 2, dlgW - 4, dlgH - 4, M11_COLOR_BROWN);
+        }
         if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
         }
         /* Word-wrap the dialog text into the box (simple two-line split) */
-        textY = dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18);
+        textY = drewSourceBackdrop
+                    ? (M11_VIEWPORT_Y + 72)
+                    : (dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18));
         if (strlen(state->dialogOverlayText) <= 40) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 12, textY, state->dialogOverlayText,
