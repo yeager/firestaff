@@ -4936,6 +4936,33 @@ int main(int argc, char** argv) {
                      "V1 endgame prints champion name at source coordinate");
     }
 
+    /* INV_GV_165F: V1 endgame prints source skill title line. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        unsigned int skillText;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        endgameView.world.party.championCount = 1;
+        endgameView.world.party.champions[0].present = 1;
+        memcpy(endgameView.world.party.champions[0].name, "HALK    ", 8);
+        endgameView.world.party.champions[0].skillLevels[0] = 4;
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        skillText = probe_count_color(fb_won,
+                                      320,
+                                      105,
+                                      23,
+                                      115,
+                                      8,
+                                      13); /* C13_COLOR_LIGHTEST_GRAY */
+        probe_record(&tally,
+                     "INV_GV_165F",
+                     skillText >= 6,
+                     "V1 endgame prints source skill-title line");
+    }
+
     /* INV_GV_166: HandleInput in gameWon state ignores movement. */
     {
         M11_GameViewState endgameView;

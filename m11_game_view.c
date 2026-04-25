@@ -15700,6 +15700,24 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                  champName, sizeof(champName));
                         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                                       87, 14 + (i * 48), champName, &nameStyle);
+                        if (state->world.party.champions[i].skillLevels[0] > 1) {
+                            static const char* const kEndgameSkillLevelNames[15] = {
+                                "NEOPHYTE", "NOVICE", "APPRENTICE", "JOURNEYMAN",
+                                "CRAFTSMAN", "ARTISAN", "ADEPT", "EXPERT",
+                                "` MASTER", "a MASTER", "b MASTER", "c MASTER",
+                                "d MASTER", "e MASTER", "ARCHMASTER"
+                            };
+                            char skillLine[32];
+                            int level = (int)state->world.party.champions[i].skillLevels[0];
+                            M11_TextStyle skillStyle = g_text_small;
+                            if (level > 16) level = 16;
+                            skillStyle.color = M11_COLOR_SILVER;
+                            skillStyle.shadowColor = M11_COLOR_DARK_GRAY;
+                            snprintf(skillLine, sizeof(skillLine), "%s FIGHTER",
+                                     kEndgameSkillLevelNames[level - 2]);
+                            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                          105, 23 + (i * 48), skillLine, &skillStyle);
+                        }
                     }
                 }
             }
