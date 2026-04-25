@@ -90,6 +90,12 @@ static int probe_count_diffs_outside_rect(const unsigned char* a,
 }
 
 enum {
+    PROBE_DM1_VIEWPORT_X = 0,
+    PROBE_DM1_VIEWPORT_Y = 33,
+    PROBE_DM1_VIEWPORT_W = 224,
+    PROBE_DM1_VIEWPORT_H = 136,
+
+    /* Legacy prototype viewport used by older debug-HUD-era probes. */
     PROBE_VIEWPORT_X = 12,
     PROBE_VIEWPORT_Y = 24,
     PROBE_VIEWPORT_W = 196,
@@ -1690,7 +1696,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38X",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, pitFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C normal pit clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38B",
                      haveAssets && memcmp(pitFb, invisiblePitFb, sizeof(pitFb)) != 0,
@@ -1698,7 +1708,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38Y",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, invisiblePitFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C invisible pit clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38C",
                      haveAssets && memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0,
@@ -1706,7 +1720,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38Z",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, stairsFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C stairs clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38D",
                      haveAssets && memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0,
@@ -1714,7 +1732,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38AA",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, teleporterFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C teleporter field clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38L",
                      haveAssets && memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
@@ -1722,7 +1744,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38AB",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, creatureFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C Trolin creature clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38R",
                      haveAssets && memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
@@ -1731,7 +1757,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38S",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, sideCreatureFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: extreme C3200 side creature clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38M",
                      haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
@@ -1739,7 +1769,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38T",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, projectileFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C fireball projectile clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38Q",
                      haveAssets && memcmp(baseFb, lightningFb, sizeof(baseFb)) != 0 &&
@@ -1748,7 +1782,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38U",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, lightningFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C lightning projectile clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38N",
                      haveAssets && memcmp(baseFb, objectFb, sizeof(baseFb)) != 0,
@@ -1756,7 +1794,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38V",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, objectFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C dagger object clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38O",
                      haveAssets && memcmp(baseFb, objectGapFb, sizeof(baseFb)) != 0,
@@ -1764,7 +1806,11 @@ int main(int argc, char** argv) {
         probe_record(&tally, "INV_GV_38W",
                      haveAssets &&
                      probe_count_diffs_outside_rect(baseFb, multiObjectFb,
-                                                    320, 200, 0, 33, 224, 136) == 0,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C multi-object pile clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38P",
                      haveAssets && memcmp(objectFb, multiObjectFb, sizeof(objectFb)) != 0,
@@ -6506,13 +6552,17 @@ int main(int argc, char** argv) {
             iconView.world.party.mapX = 3; /* toggles (x+y+dir)&1 */
             memset(fbParity, 0, sizeof(fbParity));
             M11_GameView_Draw(&iconView, fbParity, 320, 200);
-            for (x = 0; x < 224; ++x) {
-                if (fb[(24 + 8) * 320 + (12 + x)] !=
-                    fbParity[(24 + 8) * 320 + (12 + x)]) {
+            for (x = 0; x < PROBE_DM1_VIEWPORT_W; ++x) {
+                if (fb[(PROBE_DM1_VIEWPORT_Y + 8) * 320 +
+                       (PROBE_DM1_VIEWPORT_X + x)] !=
+                    fbParity[(PROBE_DM1_VIEWPORT_Y + 8) * 320 +
+                             (PROBE_DM1_VIEWPORT_X + x)]) {
                     ++diffCount;
                 }
-                if (fb[(24 + 80) * 320 + (12 + x)] !=
-                    fbParity[(24 + 80) * 320 + (12 + x)]) {
+                if (fb[(PROBE_DM1_VIEWPORT_Y + 80) * 320 +
+                       (PROBE_DM1_VIEWPORT_X + x)] !=
+                    fbParity[(PROBE_DM1_VIEWPORT_Y + 80) * 320 +
+                             (PROBE_DM1_VIEWPORT_X + x)]) {
                     ++diffCount;
                 }
             }
