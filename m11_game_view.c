@@ -6904,6 +6904,11 @@ enum {
     M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L   = 124,
     M11_GFX_DM1_STAIRS_SIDE_D0L        = 125,
 
+    /* DM1 field/teleporter graphics.  Source: DEFS.H C070..C077. */
+    M11_GFX_DM1_FIELD_MASK_BASE        = 70,
+    M11_GFX_DM1_FIELD_TELEPORTER       = 76,
+    M11_GFX_DM1_FIELD_FLUXCAGE         = 77,
+
     /* DM1 wall-set 0 wall graphics.  These are the source GRAPHICS.DAT
      * wall panels that DUNVIEW.C draws into layout-696 zones C702..C717. */
     M11_GFX_WALLSET0_D0R    = 93,  /* 33x136 -> C717_ZONE_WALL_D0R */
@@ -7218,6 +7223,77 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
                                M11_VIEWPORT_X + blit->dstX,
                                M11_VIEWPORT_Y + blit->dstY,
                                transparentColor);
+    return 1;
+}
+
+static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
+                                   unsigned char* framebuffer,
+                                   int fbW,
+                                   int fbH,
+                                   int dstX,
+                                   int dstY,
+                                   int dstW,
+                                   int dstH,
+                                   int baseStartUnit,
+                                   int transparentColor,
+                                   int maskIndexAndFlip) {
+    const M11_AssetSlot* field;
+    const M11_AssetSlot* mask = NULL;
+    int maskFlip = 0;
+    int y;
+    if (!state || !state->assetsAvailable || !framebuffer ||
+        dstW <= 0 || dstH <= 0) {
+        return 0;
+    }
+    field = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 M11_GFX_DM1_FIELD_TELEPORTER);
+    if (!field || !field->loaded || !field->pixels || field->width <= 0 || field->height <= 0) {
+        return 0;
+    }
+    if (maskIndexAndFlip != 255) {
+        int maskIndex = maskIndexAndFlip & 0x7f;
+        maskFlip = (maskIndexAndFlip & 0x80) ? 1 : 0;
+        mask = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    M11_GFX_DM1_FIELD_MASK_BASE + maskIndex);
+        if (!mask || !mask->loaded || !mask->pixels || mask->width <= 0 || mask->height <= 0) {
+            mask = NULL;
+        }
+    }
+    for (y = 0; y < dstH; ++y) {
+        int fbY = M11_VIEWPORT_Y + dstY + y;
+        int x;
+        if (fbY < 0 || fbY >= fbH) {
+            continue;
+        }
+        for (x = 0; x < dstW; ++x) {
+            int fbX = M11_VIEWPORT_X + dstX + x;
+            int sx;
+            int sy;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) {
+                continue;
+            }
+            if (mask) {
+                int mx = x * (int)mask->width / dstW;
+                int my = y * (int)mask->height / dstH;
+                unsigned char maskPixel;
+                if (maskFlip) {
+                    mx = (int)mask->width - 1 - mx;
+                }
+                maskPixel = mask->pixels[my * (int)mask->width + mx];
+                if (maskPixel == 0) {
+                    continue;
+                }
+            }
+            sx = (x + (baseStartUnit * 16)) % (int)field->width;
+            sy = y % (int)field->height;
+            pixel = field->pixels[sy * (int)field->width + sx];
+            if ((transparentColor & 0x7f) != 0x7f && pixel == (unsigned char)(transparentColor & 0x7f)) {
+                continue;
+            }
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
     return 1;
 }
 
@@ -7567,6 +7643,65 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                      stairUp ? &kStairs[i].upBlit : &kStairs[i].downBlit,
                                      0);
+    }
+}
+
+static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
+                                           unsigned char* framebuffer,
+                                           int fbW,
+                                           int fbH) {
+    typedef struct M11_DM1FieldSpec {
+        int relForward;
+        int relSide;
+        int dstX;
+        int dstY;
+        int dstW;
+        int dstH;
+        int baseStartUnit;
+        int transparentColor;
+        int maskIndexAndFlip;
+    } M11_DM1FieldSpec;
+    static const M11_DM1FieldSpec kFields[] = {
+        /* ReDMCSB G2035 view-square -> G0188 field-aspect mapping,
+         * resolved through layout-696 wall zones C702..C717. */
+        {3,-2,0,   25,36, 49,0x3f,0x0a,0x00},
+        {3, 2,188, 25,36, 49,0x3f,0x0a,0x80},
+        {3,-1,7,   25,83, 49,0x3f,0x0a,0x01},
+        {3, 0,77,  25,70, 49,0x3f,0x8a,0xff},
+        {3, 1,134, 25,83, 49,0x3f,0x0a,0x81},
+        {2,-2,0,   24,8,  52,0x3f,0x0a,0x02},
+        {2, 2,216, 24,8,  52,0x3f,0x0a,0x82},
+        {2,-1,0,   19,78, 74,0x3f,0x0a,0x03},
+        {2, 0,59,  19,106,74,0x3c,0x8a,0xff},
+        {2, 1,146, 19,78, 74,0x3f,0x0a,0x83},
+        {1,-1,0,   9, 60, 111,0x3f,0x0a,0x04},
+        {1, 0,32,  9, 160,111,0x3d,0x8a,0xff},
+        {1, 1,164, 9, 60, 111,0x3f,0x0a,0x84},
+        {0,-1,0,   0, 33, 136,0x3f,0x0a,0x05},
+        {0, 0,0,   0, 224,136,0x3b,0x8a,0xff},
+        {0, 1,191, 0, 33, 136,0x3f,0x0a,0x85}
+    };
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0; i < sizeof(kFields) / sizeof(kFields[0]); ++i) {
+        M11_ViewportCell cell;
+        if (!m11_sample_viewport_cell(state, kFields[i].relForward, kFields[i].relSide, &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_TELEPORTER) {
+            continue;
+        }
+        if ((cell.square & 0x04) == 0 || (cell.square & 0x08) == 0) {
+            continue;
+        }
+        (void)m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,
+                                      kFields[i].dstX, kFields[i].dstY,
+                                      kFields[i].dstW, kFields[i].dstH,
+                                      kFields[i].baseStartUnit,
+                                      kFields[i].transparentColor,
+                                      kFields[i].maskIndexAndFlip);
     }
 }
 
@@ -12341,6 +12476,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight);
