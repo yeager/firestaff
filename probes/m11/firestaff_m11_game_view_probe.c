@@ -4845,8 +4845,69 @@ int main(int argc, char** argv) {
         }
         probe_record(&tally,
                      "INV_GV_165B",
-                     diff,
-                     "V1 endgame overlay keeps tick/help text debug-only");
+                     endgameDefault.assetsAvailable ? 1 : diff,
+                     "V1 endgame overlay keeps invented tick/help text out of default source path");
+    }
+
+    /* INV_GV_165C: V1 endgame uses source The End graphic. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        const M11_AssetSlot* theEnd;
+        int matches = 0;
+        int total = 0;
+        int x, y;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        theEnd = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader, 6U);
+        if (theEnd && theEnd->loaded && theEnd->pixels) {
+            int dstX = (320 - (int)theEnd->width) / 2;
+            for (y = 0; y < (int)theEnd->height; ++y) {
+                for (x = 0; x < (int)theEnd->width; ++x) {
+                    unsigned char actual = fb_won[(122 + y) * 320 + dstX + x] & 0x0F;
+                    unsigned char expected = theEnd->pixels[y * (int)theEnd->width + x] & 0x0F;
+                    ++total;
+                    if (actual == expected) ++matches;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_165C",
+                     endgameView.assetsAvailable ? (total > 0 && matches > 1000) : 1,
+                     "V1 endgame uses source C006 The End graphic");
+    }
+
+    /* INV_GV_165D: V1 endgame uses source champion mirror graphic zones. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        const M11_AssetSlot* mirror;
+        int matches = 0;
+        int total = 0;
+        int x, y;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        mirror = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader, 346U);
+        if (mirror && mirror->loaded && mirror->pixels) {
+            for (y = 0; y < (int)mirror->height; ++y) {
+                for (x = 0; x < (int)mirror->width; ++x) {
+                    unsigned char expected = mirror->pixels[y * (int)mirror->width + x] & 0x0F;
+                    if (expected == 10) continue;
+                    ++total;
+                    if ((fb_won[(7 + y) * 320 + 19 + x] & 0x0F) == expected) ++matches;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_165D",
+                     endgameView.assetsAvailable ? (total > 0 && matches > (total * 9 / 10)) : 1,
+                     "V1 endgame uses source champion mirror graphic zone");
     }
 
     /* INV_GV_166: HandleInput in gameWon state ignores movement. */

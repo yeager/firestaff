@@ -15679,28 +15679,62 @@ void M11_GameView_Draw(const M11_GameViewState* state,
 
     /* Endgame victory overlay */
     if (state->gameWon) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      40, 40, 240, 120, M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      40, 40, 240, 120, M11_COLOR_LIGHT_GREEN);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      42, 42, 236, 116, M11_COLOR_LIGHT_GREEN);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      90, 52, "QUEST COMPLETE", &g_text_title);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      56, 80, "LORD CHAOS IS DEFEATED.", &g_text_shadow);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      52, 92, "THE FIRESTAFF IS RESTORED.", &g_text_shadow);
-        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
-            char wonLine[48];
-            snprintf(wonLine, sizeof(wonLine), "VICTORY AT TICK %u",
-                     (unsigned int)state->gameWonTick);
+        if (m11_v1_chrome_mode_enabled() && state->assetsAvailable) {
+            const M11_AssetSlot* theEnd = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 6U);
+            const M11_AssetSlot* mirror = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 346U);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          0, 0, framebufferWidth, framebufferHeight,
+                          M11_COLOR_DARK_GRAY);
+            if (mirror && mirror->loaded && mirror->pixels) {
+                int i;
+                for (i = 0; i < 4; ++i) {
+                    M11_AssetLoader_Blit(mirror, framebuffer, framebufferWidth,
+                                         framebufferHeight, 19, 7 + (i * 48), 10);
+                }
+            }
+            if (theEnd && theEnd->loaded && theEnd->pixels) {
+                M11_AssetLoader_Blit(theEnd, framebuffer, framebufferWidth,
+                                     framebufferHeight,
+                                     (framebufferWidth - (int)theEnd->width) / 2,
+                                     122,
+                                     -1);
+            }
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          103, 140, 115, 15, M11_COLOR_DARK_GRAY);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          105, 142, 111, 11, M11_COLOR_BLACK);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          80, 112, wonLine, &g_text_small);
-        }
-        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+                          110, 149, "RESTART THIS GAME", &g_text_small);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          127, 165, 67, 15, M11_COLOR_DARK_GRAY);
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          129, 167, 63, 11, M11_COLOR_BLACK);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          80, 132, "ESC TO RETURN TO MENU", &g_text_small);
+                          134, 174, "QUIT", &g_text_small);
+        } else {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          40, 40, 240, 120, M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          40, 40, 240, 120, M11_COLOR_LIGHT_GREEN);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          42, 42, 236, 116, M11_COLOR_LIGHT_GREEN);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          90, 52, "QUEST COMPLETE", &g_text_title);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          56, 80, "LORD CHAOS IS DEFEATED.", &g_text_shadow);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          52, 92, "THE FIRESTAFF IS RESTORED.", &g_text_shadow);
+            if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+                char wonLine[48];
+                snprintf(wonLine, sizeof(wonLine), "VICTORY AT TICK %u",
+                         (unsigned int)state->gameWonTick);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              80, 112, wonLine, &g_text_small);
+            }
+            if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              80, 132, "ESC TO RETURN TO MENU", &g_text_small);
+            }
         }
     }
 
