@@ -6303,6 +6303,24 @@ int main(int argc, char** argv) {
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(&iconView, fb, 320, 200);
 
+        probe_record(&tally,
+                     "INV_GV_350",
+                     probe_count_color(fb,
+                                       320,
+                                       12,
+                                       12,
+                                       296,
+                                       12,
+                                       PROBE_COLOR_WHITE) == 0U &&
+                         probe_count_color(fb,
+                                           320,
+                                           12,
+                                           12,
+                                           296,
+                                           12,
+                                           PROBE_COLOR_YELLOW) == 0U,
+                     "normal V1 top chrome strip contains no title/debug text pixels");
+
         /* Count cyan (palette index 3) pixels inside each cell body.
          * The body is the 16x16 inner icon backdrop at
          * X=cellX+2..cellX+18, Y=95..110. */

@@ -14496,13 +14496,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
 
-    /* Top title bar — dungeon title only (no keybinding helpers) */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, 12, framebufferWidth - 24, 12, M11_COLOR_BLACK);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 13, state->title[0] != '\0' ? state->title : "DUNGEON MASTER", &g_text_shadow);
-
     if (state->showDebugHUD) {
+        /* Top title/debug bar is diagnostic-only.  Normal V1 should not
+         * advertise itself with Firestaff text chrome above the viewport;
+         * DM1's in-game screen is asset panels + viewport, not a captioned
+         * debug screenshot. */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      12, 12, framebufferWidth - 24, 12, M11_COLOR_BLACK);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 13, state->title[0] != '\0' ? state->title : "DUNGEON MASTER", &g_text_shadow);
         snprintf(line, sizeof(line), "L%d %s %s%s",
                  state->world.party.mapIndex + 1,
                  m11_direction_name(state->world.party.direction),
