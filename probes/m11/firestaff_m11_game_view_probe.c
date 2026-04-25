@@ -3429,9 +3429,9 @@ int main(int argc, char** argv) {
         probe_record(&tally,
                      "INV_GV_110B",
                      M11_GameView_GetWallSetGraphicIndex(0, 97) == 97 &&
-                     M11_GameView_GetWallSetGraphicIndex(1, 97) == 112 &&
-                     M11_GameView_GetWallSetGraphicIndex(2, 93) == 123 &&
-                     M11_GameView_GetWallSetGraphicIndex(3, 107) == 152,
+                     M11_GameView_GetWallSetGraphicIndex(1, 97) == 137 &&
+                     M11_GameView_GetWallSetGraphicIndex(2, 93) == 173 &&
+                     M11_GameView_GetWallSetGraphicIndex(3, 107) == 227,
                      "source wall blits offset wall graphics by current map wallSet");
 
         /* INV_GV_111: Per-map floor set selection reads dungeon map floorSet.

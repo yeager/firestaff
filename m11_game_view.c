@@ -7540,11 +7540,12 @@ typedef struct M11_DM1ZoneBlit {
     int height;
 } M11_DM1ZoneBlit;
 
-static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
-                                        unsigned char* framebuffer,
-                                        int fbW,
-                                        int fbH,
-                                        const M11_DM1WallFrontBlit* blit) {
+static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* state,
+                                                    unsigned char* framebuffer,
+                                                    int fbW,
+                                                    int fbH,
+                                                    const M11_DM1WallFrontBlit* blit,
+                                                    int transparentColor) {
     const M11_AssetSlot* slot;
     unsigned int graphicIndex;
     if (!state || !state->assetsAvailable || !blit) {
@@ -7559,7 +7560,7 @@ static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
         int wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
         if (wallSet < 0) wallSet = 0;
         graphicIndex = (unsigned int)(M11_GFX_WALLSET0_D0R +
-            wallSet * 15 + ((int)graphicIndex - M11_GFX_WALLSET0_D0R));
+            wallSet * 40 + ((int)graphicIndex - M11_GFX_WALLSET0_D0R));
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
@@ -7571,8 +7572,17 @@ static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
                                framebuffer, fbW, fbH,
                                M11_VIEWPORT_X + blit->dstX,
                                M11_VIEWPORT_Y + blit->dstY,
-                               -1);
+                               transparentColor);
     return 1;
+}
+
+static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
+                                        unsigned char* framebuffer,
+                                        int fbW,
+                                        int fbH,
+                                        const M11_DM1WallFrontBlit* blit) {
+    return m11_draw_dm1_wall_blit_with_transparency(state, framebuffer,
+                                                    fbW, fbH, blit, -1);
 }
 
 static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
@@ -8309,8 +8319,12 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
             continue;
         }
         if (m11_viewport_cell_is_wall_like(&cell)) {
-            (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
-                                               &kSideBlits[i]);
+            (void)m11_draw_dm1_wall_blit_with_transparency(state,
+                                                           framebuffer,
+                                                           fbW,
+                                                           fbH,
+                                                           &kSideBlits[i],
+                                                           M11_COLOR_MAGENTA);
         }
     }
 }
@@ -12256,7 +12270,7 @@ int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex) {
         wallSet0GraphicIndex > M11_GFX_WALLSET0_D3C) {
         return wallSet0GraphicIndex;
     }
-    return M11_GFX_WALLSET0_D0R + wallSet * 15 +
+    return M11_GFX_WALLSET0_D0R + wallSet * 40 +
            (wallSet0GraphicIndex - M11_GFX_WALLSET0_D0R);
 }
 
