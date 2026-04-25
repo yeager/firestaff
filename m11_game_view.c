@@ -11044,6 +11044,57 @@ static int m11_blit_panel_asset_native(const M11_GameViewState* state,
 #define M11_DM_ACTION_ICON_INNER_Y     95
 #define M11_DM_ACTION_ICON_INNER_W     16
 #define M11_DM_ACTION_ICON_INNER_H     16
+#define M11_DM_OBJECT_ICON_GRAPHIC_BASE 42
+#define M11_DM_OBJECT_ICONS_PER_GRAPHIC 32
+#define M11_DM_OBJECT_ICON_EMPTY_HAND 201
+
+static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         int iconIndex,
+                                         int dstX,
+                                         int dstY) {
+    const M11_AssetSlot* slot;
+    int graphicIndex;
+    int localIndex;
+    int srcX;
+    int srcY;
+    int y;
+    if (!state || !state->assetsAvailable || !framebuffer || iconIndex < 0) {
+        return 0;
+    }
+    graphicIndex = M11_DM_OBJECT_ICON_GRAPHIC_BASE +
+                   (iconIndex / M11_DM_OBJECT_ICONS_PER_GRAPHIC);
+    localIndex = iconIndex % M11_DM_OBJECT_ICONS_PER_GRAPHIC;
+    srcX = (localIndex & 0x0F) * M11_DM_ACTION_ICON_INNER_W;
+    srcY = (localIndex >> 4) * M11_DM_ACTION_ICON_INNER_H;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        srcX + M11_DM_ACTION_ICON_INNER_W > (int)slot->width ||
+        srcY + M11_DM_ACTION_ICON_INNER_H > (int)slot->height) {
+        return 0;
+    }
+    for (y = 0; y < M11_DM_ACTION_ICON_INNER_H; ++y) {
+        int x;
+        int fbY = dstY + y;
+        if (fbY < 0 || fbY >= framebufferHeight) continue;
+        for (x = 0; x < M11_DM_ACTION_ICON_INNER_W; ++x) {
+            int fbX = dstX + x;
+            unsigned char px;
+            if (fbX < 0 || fbX >= framebufferWidth) continue;
+            px = slot->pixels[(srcY + y) * (int)slot->width + srcX + x];
+            /* ACTIDRAW.C applies G0498 palette changes for action-area
+             * object icons: only color 12 is remapped, to C04 cyan. */
+            if ((px & 0x0F) == M11_COLOR_DARK_GRAY) {
+                px = M11_COLOR_CYAN;
+            }
+            framebuffer[fbY * framebufferWidth + fbX] = px;
+        }
+    }
+    return 1;
+}
 
 /* Which inventory slot a champion is currently treating as the
  * action hand.  ReDMCSB stores this in G407.Champions[i].Slots[
@@ -13168,8 +13219,12 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
                       M11_COLOR_CYAN);
 
         handThing = m11_get_action_hand_thing(champ);
-        if (handThing != THING_NONE && handThing != THING_ENDOFLIST &&
-            state->assetsAvailable && state->world.things) {
+        if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
+            drewSprite = m11_draw_dm_object_icon_index(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                M11_DM_OBJECT_ICON_EMPTY_HAND,
+                innerX, M11_DM_ACTION_ICON_INNER_Y);
+        } else if (state->assetsAvailable && state->world.things) {
             /* F0386 branch: only objects with a non-zero
              * ActionSetIndex get an icon blitted; everything else
              * (food, plain potions, armour, keys, chests, scrolls,

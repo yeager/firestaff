@@ -6506,7 +6506,11 @@ int main(int argc, char** argv) {
         for (slot = 0; slot < 3; ++slot) {
             struct ChampionState_Compat* c =
                 &iconView.world.party.champions[slot];
+            int invSlot;
             memset(c, 0, sizeof(*c));
+            for (invSlot = 0; invSlot < CHAMPION_SLOT_COUNT; ++invSlot) {
+                c->inventory[invSlot] = THING_NONE;
+            }
             c->present = 1;
             memcpy(c->name, "TEST\0\0\0\0", 8);
             c->hp.maximum = 60;
@@ -6611,6 +6615,21 @@ int main(int argc, char** argv) {
                      iconView.assetsAvailable ? (cyanCellsDrawn == 2)
                                               : (cyanCellsDrawn == 0),
                      "action-hand icon cells: both living champions get cyan backdrop (or no assets)");
+
+        {
+            int cellX = 0 * 22 + 233;
+            int x, y;
+            int tanCount = 0;
+            for (y = 95; y < 111; ++y) {
+                for (x = cellX + 2; x < cellX + 18; ++x) {
+                    unsigned char idx = fb[y * 320 + x] & 0x0F;
+                    if (idx == PROBE_COLOR_MAGENTA) ++tanCount;
+                }
+            }
+            probe_record(&tally, "INV_GV_300B",
+                         iconView.assetsAvailable ? (tanCount >= 40) : 1,
+                         "action-hand icon cells: empty living hand blits source empty-hand icon");
+        }
 
         /* INV_GV_259: the dead champion cell (slot 1) is painted
          * plain black (no cyan), matching F0386 behaviour for
