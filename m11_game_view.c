@@ -11309,32 +11309,39 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                       viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
     }
 
-    for (depth = 0; depth < 3; ++depth) {
-        m11_draw_corridor_frame(framebuffer, framebufferWidth, framebufferHeight,
-                                &frames[depth], &frames[depth + 1], depth);
-    }
+    /* The Firestaff procedural corridor/trapezoid renderer is not DM1
+     * DRAWVIEW output.  It stays available in debug HUD mode, but normal
+     * V1 should not draw these invented wall panels over the source floor
+     * and ceiling base.  Next source-bound pass should replace this with
+     * DUNVIEW.C wall zones C702..C717 and wall-set entries 93..107. */
+    if (state->showDebugHUD) {
+        for (depth = 0; depth < 3; ++depth) {
+            m11_draw_corridor_frame(framebuffer, framebufferWidth, framebufferHeight,
+                                    &frames[depth], &frames[depth + 1], depth);
+        }
 
-    for (depth = 0; depth < 3; ++depth) {
-        m11_draw_side_feature(framebuffer, framebufferWidth, framebufferHeight,
-                              &frames[depth], &frames[depth + 1], &cells[depth][0], -1, depth);
-        m11_draw_side_feature(framebuffer, framebufferWidth, framebufferHeight,
-                              &frames[depth], &frames[depth + 1], &cells[depth][2], 1, depth);
-        if (!occluded) {
-            m11_draw_wall_face(framebuffer, framebufferWidth, framebufferHeight,
-                               &frames[depth + 1], &cells[depth][1], depth);
-            if (!m11_viewport_cell_is_open(&cells[depth][1])) {
-                occluded = 1;
+        for (depth = 0; depth < 3; ++depth) {
+            m11_draw_side_feature(framebuffer, framebufferWidth, framebufferHeight,
+                                  &frames[depth], &frames[depth + 1], &cells[depth][0], -1, depth);
+            m11_draw_side_feature(framebuffer, framebufferWidth, framebufferHeight,
+                                  &frames[depth], &frames[depth + 1], &cells[depth][2], 1, depth);
+            if (!occluded) {
+                m11_draw_wall_face(framebuffer, framebufferWidth, framebufferHeight,
+                                   &frames[depth + 1], &cells[depth][1], depth);
+                if (!m11_viewport_cell_is_open(&cells[depth][1])) {
+                    occluded = 1;
+                }
             }
         }
-    }
 
-    occluded = 0;
-    for (depth = 0; depth < 3; ++depth) {
-        if (!occluded) {
-            m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
-                                   &frames[depth + 1], &cells[depth][1], depth);
-            if (!m11_viewport_cell_is_open(&cells[depth][1])) {
-                occluded = 1;
+        occluded = 0;
+        for (depth = 0; depth < 3; ++depth) {
+            if (!occluded) {
+                m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
+                                       &frames[depth + 1], &cells[depth][1], depth);
+                if (!m11_viewport_cell_is_open(&cells[depth][1])) {
+                    occluded = 1;
+                }
             }
         }
     }
