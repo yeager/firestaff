@@ -4910,6 +4910,32 @@ int main(int argc, char** argv) {
                      "V1 endgame uses source champion mirror graphic zone");
     }
 
+    /* INV_GV_165E: V1 endgame prints champion name at source coordinate. */
+    {
+        M11_GameViewState endgameView;
+        unsigned char fb_won[320 * 200];
+        unsigned int nameGold;
+        memcpy(&endgameView, &gameView, sizeof(endgameView));
+        endgameView.gameWon = 1;
+        endgameView.showDebugHUD = 0;
+        endgameView.world.party.championCount = 1;
+        endgameView.world.party.champions[0].present = 1;
+        memcpy(endgameView.world.party.champions[0].name, "TIGGY   ", 8);
+        memset(fb_won, 0, sizeof(fb_won));
+        M11_GameView_Draw(&endgameView, fb_won, 320, 200);
+        nameGold = probe_count_color(fb_won,
+                                     320,
+                                     87,
+                                     14,
+                                     70,
+                                     8,
+                                     PROBE_COLOR_LIGHT_RED);
+        probe_record(&tally,
+                     "INV_GV_165E",
+                     nameGold >= 4,
+                     "V1 endgame prints champion name at source coordinate");
+    }
+
     /* INV_GV_166: HandleInput in gameWon state ignores movement. */
     {
         M11_GameViewState endgameView;

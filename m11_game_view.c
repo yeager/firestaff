@@ -15690,6 +15690,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 for (i = 0; i < 4; ++i) {
                     M11_AssetLoader_Blit(mirror, framebuffer, framebufferWidth,
                                          framebufferHeight, 19, 7 + (i * 48), 10);
+                    if (i < state->world.party.championCount &&
+                        state->world.party.champions[i].present) {
+                        char champName[16];
+                        M11_TextStyle nameStyle = g_text_small;
+                        nameStyle.color = M11_COLOR_LIGHT_RED;
+                        nameStyle.shadowColor = M11_COLOR_DARK_GRAY;
+                        m11_format_champion_name(state->world.party.champions[i].name,
+                                                 champName, sizeof(champName));
+                        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                                      87, 14 + (i * 48), champName, &nameStyle);
+                    }
                 }
             }
             if (theEnd && theEnd->loaded && theEnd->pixels) {
