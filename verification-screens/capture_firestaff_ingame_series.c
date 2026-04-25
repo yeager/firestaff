@@ -86,7 +86,14 @@ static int write_ppm_from_indices(const unsigned char* fb, int width, int height
     fprintf(f, "P6\n%d %d\n255\n", width, height);
     for (y = 0; y < height; ++y) {
         for (x = 0; x < width; ++x) {
-            const unsigned char* rgb = get_rgb(fb[y * width + x], paletteLevel);
+            unsigned char raw = fb[y * width + x];
+            unsigned char idx = M11_FB_DECODE_INDEX(raw);
+            int level = M11_FB_DECODE_LEVEL(raw);
+            const unsigned char* rgb;
+            if (level < 0 || level >= 6) {
+                level = (int)paletteLevel;
+            }
+            rgb = get_rgb(idx, (unsigned int)level);
             fwrite(rgb, 1, 3, f);
         }
     }
