@@ -14137,6 +14137,19 @@ static void m11_format_champion_title(const unsigned char* raw,
     out[end] = ' ';
 }
 
+int M11_GameView_EndgameTitleXForSourceText(const char* name, const char* title) {
+    int titleX;
+    char firstTitleChar;
+    if (!name) name = "";
+    if (!title || !title[0]) return 87 + ((int)strlen(name) * 6);
+    titleX = 87 + ((int)strlen(name) * 6);
+    firstTitleChar = title[0];
+    if (firstTitleChar != ',' && firstTitleChar != ';' && firstTitleChar != '-') {
+        titleX += 6;
+    }
+    return titleX;
+}
+
 static int m11_endgame_source_skill_level(const M11_GameViewState* state,
                                            int championIndex,
                                            int baseSkillIndex) {
@@ -15769,12 +15782,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                       rawTitle, sizeof(rawTitle));
                             champTitle = rawTitle;
                             if (champTitle[0]) {
-                                int titleX = 87 + ((int)strlen(champName) * 6);
-                                char firstTitleChar = champTitle[0];
-                                if (firstTitleChar != ',' && firstTitleChar != ';' &&
-                                    firstTitleChar != '-') {
-                                    titleX += 6;
-                                }
+                                int titleX = M11_GameView_EndgameTitleXForSourceText(champName,
+                                                                                         champTitle);
                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                                               titleX, 14 + (i * 48), champTitle, &nameStyle);
                             }

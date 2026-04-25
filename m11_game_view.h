@@ -664,6 +664,12 @@ int M11_GameView_GetCreatureDerivedBitmapCount(int creatureType);
 int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,
                                          int relForward, int relSide);
 
+/* Source endgame title placement helper for probes.  Mirrors
+ * ENDGAME.C:F0444_STARTEND_Endgame spacing: title starts after
+ * Champion.Name, with an extra character gap unless the title begins
+ * with ',', ';', or '-'. */
+int M11_GameView_EndgameTitleXForSourceText(const char* name, const char* title);
+
 #ifdef __cplusplus
 }
 #endif

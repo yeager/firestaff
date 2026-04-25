@@ -5052,6 +5052,17 @@ int main(int argc, char** argv) {
                      "V1 endgame prefers raw Champion.Title bytes when present");
     }
 
+    /* INV_GV_165M: V1 endgame source title x spacing honors punctuation. */
+    {
+        probe_record(&tally,
+                     "INV_GV_165M",
+                     M11_GameView_EndgameTitleXForSourceText("HALK", "THE BARBARIAN") == 117 &&
+                         M11_GameView_EndgameTitleXForSourceText("HALK", ", THE BARBARIAN") == 111 &&
+                         M11_GameView_EndgameTitleXForSourceText("HALK", "; THE BARBARIAN") == 111 &&
+                         M11_GameView_EndgameTitleXForSourceText("HALK", "- THE BARBARIAN") == 111,
+                     "V1 endgame title x spacing honors source punctuation rule");
+    }
+
     /* INV_GV_165F: V1 endgame prints source skill title line. */
     {
         M11_GameViewState endgameView;
