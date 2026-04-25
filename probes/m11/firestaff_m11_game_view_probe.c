@@ -3412,6 +3412,30 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectSourceScaleUnits(4) == 12,
                      "object source scale units match G2030 table");
 
+        /* INV_GV_114D: Object pile shift index table is G0217. */
+        {
+            int x0 = -1, y0 = -1, x10 = -1, y10 = -1, x15 = -1, y15 = -1;
+            M11_GameView_GetObjectPileShiftIndices(0, &x0, &y0);
+            M11_GameView_GetObjectPileShiftIndices(10, &x10, &y10);
+            M11_GameView_GetObjectPileShiftIndices(15, &x15, &y15);
+            probe_record(&tally,
+                         "INV_GV_114D",
+                         x0 == 2 && y0 == 5 &&
+                         x10 == 7 && y10 == 7 &&
+                         x15 == 5 && y15 == 3,
+                         "object pile shift index pairs match G0217 samples");
+        }
+
+        /* INV_GV_114E: Object/creature shift value table is G0223. */
+        probe_record(&tally,
+                     "INV_GV_114E",
+                     M11_GameView_GetObjectShiftValue(0, 3) == 3 &&
+                     M11_GameView_GetObjectShiftValue(0, 5) == -3 &&
+                     M11_GameView_GetObjectShiftValue(1, 5) == -2 &&
+                     M11_GameView_GetObjectShiftValue(2, 3) == 1 &&
+                     M11_GameView_GetObjectShiftValue(2, 7) == -1,
+                     "object shift values match G0223 samples");
+
         /* INV_GV_115: Draw with item sprites on floor produces different
          * output from draw without items.  We place an item and compare. */
         {

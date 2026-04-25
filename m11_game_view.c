@@ -8593,6 +8593,36 @@ static int m11_object_source_scale_units(int scaleIndex) {
     return kObjectScales[scaleIndex];
 }
 
+static void m11_object_source_pile_shift_indices(int pileIndex,
+                                                 int* outXIndex,
+                                                 int* outYIndex) {
+    /* DUNVIEW.C G0217_aauc_Graphic558_ObjectPileShiftSetIndices. */
+    static const unsigned char kPileShiftIndices[16][2] = {
+        {2,5}, {0,6}, {5,7}, {3,0},
+        {7,1}, {1,2}, {6,3}, {3,3},
+        {5,5}, {2,6}, {7,7}, {1,0},
+        {3,1}, {6,2}, {1,3}, {5,3}
+    };
+    if (pileIndex < 0) pileIndex = 0;
+    pileIndex &= 0x0F;
+    if (outXIndex) *outXIndex = (int)kPileShiftIndices[pileIndex][0];
+    if (outYIndex) *outYIndex = (int)kPileShiftIndices[pileIndex][1];
+}
+
+static int m11_object_source_shift_value(int shiftSet, int shiftIndex) {
+    /* DUNVIEW.C G0223_aac_Graphic558_ShiftSets. */
+    static const signed char kShiftSets[3][8] = {
+        { 0, 1, 2, 3, 0,-3,-2,-1},
+        { 0, 1, 1, 2, 0,-2,-1,-1},
+        { 0, 1, 1, 1, 0,-1,-1,-1}
+    };
+    if (shiftSet < 0) shiftSet = 0;
+    if (shiftSet > 2) shiftSet = 2;
+    if (shiftIndex < 0) shiftIndex = 0;
+    if (shiftIndex > 7) shiftIndex = 7;
+    return (int)kShiftSets[shiftSet][shiftIndex];
+}
+
 /* Resolve an inventory thingId to a GRAPHICS.DAT item sprite index.
  * Returns the graphic index suitable for M11_AssetLoader_Load, or 0
  * if the thing type/subtype cannot be mapped.  This is the inventory
@@ -11656,6 +11686,16 @@ unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
 
 int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex) {
     return m11_object_source_scale_units(scaleIndex);
+}
+
+void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
+                                            int* outXIndex,
+                                            int* outYIndex) {
+    m11_object_source_pile_shift_indices(pileIndex, outXIndex, outYIndex);
+}
+
+int M11_GameView_GetObjectShiftValue(int shiftSet, int shiftIndex) {
+    return m11_object_source_shift_value(shiftSet, shiftIndex);
 }
 
 static int m11_perform_non_melee_action(M11_GameViewState* state,
