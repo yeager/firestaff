@@ -112,7 +112,7 @@ if ratio > 0.01:
     )
 PY
 
-python3 - "$OUT_DIR/02_ingame_turn_right_latest.ppm" "$OUT_DIR/06_ingame_inventory_panel_latest.ppm" <<'PY'
+python3 - "$OUT_DIR/02_ingame_turn_right_latest.ppm" "$OUT_DIR/06_ingame_inventory_panel_latest.ppm" "$OUT_DIR/04_ingame_spell_panel_latest.ppm" <<'PY'
 from pathlib import Path
 import sys
 
@@ -137,6 +137,7 @@ def count_rgb(pixels, w, x0, y0, x1, y1, rgb):
 
 action_w, _, action_pixels = read_ppm(sys.argv[1])
 inv_w, _, inv_pixels = read_ppm(sys.argv[2])
+spell_w, _, spell_pixels = read_ppm(sys.argv[3])
 
 # The deterministic capture champion holds a dagger.  In the right-side
 # action cell, source dagger icon colour 12 must be remapped by G0498 to
@@ -156,6 +157,19 @@ inv_dark_gray = count_rgb(inv_pixels, inv_w, 34, 53, 50, 69, dm_dark_gray)
 if inv_dark_gray < 180:
     raise SystemExit(
         f"inventory fixture dagger icon did not preserve source dark gray: {inv_dark_gray}/256"
+    )
+
+# After the scripted first rune input, the spell panel should show a selected
+# C011 rune-label cell at x=83..96, y=43..55.  The native source cell has a
+# distinctive brown/red multicolour pattern; the procedural fallback does not.
+dm_brown = (219, 146, 109)
+dm_red = (255, 0, 0)
+selected_brown = count_rgb(spell_pixels, spell_w, 83, 43, 97, 56, dm_brown)
+selected_red = count_rgb(spell_pixels, spell_w, 83, 43, 97, 56, dm_red)
+if selected_brown < 40 or selected_red < 25:
+    raise SystemExit(
+        "spell fixture did not show native C011 selected-rune cell "
+        f"(brown={selected_brown}, red={selected_red})"
     )
 PY
 
