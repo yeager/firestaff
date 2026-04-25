@@ -12,3 +12,5 @@ Identity targets: dark skin, stern angular face, pale eyes, red mouth, large bla
 
 - A: visually strong but drifts too far into a generic regal/Afro-futurist archetype.
 - B: stricter source-lock attempt; preferred candidate for now if the goal is recognizability.
+
+- C: true-hybrid regeneration after Daniel rejected B as not hybrid enough. Stronger pixel-source foundation: blocky silhouette/color clusters retained, modern detail layered on top.
