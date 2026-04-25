@@ -806,6 +806,26 @@ first, then visual parity, then typography / honesty.
     scripts, command results, artifact paths/sizes, timestamped match table, and
     why cadence remains unclaimed.  No V1 runtime code changed, and no original
     timing/cadence claim was added.
+- **Pass 67 (landed, 2026-04-25):**
+  - Added `scripts/dosbox_dm1_native_title_capture_pass67.sh`, which drives
+    DOSBox Staging's native macOS screenshot mapper (`Cmd+F5`) with
+    `default_image_capture_formats=raw`, and
+    `scripts/dosbox_dm1_native_title_match_pass67.py`, which validates the raw
+    PNG manifest and compares each 320x200 framebuffer image directly against
+    the 53 source-backed TITLE frames.
+  - Verified that native raw screenshots work: the retained run produced 18/18
+    320x200 raw framebuffer PNGs.  Seven screenshots matched the TITLE dump
+    within the pass-65 tolerance envelope, all best-matching `frame_0012.ppm`
+    with `MAE 1.355042` and max delta `12`.
+  - A tuning run at a later selector offset hit `frame_0030.ppm` repeatedly,
+    proving that different source-backed TITLE stills can be captured natively;
+    however, each single run remains too sparse/blocking to produce a monotonic
+    source-frame timing trace.
+  - Evidence note:
+    `parity-evidence/pass67_v1_native_raw_title_capture.md` documents the native
+    screenshot mapper behavior, command results, artifact paths/sizes, match
+    metrics, and the precise remaining blocker.  No V1 runtime code changed,
+    and no original timing/cadence claim was added.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
@@ -823,17 +843,19 @@ first, then visual parity, then typography / honesty.
      implementation cadence/handoff policy only.
   2. Pixel-compare the wired frontend output against a timestamped original
      emulator capture sequence; pass 66 proves the targeted-window bridge can
-     capture timestamped changes, but its sparse host-capture cadence is not a
-     raw framebuffer sequence and the low-residual TITLE samples are not a robust
+     capture timestamped changes, and pass 67 proves native raw 320x200 stills
+     can hit source-backed TITLE frames, but neither route has produced a robust
      monotonic timing trace.
-  3. Get native/raw DOSBox screenshots working, or make the targeted-window
-     sequence earlier/faster and monotonic, so frontend cadence and handoff
-     comparison is not inferred from sparse host stills.
-- **Suggested follow-up pass:** pursue native/raw DOSBox screenshots first; if
-  that remains blocked, tighten the pass-66 launch-time targeted-window sequence
-  so it starts before the observed TITLE-like window and proves monotonic
-  source-frame movement before making frontend timing claims.  Avoid heavy video
-  work until the raw/dense frame path is proven.
+  3. Bypass the blocking DOSBox Staging screenshot mapper with a per-presented-
+     frame raw framebuffer dump, or source-prove PC TITLE timing/handoff from
+     the original/ReDMCSB PC-conditional path before making frontend timing
+     claims.
+- **Suggested follow-up pass:** instrument DOSBox Staging/SDL or use an emulator
+  with frame-dump/debugger support (for example DOSBox-X or a custom Staging
+  build) to dump the raw 320x200 framebuffer once per presented VGA frame.  In
+  parallel, isolate the PC-target timing conditionals in ReDMCSB `TITLE.C` and
+  the PC video wait path so native stills can be paired with source timing proof
+  instead of sparse hotkey screenshots.
 
 ---
 
