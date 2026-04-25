@@ -4829,6 +4829,7 @@ typedef struct M11_ViewportCell {
     int thingCount;
     unsigned short firstThing;
     int doorState;
+    int doorType;
     int doorVertical;
     int hasDoorThing;
     int creatureType; /* -1 if no creature, else creature type index (0-26) */
@@ -5777,6 +5778,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.elementType = DUNGEON_ELEMENT_WALL;
     cell.firstThing = THING_ENDOFLIST;
     cell.doorState = -1;
+    cell.doorType = 0;
     cell.creatureType = -1;
     { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) { cell.creatureTypes[ci] = -1; cell.creatureCountsPerGroup[ci] = 0; cell.creatureDirections[ci] = -1; } }
     cell.creatureGroupCount = 0;
@@ -5846,6 +5848,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             int doorIndex = THING_GET_INDEX(firstThing);
             if (doorIndex >= 0 && doorIndex < state->world.things->doorCount) {
                 cell.hasDoorThing = 1;
+                cell.doorType = state->world.things->doors[doorIndex].type & 1;
                 cell.doorVertical = state->world.things->doors[doorIndex].vertical;
             }
         }
@@ -7185,6 +7188,32 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
     return 1;
 }
 
+static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
+                                      const M11_ViewportCell* cell,
+                                      int depthIndex) {
+    int mapIdx;
+    int doorSet = 0;
+    int doorType = 0;
+    int depthOffset;
+    if (!state || !state->world.dungeon || !cell || depthIndex < 0 || depthIndex > 2) {
+        return -1;
+    }
+    mapIdx = state->world.party.mapIndex;
+    if (mapIdx < 0 || mapIdx >= state->world.dungeon->header.mapCount) {
+        return -1;
+    }
+    doorType = cell->doorType & 1;
+    doorSet = doorType ?
+        (int)state->world.dungeon->maps[mapIdx].doorSet1 :
+        (int)state->world.dungeon->maps[mapIdx].doorSet0;
+    /* ReDMCSB F0095_DUNGEONVIEW_LoadDoorSet:
+     *   D3 = M633 + doorSet*3 + 0
+     *   D2 = M633 + doorSet*3 + 1
+     *   D1 = M633 + doorSet*3 + 2 */
+    depthOffset = 2 - depthIndex;
+    return M11_GFX_DOOR_SET0_D3 + doorSet * 3 + depthOffset;
+}
+
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int fbW,
@@ -7265,18 +7294,20 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
     static const M11_DM1ZoneBlit kD1C[] = {
         {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 61, 12, 102, 4},
         {M11_GFX_DOOR_SIDE_D1,     0, 0, 44, 13, 25, 94},
-        {M11_GFX_DOOR_SIDE_D1,     0, 0, 155, 13, 25, 94},
-        {M11_GFX_DOOR_SET0_D1,     0, 0, 64, 16, 96, 86}
+        {M11_GFX_DOOR_SIDE_D1,     0, 0, 155, 13, 25, 94}
     };
     static const M11_DM1ZoneBlit kD2C[] = {
         {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 77, 21, 70, 3},
         {M11_GFX_DOOR_SIDE_D2,     0, 0, 65, 21, 18, 65},
-        {M11_GFX_DOOR_SIDE_D2,     0, 0, 141, 21, 18, 65},
-        {M11_GFX_DOOR_SET0_D2,     0, 0, 80, 24, 64, 59}
+        {M11_GFX_DOOR_SIDE_D2,     0, 0, 141, 21, 18, 65}
     };
     static const M11_DM1ZoneBlit kD3C[] = {
         {M11_GFX_DOOR_SIDE_D3, 0, 0, 82, 27, 10, 42},
-        {M11_GFX_DOOR_SIDE_D3, 0, 0, 132, 27, 10, 42},
+        {M11_GFX_DOOR_SIDE_D3, 0, 0, 132, 27, 10, 42}
+    };
+    static const M11_DM1ZoneBlit kDoorPanels[3] = {
+        {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
+        {M11_GFX_DOOR_SET0_D2, 0, 0, 80, 24, 64, 59},
         {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38}
     };
     static const struct { const M11_DM1ZoneBlit* blits; size_t count; } kByDepth[3] = {
@@ -7298,6 +7329,15 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
         for (i = 0; i < kByDepth[depth].count; ++i) {
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                          &kByDepth[depth].blits[i], 10);
+        }
+        {
+            M11_DM1ZoneBlit panel = kDoorPanels[depth];
+            int panelGraphic = m11_dm1_door_panel_graphic(state, cell, depth);
+            if (panelGraphic >= 0) {
+                panel.graphicIndex = panelGraphic;
+            }
+            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                         &panel, 10);
         }
         break;
     }
