@@ -6925,7 +6925,7 @@ enum {
      * wallSet + ornament ordinal. */
     M11_GFX_WALL_ORNAMENT_BASE = 101, /* first wall ornament graphic */
     M11_GFX_WALL_ORNAMENTS_PER_SET = 16,
-    M11_GFX_DOOR_ORNAMENT_BASE = 165, /* first door ornament graphic */
+    M11_GFX_DOOR_ORNAMENT_BASE = 441, /* M617_GRAPHIC_FIRST_DOOR_ORNAMENT */
     M11_GFX_DOOR_ORNAMENTS_PER_SET = 16,
 
     /* Floor ornament graphics.
@@ -7215,6 +7215,40 @@ static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
     return M11_GFX_DOOR_SET0_D3 + doorSet * 3 + depthOffset;
 }
 
+static int m11_dm1_scaled_dimension(int dimension, int scale) {
+    return ((dimension * scale) + (scale >> 1)) >> 5;
+}
+
+static int m11_dm1_door_ornament_info(const M11_GameViewState* state,
+                                      int ornamentOrdinal,
+                                      int* outGraphicIndex,
+                                      int* outCoordSet) {
+    static const unsigned char kDoorOrnCoordSet[12] = {
+        0, 1, 1, 1, 0, 1, 2, 1, 1, 1, 1, 1
+    };
+    int mapIdx;
+    int ordIdx;
+    int globalIdx;
+    if (!state || !state->world.dungeon || ornamentOrdinal <= 0 ||
+        !outGraphicIndex || !outCoordSet) {
+        return 0;
+    }
+    mapIdx = state->world.party.mapIndex;
+    ordIdx = ornamentOrdinal - 1;
+    m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+    if (mapIdx >= 0 && mapIdx < 32 && state->ornamentCacheLoaded[mapIdx] && ordIdx < 16) {
+        globalIdx = state->doorOrnamentIndices[mapIdx][ordIdx];
+    } else {
+        globalIdx = ordIdx;
+    }
+    if (globalIdx < 0) {
+        return 0;
+    }
+    *outGraphicIndex = M11_GFX_DOOR_ORNAMENT_BASE + globalIdx;
+    *outCoordSet = (globalIdx >= 0 && globalIdx < 12) ? kDoorOrnCoordSet[globalIdx] : 1;
+    return 1;
+}
+
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int fbW,
@@ -7357,6 +7391,98 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                          &panel, 10);
         }
+        break;
+    }
+}
+
+static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
+                                               unsigned char* framebuffer,
+                                               int fbW,
+                                               int fbH,
+                                               const M11_ViewportCell cells[3][3]) {
+    static const M11_DM1ZoneBlit kDoorPanels[3][4] = {
+        {
+            {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
+            {M11_GFX_DOOR_SET0_D1, 0, 65, 64, 15, 96, 23},
+            {M11_GFX_DOOR_SET0_D1, 0, 43, 64, 15, 96, 45},
+            {M11_GFX_DOOR_SET0_D1, 0, 21, 64, 15, 96, 67}
+        },
+        {
+            {M11_GFX_DOOR_SET0_D2, 0, 0, 80, 24, 64, 59},
+            {M11_GFX_DOOR_SET0_D2, 0, 44, 80, 24, 64, 17},
+            {M11_GFX_DOOR_SET0_D2, 0, 29, 80, 24, 64, 32},
+            {M11_GFX_DOOR_SET0_D2, 0, 14, 80, 24, 64, 47}
+        },
+        {
+            {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38},
+            {M11_GFX_DOOR_SET0_D3, 0, 27, 90, 29, 44, 11},
+            {M11_GFX_DOOR_SET0_D3, 0, 17, 90, 29, 44, 21},
+            {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
+        }
+    };
+    static const int kAnchorX[3][3] = {
+        {28, 42, 63}, /* coordinate set 0: right-aligned anchors */
+        {15, 22, 33}, /* coordinate set 1: left/top-ish anchors */
+        {34, 50, 75}  /* coordinate set 2: right/bottom anchors */
+    };
+    static const int kAnchorY[3][3] = {
+        {13, 17, 22},
+        {23, 35, 53},
+        {37, 53, 80}
+    };
+    int depth;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        const M11_ViewportCell* cell = &cells[depth][1];
+        const M11_AssetSlot* slot;
+        int graphicIndex;
+        int coordSet;
+        int panelState;
+        M11_DM1ZoneBlit panel;
+        int scale = (depth == 0) ? 32 : ((depth == 1) ? 21 : 14);
+        int viewIndex = (depth == 0) ? 2 : ((depth == 1) ? 1 : 0);
+        int ornW, ornH, relX, relY;
+        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
+            m11_viewport_cell_is_open(cell) || cell->doorOrnamentOrdinal <= 0) {
+            continue;
+        }
+        if (!m11_dm1_door_ornament_info(state, cell->doorOrnamentOrdinal,
+                                        &graphicIndex, &coordSet)) {
+            continue;
+        }
+        slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    (unsigned int)graphicIndex);
+        if (!slot || slot->width <= 0 || slot->height <= 0) {
+            continue;
+        }
+        if (coordSet < 0 || coordSet > 2) {
+            coordSet = 1;
+        }
+        ornW = m11_dm1_scaled_dimension(slot->width, scale);
+        ornH = m11_dm1_scaled_dimension(slot->height, scale);
+        if (ornW <= 0 || ornH <= 0) {
+            continue;
+        }
+        panelState = (cell->doorState >= 1 && cell->doorState <= 3) ? cell->doorState : 0;
+        panel = kDoorPanels[depth][panelState];
+        if (coordSet == 0) {
+            relX = kAnchorX[coordSet][viewIndex] - ornW;
+            relY = kAnchorY[coordSet][viewIndex];
+        } else if (coordSet == 1) {
+            relX = kAnchorX[coordSet][viewIndex];
+            relY = kAnchorY[coordSet][viewIndex] - ornH;
+        } else {
+            relX = kAnchorX[coordSet][viewIndex] - ornW;
+            relY = kAnchorY[coordSet][viewIndex] - ornH;
+        }
+        M11_AssetLoader_BlitScaled(slot,
+                                   framebuffer, fbW, fbH,
+                                   M11_VIEWPORT_X + panel.dstX + relX,
+                                   M11_VIEWPORT_Y + panel.dstY + relY,
+                                   ornW, ornH,
+                                   9);
         break;
     }
 }
@@ -11782,6 +11908,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight);
 
