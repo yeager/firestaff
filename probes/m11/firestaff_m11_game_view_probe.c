@@ -5783,9 +5783,7 @@ int main(int argc, char** argv) {
     {
         M11_GameViewState multiView;
         unsigned char fb1[320 * 200];
-        unsigned char fb2[320 * 200];
         int singlePixels = 0;
-        int multiPixels = 0;
         int px;
         int viewX = 12, viewY = 24;
         int viewW = 196, viewH = 118;
@@ -5807,7 +5805,6 @@ int main(int argc, char** argv) {
          * same square will be picked up.  However, modifying thing lists
          * at this point is fragile, so we verify the structural property
          * instead: that M11_MAX_CELL_CREATURES >= 4 (DM1 supports 4). */
-        multiPixels = singlePixels; /* baseline */
         probe_record(&tally,
                      "INV_GV_232",
                      singlePixels > 0,
@@ -7201,7 +7198,7 @@ int main(int argc, char** argv) {
         const int fSquareCount = mapW * mapH;
         int fi;
         int slot0;
-        int startX, startY, startMap;
+        int startX, startY;
         struct ProjectileCreateInput_Compat pcIn;
         struct TimelineEvent_Compat pcFirst;
 
@@ -7252,7 +7249,6 @@ int main(int argc, char** argv) {
 
         startX   = 2;
         startY   = 4;
-        startMap = 0;
 
         /* Spawn a FIREBALL directly via F0810, bypassing the action
          * menu path to isolate advance-only behaviour. */
