@@ -3412,6 +3412,17 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectSourceScaleUnits(4) == 12,
                      "object source scale units match G2030 table");
 
+        /* INV_GV_114C2: Object scale-index selection follows F0115
+         * front/back view-cell formula for D1/D2/D3 center-lane cells. */
+        probe_record(&tally,
+                     "INV_GV_114C2",
+                     M11_GameView_GetObjectSourceScaleIndex(0, 3) == 0 &&
+                     M11_GameView_GetObjectSourceScaleIndex(1, 2) == 1 &&
+                     M11_GameView_GetObjectSourceScaleIndex(1, 0) == 2 &&
+                     M11_GameView_GetObjectSourceScaleIndex(2, 2) == 3 &&
+                     M11_GameView_GetObjectSourceScaleIndex(2, 0) == 4,
+                     "object source scale-index selection follows F0115 front/back cells");
+
         /* INV_GV_114D: Object pile shift index table is G0217. */
         {
             int x0 = -1, y0 = -1, x10 = -1, y10 = -1, x15 = -1, y15 = -1;

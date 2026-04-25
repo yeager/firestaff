@@ -515,6 +515,7 @@ unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype);
 /* Return DM1 G2030 object scale units for source object distance/cell
  * scale bucket 0..4. Out-of-range inputs clamp like the renderer. */
 int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex);
+int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell);
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
                                             int* outXIndex,
                                             int* outYIndex);

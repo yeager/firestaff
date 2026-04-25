@@ -4844,6 +4844,7 @@ typedef struct M11_ViewportCell {
     /* All visible floor items (up to 4) for multi-item scatter */
     int floorItemTypes[M11_MAX_CELL_ITEMS];    /* THING_TYPE_*, -1 sentinel */
     int floorItemSubtypes[M11_MAX_CELL_ITEMS]; /* subtype per item, -1 sentinel */
+    int floorItemCells[M11_MAX_CELL_ITEMS];    /* relative cell 0..3 */
     int floorItemCount; /* number of valid entries in floorItem arrays */
     /* Wall/door ornament ordinal from thing data (0-15, -1 if none) */
     int wallOrnamentOrdinal;
@@ -5842,7 +5843,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.creatureGroupCount = 0;
     cell.firstItemThingType = -1;
     cell.firstItemSubtype = -1;
-    { int fi; for (fi = 0; fi < M11_MAX_CELL_ITEMS; ++fi) { cell.floorItemTypes[fi] = -1; cell.floorItemSubtypes[fi] = -1; } }
+    { int fi; for (fi = 0; fi < M11_MAX_CELL_ITEMS; ++fi) { cell.floorItemTypes[fi] = -1; cell.floorItemSubtypes[fi] = -1; cell.floorItemCells[fi] = 0; } }
     cell.floorItemCount = 0;
     cell.wallOrnamentOrdinal = -1;
     cell.doorOrnamentOrdinal = -1;
@@ -5987,6 +5988,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                 }
                 cell.floorItemTypes[cell.floorItemCount] = tType;
                 cell.floorItemSubtypes[cell.floorItemCount] = itemSubtype;
+                cell.floorItemCells[cell.floorItemCount] = (((int)(scanThing >> 14)) - state->world.party.direction) & 3;
                 cell.floorItemCount++;
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);
@@ -6576,6 +6578,7 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int fbW, int fbH,
                                 int x, int y, int w, int h,
                                 int thingType, int subtype,
+                                int relativeCell, int pileIndex,
                                 int depthIndex);
 static int m11_draw_wall_ornament(const M11_GameViewState* state,
                                   unsigned char* framebuffer,
@@ -6761,6 +6764,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                       faceX + 2, faceY + 2, faceW - 4, faceH - 4,
                                       cell->floorItemTypes[ii],
                                       cell->floorItemSubtypes[ii],
+                                      cell->floorItemCells[ii], ii,
                                       depthIndex)) {
                 /* Fallback cue only for the first item to avoid clutter */
                 if (ii == 0) {
@@ -8610,6 +8614,20 @@ static int m11_object_source_scale_units(int scaleIndex) {
     return kObjectScales[scaleIndex];
 }
 
+static int m11_object_source_scale_index(int depthIndex, int relativeCell) {
+    /* F0115 object path:
+     *   D1/native uses scale bucket 0.
+     *   deeper rows use (viewDepth * 2) - 1 - (viewCell >> 1).
+     * relativeCell 0/1 = back row, 2/3 = front row. */
+    int frontRow = relativeCell >= 2;
+    int idx;
+    if (depthIndex <= 0) return 0;
+    idx = depthIndex * 2 - (frontRow ? 1 : 0);
+    if (idx < 0) idx = 0;
+    if (idx > 4) idx = 4;
+    return idx;
+}
+
 static void m11_object_source_pile_shift_indices(int pileIndex,
                                                  int* outXIndex,
                                                  int* outYIndex) {
@@ -8710,11 +8728,17 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int h,
                                 int thingType,
                                 int subtype,
+                                int relativeCell,
+                                int pileIndex,
                                 int depthIndex) {
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
     int spriteW, spriteH;
     int drawW, drawH, drawX, drawY;
+    int scaleIndex;
+    int shiftSet;
+    int shiftXIndex = 0;
+    int shiftYIndex = 0;
 
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
     gfxIdx = m11_item_sprite_index(thingType, subtype);
@@ -8726,56 +8750,40 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
     spriteW = (int)slot->width;
     spriteH = (int)slot->height;
 
-    /* Scale item sprite to fit within the floor area, keeping aspect ratio.
-     * Reduce size at greater depths for perspective. */
-    drawW = w / 2;
+    /* Source-derived object scaling. DM1 uses G2030 units out of 32 for
+     * object scale buckets; this keeps the current center-cell renderer
+     * aligned with the future C2500 zone pass instead of using invented
+     * depth percentages. */
+    scaleIndex = m11_object_source_scale_index(depthIndex, relativeCell);
+    drawW = (int)slot->width * m11_object_source_scale_units(scaleIndex) / 32;
     drawH = (drawW * spriteH) / spriteW;
-    if (drawH > h / 2) {
-        drawH = h / 2;
+    if (drawH > h) {
+        drawH = h;
         drawW = (drawH * spriteW) / spriteH;
     }
-    /* Shrink at depth */
-    if (depthIndex >= 1) {
-        drawW = drawW * 2 / 3;
-        drawH = drawH * 2 / 3;
-    }
-    if (depthIndex >= 2) {
-        drawW = drawW * 2 / 3;
-        drawH = drawH * 2 / 3;
+    if (drawW > w) {
+        drawW = w;
+        drawH = (drawW * spriteH) / spriteW;
     }
     if (drawW < 3 || drawH < 3) return 0;
 
-    /* DM1-faithful floor item scatter placement.
-     * In the original, items on the floor are placed in one of 4 sub-cell
-     * positions (NW/NE/SW/SE) based on their thing-list position within
-     * the square.  Since we only render the first item, we use the
-     * subtype as a scatter seed to pick one of the 4 positions, giving
-     * visual variety across different item types instead of always
-     * centering them.  This matches the original's spatial distribution
-     * where items rarely overlap exactly at the center. */
+    /* Source-derived pile shift. F0115 uses G0217 to pick X/Y shift
+     * indices and G0223 to turn those indices into pixel offsets for the
+     * current distance bucket. We still draw into the temporary center
+     * rectangle, but the scatter order now follows the DM1 table. */
     {
-        int scatter = ((unsigned int)(subtype + thingType)) & 3;
         int halfW = (w - drawW) / 2;
-        int qx = halfW / 2;  /* quarter offset for scatter */
-        int qy = 2;          /* small vertical scatter */
-        switch (scatter) {
-            case 0: /* NW quadrant */
-                drawX = x + halfW - qx;
-                drawY = y + h - drawH - 2 - qy;
-                break;
-            case 1: /* NE quadrant */
-                drawX = x + halfW + qx;
-                drawY = y + h - drawH - 2 - qy;
-                break;
-            case 2: /* SW quadrant */
-                drawX = x + halfW - qx;
-                drawY = y + h - drawH - 2 + qy;
-                break;
-            default: /* SE quadrant */
-                drawX = x + halfW + qx;
-                drawY = y + h - drawH - 2 + qy;
-                break;
-        }
+        int cellX = (relativeCell == 1 || relativeCell == 3) ? (w / 6) : -(w / 6);
+        int cellY = (relativeCell >= 2) ? 2 : -2;
+        shiftSet = (scaleIndex + 1) >> 1;
+        if (shiftSet > 2) shiftSet = 2;
+        m11_object_source_pile_shift_indices(pileIndex, &shiftXIndex, &shiftYIndex);
+        drawX = x + halfW + cellX + m11_object_source_shift_value(shiftSet, shiftXIndex);
+        drawY = y + h - drawH - 2 + cellY + m11_object_source_shift_value(shiftSet, shiftYIndex);
+        if (drawX < x) drawX = x;
+        if (drawY < y) drawY = y;
+        if (drawX + drawW > x + w) drawX = x + w - drawW;
+        if (drawY + drawH > y + h) drawY = y + h - drawH;
     }
 
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
@@ -9751,6 +9759,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                           paneW - 2, itemArea,
                                           cell->floorItemTypes[ii],
                                           cell->floorItemSubtypes[ii],
+                                          cell->floorItemCells[ii], ii,
                                           depthIndex + 1)) {
                     if (ii == 0) {
                         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -11727,6 +11736,10 @@ unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
 
 int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex) {
     return m11_object_source_scale_units(scaleIndex);
+}
+
+int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell) {
+    return m11_object_source_scale_index(depthIndex, relativeCell);
 }
 
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
