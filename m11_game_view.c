@@ -80,18 +80,9 @@ enum {
  *   COORD.C:82   int16_t G2068_i_ViewportScreenY = 33;
  *
  * The DM1-original viewport rectangle on the 320x200 framebuffer is
- * therefore (x=0, y=33, w=224, h=136).  Firestaff's current active
- * viewport (M11_VIEWPORT_* below) remains at (12, 24, 196, 118) for
- * v1 because the surrounding HUD is still the Firestaff-invented
- * chrome, not the DM1 side-column layout.  See V1_BLOCKERS.md entry 4
- * and parity-evidence/pass40_viewport_lock.md for the full overlap /
- * dependency analysis.  The DM1_* constants below exist so that a
- * future pass (specifically pass 42 — invented-chrome reroute)
- * can bind the viewport to its source-faithful rectangle without
- * having to re-derive the anchor.  They intentionally do not replace
- * M11_VIEWPORT_* at this pass; doing so would overlap the Firestaff
- * utility panel, party slots, and prompt/control strips (quantified
- * in the pass-40 probe) and therefore cannot land in isolation.
+ * therefore (x=0, y=33, w=224, h=136).  Normal V1 now uses that
+ * source-faithful rectangle directly; the old smaller Firestaff
+ * viewport remains only for debug/prototype HUD mode.
  */
 enum {
     M11_DM1_VIEWPORT_X = 0,    /* COORD.C G2067_i_ViewportScreenX        */
@@ -101,10 +92,10 @@ enum {
 };
 
 enum {
-    M11_VIEWPORT_X = 12,
-    M11_VIEWPORT_Y = 24,
-    M11_VIEWPORT_W = 196,
-    M11_VIEWPORT_H = 118,
+    M11_VIEWPORT_X = M11_DM1_VIEWPORT_X,
+    M11_VIEWPORT_Y = M11_DM1_VIEWPORT_Y,
+    M11_VIEWPORT_W = M11_DM1_VIEWPORT_W,
+    M11_VIEWPORT_H = M11_DM1_VIEWPORT_H,
     M11_CONTROL_STRIP_X = 14,
     M11_CONTROL_STRIP_Y = 165,
     M11_CONTROL_STRIP_W = 88,
@@ -11264,10 +11255,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                               int framebufferHeight) {
     static const M11_ViewRect viewport = {M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H};
     static const M11_ViewRect frames[4] = {
-        {20, 32, 180, 102},
-        {40, 44, 140, 78},
-        {58, 56, 104, 54},
-        {74, 66, 72, 34}
+        {8, 41, 208, 120},
+        {34, 54, 156, 88},
+        {58, 68, 108, 58},
+        {78, 79, 68, 36}
     };
     M11_ViewportCell cells[3][3];
     int depth;
@@ -11355,11 +11346,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                        viewport.y + viewport.h / 2 + 8, M11_COLOR_LIGHT_GRAY);
     }
 
-    /* Overlay real GRAPHICS.DAT wall textures when available.
-     * Tiles wall-set strips into the corridor frame regions using
-     * scaled blits. Draws back-to-front so nearer strips occlude.
-     * Uses the current map's wallSet for texture selection. */
-    if (state->assetsAvailable) {
+    /* Debug/prototype only: the old Firestaff path tiled GRAPHICS.DAT
+     * wall/floor strips across procedural trapezoids.  That creates the
+     * noisy, speckled "not DM1" viewport Daniel called out.  Normal V1
+     * must wait for source-bound DRAWVIEW-style wall/floor placement
+     * instead of this placeholder tiling. */
+    if (state->assetsAvailable && state->showDebugHUD) {
         int d;
         int mapWallSet = m11_current_map_wall_set(state);
         int mapFloorSet = m11_current_map_floor_set(state);
