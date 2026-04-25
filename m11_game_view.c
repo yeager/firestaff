@@ -486,6 +486,67 @@ static int m11_dialog_source_c469_text_y(void) {
     return M11_VIEWPORT_Y + relativeY;
 }
 
+static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
+    enum {
+        C469_TOP = 49,
+        C469_BOTTOM = 73,
+        SOURCE_TEXT_HEIGHT = 6,
+        SOURCE_TEXT_PAD = 1,
+        SOURCE_TEXT_BASELINE = 6,
+        SOURCE_LINE_STEP = 8
+    };
+    int zoneH = (C469_BOTTOM - C469_TOP) + 1;
+    int count = lineCount < 1 ? 1 : lineCount;
+    int block = count * (SOURCE_TEXT_HEIGHT + (SOURCE_TEXT_PAD * 2) - 1 + 1);
+    int relativeY = C469_TOP + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
+                    SOURCE_TEXT_BASELINE - 1;
+    (void)SOURCE_LINE_STEP;
+    return M11_VIEWPORT_Y + relativeY;
+}
+
+static int m11_dialog_source_split_two_lines(const char* text,
+                                             char* line1,
+                                             size_t line1Size,
+                                             char* line2,
+                                             size_t line2Size) {
+    enum { C469_WIDTH = 77 };
+    int textW;
+    int maxW;
+    int best = -1;
+    int i;
+    if (!text || !line1 || !line2 || line1Size == 0 || line2Size == 0) return 0;
+    textW = m11_measure_text_pixels(text, &g_text_shadow);
+    maxW = C469_WIDTH - (C469_WIDTH >> 3);
+    if (textW <= maxW) {
+        snprintf(line1, line1Size, "%s", text);
+        line2[0] = '\0';
+        return 1;
+    }
+    if (maxW > textW - (textW >> 3)) {
+        maxW = textW - (textW >> 3);
+    }
+    for (i = 1; text[i] != '\0'; ++i) {
+        if (text[i] == ' ') {
+            char tmp[128];
+            size_t n = (size_t)i < sizeof(tmp) - 1 ? (size_t)i : sizeof(tmp) - 1;
+            memcpy(tmp, text, n);
+            tmp[n] = '\0';
+            if (m11_measure_text_pixels(tmp, &g_text_shadow) <= maxW) {
+                best = i;
+            }
+        }
+    }
+    if (best <= 0) {
+        best = maxW / 6;
+        if (best < 1) best = 1;
+    }
+    if ((size_t)best >= line1Size) best = (int)line1Size - 1;
+    memcpy(line1, text, (size_t)best);
+    line1[best] = '\0';
+    snprintf(line2, line2Size, "%s", text + best + (text[best] == ' ' ? 1 : 0));
+    return 2;
+}
+
 /* Draw text using the original DM1 font when available, with shadow.
  * Falls back to the builtin hardcoded font otherwise. */
 static void m11_draw_text_original(
@@ -15518,55 +15579,49 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           M11_VIEWPORT_Y + 7,
                           "V3.4", &versionStyle);
         }
-        /* Word-wrap the dialog text into the box (simple two-line split) */
-        textY = drewSourceBackdrop
-                    ? m11_dialog_source_c469_text_y()
-                    : (dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18));
-        if (strlen(state->dialogOverlayText) <= 40) {
-            if (drewSourceBackdrop) {
+        /* Word-wrap the dialog text into the box.  Source-dialog mode uses the
+         * C469 zone width decision instead of the old fixed 40-character cut. */
+        if (drewSourceBackdrop) {
+            char line1[80], line2[128];
+            int lineCount = m11_dialog_source_split_two_lines(
+                state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2));
+            textY = m11_dialog_source_c469_text_y_for_lines(lineCount);
+            m11_draw_text_centered_in_rect(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           M11_VIEWPORT_X,
+                                           textY,
+                                           M11_VIEWPORT_W,
+                                           line1,
+                                           &g_text_shadow);
+            if (lineCount > 1 && line2[0] != '\0') {
                 m11_draw_text_centered_in_rect(framebuffer,
                                                framebufferWidth,
                                                framebufferHeight,
                                                M11_VIEWPORT_X,
-                                               textY,
-                                               M11_VIEWPORT_W,
-                                               state->dialogOverlayText,
-                                               &g_text_shadow);
-            } else {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              dlgX + 12, textY, state->dialogOverlayText,
-                              &g_text_shadow);
-            }
-        } else {
-            /* Split at nearest space before character 40 */
-            char line1[48], line2[80];
-            int splitPos = 40;
-            while (splitPos > 0 && state->dialogOverlayText[splitPos] != ' ') {
-                --splitPos;
-            }
-            if (splitPos == 0) splitPos = 40;
-            memcpy(line1, state->dialogOverlayText, (size_t)splitPos);
-            line1[splitPos] = '\0';
-            snprintf(line2, sizeof(line2), "%s",
-                     state->dialogOverlayText + splitPos + (state->dialogOverlayText[splitPos] == ' ' ? 1 : 0));
-            if (drewSourceBackdrop) {
-                m11_draw_text_centered_in_rect(framebuffer,
-                                               framebufferWidth,
-                                               framebufferHeight,
-                                               M11_VIEWPORT_X,
-                                               textY,
-                                               M11_VIEWPORT_W,
-                                               line1,
-                                               &g_text_shadow);
-                m11_draw_text_centered_in_rect(framebuffer,
-                                               framebufferWidth,
-                                               framebufferHeight,
-                                               M11_VIEWPORT_X,
-                                               textY + 14,
+                                               textY + 8,
                                                M11_VIEWPORT_W,
                                                line2,
                                                &g_text_shadow);
+            }
+        } else {
+            textY = dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18);
+            if (strlen(state->dialogOverlayText) <= 40) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              dlgX + 12, textY, state->dialogOverlayText,
+                              &g_text_shadow);
             } else {
+                /* Split at nearest space before character 40 */
+                char line1[48], line2[80];
+                int splitPos = 40;
+                while (splitPos > 0 && state->dialogOverlayText[splitPos] != ' ') {
+                    --splitPos;
+                }
+                if (splitPos == 0) splitPos = 40;
+                memcpy(line1, state->dialogOverlayText, (size_t)splitPos);
+                line1[splitPos] = '\0';
+                snprintf(line2, sizeof(line2), "%s",
+                         state->dialogOverlayText + splitPos + (state->dialogOverlayText[splitPos] == ' ' ? 1 : 0));
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               dlgX + 12, textY, line1, &g_text_shadow);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,

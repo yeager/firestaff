@@ -4918,7 +4918,7 @@ int main(int argc, char** argv) {
         unsigned char fb_normal[320 * 200];
         int diff = 0, i;
         memcpy(&dlgView, &gameView, sizeof(dlgView));
-        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        M11_GameView_ShowDialogOverlay(&dlgView, "PIT");
         memset(fb_dlg, 0, sizeof(fb_dlg));
         M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
         memset(fb_normal, 0, sizeof(fb_normal));
@@ -4943,8 +4943,8 @@ int main(int argc, char** argv) {
         memcpy(&dlgDebug, &gameView, sizeof(dlgDebug));
         dlgDefault.showDebugHUD = 0;
         dlgDebug.showDebugHUD = 1;
-        M11_GameView_ShowDialogOverlay(&dlgDefault, "BEWARE THE PIT");
-        M11_GameView_ShowDialogOverlay(&dlgDebug, "BEWARE THE PIT");
+        M11_GameView_ShowDialogOverlay(&dlgDefault, "PIT");
+        M11_GameView_ShowDialogOverlay(&dlgDebug, "PIT");
         memset(fb_default, 0, sizeof(fb_default));
         M11_GameView_Draw(&dlgDefault, fb_default, 320, 200);
         memset(fb_debug, 0, sizeof(fb_debug));
@@ -4980,7 +4980,7 @@ int main(int argc, char** argv) {
         int x, y;
         memcpy(&dlgView, &gameView, sizeof(dlgView));
         dlgView.showDebugHUD = 0;
-        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        M11_GameView_ShowDialogOverlay(&dlgView, "PIT");
         memset(fb_dlg, 0, sizeof(fb_dlg));
         M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
         dialogSlot = M11_AssetLoader_Load((M11_AssetLoader*)&dlgView.assetLoader,
@@ -5009,7 +5009,7 @@ int main(int argc, char** argv) {
         unsigned int versionPixels;
         memcpy(&dlgView, &gameView, sizeof(dlgView));
         dlgView.showDebugHUD = 0;
-        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        M11_GameView_ShowDialogOverlay(&dlgView, "PIT");
         memset(fb_dlg, 0, sizeof(fb_dlg));
         M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
         versionPixels = probe_count_color(fb_dlg,
@@ -5040,7 +5040,7 @@ int main(int argc, char** argv) {
         unsigned int oldLeftWhite;
         memcpy(&dlgView, &gameView, sizeof(dlgView));
         dlgView.showDebugHUD = 0;
-        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        M11_GameView_ShowDialogOverlay(&dlgView, "PIT");
         memset(fb_dlg, 0, sizeof(fb_dlg));
         M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
         centerWhite = probe_count_color(fb_dlg,
@@ -5071,7 +5071,7 @@ int main(int argc, char** argv) {
         unsigned int oldBandWhite;
         memcpy(&dlgView, &gameView, sizeof(dlgView));
         dlgView.showDebugHUD = 0;
-        M11_GameView_ShowDialogOverlay(&dlgView, "BEWARE THE PIT");
+        M11_GameView_ShowDialogOverlay(&dlgView, "PIT");
         memset(fb_dlg, 0, sizeof(fb_dlg));
         M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
         c469BandWhite = probe_count_color(fb_dlg,
@@ -5092,6 +5092,46 @@ int main(int argc, char** argv) {
                      "INV_GV_172F",
                      c469BandWhite >= 8 && c469BandWhite > oldBandWhite,
                      "V1 single-choice dialog message uses reconstructed C469 vertical zone");
+    }
+
+    /* INV_GV_172G: V1 long dialog message uses source-width two-line split. */
+    {
+        M11_GameViewState dlgView;
+        unsigned char fb_dlg[320 * 200];
+        unsigned int firstLineWhite;
+        unsigned int secondLineWhite;
+        unsigned int oldHardSplitBandWhite;
+        memcpy(&dlgView, &gameView, sizeof(dlgView));
+        dlgView.showDebugHUD = 0;
+        M11_GameView_ShowDialogOverlay(&dlgView, "THIS MESSAGE SHOULD SPLIT NEAR SOURCE WIDTH");
+        memset(fb_dlg, 0, sizeof(fb_dlg));
+        M11_GameView_Draw(&dlgView, fb_dlg, 320, 200);
+        firstLineWhite = probe_count_color(fb_dlg,
+                                           320,
+                                           45,
+                                           91,
+                                           135,
+                                           8,
+                                           PROBE_COLOR_WHITE);
+        secondLineWhite = probe_count_color(fb_dlg,
+                                            320,
+                                            45,
+                                            99,
+                                            135,
+                                            8,
+                                            PROBE_COLOR_WHITE);
+        oldHardSplitBandWhite = probe_count_color(fb_dlg,
+                                                  320,
+                                                  45,
+                                                  109,
+                                                  135,
+                                                  8,
+                                                  PROBE_COLOR_WHITE);
+        probe_record(&tally,
+                     "INV_GV_172G",
+                     firstLineWhite >= 8 && secondLineWhite >= 8 &&
+                     oldHardSplitBandWhite < secondLineWhite,
+                     "V1 long dialog message uses source-width two-line split");
     }
 
     /* INV_GV_174: AdvanceIdleTick blocked during dialog overlay. */
