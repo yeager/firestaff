@@ -93,6 +93,8 @@ typedef struct {
     uint32_t lastWorldHash;
     struct TickResult_Compat lastTickResult;
     struct GameWorld_Compat world;
+    struct ChampionMirrorCatalog_Compat mirrorCatalog;
+    int mirrorCatalogAvailable;
     M11_MessageLog messageLog;
     int resting;
     int partyDead;
@@ -669,6 +671,20 @@ int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,
  * Champion.Name, with an extra character gap unless the title begins
  * with ',', ';', or '-'. */
 int M11_GameView_EndgameTitleXForSourceText(const char* name, const char* title);
+
+int M11_GameView_GetMirrorCatalogCount(const M11_GameViewState* state);
+int M11_GameView_GetMirrorNameByOrdinal(const M11_GameViewState* state,
+                                        int mirrorOrdinal,
+                                        char* outName,
+                                        int outSize);
+int M11_GameView_GetMirrorTitleByOrdinal(const M11_GameViewState* state,
+                                         int mirrorOrdinal,
+                                         char* outTitle,
+                                         int outSize);
+int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
+                                                int mirrorOrdinal);
+int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
+                                             const char* name);
 
 #ifdef __cplusplus
 }

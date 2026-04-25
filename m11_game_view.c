@@ -4309,6 +4309,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_set_status(state, "BOOT", "FAILED TO LOAD DUNGEON.DAT");
         return 0;
     }
+    state->mirrorCatalogAvailable = 0;
+    memset(&state->mirrorCatalog, 0, sizeof(state->mirrorCatalog));
+    if (state->world.things &&
+        F0652_CHAMPION_BuildMirrorCatalog_Compat(state->world.things,
+                                                 &state->mirrorCatalog) > 0) {
+        state->mirrorCatalogAvailable = 1;
+    }
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = spec->sourceKind;
@@ -4657,6 +4664,54 @@ static int m11_apply_tick(M11_GameViewState* state,
         m11_set_status(state, actionLabel, "MOVEMENT BLOCKED");
     }
     return 1;
+}
+
+
+int M11_GameView_GetMirrorCatalogCount(const M11_GameViewState* state) {
+    if (!state || !state->mirrorCatalogAvailable) return 0;
+    return state->mirrorCatalog.count;
+}
+
+int M11_GameView_GetMirrorNameByOrdinal(const M11_GameViewState* state,
+                                        int mirrorOrdinal,
+                                        char* outName,
+                                        int outSize) {
+    if (!state || !state->mirrorCatalogAvailable) {
+        if (outName && outSize > 0) outName[0] = ' ';
+        return 0;
+    }
+    return F0660_CHAMPION_MirrorCatalogGetName_Compat(&state->mirrorCatalog,
+                                                      mirrorOrdinal,
+                                                      outName,
+                                                      outSize);
+}
+
+int M11_GameView_GetMirrorTitleByOrdinal(const M11_GameViewState* state,
+                                         int mirrorOrdinal,
+                                         char* outTitle,
+                                         int outSize) {
+    if (!state || !state->mirrorCatalogAvailable) {
+        if (outTitle && outSize > 0) outTitle[0] = ' ';
+        return 0;
+    }
+    return F0661_CHAMPION_MirrorCatalogGetTitle_Compat(&state->mirrorCatalog,
+                                                       mirrorOrdinal,
+                                                       outTitle,
+                                                       outSize);
+}
+
+int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
+                                                int mirrorOrdinal) {
+    if (!state || !state->active || !state->mirrorCatalogAvailable) return 0;
+    return F0673_CHAMPION_MirrorCatalogRecruitOrdinalIfAbsent_Compat(
+        &state->mirrorCatalog, mirrorOrdinal, &state->world.party);
+}
+
+int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
+                                             const char* name) {
+    if (!state || !state->active || !state->mirrorCatalogAvailable) return 0;
+    return F0674_CHAMPION_MirrorCatalogRecruitNameIfAbsent_Compat(
+        &state->mirrorCatalog, name, &state->world.party);
 }
 
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,

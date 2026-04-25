@@ -262,7 +262,7 @@ int F0610_PARTY_AddChampionFromMirrorTextString_Compat(
     party->champions[slot].present = 1;
     party->champions[slot].portraitIndex = textStringIndex;
     party->champions[slot].direction = (unsigned char)party->direction;
-    party->championCount++;
+    party->championCount = F0638_PARTY_CountOccupiedChampionSlots_Compat(party);
     if (party->activeChampionIndex < 0) {
         party->activeChampionIndex = slot;
     }
@@ -753,7 +753,7 @@ static int catalog_recruit_record(const struct ChampionMirrorRecord_Compat* reco
     party->champions[slot].present = 1;
     party->champions[slot].portraitIndex = record->textStringIndex;
     party->champions[slot].direction = (unsigned char)party->direction;
-    party->championCount = F0638_PARTY_CountOccupiedChampionSlots_Compat(party) + 1;
+    party->championCount = F0638_PARTY_CountOccupiedChampionSlots_Compat(party);
     if (party->activeChampionIndex < 0) party->activeChampionIndex = slot;
     return 1;
 }

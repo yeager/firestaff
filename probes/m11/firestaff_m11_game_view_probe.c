@@ -517,6 +517,45 @@ int main(int argc, char** argv) {
     initialHash = gameView.lastWorldHash;
     initialDirection = gameView.world.party.direction;
     initialTick = gameView.world.gameTick;
+    probe_record(&tally,
+                 "INV_GV_400",
+                 M11_GameView_GetMirrorCatalogCount(&gameView) == 24,
+                 "M11 game view builds champion mirror catalog from DUNGEON.DAT at start");
+    {
+        char mirrorName[16];
+        char mirrorTitle[32];
+        probe_record(&tally,
+                     "INV_GV_401",
+                     M11_GameView_GetMirrorNameByOrdinal(&gameView, 0, mirrorName, sizeof(mirrorName)) > 0 &&
+                         strcmp(mirrorName, "DAROOU") == 0,
+                     "M11 mirror catalog exposes display name by ordinal");
+        probe_record(&tally,
+                     "INV_GV_402",
+                     M11_GameView_GetMirrorTitleByOrdinal(&gameView, 11, mirrorTitle, sizeof(mirrorTitle)) > 0 &&
+                         strcmp(mirrorTitle, "BLADECASTER") == 0,
+                     "M11 mirror catalog exposes display title by ordinal");
+    }
+    {
+        M11_GameViewState recruitView;
+        memset(&recruitView, 0, sizeof(recruitView));
+        M11_GameView_Init(&recruitView);
+        recruitView.showDebugHUD = 0;
+        probe_record(&tally,
+                     "INV_GV_403",
+                     M11_GameView_OpenSelectedMenuEntry(&recruitView, &menuState) == 1 &&
+                         M11_GameView_RecruitChampionByMirrorName(&recruitView, "STAMM") == 1 &&
+                         recruitView.world.party.championCount == 1 &&
+                         memcmp(recruitView.world.party.champions[0].name, "STAMM   ", 8) == 0 &&
+                         memcmp(recruitView.world.party.champions[0].title, "BLADECASTER         ", 20) == 0,
+                     "M11 can recruit champion identity by mirror catalog display name");
+        probe_record(&tally,
+                     "INV_GV_404",
+                     M11_GameView_RecruitChampionByMirrorOrdinal(&recruitView, 11) == 1 &&
+                         recruitView.world.party.championCount == 1,
+                     "M11 mirror ordinal recruit is idempotent for already-present champion");
+        M11_GameView_Shutdown(&recruitView);
+    }
+
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&gameView, framebuffer, 320, 200);
