@@ -8172,8 +8172,10 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1SpellAvailableSymbolZoneId(-1) == 0 &&
                              M11_GameView_GetV1SpellChampionSymbolZoneId(0) == 261 &&
                              M11_GameView_GetV1SpellChampionSymbolZoneId(3) == 264 &&
-                             M11_GameView_GetV1SpellChampionSymbolZoneId(4) == 0,
-                         "spell symbol zones expose layout-696 C245-C260 and C261-C264 ids");
+                             M11_GameView_GetV1SpellChampionSymbolZoneId(4) == 0 &&
+                             M11_GameView_GetV1SpellCastZoneId() == 252 &&
+                             M11_GameView_GetV1SpellRecantZoneId() == 254,
+                         "spell symbol zones expose layout-696 C245-C260, C261-C264, C252 and C254 ids");
         }
 
         {

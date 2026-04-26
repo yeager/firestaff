@@ -263,3 +263,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_300AG` for first/last ids and out-of-range rejection.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2617_2636_v1_spell_symbol_zone_ids.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `518/518`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2637–2656 — V1 spell cast/recant zone ids.
+  - Added source id helpers for `C252_ZONE_SPELL_AREA_CAST_SPELL` and `C254_ZONE_SPELL_AREA_RECANT_SYMBOL`.
+  - Extended `INV_GV_300AG` to assert cast/recant ids alongside spell-symbol zone ids.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2637_2656_v1_spell_cast_recant_zone_ids.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `518/518`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

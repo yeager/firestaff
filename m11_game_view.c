@@ -3076,6 +3076,16 @@ int M11_GameView_GetV1SpellChampionSymbolZoneId(int symbolIndex) {
     return 261 + symbolIndex;
 }
 
+int M11_GameView_GetV1SpellCastZoneId(void) {
+    /* Source layout-696 C252_ZONE_SPELL_AREA_CAST_SPELL. */
+    return 252;
+}
+
+int M11_GameView_GetV1SpellRecantZoneId(void) {
+    /* Source layout-696 C254_ZONE_SPELL_AREA_RECANT_SYMBOL. */
+    return 254;
+}
+
 int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
                                                 int* outX,
                                                 int* outY,

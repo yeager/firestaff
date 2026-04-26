@@ -841,6 +841,11 @@ int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);
 int M11_GameView_GetV1ChampionPortraitGraphicId(void);
 int M11_GameView_GetV1ChampionIconGraphicId(void);
 int M11_GameView_GetV1InventoryPanelGraphicId(void);
+int M11_GameView_GetV1InventoryPanelZoneId(void);
+int M11_GameView_GetV1InventoryPanelZone(int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH);
 int M11_GameView_GetV1EndgameTheEndGraphicId(void);
 int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void);
 int M11_GameView_GetV1DialogBackdropGraphicId(void);
@@ -878,10 +883,24 @@ int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
                                            int* outH);
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
+int M11_GameView_GetV1FoodBarZoneId(void);
+int M11_GameView_GetV1FoodBarZone(int* outX,
+                                  int* outY,
+                                  int* outW,
+                                  int* outH,
+                                  int* outSrcY);
+int M11_GameView_GetV1FoodWaterPanelZoneId(void);
+int M11_GameView_GetV1FoodWaterPanelZone(int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH,
+                                         int* outSrcY);
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void);
 int M11_GameView_GetV1SpellAvailableSymbolParentZoneId(int symbolIndex);
 int M11_GameView_GetV1SpellAvailableSymbolZoneId(int symbolIndex);
 int M11_GameView_GetV1SpellChampionSymbolZoneId(int symbolIndex);
+int M11_GameView_GetV1SpellCastZoneId(void);
+int M11_GameView_GetV1SpellRecantZoneId(void);
 int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
                                                 int* outX,
                                                 int* outY,
