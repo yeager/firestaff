@@ -7939,6 +7939,18 @@ int main(int argc, char** argv) {
         }
 
         {
+            int availX, availY, availW, availH;
+            int selectedX, selectedY, selectedW, selectedH;
+            probe_record(&tally, "INV_GV_300Q",
+                         M11_GameView_GetV1SpellAreaLinesGraphicId() == 11 &&
+                             M11_GameView_GetV1SpellLabelCellSourceZone(0, &availX, &availY, &availW, &availH) &&
+                             M11_GameView_GetV1SpellLabelCellSourceZone(1, &selectedX, &selectedY, &selectedW, &selectedH) &&
+                             availX == 0 && availY == 13 && availW == 14 && availH == 13 &&
+                             selectedX == 0 && selectedY == 26 && selectedW == 14 && selectedH == 13,
+                         "V1 spell label cells use source C011 lines graphic rows for available/selected states");
+        }
+
+        {
             int headerX, headerY, headerW, headerH;
             probe_record(&tally, "INV_GV_300G",
                          M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&

@@ -2916,6 +2916,25 @@ static void m11_get_rune_abbrev(int row, int col, char out[3]) {
     out[1] = src[1] ? src[1] : ' ';
 }
 
+int M11_GameView_GetV1SpellAreaLinesGraphicId(void) {
+    /* C011_GRAPHIC_MENU_SPELL_AREA_LINES; kept near rune-cell blitter so
+     * the source graphic id is probe-visible before the asset enum block. */
+    return 11;
+}
+
+int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
+                                                int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    if (outX) *outX = 0;
+    if (outY) *outY = selectedLine ? M11_SPELL_LABEL_SELECTED_Y
+                                   : M11_SPELL_LABEL_AVAILABLE_Y;
+    if (outW) *outW = M11_SPELL_LABEL_CELL_W;
+    if (outH) *outH = M11_SPELL_LABEL_CELL_H;
+    return 1;
+}
+
 static int m11_blit_spell_label_cell(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
@@ -2924,22 +2943,24 @@ static int m11_blit_spell_label_cell(const M11_GameViewState* state,
                                      int dstY,
                                      int selectedLine) {
     const M11_AssetSlot* slot;
-    int srcY = selectedLine ? M11_SPELL_LABEL_SELECTED_Y
-                            : M11_SPELL_LABEL_AVAILABLE_Y;
+    int srcX, srcY, srcW, srcH;
     if (!state || !state->assetsAvailable) {
         return 0;
     }
+    (void)M11_GameView_GetV1SpellLabelCellSourceZone(selectedLine,
+                                                     &srcX, &srcY,
+                                                     &srcW, &srcH);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                11U /* C011_GRAPHIC_MENU_SPELL_AREA_LINES */);
+                                (unsigned int)M11_GameView_GetV1SpellAreaLinesGraphicId());
     if (!slot || (int)slot->width != M11_SPELL_LABEL_CELL_W ||
         (int)slot->height != (M11_SPELL_LABEL_CELL_H * 3)) {
         return 0;
     }
     M11_AssetLoader_BlitRegion(slot,
-                               0,
+                               srcX,
                                srcY,
-                               M11_SPELL_LABEL_CELL_W,
-                               M11_SPELL_LABEL_CELL_H,
+                               srcW,
+                               srcH,
                                framebuffer,
                                framebufferWidth,
                                framebufferHeight,
