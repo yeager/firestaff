@@ -1,0 +1,65 @@
+probe=firestaff_v1_title_menu_cadence_layout
+scope=bounded source/runtime evidence; no original wall-clock cadence claim
+graphicsHeaderOk=1
+graphicsDatPath=/Users/bosse/.firestaff/data/GRAPHICS.DAT
+graphicsCount=713
+menuRange[boot_script_menu_candidate_a].available=1
+menuRange[boot_script_menu_candidate_a].first=304
+menuRange[boot_script_menu_candidate_a].last=319
+menuRange[boot_script_menu_candidate_a].count=16
+menuRange[boot_script_menu_candidate_a].serialWidthSum=357
+menuRange[boot_script_menu_candidate_a].maxWidth=32
+menuRange[boot_script_menu_candidate_a].maxHeight=28
+menuRange[boot_script_menu_candidate_a].zeroSizedCount=0
+menuRange[boot_script_menu_candidate_b_left].available=1
+menuRange[boot_script_menu_candidate_b_left].first=360
+menuRange[boot_script_menu_candidate_b_left].last=367
+menuRange[boot_script_menu_candidate_b_left].count=8
+menuRange[boot_script_menu_candidate_b_left].serialWidthSum=138
+menuRange[boot_script_menu_candidate_b_left].maxWidth=30
+menuRange[boot_script_menu_candidate_b_left].maxHeight=28
+menuRange[boot_script_menu_candidate_b_left].zeroSizedCount=0
+menuRange[boot_script_menu_candidate_b_core].available=1
+menuRange[boot_script_menu_candidate_b_core].first=368
+menuRange[boot_script_menu_candidate_b_core].last=383
+menuRange[boot_script_menu_candidate_b_core].count=16
+menuRange[boot_script_menu_candidate_b_core].serialWidthSum=974
+menuRange[boot_script_menu_candidate_b_core].maxWidth=160
+menuRange[boot_script_menu_candidate_b_core].maxHeight=111
+menuRange[boot_script_menu_candidate_b_core].zeroSizedCount=0
+menuRange[boot_script_menu_candidate_b_right].available=1
+menuRange[boot_script_menu_candidate_b_right].first=384
+menuRange[boot_script_menu_candidate_b_right].last=391
+menuRange[boot_script_menu_candidate_b_right].count=8
+menuRange[boot_script_menu_candidate_b_right].serialWidthSum=407
+menuRange[boot_script_menu_candidate_b_right].maxWidth=112
+menuRange[boot_script_menu_candidate_b_right].maxHeight=29
+menuRange[boot_script_menu_candidate_b_right].zeroSizedCount=0
+menuRange[boot_script_menu_candidate_b_wide].available=1
+menuRange[boot_script_menu_candidate_b_wide].first=360
+menuRange[boot_script_menu_candidate_b_wide].last=391
+menuRange[boot_script_menu_candidate_b_wide].count=32
+menuRange[boot_script_menu_candidate_b_wide].serialWidthSum=1519
+menuRange[boot_script_menu_candidate_b_wide].maxWidth=160
+menuRange[boot_script_menu_candidate_b_wide].maxHeight=111
+menuRange[boot_script_menu_candidate_b_wide].zeroSizedCount=0
+menuMetricInvariantOk=1
+titleDatPath=/Users/bosse/.openclaw/data/redmcsb-original/TITLE
+titleManifestOk=1
+titleFileBytes=12002
+titleItemCount=59
+titleFrameCount=53
+titleEncodedImageCount=2
+titleDeltaLayerCount=51
+titlePaletteBreakFrames=37+16
+titleSourceRecordDurationSum=53
+titleManifestInvariantOk=1
+handoffStep[0]=0 holdSurface=TITLE holdFrame=1 holdReady=0 enterSurface=TITLE enterFrame=1 enterReady=0 enteredMenu=0
+handoffStep[1]=1 holdSurface=TITLE holdFrame=1 holdReady=0 enterSurface=TITLE enterFrame=1 enterReady=0 enteredMenu=0
+handoffStep[2]=52 holdSurface=TITLE holdFrame=52 holdReady=0 enterSurface=TITLE enterFrame=52 enterReady=0 enteredMenu=0
+handoffStep[3]=53 holdSurface=TITLE holdFrame=53 holdReady=1 enterSurface=TITLE enterFrame=53 enterReady=1 enteredMenu=0
+handoffStep[4]=54 holdSurface=TITLE holdFrame=53 holdReady=1 enterSurface=MENU enterFrame=53 enterReady=1 enteredMenu=1
+handoffStep[5]=106 holdSurface=TITLE holdFrame=53 holdReady=1 enterSurface=MENU enterFrame=53 enterReady=1 enteredMenu=1
+titleHandoffInvariantOk=1
+originalCadenceClaim=0
+blocker=requires per-presented-frame emulator dump or PC-conditional TITLE.C timing isolation; sparse DOSBox screenshot mapper is not enough

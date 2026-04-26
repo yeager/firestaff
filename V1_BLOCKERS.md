@@ -846,6 +846,23 @@ first, then visual parity, then typography / honesty.
     screenshot mapper behavior, command results, artifact paths/sizes, match
     metrics, and the precise remaining blocker.  No V1 runtime code changed,
     and no original timing/cadence claim was added.
+- **Pass 68 candidate (parallel title/menu, 2026-04-26):**
+  - Added a bounded non-runtime probe for the TITLE cadence/menu-layout gap:
+    `probes/v1/firestaff_v1_title_menu_cadence_layout_probe.c` and
+    `run_firestaff_v1_title_menu_cadence_layout_probe.sh`.
+  - The probe re-verifies the original local `TITLE` manifest boundary
+    (`12002` bytes, `59` records, `53` frames, `2 EN + 51 DL`, palette split
+    `37 + 16`) and the deterministic Firestaff seam: frame 53 remains TITLE and
+    handoff-ready, while step 54 switches to MENU only in opt-in handoff mode.
+  - It also records GRAPHICS.DAT startup-menu candidate asset metrics for the
+    existing boot-script windows: A `304..319`, B-left `360..367`, B-core
+    `368..383`, B-right `384..391`, and B-wide `360..391`.  This is layout
+    groundwork only; it identifies source-backed menu graphic windows and
+    dimensions, not final 320x200 placement parity.
+  - Evidence:
+    `parity-evidence/pass68_v1_title_menu_cadence_layout.md` and
+    `parity-evidence/pass68_v1_title_menu_cadence_layout_probe.txt`.  No V1
+    runtime code changed, and no original timing/cadence claim was added.
 - **Remaining gaps before V1 audio can be called
   original-faithful** (see `PASS50_AUDIO_FINDINGS.md` §5,
   `PASS51_AUDIO_FINDINGS.md` §5, `PASS52_AUDIO_FINDINGS.md` §5,
