@@ -5345,7 +5345,8 @@ int main(int argc, char** argv) {
         endgameView.showDebugHUD = 0;
         memset(fb_won, 0, sizeof(fb_won));
         M11_GameView_Draw(&endgameView, fb_won, 320, 200);
-        theEnd = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader, 6U);
+        theEnd = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader,
+                                      (unsigned int)M11_GameView_GetV1EndgameTheEndGraphicId());
         if (theEnd && theEnd->loaded && theEnd->pixels) {
             int dstX = (320 - (int)theEnd->width) / 2;
             for (y = 0; y < (int)theEnd->height; ++y) {
@@ -5376,7 +5377,8 @@ int main(int argc, char** argv) {
         endgameView.showDebugHUD = 0;
         memset(fb_won, 0, sizeof(fb_won));
         M11_GameView_Draw(&endgameView, fb_won, 320, 200);
-        mirror = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader, 346U);
+        mirror = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader,
+                                     (unsigned int)M11_GameView_GetV1EndgameChampionMirrorGraphicId());
         if (mirror && mirror->loaded && mirror->pixels) {
             for (y = 0; y < (int)mirror->height; ++y) {
                 for (x = 0; x < (int)mirror->width; ++x) {
@@ -7970,6 +7972,13 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1FoodLabelGraphicId() == 30 &&
                              M11_GameView_GetV1WaterLabelGraphicId() == 31,
                          "V1 inventory panel status uses source C020 panel and C030/C031 food-water labels");
+        }
+
+        {
+            probe_record(&tally, "INV_GV_300V",
+                         M11_GameView_GetV1EndgameTheEndGraphicId() == 6 &&
+                             M11_GameView_GetV1EndgameChampionMirrorGraphicId() == 346,
+                         "V1 endgame graphics use source C006 The End and C346 champion mirror ids");
         }
 
         {

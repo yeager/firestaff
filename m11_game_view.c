@@ -13844,6 +13844,14 @@ int M11_GameView_GetV1InventoryPanelGraphicId(void) {
     return M11_GFX_PANEL_EMPTY;
 }
 
+int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
+    return 6;
+}
+
+int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void) {
+    return 346;
+}
+
 int M11_GameView_GetV1FoodLabelGraphicId(void) {
     return M11_GFX_FOOD_LABEL;
 }
@@ -16738,8 +16746,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     /* Endgame victory overlay */
     if (state->gameWon) {
         if (m11_v1_chrome_mode_enabled() && state->assetsAvailable) {
-            const M11_AssetSlot* theEnd = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 6U);
-            const M11_AssetSlot* mirror = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 346U);
+            const M11_AssetSlot* theEnd = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)M11_GameView_GetV1EndgameTheEndGraphicId());
+            const M11_AssetSlot* mirror = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)M11_GameView_GetV1EndgameChampionMirrorGraphicId());
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_DARK_GRAY);

@@ -793,6 +793,8 @@ int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);
 int M11_GameView_GetV1ChampionPortraitGraphicId(void);
 int M11_GameView_GetV1ChampionIconGraphicId(void);
 int M11_GameView_GetV1InventoryPanelGraphicId(void);
+int M11_GameView_GetV1EndgameTheEndGraphicId(void);
+int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void);
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void);
