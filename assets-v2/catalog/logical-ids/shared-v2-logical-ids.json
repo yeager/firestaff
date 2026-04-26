@@ -1,0 +1,157 @@
+{
+  "catalogVersion": "0.1.0",
+  "scope": "dm1-csb-dm2-shared-v2-logical-assets",
+  "description": "First stable logical asset ID catalog for V2 assets that can be shared by DM1, CSB, and DM2. This is a planning/catalog layer only; it does not assert rendered asset completion or change V1/M10 behavior.",
+  "games": ["dm1", "csb", "dm2"],
+  "tracks": ["v2.0-original", "v2.1-upscaled", "v2.2-enhanced"],
+  "idPolicy": {
+    "namespace": "fs.v2.shared.<category>.<family>.<role>[.<state>]",
+    "stability": "Logical IDs describe game/presentation roles and should not include GRAPHICS.DAT numbers, file hashes, resolutions, or production dates.",
+    "semantics": [
+      "Use the same logical ID when DM1, CSB, and DM2 need the same presentation role even if each game later binds different bytes.",
+      "Use game-local catalog overlays only when a role has different semantics, not merely different source art.",
+      "Existing pack manifest IDs may remain as physical production IDs; this catalog is the stable runtime/planning vocabulary above them."
+    ]
+  },
+  "categories": [
+    {
+      "categoryId": "ui",
+      "displayName": "UI and shell assets",
+      "ownership": "Shared gameplay chrome, menu chrome, state surfaces, and reusable UI affordances.",
+      "notes": ["Includes IDs that can bind to existing Wave 1 UI manifest entries where available."],
+      "entries": [
+        {
+          "logicalId": "fs.v2.shared.ui.gameplay-frame.base",
+          "role": "Canonical gameplay field container and screen skeleton.",
+          "sharedBy": ["dm1", "csb", "dm2"],
+          "assetClass": "ui_hud_shells",
+          "status": "blocked",
+          "binding": { "kind": "manifest-entry", "expectedBinding": "core gameplay frame pack entry", "existingManifestId": "fs.v2.ui.core-gameplay-frame.base" },
+          "notes": ["Kept blocked while viewport/frame source mapping remains provisional."]
+        },
+        {
+          "logicalId": "fs.v2.shared.ui.action-panel.base",
+          "role": "Party action panel base container.",
+          "sharedBy": ["dm1", "csb", "dm2"],
+          "assetClass": "ui_hud_shells",
+          "status": "rebuilt",
+          "binding": { "kind": "manifest-entry", "expectedBinding": "action area base asset", "existingManifestId": "fs.v2.ui.action-area.base" }
+        },
+        {
+          "logicalId": "fs.v2.shared.ui.spell-panel.base",
+          "role": "Spell interaction panel base container.",
+          "sharedBy": ["dm1", "csb", "dm2"],
+          "assetClass": "ui_hud_shells",
+          "status": "rebuilt",
+          "binding": { "kind": "manifest-entry", "expectedBinding": "spell area base asset", "existingManifestId": "fs.v2.ui.spell-area.base" }
+        },
+        {
+          "logicalId": "fs.v2.shared.ui.status-box.base",
+          "role": "Champion status box frame and value container.",
+          "sharedBy": ["dm1", "csb", "dm2"],
+          "assetClass": "ui_hud_shells",
+          "status": "in-progress",
+          "binding": { "kind": "manifest-entry", "expectedBinding": "status box family entry" }
+        },
+        {
+          "logicalId": "fs.v2.shared.ui.pointer.default",
+          "role": "Default pointer/cursor presentation.",
+          "sharedBy": ["dm1", "csb", "dm2"],
+          "assetClass": "ui_hud_shells",
+          "status": "planned",
+          "binding": { "kind": "catalog-only", "expectedBinding": "shared pointer asset or runtime cursor style" }
+        }
+      ]
+    },
+    {
+      "categoryId": "dungeon-view",
+      "displayName": "Dungeon viewport and spatial presentation",
+      "ownership": "Shared viewport roles for walls, floors, doors, stairs, overlays, and distance-layer cues.",
+      "entries": [
+        { "logicalId": "fs.v2.shared.dungeon-view.viewport.frame", "role": "World viewport frame and composition anchor.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "blocked", "binding": { "kind": "manifest-entry", "expectedBinding": "viewport frame/base entry", "existingManifestId": "fs.v2.ui.viewport-base.frame" }, "notes": ["Blocked for the same reason as the existing viewport-base frame manifest entry."] },
+        { "logicalId": "fs.v2.shared.dungeon-view.wall.front", "role": "Forward-facing wall plane at the active viewpoint.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "wall module manifest entry" } },
+        { "logicalId": "fs.v2.shared.dungeon-view.wall.side", "role": "Side wall planes for depth-ladder dungeon composition.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "side wall module entries" } },
+        { "logicalId": "fs.v2.shared.dungeon-view.floor.base", "role": "Dungeon floor plane and perspective grid material.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "floor module manifest entry" } },
+        { "logicalId": "fs.v2.shared.dungeon-view.ceiling.base", "role": "Dungeon ceiling plane and perspective grid material.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "ceiling module manifest entry" } },
+        { "logicalId": "fs.v2.shared.dungeon-view.door.wood.closed", "role": "Closed wooden dungeon door presentation.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "door family closed state" } },
+        { "logicalId": "fs.v2.shared.dungeon-view.stairs.down", "role": "Down-stairs dungeon transition surface.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "stairs family down entry" } }
+      ]
+    },
+    {
+      "categoryId": "inventory",
+      "displayName": "Inventory and equipment presentation",
+      "ownership": "Reusable inventory panel, slots, held-object presentation, and equipment affordances.",
+      "entries": [
+        { "logicalId": "fs.v2.shared.inventory.panel.base", "role": "Inventory screen/panel base surface.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "inventory panel pack entry" } },
+        { "logicalId": "fs.v2.shared.inventory.slot.equipment", "role": "Equipment slot frame for worn/held champion items.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "equipment slot frame" } },
+        { "logicalId": "fs.v2.shared.inventory.slot.backpack", "role": "Backpack/grid item slot frame.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "backpack slot frame" } },
+        { "logicalId": "fs.v2.shared.inventory.hand.left", "role": "Left action-hand/held-item presentation slot.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "left hand slot" } },
+        { "logicalId": "fs.v2.shared.inventory.hand.right", "role": "Right action-hand/held-item presentation slot.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "right hand slot" } }
+      ]
+    },
+    {
+      "categoryId": "champions",
+      "displayName": "Champion presentation",
+      "ownership": "Shared champion portrait, status, injury, and lifecycle presentation roles.",
+      "entries": [
+        { "logicalId": "fs.v2.shared.champions.portrait.frame", "role": "Champion portrait frame and crop contract.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "portraits", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "portrait frame contract" } },
+        { "logicalId": "fs.v2.shared.champions.portrait.placeholder", "role": "Fallback portrait payload before per-champion art is bound.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "portraits", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "portrait fallback asset" } },
+        { "logicalId": "fs.v2.shared.champions.status.health-bar", "role": "Health value bar/surface for champion status.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "ui_hud_shells", "status": "planned", "binding": { "kind": "runtime-symbol", "expectedBinding": "champion health status renderer slot" } },
+        { "logicalId": "fs.v2.shared.champions.status.stamina-bar", "role": "Stamina value bar/surface for champion status.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "ui_hud_shells", "status": "planned", "binding": { "kind": "runtime-symbol", "expectedBinding": "champion stamina status renderer slot" } },
+        { "logicalId": "fs.v2.shared.champions.status.mana-bar", "role": "Mana value bar/surface for champion status.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "ui_hud_shells", "status": "planned", "binding": { "kind": "runtime-symbol", "expectedBinding": "champion mana status renderer slot" } }
+      ]
+    },
+    {
+      "categoryId": "spells",
+      "displayName": "Spellcasting, runes, and magic effects",
+      "ownership": "Reusable spell UI surfaces, rune slots, projectile cues, and impacts.",
+      "entries": [
+        { "logicalId": "fs.v2.shared.spells.rune-slot.base", "role": "Single rune selection slot in the spell panel.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "effects_magic", "status": "planned", "binding": { "kind": "layout-slot", "expectedBinding": "spell rune slot" } },
+        { "logicalId": "fs.v2.shared.spells.rune-symbol.power", "role": "Power rune symbol family root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "effects_magic", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "power rune symbol set" } },
+        { "logicalId": "fs.v2.shared.spells.rune-symbol.element", "role": "Element rune symbol family root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "effects_magic", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "element rune symbol set" } },
+        { "logicalId": "fs.v2.shared.spells.projectile.fireball", "role": "Fireball projectile visual cue.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "effects_magic", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "projectile/fireball effect" } },
+        { "logicalId": "fs.v2.shared.spells.impact.generic", "role": "Generic spell impact/activation burst.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "effects_magic", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "spell impact effect" } }
+      ]
+    },
+    {
+      "categoryId": "objects",
+      "displayName": "Objects and item sprites",
+      "ownership": "Reusable object family roots for inventory icons, floor objects, fixtures, and interactables.",
+      "entries": [
+        { "logicalId": "fs.v2.shared.objects.weapon.sword", "role": "Sword object family root for inventory and world placement.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "weapon/sword object family" } },
+        { "logicalId": "fs.v2.shared.objects.weapon.dagger", "role": "Dagger object family root for inventory and world placement.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "weapon/dagger object family" } },
+        { "logicalId": "fs.v2.shared.objects.key.generic", "role": "Generic key object family root before game-local key variants.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "key object family" } },
+        { "logicalId": "fs.v2.shared.objects.container.chest", "role": "Chest/container object presentation.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "chest/container object family" } },
+        { "logicalId": "fs.v2.shared.objects.consumable.flask", "role": "Flask/potion vessel family root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "items_icons", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "flask/potion object family" } },
+        { "logicalId": "fs.v2.shared.objects.fixture.wall-button", "role": "Wall button/switch fixture presentation.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "environment_structural", "status": "planned", "binding": { "kind": "manifest-entry", "expectedBinding": "wall switch fixture" } }
+      ]
+    },
+    {
+      "categoryId": "creatures",
+      "displayName": "Creature presentation roots",
+      "ownership": "Shared creature family logical roots used by V2 creature manifests and future game overlays.",
+      "notes": ["Not every family is present in every game; sharedBy is the intended reusable catalog scope, not a spawn claim."],
+      "entries": [
+        { "logicalId": "fs.v2.shared.creatures.family.screamer", "role": "Screamer creature family presentation root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "creatures", "status": "in-progress", "binding": { "kind": "manifest-entry", "expectedBinding": "wave1 screamer family manifest" } },
+        { "logicalId": "fs.v2.shared.creatures.family.mummy", "role": "Mummy creature family presentation root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "creatures", "status": "in-progress", "binding": { "kind": "manifest-entry", "expectedBinding": "wave1 mummy family manifest" } },
+        { "logicalId": "fs.v2.shared.creatures.family.skeleton", "role": "Skeleton creature family presentation root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "creatures", "status": "in-progress", "binding": { "kind": "manifest-entry", "expectedBinding": "wave1 skeleton family manifest" } },
+        { "logicalId": "fs.v2.shared.creatures.family.giggler", "role": "Giggler creature family presentation root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "creatures", "status": "in-progress", "binding": { "kind": "manifest-entry", "expectedBinding": "wave1 giggler family manifest" } },
+        { "logicalId": "fs.v2.shared.creatures.family.red-dragon", "role": "Red dragon creature family presentation root.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "creatures", "status": "in-progress", "binding": { "kind": "manifest-entry", "expectedBinding": "wave1 red dragon family manifest" } }
+      ]
+    },
+    {
+      "categoryId": "audio",
+      "displayName": "Audio cues and loops",
+      "ownership": "Shared semantic audio cue IDs for UI feedback, dungeon ambience, movement, doors, combat, and magic.",
+      "entries": [
+        { "logicalId": "fs.v2.shared.audio.ui.click", "role": "Generic UI selection/click feedback.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "audio", "status": "planned", "binding": { "kind": "audio-cue", "expectedBinding": "ui click sample or synthesized cue" } },
+        { "logicalId": "fs.v2.shared.audio.ui.error", "role": "Invalid action or blocked interaction feedback.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "audio", "status": "planned", "binding": { "kind": "audio-cue", "expectedBinding": "ui error/deny cue" } },
+        { "logicalId": "fs.v2.shared.audio.dungeon.ambient-loop", "role": "Base dungeon ambience loop.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "audio", "status": "planned", "binding": { "kind": "audio-cue", "expectedBinding": "ambient dungeon loop" } },
+        { "logicalId": "fs.v2.shared.audio.movement.step", "role": "Party movement/step cue.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "audio", "status": "planned", "binding": { "kind": "audio-cue", "expectedBinding": "movement step cue" } },
+        { "logicalId": "fs.v2.shared.audio.door.open", "role": "Door open movement cue.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "audio", "status": "planned", "binding": { "kind": "audio-cue", "expectedBinding": "door open cue" } },
+        { "logicalId": "fs.v2.shared.audio.combat.hit", "role": "Generic melee hit feedback.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "audio", "status": "planned", "binding": { "kind": "audio-cue", "expectedBinding": "combat hit cue" } },
+        { "logicalId": "fs.v2.shared.audio.magic.cast", "role": "Spell cast/release cue.", "sharedBy": ["dm1", "csb", "dm2"], "assetClass": "audio", "status": "planned", "binding": { "kind": "audio-cue", "expectedBinding": "spell cast cue" } }
+      ]
+    }
+  ]
+}
