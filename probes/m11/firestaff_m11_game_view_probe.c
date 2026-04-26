@@ -1249,6 +1249,24 @@ int main(int argc, char** argv) {
                      "V1 status shield border graphic priority follows spell/fire/party source order");
     }
 
+    {
+        int poisonX0, poisonY0, poisonW0, poisonH0;
+        int poisonX3, poisonY3, poisonW3, poisonH3;
+        probe_record(&tally,
+                     "INV_GV_15R",
+                     M11_GameView_GetV1PoisonLabelZone(0, 96, 15,
+                                                       &poisonX0, &poisonY0,
+                                                       &poisonW0, &poisonH0) &&
+                         M11_GameView_GetV1PoisonLabelZone(3, 96, 15,
+                                                           &poisonX3, &poisonY3,
+                                                           &poisonW3, &poisonH3) &&
+                         poisonX0 == -2 && poisonY0 == 189 &&
+                         poisonW0 == 96 && poisonH0 == 15 &&
+                         poisonX3 == 205 && poisonY3 == 189 &&
+                         poisonW3 == 96 && poisonH3 == 15,
+                     "V1 poisoned label zone centers C032 under C007 status box geometry");
+    }
+
     probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,

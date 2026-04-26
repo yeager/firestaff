@@ -14161,6 +14161,26 @@ int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) 
     return 0;
 }
 
+int M11_GameView_GetV1PoisonLabelZone(int championSlot,
+                                      int labelW,
+                                      int labelH,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    int boxX, boxY, boxW, boxH;
+    if (labelW <= 0 || labelH <= 0) return 0;
+    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
+                                         &boxX, &boxY, &boxW, &boxH)) {
+        return 0;
+    }
+    if (outX) *outX = boxX + (boxW - labelW) / 2;
+    if (outY) *outY = boxY + boxH;
+    if (outW) *outW = labelW;
+    if (outH) *outH = labelH;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex) {
@@ -15153,12 +15173,21 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                      * zone; in DM1 this spills across adjacent boxes, which
                      * is the correct original behaviour.  Preserve the old
                      * V2 positioning while V1 routes through C007 geometry. */
-                    int poisonBaseW = !useV2PartyHud ? slotW : 67;
-                    int poisonBaseH = !useV2PartyHud ? slotH : 29;
-                    int lblX = x + (poisonBaseW - (int)poisonLbl->width) / 2;
-                    int lblY = y + poisonBaseH; /* just below the status box */
+                    int lblX, lblY, lblW, lblH;
+                    if (!useV2PartyHud) {
+                        (void)M11_GameView_GetV1PoisonLabelZone(
+                            slot, (int)poisonLbl->width, (int)poisonLbl->height,
+                            &lblX, &lblY, &lblW, &lblH);
+                    } else {
+                        int poisonBaseW = 67;
+                        int poisonBaseH = 29;
+                        lblX = x + (poisonBaseW - (int)poisonLbl->width) / 2;
+                        lblY = y + poisonBaseH;
+                        lblW = (int)poisonLbl->width;
+                        lblH = (int)poisonLbl->height;
+                    }
                     M11_AssetLoader_BlitRegion(poisonLbl,
-                        0, 0, (int)poisonLbl->width, (int)poisonLbl->height,
+                        0, 0, lblW, lblH,
                         framebuffer, framebufferWidth, framebufferHeight,
                         lblX, lblY, 0);
                 }
