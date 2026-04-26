@@ -749,6 +749,9 @@ int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
                                             int* outY,
                                             int* outW,
                                             int* outH);
+int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
+                                               int* outX,
+                                               int* outY);
 int M11_GameView_GetV1ActionIconCellZone(int championSlot,
                                              int* outX,
                                              int* outY,

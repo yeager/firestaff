@@ -13756,6 +13756,20 @@ int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
     return 1;
 }
 
+int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
+                                               int* outX,
+                                               int* outY) {
+    if (outX) *outX = M11_DM_ACTION_MENU_TEXT_X;
+    if (rowIndex < 0) {
+        if (outY) *outY = M11_DM_ACTION_MENU_HEADER_Y + 1;
+        return 1;
+    }
+    if (rowIndex >= 3) return 0;
+    if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
+                      rowIndex * M11_DM_ACTION_MENU_ROW_STEP + 1;
+    return 1;
+}
+
 static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -13811,10 +13825,12 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     styleBlackOnCyan.shadowDx = 0;
     styleBlackOnCyan.shadowDy = 0;
     styleBlackOnCyan.shadowColor = M11_COLOR_CYAN;
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_DM_ACTION_MENU_TEXT_X,
-                  M11_DM_ACTION_MENU_HEADER_Y + 1,
-                  nameBuf, &styleBlackOnCyan);
+    {
+        int textX, textY;
+        (void)M11_GameView_GetV1ActionMenuTextOrigin(-1, &textX, &textY);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      textX, textY, nameBuf, &styleBlackOnCyan);
+    }
 
     /* Action rows: each row is a black strip with cyan text.  Pull
      * the 3-tuple from the champion's action-hand ActionSet; any
@@ -13838,9 +13854,12 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         if (!gotActions) continue;
         name = M11_GameView_GetActionName(actions[row]);
         if (!name || name[0] == '\0') continue;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_DM_ACTION_MENU_TEXT_X, rowY + 1,
-                      name, &styleCyanOnBlack);
+        {
+            int textX, textY;
+            (void)M11_GameView_GetV1ActionMenuTextOrigin(row, &textX, &textY);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          textX, textY, name, &styleCyanOnBlack);
+        }
     }
     return 1;
 }

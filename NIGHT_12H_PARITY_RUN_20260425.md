@@ -147,3 +147,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_15E9`: slot 0 `(12,160,67,29)` and slot 3 `(219,160,67,29)` match GRAPHICS.DAT `C007` with 69 px source stride.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1417_1436_v1_status_box_zone_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `482/482`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1437–1456 — V1 action menu text origin helper.
+  - Added `M11_GameView_GetV1ActionMenuTextOrigin(...)` for source action-menu header/row text placement.
+  - Routed acting-champion header text and action-row names through the helper.
+  - Added invariant `INV_GV_300J`: header `(226,48)`, row 0 `(226,59)`, row 2 `(226,81)` match F0387 offsets.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1437_1456_v1_action_menu_text_origin_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `483/483`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
