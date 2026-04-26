@@ -8864,6 +8864,38 @@ int main(int argc, char** argv) {
         }
 
         {
+            M11_GameViewState spellView = iconView;
+            unsigned char fbSpell[320 * 200];
+            int x, y;
+            int selectedBrown = 0;
+            int selectedRed = 0;
+            int oldModalBrown = 0;
+            spellView.spellPanelOpen = 1;
+            spellView.spellRuneRow = 1;
+            spellView.spellBuffer.runeCount = 1;
+            spellView.spellBuffer.runes[0] = 0x60;
+            spellView.showDebugHUD = 0;
+            memset(fbSpell, 0, sizeof(fbSpell));
+            M11_GameView_Draw(&spellView, fbSpell, 320, 200);
+            for (y = 91; y < 104; ++y) {
+                for (x = 239; x < 253; ++x) {
+                    unsigned char idx = fbSpell[y * 320 + x] & 0x0F;
+                    if (idx == PROBE_COLOR_BROWN) ++selectedBrown;
+                    if (idx == PROBE_COLOR_RED) ++selectedRed;
+                }
+            }
+            for (x = 24; x < 204; ++x) {
+                if ((fbSpell[36 * 320 + x] & 0x0F) == PROBE_COLOR_BROWN) {
+                    ++oldModalBrown;
+                }
+            }
+            probe_record(&tally, "INV_GV_300AQ",
+                         iconView.assetsAvailable ?
+                             (selectedBrown >= 4 && selectedRed >= 20 && oldModalBrown < 120) : 1,
+                         "normal V1 spell panel stays in C013 right-column area and uses selected C011 cells, not the old modal viewport panel");
+        }
+
+        {
             int headerX, headerY, headerW, headerH;
             probe_record(&tally, "INV_GV_300G",
                          M11_GameView_GetV1ActionMenuHeaderZoneId() == 80 &&
