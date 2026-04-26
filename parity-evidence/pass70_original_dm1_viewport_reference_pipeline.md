@@ -64,11 +64,13 @@ What it automates:
 3. Writes a Swift CGEvent helper that:
    - sends the known original selector sequence (`1`, Return) x3,
    - executes an explicit caller-supplied `DM1_ORIGINAL_ROUTE_EVENTS` token route,
-   - triggers raw DOSBox screenshots with Cmd+F5 on each `shot` token.
+   - triggers raw DOSBox screenshots with Cmd+F5 on each `shot` or `shot:<label>` token,
+   - records optional route labels in `original_viewport_shot_labels.tsv` so semantic checkpoints such as `party_hud`, `spell_panel`, and `inventory_panel` are visible to overlay-readiness tooling without renaming legacy crop files.
 4. Normalizes the first six `image*.png` raw screenshots into:
    - `verification-screens/pass70-original-dm1-viewports/viewport_224x136/*.ppm`,
    - matching PNG previews when ImageMagick is available,
-   - `verification-screens/pass70-original-dm1-viewports/original_viewport_224x136_manifest.tsv`.
+   - `verification-screens/pass70-original-dm1-viewports/original_viewport_224x136_manifest.tsv`,
+   - `verification-screens/pass70-original-dm1-viewports/original_viewport_shot_labels.tsv` when a route is supplied.
 5. Fails hard if crop geometry is not exactly `224x136` or if exactly six crops are not present.
 
 Output artifacts are intentionally ignored; original/raw captures must not be accidentally committed.
@@ -94,10 +96,10 @@ DM1_ORIGINAL_ROUTE_EVENTS
 The script deliberately refuses to guess these. The exact keystroke sequence must be validated in original DM1 PC 3.4 so the six raw screenshots correspond to the same route/state as Firestaff's route above. A shape-only example is:
 
 ```sh
-DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot right wait:300 shot up wait:300 shot wait:300 shot wait:300 shot wait:300 shot'
+DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot:party_hud right wait:300 shot up wait:300 shot:spell_panel wait:300 shot wait:300 shot:inventory_panel'
 ```
 
-That example is **not validated evidence**.
+That example is **not validated evidence**. The labels are route metadata only; they do not prove the original runtime reached those semantic states and must not be cited as pixel parity.
 
 ## Verification performed
 
@@ -124,7 +126,7 @@ scripts/dosbox_dm1_capture.sh
 Then run the original reference pipeline after validating the original route string:
 
 ```sh
-DM1_ORIGINAL_ROUTE_EVENTS='<validated route with exactly six shot tokens>' \
+DM1_ORIGINAL_ROUTE_EVENTS='<validated route with exactly six shot or shot:<label> tokens>' \
   scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 ```
 

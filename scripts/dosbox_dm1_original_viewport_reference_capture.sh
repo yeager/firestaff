@@ -24,6 +24,7 @@ LOG="${OUT_DIR}/dosbox-original-viewports.log"
 PID_FILE="${OUT_DIR}/dosbox.pid"
 KEY_HELPER="${OUT_DIR}/original_viewport_route_keys.swift"
 KEY_LOG="${OUT_DIR}/original-viewpoint-route-keys.log"
+SHOT_LABEL_MANIFEST="${OUT_DIR}/original_viewport_shot_labels.tsv"
 RAW_MANIFEST="${OUT_DIR}/raw_manifest.tsv"
 CROP_MANIFEST="${OUT_DIR}/original_viewport_224x136_manifest.tsv"
 CROP_DIR="${OUT_DIR}/viewport_224x136"
@@ -40,11 +41,18 @@ Modes:
   --normalize-only  crop/hash existing image*.png raw screenshots in OUT_DIR
 
 Required for --run:
-  DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot right wait:300 shot up wait:300 shot ...'
+  DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot:party_hud right wait:300 shot up wait:300 shot:spell_panel ...'
 
 Supported route tokens:
-  shot, wait:<ms>, enter, esc, space, up, down, left, right, one, two, three,
-  four, five, six, f1-f4, kp0-kp9, kpenter, a-z, 0-9
+  shot, shot:<label>, wait:<ms>, enter, esc, space, up, down, left, right,
+  one, two, three, four, five, six, f1-f4, kp0-kp9, kpenter, a-z, 0-9
+
+Labeled shot tokens:
+  shot:<label> is equivalent to shot for capture input, and records the label
+  in original_viewport_shot_labels.tsv during normalization. Labels are
+  lowercase route semantics such as shot:party_hud, shot:spell_panel, and
+  shot:inventory_panel. They are evidence metadata only; they do not claim
+  pixel parity or validate that the original runtime reached that state.
 
 Outputs:
   raw screenshots: ${OUT_DIR}/image*.png (DOSBox Staging raw 320x200 if capture succeeds)
@@ -61,6 +69,7 @@ Optional environment:
                     the original selector and entering VGA/no-sound/keyboard mode
                     directly. 'DM VGA' remains the default for legacy runs.
   manifest:        ${CROP_MANIFEST}
+  shot labels:     ${SHOT_LABEL_MANIFEST}
 
 Honesty note:
   The route string must be validated against the original runtime state that
@@ -118,10 +127,18 @@ route = sys.argv[1].split()
 allowed = set("shot capture screenshot enter return esc escape space up down left right one two three four five six zero".split())
 allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {f"f{i}" for i in range(1, 5)} | {"kpenter"}
 shots = 0
+labeled_shots = 0
 for token in route:
     low = token.lower()
     if low in {"shot", "capture", "screenshot"}:
         shots += 1
+        continue
+    if low.startswith("shot:"):
+        label = low.split(":", 1)[1]
+        if not re.fullmatch(r"[a-z0-9][a-z0-9_-]*", label):
+            raise SystemExit(f"ERROR: invalid shot label: {token}")
+        shots += 1
+        labeled_shots += 1
         continue
     if low.startswith("wait:"):
         if not re.fullmatch(r"wait:[0-9]+", low):
@@ -130,8 +147,8 @@ for token in route:
     if low not in allowed:
         raise SystemExit(f"ERROR: unknown route token: {token}")
 if shots != 6:
-    raise SystemExit(f"ERROR: DM1_ORIGINAL_ROUTE_EVENTS must contain exactly 6 shot tokens, found {shots}")
-print(f"[pass-70] route shape OK: {len(route)} tokens, {shots} shots")
+    raise SystemExit(f"ERROR: DM1_ORIGINAL_ROUTE_EVENTS must contain exactly 6 shot or shot:<label> tokens, found {shots}")
+print(f"[pass-70] route shape OK: {len(route)} tokens, {shots} shots, {labeled_shots} labeled")
 PY
 }
 
@@ -237,17 +254,18 @@ if !skipStartupSelector {
 }
 
 for token in route {
+    let lowerToken = token.lowercased()
     print("route-token \(token)")
-    if token == "shot" || token == "capture" || token == "screenshot" {
+    if lowerToken == "shot" || lowerToken == "capture" || lowerToken == "screenshot" || lowerToken.hasPrefix("shot:") {
         cmdF5()
-    } else if token.hasPrefix("wait:") {
-        let msText = String(token.dropFirst("wait:".count))
+    } else if lowerToken.hasPrefix("wait:") {
+        let msText = String(lowerToken.dropFirst("wait:".count))
         guard let ms = UInt32(msText) else {
             fputs("invalid wait token: \(token)\n", stderr)
             exit(2)
         }
         usleep(ms * 1000)
-    } else if let key = keycodes[token.lowercased()] {
+    } else if let key = keycodes[lowerToken] {
         tap(key)
     } else {
         fputs("unknown route token: \(token)\n", stderr)
@@ -263,7 +281,7 @@ normalize_existing() {
     local image_tool
     image_tool="$(need_image_tool)"
     mkdir -p "${CROP_DIR}"
-    rm -f "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png "${RAW_MANIFEST}" "${CROP_MANIFEST}"
+    rm -f "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}"
 
     python3 - "${OUT_DIR}" "${RAW_MANIFEST}" <<'PY'
 from __future__ import annotations
@@ -295,12 +313,34 @@ PY
         05_ingame_after_cast_original_viewport_224x136
         06_ingame_inventory_panel_original_viewport_224x136
     )
-    local i=0 src label ppm png
+    local route_shot_labels=()
+    if [[ -n "${ROUTE_EVENTS}" ]]; then
+        while IFS= read -r route_label; do
+            route_shot_labels+=("$route_label")
+        done < <(python3 - "${ROUTE_EVENTS}" <<'PY'
+import sys
+for token in sys.argv[1].split():
+    low = token.lower()
+    if low in {"shot", "capture", "screenshot"}:
+        print("")
+    elif low.startswith("shot:"):
+        print(low.split(":", 1)[1])
+PY
+)
+    fi
+    printf 'index\tfilename\troute_label\troute_token\n' > "${SHOT_LABEL_MANIFEST}"
+    local i=0 src label route_label route_token ppm png
     while IFS= read -r src; do
         if [[ $i -ge ${#labels[@]} ]]; then
             break
         fi
         label="${labels[$i]}"
+        route_label="${route_shot_labels[$i]:-}"
+        if [[ -n "$route_label" ]]; then
+            route_token="shot:${route_label}"
+        else
+            route_token="shot"
+        fi
         ppm="${CROP_DIR}/${label}.ppm"
         png="${CROP_DIR}/${label}.png"
         if [[ "${image_tool}" == "pillow" ]]; then
@@ -320,6 +360,7 @@ PY
             "${image_tool}" "$src" -crop 224x136+0+33 +repage "$ppm"
             "${image_tool}" "$ppm" "$png" 2>/dev/null || true
         fi
+        printf '%02d\t%s\t%s\t%s\n' "$((i + 1))" "${label}.ppm" "$route_label" "$route_token" >> "${SHOT_LABEL_MANIFEST}"
         i=$((i + 1))
     done < <(find "${OUT_DIR}" -maxdepth 1 -type f -name 'image*.png' | sort)
 
@@ -362,7 +403,7 @@ with manifest.open("w") as f:
             raise SystemExit(f"ERROR: wrong crop geometry for {path}: {width}x{height}")
         f.write(f"original_viewport_224x136\t{path.name}\t{width}\t{height}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}\n")
 PY
-    ls -lh "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${CROP_DIR}"/* | tee "${SIZE_LOG}"
+    ls -lh "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}" "${CROP_DIR}"/* | tee "${SIZE_LOG}"
     echo "[pass-70] normalized original viewport crops: ${CROP_MANIFEST}"
 }
 
@@ -395,7 +436,7 @@ case "$mode" in
         need_stage
         if [[ -z "${ROUTE_EVENTS}" ]]; then
             echo "ERROR: DM1_ORIGINAL_ROUTE_EVENTS is required for --run; refusing to guess original route/state." >&2
-            echo "Example shape only (not validated): DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot right wait:300 shot up wait:300 shot wait:300 shot wait:300 shot wait:300 shot'" >&2
+            echo "Example shape only (not validated): DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot:party_hud right wait:300 shot up wait:300 shot:spell_panel wait:300 shot wait:300 shot:inventory_panel'" >&2
             exit 5
         fi
         validate_route_shape
