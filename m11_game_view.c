@@ -8019,6 +8019,11 @@ enum {
     M11_GFX_BORDER_PARTY_FIRESHIELD  = 38, /* C038 */
     M11_GFX_BORDER_PARTY_SPELLSHIELD = 39, /* C039 */
 
+    /* Movement arrows.
+     * C013 is the original right-column movement arrow panel drawn by
+     * F0395_MENUS_DrawMovementArrows into C009_ZONE_MOVEMENT_ARROWS. */
+    M11_GFX_MOVEMENT_ARROWS       = 13,
+
     /* Damage indicator overlays.
      * C014: 88×45, drawn on viewport when creature takes damage.
      * C015: 45×7,  drawn on champion status box for non-inventory champion.
@@ -11639,6 +11644,10 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
 #define M11_DM_SPELL_AREA_Y      90
 #define M11_DM_SPELL_AREA_W      87
 #define M11_DM_SPELL_AREA_H      25
+#define M11_DM_MOVEMENT_ARROWS_X 233
+#define M11_DM_MOVEMENT_ARROWS_Y 124
+#define M11_DM_MOVEMENT_ARROWS_W  87
+#define M11_DM_MOVEMENT_ARROWS_H  45
 
 /* Try to blit GRAPHICS.DAT graphic `gfxIdx` at its native size anchored
  * at (x,y).  Returns 1 on success, 0 if the asset was unavailable or
@@ -14018,6 +14027,23 @@ int M11_GameView_GetV1MovementArrowsZoneId(void) {
     return 9;
 }
 
+int M11_GameView_GetV1MovementArrowsGraphicId(void) {
+    /* ReDMCSB MENUDRAW.C F0395 blits C013_GRAPHIC_MOVEMENT_ARROWS here. */
+    return M11_GFX_MOVEMENT_ARROWS;
+}
+
+int M11_GameView_GetV1MovementArrowsZone(int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH) {
+    if (!M11_GameView_GetV1MovementArrowsZoneId()) return 0;
+    if (outX) *outX = M11_DM_MOVEMENT_ARROWS_X;
+    if (outY) *outY = M11_DM_MOVEMENT_ARROWS_Y;
+    if (outW) *outW = M11_DM_MOVEMENT_ARROWS_W;
+    if (outH) *outH = M11_DM_MOVEMENT_ARROWS_H;
+    return 1;
+}
+
 int M11_GameView_GetV1MovementArrowZoneId(int arrowIndex) {
     static const int kArrowZones[6] = { 68, 69, 70, 71, 72, 73 };
     if (!M11_GameView_GetV1MovementArrowsZoneId() ||
@@ -16059,6 +16085,31 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
+                                        unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight) {
+    int arrowX, arrowY, arrowW, arrowH;
+    if (!state || !framebuffer || state->showDebugHUD ||
+        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        return;
+    }
+    if (!M11_GameView_GetV1MovementArrowsZone(&arrowX, &arrowY, &arrowW, &arrowH)) {
+        return;
+    }
+
+    /* Classic DM1 draws the movement controls as one native graphic,
+     * not as Firestaff's old procedural button strip.  ReDMCSB
+     * MENUDRAW.C F0395 calls F0660_(C013_GRAPHIC_MOVEMENT_ARROWS,
+     * C009_ZONE_MOVEMENT_ARROWS, no transparency); the layout-696
+     * C068..C073 arrow hit rectangles sit one pixel inside this
+     * 87×45 source panel. */
+    (void)m11_blit_panel_asset_native(state,
+        framebuffer, framebufferWidth, framebufferHeight,
+        (unsigned int)M11_GameView_GetV1MovementArrowsGraphicId(),
+        arrowW, arrowH, arrowX, arrowY);
+}
+
 static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
@@ -17929,6 +17980,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
     m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth, framebufferHeight);
 
     /* Spell panel overlay */
     if (state->spellPanelOpen &&

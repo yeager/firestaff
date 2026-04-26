@@ -4140,6 +4140,34 @@ int main(int argc, char** argv) {
                          "odd-width action/PASS area graphic 10 loads as 87x45 with visible palette data");
         }
 
+        /* INV_GV_90C: Original movement arrows graphic loads cleanly. */
+        {
+            const M11_AssetSlot* arrowSlot = M11_AssetLoader_Load(
+                &assetView.assetLoader, 13);
+            int seen[16];
+            int unique = 0;
+            unsigned long px;
+            memset(seen, 0, sizeof(seen));
+            if (arrowSlot && arrowSlot->pixels) {
+                for (px = 0; px < (unsigned long)arrowSlot->width *
+                                  (unsigned long)arrowSlot->height; ++px) {
+                    int c = arrowSlot->pixels[px] & 0x0F;
+                    if (!seen[c]) {
+                        seen[c] = 1;
+                        ++unique;
+                    }
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_90C",
+                         arrowSlot != NULL &&
+                             arrowSlot->width == 87 &&
+                             arrowSlot->height == 45 &&
+                             arrowSlot->pixels != NULL &&
+                             unique >= 2,
+                         "movement arrows graphic 13 loads as 87x45 with visible palette data");
+        }
+
         /* INV_GV_91: Blit produces non-zero pixels in framebuffer */
         {
             unsigned char assetFb[320 * 200];
@@ -8700,10 +8728,14 @@ int main(int argc, char** argv) {
         }
 
         {
+            int panelX, panelY, panelW, panelH;
             int leftX, leftY, leftW, leftH;
             int rightX, rightY, rightW, rightH;
             probe_record(&tally, "INV_GV_300AL",
                          M11_GameView_GetV1MovementArrowsZoneId() == 9 &&
+                             M11_GameView_GetV1MovementArrowsGraphicId() == 13 &&
+                             M11_GameView_GetV1MovementArrowsZone(&panelX, &panelY, &panelW, &panelH) &&
+                             panelX == 233 && panelY == 124 && panelW == 87 && panelH == 45 &&
                              M11_GameView_GetV1MovementArrowZoneId(0) == 68 &&
                              M11_GameView_GetV1MovementArrowZoneId(1) == 69 &&
                              M11_GameView_GetV1MovementArrowZoneId(2) == 70 &&
@@ -8716,7 +8748,7 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH) &&
                              leftX == 234 && leftY == 125 && leftW == 19 && leftH == 21 &&
                              rightX == 291 && rightY == 147 && rightW == 28 && rightH == 21,
-                         "movement arrow zones expose layout-696 C009/C068-C073 ids and geometry");
+                         "movement arrow panel exposes C009/C013 and layout-696 C068-C073 geometry");
         }
 
         {
