@@ -1,0 +1,497 @@
+{
+  "schema": "pass80_original_frame_classifier.v1",
+  "attempt_dir": "verification-screens/pass79-original-direct-flags-title",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "320x200": 6
+  },
+  "expected_sequence": null,
+  "class_counts": {
+    "title_or_menu": 6
+  },
+  "duplicate_sha256_counts": {
+    "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784": 6
+  },
+  "honesty": "Classifier/audit only. A 320x200 frame is not parity evidence until its semantic class matches the intended route state.",
+  "captures": [
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0004-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0005-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0006-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+  ],
+  "problems": [],
+  "pass": true
+}

@@ -549,8 +549,11 @@ first, then visual parity, then typography / honesty.
   frames, not `320x200` gameplay frames, so no original viewport reference
   was accepted. Pass 79 resolves that launcher blocker using the original
   `DM -vv -sn -pk` flags from `DM.C`; raw DOSBox captures now audit as
-  `320x200` graphics frames and can reach the dungeon corridor view. Exact
-  original semantic route parity is still open.
+  `320x200` graphics frames and can reach the dungeon corridor view. Pass 80
+  adds a raw-frame semantic classifier/audit: the title attempt is correctly
+  `title_or_menu`, while the Enter/pass77 attempt repeats the same
+  `dungeon_gameplay` frame six times and fails the expected spell-panel and
+  inventory checkpoints. Exact original semantic route parity is still open.
 - **Suggested pass:** pass-47b/pass-72 follow-up — ZONES.H parse (from
   `PANEL.C` + `COORD.C` layout-record init) and render from the locked
   DUNGEON.DAT/GRAPHICS.DAT viewport state plus `zones_h_reconstruction.json`;
