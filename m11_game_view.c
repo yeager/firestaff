@@ -5143,10 +5143,10 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
      * action cell activates them (F0389_MENUS_SetActingChampion)
      * and switches the right-column action area into menu mode.
      * Clicking the acting champion's cell again clears it
-     * (F0388_MENUS_ClearActingChampion).  Cells are at
-     *   x = slot * 22 + 233  (w = 20)
-     *   y = 86..120          (h = 35)
-     * matching F0386_MENUS_DrawActionIcon geometry.  Only active
+     * (F0388_MENUS_ClearActingChampion).  Hit rectangles are
+     * resolved through M11_GameView_GetV1ActionIconCellZone() so
+     * click geometry stays locked to layout-696 C089..C092, matching
+     * F0386_MENUS_DrawActionIcon geometry.  Only active
      * in V1 mode once the authentic frames have rendered, mirroring
      * the visible-cells gate used in m11_draw_utility_panel. */
     if (!state->showDebugHUD) {
@@ -5186,12 +5186,12 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         }
 
         for (slotHit = 0; slotHit < CHAMPION_MAX_PARTY; ++slotHit) {
-            int cellX = M11_DM_ACTION_ICON_CELL_X0_FWD +
-                        slotHit * M11_DM_ACTION_ICON_CELL_STEP_FWD;
-            if (!m11_point_in_rect(x, y, cellX,
-                                   M11_DM_ACTION_ICON_CELL_Y_FWD,
-                                   M11_DM_ACTION_ICON_CELL_W_FWD,
-                                   M11_DM_ACTION_ICON_CELL_H_FWD)) {
+            int cellX, cellY, cellW, cellH;
+            if (!M11_GameView_GetV1ActionIconCellZone(
+                    slotHit, &cellX, &cellY, &cellW, &cellH)) {
+                continue;
+            }
+            if (!m11_point_in_rect(x, y, cellX, cellY, cellW, cellH)) {
                 continue;
             }
             /* Toggle: click on already-acting champion clears. */

@@ -7630,6 +7630,25 @@ int main(int argc, char** argv) {
                          "action-hand icon cell zones resolve to layout-696 C089..C096 geometry");
         }
 
+        {
+            M11_GameViewState pointerView = iconView;
+            int invSlot;
+            struct ChampionState_Compat* c = &pointerView.world.party.champions[3];
+            pointerView.world.party.championCount = 4;
+            memset(c, 0, sizeof(*c));
+            for (invSlot = 0; invSlot < CHAMPION_SLOT_COUNT; ++invSlot) {
+                c->inventory[invSlot] = THING_NONE;
+            }
+            c->present = 1;
+            memcpy(c->name, "WUUF", 4);
+            c->hp.maximum = 60;
+            c->hp.current = 60;
+            probe_record(&tally, "INV_GV_300E",
+                         M11_GameView_HandlePointer(&pointerView, 318, 120, 1) == M11_GAME_INPUT_REDRAW &&
+                             M11_GameView_GetActingChampionOrdinal(&pointerView) == 4,
+                         "action-hand icon pointer hit uses source C092 rightmost cell geometry");
+        }
+
         /* Count cyan (palette index 3) pixels inside each cell body.
          * The body is the 16x16 inner icon backdrop at
          * X=cellX+2..cellX+18, Y=95..110. */

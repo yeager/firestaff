@@ -79,3 +79,9 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_300D` for first/fourth cell and inner icon geometry: cells `(233,86,20,35)` and `(299,86,20,35)`, inner icons `(235,95,16,16)` and `(301,95,16,16)`.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1217_1236_v1_action_icon_zone_helpers.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `473/473`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1237–1256 — V1 action icon pointer zone parity.
+  - Routed action-cell pointer hit testing through `M11_GameView_GetV1ActionIconCellZone(...)` so click geometry shares the same source-backed layout-696 `C089..C092` definition as drawing/probes.
+  - Added invariant `INV_GV_300E`: a click at `(318,120)` activates champion ordinal 4 from source `C092` rightmost-cell geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1237_1256_v1_action_icon_pointer_zone.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `474/474`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
