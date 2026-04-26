@@ -15939,6 +15939,53 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight) {
+    int spellX, spellY, spellW, spellH;
+    int i;
+    if (!state || !state->spellPanelOpen || state->showDebugHUD ||
+        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        return;
+    }
+    if (!M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH)) {
+        return;
+    }
+
+    /* Normal V1 spell entry belongs to the source right-column spell
+     * area, not to Firestaff's old large modal workbench panel.  ReDMCSB
+     * CASTER.C clears/draws C013_ZONE_SPELL_AREA, blits the native
+     * spell-area line graphic, then prints available and champion symbols
+     * via the C245..C264 zone family.  Until the exact per-symbol zone
+     * rectangles are fully reconstructed, keep the runtime bounded inside
+     * C013 and use the already source-backed C011 14x13 line cells. */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
+    (void)m11_blit_panel_asset_native(state,
+        framebuffer, framebufferWidth, framebufferHeight,
+        M11_GameView_GetV1SpellAreaBackgroundGraphicId(),
+        spellW, spellH, spellX, spellY);
+
+    for (i = 0; i < state->spellBuffer.runeCount && i < 4; ++i) {
+        int cellX = spellX + 15 + i * M11_SPELL_LABEL_CELL_W;
+        int cellY = spellY + 1;
+        (void)m11_blit_spell_label_cell(state, framebuffer,
+                                        framebufferWidth, framebufferHeight,
+                                        cellX, cellY, 1);
+    }
+    if (state->spellBuffer.runeCount < 4) {
+        int startX = spellX + 2;
+        int cellY = spellY + 12;
+        for (i = 0; i < 6; ++i) {
+            int cellX = startX + i * M11_SPELL_LABEL_CELL_W;
+            (void)m11_blit_spell_label_cell(state, framebuffer,
+                                            framebufferWidth, framebufferHeight,
+                                            cellX, cellY, 0);
+        }
+    }
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -17761,8 +17808,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
 
+    m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
+
     /* Spell panel overlay */
-    if (state->spellPanelOpen) {
+    if (state->spellPanelOpen &&
+        (state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
+         m11_v2_vertical_slice_enabled())) {
         /* ── P4+P6 V1 Presentation: DM1-style rune-dominant spell panel
          * with GRAPHICS.DAT-backed spell area grid ── */
         int spI;
