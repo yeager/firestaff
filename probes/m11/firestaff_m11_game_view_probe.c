@@ -8706,7 +8706,9 @@ int main(int argc, char** argv) {
             c->stamina.current = 30; c->stamina.maximum = 50;
             c->mana.current = 20; c->mana.maximum = 40;
             c->portraitIndex = slot;
+            c->direction = slot;
         }
+        iconView.world.party.direction = DIR_NORTH;
         /* Slot 3 left absent. */
         iconView.active = 1;
         iconView.showDebugHUD = 0;
@@ -8721,29 +8723,61 @@ int main(int argc, char** argv) {
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(&iconView, fb, 320, 200);
 
+        probe_record(&tally, "INV_GV_15AF",
+                     M11_GameView_GetV1ChampionIconSourceIndex(&iconView, 0) == 0 &&
+                         M11_GameView_GetV1ChampionIconSourceIndex(&iconView, 1) == 1 &&
+                         M11_GameView_GetV1ChampionIconSourceIndex(&iconView, 2) == 2 &&
+                         M11_GameView_GetV1ChampionIconSourceIndex(&iconView, 3) == -1,
+                     "V1 champion icons select C028 strip cells via M026 direction-relative source index");
+
+        probe_record(&tally, "INV_GV_15AG",
+                     probe_count_color(fb,
+                                       320,
+                                       281,
+                                       0,
+                                       16,
+                                       14,
+                                       (unsigned char)M11_GameView_GetV1ChampionBarColor(0)) > 0U &&
+                         probe_count_color(fb,
+                                           320,
+                                           301,
+                                           0,
+                                           16,
+                                           14,
+                                           (unsigned char)M11_GameView_GetV1ChampionBarColor(1)) > 0U &&
+                         probe_count_color(fb,
+                                           320,
+                                           281,
+                                           15,
+                                           16,
+                                           14,
+                                           PROBE_COLOR_BLACK) == (unsigned int)(16 * 14),
+                     "V1 champion HUD renders source-colored C113/C114 icon cells and leaves absent icon slots black");
+
         probe_record(&tally,
                      "INV_GV_350",
                      /* DM1 V1 puts champion status boxes at the top of the
-                      * screen (layout-696 C151..C154), so the old full-width
-                      * top-strip check now legitimately intersects names,
-                      * hands, and bar pixels.  Only the far-right sliver past
-                      * the fourth status box (x >= 286) belongs to the removed
-                      * Firestaff diagnostic title strip. */
+                      * screen (layout-696 C151..C154) and champion icon zones
+                      * at C113..C116, so the old full-width top-strip check now
+                      * legitimately intersects names, hands, bars, and icon
+                      * pixels.  The gap between the fourth status box and the
+                      * icon cluster is the remaining removed Firestaff
+                      * diagnostic title-strip sentinel. */
                      probe_count_color(fb,
                                        320,
-                                       286,
-                                       12,
-                                       22,
-                                       12,
+                                       268,
+                                       0,
+                                       13,
+                                       29,
                                        PROBE_COLOR_WHITE) == 0U &&
                          probe_count_color(fb,
                                            320,
-                                           286,
-                                           12,
-                                           22,
-                                           12,
+                                           268,
+                                           0,
+                                           13,
+                                           29,
                                            PROBE_COLOR_YELLOW) == 0U,
-                     "normal V1 top chrome outside source status boxes contains no title/debug text pixels");
+                     "normal V1 top chrome outside source status boxes/icons contains no title/debug text pixels");
 
         {
             unsigned char fbParity[320 * 200];
@@ -9064,6 +9098,14 @@ int main(int argc, char** argv) {
         {
             int icon0X, icon0Y, icon0W, icon0H;
             int icon3X, icon3Y, icon3W, icon3H;
+            probe_record(&tally, "INV_GV_300AR",
+                         M11_GameView_GetV1ChampionIconInvisibilityRemap(0) == 0 &&
+                             M11_GameView_GetV1ChampionIconInvisibilityRemap(3) == 0 &&
+                             M11_GameView_GetV1ChampionIconInvisibilityRemap(5) == 0 &&
+                             M11_GameView_GetV1ChampionIconInvisibilityRemap(10) == 0 &&
+                             M11_GameView_GetV1ChampionIconInvisibilityRemap(14) == 14 &&
+                             M11_GameView_GetV1ChampionIconInvisibilityRemap(-1) == -1,
+                         "V1 champion icon invisibility palette mirrors source G2362 remap bytes");
             probe_record(&tally, "INV_GV_300AK",
                          M11_GameView_GetV1ChampionIconZoneId(0) == 113 &&
                              M11_GameView_GetV1ChampionIconZoneId(3) == 116 &&

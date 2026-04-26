@@ -14780,6 +14780,26 @@ int M11_GameView_GetV1ChampionIconZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1ChampionIconSourceIndex(const M11_GameViewState* state,
+                                              int championSlot) {
+    const struct ChampionState_Compat* champ;
+    int championDirection;
+    int partyDirection;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        championSlot >= state->world.party.championCount) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    if (!champ->present) return -1;
+
+    /* ReDMCSB macro M026_CHAMPION_ICON_INDEX(Direction, PartyDirection)
+     * selects one of the four 19x14 cells in graphic C028 by rotating
+     * the champion's stored direction against G0308_i_PartyDirection. */
+    championDirection = (int)champ->direction & 0x03;
+    partyDirection = state->world.party.direction & 0x03;
+    return (championDirection - partyDirection) & 0x03;
+}
+
 int M11_GameView_GetV1InventoryPanelGraphicId(void) {
     return M11_GFX_PANEL_EMPTY;
 }
@@ -17015,6 +17035,105 @@ static int m11_set_active_champion(M11_GameViewState* state, int championIndex) 
     return 1;
 }
 
+int M11_GameView_GetV1ChampionIconInvisibilityRemap(int paletteIndex) {
+    static const unsigned char remap[16] = {
+        0, 1, 2, 0, 4, 0, 6, 7, 8, 9, 0, 11, 12, 13, 14, 15
+    };
+    if (paletteIndex < 0 || paletteIndex > 15) {
+        return -1;
+    }
+    return (int)remap[paletteIndex];
+}
+
+static void m11_apply_v1_champion_icon_invisibility_remap(unsigned char* framebuffer,
+                                                          int framebufferWidth,
+                                                          int framebufferHeight,
+                                                          int x,
+                                                          int y,
+                                                          int w,
+                                                          int h) {
+    int yy;
+    int xx;
+    if (!framebuffer) return;
+    for (yy = 0; yy < h; ++yy) {
+        int py = y + yy;
+        if (py < 0 || py >= framebufferHeight) continue;
+        for (xx = 0; xx < w; ++xx) {
+            int px = x + xx;
+            int remapped;
+            unsigned char* p;
+            if (px < 0 || px >= framebufferWidth) continue;
+            p = &framebuffer[py * framebufferWidth + px];
+            remapped = M11_GameView_GetV1ChampionIconInvisibilityRemap((int)(*p & 0x0F));
+            if (remapped >= 0) {
+                *p = (unsigned char)remapped;
+            }
+        }
+    }
+}
+
+static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
+                                        unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight) {
+    int slot;
+    const M11_AssetSlot* iconStrip = NULL;
+    if (!state || !framebuffer || state->showDebugHUD ||
+        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        return;
+    }
+    if (state->assetsAvailable) {
+        iconStrip = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1ChampionIconGraphicId());
+    }
+
+    /* ReDMCSB CHAMDRAW.C F0288 clears C113..C116, fills a 19x14
+     * temporary bitmap with G0046_auc_Graphic562_ChampionColor[slot],
+     * overlays C028_GRAPHIC_CHAMPION_ICONS with C12 transparent, then
+     * blits the result to the clipped champion-icon zones.  This restores
+     * the visible top-right party-position icons that the V1 status-box
+     * pass exposed as hit zones but did not yet draw. */
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        int x, y, w, h;
+        int sourceIndex;
+        unsigned char baseColor;
+        if (!M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h)) {
+            continue;
+        }
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, w, h, M11_COLOR_BLACK);
+        if (slot >= state->world.party.championCount ||
+            !state->world.party.champions[slot].present) {
+            continue;
+        }
+        baseColor = (state->world.magic.event71CountInvisibility > 0)
+            ? (unsigned char)M11_COLOR_GRAY
+            : (unsigned char)M11_GameView_GetV1ChampionBarColor(slot);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, w, h, baseColor);
+        sourceIndex = M11_GameView_GetV1ChampionIconSourceIndex(state, slot);
+        if (iconStrip && iconStrip->loaded && iconStrip->pixels &&
+            iconStrip->width == M11_CHAMPION_ICON_W * 4 &&
+            iconStrip->height == M11_CHAMPION_ICON_H &&
+            sourceIndex >= 0 && sourceIndex < 4) {
+            M11_AssetLoader_BlitRegion(iconStrip,
+                sourceIndex * M11_CHAMPION_ICON_W,
+                0,
+                w < M11_CHAMPION_ICON_W ? w : M11_CHAMPION_ICON_W,
+                h < M11_CHAMPION_ICON_H ? h : M11_CHAMPION_ICON_H,
+                framebuffer, framebufferWidth, framebufferHeight,
+                x, y, M11_COLOR_DARK_GRAY);
+        }
+        if (state->world.magic.event71CountInvisibility > 0) {
+            m11_apply_v1_champion_icon_invisibility_remap(framebuffer,
+                                                          framebufferWidth,
+                                                          framebufferHeight,
+                                                          x, y, w, h);
+        }
+    }
+}
+
 static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
@@ -18526,6 +18645,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
     }
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth, framebufferHeight);
 
     m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth, framebufferHeight);
