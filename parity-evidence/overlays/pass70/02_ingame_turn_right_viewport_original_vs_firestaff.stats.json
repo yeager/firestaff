@@ -1,0 +1,20 @@
+{
+  "pass": 70,
+  "tool": "tools/pass70_viewport_pair_compare.py",
+  "firestaff": "verification-screens/02_ingame_turn_right_latest_viewport_224x136.ppm",
+  "firestaff_sha256": "6db0edeeba2118636cc70b037504378081d6e1299a268fceab7fab1f7cce529f",
+  "original": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
+  "original_sha256": "3d25b385a20959a03f7675c652d96b82dedd97caa2be5ce2438f62289985666e",
+  "region_xywh": [
+    0,
+    0,
+    224,
+    136
+  ],
+  "tolerance_per_channel": 0,
+  "differing_pixels": 24767,
+  "total_pixels": 30464,
+  "delta_percent": 81.2992,
+  "mask_path": "/Volumes/Extern-disk/openclaw-workspace-main/tmp/firestaff/parity-evidence/overlays/pass70/02_ingame_turn_right_viewport_original_vs_firestaff.mask.png",
+  "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch."
+}

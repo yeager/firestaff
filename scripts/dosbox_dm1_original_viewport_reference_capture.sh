@@ -17,6 +17,7 @@ DOSBOX="${DOSBOX:-/Applications/DOSBox Staging.app/Contents/MacOS/dosbox}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM1_ORIGINAL_ROUTE_EVENTS:-}"
+SKIP_STARTUP_SELECTOR="${DM1_ROUTE_SKIP_STARTUP_SELECTOR:-0}"
 CONF="${OUT_DIR}/dosbox-original-viewports.conf"
 LOG="${OUT_DIR}/dosbox-original-viewports.log"
 PID_FILE="${OUT_DIR}/dosbox.pid"
@@ -42,7 +43,7 @@ Required for --run:
 
 Supported route tokens:
   shot, wait:<ms>, enter, esc, space, up, down, left, right, one, two, three,
-  four, five, six, a-z, 0-9
+  four, five, six, kp0-kp9, kpenter, a-z, 0-9
 
 Outputs:
   raw screenshots: ${OUT_DIR}/image*.png (DOSBox Staging raw 320x200 if capture succeeds)
@@ -51,6 +52,9 @@ Outputs:
 Optional environment:
   DM1_ORIGINAL_STAGE_DIR=/path/to/DM1-PC34-tree-with-DM.EXE
                     override the default staged tree path
+  DM1_ROUTE_SKIP_STARTUP_SELECTOR=1
+                    skip legacy graphics/sound/input selector keystrokes when
+                    the DOSBox config launches `DM VGA` directly
   manifest:        ${CROP_MANIFEST}
 
 Honesty note:
@@ -106,7 +110,7 @@ validate_route_shape() {
 import re, sys
 route = sys.argv[1].split()
 allowed = set("shot capture screenshot enter return esc escape space up down left right one two three four five six zero".split())
-allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789")
+allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {"kpenter"}
 shots = 0
 for token in route:
     low = token.lower()
@@ -166,8 +170,8 @@ EOF
 import Foundation
 import CoreGraphics
 
-if CommandLine.arguments.count != 3 {
-    fputs("usage: original_viewport_route_keys.swift PID ROUTE_EVENTS\n", stderr)
+if CommandLine.arguments.count != 4 {
+    fputs("usage: original_viewport_route_keys.swift PID ROUTE_EVENTS SKIP_STARTUP_SELECTOR\n", stderr)
     exit(2)
 }
 
@@ -176,6 +180,7 @@ guard let pid = pid_t(CommandLine.arguments[1]) else {
     exit(2)
 }
 let route = CommandLine.arguments[2].split(separator: " ").map(String.init)
+let skipStartupSelector = CommandLine.arguments[3] == "1"
 let source = CGEventSource(stateID: .hidSystemState)
 
 let keycodes: [String: CGKeyCode] = [
@@ -186,7 +191,9 @@ let keycodes: [String: CGKeyCode] = [
     "o": 31, "u": 32, "i": 34, "p": 35, "l": 37, "j": 38, "k": 40,
     "n": 45, "m": 46,
     "enter": 36, "return": 36, "space": 49, "esc": 53, "escape": 53,
-    "left": 123, "right": 124, "down": 125, "up": 126
+    "left": 123, "right": 124, "down": 125, "up": 126,
+    "kp1": 83, "kp2": 84, "kp3": 85, "kp4": 86, "kp5": 87, "kp6": 88,
+    "kp7": 89, "kp8": 91, "kp9": 92, "kp0": 82, "kpenter": 76
 ]
 
 func post(_ key: CGKeyCode, _ down: Bool, flags: CGEventFlags = []) {
@@ -212,9 +219,14 @@ func cmdF5() {
 }
 
 // Original PC 3.4 startup selector: graphics=1, sound=1, input=1.
-for _ in 0..<3 {
-    tap(18) // '1'
-    tap(36) // Return
+// The generated DOSBox config launches `DM VGA` directly, which bypasses that
+// selector.  In that state, posting the legacy selector keys would hit the
+// title/game screens and shift the whole capture route.
+if !skipStartupSelector {
+    for _ in 0..<3 {
+        tap(18) // '1'
+        tap(36) // Return
+    }
 }
 
 for token in route {
@@ -402,7 +414,7 @@ case "$mode" in
 print(${WAIT_BEFORE_INPUT_MS}/1000)
 PY
 )"
-        swift "$KEY_HELPER" "$pid" "$ROUTE_EVENTS" >"$KEY_LOG" 2>&1
+        swift "$KEY_HELPER" "$pid" "$ROUTE_EVENTS" "$SKIP_STARTUP_SELECTOR" >"$KEY_LOG" 2>&1
         python3 - "$OUT_DIR" "$NEW_FILE_TIMEOUT_MS" <<'PY'
 from pathlib import Path
 import sys, time

@@ -37,7 +37,7 @@
       "firestaff_exists": true,
       "original_ppm": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm",
       "original_png": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.png",
-      "original_exists": false,
+      "original_exists": true,
       "overlay_base": "parity-evidence/overlays/pass70/01_ingame_start_viewport_original_vs_firestaff",
       "redmcsb_overlay_diff_command": "python3 tools/redmcsb_overlay_diff.py --firestaff verification-screens/01_ingame_start_latest_viewport_224x136.png --reference verification-screens/pass70-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.png --region-xywh 0,0,224,136 --out parity-evidence/overlays/pass70/01_ingame_start_viewport_original_vs_firestaff"
     },
@@ -49,7 +49,7 @@
       "firestaff_exists": true,
       "original_ppm": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm",
       "original_png": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
-      "original_exists": false,
+      "original_exists": true,
       "overlay_base": "parity-evidence/overlays/pass70/02_ingame_turn_right_viewport_original_vs_firestaff",
       "redmcsb_overlay_diff_command": "python3 tools/redmcsb_overlay_diff.py --firestaff verification-screens/02_ingame_turn_right_latest_viewport_224x136.png --reference verification-screens/pass70-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png --region-xywh 0,0,224,136 --out parity-evidence/overlays/pass70/02_ingame_turn_right_viewport_original_vs_firestaff"
     },
@@ -61,7 +61,7 @@
       "firestaff_exists": true,
       "original_ppm": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm",
       "original_png": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
-      "original_exists": false,
+      "original_exists": true,
       "overlay_base": "parity-evidence/overlays/pass70/03_ingame_move_forward_viewport_original_vs_firestaff",
       "redmcsb_overlay_diff_command": "python3 tools/redmcsb_overlay_diff.py --firestaff verification-screens/03_ingame_move_forward_latest_viewport_224x136.png --reference verification-screens/pass70-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png --region-xywh 0,0,224,136 --out parity-evidence/overlays/pass70/03_ingame_move_forward_viewport_original_vs_firestaff"
     },
@@ -73,7 +73,7 @@
       "firestaff_exists": true,
       "original_ppm": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm",
       "original_png": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png",
-      "original_exists": false,
+      "original_exists": true,
       "overlay_base": "parity-evidence/overlays/pass70/04_ingame_spell_panel_viewport_original_vs_firestaff",
       "redmcsb_overlay_diff_command": "python3 tools/redmcsb_overlay_diff.py --firestaff verification-screens/04_ingame_spell_panel_latest_viewport_224x136.png --reference verification-screens/pass70-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png --region-xywh 0,0,224,136 --out parity-evidence/overlays/pass70/04_ingame_spell_panel_viewport_original_vs_firestaff"
     },
@@ -85,7 +85,7 @@
       "firestaff_exists": true,
       "original_ppm": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm",
       "original_png": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png",
-      "original_exists": false,
+      "original_exists": true,
       "overlay_base": "parity-evidence/overlays/pass70/05_ingame_after_cast_viewport_original_vs_firestaff",
       "redmcsb_overlay_diff_command": "python3 tools/redmcsb_overlay_diff.py --firestaff verification-screens/05_ingame_after_cast_latest_viewport_224x136.png --reference verification-screens/pass70-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png --region-xywh 0,0,224,136 --out parity-evidence/overlays/pass70/05_ingame_after_cast_viewport_original_vs_firestaff"
     },
@@ -97,14 +97,11 @@
       "firestaff_exists": true,
       "original_ppm": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm",
       "original_png": "verification-screens/pass70-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png",
-      "original_exists": false,
+      "original_exists": true,
       "overlay_base": "parity-evidence/overlays/pass70/06_ingame_inventory_panel_viewport_original_vs_firestaff",
       "redmcsb_overlay_diff_command": "python3 tools/redmcsb_overlay_diff.py --firestaff verification-screens/06_ingame_inventory_panel_latest_viewport_224x136.png --reference verification-screens/pass70-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png --region-xywh 0,0,224,136 --out parity-evidence/overlays/pass70/06_ingame_inventory_panel_viewport_original_vs_firestaff"
     }
   ],
-  "blockers": [
-    "missing original manifest: verification-screens/pass70-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
-    "not all six Firestaff/original viewport crop pairs are present"
-  ],
+  "blockers": [],
   "parity_claimed": false
 }
