@@ -11018,6 +11018,173 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 }
 
+static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3][3],
+                                                  int depthIndex) {
+    int d;
+    if (!cells || depthIndex <= 0) {
+        return 1;
+    }
+    for (d = 0; d < depthIndex && d < 3; ++d) {
+        if (!m11_viewport_cell_is_open(&cells[d][1])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight,
+                                       const M11_ViewRect frames[4],
+                                       const M11_ViewportCell cells[3][3]) {
+    int depth;
+    if (!state || !framebuffer || !frames || !cells) {
+        return;
+    }
+
+    /* Source-bound side contents pass.  DUNVIEW.C F0115 places side-cell
+     * objects through the same layout-696 C2500 object zones and C3200
+     * creature zones as center cells.  The debug side-feature renderer
+     * already consumed those source tables, but normal V1 never called it;
+     * as a result side-lane items, creatures, and missiles disappeared
+     * unless debug HUD was enabled.  Draw only contents here (no invented
+     * pane fill/border), after source wall/door panels and before center
+     * contents, and stop at nearer closed center-line blockers. */
+    for (depth = 0; depth < 3; ++depth) {
+        int sideSlot;
+        const M11_ViewRect* outer = &frames[depth];
+        const M11_ViewRect* inner = &frames[depth + 1];
+        int paneY = inner->y + 3;
+        int paneH = inner->h - 6;
+        if (!m11_dm1_center_line_clear_before_depth(cells, depth)) {
+            break;
+        }
+        if (paneH <= 4) {
+            continue;
+        }
+        for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
+            int side = sideSlot == 0 ? -1 : 1;
+            const M11_ViewportCell* cell = &cells[depth][side < 0 ? 0 : 2];
+            int paneX;
+            int paneW;
+            if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
+                continue;
+            }
+            if (side < 0) {
+                paneX = outer->x + 4;
+                paneW = (inner->x - outer->x) - 8;
+            } else {
+                paneX = inner->x + inner->w + 4;
+                paneW = (outer->x + outer->w) - paneX - 4;
+            }
+            if (paneW <= 4) {
+                continue;
+            }
+
+            if (cell->floorItemCount > 0) {
+                int ii;
+                int itemArea = paneH / 3;
+                int itemBaseY = paneY + paneH - itemArea - 2;
+                for (ii = 0; ii < cell->floorItemCount; ++ii) {
+                    if (cell->floorItemTypes[ii] < 0) continue;
+                    if (!g_drawState ||
+                        !m11_draw_item_sprite(g_drawState, framebuffer,
+                                              framebufferWidth, framebufferHeight,
+                                              paneX + 1, itemBaseY,
+                                              paneW - 2, itemArea,
+                                              cell->floorItemTypes[ii],
+                                              cell->floorItemSubtypes[ii],
+                                              cell->floorItemCells[ii], ii,
+                                              depth + 1)) {
+                        if (ii == 0) {
+                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                          paneX + paneW / 2 - 2, paneY + paneH - 4,
+                                          5, 2, M11_COLOR_YELLOW);
+                        }
+                    }
+                }
+            }
+
+            if (cell->creatureGroupCount > 0) {
+                int gi;
+                int groupCount = cell->creatureGroupCount;
+                int slotH = (groupCount > 1)
+                    ? (paneH - 2) * 2 / (groupCount + 1)
+                    : paneH - 2;
+                int stepY = (groupCount > 1)
+                    ? ((paneH - 2) - slotH) / (groupCount - 1)
+                    : 0;
+                for (gi = 0; gi < groupCount; ++gi) {
+                    int cy = paneY + 1 + gi * stepY;
+                    int countInGroup = cell->creatureCountsPerGroup[gi];
+                    int visibleDups = countInGroup;
+                    int di;
+                    if (cell->creatureTypes[gi] < 0) continue;
+                    if (visibleDups > 3) visibleDups = 3;
+                    if (visibleDups < 1) visibleDups = 1;
+                    for (di = 0; di < visibleDups; ++di) {
+                        int drawH = visibleDups == 1 ? slotH : slotH * 2 / 3;
+                        int drawYBase = visibleDups == 1 ? cy : cy + di * ((slotH - drawH) > 1 ? (slotH - drawH) : 1);
+                        int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                        int zoneX = 0;
+                        int zoneY = 0;
+                        int drawPaneX = paneX + 1;
+                        int drawPaneY = drawYBase;
+                        int drawPaneW = paneW - 2;
+                        int drawSideHint = side;
+                        if (m11_c3200_creature_side_zone_point(coordSet,
+                                                               depth < 3 ? depth : 2,
+                                                               side,
+                                                               visibleDups, di,
+                                                               &zoneX, &zoneY)) {
+                            drawPaneX = M11_VIEWPORT_X + zoneX - drawPaneW / 2;
+                            drawPaneY = M11_VIEWPORT_Y + zoneY - drawH;
+                            drawSideHint = 0;
+                        }
+                        if (!g_drawState ||
+                            !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
+                                                         framebufferWidth, framebufferHeight,
+                                                         drawPaneX, drawPaneY,
+                                                         drawPaneW, drawH,
+                                                         cell->creatureTypes[gi], depth,
+                                                         drawSideHint,
+                                                         cell->creatureDirections[gi])) {
+                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                          paneX + paneW / 2 - 1, drawYBase + drawH / 2 - 2,
+                                          3, 5, depth == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                        }
+                    }
+                }
+            }
+
+            if (cell->summary.projectiles > 0) {
+                int projArea = paneH / 3;
+                int projY;
+                if (projArea < 6) projArea = 6;
+                projY = paneY + (paneH - projArea) / 2;
+                if (!g_drawState ||
+                    !m11_draw_projectile_sprite(g_drawState, framebuffer,
+                                                framebufferWidth, framebufferHeight,
+                                                paneX + 1, projY,
+                                                paneW - 2, projArea,
+                                                cell->firstProjectileGfxIndex,
+                                                depth + 1,
+                                                cell->firstProjectileRelDir,
+                                                cell->firstProjectileCell,
+                                                cell->firstProjectileFlipFlags)) {
+                    int pcx = paneX + paneW / 2;
+                    int pcy = paneY + paneH / 2;
+                    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                                   pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
+                    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                                   pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
+                }
+            }
+        }
+    }
+}
+
 static unsigned char m11_focus_color(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return M11_COLOR_DARK_GRAY;
@@ -16390,6 +16557,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_side_contents(state, framebuffer, framebufferWidth, framebufferHeight,
+                               frames, cells);
 
     /* Until the full C2500/C3200 object+creature zone pass lands, keep
      * visible center-lane objects and creatures alive in normal V1 by
