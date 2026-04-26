@@ -648,6 +648,18 @@ first, then visual parity, then typography / honesty.
     `CONFUSE`; `FIREBALL` / `DISPELL` / `LIGHTNING` cast-action cue; and
     `INVOKE` action cue.
   - Full landing log and evidence pointers in `PASS55_AUDIO_FINDINGS.md`.
+- **Pass 125 (candidate, 2026-04-26):**
+  - Tightened the fallback/no-audio runtime seam for future queue/order probes:
+    valid `M11_Audio_EmitSoundIndex(...)` calls now preserve `lastSoundIndex`
+    even when decoded SND3 cannot be queued and marker/no-audio fallback is
+    used.  Direct `M11_Audio_EmitMarker(...)` calls still clear
+    `lastSoundIndex`, so headless evidence can distinguish source-backed sound
+    events from direct procedural markers.
+  - This is metadata/ordering evidence only.  It does not claim waveform,
+    overlap, continuous-loop, or wall-clock cadence parity.
+  - New probe/evidence: `probes/m11/firestaff_m11_pass125_audio_event_order_probe.c`,
+    `run_firestaff_m11_pass125_audio_event_order_probe.sh`, and
+    `parity-evidence/pass125_audio_event_order_probe.txt` (4/4 PASS).
 - **Pass 56 (landed, 2026-04-24):**
   - Added bounded DM PC 3.4 `TITLE` mapfile loader/player support in
     `title_dat_loader_v1.[ch]`, grounded in Greatstone's 59-item TITLE bank and

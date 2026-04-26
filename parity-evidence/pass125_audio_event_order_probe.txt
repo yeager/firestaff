@@ -1,0 +1,5 @@
+PASS P125_AUDIO_EVENT_ORDER_01 headless fallback backend initializes without opening SDL audio
+PASS P125_AUDIO_EVENT_ORDER_02 mapped combat event preserves source sound index while falling back to marker/no-audio path
+PASS P125_AUDIO_EVENT_ORDER_03 direct marker emission remains distinguishable from source sound-event emission
+PASS P125_AUDIO_EVENT_ORDER_04 out-of-range sound index uses marker fallback without recording a false source event
+# summary: 4/4 invariants passed
