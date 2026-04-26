@@ -1087,7 +1087,10 @@ int main(int argc, char** argv) {
             int actionX3, actionY3, actionW3, actionH3;
             probe_record(&tally,
                          "INV_GV_15E6",
-                         M11_GameView_GetV1StatusHandZoneId(0, 0) == 211 &&
+                         M11_GameView_GetV1StatusHandParentZoneId(0) == 207 &&
+                             M11_GameView_GetV1StatusHandParentZoneId(3) == 210 &&
+                             M11_GameView_GetV1StatusHandParentZoneId(4) == 0 &&
+                             M11_GameView_GetV1StatusHandZoneId(0, 0) == 211 &&
                              M11_GameView_GetV1StatusHandZoneId(0, 1) == 212 &&
                              M11_GameView_GetV1StatusHandZoneId(3, 0) == 217 &&
                              M11_GameView_GetV1StatusHandZoneId(3, 1) == 218 &&
@@ -1096,7 +1099,7 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1StatusHandZone(3, 1, &actionX3, &actionY3, &actionW3, &actionH3) &&
                              readyX == 16 && readyY == 170 && readyW == 16 && readyH == 16 &&
                              actionX3 == 243 && actionY3 == 170 && actionW3 == 16 && actionH3 == 16,
-                         "V1 status hand slot zones expose layout-696 C211..C218 ids and geometry");
+                         "V1 status hand slot zones expose layout-696 C207..C210 parents and C211..C218 child ids/geometry");
         }
         {
             int readyIconX, readyIconY, readyIconW, readyIconH;

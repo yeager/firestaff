@@ -14399,9 +14399,14 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusHandParentZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 207 + championSlot;
+}
+
 int M11_GameView_GetV1StatusHandZoneId(int championSlot,
                                        int handIndex) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+    if (!M11_GameView_GetV1StatusHandParentZoneId(championSlot) ||
         handIndex < 0 || handIndex > 1) {
         return 0;
     }

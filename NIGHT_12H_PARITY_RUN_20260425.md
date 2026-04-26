@@ -201,3 +201,10 @@ Update this file with batch summaries if useful.
   - Routed `M11_GameView_GetV1StatusBarZone(...)` through the source value zone-id helper while preserving the existing first-champion stat id helper.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2417_2436_v1_status_bar_value_zone_ids.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2437–2456 — V1 status hand parent zone ids.
+  - Added `M11_GameView_GetV1StatusHandParentZoneId(...)` for layout-696 `C207..C210` status-hand parent containers.
+  - Routed status hand child-zone id validation through the parent zone-id helper.
+  - Hardened `INV_GV_15E6` to assert both `C207..C210` parent ids and `C211..C218` ready/action child ids/geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2437_2456_v1_status_hand_parent_zone_ids.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
