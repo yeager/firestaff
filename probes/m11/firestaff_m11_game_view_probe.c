@@ -7971,6 +7971,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            int messageX, messageY, messageW, messageH;
+            probe_record(&tally, "INV_GV_300AM",
+                         M11_GameView_GetV1MessageAreaZoneId() == 15 &&
+                             M11_GameView_GetV1MessageAreaZone(&messageX, &messageY, &messageW, &messageH) &&
+                             messageX == 0 && messageY == 176 && messageW == 320 && messageH == 24,
+                         "message area zone exposes layout-696 C015 id and full-width geometry");
+        }
+
+        {
             int viewportX, viewportY, viewportW, viewportH;
             probe_record(&tally, "INV_GV_300AJ",
                          M11_GameView_GetV1ViewportZoneId() == 7 &&

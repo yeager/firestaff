@@ -305,3 +305,9 @@ Update this file with batch summaries if useful.
   - Extended `INV_GV_300AL` to assert representative `C068` and `C071` rectangles.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2757_2776_v1_movement_arrow_geometry.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `523/523`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2757–2776 — V1 message area zone id.
+  - Added source id/geometry helper for layout-696 `C015_ZONE_MESSAGE_AREA`.
+  - Added `INV_GV_300AM` to assert `C015` and full-width `(0,176,320,24)` geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2757_2776_v1_message_area_zone_id.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `524/524`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

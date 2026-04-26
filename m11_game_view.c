@@ -13967,6 +13967,23 @@ int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
     return 1;
 }
 
+int M11_GameView_GetV1MessageAreaZoneId(void) {
+    /* Source layout-696 C015_ZONE_MESSAGE_AREA. */
+    return 15;
+}
+
+int M11_GameView_GetV1MessageAreaZone(int* outX,
+                                       int* outY,
+                                       int* outW,
+                                       int* outH) {
+    if (!M11_GameView_GetV1MessageAreaZoneId()) return 0;
+    if (outX) *outX = 0;
+    if (outY) *outY = 176;
+    if (outW) *outW = 320;
+    if (outH) *outH = 24;
+    return 1;
+}
+
 int M11_GameView_GetV1ViewportZoneId(void) {
     /* Source layout-696 C007_ZONE_VIEWPORT. */
     return 7;
