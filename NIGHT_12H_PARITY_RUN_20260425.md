@@ -329,3 +329,10 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_353`–`INV_GV_355` to assert counts, first/last ids, 16×16 source geometry, and invalid-ordinal rejection.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2837_2856_v1_inventory_source_slot_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `529/529`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2857–2876 — V1 inventory slot-box DEFS.H indices.
+  - Corrected inventory helper grouping from source `DEFS.H`: non-backpack slots are `C507..C519`; backpack/carried slots are `C520..C536`.
+  - Added source-slot-box helper keyed by original slot-box indices `8..37`, mapping directly to `C507..C536`.
+  - Added/updated `INV_GV_353`–`INV_GV_356` for corrected counts, geometry, invalid bounds, and source index span.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2857_2876_v1_inventory_slotbox_defs_indices.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `530/530`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

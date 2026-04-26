@@ -14308,18 +14308,47 @@ typedef struct M11_V1InventorySlotZone_ {
     int y;
 } M11_V1InventorySlotZone;
 
+static const M11_V1InventorySlotZone kV1InventorySourceSlotBoxZones[] = {
+    /* Source layout-696 C507..C536, matching DEFS.H
+     * C08_SLOT_BOX_INVENTORY_FIRST_SLOT through slot box 37.
+     * Coordinates are raw 16x16 zones parented to C105. */
+    { 507,   6, 53 }, /* 08 READY_HAND */
+    { 508,  62, 53 }, /* 09 ACTION_HAND */
+    { 509,  34, 26 }, /* 10 HEAD */
+    { 510,  34, 46 }, /* 11 TORSO */
+    { 511,  34, 66 }, /* 12 LEGS */
+    { 512,  34, 86 }, /* 13 FEET */
+    { 513,   6, 90 }, /* 14 POUCH_2 */
+    { 514,  79, 73 }, /* 15 QUIVER_LINE2_1 */
+    { 515,  62, 90 }, /* 16 QUIVER_LINE1_2 */
+    { 516,  79, 90 }, /* 17 QUIVER_LINE2_2 */
+    { 517,   6, 33 }, /* 18 NECK */
+    { 518,   6, 73 }, /* 19 POUCH_1 */
+    { 519,  62, 73 }, /* 20 QUIVER_LINE1_1 */
+    { 520,  66, 33 }, /* 21 BACKPACK_LINE1_1 */
+    { 521,  83, 16 }, { 522, 100, 16 }, { 523, 117, 16 },
+    { 524, 134, 16 }, { 525, 151, 16 }, { 526, 168, 16 },
+    { 527, 185, 16 }, { 528, 202, 16 },
+    { 529,  83, 33 }, { 530, 100, 33 }, { 531, 117, 33 },
+    { 532, 134, 33 }, { 533, 151, 33 }, { 534, 168, 33 },
+    { 535, 185, 33 }, { 536, 202, 33 }
+};
+
 static const M11_V1InventorySlotZone kV1InventoryEquipmentSlotZones[] = {
-    /* Source layout-696 C507..C520: inventory panel 16x16 slot zones.
-     * These are raw original zones, not modern overlay coordinates. */
+    /* Non-backpack inventory slot boxes C507..C519. C520 is the first
+     * backpack box per DEFS.H, so it intentionally lives in the
+     * backpack helper below. */
     { 507,   6, 53 }, { 508,  62, 53 }, { 509,  34, 26 },
     { 510,  34, 46 }, { 511,  34, 66 }, { 512,  34, 86 },
     { 513,   6, 90 }, { 514,  79, 73 }, { 515,  62, 90 },
     { 516,  79, 90 }, { 517,   6, 33 }, { 518,   6, 73 },
-    { 519,  62, 73 }, { 520,  66, 33 }
+    { 519,  62, 73 }
 };
 
 static const M11_V1InventorySlotZone kV1InventoryBackpackSlotZones[] = {
-    /* Source layout-696 C521..C536: 8x2 carried-object grid. */
+    /* Source layout-696 C520..C536: first backpack slot plus the
+     * 8x2 carried-object rows C521..C536. */
+    { 520,  66, 33 },
     { 521,  83, 16 }, { 522, 100, 16 }, { 523, 117, 16 },
     { 524, 134, 16 }, { 525, 151, 16 }, { 526, 168, 16 },
     { 527, 185, 16 }, { 528, 202, 16 }, { 529,  83, 33 },
@@ -14327,6 +14356,36 @@ static const M11_V1InventorySlotZone kV1InventoryBackpackSlotZones[] = {
     { 533, 151, 33 }, { 534, 168, 33 }, { 535, 185, 33 },
     { 536, 202, 33 }
 };
+
+int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void) {
+    return (int)(sizeof(kV1InventorySourceSlotBoxZones) /
+                 sizeof(kV1InventorySourceSlotBoxZones[0]));
+}
+
+int M11_GameView_GetV1InventorySourceSlotBoxZoneId(int sourceSlotBoxIndex) {
+    int ordinal = sourceSlotBoxIndex - 8;
+    if (ordinal < 0 ||
+        ordinal >= M11_GameView_GetV1InventorySourceSlotBoxZoneCount()) {
+        return 0;
+    }
+    return kV1InventorySourceSlotBoxZones[ordinal].zoneId;
+}
+
+int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH) {
+    int ordinal = sourceSlotBoxIndex - 8;
+    if (!M11_GameView_GetV1InventorySourceSlotBoxZoneId(sourceSlotBoxIndex)) {
+        return 0;
+    }
+    if (outX) *outX = kV1InventorySourceSlotBoxZones[ordinal].x;
+    if (outY) *outY = kV1InventorySourceSlotBoxZones[ordinal].y;
+    if (outW) *outW = 16;
+    if (outH) *outH = 16;
+    return 1;
+}
 
 int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void) {
     return (int)(sizeof(kV1InventoryEquipmentSlotZones) /

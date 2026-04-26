@@ -22,3 +22,7 @@ The coordinates are taken from the checked-in `zones_h_reconstruction.json` layo
 ## Result
 
 This pass does not yet replace the modern inventory overlay layout. It pins the original source slot grid so the next inventory rendering passes can migrate actual placement/draw order without inventing geometry.
+
+## Correction note
+
+Follow-up phase 2857-2876 rechecked `DEFS.H` names and corrected the grouping: `C520` is `BACKPACK_LINE1_1`, so non-backpack helpers now cover `C507..C519`, backpack helpers cover `C520..C536`, and the source-index helper covers original slot-box indices `8..37`.
