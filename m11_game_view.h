@@ -802,6 +802,16 @@ int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
                                          int* outY,
                                          int* outW,
                                          int* outH);
+int M11_GameView_GetV1ScreenZoneId(void);
+int M11_GameView_GetV1ScreenZone(int* outX,
+                                  int* outY,
+                                  int* outW,
+                                  int* outH);
+int M11_GameView_GetV1ScreenCenteredDialogZoneId(void);
+int M11_GameView_GetV1ScreenCenteredDialogZone(int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH);
 int M11_GameView_GetV1MessageAreaZoneId(void);
 int M11_GameView_GetV1MessageAreaZone(int* outX,
                                        int* outY,

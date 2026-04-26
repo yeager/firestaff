@@ -311,3 +311,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_300AM` to assert `C015` and full-width `(0,176,320,24)` geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2757_2776_v1_message_area_zone_id.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `524/524`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2777–2796 — V1 screen/dialog base zones.
+  - Added source id/geometry helpers for layout-696 `C002_ZONE_SCREEN` and `C005_ZONE_SCREEN_CENTERED_DIALOG`.
+  - Added `INV_GV_300AN` to assert full-screen `(0,0,320,200)` and centered-dialog `(48,32,224,136)` geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2777_2796_v1_screen_dialog_base_zones.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `525/525`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

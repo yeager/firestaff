@@ -7971,6 +7971,19 @@ int main(int argc, char** argv) {
         }
 
         {
+            int screenX, screenY, screenW, screenH;
+            int dialogX, dialogY, dialogW, dialogH;
+            probe_record(&tally, "INV_GV_300AN",
+                         M11_GameView_GetV1ScreenZoneId() == 2 &&
+                             M11_GameView_GetV1ScreenZone(&screenX, &screenY, &screenW, &screenH) &&
+                             screenX == 0 && screenY == 0 && screenW == 320 && screenH == 200 &&
+                             M11_GameView_GetV1ScreenCenteredDialogZoneId() == 5 &&
+                             M11_GameView_GetV1ScreenCenteredDialogZone(&dialogX, &dialogY, &dialogW, &dialogH) &&
+                             dialogX == 48 && dialogY == 32 && dialogW == 224 && dialogH == 136,
+                         "screen and centered-dialog zones expose layout-696 C002/C005 geometry");
+        }
+
+        {
             int messageX, messageY, messageW, messageH;
             probe_record(&tally, "INV_GV_300AM",
                          M11_GameView_GetV1MessageAreaZoneId() == 15 &&

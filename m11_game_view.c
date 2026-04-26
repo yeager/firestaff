@@ -13967,6 +13967,40 @@ int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
     return 1;
 }
 
+int M11_GameView_GetV1ScreenZoneId(void) {
+    /* Source layout-696 C002_ZONE_SCREEN. */
+    return 2;
+}
+
+int M11_GameView_GetV1ScreenZone(int* outX,
+                                  int* outY,
+                                  int* outW,
+                                  int* outH) {
+    if (!M11_GameView_GetV1ScreenZoneId()) return 0;
+    if (outX) *outX = 0;
+    if (outY) *outY = 0;
+    if (outW) *outW = 320;
+    if (outH) *outH = 200;
+    return 1;
+}
+
+int M11_GameView_GetV1ScreenCenteredDialogZoneId(void) {
+    /* Source layout-696 C005_ZONE_SCREEN_CENTERED_DIALOG. */
+    return 5;
+}
+
+int M11_GameView_GetV1ScreenCenteredDialogZone(int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    if (!M11_GameView_GetV1ScreenCenteredDialogZoneId()) return 0;
+    if (outX) *outX = 48;
+    if (outY) *outY = 32;
+    if (outW) *outW = 224;
+    if (outH) *outH = 136;
+    return 1;
+}
+
 int M11_GameView_GetV1MessageAreaZoneId(void) {
     /* Source layout-696 C015_ZONE_MESSAGE_AREA. */
     return 15;
