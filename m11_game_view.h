@@ -743,10 +743,16 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                             int championSlot,
                                             int handIndex);
+int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
+int M11_GameView_GetV1SlotBoxWoundedGraphicId(void);
+int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex);
 int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state);
+int M11_GameView_GetV1PartyShieldBorderGraphicId(void);
+int M11_GameView_GetV1FireShieldBorderGraphicId(void);
+int M11_GameView_GetV1SpellShieldBorderGraphicId(void);
 int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
                                              int* outX,
                                              int* outY,
@@ -754,6 +760,8 @@ int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
                                              int* outH);
 int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
                                            int championSlot);
+int M11_GameView_GetV1StatusBoxGraphicId(void);
+int M11_GameView_GetV1DeadStatusBoxGraphicId(void);
 int M11_GameView_GetV1PoisonLabelZone(int championSlot,
                                       int labelW,
                                       int labelH,

@@ -7982,6 +7982,19 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300W",
+                         M11_GameView_GetV1StatusBoxGraphicId() == 7 &&
+                             M11_GameView_GetV1DeadStatusBoxGraphicId() == 8 &&
+                             M11_GameView_GetV1SlotBoxNormalGraphicId() == 33 &&
+                             M11_GameView_GetV1SlotBoxWoundedGraphicId() == 34 &&
+                             M11_GameView_GetV1SlotBoxActingHandGraphicId() == 35 &&
+                             M11_GameView_GetV1PartyShieldBorderGraphicId() == 37 &&
+                             M11_GameView_GetV1FireShieldBorderGraphicId() == 38 &&
+                             M11_GameView_GetV1SpellShieldBorderGraphicId() == 39,
+                         "V1 status slot and shield frame graphics use source C007/C008/C033-C035/C037-C039 ids");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",

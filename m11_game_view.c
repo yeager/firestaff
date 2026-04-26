@@ -14240,6 +14240,18 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
+    return M11_GFX_SLOT_BOX_NORMAL;
+}
+
+int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
+    return M11_GFX_SLOT_BOX_WOUNDED;
+}
+
+int M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
+    return M11_GFX_SLOT_BOX_ACTING_HAND;
+}
+
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                                int championSlot,
                                                int handIndex) {
@@ -14255,12 +14267,12 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
         state->actingChampionOrdinal == (unsigned int)(championSlot + 1)) {
         /* Source F0291 assigns wounded/normal first, then acting hand
          * overrides it for C01_SLOT_ACTION_HAND. */
-        return M11_GFX_SLOT_BOX_ACTING_HAND;
+        return M11_GameView_GetV1SlotBoxActingHandGraphicId();
     }
     if (champ->wounds & (handIndex == 0 ? 0x0001u : 0x0002u)) {
-        return M11_GFX_SLOT_BOX_WOUNDED;
+        return M11_GameView_GetV1SlotBoxWoundedGraphicId();
     }
-    return M11_GFX_SLOT_BOX_NORMAL;
+    return M11_GameView_GetV1SlotBoxNormalGraphicId();
 }
 
 int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
@@ -14353,6 +14365,14 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusBoxGraphicId(void) {
+    return M11_GFX_STATUS_BOX;
+}
+
+int M11_GameView_GetV1DeadStatusBoxGraphicId(void) {
+    return M11_GFX_STATUS_BOX_DEAD;
+}
+
 int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
                                            int championSlot) {
     const struct ChampionState_Compat* champ;
@@ -14362,19 +14382,31 @@ int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
     }
     champ = &state->world.party.champions[championSlot];
     if (!champ->present) return 0;
-    return champ->hp.current == 0 ? M11_GFX_STATUS_BOX_DEAD : 0;
+    return champ->hp.current == 0 ? M11_GameView_GetV1DeadStatusBoxGraphicId() : 0;
+}
+
+int M11_GameView_GetV1PartyShieldBorderGraphicId(void) {
+    return M11_GFX_BORDER_PARTY_SHIELD;
+}
+
+int M11_GameView_GetV1FireShieldBorderGraphicId(void) {
+    return M11_GFX_BORDER_PARTY_FIRESHIELD;
+}
+
+int M11_GameView_GetV1SpellShieldBorderGraphicId(void) {
+    return M11_GFX_BORDER_PARTY_SPELLSHIELD;
 }
 
 int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) {
     if (!state) return 0;
     if (state->world.magic.spellShieldDefense > 0) {
-        return M11_GFX_BORDER_PARTY_SPELLSHIELD;
+        return M11_GameView_GetV1SpellShieldBorderGraphicId();
     }
     if (state->world.magic.fireShieldDefense > 0) {
-        return M11_GFX_BORDER_PARTY_FIRESHIELD;
+        return M11_GameView_GetV1FireShieldBorderGraphicId();
     }
     if (state->world.magic.partyShieldDefense > 0) {
-        return M11_GFX_BORDER_PARTY_SHIELD;
+        return M11_GameView_GetV1PartyShieldBorderGraphicId();
     }
     return 0;
 }
@@ -15574,7 +15606,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             if (state->assetsAvailable) {
                 const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
-                    M11_GFX_STATUS_BOX);
+                    (unsigned int)M11_GameView_GetV1StatusBoxGraphicId());
                 if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
                     M11_AssetLoader_BlitRegion(boxAsset,
                         0, 0, 67, 29,
@@ -15838,11 +15870,11 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
     if (state->assetsAvailable) {
         unsigned int gfxIdx;
         if (isActingHand)
-            gfxIdx = M11_GFX_SLOT_BOX_ACTING_HAND;
+            gfxIdx = (unsigned int)M11_GameView_GetV1SlotBoxActingHandGraphicId();
         else if (isDead)
-            gfxIdx = M11_GFX_SLOT_BOX_WOUNDED;
+            gfxIdx = (unsigned int)M11_GameView_GetV1SlotBoxWoundedGraphicId();
         else
-            gfxIdx = M11_GFX_SLOT_BOX_NORMAL;
+            gfxIdx = (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId();
 
         const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader, gfxIdx);
@@ -15960,7 +15992,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     /* Use 18×18 slot boxes when GRAPHICS.DAT assets are available */
     if (state->assetsAvailable) {
         const M11_AssetSlot* testBox = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, M11_GFX_SLOT_BOX_NORMAL);
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId());
         if (testBox && testBox->width == 18 && testBox->height == 18)
             SZ = 18;
     }
