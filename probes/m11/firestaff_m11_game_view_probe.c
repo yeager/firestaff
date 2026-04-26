@@ -7881,7 +7881,8 @@ int main(int argc, char** argv) {
             int inner0 = M11_GameView_GetV1ActionIconInnerZone(0, &ix0, &iy0, &iw0, &ih0);
             int inner3 = M11_GameView_GetV1ActionIconInnerZone(3, &ix3, &iy3, &iw3, &ih3);
             probe_record(&tally, "INV_GV_300D",
-                         M11_GameView_GetV1ActionIconCellZoneId(0) == 89 &&
+                         M11_GameView_GetV1ActionIconParentZoneId() == 88 &&
+                             M11_GameView_GetV1ActionIconCellZoneId(0) == 89 &&
                              M11_GameView_GetV1ActionIconCellZoneId(3) == 92 &&
                              M11_GameView_GetV1ActionIconInnerZoneId(0) == 93 &&
                              M11_GameView_GetV1ActionIconInnerZoneId(3) == 96 &&
@@ -7890,7 +7891,7 @@ int main(int argc, char** argv) {
                              zx3 == 299 && zy3 == 86 && zw3 == 20 && zh3 == 35 &&
                              ix0 == 235 && iy0 == 95 && iw0 == 16 && ih0 == 16 &&
                              ix3 == 301 && iy3 == 95 && iw3 == 16 && ih3 == 16,
-                         "action-hand icon cell zones expose layout-696 C089..C096 ids and geometry");
+                         "action-hand icon cell zones expose layout-696 C088..C096 ids and geometry");
         }
 
         {

@@ -227,3 +227,9 @@ Update this file with batch summaries if useful.
   - Routed action icon cell/inner geometry helpers through those ids and hardened `INV_GV_300D` to assert ids plus geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2497_2516_v1_action_icon_zone_ids.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2517–2536 — V1 action icon parent zone id.
+  - Added `M11_GameView_GetV1ActionIconParentZoneId()` for layout-696 `C088`, the action-hand icon parent/template under `C011`.
+  - Routed action icon cell id validation through the parent helper and hardened `INV_GV_300D` to assert `C088` plus `C089..C096`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2517_2536_v1_action_icon_parent_zone_id.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

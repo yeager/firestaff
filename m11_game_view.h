@@ -881,6 +881,7 @@ int M11_GameView_GetV1ActionMenuHeaderFillColor(void);
 int M11_GameView_GetV1ActionMenuHeaderTextColor(void);
 int M11_GameView_GetV1ActionMenuRowFillColor(void);
 int M11_GameView_GetV1ActionMenuRowTextColor(void);
+int M11_GameView_GetV1ActionIconParentZoneId(void);
 int M11_GameView_GetV1ActionIconCellZoneId(int championSlot);
 int M11_GameView_GetV1ActionIconCellZone(int championSlot,
                                              int* outX,

@@ -14590,8 +14590,14 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1ActionIconParentZoneId(void) {
+    /* Source action-hand icon template/root zone is C088 under C011. */
+    return 88;
+}
+
 int M11_GameView_GetV1ActionIconCellZoneId(int championSlot) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    if (!M11_GameView_GetV1ActionIconParentZoneId() ||
+        championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
     /* Source action-hand icon cell parent zones are C089..C092. */
     return 89 + championSlot;
 }
