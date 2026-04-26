@@ -15149,11 +15149,14 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     M11_GFX_POISONED_LABEL);
                 if (poisonLbl && poisonLbl->width > 0 &&
                     poisonLbl->height > 0) {
-                    /* Center the 96-wide label within the 67-wide slot;
-                     * in DM1 this spills across adjacent boxes, which is
-                     * the correct original behaviour. */
-                    int lblX = x + ((int)67 - (int)poisonLbl->width) / 2;
-                    int lblY = y + 29; /* just below the status box */
+                    /* Center the 96-wide label within the source status-box
+                     * zone; in DM1 this spills across adjacent boxes, which
+                     * is the correct original behaviour.  Preserve the old
+                     * V2 positioning while V1 routes through C007 geometry. */
+                    int poisonBaseW = !useV2PartyHud ? slotW : 67;
+                    int poisonBaseH = !useV2PartyHud ? slotH : 29;
+                    int lblX = x + (poisonBaseW - (int)poisonLbl->width) / 2;
+                    int lblY = y + poisonBaseH; /* just below the status box */
                     M11_AssetLoader_BlitRegion(poisonLbl,
                         0, 0, (int)poisonLbl->width, (int)poisonLbl->height,
                         framebuffer, framebufferWidth, framebufferHeight,
