@@ -8483,6 +8483,54 @@ static void m11_blit_scaled_palette_map(const M11_AssetSlot* slot,
     }
 }
 
+static void m11_blit_scaled_palette_map_maybe_flip(const M11_AssetSlot* slot,
+                                                   unsigned char* framebuffer,
+                                                   int fbW,
+                                                   int fbH,
+                                                   int dstX,
+                                                   int dstY,
+                                                   int dstW,
+                                                   int dstH,
+                                                   int transparentColor,
+                                                   const unsigned char paletteMap[16],
+                                                   int flipHorizontal) {
+    int dy;
+    if (!flipHorizontal) {
+        m11_blit_scaled_palette_map(slot, framebuffer, fbW, fbH,
+                                    dstX, dstY, dstW, dstH,
+                                    transparentColor, paletteMap);
+        return;
+    }
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = dy * (int)slot->height / dstH;
+        int fbY = dstY + dy;
+        int dx;
+        if (fbY < 0 || fbY >= fbH) {
+            continue;
+        }
+        for (dx = 0; dx < dstW; ++dx) {
+            int sx = ((dstW - 1 - dx) * (int)slot->width) / dstW;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) {
+                continue;
+            }
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            if (paletteMap) {
+                pixel = paletteMap[pixel & 0x0f];
+            }
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+}
+
 static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
                                       const M11_ViewportCell* cell,
                                       int depthIndex) {
@@ -8511,6 +8559,54 @@ static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
 
 static int m11_dm1_scaled_dimension(int dimension, int scale) {
     return ((dimension * scale) + (scale >> 1)) >> 5;
+}
+
+static int m11_dm1_wall_ornament_coord_set_index(int globalIndex) {
+    /* DUNVIEW.C G0194_auc_Graphic558_WallOrnamentCoordinateSetIndices,
+     * DM1/PC 3.4 media path with 60 global wall ornaments. */
+    static const unsigned char kCoordSet[60] = {
+        1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+        0, 2, 3, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 2, 2, 1, 1, 1, 1, 1,
+        4, 4, 4, 5, 0, 0, 1, 0, 0, 0,
+        2, 0, 0, 0, 0, 2, 6, 6, 6, 7
+    };
+    if (globalIndex < 0 || globalIndex >= (int)(sizeof(kCoordSet) / sizeof(kCoordSet[0]))) {
+        return 0;
+    }
+    return kCoordSet[globalIndex];
+}
+
+static int m11_dm1_wall_ornament_zone(int coordSet,
+                                      int viewWallIndex,
+                                      M11_DM1ZoneBlit* outBlit) {
+    /* DUNVIEW.C G0205_aaauc_Graphic558_WallOrnamentCoordinateSets:
+     * { X1, X2, Y1, Y2, ByteWidth, Height }.  The viewport destination is
+     * the inclusive X/Y box; ByteWidth describes source-byte storage and is
+     * not a destination width. */
+    static const unsigned char kZones[8][13][6] = {
+        {{80,83,41,45,8,5},{140,143,41,45,8,5},{16,29,39,50,8,12},{107,120,39,50,8,12},{187,200,39,50,8,12},{67,77,40,49,8,10},{146,156,40,49,8,10},{0,17,38,55,16,18},{102,123,38,55,16,18},{206,223,38,55,16,18},{48,63,38,56,8,19},{160,175,38,56,8,19},{96,127,36,63,16,28}},
+        {{74,82,41,60,8,20},{141,149,41,60,8,20},{1,47,37,63,24,27},{88,134,37,63,24,27},{171,217,37,63,24,27},{61,76,38,67,8,30},{147,162,38,67,8,30},{0,43,37,73,32,37},{80,143,37,73,32,37},{180,223,37,73,32,37},{32,63,36,83,16,48},{160,191,36,83,16,48},{64,159,36,91,48,56}},
+        {{80,83,66,70,8,5},{140,143,66,70,8,5},{16,29,64,75,8,12},{106,119,64,75,8,12},{187,200,64,75,8,12},{67,77,74,83,8,10},{146,156,74,83,8,10},{0,17,73,90,16,18},{100,121,73,90,16,18},{206,223,73,90,16,18},{48,63,84,102,8,19},{160,175,84,102,8,19},{96,127,92,119,16,28}},
+        {{80,83,49,53,8,5},{140,143,49,53,8,5},{16,29,50,61,8,12},{106,119,50,61,8,12},{187,200,50,61,8,12},{67,77,53,62,8,10},{146,156,53,62,8,10},{0,17,55,72,16,18},{100,121,55,72,16,18},{206,223,55,72,16,18},{48,63,57,75,8,19},{160,175,57,75,8,19},{96,127,64,91,16,28}},
+        {{75,90,40,44,8,5},{133,148,40,44,8,5},{1,48,44,49,24,6},{88,135,44,49,24,6},{171,218,44,49,24,6},{60,77,40,46,16,7},{146,163,40,46,16,7},{0,35,43,50,32,8},{80,143,43,50,32,8},{184,223,43,50,32,8},{32,63,41,52,16,12},{160,191,41,52,16,12},{64,159,41,52,48,12}},
+        {{78,85,36,51,8,16},{138,145,36,51,8,16},{10,41,34,53,16,20},{98,129,34,53,16,20},{179,210,34,53,16,20},{66,75,34,56,8,23},{148,157,34,56,8,23},{0,26,33,61,24,29},{91,133,33,61,24,29},{194,223,33,61,24,29},{41,56,31,65,8,35},{167,182,31,65,8,35},{80,143,29,71,32,43}},
+        {{75,82,25,75,8,51},{142,149,25,75,8,51},{12,60,25,75,32,51},{88,136,25,75,32,51},{163,211,25,75,32,51},{64,73,20,90,8,71},{150,159,20,90,8,71},{0,38,20,90,32,71},{82,142,20,90,32,71},{184,223,20,90,32,71},{41,56,9,119,8,111},{169,184,9,119,8,111},{64,159,9,119,48,111}},
+        {{74,85,25,75,8,51},{137,149,25,75,8,51},{0,75,25,75,40,51},{74,149,25,75,40,51},{148,223,25,75,40,51},{60,77,20,90,16,71},{146,163,20,90,16,71},{0,74,20,90,56,71},{60,163,20,90,56,71},{149,223,20,90,56,71},{32,63,9,119,16,111},{160,191,9,119,16,111},{32,191,9,119,80,111}}
+    };
+    const unsigned char* z;
+    if (!outBlit || coordSet < 0 || coordSet >= 8 || viewWallIndex < 0 || viewWallIndex >= 13) {
+        return 0;
+    }
+    z = kZones[coordSet][viewWallIndex];
+    outBlit->srcX = 0;
+    outBlit->srcY = 0;
+    outBlit->dstX = z[0];
+    outBlit->dstY = z[2];
+    outBlit->width = z[1] - z[0] + 1;
+    outBlit->height = z[3] - z[2] + 1;
+    return outBlit->width > 0 && outBlit->height > 0;
 }
 
 static int m11_dm1_door_ornament_info(const M11_GameViewState* state,
@@ -8802,26 +8898,32 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
     typedef struct M11_DM1WallOrnSpec {
         int relForward;
         int relSide;
-        int nativeOffset;
+        int viewWallIndex;
         int flipHorizontal;
         M11_DM1ZoneBlit blit;
     } M11_DM1WallOrnSpec;
     static const M11_DM1WallOrnSpec kWallOrnaments[] = {
         {3,-2,0,1,{0,0,0,26,  21,10,42}},
-        {3, 2,0,1,{0,0,0,187, 22,10,42}},
-        {3,-1,0,0,{0,0,0,80,  22,10,42}},
-        {3, 1,0,1,{0,0,0,134, 22,10,42}},
-        {3,-1,1,0,{0,0,0,0,   16,90,56}},
-        {3, 0,1,0,{0,0,0,67,  16,90,56}},
-        {3, 1,1,0,{0,0,0,135, 16,89,56}},
-        {2,-1,0,0,{0,0,0,66,  24,10,42}},
-        {2, 1,0,1,{0,0,0,149, 24,10,42}},
-        {2,-1,1,0,{0,35,0,0,  19,55,56}},
-        {2, 0,1,0,{0,0,0,67,  19,90,56}},
-        {2, 1,1,0,{0,0,0,169, 19,55,56}},
-        {1,-1,0,0,{0,0,0,50,  28,10,42}},
-        {1, 1,0,1,{0,0,0,165, 28,10,42}},
-        {1, 0,1,0,{0,0,0,67,  22,90,56}}
+        {3, 2,1,1,{0,0,0,187, 22,10,42}},
+        {3,-1,2,0,{0,0,0,80,  22,10,42}},
+        {3, 1,4,1,{0,0,0,134, 22,10,42}},
+        {3,-1,2,0,{0,0,0,0,   16,90,56}},
+        {3, 0,3,0,{0,0,0,67,  16,90,56}},
+        {3, 1,4,0,{0,0,0,135, 16,89,56}},
+        {2,-1,5,0,{0,0,0,66,  24,10,42}},
+        {2, 1,6,1,{0,0,0,149, 24,10,42}},
+        {2,-1,7,0,{0,35,0,0,  19,55,56}},
+        {2, 0,8,0,{0,0,0,67,  19,90,56}},
+        {2, 1,9,0,{0,0,0,169, 19,55,56}},
+        {1,-1,10,0,{0,0,0,50,  28,10,42}},
+        {1, 1,11,1,{0,0,0,165, 28,10,42}},
+        {1, 0,12,0,{0,0,0,67,  22,90,56}}
+    };
+    static const unsigned char kOrnD3Palette[16] = {
+        0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
+    };
+    static const unsigned char kOrnD2Palette[16] = {
+        0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
     };
     size_t i;
     int maxVisibleForward = 3;
@@ -8870,11 +8972,25 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             continue;
         }
         blit = kWallOrnaments[i].blit;
-        blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 +
-            kWallOrnaments[i].nativeOffset;
-        (void)m11_draw_dm1_zone_blit_maybe_flip(state, framebuffer, fbW, fbH,
-                                                &blit, 10,
-                                                kWallOrnaments[i].flipHorizontal);
+        if (m11_dm1_wall_ornament_zone(m11_dm1_wall_ornament_coord_set_index(ornGlobalIdx),
+                                       kWallOrnaments[i].viewWallIndex,
+                                       &blit)) {
+            const M11_AssetSlot* slot;
+            int nativeOffset = (kWallOrnaments[i].viewWallIndex >= 2 &&
+                                kWallOrnaments[i].viewWallIndex != 5) ? 1 : 0;
+            blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + nativeOffset;
+            slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                        (unsigned int)blit.graphicIndex);
+            if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
+                m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
+                                                       M11_VIEWPORT_X + blit.dstX,
+                                                       M11_VIEWPORT_Y + blit.dstY,
+                                                       blit.width, blit.height,
+                                                       10,
+                                                       kWallOrnaments[i].viewWallIndex <= 4 ? kOrnD3Palette : kOrnD2Palette,
+                                                       kWallOrnaments[i].flipHorizontal);
+            }
+        }
     }
 }
 
