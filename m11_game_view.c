@@ -13969,6 +13969,21 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
     return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
 }
 
+int M11_GameView_GetV1StatusBoxZone(int championSlot,
+                                    int* outX,
+                                    int* outY,
+                                    int* outW,
+                                    int* outH) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step();
+    if (outY) *outY = M11_PARTY_PANEL_Y;
+    if (outW) *outW = M11_V1_PARTY_SLOT_W;
+    if (outH) *outH = 29;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int statIndex,
                                     int* outX,
@@ -14835,6 +14850,9 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         int y = M11_PARTY_PANEL_Y;
         char line[48];
         int drewStatusBox = 0;
+        if (!useV2PartyHud) {
+            (void)M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &slotW, NULL);
+        }
 
         if (slot < state->world.party.championCount && state->world.party.champions[slot].present) {
             char name[16];

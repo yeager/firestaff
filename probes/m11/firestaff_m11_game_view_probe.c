@@ -1065,6 +1065,17 @@ int main(int argc, char** argv) {
     {
         int nameX = 0, nameY = 0, nameW = 0, nameH = 0;
         int nameX1 = 0, nameY1 = 0, nameW1 = 0, nameH1 = 0;
+        {
+            int boxX0, boxY0, boxW0, boxH0;
+            int boxX3, boxY3, boxW3, boxH3;
+            probe_record(&tally,
+                         "INV_GV_15E9",
+                         M11_GameView_GetV1StatusBoxZone(0, &boxX0, &boxY0, &boxW0, &boxH0) &&
+                             M11_GameView_GetV1StatusBoxZone(3, &boxX3, &boxY3, &boxW3, &boxH3) &&
+                             boxX0 == 12 && boxY0 == 160 && boxW0 == 67 && boxH0 == 29 &&
+                             boxX3 == 219 && boxY3 == 160 && boxW3 == 67 && boxH3 == 29,
+                         "V1 champion HUD status box zones match C007/source stride geometry");
+        }
         M11_GameView_GetV1StatusNameZone(0, &nameX, &nameY, &nameW, &nameH);
         M11_GameView_GetV1StatusNameZone(1, &nameX1, &nameY1, &nameW1, &nameH1);
         {

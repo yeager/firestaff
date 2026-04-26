@@ -140,3 +140,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_300I`: spell area `(224,90,87,25)` matches source right-column panel geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1397_1416_v1_spell_area_zone_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `481/481`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1417–1436 — V1 status box zone helper.
+  - Added `M11_GameView_GetV1StatusBoxZone(...)` for compact source status-box placement.
+  - Routed V1 party slot loop placement through the helper while preserving V2 HUD behavior.
+  - Added invariant `INV_GV_15E9`: slot 0 `(12,160,67,29)` and slot 3 `(219,160,67,29)` match GRAPHICS.DAT `C007` with 69 px source stride.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1417_1436_v1_status_box_zone_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `482/482`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
