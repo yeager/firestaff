@@ -22,8 +22,8 @@ Define the Version 2 visual tracks clearly so the renderer can support original-
 ### V2.2 Enhanced
 
 - Uses modern AI-generated or AI-assisted graphical assets at the best achievable quality, while preserving a strong Dungeon Master feel.
-- Target master scale: **4K / 10x** to match the V2.1 master-resolution convention.
-- 1080p output should be derived from the 4K/10x enhanced masters, not authored as a separate lower-resolution primary target.
+- Target master outputs: **4K / 10x** and **1080p**.
+- 1080p output is the halved derivative of the 4K/10x enhanced master, not a separately authored primary target.
 - Goal: modernized art direction, not pixel-for-pixel original reconstruction.
 - This is the clean standalone asset track.
 
@@ -32,7 +32,7 @@ Define the Version 2 visual tracks clearly so the renderer can support original-
 Version 2 must keep the asset tracks separate:
 - **V2.0 Original**: unchanged original graphics.
 - **V2.1 Upscaled**: upscaled original graphics, mastered at 4K/10x and downsampled for 1080p.
-- **V2.2 Enhanced**: modern Dungeon Master-feeling assets with clean provenance, mastered at 4K/10x.
+- **V2.2 Enhanced**: modern Dungeon Master-feeling assets with clean provenance, mastered at 4K/10x with 1080p as a halved 4K derivative.
 
 The renderer should make these tracks explicit rather than blending original, upscaled, and enhanced assets in the same mode.
 
@@ -262,7 +262,7 @@ Example manifest entry:
 - `v2.0-original` entries reference unchanged original extracted assets or an external original-data cache; do not silently substitute upscaled/enhanced files.
 - `v2.1-upscaled-4k` is the master upscaled asset pack.
 - `v2.1-upscaled-1080p` is derived from the 4K/10x masters and may share entries when dimensions are already suitable.
-- `v2.2-enhanced` is independent art with its own provenance metadata, mastered at 4K/10x with 1080p derived from those masters.
+- `v2.2-enhanced` is independent art with its own provenance metadata, delivered as 4K/10x masters plus 1080p files derived by halving those 4K masters.
 
 ### Why this structure
 
