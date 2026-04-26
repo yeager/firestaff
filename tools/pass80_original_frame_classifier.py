@@ -134,8 +134,22 @@ def classify(regions: dict[str, RegionStats], dims: tuple[int, int]) -> tuple[st
     if viewport.nonblack_ratio < 0.40 and right_col.nonblack_ratio > 0.70 and right_col.color_ratio > 0.20:
         return "title_or_menu", "sparse viewport plus colorful/right-column title-menu art"
 
+    # A flat close wall can fill the historical inventory extent with dense,
+    # low-color pixels.  Classify that as its own unsafe state before inventory
+    # or generic dungeon gameplay so route audits do not treat a wall close-up as
+    # proof that the inventory/spell transition reached the intended state.
+    if (
+        viewport.nonblack_ratio > 0.85
+        and viewport.color_ratio < 0.05
+        and viewport.unique_colors <= 8
+        and right_col.nonblack_ratio < 0.15
+        and inventory.nonblack_ratio > 0.70
+        and inventory.color_ratio < 0.10
+    ):
+        return "wall_closeup", "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence"
+
     # Inventory panel overlays the central viewport area with a dense, low-color
-    # panel.  This must be checked before generic dungeon gameplay.
+    # panel.  It must be distinguishable from the flat close-wall guard above.
     if inventory.nonblack_ratio > 0.95 and inventory.color_ratio < 0.10 and viewport.nonblack_ratio > 0.70:
         return "inventory", "dense low-color inventory extent over viewport"
 
@@ -217,14 +231,70 @@ def write_markdown(path: Path, result: dict[str, object]) -> None:
     path.write_text("\n".join(lines).rstrip() + "\n")
 
 
+def _stats(nonblack: float, color: float, unique: int) -> RegionStats:
+    return RegionStats(nonblack, color, unique, (0.0, 0.0, 0.0), 0.0)
+
+
+def run_self_test() -> int:
+    base = {name: _stats(0.0, 0.0, 1) for name in REGIONS}
+    cases = []
+
+    wall = dict(base)
+    wall.update({
+        "viewport": _stats(0.925, 0.0, 6),
+        "right_column": _stats(0.063, 0.060, 3),
+        "right_action": _stats(0.014, 0.0, 2),
+        "spell_area": _stats(0.0, 0.0, 1),
+        "inventory_extent": _stats(0.784, 0.0, 6),
+    })
+    cases.append(("flat close-wall route frame", wall, "wall_closeup"))
+
+    inventory = dict(base)
+    inventory.update({
+        "viewport": _stats(0.82, 0.16, 24),
+        "right_column": _stats(0.10, 0.03, 5),
+        "right_action": _stats(0.03, 0.0, 2),
+        "spell_area": _stats(0.02, 0.0, 2),
+        "inventory_extent": _stats(0.98, 0.04, 12),
+    })
+    cases.append(("dense inventory panel", inventory, "inventory"))
+
+    spell = dict(base)
+    spell.update({
+        "viewport": _stats(0.74, 0.18, 30),
+        "right_column": _stats(0.24, 0.18, 16),
+        "right_action": _stats(0.08, 0.03, 5),
+        "spell_area": _stats(0.64, 0.52, 15),
+        "inventory_extent": _stats(0.42, 0.11, 10),
+    })
+    cases.append(("spell panel", spell, "spell_panel"))
+
+    failures = []
+    for name, regions, expected in cases:
+        got, reason = classify(regions, (WIDTH, HEIGHT))
+        if got != expected:
+            failures.append(f"{name}: got {got}, expected {expected} ({reason})")
+    if failures:
+        print(json.dumps({"pass": False, "failures": failures}, indent=2))
+        return 1
+    print(json.dumps({"pass": True, "cases": len(cases)}, indent=2))
+    return 0
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("attempt_dir", type=Path, help="directory containing DOSBox imageNNNN-raw.png captures")
+    ap.add_argument("attempt_dir", type=Path, nargs="?", help="directory containing DOSBox imageNNNN-raw.png captures")
     ap.add_argument("--out-json", type=Path, default=None)
     ap.add_argument("--out-md", type=Path, default=None)
     ap.add_argument("--expected", default=None, help="comma-separated expected classes, or 'pass77'")
     ap.add_argument("--fail-on-duplicates", action="store_true", help="treat repeated raw frame sha256 values as a failing problem instead of a warning")
+    ap.add_argument("--self-test", action="store_true", help="run classifier guard tests without reading PNG files")
     args = ap.parse_args(argv)
+
+    if args.self_test:
+        return run_self_test()
+    if args.attempt_dir is None:
+        ap.error("attempt_dir is required unless --self-test is used")
 
     paths = sorted(args.attempt_dir.glob("image*.png"))
     expected = parse_expected(args.expected)

@@ -44,7 +44,7 @@ Required for --run:
 
 Supported route tokens:
   shot, wait:<ms>, enter, esc, space, up, down, left, right, one, two, three,
-  four, five, six, kp0-kp9, kpenter, a-z, 0-9
+  four, five, six, f1-f4, kp0-kp9, kpenter, a-z, 0-9
 
 Outputs:
   raw screenshots: ${OUT_DIR}/image*.png (DOSBox Staging raw 320x200 if capture succeeds)
@@ -55,17 +55,17 @@ Optional environment:
                     override the default staged tree path
   DM1_ROUTE_SKIP_STARTUP_SELECTOR=1
                     skip legacy graphics/sound/input selector keystrokes when
-                    the DOSBox config launches `DM VGA` directly
+                    the DOSBox config launches 'DM VGA' directly
   DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk'
                     override autoexec launch command; recommended for bypassing
                     the original selector and entering VGA/no-sound/keyboard mode
-                    directly. `DM VGA` remains the default for legacy runs.
+                    directly. 'DM VGA' remains the default for legacy runs.
   manifest:        ${CROP_MANIFEST}
 
 Honesty note:
   The route string must be validated against the original runtime state that
   corresponds to Firestaff's run_capture_screenshots.sh sequence.  This script
-  will not invent that route. Use `DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk'` to
+  will not invent that route. Use DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' to
   bypass the text selector; audit raw captures before accepting references.
 EOF
 }
@@ -116,7 +116,7 @@ validate_route_shape() {
 import re, sys
 route = sys.argv[1].split()
 allowed = set("shot capture screenshot enter return esc escape space up down left right one two three four five six zero".split())
-allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {"kpenter"}
+allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {f"f{i}" for i in range(1, 5)} | {"kpenter"}
 shots = 0
 for token in route:
     low = token.lower()
@@ -197,6 +197,7 @@ let keycodes: [String: CGKeyCode] = [
     "o": 31, "u": 32, "i": 34, "p": 35, "l": 37, "j": 38, "k": 40,
     "n": 45, "m": 46,
     "enter": 36, "return": 36, "space": 49, "esc": 53, "escape": 53,
+    "f1": 122, "f2": 120, "f3": 99, "f4": 118,
     "left": 123, "right": 124, "down": 125, "up": 126,
     "kp1": 83, "kp2": 84, "kp3": 85, "kp4": 86, "kp5": 87, "kp6": 88,
     "kp7": 89, "kp8": 91, "kp9": 92, "kp0": 82, "kpenter": 76
@@ -225,7 +226,7 @@ func cmdF5() {
 }
 
 // Original PC 3.4 startup selector: graphics=1, sound=1, input=1.
-// The generated DOSBox config launches `DM VGA` directly, which bypasses that
+// The generated DOSBox config launches 'DM VGA' directly, which bypasses that
 // selector.  In that state, posting the legacy selector keys would hit the
 // title/game screens and shift the whole capture route.
 if !skipStartupSelector {
@@ -236,6 +237,7 @@ if !skipStartupSelector {
 }
 
 for token in route {
+    print("route-token \(token)")
     if token == "shot" || token == "capture" || token == "screenshot" {
         cmdF5()
     } else if token.hasPrefix("wait:") {
