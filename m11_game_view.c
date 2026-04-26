@@ -17866,19 +17866,22 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      *
      * Debug/helper elements are only drawn when showDebugHUD is set. */
 
-    /* HUD chrome background: DARK_GRAY (slot 12 = 73,73,73) is the
-     * darkest stone tone in the DM PC VGA palette and matches the
-     * muted slate shade classic DM1 uses for the outer HUD frame.
-     * The perimeter outline is drawn in the same DARK_GRAY so it
-     * blends cleanly with the fill — the pre-correction version drew
-     * a harsh YELLOW (slot 11) outline around the entire screen,
-     * which produced the bright-gold arcade-y rectangle seen in the
-     * April 23 capture.  Classic DM1 has no yellow outer frame; only
-     * the dungeon name title and occasional status text use yellow. */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  8, 8, framebufferWidth - 16, framebufferHeight - 16, M11_COLOR_DARK_GRAY);
+    if (state->showDebugHUD) {
+        /* Debug-only HUD chrome background.  The normal V1 screen starts
+         * from the source black clear (ReDMCSB DEFS.H M518_FillScreenBlack
+         * -> C002_ZONE_SCREEN / C00_COLOR_BLACK) and then draws the exact
+         * viewport, champion status boxes, right-column panels, and bottom
+         * message area over it.  Keeping this broad slate rectangle in V1
+         * left a visible prototype frame in the gaps between source panels
+         * (especially y=29..32 above the viewport and the lower side-panel
+         * gutters). */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      8, 8, framebufferWidth - 16, framebufferHeight - 16,
+                      M11_COLOR_DARK_GRAY);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      8, 8, framebufferWidth - 16, framebufferHeight - 16,
+                      M11_COLOR_DARK_GRAY);
+    }
 
     if (state->showDebugHUD) {
         /* Top title/debug bar is diagnostic-only.  Normal V1 should not

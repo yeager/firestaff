@@ -545,6 +545,23 @@ int main(int argc, char** argv) {
                      "INV_GV_302A",
                      bootLog && strncmp(bootLog, "T0: ", 4) != 0,
                      "V1 message log strips Firestaff tick-prefix chrome from boot event text");
+    }
+
+    {
+        M11_GameViewState v1ClearView = gameView;
+        unsigned char fbV1Clear[320 * 200];
+        unsigned char fbDebugClear[320 * 200];
+        v1ClearView.showDebugHUD = 0;
+        memset(fbV1Clear, 0xEE, sizeof(fbV1Clear));
+        memset(fbDebugClear, 0xEE, sizeof(fbDebugClear));
+        M11_GameView_Draw(&v1ClearView, fbV1Clear, 320, 200);
+        M11_GameView_Draw(&gameView, fbDebugClear, 320, 200);
+        probe_record(&tally,
+                     "INV_GV_302B",
+                     (fbV1Clear[30 * 320 + 100] & 0x0F) == PROBE_COLOR_BLACK &&
+                         (fbV1Clear[30 * 320 + 310] & 0x0F) == PROBE_COLOR_BLACK &&
+                         (fbDebugClear[30 * 320 + 310] & 0x0F) == PROBE_COLOR_DARK_GRAY,
+                     "normal V1 keeps source screen-clear gaps black while debug HUD retains slate chrome");
 
         int x, y, w, h;
         int space = 0;
