@@ -14161,6 +14161,15 @@ int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) 
     return 0;
 }
 
+int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
+                                             int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    return M11_GameView_GetV1StatusBoxZone(championSlot,
+                                           outX, outY, outW, outH);
+}
+
 int M11_GameView_GetV1PoisonLabelZone(int championSlot,
                                       int labelW,
                                       int labelH,
@@ -15172,10 +15181,18 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                         (M11_AssetLoader*)&state->assetLoader, borderGfx);
                     if (borderAsset && borderAsset->width == slotW &&
                         borderAsset->height == slotH) {
+                        int borderX = x;
+                        int borderY = y;
+                        int borderW = slotW;
+                        int borderH = slotH;
+                        if (!useV2PartyHud) {
+                            (void)M11_GameView_GetV1StatusShieldBorderZone(
+                                slot, &borderX, &borderY, &borderW, &borderH);
+                        }
                         M11_AssetLoader_BlitRegion(borderAsset,
-                            0, 0, slotW, slotH,
+                            0, 0, borderW, borderH,
                             framebuffer, framebufferWidth, framebufferHeight,
-                            x, y, 0); /* transparentColor=0 (black) */
+                            borderX, borderY, 0); /* transparentColor=0 (black) */
                     }
                 }
             }

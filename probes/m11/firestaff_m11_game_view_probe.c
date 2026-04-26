@@ -1250,6 +1250,24 @@ int main(int argc, char** argv) {
     }
 
     {
+        int shieldX0, shieldY0, shieldW0, shieldH0;
+        int shieldX3, shieldY3, shieldW3, shieldH3;
+        probe_record(&tally,
+                     "INV_GV_15T",
+                     M11_GameView_GetV1StatusShieldBorderZone(0,
+                                                              &shieldX0, &shieldY0,
+                                                              &shieldW0, &shieldH0) &&
+                         M11_GameView_GetV1StatusShieldBorderZone(3,
+                                                                  &shieldX3, &shieldY3,
+                                                                  &shieldW3, &shieldH3) &&
+                         shieldX0 == 12 && shieldY0 == 160 &&
+                         shieldW0 == 67 && shieldH0 == 29 &&
+                         shieldX3 == 219 && shieldY3 == 160 &&
+                         shieldW3 == 67 && shieldH3 == 29,
+                     "V1 status shield border zone reuses C007 status box footprint");
+    }
+
+    {
         int poisonX0, poisonY0, poisonW0, poisonH0;
         int poisonX3, poisonY3, poisonW3, poisonH3;
         probe_record(&tally,
