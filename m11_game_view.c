@@ -14164,6 +14164,39 @@ int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
     return 1;
 }
 
+/* Source runtime bridge for the object in the DM1 leader hand.
+ * The classic engine stores this as G4055_s_LeaderHandObject and
+ * prints its name into C017_ZONE_LEADER_HAND_OBJECT_NAME.  M11's
+ * compat state does not yet carry that transient mouse-hand object as
+ * a separate field, but the active leader and their C00 ready-hand
+ * slot are modelled.  Use that available source-backed state as the
+ * minimal runtime path for the HUD readout and expose the exact thing
+ * and icon chosen from the object-info tables so a later dedicated
+ * leader-hand field can replace only this resolver. */
+unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state) {
+    const struct ChampionState_Compat* champ = m11_get_active_champion(state);
+    if (!champ || champ->hp.current == 0) return THING_NONE;
+    return champ->inventory[CHAMPION_SLOT_HAND_LEFT];
+}
+
+int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state) {
+    unsigned short thing = M11_GameView_GetV1LeaderHandThing(state);
+    if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return -1;
+    return m11_object_icon_index_for_thing(state, state->world.things, thing);
+}
+
+int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
+                                           char* out,
+                                           int outSize) {
+    unsigned short thing;
+    if (!out || outSize <= 0) return 0;
+    out[0] = '\0';
+    thing = M11_GameView_GetV1LeaderHandThing(state);
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    m11_get_item_name(state ? state->world.things : NULL, thing, out, (size_t)outSize);
+    return out[0] != '\0';
+}
+
 int M11_GameView_GetV1ActionAreaZoneId(void) {
     return 11;
 }
@@ -15767,6 +15800,34 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
     return 1;
 }
 
+static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
+                                                unsigned char* framebuffer,
+                                                int framebufferWidth,
+                                                int framebufferHeight) {
+    int nameX, nameY, nameW, nameH;
+    char objectName[16];
+    static const M11_TextStyle leaderHandNameStyle = {
+        1, 1, M11_COLOR_CYAN, 0, 0, M11_COLOR_BLACK
+    };
+    if (!state || !framebuffer || state->showDebugHUD ||
+        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        return;
+    }
+    if (!M11_GameView_GetV1LeaderHandObjectNameZone(&nameX, &nameY, &nameW, &nameH)) {
+        return;
+    }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  nameX, nameY, nameW, nameH, M11_COLOR_BLACK);
+    if (M11_GameView_GetV1LeaderHandObjectName(state, objectName, sizeof(objectName))) {
+        /* F0034 prints at most C014_OBJECT_NAME_MAXIMUM_LENGTH (14)
+         * source characters into C017.  Keep the runtime readout in
+         * that same bounded field. */
+        objectName[14] = '\0';
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      nameX, nameY, objectName, &leaderHandNameStyle);
+    }
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -15895,6 +15956,9 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       statX, statY, line, &g_text_small);
     }
+
+    m11_draw_v1_leader_hand_object_name(state, framebuffer,
+                                        framebufferWidth, framebufferHeight);
 
     /* DM1 action-area mode selection — mirror
      * F0387_MENUS_DrawActionArea's branch on
