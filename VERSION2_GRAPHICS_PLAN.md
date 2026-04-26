@@ -150,25 +150,128 @@ Recommendation:
 
 ## Directory layout
 
+Use a content-addressed asset store plus small per-game/per-track manifests.  DM1, CSB, and DM2 can then share identical assets by checksum without duplicating bytes on disk.
+
 Suggested structure:
 
 ```text
 assets-v2/
-  ui/
-    title/
-    menu/
-    panels/
-    fonts/
-  icons/
-  backgrounds/
-    rooms/
-    transitions/
-  objects/
-  portraits/
-  effects/
-  audio/
+  store/
+    sha256/
+      ab/
+        abcdef...png
+      cd/
+        cdef01...webp
+    README.md
+
   manifests/
+    schema/
+      asset-pack.schema.json
+      asset-entry.schema.json
+    shared/
+      common-ui.json
+      common-fonts.json
+      common-effects.json
+    games/
+      dm1/
+        v2.0-original.json
+        v2.1-upscaled-4k.json
+        v2.1-upscaled-1080p.json
+        v2.2-enhanced.json
+      csb/
+        v2.0-original.json
+        v2.1-upscaled-4k.json
+        v2.1-upscaled-1080p.json
+        v2.2-enhanced.json
+      dm2/
+        v2.0-original.json
+        v2.1-upscaled-4k.json
+        v2.1-upscaled-1080p.json
+        v2.2-enhanced.json
+
+  catalog/
+    logical-ids/
+      ui.json
+      dungeon-view.json
+      inventory.json
+      champions.json
+      spells.json
+      objects.json
+      creatures.json
+      audio.json
+    games/
+      dm1.json
+      csb.json
+      dm2.json
+
+  source-maps/
+    dm1/
+      graphics-dat.json
+      dungeon-dat.json
+      title.json
+    csb/
+      graphics-dat.json
+      dungeon-dat.json
+      title.json
+    dm2/
+      source-assets.json
+
+  generated/
+    dm1/
+      thumbnails/
+      contact-sheets/
+    csb/
+      thumbnails/
+      contact-sheets/
+    dm2/
+      thumbnails/
+      contact-sheets/
 ```
+
+### Asset identity rule
+
+Every binary asset is stored once under `assets-v2/store/sha256/` using its SHA-256 digest as the primary identity.  Game manifests do not point at duplicated files; they point at a digest plus metadata.
+
+Example manifest entry:
+
+```json
+{
+  "id": "ui.panel.inventory.background",
+  "game": "dm1",
+  "track": "v2.1-upscaled-4k",
+  "sha256": "abcdef...",
+  "path": "store/sha256/ab/abcdef...png",
+  "format": "png",
+  "size": [2240, 1360],
+  "sourceLogicalId": "dm1.graphics.c017.inventory_panel",
+  "sharedWith": ["csb"]
+}
+```
+
+### Sharing rule
+
+- If DM1, CSB, and DM2 use byte-identical assets, they reference the same `sha256` entry.
+- If the visual result is the same but metadata differs, keep one blob and separate manifest entries.
+- If the image differs by even one pixel, it gets a different checksum.
+- Do not rely on symlinks for portability.  The manifest is the source of truth; installers may optionally materialize hardlinks/copies for platform-specific packages.
+
+### Track rule
+
+- `v2.0-original` entries reference unchanged original extracted assets or an external original-data cache; do not silently substitute upscaled/enhanced files.
+- `v2.1-upscaled-4k` is the master upscaled asset pack.
+- `v2.1-upscaled-1080p` is derived from the 4K/10x masters and may share entries when dimensions are already suitable.
+- `v2.2-enhanced` is independent art with its own provenance metadata.
+
+### Why this structure
+
+This keeps the renderer simple:
+
+1. Pick game: `dm1`, `csb`, or `dm2`.
+2. Pick track: `v2.0-original`, `v2.1-upscaled-4k`, `v2.1-upscaled-1080p`, or `v2.2-enhanced`.
+3. Resolve logical asset ID through the selected manifest.
+4. Load the checksum-addressed blob.
+
+The same asset can be shared by all three games without three copies, while still allowing each game to override only the assets that truly differ.
 
 ## Production pipeline
 
