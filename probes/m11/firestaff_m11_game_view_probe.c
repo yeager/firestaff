@@ -7995,6 +7995,25 @@ int main(int argc, char** argv) {
         }
 
         {
+            int versionX, versionY;
+            int patch1X, patch1Y, patch1W, patch1H, patch1DstX, patch1DstY;
+            int patch2X, patch2Y, patch2W, patch2H, patch2DstX, patch2DstY;
+            int patch4X, patch4Y, patch4W, patch4H, patch4DstX, patch4DstY;
+            probe_record(&tally, "INV_GV_300X",
+                         M11_GameView_GetV1DialogBackdropGraphicId() == 17 &&
+                             M11_GameView_GetV1DialogVersionTextOrigin(&versionX, &versionY) &&
+                             versionX == 192 && versionY == 40 &&
+                             M11_GameView_GetV1DialogChoicePatchZone(1, &patch1X, &patch1Y, &patch1W, &patch1H, &patch1DstX, &patch1DstY) &&
+                             patch1X == 0 && patch1Y == 14 && patch1W == 224 && patch1H == 75 && patch1DstX == 0 && patch1DstY == 51 &&
+                             M11_GameView_GetV1DialogChoicePatchZone(2, &patch2X, &patch2Y, &patch2W, &patch2H, &patch2DstX, &patch2DstY) &&
+                             patch2X == 102 && patch2Y == 52 && patch2W == 21 && patch2H == 37 && patch2DstX == 102 && patch2DstY == 89 &&
+                             M11_GameView_GetV1DialogChoicePatchZone(4, &patch4X, &patch4Y, &patch4W, &patch4H, &patch4DstX, &patch4DstY) &&
+                             patch4X == 102 && patch4Y == 99 && patch4W == 21 && patch4H == 36 && patch4DstX == 102 && patch4DstY == 62 &&
+                             !M11_GameView_GetV1DialogChoicePatchZone(3, NULL, NULL, NULL, NULL, NULL, NULL),
+                         "V1 dialog backdrop/version/choice patches use source C000/C450/M621-M623 geometry");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",

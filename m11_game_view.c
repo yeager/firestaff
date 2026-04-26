@@ -11638,7 +11638,7 @@ static int m11_draw_dm_dialog_backdrop(const M11_GameViewState* state,
     const M11_AssetSlot* slot;
     if (!state || !state->assetsAvailable || !framebuffer) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)M11_GFX_DIALOG_BOX);
+                                (unsigned int)M11_GameView_GetV1DialogBackdropGraphicId());
     if (!slot || !slot->loaded || !slot->pixels ||
         (int)slot->width != M11_VIEWPORT_W ||
         (int)slot->height != M11_VIEWPORT_H) {
@@ -11663,7 +11663,7 @@ static int m11_copy_dm_dialog_patch(const M11_GameViewState* state,
     int x, y;
     if (!state || !state->assetsAvailable || !framebuffer) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)M11_GFX_DIALOG_BOX);
+                                (unsigned int)M11_GameView_GetV1DialogBackdropGraphicId());
     if (!slot || !slot->loaded || !slot->pixels) return 0;
     if (patchW <= 0) patchW = (int)slot->width;
     if (patchH <= 0) patchH = (int)slot->height;
@@ -11685,20 +11685,15 @@ static void m11_apply_dm_dialog_choice_patch(const M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int framebufferWidth,
                                              int framebufferHeight) {
-    if (!state || state->dialogChoiceCount == 3) return;
-    if (state->dialogChoiceCount <= 1) {
-        /* M621_NEGGRAPHIC_DIALOG_PATCH_1_CHOICE -> C451. */
-        m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
-                                 0, 14, 224, 75, 0, 51);
-    } else if (state->dialogChoiceCount == 2) {
-        /* M622_NEGGRAPHIC_DIALOG_PATCH_2_CHOICES -> C452. */
-        m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
-                                 102, 52, 21, 37, 102, 89);
-    } else {
-        /* M623_NEGGRAPHIC_DIALOG_PATCH_4_CHOICES -> C453. */
-        m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
-                                 102, 99, 21, 36, 102, 62);
+    int sx, sy, w, h, dx, dy;
+    if (!state) return;
+    if (!M11_GameView_GetV1DialogChoicePatchZone(state->dialogChoiceCount,
+                                                 &sx, &sy, &w, &h,
+                                                 &dx, &dy)) {
+        return;
     }
+    m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
+                             sx, sy, w, h, dx, dy);
 }
 
 /* Which inventory slot a champion is currently treating as the
@@ -13850,6 +13845,44 @@ int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
 
 int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void) {
     return 346;
+}
+
+int M11_GameView_GetV1DialogBackdropGraphicId(void) {
+    return M11_GFX_DIALOG_BOX;
+}
+
+int M11_GameView_GetV1DialogVersionTextOrigin(int* outX, int* outY) {
+    if (outX) *outX = M11_VIEWPORT_X + 192;
+    if (outY) *outY = M11_VIEWPORT_Y + 7;
+    return 1;
+}
+
+int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
+                                             int* outSrcX,
+                                             int* outSrcY,
+                                             int* outW,
+                                             int* outH,
+                                             int* outDstX,
+                                             int* outDstY) {
+    int sx, sy, w, h, dx, dy;
+    if (choiceCount == 3) return 0;
+    if (choiceCount <= 1) {
+        /* M621_NEGGRAPHIC_DIALOG_PATCH_1_CHOICE -> C451. */
+        sx = 0; sy = 14; w = 224; h = 75; dx = 0; dy = 51;
+    } else if (choiceCount == 2) {
+        /* M622_NEGGRAPHIC_DIALOG_PATCH_2_CHOICES -> C452. */
+        sx = 102; sy = 52; w = 21; h = 37; dx = 102; dy = 89;
+    } else {
+        /* M623_NEGGRAPHIC_DIALOG_PATCH_4_CHOICES -> C453. */
+        sx = 102; sy = 99; w = 21; h = 36; dx = 102; dy = 62;
+    }
+    if (outSrcX) *outSrcX = sx;
+    if (outSrcY) *outSrcY = sy;
+    if (outW) *outW = w;
+    if (outH) *outH = h;
+    if (outDstX) *outDstX = dx;
+    if (outDstY) *outDstY = dy;
+    return 1;
 }
 
 int M11_GameView_GetV1FoodLabelGraphicId(void) {
@@ -16944,9 +16977,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              * C000 dialog-box graphic.  ZONES.H reconstruction gives
              * type 4 / parent 4 / d1=192 / d2=7; parent zone 4 is the
              * 224×136 viewport, so screen origin is viewport + d1/d2. */
+            int versionX, versionY;
+            (void)M11_GameView_GetV1DialogVersionTextOrigin(&versionX, &versionY);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + 192,
-                          M11_VIEWPORT_Y + 7,
+                          versionX,
+                          versionY,
                           "V3.4", &versionStyle);
         }
         /* Word-wrap the dialog text into the box.  Source-dialog mode uses the

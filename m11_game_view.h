@@ -803,6 +803,15 @@ int M11_GameView_GetV1ChampionIconGraphicId(void);
 int M11_GameView_GetV1InventoryPanelGraphicId(void);
 int M11_GameView_GetV1EndgameTheEndGraphicId(void);
 int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void);
+int M11_GameView_GetV1DialogBackdropGraphicId(void);
+int M11_GameView_GetV1DialogVersionTextOrigin(int* outX, int* outY);
+int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
+                                             int* outSrcX,
+                                             int* outSrcY,
+                                             int* outW,
+                                             int* outH,
+                                             int* outDstX,
+                                             int* outDstY);
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void);
