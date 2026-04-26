@@ -194,3 +194,10 @@ Update this file with batch summaries if useful.
   - Hardened `INV_GV_15E9` to assert both root zone ids and geometry, including out-of-range slot rejection.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2397_2416_v1_status_box_zone_ids.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2417–2436 — V1 status bar value zone ids.
+  - Added `M11_GameView_GetV1StatusBarGraphZoneId(...)` for layout-696 `C187..C190` bar-graph containers.
+  - Added `M11_GameView_GetV1StatusBarValueZoneId(...)` for champion/stat-specific `C195..C206` HP/stamina/mana value zones.
+  - Routed `M11_GameView_GetV1StatusBarZone(...)` through the source value zone-id helper while preserving the existing first-champion stat id helper.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2417_2436_v1_status_bar_value_zone_ids.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

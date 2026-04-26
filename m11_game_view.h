@@ -739,7 +739,10 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
                                             int* outY,
                                             int* outW,
                                             int* outH);
+int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot);
 int M11_GameView_GetV1StatusBarZoneId(int statIndex);
+int M11_GameView_GetV1StatusBarValueZoneId(int championSlot,
+                                           int statIndex);
 int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int statIndex,
                                     int* outX,

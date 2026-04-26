@@ -14359,9 +14359,23 @@ int M11_GameView_GetV1StatusBoxZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 187 + championSlot;
+}
+
 int M11_GameView_GetV1StatusBarZoneId(int statIndex) {
     if (statIndex < 0 || statIndex > 2) return 0;
     return 195 + statIndex * 4;
+}
+
+int M11_GameView_GetV1StatusBarValueZoneId(int championSlot,
+                                           int statIndex) {
+    if (!M11_GameView_GetV1StatusBarGraphZoneId(championSlot) ||
+        statIndex < 0 || statIndex > 2) {
+        return 0;
+    }
+    return M11_GameView_GetV1StatusBarZoneId(statIndex) + championSlot;
 }
 
 int M11_GameView_GetV1StatusBarZone(int championSlot,
@@ -14371,10 +14385,11 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int* outW,
                                     int* outH) {
     int relX;
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
-        !M11_GameView_GetV1StatusBarZoneId(statIndex)) {
+    int zoneId = M11_GameView_GetV1StatusBarValueZoneId(championSlot, statIndex);
+    if (!zoneId) {
         return 0;
     }
+    championSlot = (zoneId - 195) % CHAMPION_MAX_PARTY;
     relX = m11_v1_bar_graph_x(statIndex);
     if (relX < 0) return 0;
     if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() + relX;
