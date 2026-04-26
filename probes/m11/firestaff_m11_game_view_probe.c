@@ -7975,14 +7975,18 @@ int main(int argc, char** argv) {
             int headerTextX, headerTextY;
             int row0TextX, row0TextY;
             int row2TextX, row2TextY;
+            int insetX, insetY;
             probe_record(&tally, "INV_GV_300J",
-                         M11_GameView_GetV1ActionMenuTextOrigin(-1, &headerTextX, &headerTextY) &&
+                         M11_GameView_GetV1ActionMenuTextInset(&insetX, &insetY) &&
+                             M11_GameView_GetV1ActionMenuTextOrigin(-1, &headerTextX, &headerTextY) &&
                              M11_GameView_GetV1ActionMenuTextOrigin(0, &row0TextX, &row0TextY) &&
                              M11_GameView_GetV1ActionMenuTextOrigin(2, &row2TextX, &row2TextY) &&
+                             !M11_GameView_GetV1ActionMenuTextOrigin(3, NULL, NULL) &&
+                             insetX == 2 && insetY == 1 &&
                              headerTextX == 226 && headerTextY == 48 &&
                              row0TextX == 226 && row0TextY == 59 &&
                              row2TextX == 226 && row2TextY == 81,
-                         "action menu text origins match F0387 header/row offsets");
+                         "action menu text origins derive from source zones plus F0387 2x1 inset");
         }
 
         {

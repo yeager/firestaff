@@ -13838,17 +13838,30 @@ int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
     return 1;
 }
 
+int M11_GameView_GetV1ActionMenuTextInset(int* outX,
+                                           int* outY) {
+    if (outX) *outX = 2;
+    if (outY) *outY = 1;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
                                                int* outX,
                                                int* outY) {
-    if (outX) *outX = M11_DM_ACTION_MENU_TEXT_X;
+    int zoneX, zoneY;
+    int insetX, insetY;
+    (void)M11_GameView_GetV1ActionMenuTextInset(&insetX, &insetY);
     if (rowIndex < 0) {
-        if (outY) *outY = M11_DM_ACTION_MENU_HEADER_Y + 1;
+        if (!M11_GameView_GetV1ActionMenuHeaderZone(&zoneX, &zoneY,
+                                                    NULL, NULL)) return 0;
+        if (outX) *outX = zoneX + insetX;
+        if (outY) *outY = zoneY + insetY;
         return 1;
     }
-    if (rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
-    if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
-                      rowIndex * M11_DM_ACTION_MENU_ROW_STEP + 1;
+    if (!M11_GameView_GetV1ActionMenuRowZone(rowIndex, &zoneX, &zoneY,
+                                             NULL, NULL)) return 0;
+    if (outX) *outX = zoneX + insetX;
+    if (outY) *outY = zoneY + insetY;
     return 1;
 }
 
