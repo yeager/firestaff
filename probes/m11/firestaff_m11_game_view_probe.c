@@ -24,6 +24,7 @@ unsigned char* G2160_puc_Bitmap_Destination;
  */
 enum {
     PROBE_COLOR_BLACK       = 0,   /* DM PC VGA slot 0  — Black       */
+    PROBE_COLOR_GRAY        = 1,   /* DM PC VGA slot 1  — Gray        */
     PROBE_COLOR_BROWN       = 3,   /* DM PC VGA slot 3  — Brown       */
     PROBE_COLOR_DARK_GRAY   = 12,  /* DM PC VGA slot 12 — Dark Gray   */
     PROBE_COLOR_LIGHT_GREEN = 7,   /* DM PC VGA slot 7  — Green       */
@@ -1183,6 +1184,13 @@ int main(int argc, char** argv) {
                          nameX1 == PROBE_BOTTOM_PANEL_X + 69 && nameY1 == PROBE_PARTY_PANEL_Y &&
                          nameW1 == 43 && nameH1 == 7,
                      "V1 champion HUD name clear zones match layout-696 C159..C162 geometry");
+        probe_record(&tally,
+                     "INV_GV_15Z",
+                     M11_GameView_GetV1StatusNameClearColor() == PROBE_COLOR_GRAY &&
+                         probe_count_color(syntheticFramebuffer, 320,
+                                           nameX, nameY, nameW, nameH,
+                                           (unsigned char)M11_GameView_GetV1StatusNameClearColor()) > 0U,
+                     "V1 champion HUD name clear uses source C01 gray before centered name text");
         probe_record(&tally,
                      "INV_GV_15E3",
                      M11_GameView_GetV1StatusNameColor(&syntheticView, 0) == PROBE_COLOR_YELLOW &&

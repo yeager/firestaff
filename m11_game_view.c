@@ -14165,6 +14165,13 @@ int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
         : M11_COLOR_ORANGE;
 }
 
+int M11_GameView_GetV1StatusNameClearColor(void) {
+    /* CHAMDRAW.C F0292 clears C159+n with C01_COLOR_DARK_GRAY before
+     * drawing the centered name into child zone C163+n.  In the DM PC
+     * VGA palette used by M11, C01 is the gray slot. */
+    return M11_COLOR_GRAY;
+}
+
 int M11_GameView_GetV1StatusNameZone(int championSlot,
                                      int* outX,
                                      int* outY,
@@ -15152,7 +15159,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                         slot, &nameClearX, &nameClearY, &nameClearW, &nameClearH);
                     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                   nameClearX, nameClearY, nameClearW, nameClearH,
-                                  M11_COLOR_GRAY);
+                                  (unsigned char)M11_GameView_GetV1StatusNameClearColor());
                 }
                 {
                     int nameTextX, nameTextY, nameTextW;
