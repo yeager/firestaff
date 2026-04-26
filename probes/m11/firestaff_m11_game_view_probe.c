@@ -7951,6 +7951,8 @@ int main(int argc, char** argv) {
         }
 
         {
+            int leftX, leftY, leftW, leftH;
+            int rightX, rightY, rightW, rightH;
             probe_record(&tally, "INV_GV_300AL",
                          M11_GameView_GetV1MovementArrowsZoneId() == 9 &&
                              M11_GameView_GetV1MovementArrowZoneId(0) == 68 &&
@@ -7960,8 +7962,12 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1MovementArrowZoneId(4) == 72 &&
                              M11_GameView_GetV1MovementArrowZoneId(5) == 73 &&
                              M11_GameView_GetV1MovementArrowZoneId(-1) == 0 &&
-                             M11_GameView_GetV1MovementArrowZoneId(6) == 0,
-                         "movement arrow zones expose layout-696 C009 and C068-C073 ids");
+                             M11_GameView_GetV1MovementArrowZoneId(6) == 0 &&
+                             M11_GameView_GetV1MovementArrowZone(0, &leftX, &leftY, &leftW, &leftH) &&
+                             M11_GameView_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH) &&
+                             leftX == 234 && leftY == 125 && leftW == 19 && leftH == 21 &&
+                             rightX == 291 && rightY == 147 && rightW == 28 && rightH == 21,
+                         "movement arrow zones expose layout-696 C009/C068-C073 ids and geometry");
         }
 
         {

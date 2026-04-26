@@ -13951,6 +13951,22 @@ int M11_GameView_GetV1MovementArrowZoneId(int arrowIndex) {
     return kArrowZones[arrowIndex];
 }
 
+int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
+                                         int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH) {
+    static const int kX[6] = { 234, 291, 263, 291, 263, 234 };
+    static const int kY[6] = { 125, 125, 125, 147, 147, 147 };
+    static const int kW[6] = { 19, 19, 27, 28, 27, 28 };
+    if (!M11_GameView_GetV1MovementArrowZoneId(arrowIndex)) return 0;
+    if (outX) *outX = kX[arrowIndex];
+    if (outY) *outY = kY[arrowIndex];
+    if (outW) *outW = kW[arrowIndex];
+    if (outH) *outH = 21;
+    return 1;
+}
+
 int M11_GameView_GetV1ViewportZoneId(void) {
     /* Source layout-696 C007_ZONE_VIEWPORT. */
     return 7;

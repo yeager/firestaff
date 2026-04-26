@@ -299,3 +299,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_300AL` to assert all movement-arrow ids plus invalid-index rejection.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2737_2756_v1_movement_arrow_zone_ids.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `523/523`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2757–2776 — V1 movement arrow geometry.
+  - Added geometry helper for the six layout-696 movement-arrow rectangles under `C009`.
+  - Extended `INV_GV_300AL` to assert representative `C068` and `C071` rectangles.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2757_2776_v1_movement_arrow_geometry.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `523/523`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
