@@ -1,0 +1,669 @@
+{
+  "schema": "pass74_fullscreen_panel_pair_compare.v1",
+  "honesty": "Measurement only. Original route and Firestaff route are not claimed semantically identical.",
+  "frame_size": [
+    320,
+    200
+  ],
+  "tolerance_per_channel": 0,
+  "regions": {
+    "full_frame": [
+      0,
+      0,
+      320,
+      200
+    ],
+    "viewport": [
+      0,
+      33,
+      224,
+      136
+    ],
+    "action_area_C011": [
+      224,
+      45,
+      87,
+      45
+    ],
+    "spell_area_C013": [
+      224,
+      90,
+      87,
+      25
+    ],
+    "right_column_action_spell": [
+      224,
+      45,
+      87,
+      70
+    ],
+    "message_area": [
+      0,
+      169,
+      224,
+      31
+    ],
+    "inventory_panel_C101_extent": [
+      80,
+      53,
+      144,
+      73
+    ]
+  },
+  "pairings": [
+    {
+      "index": "01",
+      "scene": "ingame_start",
+      "firestaff": "verification-screens/01_ingame_start_latest.png",
+      "firestaff_sha256": "4f9726038e7e27d3a2043b46e20fd5ad7a24b18a5bbe1e94fe6ffa316fa64e7c",
+      "original": "verification-screens/pass70-original-dm1-viewports/image0001-raw.png",
+      "original_sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "mask": "parity-evidence/overlays/pass74/01_ingame_start_full_frame_mask.png",
+      "regions": {
+        "full_frame": {
+          "xywh": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "differing_pixels": 53008,
+          "total_pixels": 64000,
+          "delta_percent": 82.825,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 87.629
+        },
+        "viewport": {
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "differing_pixels": 24701,
+          "total_pixels": 30464,
+          "delta_percent": 81.0826,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 89.7416
+        },
+        "action_area_C011": {
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "differing_pixels": 3517,
+          "total_pixels": 3915,
+          "delta_percent": 89.834,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 124.2204
+        },
+        "spell_area_C013": {
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "differing_pixels": 2053,
+          "total_pixels": 2175,
+          "delta_percent": 94.3908,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 118.4264
+        },
+        "right_column_action_spell": {
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "differing_pixels": 5570,
+          "total_pixels": 6090,
+          "delta_percent": 91.4614,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 122.1511
+        },
+        "message_area": {
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "differing_pixels": 3610,
+          "total_pixels": 6944,
+          "delta_percent": 51.9873,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 61.4012
+        },
+        "inventory_panel_C101_extent": {
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "differing_pixels": 6580,
+          "total_pixels": 10512,
+          "delta_percent": 62.5951,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 59.7679
+        }
+      }
+    },
+    {
+      "index": "02",
+      "scene": "ingame_turn_right",
+      "firestaff": "verification-screens/02_ingame_turn_right_latest.png",
+      "firestaff_sha256": "753ff14b0e4702e0f8d671f314f74020768f3df08bbb4cdff5e46a43d4c71ec8",
+      "original": "verification-screens/pass70-original-dm1-viewports/image0002-raw.png",
+      "original_sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "mask": "parity-evidence/overlays/pass74/02_ingame_turn_right_full_frame_mask.png",
+      "regions": {
+        "full_frame": {
+          "xywh": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "differing_pixels": 53074,
+          "total_pixels": 64000,
+          "delta_percent": 82.9281,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 89.6898
+        },
+        "viewport": {
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "differing_pixels": 24767,
+          "total_pixels": 30464,
+          "delta_percent": 81.2992,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 94.071
+        },
+        "action_area_C011": {
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "differing_pixels": 3517,
+          "total_pixels": 3915,
+          "delta_percent": 89.834,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 124.2204
+        },
+        "spell_area_C013": {
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "differing_pixels": 2053,
+          "total_pixels": 2175,
+          "delta_percent": 94.3908,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 118.4264
+        },
+        "right_column_action_spell": {
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "differing_pixels": 5570,
+          "total_pixels": 6090,
+          "delta_percent": 91.4614,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 122.1511
+        },
+        "message_area": {
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "differing_pixels": 3610,
+          "total_pixels": 6944,
+          "delta_percent": 51.9873,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 61.4012
+        },
+        "inventory_panel_C101_extent": {
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "differing_pixels": 6580,
+          "total_pixels": 10512,
+          "delta_percent": 62.5951,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 59.7679
+        }
+      }
+    },
+    {
+      "index": "03",
+      "scene": "ingame_move_forward",
+      "firestaff": "verification-screens/03_ingame_move_forward_latest.png",
+      "firestaff_sha256": "e7dddde531581313ca9f815dcbcb652f55ffd772b15450e72fbe7d5c3dc17533",
+      "original": "verification-screens/pass70-original-dm1-viewports/image0003-raw.png",
+      "original_sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "mask": "parity-evidence/overlays/pass74/03_ingame_move_forward_full_frame_mask.png",
+      "regions": {
+        "full_frame": {
+          "xywh": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "differing_pixels": 49099,
+          "total_pixels": 64000,
+          "delta_percent": 76.7172,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 80.7822
+        },
+        "viewport": {
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "differing_pixels": 20792,
+          "total_pixels": 30464,
+          "delta_percent": 68.2511,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 75.3575
+        },
+        "action_area_C011": {
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "differing_pixels": 3517,
+          "total_pixels": 3915,
+          "delta_percent": 89.834,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 124.2204
+        },
+        "spell_area_C013": {
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "differing_pixels": 2053,
+          "total_pixels": 2175,
+          "delta_percent": 94.3908,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 118.4264
+        },
+        "right_column_action_spell": {
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "differing_pixels": 5570,
+          "total_pixels": 6090,
+          "delta_percent": 91.4614,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 122.1511
+        },
+        "message_area": {
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "differing_pixels": 3610,
+          "total_pixels": 6944,
+          "delta_percent": 51.9873,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 61.4012
+        },
+        "inventory_panel_C101_extent": {
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "differing_pixels": 4894,
+          "total_pixels": 10512,
+          "delta_percent": 46.5563,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 46.8669
+        }
+      }
+    },
+    {
+      "index": "04",
+      "scene": "ingame_spell_panel",
+      "firestaff": "verification-screens/04_ingame_spell_panel_latest.png",
+      "firestaff_sha256": "0cc1480de87f66131d63fdcf6337933413eecfcce7625dcdf3d2a990bf9f0537",
+      "original": "verification-screens/pass70-original-dm1-viewports/image0004-raw.png",
+      "original_sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "mask": "parity-evidence/overlays/pass74/04_ingame_spell_panel_full_frame_mask.png",
+      "regions": {
+        "full_frame": {
+          "xywh": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "differing_pixels": 41227,
+          "total_pixels": 64000,
+          "delta_percent": 64.4172,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 65.2731
+        },
+        "viewport": {
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "differing_pixels": 12772,
+          "total_pixels": 30464,
+          "delta_percent": 41.9249,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 36.3774
+        },
+        "action_area_C011": {
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "differing_pixels": 3623,
+          "total_pixels": 3915,
+          "delta_percent": 92.5415,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 118.9407
+        },
+        "spell_area_C013": {
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "differing_pixels": 2054,
+          "total_pixels": 2175,
+          "delta_percent": 94.4368,
+          "max_channel_delta": 219,
+          "mean_abs_delta_rgb": 121.9766
+        },
+        "right_column_action_spell": {
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "differing_pixels": 5677,
+          "total_pixels": 6090,
+          "delta_percent": 93.2184,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 120.025
+        },
+        "message_area": {
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "differing_pixels": 5252,
+          "total_pixels": 6944,
+          "delta_percent": 75.6336,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 77.5636
+        },
+        "inventory_panel_C101_extent": {
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "differing_pixels": 3732,
+          "total_pixels": 10512,
+          "delta_percent": 35.5023,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 30.0263
+        }
+      }
+    },
+    {
+      "index": "05",
+      "scene": "ingame_after_cast",
+      "firestaff": "verification-screens/05_ingame_after_cast_latest.png",
+      "firestaff_sha256": "b7dcf1882b0247dfa1850ad92a3a0cbadbc181cbfc27b16c187e9f81dbd92ff3",
+      "original": "verification-screens/pass70-original-dm1-viewports/image0005-raw.png",
+      "original_sha256": "ea13da01ddfc97858eef0ffc756268a9590d08954b09abe981d2552388b7189d",
+      "mask": "parity-evidence/overlays/pass74/05_ingame_after_cast_full_frame_mask.png",
+      "regions": {
+        "full_frame": {
+          "xywh": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "differing_pixels": 54262,
+          "total_pixels": 64000,
+          "delta_percent": 84.7844,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 96.0327
+        },
+        "viewport": {
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "differing_pixels": 23800,
+          "total_pixels": 30464,
+          "delta_percent": 78.125,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 91.4448
+        },
+        "action_area_C011": {
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "differing_pixels": 3533,
+          "total_pixels": 3915,
+          "delta_percent": 90.2427,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 123.2144
+        },
+        "spell_area_C013": {
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "differing_pixels": 2134,
+          "total_pixels": 2175,
+          "delta_percent": 98.1149,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 121.8146
+        },
+        "right_column_action_spell": {
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "differing_pixels": 5667,
+          "total_pixels": 6090,
+          "delta_percent": 93.0542,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 122.7144
+        },
+        "message_area": {
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "differing_pixels": 5657,
+          "total_pixels": 6944,
+          "delta_percent": 81.466,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 130.1835
+        },
+        "inventory_panel_C101_extent": {
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "differing_pixels": 7402,
+          "total_pixels": 10512,
+          "delta_percent": 70.4148,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 80.4977
+        }
+      }
+    },
+    {
+      "index": "06",
+      "scene": "ingame_inventory_panel",
+      "firestaff": "verification-screens/06_ingame_inventory_panel_latest.png",
+      "firestaff_sha256": "729d1353f1d151295da8b97d55f7066352edfb0524c74604222cd60c8bc3b1df",
+      "original": "verification-screens/pass70-original-dm1-viewports/image0006-raw.png",
+      "original_sha256": "8a2640bbe00356f1f62843f37fa875577b8ee71bb23668fb786742de01d02e07",
+      "mask": "parity-evidence/overlays/pass74/06_ingame_inventory_panel_full_frame_mask.png",
+      "regions": {
+        "full_frame": {
+          "xywh": [
+            0,
+            0,
+            320,
+            200
+          ],
+          "differing_pixels": 60774,
+          "total_pixels": 64000,
+          "delta_percent": 94.9594,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 88.6025
+        },
+        "viewport": {
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "differing_pixels": 28283,
+          "total_pixels": 30464,
+          "delta_percent": 92.8407,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 87.976
+        },
+        "action_area_C011": {
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "differing_pixels": 3844,
+          "total_pixels": 3915,
+          "delta_percent": 98.1865,
+          "max_channel_delta": 182,
+          "mean_abs_delta_rgb": 69.3241
+        },
+        "spell_area_C013": {
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "differing_pixels": 2121,
+          "total_pixels": 2175,
+          "delta_percent": 97.5172,
+          "max_channel_delta": 146,
+          "mean_abs_delta_rgb": 68.8679
+        },
+        "right_column_action_spell": {
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "differing_pixels": 5965,
+          "total_pixels": 6090,
+          "delta_percent": 97.9475,
+          "max_channel_delta": 182,
+          "mean_abs_delta_rgb": 69.1611
+        },
+        "message_area": {
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "differing_pixels": 6883,
+          "total_pixels": 6944,
+          "delta_percent": 99.1215,
+          "max_channel_delta": 255,
+          "mean_abs_delta_rgb": 126.8239
+        },
+        "inventory_panel_C101_extent": {
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "differing_pixels": 9146,
+          "total_pixels": 10512,
+          "delta_percent": 87.0053,
+          "max_channel_delta": 182,
+          "mean_abs_delta_rgb": 67.895
+        }
+      }
+    }
+  ],
+  "problems": [],
+  "pass": true
+}
