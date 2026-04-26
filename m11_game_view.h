@@ -733,6 +733,8 @@ int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex);
 int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state);
+int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
+                                           int championSlot);
 int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
                                         int* outW,

@@ -14141,6 +14141,18 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
+                                           int championSlot) {
+    const struct ChampionState_Compat* champ;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        championSlot >= state->world.party.championCount) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championSlot];
+    if (!champ->present) return 0;
+    return champ->hp.current == 0 ? M11_GFX_STATUS_BOX_DEAD : 0;
+}
+
 int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) {
     if (!state) return 0;
     if (state->world.magic.spellShieldDefense > 0) {
@@ -14923,10 +14935,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * bars, hands, and optional shield borders are drawn on top
              * (CHAMPION.C F0292).  Dead champions still use graphic 8. */
             if (!useV2PartyHud) {
-                if (isDead && state->assetsAvailable) {
+                int baseGfx = M11_GameView_GetV1StatusBoxBaseGraphic(state, slot);
+                if (baseGfx && state->assetsAvailable) {
                     const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
-                        M11_GFX_STATUS_BOX_DEAD);
+                        baseGfx);
                     if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
                         M11_AssetLoader_BlitRegion(boxAsset,
                             0, 0, 67, 29,

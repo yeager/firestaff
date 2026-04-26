@@ -161,3 +161,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_15P`: no shield → 0, party → 37, fire-over-party → 38, spell-over-fire-over-party → 39.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1457_1476_v1_status_shield_border_priority.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `484/484`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1477–1496 — V1 status box base graphic selection.
+  - Added `M11_GameView_GetV1StatusBoxBaseGraphic(...)` for source living/dead status-box base selection.
+  - Routed dead-status-box asset selection through the helper.
+  - Added invariant `INV_GV_15Q`: living champion → 0 (clear/rebuild), dead champion → 8 (`C008_GRAPHIC_STATUS_BOX_DEAD_CHAMPION`).
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1477_1496_v1_status_box_base_graphic.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `485/485`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

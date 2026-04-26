@@ -1223,6 +1223,17 @@ int main(int argc, char** argv) {
     syntheticView.world.party.champions[0].wounds = 0;
 
     {
+        M11_GameViewState baseGraphicView = syntheticView;
+        int aliveBase = M11_GameView_GetV1StatusBoxBaseGraphic(&baseGraphicView, 0);
+        baseGraphicView.world.party.champions[0].hp.current = 0;
+        probe_record(&tally,
+                     "INV_GV_15Q",
+                     aliveBase == 0 &&
+                         M11_GameView_GetV1StatusBoxBaseGraphic(&baseGraphicView, 0) == 8,
+                     "V1 status box base graphic uses source dead box only for dead champions");
+    }
+
+    {
         M11_GameViewState shieldGraphicView = syntheticView;
         int noneBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
         shieldGraphicView.world.magic.partyShieldDefense = 1;
