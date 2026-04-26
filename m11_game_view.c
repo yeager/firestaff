@@ -11881,22 +11881,23 @@ static void m11_apply_dm_dialog_choice_patch(const M11_GameViewState* state,
 }
 
 /* Which inventory slot a champion is currently treating as the
- * action hand.  ReDMCSB stores this in G407.Champions[i].Slots[
- * C01_SLOT_ACTION_HAND], with the MASK0x8000_ACTION_HAND bit of
- * Attributes selecting which physical hand maps to it.  Our compat
- * layer does not yet mirror that bit, so fall back to the DM1
- * default for a fresh party: right hand first, then left hand. */
+ * action hand.  ReDMCSB F0386_MENUS_DrawActionIcon reads only
+ * G407.Champions[i].Slots[C01_SLOT_ACTION_HAND].  The status-box
+ * ready hand (C00_SLOT_READY_HAND) must not bleed into the action
+ * area: a champion with only a ready-hand object still shows/opens
+ * the empty-hand action set.  Our compat storage has an optional
+ * CHAMPION_SLOT_ACTION_HAND override for probe/runtime callers; when
+ * it is absent, CHAMPION_SLOT_HAND_RIGHT is the current C01 action-
+ * hand mirror. */
 static unsigned short m11_get_action_hand_thing(
     const struct ChampionState_Compat* champ) {
     unsigned short t;
     if (!champ) return THING_NONE;
-    /* Prefer the CHAMPION_SLOT_ACTION_HAND alias if populated. */
+    /* Prefer the CHAMPION_SLOT_ACTION_HAND mirror if populated. */
     t = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
     if (t != THING_NONE && t != THING_ENDOFLIST) return t;
-    /* DM1 default acting hand is the right hand. */
-    t = champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
-    if (t != THING_NONE && t != THING_ENDOFLIST) return t;
-    return champ->inventory[CHAMPION_SLOT_HAND_LEFT];
+    /* DM1 F0386/F0389 do not fall back to the ready hand. */
+    return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
 }
 
 /* Source-backed ActionSetIndex lookups extracted from
