@@ -13804,6 +13804,11 @@ int M11_GameView_GetV1ActionAreaGraphicId(void) {
     return M11_GFX_ACTION_AREA;
 }
 
+int M11_GameView_GetV1ActionAreaClearColor(void) {
+    /* F0387 clears the action area to black before drawing menu/icon state. */
+    return M11_COLOR_BLACK;
+}
+
 int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void) {
     return M11_GFX_SPELL_AREA_BG;
 }
@@ -13913,10 +13918,11 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
             &actionX, &actionY, &actionW, &actionH);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       actionX, actionY, actionW, actionH,
-                      M11_COLOR_BLACK);
+                      (unsigned char)M11_GameView_GetV1ActionAreaClearColor());
         (void)m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
-            M11_GFX_ACTION_AREA, actionW, actionH, actionX, actionY);
+            M11_GameView_GetV1ActionAreaGraphicId(),
+            actionW, actionH, actionX, actionY);
     }
 
     /* Header band: fill cyan and print the champion name in black.
@@ -14652,7 +14658,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                     &actionX, &actionY, &actionW, &actionH);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               actionX, actionY, actionW, actionH,
-                              M11_COLOR_BLACK);
+                              (unsigned char)M11_GameView_GetV1ActionAreaClearColor());
             }
             (void)m11_draw_dm_action_icon_cells(state, framebuffer,
                                                 framebufferWidth,
