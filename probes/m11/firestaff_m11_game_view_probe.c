@@ -7982,6 +7982,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            int passX, passY, passW, passH;
+            probe_record(&tally, "INV_GV_300AD",
+                         M11_GameView_GetV1ActionPassZoneId() == 98 &&
+                             M11_GameView_GetV1ActionPassZone(&passX, &passY, &passW, &passH) &&
+                             passX == 275 && passY == 45 && passW == 35 && passH == 7,
+                         "action PASS zone exposes layout-696 C098 id and right-aligned geometry");
+        }
+
+        {
             probe_record(&tally, "INV_GV_300P",
                          M11_GameView_GetV1ActionAreaGraphicId() == 10 &&
                              M11_GameView_GetV1ActionMenuGraphicZoneId(1) == 79 &&

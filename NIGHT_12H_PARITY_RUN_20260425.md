@@ -239,3 +239,9 @@ Update this file with batch summaries if useful.
   - Routed caster-tab validation through the parent panel helper and added `INV_GV_300AC` for ids plus top-of-spell-area geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2537_2556_v1_spell_caster_zone_ids.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `514/514`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2557–2576 — V1 action PASS zone id.
+  - Added source id/geometry helper for layout-696 `C098_ZONE_ACTION_AREA_PASS`, right-aligned under the action-area `C011` source zone.
+  - Added `INV_GV_300AD` to assert `C098` and `(275,45,35,7)` geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2557_2576_v1_action_pass_zone_id.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `515/515`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
