@@ -7965,6 +7965,14 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300U",
+                         M11_GameView_GetV1InventoryPanelGraphicId() == 20 &&
+                             M11_GameView_GetV1FoodLabelGraphicId() == 30 &&
+                             M11_GameView_GetV1WaterLabelGraphicId() == 31,
+                         "V1 inventory panel status uses source C020 panel and C030/C031 food-water labels");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",

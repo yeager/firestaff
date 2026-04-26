@@ -13840,6 +13840,18 @@ int M11_GameView_GetV1ChampionIconGraphicId(void) {
     return M11_GFX_CHAMPION_ICONS;
 }
 
+int M11_GameView_GetV1InventoryPanelGraphicId(void) {
+    return M11_GFX_PANEL_EMPTY;
+}
+
+int M11_GameView_GetV1FoodLabelGraphicId(void) {
+    return M11_GFX_FOOD_LABEL;
+}
+
+int M11_GameView_GetV1WaterLabelGraphicId(void) {
+    return M11_GFX_WATER_LABEL;
+}
+
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
@@ -15951,7 +15963,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                   panelX, panelY, panelW, panelH, M11_COLOR_BLACK);
     if (state->assetsAvailable) {
         const M11_AssetSlot* panelBg = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, M11_GFX_PANEL_EMPTY);
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)M11_GameView_GetV1InventoryPanelGraphicId());
         if (panelBg && panelBg->width > 0 && panelBg->height > 0) {
             /* Blit the original panel background scaled to fit */
             M11_AssetLoader_BlitScaled(panelBg,
@@ -16189,9 +16202,11 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
          * Falls back to text rendering when assets unavailable. */
         if (state->assetsAvailable) {
             const M11_AssetSlot* foodLbl = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader, M11_GFX_FOOD_LABEL);
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)M11_GameView_GetV1FoodLabelGraphicId());
             const M11_AssetSlot* waterLbl = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader, M11_GFX_WATER_LABEL);
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)M11_GameView_GetV1WaterLabelGraphicId());
             if (foodLbl && foodLbl->width > 0 && foodLbl->height > 0 &&
                 waterLbl && waterLbl->width > 0 && waterLbl->height > 0) {
                 char numBuf[8];
