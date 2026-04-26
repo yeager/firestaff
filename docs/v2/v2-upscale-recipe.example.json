@@ -1,0 +1,14 @@
+{
+  "pipelineVersion": "v2.1-upscale-scout",
+  "assets": [
+    {
+      "logicalId": "fs.v2.ui.viewport-base",
+      "sourceLogicalSize": {"width": 224, "height": 136},
+      "masterSize": {"width": 2240, "height": 1360},
+      "derivedSize": {"width": 1120, "height": 680},
+      "masterPath": "assets-v2/ui/wave1/viewport-frame/masters/4k/fs-v2-viewport-base.master.png",
+      "derivedPath": "assets-v2/ui/wave1/viewport-frame/exports/1080p/fs-v2-viewport-base.1080p.png",
+      "provenance": "Planning example only; no asset file is present in this scout."
+    }
+  ]
+}
