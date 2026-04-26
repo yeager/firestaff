@@ -988,6 +988,7 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
                                            int* outCoordinateSpace,
                                            int* outZoneId);
 int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot);
+int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxIndex);
 int M11_GameView_GetV1EndgameTheEndGraphicId(void);
 int M11_GameView_GetV1EndgameTheEndZone(int* outX,
                                         int* outY,

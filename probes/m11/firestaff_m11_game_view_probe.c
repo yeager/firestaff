@@ -7083,8 +7083,52 @@ int main(int argc, char** argv) {
                      M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_1) == 20 &&
                      M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_1) == 21 &&
                      M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_8) == 28 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_ACTION_HAND) == 0,
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_ACTION_HAND) == 0 &&
+                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(8) == CHAMPION_SLOT_HAND_LEFT &&
+                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(9) == CHAMPION_SLOT_HAND_RIGHT &&
+                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(28) == CHAMPION_SLOT_BACKPACK_8 &&
+                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(29) == -1,
                  "V1 inventory champion slots map to source slot-box indices C513..C527 without alias leakage");
+
+    /* INV_GV_362A: A normal V1 click on source inventory slot C507 routes
+     * through COMMAND.C C028/F0302's pickup half: remove the slot object and
+     * populate the dedicated transient leader-hand object instead of only
+     * exposing the test setter. */
+    {
+        M11_GameViewState clickInv;
+        struct DungeonThings_Compat localThings;
+        struct DungeonWeapon_Compat weapon;
+        unsigned short readyThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        char leaderHandName[16];
+        int sx, sy, sw, sh;
+        memset(&localThings, 0, sizeof(localThings));
+        memset(&weapon, 0, sizeof(weapon));
+        weapon.type = 8; /* DAGGER */
+        localThings.weapons = &weapon;
+        localThings.weaponCount = 1;
+        memcpy(&clickInv, &gameView, sizeof(clickInv));
+        clickInv.showDebugHUD = 0;
+        clickInv.inventoryPanelActive = 1;
+        clickInv.world.things = &localThings;
+        clickInv.world.party.activeChampionIndex = 0;
+        clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = readyThing;
+        M11_GameView_ClearV1LeaderHandObject(&clickInv);
+        memset(leaderHandName, 0, sizeof(leaderHandName));
+        (void)M11_GameView_GetV1InventorySourceSlotBoxZone(8, &sx, &sy, &sw, &sh);
+        probe_record(&tally,
+                     "INV_GV_362A",
+                     M11_GameView_HandlePointer(&clickInv,
+                                                sx + (sw / 2),
+                                                33 + sy + (sh / 2),
+                                                1) == M11_GAME_INPUT_REDRAW &&
+                         clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE &&
+                         M11_GameView_GetV1LeaderHandThing(&clickInv) == readyThing &&
+                         M11_GameView_GetV1LeaderHandObjectName(&clickInv,
+                                                                leaderHandName,
+                                                                sizeof(leaderHandName)) &&
+                         strcmp(leaderHandName, "DAGGER") == 0,
+                     "normal V1 inventory slot click picks object into dedicated leader-hand runtime state");
+    }
 
     /* INV_GV_363: Normal V1 inventory draws pouch/quiver/backpack dynamic
      * icons only inside their source C513/C514/C527 slot boxes. */

@@ -5288,6 +5288,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     return M11_GAME_INPUT_REDRAW;
 }
 
+static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
+                                                   int sourceSlotBoxIndex);
+
 M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,
@@ -5311,6 +5314,24 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
     /* In endgame, clicks are ignored (use ESC). */
     if (state->gameWon) {
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (state->inventoryPanelActive && !state->showDebugHUD) {
+        int space = M11_DM1_MOUSE_SPACE_NONE;
+        int zoneId = 0;
+        int command = M11_GameView_GetV1MouseCommandForPoint(
+            M11_DM1_MOUSE_LIST_INVENTORY,
+            x, y,
+            M11_DM1_MOUSE_MASK_LEFT,
+            &space,
+            &zoneId);
+        (void)space;
+        if (command >= 28 && command <= 57 && zoneId >= 507 && zoneId <= 536) {
+            if (m11_process_v1_inventory_slot_box_click(state, command - 20)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
 
     /* The procedural utility-panel buttons (inspect / save /
@@ -14884,6 +14905,68 @@ int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot) {
         case CHAMPION_SLOT_BACKPACK_8: return 28; /* C527 */
         default: return 0;
     }
+}
+
+int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxIndex) {
+    /* Inverse of M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot().
+     * Used by the source mouse-route bridge for COMMAND.C C028..C057.
+     * Source slot-box indices 29..37 exist in DM1, but Firestaff's
+     * bounded champion model currently exposes only eight backpack slots;
+     * return -1 for unmapped original slots rather than aliasing them. */
+    switch (sourceSlotBoxIndex) {
+        case 8:  return CHAMPION_SLOT_HAND_LEFT;   /* READY_HAND / C507 */
+        case 9:  return CHAMPION_SLOT_HAND_RIGHT;  /* ACTION_HAND / C508 */
+        case 10: return CHAMPION_SLOT_HEAD;        /* C509 */
+        case 11: return CHAMPION_SLOT_TORSO;       /* C510 */
+        case 12: return CHAMPION_SLOT_LEGS;        /* C511 */
+        case 13: return CHAMPION_SLOT_FEET;        /* C512 */
+        case 14: return CHAMPION_SLOT_POUCH_2;     /* C513 */
+        case 15: return CHAMPION_SLOT_QUIVER_3;    /* C514 */
+        case 16: return CHAMPION_SLOT_QUIVER_2;    /* C515 */
+        case 17: return CHAMPION_SLOT_QUIVER_4;    /* C516 */
+        case 18: return CHAMPION_SLOT_NECK;        /* C517 */
+        case 19: return CHAMPION_SLOT_POUCH_1;     /* C518 */
+        case 20: return CHAMPION_SLOT_QUIVER_1;    /* C519 */
+        case 21: return CHAMPION_SLOT_BACKPACK_1;  /* C520 */
+        case 22: return CHAMPION_SLOT_BACKPACK_2;  /* C521 */
+        case 23: return CHAMPION_SLOT_BACKPACK_3;  /* C522 */
+        case 24: return CHAMPION_SLOT_BACKPACK_4;  /* C523 */
+        case 25: return CHAMPION_SLOT_BACKPACK_5;  /* C524 */
+        case 26: return CHAMPION_SLOT_BACKPACK_6;  /* C525 */
+        case 27: return CHAMPION_SLOT_BACKPACK_7;  /* C526 */
+        case 28: return CHAMPION_SLOT_BACKPACK_8;  /* C527 */
+        default: return -1;
+    }
+}
+
+static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
+                                                   int sourceSlotBoxIndex) {
+    int championIndex;
+    int championSlot;
+    struct ChampionState_Compat* champ;
+    unsigned short slotThing;
+
+    if (!state || !state->inventoryPanelActive) return 0;
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(
+        sourceSlotBoxIndex);
+    if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
+    if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE) {
+        /* Source F0302 can place/swap the held object after AllowedSlots
+         * validation.  Firestaff does not yet expose that full slot-mask
+         * bridge here, so only route the safe empty-hand pickup half. */
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    slotThing = champ->inventory[championSlot];
+    if (slotThing == THING_NONE || slotThing == THING_ENDOFLIST) return 0;
+    champ->inventory[championSlot] = THING_NONE;
+    if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
+        champ->inventory[championSlot] = slotThing;
+        return 0;
+    }
+    return 1;
 }
 
 int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
