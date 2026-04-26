@@ -105,7 +105,7 @@ enum {
     M11_PROMPT_STRIP_W = 202,
     M11_PROMPT_STRIP_H = 14,
     M11_PARTY_PANEL_X = 12,
-    M11_PARTY_PANEL_Y = 160,
+    M11_PARTY_PANEL_Y = 0,
     /* Legacy / V2-mode dimensions.  V2's pre-baked four-slot HUD
      * sprite (m11_v2_party_hud_four_slot_base, 302x28) encodes
      * these values directly: 4 * 77 - 6 = 302 (= step 77 * 3 +

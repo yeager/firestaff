@@ -28,7 +28,7 @@ enum {
     PROBE_COLOR_LIGHT_BLUE  = 14,
 
     PARTY_PANEL_X = 12,
-    PARTY_PANEL_Y = 160,
+    PARTY_PANEL_Y = 0,
     SLOT_STEP     = 69,
     SLOT_Y        = PARTY_PANEL_Y,
     BAR_TOP_Y     = PARTY_PANEL_Y + 4,
