@@ -288,8 +288,8 @@ Update this file with batch summaries if useful.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2697_2716_v1_viewport_zone_id.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `522/522`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
 
-- Passes 2697–2716 — V1 champion icon zones.
+- Passes 2717–2736 — V1 champion icon zones.
   - Added source id/geometry helpers for layout-696 `C113_ZONE_CHAMPION_ICON_TOP_LEFT` through `C116_ZONE_CHAMPION_ICON_BOTTOM_LEFT`.
-  - Added `INV_GV_300AJ` to assert `C113..C116`, invalid-slot rejection, and representative clipped `16×14` rectangles.
-  - Evidence: `parity-evidence/dm1_all_graphics_phase2697_2716_v1_champion_icon_zones.md`.
+  - Added `INV_GV_300AK` to assert `C113..C116`, invalid-slot rejection, and representative clipped `16×14` rectangles.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2717_2736_v1_champion_icon_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `522/522`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

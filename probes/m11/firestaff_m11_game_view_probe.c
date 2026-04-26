@@ -8078,7 +8078,7 @@ int main(int argc, char** argv) {
         {
             int icon0X, icon0Y, icon0W, icon0H;
             int icon3X, icon3Y, icon3W, icon3H;
-            probe_record(&tally, "INV_GV_300AJ",
+            probe_record(&tally, "INV_GV_300AK",
                          M11_GameView_GetV1ChampionIconZoneId(0) == 113 &&
                              M11_GameView_GetV1ChampionIconZoneId(3) == 116 &&
                              M11_GameView_GetV1ChampionIconZoneId(-1) == 0 &&
