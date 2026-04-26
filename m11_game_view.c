@@ -17530,29 +17530,39 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             dmgX, dmgY, 0);
                     }
                 }
-                /* Always draw the damage number (even without assets) */
+                /* Always draw the damage number (even without assets).
+                 * Source F0623/F0320 uses F0650_PrintCenteredTextToScreenZone
+                 * on C167..C170, so center the formatted amount inside the
+                 * 45x7 C015 banner instead of using a fixed two-digit bias. */
                 {
                     char dmgNum[8];
                     M11_TextStyle dmgStyle = g_text_small;
+                    int dmgNumX;
+                    int dmgNumY;
+                    int dmgNumW;
+                    int dmgNumH;
                     dmgStyle.color = M11_COLOR_WHITE;
                     snprintf(dmgNum, sizeof(dmgNum), "%d",
                              state->championDamageAmount[slot]);
-                    int dmgNumX;
-                    int dmgNumY;
-                    if (!useV2PartyHud) {
-                        (void)M11_GameView_GetV1DamageNumberOrigin(
-                            slot, &dmgNumX, &dmgNumY);
+                    if (!useV2PartyHud &&
+                        M11_GameView_GetV1DamageIndicatorZone(
+                            slot, 45, 7,
+                            &dmgNumX, &dmgNumY, &dmgNumW, &dmgNumH)) {
+                        m11_draw_text_centered_in_rect(
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            dmgNumX, dmgNumY, dmgNumW, dmgNum, &dmgStyle);
                     } else {
                         int dmgBaseW = 67;
                         int dmgBaseH = 29;
-                        dmgNumX = x + dmgBaseW / 2 - 4;
+                        dmgNumX = x + dmgBaseW / 2 -
+                                  m11_measure_text_pixels(dmgNum, &dmgStyle) / 2;
                         dmgNumY = y + dmgBaseH / 2 - 3;
+                        m11_draw_text(framebuffer, framebufferWidth,
+                                      framebufferHeight,
+                                      dmgNumX,
+                                      dmgNumY,
+                                      dmgNum, &dmgStyle);
                     }
-                    m11_draw_text(framebuffer, framebufferWidth,
-                                  framebufferHeight,
-                                  dmgNumX,
-                                  dmgNumY,
-                                  dmgNum, &dmgStyle);
                 }
             }
         } else {
