@@ -2746,7 +2746,7 @@ static void m12_draw_sparse_settings_view(const M12_StartupMenuState* state,
     char line2[64];
     char line3[64];
     snprintf(line2, sizeof(line2), "LANGUAGE  %s", m12_settings_value_language(state));
-    snprintf(line3, sizeof(line3), "GRAPHICS  %s", m12_settings_value_graphics(state));
+    snprintf(line3, sizeof(line3), "PRESENTATION  %s", m12_settings_value_graphics(state));
     m12_draw_sparse_center_box(framebuffer,
                                framebufferWidth,
                                framebufferHeight,

@@ -483,10 +483,27 @@ int main(void) {
                      file_contains(configPath, "language_explicit = 1") &&
                      file_contains(configPath, "game_0_version_index = 1") &&
                      file_contains(configPath, "game_0_language_index = 1") &&
+                     file_contains(configPath, "presentation_mode = \"v2-enhanced-2d\"") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
                      file_contains(configPath, "renderer_backend_index = 1") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game version selection persist across reloads without cross-game bleed, including presentation mode, renderer backend, and per-game language");
+                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, and per-game language");
+
+    make_file_with_text(configPath,
+                        "# Firestaff startup menu config\n"
+                        "language_index = 0\n"
+                        "language_explicit = 1\n"
+                        "presentation_mode = \"v3-modern-3d\"\n"
+                        "renderer_backend_index = 0\n"
+                        "window_mode_index = 0\n"
+                        "data_dir = \"probe-data\"\n");
+    M12_StartupMenu_InitWithDataDir(&reloaded, dataDir);
+    probe_record(&tally,
+                 "INV_M12_11D",
+                 reloaded.settings.graphicsIndex == M12_PRESENTATION_V3_MODERN_3D &&
+                     strcmp(M12_StartupMenu_GetPresentationModeLabel(&reloaded), "V3 MODERN/3D") == 0 &&
+                     file_contains(configPath, "presentation_mode = \"v3-modern-3d\""),
+                 "readable presentation_mode config key loads and round-trips V3 mode without relying on numeric graphics terminology");
 
     remove_if_present(configPath);
     unsetenv("LC_ALL");

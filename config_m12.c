@@ -26,6 +26,8 @@ static int m12_string_equals(const char* a, const char* b) {
     return a && b && strcmp(a, b) == 0;
 }
 
+static int m12_read_quoted_value(char* out, size_t outSize, const char* raw);
+
 static void m12_trim(char* text) {
     char* start;
     char* end;
@@ -62,6 +64,58 @@ static int m12_parse_int(const char* value, int fallback) {
         return fallback;
     }
     return (int)parsed;
+}
+
+static int m12_parse_presentation_mode(const char* raw, int fallback) {
+    char value[64];
+    char quoted[64];
+    size_t i;
+    if (!raw || raw[0] == '\0') {
+        return fallback;
+    }
+    if (raw[0] == '"') {
+        if (!m12_read_quoted_value(quoted, sizeof(quoted), raw)) {
+            return fallback;
+        }
+        raw = quoted;
+    }
+    snprintf(value, sizeof(value), "%s", raw);
+    m12_trim(value);
+    for (i = 0U; value[i] != '\0'; ++i) {
+        value[i] = (char)tolower((unsigned char)value[i]);
+        if (value[i] == '_') {
+            value[i] = '-';
+        }
+    }
+    if (m12_string_equals(value, "v1") ||
+        m12_string_equals(value, "v1-original") ||
+        m12_string_equals(value, "original")) {
+        return 0;
+    }
+    if (m12_string_equals(value, "v2") ||
+        m12_string_equals(value, "v2-enhanced-2d") ||
+        m12_string_equals(value, "enhanced-2d")) {
+        return 1;
+    }
+    if (m12_string_equals(value, "v3") ||
+        m12_string_equals(value, "v3-modern-3d") ||
+        m12_string_equals(value, "modern-3d")) {
+        return 2;
+    }
+    return fallback;
+}
+
+static const char* m12_presentation_mode_id(int index) {
+    switch (index) {
+        case 0:
+            return "v1-original";
+        case 1:
+            return "v2-enhanced-2d";
+        case 2:
+            return "v3-modern-3d";
+        default:
+            return "v1-original";
+    }
 }
 
 static int m12_starts_with_lang(const char* value, const char* langCode) {
@@ -201,6 +255,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->languageExplicit = m12_parse_int(value, config->languageExplicit) ? 1 : 0;
         return;
     }
+    if (m12_string_equals(key, "presentation_mode")) {
+        config->graphicsIndex = m12_parse_presentation_mode(value, config->graphicsIndex);
+        return;
+    }
     if (m12_string_equals(key, "graphics_index") ||
         m12_string_equals(key, "presentation_mode_index")) {
         config->graphicsIndex = m12_parse_int(value, config->graphicsIndex);
@@ -293,6 +351,9 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "language_explicit = %d\n", config->languageExplicit ? 1 : 0);
     fprintf(fp, "presentation_mode_index = %d\n", config->graphicsIndex);
     fprintf(fp, "graphics_index = %d\n", config->graphicsIndex);
+    fputs("presentation_mode = ", fp);
+    m12_escape_and_write(fp, m12_presentation_mode_id(config->graphicsIndex));
+    fputc('\n', fp);
     fprintf(fp, "renderer_backend_index = %d\n", config->rendererBackendIndex);
     fprintf(fp, "window_mode_index = %d\n", config->windowModeIndex);
     fprintf(fp, "scale_mode_index = %d\n", config->scaleModeIndex);
