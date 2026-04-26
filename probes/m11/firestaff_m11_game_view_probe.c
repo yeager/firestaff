@@ -1164,11 +1164,14 @@ int main(int argc, char** argv) {
             int textX3, textY3, textW3, textH3;
             probe_record(&tally,
                          "INV_GV_15E8",
-                         M11_GameView_GetV1StatusNameTextZone(0, &textX0, &textY0, &textW0, &textH0) &&
+                         M11_GameView_GetV1StatusNameTextZoneId(0) == 163 &&
+                             M11_GameView_GetV1StatusNameTextZoneId(3) == 166 &&
+                             M11_GameView_GetV1StatusNameTextZoneId(4) == 0 &&
+                             M11_GameView_GetV1StatusNameTextZone(0, &textX0, &textY0, &textW0, &textH0) &&
                              M11_GameView_GetV1StatusNameTextZone(3, &textX3, &textY3, &textW3, &textH3) &&
                              textX0 == 13 && textY0 == 160 && textW0 == 42 && textH0 == 7 &&
                              textX3 == 220 && textY3 == 160 && textW3 == 42 && textH3 == 7,
-                         "V1 status name text zones match layout-696 C163..C166 geometry");
+                         "V1 status name text zones expose layout-696 C163..C166 ids and geometry");
         }
         {
             M11_GameViewState fallbackDeadBoxView = syntheticView;
@@ -1188,11 +1191,14 @@ int main(int argc, char** argv) {
         }
         probe_record(&tally,
                      "INV_GV_15E2",
-                     nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&
+                     M11_GameView_GetV1StatusNameClearZoneId(0) == 159 &&
+                         M11_GameView_GetV1StatusNameClearZoneId(3) == 162 &&
+                         M11_GameView_GetV1StatusNameClearZoneId(4) == 0 &&
+                         nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&
                          nameW == 43 && nameH == 7 &&
                          nameX1 == PROBE_BOTTOM_PANEL_X + 69 && nameY1 == PROBE_PARTY_PANEL_Y &&
                          nameW1 == 43 && nameH1 == 7,
-                     "V1 champion HUD name clear zones match layout-696 C159..C162 geometry");
+                     "V1 champion HUD name clear zones expose layout-696 C159..C162 ids and geometry");
         probe_record(&tally,
                      "INV_GV_15Z",
                      M11_GameView_GetV1StatusNameClearColor() == PROBE_COLOR_GRAY &&

@@ -706,6 +706,8 @@ int M11_GameView_GetV1StatusBoxZone(int championSlot,
                                     int* outY,
                                     int* outW,
                                     int* outH);
+int M11_GameView_GetV1StatusNameClearZoneId(int championSlot);
+int M11_GameView_GetV1StatusNameTextZoneId(int championSlot);
 int M11_GameView_GetV1StatusNameZone(int championSlot,
                                      int* outX,
                                      int* outY,

@@ -180,3 +180,10 @@ Update this file with batch summaries if useful.
   - Reused `INV_GV_15E9` and `INV_GV_15P` coverage for source status-box dimensions and overlay priority.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1517_1536_v1_status_shield_border_zone_routing.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `485/485`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2377–2396 — V1 status name source zone ids.
+  - Added probe-visible helpers for layout-696 `C159..C162` champion name clear zones and `C163..C166` centered name text zones.
+  - Routed compact status name clear/text helper validation through the source zone-id helpers.
+  - Hardened `INV_GV_15E2` and `INV_GV_15E8` to assert both zone ids and geometry, including out-of-range slot rejection.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2377_2396_v1_status_name_zone_ids.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

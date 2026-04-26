@@ -14516,12 +14516,22 @@ int M11_GameView_GetV1StatusBoxFillColor(void) {
     return M11_COLOR_DARK_GRAY;
 }
 
+int M11_GameView_GetV1StatusNameClearZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 159 + championSlot;
+}
+
+int M11_GameView_GetV1StatusNameTextZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 163 + championSlot;
+}
+
 int M11_GameView_GetV1StatusNameZone(int championSlot,
                                      int* outX,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    if (!M11_GameView_GetV1StatusNameClearZoneId(championSlot)) return 0;
     if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
                       M11_V1_STATUS_NAME_CLEAR_X;
     if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_CLEAR_Y;
@@ -14535,7 +14545,7 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    if (!M11_GameView_GetV1StatusNameTextZoneId(championSlot)) return 0;
     if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
                       M11_V1_STATUS_NAME_TEXT_X;
     if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_TEXT_Y;
