@@ -1,0 +1,12 @@
+{
+  "schema": "pass76_capture_route_state_probe.v1",
+  "honesty": "Firestaff deterministic fixture route only; original DOS semantic route remains separate.",
+  "snapshots": [
+    {"capture":"01_ingame_start_latest","action":"start","result":1,"tick":0,"mapIndex":0,"mapX":1,"mapY":3,"direction":2,"spellPanelOpen":0,"spellRuneCount":0,"inventoryPanelActive":0,"championCount":1,"activeChampionIndex":0,"rightHandThing":5120},
+    {"capture":"02_ingame_turn_right_latest","action":"right","result":1,"tick":1,"mapIndex":0,"mapX":1,"mapY":3,"direction":3,"spellPanelOpen":0,"spellRuneCount":0,"inventoryPanelActive":0,"championCount":1,"activeChampionIndex":0,"rightHandThing":5120},
+    {"capture":"03_ingame_move_forward_latest","action":"up","result":1,"tick":2,"mapIndex":0,"mapX":0,"mapY":3,"direction":3,"spellPanelOpen":0,"spellRuneCount":0,"inventoryPanelActive":0,"championCount":1,"activeChampionIndex":0,"rightHandThing":5120},
+    {"capture":"04_ingame_spell_panel_latest","action":"spell_rune_1","result":1,"tick":2,"mapIndex":0,"mapX":0,"mapY":3,"direction":3,"spellPanelOpen":1,"spellRuneCount":1,"inventoryPanelActive":0,"championCount":1,"activeChampionIndex":0,"rightHandThing":5120},
+    {"capture":"05_ingame_after_cast_latest","action":"spell_cast","result":0,"tick":2,"mapIndex":0,"mapX":0,"mapY":3,"direction":3,"spellPanelOpen":1,"spellRuneCount":1,"inventoryPanelActive":0,"championCount":1,"activeChampionIndex":0,"rightHandThing":5120},
+    {"capture":"06_ingame_inventory_panel_latest","action":"spell_clear+inventory","result":1,"tick":2,"mapIndex":0,"mapX":0,"mapY":3,"direction":3,"spellPanelOpen":0,"spellRuneCount":0,"inventoryPanelActive":1,"championCount":1,"activeChampionIndex":0,"rightHandThing":5120}
+  ]
+}
