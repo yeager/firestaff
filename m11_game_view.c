@@ -14373,18 +14373,29 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusHandZoneId(int championSlot,
+                                       int handIndex) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        handIndex < 0 || handIndex > 1) {
+        return 0;
+    }
+    return 211 + championSlot * 2 + handIndex;
+}
+
 int M11_GameView_GetV1StatusHandZone(int championSlot,
                                      int handIndex,
                                      int* outX,
                                      int* outY,
                                      int* outW,
                                      int* outH) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
-        handIndex < 0 || handIndex > 1) {
-        return 0;
-    }
-    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
-                      m11_v1_status_hand_x(handIndex);
+    int zoneId = M11_GameView_GetV1StatusHandZoneId(championSlot, handIndex);
+    int sourceSlot;
+    int sourceHand;
+    if (zoneId == 0) return 0;
+    sourceSlot = (zoneId - 211) / 2;
+    sourceHand = (zoneId - 211) % 2;
+    if (outX) *outX = M11_PARTY_PANEL_X + sourceSlot * m11_party_slot_step() +
+                      m11_v1_status_hand_x(sourceHand);
     if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_HAND_Y;
     if (outW) *outW = M11_V1_STATUS_HAND_ZONE_W;
     if (outH) *outH = M11_V1_STATUS_HAND_ZONE_H;
