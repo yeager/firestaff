@@ -1,0 +1,999 @@
+{
+  "schema": "pass83_firestaff_viewport_content_points_probe.v1",
+  "honesty": "Evidence only. Points are layout-696 source anchors from GRAPHICS.DAT/ReDMCSB reconstruction; overlays do not claim sprite pixel parity.",
+  "source_zone_reconstruction": "zones_h_reconstruction.json",
+  "source_zone_reconstruction_sha256": "56c67e7332b478cd37285cee2e38fbd83b935f6439f39e406534da493aa68aca",
+  "source_provenance": {
+    "source_file": "GRAPHICS.DAT (DM1 PC 3.4 English / I34E)",
+    "source_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "graphics_dat_entry_index": 696,
+    "graphics_dat_entry_constant": "C696_GRAPHIC_LAYOUT",
+    "blob_magic": "0xFC0D",
+    "blob_absolute_offset": 293487,
+    "blob_byte_count": 9160,
+    "format_reference": "ReDMCSB_WIP20210206 Toolchains/Common/Source/COORD.C F0639_LoadLayoutRanges / F0635_ / F0637_GetProportionalZone",
+    "defs_h_reference": "ReDMCSB_WIP20210206 Toolchains/Common/Source/DEFS.H zone constants C002..C701 (range 3748..4041)",
+    "record_struct": "typedef struct { uint16 RecordType; int16 ParentRecordIndex; int16 Data1; int16 Data2; } LAYOUT_RECORD;  // 8 bytes",
+    "note": "This is a verbatim dump of the original runtime layout table. It is NOT invented. Field meanings, record types, and resolver algorithm are documented by the cited ReDMCSB source files. Media variant targeted: I34E (DOS PC 3.4 English)."
+  },
+  "viewport_screen_rect": [
+    0,
+    33,
+    224,
+    136
+  ],
+  "families": {
+    "C2500_object": 10,
+    "C2900_projectile": 10,
+    "C3200_creature": 45
+  },
+  "inside_viewport_by_family": {
+    "C2500_object": 8,
+    "C2900_projectile": 8,
+    "C3200_creature": 34
+  },
+  "points": [
+    {
+      "family": "C2500_object",
+      "zone": 2502,
+      "label": "C2500_object s0 r2",
+      "viewport_xy": [
+        127,
+        70
+      ],
+      "screen_xy": [
+        127,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2503,
+      "label": "C2500_object s0 r3",
+      "viewport_xy": [
+        98,
+        70
+      ],
+      "screen_xy": [
+        98,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2506,
+      "label": "C2500_object s1 r2",
+      "viewport_xy": [
+        62,
+        70
+      ],
+      "screen_xy": [
+        62,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2507,
+      "label": "C2500_object s1 r3",
+      "viewport_xy": [
+        25,
+        70
+      ],
+      "screen_xy": [
+        25,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2510,
+      "label": "C2500_object s2 r2",
+      "viewport_xy": [
+        200,
+        70
+      ],
+      "screen_xy": [
+        200,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2511,
+      "label": "C2500_object s2 r3",
+      "viewport_xy": [
+        162,
+        70
+      ],
+      "screen_xy": [
+        162,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2514,
+      "label": "C2500_object s3 r2",
+      "viewport_xy": [
+        2,
+        70
+      ],
+      "screen_xy": [
+        2,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2515,
+      "label": "C2500_object s3 r3",
+      "viewport_xy": [
+        -35,
+        70
+      ],
+      "screen_xy": [
+        -35,
+        103
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2518,
+      "label": "C2500_object s4 r2",
+      "viewport_xy": [
+        258,
+        70
+      ],
+      "screen_xy": [
+        258,
+        103
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C2500_object",
+      "zone": 2519,
+      "label": "C2500_object s4 r3",
+      "viewport_xy": [
+        222,
+        70
+      ],
+      "screen_xy": [
+        222,
+        103
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2902,
+      "label": "C2900_projectile s0 r2",
+      "viewport_xy": [
+        129,
+        47
+      ],
+      "screen_xy": [
+        129,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2903,
+      "label": "C2900_projectile s0 r3",
+      "viewport_xy": [
+        95,
+        47
+      ],
+      "screen_xy": [
+        95,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2906,
+      "label": "C2900_projectile s1 r2",
+      "viewport_xy": [
+        62,
+        47
+      ],
+      "screen_xy": [
+        62,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2907,
+      "label": "C2900_projectile s1 r3",
+      "viewport_xy": [
+        25,
+        47
+      ],
+      "screen_xy": [
+        25,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2910,
+      "label": "C2900_projectile s2 r2",
+      "viewport_xy": [
+        200,
+        47
+      ],
+      "screen_xy": [
+        200,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2911,
+      "label": "C2900_projectile s2 r3",
+      "viewport_xy": [
+        162,
+        47
+      ],
+      "screen_xy": [
+        162,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2914,
+      "label": "C2900_projectile s3 r2",
+      "viewport_xy": [
+        2,
+        47
+      ],
+      "screen_xy": [
+        2,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2915,
+      "label": "C2900_projectile s3 r3",
+      "viewport_xy": [
+        -35,
+        47
+      ],
+      "screen_xy": [
+        -35,
+        80
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2918,
+      "label": "C2900_projectile s4 r2",
+      "viewport_xy": [
+        258,
+        47
+      ],
+      "screen_xy": [
+        258,
+        80
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C2900_projectile",
+      "zone": 2919,
+      "label": "C2900_projectile s4 r3",
+      "viewport_xy": [
+        202,
+        47
+      ],
+      "screen_xy": [
+        202,
+        80
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3200,
+      "label": "C3200 D3 center p0",
+      "viewport_xy": [
+        97,
+        67
+      ],
+      "screen_xy": [
+        97,
+        100
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3201,
+      "label": "C3200 D3 center p1",
+      "viewport_xy": [
+        125,
+        67
+      ],
+      "screen_xy": [
+        125,
+        100
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3202,
+      "label": "C3200 D3 center p2",
+      "viewport_xy": [
+        129,
+        72
+      ],
+      "screen_xy": [
+        129,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3203,
+      "label": "C3200 D3 center p3",
+      "viewport_xy": [
+        95,
+        72
+      ],
+      "screen_xy": [
+        95,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3204,
+      "label": "C3200 D3 center p4",
+      "viewport_xy": [
+        112,
+        72
+      ],
+      "screen_xy": [
+        112,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3205,
+      "label": "C3200 D3 left p0",
+      "viewport_xy": [
+        35,
+        68
+      ],
+      "screen_xy": [
+        35,
+        101
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3206,
+      "label": "C3200 D3 left p1",
+      "viewport_xy": [
+        63,
+        68
+      ],
+      "screen_xy": [
+        63,
+        101
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3207,
+      "label": "C3200 D3 left p2",
+      "viewport_xy": [
+        58,
+        72
+      ],
+      "screen_xy": [
+        58,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3208,
+      "label": "C3200 D3 left p3",
+      "viewport_xy": [
+        27,
+        72
+      ],
+      "screen_xy": [
+        27,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3209,
+      "label": "C3200 D3 left p4",
+      "viewport_xy": [
+        45,
+        72
+      ],
+      "screen_xy": [
+        45,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3210,
+      "label": "C3200 D3 right p0",
+      "viewport_xy": [
+        157,
+        68
+      ],
+      "screen_xy": [
+        157,
+        101
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3211,
+      "label": "C3200 D3 right p1",
+      "viewport_xy": [
+        181,
+        67
+      ],
+      "screen_xy": [
+        181,
+        100
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3212,
+      "label": "C3200 D3 right p2",
+      "viewport_xy": [
+        200,
+        72
+      ],
+      "screen_xy": [
+        200,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3213,
+      "label": "C3200 D3 right p3",
+      "viewport_xy": [
+        166,
+        72
+      ],
+      "screen_xy": [
+        166,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3214,
+      "label": "C3200 D3 right p4",
+      "viewport_xy": [
+        179,
+        72
+      ],
+      "screen_xy": [
+        179,
+        105
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3215,
+      "label": "C3200 D2 center p0",
+      "viewport_xy": [
+        -29,
+        70
+      ],
+      "screen_xy": [
+        -29,
+        103
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3216,
+      "label": "C3200 D2 center p1",
+      "viewport_xy": [
+        3,
+        68
+      ],
+      "screen_xy": [
+        3,
+        101
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3217,
+      "label": "C3200 D2 center p2",
+      "viewport_xy": [
+        -2,
+        72
+      ],
+      "screen_xy": [
+        -2,
+        105
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3218,
+      "label": "C3200 D2 center p3",
+      "viewport_xy": [
+        -40,
+        70
+      ],
+      "screen_xy": [
+        -40,
+        103
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3219,
+      "label": "C3200 D2 center p4",
+      "viewport_xy": [
+        -15,
+        72
+      ],
+      "screen_xy": [
+        -15,
+        105
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3220,
+      "label": "C3200 D2 left p0",
+      "viewport_xy": [
+        219,
+        68
+      ],
+      "screen_xy": [
+        219,
+        101
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3221,
+      "label": "C3200 D2 left p1",
+      "viewport_xy": [
+        251,
+        70
+      ],
+      "screen_xy": [
+        251,
+        103
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3222,
+      "label": "C3200 D2 left p2",
+      "viewport_xy": [
+        267,
+        70
+      ],
+      "screen_xy": [
+        267,
+        103
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3223,
+      "label": "C3200 D2 left p3",
+      "viewport_xy": [
+        226,
+        70
+      ],
+      "screen_xy": [
+        226,
+        103
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3224,
+      "label": "C3200 D2 left p4",
+      "viewport_xy": [
+        239,
+        72
+      ],
+      "screen_xy": [
+        239,
+        105
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3225,
+      "label": "C3200 D2 right p0",
+      "viewport_xy": [
+        92,
+        83
+      ],
+      "screen_xy": [
+        92,
+        116
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3226,
+      "label": "C3200 D2 right p1",
+      "viewport_xy": [
+        131,
+        83
+      ],
+      "screen_xy": [
+        131,
+        116
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3227,
+      "label": "C3200 D2 right p2",
+      "viewport_xy": [
+        132,
+        90
+      ],
+      "screen_xy": [
+        132,
+        123
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3228,
+      "label": "C3200 D2 right p3",
+      "viewport_xy": [
+        91,
+        90
+      ],
+      "screen_xy": [
+        91,
+        123
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3229,
+      "label": "C3200 D2 right p4",
+      "viewport_xy": [
+        112,
+        85
+      ],
+      "screen_xy": [
+        112,
+        118
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3230,
+      "label": "C3200 D1 center p0",
+      "viewport_xy": [
+        4,
+        83
+      ],
+      "screen_xy": [
+        4,
+        116
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3231,
+      "label": "C3200 D1 center p1",
+      "viewport_xy": [
+        46,
+        83
+      ],
+      "screen_xy": [
+        46,
+        116
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3232,
+      "label": "C3200 D1 center p2",
+      "viewport_xy": [
+        35,
+        90
+      ],
+      "screen_xy": [
+        35,
+        123
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3233,
+      "label": "C3200 D1 center p3",
+      "viewport_xy": [
+        -20,
+        90
+      ],
+      "screen_xy": [
+        -20,
+        123
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3234,
+      "label": "C3200 D1 center p4",
+      "viewport_xy": [
+        20,
+        85
+      ],
+      "screen_xy": [
+        20,
+        118
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3235,
+      "label": "C3200 D1 left p0",
+      "viewport_xy": [
+        177,
+        83
+      ],
+      "screen_xy": [
+        177,
+        116
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3236,
+      "label": "C3200 D1 left p1",
+      "viewport_xy": [
+        224,
+        83
+      ],
+      "screen_xy": [
+        224,
+        116
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3237,
+      "label": "C3200 D1 left p2",
+      "viewport_xy": [
+        243,
+        90
+      ],
+      "screen_xy": [
+        243,
+        123
+      ],
+      "inside_viewport": false
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3238,
+      "label": "C3200 D1 left p3",
+      "viewport_xy": [
+        189,
+        90
+      ],
+      "screen_xy": [
+        189,
+        123
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3239,
+      "label": "C3200 D1 left p4",
+      "viewport_xy": [
+        205,
+        85
+      ],
+      "screen_xy": [
+        205,
+        118
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3240,
+      "label": "C3200 D1 right p0",
+      "viewport_xy": [
+        83,
+        106
+      ],
+      "screen_xy": [
+        83,
+        139
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3241,
+      "label": "C3200 D1 right p1",
+      "viewport_xy": [
+        141,
+        106
+      ],
+      "screen_xy": [
+        141,
+        139
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3242,
+      "label": "C3200 D1 right p2",
+      "viewport_xy": [
+        148,
+        119
+      ],
+      "screen_xy": [
+        148,
+        152
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3243,
+      "label": "C3200 D1 right p3",
+      "viewport_xy": [
+        76,
+        119
+      ],
+      "screen_xy": [
+        76,
+        152
+      ],
+      "inside_viewport": true
+    },
+    {
+      "family": "C3200_creature",
+      "zone": 3244,
+      "label": "C3200 D1 right p4",
+      "viewport_xy": [
+        112,
+        111
+      ],
+      "screen_xy": [
+        112,
+        144
+      ],
+      "inside_viewport": true
+    }
+  ],
+  "scenes": [
+    {
+      "index": "01",
+      "scene": "ingame_start",
+      "screenshot": "verification-screens/01_ingame_start_latest.png",
+      "screenshot_sha256": "17d9ca014a079d6153da3acaac5b82f45a88885c86bac9d059ce08a6af8287f4",
+      "overlay": "parity-evidence/overlays/pass83/01_ingame_start_viewport_content_points.svg",
+      "overlay_sha256": "945a3994b4c652e8f9bf4f7a0cc4c02a377bc294fb2e6abe69cf8a7f1f15f15e"
+    },
+    {
+      "index": "02",
+      "scene": "ingame_turn_right",
+      "screenshot": "verification-screens/02_ingame_turn_right_latest.png",
+      "screenshot_sha256": "7fc3c247699b367a75c67dea4914c277061790edd51f662107bf2f46b1f4de87",
+      "overlay": "parity-evidence/overlays/pass83/02_ingame_turn_right_viewport_content_points.svg",
+      "overlay_sha256": "5e5cd9b8f9803fad8d9e94e19697bed365ed41ab93e36d987dd77487ff14be0b"
+    },
+    {
+      "index": "03",
+      "scene": "ingame_move_forward",
+      "screenshot": "verification-screens/03_ingame_move_forward_latest.png",
+      "screenshot_sha256": "790ba08deba4c51f3c18c06059f49173d0229c6196d581ef8ed75b93cea7c281",
+      "overlay": "parity-evidence/overlays/pass83/03_ingame_move_forward_viewport_content_points.svg",
+      "overlay_sha256": "93b7c497bec1c29e54058cf0331f5968063c172b897db6cd740bf5e9fe9d56c2"
+    },
+    {
+      "index": "04",
+      "scene": "ingame_spell_panel",
+      "screenshot": "verification-screens/04_ingame_spell_panel_latest.png",
+      "screenshot_sha256": "9693437bd37b8acf02f8d94a396f88251dfd565751f9a7042d1d587a57e3065a",
+      "overlay": "parity-evidence/overlays/pass83/04_ingame_spell_panel_viewport_content_points.svg",
+      "overlay_sha256": "eee2b54dbd2039200c448250e6f9c13a3c2f8f342d143cb4f70c4c1332035a2a"
+    },
+    {
+      "index": "05",
+      "scene": "ingame_after_cast",
+      "screenshot": "verification-screens/05_ingame_after_cast_latest.png",
+      "screenshot_sha256": "36cd18c5157b81268f44dcb61b465548f951fabbb62c4570cd639b486dc8f765",
+      "overlay": "parity-evidence/overlays/pass83/05_ingame_after_cast_viewport_content_points.svg",
+      "overlay_sha256": "8afc18631df5b5c800bf3fb50ce05a85e1f0623fde84d1c33681fab733310582"
+    },
+    {
+      "index": "06",
+      "scene": "ingame_inventory_panel",
+      "screenshot": "verification-screens/06_ingame_inventory_panel_latest.png",
+      "screenshot_sha256": "942f56b68325fd108066a4a357a2d624f0801b9323b832fec2f3ba965ff8e908",
+      "overlay": "parity-evidence/overlays/pass83/06_ingame_inventory_panel_viewport_content_points.svg",
+      "overlay_sha256": "b2a57a4fc2d82d3a79b3c4ba96bd7a9c84d291095e49ac1beb672d7a5cbfffb0"
+    }
+  ],
+  "problems": [],
+  "pass": true
+}
