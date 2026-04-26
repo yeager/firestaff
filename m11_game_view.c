@@ -8773,7 +8773,8 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
 static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
-                                        int fbH) {
+                                        int fbH,
+                                        const M11_ViewportCell cells[3][3]) {
     typedef struct M11_DM1WallOrnSpec {
         int relForward;
         int relSide;
@@ -8799,8 +8800,23 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         {1, 0,1,0,{0,0,0,67,  22,90,56}}
     };
     size_t i;
+    int maxVisibleForward = 3;
     if (!state || !state->assetsAvailable) {
         return;
+    }
+    /* ReDMCSB DUNVIEW.C F0128 draws wall/ornament work square-by-square
+     * from distant D3 toward near D1/D0.  Once a center wall-like square is
+     * encountered, deeper squares are not visible behind that occluder.  The
+     * earlier Firestaff pass drew every wall ornament after all wall panels,
+     * letting far ornaments paint through a nearer center wall. */
+    if (cells) {
+        int depth;
+        for (depth = 0; depth < 3; ++depth) {
+            if (m11_viewport_cell_is_wall_like(&cells[depth][1])) {
+                maxVisibleForward = depth + 1;
+                break;
+            }
+        }
     }
     for (i = 0; i < sizeof(kWallOrnaments) / sizeof(kWallOrnaments[0]); ++i) {
         M11_ViewportCell cell;
@@ -8808,6 +8824,9 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         int localIdx;
         int mapIdx;
         int ornGlobalIdx = -1;
+        if (kWallOrnaments[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kWallOrnaments[i].relForward, kWallOrnaments[i].relSide, &cell)) {
             continue;
         }
@@ -16246,7 +16265,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
