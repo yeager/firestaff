@@ -126,3 +126,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_300G`: header `(224,47,87,9)` matches source menu-mode header placement.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1357_1376_v1_action_menu_header_zone_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `479/479`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1377–1396 — V1 action area zone helper.
+  - Added `M11_GameView_GetV1ActionAreaZone(...)` for source `C011_ZONE_ACTION_AREA` geometry.
+  - Routed menu-mode clear/reblit, utility-panel action frame blit/fallback clear, and icon-mode black clear through the helper.
+  - Added invariant `INV_GV_300H`: action area `(224,45,87,45)` matches source right-column panel geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1377_1396_v1_action_area_zone_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `480/480`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

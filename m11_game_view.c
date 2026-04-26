@@ -13709,6 +13709,17 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_H       9
 #define M11_DM_ACTION_MENU_TEXT_X    226
 
+int M11_GameView_GetV1ActionAreaZone(int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    if (outX) *outX = M11_DM_ACTION_AREA_X;
+    if (outY) *outY = M11_DM_ACTION_AREA_Y;
+    if (outW) *outW = M11_DM_ACTION_AREA_W;
+    if (outH) *outH = M11_DM_ACTION_AREA_H;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
@@ -13760,14 +13771,17 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
      * column chrome); here we re-fill+re-blit to ensure we start
      * from a clean action-mode surface regardless of any prior
      * icon-cell overpaint from an earlier frame. */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y,
-                  M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
-                  M11_COLOR_BLACK);
-    (void)m11_blit_panel_asset_native(state,
-        framebuffer, framebufferWidth, framebufferHeight,
-        M11_GFX_ACTION_AREA, M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
-        M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y);
+    {
+        int actionX, actionY, actionW, actionH;
+        (void)M11_GameView_GetV1ActionAreaZone(
+            &actionX, &actionY, &actionW, &actionH);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      actionX, actionY, actionW, actionH,
+                      M11_COLOR_BLACK);
+        (void)m11_blit_panel_asset_native(state,
+            framebuffer, framebufferWidth, framebufferHeight,
+            M11_GFX_ACTION_AREA, actionW, actionH, actionX, actionY);
+    }
 
     /* Header band: fill cyan and print the champion name in black.
      * Matches F0387's zone-80 print (black text, cyan background). */
@@ -14213,10 +14227,13 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
      * Reference: ReDMCSB ACTIDRAW.C / CASTER.C and C011_ZONE_ACTION_AREA /
      * C013_ZONE_SPELL_AREA in ZONES.H. */
     if (!state->showDebugHUD && !m11_v2_vertical_slice_enabled()) {
-        int drewAction = m11_blit_panel_asset_native(state,
+        int actionX, actionY, actionW, actionH;
+        int drewAction;
+        (void)M11_GameView_GetV1ActionAreaZone(
+            &actionX, &actionY, &actionW, &actionH);
+        drewAction = m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
-            M11_GFX_ACTION_AREA, M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
-            M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y);
+            M11_GFX_ACTION_AREA, actionW, actionH, actionX, actionY);
         int drewSpell = m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
             M11_GFX_SPELL_AREA_BG, M11_DM_SPELL_AREA_W, M11_DM_SPELL_AREA_H,
@@ -14227,10 +14244,9 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
             /* If only part loaded, clear and fall back to procedural so
              * we don't leave a half-original frame. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y,
-                          M11_DM_ACTION_AREA_W,
+                          actionX, actionY, actionW,
                           (M11_DM_SPELL_AREA_Y + M11_DM_SPELL_AREA_H) -
-                              M11_DM_ACTION_AREA_Y,
+                              actionY,
                           M11_COLOR_BLACK);
         }
     }
@@ -14313,10 +14329,14 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
              * before drawing the four action-hand cells.  Keep the
              * spell-area frame below intact; the tall cyan cells then
              * overdraw y=86..120 exactly like F0386. */
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_DM_ACTION_AREA_X, M11_DM_ACTION_AREA_Y,
-                          M11_DM_ACTION_AREA_W, M11_DM_ACTION_AREA_H,
-                          M11_COLOR_BLACK);
+            {
+                int actionX, actionY, actionW, actionH;
+                (void)M11_GameView_GetV1ActionAreaZone(
+                    &actionX, &actionY, &actionW, &actionH);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              actionX, actionY, actionW, actionH,
+                              M11_COLOR_BLACK);
+            }
             (void)m11_draw_dm_action_icon_cells(state, framebuffer,
                                                 framebufferWidth,
                                                 framebufferHeight);

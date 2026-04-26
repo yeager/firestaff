@@ -7664,6 +7664,14 @@ int main(int argc, char** argv) {
         }
 
         {
+            int actionX, actionY, actionW, actionH;
+            probe_record(&tally, "INV_GV_300H",
+                         M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&
+                             actionX == 224 && actionY == 45 && actionW == 87 && actionH == 45,
+                         "action area zone matches source C011 right-column geometry");
+        }
+
+        {
             int headerX, headerY, headerW, headerH;
             probe_record(&tally, "INV_GV_300G",
                          M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&
