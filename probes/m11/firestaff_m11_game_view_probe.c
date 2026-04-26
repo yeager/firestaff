@@ -7965,6 +7965,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300O",
+                         M11_GameView_GetV1ActionMenuHeaderFillColor() == PROBE_COLOR_LIGHT_CYAN &&
+                             M11_GameView_GetV1ActionMenuHeaderTextColor() == PROBE_COLOR_BLACK &&
+                             M11_GameView_GetV1ActionMenuRowFillColor() == PROBE_COLOR_BLACK &&
+                             M11_GameView_GetV1ActionMenuRowTextColor() == PROBE_COLOR_LIGHT_CYAN,
+                         "action menu colors match F0387 cyan header/black name and black rows/cyan actions");
+        }
+
+        {
             M11_GameViewState pointerView = iconView;
             int invSlot;
             struct ChampionState_Compat* c = &pointerView.world.party.champions[3];

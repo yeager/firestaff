@@ -13818,6 +13818,22 @@ int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
     return 1;
 }
 
+int M11_GameView_GetV1ActionMenuHeaderFillColor(void) {
+    return M11_COLOR_CYAN;
+}
+
+int M11_GameView_GetV1ActionMenuHeaderTextColor(void) {
+    return M11_COLOR_BLACK;
+}
+
+int M11_GameView_GetV1ActionMenuRowFillColor(void) {
+    return M11_COLOR_BLACK;
+}
+
+int M11_GameView_GetV1ActionMenuRowTextColor(void) {
+    return M11_COLOR_CYAN;
+}
+
 static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -13864,15 +13880,15 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
             &headerX, &headerY, &headerW, &headerH);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       headerX, headerY, headerW, headerH,
-                      M11_COLOR_CYAN);
+                      (unsigned char)M11_GameView_GetV1ActionMenuHeaderFillColor());
     }
 
     m11_format_champion_name(champ->name, nameBuf, sizeof(nameBuf));
     styleBlackOnCyan = g_text_small;
-    styleBlackOnCyan.color = M11_COLOR_BLACK;
+    styleBlackOnCyan.color = (unsigned char)M11_GameView_GetV1ActionMenuHeaderTextColor();
     styleBlackOnCyan.shadowDx = 0;
     styleBlackOnCyan.shadowDy = 0;
-    styleBlackOnCyan.shadowColor = M11_COLOR_CYAN;
+    styleBlackOnCyan.shadowColor = (unsigned char)M11_GameView_GetV1ActionMenuHeaderFillColor();
     {
         int textX, textY;
         (void)M11_GameView_GetV1ActionMenuTextOrigin(-1, &textX, &textY);
@@ -13885,10 +13901,10 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
      * C0xFF_ACTION_NONE entry is drawn as an empty strip (DM1's
      * F0384_MENUS_GetActionName returns "" for 0xFF). */
     styleCyanOnBlack = g_text_small;
-    styleCyanOnBlack.color = M11_COLOR_CYAN;
+    styleCyanOnBlack.color = (unsigned char)M11_GameView_GetV1ActionMenuRowTextColor();
     styleCyanOnBlack.shadowDx = 0;
     styleCyanOnBlack.shadowDy = 0;
-    styleCyanOnBlack.shadowColor = M11_COLOR_BLACK;
+    styleCyanOnBlack.shadowColor = (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor();
 
     gotActions = M11_GameView_GetActingActionIndices(state, actions);
     for (row = 0; row < 3; ++row) {
@@ -13898,7 +13914,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
             row, &rowX, &rowY, &rowW, &rowH);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       rowX, rowY, rowW, rowH,
-                      M11_COLOR_BLACK);
+                      (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor());
         if (!gotActions) continue;
         name = M11_GameView_GetActionName(actions[row]);
         if (!name || name[0] == '\0') continue;

@@ -791,6 +791,10 @@ int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
 int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
                                                int* outX,
                                                int* outY);
+int M11_GameView_GetV1ActionMenuHeaderFillColor(void);
+int M11_GameView_GetV1ActionMenuHeaderTextColor(void);
+int M11_GameView_GetV1ActionMenuRowFillColor(void);
+int M11_GameView_GetV1ActionMenuRowTextColor(void);
 int M11_GameView_GetV1ActionIconCellZone(int championSlot,
                                              int* outX,
                                              int* outY,
