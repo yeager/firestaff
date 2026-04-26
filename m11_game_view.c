@@ -14210,6 +14210,31 @@ int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
+                                         int* outX,
+                                         int* outY) {
+    int boxX, boxY, boxW, boxH;
+    int dmgX, dmgY, dmgW, dmgH;
+    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
+                                         &boxX, &boxY, &boxW, &boxH)) {
+        return 0;
+    }
+    if (!M11_GameView_GetV1DamageIndicatorZone(championSlot,
+                                               45, 7,
+                                               &dmgX, &dmgY,
+                                               &dmgW, &dmgH)) {
+        return 0;
+    }
+    (void)boxY;
+    (void)boxH;
+    (void)dmgX;
+    (void)dmgW;
+    (void)dmgH;
+    if (outX) *outX = boxX + boxW / 2 - 4;
+    if (outY) *outY = dmgY;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex) {
@@ -15267,12 +15292,21 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     dmgStyle.color = M11_COLOR_WHITE;
                     snprintf(dmgNum, sizeof(dmgNum), "%d",
                              state->championDamageAmount[slot]);
-                    int dmgBaseW = !useV2PartyHud ? slotW : 67;
-                    int dmgBaseH = !useV2PartyHud ? slotH : 29;
+                    int dmgNumX;
+                    int dmgNumY;
+                    if (!useV2PartyHud) {
+                        (void)M11_GameView_GetV1DamageNumberOrigin(
+                            slot, &dmgNumX, &dmgNumY);
+                    } else {
+                        int dmgBaseW = 67;
+                        int dmgBaseH = 29;
+                        dmgNumX = x + dmgBaseW / 2 - 4;
+                        dmgNumY = y + dmgBaseH / 2 - 3;
+                    }
                     m11_draw_text(framebuffer, framebufferWidth,
                                   framebufferHeight,
-                                  x + dmgBaseW / 2 - 4,
-                                  y + dmgBaseH / 2 - 3,
+                                  dmgNumX,
+                                  dmgNumY,
                                   dmgNum, &dmgStyle);
                 }
             }

@@ -1303,6 +1303,22 @@ int main(int argc, char** argv) {
                      "V1 champion damage indicator zone centers C015 inside C007 status box geometry");
     }
 
+    {
+        int damageNumX0, damageNumY0;
+        int damageNumX3, damageNumY3;
+        probe_record(&tally,
+                     "INV_GV_15U",
+                     M11_GameView_GetV1DamageNumberOrigin(0,
+                                                           &damageNumX0,
+                                                           &damageNumY0) &&
+                         M11_GameView_GetV1DamageNumberOrigin(3,
+                                                               &damageNumX3,
+                                                               &damageNumY3) &&
+                         damageNumX0 == 41 && damageNumY0 == 171 &&
+                         damageNumX3 == 248 && damageNumY3 == 171,
+                     "V1 champion damage number origin is centered over the C015 damage banner");
+    }
+
     probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,
