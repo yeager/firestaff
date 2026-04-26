@@ -296,6 +296,9 @@ def main(argv: Iterable[str] | None = None) -> int:
     if args.attempt_dir is None:
         ap.error("attempt_dir is required unless --self-test is used")
 
+    if args.attempt_dir is None:
+        ap.error("attempt_dir is required unless --self-test is used")
+
     paths = sorted(args.attempt_dir.glob("image*.png"))
     expected = parse_expected(args.expected)
     rows: list[dict[str, object]] = []
