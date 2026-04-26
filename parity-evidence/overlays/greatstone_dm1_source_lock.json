@@ -1,0 +1,223 @@
+{
+  "source": "DM1 PC 3.4 local original + local Greatstone/SCK-style extracted references",
+  "originals": [
+    {
+      "name": "GRAPHICS.DAT",
+      "path": "verification-screens/dm1-dosbox-capture/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "name": "DUNGEON.DAT",
+      "path": "verification-screens/dm1-dosbox-capture/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "name": "SONG.DAT",
+      "path": "verification-screens/dm1-dosbox-capture/DungeonMasterPC34/DATA/SONG.DAT",
+      "sha256": "71e1ba82b7f3cfeb99ae181bd9d685201bdc2b11f42643460120ddcb3470c177"
+    }
+  ],
+  "critical_graphics": [
+    {
+      "index": 0,
+      "label": "Interface / derived viewport aperture",
+      "width": 224,
+      "height": 136,
+      "bytes": 30479,
+      "sha256": "3a607a1dc601664fb3a2183c984d81cdf9cab351e65c4f3098f82df939fa5ea5",
+      "path": "extracted-graphics-v1/pgm/graphic_0000.pgm"
+    },
+    {
+      "index": 7,
+      "label": "Interface - Champion Information",
+      "width": 67,
+      "height": 29,
+      "bytes": 1956,
+      "sha256": "697625330611c8765f727d666b7542e8cbf3c91e159d4a63b7a41b6bac153e49",
+      "path": "extracted-graphics-v1/pgm/graphic_0007.pgm"
+    },
+    {
+      "index": 8,
+      "label": "Interface - Dead Champion Information",
+      "width": 67,
+      "height": 29,
+      "bytes": 1956,
+      "sha256": "3537fe10ffdcf93bb6d08a60fa43fd21456376cc1664949087c0e4147c9f6e50",
+      "path": "extracted-graphics-v1/pgm/graphic_0008.pgm"
+    },
+    {
+      "index": 9,
+      "label": "Interface - Spell Casting Area",
+      "width": 87,
+      "height": 25,
+      "bytes": 2188,
+      "sha256": "93807c789cf86d60a1eae41a0581dd9c68d465d578002d308698975b6ffe4510",
+      "path": "extracted-graphics-v1/pgm/graphic_0009.pgm"
+    },
+    {
+      "index": 10,
+      "label": "Interface - Item Actions Area",
+      "width": 87,
+      "height": 45,
+      "bytes": 3928,
+      "sha256": "9ac2154fcd1db45a59406334a9646140d7426b75ac9a7534eb3edf78b840fbbd",
+      "path": "extracted-graphics-v1/pgm/graphic_0010.pgm"
+    },
+    {
+      "index": 20,
+      "label": "Interface - Character Sheet - Empty Information Area",
+      "width": 144,
+      "height": 73,
+      "bytes": 10526,
+      "sha256": "5433dca627dc7f0abe609ba1127c4955de377997870638a5b1b7dc6e94a36376",
+      "path": "extracted-graphics-v1/pgm/graphic_0020.pgm"
+    },
+    {
+      "index": 26,
+      "label": "Interface - Champions' Portraits",
+      "width": 256,
+      "height": 87,
+      "bytes": 22286,
+      "sha256": "5e46bc7a4928fa4306f37d90efb2d419ba5af136d05263cb66ca0ef7a6165df9",
+      "path": "extracted-graphics-v1/pgm/graphic_0026.pgm"
+    },
+    {
+      "index": 33,
+      "label": "Interface - Gray Border Item Slot (Empty)",
+      "width": 18,
+      "height": 18,
+      "bytes": 337,
+      "sha256": "20b1de68f18c7533f2e9b119c98fee5cc0513c1eabfafc696debe6c33679dc45",
+      "path": "extracted-graphics-v1/pgm/graphic_0033.pgm"
+    },
+    {
+      "index": 34,
+      "label": "Interface - Red Border Item Slot (Wounded)",
+      "width": 18,
+      "height": 18,
+      "bytes": 337,
+      "sha256": "fe75a2a28a409cb108d59dca05694fd730c9f722bcaa12a76f96db1e5fd73133",
+      "path": "extracted-graphics-v1/pgm/graphic_0034.pgm"
+    },
+    {
+      "index": 35,
+      "label": "Interface - Cyan Border Item Slot (Item Action Selected)",
+      "width": 18,
+      "height": 18,
+      "bytes": 337,
+      "sha256": "84f795fd4e062532d336e9023a4b294c10452a0606667380cf1a6a832c1d1fff",
+      "path": "extracted-graphics-v1/pgm/graphic_0035.pgm"
+    },
+    {
+      "index": 42,
+      "label": "Items Graphics 0 (32 Items)",
+      "width": 256,
+      "height": 32,
+      "bytes": 8206,
+      "sha256": "e2bd7ff33c2cc68bef5c6876ea6d44b4eb36c558d70b98e807b8bf0f0bc7cc57",
+      "path": "extracted-graphics-v1/pgm/graphic_0042.pgm"
+    },
+    {
+      "index": 78,
+      "label": "Dungeon Graphics - Floor",
+      "width": 224,
+      "height": 97,
+      "bytes": 21742,
+      "sha256": "a76168baf4c4f7b4d78ecb0bacbb4060b230296003ece56544466b1c364f8b1b",
+      "path": "extracted-graphics-v1/pgm/graphic_0078.pgm"
+    },
+    {
+      "index": 79,
+      "label": "Dungeon Graphics - Ceiling",
+      "width": 224,
+      "height": 39,
+      "bytes": 8750,
+      "sha256": "7ae3b0a77c5e7e85ce4e3e32b03f42029b66cbd4eda94808c6fb69e680d76250",
+      "path": "extracted-graphics-v1/pgm/graphic_0079.pgm"
+    },
+    {
+      "index": 86,
+      "label": "Dungeon Graphics - Door Left or Right Frame (Front 1)",
+      "width": 32,
+      "height": 123,
+      "bytes": 3950,
+      "sha256": "2f3eb62a58554da938e35b5e2a61990faaa789b79ca34e473ca9e44deef5d3e4",
+      "path": "extracted-graphics-v1/pgm/graphic_0086.pgm"
+    },
+    {
+      "index": 97,
+      "label": "Dungeon Graphics - Wall (Front 1)",
+      "width": 160,
+      "height": 111,
+      "bytes": 17775,
+      "sha256": "38448f34e50444660d0b02a50d5d698af95929e72b578c9374d4d6325813658e",
+      "path": "extracted-graphics-v1/pgm/graphic_0097.pgm"
+    },
+    {
+      "index": 102,
+      "label": "Dungeon Graphics - Wall (Front 2)",
+      "width": 106,
+      "height": 74,
+      "bytes": 7858,
+      "sha256": "fe68be13db6793ca76717dad7e7c1b1b62aa15aa91f24f4d481c2328b3ebb3a7",
+      "path": "extracted-graphics-v1/pgm/graphic_0102.pgm"
+    },
+    {
+      "index": 107,
+      "label": "Dungeon Graphics - Wall (Front 3)",
+      "width": 70,
+      "height": 49,
+      "bytes": 3443,
+      "sha256": "d8ce1bd7292d4b71e64baffb89df59af6e62eff129f3ca2d86303af3245498a5",
+      "path": "extracted-graphics-v1/pgm/graphic_0107.pgm"
+    },
+    {
+      "index": 303,
+      "label": "Dungeon Graphics - Wall Ornament / Lock family (left side)",
+      "width": 16,
+      "height": 19,
+      "bytes": 317,
+      "sha256": "d7d892fbfa44199693429fee6f4db0a548769754405b41b0b8e18b20197eb2da",
+      "path": "extracted-graphics-v1/pgm/graphic_0303.pgm"
+    },
+    {
+      "index": 304,
+      "label": "Dungeon Graphics - Wall Ornament / Lock family (front)",
+      "width": 32,
+      "height": 28,
+      "bytes": 909,
+      "sha256": "cef0647e01b71a5c24e9f7be6c53e52fad4807a5a6db508355081c41b7336f4d",
+      "path": "extracted-graphics-v1/pgm/graphic_0304.pgm"
+    },
+    {
+      "index": 344,
+      "label": "Item/object sprite sheet slice used by V1 inventory/object probes",
+      "width": 90,
+      "height": 12,
+      "bytes": 1093,
+      "sha256": "af455f0339c8e48c30929f08eaac0cd8208436e121b6437bc814b7e4cc948310",
+      "path": "extracted-graphics-v1/pgm/graphic_0344.pgm"
+    },
+    {
+      "index": 420,
+      "label": "Projectile/effect sprite source",
+      "width": 60,
+      "height": 25,
+      "bytes": 1513,
+      "sha256": "e71a8ade3c128051c61b721753739f8eb81393ddb5fe9e54271c70b77b48e2d2",
+      "path": "extracted-graphics-v1/pgm/graphic_0420.pgm"
+    },
+    {
+      "index": 437,
+      "label": "Projectile/effect sprite source",
+      "width": 9,
+      "height": 7,
+      "bytes": 74,
+      "sha256": "84948d48e9ca17434ba7e35fa8fc51f01da564996673108a1357e3fe5362cac7",
+      "path": "extracted-graphics-v1/pgm/graphic_0437.pgm"
+    }
+  ],
+  "critical_graphics_count": 22,
+  "parity_claimed": false,
+  "honesty": "This locks source files and key asset identities/dimensions; it does not claim full runtime viewport parity."
+}
