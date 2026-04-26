@@ -1267,6 +1267,24 @@ int main(int argc, char** argv) {
                      "V1 poisoned label zone centers C032 under C007 status box geometry");
     }
 
+    {
+        int damageX0, damageY0, damageW0, damageH0;
+        int damageX3, damageY3, damageW3, damageH3;
+        probe_record(&tally,
+                     "INV_GV_15S",
+                     M11_GameView_GetV1DamageIndicatorZone(0, 45, 7,
+                                                           &damageX0, &damageY0,
+                                                           &damageW0, &damageH0) &&
+                         M11_GameView_GetV1DamageIndicatorZone(3, 45, 7,
+                                                               &damageX3, &damageY3,
+                                                               &damageW3, &damageH3) &&
+                         damageX0 == 23 && damageY0 == 171 &&
+                         damageW0 == 45 && damageH0 == 7 &&
+                         damageX3 == 230 && damageY3 == 171 &&
+                         damageW3 == 45 && damageH3 == 7,
+                     "V1 champion damage indicator zone centers C015 inside C007 status box geometry");
+    }
+
     probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,

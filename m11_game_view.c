@@ -14181,6 +14181,26 @@ int M11_GameView_GetV1PoisonLabelZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
+                                          int indicatorW,
+                                          int indicatorH,
+                                          int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH) {
+    int boxX, boxY, boxW, boxH;
+    if (indicatorW <= 0 || indicatorH <= 0) return 0;
+    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
+                                         &boxX, &boxY, &boxW, &boxH)) {
+        return 0;
+    }
+    if (outX) *outX = boxX + (boxW - indicatorW) / 2;
+    if (outY) *outY = boxY + (boxH - indicatorH) / 2;
+    if (outW) *outW = indicatorW;
+    if (outH) *outH = indicatorH;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex) {
@@ -15204,12 +15224,21 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                         M11_GFX_DAMAGE_TO_CHAMPION_SMALL);
                     if (dmgAsset && dmgAsset->width == 45 &&
                         dmgAsset->height == 7) {
-                        int dmgBaseW = !useV2PartyHud ? slotW : 67;
-                        int dmgBaseH = !useV2PartyHud ? slotH : 29;
-                        int dmgX = x + (dmgBaseW - (int)dmgAsset->width) / 2;
-                        int dmgY = y + (dmgBaseH - (int)dmgAsset->height) / 2;
+                        int dmgX, dmgY, dmgW, dmgH;
+                        if (!useV2PartyHud) {
+                            (void)M11_GameView_GetV1DamageIndicatorZone(
+                                slot, (int)dmgAsset->width, (int)dmgAsset->height,
+                                &dmgX, &dmgY, &dmgW, &dmgH);
+                        } else {
+                            int dmgBaseW = 67;
+                            int dmgBaseH = 29;
+                            dmgX = x + (dmgBaseW - (int)dmgAsset->width) / 2;
+                            dmgY = y + (dmgBaseH - (int)dmgAsset->height) / 2;
+                            dmgW = (int)dmgAsset->width;
+                            dmgH = (int)dmgAsset->height;
+                        }
                         M11_AssetLoader_BlitRegion(dmgAsset,
-                            0, 0, (int)dmgAsset->width, (int)dmgAsset->height,
+                            0, 0, dmgW, dmgH,
                             framebuffer, framebufferWidth, framebufferHeight,
                             dmgX, dmgY, 0);
                     }

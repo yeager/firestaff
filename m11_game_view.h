@@ -742,6 +742,13 @@ int M11_GameView_GetV1PoisonLabelZone(int championSlot,
                                       int* outY,
                                       int* outW,
                                       int* outH);
+int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
+                                          int indicatorW,
+                                          int indicatorH,
+                                          int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH);
 int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
                                         int* outW,
