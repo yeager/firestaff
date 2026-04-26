@@ -8798,8 +8798,26 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300AM",
                          M11_GameView_GetV1MessageAreaZoneId() == 15 &&
                              M11_GameView_GetV1MessageAreaZone(&messageX, &messageY, &messageW, &messageH) &&
-                             messageX == 0 && messageY == 176 && messageW == 320 && messageH == 24,
-                         "message area zone exposes layout-696 C015 id and full-width geometry");
+                             messageX == 0 && messageY == 173 && messageW == 320 && messageH == 27,
+                         "message area zone exposes layout-696 C014/C015 bottom-anchored geometry");
+        }
+
+        {
+            M11_GameViewState messageView;
+            unsigned char fb_msg[320 * 200];
+            size_t visibleYellow;
+            size_t suppressedYellow;
+            memcpy(&messageView, &gameView, sizeof(messageView));
+            memset(&messageView.messageLog, 0, sizeof(messageView.messageLog));
+            M11_MessageLog_Push(&messageView.messageLog, "PARTY MOVED", PROBE_COLOR_YELLOW);
+            M11_MessageLog_Push(&messageView.messageLog, "IT COMES UP HEADS.", PROBE_COLOR_YELLOW);
+            memset(fb_msg, 0, sizeof(fb_msg));
+            M11_GameView_Draw(&messageView, fb_msg, 320, 200);
+            visibleYellow = probe_count_color(fb_msg, 320, 0, 194, 140, 6, PROBE_COLOR_YELLOW);
+            suppressedYellow = probe_count_color(fb_msg, 320, 0, 173, 140, 14, PROBE_COLOR_YELLOW);
+            probe_record(&tally, "INV_GV_300AM2",
+                         visibleYellow >= 3U && suppressedYellow == 0U,
+                         "V1 message area renders player-facing rows in source C015 and suppresses telemetry");
         }
 
         {

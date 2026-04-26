@@ -1990,11 +1990,11 @@ static int m11_v2_vertical_slice_enabled(void) {
  *     card) are already debug-only (showDebugHUD), so the reroute
  *     gives the notifications a visible path in V1 while the
  *     chrome remains hidden.
- *   - Bottom message surface is expanded from a single line at
- *     y=149 to a multi-line log region (up to 3 lines at y=149,
- *     157, 165) stepping by 8 px, matching TEXT.C message-log
- *     stride.  This is the source-faithful reroute target for the
- *     status/inspect notifications.
+ *   - Bottom message surface is routed through the source C015
+ *     message area (0,173,320,27).  DM1 PC 3.4 uses four message
+ *     rows (M532_MESSAGE_AREA_ROW_COUNT) with G2088_C7_TextLineHeight
+ *     = 7 and G2092_MessageAreaWidth = 320, so V1 no longer uses the
+ *     old Firestaff prompt strip / party-panel debug text band.
  *
  * The following surfaces are NOT touched by pass 42 (they either
  * already match DM1 source or are tracked as separate blockers):
@@ -14191,9 +14191,9 @@ int M11_GameView_GetV1MessageAreaZone(int* outX,
                                        int* outH) {
     if (!M11_GameView_GetV1MessageAreaZoneId()) return 0;
     if (outX) *outX = 0;
-    if (outY) *outY = 176;
+    if (outY) *outY = 173;
     if (outW) *outW = 320;
-    if (outH) *outH = 24;
+    if (outH) *outH = 27;
     return 1;
 }
 
@@ -17776,6 +17776,83 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_v1_message_area(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight) {
+    enum {
+        M11_V1_MESSAGE_ROW_COUNT = 4,
+        M11_V1_MESSAGE_LINE_HEIGHT = 7,
+        M11_V1_MESSAGE_TEXT_TOP_ADJUST = 4,
+        M11_V1_MESSAGE_CHAR_WIDTH = 6
+    };
+    const M11_LogEntry* rows[M11_V1_MESSAGE_ROW_COUNT];
+    int messageX, messageY, messageW, messageH;
+    int reverseIndex;
+    int visibleCount = 0;
+    int row;
+
+    if (!state || !framebuffer || state->showDebugHUD ||
+        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        return;
+    }
+    if (!M11_GameView_GetV1MessageAreaZone(&messageX, &messageY, &messageW, &messageH)) {
+        return;
+    }
+
+    /* ReDMCSB TEXT.C owns C015_ZONE_MESSAGE_AREA as a full-width black
+     * scrolling text surface: C014 is the 320x27 bottom container,
+     * C015 is bottom-anchored at y=199, DEFS.H sets
+     * M532_MESSAGE_AREA_ROW_COUNT=4 for PC media, COORD.C sets
+     * G2088_C7_TextLineHeight=7 and G2092_MessageAreaWidth=320, and
+     * F0049_TEXT_MESSAGEAREA_Clear fills C015 black before printing,
+     * and the PC print path writes rows at row*7+177.  Keep Firestaff's synthetic telemetry
+     * filtered at this boundary; only player-facing messages are drawn. */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  messageX, messageY, messageW, messageH, M11_COLOR_BLACK);
+    memset(rows, 0, sizeof(rows));
+
+    for (reverseIndex = 0;
+         reverseIndex < state->messageLog.count && visibleCount < M11_V1_MESSAGE_ROW_COUNT;
+         ++reverseIndex) {
+        const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, reverseIndex);
+        const char* text = entry ? m11_v1_strip_tick_prefix(entry->text) : NULL;
+        if (!entry || !text || text[0] == '\0' || !m11_v1_message_is_player_facing(text)) {
+            continue;
+        }
+        rows[M11_V1_MESSAGE_ROW_COUNT - 1 - visibleCount] = entry;
+        ++visibleCount;
+    }
+
+    for (row = 0; row < M11_V1_MESSAGE_ROW_COUNT; ++row) {
+        const M11_LogEntry* entry = rows[row];
+        const char* text;
+        M11_TextStyle style;
+        char clipped[M11_MESSAGE_MAX_LENGTH];
+        size_t maxChars;
+        if (!entry) {
+            continue;
+        }
+        text = m11_v1_strip_tick_prefix(entry->text);
+        if (!text || text[0] == '\0') {
+            continue;
+        }
+        maxChars = (size_t)(messageW / M11_V1_MESSAGE_CHAR_WIDTH);
+        if (maxChars >= sizeof(clipped)) {
+            maxChars = sizeof(clipped) - 1U;
+        }
+        snprintf(clipped, maxChars + 1U, "%s", text);
+        style = g_text_small;
+        style.color = entry->color;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      messageX,
+                      messageY + row * M11_V1_MESSAGE_LINE_HEIGHT +
+                          M11_V1_MESSAGE_TEXT_TOP_ADJUST,
+                      clipped,
+                      &style);
+    }
+}
+
 static void m11_draw_map_panel(const M11_GameViewState* state,
                                unsigned char* framebuffer,
                                int framebufferWidth,
@@ -17993,12 +18070,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
     }
 
-    /* Bottom zone — in normal V1 keep it below the source viewport
-     * (viewport bottom is y=168). */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, state->showDebugHUD ? 146 : 169,
-                  296, state->showDebugHUD ? 46 : 23,
-                  M11_COLOR_BLACK);
+    /* Bottom zone — in normal V1 leave the source C015 message area
+     * ownership to m11_draw_v1_message_area() below.  The old Firestaff
+     * broad inset fill was a prompt-strip/debug band at y=169..191; it
+     * visibly disagreed with TEXT.C's full-width message surface at
+     * (0,173,320,27). */
+    if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      12, state->showDebugHUD ? 146 : 169,
+                      296, state->showDebugHUD ? 46 : 23,
+                      M11_COLOR_BLACK);
+    }
 
     if (state->showDebugHUD) {
         /* Diagnostic square summary lines — debug only */
@@ -18048,6 +18130,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
 
     m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_v1_message_area(state, framebuffer, framebufferWidth, framebufferHeight);
 
     /* Spell panel overlay */
     if (state->spellPanelOpen &&
