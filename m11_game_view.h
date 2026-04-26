@@ -805,6 +805,10 @@ int M11_GameView_GetV1ChampionBigDamageGraphicId(void);
 int M11_GameView_GetV1CreatureDamageGraphicId(void);
 int M11_GameView_GetV1MovementArrowsZoneId(void);
 int M11_GameView_GetV1MovementArrowsGraphicId(void);
+int M11_GameView_GetV1MovementArrowsOuterBox(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH);
 int M11_GameView_GetV1MovementArrowsZone(int* outX,
                                          int* outY,
                                          int* outW,

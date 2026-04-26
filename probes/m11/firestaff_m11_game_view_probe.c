@@ -8728,12 +8728,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            int outerX, outerY, outerW, outerH;
             int panelX, panelY, panelW, panelH;
             int leftX, leftY, leftW, leftH;
             int rightX, rightY, rightW, rightH;
             probe_record(&tally, "INV_GV_300AL",
                          M11_GameView_GetV1MovementArrowsZoneId() == 9 &&
                              M11_GameView_GetV1MovementArrowsGraphicId() == 13 &&
+                             M11_GameView_GetV1MovementArrowsOuterBox(&outerX, &outerY, &outerW, &outerH) &&
+                             outerX == 224 && outerY == 124 && outerW == 96 && outerH == 45 &&
                              M11_GameView_GetV1MovementArrowsZone(&panelX, &panelY, &panelW, &panelH) &&
                              panelX == 233 && panelY == 124 && panelW == 87 && panelH == 45 &&
                              M11_GameView_GetV1MovementArrowZoneId(0) == 68 &&
@@ -8748,7 +8751,7 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH) &&
                              leftX == 234 && leftY == 125 && leftW == 19 && leftH == 21 &&
                              rightX == 291 && rightY == 147 && rightW == 28 && rightH == 21,
-                         "movement arrow panel exposes C009/C013 and layout-696 C068-C073 geometry");
+                         "movement arrow panel exposes DATA.C outer box, C009/C013, and layout-696 C068-C073 geometry");
         }
 
         {

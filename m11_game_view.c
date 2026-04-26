@@ -11644,6 +11644,10 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
 #define M11_DM_SPELL_AREA_Y      90
 #define M11_DM_SPELL_AREA_W      87
 #define M11_DM_SPELL_AREA_H      25
+#define M11_DM_MOVEMENT_ARROWS_OUTER_X 224
+#define M11_DM_MOVEMENT_ARROWS_OUTER_Y 124
+#define M11_DM_MOVEMENT_ARROWS_OUTER_W  96
+#define M11_DM_MOVEMENT_ARROWS_OUTER_H  45
 #define M11_DM_MOVEMENT_ARROWS_X 233
 #define M11_DM_MOVEMENT_ARROWS_Y 124
 #define M11_DM_MOVEMENT_ARROWS_W  87
@@ -14032,6 +14036,18 @@ int M11_GameView_GetV1MovementArrowsGraphicId(void) {
     return M11_GFX_MOVEMENT_ARROWS;
 }
 
+int M11_GameView_GetV1MovementArrowsOuterBox(int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH) {
+    if (!M11_GameView_GetV1MovementArrowsZoneId()) return 0;
+    if (outX) *outX = M11_DM_MOVEMENT_ARROWS_OUTER_X;
+    if (outY) *outY = M11_DM_MOVEMENT_ARROWS_OUTER_Y;
+    if (outW) *outW = M11_DM_MOVEMENT_ARROWS_OUTER_W;
+    if (outH) *outH = M11_DM_MOVEMENT_ARROWS_OUTER_H;
+    return 1;
+}
+
 int M11_GameView_GetV1MovementArrowsZone(int* outX,
                                           int* outY,
                                           int* outW,
@@ -16090,13 +16106,23 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         int framebufferWidth,
                                         int framebufferHeight) {
     int arrowX, arrowY, arrowW, arrowH;
+    int outerX, outerY, outerW, outerH;
     if (!state || !framebuffer || state->showDebugHUD ||
         !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
         return;
     }
-    if (!M11_GameView_GetV1MovementArrowsZone(&arrowX, &arrowY, &arrowW, &arrowH)) {
+    if (!M11_GameView_GetV1MovementArrowsOuterBox(&outerX, &outerY, &outerW, &outerH) ||
+        !M11_GameView_GetV1MovementArrowsZone(&arrowX, &arrowY, &arrowW, &arrowH)) {
         return;
     }
+
+    /* Clear the full legacy movement-arrow box first.  ReDMCSB DATA.C
+     * G0002_ai_Graphic562_Box_MovementArrows is 224..319 / 124..168;
+     * PANEL.C and STARTUP2.C also use that box when hatching/clearing
+     * disabled movement controls.  The PC source graphic itself is
+     * 87×45 and sits in the layout-696 C009 panel area inside that box. */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  outerX, outerY, outerW, outerH, M11_COLOR_BLACK);
 
     /* Classic DM1 draws the movement controls as one native graphic,
      * not as Firestaff's old procedural button strip.  ReDMCSB
