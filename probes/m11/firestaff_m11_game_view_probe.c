@@ -7949,6 +7949,13 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300S",
+                         M11_GameView_GetV1ChampionPortraitGraphicId() == 26 &&
+                             M11_GameView_GetV1ChampionIconGraphicId() == 28,
+                         "V1 champion identity graphics use source C026 portraits and C028 icons");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",

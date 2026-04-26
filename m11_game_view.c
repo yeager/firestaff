@@ -13832,6 +13832,14 @@ int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void) {
     return M11_GFX_SPELL_AREA_BG;
 }
 
+int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
+    return M11_GFX_CHAMPION_PORTRAITS;
+}
+
+int M11_GameView_GetV1ChampionIconGraphicId(void) {
+    return M11_GFX_CHAMPION_ICONS;
+}
+
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
@@ -15960,7 +15968,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         if (state->assetsAvailable) {
             /* Try full 32×29 portrait from graphic 26 first */
             const M11_AssetSlot* portraits = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_PORTRAITS);
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
             if (portraits && portraits->width >= 256 && portraits->height >= 29) {
                 int pIdx = champ->portraitIndex & 0x1F; /* 0–23 range */
                 int srcPX = (pIdx & 7) * M11_PORTRAIT_W;
@@ -15977,7 +15986,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             /* Fallback: small icon from graphic 28 */
             if (!drewPortrait) {
                 const M11_AssetSlot* iconStrip = M11_AssetLoader_Load(
-                    (M11_AssetLoader*)&state->assetLoader, M11_GFX_CHAMPION_ICONS);
+                    (M11_AssetLoader*)&state->assetLoader,
+                    (unsigned int)M11_GameView_GetV1ChampionIconGraphicId());
                 if (iconStrip && iconStrip->width > 0 && iconStrip->height > 0) {
                     int iconCol = champ->portraitIndex & 3;
                     int srcX = iconCol * M11_CHAMPION_ICON_W;
@@ -16711,7 +16721,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                         state->world.party.champions[i].present) {
                         const M11_AssetSlot* portraits = M11_AssetLoader_Load(
                             (M11_AssetLoader*)&state->assetLoader,
-                            M11_GFX_CHAMPION_PORTRAITS);
+                            (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
                         if (portraits && portraits->loaded && portraits->pixels &&
                             portraits->width >= 256 && portraits->height >= 87) {
                             int pIdx = state->world.party.champions[i].portraitIndex & 0x1F;
