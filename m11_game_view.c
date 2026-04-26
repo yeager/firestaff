@@ -16737,11 +16737,13 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight) {
-    /* Overlay positioned like the DM1 viewport-replacement inventory,
-     * centered with proportional margins. */
-    int panelX = 8, panelY = 8;
-    int panelW = framebufferWidth - 16;
-    int panelH = framebufferHeight - 16;
+    /* Normal V1 inventory replaces the source viewport with C017.
+     * Keep the old expansive Firestaff workbench layout only when the
+     * debug HUD is explicitly enabled. */
+    int panelX = state && state->showDebugHUD ? 8 : M11_VIEWPORT_X;
+    int panelY = state && state->showDebugHUD ? 8 : M11_VIEWPORT_Y;
+    int panelW = state && state->showDebugHUD ? framebufferWidth - 16 : M11_VIEWPORT_W;
+    int panelH = state && state->showDebugHUD ? framebufferHeight - 16 : M11_VIEWPORT_H;
     const struct ChampionState_Compat* champ;
     char champion[32];
     int isDead;
@@ -16780,25 +16782,40 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             SZ = 18;
     }
 
-    /* ── Panel background — original graphic 20 (144×73), or
-     * procedural double-border as fallback ── */
+    /* ── Panel background. Normal V1 uses C017 as a viewport-sized
+     * replacement backdrop. Debug mode keeps the older scaled C020
+     * workbench panel for diagnostics. ── */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   panelX, panelY, panelW, panelH, M11_COLOR_BLACK);
     if (state->assetsAvailable) {
         const M11_AssetSlot* panelBg = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1InventoryPanelGraphicId());
+            (unsigned int)(state->showDebugHUD
+                ? M11_GameView_GetV1InventoryPanelGraphicId()
+                : M11_GameView_GetV1InventoryBackdropGraphicId()));
         if (panelBg && panelBg->width > 0 && panelBg->height > 0) {
-            /* Blit the original panel background scaled to fit */
-            M11_AssetLoader_BlitScaled(panelBg,
-                framebuffer, framebufferWidth, framebufferHeight,
-                panelX, panelY, panelW, panelH, 0);
+            if (!state->showDebugHUD &&
+                panelBg->width == M11_VIEWPORT_W && panelBg->height == M11_VIEWPORT_H) {
+                M11_AssetLoader_Blit(panelBg, framebuffer, framebufferWidth,
+                                     framebufferHeight, panelX, panelY, 0);
+            } else {
+                M11_AssetLoader_BlitScaled(panelBg,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    panelX, panelY, panelW, panelH, 0);
+            }
         }
     }
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX, panelY, panelW, panelH, M11_COLOR_BROWN);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_DARK_GRAY);
+    if (state->showDebugHUD) {
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX, panelY, panelW, panelH, M11_COLOR_BROWN);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_DARK_GRAY);
+    } else {
+        /* Stop here for normal V1 until dynamic inventory object drawing is
+         * migrated to the source C507..C536 slot-box zones. This removes the
+         * invented full-screen Firestaff inventory chrome from parity play. */
+        return;
+    }
 
     /* ── Champion identity ── portrait + name + stat bars */
     portX = panelX + 5;

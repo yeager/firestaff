@@ -342,3 +342,10 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_357`–`INV_GV_358` to assert id/geometry and GRAPHICS.DAT 224×136 asset size.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2877_2896_v1_inventory_backdrop_zone.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `532/532`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2897–2916 — V1 inventory viewport backdrop render.
+  - Normal V1 inventory now draws source C017 as a viewport replacement at `(0,33,224,136)` instead of the old full-screen Firestaff inventory chrome.
+  - Retained the old expansive inventory workbench only behind `showDebugHUD` until dynamic slot/object drawing is migrated to `C507..C536`.
+  - Added `INV_GV_359` to verify normal inventory changes are confined to the source viewport replacement rectangle.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2897_2916_v1_inventory_viewport_backdrop_render.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `533/533`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

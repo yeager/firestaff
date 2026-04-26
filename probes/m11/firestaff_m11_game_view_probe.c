@@ -6444,6 +6444,42 @@ int main(int argc, char** argv) {
                      "Inventory panel renders differently from normal view");
     }
 
+    /* INV_GV_359: Normal V1 inventory overlay is confined to the
+     * source viewport replacement rectangle, not the old full-screen
+     * Firestaff chrome surface. */
+    {
+        M11_GameViewState normal;
+        M11_GameViewState inv;
+        unsigned char fb_normal[320 * 200];
+        unsigned char fb_inv[320 * 200];
+        int outsideDiff = 0;
+        int insideDiff = 0;
+        int px, py;
+        memcpy(&normal, &gameView, sizeof(normal));
+        normal.showDebugHUD = 0;
+        memset(fb_normal, 0, sizeof(fb_normal));
+        M11_GameView_Draw(&normal, fb_normal, 320, 200);
+        memcpy(&inv, &gameView, sizeof(inv));
+        inv.showDebugHUD = 0;
+        inv.inventoryPanelActive = 1;
+        if (inv.world.party.activeChampionIndex < 0) inv.world.party.activeChampionIndex = 0;
+        memset(fb_inv, 0, sizeof(fb_inv));
+        M11_GameView_Draw(&inv, fb_inv, 320, 200);
+        for (py = 0; py < 200; ++py) {
+            for (px = 0; px < 320; ++px) {
+                int inViewport = (px >= 0 && px < 224 && py >= 33 && py < 169);
+                if (fb_inv[py * 320 + px] != fb_normal[py * 320 + px]) {
+                    if (inViewport) insideDiff = 1;
+                    else outsideDiff = 1;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_359",
+                     insideDiff && !outsideDiff,
+                     "normal V1 inventory only changes source viewport replacement rectangle");
+    }
+
     /* INV_GV_192: Movement blocked while inventory panel active. */
     {
         M11_GameViewState iv;
@@ -8869,10 +8905,12 @@ int main(int argc, char** argv) {
                 CHAMPION_SLOT_HAND_LEFT] =
                 (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
             iconView.inventoryPanelActive = 1;
+            iconView.showDebugHUD = 1;
             memset(fbInv, 0, sizeof(fbInv));
             M11_GameView_Draw(&iconView, fbInv, 320, 200);
-            /* Inventory panel layout: panelX=8, portX=13, portY=12,
-             * hand slot left at (13,52), icon inset at (14,53). */
+            /* Debug inventory workbench layout: panelX=8, portX=13, portY=12,
+             * hand slot left at (13,52), icon inset at (14,53). Normal V1
+             * now uses C017 viewport backdrop and defers dynamic slot migration. */
             for (y = 53; y < 69; ++y) {
                 for (x = 14; x < 30; ++x) {
                     if ((fbInv[y * 320 + x] & 0x0F) == PROBE_COLOR_DARK_GRAY) {
