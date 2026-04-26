@@ -779,6 +779,10 @@ int M11_GameView_GetV1SpellAreaZone(int* outX,
                                        int* outY,
                                        int* outW,
                                        int* outH);
+int M11_GameView_GetV1ActionSpellStripZone(int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH);
 int M11_GameView_GetV1ActionAreaGraphicId(void);
 int M11_GameView_GetV1ActionAreaClearColor(void);
 int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);

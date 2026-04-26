@@ -7940,6 +7940,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            int stripX, stripY, stripW, stripH;
+            probe_record(&tally, "INV_GV_300R",
+                         M11_GameView_GetV1ActionSpellStripZone(&stripX, &stripY, &stripW, &stripH) &&
+                             stripX == 224 && stripY == 45 &&
+                             stripW == 87 && stripH == 70,
+                         "V1 action+spell strip union covers source C011/C013 right-column zones");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",

@@ -13809,6 +13809,25 @@ int M11_GameView_GetV1ActionAreaClearColor(void) {
     return M11_COLOR_BLACK;
 }
 
+int M11_GameView_GetV1ActionSpellStripZone(int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    int actionX, actionY, actionW, actionH;
+    int spellX, spellY, spellW, spellH;
+    (void)M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH);
+    (void)M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH);
+    if (outX) *outX = actionX < spellX ? actionX : spellX;
+    if (outY) *outY = actionY < spellY ? actionY : spellY;
+    if (outW) *outW = (actionX + actionW > spellX + spellW ?
+                       actionX + actionW : spellX + spellW) -
+                      (actionX < spellX ? actionX : spellX);
+    if (outH) *outH = (actionY + actionH > spellY + spellH ?
+                       actionY + actionH : spellY + spellH) -
+                      (actionY < spellY ? actionY : spellY);
+    return 1;
+}
+
 int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void) {
     return M11_GFX_SPELL_AREA_BG;
 }
@@ -14567,10 +14586,12 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         } else {
             /* If only part loaded, clear and fall back to procedural so
              * we don't leave a half-original frame. */
+            int stripX, stripY, stripW, stripH;
+            (void)M11_GameView_GetV1ActionSpellStripZone(
+                &stripX, &stripY, &stripW, &stripH);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          actionX, actionY, actionW,
-                          (spellY + spellH) - actionY,
-                          M11_COLOR_BLACK);
+                          stripX, stripY, stripW, stripH,
+                          (unsigned char)M11_GameView_GetV1ActionAreaClearColor());
         }
     }
 
