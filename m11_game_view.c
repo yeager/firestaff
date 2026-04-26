@@ -654,20 +654,64 @@ int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
     return 1;
 }
 
+int M11_GameView_GetV1DialogChoiceButtonZoneId(int choiceCount,
+                                                int choiceIndex) {
+    if (choiceIndex < 0) return 0;
+    switch (choiceCount) {
+        case 1:
+            return choiceIndex == 0 ? 456 : 0;
+        case 2:
+            if (choiceIndex == 0) return 457;
+            if (choiceIndex == 1) return 456;
+            return 0;
+        case 3:
+            if (choiceIndex == 0) return 457;
+            if (choiceIndex == 1) return 460;
+            if (choiceIndex == 2) return 461;
+            return 0;
+        default:
+            if (choiceCount < 4) return 0;
+            if (choiceIndex == 0) return 458;
+            if (choiceIndex == 1) return 459;
+            if (choiceIndex == 2) return 460;
+            if (choiceIndex == 3) return 461;
+            return 0;
+    }
+}
+
 int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
                                            int choiceIndex,
                                            int* outX,
                                            int* outY,
                                            int* outW,
                                            int* outH) {
-    int textX, textY, textW;
-    if (!M11_GameView_GetV1DialogChoiceTextZone(choiceCount, choiceIndex,
-                                                &textX, &textY, &textW, NULL)) {
-        return 0;
+    int zoneId = M11_GameView_GetV1DialogChoiceButtonZoneId(choiceCount, choiceIndex);
+    int x = 0, y = 0, w = 0;
+    switch (zoneId) {
+        case 456:
+            x = 16; y = 104; w = 192;
+            break;
+        case 457:
+            x = 16; y = 67; w = 192;
+            break;
+        case 458:
+            x = 16; y = 67; w = 86;
+            break;
+        case 459:
+            x = 123; y = 67; w = 86;
+            break;
+        case 460:
+            x = 16; y = 104; w = 86;
+            break;
+        case 461:
+            x = 123; y = 104; w = 86;
+            break;
+        default:
+            return 0;
     }
-    if (outX) *outX = textX;
-    if (outY) *outY = textY - 6;
-    if (outW) *outW = textW;
+    if (outX) *outX = x;
+    if (outY) *outY = y;
+    if (outW) *outW = w;
     if (outH) *outH = 17;
     return 1;
 }
