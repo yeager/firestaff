@@ -7612,6 +7612,24 @@ int main(int argc, char** argv) {
                          "normal V1 viewport floor/ceiling obeys DM1 parity flip");
         }
 
+        {
+            int zx0, zy0, zw0, zh0;
+            int zx3, zy3, zw3, zh3;
+            int ix0, iy0, iw0, ih0;
+            int ix3, iy3, iw3, ih3;
+            int valid0 = M11_GameView_GetV1ActionIconCellZone(0, &zx0, &zy0, &zw0, &zh0);
+            int valid3 = M11_GameView_GetV1ActionIconCellZone(3, &zx3, &zy3, &zw3, &zh3);
+            int inner0 = M11_GameView_GetV1ActionIconInnerZone(0, &ix0, &iy0, &iw0, &ih0);
+            int inner3 = M11_GameView_GetV1ActionIconInnerZone(3, &ix3, &iy3, &iw3, &ih3);
+            probe_record(&tally, "INV_GV_300D",
+                         valid0 && valid3 && inner0 && inner3 &&
+                             zx0 == 233 && zy0 == 86 && zw0 == 20 && zh0 == 35 &&
+                             zx3 == 299 && zy3 == 86 && zw3 == 20 && zh3 == 35 &&
+                             ix0 == 235 && iy0 == 95 && iw0 == 16 && ih0 == 16 &&
+                             ix3 == 301 && iy3 == 95 && iw3 == 16 && ih3 == 16,
+                         "action-hand icon cell zones resolve to layout-696 C089..C096 geometry");
+        }
+
         /* Count cyan (palette index 3) pixels inside each cell body.
          * The body is the 16x16 inner icon backdrop at
          * X=cellX+2..cellX+18, Y=95..110. */

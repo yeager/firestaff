@@ -13823,7 +13823,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         champ = &state->world.party.champions[slot];
         if (!champ->present) continue;
 
-        cellX = M11_DM_ACTION_ICON_CELL_X0 + slot * M11_DM_ACTION_ICON_CELL_STEP;
+        (void)M11_GameView_GetV1ActionIconCellZone(slot, &cellX, NULL, NULL, NULL);
         isDead = (champ->hp.current == 0);
 
         if (isDead) {
@@ -13969,6 +13969,37 @@ int M11_GameView_GetV1StatusNameZone(int championSlot,
     if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_CLEAR_Y;
     if (outW) *outW = M11_V1_STATUS_NAME_CLEAR_W;
     if (outH) *outH = M11_V1_STATUS_NAME_CLEAR_H;
+    return 1;
+}
+
+int M11_GameView_GetV1ActionIconCellZone(int championSlot,
+                                             int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    if (outX) *outX = M11_DM_ACTION_ICON_CELL_X0 +
+                      championSlot * M11_DM_ACTION_ICON_CELL_STEP;
+    if (outY) *outY = M11_DM_ACTION_ICON_CELL_Y;
+    if (outW) *outW = M11_DM_ACTION_ICON_CELL_W;
+    if (outH) *outH = M11_DM_ACTION_ICON_CELL_H;
+    return 1;
+}
+
+int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
+                                              int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH) {
+    int cellX;
+    if (!M11_GameView_GetV1ActionIconCellZone(championSlot,
+                                              &cellX, NULL, NULL, NULL)) {
+        return 0;
+    }
+    if (outX) *outX = cellX + M11_DM_ACTION_ICON_INNER_X_OFF;
+    if (outY) *outY = M11_DM_ACTION_ICON_INNER_Y;
+    if (outW) *outW = M11_DM_ACTION_ICON_INNER_W;
+    if (outH) *outH = M11_DM_ACTION_ICON_INNER_H;
     return 1;
 }
 

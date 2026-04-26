@@ -710,6 +710,16 @@ int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex);
+int M11_GameView_GetV1ActionIconCellZone(int championSlot,
+                                             int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH);
+int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
+                                              int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH);
 
 #ifdef __cplusplus
 }

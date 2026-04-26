@@ -72,3 +72,10 @@ Suggested next HUD targets:
 5. Capture screenshots after meaningful visual batches.
 
 Update this file with batch summaries if useful.
+
+- Passes 1217–1236 — V1 action icon source zone helper hardening.
+  - Added probe-visible helpers for layout-696 `C089..C092` action-cell zones and `C093..C096` inner icon zones.
+  - Routed the V1 action icon renderer through the shared source-zone helper to keep drawing/pointer/probe geometry anchored to one source-backed definition.
+  - Added invariant `INV_GV_300D` for first/fourth cell and inner icon geometry: cells `(233,86,20,35)` and `(299,86,20,35)`, inner icons `(235,95,16,16)` and `(301,95,16,16)`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1217_1236_v1_action_icon_zone_helpers.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `473/473`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
