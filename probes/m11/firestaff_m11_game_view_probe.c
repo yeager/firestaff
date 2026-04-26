@@ -708,6 +708,15 @@ int main(int argc, char** argv) {
                          &space, &zoneId) == 11 &&
                          space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 2,
                      "DM1 inventory table gives right-click screen-zone close inventory precedence over viewport-relative slot hits");
+        probe_record(&tally,
+                     "INV_GV_438",
+                     M11_GameView_GetV1InventorySourceSlotBoxGraphicId(7) == 0 &&
+                         M11_GameView_GetV1InventorySourceSlotBoxGraphicId(8) ==
+                             M11_GameView_GetV1SlotBoxNormalGraphicId() &&
+                         M11_GameView_GetV1InventorySourceSlotBoxGraphicId(37) ==
+                             M11_GameView_GetV1SlotBoxNormalGraphicId() &&
+                         M11_GameView_GetV1InventorySourceSlotBoxGraphicId(38) == 0,
+                     "DM1 inventory source slot boxes C507..C536 use source C033 normal slot-box graphic");
     }
 
     initialHash = gameView.lastWorldHash;

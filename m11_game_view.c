@@ -14947,6 +14947,18 @@ int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,
     return 1;
 }
 
+int M11_GameView_GetV1InventorySourceSlotBoxGraphicId(int sourceSlotBoxIndex) {
+    /* Source inventory C507..C536 are SLOT_BOX entries.  DM1 draws the
+     * C033 normal slot-box bitmap before blitting an object icon into
+     * the 16x16 child zone.  Wounded/acting variants are handled by
+     * champion status hands; do not invent per-inventory semantics here.
+     * Ref: ReDMCSB INVNTORY.C F0335/F0038 and DEFS.H C033/C507..C536. */
+    if (!M11_GameView_GetV1InventorySourceSlotBoxZoneId(sourceSlotBoxIndex)) {
+        return 0;
+    }
+    return M11_GameView_GetV1SlotBoxNormalGraphicId();
+}
+
 int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void) {
     return (int)(sizeof(kV1InventoryEquipmentSlotZones) /
                  sizeof(kV1InventoryEquipmentSlotZones[0]));
@@ -18027,7 +18039,37 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
          * those populate the first eight source backpack boxes C520..C527;
          * C528..C536 remain exposed by the source-zone helpers for the
          * wider original namespace. */
+        int sourceSlotBox;
         int slotIdx;
+        for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox) {
+            int zx = 0, zy = 0, zw = 0, zh = 0;
+            int slotBoxGraphic = M11_GameView_GetV1InventorySourceSlotBoxGraphicId(
+                sourceSlotBox);
+            if (!slotBoxGraphic ||
+                !M11_GameView_GetV1InventorySourceSlotBoxZone(
+                    sourceSlotBox, &zx, &zy, &zw, &zh)) {
+                continue;
+            }
+            if (state->assetsAvailable) {
+                const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    (unsigned int)slotBoxGraphic);
+                if (boxSlot && boxSlot->width == 18 && boxSlot->height == 18) {
+                    M11_AssetLoader_Blit(boxSlot, framebuffer, framebufferWidth,
+                                         framebufferHeight,
+                                         M11_VIEWPORT_X + zx - 1,
+                                         M11_VIEWPORT_Y + zy - 1, 0);
+                    continue;
+                }
+            }
+            /* Asset fallback: retain the source 16x16 zone footprint. */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
+                          zw, zh, M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
+                          zw, zh, M11_COLOR_DARK_GRAY);
+        }
         for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx) {
             unsigned short thingId = champ->inventory[slotIdx];
             int sourceSlotBox = M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(slotIdx);

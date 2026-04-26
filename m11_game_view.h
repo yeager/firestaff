@@ -946,6 +946,7 @@ int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,
                                                   int* outY,
                                                   int* outW,
                                                   int* outH);
+int M11_GameView_GetV1InventorySourceSlotBoxGraphicId(int sourceSlotBoxIndex);
 int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void);
 int M11_GameView_GetV1InventoryEquipmentSlotZoneId(int equipmentOrdinal);
 int M11_GameView_GetV1InventoryEquipmentSlotZone(int equipmentOrdinal,
