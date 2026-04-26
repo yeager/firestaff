@@ -14338,15 +14338,21 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
     return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
 }
 
+int M11_GameView_GetV1StatusBoxZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 151 + championSlot;
+}
+
 int M11_GameView_GetV1StatusBoxZone(int championSlot,
                                     int* outX,
                                     int* outY,
                                     int* outW,
                                     int* outH) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) {
+    int zoneId = M11_GameView_GetV1StatusBoxZoneId(championSlot);
+    if (!zoneId) {
         return 0;
     }
-    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step();
+    if (outX) *outX = M11_PARTY_PANEL_X + (zoneId - 151) * m11_party_slot_step();
     if (outY) *outY = M11_PARTY_PANEL_Y;
     if (outW) *outW = M11_V1_PARTY_SLOT_W;
     if (outH) *outH = 29;
