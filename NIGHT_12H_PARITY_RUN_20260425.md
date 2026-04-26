@@ -215,3 +215,9 @@ Update this file with batch summaries if useful.
   - Hardened `INV_GV_300I` to assert both `C013` id and right-column spell-area geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2457_2476_v1_spell_area_zone_id.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2477–2496 — V1 action area zone id.
+  - Added `M11_GameView_GetV1ActionAreaZoneId()` for layout-696 `C011_ZONE_ACTION_AREA`.
+  - Routed the action-area geometry helper through the source zone id and tightened `INV_GV_300H` to assert both id and `(224,45,87,45)` geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2477_2496_v1_action_area_zone_id.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

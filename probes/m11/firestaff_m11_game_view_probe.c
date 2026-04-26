@@ -7948,9 +7948,10 @@ int main(int argc, char** argv) {
         {
             int actionX, actionY, actionW, actionH;
             probe_record(&tally, "INV_GV_300H",
-                         M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&
+                         M11_GameView_GetV1ActionAreaZoneId() == 11 &&
+                             M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&
                              actionX == 224 && actionY == 45 && actionW == 87 && actionH == 45,
-                         "action area zone matches source C011 right-column geometry");
+                         "action area zone exposes source C011 right-column id and geometry");
         }
 
         {

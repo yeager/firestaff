@@ -13909,10 +13909,15 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_H       9
 #define M11_DM_ACTION_MENU_TEXT_X    226
 
+int M11_GameView_GetV1ActionAreaZoneId(void) {
+    return 11;
+}
+
 int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
+    if (!M11_GameView_GetV1ActionAreaZoneId()) return 0;
     if (outX) *outX = M11_DM_ACTION_AREA_X;
     if (outY) *outY = M11_DM_ACTION_AREA_Y;
     if (outW) *outW = M11_DM_ACTION_AREA_W;
