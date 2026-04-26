@@ -8829,8 +8829,8 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300H",
                          M11_GameView_GetV1ActionAreaZoneId() == 11 &&
                              M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&
-                             actionX == 224 && actionY == 45 && actionW == 87 && actionH == 45,
-                         "action area zone exposes source C011 right-column id and geometry");
+                             actionX == 233 && actionY == 77 && actionW == 87 && actionH == 45,
+                         "action area zone exposes source C011/COMMAND.C right-column geometry");
         }
 
         {
@@ -8838,8 +8838,8 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300I",
                          M11_GameView_GetV1SpellAreaZoneId() == 13 &&
                              M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH) &&
-                             spellX == 224 && spellY == 90 && spellW == 87 && spellH == 25,
-                         "spell area zone exposes source C013 right-column id and geometry");
+                             spellX == 233 && spellY == 42 && spellW == 87 && spellH == 25,
+                         "spell area graphic anchors at ReDMCSB C013 right-column source position");
         }
 
         {
@@ -8850,9 +8850,9 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1SpellCasterTabZoneId() == 224 &&
                              M11_GameView_GetV1SpellCasterPanelZone(&panelX, &panelY, &panelW, &panelH) &&
                              M11_GameView_GetV1SpellCasterTabZone(&tabX, &tabY, &tabW, &tabH) &&
-                             panelX == 224 && panelY == 90 && panelW == 87 && panelH == 8 &&
-                             tabX == 224 && tabY == 90 && tabW == 45 && tabH == 8,
-                         "spell caster panel zones expose layout-696 C221/C224 ids and geometry");
+                             panelX == 233 && panelY == 42 && panelW == 87 && panelH == 8 &&
+                             tabX == 233 && tabY == 42 && tabW == 45 && tabH == 8,
+                         "spell caster panel zones expose layout-696 C221/C224 ids at ReDMCSB C013 position");
         }
 
         {
@@ -8860,7 +8860,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300AE",
                          M11_GameView_GetV1ActionResultZoneId() == 75 &&
                              M11_GameView_GetV1ActionResultZone(&resultX, &resultY, &resultW, &resultH) &&
-                             resultX == 224 && resultY == 45 && resultW == 87 && resultH == 45,
+                             resultX == 233 && resultY == 77 && resultW == 87 && resultH == 45,
                          "action result zone exposes layout-696 C075 id and action-area geometry");
         }
 
@@ -8869,8 +8869,8 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300AD",
                          M11_GameView_GetV1ActionPassZoneId() == 98 &&
                              M11_GameView_GetV1ActionPassZone(&passX, &passY, &passW, &passH) &&
-                             passX == 275 && passY == 45 && passW == 35 && passH == 7,
-                         "action PASS zone exposes layout-696 C098 id and right-aligned geometry");
+                             passX == 285 && passY == 77 && passW == 34 && passH == 7,
+                         "action PASS zone exposes ReDMCSB COMMAND.C C112 right-aligned geometry");
         }
 
         {
@@ -8881,10 +8881,10 @@ int main(int argc, char** argv) {
                          M11_GameView_GetV1ActionMenuGraphicZone(1, &oneX, &oneY, &oneW, &oneH) &&
                              M11_GameView_GetV1ActionMenuGraphicZone(2, &twoX, &twoY, &twoW, &twoH) &&
                              M11_GameView_GetV1ActionMenuGraphicZone(3, &threeX, &threeY, &threeW, &threeH) &&
-                             oneX == 224 && oneY == 45 && oneW == 87 && oneH == 21 &&
-                             twoX == 224 && twoY == 45 && twoW == 87 && twoH == 33 &&
-                             threeX == 224 && threeY == 45 && threeW == 87 && threeH == 45,
-                         "action menu graphic zones route C079/C077/C011 to source-sized rectangles");
+                             oneX == 233 && oneY == 77 && oneW == 87 && oneH == 21 &&
+                             twoX == 233 && twoY == 77 && twoW == 87 && twoH == 33 &&
+                             threeX == 233 && threeY == 77 && threeW == 87 && threeH == 45,
+                         "action menu graphic zones route C079/C077/C011 to source-sized rectangles at COMMAND.C position");
         }
 
         {
@@ -8919,9 +8919,9 @@ int main(int argc, char** argv) {
             int stripX, stripY, stripW, stripH;
             probe_record(&tally, "INV_GV_300R",
                          M11_GameView_GetV1ActionSpellStripZone(&stripX, &stripY, &stripW, &stripH) &&
-                             stripX == 224 && stripY == 45 &&
-                             stripW == 87 && stripH == 70,
-                         "V1 action+spell strip union covers source C011/C013 right-column zones");
+                             stripX == 233 && stripY == 42 &&
+                             stripW == 87 && stripH == 80,
+                         "V1 action+spell strip union covers source C013/C011 right-column stack");
         }
 
         {
@@ -9153,8 +9153,8 @@ int main(int argc, char** argv) {
             spellView.showDebugHUD = 0;
             memset(fbSpell, 0, sizeof(fbSpell));
             M11_GameView_Draw(&spellView, fbSpell, 320, 200);
-            for (y = 91; y < 104; ++y) {
-                for (x = 239; x < 253; ++x) {
+            for (y = 43; y < 56; ++y) {
+                for (x = 248; x < 262; ++x) {
                     unsigned char idx = fbSpell[y * 320 + x] & 0x0F;
                     if (idx == PROBE_COLOR_BROWN) ++selectedBrown;
                     if (idx == PROBE_COLOR_RED) ++selectedRed;
@@ -9176,7 +9176,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300G",
                          M11_GameView_GetV1ActionMenuHeaderZoneId() == 80 &&
                              M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&
-                             headerX == 224 && headerY == 47 && headerW == 87 && headerH == 9,
+                             headerX == 233 && headerY == 77 && headerW == 87 && headerH == 9,
                          "action menu header zone exposes F0387 source zone 80 geometry");
         }
 
@@ -9196,9 +9196,9 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1ActionMenuRowZone(0, &row0X, &row0Y, &row0W, &row0H) &&
                              M11_GameView_GetV1ActionMenuRowZone(2, &row2X, &row2Y, &row2W, &row2H) &&
                              !M11_GameView_GetV1ActionMenuRowZone(3, NULL, NULL, NULL, NULL) &&
-                             row0X == 224 && row0Y == 58 && row0W == 87 && row0H == 9 &&
-                             row2X == 224 && row2Y == 80 && row2W == 87 && row2H == 9,
-                         "action menu row zones expose F0387 source base zones 82-84 and print zones 85-87 geometry");
+                             row0X == 234 && row0Y == 86 && row0W == 85 && row0H == 11 &&
+                             row2X == 234 && row2Y == 110 && row2W == 85 && row2H == 11,
+                         "action menu row zones expose COMMAND.C C113-C115 / F0387 zones 85-87 geometry");
         }
 
         {
@@ -9212,11 +9212,11 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1ActionMenuTextOrigin(0, &row0TextX, &row0TextY) &&
                              M11_GameView_GetV1ActionMenuTextOrigin(2, &row2TextX, &row2TextY) &&
                              !M11_GameView_GetV1ActionMenuTextOrigin(3, NULL, NULL) &&
-                             insetX == 2 && insetY == 1 &&
-                             headerTextX == 226 && headerTextY == 48 &&
-                             row0TextX == 226 && row0TextY == 59 &&
-                             row2TextX == 226 && row2TextY == 81,
-                         "action menu text origins derive from source zones plus F0387 2x1 inset");
+                             insetX == 2 && insetY == 6 &&
+                             headerTextX == 235 && headerTextY == 83 &&
+                             row0TextX == 241 && row0TextY == 93 &&
+                             row2TextX == 241 && row2TextY == 117,
+                         "action menu text origins match ACTIDRAW.C F0387 PC coordinates");
         }
 
         {
@@ -9791,16 +9791,16 @@ int main(int argc, char** argv) {
                          actions[0] == 6 && actions[1] == 7 && actions[2] == 8,
                      "action-menu: empty-hand ActionSet yields PUNCH/KICK/WAR CRY indices");
 
-        /* Menu-mode frame: expect a CYAN header band at y=47..55
+        /* Menu-mode frame: expect a CYAN header band at y=77..85
          * spanning the action area width.  Count cyan pixels in
-         * the header row y=49 between x=224..310 as the signature
-         * of menu-mode (vs icon-mode which leaves y=47..55 as the
-         * graphic-10 frame, mostly non-cyan). */
+         * the header row y=79 between x=233..319 as the signature
+         * of menu-mode (vs icon-mode which leaves the action-area
+         * graphic frame mostly non-cyan). */
         memset(fbMenu, 0, sizeof(fbMenu));
         M11_GameView_Draw(&menuView, fbMenu, 320, 200);
         cyanHeaderPixels = 0;
-        for (x = 225; x < 311; ++x) {
-            if ((fbMenu[49 * 320 + x] & 0x0F) == 4) ++cyanHeaderPixels;
+        for (x = 234; x < 319; ++x) {
+            if ((fbMenu[79 * 320 + x] & 0x0F) == 4) ++cyanHeaderPixels;
         }
         probe_record(&tally, "INV_GV_313",
                      menuView.assetsAvailable
@@ -9950,12 +9950,12 @@ int main(int argc, char** argv) {
                          "action-menu: TriggerActionRow in idle mode is a no-op");
 
             /* INV_GV_325: HandlePointer click inside an action
-             * row bounds (mid-row 0, x=226, y=62) with an acting
+             * row bounds (mid-row 0, x=260, y=91) with an acting
              * champion fires the row-click path and returns
              * REDRAW (menu closes).  Cross-check by re-activating
              * and simulating the full pointer flow. */
             (void)M11_GameView_SetActingChampion(&menuView, 0);
-            pointerResult = M11_GameView_HandlePointer(&menuView, 260, 62, 1);
+            pointerResult = M11_GameView_HandlePointer(&menuView, 260, 91, 1);
             probe_record(&tally, "INV_GV_325",
                          pointerResult == M11_GAME_INPUT_REDRAW &&
                              M11_GameView_GetActingChampionOrdinal(&menuView) == 0,
@@ -9991,7 +9991,7 @@ int main(int argc, char** argv) {
                  * can confirm the menu actually closes and returns
                  * to idle icon-cell presentation after a click. */
                 (void)M11_GameView_SetActingChampion(&menuView, 0);
-                (void)M11_GameView_HandlePointer(&menuView, 260, 62, 1);
+                (void)M11_GameView_HandlePointer(&menuView, 260, 91, 1);
                 memset(fbMenu, 0, sizeof(fbMenu));
                 M11_GameView_Draw(&menuView, fbMenu, 320, 200);
                 snprintf(ssPath, sizeof(ssPath),
