@@ -14213,18 +14213,17 @@ int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
 }
 
 /* Source runtime bridge for the object in the DM1 leader hand.
- * The classic engine stores this as G4055_s_LeaderHandObject and
- * prints its name into C017_ZONE_LEADER_HAND_OBJECT_NAME.  M11's
- * compat state does not yet carry that transient mouse-hand object as
- * a separate field, but the active leader and their C00 ready-hand
- * slot are modelled.  Use that available source-backed state as the
- * minimal runtime path for the HUD readout and expose the exact thing
- * and icon chosen from the object-info tables so a later dedicated
- * leader-hand field can replace only this resolver. */
+ * The classic engine stores this as the transient mouse-hand object
+ * G4055_s_LeaderHandObject, which is separate from every champion
+ * inventory slot.  Earlier M11 V1 builds synthesized that object from
+ * the active champion's ready-hand slot; that made the idle right
+ * column print item names even when the source mouse hand would be
+ * empty.  Until M11 carries a dedicated G4055-equivalent field, keep
+ * C017 source-faithful by reporting no held leader-hand object rather
+ * than inventing one from champion equipment. */
 unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state) {
-    const struct ChampionState_Compat* champ = m11_get_active_champion(state);
-    if (!champ || champ->hp.current == 0) return THING_NONE;
-    return champ->inventory[CHAMPION_SLOT_HAND_LEFT];
+    (void)state;
+    return THING_NONE;
 }
 
 int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state) {
@@ -15979,19 +15978,25 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         snprintf(line, sizeof(line), "%s %s", m11_source_name(state->sourceKind), champion);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       250, 34, line, &g_text_small);
-    } else if (activeChampion && !drewAuthenticFrames) {
-        /* Legacy/procedural fallback only.  In normal V1 with the
-         * original action-area graphic active, the idle/icon branch is
-         * owned by F0386-style action-hand icon cells; champion names
-         * belong to F0387 menu mode and are drawn there after a fresh
-         * graphic-10 blit. */
+    } else if (activeChampion && !drewAuthenticFrames &&
+               !m11_v1_chrome_mode_enabled()) {
+        /* Legacy/procedural fallback only.  In normal V1 chrome mode,
+         * C017 is reserved for the source leader-hand object name and
+         * must not be repurposed as a champion-name/status label.  When
+         * authentic action/spell graphics are active, the idle/icon
+         * branch is owned by F0386-style action-hand icon cells;
+         * champion names belong to F0387 menu mode and are drawn there
+         * after a fresh graphic-10 blit. */
         int nameY = 34;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       227, nameY, champion, &g_text_small);
     }
 
     line[0] = '\0';
-    if (activeChampion && !(drewAuthenticFrames && !state->showDebugHUD)) {
+    if (activeChampion &&
+        (state->showDebugHUD ||
+         (!(drewAuthenticFrames && !state->showDebugHUD) &&
+          !m11_v1_chrome_mode_enabled()))) {
         if (state->showDebugHUD) {
             snprintf(line, sizeof(line), "L%d HP%u ST%u",
                      mapDesc ? (int)mapDesc->level : 0,

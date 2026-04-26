@@ -1700,10 +1700,9 @@ int main(int argc, char** argv) {
         unsigned char leaderHandFramebuffer[320 * 200];
         char leaderHandName[16];
         int leaderNameX, leaderNameY, leaderNameW, leaderNameH;
-        unsigned short leaderThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        unsigned short readyHandThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
         leaderHandView.world.party.activeChampionIndex = 0;
-        leaderHandView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = leaderThing;
-        leaderHandView.world.party.champions[1].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+        leaderHandView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = readyHandThing;
         memset(leaderHandName, 0, sizeof(leaderHandName));
         memset(leaderHandFramebuffer, 0, sizeof(leaderHandFramebuffer));
         M11_GameView_Draw(&leaderHandView, leaderHandFramebuffer, 320, 200);
@@ -1711,21 +1710,18 @@ int main(int argc, char** argv) {
             &leaderNameX, &leaderNameY, &leaderNameW, &leaderNameH);
         probe_record(&tally,
                      "INV_GV_15OA",
-                     M11_GameView_GetV1LeaderHandThing(&leaderHandView) == leaderThing &&
-                         M11_GameView_GetV1LeaderHandObjectIconIndex(&leaderHandView) == 16 &&
-                         M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
-                                                                leaderHandName,
-                                                                sizeof(leaderHandName)) &&
-                         strcmp(leaderHandName, "EYE OF TIME") == 0,
-                     "V1 leader-hand runtime resolves active leader ready-hand thing, source object icon, and name");
+                     M11_GameView_GetV1LeaderHandThing(&leaderHandView) == THING_NONE &&
+                         M11_GameView_GetV1LeaderHandObjectIconIndex(&leaderHandView) == -1 &&
+                         !M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
+                                                                 leaderHandName,
+                                                                 sizeof(leaderHandName)),
+                     "V1 leader-hand runtime does not synthesize G4055 from the active champion ready-hand slot");
         probe_record(&tally,
                      "INV_GV_15OB",
                      leaderNameX == 233 && leaderNameY == 33 &&
-                         probe_count_color(leaderHandFramebuffer, 320,
-                                           leaderNameX, leaderNameY,
-                                           leaderNameW, leaderNameH,
-                                           PROBE_COLOR_LIGHT_CYAN) > 0U,
-                     "V1 leader-hand runtime draws object name into C017 using source cyan text");
+                         leaderNameW == 87 && leaderNameH == 6 &&
+                         leaderHandName[0] == '\0',
+                     "V1 leader-hand C017 resolver stays blank when no dedicated source mouse-hand object exists");
         leaderHandView.world.party.activeChampionIndex = 1;
         probe_record(&tally,
                      "INV_GV_15OC",
@@ -1734,7 +1730,7 @@ int main(int argc, char** argv) {
                          !M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
                                                                  leaderHandName,
                                                                  sizeof(leaderHandName)),
-                     "V1 leader-hand runtime follows the current leader and reports empty when that leader has no ready-hand object");
+                     "V1 leader-hand runtime stays empty across leader changes without a G4055-equivalent field");
     }
 
     {
