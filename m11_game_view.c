@@ -14010,6 +14010,20 @@ int M11_GameView_GetV1StatusNameZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusNameTextZone(int championSlot,
+                                         int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
+                      M11_V1_STATUS_NAME_TEXT_X;
+    if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_TEXT_Y;
+    if (outW) *outW = M11_V1_STATUS_NAME_TEXT_W;
+    if (outH) *outH = M11_V1_STATUS_NAME_TEXT_H;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionIconCellZone(int championSlot,
                                              int* outX,
                                              int* outY,
@@ -14849,12 +14863,15 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                               M11_V1_STATUS_NAME_CLEAR_W,
                               M11_V1_STATUS_NAME_CLEAR_H,
                               M11_COLOR_GRAY);
-                m11_draw_text_centered_in_rect(
-                    framebuffer, framebufferWidth, framebufferHeight,
-                    x + M11_V1_STATUS_NAME_TEXT_X,
-                    y + M11_V1_STATUS_NAME_TEXT_Y,
-                    M11_V1_STATUS_NAME_TEXT_W,
-                    name, &nameStyle);
+                {
+                    int nameTextX, nameTextY, nameTextW;
+                    (void)M11_GameView_GetV1StatusNameTextZone(
+                        slot, &nameTextX, &nameTextY, &nameTextW, NULL);
+                    m11_draw_text_centered_in_rect(
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        nameTextX, nameTextY, nameTextW,
+                        name, &nameStyle);
+                }
             } else {
                 int nameOffX = 4;
                 if (slot == activeIndex) {

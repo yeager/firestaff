@@ -1089,6 +1089,17 @@ int main(int argc, char** argv) {
                              manaX3 == 279 && manaY3 == 164 && manaW3 == 4 && manaH3 == 25,
                          "V1 status bar graph zones match layout-696 C195/C203 geometry");
         }
+        {
+            int textX0, textY0, textW0, textH0;
+            int textX3, textY3, textW3, textH3;
+            probe_record(&tally,
+                         "INV_GV_15E8",
+                         M11_GameView_GetV1StatusNameTextZone(0, &textX0, &textY0, &textW0, &textH0) &&
+                             M11_GameView_GetV1StatusNameTextZone(3, &textX3, &textY3, &textW3, &textH3) &&
+                             textX0 == 13 && textY0 == 160 && textW0 == 42 && textH0 == 7 &&
+                             textX3 == 220 && textY3 == 160 && textW3 == 42 && textH3 == 7,
+                         "V1 status name text zones match layout-696 C163..C166 geometry");
+        }
         probe_record(&tally,
                      "INV_GV_15E2",
                      nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&
