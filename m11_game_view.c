@@ -15136,10 +15136,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 if (borderGfx) {
                     const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader, borderGfx);
-                    if (borderAsset && borderAsset->width == 67 &&
-                        borderAsset->height == 29) {
+                    if (borderAsset && borderAsset->width == slotW &&
+                        borderAsset->height == slotH) {
                         M11_AssetLoader_BlitRegion(borderAsset,
-                            0, 0, 67, 29,
+                            0, 0, slotW, slotH,
                             framebuffer, framebufferWidth, framebufferHeight,
                             x, y, 0); /* transparentColor=0 (black) */
                     }

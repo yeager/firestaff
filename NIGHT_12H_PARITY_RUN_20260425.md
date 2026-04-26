@@ -174,3 +174,9 @@ Update this file with batch summaries if useful.
   - Reused `INV_GV_15E9` and `INV_GV_15Q` coverage for source box geometry and base graphic selection.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1497_1516_v1_status_box_zone_routing.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `485/485`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1517–1536 — V1 status shield border zone routing.
+  - Routed shield border overlay asset checks/blits through `slotW/slotH` from `M11_GameView_GetV1StatusBoxZone(...)`.
+  - Reused `INV_GV_15E9` and `INV_GV_15P` coverage for source status-box dimensions and overlay priority.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1517_1536_v1_status_shield_border_zone_routing.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `485/485`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
