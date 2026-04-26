@@ -1222,6 +1222,22 @@ int main(int argc, char** argv) {
     syntheticView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
     syntheticView.world.party.champions[0].wounds = 0;
 
+    {
+        M11_GameViewState shieldGraphicView = syntheticView;
+        int noneBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        shieldGraphicView.world.magic.partyShieldDefense = 1;
+        int partyBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        shieldGraphicView.world.magic.fireShieldDefense = 1;
+        int fireBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        shieldGraphicView.world.magic.spellShieldDefense = 1;
+        int spellBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        probe_record(&tally,
+                     "INV_GV_15P",
+                     noneBorder == 0 && partyBorder == 37 &&
+                         fireBorder == 38 && spellBorder == 39,
+                     "V1 status shield border graphic priority follows spell/fire/party source order");
+    }
+
     probe_record(&tally,
                  "INV_GV_16",
                  probe_count_color(syntheticFramebuffer,

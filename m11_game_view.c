@@ -14141,6 +14141,20 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) {
+    if (!state) return 0;
+    if (state->world.magic.spellShieldDefense > 0) {
+        return M11_GFX_BORDER_PARTY_SPELLSHIELD;
+    }
+    if (state->world.magic.fireShieldDefense > 0) {
+        return M11_GFX_BORDER_PARTY_FIRESHIELD;
+    }
+    if (state->world.magic.partyShieldDefense > 0) {
+        return M11_GFX_BORDER_PARTY_SHIELD;
+    }
+    return 0;
+}
+
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex) {
@@ -15103,13 +15117,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              *   C037 (party shield), C038 (fire shield), or C039 (spell shield).
              * Priority: spell > fire > party (highest active wins). */
             if (state->assetsAvailable && !isDead) {
-                unsigned int borderGfx = 0;
-                if (state->world.magic.spellShieldDefense > 0)
-                    borderGfx = M11_GFX_BORDER_PARTY_SPELLSHIELD;
-                else if (state->world.magic.fireShieldDefense > 0)
-                    borderGfx = M11_GFX_BORDER_PARTY_FIRESHIELD;
-                else if (state->world.magic.partyShieldDefense > 0)
-                    borderGfx = M11_GFX_BORDER_PARTY_SHIELD;
+                unsigned int borderGfx =
+                    (unsigned int)M11_GameView_GetV1StatusShieldBorderGraphic(state);
                 if (borderGfx) {
                     const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader, borderGfx);

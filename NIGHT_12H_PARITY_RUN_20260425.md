@@ -154,3 +154,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_300J`: header `(226,48)`, row 0 `(226,59)`, row 2 `(226,81)` match F0387 offsets.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1437_1456_v1_action_menu_text_origin_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `483/483`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1457–1476 — V1 status shield border priority.
+  - Added `M11_GameView_GetV1StatusShieldBorderGraphic(...)` for source shield overlay graphic selection.
+  - Routed V1 status-box shield border drawing through the helper.
+  - Added invariant `INV_GV_15P`: no shield → 0, party → 37, fire-over-party → 38, spell-over-fire-over-party → 39.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1457_1476_v1_status_shield_border_priority.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `484/484`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
