@@ -13819,12 +13819,17 @@ int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetV1ActionMenuRowCount(void) {
+    /* F0387 prints exactly three action rows for the selected ActionSet. */
+    return 3;
+}
+
 int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
                                             int* outX,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
-    if (rowIndex < 0 || rowIndex >= 3) return 0;
+    if (rowIndex < 0 || rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
     if (outX) *outX = M11_DM_ACTION_AREA_X;
     if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
                       rowIndex * M11_DM_ACTION_MENU_ROW_STEP;
@@ -13841,7 +13846,7 @@ int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
         if (outY) *outY = M11_DM_ACTION_MENU_HEADER_Y + 1;
         return 1;
     }
-    if (rowIndex >= 3) return 0;
+    if (rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
     if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
                       rowIndex * M11_DM_ACTION_MENU_ROW_STEP + 1;
     return 1;
@@ -13936,7 +13941,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     styleCyanOnBlack.shadowColor = (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor();
 
     gotActions = M11_GameView_GetActingActionIndices(state, actions);
-    for (row = 0; row < 3; ++row) {
+    for (row = 0; row < M11_GameView_GetV1ActionMenuRowCount(); ++row) {
         int rowX, rowY, rowW, rowH;
         const char* name;
         (void)M11_GameView_GetV1ActionMenuRowZone(

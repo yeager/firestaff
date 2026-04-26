@@ -7962,11 +7962,13 @@ int main(int argc, char** argv) {
             int row0X, row0Y, row0W, row0H;
             int row2X, row2Y, row2W, row2H;
             probe_record(&tally, "INV_GV_300F",
-                         M11_GameView_GetV1ActionMenuRowZone(0, &row0X, &row0Y, &row0W, &row0H) &&
+                         M11_GameView_GetV1ActionMenuRowCount() == 3 &&
+                             M11_GameView_GetV1ActionMenuRowZone(0, &row0X, &row0Y, &row0W, &row0H) &&
                              M11_GameView_GetV1ActionMenuRowZone(2, &row2X, &row2Y, &row2W, &row2H) &&
+                             !M11_GameView_GetV1ActionMenuRowZone(3, NULL, NULL, NULL, NULL) &&
                              row0X == 224 && row0Y == 58 && row0W == 87 && row0H == 9 &&
                              row2X == 224 && row2Y == 80 && row2W == 87 && row2H == 9,
-                         "action menu row zones match F0387 source row geometry");
+                         "action menu row zones match F0387 source three-row geometry");
         }
 
         {
