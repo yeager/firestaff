@@ -2,23 +2,37 @@
 
 ## Goal
 
-Build a **standalone, legally distributable version** with:
-- new high-resolution visuals
-- improved audio
-- no dependency on the original game's data files
-- the same broad game structure and emotional feel, without copying original assets
+Define the Version 2 visual tracks clearly so the renderer can support original-faithful, upscaled, and enhanced presentation without mixing their asset rules.
+
+## Version tracks
+
+### V2.0 Original
+
+- Uses unchanged original graphics.
+- Goal: preserve the original look exactly while presenting it through the Version 2 renderer/presentation structure.
+- This track is original-data dependent and is not the standalone clean-room art target.
+
+### V2.1 Upscaled
+
+- Uses upscaled versions of the original graphical assets, produced at the best achievable quality.
+- Target master scale: **4K / 10x upscale** from the original 320x200-era asset basis.
+- 1080p output should be derived by halving the 4K/10x masters, not by creating a separate lower-quality upscale path.
+- Goal: keep the original composition and Dungeon Master identity, but with cleaner high-resolution presentation.
+
+### V2.2 Enhanced
+
+- Uses modern AI-generated or AI-assisted graphical assets at the best achievable quality, while preserving a strong Dungeon Master feel.
+- Goal: modernized art direction, not pixel-for-pixel original reconstruction.
+- This is the clean standalone asset track.
 
 ## Core principle
 
-Version 2 should **not** be:
-- AI-upscaled original graphics
-- paint-over directly on top of original assets
-- a legally grey "enhanced original dump"
+Version 2 must keep the asset tracks separate:
+- **V2.0 Original**: unchanged original graphics.
+- **V2.1 Upscaled**: upscaled original graphics, mastered at 4K/10x and downsampled for 1080p.
+- **V2.2 Enhanced**: modern Dungeon Master-feeling assets with clean provenance.
 
-Version 2 should be:
-- **newly illustrated presentation**
-- its own asset pipeline
-- a clear separation between gameplay logic and presentation
+The renderer should make these tracks explicit rather than blending original, upscaled, and enhanced assets in the same mode.
 
 ## Recommended visual direction
 
