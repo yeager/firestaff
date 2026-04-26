@@ -13223,6 +13223,61 @@ int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH) {
     return 1;
 }
 
+int M11_GameView_GetV1ViewportBaseGraphic(int layer,
+                                          int* outGraphic,
+                                          int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH) {
+    switch (layer) {
+        case 0:
+            if (outGraphic) *outGraphic = M11_GFX_CEILING_PANEL;
+            if (outX) *outX = 0;
+            if (outY) *outY = 0;
+            if (outW) *outW = 224;
+            if (outH) *outH = 39;
+            return 1;
+        case 1:
+            if (outGraphic) *outGraphic = M11_GFX_FLOOR_PANEL;
+            if (outX) *outX = 0;
+            if (outY) *outY = 39;
+            if (outW) *outW = 224;
+            if (outH) *outH = 97;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int M11_GameView_GetV1ViewportSourceDrawOrderCount(void) {
+    return 16;
+}
+
+int M11_GameView_GetV1ViewportSourceDrawOrderStep(int ordinal) {
+    static const int kDrawOrder[] = {
+        1,  /* floor/ceiling base */
+        2,  /* pits */
+        3,  /* floor ornaments */
+        4,  /* side walls */
+        5,  /* front walls */
+        6,  /* wall ornaments */
+        7,  /* stairs */
+        8,  /* teleporter fields */
+        9,  /* side doors */
+        10, /* side door ornaments */
+        11, /* side destroyed-door masks */
+        12, /* center doors */
+        13, /* center door ornaments */
+        14, /* center destroyed-door masks */
+        15, /* center door buttons */
+        16  /* D3R door button */
+    };
+    if (ordinal < 0 || ordinal >= (int)(sizeof(kDrawOrder) / sizeof(kDrawOrder[0]))) {
+        return 0;
+    }
+    return kDrawOrder[ordinal];
+}
+
 int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
                                             unsigned short thingId) {
     if (!state || !state->world.things) return -1;

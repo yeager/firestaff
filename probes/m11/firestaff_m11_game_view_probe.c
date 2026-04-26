@@ -767,6 +767,11 @@ int main(int argc, char** argv) {
         int objX = -1, objY = -1;
         int projX = -1, projY = -1;
         int creatureX = -1, creatureY = -1;
+        int baseGraphic0 = -1, baseGraphic1 = -1;
+        int baseX0 = -1, baseY0 = -1, baseW0 = -1, baseH0 = -1;
+        int baseX1 = -1, baseY1 = -1, baseW1 = -1, baseH1 = -1;
+        const M11_AssetSlot* ceilingSlot = NULL;
+        const M11_AssetSlot* floorSlot = NULL;
 
         probe_record(&tally,
                      "INV_GV_408",
@@ -827,6 +832,47 @@ int main(int argc, char** argv) {
                          creatureY >= 0 && creatureY < PROBE_DM1_VIEWPORT_H &&
                          projY >= 0 && projY < PROBE_DM1_VIEWPORT_H,
                      "viewport content placement seams expose source C2500 object, C3200 creature, and C2900 projectile points inside C007");
+        if (gameView.assetsAvailable) {
+            ceilingSlot = M11_AssetLoader_Load(&gameView.assetLoader, 79);
+            floorSlot = M11_AssetLoader_Load(&gameView.assetLoader, 78);
+        }
+        probe_record(&tally,
+                     "INV_GV_414",
+                     M11_GameView_GetV1ViewportBaseGraphic(0, &baseGraphic0,
+                                                           &baseX0, &baseY0,
+                                                           &baseW0, &baseH0) == 1 &&
+                         M11_GameView_GetV1ViewportBaseGraphic(1, &baseGraphic1,
+                                                               &baseX1, &baseY1,
+                                                               &baseW1, &baseH1) == 1 &&
+                         baseGraphic0 == 79 && baseX0 == 0 && baseY0 == 0 &&
+                         baseW0 == 224 && baseH0 == 39 &&
+                         baseGraphic1 == 78 && baseX1 == 0 && baseY1 == 39 &&
+                         baseW1 == 224 && baseH1 == 97 &&
+                         (!gameView.assetsAvailable ||
+                          (ceilingSlot && ceilingSlot->loaded && ceilingSlot->width == 224 && ceilingSlot->height == 39 &&
+                           floorSlot && floorSlot->loaded && floorSlot->width == 224 && floorSlot->height == 97)),
+                     "viewport base uses source ceiling C079 224x39 then floor C078 224x97 inside the 224x136 aperture");
+        probe_record(&tally,
+                     "INV_GV_415",
+                     M11_GameView_GetV1ViewportSourceDrawOrderCount() == 16 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(0) == 1 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(1) == 2 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(2) == 3 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(3) == 4 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(4) == 5 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(5) == 6 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(6) == 7 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(7) == 8 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(8) == 9 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(9) == 10 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(10) == 11 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(11) == 12 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(12) == 13 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(13) == 14 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(14) == 15 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(15) == 16 &&
+                         M11_GameView_GetV1ViewportSourceDrawOrderStep(16) == 0,
+                     "viewport source draw-order seam is pinned from base/pits/ornaments/walls through doors/buttons");
     }
 
 
