@@ -607,6 +607,24 @@ int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
     return 1;
 }
 
+int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
+                                           int choiceIndex,
+                                           int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    int textX, textY, textW;
+    if (!M11_GameView_GetV1DialogChoiceTextZone(choiceCount, choiceIndex,
+                                                &textX, &textY, &textW, NULL)) {
+        return 0;
+    }
+    if (outX) *outX = textX;
+    if (outY) *outY = textY - 6;
+    if (outW) *outW = textW;
+    if (outH) *outH = 17;
+    return 1;
+}
+
 static int m11_dialog_source_message_width_for_choices(int choiceCount) {
     return M11_GameView_GetV1DialogMessageWidth(choiceCount);
 }
@@ -698,27 +716,20 @@ static int m11_dialog_choice_at_point(const M11_GameViewState* state,
                                       int y) {
     int vx = x - M11_VIEWPORT_X;
     int vy = y - M11_VIEWPORT_Y;
+    int i;
     if (!state || state->dialogChoiceCount <= 0) return 0;
     if (vx < 0 || vy < 0 || vx >= M11_VIEWPORT_W || vy >= M11_VIEWPORT_H) return 0;
-    switch (state->dialogChoiceCount) {
-        case 1:
-            return (vx >= 16 && vx <= 207 && vy >= 104 && vy <= 120) ? 1 : 0;
-        case 2:
-            if (vx >= 16 && vx <= 207 && vy >= 67 && vy <= 83) return 1;
-            if (vx >= 16 && vx <= 207 && vy >= 104 && vy <= 120) return 2;
-            return 0;
-        case 3:
-            if (vx >= 16 && vx <= 207 && vy >= 67 && vy <= 83) return 1;
-            if (vx >= 16 && vx <= 101 && vy >= 104 && vy <= 120) return 2;
-            if (vx >= 123 && vx <= 208 && vy >= 104 && vy <= 120) return 3;
-            return 0;
-        default:
-            if (vx >= 16 && vx <= 101 && vy >= 67 && vy <= 83) return 1;
-            if (vx >= 123 && vx <= 208 && vy >= 67 && vy <= 83) return 2;
-            if (vx >= 16 && vx <= 101 && vy >= 104 && vy <= 120) return 3;
-            if (vx >= 123 && vx <= 208 && vy >= 104 && vy <= 120) return 4;
-            return 0;
+    for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
+        int hx, hy, hw, hh;
+        if (!M11_GameView_GetV1DialogChoiceHitZone(state->dialogChoiceCount,
+                                                   i, &hx, &hy, &hw, &hh)) {
+            continue;
+        }
+        if (vx >= hx && vx < hx + hw && vy >= hy && vy < hy + hh) {
+            return i + 1;
+        }
     }
+    return 0;
 }
 
 /* Draw text using the original DM1 font when available, with shadow.

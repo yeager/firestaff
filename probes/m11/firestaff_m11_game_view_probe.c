@@ -8052,6 +8052,18 @@ int main(int argc, char** argv) {
         }
 
         {
+            int h2x, h2y, h2w, h2h;
+            int h4x, h4y, h4w, h4h;
+            probe_record(&tally, "INV_GV_300AB",
+                         M11_GameView_GetV1DialogChoiceHitZone(2, 0, &h2x, &h2y, &h2w, &h2h) &&
+                             h2x == 16 && h2y == 67 && h2w == 192 && h2h == 17 &&
+                             M11_GameView_GetV1DialogChoiceHitZone(4, 3, &h4x, &h4y, &h4w, &h4h) &&
+                             h4x == 123 && h4y == 104 && h4w == 86 && h4h == 17 &&
+                             !M11_GameView_GetV1DialogChoiceHitZone(1, 1, NULL, NULL, NULL, NULL),
+                         "V1 dialog pointer hit zones derive from source choice text zones");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",

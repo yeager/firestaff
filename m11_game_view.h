@@ -823,6 +823,12 @@ int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
                                             int* outY,
                                             int* outW,
                                             int* outH);
+int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
+                                           int choiceIndex,
+                                           int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH);
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void);
