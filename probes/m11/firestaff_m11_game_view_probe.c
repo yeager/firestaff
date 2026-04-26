@@ -6528,6 +6528,54 @@ int main(int argc, char** argv) {
                      "normal V1 inventory ready-hand icon is confined to source C507 slot box");
     }
 
+    /* INV_GV_361: Normal V1 inventory draws head equipment icon into
+     * source slot box 10 / C509 without moving outside that slot. */
+    {
+        M11_GameViewState emptyInv;
+        M11_GameViewState itemInv;
+        struct DungeonThings_Compat localThings;
+        struct DungeonArmour_Compat armour;
+        unsigned char fb_empty[320 * 200];
+        unsigned char fb_item[320 * 200];
+        int inSlotDiff = 0;
+        int outsideDiff = 0;
+        int px, py;
+        memset(&localThings, 0, sizeof(localThings));
+        memset(&armour, 0, sizeof(armour));
+        armour.type = 0;
+        localThings.armours = &armour;
+        localThings.armourCount = 1;
+
+        memcpy(&emptyInv, &gameView, sizeof(emptyInv));
+        emptyInv.showDebugHUD = 0;
+        emptyInv.inventoryPanelActive = 1;
+        if (emptyInv.world.party.activeChampionIndex < 0) emptyInv.world.party.activeChampionIndex = 0;
+        emptyInv.world.party.champions[0].inventory[CHAMPION_SLOT_HEAD] = THING_NONE;
+        memset(fb_empty, 0, sizeof(fb_empty));
+        M11_GameView_Draw(&emptyInv, fb_empty, 320, 200);
+
+        memcpy(&itemInv, &emptyInv, sizeof(itemInv));
+        itemInv.world.things = &localThings;
+        itemInv.world.party.champions[0].inventory[CHAMPION_SLOT_HEAD] =
+            (unsigned short)((THING_TYPE_ARMOUR << 10) | 0);
+        memset(fb_item, 0, sizeof(fb_item));
+        M11_GameView_Draw(&itemInv, fb_item, 320, 200);
+
+        for (py = 0; py < 200; ++py) {
+            for (px = 0; px < 320; ++px) {
+                int inHeadSlot = (px >= 34 && px < 50 && py >= 59 && py < 75);
+                if (fb_item[py * 320 + px] != fb_empty[py * 320 + px]) {
+                    if (inHeadSlot) ++inSlotDiff;
+                    else ++outsideDiff;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_361",
+                     itemInv.assetsAvailable ? (inSlotDiff > 10 && outsideDiff == 0) : 1,
+                     "normal V1 inventory head icon is confined to source C509 slot box");
+    }
+
     /* INV_GV_192: Movement blocked while inventory panel active. */
     {
         M11_GameViewState iv;

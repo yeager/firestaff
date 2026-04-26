@@ -355,3 +355,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_360` to verify a ready-hand dagger delta is confined to the source C507 slot rectangle.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2917_2936_v1_inventory_ready_hand_icon.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `534/534`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2937–2956 — V1 inventory body equipment source icons.
+  - Extended normal V1 inventory icon placement from ready/action hands to source body equipment slots `C509..C512` and `C517` via original slot-box indices `10..13` and `18`.
+  - Added `INV_GV_361` to verify a head armour icon delta is confined to source C509.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2937_2956_v1_inventory_body_equipment_icons.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `535/535`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

@@ -16815,11 +16815,20 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
          * into the source slot-box zones C507/C508. Remaining dynamic
          * inventory slots are intentionally deferred until they can be bound
          * to the same C507..C536 source namespace. */
-        int handSlot;
-        const int champSlots[2] = { CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_HAND_RIGHT };
-        const int sourceSlotBoxes[2] = { 8, 9 };
-        for (handSlot = 0; handSlot < 2; ++handSlot) {
-            int slotIdx = champSlots[handSlot];
+        static const struct { int sourceSlotBox; int championSlot; } slotMap[] = {
+            { 8,  CHAMPION_SLOT_HAND_LEFT  },
+            { 9,  CHAMPION_SLOT_HAND_RIGHT },
+            { 10, CHAMPION_SLOT_HEAD       },
+            { 11, CHAMPION_SLOT_TORSO      },
+            { 12, CHAMPION_SLOT_LEGS       },
+            { 13, CHAMPION_SLOT_FEET       },
+            { 18, CHAMPION_SLOT_NECK       }
+        };
+        int mapOrdinal;
+        for (mapOrdinal = 0;
+             mapOrdinal < (int)(sizeof(slotMap) / sizeof(slotMap[0]));
+             ++mapOrdinal) {
+            int slotIdx = slotMap[mapOrdinal].championSlot;
             unsigned short thingId = champ->inventory[slotIdx];
             if (thingId != THING_NONE && thingId != THING_ENDOFLIST &&
                 state->assetsAvailable && state->world.things) {
@@ -16827,7 +16836,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 int iconIndex = m11_object_icon_index_for_thing(
                     state, state->world.things, thingId);
                 if (M11_GameView_GetV1InventorySourceSlotBoxZone(
-                        sourceSlotBoxes[handSlot], &zx, &zy, &zw, &zh)) {
+                        slotMap[mapOrdinal].sourceSlotBox, &zx, &zy, &zw, &zh)) {
                     (void)zw; (void)zh;
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth, framebufferHeight,
