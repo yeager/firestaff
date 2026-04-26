@@ -3058,6 +3058,24 @@ int M11_GameView_GetV1SpellAreaLinesGraphicId(void) {
     return 11;
 }
 
+int M11_GameView_GetV1SpellAvailableSymbolParentZoneId(int symbolIndex) {
+    if (symbolIndex < 0 || symbolIndex >= 6) return 0;
+    /* Source layout-696 C245..C250 parent zones for available spell symbols. */
+    return 245 + symbolIndex;
+}
+
+int M11_GameView_GetV1SpellAvailableSymbolZoneId(int symbolIndex) {
+    if (!M11_GameView_GetV1SpellAvailableSymbolParentZoneId(symbolIndex)) return 0;
+    /* Source layout-696 C255..C260 draw zones for available spell symbols. */
+    return 255 + symbolIndex;
+}
+
+int M11_GameView_GetV1SpellChampionSymbolZoneId(int symbolIndex) {
+    if (symbolIndex < 0 || symbolIndex >= 4) return 0;
+    /* Source layout-696 C261..C264 selected/champion spell-symbol zones. */
+    return 261 + symbolIndex;
+}
+
 int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
                                                 int* outX,
                                                 int* outY,

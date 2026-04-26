@@ -257,3 +257,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_300AF` to assert one-/two-/three-row menu rectangles `(87×21)`, `(87×33)`, and `(87×45)`.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2597_2616_v1_action_menu_graphic_geometry.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `516/516`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2617–2636 — V1 spell symbol zone ids.
+  - Added source id helpers for spell-area symbol parents `C245..C250`, available-symbol zones `C255..C260`, and selected/champion symbol zones `C261..C264`.
+  - Added `INV_GV_300AG` for first/last ids and out-of-range rejection.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2617_2636_v1_spell_symbol_zone_ids.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `518/518`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

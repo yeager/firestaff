@@ -8163,6 +8163,20 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300AG",
+                         M11_GameView_GetV1SpellAvailableSymbolParentZoneId(0) == 245 &&
+                             M11_GameView_GetV1SpellAvailableSymbolParentZoneId(5) == 250 &&
+                             M11_GameView_GetV1SpellAvailableSymbolParentZoneId(6) == 0 &&
+                             M11_GameView_GetV1SpellAvailableSymbolZoneId(0) == 255 &&
+                             M11_GameView_GetV1SpellAvailableSymbolZoneId(5) == 260 &&
+                             M11_GameView_GetV1SpellAvailableSymbolZoneId(-1) == 0 &&
+                             M11_GameView_GetV1SpellChampionSymbolZoneId(0) == 261 &&
+                             M11_GameView_GetV1SpellChampionSymbolZoneId(3) == 264 &&
+                             M11_GameView_GetV1SpellChampionSymbolZoneId(4) == 0,
+                         "spell symbol zones expose layout-696 C245-C260 and C261-C264 ids");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",

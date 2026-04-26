@@ -879,6 +879,9 @@ int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void);
+int M11_GameView_GetV1SpellAvailableSymbolParentZoneId(int symbolIndex);
+int M11_GameView_GetV1SpellAvailableSymbolZoneId(int symbolIndex);
+int M11_GameView_GetV1SpellChampionSymbolZoneId(int symbolIndex);
 int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
                                                 int* outX,
                                                 int* outY,
