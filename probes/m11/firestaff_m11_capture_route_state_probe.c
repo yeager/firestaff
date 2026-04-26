@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
         {"02_ingame_turn_right_latest", "right", M12_MENU_INPUT_RIGHT, M11_GAME_INPUT_REDRAW},
         {"03_ingame_move_forward_latest", "up", M12_MENU_INPUT_UP, M11_GAME_INPUT_REDRAW},
         {"04_ingame_spell_panel_latest", "spell_rune_1", M12_MENU_INPUT_SPELL_RUNE_1, M11_GAME_INPUT_REDRAW},
-        {"05_ingame_after_cast_latest", "spell_cast", M12_MENU_INPUT_SPELL_CAST, M11_GAME_INPUT_IGNORED},
+        {"05_ingame_after_cast_latest", "spell_rune_4+rune_4+spell_cast", M12_MENU_INPUT_SPELL_CAST, M11_GAME_INPUT_REDRAW},
         {"06_ingame_inventory_panel_latest", "spell_clear+inventory", M12_MENU_INPUT_INVENTORY_TOGGLE, M11_GAME_INPUT_REDRAW},
     };
     if (argc < 3) {
@@ -175,6 +175,10 @@ int main(int argc, char** argv) {
         int i;
         for (i = 1; i < 6; ++i) {
             int result;
+            if (i == 4) {
+                (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_4);
+                (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_4);
+            }
             if (i == 5) {
                 (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_CLEAR);
                 ensure_deterministic_capture_champion(&game);
@@ -188,7 +192,7 @@ int main(int argc, char** argv) {
     if (rows[1].direction != 3) ok = 0;
     if (rows[2].mapX != 0 || rows[2].mapY != 3 || rows[2].direction != 3) ok = 0;
     if (!rows[3].spellPanelOpen || rows[3].spellRuneCount != 1) ok = 0;
-    if (rows[4].spellPanelOpen == 0) ok = 0;
+    if (rows[4].spellPanelOpen != 0 || rows[4].spellRuneCount != 0) ok = 0;
     if (!rows[5].inventoryPanelActive) ok = 0;
 
     if (!write_outputs(outDir, rows, rowCount)) ok = 0;

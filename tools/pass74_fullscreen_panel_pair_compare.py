@@ -31,12 +31,12 @@ class Pairing:
 
 
 PAIRINGS = (
-    Pairing("01", "ingame_start", "01_ingame_start_latest.png", "image0001-raw.png"),
-    Pairing("02", "ingame_turn_right", "02_ingame_turn_right_latest.png", "image0002-raw.png"),
-    Pairing("03", "ingame_move_forward", "03_ingame_move_forward_latest.png", "image0003-raw.png"),
-    Pairing("04", "ingame_spell_panel", "04_ingame_spell_panel_latest.png", "image0004-raw.png"),
-    Pairing("05", "ingame_after_cast", "05_ingame_after_cast_latest.png", "image0005-raw.png"),
-    Pairing("06", "ingame_inventory_panel", "06_ingame_inventory_panel_latest.png", "image0006-raw.png"),
+    Pairing("01", "ingame_start", "01_ingame_start_latest.ppm", "image0001-raw.png"),
+    Pairing("02", "ingame_turn_right", "02_ingame_turn_right_latest.ppm", "image0002-raw.png"),
+    Pairing("03", "ingame_move_forward", "03_ingame_move_forward_latest.ppm", "image0003-raw.png"),
+    Pairing("04", "ingame_spell_panel", "04_ingame_spell_panel_latest.ppm", "image0004-raw.png"),
+    Pairing("05", "ingame_after_cast", "05_ingame_after_cast_latest.ppm", "image0005-raw.png"),
+    Pairing("06", "ingame_inventory_panel", "06_ingame_inventory_panel_latest.ppm", "image0006-raw.png"),
 )
 
 # Source-relevant regions.  These are not arbitrary screenshots crops: they are

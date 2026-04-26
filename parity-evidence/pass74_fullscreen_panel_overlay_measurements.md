@@ -14,7 +14,7 @@ This is measurement-only. It does **not** claim semantic route parity or pixel p
 - Stats: `parity-evidence/overlays/pass74/pass74_fullscreen_panel_compare_stats.json`
 - Masks: `parity-evidence/overlays/pass74/*_full_frame_mask.png`
 
-The tool pairs the six Firestaff full-frame captures with the six original raw DOSBox screenshots from pass 70 and measures these source-relevant regions:
+The tool pairs the six Firestaff full-frame PPM captures with the six original raw DOSBox screenshots from pass 70 and measures these source-relevant regions:
 
 | region | xywh |
 | --- | --- |
@@ -45,9 +45,9 @@ pairs=6, problems=[]
 | 01 ingame_start | 82.8250% | 81.0826% | 89.8340% | 94.3908% | 62.5951% |
 | 02 ingame_turn_right | 82.9281% | 81.2992% | 89.8340% | 94.3908% | 62.5951% |
 | 03 ingame_move_forward | 76.7172% | 68.2511% | 89.8340% | 94.3908% | 46.5563% |
-| 04 ingame_spell_panel | 64.4172% | 41.9249% | 92.5415% | 94.4368% | 35.5023% |
-| 05 ingame_after_cast | 84.7844% | 78.1250% | 90.2427% | 98.1149% | 70.4148% |
-| 06 ingame_inventory_panel | 94.9594% | 92.8407% | 98.1865% | 97.5172% | 87.0053% |
+| 04 ingame_spell_panel | 76.7781% | 68.2511% | 89.8340% | 96.1839% | 46.5563% |
+| 05 ingame_after_cast | 85.2031% | 79.0047% | 90.2427% | 98.1149% | 71.0712% |
+| 06 ingame_inventory_panel | 94.2859% | 93.4874% | 93.3844% | 94.3908% | 87.0148% |
 
 ## Interpretation
 

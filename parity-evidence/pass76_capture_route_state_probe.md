@@ -37,10 +37,10 @@ Outputs:
 | 02_ingame_turn_right_latest | right | 1 | 1 | 0 | 1 | 3 | 3 | 0 | 0 | 0 | `0x1400` |
 | 03_ingame_move_forward_latest | up | 1 | 2 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | `0x1400` |
 | 04_ingame_spell_panel_latest | spell_rune_1 | 1 | 2 | 0 | 0 | 3 | 3 | 1 | 1 | 0 | `0x1400` |
-| 05_ingame_after_cast_latest | spell_cast | 0 | 2 | 0 | 0 | 3 | 3 | 1 | 1 | 0 | `0x1400` |
-| 06_ingame_inventory_panel_latest | spell_clear+inventory | 1 | 2 | 0 | 0 | 3 | 3 | 0 | 0 | 1 | `0x1400` |
+| 05_ingame_after_cast_latest | spell_rune_4+rune_4+spell_cast | 1 | 3 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | `0x1400` |
+| 06_ingame_inventory_panel_latest | spell_clear+inventory | 1 | 3 | 0 | 0 | 3 | 3 | 0 | 0 | 1 | `0x1400` |
 
-Important detail: `05_ingame_after_cast_latest` is named “after_cast”, but the state gate proves the current fixture has only one rune and `M12_MENU_INPUT_SPELL_CAST` is ignored. That capture is actually still spell-panel-open with one rune, not a completed cast.
+Pass 77 fixed the earlier one-rune bug: `05_ingame_after_cast_latest` now enters low-power Ful Ir via `RUNE_4`, `RUNE_4`, then `SPELL_CAST`; the gate verifies cast input is consumed, tick advances to 3, and the spell panel closes.
 
 ## Impact
 

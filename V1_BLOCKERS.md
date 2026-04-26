@@ -540,10 +540,10 @@ first, then visual parity, then typography / honesty.
   measurements for viewport/action/spell/inventory surfaces; high deltas
   confirm semantic route mismatch remains. Pass 75 sheets the startup-menu
   candidate asset windows so menu overlay work has concrete source assets.
-  Pass 76 locks the Firestaff six-capture fixture as state, proving the
-  current `after_cast` capture is actually one-rune spell-panel-open
-  (`SPELL_CAST` ignored), so original route work can now target exact
-  Firestaff states instead of capture filenames.
+  Pass 76 locks the Firestaff six-capture fixture as state. Pass 77 fixes
+  the earlier one-rune `after_cast` bug by entering low-power Ful Ir before
+  `SPELL_CAST`; original route work can now target exact Firestaff states
+  instead of misleading capture filenames.
 - **Suggested pass:** pass-47b/pass-72 follow-up — ZONES.H parse (from
   `PANEL.C` + `COORD.C` layout-record init) and render from the locked
   DUNGEON.DAT/GRAPHICS.DAT viewport state plus `zones_h_reconstruction.json`;

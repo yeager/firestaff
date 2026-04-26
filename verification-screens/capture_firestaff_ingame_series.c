@@ -230,10 +230,16 @@ int main(int argc, char** argv) {
     if (!save_game(outDir, "03_ingame_move_forward_latest", &game, paletteLevel)) return 1;
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_1);
     if (!save_game(outDir, "04_ingame_spell_panel_latest", &game, paletteLevel)) return 1;
+    /* Complete a deterministic low-power Ful Ir (fireball) sequence before
+     * casting: row0 power rune, row1 Ful, row2 Ir.  The previous fixture
+     * tried to cast after only one rune, so SPELL_CAST was ignored while the
+     * screenshot name claimed "after_cast". */
+    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_4);
+    (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_RUNE_4);
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_CAST);
     if (!save_game(outDir, "05_ingame_after_cast_latest", &game, paletteLevel)) return 1;
 
-    /* Close spell panel via SPELL_CLEAR, then open the inventory panel. */
+    /* Ensure the spell panel is closed, then open the inventory panel. */
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_SPELL_CLEAR);
     ensure_deterministic_capture_champion(&game);
     (void)M11_GameView_HandleInput(&game, M12_MENU_INPUT_INVENTORY_TOGGLE);
