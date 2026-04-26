@@ -7982,6 +7982,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            int resultX, resultY, resultW, resultH;
+            probe_record(&tally, "INV_GV_300AE",
+                         M11_GameView_GetV1ActionResultZoneId() == 75 &&
+                             M11_GameView_GetV1ActionResultZone(&resultX, &resultY, &resultW, &resultH) &&
+                             resultX == 224 && resultY == 45 && resultW == 87 && resultH == 45,
+                         "action result zone exposes layout-696 C075 id and action-area geometry");
+        }
+
+        {
             int passX, passY, passW, passH;
             probe_record(&tally, "INV_GV_300AD",
                          M11_GameView_GetV1ActionPassZoneId() == 98 &&

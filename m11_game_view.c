@@ -13956,6 +13956,19 @@ int M11_GameView_GetV1ActionAreaClearColor(void) {
     return M11_COLOR_BLACK;
 }
 
+int M11_GameView_GetV1ActionResultZoneId(void) {
+    /* Source layout-696 C075_ZONE_ACTION_RESULT covers the action result area. */
+    return 75;
+}
+
+int M11_GameView_GetV1ActionResultZone(int* outX,
+                                       int* outY,
+                                       int* outW,
+                                       int* outH) {
+    if (!M11_GameView_GetV1ActionResultZoneId()) return 0;
+    return M11_GameView_GetV1ActionAreaZone(outX, outY, outW, outH);
+}
+
 int M11_GameView_GetV1ActionPassZoneId(void) {
     /* Source layout-696 C098_ZONE_ACTION_AREA_PASS, under the C097 35x7 text area. */
     return 98;
