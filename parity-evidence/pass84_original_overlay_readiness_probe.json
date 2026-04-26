@@ -1,0 +1,377 @@
+{
+  "blockers": [
+    "default pass74 compare inputs are missing Firestaff PPM full-frame captures",
+    "default pass74 compare inputs are missing original raw 320x200 screenshots",
+    "recorded pass74 stats reference artifacts absent from the fresh worktree",
+    "pass78 route attempts remained text-mode/prompt captures, not gameplay"
+  ],
+  "champion_inventory_spell_route_readiness": {
+    "explicit_champion_keys_supported_by_route_script": true,
+    "required_scenes": [
+      "01_ingame_start",
+      "02_ingame_turn_right",
+      "03_ingame_move_forward",
+      "04_ingame_spell_panel",
+      "05_ingame_after_cast",
+      "06_ingame_inventory_panel"
+    ],
+    "route_shape_dry_run_supported": true,
+    "semantically_locked_original_runtime_route": false
+  },
+  "firestaff_png_reviews": [
+    {
+      "bytes": 9345,
+      "exists": true,
+      "path": "verification-screens/01_ingame_start_latest.png"
+    },
+    {
+      "bytes": 8973,
+      "exists": true,
+      "path": "verification-screens/02_ingame_turn_right_latest.png"
+    },
+    {
+      "bytes": 8126,
+      "exists": true,
+      "path": "verification-screens/03_ingame_move_forward_latest.png"
+    },
+    {
+      "bytes": 8430,
+      "exists": true,
+      "path": "verification-screens/04_ingame_spell_panel_latest.png"
+    },
+    {
+      "bytes": 8125,
+      "exists": true,
+      "path": "verification-screens/05_ingame_after_cast_latest.png"
+    },
+    {
+      "bytes": 2483,
+      "exists": true,
+      "path": "verification-screens/06_ingame_inventory_panel_latest.png"
+    }
+  ],
+  "firestaff_ppm_inputs": [
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/01_ingame_start_latest.ppm"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/02_ingame_turn_right_latest.ppm"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/03_ingame_move_forward_latest.ppm"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/04_ingame_spell_panel_latest.ppm"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/05_ingame_after_cast_latest.ppm"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/06_ingame_inventory_panel_latest.ppm"
+    }
+  ],
+  "honesty": "Evidence/readiness only; no pixel-parity or semantic-route parity is claimed.",
+  "original_raw_inputs": [
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/pass70-original-dm1-viewports/image0001-raw.png"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/pass70-original-dm1-viewports/image0002-raw.png"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/pass70-original-dm1-viewports/image0003-raw.png"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/pass70-original-dm1-viewports/image0004-raw.png"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/pass70-original-dm1-viewports/image0005-raw.png"
+    },
+    {
+      "bytes": 0,
+      "exists": false,
+      "path": "verification-screens/pass70-original-dm1-viewports/image0006-raw.png"
+    }
+  ],
+  "pass74_stats": {
+    "exists": true,
+    "missing_referenced_artifacts": [
+      "parity-evidence/overlays/pass74/01_ingame_start_full_frame_mask.png",
+      "parity-evidence/overlays/pass74/02_ingame_turn_right_full_frame_mask.png",
+      "parity-evidence/overlays/pass74/03_ingame_move_forward_full_frame_mask.png",
+      "parity-evidence/overlays/pass74/04_ingame_spell_panel_full_frame_mask.png",
+      "parity-evidence/overlays/pass74/05_ingame_after_cast_full_frame_mask.png",
+      "parity-evidence/overlays/pass74/06_ingame_inventory_panel_full_frame_mask.png",
+      "verification-screens/01_ingame_start_latest.ppm",
+      "verification-screens/02_ingame_turn_right_latest.ppm",
+      "verification-screens/03_ingame_move_forward_latest.ppm",
+      "verification-screens/04_ingame_spell_panel_latest.ppm",
+      "verification-screens/05_ingame_after_cast_latest.ppm",
+      "verification-screens/06_ingame_inventory_panel_latest.ppm",
+      "verification-screens/pass70-original-dm1-viewports/image0001-raw.png",
+      "verification-screens/pass70-original-dm1-viewports/image0002-raw.png",
+      "verification-screens/pass70-original-dm1-viewports/image0003-raw.png",
+      "verification-screens/pass70-original-dm1-viewports/image0004-raw.png",
+      "verification-screens/pass70-original-dm1-viewports/image0005-raw.png",
+      "verification-screens/pass70-original-dm1-viewports/image0006-raw.png"
+    ],
+    "recorded_pairs": 6,
+    "recorded_pass": true,
+    "recorded_problems": [],
+    "schema": "pass74_fullscreen_panel_pair_compare.v1"
+  },
+  "pass78_route_attempts": [
+    {
+      "all_gameplay_320x200": false,
+      "captures": [
+        {
+          "bytes": 1317,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga-exe/image0001-raw.png",
+          "height": 400,
+          "sha256": "d2038406f95df5e4557afb5724cab7f8d3911ad12b182c7135ed5e008b80bae3",
+          "width": 720
+        },
+        {
+          "bytes": 1330,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga-exe/image0002-raw.png",
+          "height": 400,
+          "sha256": "a976197474fada07c962c8db510bb354e0b468f3235ef9af2d54232f27de2601",
+          "width": 720
+        },
+        {
+          "bytes": 1317,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga-exe/image0003-raw.png",
+          "height": 400,
+          "sha256": "d2038406f95df5e4557afb5724cab7f8d3911ad12b182c7135ed5e008b80bae3",
+          "width": 720
+        },
+        {
+          "bytes": 1345,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga-exe/image0004-raw.png",
+          "height": 400,
+          "sha256": "7b28c9c1e6870e26184c139de3791d154f8a3d75bc61d73676edf381ea4a92e3",
+          "width": 720
+        },
+        {
+          "bytes": 1748,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga-exe/image0005-raw.png",
+          "height": 400,
+          "sha256": "0f5acc833d03b74e0d4ac7bdaf7619dc4f4d59205dff2c105f9d52448654a3aa",
+          "width": 720
+        },
+        {
+          "bytes": 1763,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga-exe/image0006-raw.png",
+          "height": 400,
+          "sha256": "e24942569d12f251e41c405d47aaef519992955e630363db098346a48ae46e60",
+          "width": 720
+        }
+      ],
+      "dimensions_seen": {
+        "720x400": 6
+      },
+      "path": "parity-evidence/overlays/pass78/pass78_program_vga_exe_prompt_blocker.json"
+    },
+    {
+      "all_gameplay_320x200": false,
+      "captures": [
+        {
+          "bytes": 9942,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga/image0001-raw.png",
+          "height": 400,
+          "sha256": "7a85a07aeb1a87484c1cbdbc05eeed2230f0c97cf97e222d9d8ec5acd36df3cc",
+          "width": 720
+        },
+        {
+          "bytes": 9956,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga/image0002-raw.png",
+          "height": 400,
+          "sha256": "f0cf0c33e8a03aa2d7318a871501435a2367c95c57f5c8b674daab21ce4786ef",
+          "width": 720
+        },
+        {
+          "bytes": 9956,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga/image0003-raw.png",
+          "height": 400,
+          "sha256": "f0cf0c33e8a03aa2d7318a871501435a2367c95c57f5c8b674daab21ce4786ef",
+          "width": 720
+        },
+        {
+          "bytes": 9959,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga/image0004-raw.png",
+          "height": 400,
+          "sha256": "baf621d44e1d730b77f986bd9208598e73c476496bdd1a95d64b0d9b02c1ef00",
+          "width": 720
+        },
+        {
+          "bytes": 10371,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga/image0005-raw.png",
+          "height": 400,
+          "sha256": "182e5873052b365ce89806ada21ca74cb385d10174d820ebdf71608d1f4d71e8",
+          "width": 720
+        },
+        {
+          "bytes": 10386,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-vga/image0006-raw.png",
+          "height": 400,
+          "sha256": "85566be37f242e57a0c8c90919c10a40b797b26647efa8368850ba82e5977eaf",
+          "width": 720
+        }
+      ],
+      "dimensions_seen": {
+        "720x400": 6
+      },
+      "path": "parity-evidence/overlays/pass78/pass78_program_vga_prompt_blocker.json"
+    },
+    {
+      "all_gameplay_320x200": false,
+      "captures": [
+        {
+          "bytes": 6457,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-target3/image0001-raw.png",
+          "height": 400,
+          "sha256": "de99ce0d86e2039756377ff09ac751858868f233f5881b852b078646e6fbdbcf",
+          "width": 720
+        },
+        {
+          "bytes": 6469,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-target3/image0002-raw.png",
+          "height": 400,
+          "sha256": "bb096ac28b9ad712ce8c6de59131f8f44a459fb94b888e70252ea43336268c3d",
+          "width": 720
+        },
+        {
+          "bytes": 6469,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-target3/image0003-raw.png",
+          "height": 400,
+          "sha256": "bb096ac28b9ad712ce8c6de59131f8f44a459fb94b888e70252ea43336268c3d",
+          "width": 720
+        },
+        {
+          "bytes": 6469,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-target3/image0004-raw.png",
+          "height": 400,
+          "sha256": "bb096ac28b9ad712ce8c6de59131f8f44a459fb94b888e70252ea43336268c3d",
+          "width": 720
+        },
+        {
+          "bytes": 6457,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-target3/image0005-raw.png",
+          "height": 400,
+          "sha256": "de99ce0d86e2039756377ff09ac751858868f233f5881b852b078646e6fbdbcf",
+          "width": 720
+        },
+        {
+          "bytes": 6486,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-target3/image0006-raw.png",
+          "height": 400,
+          "sha256": "cbbaac85ef502d90fb07030eca178d41b2234f046d741b6e0defa514d99ffde3",
+          "width": 720
+        }
+      ],
+      "dimensions_seen": {
+        "720x400": 6
+      },
+      "path": "parity-evidence/overlays/pass78/pass78_selector_blocker_target3.json"
+    },
+    {
+      "all_gameplay_320x200": false,
+      "captures": [
+        {
+          "bytes": 6544,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-v-key/image0001-raw.png",
+          "height": 400,
+          "sha256": "78bdaa04e30f4bc5fdf6fa7bf597b5c6d1842e29981cd1edc4d970b62054bba5",
+          "width": 720
+        },
+        {
+          "bytes": 6535,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-v-key/image0002-raw.png",
+          "height": 400,
+          "sha256": "2d0fcbdfa0eab0b462dcbdb17988a2549a362b152ad8589e00a9436e9bc80cb7",
+          "width": 720
+        },
+        {
+          "bytes": 6536,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-v-key/image0003-raw.png",
+          "height": 400,
+          "sha256": "eee59fc433c0c6efc69eeec475ba92ba8dc246938cf6496297f13577c1de56f3",
+          "width": 720
+        },
+        {
+          "bytes": 6536,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-v-key/image0004-raw.png",
+          "height": 400,
+          "sha256": "eee59fc433c0c6efc69eeec475ba92ba8dc246938cf6496297f13577c1de56f3",
+          "width": 720
+        },
+        {
+          "bytes": 6523,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-v-key/image0005-raw.png",
+          "height": 400,
+          "sha256": "8fde0655a753254afa83229f56ff03c311d37b4d84d8d884fc063d5ba26225f1",
+          "width": 720
+        },
+        {
+          "bytes": 6536,
+          "classification": "text_or_non_gameplay_blocker",
+          "file": "verification-screens/pass78-original-route-v-key/image0006-raw.png",
+          "height": 400,
+          "sha256": "eee59fc433c0c6efc69eeec475ba92ba8dc246938cf6496297f13577c1de56f3",
+          "width": 720
+        }
+      ],
+      "dimensions_seen": {
+        "720x400": 6
+      },
+      "path": "parity-evidence/overlays/pass78/pass78_selector_blocker_v_key.json"
+    }
+  ],
+  "ready_for_overlay_comparison": false,
+  "schema": "pass84_original_overlay_readiness_probe.v1"
+}
