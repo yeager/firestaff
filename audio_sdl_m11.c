@@ -610,7 +610,19 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMar
 #endif
     }
 
-    return M11_Audio_EmitMarker(state, fallbackMarker);
+    {
+        int result = M11_Audio_EmitMarker(state, fallbackMarker);
+        /* Preserve the source sound-event index even when playback has to fall
+         * back to a marker/no-audio path.  Direct marker emissions still clear
+         * lastSoundIndex in M11_Audio_EmitMarker(); this only applies to calls
+         * that reached the event-index seam.  It gives headless probes a stable
+         * ordering/identity breadcrumb without claiming original waveform or
+         * cadence parity. */
+        if (fallbackMarker > M11_AUDIO_MARKER_NONE && fallbackMarker < M11_AUDIO_MARKER_COUNT) {
+            state->lastSoundIndex = soundIndex;
+        }
+        return result;
+    }
 }
 
 int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
