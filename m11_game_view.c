@@ -15175,10 +15175,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                         M11_GFX_DAMAGE_TO_CHAMPION_SMALL);
                     if (dmgAsset && dmgAsset->width == 45 &&
                         dmgAsset->height == 7) {
-                        int dmgX = x + (67 - 45) / 2;
-                        int dmgY = y + (29 - 7) / 2;
+                        int dmgBaseW = !useV2PartyHud ? slotW : 67;
+                        int dmgBaseH = !useV2PartyHud ? slotH : 29;
+                        int dmgX = x + (dmgBaseW - (int)dmgAsset->width) / 2;
+                        int dmgY = y + (dmgBaseH - (int)dmgAsset->height) / 2;
                         M11_AssetLoader_BlitRegion(dmgAsset,
-                            0, 0, 45, 7,
+                            0, 0, (int)dmgAsset->width, (int)dmgAsset->height,
                             framebuffer, framebufferWidth, framebufferHeight,
                             dmgX, dmgY, 0);
                     }
@@ -15190,9 +15192,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     dmgStyle.color = M11_COLOR_WHITE;
                     snprintf(dmgNum, sizeof(dmgNum), "%d",
                              state->championDamageAmount[slot]);
+                    int dmgBaseW = !useV2PartyHud ? slotW : 67;
+                    int dmgBaseH = !useV2PartyHud ? slotH : 29;
                     m11_draw_text(framebuffer, framebufferWidth,
                                   framebufferHeight,
-                                  x + 67 / 2 - 4, y + 29 / 2 - 3,
+                                  x + dmgBaseW / 2 - 4,
+                                  y + dmgBaseH / 2 - 3,
                                   dmgNum, &dmgStyle);
                 }
             }
