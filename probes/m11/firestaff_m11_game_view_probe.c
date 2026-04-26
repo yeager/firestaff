@@ -630,6 +630,77 @@ int main(int argc, char** argv) {
                      "M11 mirror panel resurrect command recruits the selected champion");
         M11_GameView_Shutdown(&mirrorView);
     }
+    {
+        int vx = -1, vy = -1, vw = -1, vh = -1;
+        int zx = -1, zy = -1, zw = -1, zh = -1;
+        int px = -1, py = -1, pw = -1, ph = -1;
+        int gx = -1, gy = -1, gw = -1, gh = -1;
+        int iconGraphic = -1;
+        int iconX = -1, iconY = -1, iconW = -1, iconH = -1;
+        int objX = -1, objY = -1;
+        int projX = -1, projY = -1;
+        int creatureX = -1, creatureY = -1;
+
+        probe_record(&tally,
+                     "INV_GV_408",
+                     M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh) == 1 &&
+                         M11_GameView_GetV1ViewportZone(&zx, &zy, &zw, &zh) == 1 &&
+                         M11_GameView_GetV1ViewportZoneId() == 7 &&
+                         vx == PROBE_DM1_VIEWPORT_X && vy == PROBE_DM1_VIEWPORT_Y &&
+                         vw == PROBE_DM1_VIEWPORT_W && vh == PROBE_DM1_VIEWPORT_H &&
+                         zx == vx && zy == vy && zw == vw && zh == vh,
+                     "viewport source zone C007 is locked to the DM1 224x136 rectangle at screen origin 0,33");
+        probe_record(&tally,
+                     "INV_GV_409",
+                     M11_GameView_GetV1InventoryPanelGraphicId() == 20 &&
+                         M11_GameView_GetV1InventoryPanelZoneId() == 101 &&
+                         M11_GameView_GetV1InventoryPanelZone(&px, &py, &pw, &ph) == 1 &&
+                         px == 80 && py == 52 && pw == 144 && ph == 73,
+                     "inventory source panel seam is C020 graphic in layout-696 C101 at 80,52,144x73");
+        probe_record(&tally,
+                     "INV_GV_410",
+                     M11_GameView_GetV1SlotBoxNormalGraphicId() == 33 &&
+                         M11_GameView_GetV1SlotBoxWoundedGraphicId() == 34 &&
+                         M11_GameView_GetV1SlotBoxActingHandGraphicId() == 35 &&
+                         M11_GameView_GetV1StatusHandSlotBoxZone(0, 0, &gx, &gy, &gw, &gh) == 1 &&
+                         gw == 18 && gh == 18,
+                     "inventory/action slot-box graphics are source C033/C034/C035 and overhang 16x16 icon cells as 18x18 boxes");
+        probe_record(&tally,
+                     "INV_GV_411",
+                     M11_GameView_GetV1ObjectIconSourceZone(0, &iconGraphic,
+                                                            &iconX, &iconY,
+                                                            &iconW, &iconH) == 1 &&
+                         iconGraphic == 42 && iconX == 0 && iconY == 0 &&
+                         iconW == 16 && iconH == 16 &&
+                         M11_GameView_GetV1ObjectIconSourceZone(31, &iconGraphic,
+                                                                &iconX, &iconY,
+                                                                &iconW, &iconH) == 1 &&
+                         iconGraphic == 42 && iconX == 240 && iconY == 16 &&
+                         M11_GameView_GetV1ObjectIconSourceZone(32, &iconGraphic,
+                                                                &iconX, &iconY,
+                                                                &iconW, &iconH) == 1 &&
+                         iconGraphic == 43 && iconX == 0 && iconY == 0,
+                     "inventory object-icon atlas seam is 32 icons per GRAPHICS.DAT page, 16x16 source cells starting at graphic 42");
+        probe_record(&tally,
+                     "INV_GV_412",
+                     M11_GameView_MapV1ActionIconPaletteColor(12, 1) == PROBE_COLOR_LIGHT_CYAN &&
+                         M11_GameView_MapV1ActionIconPaletteColor(12, 0) == PROBE_COLOR_DARK_GRAY,
+                     "action-hand icons apply G0498 colour-12 cyan remap while inventory slot icons preserve source colour 12");
+        probe_record(&tally,
+                     "INV_GV_413",
+                     M11_GameView_GetC2500ObjectZonePoint(1, 3, &objX, &objY) == 1 &&
+                         M11_GameView_GetC3200CreatureZonePoint(1, 1, 2, 1,
+                                                               &creatureX, &creatureY) == 1 &&
+                         M11_GameView_GetC2900ProjectileZonePoint(1, 3,
+                                                                  &projX, &projY) == 1 &&
+                         objX >= 0 && objX < PROBE_DM1_VIEWPORT_W &&
+                         creatureX >= 0 && creatureX < PROBE_DM1_VIEWPORT_W &&
+                         projX >= 0 && projX < PROBE_DM1_VIEWPORT_W &&
+                         objY >= 0 && objY < PROBE_DM1_VIEWPORT_H &&
+                         creatureY >= 0 && creatureY < PROBE_DM1_VIEWPORT_H &&
+                         projY >= 0 && projY < PROBE_DM1_VIEWPORT_H,
+                     "viewport content placement seams expose source C2500 object, C3200 creature, and C2900 projectile points inside C007");
+    }
 
 
     memset(framebuffer, 0, sizeof(framebuffer));
