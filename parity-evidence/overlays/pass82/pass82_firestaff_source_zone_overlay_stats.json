@@ -1,0 +1,739 @@
+{
+  "schema": "pass82_firestaff_source_zone_overlay_probe.v1",
+  "honesty": "Evidence only. Static GRAPHICS.DAT anchor deltas are measurements, not parity claims; dynamic overlays and route/state differences must be interpreted against source.",
+  "frame_size": [
+    320,
+    200
+  ],
+  "source_anchor_provenance": "reference-artifacts/provenance.json",
+  "scenes": [
+    {
+      "index": "01",
+      "scene": "ingame_start",
+      "screenshot": "verification-screens/01_ingame_start_latest.png",
+      "screenshot_sha256": "17d9ca014a079d6153da3acaac5b82f45a88885c86bac9d059ce08a6af8287f4",
+      "overlay": "parity-evidence/overlays/pass82/01_ingame_start_source_zones_overlay.png",
+      "zones": [
+        {
+          "name": "viewport_C000",
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "source_reference": "C000_DERIVED_BITMAP_VIEWPORT; DEFS.H/COORD.C viewport aperture",
+          "crop": "parity-evidence/overlays/pass82/01_ingame_start_viewport_C000.png",
+          "crop_sha256": "68b4df029a8e34e3290af4e36c285b0d2ada4ff14dd0d2cdccdd8bbef9e562ac",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0000_viewport_full_frame.png",
+            "anchor_sha256": "1550997418e9b93ed4439fac9edcbe111da48ac412f5ea3140733a32f95b94fb",
+            "mask": "parity-evidence/overlays/pass82/01_ingame_start_viewport_C000_anchor_mask.png",
+            "differing_pixels": 28615,
+            "total_pixels": 30464,
+            "delta_percent": 93.9305,
+            "max_channel_delta": 219,
+            "mean_abs_delta_rgb": 66.1127
+          }
+        },
+        {
+          "name": "action_area_C010",
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "source_reference": "C010_GRAPHIC_MENU_ACTION_AREA; m11_game_view.c comment and DEFS-family graphic index",
+          "crop": "parity-evidence/overlays/pass82/01_ingame_start_action_area_C010.png",
+          "crop_sha256": "ac22d928f2a6c8fff8dd78a95db740f1f8bab1087b63b2d8050fd7682096f622",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0010_action_area.png",
+            "anchor_sha256": "0d13a614ad1f16a010543a5d1375d060c229e73f3f34c3efa33b1be4224ac7a2",
+            "mask": "parity-evidence/overlays/pass82/01_ingame_start_action_area_C010_anchor_mask.png",
+            "differing_pixels": 1012,
+            "total_pixels": 3915,
+            "delta_percent": 25.8493,
+            "max_channel_delta": 219,
+            "mean_abs_delta_rgb": 37.74
+          }
+        },
+        {
+          "name": "spell_area_C009",
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "source_reference": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (DEFS.H:1815)",
+          "crop": "parity-evidence/overlays/pass82/01_ingame_start_spell_area_C009.png",
+          "crop_sha256": "15e84026c218c475884b0b7a6f6f4c98a9c2d8430ed89815c315ddd837460498",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0009_spell_area_backdrop.png",
+            "anchor_sha256": "456032a7dca63ea1671113d58abe0b0f744a13895209b079a2db3aa556133715",
+            "mask": "parity-evidence/overlays/pass82/01_ingame_start_spell_area_C009_anchor_mask.png",
+            "differing_pixels": 781,
+            "total_pixels": 2175,
+            "delta_percent": 35.908,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 52.5218
+          }
+        },
+        {
+          "name": "right_column_action_spell",
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "source_reference": "Composite of C010 action area plus C009/C011 spell surface",
+          "crop": "parity-evidence/overlays/pass82/01_ingame_start_right_column_action_spell.png",
+          "crop_sha256": "d010e667ae68af45af9699c1d4aba929a21fc5665d1386e73178173d1aca09a7"
+        },
+        {
+          "name": "inventory_panel_C020",
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "source_reference": "C020_GRAPHIC_PANEL_EMPTY (DEFS.H:1780)",
+          "crop": "parity-evidence/overlays/pass82/01_ingame_start_inventory_panel_C020.png",
+          "crop_sha256": "ce98b531b2dc324f3ba1c2b3e9e2f5ef0cd519fa245fdda7624b815f71b958d7",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0020_panel_empty.png",
+            "anchor_sha256": "481ce587681dac98d3c1ac6909fcfb5b6815949875eecd695c7cec4553493d7e",
+            "mask": "parity-evidence/overlays/pass82/01_ingame_start_inventory_panel_C020_anchor_mask.png",
+            "differing_pixels": 7670,
+            "total_pixels": 10512,
+            "delta_percent": 72.9642,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 53.9784
+          }
+        },
+        {
+          "name": "message_area",
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "source_reference": "DM1 message/text line area from DUNVIEW/PANEL/TEXT layout reconstruction",
+          "crop": "parity-evidence/overlays/pass82/01_ingame_start_message_area.png",
+          "crop_sha256": "daa030d46fce214648273424550d05d18ef6e0bc56de43c40bf01bc18dc7e931"
+        }
+      ]
+    },
+    {
+      "index": "02",
+      "scene": "ingame_turn_right",
+      "screenshot": "verification-screens/02_ingame_turn_right_latest.png",
+      "screenshot_sha256": "7fc3c247699b367a75c67dea4914c277061790edd51f662107bf2f46b1f4de87",
+      "overlay": "parity-evidence/overlays/pass82/02_ingame_turn_right_source_zones_overlay.png",
+      "zones": [
+        {
+          "name": "viewport_C000",
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "source_reference": "C000_DERIVED_BITMAP_VIEWPORT; DEFS.H/COORD.C viewport aperture",
+          "crop": "parity-evidence/overlays/pass82/02_ingame_turn_right_viewport_C000.png",
+          "crop_sha256": "f6446591628751cecb6fcb04999e3e86ea1f067d6cd29946f7587963c14c7910",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0000_viewport_full_frame.png",
+            "anchor_sha256": "1550997418e9b93ed4439fac9edcbe111da48ac412f5ea3140733a32f95b94fb",
+            "mask": "parity-evidence/overlays/pass82/02_ingame_turn_right_viewport_C000_anchor_mask.png",
+            "differing_pixels": 28975,
+            "total_pixels": 30464,
+            "delta_percent": 95.1123,
+            "max_channel_delta": 219,
+            "mean_abs_delta_rgb": 68.0282
+          }
+        },
+        {
+          "name": "action_area_C010",
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "source_reference": "C010_GRAPHIC_MENU_ACTION_AREA; m11_game_view.c comment and DEFS-family graphic index",
+          "crop": "parity-evidence/overlays/pass82/02_ingame_turn_right_action_area_C010.png",
+          "crop_sha256": "ac22d928f2a6c8fff8dd78a95db740f1f8bab1087b63b2d8050fd7682096f622",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0010_action_area.png",
+            "anchor_sha256": "0d13a614ad1f16a010543a5d1375d060c229e73f3f34c3efa33b1be4224ac7a2",
+            "mask": "parity-evidence/overlays/pass82/02_ingame_turn_right_action_area_C010_anchor_mask.png",
+            "differing_pixels": 1012,
+            "total_pixels": 3915,
+            "delta_percent": 25.8493,
+            "max_channel_delta": 219,
+            "mean_abs_delta_rgb": 37.74
+          }
+        },
+        {
+          "name": "spell_area_C009",
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "source_reference": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (DEFS.H:1815)",
+          "crop": "parity-evidence/overlays/pass82/02_ingame_turn_right_spell_area_C009.png",
+          "crop_sha256": "15e84026c218c475884b0b7a6f6f4c98a9c2d8430ed89815c315ddd837460498",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0009_spell_area_backdrop.png",
+            "anchor_sha256": "456032a7dca63ea1671113d58abe0b0f744a13895209b079a2db3aa556133715",
+            "mask": "parity-evidence/overlays/pass82/02_ingame_turn_right_spell_area_C009_anchor_mask.png",
+            "differing_pixels": 781,
+            "total_pixels": 2175,
+            "delta_percent": 35.908,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 52.5218
+          }
+        },
+        {
+          "name": "right_column_action_spell",
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "source_reference": "Composite of C010 action area plus C009/C011 spell surface",
+          "crop": "parity-evidence/overlays/pass82/02_ingame_turn_right_right_column_action_spell.png",
+          "crop_sha256": "d010e667ae68af45af9699c1d4aba929a21fc5665d1386e73178173d1aca09a7"
+        },
+        {
+          "name": "inventory_panel_C020",
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "source_reference": "C020_GRAPHIC_PANEL_EMPTY (DEFS.H:1780)",
+          "crop": "parity-evidence/overlays/pass82/02_ingame_turn_right_inventory_panel_C020.png",
+          "crop_sha256": "ce98b531b2dc324f3ba1c2b3e9e2f5ef0cd519fa245fdda7624b815f71b958d7",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0020_panel_empty.png",
+            "anchor_sha256": "481ce587681dac98d3c1ac6909fcfb5b6815949875eecd695c7cec4553493d7e",
+            "mask": "parity-evidence/overlays/pass82/02_ingame_turn_right_inventory_panel_C020_anchor_mask.png",
+            "differing_pixels": 7670,
+            "total_pixels": 10512,
+            "delta_percent": 72.9642,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 53.9784
+          }
+        },
+        {
+          "name": "message_area",
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "source_reference": "DM1 message/text line area from DUNVIEW/PANEL/TEXT layout reconstruction",
+          "crop": "parity-evidence/overlays/pass82/02_ingame_turn_right_message_area.png",
+          "crop_sha256": "976ac7105be7e96be978a5b3ee2af42a9d05ba1ba4e9a746fe8dd19eb1ff74e8"
+        }
+      ]
+    },
+    {
+      "index": "03",
+      "scene": "ingame_move_forward",
+      "screenshot": "verification-screens/03_ingame_move_forward_latest.png",
+      "screenshot_sha256": "790ba08deba4c51f3c18c06059f49173d0229c6196d581ef8ed75b93cea7c281",
+      "overlay": "parity-evidence/overlays/pass82/03_ingame_move_forward_source_zones_overlay.png",
+      "zones": [
+        {
+          "name": "viewport_C000",
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "source_reference": "C000_DERIVED_BITMAP_VIEWPORT; DEFS.H/COORD.C viewport aperture",
+          "crop": "parity-evidence/overlays/pass82/03_ingame_move_forward_viewport_C000.png",
+          "crop_sha256": "2d796ee923ac44b99880b4bd4201cbeeaab05f5905c0f42f7f156894eb474561",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0000_viewport_full_frame.png",
+            "anchor_sha256": "1550997418e9b93ed4439fac9edcbe111da48ac412f5ea3140733a32f95b94fb",
+            "mask": "parity-evidence/overlays/pass82/03_ingame_move_forward_viewport_C000_anchor_mask.png",
+            "differing_pixels": 28632,
+            "total_pixels": 30464,
+            "delta_percent": 93.9863,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 72.8069
+          }
+        },
+        {
+          "name": "action_area_C010",
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "source_reference": "C010_GRAPHIC_MENU_ACTION_AREA; m11_game_view.c comment and DEFS-family graphic index",
+          "crop": "parity-evidence/overlays/pass82/03_ingame_move_forward_action_area_C010.png",
+          "crop_sha256": "ac22d928f2a6c8fff8dd78a95db740f1f8bab1087b63b2d8050fd7682096f622",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0010_action_area.png",
+            "anchor_sha256": "0d13a614ad1f16a010543a5d1375d060c229e73f3f34c3efa33b1be4224ac7a2",
+            "mask": "parity-evidence/overlays/pass82/03_ingame_move_forward_action_area_C010_anchor_mask.png",
+            "differing_pixels": 1012,
+            "total_pixels": 3915,
+            "delta_percent": 25.8493,
+            "max_channel_delta": 219,
+            "mean_abs_delta_rgb": 37.74
+          }
+        },
+        {
+          "name": "spell_area_C009",
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "source_reference": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (DEFS.H:1815)",
+          "crop": "parity-evidence/overlays/pass82/03_ingame_move_forward_spell_area_C009.png",
+          "crop_sha256": "15e84026c218c475884b0b7a6f6f4c98a9c2d8430ed89815c315ddd837460498",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0009_spell_area_backdrop.png",
+            "anchor_sha256": "456032a7dca63ea1671113d58abe0b0f744a13895209b079a2db3aa556133715",
+            "mask": "parity-evidence/overlays/pass82/03_ingame_move_forward_spell_area_C009_anchor_mask.png",
+            "differing_pixels": 781,
+            "total_pixels": 2175,
+            "delta_percent": 35.908,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 52.5218
+          }
+        },
+        {
+          "name": "right_column_action_spell",
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "source_reference": "Composite of C010 action area plus C009/C011 spell surface",
+          "crop": "parity-evidence/overlays/pass82/03_ingame_move_forward_right_column_action_spell.png",
+          "crop_sha256": "d010e667ae68af45af9699c1d4aba929a21fc5665d1386e73178173d1aca09a7"
+        },
+        {
+          "name": "inventory_panel_C020",
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "source_reference": "C020_GRAPHIC_PANEL_EMPTY (DEFS.H:1780)",
+          "crop": "parity-evidence/overlays/pass82/03_ingame_move_forward_inventory_panel_C020.png",
+          "crop_sha256": "9edd90c1872a9d82ee731c41e1026a407818ec0229dc84edf7238af9f71bb6b7",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0020_panel_empty.png",
+            "anchor_sha256": "481ce587681dac98d3c1ac6909fcfb5b6815949875eecd695c7cec4553493d7e",
+            "mask": "parity-evidence/overlays/pass82/03_ingame_move_forward_inventory_panel_C020_anchor_mask.png",
+            "differing_pixels": 10326,
+            "total_pixels": 10512,
+            "delta_percent": 98.2306,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 73.1436
+          }
+        },
+        {
+          "name": "message_area",
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "source_reference": "DM1 message/text line area from DUNVIEW/PANEL/TEXT layout reconstruction",
+          "crop": "parity-evidence/overlays/pass82/03_ingame_move_forward_message_area.png",
+          "crop_sha256": "976ac7105be7e96be978a5b3ee2af42a9d05ba1ba4e9a746fe8dd19eb1ff74e8"
+        }
+      ]
+    },
+    {
+      "index": "04",
+      "scene": "ingame_spell_panel",
+      "screenshot": "verification-screens/04_ingame_spell_panel_latest.png",
+      "screenshot_sha256": "9693437bd37b8acf02f8d94a396f88251dfd565751f9a7042d1d587a57e3065a",
+      "overlay": "parity-evidence/overlays/pass82/04_ingame_spell_panel_source_zones_overlay.png",
+      "zones": [
+        {
+          "name": "viewport_C000",
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "source_reference": "C000_DERIVED_BITMAP_VIEWPORT; DEFS.H/COORD.C viewport aperture",
+          "crop": "parity-evidence/overlays/pass82/04_ingame_spell_panel_viewport_C000.png",
+          "crop_sha256": "2d796ee923ac44b99880b4bd4201cbeeaab05f5905c0f42f7f156894eb474561",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0000_viewport_full_frame.png",
+            "anchor_sha256": "1550997418e9b93ed4439fac9edcbe111da48ac412f5ea3140733a32f95b94fb",
+            "mask": "parity-evidence/overlays/pass82/04_ingame_spell_panel_viewport_C000_anchor_mask.png",
+            "differing_pixels": 28632,
+            "total_pixels": 30464,
+            "delta_percent": 93.9863,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 72.8069
+          }
+        },
+        {
+          "name": "action_area_C010",
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "source_reference": "C010_GRAPHIC_MENU_ACTION_AREA; m11_game_view.c comment and DEFS-family graphic index",
+          "crop": "parity-evidence/overlays/pass82/04_ingame_spell_panel_action_area_C010.png",
+          "crop_sha256": "8da2948e138c3bcd4fdd7e9b477e20579f87457c1ea4a29cce1fbd058c9df301",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0010_action_area.png",
+            "anchor_sha256": "0d13a614ad1f16a010543a5d1375d060c229e73f3f34c3efa33b1be4224ac7a2",
+            "mask": "parity-evidence/overlays/pass82/04_ingame_spell_panel_action_area_C010_anchor_mask.png",
+            "differing_pixels": 1614,
+            "total_pixels": 3915,
+            "delta_percent": 41.2261,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 58.0941
+          }
+        },
+        {
+          "name": "spell_area_C009",
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "source_reference": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (DEFS.H:1815)",
+          "crop": "parity-evidence/overlays/pass82/04_ingame_spell_panel_spell_area_C009.png",
+          "crop_sha256": "15e84026c218c475884b0b7a6f6f4c98a9c2d8430ed89815c315ddd837460498",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0009_spell_area_backdrop.png",
+            "anchor_sha256": "456032a7dca63ea1671113d58abe0b0f744a13895209b079a2db3aa556133715",
+            "mask": "parity-evidence/overlays/pass82/04_ingame_spell_panel_spell_area_C009_anchor_mask.png",
+            "differing_pixels": 781,
+            "total_pixels": 2175,
+            "delta_percent": 35.908,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 52.5218
+          }
+        },
+        {
+          "name": "right_column_action_spell",
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "source_reference": "Composite of C010 action area plus C009/C011 spell surface",
+          "crop": "parity-evidence/overlays/pass82/04_ingame_spell_panel_right_column_action_spell.png",
+          "crop_sha256": "2d9d4914034876739ebbbf5fb3921958dddffeff1e2336a43906de472d733bea"
+        },
+        {
+          "name": "inventory_panel_C020",
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "source_reference": "C020_GRAPHIC_PANEL_EMPTY (DEFS.H:1780)",
+          "crop": "parity-evidence/overlays/pass82/04_ingame_spell_panel_inventory_panel_C020.png",
+          "crop_sha256": "9edd90c1872a9d82ee731c41e1026a407818ec0229dc84edf7238af9f71bb6b7",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0020_panel_empty.png",
+            "anchor_sha256": "481ce587681dac98d3c1ac6909fcfb5b6815949875eecd695c7cec4553493d7e",
+            "mask": "parity-evidence/overlays/pass82/04_ingame_spell_panel_inventory_panel_C020_anchor_mask.png",
+            "differing_pixels": 10326,
+            "total_pixels": 10512,
+            "delta_percent": 98.2306,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 73.1436
+          }
+        },
+        {
+          "name": "message_area",
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "source_reference": "DM1 message/text line area from DUNVIEW/PANEL/TEXT layout reconstruction",
+          "crop": "parity-evidence/overlays/pass82/04_ingame_spell_panel_message_area.png",
+          "crop_sha256": "976ac7105be7e96be978a5b3ee2af42a9d05ba1ba4e9a746fe8dd19eb1ff74e8"
+        }
+      ]
+    },
+    {
+      "index": "05",
+      "scene": "ingame_after_cast",
+      "screenshot": "verification-screens/05_ingame_after_cast_latest.png",
+      "screenshot_sha256": "36cd18c5157b81268f44dcb61b465548f951fabbb62c4570cd639b486dc8f765",
+      "overlay": "parity-evidence/overlays/pass82/05_ingame_after_cast_source_zones_overlay.png",
+      "zones": [
+        {
+          "name": "viewport_C000",
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "source_reference": "C000_DERIVED_BITMAP_VIEWPORT; DEFS.H/COORD.C viewport aperture",
+          "crop": "parity-evidence/overlays/pass82/05_ingame_after_cast_viewport_C000.png",
+          "crop_sha256": "2d796ee923ac44b99880b4bd4201cbeeaab05f5905c0f42f7f156894eb474561",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0000_viewport_full_frame.png",
+            "anchor_sha256": "1550997418e9b93ed4439fac9edcbe111da48ac412f5ea3140733a32f95b94fb",
+            "mask": "parity-evidence/overlays/pass82/05_ingame_after_cast_viewport_C000_anchor_mask.png",
+            "differing_pixels": 28632,
+            "total_pixels": 30464,
+            "delta_percent": 93.9863,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 72.8069
+          }
+        },
+        {
+          "name": "action_area_C010",
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "source_reference": "C010_GRAPHIC_MENU_ACTION_AREA; m11_game_view.c comment and DEFS-family graphic index",
+          "crop": "parity-evidence/overlays/pass82/05_ingame_after_cast_action_area_C010.png",
+          "crop_sha256": "ac22d928f2a6c8fff8dd78a95db740f1f8bab1087b63b2d8050fd7682096f622",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0010_action_area.png",
+            "anchor_sha256": "0d13a614ad1f16a010543a5d1375d060c229e73f3f34c3efa33b1be4224ac7a2",
+            "mask": "parity-evidence/overlays/pass82/05_ingame_after_cast_action_area_C010_anchor_mask.png",
+            "differing_pixels": 1012,
+            "total_pixels": 3915,
+            "delta_percent": 25.8493,
+            "max_channel_delta": 219,
+            "mean_abs_delta_rgb": 37.74
+          }
+        },
+        {
+          "name": "spell_area_C009",
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "source_reference": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (DEFS.H:1815)",
+          "crop": "parity-evidence/overlays/pass82/05_ingame_after_cast_spell_area_C009.png",
+          "crop_sha256": "15e84026c218c475884b0b7a6f6f4c98a9c2d8430ed89815c315ddd837460498",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0009_spell_area_backdrop.png",
+            "anchor_sha256": "456032a7dca63ea1671113d58abe0b0f744a13895209b079a2db3aa556133715",
+            "mask": "parity-evidence/overlays/pass82/05_ingame_after_cast_spell_area_C009_anchor_mask.png",
+            "differing_pixels": 781,
+            "total_pixels": 2175,
+            "delta_percent": 35.908,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 52.5218
+          }
+        },
+        {
+          "name": "right_column_action_spell",
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "source_reference": "Composite of C010 action area plus C009/C011 spell surface",
+          "crop": "parity-evidence/overlays/pass82/05_ingame_after_cast_right_column_action_spell.png",
+          "crop_sha256": "d010e667ae68af45af9699c1d4aba929a21fc5665d1386e73178173d1aca09a7"
+        },
+        {
+          "name": "inventory_panel_C020",
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "source_reference": "C020_GRAPHIC_PANEL_EMPTY (DEFS.H:1780)",
+          "crop": "parity-evidence/overlays/pass82/05_ingame_after_cast_inventory_panel_C020.png",
+          "crop_sha256": "9edd90c1872a9d82ee731c41e1026a407818ec0229dc84edf7238af9f71bb6b7",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0020_panel_empty.png",
+            "anchor_sha256": "481ce587681dac98d3c1ac6909fcfb5b6815949875eecd695c7cec4553493d7e",
+            "mask": "parity-evidence/overlays/pass82/05_ingame_after_cast_inventory_panel_C020_anchor_mask.png",
+            "differing_pixels": 10326,
+            "total_pixels": 10512,
+            "delta_percent": 98.2306,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 73.1436
+          }
+        },
+        {
+          "name": "message_area",
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "source_reference": "DM1 message/text line area from DUNVIEW/PANEL/TEXT layout reconstruction",
+          "crop": "parity-evidence/overlays/pass82/05_ingame_after_cast_message_area.png",
+          "crop_sha256": "976ac7105be7e96be978a5b3ee2af42a9d05ba1ba4e9a746fe8dd19eb1ff74e8"
+        }
+      ]
+    },
+    {
+      "index": "06",
+      "scene": "ingame_inventory_panel",
+      "screenshot": "verification-screens/06_ingame_inventory_panel_latest.png",
+      "screenshot_sha256": "942f56b68325fd108066a4a357a2d624f0801b9323b832fec2f3ba965ff8e908",
+      "overlay": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_source_zones_overlay.png",
+      "zones": [
+        {
+          "name": "viewport_C000",
+          "xywh": [
+            0,
+            33,
+            224,
+            136
+          ],
+          "source_reference": "C000_DERIVED_BITMAP_VIEWPORT; DEFS.H/COORD.C viewport aperture",
+          "crop": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_viewport_C000.png",
+          "crop_sha256": "bb1c86d2a93a7e3079f7c8c5ec01e58663369b24be2726ad22f6819973baa62c",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0000_viewport_full_frame.png",
+            "anchor_sha256": "1550997418e9b93ed4439fac9edcbe111da48ac412f5ea3140733a32f95b94fb",
+            "mask": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_viewport_C000_anchor_mask.png",
+            "differing_pixels": 28619,
+            "total_pixels": 30464,
+            "delta_percent": 93.9437,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 47.4635
+          }
+        },
+        {
+          "name": "action_area_C010",
+          "xywh": [
+            224,
+            45,
+            87,
+            45
+          ],
+          "source_reference": "C010_GRAPHIC_MENU_ACTION_AREA; m11_game_view.c comment and DEFS-family graphic index",
+          "crop": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_action_area_C010.png",
+          "crop_sha256": "ac22d928f2a6c8fff8dd78a95db740f1f8bab1087b63b2d8050fd7682096f622",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0010_action_area.png",
+            "anchor_sha256": "0d13a614ad1f16a010543a5d1375d060c229e73f3f34c3efa33b1be4224ac7a2",
+            "mask": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_action_area_C010_anchor_mask.png",
+            "differing_pixels": 1012,
+            "total_pixels": 3915,
+            "delta_percent": 25.8493,
+            "max_channel_delta": 219,
+            "mean_abs_delta_rgb": 37.74
+          }
+        },
+        {
+          "name": "spell_area_C009",
+          "xywh": [
+            224,
+            90,
+            87,
+            25
+          ],
+          "source_reference": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (DEFS.H:1815)",
+          "crop": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_spell_area_C009.png",
+          "crop_sha256": "15e84026c218c475884b0b7a6f6f4c98a9c2d8430ed89815c315ddd837460498",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0009_spell_area_backdrop.png",
+            "anchor_sha256": "456032a7dca63ea1671113d58abe0b0f744a13895209b079a2db3aa556133715",
+            "mask": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_spell_area_C009_anchor_mask.png",
+            "differing_pixels": 781,
+            "total_pixels": 2175,
+            "delta_percent": 35.908,
+            "max_channel_delta": 255,
+            "mean_abs_delta_rgb": 52.5218
+          }
+        },
+        {
+          "name": "right_column_action_spell",
+          "xywh": [
+            224,
+            45,
+            87,
+            70
+          ],
+          "source_reference": "Composite of C010 action area plus C009/C011 spell surface",
+          "crop": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_right_column_action_spell.png",
+          "crop_sha256": "d010e667ae68af45af9699c1d4aba929a21fc5665d1386e73178173d1aca09a7"
+        },
+        {
+          "name": "inventory_panel_C020",
+          "xywh": [
+            80,
+            53,
+            144,
+            73
+          ],
+          "source_reference": "C020_GRAPHIC_PANEL_EMPTY (DEFS.H:1780)",
+          "crop": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_inventory_panel_C020.png",
+          "crop_sha256": "08e387d5e0b698f9613055f378728be841b99f97eee6d1202fc61f50f454d693",
+          "anchor_compare": {
+            "anchor": "reference-artifacts/anchors/0020_panel_empty.png",
+            "anchor_sha256": "481ce587681dac98d3c1ac6909fcfb5b6815949875eecd695c7cec4553493d7e",
+            "mask": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_inventory_panel_C020_anchor_mask.png",
+            "differing_pixels": 1649,
+            "total_pixels": 10512,
+            "delta_percent": 15.6868,
+            "max_channel_delta": 182,
+            "mean_abs_delta_rgb": 11.6498
+          }
+        },
+        {
+          "name": "message_area",
+          "xywh": [
+            0,
+            169,
+            224,
+            31
+          ],
+          "source_reference": "DM1 message/text line area from DUNVIEW/PANEL/TEXT layout reconstruction",
+          "crop": "parity-evidence/overlays/pass82/06_ingame_inventory_panel_message_area.png",
+          "crop_sha256": "976ac7105be7e96be978a5b3ee2af42a9d05ba1ba4e9a746fe8dd19eb1ff74e8"
+        }
+      ]
+    }
+  ],
+  "problems": [],
+  "pass": true
+}

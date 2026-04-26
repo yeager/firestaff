@@ -84,7 +84,9 @@ cc $CFLAGS_COMMON \
 
 FIRESTAFF_DATA="$DATA_DIR" "$CAPTURE_BIN" "$OUT_DIR" "$DATA_DIR"
 
-# Convert PPM to PNG if convert/magick available
+# Convert PPM to PNG for reviewable evidence.  Prefer ImageMagick when it is
+# present, but fall back to Pillow so clean macOS worktrees still get the
+# normalized PNG screenshots used by the source-zone overlay probes.
 for ppm in "$OUT_DIR"/*_latest.ppm "$OUT_DIR"/*_viewport_224x136.ppm; do
     [ -f "$ppm" ] || continue
     png="${ppm%.ppm}.png"
@@ -92,6 +94,12 @@ for ppm in "$OUT_DIR"/*_latest.ppm "$OUT_DIR"/*_viewport_224x136.ppm; do
         magick "$ppm" "$png" 2>/dev/null || true
     elif command -v convert >/dev/null 2>&1; then
         convert "$ppm" "$png" 2>/dev/null || true
+    else
+        python3 - "$ppm" "$png" <<'PY' || true
+import sys
+from PIL import Image
+Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2], optimize=True)
+PY
     fi
 done
 
