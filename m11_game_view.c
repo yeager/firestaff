@@ -522,17 +522,19 @@ static void m11_draw_text_centered_in_rect(unsigned char* framebuffer,
 
 static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
     enum {
-        C469_TOP = 49,
-        C469_BOTTOM = 73,
         SOURCE_TEXT_HEIGHT = 6,
         SOURCE_TEXT_PAD = 1,
         SOURCE_TEXT_BASELINE = 6,
         SOURCE_LINE_STEP = 8
     };
-    int zoneH = (C469_BOTTOM - C469_TOP) + 1;
+    int zoneX, zoneY, zoneW, zoneH;
     int count = lineCount < 1 ? 1 : lineCount;
     int block = count * (SOURCE_TEXT_HEIGHT + (SOURCE_TEXT_PAD * 2) - 1 + 1);
-    int relativeY = C469_TOP + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
+    int relativeY;
+    (void)M11_GameView_GetV1DialogMessageZone(1, &zoneX, &zoneY, &zoneW, &zoneH);
+    (void)zoneX;
+    (void)zoneW;
+    relativeY = zoneY + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
                     SOURCE_TEXT_BASELINE - 1;
     (void)SOURCE_LINE_STEP;
     return M11_VIEWPORT_Y + relativeY;
@@ -540,16 +542,18 @@ static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
 
 static int m11_dialog_source_c471_text_y_for_lines(int lineCount) {
     enum {
-        C471_TOP = 32,
-        C471_BOTTOM = 36,
         SOURCE_TEXT_HEIGHT = 6,
         SOURCE_TEXT_PAD = 1,
         SOURCE_TEXT_BASELINE = 6
     };
-    int zoneH = (C471_BOTTOM - C471_TOP) + 1;
+    int zoneX, zoneY, zoneW, zoneH;
     int count = lineCount < 1 ? 1 : lineCount;
     int block = count * (SOURCE_TEXT_HEIGHT + (SOURCE_TEXT_PAD * 2) - 1 + 1);
-    int relativeY = C471_TOP + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
+    int relativeY;
+    (void)M11_GameView_GetV1DialogMessageZone(2, &zoneX, &zoneY, &zoneW, &zoneH);
+    (void)zoneX;
+    (void)zoneW;
+    relativeY = zoneY + ((zoneH - (block - (SOURCE_TEXT_PAD * 2))) / 2) +
                     SOURCE_TEXT_BASELINE - 1;
     return M11_VIEWPORT_Y + relativeY;
 }
@@ -562,11 +566,30 @@ int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount) {
     return m11_dialog_source_c471_text_y_for_lines(lineCount);
 }
 
+int M11_GameView_GetV1DialogMessageZone(int choiceCount,
+                                         int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH) {
+    int x, y, w, h;
+    if (choiceCount > 1) {
+        /* C471_ZONE_DIALOG: parent C470 bottom/right (188,36), child top/left (112,32). */
+        x = 112; y = 32; w = 77; h = 5;
+    } else {
+        /* C469_ZONE_DIALOG: parent C468 bottom/right (188,73), child top/left (112,49). */
+        x = 112; y = 49; w = 77; h = 25;
+    }
+    if (outX) *outX = x;
+    if (outY) *outY = y;
+    if (outW) *outW = w;
+    if (outH) *outH = h;
+    return 1;
+}
+
 int M11_GameView_GetV1DialogMessageWidth(int choiceCount) {
-    (void)choiceCount;
-    /* C469 and C471 both resolve to a 77 px source message band in the
-     * recovered layout (center x=112, right edge=188). */
-    return 77;
+    int w = 0;
+    (void)M11_GameView_GetV1DialogMessageZone(choiceCount, NULL, NULL, &w, NULL);
+    return w;
 }
 
 int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,

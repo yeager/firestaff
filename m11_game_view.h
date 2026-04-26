@@ -814,6 +814,11 @@ int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
                                              int* outH,
                                              int* outDstX,
                                              int* outDstY);
+int M11_GameView_GetV1DialogMessageZone(int choiceCount,
+                                          int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH);
 int M11_GameView_GetV1DialogMessageWidth(int choiceCount);
 int M11_GameView_GetV1DialogSingleChoiceMessageTextY(int lineCount);
 int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount);

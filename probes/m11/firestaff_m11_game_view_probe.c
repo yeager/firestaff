@@ -8026,14 +8026,20 @@ int main(int argc, char** argv) {
         }
 
         {
+            int c469x, c469y, c469w, c469h;
+            int c471x, c471y, c471w, c471h;
             probe_record(&tally, "INV_GV_300Z",
-                         M11_GameView_GetV1DialogMessageWidth(1) == 77 &&
+                         M11_GameView_GetV1DialogMessageZone(1, &c469x, &c469y, &c469w, &c469h) &&
+                             c469x == 112 && c469y == 49 && c469w == 77 && c469h == 25 &&
+                             M11_GameView_GetV1DialogMessageZone(4, &c471x, &c471y, &c471w, &c471h) &&
+                             c471x == 112 && c471y == 32 && c471w == 77 && c471h == 5 &&
+                             M11_GameView_GetV1DialogMessageWidth(1) == 77 &&
                              M11_GameView_GetV1DialogMessageWidth(4) == 77 &&
                              M11_GameView_GetV1DialogSingleChoiceMessageTextY(1) == 96 &&
                              M11_GameView_GetV1DialogSingleChoiceMessageTextY(2) == 92 &&
                              M11_GameView_GetV1DialogMultiChoiceMessageTextY(1) == 70 &&
                              M11_GameView_GetV1DialogMultiChoiceMessageTextY(2) == 66,
-                         "V1 dialog message width and vertical origins use source C469/C471 zones");
+                         "V1 dialog message zones and vertical origins use source C469/C471 geometry");
         }
 
         {
