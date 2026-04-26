@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firestaff.example/schemas/assets-v2/asset-pack.schema.json",
+  "title": "Firestaff assets-v2 asset pack manifest",
+  "description": "Checksum-addressed V2 asset manifest for one game/track pack or a shared pack.",
+  "type": "object",
+  "required": [
+    "manifestVersion",
+    "packId",
+    "game",
+    "track",
+    "contentAddressing",
+    "assets"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "description": "Schema-facing manifest version for tooling migrations.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "packId": {
+      "description": "Stable identifier for this pack.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "description": { "type": "string" },
+    "game": {
+      "description": "Game or shared scope for the manifest.",
+      "type": "string",
+      "enum": ["dm1", "csb", "dm2", "shared"]
+    },
+    "track": {
+      "description": "V2 presentation track selected by this manifest.",
+      "type": "string",
+      "enum": [
+        "v2.0-original",
+        "v2.1-upscaled-4k",
+        "v2.1-upscaled-1080p",
+        "v2.2-enhanced"
+      ]
+    },
+    "targetResolution": {
+      "description": "Optional intended output/master target for this pack.",
+      "type": "string",
+      "enum": ["original", "1080p", "4k", "mixed"]
+    },
+    "contentAddressing": {
+      "type": "object",
+      "required": ["algorithm", "storeRoot", "sharding"],
+      "properties": {
+        "algorithm": { "type": "string", "const": "sha256" },
+        "storeRoot": { "type": "string", "const": "assets-v2/store/sha256" },
+        "sharding": {
+          "description": "How blobs are placed below storeRoot.",
+          "type": "string",
+          "const": "first-byte-prefix"
+        }
+      },
+      "additionalProperties": false
+    },
+    "basePacks": {
+      "description": "Optional pack IDs resolved before this pack; later entries override earlier logical IDs.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+      },
+      "uniqueItems": true
+    },
+    "catalogRefs": {
+      "description": "Optional repository-relative catalog files used to define legal logical IDs.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^assets-v2/catalog/.+\\.json$"
+      },
+      "uniqueItems": true
+    },
+    "assets": {
+      "description": "Logical asset bindings for this pack. Each entry names a checksum-addressed blob.",
+      "type": "array",
+      "items": { "$ref": "asset-entry.schema.json" },
+      "uniqueItems": true
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
