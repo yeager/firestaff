@@ -13937,6 +13937,23 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_H       9
 #define M11_DM_ACTION_MENU_TEXT_X    226
 
+int M11_GameView_GetV1ViewportZoneId(void) {
+    /* Source layout-696 C007_ZONE_VIEWPORT. */
+    return 7;
+}
+
+int M11_GameView_GetV1ViewportZone(int* outX,
+                                   int* outY,
+                                   int* outW,
+                                   int* outH) {
+    if (!M11_GameView_GetV1ViewportZoneId()) return 0;
+    if (outX) *outX = M11_VIEWPORT_X;
+    if (outY) *outY = M11_VIEWPORT_Y;
+    if (outW) *outW = M11_VIEWPORT_W;
+    if (outH) *outH = M11_VIEWPORT_H;
+    return 1;
+}
+
 int M11_GameView_GetV1LeaderHandObjectNameZoneId(void) {
     /* Source layout-696 C017_ZONE_LEADER_HAND_OBJECT_NAME. */
     return 17;
@@ -14124,6 +14141,27 @@ int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
 
 int M11_GameView_GetV1ChampionIconGraphicId(void) {
     return M11_GFX_CHAMPION_ICONS;
+}
+
+int M11_GameView_GetV1ChampionIconZoneId(int championSlot) {
+    /* Source layout-696 C113..C116 champion icon click zones. */
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 113 + championSlot;
+}
+
+int M11_GameView_GetV1ChampionIconZone(int championSlot,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    static const int xs[CHAMPION_MAX_PARTY] = { 281, 301, 301, 281 };
+    static const int ys[CHAMPION_MAX_PARTY] = { 0, 0, 15, 15 };
+    if (!M11_GameView_GetV1ChampionIconZoneId(championSlot)) return 0;
+    if (outX) *outX = xs[championSlot];
+    if (outY) *outY = ys[championSlot];
+    if (outW) *outW = 16;
+    if (outH) *outH = 14;
+    return 1;
 }
 
 int M11_GameView_GetV1InventoryPanelGraphicId(void) {

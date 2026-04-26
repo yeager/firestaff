@@ -7951,6 +7951,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            int viewportX, viewportY, viewportW, viewportH;
+            probe_record(&tally, "INV_GV_300AJ",
+                         M11_GameView_GetV1ViewportZoneId() == 7 &&
+                             M11_GameView_GetV1ViewportZone(&viewportX, &viewportY, &viewportW, &viewportH) &&
+                             viewportX == 0 && viewportY == 33 && viewportW == 224 && viewportH == 136,
+                         "viewport zone exposes layout-696 C007 id and DM1 PC geometry");
+        }
+
+        {
             int nameX, nameY, nameW, nameH;
             probe_record(&tally, "INV_GV_300AH",
                          M11_GameView_GetV1LeaderHandObjectNameZoneId() == 17 &&
@@ -8064,6 +8073,21 @@ int main(int argc, char** argv) {
                          M11_GameView_GetV1ChampionPortraitGraphicId() == 26 &&
                              M11_GameView_GetV1ChampionIconGraphicId() == 28,
                          "V1 champion identity graphics use source C026 portraits and C028 icons");
+        }
+
+        {
+            int icon0X, icon0Y, icon0W, icon0H;
+            int icon3X, icon3Y, icon3W, icon3H;
+            probe_record(&tally, "INV_GV_300AJ",
+                         M11_GameView_GetV1ChampionIconZoneId(0) == 113 &&
+                             M11_GameView_GetV1ChampionIconZoneId(3) == 116 &&
+                             M11_GameView_GetV1ChampionIconZoneId(-1) == 0 &&
+                             M11_GameView_GetV1ChampionIconZoneId(4) == 0 &&
+                             M11_GameView_GetV1ChampionIconZone(0, &icon0X, &icon0Y, &icon0W, &icon0H) &&
+                             M11_GameView_GetV1ChampionIconZone(3, &icon3X, &icon3Y, &icon3W, &icon3H) &&
+                             icon0X == 281 && icon0Y == 0 && icon0W == 16 && icon0H == 14 &&
+                             icon3X == 281 && icon3Y == 15 && icon3W == 16 && icon3H == 14,
+                         "champion icon zones expose layout-696 C113-C116 ids and clipped geometry");
         }
 
         {

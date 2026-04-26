@@ -795,6 +795,11 @@ int M11_GameView_GetV1PoisonLabelGraphicId(void);
 int M11_GameView_GetV1ChampionSmallDamageGraphicId(void);
 int M11_GameView_GetV1ChampionBigDamageGraphicId(void);
 int M11_GameView_GetV1CreatureDamageGraphicId(void);
+int M11_GameView_GetV1ViewportZoneId(void);
+int M11_GameView_GetV1ViewportZone(int* outX,
+                                   int* outY,
+                                   int* outW,
+                                   int* outH);
 int M11_GameView_GetV1LeaderHandObjectNameZoneId(void);
 int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
                                                int* outY,
@@ -845,6 +850,12 @@ int M11_GameView_GetV1ActionPassZone(int* outX,
 int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);
 int M11_GameView_GetV1ChampionPortraitGraphicId(void);
 int M11_GameView_GetV1ChampionIconGraphicId(void);
+int M11_GameView_GetV1ChampionIconZoneId(int championSlot);
+int M11_GameView_GetV1ChampionIconZone(int championSlot,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH);
 int M11_GameView_GetV1InventoryPanelGraphicId(void);
 int M11_GameView_GetV1InventoryPanelZoneId(void);
 int M11_GameView_GetV1InventoryPanelZone(int* outX,

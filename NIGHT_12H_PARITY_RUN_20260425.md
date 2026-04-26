@@ -281,3 +281,15 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_300AI` to assert panel rectangle `(80,52,144,73)` plus food/water clipped label zones `(113,69,34,6)` and `(113,92,46,6)`.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2677_2696_v1_inventory_food_water_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `520/520`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2697–2716 — V1 viewport zone id.
+  - Added source id/geometry helper for layout-696 `C007_ZONE_VIEWPORT`, bound to existing DM1 PC viewport `(0,33,224,136)`.
+  - Added `INV_GV_300AJ` to assert `C007` and viewport geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2697_2716_v1_viewport_zone_id.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `522/522`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2697–2716 — V1 champion icon zones.
+  - Added source id/geometry helpers for layout-696 `C113_ZONE_CHAMPION_ICON_TOP_LEFT` through `C116_ZONE_CHAMPION_ICON_BOTTOM_LEFT`.
+  - Added `INV_GV_300AJ` to assert `C113..C116`, invalid-slot rejection, and representative clipped `16×14` rectangles.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2697_2716_v1_champion_icon_zones.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `522/522`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
