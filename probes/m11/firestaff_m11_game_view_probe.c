@@ -7936,9 +7936,12 @@ int main(int argc, char** argv) {
         {
             probe_record(&tally, "INV_GV_300P",
                          M11_GameView_GetV1ActionAreaGraphicId() == 10 &&
+                             M11_GameView_GetV1ActionMenuGraphicZoneId(1) == 79 &&
+                             M11_GameView_GetV1ActionMenuGraphicZoneId(2) == 77 &&
+                             M11_GameView_GetV1ActionMenuGraphicZoneId(3) == 11 &&
                              M11_GameView_GetV1ActionAreaClearColor() == PROBE_COLOR_BLACK &&
                              M11_GameView_GetV1SpellAreaBackgroundGraphicId() == 9,
-                         "right-column V1 panel graphics use source C010 action, black clear, and C009 spell-area background");
+                         "right-column V1 action graphic uses source C010 with C079/C077/C011 menu zones");
         }
 
         {

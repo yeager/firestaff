@@ -13935,6 +13935,12 @@ int M11_GameView_GetV1ActionAreaGraphicId(void) {
     return M11_GFX_ACTION_AREA;
 }
 
+int M11_GameView_GetV1ActionMenuGraphicZoneId(int actionRowCount) {
+    if (actionRowCount <= 1) return 79;
+    if (actionRowCount == 2) return 77;
+    return 11;
+}
+
 int M11_GameView_GetV1ActionAreaClearColor(void) {
     /* F0387 clears the action area to black before drawing menu/icon state. */
     return M11_COLOR_BLACK;
