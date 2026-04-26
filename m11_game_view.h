@@ -796,6 +796,8 @@ int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
 int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
                                              int applyActionPalette);
 int M11_GameView_ShouldHatchV1ActionIconCells(const M11_GameViewState* state);
+int M11_GameView_GetV1ActionIconCellBackdropColor(const M11_GameViewState* state,
+                                                  int championSlot);
 
 #ifdef __cplusplus
 }

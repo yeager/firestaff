@@ -11546,6 +11546,18 @@ int M11_GameView_ShouldHatchV1ActionIconCells(const M11_GameViewState* state) {
            state->resting;
 }
 
+int M11_GameView_GetV1ActionIconCellBackdropColor(const M11_GameViewState* state,
+                                                  int championSlot) {
+    const struct ChampionState_Compat* champ;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        championSlot >= state->world.party.championCount) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    if (!champ->present) return -1;
+    return champ->hp.current == 0 ? M11_COLOR_BLACK : M11_COLOR_CYAN;
+}
+
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -13941,7 +13953,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             /* DM1: FillBox BLACK then return — no icon for dead. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           cellX, cellY, cellW, cellH,
-                          M11_COLOR_BLACK);
+                          (unsigned char)M11_GameView_GetV1ActionIconCellBackdropColor(state, slot));
             ++drawn;
             continue;
         }
@@ -13949,7 +13961,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         /* Living champion: cyan cell backdrop. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       cellX, cellY, cellW, cellH,
-                      M11_COLOR_CYAN);
+                      (unsigned char)M11_GameView_GetV1ActionIconCellBackdropColor(state, slot));
 
         /* Inner icon backdrop: DM1 fills the 16×16 bitmap with
          * C04_COLOR_CYAN when the hand has an object without an

@@ -7804,6 +7804,14 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300N",
+                         M11_GameView_GetV1ActionIconCellBackdropColor(&iconView, 0) == 4 &&
+                             M11_GameView_GetV1ActionIconCellBackdropColor(&iconView, 1) == 0 &&
+                             M11_GameView_GetV1ActionIconCellBackdropColor(&iconView, 3) == -1,
+                         "V1 action icon cell backdrop color is cyan for living, black for dead, absent ignored");
+        }
+
+        {
             M11_GameViewState hatchView = iconView;
             int hatchIdle = M11_GameView_ShouldHatchV1ActionIconCells(&hatchView);
             hatchView.resting = 1;
