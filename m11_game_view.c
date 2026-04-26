@@ -14172,6 +14172,12 @@ int M11_GameView_GetV1StatusNameClearColor(void) {
     return M11_COLOR_GRAY;
 }
 
+int M11_GameView_GetV1StatusBoxFillColor(void) {
+    /* CHAMDRAW.C F0292 clears the live champion status box with
+     * C12_COLOR_DARKEST_GRAY before drawing name, bars, and hands. */
+    return M11_COLOR_DARK_GRAY;
+}
+
 int M11_GameView_GetV1StatusNameZone(int championSlot,
                                      int* outX,
                                      int* outY,
@@ -15125,7 +15131,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 if (!isDead) {
                     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                   x, y, slotW, slotH,
-                                  M11_COLOR_DARK_GRAY);
+                                  (unsigned char)M11_GameView_GetV1StatusBoxFillColor());
                     drewStatusBox = 1;
                 }
             }

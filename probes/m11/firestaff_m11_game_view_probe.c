@@ -1191,6 +1191,21 @@ int main(int argc, char** argv) {
                                            nameX, nameY, nameW, nameH,
                                            (unsigned char)M11_GameView_GetV1StatusNameClearColor()) > 0U,
                      "V1 champion HUD name clear uses source C01 gray before centered name text");
+        {
+            int liveFillBoxX, liveFillBoxY, liveFillBoxW, liveFillBoxH;
+            probe_record(&tally,
+                         "INV_GV_15AA",
+                         M11_GameView_GetV1StatusBoxFillColor() == PROBE_COLOR_DARK_GRAY &&
+                             M11_GameView_GetV1StatusBoxZone(0, &liveFillBoxX,
+                                                             &liveFillBoxY,
+                                                             &liveFillBoxW,
+                                                             &liveFillBoxH) &&
+                             probe_count_color(syntheticFramebuffer, 320,
+                                               liveFillBoxX, liveFillBoxY,
+                                               liveFillBoxW, liveFillBoxH,
+                                               (unsigned char)M11_GameView_GetV1StatusBoxFillColor()) > 0U,
+                         "V1 live status-box fill uses source C12 darkest-gray before overlays");
+        }
         probe_record(&tally,
                      "INV_GV_15E3",
                      M11_GameView_GetV1StatusNameColor(&syntheticView, 0) == PROBE_COLOR_YELLOW &&

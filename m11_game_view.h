@@ -700,6 +700,7 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
                                       int championSlot);
 int M11_GameView_GetV1StatusNameClearColor(void);
+int M11_GameView_GetV1StatusBoxFillColor(void);
 int M11_GameView_GetV1StatusBoxZone(int championSlot,
                                     int* outX,
                                     int* outY,
