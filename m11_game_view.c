@@ -569,6 +569,44 @@ int M11_GameView_GetV1DialogMessageWidth(int choiceCount) {
     return 77;
 }
 
+int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
+                                            int choiceIndex,
+                                            int* outX,
+                                            int* outY,
+                                            int* outW,
+                                            int* outH) {
+    int x = 0, y = 0, w = 0;
+    if (choiceIndex < 0) return 0;
+    switch (choiceCount) {
+        case 1:
+            if (choiceIndex >= 1) return 0;
+            x = 16; y = 110; w = 192;
+            break;
+        case 2:
+            if (choiceIndex >= 2) return 0;
+            x = 16; y = choiceIndex == 0 ? 73 : 110; w = 192;
+            break;
+        case 3:
+            if (choiceIndex >= 3) return 0;
+            if (choiceIndex == 0) { x = 16; y = 73; w = 192; }
+            else if (choiceIndex == 1) { x = 16; y = 110; w = 86; }
+            else { x = 123; y = 110; w = 86; }
+            break;
+        default:
+            if (choiceCount < 4 || choiceIndex >= 4) return 0;
+            if (choiceIndex == 0) { x = 16; y = 73; w = 86; }
+            else if (choiceIndex == 1) { x = 123; y = 73; w = 86; }
+            else if (choiceIndex == 2) { x = 16; y = 110; w = 86; }
+            else { x = 123; y = 110; w = 86; }
+            break;
+    }
+    if (outX) *outX = x;
+    if (outY) *outY = y;
+    if (outW) *outW = w;
+    if (outH) *outH = 7;
+    return 1;
+}
+
 static int m11_dialog_source_message_width_for_choices(int choiceCount) {
     return M11_GameView_GetV1DialogMessageWidth(choiceCount);
 }
@@ -642,36 +680,16 @@ static void m11_draw_dialog_choices_source(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
                                            int framebufferHeight) {
+    int i;
     if (!state || state->dialogChoiceCount <= 0) return;
-    switch (state->dialogChoiceCount) {
-        case 1:
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        16, 110, 192, state->dialogChoices[0]);
-            break;
-        case 2:
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        16, 73, 192, state->dialogChoices[0]);
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        16, 110, 192, state->dialogChoices[1]);
-            break;
-        case 3:
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        16, 73, 192, state->dialogChoices[0]);
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        16, 110, 86, state->dialogChoices[1]);
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        123, 110, 86, state->dialogChoices[2]);
-            break;
-        default:
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        16, 73, 86, state->dialogChoices[0]);
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        123, 73, 86, state->dialogChoices[1]);
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        16, 110, 86, state->dialogChoices[2]);
-            m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                        123, 110, 86, state->dialogChoices[3]);
-            break;
+    for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
+        int x, y, w;
+        if (!M11_GameView_GetV1DialogChoiceTextZone(state->dialogChoiceCount,
+                                                    i, &x, &y, &w, NULL)) {
+            continue;
+        }
+        m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
+                                    x, y, w, state->dialogChoices[i]);
     }
 }
 
