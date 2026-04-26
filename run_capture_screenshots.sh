@@ -95,4 +95,56 @@ for ppm in "$OUT_DIR"/*_latest.ppm "$OUT_DIR"/*_viewport_224x136.ppm; do
     fi
 done
 
+# Write a deterministic evidence manifest for the exact bytes that were
+# captured.  The viewport crops are the DM1 source aperture
+# (0,33,224,136); hashing them here gives parity work a stable visual
+# fingerprint without claiming an emulator overlay we do not have yet.
+MANIFEST="$OUT_DIR/capture_manifest_sha256.tsv"
+TMP_HASHES="$OUT_DIR/.capture_viewport_hashes.tmp"
+: > "$TMP_HASHES"
+{
+    echo "# Firestaff in-game capture manifest"
+    echo "# columns: kind<TAB>filename<TAB>width<TAB>height<TAB>bytes<TAB>sha256"
+    for ppm in "$OUT_DIR"/*_latest.ppm "$OUT_DIR"/*_viewport_224x136.ppm; do
+        [ -f "$ppm" ] || continue
+        header_dims=$(awk 'NR==2 { print $1 " " $2; exit }' "$ppm")
+        width=${header_dims% *}
+        height=${header_dims#* }
+        bytes=$(wc -c < "$ppm" | tr -d ' ')
+        if command -v shasum >/dev/null 2>&1; then
+            hash=$(shasum -a 256 "$ppm" | awk '{print $1}')
+        elif command -v sha256sum >/dev/null 2>&1; then
+            hash=$(sha256sum "$ppm" | awk '{print $1}')
+        else
+            hash="NO_SHA256_TOOL"
+        fi
+        case "$ppm" in
+            *_viewport_224x136.ppm)
+                kind="viewport_224x136"
+                echo "$hash" >> "$TMP_HASHES"
+                ;;
+            *)
+                kind="fullframe_320x200"
+                ;;
+        esac
+        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$kind" "$(basename "$ppm")" "$width" "$height" "$bytes" "$hash"
+    done
+} > "$MANIFEST"
+
+viewport_count=$(wc -l < "$TMP_HASHES" | tr -d ' ')
+viewport_unique=$(sort "$TMP_HASHES" | uniq | wc -l | tr -d ' ')
+rm -f "$TMP_HASHES"
+
+if [ "$viewport_count" != "6" ]; then
+    echo "expected 6 viewport crops in manifest, found $viewport_count" >&2
+    exit 1
+fi
+if [ "$viewport_unique" = "0" ]; then
+    echo "viewport crop hashing produced no hashes" >&2
+    exit 1
+fi
+
+echo "Capture manifest: $MANIFEST ($viewport_count viewport crops, $viewport_unique unique hashes)"
+
 echo "Screenshots captured in $OUT_DIR"
