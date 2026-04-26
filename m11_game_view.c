@@ -2311,8 +2311,27 @@ static int m11_v1_message_is_player_facing(const char* stripped) {
     return 1;
 }
 
+static const char* m11_v1_strip_tick_prefix(const char* text) {
+    const char* p;
+    if (!text || text[0] != 'T') {
+        return text;
+    }
+    p = text + 1;
+    if (*p < '0' || *p > '9') {
+        return text;
+    }
+    while (*p >= '0' && *p <= '9') {
+        ++p;
+    }
+    if (p[0] == ':' && p[1] == ' ') {
+        return p + 2;
+    }
+    return text;
+}
+
 static void m11_log_event(M11_GameViewState* state, unsigned char color, const char* fmt, ...) {
     char buf[M11_MESSAGE_MAX_LENGTH];
+    const char* visibleText;
     va_list ap;
     if (!state) {
         return;
@@ -2320,7 +2339,8 @@ static void m11_log_event(M11_GameViewState* state, unsigned char color, const c
     va_start(ap, fmt);
     vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
-    M11_MessageLog_Push(&state->messageLog, buf, color);
+    visibleText = m11_v1_strip_tick_prefix(buf);
+    M11_MessageLog_Push(&state->messageLog, visibleText, color);
 }
 
 /* ================================================================
