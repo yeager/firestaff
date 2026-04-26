@@ -516,7 +516,11 @@ first, then visual parity, then typography / honesty.
     content without an emulator capture, (c) TEXT.C runtime strings.
 - **Status:** partially unblocked.  Panel-chrome pixel overlays and
   the DEFS.H-anchored viewport bounding rect can now be diffed
-  honestly.  Full viewport content overlay still requires the
+  honestly.  Phase 70 also locks the source viewport base graphics
+  (C079 ceiling `224x39`, C078 floor `224x97`) and current renderer
+  draw-order inputs (`INV_GV_414/415`) so the next visual patch can
+  change placement/z-order intentionally instead of rediscovering the
+  asset seam.  Full viewport content overlay still requires the
   DOSBox path to run end-to-end (user must install DOSBox + we need
   a KeyMapper / autoexec keystroke plan).
 - **Suggested pass:** pass-47b — ZONES.H parse (from `PANEL.C` +
