@@ -43,4 +43,3 @@ PASS INV_GV_300AP V1 endgame zones expose source C412-C419, title, text, skill a
 ctest --test-dir build --output-on-failure
 5/5 PASS
 ```
-
