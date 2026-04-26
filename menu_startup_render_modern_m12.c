@@ -857,11 +857,11 @@ static void draw_card(M12_ModernCanvas* c,
     if (isSettings) {
         ModernTextStyle p = text_style_make(2, COLOR_TEXT_DIM(), 1);
         draw_text(c, x + 16, y + 72,  "LANGUAGE", &p);
-        draw_text(c, x + 16, y + 108, "GRAPHICS", &p);
+        draw_text(c, x + 16, y + 108, "PRESENTATION", &p);
         draw_text(c, x + 16, y + 144, "WINDOW",   &p);
 
         static const char* langs[] = {"EN", "SV", "FR", "DE"};
-        static const char* grf[]   = {"CLASSIC", "ENHANCED", "MODERN"};
+        static const char* grf[]   = {"V1", "V2", "V3 SOON"};
         static const char* win[]   = {"WINDOWED", "FULLSCREEN"};
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
         int li = state->settings.languageIndex;
@@ -1117,7 +1117,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
     static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
-    static const char* grf[]   = {"CLASSIC VGA", "ENHANCED", "MODERN"};
+    static const char* grf[]   = {"V1 ORIGINAL", "V2 ENHANCED 2D", "V3 MODERN/3D"};
     static const char* win[]   = {"WINDOWED", "FULLSCREEN"};
     int li = state->settings.languageIndex;
     int gi = state->settings.graphicsIndex;
@@ -1131,7 +1131,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int rowY = panelY + 36;
     draw_setting_row(c, rowX, rowY,      rowW, "LANGUAGE",       langs[li],
                      state->settingsSelectedIndex == 0);
-    draw_setting_row(c, rowX, rowY + 70, rowW, "GRAPHICS STYLE", grf[gi],
+    draw_setting_row(c, rowX, rowY + 70, rowW, "PRESENTATION MODE", grf[gi],
                      state->settingsSelectedIndex == 1);
     draw_setting_row(c, rowX, rowY + 140, rowW, "WINDOW MODE",   win[wi],
                      state->settingsSelectedIndex == 2);
