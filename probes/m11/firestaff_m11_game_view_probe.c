@@ -8026,7 +8026,7 @@ int main(int argc, char** argv) {
             int invX, invY, invW, invH;
             int foodX, foodY, foodW, foodH, foodSrcY;
             int waterX, waterY, waterW, waterH, waterSrcY;
-            probe_record(&tally, "INV_GV_300AG",
+            probe_record(&tally, "INV_GV_300AI",
                          M11_GameView_GetV1InventoryPanelZoneId() == 101 &&
                              M11_GameView_GetV1InventoryPanelZone(&invX, &invY, &invW, &invH) &&
                              invX == 80 && invY == 52 && invW == 144 && invH == 73 &&

@@ -276,8 +276,8 @@ Update this file with batch summaries if useful.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2657_2676_v1_leader_hand_object_name_zone_id.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `520/520`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
 
-- Passes 2617–2636 — V1 inventory food/water zones.
+- Passes 2677–2696 — V1 inventory food/water zones.
   - Added source id/geometry helpers for layout-696 `C101_ZONE_PANEL`, `C103_ZONE_FOOD_BAR`, and `C104_ZONE_FOOD_WATER`.
-  - Added `INV_GV_300AG` to assert panel rectangle `(80,52,144,73)` plus food/water clipped label zones `(113,69,34,6)` and `(113,92,46,6)`.
-  - Evidence: `parity-evidence/dm1_all_graphics_phase2617_2636_v1_inventory_food_water_zones.md`.
+  - Added `INV_GV_300AI` to assert panel rectangle `(80,52,144,73)` plus food/water clipped label zones `(113,69,34,6)` and `(113,92,46,6)`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2677_2696_v1_inventory_food_water_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `520/520`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
