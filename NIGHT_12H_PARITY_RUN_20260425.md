@@ -317,3 +317,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_300AN` to assert full-screen `(0,0,320,200)` and centered-dialog `(48,32,224,136)` geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2777_2796_v1_screen_dialog_base_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `525/525`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2797–2816 — V1 explosion/viewport text zones.
+  - Added source id/geometry helpers for layout-696 `C004_ZONE_EXPLOSION_PATTERN_D0C` and `C006_ZONE_VIEWPORT_CENTERED_TEXT`.
+  - Added `INV_GV_300AO` to assert D0C explosion pattern `(0,0,32,29)` and representative centered text `(73,60,77,15)` geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2797_2816_v1_explosion_viewport_text_zones.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `526/526`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

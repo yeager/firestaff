@@ -14001,6 +14001,42 @@ int M11_GameView_GetV1ScreenCenteredDialogZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetV1ExplosionPatternD0CZoneId(void) {
+    /* Source layout-696 C004_ZONE_EXPLOSION_PATTERN_D0C. */
+    return 4;
+}
+
+int M11_GameView_GetV1ExplosionPatternD0CZone(int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH) {
+    if (!M11_GameView_GetV1ExplosionPatternD0CZoneId()) return 0;
+    if (outX) *outX = 0;
+    if (outY) *outY = 0;
+    if (outW) *outW = 32;
+    if (outH) *outH = 29;
+    return 1;
+}
+
+int M11_GameView_GetV1ViewportCenteredTextZoneId(void) {
+    /* Source layout-696 C006_ZONE_VIEWPORT_CENTERED_TEXT. */
+    return 6;
+}
+
+int M11_GameView_GetV1ViewportCenteredTextZone(int contentW,
+                                               int contentH,
+                                               int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH) {
+    if (!M11_GameView_GetV1ViewportCenteredTextZoneId() || contentW <= 0 || contentH <= 0) return 0;
+    if (outX) *outX = (224 - contentW) / 2;
+    if (outY) *outY = (136 - contentH) / 2;
+    if (outW) *outW = contentW;
+    if (outH) *outH = contentH;
+    return 1;
+}
+
 int M11_GameView_GetV1MessageAreaZoneId(void) {
     /* Source layout-696 C015_ZONE_MESSAGE_AREA. */
     return 15;

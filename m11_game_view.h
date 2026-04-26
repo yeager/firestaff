@@ -812,6 +812,18 @@ int M11_GameView_GetV1ScreenCenteredDialogZone(int* outX,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH);
+int M11_GameView_GetV1ExplosionPatternD0CZoneId(void);
+int M11_GameView_GetV1ExplosionPatternD0CZone(int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH);
+int M11_GameView_GetV1ViewportCenteredTextZoneId(void);
+int M11_GameView_GetV1ViewportCenteredTextZone(int contentW,
+                                               int contentH,
+                                               int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH);
 int M11_GameView_GetV1MessageAreaZoneId(void);
 int M11_GameView_GetV1MessageAreaZone(int* outX,
                                        int* outY,

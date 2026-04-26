@@ -7984,6 +7984,19 @@ int main(int argc, char** argv) {
         }
 
         {
+            int expX, expY, expW, expH;
+            int centeredX, centeredY, centeredW, centeredH;
+            probe_record(&tally, "INV_GV_300AO",
+                         M11_GameView_GetV1ExplosionPatternD0CZoneId() == 4 &&
+                             M11_GameView_GetV1ExplosionPatternD0CZone(&expX, &expY, &expW, &expH) &&
+                             expX == 0 && expY == 0 && expW == 32 && expH == 29 &&
+                             M11_GameView_GetV1ViewportCenteredTextZoneId() == 6 &&
+                             M11_GameView_GetV1ViewportCenteredTextZone(77, 15, &centeredX, &centeredY, &centeredW, &centeredH) &&
+                             centeredX == 73 && centeredY == 60 && centeredW == 77 && centeredH == 15,
+                         "explosion pattern and viewport-centered text zones expose layout-696 C004/C006 geometry");
+        }
+
+        {
             int messageX, messageY, messageW, messageH;
             probe_record(&tally, "INV_GV_300AM",
                          M11_GameView_GetV1MessageAreaZoneId() == 15 &&
