@@ -13937,6 +13937,23 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_H       9
 #define M11_DM_ACTION_MENU_TEXT_X    226
 
+int M11_GameView_GetV1LeaderHandObjectNameZoneId(void) {
+    /* Source layout-696 C017_ZONE_LEADER_HAND_OBJECT_NAME. */
+    return 17;
+}
+
+int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH) {
+    if (!M11_GameView_GetV1LeaderHandObjectNameZoneId()) return 0;
+    if (outX) *outX = 233;
+    if (outY) *outY = 33;
+    if (outW) *outW = 87;
+    if (outH) *outH = 6;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionAreaZoneId(void) {
     return 11;
 }
@@ -14113,6 +14130,23 @@ int M11_GameView_GetV1InventoryPanelGraphicId(void) {
     return M11_GFX_PANEL_EMPTY;
 }
 
+int M11_GameView_GetV1InventoryPanelZoneId(void) {
+    /* Source layout-696 C101_ZONE_PANEL, centered at (152,89). */
+    return 101;
+}
+
+int M11_GameView_GetV1InventoryPanelZone(int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH) {
+    if (!M11_GameView_GetV1InventoryPanelZoneId()) return 0;
+    if (outX) *outX = 80;
+    if (outY) *outY = 52;
+    if (outW) *outW = 144;
+    if (outH) *outH = 73;
+    return 1;
+}
+
 int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
     return 6;
 }
@@ -14165,6 +14199,44 @@ int M11_GameView_GetV1FoodLabelGraphicId(void) {
 
 int M11_GameView_GetV1WaterLabelGraphicId(void) {
     return M11_GFX_WATER_LABEL;
+}
+
+int M11_GameView_GetV1FoodBarZoneId(void) {
+    /* Source layout-696 C103_ZONE_FOOD_BAR. */
+    return 103;
+}
+
+int M11_GameView_GetV1FoodBarZone(int* outX,
+                                  int* outY,
+                                  int* outW,
+                                  int* outH,
+                                  int* outSrcY) {
+    if (!M11_GameView_GetV1FoodBarZoneId()) return 0;
+    if (outX) *outX = 113;
+    if (outY) *outY = 69;
+    if (outW) *outW = 34;
+    if (outH) *outH = 6;
+    if (outSrcY) *outSrcY = 2;
+    return 1;
+}
+
+int M11_GameView_GetV1FoodWaterPanelZoneId(void) {
+    /* Source layout-696 C104_ZONE_FOOD_WATER. */
+    return 104;
+}
+
+int M11_GameView_GetV1FoodWaterPanelZone(int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH,
+                                         int* outSrcY) {
+    if (!M11_GameView_GetV1FoodWaterPanelZoneId()) return 0;
+    if (outX) *outX = 113;
+    if (outY) *outY = 92;
+    if (outW) *outW = 46;
+    if (outH) *outH = 6;
+    if (outSrcY) *outSrcY = 2;
+    return 1;
 }
 
 int M11_GameView_GetV1ActionMenuHeaderZoneId(void) {

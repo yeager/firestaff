@@ -7951,6 +7951,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            int nameX, nameY, nameW, nameH;
+            probe_record(&tally, "INV_GV_300AH",
+                         M11_GameView_GetV1LeaderHandObjectNameZoneId() == 17 &&
+                             M11_GameView_GetV1LeaderHandObjectNameZone(&nameX, &nameY, &nameW, &nameH) &&
+                             nameX == 233 && nameY == 33 && nameW == 87 && nameH == 6,
+                         "leader hand object-name zone exposes layout-696 C017 id and geometry");
+        }
+
+        {
             int actionX, actionY, actionW, actionH;
             probe_record(&tally, "INV_GV_300H",
                          M11_GameView_GetV1ActionAreaZoneId() == 11 &&
@@ -8011,6 +8020,23 @@ int main(int argc, char** argv) {
                              twoX == 224 && twoY == 45 && twoW == 87 && twoH == 33 &&
                              threeX == 224 && threeY == 45 && threeW == 87 && threeH == 45,
                          "action menu graphic zones route C079/C077/C011 to source-sized rectangles");
+        }
+
+        {
+            int invX, invY, invW, invH;
+            int foodX, foodY, foodW, foodH, foodSrcY;
+            int waterX, waterY, waterW, waterH, waterSrcY;
+            probe_record(&tally, "INV_GV_300AG",
+                         M11_GameView_GetV1InventoryPanelZoneId() == 101 &&
+                             M11_GameView_GetV1InventoryPanelZone(&invX, &invY, &invW, &invH) &&
+                             invX == 80 && invY == 52 && invW == 144 && invH == 73 &&
+                             M11_GameView_GetV1FoodBarZoneId() == 103 &&
+                             M11_GameView_GetV1FoodBarZone(&foodX, &foodY, &foodW, &foodH, &foodSrcY) &&
+                             foodX == 113 && foodY == 69 && foodW == 34 && foodH == 6 && foodSrcY == 2 &&
+                             M11_GameView_GetV1FoodWaterPanelZoneId() == 104 &&
+                             M11_GameView_GetV1FoodWaterPanelZone(&waterX, &waterY, &waterW, &waterH, &waterSrcY) &&
+                             waterX == 113 && waterY == 92 && waterW == 46 && waterH == 6 && waterSrcY == 2,
+                         "inventory panel and food/water zones expose layout-696 C101/C103/C104 geometry");
         }
 
         {

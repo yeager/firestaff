@@ -795,6 +795,11 @@ int M11_GameView_GetV1PoisonLabelGraphicId(void);
 int M11_GameView_GetV1ChampionSmallDamageGraphicId(void);
 int M11_GameView_GetV1ChampionBigDamageGraphicId(void);
 int M11_GameView_GetV1CreatureDamageGraphicId(void);
+int M11_GameView_GetV1LeaderHandObjectNameZoneId(void);
+int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH);
 int M11_GameView_GetV1ActionAreaZoneId(void);
 int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
