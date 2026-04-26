@@ -592,36 +592,60 @@ int M11_GameView_GetV1DialogMessageWidth(int choiceCount) {
     return w;
 }
 
+int M11_GameView_GetV1DialogChoiceTextZoneId(int choiceCount,
+                                              int choiceIndex) {
+    if (choiceIndex < 0) return 0;
+    switch (choiceCount) {
+        case 1:
+            return choiceIndex == 0 ? 462 : 0;
+        case 2:
+            if (choiceIndex == 0) return 463;
+            if (choiceIndex == 1) return 462;
+            return 0;
+        case 3:
+            if (choiceIndex == 0) return 463;
+            if (choiceIndex == 1) return 466;
+            if (choiceIndex == 2) return 467;
+            return 0;
+        default:
+            if (choiceCount < 4) return 0;
+            if (choiceIndex == 0) return 464;
+            if (choiceIndex == 1) return 465;
+            if (choiceIndex == 2) return 466;
+            if (choiceIndex == 3) return 467;
+            return 0;
+    }
+}
+
 int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
                                             int choiceIndex,
                                             int* outX,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
+    int zoneId = M11_GameView_GetV1DialogChoiceTextZoneId(choiceCount, choiceIndex);
     int x = 0, y = 0, w = 0;
-    if (choiceIndex < 0) return 0;
-    switch (choiceCount) {
-        case 1:
-            if (choiceIndex >= 1) return 0;
+    switch (zoneId) {
+        case 462:
             x = 16; y = 110; w = 192;
             break;
-        case 2:
-            if (choiceIndex >= 2) return 0;
-            x = 16; y = choiceIndex == 0 ? 73 : 110; w = 192;
+        case 463:
+            x = 16; y = 73; w = 192;
             break;
-        case 3:
-            if (choiceIndex >= 3) return 0;
-            if (choiceIndex == 0) { x = 16; y = 73; w = 192; }
-            else if (choiceIndex == 1) { x = 16; y = 110; w = 86; }
-            else { x = 123; y = 110; w = 86; }
+        case 464:
+            x = 16; y = 73; w = 86;
+            break;
+        case 465:
+            x = 123; y = 73; w = 86;
+            break;
+        case 466:
+            x = 16; y = 110; w = 86;
+            break;
+        case 467:
+            x = 123; y = 110; w = 86;
             break;
         default:
-            if (choiceCount < 4 || choiceIndex >= 4) return 0;
-            if (choiceIndex == 0) { x = 16; y = 73; w = 86; }
-            else if (choiceIndex == 1) { x = 123; y = 73; w = 86; }
-            else if (choiceIndex == 2) { x = 16; y = 110; w = 86; }
-            else { x = 123; y = 110; w = 86; }
-            break;
+            return 0;
     }
     if (outX) *outX = x;
     if (outY) *outY = y;

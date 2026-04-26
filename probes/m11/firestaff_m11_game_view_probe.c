@@ -8047,14 +8047,19 @@ int main(int argc, char** argv) {
             int c3x, c3y, c3w, c3h;
             int c4x, c4y, c4w, c4h;
             probe_record(&tally, "INV_GV_300AA",
-                         M11_GameView_GetV1DialogChoiceTextZone(1, 0, &c1x, &c1y, &c1w, &c1h) &&
+                         M11_GameView_GetV1DialogChoiceTextZoneId(1, 0) == 462 &&
+                             M11_GameView_GetV1DialogChoiceTextZoneId(2, 0) == 463 &&
+                             M11_GameView_GetV1DialogChoiceTextZoneId(2, 1) == 462 &&
+                             M11_GameView_GetV1DialogChoiceTextZoneId(3, 1) == 466 &&
+                             M11_GameView_GetV1DialogChoiceTextZoneId(4, 1) == 465 &&
+                             M11_GameView_GetV1DialogChoiceTextZone(1, 0, &c1x, &c1y, &c1w, &c1h) &&
                              c1x == 16 && c1y == 110 && c1w == 192 && c1h == 7 &&
                              M11_GameView_GetV1DialogChoiceTextZone(3, 2, &c3x, &c3y, &c3w, &c3h) &&
                              c3x == 123 && c3y == 110 && c3w == 86 && c3h == 7 &&
                              M11_GameView_GetV1DialogChoiceTextZone(4, 1, &c4x, &c4y, &c4w, &c4h) &&
                              c4x == 123 && c4y == 73 && c4w == 86 && c4h == 7 &&
                              !M11_GameView_GetV1DialogChoiceTextZone(2, 2, NULL, NULL, NULL, NULL),
-                         "V1 dialog choice text zones expose source C462-C467 layout cases");
+                         "V1 dialog choice text zone ids expose source C462-C467 layout cases");
         }
 
         {
