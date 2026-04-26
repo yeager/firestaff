@@ -4519,6 +4519,9 @@ void M11_GameView_Init(M11_GameViewState* state) {
         state->showDebugHUD = (dbg && dbg[0] == '1') ? 1 : 0;
     }
     state->candidateMirrorOrdinal = -1;
+    state->leaderHandObjectPresent = 0;
+    state->leaderHandThing = THING_NONE;
+    state->leaderHandIconIndex = -1;
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 }
@@ -14234,20 +14237,36 @@ int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
 /* Source runtime bridge for the object in the DM1 leader hand.
  * The classic engine stores this as the transient mouse-hand object
  * G4055_s_LeaderHandObject, which is separate from every champion
- * inventory slot.  Earlier M11 V1 builds synthesized that object from
- * the active champion's ready-hand slot; that made the idle right
- * column print item names even when the source mouse hand would be
- * empty.  Until M11 carries a dedicated G4055-equivalent field, keep
- * C017 source-faithful by reporting no held leader-hand object rather
- * than inventing one from champion equipment. */
+ * inventory slot.  M11 keeps the same separation: this state is only
+ * populated by explicit leader-hand put/remove flow, never by looking
+ * through the active champion's ready-hand equipment. */
+int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
+                                        unsigned short thing) {
+    if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    state->leaderHandObjectPresent = 1;
+    state->leaderHandThing = thing;
+    state->leaderHandIconIndex = m11_object_icon_index_for_thing(
+        state, state->world.things, thing);
+    return 1;
+}
+
+void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state) {
+    if (!state) return;
+    state->leaderHandObjectPresent = 0;
+    state->leaderHandThing = THING_NONE;
+    state->leaderHandIconIndex = -1;
+}
+
 unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state) {
-    (void)state;
-    return THING_NONE;
+    if (!state || !state->leaderHandObjectPresent) return THING_NONE;
+    if (state->leaderHandThing == THING_ENDOFLIST) return THING_NONE;
+    return state->leaderHandThing;
 }
 
 int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state) {
     unsigned short thing = M11_GameView_GetV1LeaderHandThing(state);
     if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return -1;
+    if (state->leaderHandIconIndex >= 0) return state->leaderHandIconIndex;
     return m11_object_icon_index_for_thing(state, state->world.things, thing);
 }
 

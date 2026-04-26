@@ -1752,6 +1752,9 @@ int main(int argc, char** argv) {
         unsigned short readyHandThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
         leaderHandView.world.party.activeChampionIndex = 0;
         leaderHandView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = readyHandThing;
+        if (leaderHandView.world.things && leaderHandView.world.things->weapons) {
+            leaderHandView.world.things->weapons[0].type = 8; /* DAGGER */
+        }
         memset(leaderHandName, 0, sizeof(leaderHandName));
         memset(leaderHandFramebuffer, 0, sizeof(leaderHandFramebuffer));
         M11_GameView_Draw(&leaderHandView, leaderHandFramebuffer, 320, 200);
@@ -1771,15 +1774,35 @@ int main(int argc, char** argv) {
                          leaderNameW == 87 && leaderNameH == 6 &&
                          leaderHandName[0] == '\0',
                      "V1 leader-hand C017 resolver stays blank when no dedicated source mouse-hand object exists");
-        leaderHandView.world.party.activeChampionIndex = 1;
         probe_record(&tally,
                      "INV_GV_15OC",
+                     M11_GameView_SetV1LeaderHandObject(&leaderHandView, readyHandThing) == 1 &&
+                         M11_GameView_GetV1LeaderHandThing(&leaderHandView) == readyHandThing &&
+                         M11_GameView_GetV1LeaderHandObjectIconIndex(&leaderHandView) >= 0 &&
+                         M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
+                                                                leaderHandName,
+                                                                sizeof(leaderHandName)) &&
+                         strcmp(leaderHandName, "DAGGER") == 0,
+                     "V1 leader-hand runtime carries a dedicated G4055-equivalent object with source icon/name resolution");
+        memset(leaderHandFramebuffer, 0, sizeof(leaderHandFramebuffer));
+        leaderHandView.showDebugHUD = 0;
+        M11_GameView_Draw(&leaderHandView, leaderHandFramebuffer, 320, 200);
+        probe_record(&tally,
+                     "INV_GV_15OD",
+                     probe_count_color(leaderHandFramebuffer, 320,
+                                       leaderNameX, leaderNameY,
+                                       leaderNameW, leaderNameH,
+                                       PROBE_COLOR_LIGHT_CYAN) > 0U,
+                     "normal V1 draws the transient leader-hand object name into source C017");
+        M11_GameView_ClearV1LeaderHandObject(&leaderHandView);
+        probe_record(&tally,
+                     "INV_GV_15OE",
                      M11_GameView_GetV1LeaderHandThing(&leaderHandView) == THING_NONE &&
                          M11_GameView_GetV1LeaderHandObjectIconIndex(&leaderHandView) == -1 &&
                          !M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
                                                                  leaderHandName,
                                                                  sizeof(leaderHandName)),
-                     "V1 leader-hand runtime stays empty across leader changes without a G4055-equivalent field");
+                     "V1 leader-hand remove flow clears the G4055-equivalent object instead of reading champion equipment");
     }
 
     {

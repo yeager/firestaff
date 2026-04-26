@@ -206,6 +206,15 @@ typedef struct {
      * Set to 1 via FIRESTAFF_DEBUG_HUD=1 environment variable. */
     int showDebugHUD;
 
+    /* Source transient leader-hand object.  Mirrors DM1
+     * G4055_s_LeaderHandObject at V1 presentation/runtime level: this
+     * is the mouse-held object, distinct from any champion inventory
+     * ready/action-hand slot.  `leaderHandObjectPresent == 0` means
+     * G4055_s_LeaderHandObject.Thing is C0xFFFF_THING_NONE. */
+    int leaderHandObjectPresent;
+    unsigned short leaderHandThing;
+    int leaderHandIconIndex;
+
     /* Acting-champion ordinal.  Mirrors DM1
      * G0506_ui_ActingChampionOrdinal exactly: 0 = no champion is
      * acting (idle action area with four action-hand icon cells,
@@ -856,6 +865,9 @@ int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
                                                int* outY,
                                                int* outW,
                                                int* outH);
+int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
+                                        unsigned short thing);
+void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state);
 unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state);
 int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state);
 int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
