@@ -102,13 +102,64 @@ static int write_ppm_from_indices(const unsigned char* fb, int width, int height
     return 1;
 }
 
+static int write_ppm_crop_from_indices(const unsigned char* fb,
+                                       int width,
+                                       int height,
+                                       int cropX,
+                                       int cropY,
+                                       int cropW,
+                                       int cropH,
+                                       unsigned int paletteLevel,
+                                       const char* path) {
+    FILE* f;
+    int x;
+    int y;
+    if (!fb || !path || cropX < 0 || cropY < 0 || cropW <= 0 || cropH <= 0 ||
+        cropX + cropW > width || cropY + cropH > height) {
+        return 0;
+    }
+    f = fopen(path, "wb");
+    if (!f) return 0;
+    fprintf(f, "P6\n%d %d\n255\n", cropW, cropH);
+    for (y = 0; y < cropH; ++y) {
+        for (x = 0; x < cropW; ++x) {
+            unsigned char raw = fb[(cropY + y) * width + (cropX + x)];
+            unsigned char idx = M11_FB_DECODE_INDEX(raw);
+            int level = M11_FB_DECODE_LEVEL(raw);
+            const unsigned char* rgb;
+            if (level < 0 || level >= 6) {
+                level = (int)paletteLevel;
+            }
+            rgb = get_rgb(idx, (unsigned int)level);
+            fwrite(rgb, 1, 3, f);
+        }
+    }
+    fclose(f);
+    return 1;
+}
+
 static int save_game(const char* outDir, const char* name, M11_GameViewState* game, unsigned int paletteLevel) {
     unsigned char fb[FB_W * FB_H];
     char path[1024];
+    char cropPath[1024];
+    int vpX = 0;
+    int vpY = 0;
+    int vpW = 0;
+    int vpH = 0;
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
     snprintf(path, sizeof(path), "%s/%s.ppm", outDir, name);
-    return write_ppm_from_indices(fb, FB_W, FB_H, paletteLevel, path);
+    if (!write_ppm_from_indices(fb, FB_W, FB_H, paletteLevel, path)) {
+        return 0;
+    }
+    if (!M11_GameView_GetViewportRect(&vpX, &vpY, &vpW, &vpH) ||
+        vpX != 0 || vpY != 33 || vpW != 224 || vpH != 136) {
+        return 0;
+    }
+    snprintf(cropPath, sizeof(cropPath), "%s/%s_viewport_224x136.ppm", outDir, name);
+    return write_ppm_crop_from_indices(fb, FB_W, FB_H,
+                                       vpX, vpY, vpW, vpH,
+                                       paletteLevel, cropPath);
 }
 
 static void ensure_deterministic_capture_champion(M11_GameViewState* game) {
@@ -189,6 +240,6 @@ int main(int argc, char** argv) {
     if (!save_game(outDir, "06_ingame_inventory_panel_latest", &game, paletteLevel)) return 1;
 
     M11_GameView_Shutdown(&game);
-    printf("wrote 6 in-game screenshots to %s\n", outDir);
+    printf("wrote 6 in-game screenshots and 6 viewport crops to %s\n", outDir);
     return 0;
 }

@@ -85,7 +85,7 @@ cc $CFLAGS_COMMON \
 FIRESTAFF_DATA="$DATA_DIR" "$CAPTURE_BIN" "$OUT_DIR" "$DATA_DIR"
 
 # Convert PPM to PNG if convert/magick available
-for ppm in "$OUT_DIR"/*_latest.ppm; do
+for ppm in "$OUT_DIR"/*_latest.ppm "$OUT_DIR"/*_viewport_224x136.ppm; do
     [ -f "$ppm" ] || continue
     png="${ppm%.ppm}.png"
     if command -v magick >/dev/null 2>&1; then

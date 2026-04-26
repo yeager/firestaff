@@ -232,6 +232,28 @@ static size_t probe_count_color(const unsigned char* framebuffer,
     return count;
 }
 
+
+static unsigned int probe_hash_rect(const unsigned char* framebuffer,
+                                    int width,
+                                    int x,
+                                    int y,
+                                    int w,
+                                    int h) {
+    unsigned int hsh = 2166136261u;
+    int xx;
+    int yy;
+    if (!framebuffer || width <= 0 || w <= 0 || h <= 0) {
+        return 0u;
+    }
+    for (yy = 0; yy < h; ++yy) {
+        for (xx = 0; xx < w; ++xx) {
+            hsh ^= framebuffer[(y + yy) * width + (x + xx)];
+            hsh *= 16777619u;
+        }
+    }
+    return hsh;
+}
+
 static void probe_set_square(struct DungeonDatState_Compat* dungeon,
                              int mapX,
                              int mapY,
@@ -1079,6 +1101,9 @@ int main(int argc, char** argv) {
 
     {
         int vx = -1, vy = -1, vw = -1, vh = -1;
+        unsigned int viewportHashA;
+        unsigned int viewportHashB;
+        unsigned char repeatFramebuffer[320 * 200];
         probe_record(&tally,
                      "INV_GV_12C",
                      M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh) == 1 &&
@@ -1087,6 +1112,28 @@ int main(int argc, char** argv) {
                      vw == PROBE_DM1_VIEWPORT_W &&
                      vh == PROBE_DM1_VIEWPORT_H,
                      "runtime viewport rect API returns source DM1 viewport geometry");
+        probe_record(&tally,
+                     "INV_GV_12D",
+                     vx >= 0 && vy >= 0 &&
+                     vx + vw <= 320 && vy + vh <= 200 &&
+                     vw * vh == 30464,
+                     "runtime viewport crop is the deterministic 224x136 DM1 aperture inside 320x200");
+        memset(repeatFramebuffer, 0, sizeof(repeatFramebuffer));
+        M11_GameView_Draw(&syntheticView, repeatFramebuffer, 320, 200);
+        viewportHashA = probe_hash_rect(syntheticFramebuffer, 320,
+                                        PROBE_DM1_VIEWPORT_X,
+                                        PROBE_DM1_VIEWPORT_Y,
+                                        PROBE_DM1_VIEWPORT_W,
+                                        PROBE_DM1_VIEWPORT_H);
+        viewportHashB = probe_hash_rect(repeatFramebuffer, 320,
+                                        PROBE_DM1_VIEWPORT_X,
+                                        PROBE_DM1_VIEWPORT_Y,
+                                        PROBE_DM1_VIEWPORT_W,
+                                        PROBE_DM1_VIEWPORT_H);
+        probe_record(&tally,
+                     "INV_GV_12E",
+                     viewportHashA != 0U && viewportHashA == viewportHashB,
+                     "two same-state draws produce identical bytes for the 224x136 viewport crop");
     }
 
     probe_record(&tally,
