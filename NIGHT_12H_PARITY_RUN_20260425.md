@@ -92,3 +92,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_15E6`: slot 0 ready `(16,170,16,16)` and slot 3 action `(243,170,16,16)` match source child zones with 69 px status stride.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1257_1276_v1_status_hand_zone_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `475/475`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1277–1296 — V1 status bar zone helper hardening.
+  - Added `M11_GameView_GetV1StatusBarZone(...)` for source HP/stamina/mana vertical bar geometry.
+  - Routed V1 bar drawing through the shared helper.
+  - Added invariant `INV_GV_15E7`: slot 0 HP `(58,164,4,25)` and slot 3 mana `(279,164,4,25)` match layout-696 bar placement with 69 px status stride.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1277_1296_v1_status_bar_zone_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `476/476`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

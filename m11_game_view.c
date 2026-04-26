@@ -13917,6 +13917,26 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
     return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
 }
 
+int M11_GameView_GetV1StatusBarZone(int championSlot,
+                                    int statIndex,
+                                    int* outX,
+                                    int* outY,
+                                    int* outW,
+                                    int* outH) {
+    int relX;
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        statIndex < 0 || statIndex > 2) {
+        return 0;
+    }
+    relX = m11_v1_bar_graph_x(statIndex);
+    if (relX < 0) return 0;
+    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() + relX;
+    if (outY) *outY = M11_PARTY_PANEL_Y + m11_v1_bar_graph_y_top();
+    if (outW) *outW = M11_V1_BAR_CONTAINER_W;
+    if (outH) *outH = M11_V1_BAR_CONTAINER_H;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandZone(int championSlot,
                                      int handIndex,
                                      int* outX,
@@ -14876,7 +14896,6 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * parity-evidence/pass43_bar_graphs.md. */
             if (m11_v1_bar_graphs_enabled()) {
                 int statIdx;
-                int barTopY = y + m11_v1_bar_graph_y_top();
                 unsigned char champColor =
                     isDead
                         ? (unsigned char)M11_COLOR_DARK_GRAY
@@ -14890,11 +14909,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 curs[2] = (long)champ->mana.current;
                 maxs[2] = (long)champ->mana.maximum;
                 for (statIdx = 0; statIdx < 3; ++statIdx) {
-                    int barX = x + m11_v1_bar_graph_x(statIdx);
+                    int barX, barTopY, barW, barFullHeight;
                     int blankHeight;
                     int fillHeight;
-                    int barFullHeight = (int)M11_V1_BAR_CONTAINER_H;
-                    int barW          = (int)M11_V1_BAR_CONTAINER_W;
+                    (void)M11_GameView_GetV1StatusBarZone(
+                        slot, statIdx, &barX, &barTopY, &barW, &barFullHeight);
                     /* Blank the whole container to darkest-gray
                      * first (matches F0287's F0732_FillScreenArea
                      * (L2004_ai_XYZBlankBar, C12_COLOR_DARKEST_GRAY)

@@ -1078,6 +1078,17 @@ int main(int argc, char** argv) {
                              actionX3 == 243 && actionY3 == 170 && actionW3 == 16 && actionH3 == 16,
                          "V1 status hand slot zones match layout-696 C211..C218 geometry");
         }
+        {
+            int hpX, hpY, hpW, hpH;
+            int manaX3, manaY3, manaW3, manaH3;
+            probe_record(&tally,
+                         "INV_GV_15E7",
+                         M11_GameView_GetV1StatusBarZone(0, 0, &hpX, &hpY, &hpW, &hpH) &&
+                             M11_GameView_GetV1StatusBarZone(3, 2, &manaX3, &manaY3, &manaW3, &manaH3) &&
+                             hpX == 58 && hpY == 164 && hpW == 4 && hpH == 25 &&
+                             manaX3 == 279 && manaY3 == 164 && manaW3 == 4 && manaH3 == 25,
+                         "V1 status bar graph zones match layout-696 C195/C203 geometry");
+        }
         probe_record(&tally,
                      "INV_GV_15E2",
                      nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&
