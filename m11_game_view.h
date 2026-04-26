@@ -771,6 +771,10 @@ int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
 int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
                                          int* outX,
                                          int* outY);
+int M11_GameView_GetV1PoisonLabelGraphicId(void);
+int M11_GameView_GetV1ChampionSmallDamageGraphicId(void);
+int M11_GameView_GetV1ChampionBigDamageGraphicId(void);
+int M11_GameView_GetV1CreatureDamageGraphicId(void);
 int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
                                         int* outW,

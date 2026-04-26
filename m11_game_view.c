@@ -14359,6 +14359,22 @@ int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) 
     return 0;
 }
 
+int M11_GameView_GetV1PoisonLabelGraphicId(void) {
+    return M11_GFX_POISONED_LABEL;
+}
+
+int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
+    return M11_GFX_DAMAGE_TO_CHAMPION_SMALL;
+}
+
+int M11_GameView_GetV1ChampionBigDamageGraphicId(void) {
+    return M11_GFX_DAMAGE_TO_CHAMPION_BIG;
+}
+
+int M11_GameView_GetV1CreatureDamageGraphicId(void) {
+    return M11_GFX_DAMAGE_TO_CREATURE;
+}
+
 int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
                                              int* outX,
                                              int* outY,
@@ -15437,7 +15453,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             if (state->assetsAvailable && champ->poisonDose > 0) {
                 const M11_AssetSlot* poisonLbl = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
-                    M11_GFX_POISONED_LABEL);
+                    (unsigned int)M11_GameView_GetV1PoisonLabelGraphicId());
                 if (poisonLbl && poisonLbl->width > 0 &&
                     poisonLbl->height > 0) {
                     /* Center the 96-wide label within the source status-box
@@ -15472,7 +15488,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 if (state->assetsAvailable) {
                     const M11_AssetSlot* dmgAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
-                        M11_GFX_DAMAGE_TO_CHAMPION_SMALL);
+                        (unsigned int)M11_GameView_GetV1ChampionSmallDamageGraphicId());
                     if (dmgAsset && dmgAsset->width == 45 &&
                         dmgAsset->height == 7) {
                         int dmgX, dmgY, dmgW, dmgH;
@@ -16224,7 +16240,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             if (state->assetsAvailable) {
                 const M11_AssetSlot* dmg16 = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
-                    M11_GFX_DAMAGE_TO_CHAMPION_BIG);
+                    (unsigned int)M11_GameView_GetV1ChampionBigDamageGraphicId());
                 if (dmg16 && dmg16->width == 32 && dmg16->height == 29) {
                     M11_AssetLoader_BlitRegion(dmg16,
                         0, 0, 32, 29,
@@ -17008,7 +17024,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (state->assetsAvailable) {
             const M11_AssetSlot* dmg14 = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                M11_GFX_DAMAGE_TO_CREATURE);
+                (unsigned int)M11_GameView_GetV1CreatureDamageGraphicId());
             if (dmg14 && dmg14->width > 0 && dmg14->height > 0) {
                 int blitW, blitH;
                 if (state->creatureHitDamageAmount > 40) {

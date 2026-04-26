@@ -7956,6 +7956,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300T",
+                         M11_GameView_GetV1PoisonLabelGraphicId() == 32 &&
+                             M11_GameView_GetV1ChampionSmallDamageGraphicId() == 15 &&
+                             M11_GameView_GetV1ChampionBigDamageGraphicId() == 16 &&
+                             M11_GameView_GetV1CreatureDamageGraphicId() == 14,
+                         "V1 HUD condition/damage graphics use source C032/C015/C016/C014 ids");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",
