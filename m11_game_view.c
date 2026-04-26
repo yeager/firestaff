@@ -13937,6 +13937,20 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_H       9
 #define M11_DM_ACTION_MENU_TEXT_X    226
 
+int M11_GameView_GetV1MovementArrowsZoneId(void) {
+    /* Source layout-696 C009_ZONE_MOVEMENT_ARROWS. */
+    return 9;
+}
+
+int M11_GameView_GetV1MovementArrowZoneId(int arrowIndex) {
+    static const int kArrowZones[6] = { 68, 69, 70, 71, 72, 73 };
+    if (!M11_GameView_GetV1MovementArrowsZoneId() ||
+        arrowIndex < 0 || arrowIndex >= 6) {
+        return 0;
+    }
+    return kArrowZones[arrowIndex];
+}
+
 int M11_GameView_GetV1ViewportZoneId(void) {
     /* Source layout-696 C007_ZONE_VIEWPORT. */
     return 7;

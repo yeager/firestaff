@@ -298,4 +298,4 @@ Update this file with batch summaries if useful.
   - Added source id helpers for layout-696 `C009_ZONE_MOVEMENT_ARROWS` and arrow controls `C068..C073`.
   - Added `INV_GV_300AL` to assert all movement-arrow ids plus invalid-index rejection.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2737_2756_v1_movement_arrow_zone_ids.md`.
-  - Gates: pending in worker.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `523/523`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
