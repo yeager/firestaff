@@ -1,4 +1,4 @@
-# DM1 all-graphics parity — phase 2777–2796: V1 screen/dialog base zones
+# DM1 all-graphics parity — phase 2797–2816: V1 screen/dialog base zones
 
 ## Scope
 

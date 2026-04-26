@@ -306,20 +306,20 @@ Update this file with batch summaries if useful.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2757_2776_v1_movement_arrow_geometry.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `523/523`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
 
-- Passes 2757–2776 — V1 message area zone id.
+- Passes 2777–2796 — V1 message area zone id.
   - Added source id/geometry helper for layout-696 `C015_ZONE_MESSAGE_AREA`.
   - Added `INV_GV_300AM` to assert `C015` and full-width `(0,176,320,24)` geometry.
-  - Evidence: `parity-evidence/dm1_all_graphics_phase2757_2776_v1_message_area_zone_id.md`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2777_2796_v1_message_area_zone_id.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `524/524`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
 
-- Passes 2777–2796 — V1 screen/dialog base zones.
+- Passes 2797–2816 — V1 screen/dialog base zones.
   - Added source id/geometry helpers for layout-696 `C002_ZONE_SCREEN` and `C005_ZONE_SCREEN_CENTERED_DIALOG`.
   - Added `INV_GV_300AN` to assert full-screen `(0,0,320,200)` and centered-dialog `(48,32,224,136)` geometry.
-  - Evidence: `parity-evidence/dm1_all_graphics_phase2777_2796_v1_screen_dialog_base_zones.md`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2797_2816_v1_screen_dialog_base_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `525/525`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
 
-- Passes 2797–2816 — V1 explosion/viewport text zones.
+- Passes 2817–2836 — V1 explosion/viewport text zones.
   - Added source id/geometry helpers for layout-696 `C004_ZONE_EXPLOSION_PATTERN_D0C` and `C006_ZONE_VIEWPORT_CENTERED_TEXT`.
   - Added `INV_GV_300AO` to assert D0C explosion pattern `(0,0,32,29)` and representative centered text `(73,60,77,15)` geometry.
-  - Evidence: `parity-evidence/dm1_all_graphics_phase2797_2816_v1_explosion_viewport_text_zones.md`.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2817_2836_v1_explosion_viewport_text_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `526/526`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

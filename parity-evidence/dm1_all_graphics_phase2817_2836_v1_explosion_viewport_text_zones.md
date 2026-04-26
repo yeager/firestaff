@@ -1,4 +1,4 @@
-# DM1 all-graphics parity — phase 2797–2816: V1 explosion/viewport text zones
+# DM1 all-graphics parity — phase 2817–2836: V1 explosion/viewport text zones
 
 ## Scope
 

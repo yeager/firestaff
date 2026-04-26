@@ -1,4 +1,4 @@
-# DM1 all-graphics parity — phase 2757–2776: V1 message area zone id
+# DM1 all-graphics parity — phase 2777–2796: V1 message area zone id
 
 ## Scope
 
