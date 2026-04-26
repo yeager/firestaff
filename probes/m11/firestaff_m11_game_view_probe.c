@@ -1873,9 +1873,13 @@ int main(int argc, char** argv) {
         int damageX3, damageY3, damageW3, damageH3;
         probe_record(&tally,
                      "INV_GV_15S",
-                     M11_GameView_GetV1DamageIndicatorZone(0, 45, 7,
-                                                           &damageX0, &damageY0,
-                                                           &damageW0, &damageH0) &&
+                     M11_GameView_GetV1DamageIndicatorZoneId(0) == 167 &&
+                         M11_GameView_GetV1DamageIndicatorZoneId(3) == 170 &&
+                         M11_GameView_GetV1DamageIndicatorZoneId(-1) == 0 &&
+                         M11_GameView_GetV1DamageIndicatorZoneId(4) == 0 &&
+                         M11_GameView_GetV1DamageIndicatorZone(0, 45, 7,
+                                                               &damageX0, &damageY0,
+                                                               &damageW0, &damageH0) &&
                          M11_GameView_GetV1DamageIndicatorZone(3, 45, 7,
                                                                &damageX3, &damageY3,
                                                                &damageW3, &damageH3) &&
@@ -1883,7 +1887,7 @@ int main(int argc, char** argv) {
                          damageW0 == 45 && damageH0 == 7 &&
                          damageX3 == 230 && damageY3 == PROBE_PARTY_PANEL_Y + 11 &&
                          damageW3 == 45 && damageH3 == 7,
-                     "V1 champion damage indicator zone centers C015 inside C007 status box geometry");
+                     "V1 champion damage indicator zones expose C167-C170 ids and center C015 inside C007 geometry");
     }
 
     {

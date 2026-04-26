@@ -16204,6 +16204,11 @@ int M11_GameView_GetV1PoisonLabelZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 167 + championSlot;
+}
+
 int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
                                           int indicatorW,
                                           int indicatorH,
@@ -16212,7 +16217,14 @@ int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
                                           int* outW,
                                           int* outH) {
     int boxX, boxY, boxW, boxH;
-    if (indicatorW <= 0 || indicatorH <= 0) return 0;
+    int zoneId = M11_GameView_GetV1DamageIndicatorZoneId(championSlot);
+    if (indicatorW <= 0 || indicatorH <= 0 || zoneId == 0) return 0;
+    /* Source layout-696 / ReDMCSB CHAMPION.C F0291 selects
+     * C167..C170 for the small damage-to-champion banner.  The
+     * decoded zone is the 45x7 C015 banner centered over the
+     * champion status box; derive the rectangle through the source
+     * zone id so future HUD placement drift is caught at the helper. */
+    championSlot = zoneId - 167;
     if (!M11_GameView_GetV1StatusBoxZone(championSlot,
                                          &boxX, &boxY, &boxW, &boxH)) {
         return 0;
