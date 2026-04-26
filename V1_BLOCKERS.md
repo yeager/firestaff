@@ -533,11 +533,17 @@ first, then visual parity, then typography / honesty.
   source-state anchor via `firestaff_m11_viewport_state_probe`: source
   party state `(map=0,x=1,y=3,dir=SOUTH)`, a 3x3 relative viewport
   neighborhood with thing-chain counts, and critical viewport asset
-  dimensions from `GRAPHICS.DAT`.
+  dimensions from `GRAPHICS.DAT`. Pass 73 commits the reproducible
+  layout-696/ZONES reconstruction (`zones_h_reconstruction.json`),
+  replacing the old vague ZONES.H-missing blocker with a concrete source
+  layout table. Pass 74 adds full-frame original-vs-Firestaff region
+  measurements for viewport/action/spell/inventory surfaces; high deltas
+  confirm semantic route mismatch remains. Pass 75 sheets the startup-menu
+  candidate asset windows so menu overlay work has concrete source assets.
 - **Suggested pass:** pass-47b/pass-72 follow-up — ZONES.H parse (from
   `PANEL.C` + `COORD.C` layout-record init) and render from the locked
-  DUNGEON.DAT/GRAPHICS.DAT viewport state; use DOSBox captures as
-  comparison evidence, not as the source of route truth.
+  DUNGEON.DAT/GRAPHICS.DAT viewport state plus `zones_h_reconstruction.json`;
+  use DOSBox captures as comparison evidence, not as the source of route truth.
 
 ## 12. Tick-prefix (`Tn:`) on message log lines — **CANDIDATE HUD PASS**
 - **Area:** `TEXT`
