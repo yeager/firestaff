@@ -13720,6 +13720,17 @@ int M11_GameView_GetV1ActionAreaZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetV1SpellAreaZone(int* outX,
+                                       int* outY,
+                                       int* outW,
+                                       int* outH) {
+    if (outX) *outX = M11_DM_SPELL_AREA_X;
+    if (outY) *outY = M11_DM_SPELL_AREA_Y;
+    if (outW) *outW = M11_DM_SPELL_AREA_W;
+    if (outH) *outH = M11_DM_SPELL_AREA_H;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
@@ -14228,16 +14239,19 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
      * C013_ZONE_SPELL_AREA in ZONES.H. */
     if (!state->showDebugHUD && !m11_v2_vertical_slice_enabled()) {
         int actionX, actionY, actionW, actionH;
+        int spellX, spellY, spellW, spellH;
         int drewAction;
+        int drewSpell;
         (void)M11_GameView_GetV1ActionAreaZone(
             &actionX, &actionY, &actionW, &actionH);
+        (void)M11_GameView_GetV1SpellAreaZone(
+            &spellX, &spellY, &spellW, &spellH);
         drewAction = m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
             M11_GFX_ACTION_AREA, actionW, actionH, actionX, actionY);
-        int drewSpell = m11_blit_panel_asset_native(state,
+        drewSpell = m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
-            M11_GFX_SPELL_AREA_BG, M11_DM_SPELL_AREA_W, M11_DM_SPELL_AREA_H,
-            M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y);
+            M11_GFX_SPELL_AREA_BG, spellW, spellH, spellX, spellY);
         if (drewAction && drewSpell) {
             drewAuthenticFrames = 1;
         } else {
@@ -14245,8 +14259,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
              * we don't leave a half-original frame. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           actionX, actionY, actionW,
-                          (M11_DM_SPELL_AREA_Y + M11_DM_SPELL_AREA_H) -
-                              actionY,
+                          (spellY + spellH) - actionY,
                           M11_COLOR_BLACK);
         }
     }

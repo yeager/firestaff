@@ -7672,6 +7672,14 @@ int main(int argc, char** argv) {
         }
 
         {
+            int spellX, spellY, spellW, spellH;
+            probe_record(&tally, "INV_GV_300I",
+                         M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH) &&
+                             spellX == 224 && spellY == 90 && spellW == 87 && spellH == 25,
+                         "spell area zone matches source C013 right-column geometry");
+        }
+
+        {
             int headerX, headerY, headerW, headerH;
             probe_record(&tally, "INV_GV_300G",
                          M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&

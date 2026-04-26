@@ -133,3 +133,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_300H`: action area `(224,45,87,45)` matches source right-column panel geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1377_1396_v1_action_area_zone_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `480/480`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1397–1416 — V1 spell area zone helper.
+  - Added `M11_GameView_GetV1SpellAreaZone(...)` for source `C013_ZONE_SPELL_AREA` geometry.
+  - Routed V1 spell-frame blit and partial-frame fallback clear through the helper.
+  - Added invariant `INV_GV_300I`: spell area `(224,90,87,25)` matches source right-column panel geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1397_1416_v1_spell_area_zone_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `481/481`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

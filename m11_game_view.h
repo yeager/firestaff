@@ -731,6 +731,10 @@ int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH);
+int M11_GameView_GetV1SpellAreaZone(int* outX,
+                                       int* outY,
+                                       int* outW,
+                                       int* outH);
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
