@@ -6627,6 +6627,33 @@ int main(int argc, char** argv) {
                      "V1 inventory source slot-box helper preserves DEFS.H indices 8..37");
     }
 
+    /* INV_GV_357: Inventory backdrop uses source C017 over the exact
+     * DM1 viewport replacement rectangle. */
+    {
+        int x = -1, y = -1, w = -1, h = -1;
+        probe_record(&tally,
+                     "INV_GV_357",
+                     M11_GameView_GetV1InventoryBackdropGraphicId() == 17 &&
+                         M11_GameView_GetV1InventoryBackdropZone(&x, &y, &w, &h) &&
+                         x == 0 && y == 33 && w == 224 && h == 136,
+                     "V1 inventory backdrop exposes source C017 in viewport replacement zone");
+    }
+
+    /* INV_GV_358: Source C017 inventory/dialog backdrop loads as a
+     * 224x136 viewport-sized bitmap from GRAPHICS.DAT. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* invBackdrop = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader,
+            (unsigned int)M11_GameView_GetV1InventoryBackdropGraphicId());
+        probe_record(&tally,
+                     "INV_GV_358",
+                     invBackdrop != NULL && invBackdrop->width == 224 && invBackdrop->height == 136,
+                     "inventory backdrop C017 loads as 224x136 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_358", 1,
+                     "inventory backdrop C017: skipped (no GRAPHICS.DAT)");
+    }
+
     /* INV_GV_201: Slot box normal graphic (33) loads as 18×18 bitmap. */
     if (gameView.assetsAvailable) {
         const M11_AssetSlot* box33 = M11_AssetLoader_Load(

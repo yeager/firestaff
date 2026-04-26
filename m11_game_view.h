@@ -892,6 +892,11 @@ int M11_GameView_GetV1ChampionIconZone(int championSlot,
                                         int* outH);
 int M11_GameView_GetV1InventoryPanelGraphicId(void);
 int M11_GameView_GetV1InventoryPanelZoneId(void);
+int M11_GameView_GetV1InventoryBackdropGraphicId(void);
+int M11_GameView_GetV1InventoryBackdropZone(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH);
 int M11_GameView_GetV1InventoryPanelZone(int* outX,
                                           int* outY,
                                           int* outW,

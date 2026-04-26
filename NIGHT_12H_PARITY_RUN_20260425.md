@@ -336,3 +336,9 @@ Update this file with batch summaries if useful.
   - Added/updated `INV_GV_353`–`INV_GV_356` for corrected counts, geometry, invalid bounds, and source index span.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2857_2876_v1_inventory_slotbox_defs_indices.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `530/530`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2877–2896 — V1 inventory backdrop source zone.
+  - Added explicit inventory backdrop helpers for source graphic `C017_GRAPHIC_INVENTORY` / graphic id `17` and the viewport replacement zone `(0,33,224,136)`.
+  - Added `INV_GV_357`–`INV_GV_358` to assert id/geometry and GRAPHICS.DAT 224×136 asset size.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2877_2896_v1_inventory_backdrop_zone.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `532/532`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

@@ -14285,6 +14285,22 @@ int M11_GameView_GetV1InventoryPanelGraphicId(void) {
     return M11_GFX_PANEL_EMPTY;
 }
 
+int M11_GameView_GetV1InventoryBackdropGraphicId(void) {
+    /* DEFS.H C017_GRAPHIC_INVENTORY, 224x136 viewport-replacement graphic. */
+    return M11_GFX_DIALOG_BOX;
+}
+
+int M11_GameView_GetV1InventoryBackdropZone(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    if (outX) *outX = M11_VIEWPORT_X;
+    if (outY) *outY = M11_VIEWPORT_Y;
+    if (outW) *outW = M11_VIEWPORT_W;
+    if (outH) *outH = M11_VIEWPORT_H;
+    return 1;
+}
+
 int M11_GameView_GetV1InventoryPanelZoneId(void) {
     /* Source layout-696 C101_ZONE_PANEL, centered at (152,89). */
     return 101;
