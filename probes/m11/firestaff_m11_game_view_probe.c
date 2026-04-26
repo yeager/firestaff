@@ -1067,6 +1067,17 @@ int main(int argc, char** argv) {
         int nameX1 = 0, nameY1 = 0, nameW1 = 0, nameH1 = 0;
         M11_GameView_GetV1StatusNameZone(0, &nameX, &nameY, &nameW, &nameH);
         M11_GameView_GetV1StatusNameZone(1, &nameX1, &nameY1, &nameW1, &nameH1);
+        {
+            int readyX, readyY, readyW, readyH;
+            int actionX3, actionY3, actionW3, actionH3;
+            probe_record(&tally,
+                         "INV_GV_15E6",
+                         M11_GameView_GetV1StatusHandZone(0, 0, &readyX, &readyY, &readyW, &readyH) &&
+                             M11_GameView_GetV1StatusHandZone(3, 1, &actionX3, &actionY3, &actionW3, &actionH3) &&
+                             readyX == 16 && readyY == 170 && readyW == 16 && readyH == 16 &&
+                             actionX3 == 243 && actionY3 == 170 && actionW3 == 16 && actionH3 == 16,
+                         "V1 status hand slot zones match layout-696 C211..C218 geometry");
+        }
         probe_record(&tally,
                      "INV_GV_15E2",
                      nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&

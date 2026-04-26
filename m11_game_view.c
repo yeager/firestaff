@@ -13917,6 +13917,24 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
     return champ->inventory[CHAMPION_SLOT_HAND_RIGHT];
 }
 
+int M11_GameView_GetV1StatusHandZone(int championSlot,
+                                     int handIndex,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        handIndex < 0 || handIndex > 1) {
+        return 0;
+    }
+    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
+                      m11_v1_status_hand_x(handIndex);
+    if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_HAND_Y;
+    if (outW) *outW = M11_V1_STATUS_HAND_ZONE_W;
+    if (outH) *outH = M11_V1_STATUS_HAND_ZONE_H;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                                int championSlot,
                                                int handIndex) {
@@ -14930,14 +14948,17 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * present living champions; these are separate from the
              * right-column action icon cells. */
             if (!useV2PartyHud && !isDead) {
+                int readyX, readyY, actionX, actionY;
+                (void)M11_GameView_GetV1StatusHandZone(
+                    slot, 0, &readyX, &readyY, NULL, NULL);
+                (void)M11_GameView_GetV1StatusHandZone(
+                    slot, 1, &actionX, &actionY, NULL, NULL);
                 (void)m11_draw_v1_status_hand_slot(
                     state, champ, framebuffer, framebufferWidth, framebufferHeight,
-                    slot, 0, x + m11_v1_status_hand_x(0),
-                    y + M11_V1_STATUS_HAND_Y);
+                    slot, 0, readyX, readyY);
                 (void)m11_draw_v1_status_hand_slot(
                     state, champ, framebuffer, framebufferWidth, framebufferHeight,
-                    slot, 1, x + m11_v1_status_hand_x(1),
-                    y + M11_V1_STATUS_HAND_Y);
+                    slot, 1, actionX, actionY);
             }
 
             /* GRAPHICS.DAT-backed shield border overlays (67×29).

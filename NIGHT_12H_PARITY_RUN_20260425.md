@@ -85,3 +85,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_300E`: a click at `(318,120)` activates champion ordinal 4 from source `C092` rightmost-cell geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1237_1256_v1_action_icon_pointer_zone.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `474/474`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1257–1276 — V1 status hand zone helper hardening.
+  - Added `M11_GameView_GetV1StatusHandZone(...)` for layout-696 `C211..C218` status ready/action hand slot geometry.
+  - Routed V1 status-hand drawing through the shared helper.
+  - Added invariant `INV_GV_15E6`: slot 0 ready `(16,170,16,16)` and slot 3 action `(243,170,16,16)` match source child zones with 69 px status stride.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1257_1276_v1_status_hand_zone_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `475/475`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
