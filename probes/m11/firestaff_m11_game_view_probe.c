@@ -1107,6 +1107,23 @@ int main(int argc, char** argv) {
                          "V1 status hand icon zones inset 16x16 object icons within hand slots");
         }
         {
+            int readyBoxX, readyBoxY, readyBoxW, readyBoxH;
+            int actionBoxX3, actionBoxY3, actionBoxW3, actionBoxH3;
+            probe_record(&tally,
+                         "INV_GV_15W",
+                         M11_GameView_GetV1StatusHandSlotBoxZone(0, 0,
+                                                                 &readyBoxX, &readyBoxY,
+                                                                 &readyBoxW, &readyBoxH) &&
+                             M11_GameView_GetV1StatusHandSlotBoxZone(3, 1,
+                                                                     &actionBoxX3, &actionBoxY3,
+                                                                     &actionBoxW3, &actionBoxH3) &&
+                             readyBoxX == 16 && readyBoxY == 170 &&
+                             readyBoxW == 18 && readyBoxH == 18 &&
+                             actionBoxX3 == 243 && actionBoxY3 == 170 &&
+                             actionBoxW3 == 18 && actionBoxH3 == 18,
+                         "V1 status hand slot-box zones expose 18x18 C033/C034/C035 overdraw at hand origins");
+        }
+        {
             int hpX, hpY, hpW, hpH;
             int manaX3, manaY3, manaW3, manaH3;
             probe_record(&tally,

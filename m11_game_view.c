@@ -14100,6 +14100,30 @@ int M11_GameView_GetV1StatusHandIconZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
+                                            int handIndex,
+                                            int* outX,
+                                            int* outY,
+                                            int* outW,
+                                            int* outH) {
+    int handX, handY;
+    if (!M11_GameView_GetV1StatusHandZone(championSlot, handIndex,
+                                          &handX, &handY,
+                                          NULL, NULL)) {
+        return 0;
+    }
+    /* CHAMDRAW.C F0291 draws the C033/C034/C035 hand-slot box
+     * bitmap at the hand-zone origin.  Those source bitmaps are
+     * 18x18, deliberately overhanging the 16x16 layout-696 parent
+     * zone by one pixel on the right/bottom; the 16x16 object icon
+     * is then drawn at +1,+1 inside the box. */
+    if (outX) *outX = handX;
+    if (outY) *outY = handY;
+    if (outW) *outW = 18;
+    if (outH) *outH = 18;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                                int championSlot,
                                                int handIndex) {
@@ -15254,9 +15278,9 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * right-column action icon cells. */
             if (!useV2PartyHud && !isDead) {
                 int readyX, readyY, actionX, actionY;
-                (void)M11_GameView_GetV1StatusHandZone(
+                (void)M11_GameView_GetV1StatusHandSlotBoxZone(
                     slot, 0, &readyX, &readyY, NULL, NULL);
-                (void)M11_GameView_GetV1StatusHandZone(
+                (void)M11_GameView_GetV1StatusHandSlotBoxZone(
                     slot, 1, &actionX, &actionY, NULL, NULL);
                 (void)m11_draw_v1_status_hand_slot(
                     state, champ, framebuffer, framebufferWidth, framebufferHeight,
