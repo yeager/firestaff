@@ -56,15 +56,17 @@ Optional environment:
   DM1_ROUTE_SKIP_STARTUP_SELECTOR=1
                     skip legacy graphics/sound/input selector keystrokes when
                     the DOSBox config launches `DM VGA` directly
-  DM1_ORIGINAL_PROGRAM='VGA'
-                    override autoexec launch command; useful for staged trees
-                    whose `DM VGA` selector path remains in text mode.
+  DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk'
+                    override autoexec launch command; recommended for bypassing
+                    the original selector and entering VGA/no-sound/keyboard mode
+                    directly. `DM VGA` remains the default for legacy runs.
   manifest:        ${CROP_MANIFEST}
 
 Honesty note:
   The route string must be validated against the original runtime state that
   corresponds to Firestaff's run_capture_screenshots.sh sequence.  This script
-  will not invent that route.
+  will not invent that route. Use `DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk'` to
+  bypass the text selector; audit raw captures before accepting references.
 EOF
 }
 

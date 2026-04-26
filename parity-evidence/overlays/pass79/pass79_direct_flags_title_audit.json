@@ -1,0 +1,60 @@
+{
+  "schema": "pass78_original_route_attempt_audit.v1",
+  "attempt_dir": "verification-screens/pass79-original-direct-flags-title",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "320x200": 6
+  },
+  "all_gameplay_320x200": true,
+  "honesty": "Only 320x200 raw DOSBox graphics frames may be normalized as original DM1 viewport references. 720x400 text-mode selector/prompt captures are blockers.",
+  "captures": [
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0004-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0005-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-screens/pass79-original-direct-flags-title/image0006-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 15592,
+      "sha256": "0494bcb374b168b0ced1f3f48c8178515840cfd1003e874a4c44683968fba784",
+      "classification": "gameplay_graphics_candidate"
+    }
+  ]
+}

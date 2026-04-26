@@ -547,7 +547,10 @@ first, then visual parity, then typography / honesty.
   route lock and hardens the DOSBox harness, but records only negative
   evidence so far: automated captures remain `720x400` selector/prompt
   frames, not `320x200` gameplay frames, so no original viewport reference
-  was accepted.
+  was accepted. Pass 79 resolves that launcher blocker using the original
+  `DM -vv -sn -pk` flags from `DM.C`; raw DOSBox captures now audit as
+  `320x200` graphics frames and can reach the dungeon corridor view. Exact
+  original semantic route parity is still open.
 - **Suggested pass:** pass-47b/pass-72 follow-up — ZONES.H parse (from
   `PANEL.C` + `COORD.C` layout-record init) and render from the locked
   DUNGEON.DAT/GRAPHICS.DAT viewport state plus `zones_h_reconstruction.json`;
