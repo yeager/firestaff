@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firestaff.example/schemas/v2.2-enhanced-recipe.schema.json",
+  "title": "Firestaff V2.2 Enhanced 4K/1080p recipe",
+  "type": "object",
+  "required": [
+    "pipelineVersion",
+    "checksumStoreRoot",
+    "assets"
+  ],
+  "properties": {
+    "pipelineVersion": {
+      "const": "v2.2-enhanced-4k1080"
+    },
+    "checksumStoreRoot": {
+      "const": "assets-v2/store"
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "logicalId",
+          "assetLineage",
+          "sourceLogicalSize",
+          "masterSize",
+          "derivedSize",
+          "masterPath",
+          "derivedPath",
+          "provenance"
+        ],
+        "properties": {
+          "logicalId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assetLineage": {
+            "const": "v2.2-enhanced"
+          },
+          "sourceLogicalSize": {
+            "$ref": "#/$defs/size"
+          },
+          "masterSize": {
+            "$ref": "#/$defs/size"
+          },
+          "derivedSize": {
+            "$ref": "#/$defs/size"
+          },
+          "masterPath": {
+            "$ref": "#/$defs/v22RelativePath"
+          },
+          "derivedPath": {
+            "$ref": "#/$defs/v22RelativePath"
+          },
+          "provenance": {
+            "type": "object",
+            "required": [
+              "sourceKind",
+              "sourceNotes",
+              "operator",
+              "toolchain",
+              "licenseNotes"
+            ],
+            "properties": {
+              "sourceKind": {
+                "type": "string",
+                "minLength": 1,
+                "not": {
+                  "enum": [
+                    "v2.1-upscaled-original",
+                    "dm1-original-extract"
+                  ]
+                }
+              },
+              "sourceNotes": {
+                "type": "string",
+                "minLength": 1
+              },
+              "operator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "toolchain": {
+                "type": "string",
+                "minLength": 1
+              },
+              "licenseNotes": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "size": {
+      "type": "object",
+      "required": [
+        "width",
+        "height"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "v22RelativePath": {
+      "type": "string",
+      "pattern": "^assets-v2/v2\\.2-enhanced/[^\\n]*$",
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "(^|/)\\.\\.(/|$)"
+          },
+          {
+            "pattern": "^/"
+          },
+          {
+            "pattern": "v2\\.1|upscaled-original|/ui/wave1/"
+          }
+        ]
+      }
+    }
+  }
+}
