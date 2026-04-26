@@ -15123,16 +15123,14 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
             }
             if (!drewStatusBox) {
-                /* Procedural fallback.  Slot width is mode-aware so
-                 * V1 uses the DEFS.H-anchored 67-wide box and V2
-                 * keeps its legacy 71-wide shell.  Height is still
-                 * 28 (DM1 graphic 7 is 67x29 but the M11 slot is
-                 * 28 tall; the extra pixel row is absorbed by the
-                 * panel backdrop). */
+                /* Procedural fallback.  V1 uses the same source status-box
+                 * rectangle as C007/C008 (67x29); V2 keeps the legacy
+                 * 71x28 shell baked into its vertical-slice HUD assets. */
+                int fallbackH = useV2PartyHud ? M11_PARTY_SLOT_H : slotH;
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x, y, slotW, M11_PARTY_SLOT_H, M11_COLOR_BLACK);
+                              x, y, slotW, fallbackH, M11_COLOR_BLACK);
                 m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x, y, slotW, M11_PARTY_SLOT_H, M11_COLOR_LIGHT_CYAN);
+                              x, y, slotW, fallbackH, M11_COLOR_LIGHT_CYAN);
             }
 
             /* No invented active-champion frame in V1.  The source

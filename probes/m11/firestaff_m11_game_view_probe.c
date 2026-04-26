@@ -1160,6 +1160,22 @@ int main(int argc, char** argv) {
                              textX3 == 220 && textY3 == 160 && textW3 == 42 && textH3 == 7,
                          "V1 status name text zones match layout-696 C163..C166 geometry");
         }
+        {
+            M11_GameViewState fallbackDeadBoxView = syntheticView;
+            unsigned char fallbackDeadBoxFramebuffer[320 * 200];
+            int deadBoxX, deadBoxY, deadBoxW, deadBoxH;
+            fallbackDeadBoxView.assetsAvailable = 0;
+            fallbackDeadBoxView.world.party.champions[1].hp.current = 0;
+            memset(fallbackDeadBoxFramebuffer, 0, sizeof(fallbackDeadBoxFramebuffer));
+            M11_GameView_Draw(&fallbackDeadBoxView, fallbackDeadBoxFramebuffer, 320, 200);
+            probe_record(&tally,
+                         "INV_GV_15Y",
+                         M11_GameView_GetV1StatusBoxZone(1, &deadBoxX, &deadBoxY,
+                                                         &deadBoxW, &deadBoxH) &&
+                             deadBoxW == 67 && deadBoxH == 29 &&
+                             fallbackDeadBoxFramebuffer[(deadBoxY + 28) * 320 + deadBoxX] == PROBE_COLOR_LIGHT_CYAN,
+                         "V1 dead status-box fallback preserves source 67x29 C008 extent");
+        }
         probe_record(&tally,
                      "INV_GV_15E2",
                      nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&
