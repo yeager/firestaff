@@ -11531,6 +11531,14 @@ int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
     return 1;
 }
 
+int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
+                                             int applyActionPalette) {
+    if (applyActionPalette && (colorIndex & 0x0F) == M11_COLOR_DARK_GRAY) {
+        return M11_COLOR_CYAN;
+    }
+    return colorIndex;
+}
+
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -11575,9 +11583,8 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
              * action-area object icons: color 12 is remapped to C04 cyan.
              * Inventory slot icons use F0038_OBJECT_DrawIconInSlotBox and
              * are blitted directly, without this palette rewrite. */
-            if (applyActionPalette && (px & 0x0F) == M11_COLOR_DARK_GRAY) {
-                px = M11_COLOR_CYAN;
-            }
+            px = (unsigned char)M11_GameView_MapV1ActionIconPaletteColor(
+                px, applyActionPalette);
             framebuffer[fbY * framebufferWidth + fbX] = px;
         }
     }

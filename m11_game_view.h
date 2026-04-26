@@ -793,6 +793,8 @@ int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
                                                int* outY,
                                                int* outW,
                                                int* outH);
+int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
+                                             int applyActionPalette);
 
 #ifdef __cplusplus
 }

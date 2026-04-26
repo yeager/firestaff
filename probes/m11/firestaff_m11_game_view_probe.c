@@ -7795,6 +7795,15 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300L",
+                         M11_GameView_MapV1ActionIconPaletteColor(12, 1) == 4 &&
+                             M11_GameView_MapV1ActionIconPaletteColor(12, 0) == 12 &&
+                             M11_GameView_MapV1ActionIconPaletteColor(28, 1) == 4 &&
+                             M11_GameView_MapV1ActionIconPaletteColor(5, 1) == 5,
+                         "V1 action object icon palette remaps color-12 nybbles to cyan only in action cells");
+        }
+
+        {
             int actionX, actionY, actionW, actionH;
             probe_record(&tally, "INV_GV_300H",
                          M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&
