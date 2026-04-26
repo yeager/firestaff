@@ -11539,6 +11539,13 @@ int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
     return colorIndex;
 }
 
+int M11_GameView_ShouldHatchV1ActionIconCells(const M11_GameViewState* state) {
+    if (!state) return 0;
+    return state->candidateMirrorOrdinal > 0 ||
+           state->candidateMirrorPanelActive ||
+           state->resting;
+}
+
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -13988,9 +13995,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
          * yet carry the source MASK0x0008_DISABLE_ACTION bitfield for
          * per-champion cooldown, but the two global gates are present
          * in GameView state and should visibly match DM1. */
-        if (state->candidateMirrorOrdinal > 0 ||
-            state->candidateMirrorPanelActive ||
-            state->resting) {
+        if (M11_GameView_ShouldHatchV1ActionIconCells(state)) {
             m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
                            cellX, cellY, cellW, cellH);
         }

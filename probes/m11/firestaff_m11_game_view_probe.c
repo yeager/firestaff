@@ -7804,6 +7804,22 @@ int main(int argc, char** argv) {
         }
 
         {
+            M11_GameViewState hatchView = iconView;
+            int hatchIdle = M11_GameView_ShouldHatchV1ActionIconCells(&hatchView);
+            hatchView.resting = 1;
+            int hatchResting = M11_GameView_ShouldHatchV1ActionIconCells(&hatchView);
+            hatchView.resting = 0;
+            hatchView.candidateMirrorPanelActive = 1;
+            int hatchPanel = M11_GameView_ShouldHatchV1ActionIconCells(&hatchView);
+            hatchView.candidateMirrorPanelActive = 0;
+            hatchView.candidateMirrorOrdinal = 2;
+            probe_record(&tally, "INV_GV_300M",
+                         !hatchIdle && hatchResting && hatchPanel &&
+                             M11_GameView_ShouldHatchV1ActionIconCells(&hatchView),
+                         "V1 action icon hatch gate follows resting/candidate global source disable states");
+        }
+
+        {
             int actionX, actionY, actionW, actionH;
             probe_record(&tally, "INV_GV_300H",
                          M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&

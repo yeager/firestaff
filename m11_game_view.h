@@ -795,6 +795,7 @@ int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
                                                int* outH);
 int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
                                              int applyActionPalette);
+int M11_GameView_ShouldHatchV1ActionIconCells(const M11_GameViewState* state);
 
 #ifdef __cplusplus
 }
