@@ -7969,6 +7969,19 @@ int main(int argc, char** argv) {
         }
 
         {
+            int panelX, panelY, panelW, panelH;
+            int tabX, tabY, tabW, tabH;
+            probe_record(&tally, "INV_GV_300AC",
+                         M11_GameView_GetV1SpellCasterPanelZoneId() == 221 &&
+                             M11_GameView_GetV1SpellCasterTabZoneId() == 224 &&
+                             M11_GameView_GetV1SpellCasterPanelZone(&panelX, &panelY, &panelW, &panelH) &&
+                             M11_GameView_GetV1SpellCasterTabZone(&tabX, &tabY, &tabW, &tabH) &&
+                             panelX == 224 && panelY == 90 && panelW == 87 && panelH == 8 &&
+                             tabX == 224 && tabY == 90 && tabW == 45 && tabH == 8,
+                         "spell caster panel zones expose layout-696 C221/C224 ids and geometry");
+        }
+
+        {
             probe_record(&tally, "INV_GV_300P",
                          M11_GameView_GetV1ActionAreaGraphicId() == 10 &&
                              M11_GameView_GetV1ActionMenuGraphicZoneId(1) == 79 &&

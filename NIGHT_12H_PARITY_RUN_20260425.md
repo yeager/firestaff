@@ -233,3 +233,9 @@ Update this file with batch summaries if useful.
   - Routed action icon cell id validation through the parent helper and hardened `INV_GV_300D` to assert `C088` plus `C089..C096`.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2517_2536_v1_action_icon_parent_zone_id.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2537–2556 — V1 spell caster zone ids.
+  - Added source id/geometry helpers for layout-696 `C221_ZONE_SPELL_AREA_SET_MAGIC_CASTER` and `C224_ZONE_SPELL_AREA_MAGIC_CASTER_TAB`.
+  - Routed caster-tab validation through the parent panel helper and added `INV_GV_300AC` for ids plus top-of-spell-area geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2537_2556_v1_spell_caster_zone_ids.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `514/514`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

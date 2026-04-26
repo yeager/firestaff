@@ -809,6 +809,16 @@ int M11_GameView_GetV1ActionSpellStripZone(int* outX,
                                            int* outY,
                                            int* outW,
                                            int* outH);
+int M11_GameView_GetV1SpellCasterPanelZoneId(void);
+int M11_GameView_GetV1SpellCasterPanelZone(int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH);
+int M11_GameView_GetV1SpellCasterTabZoneId(void);
+int M11_GameView_GetV1SpellCasterTabZone(int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH);
 int M11_GameView_GetV1ActionAreaGraphicId(void);
 int M11_GameView_GetV1ActionMenuGraphicZoneId(int actionRowCount);
 int M11_GameView_GetV1ActionAreaClearColor(void);

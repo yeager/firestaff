@@ -13956,6 +13956,49 @@ int M11_GameView_GetV1ActionAreaClearColor(void) {
     return M11_COLOR_BLACK;
 }
 
+int M11_GameView_GetV1SpellCasterPanelZoneId(void) {
+    /* Source layout-696 C221_ZONE_SPELL_AREA_SET_MAGIC_CASTER. */
+    return 221;
+}
+
+int M11_GameView_GetV1SpellCasterPanelZone(int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    int spellX, spellY;
+    if (!M11_GameView_GetV1SpellCasterPanelZoneId() ||
+        !M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, NULL, NULL)) {
+        return 0;
+    }
+    if (outX) *outX = spellX;
+    if (outY) *outY = spellY;
+    if (outW) *outW = 87;
+    if (outH) *outH = 8;
+    return 1;
+}
+
+int M11_GameView_GetV1SpellCasterTabZoneId(void) {
+    if (!M11_GameView_GetV1SpellCasterPanelZoneId()) return 0;
+    /* Source layout-696 C224_ZONE_SPELL_AREA_MAGIC_CASTER_TAB. */
+    return 224;
+}
+
+int M11_GameView_GetV1SpellCasterTabZone(int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH) {
+    int panelX, panelY;
+    if (!M11_GameView_GetV1SpellCasterTabZoneId() ||
+        !M11_GameView_GetV1SpellCasterPanelZone(&panelX, &panelY, NULL, NULL)) {
+        return 0;
+    }
+    if (outX) *outX = panelX;
+    if (outY) *outY = panelY;
+    if (outW) *outW = 45;
+    if (outH) *outH = 8;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionSpellStripZone(int* outX,
                                            int* outY,
                                            int* outW,
