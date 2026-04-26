@@ -11,7 +11,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC_STAGE="${REPO}/verification-screens/dm1-dosbox-capture/DungeonMasterPC34"
+SRC_STAGE="${DM1_ORIGINAL_STAGE_DIR:-${REPO}/verification-screens/dm1-dosbox-capture/DungeonMasterPC34}"
 OUT_DIR="${OUT_DIR:-${REPO}/verification-screens/pass70-original-dm1-viewports}"
 DOSBOX="${DOSBOX:-/Applications/DOSBox Staging.app/Contents/MacOS/dosbox}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
@@ -47,6 +47,10 @@ Supported route tokens:
 Outputs:
   raw screenshots: ${OUT_DIR}/image*.png (DOSBox Staging raw 320x200 if capture succeeds)
   crops:           ${CROP_DIR}/*.ppm and *.png
+
+Optional environment:
+  DM1_ORIGINAL_STAGE_DIR=/path/to/DM1-PC34-tree-with-DM.EXE
+                    override the default staged tree path
   manifest:        ${CROP_MANIFEST}
 
 Honesty note:
@@ -71,20 +75,54 @@ done
 need_stage() {
     if [[ ! -f "${SRC_STAGE}/DM.EXE" ]]; then
         echo "ERROR: staged DM1 PC 3.4 tree missing: ${SRC_STAGE}" >&2
-        echo "Run scripts/dosbox_dm1_capture.sh first. If that fails, the missing input is original-games/Game,Dungeon_Master,DOS,Software.7z." >&2
+        echo "Run scripts/dosbox_dm1_capture.sh first, or set DM1_ORIGINAL_STAGE_DIR to an existing DM1 PC 3.4 tree. If staging fails, the missing input is original-games/Game,Dungeon_Master,DOS,Software.7z." >&2
         exit 3
     fi
 }
 
-need_magick() {
+need_image_tool() {
     if command -v magick >/dev/null 2>&1; then
         echo magick
     elif command -v convert >/dev/null 2>&1; then
         echo convert
     else
-        echo "ERROR: ImageMagick is required for PNG->PPM viewport crop normalization (magick or convert on PATH)." >&2
-        exit 4
+        if python3 - <<'PY' >/dev/null 2>&1
+from PIL import Image
+PY
+        then
+            echo pillow
+        else
+            echo "ERROR: ImageMagick (magick/convert) or Python Pillow is required for PNG->PPM viewport crop normalization." >&2
+            exit 4
+        fi
     fi
+}
+
+validate_route_shape() {
+    if [[ -z "${ROUTE_EVENTS}" ]]; then
+        return 0
+    fi
+    python3 - "${ROUTE_EVENTS}" <<'PY'
+import re, sys
+route = sys.argv[1].split()
+allowed = set("shot capture screenshot enter return esc escape space up down left right one two three four five six zero".split())
+allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789")
+shots = 0
+for token in route:
+    low = token.lower()
+    if low in {"shot", "capture", "screenshot"}:
+        shots += 1
+        continue
+    if low.startswith("wait:"):
+        if not re.fullmatch(r"wait:[0-9]+", low):
+            raise SystemExit(f"ERROR: invalid wait token: {token}")
+        continue
+    if low not in allowed:
+        raise SystemExit(f"ERROR: unknown route token: {token}")
+if shots != 6:
+    raise SystemExit(f"ERROR: DM1_ORIGINAL_ROUTE_EVENTS must contain exactly 6 shot tokens, found {shots}")
+print(f"[pass-70] route shape OK: {len(route)} tokens, {shots} shots")
+PY
 }
 
 write_helpers() {
@@ -202,8 +240,8 @@ SWIFT
 }
 
 normalize_existing() {
-    local convert_bin
-    convert_bin="$(need_magick)"
+    local image_tool
+    image_tool="$(need_image_tool)"
     mkdir -p "${CROP_DIR}"
     rm -f "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png "${RAW_MANIFEST}" "${CROP_MANIFEST}"
 
@@ -245,8 +283,23 @@ PY
         label="${labels[$i]}"
         ppm="${CROP_DIR}/${label}.ppm"
         png="${CROP_DIR}/${label}.png"
-        "${convert_bin}" "$src" -crop 224x136+0+33 +repage "$ppm"
-        "${convert_bin}" "$ppm" "$png" 2>/dev/null || true
+        if [[ "${image_tool}" == "pillow" ]]; then
+            python3 - "$src" "$ppm" "$png" <<'PY'
+from pathlib import Path
+from PIL import Image
+import sys
+src, ppm, png = map(Path, sys.argv[1:4])
+im = Image.open(src).convert("RGB")
+if im.size != (320, 200):
+    raise SystemExit(f"ERROR: expected raw screenshot 320x200, got {im.size[0]}x{im.size[1]} for {src}")
+crop = im.crop((0, 33, 224, 169))
+crop.save(ppm)
+crop.save(png)
+PY
+        else
+            "${image_tool}" "$src" -crop 224x136+0+33 +repage "$ppm"
+            "${image_tool}" "$ppm" "$png" 2>/dev/null || true
+        fi
         i=$((i + 1))
     done < <(find "${OUT_DIR}" -maxdepth 1 -type f -name 'image*.png' | sort)
 
@@ -309,6 +362,7 @@ case "$mode" in
             echo "[blocked] DM1_ORIGINAL_ROUTE_EVENTS is not set. Do not guess; validate the exact original keystroke route first."
         else
             echo "[pass-70] route events: ${ROUTE_EVENTS}"
+            validate_route_shape
         fi
         echo "[pass-70] normalize command after raw screenshots exist: scripts/dosbox_dm1_original_viewport_reference_capture.sh --normalize-only"
         exit 0
@@ -324,6 +378,7 @@ case "$mode" in
             echo "Example shape only (not validated): DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot right wait:300 shot up wait:300 shot wait:300 shot wait:300 shot wait:300 shot'" >&2
             exit 5
         fi
+        validate_route_shape
         if ! command -v swift >/dev/null 2>&1; then
             echo "ERROR: swift is required for targeted macOS CGEvent input" >&2
             exit 6
