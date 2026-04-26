@@ -14353,6 +14353,11 @@ int M11_GameView_GetV1StatusBoxZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusBarZoneId(int statIndex) {
+    if (statIndex < 0 || statIndex > 2) return 0;
+    return 195 + statIndex * 4;
+}
+
 int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int statIndex,
                                     int* outX,
@@ -14361,7 +14366,7 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int* outH) {
     int relX;
     if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
-        statIndex < 0 || statIndex > 2) {
+        !M11_GameView_GetV1StatusBarZoneId(statIndex)) {
         return 0;
     }
     relX = m11_v1_bar_graph_x(statIndex);

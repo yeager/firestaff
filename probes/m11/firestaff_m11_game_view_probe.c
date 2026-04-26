@@ -1149,11 +1149,15 @@ int main(int argc, char** argv) {
             int manaX3, manaY3, manaW3, manaH3;
             probe_record(&tally,
                          "INV_GV_15E7",
-                         M11_GameView_GetV1StatusBarZone(0, 0, &hpX, &hpY, &hpW, &hpH) &&
+                         M11_GameView_GetV1StatusBarZoneId(0) == 195 &&
+                             M11_GameView_GetV1StatusBarZoneId(1) == 199 &&
+                             M11_GameView_GetV1StatusBarZoneId(2) == 203 &&
+                             M11_GameView_GetV1StatusBarZoneId(3) == 0 &&
+                             M11_GameView_GetV1StatusBarZone(0, 0, &hpX, &hpY, &hpW, &hpH) &&
                              M11_GameView_GetV1StatusBarZone(3, 2, &manaX3, &manaY3, &manaW3, &manaH3) &&
                              hpX == 58 && hpY == 164 && hpW == 4 && hpH == 25 &&
                              manaX3 == 279 && manaY3 == 164 && manaW3 == 4 && manaH3 == 25,
-                         "V1 status bar graph zones match layout-696 C195/C203 geometry");
+                         "V1 status bar graph zones expose layout-696 C195/C199/C203 ids and geometry");
         }
         {
             int textX0, textY0, textW0, textH0;
