@@ -607,6 +607,31 @@ int main(int argc, char** argv) {
                          &space, &zoneId) == 7 && zoneId == 151,
                      "DM1 mouse zone matching keeps source inclusive right/bottom edges for status boxes");
 
+        {
+            int actionX, actionY, actionW, actionH;
+            int spellX, spellY, spellW, spellH;
+            (void)M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH);
+            (void)M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH);
+            probe_record(&tally,
+                         "INV_GV_433A",
+                         M11_GameView_GetV1MouseCommandForPoint(
+                             M11_DM1_MOUSE_LIST_INTERFACE,
+                             spellX + (spellW / 2), spellY + (spellH / 2),
+                             M11_DM1_MOUSE_MASK_LEFT,
+                             &space, &zoneId) == 100 &&
+                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 13,
+                         "DM1 primary mouse table maps left-click C013 spell area to command C100 before falling through");
+            probe_record(&tally,
+                         "INV_GV_433B",
+                         M11_GameView_GetV1MouseCommandForPoint(
+                             M11_DM1_MOUSE_LIST_INTERFACE,
+                             actionX + (actionW / 2), actionY + (actionH / 2),
+                             M11_DM1_MOUSE_MASK_LEFT,
+                             &space, &zoneId) == 111 &&
+                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 11,
+                         "DM1 primary mouse table maps left-click C011 action area to command C111 before falling through");
+        }
+
         (void)M11_GameView_GetV1ViewportZone(&vx, &vy, &vw, &vh);
         probe_record(&tally,
                      "INV_GV_434",
@@ -626,6 +651,30 @@ int main(int argc, char** argv) {
                          &space, &zoneId) == 83 &&
                          space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 2,
                      "DM1 secondary movement table maps right-click screen zone, including viewport, to command C083 toggle leader inventory");
+        {
+            int leftX, leftY, leftW, leftH;
+            int rightX, rightY, rightW, rightH;
+            (void)M11_GameView_GetV1MovementArrowZone(0, &leftX, &leftY, &leftW, &leftH);
+            (void)M11_GameView_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH);
+            probe_record(&tally,
+                         "INV_GV_435A",
+                         M11_GameView_GetV1MouseCommandForPoint(
+                             M11_DM1_MOUSE_LIST_MOVEMENT,
+                             leftX + (leftW / 2), leftY + (leftH / 2),
+                             M11_DM1_MOUSE_MASK_LEFT,
+                             &space, &zoneId) == 1 &&
+                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 68,
+                         "DM1 secondary movement table maps left-click C068 turn-left arrow to command C001");
+            probe_record(&tally,
+                         "INV_GV_435B",
+                         M11_GameView_GetV1MouseCommandForPoint(
+                             M11_DM1_MOUSE_LIST_MOVEMENT,
+                             rightX + (rightW / 2), rightY + (rightH / 2),
+                             M11_DM1_MOUSE_MASK_LEFT,
+                             &space, &zoneId) == 4 &&
+                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 71,
+                         "DM1 secondary movement table maps left-click C071 move-right arrow to command C004");
+        }
 
         for (slot = 8; slot <= 37; ++slot) {
             int sx, sy, sw, sh;

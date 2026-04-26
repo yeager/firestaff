@@ -14665,13 +14665,13 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
     if (!route) return 0;
     switch (route->zoneId) {
         case 2:
-            if (outX) *outX = 0;
-            if (outY) *outY = 0;
-            if (outW) *outW = 320;
-            if (outH) *outH = 200;
-            return 1;
+            return M11_GameView_GetV1ScreenZone(outX, outY, outW, outH);
         case 7:
             return M11_GameView_GetV1ViewportZone(outX, outY, outW, outH);
+        case 11:
+            return M11_GameView_GetV1ActionAreaZone(outX, outY, outW, outH);
+        case 13:
+            return M11_GameView_GetV1SpellAreaZone(outX, outY, outW, outH);
         default:
             break;
     }
@@ -14690,6 +14690,10 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         if (outW) *outW = 24;
         if (outH) *outH = 29;
         return 1;
+    }
+    if (route->zoneId >= 68 && route->zoneId <= 73) {
+        return M11_GameView_GetV1MovementArrowZone(route->zoneId - 68,
+                                                   outX, outY, outW, outH);
     }
     if (route->zoneId >= 113 && route->zoneId <= 116) {
         return M11_GameView_GetV1ChampionIconZone(route->zoneId - 113,
@@ -14748,12 +14752,20 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
         { 125, M11_DM1_MOUSE_SPACE_SCREEN, 113, M11_DM1_MOUSE_MASK_LEFT  },
         { 126, M11_DM1_MOUSE_SPACE_SCREEN, 114, M11_DM1_MOUSE_MASK_LEFT  },
         { 127, M11_DM1_MOUSE_SPACE_SCREEN, 115, M11_DM1_MOUSE_MASK_LEFT  },
-        { 128, M11_DM1_MOUSE_SPACE_SCREEN, 116, M11_DM1_MOUSE_MASK_LEFT  }
+        { 128, M11_DM1_MOUSE_SPACE_SCREEN, 116, M11_DM1_MOUSE_MASK_LEFT  },
+        { 100, M11_DM1_MOUSE_SPACE_SCREEN,  13, M11_DM1_MOUSE_MASK_LEFT  },
+        { 111, M11_DM1_MOUSE_SPACE_SCREEN,  11, M11_DM1_MOUSE_MASK_LEFT  }
     };
     static const M11_V1MouseRoute movementRoutes[] = {
         /* ReDMCSB COMMAND.C G0448_as_Graphic561_SecondaryMouseInput_Movement. */
-        { 80, M11_DM1_MOUSE_SPACE_SCREEN, 7, M11_DM1_MOUSE_MASK_LEFT  },
-        { 83, M11_DM1_MOUSE_SPACE_SCREEN, 2, M11_DM1_MOUSE_MASK_RIGHT }
+        { 1,  M11_DM1_MOUSE_SPACE_SCREEN, 68, M11_DM1_MOUSE_MASK_LEFT  },
+        { 3,  M11_DM1_MOUSE_SPACE_SCREEN, 70, M11_DM1_MOUSE_MASK_LEFT  },
+        { 2,  M11_DM1_MOUSE_SPACE_SCREEN, 69, M11_DM1_MOUSE_MASK_LEFT  },
+        { 6,  M11_DM1_MOUSE_SPACE_SCREEN, 73, M11_DM1_MOUSE_MASK_LEFT  },
+        { 5,  M11_DM1_MOUSE_SPACE_SCREEN, 72, M11_DM1_MOUSE_MASK_LEFT  },
+        { 4,  M11_DM1_MOUSE_SPACE_SCREEN, 71, M11_DM1_MOUSE_MASK_LEFT  },
+        { 80, M11_DM1_MOUSE_SPACE_SCREEN, 7,  M11_DM1_MOUSE_MASK_LEFT  },
+        { 83, M11_DM1_MOUSE_SPACE_SCREEN, 2,  M11_DM1_MOUSE_MASK_RIGHT }
     };
     static const M11_V1MouseRoute inventoryRoutes[] = {
         /* ReDMCSB COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory. */

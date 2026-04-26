@@ -963,9 +963,10 @@ enum {
 
 /* Bounded source-backed DM PC 3.4 mouse input resolver for probes/future
  * routing. It mirrors COMMAND.C F0358_COMMAND_GetCommandFromMouseInput_CPSC
- * for the currently covered GRAPHIC561 rows: champion status/icon entries
- * from interface G0447, viewport/screen rows from movement G0448, and
- * inventory slot rows from G0449. Coordinates passed in are screen-relative;
+ * for the currently covered GRAPHIC561 rows: champion status/icon plus
+ * action/spell area entries from interface G0447, movement arrow +
+ * viewport/screen rows from movement G0448, and inventory slot rows from
+ * G0449. Coordinates passed in are screen-relative;
  * viewport-relative source zones (CM2) are matched after subtracting the DM1
  * viewport origin. Returns the DM1 command id or 0 (C000_COMMAND_NONE). */
 int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
