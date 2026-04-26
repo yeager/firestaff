@@ -384,6 +384,18 @@ first, then visual parity, then typography / honesty.
   - All baseline gates stay green: Phase A 18/18, M11 game view
     361/361, M11 launcher smoke PASS, M10 verify 20/20 phases,
     M11 verify end-to-end.
+- **Pass 81 follow-up lock (2026-04-26):**
+  - Added `INV_GV_15E10` to the M11 game-view probe so the V1
+    champion HUD is no longer only partially sampled by a two-champion
+    fixture.  The new invariant constructs a four-champion party and
+    verifies the rear status boxes at `(150,160)` and `(219,160)`,
+    source name zones, source-colored names, and slot-specific bar
+    colors for champion slots 2 and 3.
+  - Added visual evidence under
+    `verification-screens/pass81-champion-hud-priority/`, including
+    `party_hud_four_champions_vga.png`.
+  - Evidence: `parity-evidence/pass81_champion_hud_four_slot_lock.md`.
+  - Gate: M11 game view `563/563` invariants passed.
 - **What pass 43 does NOT change:**
   - Spell-panel rune labels remain text instead of the `C011` graphic
     blit (blocker §8 / pass 44).

@@ -1531,6 +1531,77 @@ int main(int argc, char** argv) {
                                                PROBE_COLOR_SILVER) > 0U,
                          "V1 dead champion HUD prints source centered name in C13 lightest gray");
         }
+        {
+            M11_GameViewState fourChampionView = syntheticView;
+            unsigned char fourChampionFramebuffer[320 * 200];
+            int invI;
+            int slot2BoxX, slot2BoxY, slot2BoxW, slot2BoxH;
+            int slot3BoxX, slot3BoxY, slot3BoxW, slot3BoxH;
+            int slot2NameX, slot2NameY, slot2NameW, slot2NameH;
+            int slot3NameX, slot3NameY, slot3NameW, slot3NameH;
+            int slot2HpX, slot2HpY, slot2HpW, slot2HpH;
+            int slot3ManaX, slot3ManaY, slot3ManaW, slot3ManaH;
+
+            fourChampionView.world.party.championCount = 4;
+            for (invI = 0; invI < CHAMPION_SLOT_COUNT; ++invI) {
+                fourChampionView.world.party.champions[2].inventory[invI] = THING_NONE;
+                fourChampionView.world.party.champions[3].inventory[invI] = THING_NONE;
+            }
+            fourChampionView.world.party.champions[2].present = 1;
+            memcpy(fourChampionView.world.party.champions[2].name, "SYRA", 4);
+            fourChampionView.world.party.champions[2].hp.current = 63;
+            fourChampionView.world.party.champions[2].hp.maximum = 90;
+            fourChampionView.world.party.champions[2].stamina.current = 44;
+            fourChampionView.world.party.champions[2].stamina.maximum = 70;
+            fourChampionView.world.party.champions[2].mana.current = 21;
+            fourChampionView.world.party.champions[2].mana.maximum = 42;
+            fourChampionView.world.party.champions[3].present = 1;
+            memcpy(fourChampionView.world.party.champions[3].name, "ZYTA", 4);
+            fourChampionView.world.party.champions[3].hp.current = 54;
+            fourChampionView.world.party.champions[3].hp.maximum = 80;
+            fourChampionView.world.party.champions[3].stamina.current = 35;
+            fourChampionView.world.party.champions[3].stamina.maximum = 64;
+            fourChampionView.world.party.champions[3].mana.current = 30;
+            fourChampionView.world.party.champions[3].mana.maximum = 60;
+
+            memset(fourChampionFramebuffer, 0, sizeof(fourChampionFramebuffer));
+            M11_GameView_Draw(&fourChampionView, fourChampionFramebuffer, 320, 200);
+            probe_record(&tally,
+                         "INV_GV_15E10",
+                         M11_GameView_GetV1StatusBoxZone(2, &slot2BoxX, &slot2BoxY,
+                                                         &slot2BoxW, &slot2BoxH) &&
+                             M11_GameView_GetV1StatusBoxZone(3, &slot3BoxX, &slot3BoxY,
+                                                             &slot3BoxW, &slot3BoxH) &&
+                             M11_GameView_GetV1StatusNameZone(2, &slot2NameX, &slot2NameY,
+                                                             &slot2NameW, &slot2NameH) &&
+                             M11_GameView_GetV1StatusNameZone(3, &slot3NameX, &slot3NameY,
+                                                             &slot3NameW, &slot3NameH) &&
+                             M11_GameView_GetV1StatusBarZone(2, 0, &slot2HpX, &slot2HpY,
+                                                            &slot2HpW, &slot2HpH) &&
+                             M11_GameView_GetV1StatusBarZone(3, 2, &slot3ManaX, &slot3ManaY,
+                                                            &slot3ManaW, &slot3ManaH) &&
+                             slot2BoxX == 150 && slot2BoxY == 160 &&
+                             slot2BoxW == 67 && slot2BoxH == 29 &&
+                             slot3BoxX == 219 && slot3BoxY == 160 &&
+                             slot3BoxW == 67 && slot3BoxH == 29 &&
+                             probe_count_color(fourChampionFramebuffer, 320,
+                                               slot2NameX, slot2NameY,
+                                               slot2NameW, slot2NameH,
+                                               PROBE_COLOR_ORANGE) > 0U &&
+                             probe_count_color(fourChampionFramebuffer, 320,
+                                               slot3NameX, slot3NameY,
+                                               slot3NameW, slot3NameH,
+                                               PROBE_COLOR_ORANGE) > 0U &&
+                             probe_count_color(fourChampionFramebuffer, 320,
+                                               slot2HpX, slot2HpY,
+                                               slot2HpW, slot2HpH,
+                                               PROBE_COLOR_RED) > 0U &&
+                             probe_count_color(fourChampionFramebuffer, 320,
+                                               slot3ManaX, slot3ManaY,
+                                               slot3ManaW, slot3ManaH,
+                                               PROBE_COLOR_LIGHT_BLUE) > 0U,
+                         "V1 champion HUD renders all four recruited champion status boxes with source zones, names, and bars");
+        }
     }
 
     probe_record(&tally,
@@ -7532,6 +7603,65 @@ int main(int argc, char** argv) {
                 printf("Screenshot: %s\n", ssPath);
             }
             snprintf(ssPpmPath, sizeof(ssPpmPath), "%s/party_hud_statusbox_gfx_vga.ppm", ssDir);
+            probe_dump_m11_vga_ppm(ssPpmPath, ssFb, 320, 200);
+            printf("Screenshot: %s\n", ssPpmPath);
+        }
+    }
+
+    /* ── Screenshot: dump the prioritized four-champion V1 HUD ── */
+    {
+        M11_GameViewState ssView;
+        unsigned char ssFb[320 * 200];
+        const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
+        int invI;
+        memcpy(&ssView, &gameView, sizeof(ssView));
+        ssView.inventoryPanelActive = 0;
+        ssView.mapOverlayActive = 0;
+        ssView.world.party.activeChampionIndex = 0;
+        ssView.world.party.championCount = 4;
+        for (invI = 0; invI < CHAMPION_SLOT_COUNT; ++invI) {
+            ssView.world.party.champions[0].inventory[invI] = THING_NONE;
+            ssView.world.party.champions[1].inventory[invI] = THING_NONE;
+            ssView.world.party.champions[2].inventory[invI] = THING_NONE;
+            ssView.world.party.champions[3].inventory[invI] = THING_NONE;
+        }
+        ssView.world.party.champions[0].present = 1;
+        memcpy(ssView.world.party.champions[0].name, "HALK", 4);
+        ssView.world.party.champions[0].hp.current = 40;
+        ssView.world.party.champions[0].hp.maximum = 40;
+        ssView.world.party.champions[0].stamina.current = 30;
+        ssView.world.party.champions[0].stamina.maximum = 30;
+        ssView.world.party.champions[0].mana.current = 0;
+        ssView.world.party.champions[0].mana.maximum = 0;
+        ssView.world.party.champions[1].present = 1;
+        memcpy(ssView.world.party.champions[1].name, "ALEX", 4);
+        ssView.world.party.champions[1].hp.current = 82;
+        ssView.world.party.champions[1].hp.maximum = 100;
+        ssView.world.party.champions[1].stamina.current = 61;
+        ssView.world.party.champions[1].stamina.maximum = 80;
+        ssView.world.party.champions[1].mana.current = 16;
+        ssView.world.party.champions[1].mana.maximum = 40;
+        ssView.world.party.champions[2].present = 1;
+        memcpy(ssView.world.party.champions[2].name, "SYRA", 4);
+        ssView.world.party.champions[2].hp.current = 63;
+        ssView.world.party.champions[2].hp.maximum = 90;
+        ssView.world.party.champions[2].stamina.current = 44;
+        ssView.world.party.champions[2].stamina.maximum = 70;
+        ssView.world.party.champions[2].mana.current = 21;
+        ssView.world.party.champions[2].mana.maximum = 42;
+        ssView.world.party.champions[3].present = 1;
+        memcpy(ssView.world.party.champions[3].name, "ZYTA", 4);
+        ssView.world.party.champions[3].hp.current = 54;
+        ssView.world.party.champions[3].hp.maximum = 80;
+        ssView.world.party.champions[3].stamina.current = 35;
+        ssView.world.party.champions[3].stamina.maximum = 64;
+        ssView.world.party.champions[3].mana.current = 30;
+        ssView.world.party.champions[3].mana.maximum = 60;
+        memset(ssFb, 0, sizeof(ssFb));
+        M11_GameView_Draw(&ssView, ssFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            char ssPpmPath[512];
+            snprintf(ssPpmPath, sizeof(ssPpmPath), "%s/party_hud_four_champions_vga.ppm", ssDir);
             probe_dump_m11_vga_ppm(ssPpmPath, ssFb, 320, 200);
             printf("Screenshot: %s\n", ssPpmPath);
         }
