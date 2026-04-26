@@ -959,22 +959,26 @@ first, then visual parity, then typography / honesty.
     M621/M622/M623 patch graphics, and choice hit/selection flow.
   - Matrix status remains `KNOWN_DIFF (narrowed)`: dialog `F0427` is now
     substantially source-backed, but original overlay comparison is still needed.
-- **Endgame narrowing (passes 122–123):**
+- **Endgame narrowing (passes 122–123, 127, 2957–2976):**
   - Default V1 game-won overlay no longer uses the invented victory panel when
     source assets are available.
   - Wired source endgame graphics: `C006_GRAPHIC_THE_END` (graphic `6`),
     `C346_GRAPHIC_WALL_ORNAMENT_43_CHAMPION_MIRROR` (graphic `346`) in C412–C415,
-    restart/quit boxes from `DATA.C`, and champion names at x=87/y=14+48n.
-  - Remaining endgame gaps: champion portrait blits in C416–C419, champion title
-    text, skill-title/level list, timing/music/restart loop, and original overlay
+    champion portrait blits in C416–C419, restart/quit boxes from `DATA.C`,
+    champion names at x=87/y=14+48n, raw champion titles, and source skill-title
+    lines using non-temporary lifecycle skill levels.
+  - Pass 2957–2976 exposes the endgame geometry through probeable helpers so the
+    renderer no longer carries a separate pocket of hardcoded C412–C419/text/
+    button coordinates.
+  - Remaining endgame gaps: timing/music/restart loop and original overlay
     comparison captures.
 - **Representative gates:**
-  - `firestaff_m11_game_view_probe`: `437/437 invariants passed` after the
-    dialog/endgame source-backed overlay work.
+  - `firestaff_m11_game_view_probe`: `536/536 invariants passed` after the
+    latest dialog/endgame/inventory source-backed overlay work.
   - `ctest`: `5/5 PASS`.
 - **Remaining gaps:**
-  - Finish source endgame portrait/title/skill list or document exact blockers.
   - Capture original dialog/endgame frames and perform overlay comparison.
+  - Source-bind endgame timing/music/restart loop if required for lock.
   - Keep the map overlay debug-only unless contrary source/runtime evidence is
     found.
 

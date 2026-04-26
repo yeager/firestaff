@@ -14463,8 +14463,103 @@ int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
     return 6;
 }
 
+int M11_GameView_GetV1EndgameTheEndZone(int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    if (outX) *outX = 120;
+    if (outY) *outY = 122;
+    if (outW) *outW = 80;
+    if (outH) *outH = 14;
+    return 1;
+}
+
 int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void) {
     return 346;
+}
+
+int M11_GameView_GetV1EndgameChampionMirrorZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    /* Source layout-696 C412..C415 champion mirror zones. */
+    return 412 + championSlot;
+}
+
+int M11_GameView_GetV1EndgameChampionMirrorZone(int championSlot,
+                                                int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    if (!M11_GameView_GetV1EndgameChampionMirrorZoneId(championSlot)) return 0;
+    if (outX) *outX = 19;
+    if (outY) *outY = 7 + championSlot * 48;
+    if (outW) *outW = 48;
+    if (outH) *outH = 43;
+    return 1;
+}
+
+int M11_GameView_GetV1EndgameChampionPortraitZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    /* Source layout-696 C416..C419, parented to C412..C415 at +8,+6. */
+    return 416 + championSlot;
+}
+
+int M11_GameView_GetV1EndgameChampionPortraitZone(int championSlot,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH) {
+    if (!M11_GameView_GetV1EndgameChampionPortraitZoneId(championSlot)) return 0;
+    if (outX) *outX = 27;
+    if (outY) *outY = 13 + championSlot * 48;
+    if (outW) *outW = M11_PORTRAIT_W;
+    if (outH) *outH = M11_PORTRAIT_H;
+    return 1;
+}
+
+int M11_GameView_GetV1EndgameChampionNameOrigin(int championSlot,
+                                                int* outX,
+                                                int* outY) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    if (outX) *outX = 87;
+    if (outY) *outY = 14 + championSlot * 48;
+    return 1;
+}
+
+int M11_GameView_GetV1EndgameChampionSkillOrigin(int championSlot,
+                                                 int skillLineIndex,
+                                                 int* outX,
+                                                 int* outY) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        skillLineIndex < 0 || skillLineIndex >= CHAMPION_SKILL_COUNT) {
+        return 0;
+    }
+    if (outX) *outX = 105;
+    if (outY) *outY = 23 + championSlot * 48 + skillLineIndex * 8;
+    return 1;
+}
+
+int M11_GameView_GetV1EndgameRestartBox(int inner,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    if (outX) *outX = inner ? 105 : 103;
+    if (outY) *outY = inner ? 142 : 140;
+    if (outW) *outW = inner ? 111 : 115;
+    if (outH) *outH = inner ? 11 : 15;
+    return 1;
+}
+
+int M11_GameView_GetV1EndgameQuitBox(int inner,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH) {
+    if (outX) *outX = inner ? 129 : 127;
+    if (outY) *outY = inner ? 167 : 165;
+    if (outW) *outW = inner ? 63 : 67;
+    if (outH) *outH = inner ? 11 : 15;
+    return 1;
 }
 
 int M11_GameView_GetV1DialogBackdropGraphicId(void) {
@@ -17620,8 +17715,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             if (mirror && mirror->loaded && mirror->pixels) {
                 int i;
                 for (i = 0; i < 4; ++i) {
+                    int mirrorX, mirrorY;
+                    (void)M11_GameView_GetV1EndgameChampionMirrorZone(i,
+                                                                       &mirrorX, &mirrorY,
+                                                                       NULL, NULL);
                     M11_AssetLoader_Blit(mirror, framebuffer, framebufferWidth,
-                                         framebufferHeight, 19, 7 + (i * 48), 10);
+                                         framebufferHeight, mirrorX, mirrorY, 10);
                     if (i < state->world.party.championCount &&
                         state->world.party.champions[i].present) {
                         const M11_AssetSlot* portraits = M11_AssetLoader_Load(
@@ -17634,11 +17733,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                             int srcPY = (pIdx >> 3) * M11_PORTRAIT_H;
                             if (srcPX + M11_PORTRAIT_W <= (int)portraits->width &&
                                 srcPY + M11_PORTRAIT_H <= (int)portraits->height) {
+                                int portraitX, portraitY;
+                                (void)M11_GameView_GetV1EndgameChampionPortraitZone(i,
+                                                                                     &portraitX, &portraitY,
+                                                                                     NULL, NULL);
                                 M11_AssetLoader_BlitRegion(portraits,
                                     srcPX, srcPY,
                                     M11_PORTRAIT_W, M11_PORTRAIT_H,
                                     framebuffer, framebufferWidth, framebufferHeight,
-                                    27, 13 + (i * 48), M11_COLOR_DARK_GRAY);
+                                    portraitX, portraitY, M11_COLOR_DARK_GRAY);
                             }
                         }
                         char champName[16];
@@ -17647,8 +17750,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                         nameStyle.shadowColor = M11_COLOR_DARK_GRAY;
                         m11_format_champion_name(state->world.party.champions[i].name,
                                                  champName, sizeof(champName));
+                        int nameX, nameY;
+                        (void)M11_GameView_GetV1EndgameChampionNameOrigin(i,
+                                                                           &nameX, &nameY);
                         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                      87, 14 + (i * 48), champName, &nameStyle);
+                                      nameX, nameY, champName, &nameStyle);
                         {
                             char rawTitle[CHAMPION_TITLE_LENGTH + 1];
                             const char* champTitle;
@@ -17659,7 +17765,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                 int titleX = M11_GameView_EndgameTitleXForSourceText(champName,
                                                                                          champTitle);
                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                              titleX, 14 + (i * 48), champTitle, &nameStyle);
+                                              titleX, nameY, champTitle, &nameStyle);
                             }
                         }
                         {
@@ -17673,7 +17779,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                 "FIGHTER", "NINJA", "PRIEST", "WIZARD"
                             };
                             int skillIndex;
-                            int skillY = 15 + (i * 48);
+                            int visibleSkillLine = 0;
                             M11_TextStyle skillStyle = g_text_small;
                             skillStyle.color = M11_COLOR_SILVER;
                             skillStyle.shadowColor = M11_COLOR_DARK_GRAY;
@@ -17684,36 +17790,59 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                     continue;
                                 }
                                 if (level > 16) level = 16;
-                                skillY += 8;
+                                int skillX, skillY;
+                                (void)M11_GameView_GetV1EndgameChampionSkillOrigin(i,
+                                                                                   visibleSkillLine,
+                                                                                   &skillX, &skillY);
+                                ++visibleSkillLine;
                                 snprintf(skillLine, sizeof(skillLine), "%s %s",
                                          kEndgameSkillLevelNames[level - 2],
                                          kEndgameBaseSkillNames[skillIndex]);
                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                              105, skillY, skillLine, &skillStyle);
+                                              skillX, skillY, skillLine, &skillStyle);
                             }
                         }
                     }
                 }
             }
             if (theEnd && theEnd->loaded && theEnd->pixels) {
+                int theEndX, theEndY;
+                (void)M11_GameView_GetV1EndgameTheEndZone(&theEndX, &theEndY,
+                                                           NULL, NULL);
                 M11_AssetLoader_Blit(theEnd, framebuffer, framebufferWidth,
                                      framebufferHeight,
-                                     (framebufferWidth - (int)theEnd->width) / 2,
-                                     122,
+                                     theEndX,
+                                     theEndY,
                                      -1);
             }
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          103, 140, 115, 15, M11_COLOR_DARK_GRAY);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          105, 142, 111, 11, M11_COLOR_BLACK);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          110, 149, "RESTART THIS GAME", &g_text_small);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          127, 165, 67, 15, M11_COLOR_DARK_GRAY);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          129, 167, 63, 11, M11_COLOR_BLACK);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          134, 174, "QUIT", &g_text_small);
+            {
+                int outerX, outerY, outerW, outerH;
+                int innerX, innerY, innerW, innerH;
+                (void)M11_GameView_GetV1EndgameRestartBox(0,
+                                                          &outerX, &outerY,
+                                                          &outerW, &outerH);
+                (void)M11_GameView_GetV1EndgameRestartBox(1,
+                                                          &innerX, &innerY,
+                                                          &innerW, &innerH);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              outerX, outerY, outerW, outerH, M11_COLOR_DARK_GRAY);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              innerX, innerY, innerW, innerH, M11_COLOR_BLACK);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              innerX + 5, innerY + 7, "RESTART THIS GAME", &g_text_small);
+                (void)M11_GameView_GetV1EndgameQuitBox(0,
+                                                       &outerX, &outerY,
+                                                       &outerW, &outerH);
+                (void)M11_GameView_GetV1EndgameQuitBox(1,
+                                                       &innerX, &innerY,
+                                                       &innerW, &innerH);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              outerX, outerY, outerW, outerH, M11_COLOR_DARK_GRAY);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              innerX, innerY, innerW, innerH, M11_COLOR_BLACK);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              innerX + 5, innerY + 7, "QUIT", &g_text_small);
+            }
         } else {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           40, 40, 240, 120, M11_COLOR_BLACK);

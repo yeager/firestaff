@@ -8401,6 +8401,49 @@ int main(int argc, char** argv) {
         }
 
         {
+            int endX, endY, endW, endH;
+            int mirror0X, mirror0Y, mirror0W, mirror0H;
+            int mirror3X, mirror3Y, mirror3W, mirror3H;
+            int portrait0X, portrait0Y, portrait0W, portrait0H;
+            int portrait3X, portrait3Y, portrait3W, portrait3H;
+            int nameX, nameY;
+            int skillX, skillY;
+            int restartX, restartY, restartW, restartH;
+            int restartInnerX, restartInnerY, restartInnerW, restartInnerH;
+            int quitX, quitY, quitW, quitH;
+            int quitInnerX, quitInnerY, quitInnerW, quitInnerH;
+            probe_record(&tally, "INV_GV_300AP",
+                         M11_GameView_GetV1EndgameTheEndZone(&endX, &endY, &endW, &endH) &&
+                             endX == 120 && endY == 122 && endW == 80 && endH == 14 &&
+                             M11_GameView_GetV1EndgameChampionMirrorZoneId(0) == 412 &&
+                             M11_GameView_GetV1EndgameChampionMirrorZoneId(3) == 415 &&
+                             M11_GameView_GetV1EndgameChampionMirrorZoneId(4) == 0 &&
+                             M11_GameView_GetV1EndgameChampionMirrorZone(0, &mirror0X, &mirror0Y, &mirror0W, &mirror0H) &&
+                             M11_GameView_GetV1EndgameChampionMirrorZone(3, &mirror3X, &mirror3Y, &mirror3W, &mirror3H) &&
+                             mirror0X == 19 && mirror0Y == 7 && mirror0W == 48 && mirror0H == 43 &&
+                             mirror3X == 19 && mirror3Y == 151 && mirror3W == 48 && mirror3H == 43 &&
+                             M11_GameView_GetV1EndgameChampionPortraitZoneId(0) == 416 &&
+                             M11_GameView_GetV1EndgameChampionPortraitZoneId(3) == 419 &&
+                             M11_GameView_GetV1EndgameChampionPortraitZone(0, &portrait0X, &portrait0Y, &portrait0W, &portrait0H) &&
+                             M11_GameView_GetV1EndgameChampionPortraitZone(3, &portrait3X, &portrait3Y, &portrait3W, &portrait3H) &&
+                             portrait0X == 27 && portrait0Y == 13 && portrait0W == 32 && portrait0H == 29 &&
+                             portrait3X == 27 && portrait3Y == 157 && portrait3W == 32 && portrait3H == 29 &&
+                             M11_GameView_GetV1EndgameChampionNameOrigin(2, &nameX, &nameY) &&
+                             nameX == 87 && nameY == 110 &&
+                             M11_GameView_GetV1EndgameChampionSkillOrigin(2, 1, &skillX, &skillY) &&
+                             skillX == 105 && skillY == 127 &&
+                             M11_GameView_GetV1EndgameRestartBox(0, &restartX, &restartY, &restartW, &restartH) &&
+                             M11_GameView_GetV1EndgameRestartBox(1, &restartInnerX, &restartInnerY, &restartInnerW, &restartInnerH) &&
+                             restartX == 103 && restartY == 140 && restartW == 115 && restartH == 15 &&
+                             restartInnerX == 105 && restartInnerY == 142 && restartInnerW == 111 && restartInnerH == 11 &&
+                             M11_GameView_GetV1EndgameQuitBox(0, &quitX, &quitY, &quitW, &quitH) &&
+                             M11_GameView_GetV1EndgameQuitBox(1, &quitInnerX, &quitInnerY, &quitInnerW, &quitInnerH) &&
+                             quitX == 127 && quitY == 165 && quitW == 67 && quitH == 15 &&
+                             quitInnerX == 129 && quitInnerY == 167 && quitInnerW == 63 && quitInnerH == 11,
+                         "V1 endgame zones expose source C412-C419, title, text, skill and restart/quit geometry");
+        }
+
+        {
             probe_record(&tally, "INV_GV_300W",
                          M11_GameView_GetV1StatusBoxGraphicId() == 7 &&
                              M11_GameView_GetV1DeadStatusBoxGraphicId() == 8 &&
