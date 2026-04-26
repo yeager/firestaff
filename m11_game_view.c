@@ -11973,6 +11973,12 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
 #define M11_DM_SPELL_AREA_Y      42
 #define M11_DM_SPELL_AREA_W      87
 #define M11_DM_SPELL_AREA_H      25
+/* COMMAND.C's C013 mouse/input zone is taller than the 87x25
+ * C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND bitmap: the cast/recant
+ * symbol zones live in the lower source rows down to y=74.  Keep
+ * M11_DM_SPELL_AREA_H as the native graphic height, but use this
+ * source hit height for primary mouse routing. */
+#define M11_DM_SPELL_AREA_CLICK_H 33
 #define M11_DM_MOVEMENT_ARROWS_OUTER_X 224
 #define M11_DM_MOVEMENT_ARROWS_OUTER_Y 124
 #define M11_DM_MOVEMENT_ARROWS_OUTER_W  96
@@ -12670,6 +12676,14 @@ int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
     outIndices[1] = M11_ACTION_SET_ACTIONS[setIdx][1];
     outIndices[2] = M11_ACTION_SET_ACTIONS[setIdx][2];
     return 1;
+}
+
+static int m11_count_source_action_menu_rows(const unsigned char actions[3]) {
+    if (!actions) return 0;
+    if (actions[0] == 0xFF) return 0;
+    if (actions[1] == 0xFF) return 1;
+    if (actions[2] == 0xFF) return 2;
+    return 3;
 }
 
 /* DM1 melee-style action flags.  When an action-name index appears
@@ -14618,6 +14632,17 @@ int M11_GameView_GetV1SpellAreaZone(int* outX,
     return 1;
 }
 
+static int m11_get_v1_spell_area_click_zone(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    if (outX) *outX = M11_DM_SPELL_AREA_X;
+    if (outY) *outY = M11_DM_SPELL_AREA_Y;
+    if (outW) *outW = M11_DM_SPELL_AREA_W;
+    if (outH) *outH = M11_DM_SPELL_AREA_CLICK_H;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionAreaGraphicId(void) {
     return M11_GFX_ACTION_AREA;
 }
@@ -15014,7 +15039,7 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         case 11:
             return M11_GameView_GetV1ActionAreaZone(outX, outY, outW, outH);
         case 13:
-            return M11_GameView_GetV1SpellAreaZone(outX, outY, outW, outH);
+            return m11_get_v1_spell_area_click_zone(outX, outY, outW, outH);
         default:
             break;
     }
@@ -15565,6 +15590,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     int actingIndex;
     unsigned char actions[3];
     int gotActions;
+    int visibleRows = 3;
     int row;
     char nameBuf[16];
     M11_TextStyle styleBlackOnCyan;
@@ -15578,8 +15604,16 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     champ = &state->world.party.champions[actingIndex];
     if (!champ->present) return 0;
 
+    gotActions = M11_GameView_GetActingActionIndices(state, actions);
+    if (gotActions) {
+        visibleRows = m11_count_source_action_menu_rows(actions);
+        if (visibleRows <= 0) return 0;
+    }
+
     /* F0387 always fills the full action area with black before
-     * blitting the menu graphic.  We've already blitted graphic 10
+     * blitting the source menu sub-graphic selected by the number
+     * of non-empty action rows (C079 one-row, C077 two-row, C011
+     * three-row).  We've already blitted graphic 10
      * once at the top of m11_draw_utility_panel (as the right-
      * column chrome); here we re-fill+re-blit to ensure we start
      * from a clean action-mode surface regardless of any prior
@@ -15591,10 +15625,28 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       actionX, actionY, actionW, actionH,
                       (unsigned char)M11_GameView_GetV1ActionAreaClearColor());
-        (void)m11_blit_panel_asset_native(state,
-            framebuffer, framebufferWidth, framebufferHeight,
-            M11_GameView_GetV1ActionAreaGraphicId(),
-            actionW, actionH, actionX, actionY);
+        int menuX, menuY, menuW, menuH;
+        if (M11_GameView_GetV1ActionMenuGraphicZone(
+                visibleRows, &menuX, &menuY, &menuW, &menuH)) {
+            const M11_AssetSlot* slot = NULL;
+            if (state->assetsAvailable) {
+                slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                            (unsigned int)M11_GameView_GetV1ActionAreaGraphicId());
+            }
+            if (slot && slot->loaded && slot->pixels &&
+                (int)slot->width == actionW && (int)slot->height == actionH) {
+                M11_AssetLoader_BlitRegion(slot, 0, 0, menuW, menuH,
+                                           framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           menuX, menuY, -1);
+            } else {
+                (void)m11_blit_panel_asset_native(state,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    M11_GameView_GetV1ActionAreaGraphicId(),
+                    actionW, actionH, actionX, actionY);
+            }
+        }
     }
 
     /* Header band: fill cyan and print the champion name in black.
@@ -15631,7 +15683,6 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     styleCyanOnBlack.shadowDy = 0;
     styleCyanOnBlack.shadowColor = (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor();
 
-    gotActions = M11_GameView_GetActingActionIndices(state, actions);
     for (row = 0; row < M11_GameView_GetV1ActionMenuRowCount(); ++row) {
         int rowX, rowY, rowW, rowH;
         const char* name;
@@ -15640,7 +15691,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       rowX, rowY, rowW, rowH,
                       (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor());
-        if (!gotActions) continue;
+        if (!gotActions || row >= visibleRows) continue;
         name = M11_GameView_GetActionName(actions[row]);
         if (!name || name[0] == '\0') continue;
         {
