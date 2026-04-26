@@ -529,11 +529,15 @@ first, then visual parity, then typography / honesty.
   references plus the original `GRAPHICS.DAT`/`DUNGEON.DAT`/`SONG.DAT`
   hashes, so the next visual pass should build deterministic source
   states from locked original data instead of treating keyboard route
-  guesses as truth.
-- **Suggested pass:** pass-47b/pass-71 follow-up — ZONES.H parse (from
-  `PANEL.C` + `COORD.C` layout-record init) and deterministic
-  DUNGEON.DAT/GRAPHICS.DAT viewport state construction; use DOSBox
-  captures as comparison evidence, not as the source of route truth.
+  guesses as truth.  Pass 72 adds exactly that first deterministic
+  source-state anchor via `firestaff_m11_viewport_state_probe`: source
+  party state `(map=0,x=1,y=3,dir=SOUTH)`, a 3x3 relative viewport
+  neighborhood with thing-chain counts, and critical viewport asset
+  dimensions from `GRAPHICS.DAT`.
+- **Suggested pass:** pass-47b/pass-72 follow-up — ZONES.H parse (from
+  `PANEL.C` + `COORD.C` layout-record init) and render from the locked
+  DUNGEON.DAT/GRAPHICS.DAT viewport state; use DOSBox captures as
+  comparison evidence, not as the source of route truth.
 
 ## 12. Tick-prefix (`Tn:`) on message log lines — **CANDIDATE HUD PASS**
 - **Area:** `TEXT`

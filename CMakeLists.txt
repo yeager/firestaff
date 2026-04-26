@@ -118,6 +118,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_v2_initial_4k_capture PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Deterministic source-driven viewport state anchor (DUNGEON.DAT + GRAPHICS.DAT)
+add_executable(firestaff_m11_viewport_state_probe probes/m11/firestaff_m11_viewport_state_probe.c)
+target_link_libraries(firestaff_m11_viewport_state_probe PRIVATE firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_viewport_state_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Deterministic in-game screenshot series used by parity evidence.
 add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
 target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
@@ -172,6 +179,14 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_audio
         COMMAND firestaff_m11_audio_probe
+    )
+
+    add_test(
+        NAME m11_viewport_state
+        COMMAND firestaff_m11_viewport_state_probe "$ENV{HOME}/.firestaff/data" ${CMAKE_CURRENT_BINARY_DIR}/viewport-state
+    )
+    set_tests_properties(m11_viewport_state PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
     # Launcher smoke (needs game data + built firestaff binary)
