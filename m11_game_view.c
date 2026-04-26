@@ -11511,6 +11511,26 @@ static int m11_blit_panel_asset_native(const M11_GameViewState* state,
 #define M11_DM_OBJECT_ICONS_PER_GRAPHIC 32
 #define M11_DM_OBJECT_ICON_EMPTY_HAND 201
 
+int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
+                                           int* outGraphicIndex,
+                                           int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    int localIndex;
+    if (iconIndex < 0) return 0;
+    localIndex = iconIndex % M11_DM_OBJECT_ICONS_PER_GRAPHIC;
+    if (outGraphicIndex) {
+        *outGraphicIndex = M11_DM_OBJECT_ICON_GRAPHIC_BASE +
+                           (iconIndex / M11_DM_OBJECT_ICONS_PER_GRAPHIC);
+    }
+    if (outX) *outX = (localIndex & 0x0F) * M11_DM_ACTION_ICON_INNER_W;
+    if (outY) *outY = (localIndex >> 4) * M11_DM_ACTION_ICON_INNER_H;
+    if (outW) *outW = M11_DM_ACTION_ICON_INNER_W;
+    if (outH) *outH = M11_DM_ACTION_ICON_INNER_H;
+    return 1;
+}
+
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -11521,18 +11541,20 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          int applyActionPalette) {
     const M11_AssetSlot* slot;
     int graphicIndex;
-    int localIndex;
     int srcX;
     int srcY;
     int y;
     if (!state || !state->assetsAvailable || !framebuffer || iconIndex < 0) {
         return 0;
     }
-    graphicIndex = M11_DM_OBJECT_ICON_GRAPHIC_BASE +
-                   (iconIndex / M11_DM_OBJECT_ICONS_PER_GRAPHIC);
-    localIndex = iconIndex % M11_DM_OBJECT_ICONS_PER_GRAPHIC;
-    srcX = (localIndex & 0x0F) * M11_DM_ACTION_ICON_INNER_W;
-    srcY = (localIndex >> 4) * M11_DM_ACTION_ICON_INNER_H;
+    if (!M11_GameView_GetV1ObjectIconSourceZone(iconIndex,
+                                                &graphicIndex,
+                                                &srcX,
+                                                &srcY,
+                                                NULL,
+                                                NULL)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)graphicIndex);
     if (!slot || !slot->loaded || !slot->pixels ||

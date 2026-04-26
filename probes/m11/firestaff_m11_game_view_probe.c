@@ -7772,6 +7772,29 @@ int main(int argc, char** argv) {
         }
 
         {
+            int emptyGraphic, emptySrcX, emptySrcY, emptySrcW, emptySrcH;
+            int firstGraphic, firstSrcX, firstSrcY, firstSrcW, firstSrcH;
+            probe_record(&tally, "INV_GV_300K",
+                         M11_GameView_GetV1ObjectIconSourceZone(201,
+                                                                &emptyGraphic,
+                                                                &emptySrcX,
+                                                                &emptySrcY,
+                                                                &emptySrcW,
+                                                                &emptySrcH) &&
+                             M11_GameView_GetV1ObjectIconSourceZone(16,
+                                                                    &firstGraphic,
+                                                                    &firstSrcX,
+                                                                    &firstSrcY,
+                                                                    &firstSrcW,
+                                                                    &firstSrcH) &&
+                             emptyGraphic == 48 && emptySrcX == 144 && emptySrcY == 0 &&
+                             emptySrcW == 16 && emptySrcH == 16 &&
+                             firstGraphic == 42 && firstSrcX == 0 && firstSrcY == 16 &&
+                             firstSrcW == 16 && firstSrcH == 16,
+                         "V1 object icon source zones resolve 16x16 cells across F0042+ graphics");
+        }
+
+        {
             int actionX, actionY, actionW, actionH;
             probe_record(&tally, "INV_GV_300H",
                          M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&

@@ -787,6 +787,12 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
                                               int* outY,
                                               int* outW,
                                               int* outH);
+int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
+                                               int* outGraphicIndex,
+                                               int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH);
 
 #ifdef __cplusplus
 }
