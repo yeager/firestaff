@@ -8094,9 +8094,10 @@ int main(int argc, char** argv) {
         {
             int headerX, headerY, headerW, headerH;
             probe_record(&tally, "INV_GV_300G",
-                         M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&
+                         M11_GameView_GetV1ActionMenuHeaderZoneId() == 80 &&
+                             M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&
                              headerX == 224 && headerY == 47 && headerW == 87 && headerH == 9,
-                         "action menu header zone matches F0387 source header geometry");
+                         "action menu header zone exposes F0387 source zone 80 geometry");
         }
 
         {
@@ -8104,12 +8105,16 @@ int main(int argc, char** argv) {
             int row2X, row2Y, row2W, row2H;
             probe_record(&tally, "INV_GV_300F",
                          M11_GameView_GetV1ActionMenuRowCount() == 3 &&
+                             M11_GameView_GetV1ActionMenuRowZoneId(0) == 85 &&
+                             M11_GameView_GetV1ActionMenuRowZoneId(1) == 86 &&
+                             M11_GameView_GetV1ActionMenuRowZoneId(2) == 87 &&
+                             M11_GameView_GetV1ActionMenuRowZoneId(3) == 0 &&
                              M11_GameView_GetV1ActionMenuRowZone(0, &row0X, &row0Y, &row0W, &row0H) &&
                              M11_GameView_GetV1ActionMenuRowZone(2, &row2X, &row2Y, &row2W, &row2H) &&
                              !M11_GameView_GetV1ActionMenuRowZone(3, NULL, NULL, NULL, NULL) &&
                              row0X == 224 && row0Y == 58 && row0W == 87 && row0H == 9 &&
                              row2X == 224 && row2Y == 80 && row2W == 87 && row2H == 9,
-                         "action menu row zones match F0387 source three-row geometry");
+                         "action menu row zones expose F0387 source zones 85-87 geometry");
         }
 
         {

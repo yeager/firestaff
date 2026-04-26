@@ -14029,10 +14029,16 @@ int M11_GameView_GetV1WaterLabelGraphicId(void) {
     return M11_GFX_WATER_LABEL;
 }
 
+int M11_GameView_GetV1ActionMenuHeaderZoneId(void) {
+    /* F0387 prints the acting champion name through zone 80. */
+    return 80;
+}
+
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
                                                int* outH) {
+    (void)M11_GameView_GetV1ActionMenuHeaderZoneId();
     if (outX) *outX = M11_DM_ACTION_AREA_X;
     if (outY) *outY = M11_DM_ACTION_MENU_HEADER_Y;
     if (outW) *outW = M11_DM_ACTION_AREA_W;
@@ -14045,15 +14051,22 @@ int M11_GameView_GetV1ActionMenuRowCount(void) {
     return 3;
 }
 
+int M11_GameView_GetV1ActionMenuRowZoneId(int rowIndex) {
+    if (rowIndex < 0 || rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
+    /* F0387 prints action names through zones 85, 86, and 87. */
+    return 85 + rowIndex;
+}
+
 int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
                                             int* outX,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
-    if (rowIndex < 0 || rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
+    int zoneId = M11_GameView_GetV1ActionMenuRowZoneId(rowIndex);
+    if (zoneId == 0) return 0;
     if (outX) *outX = M11_DM_ACTION_AREA_X;
     if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
-                      rowIndex * M11_DM_ACTION_MENU_ROW_STEP;
+                      (zoneId - 85) * M11_DM_ACTION_MENU_ROW_STEP;
     if (outW) *outW = M11_DM_ACTION_AREA_W;
     if (outH) *outH = M11_DM_ACTION_MENU_ROW_H;
     return 1;
