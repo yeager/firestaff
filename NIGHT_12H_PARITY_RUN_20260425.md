@@ -349,3 +349,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_359` to verify normal inventory changes are confined to the source viewport replacement rectangle.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2897_2916_v1_inventory_viewport_backdrop_render.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `533/533`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2917–2936 — V1 inventory ready/action hand source icons.
+  - Normal V1 inventory now draws ready/action hand object icons onto source slot-box indices `8`/`9` (`C507`/`C508`) over the C017 backdrop, without restoring full-screen chrome.
+  - Added `INV_GV_360` to verify a ready-hand dagger delta is confined to the source C507 slot rectangle.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2917_2936_v1_inventory_ready_hand_icon.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `534/534`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

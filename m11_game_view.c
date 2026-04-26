@@ -16811,9 +16811,30 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_DARK_GRAY);
     } else {
-        /* Stop here for normal V1 until dynamic inventory object drawing is
-         * migrated to the source C507..C536 slot-box zones. This removes the
-         * invented full-screen Firestaff inventory chrome from parity play. */
+        /* Normal V1 dynamic overlay phase: draw ready/action hand objects
+         * into the source slot-box zones C507/C508. Remaining dynamic
+         * inventory slots are intentionally deferred until they can be bound
+         * to the same C507..C536 source namespace. */
+        int handSlot;
+        const int champSlots[2] = { CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_HAND_RIGHT };
+        const int sourceSlotBoxes[2] = { 8, 9 };
+        for (handSlot = 0; handSlot < 2; ++handSlot) {
+            int slotIdx = champSlots[handSlot];
+            unsigned short thingId = champ->inventory[slotIdx];
+            if (thingId != THING_NONE && thingId != THING_ENDOFLIST &&
+                state->assetsAvailable && state->world.things) {
+                int zx = 0, zy = 0, zw = 0, zh = 0;
+                int iconIndex = m11_object_icon_index_for_thing(
+                    state, state->world.things, thingId);
+                if (M11_GameView_GetV1InventorySourceSlotBoxZone(
+                        sourceSlotBoxes[handSlot], &zx, &zy, &zw, &zh)) {
+                    (void)zw; (void)zh;
+                    (void)m11_draw_dm_object_icon_index(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
+                }
+            }
+        }
         return;
     }
 
