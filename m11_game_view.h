@@ -740,6 +740,8 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int* outY,
                                     int* outW,
                                     int* outH);
+int M11_GameView_GetV1ChampionBarColor(int championSlot);
+int M11_GameView_GetV1StatusBarBlankColor(void);
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                             int championSlot,
                                             int handIndex);

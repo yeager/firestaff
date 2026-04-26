@@ -1952,7 +1952,7 @@ static int m11_party_slot_w(void) {
  * of CHAMDRAW.C F0287_CHAMPION_DrawBarGraphs: blank portion is
  * darkest-gray (C12), filled portion is the per-champion color
  * (G0046_auc_Graphic562_ChampionColor[championIndex], reconstructed
- * as m11_v1_champion_color() below), bar drains from the top.
+ * as M11_GameView_GetV1ChampionBarColor() below), bar drains from the top.
  *
  * Ref: V1_BLOCKERS.md §7; firestaff_pc34_core_amalgam.c
  * CHAMDRAW.C F0287; zones_h_reconstruction.json records 187..206;
@@ -1992,7 +1992,7 @@ static int m11_v1_bar_graphs_enabled(void) {
  * Honesty trail: when graphic 562 itself is decoded semantically,
  * this helper can swap from the DATA.C mirror to the extracted
  * bytes without changing the rendered output. */
-static unsigned char m11_v1_champion_color(int championIndex) {
+int M11_GameView_GetV1ChampionBarColor(int championIndex) {
     static const unsigned char colorTable[4] = {
         (unsigned char)M11_COLOR_LIGHT_GREEN, /* DATA.C G0046[0] = 7  */
         (unsigned char)M11_COLOR_YELLOW,      /* DATA.C G0046[1] = 11 */
@@ -2000,9 +2000,13 @@ static unsigned char m11_v1_champion_color(int championIndex) {
         (unsigned char)M11_COLOR_LIGHT_BLUE   /* DATA.C G0046[3] = 14 */
     };
     if (championIndex < 0 || championIndex > 3) {
-        return (unsigned char)M11_COLOR_SILVER; /* C13_COLOR_LIGHTEST_GRAY */
+        return M11_COLOR_SILVER; /* C13_COLOR_LIGHTEST_GRAY */
     }
-    return colorTable[championIndex];
+    return (int)colorTable[championIndex];
+}
+
+int M11_GameView_GetV1StatusBarBlankColor(void) {
+    return M11_COLOR_DARK_GRAY;
 }
 
 /* Pass 43: return the top-left pixel coordinate inside a 67x29
@@ -15420,8 +15424,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 int statIdx;
                 unsigned char champColor =
                     isDead
-                        ? (unsigned char)M11_COLOR_DARK_GRAY
-                        : m11_v1_champion_color(slot);
+                        ? (unsigned char)M11_GameView_GetV1StatusBarBlankColor()
+                        : (unsigned char)M11_GameView_GetV1ChampionBarColor(slot);
                 long curs[3];
                 long maxs[3];
                 curs[0] = (long)champ->hp.current;
@@ -15443,7 +15447,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     m11_fill_rect(framebuffer, framebufferWidth,
                                   framebufferHeight,
                                   barX, barTopY, barW, barFullHeight,
-                                  M11_COLOR_DARK_GRAY);
+                                  (unsigned char)M11_GameView_GetV1StatusBarBlankColor());
                     if (maxs[statIdx] > 0 && curs[statIdx] > 0) {
                         /* F0287 scales fill height by cur/max,
                          * min 1 px if any cur > 0.  Blank height is

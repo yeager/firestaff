@@ -7995,6 +7995,18 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300Y",
+                         M11_GameView_GetV1ChampionBarColor(0) == PROBE_COLOR_LIGHT_GREEN &&
+                             M11_GameView_GetV1ChampionBarColor(1) == PROBE_COLOR_YELLOW &&
+                             M11_GameView_GetV1ChampionBarColor(2) == PROBE_COLOR_RED &&
+                             M11_GameView_GetV1ChampionBarColor(3) == PROBE_COLOR_LIGHT_BLUE &&
+                             M11_GameView_GetV1ChampionBarColor(-1) == PROBE_COLOR_SILVER &&
+                             M11_GameView_GetV1ChampionBarColor(4) == PROBE_COLOR_SILVER &&
+                             M11_GameView_GetV1StatusBarBlankColor() == PROBE_COLOR_DARK_GRAY,
+                         "V1 champion bar colors use source G0046 order with C12 blank bars");
+        }
+
+        {
             int versionX, versionY;
             int patch1X, patch1Y, patch1W, patch1H, patch1DstX, patch1DstY;
             int patch2X, patch2Y, patch2W, patch2H, patch2DstX, patch2DstY;
