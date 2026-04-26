@@ -18,6 +18,7 @@ WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM1_ORIGINAL_ROUTE_EVENTS:-}"
 SKIP_STARTUP_SELECTOR="${DM1_ROUTE_SKIP_STARTUP_SELECTOR:-0}"
+ORIGINAL_PROGRAM="${DM1_ORIGINAL_PROGRAM:-DM VGA}"
 CONF="${OUT_DIR}/dosbox-original-viewports.conf"
 LOG="${OUT_DIR}/dosbox-original-viewports.log"
 PID_FILE="${OUT_DIR}/dosbox.pid"
@@ -55,6 +56,9 @@ Optional environment:
   DM1_ROUTE_SKIP_STARTUP_SELECTOR=1
                     skip legacy graphics/sound/input selector keystrokes when
                     the DOSBox config launches `DM VGA` directly
+  DM1_ORIGINAL_PROGRAM='VGA'
+                    override autoexec launch command; useful for staged trees
+                    whose `DM VGA` selector path remains in text mode.
   manifest:        ${CROP_MANIFEST}
 
 Honesty note:
@@ -163,7 +167,7 @@ default_image_capture_formats=raw
 [autoexec]
 mount c "${SRC_STAGE}"
 c:
-DM VGA
+${ORIGINAL_PROGRAM}
 EOF
 
     cat > "${KEY_HELPER}" <<'SWIFT'

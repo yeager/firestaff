@@ -1,0 +1,60 @@
+{
+  "schema": "pass78_original_route_attempt_audit.v1",
+  "attempt_dir": "verification-screens/pass78-original-route-target3",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "720x400": 6
+  },
+  "all_gameplay_320x200": false,
+  "honesty": "Only 320x200 raw DOSBox graphics frames may be normalized as original DM1 viewport references. 720x400 text-mode selector/prompt captures are blockers.",
+  "captures": [
+    {
+      "file": "verification-screens/pass78-original-route-target3/image0001-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6457,
+      "sha256": "de99ce0d86e2039756377ff09ac751858868f233f5881b852b078646e6fbdbcf",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-target3/image0002-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6469,
+      "sha256": "bb096ac28b9ad712ce8c6de59131f8f44a459fb94b888e70252ea43336268c3d",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-target3/image0003-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6469,
+      "sha256": "bb096ac28b9ad712ce8c6de59131f8f44a459fb94b888e70252ea43336268c3d",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-target3/image0004-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6469,
+      "sha256": "bb096ac28b9ad712ce8c6de59131f8f44a459fb94b888e70252ea43336268c3d",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-target3/image0005-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6457,
+      "sha256": "de99ce0d86e2039756377ff09ac751858868f233f5881b852b078646e6fbdbcf",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-target3/image0006-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6486,
+      "sha256": "cbbaac85ef502d90fb07030eca178d41b2234f046d741b6e0defa514d99ffde3",
+      "classification": "text_or_non_gameplay_blocker"
+    }
+  ]
+}

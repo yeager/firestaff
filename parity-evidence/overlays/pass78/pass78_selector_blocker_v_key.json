@@ -1,0 +1,60 @@
+{
+  "schema": "pass78_original_route_attempt_audit.v1",
+  "attempt_dir": "verification-screens/pass78-original-route-v-key",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "720x400": 6
+  },
+  "all_gameplay_320x200": false,
+  "honesty": "Only 320x200 raw DOSBox graphics frames may be normalized as original DM1 viewport references. 720x400 text-mode selector/prompt captures are blockers.",
+  "captures": [
+    {
+      "file": "verification-screens/pass78-original-route-v-key/image0001-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6544,
+      "sha256": "78bdaa04e30f4bc5fdf6fa7bf597b5c6d1842e29981cd1edc4d970b62054bba5",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-v-key/image0002-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6535,
+      "sha256": "2d0fcbdfa0eab0b462dcbdb17988a2549a362b152ad8589e00a9436e9bc80cb7",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-v-key/image0003-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6536,
+      "sha256": "eee59fc433c0c6efc69eeec475ba92ba8dc246938cf6496297f13577c1de56f3",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-v-key/image0004-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6536,
+      "sha256": "eee59fc433c0c6efc69eeec475ba92ba8dc246938cf6496297f13577c1de56f3",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-v-key/image0005-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6523,
+      "sha256": "8fde0655a753254afa83229f56ff03c311d37b4d84d8d884fc063d5ba26225f1",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-v-key/image0006-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 6536,
+      "sha256": "eee59fc433c0c6efc69eeec475ba92ba8dc246938cf6496297f13577c1de56f3",
+      "classification": "text_or_non_gameplay_blocker"
+    }
+  ]
+}

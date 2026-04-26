@@ -543,7 +543,11 @@ first, then visual parity, then typography / honesty.
   Pass 76 locks the Firestaff six-capture fixture as state. Pass 77 fixes
   the earlier one-rune `after_cast` bug by entering low-power Ful Ir before
   `SPELL_CAST`; original route work can now target exact Firestaff states
-  instead of misleading capture filenames.
+  instead of misleading capture filenames. Pass 78 attempts that original
+  route lock and hardens the DOSBox harness, but records only negative
+  evidence so far: automated captures remain `720x400` selector/prompt
+  frames, not `320x200` gameplay frames, so no original viewport reference
+  was accepted.
 - **Suggested pass:** pass-47b/pass-72 follow-up — ZONES.H parse (from
   `PANEL.C` + `COORD.C` layout-record init) and render from the locked
   DUNGEON.DAT/GRAPHICS.DAT viewport state plus `zones_h_reconstruction.json`;

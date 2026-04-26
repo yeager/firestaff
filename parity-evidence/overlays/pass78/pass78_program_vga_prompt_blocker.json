@@ -1,0 +1,60 @@
+{
+  "schema": "pass78_original_route_attempt_audit.v1",
+  "attempt_dir": "verification-screens/pass78-original-route-vga",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "720x400": 6
+  },
+  "all_gameplay_320x200": false,
+  "honesty": "Only 320x200 raw DOSBox graphics frames may be normalized as original DM1 viewport references. 720x400 text-mode selector/prompt captures are blockers.",
+  "captures": [
+    {
+      "file": "verification-screens/pass78-original-route-vga/image0001-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 9942,
+      "sha256": "7a85a07aeb1a87484c1cbdbc05eeed2230f0c97cf97e222d9d8ec5acd36df3cc",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga/image0002-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 9956,
+      "sha256": "f0cf0c33e8a03aa2d7318a871501435a2367c95c57f5c8b674daab21ce4786ef",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga/image0003-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 9956,
+      "sha256": "f0cf0c33e8a03aa2d7318a871501435a2367c95c57f5c8b674daab21ce4786ef",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga/image0004-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 9959,
+      "sha256": "baf621d44e1d730b77f986bd9208598e73c476496bdd1a95d64b0d9b02c1ef00",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga/image0005-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 10371,
+      "sha256": "182e5873052b365ce89806ada21ca74cb385d10174d820ebdf71608d1f4d71e8",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga/image0006-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 10386,
+      "sha256": "85566be37f242e57a0c8c90919c10a40b797b26647efa8368850ba82e5977eaf",
+      "classification": "text_or_non_gameplay_blocker"
+    }
+  ]
+}

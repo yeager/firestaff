@@ -1,0 +1,60 @@
+{
+  "schema": "pass78_original_route_attempt_audit.v1",
+  "attempt_dir": "verification-screens/pass78-original-route-vga-exe",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "720x400": 6
+  },
+  "all_gameplay_320x200": false,
+  "honesty": "Only 320x200 raw DOSBox graphics frames may be normalized as original DM1 viewport references. 720x400 text-mode selector/prompt captures are blockers.",
+  "captures": [
+    {
+      "file": "verification-screens/pass78-original-route-vga-exe/image0001-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 1317,
+      "sha256": "d2038406f95df5e4557afb5724cab7f8d3911ad12b182c7135ed5e008b80bae3",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga-exe/image0002-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 1330,
+      "sha256": "a976197474fada07c962c8db510bb354e0b468f3235ef9af2d54232f27de2601",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga-exe/image0003-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 1317,
+      "sha256": "d2038406f95df5e4557afb5724cab7f8d3911ad12b182c7135ed5e008b80bae3",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga-exe/image0004-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 1345,
+      "sha256": "7b28c9c1e6870e26184c139de3791d154f8a3d75bc61d73676edf381ea4a92e3",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga-exe/image0005-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 1748,
+      "sha256": "0f5acc833d03b74e0d4ac7bdaf7619dc4f4d59205dff2c105f9d52448654a3aa",
+      "classification": "text_or_non_gameplay_blocker"
+    },
+    {
+      "file": "verification-screens/pass78-original-route-vga-exe/image0006-raw.png",
+      "width": 720,
+      "height": 400,
+      "bytes": 1763,
+      "sha256": "e24942569d12f251e41c405d47aaef519992955e630363db098346a48ae46e60",
+      "classification": "text_or_non_gameplay_blocker"
+    }
+  ]
+}
