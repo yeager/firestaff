@@ -779,6 +779,8 @@ int M11_GameView_GetV1SpellAreaZone(int* outX,
                                        int* outY,
                                        int* outW,
                                        int* outH);
+int M11_GameView_GetV1ActionAreaGraphicId(void);
+int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,

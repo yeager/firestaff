@@ -13779,6 +13779,14 @@ int M11_GameView_GetV1SpellAreaZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetV1ActionAreaGraphicId(void) {
+    return M11_GFX_ACTION_AREA;
+}
+
+int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void) {
+    return M11_GFX_SPELL_AREA_BG;
+}
+
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
@@ -14503,10 +14511,12 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
             &spellX, &spellY, &spellW, &spellH);
         drewAction = m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
-            M11_GFX_ACTION_AREA, actionW, actionH, actionX, actionY);
+            M11_GameView_GetV1ActionAreaGraphicId(),
+            actionW, actionH, actionX, actionY);
         drewSpell = m11_blit_panel_asset_native(state,
             framebuffer, framebufferWidth, framebufferHeight,
-            M11_GFX_SPELL_AREA_BG, spellW, spellH, spellX, spellY);
+            M11_GameView_GetV1SpellAreaBackgroundGraphicId(),
+            spellW, spellH, spellX, spellY);
         if (drewAction && drewSpell) {
             drewAuthenticFrames = 1;
         } else {

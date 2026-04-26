@@ -7932,6 +7932,13 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300P",
+                         M11_GameView_GetV1ActionAreaGraphicId() == 10 &&
+                             M11_GameView_GetV1SpellAreaBackgroundGraphicId() == 9,
+                         "right-column V1 panel graphics use source C010 action and C009 spell-area backgrounds");
+        }
+
+        {
             int headerX, headerY, headerW, headerH;
             probe_record(&tally, "INV_GV_300G",
                          M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&
