@@ -221,3 +221,9 @@ Update this file with batch summaries if useful.
   - Routed the action-area geometry helper through the source zone id and tightened `INV_GV_300H` to assert both id and `(224,45,87,45)` geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2477_2496_v1_action_area_zone_id.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2497–2516 — V1 action icon zone ids.
+  - Added source id helpers for layout-696 action icon parent zones `C089..C092` and inner icon zones `C093..C096`.
+  - Routed action icon cell/inner geometry helpers through those ids and hardened `INV_GV_300D` to assert ids plus geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2497_2516_v1_action_icon_zone_ids.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

@@ -14590,18 +14590,31 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1ActionIconCellZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    /* Source action-hand icon cell parent zones are C089..C092. */
+    return 89 + championSlot;
+}
+
 int M11_GameView_GetV1ActionIconCellZone(int championSlot,
                                              int* outX,
                                              int* outY,
                                              int* outW,
                                              int* outH) {
-    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    int zoneId = M11_GameView_GetV1ActionIconCellZoneId(championSlot);
+    if (zoneId == 0) return 0;
     if (outX) *outX = M11_DM_ACTION_ICON_CELL_X0 +
-                      championSlot * M11_DM_ACTION_ICON_CELL_STEP;
+                      (zoneId - 89) * M11_DM_ACTION_ICON_CELL_STEP;
     if (outY) *outY = M11_DM_ACTION_ICON_CELL_Y;
     if (outW) *outW = M11_DM_ACTION_ICON_CELL_W;
     if (outH) *outH = M11_DM_ACTION_ICON_CELL_H;
     return 1;
+}
+
+int M11_GameView_GetV1ActionIconInnerZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    /* Source inner icon zones are C093..C096. */
+    return 93 + championSlot;
 }
 
 int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
@@ -14610,7 +14623,8 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
                                               int* outW,
                                               int* outH) {
     int cellX;
-    if (!M11_GameView_GetV1ActionIconCellZone(championSlot,
+    if (!M11_GameView_GetV1ActionIconInnerZoneId(championSlot) ||
+        !M11_GameView_GetV1ActionIconCellZone(championSlot,
                                               &cellX, NULL, NULL, NULL)) {
         return 0;
     }
