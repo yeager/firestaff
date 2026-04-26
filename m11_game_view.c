@@ -14302,6 +14302,88 @@ int M11_GameView_GetV1InventoryPanelZone(int* outX,
     return 1;
 }
 
+typedef struct M11_V1InventorySlotZone_ {
+    int zoneId;
+    int x;
+    int y;
+} M11_V1InventorySlotZone;
+
+static const M11_V1InventorySlotZone kV1InventoryEquipmentSlotZones[] = {
+    /* Source layout-696 C507..C520: inventory panel 16x16 slot zones.
+     * These are raw original zones, not modern overlay coordinates. */
+    { 507,   6, 53 }, { 508,  62, 53 }, { 509,  34, 26 },
+    { 510,  34, 46 }, { 511,  34, 66 }, { 512,  34, 86 },
+    { 513,   6, 90 }, { 514,  79, 73 }, { 515,  62, 90 },
+    { 516,  79, 90 }, { 517,   6, 33 }, { 518,   6, 73 },
+    { 519,  62, 73 }, { 520,  66, 33 }
+};
+
+static const M11_V1InventorySlotZone kV1InventoryBackpackSlotZones[] = {
+    /* Source layout-696 C521..C536: 8x2 carried-object grid. */
+    { 521,  83, 16 }, { 522, 100, 16 }, { 523, 117, 16 },
+    { 524, 134, 16 }, { 525, 151, 16 }, { 526, 168, 16 },
+    { 527, 185, 16 }, { 528, 202, 16 }, { 529,  83, 33 },
+    { 530, 100, 33 }, { 531, 117, 33 }, { 532, 134, 33 },
+    { 533, 151, 33 }, { 534, 168, 33 }, { 535, 185, 33 },
+    { 536, 202, 33 }
+};
+
+int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void) {
+    return (int)(sizeof(kV1InventoryEquipmentSlotZones) /
+                 sizeof(kV1InventoryEquipmentSlotZones[0]));
+}
+
+int M11_GameView_GetV1InventoryEquipmentSlotZoneId(int equipmentOrdinal) {
+    if (equipmentOrdinal < 0 ||
+        equipmentOrdinal >= M11_GameView_GetV1InventoryEquipmentSlotZoneCount()) {
+        return 0;
+    }
+    return kV1InventoryEquipmentSlotZones[equipmentOrdinal].zoneId;
+}
+
+int M11_GameView_GetV1InventoryEquipmentSlotZone(int equipmentOrdinal,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH) {
+    if (!M11_GameView_GetV1InventoryEquipmentSlotZoneId(equipmentOrdinal)) {
+        return 0;
+    }
+    if (outX) *outX = kV1InventoryEquipmentSlotZones[equipmentOrdinal].x;
+    if (outY) *outY = kV1InventoryEquipmentSlotZones[equipmentOrdinal].y;
+    if (outW) *outW = 16;
+    if (outH) *outH = 16;
+    return 1;
+}
+
+int M11_GameView_GetV1InventoryBackpackSlotZoneCount(void) {
+    return (int)(sizeof(kV1InventoryBackpackSlotZones) /
+                 sizeof(kV1InventoryBackpackSlotZones[0]));
+}
+
+int M11_GameView_GetV1InventoryBackpackSlotZoneId(int backpackOrdinal) {
+    if (backpackOrdinal < 0 ||
+        backpackOrdinal >= M11_GameView_GetV1InventoryBackpackSlotZoneCount()) {
+        return 0;
+    }
+    return kV1InventoryBackpackSlotZones[backpackOrdinal].zoneId;
+}
+
+int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
+                                                 int* outX,
+                                                 int* outY,
+                                                 int* outW,
+                                                 int* outH) {
+    if (!M11_GameView_GetV1InventoryBackpackSlotZoneId(backpackOrdinal)) {
+        return 0;
+    }
+    if (outX) *outX = kV1InventoryBackpackSlotZones[backpackOrdinal].x;
+    if (outY) *outY = kV1InventoryBackpackSlotZones[backpackOrdinal].y;
+    if (outW) *outW = 16;
+    if (outH) *outH = 16;
+    return 1;
+}
+
 int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
     return 6;
 }

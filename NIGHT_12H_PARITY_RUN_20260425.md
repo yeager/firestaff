@@ -323,3 +323,9 @@ Update this file with batch summaries if useful.
   - Added `INV_GV_300AO` to assert D0C explosion pattern `(0,0,32,29)` and representative centered text `(73,60,77,15)` geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2817_2836_v1_explosion_viewport_text_zones.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `526/526`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2837–2856 — V1 inventory source slot zones.
+  - Added source-backed helpers for layout-696 inventory equipment slots `C507..C520` and backpack/carried-object grid slots `C521..C536`.
+  - Added `INV_GV_353`–`INV_GV_355` to assert counts, first/last ids, 16×16 source geometry, and invalid-ordinal rejection.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2837_2856_v1_inventory_source_slot_zones.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `529/529`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

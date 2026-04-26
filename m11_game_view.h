@@ -896,6 +896,20 @@ int M11_GameView_GetV1InventoryPanelZone(int* outX,
                                           int* outY,
                                           int* outW,
                                           int* outH);
+int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void);
+int M11_GameView_GetV1InventoryEquipmentSlotZoneId(int equipmentOrdinal);
+int M11_GameView_GetV1InventoryEquipmentSlotZone(int equipmentOrdinal,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH);
+int M11_GameView_GetV1InventoryBackpackSlotZoneCount(void);
+int M11_GameView_GetV1InventoryBackpackSlotZoneId(int backpackOrdinal);
+int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
+                                                 int* outX,
+                                                 int* outY,
+                                                 int* outW,
+                                                 int* outH);
 int M11_GameView_GetV1EndgameTheEndGraphicId(void);
 int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void);
 int M11_GameView_GetV1DialogBackdropGraphicId(void);

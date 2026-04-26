@@ -6555,6 +6555,59 @@ int main(int argc, char** argv) {
                  M11_GameView_GetInventorySelectedSlot(NULL) == -1,
                  "Map/inventory query APIs are NULL-safe");
 
+    /* INV_GV_353: Source layout-696 exposes C507..C520 inventory
+     * equipment slot zones as raw 16x16 panel coordinates. */
+    {
+        int firstX = -1, firstY = -1, firstW = -1, firstH = -1;
+        int lastX = -1, lastY = -1, lastW = -1, lastH = -1;
+        probe_record(&tally,
+                     "INV_GV_353",
+                     M11_GameView_GetV1InventoryEquipmentSlotZoneCount() == 14 &&
+                         M11_GameView_GetV1InventoryEquipmentSlotZoneId(0) == 507 &&
+                         M11_GameView_GetV1InventoryEquipmentSlotZoneId(13) == 520 &&
+                         M11_GameView_GetV1InventoryEquipmentSlotZone(0,
+                             &firstX, &firstY, &firstW, &firstH) &&
+                         M11_GameView_GetV1InventoryEquipmentSlotZone(13,
+                             &lastX, &lastY, &lastW, &lastH) &&
+                         firstX == 6 && firstY == 53 &&
+                         firstW == 16 && firstH == 16 &&
+                         lastX == 66 && lastY == 33 &&
+                         lastW == 16 && lastH == 16,
+                     "V1 inventory equipment slot zones expose layout-696 C507..C520 ids and geometry");
+    }
+
+    /* INV_GV_354: Source layout-696 exposes C521..C536 backpack/
+     * carried-object grid zones as two 8-slot rows. */
+    {
+        int firstX = -1, firstY = -1, firstW = -1, firstH = -1;
+        int lastX = -1, lastY = -1, lastW = -1, lastH = -1;
+        probe_record(&tally,
+                     "INV_GV_354",
+                     M11_GameView_GetV1InventoryBackpackSlotZoneCount() == 16 &&
+                         M11_GameView_GetV1InventoryBackpackSlotZoneId(0) == 521 &&
+                         M11_GameView_GetV1InventoryBackpackSlotZoneId(15) == 536 &&
+                         M11_GameView_GetV1InventoryBackpackSlotZone(0,
+                             &firstX, &firstY, &firstW, &firstH) &&
+                         M11_GameView_GetV1InventoryBackpackSlotZone(15,
+                             &lastX, &lastY, &lastW, &lastH) &&
+                         firstX == 83 && firstY == 16 &&
+                         firstW == 16 && firstH == 16 &&
+                         lastX == 202 && lastY == 33 &&
+                         lastW == 16 && lastH == 16,
+                     "V1 inventory backpack grid exposes layout-696 C521..C536 ids and geometry");
+    }
+
+    /* INV_GV_355: Inventory source-zone helpers reject invalid ordinals. */
+    probe_record(&tally,
+                 "INV_GV_355",
+                 M11_GameView_GetV1InventoryEquipmentSlotZoneId(-1) == 0 &&
+                     M11_GameView_GetV1InventoryEquipmentSlotZoneId(14) == 0 &&
+                     M11_GameView_GetV1InventoryEquipmentSlotZone(14, NULL, NULL, NULL, NULL) == 0 &&
+                     M11_GameView_GetV1InventoryBackpackSlotZoneId(-1) == 0 &&
+                     M11_GameView_GetV1InventoryBackpackSlotZoneId(16) == 0 &&
+                     M11_GameView_GetV1InventoryBackpackSlotZone(16, NULL, NULL, NULL, NULL) == 0,
+                 "V1 inventory source-zone helpers reject invalid ordinals");
+
     /* INV_GV_201: Slot box normal graphic (33) loads as 18×18 bitmap. */
     if (gameView.assetsAvailable) {
         const M11_AssetSlot* box33 = M11_AssetLoader_Load(
