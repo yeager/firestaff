@@ -814,6 +814,9 @@ int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
                                              int* outH,
                                              int* outDstX,
                                              int* outDstY);
+int M11_GameView_GetV1DialogMessageWidth(int choiceCount);
+int M11_GameView_GetV1DialogSingleChoiceMessageTextY(int lineCount);
+int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount);
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void);

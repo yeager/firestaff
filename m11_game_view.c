@@ -554,11 +554,23 @@ static int m11_dialog_source_c471_text_y_for_lines(int lineCount) {
     return M11_VIEWPORT_Y + relativeY;
 }
 
-static int m11_dialog_source_message_width_for_choices(int choiceCount) {
+int M11_GameView_GetV1DialogSingleChoiceMessageTextY(int lineCount) {
+    return m11_dialog_source_c469_text_y_for_lines(lineCount);
+}
+
+int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount) {
+    return m11_dialog_source_c471_text_y_for_lines(lineCount);
+}
+
+int M11_GameView_GetV1DialogMessageWidth(int choiceCount) {
     (void)choiceCount;
     /* C469 and C471 both resolve to a 77 px source message band in the
      * recovered layout (center x=112, right edge=188). */
     return 77;
+}
+
+static int m11_dialog_source_message_width_for_choices(int choiceCount) {
+    return M11_GameView_GetV1DialogMessageWidth(choiceCount);
 }
 
 static int m11_dialog_source_split_two_lines(const char* text,
@@ -16996,8 +17008,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2),
                 m11_dialog_source_message_width_for_choices(state->dialogChoiceCount));
             textY = (state->dialogChoiceCount > 1)
-                        ? m11_dialog_source_c471_text_y_for_lines(lineCount)
-                        : m11_dialog_source_c469_text_y_for_lines(lineCount);
+                        ? M11_GameView_GetV1DialogMultiChoiceMessageTextY(lineCount)
+                        : M11_GameView_GetV1DialogSingleChoiceMessageTextY(lineCount);
             m11_draw_text_centered_in_rect(framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,

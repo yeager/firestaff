@@ -8026,6 +8026,17 @@ int main(int argc, char** argv) {
         }
 
         {
+            probe_record(&tally, "INV_GV_300Z",
+                         M11_GameView_GetV1DialogMessageWidth(1) == 77 &&
+                             M11_GameView_GetV1DialogMessageWidth(4) == 77 &&
+                             M11_GameView_GetV1DialogSingleChoiceMessageTextY(1) == 96 &&
+                             M11_GameView_GetV1DialogSingleChoiceMessageTextY(2) == 92 &&
+                             M11_GameView_GetV1DialogMultiChoiceMessageTextY(1) == 70 &&
+                             M11_GameView_GetV1DialogMultiChoiceMessageTextY(2) == 66,
+                         "V1 dialog message width and vertical origins use source C469/C471 zones");
+        }
+
+        {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",
