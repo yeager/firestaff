@@ -13920,10 +13920,15 @@ int M11_GameView_GetV1ActionAreaZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetV1SpellAreaZoneId(void) {
+    return 13;
+}
+
 int M11_GameView_GetV1SpellAreaZone(int* outX,
                                        int* outY,
                                        int* outW,
                                        int* outH) {
+    if (!M11_GameView_GetV1SpellAreaZoneId()) return 0;
     if (outX) *outX = M11_DM_SPELL_AREA_X;
     if (outY) *outY = M11_DM_SPELL_AREA_Y;
     if (outW) *outW = M11_DM_SPELL_AREA_W;

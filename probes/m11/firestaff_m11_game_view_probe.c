@@ -7956,9 +7956,10 @@ int main(int argc, char** argv) {
         {
             int spellX, spellY, spellW, spellH;
             probe_record(&tally, "INV_GV_300I",
-                         M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH) &&
+                         M11_GameView_GetV1SpellAreaZoneId() == 13 &&
+                             M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH) &&
                              spellX == 224 && spellY == 90 && spellW == 87 && spellH == 25,
-                         "spell area zone matches source C013 right-column geometry");
+                         "spell area zone exposes source C013 right-column id and geometry");
         }
 
         {

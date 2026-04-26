@@ -208,3 +208,10 @@ Update this file with batch summaries if useful.
   - Hardened `INV_GV_15E6` to assert both `C207..C210` parent ids and `C211..C218` ready/action child ids/geometry.
   - Evidence: `parity-evidence/dm1_all_graphics_phase2437_2456_v1_status_hand_parent_zone_ids.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 2457–2476 — V1 spell area zone id.
+  - Added `M11_GameView_GetV1SpellAreaZoneId()` for layout-696 `C013_ZONE_SPELL_AREA`.
+  - Routed `M11_GameView_GetV1SpellAreaZone(...)` through the source zone-id helper.
+  - Hardened `INV_GV_300I` to assert both `C013` id and right-column spell-area geometry.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase2457_2476_v1_spell_area_zone_id.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `513/513`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
