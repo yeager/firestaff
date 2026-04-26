@@ -7664,6 +7664,14 @@ int main(int argc, char** argv) {
         }
 
         {
+            int headerX, headerY, headerW, headerH;
+            probe_record(&tally, "INV_GV_300G",
+                         M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&
+                             headerX == 224 && headerY == 47 && headerW == 87 && headerH == 9,
+                         "action menu header zone matches F0387 source header geometry");
+        }
+
+        {
             int row0X, row0Y, row0W, row0H;
             int row2X, row2Y, row2W, row2H;
             probe_record(&tally, "INV_GV_300F",

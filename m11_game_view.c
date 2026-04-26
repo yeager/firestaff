@@ -13709,6 +13709,17 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_H       9
 #define M11_DM_ACTION_MENU_TEXT_X    226
 
+int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH) {
+    if (outX) *outX = M11_DM_ACTION_AREA_X;
+    if (outY) *outY = M11_DM_ACTION_MENU_HEADER_Y;
+    if (outW) *outW = M11_DM_ACTION_AREA_W;
+    if (outH) *outH = M11_DM_ACTION_MENU_HEADER_H;
+    return 1;
+}
+
 int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
                                             int* outX,
                                             int* outY,
@@ -13760,10 +13771,14 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
 
     /* Header band: fill cyan and print the champion name in black.
      * Matches F0387's zone-80 print (black text, cyan background). */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_DM_ACTION_AREA_X, M11_DM_ACTION_MENU_HEADER_Y,
-                  M11_DM_ACTION_AREA_W, M11_DM_ACTION_MENU_HEADER_H,
-                  M11_COLOR_CYAN);
+    {
+        int headerX, headerY, headerW, headerH;
+        (void)M11_GameView_GetV1ActionMenuHeaderZone(
+            &headerX, &headerY, &headerW, &headerH);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      headerX, headerY, headerW, headerH,
+                      M11_COLOR_CYAN);
+    }
 
     m11_format_champion_name(champ->name, nameBuf, sizeof(nameBuf));
     styleBlackOnCyan = g_text_small;

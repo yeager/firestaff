@@ -119,3 +119,10 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_300F`: row 0 `(224,58,87,9)` and row 2 `(224,80,87,9)` match source row placement.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1337_1356_v1_action_menu_row_zone_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `478/478`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1357–1376 — V1 action menu header zone helper.
+  - Added `M11_GameView_GetV1ActionMenuHeaderZone(...)` for the F0387 acting-champion header band.
+  - Routed action-menu cyan header fill through the helper.
+  - Added invariant `INV_GV_300G`: header `(224,47,87,9)` matches source menu-mode header placement.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1357_1376_v1_action_menu_header_zone_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `479/479`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
