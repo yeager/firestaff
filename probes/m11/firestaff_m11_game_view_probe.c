@@ -1090,6 +1090,23 @@ int main(int argc, char** argv) {
                          "V1 status hand slot zones match layout-696 C211..C218 geometry");
         }
         {
+            int readyIconX, readyIconY, readyIconW, readyIconH;
+            int actionIconX3, actionIconY3, actionIconW3, actionIconH3;
+            probe_record(&tally,
+                         "INV_GV_15V",
+                         M11_GameView_GetV1StatusHandIconZone(0, 0,
+                                                              &readyIconX, &readyIconY,
+                                                              &readyIconW, &readyIconH) &&
+                             M11_GameView_GetV1StatusHandIconZone(3, 1,
+                                                                  &actionIconX3, &actionIconY3,
+                                                                  &actionIconW3, &actionIconH3) &&
+                             readyIconX == 17 && readyIconY == 171 &&
+                             readyIconW == 16 && readyIconH == 16 &&
+                             actionIconX3 == 244 && actionIconY3 == 171 &&
+                             actionIconW3 == 16 && actionIconH3 == 16,
+                         "V1 status hand icon zones inset 16x16 object icons within hand slots");
+        }
+        {
             int hpX, hpY, hpW, hpH;
             int manaX3, manaY3, manaW3, manaH3;
             probe_record(&tally,

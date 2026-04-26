@@ -14081,6 +14081,25 @@ int M11_GameView_GetV1StatusHandZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1StatusHandIconZone(int championSlot,
+                                         int handIndex,
+                                         int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH) {
+    int handX, handY;
+    if (!M11_GameView_GetV1StatusHandZone(championSlot, handIndex,
+                                          &handX, &handY,
+                                          NULL, NULL)) {
+        return 0;
+    }
+    if (outX) *outX = handX + 1;
+    if (outY) *outY = handY + 1;
+    if (outW) *outW = 16;
+    if (outH) *outH = 16;
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                                int championSlot,
                                                int handIndex) {
@@ -14359,9 +14378,18 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
         state, championSlot, handIndex);
     if (iconIndex < 0) return drewBox;
 
-    (void)m11_draw_dm_object_icon_index(
-        state, framebuffer, framebufferWidth, framebufferHeight,
-        iconIndex, dstX + 1, dstY + 1, 0);
+    {
+        int iconX = dstX + 1;
+        int iconY = dstY + 1;
+        int iconW, iconH;
+        (void)M11_GameView_GetV1StatusHandIconZone(
+            championSlot, handIndex, &iconX, &iconY, &iconW, &iconH);
+        (void)iconW;
+        (void)iconH;
+        (void)m11_draw_dm_object_icon_index(
+            state, framebuffer, framebufferWidth, framebufferHeight,
+            iconIndex, iconX, iconY, 0);
+    }
     return 1;
 }
 
