@@ -5171,13 +5171,10 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         if (state->actingChampionOrdinal != 0) {
             int rowIdx;
             for (rowIdx = 0; rowIdx < 3; ++rowIdx) {
-                int rowY = M11_DM_ACTION_MENU_ROW_Y0_FWD +
-                           rowIdx * M11_DM_ACTION_MENU_ROW_STEP_FWD;
-                if (!m11_point_in_rect(x, y,
-                                       M11_DM_ACTION_MENU_AREA_X_FWD,
-                                       rowY,
-                                       M11_DM_ACTION_MENU_AREA_W_FWD,
-                                       M11_DM_ACTION_MENU_ROW_H_FWD)) {
+                int rowX, rowY, rowW, rowH;
+                if (!M11_GameView_GetV1ActionMenuRowZone(
+                        rowIdx, &rowX, &rowY, &rowW, &rowH) ||
+                    !m11_point_in_rect(x, y, rowX, rowY, rowW, rowH)) {
                     continue;
                 }
                 (void)M11_GameView_TriggerActionRow(state, rowIdx);
@@ -13712,6 +13709,20 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_H       9
 #define M11_DM_ACTION_MENU_TEXT_X    226
 
+int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
+                                            int* outX,
+                                            int* outY,
+                                            int* outW,
+                                            int* outH) {
+    if (rowIndex < 0 || rowIndex >= 3) return 0;
+    if (outX) *outX = M11_DM_ACTION_AREA_X;
+    if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
+                      rowIndex * M11_DM_ACTION_MENU_ROW_STEP;
+    if (outW) *outW = M11_DM_ACTION_AREA_W;
+    if (outH) *outH = M11_DM_ACTION_MENU_ROW_H;
+    return 1;
+}
+
 static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -13777,11 +13788,12 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
 
     gotActions = M11_GameView_GetActingActionIndices(state, actions);
     for (row = 0; row < 3; ++row) {
-        int rowY = M11_DM_ACTION_MENU_ROW_Y0 + row * M11_DM_ACTION_MENU_ROW_STEP;
+        int rowX, rowY, rowW, rowH;
         const char* name;
+        (void)M11_GameView_GetV1ActionMenuRowZone(
+            row, &rowX, &rowY, &rowW, &rowH);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_DM_ACTION_AREA_X, rowY,
-                      M11_DM_ACTION_AREA_W, M11_DM_ACTION_MENU_ROW_H,
+                      rowX, rowY, rowW, rowH,
                       M11_COLOR_BLACK);
         if (!gotActions) continue;
         name = M11_GameView_GetActionName(actions[row]);

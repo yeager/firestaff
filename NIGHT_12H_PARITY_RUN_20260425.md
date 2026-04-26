@@ -112,3 +112,10 @@ Update this file with batch summaries if useful.
   - Reused existing invariant coverage `INV_GV_15E2`/`INV_GV_15E4` for layout-696 `C159..C162` clear geometry and rendered source-colored names.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1317_1336_v1_status_name_clear_zone_routing.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `477/477`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1337–1356 — V1 action menu row zone helper.
+  - Added `M11_GameView_GetV1ActionMenuRowZone(...)` for shared F0387 action-menu trigger row geometry.
+  - Routed row rendering and pointer row-hit testing through the helper.
+  - Added invariant `INV_GV_300F`: row 0 `(224,58,87,9)` and row 2 `(224,80,87,9)` match source row placement.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1337_1356_v1_action_menu_row_zone_helper.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `478/478`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
