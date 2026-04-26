@@ -520,11 +520,20 @@ first, then visual parity, then typography / honesty.
   (C079 ceiling `224x39`, C078 floor `224x97`) and current renderer
   draw-order inputs (`INV_GV_414/415`) so the next visual patch can
   change placement/z-order intentionally instead of rediscovering the
-  asset seam.  Full viewport content overlay still requires the
-  DOSBox path to run end-to-end (user must install DOSBox + we need
-  a KeyMapper / autoexec keystroke plan).
-- **Suggested pass:** pass-47b — ZONES.H parse (from `PANEL.C` +
-  `COORD.C` layout-record init) and DOSBox keystroke automation plan.
+  asset seam.  Pass 70 follow-up captured six original DOS viewport
+  crops and produced first Firestaff-vs-original diff stats; original
+  media is no longer the blocker.  The remaining blocker is exact
+  semantic input/state parity: live DOSBox key routing proved too
+  fragile for authoritative state matching.  Pass 71 adds a
+  Greatstone/SCK source-lock check for 22 critical `GRAPHICS.DAT`
+  references plus the original `GRAPHICS.DAT`/`DUNGEON.DAT`/`SONG.DAT`
+  hashes, so the next visual pass should build deterministic source
+  states from locked original data instead of treating keyboard route
+  guesses as truth.
+- **Suggested pass:** pass-47b/pass-71 follow-up — ZONES.H parse (from
+  `PANEL.C` + `COORD.C` layout-record init) and deterministic
+  DUNGEON.DAT/GRAPHICS.DAT viewport state construction; use DOSBox
+  captures as comparison evidence, not as the source of route truth.
 
 ## 12. Tick-prefix (`Tn:`) on message log lines — **CANDIDATE HUD PASS**
 - **Area:** `TEXT`
