@@ -523,6 +523,103 @@ int main(int argc, char** argv) {
                      "INV_GV_302A",
                      bootLog && strncmp(bootLog, "T0: ", 4) != 0,
                      "V1 message log strips Firestaff tick-prefix chrome from boot event text");
+
+        int x, y, w, h;
+        int space = 0;
+        int zoneId = 0;
+        int vx, vy, vw, vh;
+        int slot;
+        int allInventorySlotsMatched = 1;
+
+        (void)M11_GameView_GetV1StatusBoxZone(0, &x, &y, &w, &h);
+        probe_record(&tally,
+                     "INV_GV_430",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_INTERFACE,
+                         x + 1, y + 1,
+                         M11_DM1_MOUSE_MASK_RIGHT,
+                         &space, &zoneId) == 7 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 151,
+                     "DM1 primary mouse table maps right-click C151 champion-0 status box to command C007 toggle inventory");
+        probe_record(&tally,
+                     "INV_GV_431",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_INTERFACE,
+                         x + 1, y + 1,
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 12 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 151,
+                     "DM1 primary mouse table maps left-click C151 champion-0 name/hands to command C012 status-box click");
+        probe_record(&tally,
+                     "INV_GV_432",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_INTERFACE,
+                         x + 43, y + 1,
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 7 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 187,
+                     "DM1 primary mouse table scans C187 bar-graph left-click before C151 and returns command C007");
+        probe_record(&tally,
+                     "INV_GV_433",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_INTERFACE,
+                         x + w - 1, y + h - 1,
+                         M11_DM1_MOUSE_MASK_RIGHT,
+                         &space, &zoneId) == 7 && zoneId == 151,
+                     "DM1 mouse zone matching keeps source inclusive right/bottom edges for status boxes");
+
+        (void)M11_GameView_GetV1ViewportZone(&vx, &vy, &vw, &vh);
+        probe_record(&tally,
+                     "INV_GV_434",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                         vx + (vw / 2), vy + (vh / 2),
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 80 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7,
+                     "DM1 secondary movement table maps left-click C007 viewport to command C080 click-in-dungeon-view");
+        probe_record(&tally,
+                     "INV_GV_435",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                         vx + (vw / 2), vy + (vh / 2),
+                         M11_DM1_MOUSE_MASK_RIGHT,
+                         &space, &zoneId) == 83 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 2,
+                     "DM1 secondary movement table maps right-click screen zone, including viewport, to command C083 toggle leader inventory");
+
+        for (slot = 8; slot <= 37; ++slot) {
+            int sx, sy, sw, sh;
+            int command;
+            if (!M11_GameView_GetV1InventorySourceSlotBoxZone(slot, &sx, &sy, &sw, &sh)) {
+                allInventorySlotsMatched = 0;
+                break;
+            }
+            command = M11_GameView_GetV1MouseCommandForPoint(
+                M11_DM1_MOUSE_LIST_INVENTORY,
+                vx + sx + (sw / 2), vy + sy + (sh / 2),
+                M11_DM1_MOUSE_MASK_LEFT,
+                &space, &zoneId);
+            if (command != 20 + slot ||
+                space != M11_DM1_MOUSE_SPACE_VIEWPORT ||
+                zoneId != 499 + slot) {
+                allInventorySlotsMatched = 0;
+                break;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_436",
+                     allInventorySlotsMatched,
+                     "DM1 inventory slot zones C507..C536 route screen clicks through viewport-relative coordinates to commands C028..C057");
+        probe_record(&tally,
+                     "INV_GV_437",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_INVENTORY,
+                         vx + 6, vy + 53,
+                         M11_DM1_MOUSE_MASK_RIGHT,
+                         &space, &zoneId) == 11 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 2,
+                     "DM1 inventory table gives right-click screen-zone close inventory precedence over viewport-relative slot hits");
     }
 
     initialHash = gameView.lastWorldHash;

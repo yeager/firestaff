@@ -922,6 +922,37 @@ int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH);
+
+enum {
+    M11_DM1_MOUSE_MASK_RIGHT = 0x0001,
+    M11_DM1_MOUSE_MASK_LEFT  = 0x0002
+};
+
+enum {
+    M11_DM1_MOUSE_SPACE_NONE     = 0,
+    M11_DM1_MOUSE_SPACE_SCREEN   = 1,
+    M11_DM1_MOUSE_SPACE_VIEWPORT = 2
+};
+
+enum {
+    M11_DM1_MOUSE_LIST_INTERFACE = 1,
+    M11_DM1_MOUSE_LIST_MOVEMENT  = 2,
+    M11_DM1_MOUSE_LIST_INVENTORY = 3
+};
+
+/* Bounded source-backed DM PC 3.4 mouse input resolver for probes/future
+ * routing. It mirrors COMMAND.C F0358_COMMAND_GetCommandFromMouseInput_CPSC
+ * for the currently covered GRAPHIC561 rows: champion status/icon entries
+ * from interface G0447, viewport/screen rows from movement G0448, and
+ * inventory slot rows from G0449. Coordinates passed in are screen-relative;
+ * viewport-relative source zones (CM2) are matched after subtracting the DM1
+ * viewport origin. Returns the DM1 command id or 0 (C000_COMMAND_NONE). */
+int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
+                                           int screenX,
+                                           int screenY,
+                                           int buttonMask,
+                                           int* outCoordinateSpace,
+                                           int* outZoneId);
 int M11_GameView_GetV1EndgameTheEndGraphicId(void);
 int M11_GameView_GetV1EndgameTheEndZone(int* outX,
                                         int* outY,

@@ -14479,6 +14479,194 @@ int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
     return 1;
 }
 
+typedef struct M11_V1MouseRoute_ {
+    int command;
+    int coordinateSpace;
+    int zoneId;
+    int buttonMask;
+} M11_V1MouseRoute;
+
+static int m11_source_rect_contains_inclusive(int x,
+                                              int y,
+                                              int rx,
+                                              int ry,
+                                              int rw,
+                                              int rh) {
+    return rw > 0 && rh > 0 && x >= rx && y >= ry &&
+           x <= rx + rw - 1 && y <= ry + rh - 1;
+}
+
+static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    int slot;
+    int relX;
+    int relY;
+    int relW;
+    int relH;
+    if (!route) return 0;
+    switch (route->zoneId) {
+        case 2:
+            if (outX) *outX = 0;
+            if (outY) *outY = 0;
+            if (outW) *outW = 320;
+            if (outH) *outH = 200;
+            return 1;
+        case 7:
+            return M11_GameView_GetV1ViewportZone(outX, outY, outW, outH);
+        default:
+            break;
+    }
+
+    if (route->zoneId >= 151 && route->zoneId <= 154) {
+        return M11_GameView_GetV1StatusBoxZone(route->zoneId - 151,
+                                               outX, outY, outW, outH);
+    }
+    if (route->zoneId >= 187 && route->zoneId <= 190) {
+        slot = route->zoneId - 187;
+        if (!M11_GameView_GetV1StatusBoxZone(slot, &relX, &relY, &relW, &relH)) {
+            return 0;
+        }
+        if (outX) *outX = relX + 43;
+        if (outY) *outY = relY;
+        if (outW) *outW = 24;
+        if (outH) *outH = 29;
+        return 1;
+    }
+    if (route->zoneId >= 113 && route->zoneId <= 116) {
+        return M11_GameView_GetV1ChampionIconZone(route->zoneId - 113,
+                                                  outX, outY, outW, outH);
+    }
+    if (route->zoneId >= 507 && route->zoneId <= 536) {
+        return M11_GameView_GetV1InventorySourceSlotBoxZone(route->zoneId - 499,
+                                                            outX, outY, outW, outH);
+    }
+    return 0;
+}
+
+static int m11_v1_mouse_route_matches(const M11_V1MouseRoute* route,
+                                      int screenX,
+                                      int screenY,
+                                      int buttonMask) {
+    int x;
+    int y;
+    int w;
+    int h;
+    int testX = screenX;
+    int testY = screenY;
+    if (!route || !(buttonMask & route->buttonMask)) {
+        return 0;
+    }
+    if (!m11_v1_mouse_route_zone_rect(route, &x, &y, &w, &h)) {
+        return 0;
+    }
+    if (route->coordinateSpace == M11_DM1_MOUSE_SPACE_VIEWPORT) {
+        testX -= M11_VIEWPORT_X;
+        testY -= M11_VIEWPORT_Y;
+    }
+    return m11_source_rect_contains_inclusive(testX, testY, x, y, w, h);
+}
+
+int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
+                                           int screenX,
+                                           int screenY,
+                                           int buttonMask,
+                                           int* outCoordinateSpace,
+                                           int* outZoneId) {
+    static const M11_V1MouseRoute interfaceRoutes[] = {
+        /* ReDMCSB COMMAND.C G0447_as_Graphic561_PrimaryMouseInput_Interface. */
+        { 7,   M11_DM1_MOUSE_SPACE_SCREEN, 151, M11_DM1_MOUSE_MASK_RIGHT },
+        { 8,   M11_DM1_MOUSE_SPACE_SCREEN, 152, M11_DM1_MOUSE_MASK_RIGHT },
+        { 9,   M11_DM1_MOUSE_SPACE_SCREEN, 153, M11_DM1_MOUSE_MASK_RIGHT },
+        { 10,  M11_DM1_MOUSE_SPACE_SCREEN, 154, M11_DM1_MOUSE_MASK_RIGHT },
+        { 7,   M11_DM1_MOUSE_SPACE_SCREEN, 187, M11_DM1_MOUSE_MASK_LEFT  },
+        { 8,   M11_DM1_MOUSE_SPACE_SCREEN, 188, M11_DM1_MOUSE_MASK_LEFT  },
+        { 9,   M11_DM1_MOUSE_SPACE_SCREEN, 189, M11_DM1_MOUSE_MASK_LEFT  },
+        { 10,  M11_DM1_MOUSE_SPACE_SCREEN, 190, M11_DM1_MOUSE_MASK_LEFT  },
+        { 12,  M11_DM1_MOUSE_SPACE_SCREEN, 151, M11_DM1_MOUSE_MASK_LEFT  },
+        { 13,  M11_DM1_MOUSE_SPACE_SCREEN, 152, M11_DM1_MOUSE_MASK_LEFT  },
+        { 14,  M11_DM1_MOUSE_SPACE_SCREEN, 153, M11_DM1_MOUSE_MASK_LEFT  },
+        { 15,  M11_DM1_MOUSE_SPACE_SCREEN, 154, M11_DM1_MOUSE_MASK_LEFT  },
+        { 125, M11_DM1_MOUSE_SPACE_SCREEN, 113, M11_DM1_MOUSE_MASK_LEFT  },
+        { 126, M11_DM1_MOUSE_SPACE_SCREEN, 114, M11_DM1_MOUSE_MASK_LEFT  },
+        { 127, M11_DM1_MOUSE_SPACE_SCREEN, 115, M11_DM1_MOUSE_MASK_LEFT  },
+        { 128, M11_DM1_MOUSE_SPACE_SCREEN, 116, M11_DM1_MOUSE_MASK_LEFT  }
+    };
+    static const M11_V1MouseRoute movementRoutes[] = {
+        /* ReDMCSB COMMAND.C G0448_as_Graphic561_SecondaryMouseInput_Movement. */
+        { 80, M11_DM1_MOUSE_SPACE_SCREEN, 7, M11_DM1_MOUSE_MASK_LEFT  },
+        { 83, M11_DM1_MOUSE_SPACE_SCREEN, 2, M11_DM1_MOUSE_MASK_RIGHT }
+    };
+    static const M11_V1MouseRoute inventoryRoutes[] = {
+        /* ReDMCSB COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory. */
+        { 11, M11_DM1_MOUSE_SPACE_SCREEN,   2, M11_DM1_MOUSE_MASK_RIGHT },
+        { 28, M11_DM1_MOUSE_SPACE_VIEWPORT, 507, M11_DM1_MOUSE_MASK_LEFT },
+        { 29, M11_DM1_MOUSE_SPACE_VIEWPORT, 508, M11_DM1_MOUSE_MASK_LEFT },
+        { 30, M11_DM1_MOUSE_SPACE_VIEWPORT, 509, M11_DM1_MOUSE_MASK_LEFT },
+        { 31, M11_DM1_MOUSE_SPACE_VIEWPORT, 510, M11_DM1_MOUSE_MASK_LEFT },
+        { 32, M11_DM1_MOUSE_SPACE_VIEWPORT, 511, M11_DM1_MOUSE_MASK_LEFT },
+        { 33, M11_DM1_MOUSE_SPACE_VIEWPORT, 512, M11_DM1_MOUSE_MASK_LEFT },
+        { 34, M11_DM1_MOUSE_SPACE_VIEWPORT, 513, M11_DM1_MOUSE_MASK_LEFT },
+        { 35, M11_DM1_MOUSE_SPACE_VIEWPORT, 514, M11_DM1_MOUSE_MASK_LEFT },
+        { 36, M11_DM1_MOUSE_SPACE_VIEWPORT, 515, M11_DM1_MOUSE_MASK_LEFT },
+        { 37, M11_DM1_MOUSE_SPACE_VIEWPORT, 516, M11_DM1_MOUSE_MASK_LEFT },
+        { 38, M11_DM1_MOUSE_SPACE_VIEWPORT, 517, M11_DM1_MOUSE_MASK_LEFT },
+        { 39, M11_DM1_MOUSE_SPACE_VIEWPORT, 518, M11_DM1_MOUSE_MASK_LEFT },
+        { 40, M11_DM1_MOUSE_SPACE_VIEWPORT, 519, M11_DM1_MOUSE_MASK_LEFT },
+        { 41, M11_DM1_MOUSE_SPACE_VIEWPORT, 520, M11_DM1_MOUSE_MASK_LEFT },
+        { 42, M11_DM1_MOUSE_SPACE_VIEWPORT, 521, M11_DM1_MOUSE_MASK_LEFT },
+        { 43, M11_DM1_MOUSE_SPACE_VIEWPORT, 522, M11_DM1_MOUSE_MASK_LEFT },
+        { 44, M11_DM1_MOUSE_SPACE_VIEWPORT, 523, M11_DM1_MOUSE_MASK_LEFT },
+        { 45, M11_DM1_MOUSE_SPACE_VIEWPORT, 524, M11_DM1_MOUSE_MASK_LEFT },
+        { 46, M11_DM1_MOUSE_SPACE_VIEWPORT, 525, M11_DM1_MOUSE_MASK_LEFT },
+        { 47, M11_DM1_MOUSE_SPACE_VIEWPORT, 526, M11_DM1_MOUSE_MASK_LEFT },
+        { 48, M11_DM1_MOUSE_SPACE_VIEWPORT, 527, M11_DM1_MOUSE_MASK_LEFT },
+        { 49, M11_DM1_MOUSE_SPACE_VIEWPORT, 528, M11_DM1_MOUSE_MASK_LEFT },
+        { 50, M11_DM1_MOUSE_SPACE_VIEWPORT, 529, M11_DM1_MOUSE_MASK_LEFT },
+        { 51, M11_DM1_MOUSE_SPACE_VIEWPORT, 530, M11_DM1_MOUSE_MASK_LEFT },
+        { 52, M11_DM1_MOUSE_SPACE_VIEWPORT, 531, M11_DM1_MOUSE_MASK_LEFT },
+        { 53, M11_DM1_MOUSE_SPACE_VIEWPORT, 532, M11_DM1_MOUSE_MASK_LEFT },
+        { 54, M11_DM1_MOUSE_SPACE_VIEWPORT, 533, M11_DM1_MOUSE_MASK_LEFT },
+        { 55, M11_DM1_MOUSE_SPACE_VIEWPORT, 534, M11_DM1_MOUSE_MASK_LEFT },
+        { 56, M11_DM1_MOUSE_SPACE_VIEWPORT, 535, M11_DM1_MOUSE_MASK_LEFT },
+        { 57, M11_DM1_MOUSE_SPACE_VIEWPORT, 536, M11_DM1_MOUSE_MASK_LEFT }
+    };
+    const M11_V1MouseRoute* routes = NULL;
+    int count = 0;
+    int i;
+
+    if (outCoordinateSpace) *outCoordinateSpace = M11_DM1_MOUSE_SPACE_NONE;
+    if (outZoneId) *outZoneId = 0;
+
+    switch (mouseInputList) {
+        case M11_DM1_MOUSE_LIST_INTERFACE:
+            routes = interfaceRoutes;
+            count = (int)(sizeof(interfaceRoutes) / sizeof(interfaceRoutes[0]));
+            break;
+        case M11_DM1_MOUSE_LIST_MOVEMENT:
+            routes = movementRoutes;
+            count = (int)(sizeof(movementRoutes) / sizeof(movementRoutes[0]));
+            break;
+        case M11_DM1_MOUSE_LIST_INVENTORY:
+            routes = inventoryRoutes;
+            count = (int)(sizeof(inventoryRoutes) / sizeof(inventoryRoutes[0]));
+            break;
+        default:
+            return 0;
+    }
+
+    for (i = 0; i < count; ++i) {
+        if (m11_v1_mouse_route_matches(&routes[i], screenX, screenY, buttonMask)) {
+            if (outCoordinateSpace) *outCoordinateSpace = routes[i].coordinateSpace;
+            if (outZoneId) *outZoneId = routes[i].zoneId;
+            return routes[i].command;
+        }
+    }
+    return 0;
+}
+
 int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
     return 6;
 }
