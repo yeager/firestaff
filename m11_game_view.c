@@ -14857,12 +14857,14 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             if (!useV2PartyHud) {
                 M11_TextStyle nameStyle = g_text_small;
                 nameStyle.color = (unsigned char)M11_GameView_GetV1StatusNameColor(state, slot);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + M11_V1_STATUS_NAME_CLEAR_X,
-                              y + M11_V1_STATUS_NAME_CLEAR_Y,
-                              M11_V1_STATUS_NAME_CLEAR_W,
-                              M11_V1_STATUS_NAME_CLEAR_H,
-                              M11_COLOR_GRAY);
+                {
+                    int nameClearX, nameClearY, nameClearW, nameClearH;
+                    (void)M11_GameView_GetV1StatusNameZone(
+                        slot, &nameClearX, &nameClearY, &nameClearW, &nameClearH);
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  nameClearX, nameClearY, nameClearW, nameClearH,
+                                  M11_COLOR_GRAY);
+                }
                 {
                     int nameTextX, nameTextY, nameTextW;
                     (void)M11_GameView_GetV1StatusNameTextZone(

@@ -106,3 +106,9 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_15E8`: slot 0 text `(13,160,42,7)` and slot 3 text `(220,160,42,7)` match source layout with 69 px status stride.
   - Evidence: `parity-evidence/dm1_all_graphics_phase1297_1316_v1_status_name_text_zone_helper.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `477/477`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1317–1336 — V1 status name clear-zone routing.
+  - Routed compact champion-name clear fill through `M11_GameView_GetV1StatusNameZone(...)` instead of draw-site local arithmetic.
+  - Reused existing invariant coverage `INV_GV_15E2`/`INV_GV_15E4` for layout-696 `C159..C162` clear geometry and rendered source-colored names.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1317_1336_v1_status_name_clear_zone_routing.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `477/477`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
