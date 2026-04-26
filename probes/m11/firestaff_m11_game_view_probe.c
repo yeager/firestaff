@@ -8108,6 +8108,10 @@ int main(int argc, char** argv) {
             int row2X, row2Y, row2W, row2H;
             probe_record(&tally, "INV_GV_300F",
                          M11_GameView_GetV1ActionMenuRowCount() == 3 &&
+                             M11_GameView_GetV1ActionMenuRowBaseZoneId(0) == 82 &&
+                             M11_GameView_GetV1ActionMenuRowBaseZoneId(1) == 83 &&
+                             M11_GameView_GetV1ActionMenuRowBaseZoneId(2) == 84 &&
+                             M11_GameView_GetV1ActionMenuRowBaseZoneId(3) == 0 &&
                              M11_GameView_GetV1ActionMenuRowZoneId(0) == 85 &&
                              M11_GameView_GetV1ActionMenuRowZoneId(1) == 86 &&
                              M11_GameView_GetV1ActionMenuRowZoneId(2) == 87 &&
@@ -8117,7 +8121,7 @@ int main(int argc, char** argv) {
                              !M11_GameView_GetV1ActionMenuRowZone(3, NULL, NULL, NULL, NULL) &&
                              row0X == 224 && row0Y == 58 && row0W == 87 && row0H == 9 &&
                              row2X == 224 && row2Y == 80 && row2W == 87 && row2H == 9,
-                         "action menu row zones expose F0387 source zones 85-87 geometry");
+                         "action menu row zones expose F0387 source base zones 82-84 and print zones 85-87 geometry");
         }
 
         {

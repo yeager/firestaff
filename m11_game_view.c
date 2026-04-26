@@ -14057,8 +14057,14 @@ int M11_GameView_GetV1ActionMenuRowCount(void) {
     return 3;
 }
 
-int M11_GameView_GetV1ActionMenuRowZoneId(int rowIndex) {
+int M11_GameView_GetV1ActionMenuRowBaseZoneId(int rowIndex) {
     if (rowIndex < 0 || rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
+    /* Source action-row parent zones are C082, C083, and C084. */
+    return 82 + rowIndex;
+}
+
+int M11_GameView_GetV1ActionMenuRowZoneId(int rowIndex) {
+    if (!M11_GameView_GetV1ActionMenuRowBaseZoneId(rowIndex)) return 0;
     /* F0387 prints action names through zones 85, 86, and 87. */
     return 85 + rowIndex;
 }

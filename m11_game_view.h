@@ -853,6 +853,7 @@ int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outW,
                                                int* outH);
 int M11_GameView_GetV1ActionMenuRowCount(void);
+int M11_GameView_GetV1ActionMenuRowBaseZoneId(int rowIndex);
 int M11_GameView_GetV1ActionMenuRowZoneId(int rowIndex);
 int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
                                             int* outX,
