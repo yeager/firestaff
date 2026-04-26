@@ -168,3 +168,9 @@ Update this file with batch summaries if useful.
   - Added invariant `INV_GV_15Q`: living champion → 0 (clear/rebuild), dead champion → 8 (`C008_GRAPHIC_STATUS_BOX_DEAD_CHAMPION`).
   - Evidence: `parity-evidence/dm1_all_graphics_phase1477_1496_v1_status_box_base_graphic.md`.
   - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `485/485`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.
+
+- Passes 1497–1516 — V1 status box zone routing.
+  - Routed dead status-box asset checks/blits and living dark-gray clears through `M11_GameView_GetV1StatusBoxZone(...)` dimensions (`slotW/slotH`).
+  - Reused `INV_GV_15E9` and `INV_GV_15Q` coverage for source box geometry and base graphic selection.
+  - Evidence: `parity-evidence/dm1_all_graphics_phase1497_1516_v1_status_box_zone_routing.md`.
+  - Gates: `cmake --build build --target firestaff_m11_game_view_probe firestaff -- -j2`; `FIRESTAFF_DATA="$HOME/.firestaff/data" ./build/firestaff_m11_game_view_probe "$HOME/.firestaff/data"` → `485/485`; `ctest --test-dir build --output-on-failure` → `5/5 passed`.

@@ -14893,10 +14893,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         int x = M11_PARTY_PANEL_X + slot * slotStep;
         int y = M11_PARTY_PANEL_Y;
+        int slotH = M11_PARTY_SLOT_H;
         char line[48];
         int drewStatusBox = 0;
         if (!useV2PartyHud) {
-            (void)M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &slotW, NULL);
+            (void)M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &slotW, &slotH);
         }
 
         if (slot < state->world.party.championCount && state->world.party.champions[slot].present) {
@@ -14940,9 +14941,9 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
                         baseGfx);
-                    if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
+                    if (boxAsset && boxAsset->width == slotW && boxAsset->height == slotH) {
                         M11_AssetLoader_BlitRegion(boxAsset,
-                            0, 0, 67, 29,
+                            0, 0, slotW, slotH,
                             framebuffer, framebufferWidth, framebufferHeight,
                             x, y, 0);
                         drewStatusBox = 1;
@@ -14950,7 +14951,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
                 if (!isDead) {
                     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  x, y, M11_V1_PARTY_SLOT_W, 29,
+                                  x, y, slotW, slotH,
                                   M11_COLOR_DARK_GRAY);
                     drewStatusBox = 1;
                 }
