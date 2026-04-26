@@ -6799,6 +6799,77 @@ int main(int argc, char** argv) {
                      "normal V1 inventory head icon is confined to source C509 slot box");
     }
 
+    /* INV_GV_362: Firestaff champion inventory slots map onto the
+     * ReDMCSB/layout-696 slot-box namespace used by normal V1 inventory. */
+    probe_record(&tally,
+                 "INV_GV_362",
+                 M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_POUCH_2) == 14 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_3) == 15 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_2) == 16 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_4) == 17 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_POUCH_1) == 19 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_1) == 20 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_1) == 21 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_8) == 28 &&
+                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_ACTION_HAND) == 0,
+                 "V1 inventory champion slots map to source slot-box indices C513..C527 without alias leakage");
+
+    /* INV_GV_363: Normal V1 inventory draws pouch/quiver/backpack dynamic
+     * icons only inside their source C513/C514/C527 slot boxes. */
+    {
+        M11_GameViewState emptyInv;
+        M11_GameViewState itemInv;
+        struct DungeonThings_Compat localThings;
+        struct DungeonWeapon_Compat weapon;
+        unsigned char fb_empty[320 * 200];
+        unsigned char fb_item[320 * 200];
+        int inSlotDiff = 0;
+        int outsideDiff = 0;
+        int px, py;
+        memset(&localThings, 0, sizeof(localThings));
+        memset(&weapon, 0, sizeof(weapon));
+        weapon.type = 8; /* dagger -> source object icon 32 */
+        localThings.weapons = &weapon;
+        localThings.weaponCount = 1;
+
+        memcpy(&emptyInv, &gameView, sizeof(emptyInv));
+        emptyInv.showDebugHUD = 0;
+        emptyInv.inventoryPanelActive = 1;
+        if (emptyInv.world.party.activeChampionIndex < 0) emptyInv.world.party.activeChampionIndex = 0;
+        emptyInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_2] = THING_NONE;
+        emptyInv.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] = THING_NONE;
+        emptyInv.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_8] = THING_NONE;
+        memset(fb_empty, 0, sizeof(fb_empty));
+        M11_GameView_Draw(&emptyInv, fb_empty, 320, 200);
+
+        memcpy(&itemInv, &emptyInv, sizeof(itemInv));
+        itemInv.world.things = &localThings;
+        itemInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_2] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        itemInv.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        itemInv.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_8] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        memset(fb_item, 0, sizeof(fb_item));
+        M11_GameView_Draw(&itemInv, fb_item, 320, 200);
+
+        for (py = 0; py < 200; ++py) {
+            for (px = 0; px < 320; ++px) {
+                int inPouch2 = (px >= 6 && px < 22 && py >= 123 && py < 139);
+                int inQuiverLine2_1 = (px >= 79 && px < 95 && py >= 106 && py < 122);
+                int inBackpack8 = (px >= 185 && px < 201 && py >= 49 && py < 65);
+                if (fb_item[py * 320 + px] != fb_empty[py * 320 + px]) {
+                    if (inPouch2 || inQuiverLine2_1 || inBackpack8) ++inSlotDiff;
+                    else ++outsideDiff;
+                }
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_363",
+                     itemInv.assetsAvailable ? (inSlotDiff > 30 && outsideDiff == 0) : 1,
+                     "normal V1 inventory pouch/quiver/backpack icons are confined to source C513/C514/C527 boxes");
+    }
+
     /* INV_GV_192: Movement blocked while inventory panel active. */
     {
         M11_GameViewState iv;

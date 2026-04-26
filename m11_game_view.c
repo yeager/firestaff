@@ -14667,6 +14667,38 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
     return 0;
 }
 
+int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot) {
+    /* Bridge Firestaff's compact champion inventory indices to the
+     * ReDMCSB/DEFS.H inventory slot-box namespace.  The return value is
+     * the original source slot-box index (8..37), which maps directly to
+     * layout-696 zones C507..C536 via
+     * M11_GameView_GetV1InventorySourceSlotBoxZone*(). */
+    switch (championSlot) {
+        case CHAMPION_SLOT_HAND_LEFT:  return 8;  /* READY_HAND -> C507 */
+        case CHAMPION_SLOT_HAND_RIGHT: return 9;  /* ACTION_HAND -> C508 */
+        case CHAMPION_SLOT_HEAD:       return 10; /* C509 */
+        case CHAMPION_SLOT_TORSO:      return 11; /* C510 */
+        case CHAMPION_SLOT_LEGS:       return 12; /* C511 */
+        case CHAMPION_SLOT_FEET:       return 13; /* C512 */
+        case CHAMPION_SLOT_POUCH_2:    return 14; /* C513 */
+        case CHAMPION_SLOT_QUIVER_3:   return 15; /* C514 QUIVER_LINE2_1 */
+        case CHAMPION_SLOT_QUIVER_2:   return 16; /* C515 QUIVER_LINE1_2 */
+        case CHAMPION_SLOT_QUIVER_4:   return 17; /* C516 QUIVER_LINE2_2 */
+        case CHAMPION_SLOT_NECK:       return 18; /* C517 */
+        case CHAMPION_SLOT_POUCH_1:    return 19; /* C518 */
+        case CHAMPION_SLOT_QUIVER_1:   return 20; /* C519 QUIVER_LINE1_1 */
+        case CHAMPION_SLOT_BACKPACK_1: return 21; /* C520 */
+        case CHAMPION_SLOT_BACKPACK_2: return 22; /* C521 */
+        case CHAMPION_SLOT_BACKPACK_3: return 23; /* C522 */
+        case CHAMPION_SLOT_BACKPACK_4: return 24; /* C523 */
+        case CHAMPION_SLOT_BACKPACK_5: return 25; /* C524 */
+        case CHAMPION_SLOT_BACKPACK_6: return 26; /* C525 */
+        case CHAMPION_SLOT_BACKPACK_7: return 27; /* C526 */
+        case CHAMPION_SLOT_BACKPACK_8: return 28; /* C527 */
+        default: return 0;
+    }
+}
+
 int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
     return 6;
 }
@@ -17114,32 +17146,26 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       panelX + 1, panelY + 1, panelW - 2, panelH - 2, M11_COLOR_DARK_GRAY);
     } else {
-        /* Normal V1 dynamic overlay phase: draw ready/action hand objects
-         * into the source slot-box zones C507/C508. Remaining dynamic
-         * inventory slots are intentionally deferred until they can be bound
-         * to the same C507..C536 source namespace. */
-        static const struct { int sourceSlotBox; int championSlot; } slotMap[] = {
-            { 8,  CHAMPION_SLOT_HAND_LEFT  },
-            { 9,  CHAMPION_SLOT_HAND_RIGHT },
-            { 10, CHAMPION_SLOT_HEAD       },
-            { 11, CHAMPION_SLOT_TORSO      },
-            { 12, CHAMPION_SLOT_LEGS       },
-            { 13, CHAMPION_SLOT_FEET       },
-            { 18, CHAMPION_SLOT_NECK       }
-        };
-        int mapOrdinal;
-        for (mapOrdinal = 0;
-             mapOrdinal < (int)(sizeof(slotMap) / sizeof(slotMap[0]));
-             ++mapOrdinal) {
-            int slotIdx = slotMap[mapOrdinal].championSlot;
+        /* Normal V1 dynamic overlay phase: draw every Firestaff-modeled
+         * champion inventory object into the source slot-box namespace.
+         * This keeps placement anchored to layout-696 C507..C536 instead
+         * of the older freehand workbench/debug layout.  Firestaff's
+         * compact champion model currently has eight backpack slots, so
+         * those populate the first eight source backpack boxes C520..C527;
+         * C528..C536 remain exposed by the source-zone helpers for the
+         * wider original namespace. */
+        int slotIdx;
+        for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx) {
             unsigned short thingId = champ->inventory[slotIdx];
+            int sourceSlotBox = M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(slotIdx);
+            if (!sourceSlotBox) continue;
             if (thingId != THING_NONE && thingId != THING_ENDOFLIST &&
                 state->assetsAvailable && state->world.things) {
                 int zx = 0, zy = 0, zw = 0, zh = 0;
                 int iconIndex = m11_object_icon_index_for_thing(
                     state, state->world.things, thingId);
                 if (M11_GameView_GetV1InventorySourceSlotBoxZone(
-                        slotMap[mapOrdinal].sourceSlotBox, &zx, &zy, &zw, &zh)) {
+                        sourceSlotBox, &zx, &zy, &zw, &zh)) {
                     (void)zw; (void)zh;
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth, framebufferHeight,

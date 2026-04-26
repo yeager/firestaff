@@ -922,7 +922,6 @@ int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH);
-
 enum {
     M11_DM1_MOUSE_MASK_RIGHT = 0x0001,
     M11_DM1_MOUSE_MASK_LEFT  = 0x0002
@@ -953,6 +952,7 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
                                            int buttonMask,
                                            int* outCoordinateSpace,
                                            int* outZoneId);
+int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot);
 int M11_GameView_GetV1EndgameTheEndGraphicId(void);
 int M11_GameView_GetV1EndgameTheEndZone(int* outX,
                                         int* outY,
