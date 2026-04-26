@@ -9564,6 +9564,43 @@ int main(int argc, char** argv) {
                      M11_GameView_GetActingChampionOrdinal(&menuView) == 0,
                      "action-menu: ClearActingChampion returns to idle mode");
 
+        /* INV_GV_316: F0386/F0389 read only C01_SLOT_ACTION_HAND.
+         * A ready-hand object must not leak into the action area or
+         * change the activatable action set; with only the ready hand
+         * populated, the action hand is still empty and resolves to
+         * ActionSet 2 (PUNCH/KICK/WAR CRY). */
+        {
+            struct DungeonThings_Compat localThings;
+            struct DungeonWeapon_Compat readyWeapon;
+            unsigned char readyActions[3] = {0, 0, 0};
+            int gotReadyActions;
+            memset(&localThings, 0, sizeof(localThings));
+            memset(&readyWeapon, 0, sizeof(readyWeapon));
+            readyWeapon.type = 8; /* dagger would be ActionSet 12 if used */
+            localThings.weapons = &readyWeapon;
+            localThings.weaponCount = 1;
+            menuView.world.things = &localThings;
+            menuView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            menuView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] =
+                THING_NONE;
+            menuView.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+                THING_NONE;
+            (void)M11_GameView_SetActingChampion(&menuView, 0);
+            gotReadyActions = M11_GameView_GetActingActionIndices(&menuView,
+                                                                  readyActions);
+            probe_record(&tally, "INV_GV_316",
+                         gotReadyActions == 1 &&
+                             readyActions[0] == 6 &&
+                             readyActions[1] == 7 &&
+                             readyActions[2] == 8,
+                         "action-menu: ready-hand-only object does not override empty action hand");
+            M11_GameView_ClearActingChampion(&menuView);
+            menuView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+                THING_NONE;
+            menuView.world.things = NULL;
+        }
+
         /* ── INV_GV_320..325: DM1 action-menu row clicks drive
          * F0391_MENUS_DidClickTriggerAction.  Each row hit must
          * (a) always clear the acting champion when the row
