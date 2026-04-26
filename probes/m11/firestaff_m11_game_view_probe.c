@@ -1109,19 +1109,34 @@ int main(int argc, char** argv) {
         {
             int readyBoxX, readyBoxY, readyBoxW, readyBoxH;
             int actionBoxX3, actionBoxY3, actionBoxW3, actionBoxH3;
+            int slotBoxZonesOk =
+                M11_GameView_GetV1StatusHandSlotBoxZone(0, 0,
+                                                        &readyBoxX, &readyBoxY,
+                                                        &readyBoxW, &readyBoxH) &&
+                M11_GameView_GetV1StatusHandSlotBoxZone(3, 1,
+                                                        &actionBoxX3, &actionBoxY3,
+                                                        &actionBoxW3, &actionBoxH3) &&
+                readyBoxX == 16 && readyBoxY == 170 &&
+                readyBoxW == 18 && readyBoxH == 18 &&
+                actionBoxX3 == 243 && actionBoxY3 == 170 &&
+                actionBoxW3 == 18 && actionBoxH3 == 18;
             probe_record(&tally,
                          "INV_GV_15W",
-                         M11_GameView_GetV1StatusHandSlotBoxZone(0, 0,
-                                                                 &readyBoxX, &readyBoxY,
-                                                                 &readyBoxW, &readyBoxH) &&
-                             M11_GameView_GetV1StatusHandSlotBoxZone(3, 1,
-                                                                     &actionBoxX3, &actionBoxY3,
-                                                                     &actionBoxW3, &actionBoxH3) &&
-                             readyBoxX == 16 && readyBoxY == 170 &&
-                             readyBoxW == 18 && readyBoxH == 18 &&
-                             actionBoxX3 == 243 && actionBoxY3 == 170 &&
-                             actionBoxW3 == 18 && actionBoxH3 == 18,
+                         slotBoxZonesOk,
                          "V1 status hand slot-box zones expose 18x18 C033/C034/C035 overdraw at hand origins");
+            {
+                M11_GameViewState fallbackHandView = syntheticView;
+                unsigned char fallbackHandFramebuffer[320 * 200];
+                fallbackHandView.assetsAvailable = 0;
+                memset(fallbackHandFramebuffer, 0, sizeof(fallbackHandFramebuffer));
+                M11_GameView_Draw(&fallbackHandView, fallbackHandFramebuffer, 320, 200);
+                probe_record(&tally,
+                             "INV_GV_15X",
+                             slotBoxZonesOk &&
+                                 fallbackHandFramebuffer[readyBoxY * 320 + (readyBoxX + 17)] == PROBE_COLOR_DARK_GRAY &&
+                                 fallbackHandFramebuffer[(readyBoxY + 17) * 320 + readyBoxX] == PROBE_COLOR_DARK_GRAY,
+                             "V1 status hand slot fallback renders the 18x18 C033 box extent, not the 16x16 parent zone");
+            }
         }
         {
             int hpX, hpY, hpW, hpH;

@@ -14386,16 +14386,16 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
         }
     }
     if (!drewBox) {
+        int boxX = dstX;
+        int boxY = dstY;
+        int boxW = 18;
+        int boxH = 18;
+        (void)M11_GameView_GetV1StatusHandSlotBoxZone(
+            championSlot, handIndex, &boxX, &boxY, &boxW, &boxH);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      dstX, dstY,
-                      M11_V1_STATUS_HAND_ZONE_W,
-                      M11_V1_STATUS_HAND_ZONE_H,
-                      M11_COLOR_BLACK);
+                      boxX, boxY, boxW, boxH, M11_COLOR_BLACK);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      dstX, dstY,
-                      M11_V1_STATUS_HAND_ZONE_W,
-                      M11_V1_STATUS_HAND_ZONE_H,
-                      M11_COLOR_DARK_GRAY);
+                      boxX, boxY, boxW, boxH, M11_COLOR_DARK_GRAY);
     }
 
     iconIndex = M11_GameView_GetV1StatusHandIconIndex(
