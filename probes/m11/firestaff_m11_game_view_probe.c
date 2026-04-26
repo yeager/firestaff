@@ -517,6 +517,14 @@ int main(int argc, char** argv) {
                      strcmp(gameView.sourceId, "dm1") == 0,
                  "launcher selection transitions into a real game view through the source hook");
 
+    {
+        const char* bootLog = M11_GameView_GetMessageLogEntry(&gameView, 0);
+        probe_record(&tally,
+                     "INV_GV_302A",
+                     bootLog && strncmp(bootLog, "T0: ", 4) != 0,
+                     "V1 message log strips Firestaff tick-prefix chrome from boot event text");
+    }
+
     initialHash = gameView.lastWorldHash;
     initialDirection = gameView.world.party.direction;
     initialTick = gameView.world.gameTick;

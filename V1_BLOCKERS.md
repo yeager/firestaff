@@ -522,13 +522,20 @@ first, then visual parity, then typography / honesty.
 - **Suggested pass:** pass-47b — ZONES.H parse (from `PANEL.C` +
   `COORD.C` layout-record init) and DOSBox keystroke automation plan.
 
-## 12. Tick-prefix (`Tn:`) on message log lines
+## 12. Tick-prefix (`Tn:`) on message log lines — **CANDIDATE HUD PASS**
 - **Area:** `TEXT`
+- **Status:** Candidate fix on `parallel/hud-pass-20260426090938`; not
+  integrated to main yet.
 - **Evidence:**
   - `PARITY_V1_TEXT_VS_GRAPHICS_AUDIT.md` Pass 35 §2.3 — the tick
     prefix is a Firestaff convention, not source-faithful.
-- **Suggested pass:** pass-48 — drop the `Tn:` prefix in V1 mode
-  (single-line change in `m11_log_event`).
+  - `parity-evidence/candidate_hud_tick_prefix_message_log.md` records
+    the bounded HUD/UI fix.
+  - `INV_GV_302A` verifies the boot message-log entry is stored without
+    the old `T0: ` prefix.
+- **Candidate pass:** strip leading `T<digits>: ` at the `m11_log_event`
+  storage seam, preserving existing call sites while keeping synthetic
+  tick chrome out of message-log text.
 
 ## 13. Animating door intermediate states handled upstream of F0715
 - **Area:** `OWNERSHIP` (already noted in blocker #2 but tracked
