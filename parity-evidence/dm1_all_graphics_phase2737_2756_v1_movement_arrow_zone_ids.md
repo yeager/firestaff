@@ -2,7 +2,7 @@
 
 ## Scope
 
-Expose source zone-id mappings for the V1 movement-arrow control cluster.
+Expose source zone-id mappings and representative resolved rectangles for the V1 movement-arrow control cluster.
 
 ## Source anchors
 
@@ -16,14 +16,20 @@ ReDMCSB `DEFS.H` / layout-696:
 - `C072_ZONE_MOVE_BACKWARD`
 - `C073_ZONE_MOVE_LEFT`
 
+Representative resolved rectangles from `zones_h_reconstruction.json` via `tools/resolve_dm1_zone.py`:
+
+- `C068` turn-left: `(234,125,19,21)`
+- `C071` move-right: `(291,147,28,21)`
+
 ## Implemented
 
 - Added `M11_GameView_GetV1MovementArrowsZoneId()` returning root source `C009`.
 - Added `M11_GameView_GetV1MovementArrowZoneId(index)` mapping the six source arrow zones and rejecting out-of-range indices.
+- Added `M11_GameView_GetV1MovementArrowZone(index, ...)` exposing resolved arrow rectangles.
 
 ## Updated invariants
 
-- `INV_GV_300AL`: asserts `C009`, all six arrow ids `C068..C073`, and invalid-index rejection.
+- `INV_GV_300AL`: asserts `C009`, all six arrow ids `C068..C073`, invalid-index rejection, and representative arrow geometry.
 
 ## Verification
 
