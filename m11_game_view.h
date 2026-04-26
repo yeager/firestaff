@@ -922,6 +922,7 @@ int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH);
+int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot);
 int M11_GameView_GetV1EndgameTheEndGraphicId(void);
 int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void);
 int M11_GameView_GetV1DialogBackdropGraphicId(void);
