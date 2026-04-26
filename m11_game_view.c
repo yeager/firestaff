@@ -13951,6 +13951,23 @@ int M11_GameView_GetV1ActionMenuGraphicZoneId(int actionRowCount) {
     return 11;
 }
 
+int M11_GameView_GetV1ActionMenuGraphicZone(int actionRowCount,
+                                            int* outX,
+                                            int* outY,
+                                            int* outW,
+                                            int* outH) {
+    int zoneId = M11_GameView_GetV1ActionMenuGraphicZoneId(actionRowCount);
+    int actionX, actionY;
+    if (!zoneId || !M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, NULL, NULL)) {
+        return 0;
+    }
+    if (outX) *outX = actionX;
+    if (outY) *outY = actionY;
+    if (outW) *outW = 87;
+    if (outH) *outH = (zoneId == 79) ? 21 : ((zoneId == 77) ? 33 : 45);
+    return 1;
+}
+
 int M11_GameView_GetV1ActionAreaClearColor(void) {
     /* F0387 clears the action area to black before drawing menu/icon state. */
     return M11_COLOR_BLACK;

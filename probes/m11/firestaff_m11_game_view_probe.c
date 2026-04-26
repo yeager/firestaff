@@ -8000,6 +8000,20 @@ int main(int argc, char** argv) {
         }
 
         {
+            int oneX, oneY, oneW, oneH;
+            int twoX, twoY, twoW, twoH;
+            int threeX, threeY, threeW, threeH;
+            probe_record(&tally, "INV_GV_300AF",
+                         M11_GameView_GetV1ActionMenuGraphicZone(1, &oneX, &oneY, &oneW, &oneH) &&
+                             M11_GameView_GetV1ActionMenuGraphicZone(2, &twoX, &twoY, &twoW, &twoH) &&
+                             M11_GameView_GetV1ActionMenuGraphicZone(3, &threeX, &threeY, &threeW, &threeH) &&
+                             oneX == 224 && oneY == 45 && oneW == 87 && oneH == 21 &&
+                             twoX == 224 && twoY == 45 && twoW == 87 && twoH == 33 &&
+                             threeX == 224 && threeY == 45 && threeW == 87 && threeH == 45,
+                         "action menu graphic zones route C079/C077/C011 to source-sized rectangles");
+        }
+
+        {
             probe_record(&tally, "INV_GV_300P",
                          M11_GameView_GetV1ActionAreaGraphicId() == 10 &&
                              M11_GameView_GetV1ActionMenuGraphicZoneId(1) == 79 &&
