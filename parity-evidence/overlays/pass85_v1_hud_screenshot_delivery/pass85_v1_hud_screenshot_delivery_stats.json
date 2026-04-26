@@ -1,0 +1,91 @@
+{
+  "schema": "pass85_v1_hud_screenshot_delivery.v1",
+  "honesty": "Current Firestaff V1 evidence only; no original-runtime pixel parity claim.",
+  "hud_box": [
+    12,
+    0,
+    274,
+    29
+  ],
+  "scenes": [
+    {
+      "scene": "party_hud_with_champions",
+      "source": "verification-screens/07_party_hud_with_champions.png",
+      "source_sha256": "8aedbd8094b641c0aef699c9a8f8dc2cedfd38ac9704e2483986db08aaff6eac",
+      "hud_crop": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/party_hud_with_champions_top_row_hud_raw.png",
+      "hud_crop_sha256": "9ec77e19dc3ced0df82186b76105e0a29cab1dd0f293eada9a2a0aa5bcb9839e",
+      "hud_crop_metrics": {
+        "width": 274,
+        "height": 29,
+        "nonblack_pixels": 3882,
+        "total_pixels": 7946,
+        "nonblack_ratio": 0.4885,
+        "unique_colors": 7
+      },
+      "zoned_hud_crop": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/party_hud_with_champions_top_row_hud_zoned.png",
+      "zoned_hud_crop_sha256": "3c086c951463d1c5a3d920657ee53aad474f9357e93877eae830fcf01482aaa1",
+      "zoned_hud_crop_metrics": {
+        "width": 274,
+        "height": 29,
+        "nonblack_pixels": 4773,
+        "total_pixels": 7946,
+        "nonblack_ratio": 0.6007,
+        "unique_colors": 10
+      }
+    },
+    {
+      "scene": "spell_panel_with_champions",
+      "source": "verification-screens/08_spell_panel_with_champions.png",
+      "source_sha256": "a4124d57489d8ad8cdd0fbc19cbba869f64d462f1cf05573e3643aa1ad454a1a",
+      "hud_crop": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/spell_panel_with_champions_top_row_hud_raw.png",
+      "hud_crop_sha256": "9ec77e19dc3ced0df82186b76105e0a29cab1dd0f293eada9a2a0aa5bcb9839e",
+      "hud_crop_metrics": {
+        "width": 274,
+        "height": 29,
+        "nonblack_pixels": 3882,
+        "total_pixels": 7946,
+        "nonblack_ratio": 0.4885,
+        "unique_colors": 7
+      },
+      "zoned_hud_crop": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/spell_panel_with_champions_top_row_hud_zoned.png",
+      "zoned_hud_crop_sha256": "3c086c951463d1c5a3d920657ee53aad474f9357e93877eae830fcf01482aaa1",
+      "zoned_hud_crop_metrics": {
+        "width": 274,
+        "height": 29,
+        "nonblack_pixels": 4773,
+        "total_pixels": 7946,
+        "nonblack_ratio": 0.6007,
+        "unique_colors": 10
+      }
+    },
+    {
+      "scene": "four_champion_priority",
+      "source": "verification-screens/pass81-champion-hud-priority/party_hud_four_champions_vga.png",
+      "source_sha256": "ff22ee364675e5d26c49db40b853ebc355ebf95cf3b8d4e2e38165258d4beb47",
+      "hud_crop": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/four_champion_priority_top_row_hud_raw.png",
+      "hud_crop_sha256": "99c410b24216c7a5baab5ef1c2fc6be436044a8f0b6f25dedcf38f6e0cca842d",
+      "hud_crop_metrics": {
+        "width": 274,
+        "height": 29,
+        "nonblack_pixels": 5754,
+        "total_pixels": 7946,
+        "nonblack_ratio": 0.7241,
+        "unique_colors": 2
+      },
+      "zoned_hud_crop": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/four_champion_priority_top_row_hud_zoned.png",
+      "zoned_hud_crop_sha256": "797555c53cee4caa7c2dc78c59616fbffa612b8c3b9ace4bee6e0a36fd49884f",
+      "zoned_hud_crop_metrics": {
+        "width": 274,
+        "height": 29,
+        "nonblack_pixels": 6412,
+        "total_pixels": 7946,
+        "nonblack_ratio": 0.8069,
+        "unique_colors": 7
+      }
+    }
+  ],
+  "problems": [],
+  "manifest": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/pass85_v1_hud_screenshot_delivery_sha256.tsv",
+  "stats": "parity-evidence/overlays/pass85_v1_hud_screenshot_delivery/pass85_v1_hud_screenshot_delivery_stats.json",
+  "pass": true
+}
