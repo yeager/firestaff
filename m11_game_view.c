@@ -13883,9 +13883,9 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
     int slot;
     if (!state) return 0;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        int cellX;
+        int cellX, cellY, cellW, cellH;
         int isDead;
-        int innerX;
+        int innerX, innerY, innerW, innerH;
         int drewSprite = 0;
         const struct ChampionState_Compat* champ;
         unsigned short handThing;
@@ -13893,16 +13893,18 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         if (slot >= state->world.party.championCount) break;
         champ = &state->world.party.champions[slot];
         if (!champ->present) continue;
-
-        (void)M11_GameView_GetV1ActionIconCellZone(slot, &cellX, NULL, NULL, NULL);
+        if (!M11_GameView_GetV1ActionIconCellZone(
+                slot, &cellX, &cellY, &cellW, &cellH) ||
+            !M11_GameView_GetV1ActionIconInnerZone(
+                slot, &innerX, &innerY, &innerW, &innerH)) {
+            continue;
+        }
         isDead = (champ->hp.current == 0);
 
         if (isDead) {
             /* DM1: FillBox BLACK then return — no icon for dead. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cellX, M11_DM_ACTION_ICON_CELL_Y,
-                          M11_DM_ACTION_ICON_CELL_W,
-                          M11_DM_ACTION_ICON_CELL_H,
+                          cellX, cellY, cellW, cellH,
                           M11_COLOR_BLACK);
             ++drawn;
             continue;
@@ -13910,12 +13912,8 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
 
         /* Living champion: cyan cell backdrop. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      cellX, M11_DM_ACTION_ICON_CELL_Y,
-                      M11_DM_ACTION_ICON_CELL_W,
-                      M11_DM_ACTION_ICON_CELL_H,
+                      cellX, cellY, cellW, cellH,
                       M11_COLOR_CYAN);
-
-        innerX = cellX + M11_DM_ACTION_ICON_INNER_X_OFF;
 
         /* Inner icon backdrop: DM1 fills the 16×16 bitmap with
          * C04_COLOR_CYAN when the hand has an object without an
@@ -13923,9 +13921,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
          * We fill the inner box cyan too, so empty hands and
          * non-weapon items both read as the authentic cyan cell. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      innerX, M11_DM_ACTION_ICON_INNER_Y,
-                      M11_DM_ACTION_ICON_INNER_W,
-                      M11_DM_ACTION_ICON_INNER_H,
+                      innerX, innerY, innerW, innerH,
                       M11_COLOR_CYAN);
 
         handThing = m11_get_action_hand_thing(champ);
@@ -13933,7 +13929,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             drewSprite = m11_draw_dm_object_icon_index(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 M11_DM_OBJECT_ICON_EMPTY_HAND,
-                innerX, M11_DM_ACTION_ICON_INNER_Y, 1);
+                innerX, innerY, 1);
         } else if (state->assetsAvailable && state->world.things) {
             /* F0386 branch: only objects with a non-zero
              * ActionSetIndex get an icon blitted; everything else
@@ -13950,7 +13946,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
                     state, state->world.things, handThing);
                 drewSprite = m11_draw_dm_object_icon_index(
                     state, framebuffer, framebufferWidth, framebufferHeight,
-                    iconIndex, innerX, M11_DM_ACTION_ICON_INNER_Y, 1);
+                    iconIndex, innerX, innerY, 1);
             }
         }
         (void)drewSprite;
@@ -13967,9 +13963,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             state->candidateMirrorPanelActive ||
             state->resting) {
             m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
-                           cellX, M11_DM_ACTION_ICON_CELL_Y,
-                           M11_DM_ACTION_ICON_CELL_W,
-                           M11_DM_ACTION_ICON_CELL_H);
+                           cellX, cellY, cellW, cellH);
         }
         ++drawn;
     }
