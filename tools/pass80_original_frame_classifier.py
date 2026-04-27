@@ -44,6 +44,15 @@ PASS77_EXPECTED = [
     "inventory",
 ]
 
+PASS94_DIAGNOSTIC_EXPECTED = [
+    "title_or_menu",
+    "entrance_menu",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+]
+
 
 @dataclass(frozen=True)
 class RegionStats:
@@ -134,6 +143,13 @@ def classify(regions: dict[str, RegionStats], dims: tuple[int, int]) -> tuple[st
     if viewport.nonblack_ratio < 0.40 and right_col.nonblack_ratio > 0.70 and right_col.color_ratio > 0.20:
         return "title_or_menu", "sparse viewport plus colorful/right-column title-menu art"
 
+    # The original entrance/menu view overlays ENTER/RESUME/QUIT controls in
+    # the right column while the dungeon entrance/hallway is already visible.
+    # Keep it separate from both title art and gameplay so route audits do not
+    # mistake the pre-start menu for a usable in-game HUD/spell/inventory state.
+    if viewport.nonblack_ratio > 0.50 and right_col.nonblack_ratio > 0.55 and right_col.color_ratio > 0.15:
+        return "entrance_menu", "dungeon entrance/menu controls still occupy the right column"
+
     # A flat close wall can fill the historical inventory extent with dense,
     # low-color pixels.  Classify that as its own unsafe state before inventory
     # or generic dungeon gameplay so route audits do not treat a wall close-up as
@@ -172,6 +188,8 @@ def parse_expected(value: str | None) -> list[str] | None:
         return None
     if value == "pass77":
         return PASS77_EXPECTED
+    if value in {"pass94", "pass94-diagnostic"}:
+        return PASS94_DIAGNOSTIC_EXPECTED
     parsed = [x.strip() for x in value.split(",") if x.strip()]
     return parsed or None
 
@@ -259,6 +277,16 @@ def run_self_test() -> int:
     })
     cases.append(("dense inventory panel", inventory, "inventory"))
 
+    entrance = dict(base)
+    entrance.update({
+        "viewport": _stats(0.78, 0.10, 18),
+        "right_column": _stats(0.83, 0.34, 24),
+        "right_action": _stats(0.62, 0.26, 18),
+        "spell_area": _stats(0.40, 0.21, 12),
+        "inventory_extent": _stats(0.55, 0.07, 12),
+    })
+    cases.append(("entrance menu", entrance, "entrance_menu"))
+
     spell = dict(base)
     spell.update({
         "viewport": _stats(0.74, 0.18, 30),
@@ -286,16 +314,13 @@ def main(argv: Iterable[str] | None = None) -> int:
     ap.add_argument("attempt_dir", type=Path, nargs="?", help="directory containing DOSBox imageNNNN-raw.png captures")
     ap.add_argument("--out-json", type=Path, default=None)
     ap.add_argument("--out-md", type=Path, default=None)
-    ap.add_argument("--expected", default=None, help="comma-separated expected classes, or 'pass77'")
+    ap.add_argument("--expected", default=None, help="comma-separated expected classes, or preset: 'pass77', 'pass94-diagnostic'")
     ap.add_argument("--fail-on-duplicates", action="store_true", help="treat repeated raw frame sha256 values as a failing problem instead of a warning")
     ap.add_argument("--self-test", action="store_true", help="run classifier guard tests without reading PNG files")
     args = ap.parse_args(argv)
 
     if args.self_test:
         return run_self_test()
-    if args.attempt_dir is None:
-        ap.error("attempt_dir is required unless --self-test is used")
-
     if args.attempt_dir is None:
         ap.error("attempt_dir is required unless --self-test is used")
 

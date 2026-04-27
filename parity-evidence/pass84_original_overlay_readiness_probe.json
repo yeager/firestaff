@@ -3,7 +3,8 @@
     "default pass74 compare inputs are missing Firestaff PPM full-frame captures",
     "default pass74 compare inputs are missing original raw 320x200 screenshots",
     "recorded pass74 stats reference artifacts absent from the fresh worktree",
-    "pass78 route attempts remained text-mode/prompt captures, not gameplay"
+    "pass78 route attempts remained text-mode/prompt captures, not gameplay",
+    "original shot-label manifest is absent; semantic route checkpoints are not auditable"
   ],
   "champion_inventory_spell_route_readiness": {
     "explicit_champion_keys_supported_by_route_script": true,
@@ -16,7 +17,8 @@
       "06_ingame_inventory_panel"
     ],
     "route_shape_dry_run_supported": true,
-    "semantically_locked_original_runtime_route": false
+    "semantically_locked_original_runtime_route": false,
+    "serialized_original_frame_clicks_supported_by_route_script": true
   },
   "firestaff_png_reviews": [
     {
@@ -373,5 +375,9 @@
     }
   ],
   "ready_for_overlay_comparison": false,
-  "schema": "pass84_original_overlay_readiness_probe.v1"
+  "schema": "pass84_original_overlay_readiness_probe.v1",
+  "shot_label_manifest": {
+    "exists": false,
+    "path": "verification-screens/pass70-original-dm1-viewports/original_viewport_shot_labels.tsv"
+  }
 }

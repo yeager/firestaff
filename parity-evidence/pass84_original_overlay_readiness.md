@@ -30,7 +30,7 @@ Result summary:
 
 ```text
 ready_for_overlay_comparison=false
-blockers=4
+blockers=5
 ```
 
 ## Findings
@@ -41,6 +41,7 @@ blockers=4
   - six `verification-screens/pass70-original-dm1-viewports/image000*-raw.png` original raw screenshots are absent;
   - the existing pass-74 stats JSON records six pairs, but references artifacts that are not present in the fresh worktree.
 - Existing pass-78 original-route attempts remain negative evidence: all four audited attempts report `all_gameplay_320x200=false` and only `720x400` text-mode/prompt captures.
+- The pass-84 readiness probe now audits `verification-screens/pass70-original-dm1-viewports/original_viewport_shot_labels.tsv` and blocks readiness if the semantic route labels are absent or do not match `party_hud`, `spell_panel`, and `inventory_panel` at the expected six-shot checkpoints.
 - The original route script accepts explicit `f1`-`f4` champion keys and validates six-shot route shape. It now also accepts labeled capture tokens such as `shot:party_hud`, `shot:spell_panel`, and `shot:inventory_panel`, and writes those labels to `original_viewport_shot_labels.tsv` during normalization. This is metadata support only; it does not prove that the original runtime reaches the champion party/inventory/spell-panel states.
 
 ## Champion party / inventory / spell-panel blocker
@@ -64,6 +65,7 @@ DM1_ORIGINAL_ROUTE_EVENTS="wait:5000 shot:party_hud f1 wait:500 shot f2 wait:500
 Observed:
 
 - classifier self-test: `pass=true`, `cases=3`;
+- pass-84 readiness regeneration: `ready_for_overlay_comparison=false`, `blockers=5`, including absent `original_viewport_shot_labels.tsv`;
 - route dry-run: staged DM1 tree is missing when absent, but helper generation and six-shot shape validation with three labeled shots succeed;
 - direct `python3 tools/pass74_fullscreen_panel_pair_compare.py` is currently blocked by missing fresh-worktree PPM/raw inputs, so no new overlay measurements were claimed.
 

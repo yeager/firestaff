@@ -106,6 +106,12 @@ enum {
     M11_PROMPT_STRIP_H = 14,
     M11_PARTY_PANEL_X = 12,
     M11_PARTY_PANEL_Y = 0,
+    /* DM1 PC 3.4 source layout-696 anchors champion status boxes at
+     * x=0: C151..C154 are children of the 67x29 C150 template at
+     * offsets 0,69,138,207.  The legacy 12px inset remains the V2
+     * vertical-slice HUD origin because those pre-baked assets were
+     * authored against it. */
+    M11_V1_PARTY_PANEL_X = 0,
     /* Legacy / V2-mode dimensions.  V2's pre-baked four-slot HUD
      * sprite (m11_v2_party_hud_four_slot_base, 302x28) encodes
      * these values directly: 4 * 77 - 6 = 302 (= step 77 * 3 +
@@ -2063,6 +2069,12 @@ static int m11_party_slot_step(void) {
     return m11_v2_vertical_slice_enabled()
         ? (int)M11_PARTY_SLOT_STEP
         : (int)M11_V1_PARTY_SLOT_STEP;
+}
+
+static int m11_party_panel_x(void) {
+    return m11_v2_vertical_slice_enabled()
+        ? (int)M11_PARTY_PANEL_X
+        : (int)M11_V1_PARTY_PANEL_X;
 }
 
 static int m11_party_slot_w(void) {
@@ -5116,6 +5128,30 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
+    /* ReDMCSB COMMAND.C switches resting play to the dedicated
+     * G0450/G0460 PartyResting input lists after C145_COMMAND_REST:
+     * movement/action/menu commands are no longer routed, and only
+     * C146_COMMAND_WAKE_UP (plus the platform freeze/menu escape paths)
+     * leaves the rest screen.  Keep Firestaff's R binding as the local
+     * wake key, and accept Enter/ACCEPT as the source-backed keyboard
+     * wake equivalent; do not spend a movement tick while resting. */
+    if (state->resting) {
+        if (input == M12_MENU_INPUT_REST_TOGGLE ||
+            input == M12_MENU_INPUT_ACCEPT) {
+            state->resting = 0;
+            m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                          (unsigned int)state->world.gameTick);
+            m11_set_status(state, "REST", "PARTY AWAKE");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle), "AWAKE");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "REST ENDED. RESUME EXPLORING.");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (input != M12_MENU_INPUT_NONE) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+    }
+
     /* Map/inventory toggle.
      *
      * The full-screen map overlay is a Firestaff convenience/debug
@@ -5209,22 +5245,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_IGNORED;
         case M12_MENU_INPUT_REST_TOGGLE:
-            state->resting = !state->resting;
-            if (state->resting) {
-                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: RESTING",
-                              (unsigned int)state->world.gameTick);
-                m11_set_status(state, "REST", "PARTY IS RESTING");
-                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTING");
-                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                         "HP AND STAMINA RECOVER SLOWLY. PRESS R AGAIN TO WAKE.");
-            } else {
-                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
-                              (unsigned int)state->world.gameTick);
-                m11_set_status(state, "REST", "PARTY AWAKE");
-                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "AWAKE");
-                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                         "REST ENDED. RESUME EXPLORING.");
-            }
+            state->resting = 1;
+            m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: RESTING",
+                          (unsigned int)state->world.gameTick);
+            m11_set_status(state, "REST", "PARTY IS RESTING");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTING");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "HP AND STAMINA RECOVER SLOWLY. PRESS R AGAIN TO WAKE.");
             return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_USE_STAIRS:
             if (m11_try_stairs_transition(state)) {
@@ -5476,7 +5503,7 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         int slotStep = m11_party_slot_step();
         int slotW    = m11_party_slot_w();
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-            int slotX = M11_PARTY_PANEL_X + slot * slotStep;
+            int slotX = m11_party_panel_x() + slot * slotStep;
             if (m11_point_in_rect(x, y,
                                   slotX,
                                   M11_PARTY_PANEL_Y + 20,
@@ -8741,6 +8768,19 @@ static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* s
                                9);
 }
 
+static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[3][3]) {
+    int depth;
+    if (!cells) {
+        return 3;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        if (cells[depth][1].valid && !m11_viewport_cell_is_open(&cells[depth][1])) {
+            return depth + 1;
+        }
+    }
+    return 3;
+}
+
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int fbW,
@@ -8775,7 +8815,8 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
 static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
-                                    int fbH) {
+                                    int fbH,
+                                    int maxVisibleForward) {
     typedef struct M11_DM1PitSpec {
         int relForward;
         int relSide;
@@ -8805,6 +8846,9 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
     }
     for (i = 0; i < sizeof(kPits) / sizeof(kPits[0]); ++i) {
         M11_ViewportCell cell;
+        if (kPits[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kPits[i].relForward, kPits[i].relSide, &cell)) {
             continue;
         }
@@ -8827,7 +8871,8 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
 static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
-                                         int fbH) {
+                                         int fbH,
+                                         int maxVisibleForward) {
     typedef struct M11_DM1FloorOrnSpec {
         int relForward;
         int relSide;
@@ -8858,6 +8903,9 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         int localIdx;
         int mapIdx;
         int ornGlobalIdx = -1;
+        if (kOrnaments[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kOrnaments[i].relForward, kOrnaments[i].relSide, &cell)) {
             continue;
         }
@@ -9010,7 +9058,8 @@ static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
 static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
-                                int fbH) {
+                                int fbH,
+                                int maxVisibleForward) {
     typedef struct M11_DM1StairSpec {
         int relForward;
         int relSide;
@@ -9050,6 +9099,9 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         M11_ViewportCell cell;
         int frontFacing;
         int stairUp;
+        if (kStairs[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kStairs[i].relForward, kStairs[i].relSide, &cell)) {
             continue;
         }
@@ -9070,7 +9122,8 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
 static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int fbW,
-                                           int fbH) {
+                                           int fbH,
+                                           int maxVisibleForward) {
     typedef struct M11_DM1FieldSpec {
         int relForward;
         int relSide;
@@ -9108,6 +9161,9 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
     }
     for (i = 0; i < sizeof(kFields) / sizeof(kFields[0]); ++i) {
         M11_ViewportCell cell;
+        if (kFields[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kFields[i].relForward, kFields[i].relSide, &cell)) {
             continue;
         }
@@ -9129,7 +9185,8 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
 static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
-                                    int fbH) {
+                                    int fbH,
+                                    int maxVisibleForward) {
     static const M11_DM1WallFrontBlit kSideBlits[] = {
         /* Far to near, matching the first source-bound subset of
          * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
@@ -9154,6 +9211,9 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     }
     for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
         M11_ViewportCell cell;
+        if (kSideBlits[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state,
                                       kSideBlits[i].relForward,
                                       kSideBlits[i].relSide,
@@ -9476,7 +9536,8 @@ typedef struct M11_DM1SideDoorSpec {
 static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
-                                    int fbH) {
+                                    int fbH,
+                                    int maxVisibleForward) {
     static const M11_DM1SideDoorSpec kSpecs[] = {
         /* D3L2/R2 doors have only the clipped door panel in DUNVIEW.C. */
         {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
@@ -9517,6 +9578,9 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         M11_ViewportCell cell;
         M11_DM1ZoneBlit panel;
         int panelGraphic;
+        if (kSpecs[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
             continue;
         }
@@ -9562,7 +9626,8 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
 static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
-                                             int fbH) {
+                                             int fbH,
+                                             int maxVisibleForward) {
     static const M11_DM1SideDoorSpec kSpecs[] = {
         {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
         {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
@@ -9591,6 +9656,9 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
         M11_ViewportCell cell;
         M11_DM1ZoneBlit panel;
         int panelGraphic;
+        if (kSpecs[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
             continue;
         }
@@ -9630,7 +9698,8 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
 static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* state,
                                                    unsigned char* framebuffer,
                                                    int fbW,
-                                                   int fbH) {
+                                                   int fbH,
+                                                   int maxVisibleForward) {
     static const M11_DM1SideDoorSpec kSpecs[] = {
         {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
         {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
@@ -9649,6 +9718,9 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
         M11_ViewportCell cell;
         M11_DM1ZoneBlit panel;
         int panelGraphic;
+        if (kSpecs[i].relForward > maxVisibleForward) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
             continue;
         }
@@ -15846,7 +15918,7 @@ int M11_GameView_GetV1StatusBoxZone(int championSlot,
     if (!zoneId) {
         return 0;
     }
-    if (outX) *outX = M11_PARTY_PANEL_X + (zoneId - 151) * m11_party_slot_step();
+    if (outX) *outX = M11_V1_PARTY_PANEL_X + (zoneId - 151) * m11_party_slot_step();
     if (outY) *outY = M11_PARTY_PANEL_Y;
     if (outW) *outW = M11_V1_PARTY_SLOT_W;
     if (outH) *outH = 29;
@@ -15886,7 +15958,7 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
     championSlot = (zoneId - 195) % CHAMPION_MAX_PARTY;
     relX = m11_v1_bar_graph_x(statIndex);
     if (relX < 0) return 0;
-    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() + relX;
+    if (outX) *outX = M11_V1_PARTY_PANEL_X + championSlot * m11_party_slot_step() + relX;
     if (outY) *outY = M11_PARTY_PANEL_Y + m11_v1_bar_graph_y_top();
     if (outW) *outW = M11_V1_BAR_CONTAINER_W;
     if (outH) *outH = M11_V1_BAR_CONTAINER_H;
@@ -15919,7 +15991,7 @@ int M11_GameView_GetV1StatusHandZone(int championSlot,
     if (zoneId == 0) return 0;
     sourceSlot = (zoneId - 211) / 2;
     sourceHand = (zoneId - 211) % 2;
-    if (outX) *outX = M11_PARTY_PANEL_X + sourceSlot * m11_party_slot_step() +
+    if (outX) *outX = M11_V1_PARTY_PANEL_X + sourceSlot * m11_party_slot_step() +
                       m11_v1_status_hand_x(sourceHand);
     if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_HAND_Y;
     if (outW) *outW = M11_V1_STATUS_HAND_ZONE_W;
@@ -16052,7 +16124,7 @@ int M11_GameView_GetV1StatusNameZone(int championSlot,
                                      int* outW,
                                      int* outH) {
     if (!M11_GameView_GetV1StatusNameClearZoneId(championSlot)) return 0;
-    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
+    if (outX) *outX = M11_V1_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
                       M11_V1_STATUS_NAME_CLEAR_X;
     if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_CLEAR_Y;
     if (outW) *outW = M11_V1_STATUS_NAME_CLEAR_W;
@@ -16066,7 +16138,7 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
                                          int* outW,
                                          int* outH) {
     if (!M11_GameView_GetV1StatusNameTextZoneId(championSlot)) return 0;
-    if (outX) *outX = M11_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
+    if (outX) *outX = M11_V1_PARTY_PANEL_X + championSlot * m11_party_slot_step() +
                       M11_V1_STATUS_NAME_TEXT_X;
     if (outY) *outY = M11_PARTY_PANEL_Y + M11_V1_STATUS_NAME_TEXT_Y;
     if (outW) *outW = M11_V1_STATUS_NAME_TEXT_W;
@@ -16727,6 +16799,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     M11_ViewportCell cells[3][3];
     int depth;
     int occluded = 0;
+    int maxVisibleForward;
 
     memset(cells, 0, sizeof(cells));
 
@@ -16736,6 +16809,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             (void)m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side]);
         }
     }
+    maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);
@@ -16753,16 +16827,24 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * panels using original wall-set bitmaps and original layout-696
      * zones.  This is still narrower than full DUNVIEW.C: ornaments,
      * doors, pits, stairs, fields, and exact object order remain next. */
-    m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
+                             maxVisibleForward);
+    m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
+                                  maxVisibleForward);
+    m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
+                            maxVisibleForward);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
+                        maxVisibleForward);
+    m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
+                                  maxVisibleForward);
+    m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
+                             maxVisibleForward);
+    m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
+                                       maxVisibleForward);
+    m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
+                                          maxVisibleForward);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight, cells);
@@ -17230,7 +17312,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                 M11_PARTY_PANEL_X, M11_PARTY_PANEL_Y, 1);
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        int x = M11_PARTY_PANEL_X + slot * slotStep;
+        int x = m11_party_panel_x() + slot * slotStep;
         int y = M11_PARTY_PANEL_Y;
         int slotH = M11_PARTY_SLOT_H;
         char line[48];

@@ -1,6 +1,6 @@
 {
-  "schema": "pass83_champion_hud_zone_overlay_probe.v1",
-  "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims.",
+  "schema": "pass83_champion_hud_zone_overlay_probe.v2",
+  "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims. Pass96 refresh keeps the evidence geometry at source x=0, matching pass90 and layout-696 C151..C154.",
   "frame_size": [
     320,
     200
@@ -9,7 +9,7 @@
     {
       "name": "C151_status_box_slot0",
       "xywh": [
-        12,
+        0,
         0,
         67,
         29
@@ -19,7 +19,7 @@
     {
       "name": "C159_name_clear_slot0",
       "xywh": [
-        12,
+        0,
         0,
         43,
         7
@@ -29,7 +29,7 @@
     {
       "name": "C163_name_text_slot0",
       "xywh": [
-        13,
+        1,
         0,
         42,
         7
@@ -39,7 +39,7 @@
     {
       "name": "C211_ready_hand_slot0",
       "xywh": [
-        16,
+        4,
         10,
         16,
         16
@@ -49,7 +49,7 @@
     {
       "name": "C212_action_hand_slot0",
       "xywh": [
-        36,
+        24,
         10,
         16,
         16
@@ -59,7 +59,7 @@
     {
       "name": "C195_hp_bar_slot0",
       "xywh": [
-        58,
+        46,
         4,
         4,
         25
@@ -69,7 +69,7 @@
     {
       "name": "C199_stamina_bar_slot0",
       "xywh": [
-        65,
+        53,
         4,
         4,
         25
@@ -79,7 +79,7 @@
     {
       "name": "C203_mana_bar_slot0",
       "xywh": [
-        72,
+        60,
         4,
         4,
         25
@@ -89,7 +89,7 @@
     {
       "name": "C152_status_box_slot1",
       "xywh": [
-        81,
+        69,
         0,
         67,
         29
@@ -99,7 +99,7 @@
     {
       "name": "C160_name_clear_slot1",
       "xywh": [
-        81,
+        69,
         0,
         43,
         7
@@ -109,7 +109,7 @@
     {
       "name": "C164_name_text_slot1",
       "xywh": [
-        82,
+        70,
         0,
         42,
         7
@@ -119,7 +119,7 @@
     {
       "name": "C213_ready_hand_slot1",
       "xywh": [
-        85,
+        73,
         10,
         16,
         16
@@ -129,7 +129,7 @@
     {
       "name": "C214_action_hand_slot1",
       "xywh": [
-        105,
+        93,
         10,
         16,
         16
@@ -139,7 +139,7 @@
     {
       "name": "C196_hp_bar_slot1",
       "xywh": [
-        127,
+        115,
         4,
         4,
         25
@@ -149,7 +149,7 @@
     {
       "name": "C200_stamina_bar_slot1",
       "xywh": [
-        134,
+        122,
         4,
         4,
         25
@@ -159,7 +159,7 @@
     {
       "name": "C204_mana_bar_slot1",
       "xywh": [
-        141,
+        129,
         4,
         4,
         25
@@ -169,7 +169,7 @@
     {
       "name": "C153_status_box_slot2",
       "xywh": [
-        150,
+        138,
         0,
         67,
         29
@@ -179,7 +179,7 @@
     {
       "name": "C161_name_clear_slot2",
       "xywh": [
-        150,
+        138,
         0,
         43,
         7
@@ -189,7 +189,7 @@
     {
       "name": "C165_name_text_slot2",
       "xywh": [
-        151,
+        139,
         0,
         42,
         7
@@ -199,7 +199,7 @@
     {
       "name": "C215_ready_hand_slot2",
       "xywh": [
-        154,
+        142,
         10,
         16,
         16
@@ -209,7 +209,7 @@
     {
       "name": "C216_action_hand_slot2",
       "xywh": [
-        174,
+        162,
         10,
         16,
         16
@@ -219,7 +219,7 @@
     {
       "name": "C197_hp_bar_slot2",
       "xywh": [
-        196,
+        184,
         4,
         4,
         25
@@ -229,7 +229,7 @@
     {
       "name": "C201_stamina_bar_slot2",
       "xywh": [
-        203,
+        191,
         4,
         4,
         25
@@ -239,7 +239,7 @@
     {
       "name": "C205_mana_bar_slot2",
       "xywh": [
-        210,
+        198,
         4,
         4,
         25
@@ -249,7 +249,7 @@
     {
       "name": "C154_status_box_slot3",
       "xywh": [
-        219,
+        207,
         0,
         67,
         29
@@ -259,7 +259,7 @@
     {
       "name": "C162_name_clear_slot3",
       "xywh": [
-        219,
+        207,
         0,
         43,
         7
@@ -269,7 +269,7 @@
     {
       "name": "C166_name_text_slot3",
       "xywh": [
-        220,
+        208,
         0,
         42,
         7
@@ -279,7 +279,7 @@
     {
       "name": "C217_ready_hand_slot3",
       "xywh": [
-        223,
+        211,
         10,
         16,
         16
@@ -289,7 +289,7 @@
     {
       "name": "C218_action_hand_slot3",
       "xywh": [
-        243,
+        231,
         10,
         16,
         16
@@ -299,7 +299,7 @@
     {
       "name": "C198_hp_bar_slot3",
       "xywh": [
-        265,
+        253,
         4,
         4,
         25
@@ -309,7 +309,7 @@
     {
       "name": "C202_stamina_bar_slot3",
       "xywh": [
-        272,
+        260,
         4,
         4,
         25
@@ -319,7 +319,7 @@
     {
       "name": "C206_mana_bar_slot3",
       "xywh": [
-        279,
+        267,
         4,
         4,
         25
@@ -333,30 +333,30 @@
       "screenshot": "verification-screens/07_party_hud_with_champions.png",
       "screenshot_sha256": "8aedbd8094b641c0aef699c9a8f8dc2cedfd38ac9704e2483986db08aaff6eac",
       "overlay": "parity-evidence/overlays/pass83/party_hud_with_champions_champion_hud_zones_overlay.png",
-      "overlay_sha256": "360e0991a960f28c8458cfe7c29bba5c3189c253a79546db52753159d3f596f6",
+      "overlay_sha256": "51a7c362f694927c4f927b4d8546f8aeddb64ef1a3b27e4362ffb0d4d487ea8e",
       "zones": [
         {
           "name": "C151_status_box_slot0",
           "xywh": [
-            12,
+            0,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C151_status_box_slot0.png",
-          "crop_sha256": "59c89ada3f1867ae148850ee6fce1dfeffa0aa433d210f790feecd1a6bbab5f8",
+          "crop_sha256": "c54da8af1f563db534b8b04a475665ef43eae95f7e2dfd6bec5ebc2156ac79d2",
           "metrics": {
-            "nonblack_pixels": 1052,
+            "nonblack_pixels": 1210,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.5414,
+            "nonblack_ratio": 0.6227,
             "unique_colors": 7
           }
         },
         {
           "name": "C159_name_clear_slot0",
           "xywh": [
-            12,
+            0,
             0,
             43,
             7
@@ -374,7 +374,7 @@
         {
           "name": "C163_name_text_slot0",
           "xywh": [
-            13,
+            1,
             0,
             42,
             7
@@ -392,68 +392,50 @@
         {
           "name": "C211_ready_hand_slot0",
           "xywh": [
-            16,
+            4,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C211/C213/C215/C217 ready-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C211_ready_hand_slot0.png",
-          "crop_sha256": "e71c1ba8e73cd5ca1cb85cf9b64737ad8c6e2bbef8f867bca547a6ccafb587ad",
+          "crop_sha256": "475548b6d4727c6bbde1426e01b559b327552db234e00c217b979e1dca74d18a",
           "metrics": {
-            "nonblack_pixels": 89,
+            "nonblack_pixels": 161,
             "total_pixels": 256,
-            "nonblack_ratio": 0.3477,
-            "unique_colors": 4
+            "nonblack_ratio": 0.6289,
+            "unique_colors": 6
           }
         },
         {
           "name": "C212_action_hand_slot0",
           "xywh": [
-            36,
+            24,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C212/C214/C216/C218 action-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C212_action_hand_slot0.png",
-          "crop_sha256": "a07fa90d5523c8a1e4dfcb7743fb83ead9ae50394e8d6eb0e0097dafb3002f9e",
+          "crop_sha256": "f7d0fb751bdc59bb7fdf285e6df249540b159f4d8ad5bf1b5e990a46e36bf81f",
           "metrics": {
-            "nonblack_pixels": 94,
+            "nonblack_pixels": 93,
             "total_pixels": 256,
-            "nonblack_ratio": 0.3672,
+            "nonblack_ratio": 0.3633,
             "unique_colors": 4
           }
         },
         {
           "name": "C195_hp_bar_slot0",
           "xywh": [
-            58,
+            46,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C195..C198: F0287 HP vertical bar container",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C195_hp_bar_slot0.png",
-          "crop_sha256": "45802be9d9bf83dfdc3ebbe49efe36a6652293a195ea0d1673aece25812c7af1",
-          "metrics": {
-            "nonblack_pixels": 46,
-            "total_pixels": 100,
-            "nonblack_ratio": 0.46,
-            "unique_colors": 7
-          }
-        },
-        {
-          "name": "C199_stamina_bar_slot0",
-          "xywh": [
-            65,
-            4,
-            4,
-            25
-          ],
-          "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
-          "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C199_stamina_bar_slot0.png",
-          "crop_sha256": "096c53e2b37ecd97e620c893fa31f26490a97164608e1ea959626c17fc88e64d",
+          "crop_sha256": "00bc1688748d37b8ca48fdf3b0a4da468b83b15b0788e18ce98566514a6314a3",
           "metrics": {
             "nonblack_pixels": 47,
             "total_pixels": 100,
@@ -462,45 +444,63 @@
           }
         },
         {
+          "name": "C199_stamina_bar_slot0",
+          "xywh": [
+            53,
+            4,
+            4,
+            25
+          ],
+          "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
+          "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C199_stamina_bar_slot0.png",
+          "crop_sha256": "6e2938daac671052f4373614572f26369d81868dec4cfa0b849ad9dc64007cda",
+          "metrics": {
+            "nonblack_pixels": 45,
+            "total_pixels": 100,
+            "nonblack_ratio": 0.45,
+            "unique_colors": 6
+          }
+        },
+        {
           "name": "C203_mana_bar_slot0",
           "xywh": [
-            72,
+            60,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C203_mana_bar_slot0.png",
-          "crop_sha256": "9967f2e0f35ffae70162e9c40403030f6cfebc998c0402b1a6f1dcddadf406ee",
+          "crop_sha256": "0af73e43bd2e194b8071fb9481cce847e2dfed321f5076b682803d0004e653e1",
           "metrics": {
-            "nonblack_pixels": 49,
+            "nonblack_pixels": 37,
             "total_pixels": 100,
-            "nonblack_ratio": 0.49,
-            "unique_colors": 7
+            "nonblack_ratio": 0.37,
+            "unique_colors": 6
           }
         },
         {
           "name": "C152_status_box_slot1",
           "xywh": [
-            81,
+            69,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C152_status_box_slot1.png",
-          "crop_sha256": "558dad509c95eb2c3908f83a65248045dba9a5976b6bd91a1e4f3a57504c5b08",
+          "crop_sha256": "9ed6440a3948a08d95615aa36f79c2a30417128b47f54fb5514ab28ce459b188",
           "metrics": {
-            "nonblack_pixels": 959,
+            "nonblack_pixels": 990,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.4936,
+            "nonblack_ratio": 0.5095,
             "unique_colors": 7
           }
         },
         {
           "name": "C160_name_clear_slot1",
           "xywh": [
-            81,
+            69,
             0,
             43,
             7
@@ -518,7 +518,7 @@
         {
           "name": "C164_name_text_slot1",
           "xywh": [
-            82,
+            70,
             0,
             42,
             7
@@ -536,68 +536,86 @@
         {
           "name": "C213_ready_hand_slot1",
           "xywh": [
-            85,
+            73,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C211/C213/C215/C217 ready-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C213_ready_hand_slot1.png",
-          "crop_sha256": "4309b45cfef5db8e46b800726446d70a0bf31ed515fdb0402434dd078fea540a",
+          "crop_sha256": "3b0ba41d423deb461248440f0d552ef76b160dcfadbfacdb5df965c6a209d8fc",
           "metrics": {
-            "nonblack_pixels": 94,
+            "nonblack_pixels": 86,
             "total_pixels": 256,
-            "nonblack_ratio": 0.3672,
+            "nonblack_ratio": 0.3359,
             "unique_colors": 4
           }
         },
         {
           "name": "C214_action_hand_slot1",
           "xywh": [
-            105,
+            93,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C212/C214/C216/C218 action-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C214_action_hand_slot1.png",
-          "crop_sha256": "fee992e1bcffe090358d3233180b2e913d40cfd40798bfa69c91e3479cb162c3",
+          "crop_sha256": "52b9d54b17add1e9ffde06b54cb7b35f22948e83b12912bd642cfef2d17c615d",
           "metrics": {
-            "nonblack_pixels": 48,
+            "nonblack_pixels": 71,
             "total_pixels": 256,
-            "nonblack_ratio": 0.1875,
-            "unique_colors": 3
+            "nonblack_ratio": 0.2773,
+            "unique_colors": 4
           }
         },
         {
           "name": "C196_hp_bar_slot1",
           "xywh": [
-            127,
+            115,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C195..C198: F0287 HP vertical bar container",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C196_hp_bar_slot1.png",
-          "crop_sha256": "96b8285f66e1fc58d7a6ed00e6df5c7787059c177b652b5a8ee4fe51d1e89c24",
+          "crop_sha256": "0af73e43bd2e194b8071fb9481cce847e2dfed321f5076b682803d0004e653e1",
           "metrics": {
-            "nonblack_pixels": 38,
+            "nonblack_pixels": 37,
             "total_pixels": 100,
-            "nonblack_ratio": 0.38,
+            "nonblack_ratio": 0.37,
             "unique_colors": 6
           }
         },
         {
           "name": "C200_stamina_bar_slot1",
           "xywh": [
-            134,
+            122,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C200_stamina_bar_slot1.png",
-          "crop_sha256": "cfb6ebf63ce1cb4f01f5fbd9d64c5fcc7f01f76fe19e52edd94ca77738683e1e",
+          "crop_sha256": "e0cec093cfcbf7db309621b896bbd988d9e807cf3ddb410ac79eadf47da92df2",
+          "metrics": {
+            "nonblack_pixels": 39,
+            "total_pixels": 100,
+            "nonblack_ratio": 0.39,
+            "unique_colors": 6
+          }
+        },
+        {
+          "name": "C204_mana_bar_slot1",
+          "xywh": [
+            129,
+            4,
+            4,
+            25
+          ],
+          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
+          "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C204_mana_bar_slot1.png",
+          "crop_sha256": "fa12af09cc7a0dea55082f13a4d8b8b23c4f63ee2290ced17486d22d1ebe8e57",
           "metrics": {
             "nonblack_pixels": 40,
             "total_pixels": 100,
@@ -606,45 +624,27 @@
           }
         },
         {
-          "name": "C204_mana_bar_slot1",
-          "xywh": [
-            141,
-            4,
-            4,
-            25
-          ],
-          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
-          "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C204_mana_bar_slot1.png",
-          "crop_sha256": "ef9c4d768b861b2ea4df07fe849bbecaf843c27ec754624c896936d9d696f778",
-          "metrics": {
-            "nonblack_pixels": 38,
-            "total_pixels": 100,
-            "nonblack_ratio": 0.38,
-            "unique_colors": 6
-          }
-        },
-        {
           "name": "C153_status_box_slot2",
           "xywh": [
-            150,
+            138,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C153_status_box_slot2.png",
-          "crop_sha256": "ea6c5f34864ed3ed2bcd2e52fc3b151010e33f7f165ce13304c3460aaa4a0981",
+          "crop_sha256": "13a68b56935bf4e5d3cd75932157cdb579251d9e92427794836f0cb1dd470fbe",
           "metrics": {
-            "nonblack_pixels": 915,
+            "nonblack_pixels": 897,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.4709,
+            "nonblack_ratio": 0.4617,
             "unique_colors": 6
           }
         },
         {
           "name": "C161_name_clear_slot2",
           "xywh": [
-            150,
+            138,
             0,
             43,
             7
@@ -662,7 +662,7 @@
         {
           "name": "C165_name_text_slot2",
           "xywh": [
-            151,
+            139,
             0,
             42,
             7
@@ -680,7 +680,7 @@
         {
           "name": "C215_ready_hand_slot2",
           "xywh": [
-            154,
+            142,
             10,
             16,
             16
@@ -698,7 +698,7 @@
         {
           "name": "C216_action_hand_slot2",
           "xywh": [
-            174,
+            162,
             10,
             16,
             16
@@ -716,14 +716,14 @@
         {
           "name": "C197_hp_bar_slot2",
           "xywh": [
-            196,
+            184,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C195..C198: F0287 HP vertical bar container",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C197_hp_bar_slot2.png",
-          "crop_sha256": "356950094396865b84657ebb1dde8ddb127b9189ad69d293a1aa9c389edddf0c",
+          "crop_sha256": "0af73e43bd2e194b8071fb9481cce847e2dfed321f5076b682803d0004e653e1",
           "metrics": {
             "nonblack_pixels": 37,
             "total_pixels": 100,
@@ -734,13 +734,31 @@
         {
           "name": "C201_stamina_bar_slot2",
           "xywh": [
-            203,
+            191,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C201_stamina_bar_slot2.png",
+          "crop_sha256": "34f3834f83565ca7ec300516a1824466dbdb857c90ad9c695936f8b84fa621a4",
+          "metrics": {
+            "nonblack_pixels": 37,
+            "total_pixels": 100,
+            "nonblack_ratio": 0.37,
+            "unique_colors": 6
+          }
+        },
+        {
+          "name": "C205_mana_bar_slot2",
+          "xywh": [
+            198,
+            4,
+            4,
+            25
+          ],
+          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
+          "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C205_mana_bar_slot2.png",
           "crop_sha256": "bc45ce9fae190b56e22aa5bcccef31bc1ec76ece156581c82da3da14a017ef7e",
           "metrics": {
             "nonblack_pixels": 36,
@@ -750,45 +768,27 @@
           }
         },
         {
-          "name": "C205_mana_bar_slot2",
-          "xywh": [
-            210,
-            4,
-            4,
-            25
-          ],
-          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
-          "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C205_mana_bar_slot2.png",
-          "crop_sha256": "1b9b18c0eaaace62bfb26700588bab6b5982fa863d25c61080cbd80284489820",
-          "metrics": {
-            "nonblack_pixels": 52,
-            "total_pixels": 100,
-            "nonblack_ratio": 0.52,
-            "unique_colors": 4
-          }
-        },
-        {
           "name": "C154_status_box_slot3",
           "xywh": [
-            219,
+            207,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C154_status_box_slot3.png",
-          "crop_sha256": "825a3451bff55bac3e0b0dee87dfdfd7c3c7b9c96627f09af6b00036470f2563",
+          "crop_sha256": "93844b8c90720bbe4e499eb1b16ee4012e488a8bc75ad79277ed5fb8159a98a8",
           "metrics": {
-            "nonblack_pixels": 871,
+            "nonblack_pixels": 894,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.4483,
+            "nonblack_ratio": 0.4601,
             "unique_colors": 5
           }
         },
         {
           "name": "C162_name_clear_slot3",
           "xywh": [
-            219,
+            207,
             0,
             43,
             7
@@ -806,7 +806,7 @@
         {
           "name": "C166_name_text_slot3",
           "xywh": [
-            220,
+            208,
             0,
             42,
             7
@@ -824,25 +824,25 @@
         {
           "name": "C217_ready_hand_slot3",
           "xywh": [
-            223,
+            211,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C211/C213/C215/C217 ready-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/party_hud_with_champions_C217_ready_hand_slot3.png",
-          "crop_sha256": "23bb7f1a87e481a80d6b98b842d219cb2a2aec9827b457dfe3e4b09a95414b03",
+          "crop_sha256": "423eb876b845e57325a88acdc7e62ae6b97f85ee4fdd8d72f6a9e1090ad6fff4",
           "metrics": {
-            "nonblack_pixels": 32,
+            "nonblack_pixels": 38,
             "total_pixels": 256,
-            "nonblack_ratio": 0.125,
+            "nonblack_ratio": 0.1484,
             "unique_colors": 2
           }
         },
         {
           "name": "C218_action_hand_slot3",
           "xywh": [
-            243,
+            231,
             10,
             16,
             16
@@ -860,7 +860,7 @@
         {
           "name": "C198_hp_bar_slot3",
           "xywh": [
-            265,
+            253,
             4,
             4,
             25
@@ -878,7 +878,7 @@
         {
           "name": "C202_stamina_bar_slot3",
           "xywh": [
-            272,
+            260,
             4,
             4,
             25
@@ -896,7 +896,7 @@
         {
           "name": "C206_mana_bar_slot3",
           "xywh": [
-            279,
+            267,
             4,
             4,
             25
@@ -918,30 +918,30 @@
       "screenshot": "verification-screens/08_spell_panel_with_champions.png",
       "screenshot_sha256": "a4124d57489d8ad8cdd0fbc19cbba869f64d462f1cf05573e3643aa1ad454a1a",
       "overlay": "parity-evidence/overlays/pass83/spell_panel_with_champions_champion_hud_zones_overlay.png",
-      "overlay_sha256": "17e2706934e483ad21bf9c19d1ee1c9ee7ddae0083b6da33e7fd87800e8d63c7",
+      "overlay_sha256": "7d364737ade99b4334f110f5e066fb55f56216fc9d7305dff1aceaec7f158e32",
       "zones": [
         {
           "name": "C151_status_box_slot0",
           "xywh": [
-            12,
+            0,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C151_status_box_slot0.png",
-          "crop_sha256": "59c89ada3f1867ae148850ee6fce1dfeffa0aa433d210f790feecd1a6bbab5f8",
+          "crop_sha256": "c54da8af1f563db534b8b04a475665ef43eae95f7e2dfd6bec5ebc2156ac79d2",
           "metrics": {
-            "nonblack_pixels": 1052,
+            "nonblack_pixels": 1210,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.5414,
+            "nonblack_ratio": 0.6227,
             "unique_colors": 7
           }
         },
         {
           "name": "C159_name_clear_slot0",
           "xywh": [
-            12,
+            0,
             0,
             43,
             7
@@ -959,7 +959,7 @@
         {
           "name": "C163_name_text_slot0",
           "xywh": [
-            13,
+            1,
             0,
             42,
             7
@@ -977,68 +977,50 @@
         {
           "name": "C211_ready_hand_slot0",
           "xywh": [
-            16,
+            4,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C211/C213/C215/C217 ready-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C211_ready_hand_slot0.png",
-          "crop_sha256": "e71c1ba8e73cd5ca1cb85cf9b64737ad8c6e2bbef8f867bca547a6ccafb587ad",
+          "crop_sha256": "475548b6d4727c6bbde1426e01b559b327552db234e00c217b979e1dca74d18a",
           "metrics": {
-            "nonblack_pixels": 89,
+            "nonblack_pixels": 161,
             "total_pixels": 256,
-            "nonblack_ratio": 0.3477,
-            "unique_colors": 4
+            "nonblack_ratio": 0.6289,
+            "unique_colors": 6
           }
         },
         {
           "name": "C212_action_hand_slot0",
           "xywh": [
-            36,
+            24,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C212/C214/C216/C218 action-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C212_action_hand_slot0.png",
-          "crop_sha256": "a07fa90d5523c8a1e4dfcb7743fb83ead9ae50394e8d6eb0e0097dafb3002f9e",
+          "crop_sha256": "f7d0fb751bdc59bb7fdf285e6df249540b159f4d8ad5bf1b5e990a46e36bf81f",
           "metrics": {
-            "nonblack_pixels": 94,
+            "nonblack_pixels": 93,
             "total_pixels": 256,
-            "nonblack_ratio": 0.3672,
+            "nonblack_ratio": 0.3633,
             "unique_colors": 4
           }
         },
         {
           "name": "C195_hp_bar_slot0",
           "xywh": [
-            58,
+            46,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C195..C198: F0287 HP vertical bar container",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C195_hp_bar_slot0.png",
-          "crop_sha256": "45802be9d9bf83dfdc3ebbe49efe36a6652293a195ea0d1673aece25812c7af1",
-          "metrics": {
-            "nonblack_pixels": 46,
-            "total_pixels": 100,
-            "nonblack_ratio": 0.46,
-            "unique_colors": 7
-          }
-        },
-        {
-          "name": "C199_stamina_bar_slot0",
-          "xywh": [
-            65,
-            4,
-            4,
-            25
-          ],
-          "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
-          "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C199_stamina_bar_slot0.png",
-          "crop_sha256": "096c53e2b37ecd97e620c893fa31f26490a97164608e1ea959626c17fc88e64d",
+          "crop_sha256": "00bc1688748d37b8ca48fdf3b0a4da468b83b15b0788e18ce98566514a6314a3",
           "metrics": {
             "nonblack_pixels": 47,
             "total_pixels": 100,
@@ -1047,45 +1029,63 @@
           }
         },
         {
+          "name": "C199_stamina_bar_slot0",
+          "xywh": [
+            53,
+            4,
+            4,
+            25
+          ],
+          "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
+          "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C199_stamina_bar_slot0.png",
+          "crop_sha256": "6e2938daac671052f4373614572f26369d81868dec4cfa0b849ad9dc64007cda",
+          "metrics": {
+            "nonblack_pixels": 45,
+            "total_pixels": 100,
+            "nonblack_ratio": 0.45,
+            "unique_colors": 6
+          }
+        },
+        {
           "name": "C203_mana_bar_slot0",
           "xywh": [
-            72,
+            60,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C203_mana_bar_slot0.png",
-          "crop_sha256": "9967f2e0f35ffae70162e9c40403030f6cfebc998c0402b1a6f1dcddadf406ee",
+          "crop_sha256": "0af73e43bd2e194b8071fb9481cce847e2dfed321f5076b682803d0004e653e1",
           "metrics": {
-            "nonblack_pixels": 49,
+            "nonblack_pixels": 37,
             "total_pixels": 100,
-            "nonblack_ratio": 0.49,
-            "unique_colors": 7
+            "nonblack_ratio": 0.37,
+            "unique_colors": 6
           }
         },
         {
           "name": "C152_status_box_slot1",
           "xywh": [
-            81,
+            69,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C152_status_box_slot1.png",
-          "crop_sha256": "558dad509c95eb2c3908f83a65248045dba9a5976b6bd91a1e4f3a57504c5b08",
+          "crop_sha256": "9ed6440a3948a08d95615aa36f79c2a30417128b47f54fb5514ab28ce459b188",
           "metrics": {
-            "nonblack_pixels": 959,
+            "nonblack_pixels": 990,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.4936,
+            "nonblack_ratio": 0.5095,
             "unique_colors": 7
           }
         },
         {
           "name": "C160_name_clear_slot1",
           "xywh": [
-            81,
+            69,
             0,
             43,
             7
@@ -1103,7 +1103,7 @@
         {
           "name": "C164_name_text_slot1",
           "xywh": [
-            82,
+            70,
             0,
             42,
             7
@@ -1121,68 +1121,86 @@
         {
           "name": "C213_ready_hand_slot1",
           "xywh": [
-            85,
+            73,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C211/C213/C215/C217 ready-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C213_ready_hand_slot1.png",
-          "crop_sha256": "4309b45cfef5db8e46b800726446d70a0bf31ed515fdb0402434dd078fea540a",
+          "crop_sha256": "3b0ba41d423deb461248440f0d552ef76b160dcfadbfacdb5df965c6a209d8fc",
           "metrics": {
-            "nonblack_pixels": 94,
+            "nonblack_pixels": 86,
             "total_pixels": 256,
-            "nonblack_ratio": 0.3672,
+            "nonblack_ratio": 0.3359,
             "unique_colors": 4
           }
         },
         {
           "name": "C214_action_hand_slot1",
           "xywh": [
-            105,
+            93,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C212/C214/C216/C218 action-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C214_action_hand_slot1.png",
-          "crop_sha256": "fee992e1bcffe090358d3233180b2e913d40cfd40798bfa69c91e3479cb162c3",
+          "crop_sha256": "52b9d54b17add1e9ffde06b54cb7b35f22948e83b12912bd642cfef2d17c615d",
           "metrics": {
-            "nonblack_pixels": 48,
+            "nonblack_pixels": 71,
             "total_pixels": 256,
-            "nonblack_ratio": 0.1875,
-            "unique_colors": 3
+            "nonblack_ratio": 0.2773,
+            "unique_colors": 4
           }
         },
         {
           "name": "C196_hp_bar_slot1",
           "xywh": [
-            127,
+            115,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C195..C198: F0287 HP vertical bar container",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C196_hp_bar_slot1.png",
-          "crop_sha256": "96b8285f66e1fc58d7a6ed00e6df5c7787059c177b652b5a8ee4fe51d1e89c24",
+          "crop_sha256": "0af73e43bd2e194b8071fb9481cce847e2dfed321f5076b682803d0004e653e1",
           "metrics": {
-            "nonblack_pixels": 38,
+            "nonblack_pixels": 37,
             "total_pixels": 100,
-            "nonblack_ratio": 0.38,
+            "nonblack_ratio": 0.37,
             "unique_colors": 6
           }
         },
         {
           "name": "C200_stamina_bar_slot1",
           "xywh": [
-            134,
+            122,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C200_stamina_bar_slot1.png",
-          "crop_sha256": "cfb6ebf63ce1cb4f01f5fbd9d64c5fcc7f01f76fe19e52edd94ca77738683e1e",
+          "crop_sha256": "e0cec093cfcbf7db309621b896bbd988d9e807cf3ddb410ac79eadf47da92df2",
+          "metrics": {
+            "nonblack_pixels": 39,
+            "total_pixels": 100,
+            "nonblack_ratio": 0.39,
+            "unique_colors": 6
+          }
+        },
+        {
+          "name": "C204_mana_bar_slot1",
+          "xywh": [
+            129,
+            4,
+            4,
+            25
+          ],
+          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
+          "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C204_mana_bar_slot1.png",
+          "crop_sha256": "fa12af09cc7a0dea55082f13a4d8b8b23c4f63ee2290ced17486d22d1ebe8e57",
           "metrics": {
             "nonblack_pixels": 40,
             "total_pixels": 100,
@@ -1191,45 +1209,27 @@
           }
         },
         {
-          "name": "C204_mana_bar_slot1",
-          "xywh": [
-            141,
-            4,
-            4,
-            25
-          ],
-          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
-          "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C204_mana_bar_slot1.png",
-          "crop_sha256": "ef9c4d768b861b2ea4df07fe849bbecaf843c27ec754624c896936d9d696f778",
-          "metrics": {
-            "nonblack_pixels": 38,
-            "total_pixels": 100,
-            "nonblack_ratio": 0.38,
-            "unique_colors": 6
-          }
-        },
-        {
           "name": "C153_status_box_slot2",
           "xywh": [
-            150,
+            138,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C153_status_box_slot2.png",
-          "crop_sha256": "ea6c5f34864ed3ed2bcd2e52fc3b151010e33f7f165ce13304c3460aaa4a0981",
+          "crop_sha256": "13a68b56935bf4e5d3cd75932157cdb579251d9e92427794836f0cb1dd470fbe",
           "metrics": {
-            "nonblack_pixels": 915,
+            "nonblack_pixels": 897,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.4709,
+            "nonblack_ratio": 0.4617,
             "unique_colors": 6
           }
         },
         {
           "name": "C161_name_clear_slot2",
           "xywh": [
-            150,
+            138,
             0,
             43,
             7
@@ -1247,7 +1247,7 @@
         {
           "name": "C165_name_text_slot2",
           "xywh": [
-            151,
+            139,
             0,
             42,
             7
@@ -1265,7 +1265,7 @@
         {
           "name": "C215_ready_hand_slot2",
           "xywh": [
-            154,
+            142,
             10,
             16,
             16
@@ -1283,7 +1283,7 @@
         {
           "name": "C216_action_hand_slot2",
           "xywh": [
-            174,
+            162,
             10,
             16,
             16
@@ -1301,14 +1301,14 @@
         {
           "name": "C197_hp_bar_slot2",
           "xywh": [
-            196,
+            184,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C195..C198: F0287 HP vertical bar container",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C197_hp_bar_slot2.png",
-          "crop_sha256": "356950094396865b84657ebb1dde8ddb127b9189ad69d293a1aa9c389edddf0c",
+          "crop_sha256": "0af73e43bd2e194b8071fb9481cce847e2dfed321f5076b682803d0004e653e1",
           "metrics": {
             "nonblack_pixels": 37,
             "total_pixels": 100,
@@ -1319,13 +1319,31 @@
         {
           "name": "C201_stamina_bar_slot2",
           "xywh": [
-            203,
+            191,
             4,
             4,
             25
           ],
           "source_reference": "layout-696 C199..C202: F0287 stamina vertical bar container",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C201_stamina_bar_slot2.png",
+          "crop_sha256": "34f3834f83565ca7ec300516a1824466dbdb857c90ad9c695936f8b84fa621a4",
+          "metrics": {
+            "nonblack_pixels": 37,
+            "total_pixels": 100,
+            "nonblack_ratio": 0.37,
+            "unique_colors": 6
+          }
+        },
+        {
+          "name": "C205_mana_bar_slot2",
+          "xywh": [
+            198,
+            4,
+            4,
+            25
+          ],
+          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
+          "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C205_mana_bar_slot2.png",
           "crop_sha256": "bc45ce9fae190b56e22aa5bcccef31bc1ec76ece156581c82da3da14a017ef7e",
           "metrics": {
             "nonblack_pixels": 36,
@@ -1335,45 +1353,27 @@
           }
         },
         {
-          "name": "C205_mana_bar_slot2",
-          "xywh": [
-            210,
-            4,
-            4,
-            25
-          ],
-          "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container",
-          "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C205_mana_bar_slot2.png",
-          "crop_sha256": "1b9b18c0eaaace62bfb26700588bab6b5982fa863d25c61080cbd80284489820",
-          "metrics": {
-            "nonblack_pixels": 52,
-            "total_pixels": 100,
-            "nonblack_ratio": 0.52,
-            "unique_colors": 4
-          }
-        },
-        {
           "name": "C154_status_box_slot3",
           "xywh": [
-            219,
+            207,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C154_status_box_slot3.png",
-          "crop_sha256": "825a3451bff55bac3e0b0dee87dfdfd7c3c7b9c96627f09af6b00036470f2563",
+          "crop_sha256": "93844b8c90720bbe4e499eb1b16ee4012e488a8bc75ad79277ed5fb8159a98a8",
           "metrics": {
-            "nonblack_pixels": 871,
+            "nonblack_pixels": 894,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.4483,
+            "nonblack_ratio": 0.4601,
             "unique_colors": 5
           }
         },
         {
           "name": "C162_name_clear_slot3",
           "xywh": [
-            219,
+            207,
             0,
             43,
             7
@@ -1391,7 +1391,7 @@
         {
           "name": "C166_name_text_slot3",
           "xywh": [
-            220,
+            208,
             0,
             42,
             7
@@ -1409,25 +1409,25 @@
         {
           "name": "C217_ready_hand_slot3",
           "xywh": [
-            223,
+            211,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C211/C213/C215/C217 ready-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/spell_panel_with_champions_C217_ready_hand_slot3.png",
-          "crop_sha256": "23bb7f1a87e481a80d6b98b842d219cb2a2aec9827b457dfe3e4b09a95414b03",
+          "crop_sha256": "423eb876b845e57325a88acdc7e62ae6b97f85ee4fdd8d72f6a9e1090ad6fff4",
           "metrics": {
-            "nonblack_pixels": 32,
+            "nonblack_pixels": 38,
             "total_pixels": 256,
-            "nonblack_ratio": 0.125,
+            "nonblack_ratio": 0.1484,
             "unique_colors": 2
           }
         },
         {
           "name": "C218_action_hand_slot3",
           "xywh": [
-            243,
+            231,
             10,
             16,
             16
@@ -1445,7 +1445,7 @@
         {
           "name": "C198_hp_bar_slot3",
           "xywh": [
-            265,
+            253,
             4,
             4,
             25
@@ -1463,7 +1463,7 @@
         {
           "name": "C202_stamina_bar_slot3",
           "xywh": [
-            272,
+            260,
             4,
             4,
             25
@@ -1481,7 +1481,7 @@
         {
           "name": "C206_mana_bar_slot3",
           "xywh": [
-            279,
+            267,
             4,
             4,
             25
@@ -1503,30 +1503,30 @@
       "screenshot": "verification-screens/pass81-champion-hud-priority/party_hud_four_champions_vga.png",
       "screenshot_sha256": "ff22ee364675e5d26c49db40b853ebc355ebf95cf3b8d4e2e38165258d4beb47",
       "overlay": "parity-evidence/overlays/pass83/four_champion_priority_champion_hud_zones_overlay.png",
-      "overlay_sha256": "c7dd4b5bfd3b74ddb5cac89a750e688b84630f09d2778305f9bec628e58d3389",
+      "overlay_sha256": "a8f718f106f5de6434d0fdd37b5344960f7153a69989a35ecf48819a949dee91",
       "zones": [
         {
           "name": "C151_status_box_slot0",
           "xywh": [
-            12,
+            0,
             0,
             67,
             29
           ],
           "source_reference": "layout-696 C151..C154: 67x29 champion status boxes; DEFS.H C69 spacing",
           "crop": "parity-evidence/overlays/pass83/four_champion_priority_C151_status_box_slot0.png",
-          "crop_sha256": "9dca23fb6d4c953b495199dee28b552cf8f91ee38a555e7898c482feaa55f3eb",
+          "crop_sha256": "3f9d547b7d3014d2cf5aa419192e3957aa7ad6ed18e3143fd7083bd408582a8b",
           "metrics": {
-            "nonblack_pixels": 1407,
+            "nonblack_pixels": 1239,
             "total_pixels": 1943,
-            "nonblack_ratio": 0.7241,
+            "nonblack_ratio": 0.6377,
             "unique_colors": 2
           }
         },
         {
           "name": "C159_name_clear_slot0",
           "xywh": [
-            12,
+            0,
             0,
             43,
             7
@@ -1544,7 +1544,7 @@
         {
           "name": "C163_name_text_slot0",
           "xywh": [
-            13,
+            1,
             0,
             42,
             7
@@ -1562,25 +1562,25 @@
         {
           "name": "C211_ready_hand_slot0",
           "xywh": [
-            16,
+            4,
             10,
             16,
             16
           ],
           "source_reference": "layout-696 C211/C213/C215/C217 ready-hand icon parent",
           "crop": "parity-evidence/overlays/pass83/four_champion_priority_C211_ready_hand_slot0.png",
-          "crop_sha256": "e7ea4bd3176db3add608ddfb4800d6409e997802de18e310b40ea51ae5712148",
+          "crop_sha256": "2f1a8d15669df9bb072d177c37d6d94b1cadc5c7ebd886835c05264bb44638e8",
           "metrics": {
-            "nonblack_pixels": 256,
+            "nonblack_pixels": 192,
             "total_pixels": 256,
-            "nonblack_ratio": 1.0,
-            "unique_colors": 1
+            "nonblack_ratio": 0.75,
+            "unique_colors": 2
           }
         },
         {
           "name": "C212_action_hand_slot0",
           "xywh": [
-            36,
+            24,
             10,
             16,
             16
@@ -1598,7 +1598,7 @@
         {
           "name": "C195_hp_bar_slot0",
           "xywh": [
-            58,
+            46,
             4,
             4,
             25
@@ -1616,7 +1616,7 @@
         {
           "name": "C199_stamina_bar_slot0",
           "xywh": [
-            65,
+            53,
             4,
             4,
             25
@@ -1634,7 +1634,7 @@
         {
           "name": "C203_mana_bar_slot0",
           "xywh": [
-            72,
+            60,
             4,
             4,
             25
@@ -1652,7 +1652,7 @@
         {
           "name": "C152_status_box_slot1",
           "xywh": [
-            81,
+            69,
             0,
             67,
             29
@@ -1670,7 +1670,7 @@
         {
           "name": "C160_name_clear_slot1",
           "xywh": [
-            81,
+            69,
             0,
             43,
             7
@@ -1688,7 +1688,7 @@
         {
           "name": "C164_name_text_slot1",
           "xywh": [
-            82,
+            70,
             0,
             42,
             7
@@ -1706,7 +1706,7 @@
         {
           "name": "C213_ready_hand_slot1",
           "xywh": [
-            85,
+            73,
             10,
             16,
             16
@@ -1724,7 +1724,7 @@
         {
           "name": "C214_action_hand_slot1",
           "xywh": [
-            105,
+            93,
             10,
             16,
             16
@@ -1742,7 +1742,7 @@
         {
           "name": "C196_hp_bar_slot1",
           "xywh": [
-            127,
+            115,
             4,
             4,
             25
@@ -1760,7 +1760,7 @@
         {
           "name": "C200_stamina_bar_slot1",
           "xywh": [
-            134,
+            122,
             4,
             4,
             25
@@ -1778,7 +1778,7 @@
         {
           "name": "C204_mana_bar_slot1",
           "xywh": [
-            141,
+            129,
             4,
             4,
             25
@@ -1796,7 +1796,7 @@
         {
           "name": "C153_status_box_slot2",
           "xywh": [
-            150,
+            138,
             0,
             67,
             29
@@ -1814,7 +1814,7 @@
         {
           "name": "C161_name_clear_slot2",
           "xywh": [
-            150,
+            138,
             0,
             43,
             7
@@ -1832,7 +1832,7 @@
         {
           "name": "C165_name_text_slot2",
           "xywh": [
-            151,
+            139,
             0,
             42,
             7
@@ -1850,7 +1850,7 @@
         {
           "name": "C215_ready_hand_slot2",
           "xywh": [
-            154,
+            142,
             10,
             16,
             16
@@ -1868,7 +1868,7 @@
         {
           "name": "C216_action_hand_slot2",
           "xywh": [
-            174,
+            162,
             10,
             16,
             16
@@ -1886,7 +1886,7 @@
         {
           "name": "C197_hp_bar_slot2",
           "xywh": [
-            196,
+            184,
             4,
             4,
             25
@@ -1904,7 +1904,7 @@
         {
           "name": "C201_stamina_bar_slot2",
           "xywh": [
-            203,
+            191,
             4,
             4,
             25
@@ -1922,7 +1922,7 @@
         {
           "name": "C205_mana_bar_slot2",
           "xywh": [
-            210,
+            198,
             4,
             4,
             25
@@ -1940,7 +1940,7 @@
         {
           "name": "C154_status_box_slot3",
           "xywh": [
-            219,
+            207,
             0,
             67,
             29
@@ -1958,7 +1958,7 @@
         {
           "name": "C162_name_clear_slot3",
           "xywh": [
-            219,
+            207,
             0,
             43,
             7
@@ -1976,7 +1976,7 @@
         {
           "name": "C166_name_text_slot3",
           "xywh": [
-            220,
+            208,
             0,
             42,
             7
@@ -1994,7 +1994,7 @@
         {
           "name": "C217_ready_hand_slot3",
           "xywh": [
-            223,
+            211,
             10,
             16,
             16
@@ -2012,7 +2012,7 @@
         {
           "name": "C218_action_hand_slot3",
           "xywh": [
-            243,
+            231,
             10,
             16,
             16
@@ -2030,7 +2030,7 @@
         {
           "name": "C198_hp_bar_slot3",
           "xywh": [
-            265,
+            253,
             4,
             4,
             25
@@ -2048,7 +2048,7 @@
         {
           "name": "C202_stamina_bar_slot3",
           "xywh": [
-            272,
+            260,
             4,
             4,
             25
@@ -2066,7 +2066,7 @@
         {
           "name": "C206_mana_bar_slot3",
           "xywh": [
-            279,
+            267,
             4,
             4,
             25

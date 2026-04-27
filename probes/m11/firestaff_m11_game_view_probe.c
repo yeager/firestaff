@@ -110,7 +110,7 @@ enum {
     PROBE_MAP_BOX_Y = 74,
     PROBE_MAP_BOX_W = 86,
     PROBE_MAP_BOX_H = 68,
-    PROBE_BOTTOM_PANEL_X = 12,
+    PROBE_BOTTOM_PANEL_X = 0,
     PROBE_BOTTOM_PANEL_Y = 146,
     PROBE_BOTTOM_PANEL_W = 296,
     PROBE_BOTTOM_PANEL_H = 46,
@@ -1420,8 +1420,8 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1StatusBoxZoneId(4) == 0 &&
                              M11_GameView_GetV1StatusBoxZone(0, &boxX0, &boxY0, &boxW0, &boxH0) &&
                              M11_GameView_GetV1StatusBoxZone(3, &boxX3, &boxY3, &boxW3, &boxH3) &&
-                             boxX0 == 12 && boxY0 == PROBE_PARTY_PANEL_Y && boxW0 == 67 && boxH0 == 29 &&
-                             boxX3 == 219 && boxY3 == PROBE_PARTY_PANEL_Y && boxW3 == 67 && boxH3 == 29,
+                             boxX0 == 0 && boxY0 == PROBE_PARTY_PANEL_Y && boxW0 == 67 && boxH0 == 29 &&
+                             boxX3 == 207 && boxY3 == PROBE_PARTY_PANEL_Y && boxW3 == 67 && boxH3 == 29,
                          "V1 champion HUD status box zones expose layout-696 C151..C154 ids and geometry");
         }
         M11_GameView_GetV1StatusNameZone(0, &nameX, &nameY, &nameW, &nameH);
@@ -1441,8 +1441,8 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1StatusHandZoneId(4, 0) == 0 &&
                              M11_GameView_GetV1StatusHandZone(0, 0, &readyX, &readyY, &readyW, &readyH) &&
                              M11_GameView_GetV1StatusHandZone(3, 1, &actionX3, &actionY3, &actionW3, &actionH3) &&
-                             readyX == 16 && readyY == PROBE_PARTY_PANEL_Y + 10 && readyW == 16 && readyH == 16 &&
-                             actionX3 == 243 && actionY3 == PROBE_PARTY_PANEL_Y + 10 && actionW3 == 16 && actionH3 == 16,
+                             readyX == 4 && readyY == PROBE_PARTY_PANEL_Y + 10 && readyW == 16 && readyH == 16 &&
+                             actionX3 == 231 && actionY3 == PROBE_PARTY_PANEL_Y + 10 && actionW3 == 16 && actionH3 == 16,
                          "V1 status hand slot zones expose layout-696 C207..C210 parents and C211..C218 child ids/geometry");
         }
         {
@@ -1456,9 +1456,9 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1StatusHandIconZone(3, 1,
                                                                   &actionIconX3, &actionIconY3,
                                                                   &actionIconW3, &actionIconH3) &&
-                             readyIconX == 17 && readyIconY == PROBE_PARTY_PANEL_Y + 11 &&
+                             readyIconX == 5 && readyIconY == PROBE_PARTY_PANEL_Y + 11 &&
                              readyIconW == 16 && readyIconH == 16 &&
-                             actionIconX3 == 244 && actionIconY3 == PROBE_PARTY_PANEL_Y + 11 &&
+                             actionIconX3 == 232 && actionIconY3 == PROBE_PARTY_PANEL_Y + 11 &&
                              actionIconW3 == 16 && actionIconH3 == 16,
                          "V1 status hand icon zones inset 16x16 object icons within hand slots");
         }
@@ -1472,9 +1472,9 @@ int main(int argc, char** argv) {
                 M11_GameView_GetV1StatusHandSlotBoxZone(3, 1,
                                                         &actionBoxX3, &actionBoxY3,
                                                         &actionBoxW3, &actionBoxH3) &&
-                readyBoxX == 16 && readyBoxY == PROBE_PARTY_PANEL_Y + 10 &&
+                readyBoxX == 4 && readyBoxY == PROBE_PARTY_PANEL_Y + 10 &&
                 readyBoxW == 18 && readyBoxH == 18 &&
-                actionBoxX3 == 243 && actionBoxY3 == PROBE_PARTY_PANEL_Y + 10 &&
+                actionBoxX3 == 231 && actionBoxY3 == PROBE_PARTY_PANEL_Y + 10 &&
                 actionBoxW3 == 18 && actionBoxH3 == 18;
             probe_record(&tally,
                          "INV_GV_15W",
@@ -1512,8 +1512,8 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1StatusBarValueZoneId(4, 0) == 0 &&
                              M11_GameView_GetV1StatusBarZone(0, 0, &hpX, &hpY, &hpW, &hpH) &&
                              M11_GameView_GetV1StatusBarZone(3, 2, &manaX3, &manaY3, &manaW3, &manaH3) &&
-                             hpX == 58 && hpY == PROBE_PARTY_PANEL_Y + 4 && hpW == 4 && hpH == 25 &&
-                             manaX3 == 279 && manaY3 == PROBE_PARTY_PANEL_Y + 4 && manaW3 == 4 && manaH3 == 25,
+                             hpX == 46 && hpY == PROBE_PARTY_PANEL_Y + 4 && hpW == 4 && hpH == 25 &&
+                             manaX3 == 267 && manaY3 == PROBE_PARTY_PANEL_Y + 4 && manaW3 == 4 && manaH3 == 25,
                          "V1 status bar graph zones expose layout-696 C187..C190 and C195..C206 ids plus geometry");
         }
         {
@@ -1526,8 +1526,8 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1StatusNameTextZoneId(4) == 0 &&
                              M11_GameView_GetV1StatusNameTextZone(0, &textX0, &textY0, &textW0, &textH0) &&
                              M11_GameView_GetV1StatusNameTextZone(3, &textX3, &textY3, &textW3, &textH3) &&
-                             textX0 == 13 && textY0 == PROBE_PARTY_PANEL_Y && textW0 == 42 && textH0 == 7 &&
-                             textX3 == 220 && textY3 == PROBE_PARTY_PANEL_Y && textW3 == 42 && textH3 == 7,
+                             textX0 == 1 && textY0 == PROBE_PARTY_PANEL_Y && textW0 == 42 && textH0 == 7 &&
+                             textX3 == 208 && textY3 == PROBE_PARTY_PANEL_Y && textW3 == 42 && textH3 == 7,
                          "V1 status name text zones expose layout-696 C163..C166 ids and geometry");
         }
         {
@@ -1655,9 +1655,9 @@ int main(int argc, char** argv) {
                                                             &slot2HpW, &slot2HpH) &&
                              M11_GameView_GetV1StatusBarZone(3, 2, &slot3ManaX, &slot3ManaY,
                                                             &slot3ManaW, &slot3ManaH) &&
-                             slot2BoxX == 150 && slot2BoxY == PROBE_PARTY_PANEL_Y &&
+                             slot2BoxX == 138 && slot2BoxY == PROBE_PARTY_PANEL_Y &&
                              slot2BoxW == 67 && slot2BoxH == 29 &&
-                             slot3BoxX == 219 && slot3BoxY == PROBE_PARTY_PANEL_Y &&
+                             slot3BoxX == 207 && slot3BoxY == PROBE_PARTY_PANEL_Y &&
                              slot3BoxW == 67 && slot3BoxH == 29 &&
                              probe_count_color(fourChampionFramebuffer, 320,
                                                slot2NameX, slot2NameY,
@@ -1852,9 +1852,9 @@ int main(int argc, char** argv) {
                          M11_GameView_GetV1StatusShieldBorderZone(3,
                                                                   &shieldX3, &shieldY3,
                                                                   &shieldW3, &shieldH3) &&
-                         shieldX0 == 12 && shieldY0 == PROBE_PARTY_PANEL_Y &&
+                         shieldX0 == 0 && shieldY0 == PROBE_PARTY_PANEL_Y &&
                          shieldW0 == 67 && shieldH0 == 29 &&
-                         shieldX3 == 219 && shieldY3 == PROBE_PARTY_PANEL_Y &&
+                         shieldX3 == 207 && shieldY3 == PROBE_PARTY_PANEL_Y &&
                          shieldW3 == 67 && shieldH3 == 29,
                      "V1 status shield border zone reuses C007 status box footprint");
     }
@@ -1870,9 +1870,9 @@ int main(int argc, char** argv) {
                          M11_GameView_GetV1PoisonLabelZone(3, 96, 15,
                                                            &poisonX3, &poisonY3,
                                                            &poisonW3, &poisonH3) &&
-                         poisonX0 == -2 && poisonY0 == PROBE_PARTY_PANEL_Y + 29 &&
+                         poisonX0 == -14 && poisonY0 == PROBE_PARTY_PANEL_Y + 29 &&
                          poisonW0 == 96 && poisonH0 == 15 &&
-                         poisonX3 == 205 && poisonY3 == PROBE_PARTY_PANEL_Y + 29 &&
+                         poisonX3 == 193 && poisonY3 == PROBE_PARTY_PANEL_Y + 29 &&
                          poisonW3 == 96 && poisonH3 == 15,
                      "V1 poisoned label zone centers C032 under C007 status box geometry");
     }
@@ -1892,9 +1892,9 @@ int main(int argc, char** argv) {
                          M11_GameView_GetV1DamageIndicatorZone(3, 45, 7,
                                                                &damageX3, &damageY3,
                                                                &damageW3, &damageH3) &&
-                         damageX0 == 23 && damageY0 == PROBE_PARTY_PANEL_Y + 11 &&
+                         damageX0 == 11 && damageY0 == PROBE_PARTY_PANEL_Y + 11 &&
                          damageW0 == 45 && damageH0 == 7 &&
-                         damageX3 == 230 && damageY3 == PROBE_PARTY_PANEL_Y + 11 &&
+                         damageX3 == 218 && damageY3 == PROBE_PARTY_PANEL_Y + 11 &&
                          damageW3 == 45 && damageH3 == 7,
                      "V1 champion damage indicator zones expose C167-C170 ids and center C015 inside C007 geometry");
     }
@@ -1910,8 +1910,8 @@ int main(int argc, char** argv) {
                          M11_GameView_GetV1DamageNumberOrigin(3,
                                                                &damageNumX3,
                                                                &damageNumY3) &&
-                         damageNumX0 == 41 && damageNumY0 == PROBE_PARTY_PANEL_Y + 11 &&
-                         damageNumX3 == 248 && damageNumY3 == PROBE_PARTY_PANEL_Y + 11,
+                         damageNumX0 == 29 && damageNumY0 == PROBE_PARTY_PANEL_Y + 11 &&
+                         damageNumX3 == 236 && damageNumY3 == PROBE_PARTY_PANEL_Y + 11,
                      "V1 champion damage number origin is centered over the C015 damage banner");
     }
 
@@ -2065,11 +2065,22 @@ int main(int argc, char** argv) {
                      strcmp(gameView.lastAction, "REST") == 0,
                  "R toggles rest mode on and reports it through last action");
 
+    initialTick = gameView.world.gameTick;
+    initialDirection = gameView.world.party.direction;
+    probe_record(&tally,
+                 "INV_GV_22A",
+                 gameView.resting == 1 &&
+                     M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_UP) == M11_GAME_INPUT_IGNORED &&
+                     gameView.resting == 1 &&
+                     gameView.world.gameTick == initialTick &&
+                     gameView.world.party.direction == initialDirection,
+                 "resting mode uses the source PartyResting input list and suppresses movement ticks until wake-up");
+
     probe_record(&tally,
                  "INV_GV_22B",
                  M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_REST_TOGGLE) == M11_GAME_INPUT_REDRAW &&
                      gameView.resting == 0,
-                 "R again toggles rest mode off");
+                 "R again wakes the party from rest mode");
 
     /* INV_GV_23: Stairs interaction — either descends or reports no stairs */
     {
@@ -4450,28 +4461,28 @@ int main(int argc, char** argv) {
                          "creature type 1 sprite 588 loads as 64x66");
         }
 
-        /* INV_GV_104: Ceiling panel graphic 78 loads as 224x97 */
+        /* INV_GV_104: Floor panel graphic 78 loads as 224x97 */
         {
-            const M11_AssetSlot* ceilSlot = M11_AssetLoader_Load(
+            const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
                 &assetView.assetLoader, 78);
             probe_record(&tally,
                          "INV_GV_104",
-                         ceilSlot != NULL &&
-                             ceilSlot->width == 224 && ceilSlot->height == 97 &&
-                             ceilSlot->pixels != NULL,
-                         "ceiling panel graphic 78 loads as 224x97");
+                         floorSlot != NULL &&
+                             floorSlot->width == 224 && floorSlot->height == 97 &&
+                             floorSlot->pixels != NULL,
+                         "floor panel graphic 78 loads as 224x97");
         }
 
-        /* INV_GV_105: Floor panel graphic 79 loads as 224x39 */
+        /* INV_GV_105: Ceiling panel graphic 79 loads as 224x39 */
         {
-            const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
+            const M11_AssetSlot* ceilSlot = M11_AssetLoader_Load(
                 &assetView.assetLoader, 79);
             probe_record(&tally,
                          "INV_GV_105",
-                         floorSlot != NULL &&
-                             floorSlot->width == 224 && floorSlot->height == 39 &&
-                             floorSlot->pixels != NULL,
-                         "floor panel graphic 79 loads as 224x39");
+                         ceilSlot != NULL &&
+                             ceilSlot->width == 224 && ceilSlot->height == 39 &&
+                             ceilSlot->pixels != NULL,
+                         "ceiling panel graphic 79 loads as 224x39");
         }
 
         /* INV_GV_106: Far corridor band is darker than near band after Draw.
@@ -8773,21 +8784,22 @@ int main(int argc, char** argv) {
                       * screen (layout-696 C151..C154) and champion icon zones
                       * at C113..C116, so the old full-width top-strip check now
                       * legitimately intersects names, hands, bars, and icon
-                      * pixels.  The gap between the fourth status box and the
-                      * icon cluster is the remaining removed Firestaff
-                      * diagnostic title-strip sentinel. */
+                      * pixels.  After the source x-origin correction the gap
+                      * between slot 3 (ends at x=273 inclusive) and the icon
+                      * cluster (starts at x=281) is the remaining removed
+                      * Firestaff diagnostic title-strip sentinel. */
                      probe_count_color(fb,
                                        320,
-                                       268,
+                                       274,
                                        0,
-                                       13,
+                                       7,
                                        29,
                                        PROBE_COLOR_WHITE) == 0U &&
                          probe_count_color(fb,
                                            320,
-                                           268,
+                                           274,
                                            0,
-                                           13,
+                                           7,
                                            29,
                                            PROBE_COLOR_YELLOW) == 0U,
                      "normal V1 top chrome outside source status boxes/icons contains no title/debug text pixels");

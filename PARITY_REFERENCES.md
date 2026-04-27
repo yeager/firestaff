@@ -21,7 +21,9 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 ## A. Original game data packages
 
 ### A1. DM1 DOS package
-- **Location (remote):** Burken — `/home/yeager/Dungeon-Master_DOS_EN.zip`
+- **Location (canonical worker-local):** `~/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z`
+- **Extracted PC34 data set:** `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`
+- **Historical/deprecated remote:** Burken `<deprecated-remote-dm-archive>` (do not use for worker-subagent provenance; retained only as old context)
 - **Contents:**
   - `DUNGEON.DAT` — dungeon content data
   - `GRAPHICS.DAT` — all graphics (sprites, UI, viewport assets)

@@ -1,0 +1,499 @@
+{
+  "schema": "pass80_original_frame_classifier.v1",
+  "attempt_dir": "verification-screens/pass93-subagent-key-explore",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "320x200": 6
+  },
+  "expected_sequence": null,
+  "class_counts": {
+    "entrance_menu": 3,
+    "graphics_320x200_unclassified": 2,
+    "wall_closeup": 1
+  },
+  "duplicate_sha256_counts": {
+    "5ae7199a3df064c9ebc934c15e87711d4fdacbafea6fd699458c934137b07d9a": 2
+  },
+  "honesty": "Classifier/audit only. A 320x200 frame is not parity evidence until its semantic class matches the intended route state.",
+  "captures": [
+    {
+      "file": "verification-screens/pass93-subagent-key-explore/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 434,
+      "sha256": "c79222a6c543544ba17a8e419e56a48b7966066ef5a3a972c377b992414c7250",
+      "classification": "graphics_320x200_unclassified",
+      "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass93-subagent-key-explore/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 19833,
+      "sha256": "b6398313372c956dc031d353e4f49ebfe8cec66b6251332d649b7d0f96aa8f05",
+      "classification": "graphics_320x200_unclassified",
+      "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.4458,
+          "color_ratio": 0.0549,
+          "unique_colors": 9,
+          "mean_rgb": [
+            56.39,
+            51.96,
+            49.0
+          ],
+          "luma_stddev": 68.43
+        },
+        "right_action": {
+          "nonblack_ratio": 0.9132,
+          "color_ratio": 0.892,
+          "unique_colors": 13,
+          "mean_rgb": [
+            154.08,
+            127.36,
+            89.18
+          ],
+          "luma_stddev": 52.15
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9205,
+          "color_ratio": 0.892,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.37,
+            131.06,
+            86.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9299,
+          "color_ratio": 0.8635,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.02,
+            137.01,
+            69.14
+          ],
+          "luma_stddev": 48.21
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.3908,
+          "color_ratio": 0.0479,
+          "unique_colors": 8,
+          "mean_rgb": [
+            40.24,
+            36.1,
+            33.42
+          ],
+          "luma_stddev": 50.38
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass93-subagent-key-explore/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 23615,
+      "sha256": "12d500d7b8d6200200358506152eb6c759e0869854c0e0253f132aea2ce13d42",
+      "classification": "entrance_menu",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.8871,
+          "color_ratio": 0.0022,
+          "unique_colors": 8,
+          "mean_rgb": [
+            138.34,
+            138.18,
+            138.1
+          ],
+          "luma_stddev": 63.59
+        },
+        "right_action": {
+          "nonblack_ratio": 0.9126,
+          "color_ratio": 0.8922,
+          "unique_colors": 13,
+          "mean_rgb": [
+            153.88,
+            127.14,
+            89.12
+          ],
+          "luma_stddev": 52.4
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9297,
+          "color_ratio": 0.9025,
+          "unique_colors": 11,
+          "mean_rgb": [
+            147.42,
+            131.34,
+            86.76
+          ],
+          "luma_stddev": 48.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9372,
+          "color_ratio": 0.8692,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.81,
+            137.39,
+            69.25
+          ],
+          "luma_stddev": 47.33
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.727,
+          "color_ratio": 0.0059,
+          "unique_colors": 8,
+          "mean_rgb": [
+            97.16,
+            96.73,
+            96.52
+          ],
+          "luma_stddev": 70.16
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass93-subagent-key-explore/image0004-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 24486,
+      "sha256": "5ae7199a3df064c9ebc934c15e87711d4fdacbafea6fd699458c934137b07d9a",
+      "classification": "entrance_menu",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.925,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            146.05,
+            146.05,
+            146.05
+          ],
+          "luma_stddev": 57.48
+        },
+        "right_action": {
+          "nonblack_ratio": 0.9502,
+          "color_ratio": 0.9349,
+          "unique_colors": 13,
+          "mean_rgb": [
+            159.93,
+            132.09,
+            92.69
+          ],
+          "luma_stddev": 45.24
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9609,
+          "color_ratio": 0.9462,
+          "unique_colors": 12,
+          "mean_rgb": [
+            153.14,
+            135.84,
+            89.67
+          ],
+          "luma_stddev": 41.09
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9649,
+          "color_ratio": 0.8985,
+          "unique_colors": 16,
+          "mean_rgb": [
+            120.26,
+            141.1,
+            72.05
+          ],
+          "luma_stddev": 42.36
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.7836,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            108.91,
+            108.91,
+            108.91
+          ],
+          "luma_stddev": 68.96
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass93-subagent-key-explore/image0005-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 24486,
+      "sha256": "5ae7199a3df064c9ebc934c15e87711d4fdacbafea6fd699458c934137b07d9a",
+      "classification": "entrance_menu",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.925,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            146.05,
+            146.05,
+            146.05
+          ],
+          "luma_stddev": 57.48
+        },
+        "right_action": {
+          "nonblack_ratio": 0.9502,
+          "color_ratio": 0.9349,
+          "unique_colors": 13,
+          "mean_rgb": [
+            159.93,
+            132.09,
+            92.69
+          ],
+          "luma_stddev": 45.24
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9609,
+          "color_ratio": 0.9462,
+          "unique_colors": 12,
+          "mean_rgb": [
+            153.14,
+            135.84,
+            89.67
+          ],
+          "luma_stddev": 41.09
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9649,
+          "color_ratio": 0.8985,
+          "unique_colors": 16,
+          "mean_rgb": [
+            120.26,
+            141.1,
+            72.05
+          ],
+          "luma_stddev": 42.36
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.7836,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            108.91,
+            108.91,
+            108.91
+          ],
+          "luma_stddev": 68.96
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass93-subagent-key-explore/image0006-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 12278,
+      "sha256": "dcfdff6845bfc053ed38c5662a8d81c0a4901abf6b3be09c05676776fb8c4709",
+      "classification": "wall_closeup",
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.925,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            146.05,
+            146.05,
+            146.05
+          ],
+          "luma_stddev": 57.48
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.7836,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            108.91,
+            108.91,
+            108.91
+          ],
+          "luma_stddev": 68.96
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+  ],
+  "problems": [],
+  "pass": true
+}

@@ -160,14 +160,15 @@ if inv_dark_gray < 180:
     )
 
 # After the scripted first rune input, normal V1 should keep spell feedback
-# inside the DM1 right-column C013 spell area, not Firestaff's old modal
-# viewport workbench.  The selected C011 rune-label cell is now anchored at
-# x=239..252, y=91..103 and keeps the native brown/red pattern.
+# inside the DM1 right-column spell area, not Firestaff's old modal viewport
+# workbench.  The selected source C011 rune-label cell currently appears in
+# the top-right spell-panel strip at x=248..261, y=43..55 and keeps the native
+# brown/red pattern.
 dm_brown = (219, 146, 109)
 dm_red = (255, 0, 0)
-selected_brown = count_rgb(spell_pixels, spell_w, 239, 91, 253, 104, dm_brown)
-selected_red = count_rgb(spell_pixels, spell_w, 239, 91, 253, 104, dm_red)
-if selected_brown < 4 or selected_red < 20:
+selected_brown = count_rgb(spell_pixels, spell_w, 248, 43, 262, 56, dm_brown)
+selected_red = count_rgb(spell_pixels, spell_w, 248, 43, 262, 56, dm_red)
+if selected_brown < 40 or selected_red < 20:
     raise SystemExit(
         "spell fixture did not show right-column native C011 selected-rune cell "
         f"(brown={selected_brown}, red={selected_red})"

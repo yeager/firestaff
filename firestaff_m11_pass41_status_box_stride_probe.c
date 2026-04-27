@@ -20,14 +20,14 @@
  *      as literal enum members, plus the legacy 77 / 71 values as
  *      the V2-mode fallback.
  *   3. `m11_game_view.c` carries `m11_party_slot_step()` and
- *      `m11_party_slot_w()` that return the V1 values by default
+ *      `m11_party_slot_w()` plus `m11_party_panel_x()` that return the V1 values by default
  *      and the V2 values when the V2 vertical slice is enabled.
  *   4. With stride 69 and slot-width 67, the four champion status
- *      boxes (at M11_PARTY_PANEL_X = 12) occupy x ranges 12..78,
- *      81..147, 150..216, 219..285.  They are strictly
+ *      boxes (at V1 source x=0) occupy x ranges 0..66,
+ *      69..135, 138..204, 207..273.  They are strictly
  *      non-overlapping (gap = 2 px between adjacent boxes, matching
  *      69 - 67 = 2).
- *   5. The four-slot V1 party panel right edge (x = 286) fits
+ *   5. The four-slot V1 party panel right edge (x = 274) fits
  *      inside the 320x200 framebuffer.
  *   6. Pass-34-recorded drift numbers are preserved: stride delta
  *      was +8 px / slot (77 - 69); width delta was +4 px / slot
@@ -61,7 +61,7 @@ enum {
     V2_PARTY_SLOT_STEP = 77,
     V2_PARTY_SLOT_W    = 71,
 
-    PARTY_PANEL_X = 12,
+    PARTY_PANEL_X = 0,
     SCREEN_W      = 320,
     SCREEN_H      = 200,
     CHAMPION_MAX  = 4
@@ -101,14 +101,14 @@ int main(void) {
            DEFS_H_GRAPHIC_STATUS_BOX_W == 67 && DEFS_H_GRAPHIC_STATUS_BOX_H == 29,
            "C007_GRAPHIC_STATUS_BOX dimensions == 67x29 (M11 asset probe INV_GV_205)");
     {
-        int n = read_file("dm7z-extract/Toolchains/Common/Source/DEFS.H",
-                          buf, sizeof(buf));
-        int has_c69 = (n > 0) && (strstr(buf,
-            "#define C69_CHAMPION_STATUS_BOX_SPACING 69") != NULL);
+        int n = read_file("zones_h_reconstruction.json", buf, sizeof(buf));
+        int has_c150 = (n > 0) &&
+            strstr(buf, "\"150\": {\n      \"type\": 9,\n      \"parent\": 0,\n      \"d1\": 67,\n      \"d2\": 29") != NULL;
+        int has_c154_offset = (n > 0) &&
+            strstr(buf, "\"154\": {\n      \"type\": 1,\n      \"parent\": 150,\n      \"d1\": 207,\n      \"d2\": 0") != NULL;
         record("INV_P41_03",
-               has_c69,
-               "dm7z-extract DEFS.H literally defines "
-               "C69_CHAMPION_STATUS_BOX_SPACING == 69");
+               has_c150 && has_c154_offset,
+               "zones_h_reconstruction locks C150 67x29 and C154 source offset x=207");
     }
 
     /* 2. m11_game_view.c enum carries V1 + V2 values */
@@ -143,6 +143,8 @@ int main(void) {
             "static int m11_party_slot_step(void)") != NULL);
         int have_w_fn    = (n > 0) && (strstr(buf,
             "static int m11_party_slot_w(void)") != NULL);
+        int have_x_fn    = (n > 0) && (strstr(buf,
+            "static int m11_party_panel_x(void)") != NULL);
         int step_returns_v1 = (n > 0) && (strstr(buf,
             "M11_V1_PARTY_SLOT_STEP") != NULL);
         int w_returns_v1 = (n > 0) && (strstr(buf,
@@ -160,8 +162,9 @@ int main(void) {
                have_w_fn,
                "m11_game_view.c defines static m11_party_slot_w(void)");
         record("INV_P41_10",
-               step_returns_v1 && w_returns_v1,
-               "helpers branch on V1 override constants");
+               have_x_fn && step_returns_v1 && w_returns_v1 &&
+                   strstr(buf, "M11_V1_PARTY_PANEL_X") != NULL,
+               "helpers branch on V1 override constants, including source x=0");
         record("INV_P41_11",
                step_gated_on_v2 && w_gated_on_v2,
                "helpers return V2 values only when vertical slice is enabled");
@@ -196,10 +199,10 @@ int main(void) {
                         (CHAMPION_MAX - 1) * V1_PARTY_SLOT_STEP +
                         V1_PARTY_SLOT_W; /* exclusive */
         snprintf(msg, sizeof(msg),
-                 "V1 party-panel right edge = %d (<= %d screen width)",
+                 "V1 source party-panel right edge = %d (<= %d screen width)",
                  rightmost, SCREEN_W);
         record("INV_P41_14",
-               rightmost == 286 && rightmost <= SCREEN_W,
+               rightmost == 274 && rightmost <= SCREEN_W,
                msg);
     }
 

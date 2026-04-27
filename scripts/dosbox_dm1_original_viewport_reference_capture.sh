@@ -32,20 +32,22 @@ SIZE_LOG="${OUT_DIR}/artifact-sizes.txt"
 
 usage() {
     cat <<EOF
-Usage: scripts/dosbox_dm1_original_viewport_reference_capture.sh [--prepare|--dry-run|--run|--normalize-only]
+Usage: scripts/dosbox_dm1_original_viewport_reference_capture.sh [--prepare|--dry-run|--run|--normalize-only|--print-pass94-diagnostic]
 
 Modes:
-  --prepare         write DOSBox config and Swift key helper only (default)
-  --dry-run         show blockers/plan, no launch
-  --run             launch DOSBox, post an explicit route, capture raw frames, normalize crops
-  --normalize-only  crop/hash existing image*.png raw screenshots in OUT_DIR
+  --prepare                  write DOSBox config and Swift key helper only (default)
+  --dry-run                  show blockers/plan, no launch
+  --run                      launch DOSBox, post an explicit route, capture raw frames, normalize crops
+  --normalize-only           crop/hash existing image*.png raw screenshots in OUT_DIR
+  --print-pass94-diagnostic  print the pass94 entrance-click diagnostic command and audit expectations
 
 Required for --run:
   DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot:party_hud right wait:300 shot up wait:300 shot:spell_panel ...'
 
 Supported route tokens:
-  shot, shot:<label>, wait:<ms>, enter, esc, space, up, down, left, right,
-  one, two, three, four, five, six, f1-f4, kp0-kp9, kpenter, a-z, 0-9
+  shot, shot:<label>, wait:<ms>, click:<x>,<y>, enter, esc, space, up, down,
+  left, right, one, two, three, four, five, six, f1-f4, kp0-kp9,
+  kpenter, a-z, 0-9
 
 Labeled shot tokens:
   shot:<label> is equivalent to shot for capture input, and records the label
@@ -68,6 +70,9 @@ Optional environment:
                     override autoexec launch command; recommended for bypassing
                     the original selector and entering VGA/no-sound/keyboard mode
                     directly. 'DM VGA' remains the default for legacy runs.
+  click:<x>,<y>    posts one serialized left-click in original 320x200 game
+                    coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
+                    mixed mouse/keyboard commands can be lost when packed tightly.
   manifest:        ${CROP_MANIFEST}
   shot labels:     ${SHOT_LABEL_MANIFEST}
 
@@ -86,10 +91,46 @@ while [[ $# -gt 0 ]]; do
         --dry-run) mode="dry-run"; shift ;;
         --run) mode="run"; shift ;;
         --normalize-only) mode="normalize-only"; shift ;;
+        --print-pass94-diagnostic) mode="print-pass94-diagnostic"; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "unknown arg: $1" >&2; usage >&2; exit 2 ;;
     esac
 done
+
+print_pass94_diagnostic() {
+    cat <<EOF
+# Pass 94 original entrance-click diagnostic (manual/original-route unblock only).
+# This is not parity evidence. It should answer whether click:260,50 leaves the entrance menu.
+
+OUT_DIR=\$PWD/verification-screens/pass94-hall-map-enter-diagnostic \\
+DM1_ORIGINAL_STAGE_DIR=\$PWD/verification-screens/dm1-dosbox-capture/DungeonMasterPC34 \\
+DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\
+DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
+WAIT_BEFORE_INPUT_MS=5000 \\
+NEW_FILE_TIMEOUT_MS=6000 \\
+DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 shot:title enter wait:1200 shot:pre_enter_menu click:260,50 wait:1200 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe' \\
+scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
+
+# Expected route labels in original_viewport_shot_labels.tsv:
+#   01 title
+#   02 pre_enter_menu
+#   03 after_enter_click
+#   04 forward_1
+#   05 forward_2
+#   06 left_turn_probe
+
+# Expected classifier outcome if the entrance click worked:
+#   title_or_menu, entrance_menu, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay
+python3 tools/pass80_original_frame_classifier.py \\
+  verification-screens/pass94-hall-map-enter-diagnostic \\
+  --expected pass94-diagnostic \\
+  --fail-on-duplicates
+
+# Failure signal to preserve as a blocker, not promote:
+#   after_enter_click == entrance_menu means click:260,50 did not leave the menu.
+#   wall_closeup/title_or_menu/non_graphics_blocker in shots 04-06 means the movement probe is not usable gameplay evidence.
+EOF
+}
 
 need_stage() {
     if [[ ! -f "${SRC_STAGE}/DM.EXE" ]]; then
@@ -126,12 +167,15 @@ import re, sys
 route = sys.argv[1].split()
 allowed = set("shot capture screenshot enter return esc escape space up down left right one two three four five six zero".split())
 allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {f"f{i}" for i in range(1, 5)} | {"kpenter"}
+diagnostic_only = {"title", "pre_enter_menu", "after_enter_click", "forward_1", "forward_2", "left_turn_probe"}
 shots = 0
 labeled_shots = 0
+labels = []
 for token in route:
     low = token.lower()
     if low in {"shot", "capture", "screenshot"}:
         shots += 1
+        labels.append("")
         continue
     if low.startswith("shot:"):
         label = low.split(":", 1)[1]
@@ -139,16 +183,32 @@ for token in route:
             raise SystemExit(f"ERROR: invalid shot label: {token}")
         shots += 1
         labeled_shots += 1
+        labels.append(label)
         continue
     if low.startswith("wait:"):
         if not re.fullmatch(r"wait:[0-9]+", low):
             raise SystemExit(f"ERROR: invalid wait token: {token}")
+        continue
+    if low.startswith("click:"):
+        m = re.fullmatch(r"click:([0-9]{1,3}),([0-9]{1,3})", low)
+        if not m:
+            raise SystemExit(f"ERROR: invalid click token: {token}")
+        x, y = map(int, m.groups())
+        if not (0 <= x < 320 and 0 <= y < 200):
+            raise SystemExit(f"ERROR: click token outside original 320x200 frame: {token}")
         continue
     if low not in allowed:
         raise SystemExit(f"ERROR: unknown route token: {token}")
 if shots != 6:
     raise SystemExit(f"ERROR: DM1_ORIGINAL_ROUTE_EVENTS must contain exactly 6 shot or shot:<label> tokens, found {shots}")
 print(f"[pass-70] route shape OK: {len(route)} tokens, {shots} shots, {labeled_shots} labeled")
+if labeled_shots:
+    pretty = ", ".join(f"{idx + 1:02d}:{label or '(unlabeled)'}" for idx, label in enumerate(labels))
+    print(f"[pass-70] shot label plan: {pretty}")
+diagnostic_hits = [label for label in labels if label in diagnostic_only]
+if diagnostic_hits:
+    print("[pass-70] diagnostic-only labels present: " + ", ".join(diagnostic_hits))
+    print("[pass-70] note: diagnostic labels are for manual/pass94 routing only; pass84 overlay readiness requires party_hud, blank, blank, spell_panel, blank, inventory_panel")
 PY
 }
 
@@ -192,6 +252,7 @@ EOF
     cat > "${KEY_HELPER}" <<'SWIFT'
 import Foundation
 import CoreGraphics
+import ApplicationServices
 
 if CommandLine.arguments.count != 4 {
     fputs("usage: original_viewport_route_keys.swift PID ROUTE_EVENTS SKIP_STARTUP_SELECTOR\n", stderr)
@@ -242,6 +303,53 @@ func cmdF5() {
     usleep(180_000)
 }
 
+func dosboxWindowBounds() -> CGRect? {
+    let opts: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+    guard let windows = CGWindowListCopyWindowInfo(opts, kCGNullWindowID) as? [[String: Any]] else { return nil }
+    for window in windows {
+        guard let ownerPid = window[kCGWindowOwnerPID as String] as? pid_t, ownerPid == pid else { continue }
+        guard let boundsDict = window[kCGWindowBounds as String] as? [String: Any] else { continue }
+        guard
+            let x = boundsDict["X"] as? CGFloat,
+            let y = boundsDict["Y"] as? CGFloat,
+            let w = boundsDict["Width"] as? CGFloat,
+            let h = boundsDict["Height"] as? CGFloat,
+            w > 0, h > 0
+        else { continue }
+        return CGRect(x: x, y: y, width: w, height: h)
+    }
+    return nil
+}
+
+func clickOriginalFrame(x: Int, y: Int) {
+    guard let bounds = dosboxWindowBounds() else {
+        fputs("could not find DOSBox window bounds for click:\(x),\(y)\n", stderr)
+        exit(3)
+    }
+    // Map DM1's raw 320x200 coordinate space into the visible DOSBox content.
+    // DOSBox Staging may letterbox/pillarbox depending on the current mode; use
+    // a centered aspect-fit rectangle so clicks stay anchored to original pixels.
+    let contentAspect = 320.0 / 200.0
+    var contentW = Double(bounds.width)
+    var contentH = contentW / contentAspect
+    if contentH > Double(bounds.height) {
+        contentH = Double(bounds.height)
+        contentW = contentH * contentAspect
+    }
+    let left = Double(bounds.minX) + (Double(bounds.width) - contentW) / 2.0
+    let top = Double(bounds.minY) + (Double(bounds.height) - contentH) / 2.0
+    let px = left + ((Double(x) + 0.5) / 320.0) * contentW
+    let py = top + ((Double(y) + 0.5) / 200.0) * contentH
+    let point = CGPoint(x: px, y: py)
+    guard let down = CGEvent(mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left),
+          let up = CGEvent(mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left) else { return }
+    down.postToPid(pid)
+    usleep(45_000)
+    up.postToPid(pid)
+    print("click-mapped \(x),\(y) -> \(Int(px)),\(Int(py)) window=\(Int(bounds.width))x\(Int(bounds.height))")
+    usleep(180_000)
+}
+
 // Original PC 3.4 startup selector: graphics=1, sound=1, input=1.
 // The generated DOSBox config launches 'DM VGA' directly, which bypasses that
 // selector.  In that state, posting the legacy selector keys would hit the
@@ -265,6 +373,13 @@ for token in route {
             exit(2)
         }
         usleep(ms * 1000)
+    } else if lowerToken.hasPrefix("click:") {
+        let coords = lowerToken.dropFirst("click:".count).split(separator: ",")
+        guard coords.count == 2, let x = Int(coords[0]), let y = Int(coords[1]), x >= 0, x < 320, y >= 0, y < 200 else {
+            fputs("invalid click token: \(token)\n", stderr)
+            exit(2)
+        }
+        clickOriginalFrame(x: x, y: y)
     } else if let key = keycodes[lowerToken] {
         tap(key)
     } else {
@@ -293,6 +408,8 @@ manifest = Path(sys.argv[2])
 paths = sorted(out.glob("image*.png"))
 if not paths:
     raise SystemExit(f"ERROR: no DOSBox raw screenshots found under {out}/image*.png")
+if len(paths) != 6:
+    raise SystemExit(f"ERROR: expected exactly 6 DOSBox raw screenshots under {out}/image*.png, found {len(paths)}")
 with manifest.open("w") as f:
     f.write("index\tpath\tmtime_epoch_ns\tmtime_iso\tsha256\tsize_bytes\twidth\theight\n")
     for i, path in enumerate(paths):
@@ -315,9 +432,9 @@ PY
     )
     local route_shot_labels=()
     if [[ -n "${ROUTE_EVENTS}" ]]; then
-        while IFS= read -r route_label; do
-            route_shot_labels+=("$route_label")
-        done < <(python3 - "${ROUTE_EVENTS}" <<'PY'
+        local route_labels_tmp
+        route_labels_tmp="$(mktemp "${OUT_DIR}/route-shot-labels.XXXXXX")"
+        python3 - "${ROUTE_EVENTS}" > "${route_labels_tmp}" <<'PY'
 import sys
 for token in sys.argv[1].split():
     low = token.lower()
@@ -326,7 +443,14 @@ for token in sys.argv[1].split():
     elif low.startswith("shot:"):
         print(low.split(":", 1)[1])
 PY
-)
+        while IFS= read -r route_label || [[ -n "$route_label" ]]; do
+            route_shot_labels+=("$route_label")
+        done < "${route_labels_tmp}"
+        rm -f "${route_labels_tmp}"
+        if [[ ${#route_shot_labels[@]} -ne 6 ]]; then
+            echo "ERROR: expected exactly 6 route shot labels, found ${#route_shot_labels[@]}" >&2
+            exit 8
+        fi
     fi
     printf 'index\tfilename\troute_label\troute_token\n' > "${SHOT_LABEL_MANIFEST}"
     local i=0 src label route_label route_token ppm png
@@ -408,6 +532,10 @@ PY
 }
 
 case "$mode" in
+    print-pass94-diagnostic)
+        print_pass94_diagnostic
+        exit 0
+        ;;
     prepare)
         need_stage
         write_helpers

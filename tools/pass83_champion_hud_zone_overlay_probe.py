@@ -18,7 +18,10 @@ OUT_DIR = REPO / "parity-evidence" / "overlays" / "pass83"
 STATS = OUT_DIR / "pass83_champion_hud_zone_overlay_stats.json"
 MD = REPO / "parity-evidence" / "pass83_champion_hud_zone_overlay.md"
 FRAME_W, FRAME_H = 320, 200
-PARTY_X, PARTY_Y, SLOT_W, SLOT_H, SLOT_STEP = 12, 0, 67, 29, 69
+# DM1 PC 3.4 layout-696 anchors C151..C154 at source x=0 with 69px
+# spacing. Firestaff's old 12px party-panel inset is V2-only chrome; keep
+# this evidence overlay aligned with the V1 source-origin locked in pass90.
+PARTY_X, PARTY_Y, SLOT_W, SLOT_H, SLOT_STEP = 0, 0, 67, 29, 69
 
 @dataclass(frozen=True)
 class Scene:
@@ -177,6 +180,7 @@ def write_markdown(result: dict[str, object]) -> None:
     lines = [
         "# Pass 83 — champion HUD source-zone overlay", "",
         "This pass adds visual evidence for the top-row V1 champion HUD. It overlays and crops the DM1 PC 3.4 layout-696 champion status zones already asserted by the M11 game-view probe.", "",
+        "Pass 96 refresh: these overlays now use the V1 source-origin champion-box x=0 geometry from pass90, not Firestaff's legacy V2-only 12px party-panel inset.", "",
         "Honesty: these files are evidence aids only. They do not claim pixel-perfect parity with original runtime screenshots.", "",
         f"- stats: `{result['stats']}`", f"- scenes: {len(result['scenes'])}", f"- pass: `{result['pass']}`", "",
         "## Generated overlays", "",
@@ -191,11 +195,11 @@ def write_markdown(result: dict[str, object]) -> None:
 
 def run_self_test() -> int:
     zones = zone_table()
-    assert zones[0].xywh == (12, 0, 67, 29)
-    assert zones[8].xywh == (81, 0, 67, 29)
-    assert zones[24].xywh == (219, 0, 67, 29)
-    assert any(z.name == "C203_mana_bar_slot0" and z.xywh == (72, 4, 4, 25) for z in zones)
-    assert any(z.name == "C206_mana_bar_slot3" and z.xywh == (279, 4, 4, 25) for z in zones)
+    assert zones[0].xywh == (0, 0, 67, 29)
+    assert zones[8].xywh == (69, 0, 67, 29)
+    assert zones[24].xywh == (207, 0, 67, 29)
+    assert any(z.name == "C203_mana_bar_slot0" and z.xywh == (60, 4, 4, 25) for z in zones)
+    assert any(z.name == "C206_mana_bar_slot3" and z.xywh == (267, 4, 4, 25) for z in zones)
     print(json.dumps({"pass": True, "zones": len(zones)}, indent=2)); return 0
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -214,7 +218,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             crop_path = OUT_DIR / f"{scene.name}_{zone.name}.png"; save_png(crop, crop_path)
             zone_rows.append({"name": zone.name, "xywh": [x, y, w, h], "source_reference": zone.source_reference, "crop": rel(crop_path), "crop_sha256": sha256(crop_path), "metrics": crop_metrics(crop)})
         scenes.append({"scene": scene.name, "screenshot": rel(screen_path), "screenshot_sha256": sha256(screen_path), "overlay": rel(overlay_path), "overlay_sha256": sha256(overlay_path), "zones": zone_rows})
-    result = {"schema": "pass83_champion_hud_zone_overlay_probe.v1", "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims.", "frame_size": [FRAME_W, FRAME_H], "zones": [{"name": z.name, "xywh": list(z.xywh), "source_reference": z.source_reference} for z in ZONES], "scenes": scenes, "problems": problems, "pass": bool(scenes) and not problems, "stats": rel(STATS)}
+    result = {"schema": "pass83_champion_hud_zone_overlay_probe.v2", "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims. Pass96 refresh keeps the evidence geometry at source x=0, matching pass90 and layout-696 C151..C154.", "frame_size": [FRAME_W, FRAME_H], "zones": [{"name": z.name, "xywh": list(z.xywh), "source_reference": z.source_reference} for z in ZONES], "scenes": scenes, "problems": problems, "pass": bool(scenes) and not problems, "stats": rel(STATS)}
     STATS.write_text(json.dumps(result, indent=2) + "\n"); write_markdown(result)
     print(json.dumps({"scenes": len(scenes), "zones": len(ZONES), "problems": problems, "stats": rel(STATS), "markdown": rel(MD)}, indent=2))
     return 0 if result["pass"] else 1

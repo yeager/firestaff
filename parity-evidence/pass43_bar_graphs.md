@@ -159,7 +159,7 @@ Result:
 
 What it proves:
 
-1. slot-0 bar origins are exactly `58/65/72 @ y=164`
+1. slot-0 top-row bar origins are exactly `58/65/72 @ y=4`
 2. source champion-color table is exactly `{7,11,8,14}`
 3. pass-43 geometry + mode switch are present in `m11_game_view.c`
 4. 100/100 renders a full-height `4×25` bar

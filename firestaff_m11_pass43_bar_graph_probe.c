@@ -27,7 +27,7 @@ enum {
     PROBE_COLOR_DARK_GRAY   = 12,
     PROBE_COLOR_LIGHT_BLUE  = 14,
 
-    PARTY_PANEL_X = 12,
+    PARTY_PANEL_X = 0,
     PARTY_PANEL_Y = 0,
     SLOT_STEP     = 69,
     SLOT_Y        = PARTY_PANEL_Y,
@@ -62,6 +62,23 @@ static int read_file(const char* path, char* buf, size_t cap) {
     fclose(f);
     buf[n] = '\0';
     return (int)n;
+}
+
+static int read_first_existing_file(const char* const* paths,
+                                    int pathCount,
+                                    char* buf,
+                                    size_t cap,
+                                    const char** usedPath) {
+    int i;
+    for (i = 0; i < pathCount; ++i) {
+        int n = read_file(paths[i], buf, cap);
+        if (n > 0) {
+            if (usedPath) *usedPath = paths[i];
+            return n;
+        }
+    }
+    if (usedPath) *usedPath = NULL;
+    return 0;
 }
 
 static int count_color_rect(const unsigned char* fb,
@@ -107,6 +124,7 @@ int main(int argc, char** argv) {
     const char* outDir = (argc > 1) ? argv[1] : "verification-m11/pass43-bar-graphs";
     char pgmPath[512];
     int n;
+    const char* usedSourcePath = NULL;
 
     memset(&view, 0, sizeof(view));
     M11_GameView_Init(&view);
@@ -160,13 +178,24 @@ int main(int argc, char** argv) {
     printf("Screenshot: %s\n", pgmPath);
 
     record("INV_P43_01",
-           BAR_HP_X == 58 && BAR_STA_X == 65 && BAR_MANA_X == 72 && BAR_TOP_Y == 164,
-           "slot-0 V1 bar origins resolve to x=58/65/72 and y=164 from the recovered zone geometry");
+           BAR_HP_X == 46 && BAR_STA_X == 53 && BAR_MANA_X == 60 && BAR_TOP_Y == 4,
+           "slot-0 top-row V1 bar origins resolve to x=46/53/60 and y=4 from the recovered zone geometry");
 
-    n = read_file("../redmcsb-output/I34E_I34M/DATA.C", src, sizeof(src));
+    {
+        const char* const dataPaths[] = {
+            "../../ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+            "../../tmp/redmcsb-output/I34E_I34M/DATA.C",
+            "../redmcsb-output/I34E_I34M/DATA.C"
+        };
+        n = read_first_existing_file(dataPaths,
+                                     (int)(sizeof(dataPaths) / sizeof(dataPaths[0])),
+                                     src, sizeof(src), &usedSourcePath);
+    }
     record("INV_P43_02",
-           n > 0 && strstr(src, "unsigned char G0046_auc_Graphic562_ChampionColor[4] = { 7, 11, 8, 14 }") != NULL,
-           "ReDMCSB DATA.C anchors the champion-color table as {7,11,8,14}");
+           n > 0 && strstr(src, "G0046_auc_Graphic562_ChampionColor[4] = { 7, 11, 8, 14 }") != NULL,
+           usedSourcePath
+               ? "ReDMCSB DATA.C anchors the champion-color table as {7,11,8,14}"
+               : "ReDMCSB DATA.C source not found in local reference candidates");
 
     n = read_file("m11_game_view.c", src, sizeof(src));
     record("INV_P43_03",

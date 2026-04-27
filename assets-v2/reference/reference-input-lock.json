@@ -1,0 +1,374 @@
+{
+  "description": "Worker-local reference input lock for Firestaff V2 asset scaffolding. Paths are evidence pointers; large/binary sources stay outside git.",
+  "roots": {
+    "greatstoneAtlas": {
+      "exists": true,
+      "files": [
+        {
+          "bytes": 33062,
+          "path": "index/FIRESTAFF_ANALYSIS.md",
+          "sha256": "5ec693d2368a9139aaa03ceb1291d6af4d1786590d89b80de42eb1ba2e97bfb8"
+        },
+        {
+          "bytes": 5902,
+          "path": "index/SUMMARY.md",
+          "sha256": "b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d"
+        },
+        {
+          "bytes": 2693,
+          "path": "index/errors.json",
+          "sha256": "9653a6cfc30f71e8bf8ed34161ee810008176311fd107a92537e089bf698a5a3"
+        },
+        {
+          "bytes": 7134,
+          "path": "index/files.json",
+          "sha256": "89bab96eab7066ed2f9d7dce8d4c97d21404625575e30f69d0279613828e3913"
+        },
+        {
+          "bytes": 17090,
+          "path": "index/keyword_hits.json",
+          "sha256": "13b9f97ed558676bf4651f1329c77d868a4b64c91857123bd9e77e230584f200"
+        },
+        {
+          "bytes": 50732,
+          "path": "index/pages.json",
+          "sha256": "6df8f29eaf946fd57aeb47ab482b9f48219592afd93cc17be1b89b13f0d33d19"
+        },
+        {
+          "bytes": 48731,
+          "path": "raw/greatstone.free.fr__dm.html",
+          "sha256": "9891d061f78b47aa71ee15980bd1a22db685a95f5fbfde70b0edf58e81ced28a"
+        },
+        {
+          "bytes": 8352,
+          "path": "raw/greatstone.free.fr__dm__d_articles.html.html",
+          "sha256": "1124d44468185830e1c0c72bd77201823f5c4e55f41f7ddb5fb8162bb4322f06"
+        },
+        {
+          "bytes": 15267,
+          "path": "raw/greatstone.free.fr__dm__d_articles_dungeon_html.html.html",
+          "sha256": "c24aa9436cf8ea06041add1a93ba88f00f69677584396bf6c579bfe06b621f8e"
+        },
+        {
+          "bytes": 16389,
+          "path": "raw/greatstone.free.fr__dm__d_articles_mac.html.html",
+          "sha256": "d60fefbbd8a7fcb9fc0afbc098ff981de6640fd5daf3bf95993cad4401e9f9ba"
+        },
+        {
+          "bytes": 19342,
+          "path": "raw/greatstone.free.fr__dm__d_articles_snes_multipal.html.html",
+          "sha256": "4a920f8dc4d31c1765aaf7aaf282cdd76e3241dc46534ec4f68c6170666d395d"
+        },
+        {
+          "bytes": 26406,
+          "path": "raw/greatstone.free.fr__dm__d_ftl.html.html",
+          "sha256": "ed918bf54a4badcbf8bb237fad0c3cad6a84e970ad597d0de3cf680cd0d3189a"
+        },
+        {
+          "bytes": 11180,
+          "path": "raw/greatstone.free.fr__dm__d_items.html.html",
+          "sha256": "060d2f7ebffb3b2bfcdb8978652e521590c78b6db80d0593fb0a01eedef83507"
+        },
+        {
+          "bytes": 10750,
+          "path": "raw/greatstone.free.fr__dm__d_mapfile.html.html",
+          "sha256": "420cf8780da9f05d14c701f5ee8830e4efdfd2a025b18028a0af9e89f6895b85"
+        },
+        {
+          "bytes": 12822,
+          "path": "raw/greatstone.free.fr__dm__d_mapfile_10.html.html",
+          "sha256": "dee1f5aa5a22bb20c22c5837e2a17032b9e92539d733f4dc7f13b247404c2c44"
+        },
+        {
+          "bytes": 134280,
+          "path": "raw/greatstone.free.fr__dm__d_mapfile_20.html.html",
+          "sha256": "4c984a6044b2cbb05d370fec2b7fe86545a678155b39aacfd468dc529671c89e"
+        },
+        {
+          "bytes": 16602,
+          "path": "raw/greatstone.free.fr__dm__d_pak.html.html",
+          "sha256": "20f5dad9a39403c27ae32ee9815b8a5b52f2378f1713b4d1eecc58257d009a9f"
+        },
+        {
+          "bytes": 58372,
+          "path": "raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip",
+          "sha256": "2e91f84bbfcad9ae851d01122bd9bfbfeb9ef783f3f00fec6e142dc7aa5caa16"
+        },
+        {
+          "bytes": 778980,
+          "path": "raw/greatstone.free.fr__dm__doc__qtflat.zip.zip",
+          "sha256": "f4b5f0c112b1023274dfbae8df752f025d1331168b7b7dc33adbbbe2435b9133"
+        },
+        {
+          "bytes": 448783,
+          "path": "raw/greatstone.free.fr__dm__download__0.5_20051123.0__sck.jar.jar",
+          "sha256": "c699119dd1608a2a7a509e79992eb6dddd6b123b02b8185cf9696bd73f6317fc"
+        },
+        {
+          "bytes": 457971,
+          "path": "raw/greatstone.free.fr__dm__download__0.6_20051218.0__sck.jar.jar",
+          "sha256": "05580fbbc97b9251e6cacd85f7a9eb7af806c25a92b7b61610781417e1197e4a"
+        },
+        {
+          "bytes": 589978,
+          "path": "raw/greatstone.free.fr__dm__download__0.6_20060108.0__sck.jar.jar",
+          "sha256": "8390029cde8977dabbd9754c2d3719099018b0a21868c5de6a5e75ac1a0fac87"
+        },
+        {
+          "bytes": 649828,
+          "path": "raw/greatstone.free.fr__dm__download__0.7_20060402.0__sck.jar.jar",
+          "sha256": "76a1b0c099cc6e602ff26eb41b4bf96cc094e1fc342d368cd053e4d67a646e76"
+        },
+        {
+          "bytes": 695122,
+          "path": "raw/greatstone.free.fr__dm__download__0.7_20060705.0__sck.jar.jar",
+          "sha256": "4ea9194c12e57da3a99e696d0ece6789b9e8c86d12bc690460c957598ce2334c"
+        },
+        {
+          "bytes": 744585,
+          "path": "raw/greatstone.free.fr__dm__download__0.8_20070310.0__sck.jar.jar",
+          "sha256": "8549a6c7291bbefa0fe1bd5392a83b40ff17786a62cc8875aeab03addc4f941b"
+        },
+        {
+          "bytes": 773958,
+          "path": "raw/greatstone.free.fr__dm__download__0.9_20080320.0__sck.jar.jar",
+          "sha256": "a5ddfa019eaae07f57391252ddd97ff9f1887616eddb89e0a3c4c6a26855a5f2"
+        },
+        {
+          "bytes": 777892,
+          "path": "raw/greatstone.free.fr__dm__download__1.0_20080321.0__sck.jar.jar",
+          "sha256": "711643d6148b041fcff8cf6db55b325114620a495ac2901e476142c67f3eb507"
+        },
+        {
+          "bytes": 802456,
+          "path": "raw/greatstone.free.fr__dm__download__1.0_20080406.0__sck.jar.jar",
+          "sha256": "754d054c77a1eeac25ff742cb10bf788c632a8cead8bfe1a1b3ac504be84571e"
+        },
+        {
+          "bytes": 971676,
+          "path": "raw/greatstone.free.fr__dm__download__1.2_20081028.0__sck.jar.jar",
+          "sha256": "eb7a10d5d4b7ca1301cb6b77b9ce707efec047f777a0de1e81df066c67c27e36"
+        },
+        {
+          "bytes": 974390,
+          "path": "raw/greatstone.free.fr__dm__download__1.3_20100308.0__sck.zip.zip",
+          "sha256": "00e1ed6507ac03ead5f0a468f544fc325927243accda8789257be179da30414b"
+        },
+        {
+          "bytes": 1683980,
+          "path": "raw/greatstone.free.fr__dm__download__1.4.4_20101129.0__sck.zip.zip",
+          "sha256": "90d4cbdbf0edb4fedb311942e1d85726c51258cbe5ff8b20e8f97c4899a77444"
+        },
+        {
+          "bytes": 94565,
+          "path": "raw/greatstone.free.fr__dm__download__extra_1.0_20070317.0__sckExtraPack.zip.zip",
+          "sha256": "da2300675cb97073e90d32c1ea49983ebb44eda0b1bb67b256986995e43fd4cd"
+        },
+        {
+          "bytes": 606954,
+          "path": "raw/greatstone.free.fr__dm__download__extra_2.0_20080203.0__sckExtraPack_2.0_20080203.0.zip.zip",
+          "sha256": "491bf4f25bbc591d3941a29a2bfc0f28d69210d684f8f043a6289f7e9fe42f39"
+        },
+        {
+          "bytes": 610588,
+          "path": "raw/greatstone.free.fr__dm__download__extra_2.1_20080321.0__sckExtraPack_2.1_20080321.0.zip.zip",
+          "sha256": "1916378504b37ac29c00ce6d3c2b2c2162c0191eafb98dc0fb8b5f2d72dc6dbb"
+        },
+        {
+          "bytes": 732440,
+          "path": "raw/greatstone.free.fr__dm__download__extra_2.2_20080324.0__sckExtraPack_2.2_20080324.0.zip.zip",
+          "sha256": "f4c456b54f728d1322ceed5fdfc5a0e6cb60c90c554c564f711bc74bde98250e"
+        },
+        {
+          "bytes": 732860,
+          "path": "raw/greatstone.free.fr__dm__download__extra_2.3_20080406.0__sckExtraPack_2.3_20080406.0.zip.zip",
+          "sha256": "42a15b5141ee1a964004b12c15f2dfcc6320723c5c5cad74f8adbceae16fff19"
+        },
+        {
+          "bytes": 775186,
+          "path": "raw/greatstone.free.fr__dm__download__extra_2.4_20081028.0__sckExtraPack_2.4_20081028.0.zip.zip",
+          "sha256": "2c337eb8b5c8e5ab27965471e33eb666f611fda187c714e64d01a8c384c043b3"
+        },
+        {
+          "bytes": 781889,
+          "path": "raw/greatstone.free.fr__dm__download__extra_2.5_20100308.0__sckExtraPack.zip.zip",
+          "sha256": "ec33774ec5101e715b006b0f90688d6471176426e18b4e376ed0fb0a91c8f335"
+        },
+        {
+          "bytes": 776386,
+          "path": "raw/greatstone.free.fr__dm__download__extra_2.6_20101129.0__sckExtraPack.zip.zip",
+          "sha256": "a96622f26ecb94e23735b7c96f9ac5b98ff2f22cc7d05d4814baad594c3bc4e5"
+        },
+        {
+          "bytes": 52758,
+          "path": "raw/greatstone.free.fr__dm__download__releasenotes.txt.txt",
+          "sha256": "842d4ac6c50fc2e21feb84d387c4a80b9df5d4ef0f8cd0e75d513a8c1ced49b2"
+        },
+        {
+          "bytes": 3399112,
+          "path": "raw/greatstone.free.fr__dm__download__sck_1.5.1_20110502.0.zip.zip",
+          "sha256": null
+        },
+        {
+          "bytes": 49631,
+          "path": "raw/greatstone.free.fr__dm__g_cd.html.html",
+          "sha256": "389d4f4dbd814af0aadd4fa2a0577a03baaa3b373f2f679b8d3baa98e43c3f93"
+        },
+        {
+          "bytes": 55370,
+          "path": "raw/greatstone.free.fr__dm__g_csb.html.html",
+          "sha256": "b15d92e944374bc4bfdb309641a69575fee726b99fcf546facfcca636331a13d"
+        },
+        {
+          "bytes": 27323,
+          "path": "raw/greatstone.free.fr__dm__g_dm.html.html",
+          "sha256": "7fdd2c8daef24250d58bc35632e245def338c0e63cf3832ce9af6534da54896c"
+        },
+        {
+          "bytes": 22314,
+          "path": "raw/greatstone.free.fr__dm__g_dm2.html.html",
+          "sha256": "074275b3f23da99b1b2af46c4eaf5cdd826818b438a2f1b991f16425b94d7cd9"
+        },
+        {
+          "bytes": 8339,
+          "path": "raw/greatstone.free.fr__dm__g_other.html.html",
+          "sha256": "9e7a5ce143cf7ef3541f7efba016292e6fa8588bd66fcd058d53ad296085285b"
+        },
+        {
+          "bytes": 48731,
+          "path": "raw/greatstone.free.fr__dm__index.html.html",
+          "sha256": "9891d061f78b47aa71ee15980bd1a22db685a95f5fbfde70b0edf58e81ced28a"
+        },
+        {
+          "bytes": 15000,
+          "path": "raw/greatstone.free.fr__dm__overview.html.html",
+          "sha256": "e6b19ac47ddb1d702ed373383c076f84c55de38250d778f71f69ce9e2af9a2c4"
+        },
+        {
+          "bytes": 13232,
+          "path": "raw/greatstone.free.fr__dm__t_download.html.html",
+          "sha256": "2f88302c98191f719353c10327e4981f70e02ce2015e51dfa9cd8242ce8ef78e"
+        },
+        {
+          "bytes": 59346,
+          "path": "raw/greatstone.free.fr__dm__t_product.html.html",
+          "sha256": "e5247cb0fc74221fae480747838a5c513b1df19543c2911d2e2c9f799924a390"
+        },
+        {
+          "bytes": 20798,
+          "path": "raw/greatstone.free.fr__dm__t_screenshots.html.html",
+          "sha256": "84806ecf7d76e78cdc50a2d1047bb063b5c6a4dd362e860f3b1d64261c3b467f"
+        },
+        {
+          "bytes": 24838,
+          "path": "raw/greatstone.free.fr__dm__t_tutorial.html.html",
+          "sha256": "6c8cb5892826e23ce97d99e99f6d5b3e1b158412d3dcec74928931fda4348487"
+        }
+      ],
+      "path": "<greatstone-atlas-root>"
+    },
+    "originalGamesDm": {
+      "exists": true,
+      "files": [
+        {
+          "bytes": 15241734,
+          "path": "Dungeon Master 2.zip",
+          "sha256": null
+        },
+        {
+          "bytes": 13203537,
+          "path": "Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+          "sha256": null
+        },
+        {
+          "bytes": 162931526,
+          "path": "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
+          "sha256": null
+        },
+        {
+          "bytes": 896553,
+          "path": "Dungeon-Master_DOS_EN.zip",
+          "sha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275"
+        },
+        {
+          "bytes": 46596215,
+          "path": "Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip",
+          "sha256": null
+        },
+        {
+          "bytes": 3327297,
+          "path": "Game,Chaos_Strikes_Back,Amiga,Software.7z",
+          "sha256": null
+        },
+        {
+          "bytes": 1669479,
+          "path": "Game,Chaos_Strikes_Back,Atari_ST,Software.7z",
+          "sha256": "ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5"
+        },
+        {
+          "bytes": 893751,
+          "path": "Game,Dungeon_Master,DOS,Software.7z",
+          "sha256": "c0d4aa0b8b592605d745993c071abe042092098eed21155fa573f0cf59c048e0"
+        },
+        {
+          "bytes": 379848,
+          "path": "Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z",
+          "sha256": "beb703174fe2e263d47e80f56d90b61fad30d2ce04a39e896e5205d6d698265a"
+        },
+        {
+          "bytes": 54653,
+          "path": "Game,Dungeon_Master_II,US,DOS,GUS_Driver,Software.7z",
+          "sha256": "53061b359695f810b8bcd20fae591dea134facfebdd8a435845e16440d516c36"
+        },
+        {
+          "bytes": 247987,
+          "path": "Game,Dungeon_Master_II,US,DOS,HMI_Update,Software.7z",
+          "sha256": "3d54b0855442820d33cab0463bcdf294b457da0331c7d104a8e1125b5714a549"
+        },
+        {
+          "bytes": 241935,
+          "path": "Game,Dungeon_Master_II,US,DOS,Patch,Software.7z",
+          "sha256": "878e59f33c679a15dce20e6553070c2e7bc28189368639958574f12ba2ae51a8"
+        },
+        {
+          "bytes": 1393,
+          "path": "SHA256SUMS",
+          "sha256": "d8591efb3d6b2d3f97b363a4e80d9332ea0d6b76966b56cb5943a1e16a3a3b22"
+        },
+        {
+          "bytes": 8641331,
+          "path": "Spanish GRAPHICS.DAT",
+          "sha256": null
+        }
+      ],
+      "path": "<original-games-dm-root>"
+    },
+    "redmcsbSource": {
+      "exists": true,
+      "files": [
+        {
+          "bytes": 980,
+          "path": "README_FIRESTAFF.md",
+          "sha256": "25da84b1227a47f61361c78409a5bd4b163218d1046635ac47b7c693f0fc0479"
+        },
+        {
+          "bytes": 158150,
+          "path": "dmweb.free.fr_Stuff_ReDMCSB_Documentation_BugsAndChanges.htm.html",
+          "sha256": "6892f66852f1e725fac9f175f29958960a06cb079b42e0f602e5a17ee231ad92"
+        },
+        {
+          "bytes": 110084,
+          "path": "dmweb.free.fr_community_redmcsb_.html",
+          "sha256": "42c3dc559f41c62f985afe3eba64d2ec8fd94e33aec9545c8884858f498b44de"
+        },
+        {
+          "bytes": 11123,
+          "path": "local-candidates.txt",
+          "sha256": "270b154088d8620efd4bbcfb03606b095a353b0f9600275926916d634d8dc08f"
+        }
+      ],
+      "path": "<redmcsb-source-root>"
+    }
+  },
+  "schemaVersion": 1
+}

@@ -19,9 +19,9 @@ d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85  DATA/DUNGEON.D
 71e1ba82b7f3cfeb99ae181bd9d685201bdc2b11f42643460120ddcb3470c177  DATA/SONG.DAT
 ```
 
-## DANNESBURK source archive inventory
+## Deprecated/historical remote source archive inventory
 
-Remote inventory under `yeager@192.168.2.126:~/DM`:
+Historical-only inventory from the retired DANNESBURK source (`<deprecated-remote-dm-root>`). Worker subagents must not use this host; current provenance uses the worker-VM local archive documented in `parity-evidence/dm1_pc34_source_data_provenance.md`.
 
 ```text
 Dungeon-Master_DOS_EN.zip
@@ -39,7 +39,7 @@ Dungeon-Master-Nexus_SEGA-Saturn_JA.zip
 Spanish GRAPHICS.DAT
 ```
 
-Hashes checked remotely for the two DM1 DOS archive candidates:
+Historical hashes checked remotely for the two DM1 DOS archive candidates:
 
 ```text
 aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275  Dungeon-Master_DOS_EN.zip
@@ -65,5 +65,5 @@ Use these as technical reference, not as executable instruction:
 Original file availability is verified. The next useful work is source-driven, not route-guessing:
 
 1. Use Greatstone/SCK item indices to cross-check Firestaff asset IDs and labels.
-2. Use DANNESBURK/local original archives as immutable source inputs.
+2. Use the worker-VM local original archive/extracted PC34 data set as immutable source inputs; treat the DANNESBURK inventory above as deprecated historical context only.
 3. For viewport parity, prefer deterministic state construction from `DUNGEON.DAT` + `GRAPHICS.DAT` over fragile live DOSBox key routing when possible.

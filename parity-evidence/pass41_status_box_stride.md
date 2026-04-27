@@ -86,18 +86,20 @@ strictly inside the 67-wide status-box frame in V1:
 
 24 invariants, all green (`# summary: 24/24 invariants passed`):
 
-- **INV_P41_01..03** — DEFS.H source anchors (C69 == 69, C007 ==
-  67×29; literal presence of `C69_CHAMPION_STATUS_BOX_SPACING` in
-  `dm7z-extract/Toolchains/Common/Source/DEFS.H`).
+- **INV_P41_01..03** — source anchors (C69 == 69, C007 ==
+  67×29; layout-696 `zones_h_reconstruction.json` locks C150 at
+  67×29 and C154 at source x-offset 207).
 - **INV_P41_04..07** — enum wiring in `m11_game_view.c`
   (`M11_V1_PARTY_SLOT_STEP = 69`, `M11_V1_PARTY_SLOT_W = 67`,
   legacy `M11_PARTY_SLOT_STEP = 77` + `M11_PARTY_SLOT_W = 71`).
 - **INV_P41_08..11** — helper signatures and V1/V2 branch wiring
   (`m11_party_slot_step()`, `m11_party_slot_w()`).
-- **INV_P41_12..13** — V1 slot rectangles at
-  `(12, 81, 150, 219)` × 67 are strictly non-overlapping
+- **INV_P41_12..13** — V1 slot rectangles originally landed at
+  `(12, 81, 150, 219)` × 67; pass 90 later rebased the V1
+  origin to the source layout x=0, giving `(0, 69, 138, 207)` × 67,
+  still strictly non-overlapping
   (2-px gap between successive frames, matching `69 − 67`).
-- **INV_P41_14** — V1 party-panel right edge = 286 ≤ 320
+- **INV_P41_14** — V1 party-panel right edge = 274 ≤ 320 after pass-90 x-origin correction
   framebuffer width.
 - **INV_P41_15..17** — pass-34 drift numbers preserved:
   stride delta 8 px/slot, width delta 4 px/slot, total
@@ -128,16 +130,16 @@ The source PGMs are reproducible in-tree:
 | `party_hud_statusbox_pre_pass41_stride77.pgm` | checkout commit 09caa98 (pass 40), run `./run_firestaff_m11_game_view_probe.sh`, copy `verification-m11/game-view/party_hud_statusbox_gfx.pgm` |
 | `party_hud_statusbox_v1_stride69.pgm`          | on main after pass 41, run `./run_firestaff_m11_game_view_probe.sh`, copy `verification-m11/game-view/party_hud_statusbox_gfx.pgm` |
 
-The JSON stats file records the nonzero-x ranges on scan row
+The JSON stats file originally recorded the nonzero-x ranges on scan row
 **y = 163** (the status-box top border) for both builds.  After pass
-41 the frame-border columns at y=163 are exactly:
+90 the V1 source-origin frame-border columns at y=0 are exactly:
 
 | Slot | Frame x-range | Gap to next |
 |---|---|---|
-| slot 0 | 12..78  | 2 px (79, 80 black) |
-| slot 1 | 81..147 | 2 px (148, 149 black) |
-| slot 2 | 150..216 | 2 px (217, 218 black) |
-| slot 3 | 219..285 | — |
+| slot 0 | 0..66   | 2 px (67, 68 black) |
+| slot 1 | 69..135 | 2 px (136, 137 black) |
+| slot 2 | 138..204 | 2 px (205, 206 black) |
+| slot 3 | 207..273 | — |
 
 For comparison, the **pre-pass-41** render (`parity-evidence/
 overlays/pass41/party_hud_statusbox_pre_pass41_stride77.pgm`, same
@@ -147,8 +149,9 @@ what pass 34 measured.
 
 This is a real pixel-level landing of the `C69` anchor: the stride
 delta is exactly +8 px/slot between the two renders, the slot frame
-width changes from 71 → 67 px, and the rightmost box now ends at
-x=285 instead of x=309, saving 28 px of horizontal chrome.
+width changes from 71 → 67 px, and pass 90 moves the V1 source-origin
+rightmost box to x=273, leaving a clean 7 px gap before the champion
+icon lane at x=281.
 
 ---
 
@@ -232,3 +235,8 @@ and a reproducible screenshot diff against the pre-pass-41 render.
 **This pass alone does not complete DM1/V1 parity.**  It resolves
 `V1_BLOCKERS.md` §5 and is an independent precondition for pass 42's
 side-column layout work.
+
+
+### Pass 90 note — V1 source x-origin correction
+
+A later HUD/top-row pass corrected the V1 status-box origin from Firestaff's legacy 12 px inset to layout-696 source x=0.  The V2 pre-baked party HUD remains at x=12.  This places C151..C154 at `0..66`, `69..135`, `138..204`, `207..273`, leaving a 7 px gap before the C113/C116 champion icon lane beginning at x=281.

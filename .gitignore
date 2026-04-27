@@ -143,3 +143,12 @@ __pycache__/
 # Absolute /tmp paths should never be in-tree
 # -------------------------------------------------------------------------
 /tmp/
+
+# Local release packaging/staging outputs (rebuilt outside source control)
+/release/
+
+# Local handoff/temp full-tree snapshots from worker passes
+/firestaff-hud-toprow-clean-*/
+
+# Failed/partial original-route scratch attempt with no raw gameplay captures
+/verification-screens/pass86-original-route-dm-vv-sn-pk/

@@ -17,6 +17,8 @@ SCREEN_DIR = REPO / "verification-screens"
 ZONES_JSON = REPO / "zones_h_reconstruction.json"
 OUT_DIR = REPO / "parity-evidence" / "overlays" / "pass83"
 STATS = OUT_DIR / "pass83_firestaff_viewport_content_points_stats.json"
+SUMMARY_MD = OUT_DIR / "pass83_firestaff_viewport_content_points_summary.md"
+POINTS_TSV = OUT_DIR / "pass83_firestaff_viewport_content_points.tsv"
 
 FRAME_W = 320
 FRAME_H = 200
@@ -89,37 +91,32 @@ def point_row(family: str, zone: int, label: str, x: int, y: int) -> dict[str, o
 def collect_points(records: dict[int, dict[str, int]]) -> list[dict[str, object]]:
     points: list[dict[str, object]] = []
 
-    # C2500 and C2900 are 5 G2030 scale buckets × 4 relative cells.
-    for base, family in ((2500, "C2500_object"), (2900, "C2900_projectile")):
-        for scale in range(5):
-            for rel_cell in range(4):
-                zone = base + scale * 4 + rel_cell
-                rec = records[zone]
-                if rec["d1"] == 0 and rec["d2"] == 0:
-                    continue
-                points.append(point_row(
-                    family,
-                    zone,
-                    f"{family} s{scale} r{rel_cell}",
-                    int(rec["d1"]),
-                    int(rec["d2"]),
-                ))
-
-    # C3200 records are arranged D3, D2, D1; each depth has center, left side,
-    # then right side groups with five creature slot points. Keep source order.
-    zone = 3200
-    for depth_name in ("D3", "D2", "D1"):
-        for group_name in ("center", "left", "right"):
-            for slot in range(5):
-                rec = records[zone]
-                points.append(point_row(
-                    "C3200_creature",
-                    zone,
-                    f"C3200 {depth_name} {group_name} p{slot}",
-                    int(rec["d1"]),
-                    int(rec["d2"]),
-                ))
-                zone += 1
+    # These three layout-696 ranges are the source-backed viewport content
+    # anchor tables used by the original engine for floor objects, projectiles,
+    # and creatures.  Earlier pass83 output sampled only the first few buckets;
+    # keep the full ranges so side/depth cells are no longer silently omitted.
+    source_ranges = (
+        (2500, 2567, "C2500_object"),
+        (2900, 2947, "C2900_projectile"),
+        (3200, 3394, "C3200_creature"),
+    )
+    for first, last, family in source_ranges:
+        for zone in range(first, last + 1):
+            rec = records[zone]
+            x = int(rec["d1"])
+            y = int(rec["d2"])
+            # (0,0) entries are empty/sentinel records in these content tables,
+            # not visible placement anchors.  Preserve real negative/off-edge
+            # source coordinates so clipping work remains evidence-backed.
+            if x == 0 and y == 0:
+                continue
+            points.append(point_row(
+                family,
+                zone,
+                f"{family} C{zone}",
+                x,
+                y,
+            ))
 
     return points
 
@@ -155,6 +152,48 @@ def draw_overlay_svg(screen_path: Path, points: list[dict[str, object]], out_pat
     parts.append("</svg>")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(parts) + "\n")
+
+
+def write_points_tsv(points: list[dict[str, object]], out_path: Path) -> None:
+    lines = ["family\tzone\tlabel\tviewport_x\tviewport_y\tscreen_x\tscreen_y\tinside_viewport"]
+    for row in points:
+        vx, vy = row["viewport_xy"]
+        sx, sy = row["screen_xy"]
+        lines.append("\t".join([
+            str(row["family"]),
+            str(row["zone"]),
+            str(row["label"]),
+            str(vx), str(vy), str(sx), str(sy),
+            "yes" if row["inside_viewport"] else "no",
+        ]))
+    out_path.write_text("\n".join(lines) + "\n")
+
+
+def write_summary_md(result: dict[str, object], out_path: Path) -> None:
+    lines = [
+        "# Pass 83 — viewport content anchor coverage",
+        "",
+        "Evidence-only expansion of the layout-696 viewport content overlay. It uses the full source ranges for floor object, projectile, and creature placement anchors and does not claim pixel parity.",
+        "",
+        f"- Source: `{result['source_zone_reconstruction']}`",
+        f"- Viewport rect: `{result['viewport_screen_rect']}`",
+        f"- TSV: `{rel(POINTS_TSV)}`",
+        "",
+        "| Family | Anchors | Inside viewport |",
+        "| --- | ---: | ---: |",
+    ]
+    families = result["families"]
+    inside = result["inside_viewport_by_family"]
+    for family in sorted(families):
+        lines.append(f"| `{family}` | {families[family]} | {inside.get(family, 0)} |")
+    lines += [
+        "",
+        "Notes:",
+        "- `(0,0)` sentinel records are excluded from visible anchor counts.",
+        "- Negative/off-edge source coordinates are retained in JSON/TSV so clipping and side-cell placement remain auditable.",
+        "- Overlay SVGs are current Firestaff V1 evidence only, not original-runtime parity claims.",
+    ]
+    out_path.write_text("\n".join(lines) + "\n")
 
 
 def main() -> int:
@@ -196,8 +235,10 @@ def main() -> int:
         if row["inside_viewport"]:
             family_inside[fam] = family_inside.get(fam, 0) + 1
 
+    write_points_tsv(points, POINTS_TSV)
+
     result = {
-        "schema": "pass83_firestaff_viewport_content_points_probe.v1",
+        "schema": "pass83_firestaff_viewport_content_points_probe.v2",
         "honesty": "Evidence only. Points are layout-696 source anchors from GRAPHICS.DAT/ReDMCSB reconstruction; overlays do not claim sprite pixel parity.",
         "source_zone_reconstruction": rel(ZONES_JSON),
         "source_zone_reconstruction_sha256": sha256(ZONES_JSON),
@@ -205,13 +246,18 @@ def main() -> int:
         "viewport_screen_rect": [VIEWPORT_X, VIEWPORT_Y, VIEWPORT_W, VIEWPORT_H],
         "families": family_counts,
         "inside_viewport_by_family": family_inside,
+        "points_tsv": rel(POINTS_TSV),
+        "points_tsv_sha256": sha256(POINTS_TSV),
         "points": points,
         "scenes": scenes,
         "problems": problems,
         "pass": not problems,
     }
+    write_summary_md(result, SUMMARY_MD)
+    result["summary_md"] = rel(SUMMARY_MD)
+    result["summary_md_sha256"] = sha256(SUMMARY_MD)
     STATS.write_text(json.dumps(result, indent=2) + "\n")
-    print(json.dumps({"points": len(points), "scenes": len(scenes), "problems": problems, "stats": rel(STATS)}, indent=2))
+    print(json.dumps({"points": len(points), "scenes": len(scenes), "problems": problems, "stats": rel(STATS), "summary": rel(SUMMARY_MD)}, indent=2))
     return 0 if not problems else 1
 
 
