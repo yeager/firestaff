@@ -9,18 +9,7 @@
 # Future extraction should replace manual population.
 #
 msgid ""
-msgstr ""
-"Project-Id-Version: firestaff-dm1\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:45+0200\n"
-"PO-Revision-Date: 2026-04-22 12:05+0200\n"
-"Last-Translator: OpenClaw GPT-5.4 pass\n"
-"Language-Team: Swedish\n"
-"Language: sv\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+msgstr "Project-Id-Version: firestaff-dm1\nReport-Msgid-Bugs-To: \nPOT-Creation-Date: 2026-04-22 05:45+0200\nPO-Revision-Date: 2026-04-22 12:05+0200\nLast-Translator: OpenClaw GPT-5.4 pass\nLanguage-Team: Swedish\nLanguage: sv\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. Extracted from current DM1 runtime
 msgid "NORTH"
@@ -160,699 +149,699 @@ msgstr "ANKOM TILL NIVÅ %d, POSITION (%d,%d)"
 
 #. Extracted from current DM1 runtime
 msgid "EYE OF TIME"
-msgstr "Tidens öga"
+msgstr "TIDENS ÖGA"
 
 #. Extracted from current DM1 runtime
 msgid "STORMRING"
-msgstr "Stormring"
+msgstr "STORMRING"
 
 #. Extracted from current DM1 runtime
 msgid "TORCH"
-msgstr "Fackla"
+msgstr "FACKLA"
 
 #. Extracted from current DM1 runtime
 msgid "FLAMITT"
-msgstr "Flamitt"
+msgstr "FLAMITT"
 
 #. Extracted from current DM1 runtime
 msgid "STAFF OF CLAWS"
-msgstr "Klostav"
+msgstr "KLOSTAV"
 
 #. Extracted from current DM1 runtime
 msgid "BOLT BLADE"
-msgstr "Blixtklinga"
+msgstr "BLIXTKLINGA"
 
 #. Extracted from current DM1 runtime
 msgid "FURY"
-msgstr "Vrede"
+msgstr "VREDE"
 
 #. Extracted from current DM1 runtime
 msgid "THE FIRESTAFF"
-msgstr "Eldstaven"
+msgstr "ELDSTAVEN"
 
 #. Extracted from current DM1 runtime
 msgid "DAGGER"
-msgstr "Dolk"
+msgstr "DOLK"
 
 #. Extracted from current DM1 runtime
 msgid "FALCHION"
-msgstr "Huggsvärd"
+msgstr "HUGGSVÄRD"
 
 #. Extracted from current DM1 runtime
 msgid "SWORD"
-msgstr "Svärd"
+msgstr "SVÄRD"
 
 #. Extracted from current DM1 runtime
 msgid "RAPIER"
-msgstr "Värja"
+msgstr "VÄRJA"
 
 #. Extracted from current DM1 runtime
 msgid "SABRE"
-msgstr "Sabel"
+msgstr "SABEL"
 
 #. Extracted from current DM1 runtime
 msgid "SAMURAI SWORD"
-msgstr "Samurajsvärd"
+msgstr "SAMURAJSVÄRD"
 
 #. Extracted from current DM1 runtime
 msgid "DELTA"
-msgstr "Delta"
+msgstr "DELTA"
 
 #. Extracted from current DM1 runtime
 msgid "DIAMOND EDGE"
-msgstr "Diamantegg"
+msgstr "DIAMANTEGG"
 
 #. Extracted from current DM1 runtime
 msgid "VORPAL BLADE"
-msgstr "Vorpalklinga"
+msgstr "VORPALKLINGA"
 
 #. Extracted from current DM1 runtime
 msgid "THE INQUISITOR"
-msgstr "Inkvisitorn"
+msgstr "INKVISITORN"
 
 #. Extracted from current DM1 runtime
 msgid "AXE"
-msgstr "Yxa"
+msgstr "YXA"
 
 #. Extracted from current DM1 runtime
 msgid "HARDCLEAVE"
-msgstr "Hårdklyvaren"
+msgstr "HÅRDKLYVAREN"
 
 #. Extracted from current DM1 runtime
 msgid "MACE"
-msgstr "Stridshammare"
+msgstr "STRIDSHAMMARE"
 
 #. Extracted from current DM1 runtime
 msgid "MACE OF ORDER"
-msgstr "Ordningens stridshammare"
+msgstr "ORDNINGENS STRIDSHAMMARE"
 
 #. Extracted from current DM1 runtime
 msgid "MORNING STAR"
-msgstr "Morgonstjärna"
+msgstr "MORGONSTJÄRNA"
 
 #. Extracted from current DM1 runtime
 msgid "CLUB"
-msgstr "Klubba"
+msgstr "KLUBBA"
 
 #. Extracted from current DM1 runtime
 msgid "STONE CLUB"
-msgstr "Stenklubba"
+msgstr "STENKLUBBA"
 
 #. Extracted from current DM1 runtime
 msgid "BOW"
-msgstr "Båge"
+msgstr "BÅGE"
 
 #. Extracted from current DM1 runtime
 msgid "CROSSBOW"
-msgstr "Armborst"
+msgstr "ARMBORST"
 
 #. Extracted from current DM1 runtime
 msgid "ARROW"
-msgstr "Pil"
+msgstr "PIL"
 
 #. Extracted from current DM1 runtime
 msgid "SLAYER"
-msgstr "Dräparen"
+msgstr "DRÄPAREN"
 
 #. Extracted from current DM1 runtime
 msgid "SLING"
-msgstr "Slunga"
+msgstr "SLUNGA"
 
 #. Extracted from current DM1 runtime
 msgid "ROCK"
-msgstr "Sten"
+msgstr "STEN"
 
 #. Extracted from current DM1 runtime
 msgid "POISON DART"
-msgstr "Giftdart"
+msgstr "GIFTDART"
 
 #. Extracted from current DM1 runtime
 msgid "THROWING STAR"
-msgstr "Kaststjärna"
+msgstr "KASTSTJÄRNA"
 
 #. Extracted from current DM1 runtime
 msgid "STICK"
-msgstr "Pinne"
+msgstr "PINNE"
 
 #. Extracted from current DM1 runtime
 msgid "STAFF"
-msgstr "Stav"
+msgstr "STAV"
 
 #. Extracted from current DM1 runtime
 msgid "WAND"
-msgstr "Trollstav"
+msgstr "TROLLSTAV"
 
 #. Extracted from current DM1 runtime
 msgid "TEOWAND"
-msgstr "Teowand"
+msgstr "TEOWAND"
 
 #. Extracted from current DM1 runtime
 msgid "YEW STAFF"
-msgstr "Idegransstav"
+msgstr "IDEGRANSSTAV"
 
 #. Extracted from current DM1 runtime
 msgid "STAFF OF MANAR"
-msgstr "Manars stav"
+msgstr "MANARS STAV"
 
 #. Extracted from current DM1 runtime
 msgid "SNAKE STAFF"
-msgstr "Ormstav"
+msgstr "ORMSTAV"
 
 #. Extracted from current DM1 runtime
 msgid "THE CONDUIT"
-msgstr "Kanalen"
+msgstr "KANALEN"
 
 #. Extracted from current DM1 runtime
 msgid "DRAGON SPIT"
-msgstr "Drakspott"
+msgstr "DRAKSPOTT"
 
 #. Extracted from current DM1 runtime
 msgid "SCEPTRE OF LYF"
-msgstr "Lyfs spira"
+msgstr "LYFS SPIRA"
 
 #. Extracted from current DM1 runtime
 msgid "HORN OF FEAR"
-msgstr "Räckslans horn"
+msgstr "RÄDSLANS HORN"
 
 #. Extracted from current DM1 runtime
 msgid "SPEED BOW"
-msgstr "Snabbbåge"
+msgstr "SNABBBÅGE"
 
 #. Extracted from current DM1 runtime
 msgid "CAPE"
-msgstr "Mantel"
+msgstr "MANTEL"
 
 #. Extracted from current DM1 runtime
 msgid "CLOAK OF NIGHT"
-msgstr "Nattens kåpa"
+msgstr "NATTENS KÅPA"
 
 #. Extracted from current DM1 runtime
 msgid "BARBARIAN HIDE"
-msgstr "Barbarhud"
+msgstr "BARBARHUD"
 
 #. Extracted from current DM1 runtime
 msgid "SANDALS"
-msgstr "Sandaler"
+msgstr "SANDALER"
 
 #. Extracted from current DM1 runtime
 msgid "LEATHER BOOTS"
-msgstr "Läderstövlar"
+msgstr "LÄDERSTÖVLAR"
 
 #. Extracted from current DM1 runtime
 msgid "ELVEN BOOTS"
-msgstr "Alvstövlar"
+msgstr "ALVSTÖVLAR"
 
 #. Extracted from current DM1 runtime
 msgid "LEATHER JERKIN"
-msgstr "Läderväst"
+msgstr "LÄDERVÄST"
 
 #. Extracted from current DM1 runtime
 msgid "LEATHER PANTS"
-msgstr "Läderbyxor"
+msgstr "LÄDERBYXOR"
 
 #. Extracted from current DM1 runtime
 msgid "SUEDE BOOTS"
-msgstr "Mockastövlar"
+msgstr "MOCKASTÖVLAR"
 
 #. Extracted from current DM1 runtime
 msgid "BLUE PANTS"
-msgstr "Blå byxor"
+msgstr "BLÅ BYXOR"
 
 #. Extracted from current DM1 runtime
 msgid "GHI"
-msgstr "Ghi"
+msgstr "GHI"
 
 #. Extracted from current DM1 runtime
 msgid "GHI TROUSERS"
-msgstr "Ghi-byxor"
+msgstr "GHI-BYXOR"
 
 #. Extracted from current DM1 runtime
 msgid "CALISTA"
-msgstr "Calista"
+msgstr "CALISTA"
 
 #. Extracted from current DM1 runtime
 msgid "CROWN OF NERRA"
-msgstr "Nerras krona"
+msgstr "NERRAS KRONA"
 
 #. Extracted from current DM1 runtime
 msgid "BEZERKER HELM"
-msgstr "Bärsärkshjälm"
+msgstr "BÄRSÄRKSHJÄLM"
 
 #. Extracted from current DM1 runtime
 msgid "HELMET"
-msgstr "Hjälm"
+msgstr "HJÄLM"
 
 #. Extracted from current DM1 runtime
 msgid "BASINET"
-msgstr "Baskerhjälm"
+msgstr "BASKERHJÄLM"
 
 #. Extracted from current DM1 runtime
 msgid "NETA SHIRT"
-msgstr "Neta-skjorta"
+msgstr "NETA-SKJORTA"
 
 #. Extracted from current DM1 runtime
 msgid "CHAINMAIL"
-msgstr "Kedjebrynja"
+msgstr "KEDJEBRYNJA"
 
 #. Extracted from current DM1 runtime
 msgid "PLATE MAIL"
-msgstr "Plåtrustning"
+msgstr "PLÅTRUSTNING"
 
 #. Extracted from current DM1 runtime
 msgid "MITHRAL MAIL"
-msgstr "Mithralbrynja"
+msgstr "MITHRALBRYNJA"
 
 #. Extracted from current DM1 runtime
 msgid "MITHRAL HOSEN"
-msgstr "Mithralhosor"
+msgstr "MITHRALHOSOR"
 
 #. Extracted from current DM1 runtime
 msgid "LEG MAIL"
-msgstr "Benskydd"
+msgstr "BENSKYDD"
 
 #. Extracted from current DM1 runtime
 msgid "FOOT PLATE"
-msgstr "Fotplåt"
+msgstr "FOTPLÅT"
 
 #. Extracted from current DM1 runtime
 msgid "SMALL SHIELD"
-msgstr "Liten sköld"
+msgstr "LITEN SKÖLD"
 
 #. Extracted from current DM1 runtime
 msgid "WOODEN SHIELD"
-msgstr "Träsköld"
+msgstr "TRÄSKÖLD"
 
 #. Extracted from current DM1 runtime
 msgid "LARGE SHIELD"
-msgstr "Stor sköld"
+msgstr "STOR SKÖLD"
 
 #. Extracted from current DM1 runtime
 msgid "SHIELD OF LYTE"
-msgstr "Lytes sköld"
+msgstr "LYTES SKÖLD"
 
 #. Extracted from current DM1 runtime
 msgid "SHIELD OF DARC"
-msgstr "Darcs sköld"
+msgstr "DARCS SKÖLD"
 
 #. Extracted from current DM1 runtime
 msgid "DEXHELM"
-msgstr "Dexhjälm"
+msgstr "DEXHJÄLM"
 
 #. Extracted from current DM1 runtime
 msgid "MON POTION"
-msgstr "Mon-dryck"
+msgstr "MON-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "UM POTION"
-msgstr "Um-dryck"
+msgstr "UM-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "DES POTION"
-msgstr "Des-dryck"
+msgstr "DES-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "VEN POTION"
-msgstr "Ven-dryck"
+msgstr "VEN-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "SAR POTION"
-msgstr "Sar-dryck"
+msgstr "SAR-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "ZO POTION"
-msgstr "Zo-dryck"
+msgstr "ZO-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "ROS POTION"
-msgstr "Ros-dryck"
+msgstr "ROS-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "KU POTION"
-msgstr "Ku-dryck"
+msgstr "KU-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "DANE POTION"
-msgstr "Dane-dryck"
+msgstr "DANE-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "NETA POTION"
-msgstr "Neta-dryck"
+msgstr "NETA-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "BRO POTION"
-msgstr "Bro-dryck"
+msgstr "BRO-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "MA POTION"
-msgstr "Ma-dryck"
+msgstr "MA-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "YA POTION"
-msgstr "Ya-dryck"
+msgstr "YA-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "EE POTION"
-msgstr "Ee-dryck"
+msgstr "EE-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "VI POTION"
-msgstr "Vi-dryck"
+msgstr "VI-DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "WATER FLASK"
-msgstr "Vattenflaska"
+msgstr "VATTENFLASKA"
 
 #. Extracted from current DM1 runtime
 msgid "EMPTY FLASK"
-msgstr "Tom flaska"
+msgstr "TOM FLASKA"
 
 #. Extracted from current DM1 runtime
 msgid "COMPASS"
-msgstr "Kompass"
+msgstr "KOMPASS"
 
 #. Extracted from current DM1 runtime
 msgid "WATERSKIN"
-msgstr "Vattensäck"
+msgstr "VATTENSÄCK"
 
 #. Extracted from current DM1 runtime
 msgid "JEWEL SYMAL"
-msgstr "Symals juvel"
+msgstr "SYMALS JUVEL"
 
 #. Extracted from current DM1 runtime
 msgid "ILLUMULET"
-msgstr "Illumulet"
+msgstr "ILLUMULET"
 
 #. Extracted from current DM1 runtime
 msgid "ASHES"
-msgstr "Aska"
+msgstr "ASKA"
 
 #. Extracted from current DM1 runtime
 msgid "BONES"
-msgstr "Ben"
+msgstr "BEN"
 
 #. Extracted from current DM1 runtime
 msgid "SAR COIN"
-msgstr "Sar-mynt"
+msgstr "SAR-MYNT"
 
 #. Extracted from current DM1 runtime
 msgid "GOLD COIN"
-msgstr "Guldmynt"
+msgstr "GULDMYNT"
 
 #. Extracted from current DM1 runtime
 msgid "IRON KEY"
-msgstr "Järnnyckel"
+msgstr "JÄRNNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "KEY OF B"
-msgstr "B-nyckel"
+msgstr "B-NYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "SOLID KEY"
-msgstr "Massiv nyckel"
+msgstr "MASSIV NYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "SQUARE KEY"
-msgstr "Fyrkantig nyckel"
+msgstr "FYRKANTIG NYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "TOURQUOISE KEY"
-msgstr "Turkos nyckel"
+msgstr "TURKOS NYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "CROSS KEY"
-msgstr "Korsnyckel"
+msgstr "KORSNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "ONYX KEY"
-msgstr "Onyxnyckel"
+msgstr "ONYXNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "SKELETON KEY"
-msgstr "Skelettnyckel"
+msgstr "SKELETTNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "GOLD KEY"
-msgstr "Guldnyckel"
+msgstr "GULDNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "WINGED KEY"
-msgstr "Bevingad nyckel"
+msgstr "BEVINGAD NYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "TOPAZ KEY"
-msgstr "Topasnyckel"
+msgstr "TOPASNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "SAPPHIRE KEY"
-msgstr "Safirnyckel"
+msgstr "SAFIRNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "EMERALD KEY"
-msgstr "Smaragdnyckel"
+msgstr "SMARAGDNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "RUBY KEY"
-msgstr "Rubinnyckel"
+msgstr "RUBINNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "RA KEY"
-msgstr "Ra-nyckel"
+msgstr "RA-NYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "MASTER KEY"
-msgstr "Huvudnyckel"
+msgstr "HUVUDNYCKEL"
 
 #. Extracted from current DM1 runtime
 msgid "BOULDER"
-msgstr "Klippblock"
+msgstr "KLIPPBLOCK"
 
 #. Extracted from current DM1 runtime
 msgid "BLUE GEM"
-msgstr "Blå ädelsten"
+msgstr "BLÅ ÄDELSTEN"
 
 #. Extracted from current DM1 runtime
 msgid "ORANGE GEM"
-msgstr "Orange ädelsten"
+msgstr "ORANGE ÄDELSTEN"
 
 #. Extracted from current DM1 runtime
 msgid "GREEN GEM"
-msgstr "Grön ädelsten"
+msgstr "GRÖN ÄDELSTEN"
 
 #. Extracted from current DM1 runtime
 msgid "APPLE"
-msgstr "Äpple"
+msgstr "ÄPPLE"
 
 #. Extracted from current DM1 runtime
 msgid "CORN"
-msgstr "Majs"
+msgstr "MAJS"
 
 #. Extracted from current DM1 runtime
 msgid "BREAD"
-msgstr "Bröd"
+msgstr "BRÖD"
 
 #. Extracted from current DM1 runtime
 msgid "CHEESE"
-msgstr "Ost"
+msgstr "OST"
 
 #. Extracted from current DM1 runtime
 msgid "SCREAMER SLICE"
-msgstr "Screamer-skiva"
+msgstr "SCREAMER-SKIVA"
 
 #. Extracted from current DM1 runtime
 msgid "WORM ROUND"
-msgstr "Maskbit"
+msgstr "MASKBIT"
 
 #. Extracted from current DM1 runtime
 msgid "DRUMSTICK"
-msgstr "Kycklinglår"
+msgstr "KYCKLINGLÅR"
 
 #. Extracted from current DM1 runtime
 msgid "DRAGON STEAK"
-msgstr "Drakstek"
+msgstr "DRAKSTEK"
 
 #. Extracted from current DM1 runtime
 msgid "GEM OF AGES"
-msgstr "Tidernas ädelsten"
+msgstr "TIDERNAS ÄDELSTEN"
 
 #. Extracted from current DM1 runtime
 msgid "EKKHARD CROSS"
-msgstr "Ekkhards kors"
+msgstr "EKKHARDS KORS"
 
 #. Extracted from current DM1 runtime
 msgid "MOONSTONE"
-msgstr "Månsten"
+msgstr "MÅNSTEN"
 
 #. Extracted from current DM1 runtime
 msgid "THE HELLION"
-msgstr "Hellion"
+msgstr "HELLION"
 
 #. Extracted from current DM1 runtime
 msgid "PENDANT FERAL"
-msgstr "Vildmarkshänge"
+msgstr "VILDMARKSHÄNGE"
 
 #. Extracted from current DM1 runtime
 msgid "MAGICAL BOX"
-msgstr "Magisk låda"
+msgstr "MAGISK LÅDA"
 
 #. Extracted from current DM1 runtime
 msgid "MIRROR OF DAWN"
-msgstr "Gryningens spegel"
+msgstr "GRYNINGENS SPEGEL"
 
 #. Extracted from current DM1 runtime
 msgid "ROPE"
-msgstr "Rep"
+msgstr "REP"
 
 #. Extracted from current DM1 runtime
 msgid "RABBIT FOOT"
-msgstr "Kaninfot"
+msgstr "KANINFOT"
 
 #. Extracted from current DM1 runtime
 msgid "CORBAMITE"
-msgstr "Corbamite"
+msgstr "CORBAMITE"
 
 #. Extracted from current DM1 runtime
 msgid "CHOKER"
-msgstr "Halskrage"
+msgstr "HALSKRAGE"
 
 #. Extracted from current DM1 runtime
 msgid "LOCK PICKS"
-msgstr "Dyrkar"
+msgstr "DYRKAR"
 
 #. Extracted from current DM1 runtime
 msgid "MAGNIFIER"
-msgstr "Förstoringsglas"
+msgstr "FÖRSTORINGSGLAS"
 
 #. Extracted from current DM1 runtime
 msgid "ZOKATHRA SPELL"
-msgstr "Zokathra-besvärjelse"
+msgstr "ZOKATHRA-BESVÄRJELSE"
 
 #. Extracted from current DM1 runtime
 msgid "SCROLL"
-msgstr "Pergamentrulle"
+msgstr "PERGAMENTRULLE"
 
 #. Extracted from current DM1 runtime
 msgid "CHEST"
-msgstr "Kista"
+msgstr "KISTA"
 
 #. Extracted from current DM1 runtime
 msgid "OPEN CHEST"
-msgstr "Öppen kista"
+msgstr "ÖPPEN KISTA"
 
 #. Extracted from current DM1 runtime
 msgid "GIANT SCORPION"
-msgstr "Jätteskorpion"
+msgstr "JÄTTESKORPION"
 
 #. Extracted from current DM1 runtime
 msgid "SWAMP SLIME"
-msgstr "Träskslajm"
+msgstr "TRÄSKSLAJM"
 
 #. Extracted from current DM1 runtime
 msgid "GIGGLER"
-msgstr "Gigglare"
+msgstr "GIGGLARE"
 
 #. Extracted from current DM1 runtime
 msgid "WIZARD EYE"
-msgstr "Trollkarlens öga"
+msgstr "TROLLKARLENS ÖGA"
 
 #. Extracted from current DM1 runtime
 msgid "PAIN RAT"
-msgstr "Smärtråtta"
+msgstr "SMÄRTRÅTTA"
 
 #. Extracted from current DM1 runtime
 msgid "RUSTER"
-msgstr "Ruster"
+msgstr "RUSTER"
 
 #. Extracted from current DM1 runtime
 msgid "SCREAMER"
-msgstr "Screamer"
+msgstr "SCREAMER"
 
 #. Extracted from current DM1 runtime
 msgid "ROCKPILE"
-msgstr "Stenhög"
+msgstr "STENHÖG"
 
 #. Extracted from current DM1 runtime
 msgid "GHOST"
-msgstr "Spöke"
+msgstr "SPÖKE"
 
 #. Extracted from current DM1 runtime
 msgid "STONE GOLEM"
-msgstr "Stengolem"
+msgstr "STENGOLEM"
 
 #. Extracted from current DM1 runtime
 msgid "MUMMY"
-msgstr "Mumie"
+msgstr "MUMIE"
 
 #. Extracted from current DM1 runtime
 msgid "BLACK FLAME"
-msgstr "Svart flamma"
+msgstr "SVART FLAMMA"
 
 #. Extracted from current DM1 runtime
 msgid "SKELETON"
-msgstr "Skelett"
+msgstr "SKELETT"
 
 #. Extracted from current DM1 runtime
 msgid "COUATL"
-msgstr "Couatl"
+msgstr "COUATL"
 
 #. Extracted from current DM1 runtime
 msgid "VEXIRK"
-msgstr "Vexirk"
+msgstr "VEXIRK"
 
 #. Extracted from current DM1 runtime
 msgid "MAGENTA WORM"
-msgstr "Magentamask"
+msgstr "MAGENTAMASK"
 
 #. Extracted from current DM1 runtime
 msgid "TROLIN"
-msgstr "Trolin"
+msgstr "TROLIN"
 
 #. Extracted from current DM1 runtime
 msgid "GIANT WASP"
-msgstr "Jättegeting"
+msgstr "JÄTTEGETING"
 
 #. Extracted from current DM1 runtime
 msgid "ANIMATED ARMOUR"
-msgstr "Levande rustning"
+msgstr "LEVANDE RUSTNING"
 
 #. Extracted from current DM1 runtime
 msgid "MATERIALIZER"
-msgstr "Materialiserare"
+msgstr "MATERIALISERARE"
 
 #. Extracted from current DM1 runtime
 msgid "WATER ELEMENTAL"
-msgstr "Vattenelementar"
+msgstr "VATTENELEMENTAR"
 
 #. Extracted from current DM1 runtime
 msgid "OITU"
-msgstr "Oitu"
+msgstr "OITU"
 
 #. Extracted from current DM1 runtime
 msgid "DEMON"
-msgstr "Demon"
+msgstr "DEMON"
 
 #. Extracted from current DM1 runtime
 msgid "LORD CHAOS"
-msgstr "Lord Chaos"
+msgstr "LORD CHAOS"
 
 #. Extracted from current DM1 runtime
 msgid "RED DRAGON"
-msgstr "Röd drake"
+msgstr "RÖD DRAKE"
 
 #. Extracted from current DM1 runtime
 msgid "LORD ORDER"
-msgstr "Lord Order"
+msgstr "LORD ORDER"
 
 #. Extracted from current DM1 runtime
 msgid "GREY LORD"
-msgstr "Grey Lord"
+msgstr "GREY LORD"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN CREATURE"
-msgstr "Okänd varelse"
+msgstr "OKÄND VARELSE"
 
 #. Extracted from current DM1 runtime
 msgid "NOTHING"
-msgstr "Ingenting"
+msgstr "INGENTING"
 
 #. Extracted from current DM1 runtime
 msgid "WEAPON %d"
@@ -1184,9 +1173,7 @@ msgstr "SPELET ÄR SLUT"
 
 #. Extracted from current DM1 runtime
 msgid "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU."
-msgstr ""
-"FÄNGELSEHÅLAN KRÄVER ERA SJÄLAR. LÄS IN EN SPARFIL ELLER ÅTERVÄND TILL "
-"MENYN."
+msgstr "FÄNGELSEHÅLAN KRÄVER ERA SJÄLAR. LÄS IN EN SPARFIL ELLER ÅTERVÄND TILL MENYN."
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
@@ -1202,19 +1189,19 @@ msgstr "T%u: %s GICK UPP I NIVÅ! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
-msgstr "Krigare"
+msgstr "KRIGARE"
 
 #. Extracted from current DM1 runtime
 msgid "NINJA"
-msgstr "Ninja"
+msgstr "NINJA"
 
 #. Extracted from current DM1 runtime
 msgid "PRIEST"
-msgstr "Präst"
+msgstr "PRÄST"
 
 #. Extracted from current DM1 runtime
 msgid "WIZARD"
-msgstr "Trollkarl"
+msgstr "TROLLKARL"
 
 #. Extracted from current DM1 runtime
 msgid "SKILL"
@@ -1449,16 +1436,12 @@ msgid "READY"
 msgstr "KLAR"
 
 #. Extracted from current DM1 runtime
-msgid ""
-"CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT "
-"CHAMPION"
-msgstr ""
-"KLICKA I MITTEN FÖR ATT GÅ FRAMÅT ELLER LÄSA, KLICKA PÅ SIDORNA FÖR ATT "
-"SVÄNGA, TAB VÄLJER FRÄMRE KÄMPEN"
+msgid "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION"
+msgstr "KLICKA I MITTEN FÖR ATT GÅ FRAMÅT ELLER LÄSA, KLICKA PÅ SIDORNA FÖR ATT SVÄNGA, TAB VÄLJER FRÄMRE KÄMPEN"
 
 #. Extracted from current DM1 runtime
 msgid "DUNGEON MASTER"
-msgstr "Dungeon Master"
+msgstr "DUNGEON MASTER"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE"
@@ -1850,8 +1833,7 @@ msgstr "DÖRREN ÖPPNAD"
 
 #. Extracted from current DM1 runtime
 msgid "OPEN, PASSAGE CLEAR, CLICK CENTER OR PRESS UP TO CROSS"
-msgstr ""
-"ÖPPEN, PASSAGEN ÄR FRI, KLICKA I MITTEN ELLER TRYCK UPP FÖR ATT PASSERA"
+msgstr "ÖPPEN, PASSAGEN ÄR FRI, KLICKA I MITTEN ELLER TRYCK UPP FÖR ATT PASSERA"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR CLOSED"
@@ -2026,19 +2008,12 @@ msgid "%s READY"
 msgstr "%s KLAR"
 
 #. Extracted from current DM1 runtime
-msgid ""
-"SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT "
-"CHAMPION"
-msgstr ""
-"MELLANSLAG AGERAR, ENTER INSPEKTERAR, KLICKA I MITTEN FÖR ATT BEKRÄFTA, TAB "
-"BLÄDDRAR BLAND FRÄMRE KÄMPAR"
+msgid "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION"
+msgstr "MELLANSLAG AGERAR, ENTER INSPEKTERAR, KLICKA I MITTEN FÖR ATT BEKRÄFTA, TAB BLÄDDRAR BLAND FRÄMRE KÄMPAR"
 
 #. Extracted from current DM1 runtime
-msgid ""
-"CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS"
-msgstr ""
-"KLICKA ELLER TAB FÖR ATT BYTA, KLICKA I MITTEN FÖR ATT BEKRÄFTA, MELLANSLAG "
-"AGERAR, ENTER INSPEKTERAR"
+msgid "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS"
+msgstr "KLICKA ELLER TAB FÖR ATT BYTA, KLICKA I MITTEN FÖR ATT BEKRÄFTA, MELLANSLAG AGERAR, ENTER INSPEKTERAR"
 
 #. Extracted from current DM1 runtime
 msgid "DEAD"
@@ -2070,8 +2045,7 @@ msgstr "FOKUS AKTIV EFFEKT"
 
 #. Extracted from current DM1 runtime
 msgid "SPACE WAITS, ENTER INSPECTS, TURN IF THE CELL STAYS HOT"
-msgstr ""
-"MELLANSLAG VÄNTAR, ENTER INSPEKTERAR, SVÄNG OM RUTAN FORTSÄTTER VARA HET"
+msgstr "MELLANSLAG VÄNTAR, ENTER INSPEKTERAR, SVÄNG OM RUTAN FORTSÄTTER VARA HET"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS OPEN DOOR"
