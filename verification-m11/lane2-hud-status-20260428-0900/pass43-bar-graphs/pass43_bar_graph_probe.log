@@ -1,0 +1,12 @@
+Screenshot: verification-m11/lane2-hud-status-20260428-0900/pass43-bar-graphs/pass43_party_bar_graphs.pgm
+PASS INV_P43_01 slot-0 top-row V1 bar origins resolve to x=46/53/60 and y=4 from the recovered zone geometry
+PASS INV_P43_02 local source/evidence anchors the champion-color table as {7,11,8,14}
+PASS INV_P43_03 m11_game_view.c carries the pass-43 V1 bar-graph geometry and mode switch
+PASS INV_P43_04 slot-0 HP bar is a full-height 4x25 green column at 100/100
+PASS INV_P43_05 slot-0 stamina bar blanks the top 13 px and fills the bottom 12 px at 50/100
+PASS INV_P43_06 slot-0 mana bar honors the CHAMDRAW min-1px fill rule at 1/100
+PASS INV_P43_07 slot-1 HP bar uses champion color 11 (yellow) from the source table
+PASS INV_P43_08 slot-2 HP bar uses champion color 8 (red) from the source table
+PASS INV_P43_09 slot-3 HP bar uses champion color 14 (light blue) from the source table
+PASS INV_P43_10 the old left-anchored horizontal strip body no longer carries colored stat fill in V1
+# summary: 10/10 invariants passed
