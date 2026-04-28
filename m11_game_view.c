@@ -16375,18 +16375,69 @@ int M11_GameView_GetV1SpellShieldBorderGraphicId(void) {
     return M11_GFX_BORDER_PARTY_SPELLSHIELD;
 }
 
-int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) {
+static int m11_collect_v1_status_shield_border_graphics(
+    const M11_GameViewState* state,
+    int championSlot,
+    int outGraphics[3]) {
+    int appended[3];
+    int appendCount = 0;
+    int drawCount = 0;
+    int i;
+
+    (void)championSlot;
     if (!state) return 0;
-    if (state->world.magic.spellShieldDefense > 0) {
-        return M11_GameView_GetV1SpellShieldBorderGraphicId();
-    }
+
+    /* CHAMDRAW.C F0292 appends active borders in fire, spell,
+     * party/champion-shield order, then draws them with
+     * while (BorderCount--) — so the visible draw stack is the
+     * reverse order: party shield first, spell shield, fire shield
+     * last/topmost. */
     if (state->world.magic.fireShieldDefense > 0) {
-        return M11_GameView_GetV1FireShieldBorderGraphicId();
+        appended[appendCount++] = M11_GameView_GetV1FireShieldBorderGraphicId();
+    }
+    if (state->world.magic.spellShieldDefense > 0) {
+        appended[appendCount++] = M11_GameView_GetV1SpellShieldBorderGraphicId();
     }
     if (state->world.magic.partyShieldDefense > 0) {
-        return M11_GameView_GetV1PartyShieldBorderGraphicId();
+        appended[appendCount++] = M11_GameView_GetV1PartyShieldBorderGraphicId();
     }
-    return 0;
+
+    if (outGraphics) {
+        for (i = appendCount - 1; i >= 0; --i) {
+            outGraphics[drawCount++] = appended[i];
+        }
+    }
+    return appendCount;
+}
+
+int M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
+    const M11_GameViewState* state, int championSlot) {
+    return m11_collect_v1_status_shield_border_graphics(
+        state, championSlot, NULL);
+}
+
+int M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
+    const M11_GameViewState* state, int championSlot, int drawOrdinal) {
+    int graphics[3] = {0, 0, 0};
+    int count;
+    if (drawOrdinal < 0 || drawOrdinal >= 3) return 0;
+    count = m11_collect_v1_status_shield_border_graphics(
+        state, championSlot, graphics);
+    if (drawOrdinal >= count) return 0;
+    return graphics[drawOrdinal];
+}
+
+int M11_GameView_GetV1StatusShieldBorderGraphicForChampion(
+    const M11_GameViewState* state, int championSlot) {
+    int count = M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
+        state, championSlot);
+    if (count <= 0) return 0;
+    return M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
+        state, championSlot, count - 1);
+}
+
+int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) {
+    return M11_GameView_GetV1StatusShieldBorderGraphicForChampion(state, -1);
 }
 
 int M11_GameView_GetV1PoisonLabelGraphicId(void) {
@@ -17690,31 +17741,40 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             }
 
             /* GRAPHICS.DAT-backed shield border overlays (67×29).
-             * Drawn with transparency on top of the status box when the
-             * party has an active shield spell.
-             * Ref: ReDMCSB INVNTORY.C — G0310_i_ShieldDefenseType selects
-             *   C037 (party shield), C038 (fire shield), or C039 (spell shield).
-             * Priority: spell > fire > party (highest active wins). */
+             * Drawn with transparency on top of the status box when party
+             * shield defenses are active. Ref: ReDMCSB CHAMDRAW.C F0292
+             * appends C038 fire, C039 spell, then C037 party/champion shield
+             * and draws the array in reverse, stacking party -> spell -> fire
+             * rather than selecting only one. Champion-local ShieldDefense is
+             * not yet present in M11 state, so this helper preserves the
+             * party-wide source-backed portion of that stack. */
             if (state->assetsAvailable && !isDead) {
-                unsigned int borderGfx =
-                    (unsigned int)M11_GameView_GetV1StatusShieldBorderGraphic(state);
-                if (borderGfx) {
-                    const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
-                        (M11_AssetLoader*)&state->assetLoader, borderGfx);
-                    if (borderAsset && borderAsset->width == slotW &&
-                        borderAsset->height == slotH) {
-                        int borderX = x;
-                        int borderY = y;
-                        int borderW = slotW;
-                        int borderH = slotH;
-                        if (!useV2PartyHud) {
-                            (void)M11_GameView_GetV1StatusShieldBorderZone(
-                                slot, &borderX, &borderY, &borderW, &borderH);
+                int borderCount =
+                    M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
+                        state, slot);
+                int borderOrdinal;
+                for (borderOrdinal = 0; borderOrdinal < borderCount; ++borderOrdinal) {
+                    unsigned int borderGfx = (unsigned int)
+                        M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
+                            state, slot, borderOrdinal);
+                    if (borderGfx) {
+                        const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
+                            (M11_AssetLoader*)&state->assetLoader, borderGfx);
+                        if (borderAsset && borderAsset->width == slotW &&
+                            borderAsset->height == slotH) {
+                            int borderX = x;
+                            int borderY = y;
+                            int borderW = slotW;
+                            int borderH = slotH;
+                            if (!useV2PartyHud) {
+                                (void)M11_GameView_GetV1StatusShieldBorderZone(
+                                    slot, &borderX, &borderY, &borderW, &borderH);
+                            }
+                            M11_AssetLoader_BlitRegion(borderAsset,
+                                0, 0, borderW, borderH,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                borderX, borderY, 0); /* transparentColor=0 (black) */
                         }
-                        M11_AssetLoader_BlitRegion(borderAsset,
-                            0, 0, borderW, borderH,
-                            framebuffer, framebufferWidth, framebufferHeight,
-                            borderX, borderY, 0); /* transparentColor=0 (black) */
                     }
                 }
             }

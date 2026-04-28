@@ -1833,12 +1833,20 @@ int main(int argc, char** argv) {
         shieldGraphicView.world.magic.fireShieldDefense = 1;
         int fireBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
         shieldGraphicView.world.magic.spellShieldDefense = 1;
-        int spellBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        int allTopBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
         probe_record(&tally,
                      "INV_GV_15P",
                      noneBorder == 0 && partyBorder == 37 &&
-                         fireBorder == 38 && spellBorder == 39,
-                     "V1 status shield border graphic priority follows spell/fire/party source order");
+                         fireBorder == 38 && allTopBorder == 38,
+                     "V1 status shield top border follows F0292 reverse draw stack (fire topmost)");
+        probe_record(&tally,
+                     "INV_GV_15P2",
+                     M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(&shieldGraphicView, 0) == 3 &&
+                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 0) == 37 &&
+                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 1) == 39 &&
+                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 2) == 38 &&
+                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 3) == 0,
+                     "V1 status shield border stack draws party, spell, then fire like F0292 while-count order");
     }
 
     {
