@@ -1,0 +1,3 @@
+replay_run=/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay
+replay_source=/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__champion_name_keys/image0006-key_C_6.png
+pass155_file=image0006-key_C_6.png
