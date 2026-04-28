@@ -498,6 +498,15 @@ static const char* mode_short(int mode) {
     return "V1 ORIGINAL";
 }
 
+
+static const char* language_short(const M12_StartupMenuState* state) {
+    int li = state ? state->settings.languageIndex : 0;
+    if (li == 1) return "SV";
+    if (li == 2) return "FR";
+    if (li == 3) return "DE";
+    return "EN";
+}
+
 static void draw_mode_badge(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     int mode = M12_StartupMenu_GetPresentationMode(state);
     M12_RGB col = mode_color(mode);
@@ -1492,8 +1501,9 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
     draw_data_dir(&c, state);
 
     const char* modeStr = mode_short(M12_StartupMenu_GetPresentationMode(state));
-    char modeHint[64];
-    snprintf(modeHint, sizeof(modeHint), "PRESENTATION  %s", modeStr);
+    const char* langStr = language_short(state);
+    char modeHint[80];
+    snprintf(modeHint, sizeof(modeHint), "PRESENTATION  %s    LANG  %s", modeStr, langStr);
     draw_footer(&c, footerLeft, modeHint);
 }
 

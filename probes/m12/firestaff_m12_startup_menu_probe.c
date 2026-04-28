@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "asset_status_m12.h"
 #include "menu_hit_m12.h"
 #include "menu_startup_m12.h"

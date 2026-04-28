@@ -1,5 +1,5 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
 HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
 OUT_DIR=${1:-$HERE/verification-m12/menu-mouse}

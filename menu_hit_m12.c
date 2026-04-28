@@ -10,15 +10,15 @@
 #include <string.h>
 
 /* Canvas size (must match M12_MODERN_MENU_NATIVE_{WIDTH,HEIGHT}). */
-#define M12_HIT_CANVAS_W 1280
-#define M12_HIT_CANVAS_H 720
+#define M12_HIT_CANVAS_W 1920
+#define M12_HIT_CANVAS_H 1080
 
 /* --- Main view layout (mirrors draw_main_view) --- */
 #define M12_HIT_MAIN_GRID_TOP       170
 #define M12_HIT_MAIN_GRID_BOTTOM    (M12_HIT_CANVAS_H - 130)
 #define M12_HIT_MAIN_SIDE_MARGIN    48
-#define M12_HIT_MAIN_CARD_GAP       18
-#define M12_HIT_MAIN_CARD_COUNT     5
+#define M12_HIT_MAIN_CARD_GAP       22
+#define M12_HIT_MAIN_CARD_COUNT     4
 
 /* --- Sub-view panel layout (shared by settings + game options) --- */
 #define M12_HIT_PANEL_X        96
@@ -143,11 +143,14 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
 
     switch (state->view) {
         case M12_MENU_VIEW_MAIN:
-            for (i = 0; i < M12_HIT_MAIN_CARD_COUNT; ++i) {
+            /* Modern front-door view has one brand card followed by
+             * three game cards.  The brand card is decorative; visible
+             * game card slots 1..3 map to menu entry indices 0..2. */
+            for (i = 1; i < M12_HIT_MAIN_CARD_COUNT; ++i) {
                 if (m12_hit_main_card_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
                     hit.kind = M12_HIT_MAIN_CARD;
-                    hit.index = i;
+                    hit.index = i - 1;
                     return hit;
                 }
             }

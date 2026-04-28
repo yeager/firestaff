@@ -4,8 +4,8 @@
  * Bounded M12 slice probe for startup-menu mouse/hover/keyboard
  * interaction on the modern high-resolution renderer.
  *
- *   INV_MOUSE_01   hit-test on the main view maps the 5 cards to
- *                  card 0..4.
+ *   INV_MOUSE_01   hit-test on the modern main view maps the three
+ *                  visible game cards to entry indices 0..2.
  *   INV_MOUSE_02   clicking the non-selected card moves selection and
  *                  activates it.
  *   INV_MOUSE_03   in settings view, clicking the right half of a row
@@ -91,24 +91,26 @@ int main(void) {
     {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
-        /* Canvas: 5 cards across 1184 usable px starting at x=48. */
+        /* Modern front-door layout: brand card at visual slot 0,
+         * then DM1/CSB/DM2 game cards at visual slots 1..3. */
         int side = 48;
-        int gap = 18;
-        int count = 5;
-        int cardW = (W - 2 * side - gap * (count - 1)) / count;
+        int gap = 22;
+        int visualCount = 4;
+        int cardW = (W - 2 * side - gap * (visualCount - 1)) / visualCount;
         int allOk = 1;
-        for (int i = 0; i < count; ++i) {
-            int cx = side + i * (cardW + gap) + cardW / 2;
+        for (int entry = 0; entry < 3; ++entry) {
+            int visualSlot = entry + 1;
+            int cx = side + visualSlot * (cardW + gap) + cardW / 2;
             int cy = 400;
             M12_MouseHit h_ = M12_ModernMenu_HitTest(&s, cx, cy);
-            if (!(h_.kind == M12_HIT_MAIN_CARD && h_.index == i)) {
+            if (!(h_.kind == M12_HIT_MAIN_CARD && h_.index == entry)) {
                 allOk = 0;
-                printf("  DEBUG card %d at (%d,%d) -> kind=%d index=%d\n",
-                       i, cx, cy, h_.kind, h_.index);
+                printf("  DEBUG visual card %d at (%d,%d) -> kind=%d index=%d\n",
+                       visualSlot, cx, cy, h_.kind, h_.index);
             }
         }
         record(&t, "INV_MOUSE_01", allOk,
-               "hit-test maps main view card centres to card indices 0..4");
+               "hit-test maps visible game card centres to entry indices 0..2");
     }
 
     /* ---------- INV_MOUSE_02 ---------- */
@@ -117,11 +119,12 @@ int main(void) {
         M12_StartupMenu_Init(&s);
         force_dm1_ready(&s);
         int side = 48;
-        int gap = 18;
-        int count = 5;
-        int cardW = (W - 2 * side - gap * (count - 1)) / count;
-        /* Click card 2 (DM2): visible in the catalog, but not launch-supported. */
-        int cx = side + 2 * (cardW + gap) + cardW / 2;
+        int gap = 22;
+        int visualCount = 4;
+        int cardW = (W - 2 * side - gap * (visualCount - 1)) / visualCount;
+        /* Click visual card 3 / entry 2 (DM2): visible in the catalog,
+         * but not launch-supported. */
+        int cx = side + 3 * (cardW + gap) + cardW / 2;
         int cy = 400;
         int changed = M12_ModernMenu_HandlePointer(&s, cx, cy, 1, NULL);
         int ok = changed == 1 &&
@@ -135,7 +138,7 @@ int main(void) {
         /* Card 0 is DM1 and it's forced-ready, click should open game-opts. */
         M12_StartupMenu_Init(&s);
         force_dm1_ready(&s);
-        cx = side + cardW / 2;
+        cx = side + 1 * (cardW + gap) + cardW / 2;
         cy = 400;
         M12_ModernMenu_HandlePointer(&s, cx, cy, 1, NULL);
         record(&t, "INV_MOUSE_02B",
