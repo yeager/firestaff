@@ -1,0 +1,45 @@
+window-found 4194321 via search --class DOSBox
+window-found 4194330 via search --class DOSBox
+capture initial anim_000.png sha=b3080eaac5d0
+window-found 4194330 via search --class DOSBox
+key Return
+window-found 4194330 via search --class DOSBox
+capture seed_2 selector_000.png sha=44842ee36952
+window-found 4194330 via search --class DOSBox
+capture seed_3 selector_000.png sha=44842ee36952
+window-found 4194330 via search --class DOSBox
+click 45,35 mapped 91,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture seed_4 selector_000.png sha=44842ee36952
+window-found 4194330 via search --class DOSBox
+capture seed_5 selector_000.png sha=99ec0762b84b
+window-found 4194330 via search --class DOSBox
+click 95,35 mapped 191,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture seed_6 selector_000.png sha=307323fbc1f7
+window-found 4194330 via search --class DOSBox
+capture seed_7 selector_000.png sha=307323fbc1f7
+window-found 4194330 via search --class DOSBox
+click 150,35 mapped 301,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture seed_8 selector_000.png sha=7addedda4327
+window-found 4194330 via search --class DOSBox
+capture seed_9 selector_000.png sha=e4e4e97211ea
+window-found 4194330 via search --class DOSBox
+click 220,35 mapped 441,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture seed_10 fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+capture seed_11 fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+click 280,35 mapped 561,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture seed_12 fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+capture seed_13 fires_000.png sha=5f1bf5b12f9f
+window-found 4194330 via search --class DOSBox
+key d
+window-found 4194330 via search --class DOSBox
+capture after_control fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_settle fires_000.png sha=48ed3743ab6a
