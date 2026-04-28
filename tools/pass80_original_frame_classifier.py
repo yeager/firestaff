@@ -158,6 +158,7 @@ def classify(regions: dict[str, RegionStats], dims: tuple[int, int]) -> tuple[st
         viewport.nonblack_ratio > 0.85
         and viewport.color_ratio < 0.05
         and viewport.unique_colors <= 8
+        and viewport.luma_stddev < 45.0
         and right_col.nonblack_ratio < 0.15
         and inventory.nonblack_ratio > 0.70
         and inventory.color_ratio < 0.10
@@ -249,8 +250,8 @@ def write_markdown(path: Path, result: dict[str, object]) -> None:
     path.write_text("\n".join(lines).rstrip() + "\n")
 
 
-def _stats(nonblack: float, color: float, unique: int) -> RegionStats:
-    return RegionStats(nonblack, color, unique, (0.0, 0.0, 0.0), 0.0)
+def _stats(nonblack: float, color: float, unique: int, luma_stddev: float = 0.0) -> RegionStats:
+    return RegionStats(nonblack, color, unique, (0.0, 0.0, 0.0), luma_stddev)
 
 
 def run_self_test() -> int:
@@ -259,13 +260,23 @@ def run_self_test() -> int:
 
     wall = dict(base)
     wall.update({
-        "viewport": _stats(0.925, 0.0, 6),
+        "viewport": _stats(0.925, 0.0, 6, 27.99),
         "right_column": _stats(0.063, 0.060, 3),
         "right_action": _stats(0.014, 0.0, 2),
         "spell_area": _stats(0.0, 0.0, 1),
         "inventory_extent": _stats(0.784, 0.0, 6),
     })
     cases.append(("flat close-wall route frame", wall, "wall_closeup"))
+
+    corridor = dict(base)
+    corridor.update({
+        "viewport": _stats(0.925, 0.0, 6, 57.48),
+        "right_column": _stats(0.063, 0.060, 3),
+        "right_action": _stats(0.014, 0.0, 2),
+        "spell_area": _stats(0.0, 0.0, 1),
+        "inventory_extent": _stats(0.784, 0.0, 6, 68.96),
+    })
+    cases.append(("low-color corridor gameplay", corridor, "dungeon_gameplay"))
 
     inventory = dict(base)
     inventory.update({

@@ -440,24 +440,27 @@ click_original_frame() {
     geom="$(xdotool getwindowgeometry --shell "$window")"
     eval "$geom"
     gx="$X"; gy="$Y"; gw="$WIDTH"; gh="$HEIGHT"
-    read -r px py < <(python3 - "$gx" "$gy" "$gw" "$gh" "$x" "$y" <<'PY'
+    read -r px py < <(python3 - "$gw" "$gh" "$x" "$y" <<'PY'
 import sys
-gx, gy, gw, gh, x, y = map(float, sys.argv[1:])
+gw, gh, x, y = map(float, sys.argv[1:])
 content_aspect = 320.0 / 200.0
 content_w = gw
 content_h = content_w / content_aspect
 if content_h > gh:
     content_h = gh
     content_w = content_h * content_aspect
-left = gx + (gw - content_w) / 2.0
-top = gy + (gh - content_h) / 2.0
+left = (gw - content_w) / 2.0
+top = (gh - content_h) / 2.0
 px = left + ((x + 0.5) / 320.0) * content_w
 py = top + ((y + 0.5) / 200.0) * content_h
 print(int(round(px)), int(round(py)))
 PY
 )
+    # xdotool --window coordinates are relative to the target window.  Do not
+    # add the absolute X/Y origin here; doing so can click outside the DOSBox
+    # client under Xvfb when the window is offset from 0,0.
     xdotool mousemove --window "$window" "$px" "$py" click 1
-    echo "click-mapped ${x},${y} -> ${px},${py} window=${gw}x${gh}"
+    echo "click-mapped ${x},${y} -> window-relative ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
     sleep 0.18
 }
 
