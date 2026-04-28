@@ -1,0 +1,15 @@
+$ git status --short --branch
+## sync/n2-dm1-v1-20260428...origin/main [ahead 23]
+?? ..-firestaff-worker-viewport-parity-20260427-040243/
+?? verification-m11/lane2-hud-20260428-070228/
+?? verification-m11/verification_summary.md
+
+$ git log --oneline -8
+b1b881c Record lane3 inventory follow-up evidence
+f532cc4 Fix lane2 follow-up evidence formatting
+b5d231d Add N2 Linux original capture route evidence
+ae70940 Record DM1 V1 HUD status follow-up evidence
+dda3089 Fix lane2 champion lifecycle evidence formatting
+c62cc88 Record lane1 viewport follow-up evidence
+3b9e74f Align V1 spell label gate with right column
+ac51cb1 Record original overlay capture follow-up
