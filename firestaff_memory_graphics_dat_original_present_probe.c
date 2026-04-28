@@ -13,6 +13,11 @@ static unsigned short read_u16_le(const unsigned char* p) {
     return (unsigned short)(p[0] | ((unsigned short)p[1] << 8));
 }
 
+static unsigned long storage_byte_count_from_size(unsigned short width, unsigned short height) {
+    unsigned short bytesPerRow = (unsigned short)(((width + 1) & 0xFFFE) >> 1);
+    return (unsigned long)bytesPerRow * (unsigned long)height;
+}
+
 static unsigned long bitmap_byte_count(const unsigned char* bitmap) {
     unsigned short width = read_u16_le(bitmap - 4);
     unsigned short height = read_u16_le(bitmap - 2);
@@ -27,6 +32,7 @@ int main(int argc, char** argv) {
     struct MemoryGraphicsDatRuntimeState_Compat runtimeState;
     struct MemoryGraphicsDatBitmapPathResult_Compat result;
     unsigned int rawBufferBytes;
+    unsigned long bitmapBufferBytes;
     unsigned char* rawGraphic;
     unsigned char* ownedStorage;
     unsigned char* presentStorage;
@@ -60,9 +66,12 @@ int main(int argc, char** argv) {
     if (rawBufferBytes < 4096U) {
         rawBufferBytes = 4096U;
     }
+    bitmapBufferBytes = storage_byte_count_from_size(
+        runtimeState.widthHeight[graphicIndex].Width,
+        runtimeState.widthHeight[graphicIndex].Height);
     rawGraphic = (unsigned char*)calloc((size_t)rawBufferBytes + 4096U, 1);
-    ownedStorage = (unsigned char*)calloc((size_t)rawBufferBytes + 8192U, 1);
-    presentStorage = (unsigned char*)calloc((size_t)rawBufferBytes + 8192U, 1);
+    ownedStorage = (unsigned char*)calloc((size_t)bitmapBufferBytes + 8192U, 1);
+    presentStorage = (unsigned char*)calloc((size_t)bitmapBufferBytes + 8192U, 1);
     if ((rawGraphic == 0) || (ownedStorage == 0) || (presentStorage == 0)) {
         fprintf(stderr, "failed: allocation error\n");
         free(rawGraphic);

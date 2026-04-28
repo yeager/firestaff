@@ -11,6 +11,11 @@ unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
+static unsigned long storage_byte_count_from_size(unsigned short width, unsigned short height) {
+    unsigned short bytesPerRow = (unsigned short)(((width + 1) & 0xFFFE) >> 1);
+    return (unsigned long)bytesPerRow * (unsigned long)height;
+}
+
 static const char* kind_name(enum GraphicsDatEntryKind_Compat kind) {
     switch (kind) {
         case GRAPHICS_DAT_ENTRY_BITMAP_SAFE: return "BITMAP_SAFE";
@@ -33,6 +38,7 @@ int main(int argc, char** argv) {
     struct ScreenBitmapPresentResult_Compat presentResult;
     struct ScreenBitmapExportPgmResult_Compat exportResult;
     unsigned int rawBufferBytes;
+    unsigned long bitmapBufferBytes;
     unsigned char* rawGraphic;
     unsigned char* ownedStorage;
     unsigned char* screenStorage;
@@ -82,9 +88,12 @@ int main(int argc, char** argv) {
     if (rawBufferBytes < 4096U) {
         rawBufferBytes = 4096U;
     }
+    bitmapBufferBytes = storage_byte_count_from_size(
+        runtimeState.widthHeight[graphicIndex].Width,
+        runtimeState.widthHeight[graphicIndex].Height);
     rawGraphic = (unsigned char*)calloc((size_t)rawBufferBytes + 4096U, 1);
-    ownedStorage = (unsigned char*)calloc((size_t)rawBufferBytes + 8192U, 1);
-    screenStorage = (unsigned char*)calloc((size_t)rawBufferBytes + 8192U, 1);
+    ownedStorage = (unsigned char*)calloc((size_t)bitmapBufferBytes + 8192U, 1);
+    screenStorage = (unsigned char*)calloc((size_t)bitmapBufferBytes + 8192U, 1);
     if ((rawGraphic == 0) || (ownedStorage == 0) || (screenStorage == 0)) {
         fprintf(stderr, "failed: allocation error\n");
         free(rawGraphic);
