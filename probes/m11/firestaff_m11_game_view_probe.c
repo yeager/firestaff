@@ -7183,6 +7183,52 @@ int main(int argc, char** argv) {
                      "normal V1 inventory slot click picks object into dedicated leader-hand runtime state");
     }
 
+    /* INV_GV_362C: With a source-backed AllowedSlots bridge, normal V1
+     * inventory clicks can place the transient leader-hand object into a
+     * valid empty slot and reject an invalid slot, matching F0302's
+     * G0237.AllowedSlots & G0038.SlotMasks gate. */
+    {
+        M11_GameViewState placeInv;
+        struct DungeonThings_Compat localThings;
+        struct DungeonWeapon_Compat weapons[2];
+        unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        unsigned short torchThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+        int sx = 0, sy = 0, sw = 0, sh = 0;
+        int ok;
+        memset(&localThings, 0, sizeof(localThings));
+        memset(weapons, 0, sizeof(weapons));
+        weapons[0].type = 8; /* DAGGER: source AllowedSlots 0x05C0 (quiver/pouch/chest) */
+        weapons[1].type = 2; /* TORCH: source AllowedSlots 0x0400 (chest/backpack only) */
+        localThings.weapons = weapons;
+        localThings.weaponCount = 2;
+        memcpy(&placeInv, &gameView, sizeof(placeInv));
+        placeInv.showDebugHUD = 0;
+        placeInv.inventoryPanelActive = 1;
+        placeInv.world.things = &localThings;
+        placeInv.world.party.activeChampionIndex = 0;
+        placeInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_1] = THING_NONE;
+        M11_GameView_SetV1LeaderHandObject(&placeInv, daggerThing);
+        (void)M11_GameView_GetV1InventorySourceSlotBoxZone(19, &sx, &sy, &sw, &sh);
+        ok = M11_GameView_HandlePointer(&placeInv,
+                                        sx + (sw / 2),
+                                        33 + sy + (sh / 2),
+                                        1) == M11_GAME_INPUT_REDRAW &&
+             placeInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_1] == daggerThing &&
+             M11_GameView_GetV1LeaderHandThing(&placeInv) == THING_NONE;
+        M11_GameView_SetV1LeaderHandObject(&placeInv, torchThing);
+        ok = ok &&
+             M11_GameView_HandlePointer(&placeInv,
+                                        sx + (sw / 2),
+                                        33 + sy + (sh / 2),
+                                        1) == M11_GAME_INPUT_IGNORED &&
+             placeInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_1] == daggerThing &&
+             M11_GameView_GetV1LeaderHandThing(&placeInv) == torchThing;
+        probe_record(&tally,
+                     "INV_GV_362C",
+                     ok,
+                     "V1 inventory leader-hand placement honors source AllowedSlots before slot mutation");
+    }
+
     /* INV_GV_362B: Source backpack boxes C528..C536 are real click
      * zones/commands, but they must not alias Firestaff's compact eight-slot
      * champion backpack model.  Until the champion model grows the remaining

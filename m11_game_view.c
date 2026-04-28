@@ -12484,6 +12484,53 @@ static int m11_object_info_index_for_thing(const struct DungeonThings_Compat* th
     }
 }
 
+static unsigned int m11_allowed_slots_for_thing(const struct DungeonThings_Compat* things,
+                                                unsigned short thingId) {
+    static const unsigned short kObjectInfoAllowedSlots[180] = {
+        0x0500, 0x0200, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0501, 0x0501, 0x0501, 0x0501,
+        0x0501, 0x0501, 0x0501, 0x0501, 0x0501, 0x0501, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500,
+        0x0500, 0x0400, 0x0400, 0x0040, 0x0040, 0x0040, 0x0040, 0x05C0, 0x0040, 0x0040, 0x0040, 0x0040,
+        0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0440, 0x0040, 0x0040,
+        0x0040, 0x0040, 0x05C0, 0x05C0, 0x0440, 0x05C0, 0x05C0, 0x05C0, 0x0040, 0x0040, 0x0540, 0x0540,
+        0x0040, 0x0040, 0x0040, 0x0040, 0x0440, 0x0040, 0x0440, 0x0040, 0x0040, 0x040C, 0x040C, 0x0410,
+        0x0420, 0x0420, 0x0408, 0x0410, 0x0408, 0x0410, 0x0408, 0x0408, 0x0410, 0x0410, 0x0408, 0x0410,
+        0x0420, 0x0408, 0x0410, 0x0420, 0x0410, 0x0408, 0x0408, 0x0410, 0x0402, 0x0402, 0x0402, 0x0402,
+        0x0402, 0x0400, 0x0200, 0x0200, 0x0200, 0x0408, 0x0410, 0x0408, 0x0410, 0x0402, 0x0420, 0x0402,
+        0x0008, 0x0010, 0x0420, 0x0200, 0x0402, 0x0008, 0x0010, 0x0420, 0x0200, 0x0402, 0x0008, 0x0010,
+        0x0420, 0x0200, 0x0402, 0x0408, 0x0010, 0x0420, 0x0408, 0x0500, 0x0501, 0x0504, 0x0504, 0x0500,
+        0x0400, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500,
+        0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0200, 0x0500, 0x0500, 0x0500,
+        0x0501, 0x0501, 0x0501, 0x0501, 0x0401, 0x0401, 0x0501, 0x0501, 0x0504, 0x0504, 0x0504, 0x0504,
+        0x0504, 0x0500, 0x0500, 0x0500, 0x0400, 0x0500, 0x0500, 0x0504, 0x0500, 0x0500, 0x0000, 0x0400
+    };
+    int objectInfoIndex = m11_object_info_index_for_thing(things, thingId);
+    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return 0;
+    return (unsigned int)kObjectInfoAllowedSlots[objectInfoIndex];
+}
+
+static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex) {
+    switch (sourceSlotBoxIndex) {
+        case 8:
+        case 9:  return 0x0200u;
+        case 10: return 0x0002u;
+        case 11: return 0x0008u;
+        case 12: return 0x0010u;
+        case 13: return 0x0020u;
+        case 14:
+        case 19: return 0x0100u;
+        case 15:
+        case 16:
+        case 17: return 0x0080u;
+        case 18: return 0x0004u;
+        case 20: return 0x0040u;
+        default:
+            if (sourceSlotBoxIndex >= 21 && sourceSlotBoxIndex <= 37) {
+                return 0x0400u;
+            }
+            return 0;
+    }
+}
+
 static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
                                            const struct DungeonThings_Compat* things,
                                            unsigned short thingId) {
@@ -15364,14 +15411,23 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(
         sourceSlotBoxIndex);
     if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
-    if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE) {
-        /* Source F0302 can place/swap the held object after AllowedSlots
-         * validation.  Firestaff does not yet expose that full slot-mask
-         * bridge here, so only route the safe empty-hand pickup half. */
-        return 0;
-    }
     champ = &state->world.party.champions[championIndex];
     slotThing = champ->inventory[championSlot];
+    if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE) {
+        unsigned short leaderThing = M11_GameView_GetV1LeaderHandThing(state);
+        unsigned int allowedSlots = m11_allowed_slots_for_thing(state->world.things,
+                                                                leaderThing);
+        unsigned int slotMask = m11_v1_inventory_source_slot_box_mask(sourceSlotBoxIndex);
+        if ((allowedSlots & slotMask) == 0) return 0;
+        champ->inventory[championSlot] = leaderThing;
+        M11_GameView_ClearV1LeaderHandObject(state);
+        if (slotThing != THING_NONE && slotThing != THING_ENDOFLIST &&
+            !M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
+        return 1;
+    }
     if (slotThing == THING_NONE || slotThing == THING_ENDOFLIST) return 0;
     champ->inventory[championSlot] = THING_NONE;
     if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
