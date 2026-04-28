@@ -38,6 +38,7 @@ enum {
     M12_SETTINGS_ROW_INTEGER_SCALING,
     M12_SETTINGS_ROW_SCALING_FILTER,
     M12_SETTINGS_ROW_VSYNC,
+    M12_SETTINGS_ROW_WASD_MOVEMENT,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -795,6 +796,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.integerScaling = state->settings.integerScaling;
     config.scalingFilterIndex = state->settings.scalingFilterIndex;
     config.vsyncIndex = state->settings.vsyncIndex;
+    config.wasdMovementEnabled = state->settings.wasdMovementEnabled;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         M12_GameOptions opts = state->gameOptions[gi];
         m12_clamp_game_options(&opts);
@@ -834,6 +836,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
                                                          (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
     state->settings.vsyncIndex = m12_clamp_index(config.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+    state->settings.wasdMovementEnabled = config.wasdMovementEnabled ? 1 : 0;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         state->gameOptions[gi].versionIndex = config.gameVersionIndex[gi];
         state->gameOptions[gi].usePatch = config.gameUsePatch[gi];
@@ -927,6 +930,10 @@ static const char* m12_settings_value_scaling_filter(const M12_StartupMenuState*
 
 static const char* m12_settings_value_vsync(const M12_StartupMenuState* state) {
     return m12_tr(state, g_toggleModes[state->settings.vsyncIndex]);
+}
+
+static const char* m12_settings_value_wasd_movement(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state->settings.wasdMovementEnabled ? 1 : 0]);
 }
 
 static int m12_game_slot_from_id(const char* gameId) {
@@ -1023,6 +1030,7 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
                                                          (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
     state->settings.vsyncIndex = m12_clamp_index(state->settings.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+    state->settings.wasdMovementEnabled = state->settings.wasdMovementEnabled ? 1 : 0;
     state->gameOptSelectedRow = m12_clamp_index(state->gameOptSelectedRow,
                                                 M12_GAME_OPT_ROW_COUNT + 1);
     state->museumSelectedIndex = m12_clamp_index(state->museumSelectedIndex,
@@ -1144,6 +1152,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
         case M12_SETTINGS_ROW_VSYNC:
             state->settings.vsyncIndex = m12_cycle_index(
                 state->settings.vsyncIndex,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_WASD_MOVEMENT:
+            state->settings.wasdMovementEnabled = m12_cycle_index(
+                state->settings.wasdMovementEnabled,
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
@@ -2511,6 +2525,15 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                           state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
                           0,
                           0);
+    m12_draw_settings_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          208,
+                          m12_tr(state, "WASD MOVEMENT"),
+                          m12_settings_value_wasd_movement(state),
+                          state->settingsSelectedIndex == M12_SETTINGS_ROW_WASD_MOVEMENT,
+                          0,
+                          0);
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
@@ -3760,11 +3783,22 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                  state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
                                  0,
                                  0);
+    m12_draw_modern_settings_row(framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 panelX + 10,
+                                 contentY + 284,
+                                 framebufferWidth - margin - panelX - 20,
+                                 m12_tr(state, "WASD MOVEMENT"),
+                                 m12_settings_value_wasd_movement(state),
+                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_WASD_MOVEMENT,
+                                 0,
+                                 0);
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   panelX + 10,
-                  contentY + 254,
+                  contentY + 320,
                   m12_text(state, M12_TEXT_SETTINGS_SAVED),
                   &g_textSmallMuted);
     m12_draw_footer(framebuffer,

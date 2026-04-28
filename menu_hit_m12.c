@@ -30,7 +30,7 @@
 
 /* Settings rows (3 rows, 70px step, starting panelY+36) */
 #define M12_HIT_SETTINGS_ROW_Y0     (M12_HIT_PANEL_Y + 36)
-#define M12_HIT_SETTINGS_ROW_STEP   70
+#define M12_HIT_SETTINGS_ROW_STEP   32
 
 /* Game options rows (8 rows: version, patch, language, cheats, speed,
  * aspect, resolution, launch). Renderer draws rows 0..6 at step 52,
@@ -38,9 +38,8 @@
 #define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_PANEL_Y + 28)
 #define M12_HIT_GAMEOPT_ROW_STEP    52
 
-/* Settings view has exactly three rows: language, graphics, window mode.
- * Mirrors the private M12_SETTINGS_ROW_COUNT in menu_startup_m12.c. */
-#define M12_HIT_SETTINGS_ROW_COUNT  3
+/* Settings view row count. Mirrors the private M12_SETTINGS_ROW_COUNT in menu_startup_m12.c. */
+#define M12_HIT_SETTINGS_ROW_COUNT  9
 
 /* Museum view mirrors the modern renderer: section rows in the left
  * panel, broad content area on the right for page cycling. */

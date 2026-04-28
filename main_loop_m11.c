@@ -483,17 +483,25 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
                 case SDLK_A:
-                    return gameView && gameView->active
-                               ? M12_MENU_INPUT_STRAFE_LEFT
-                               : M12_MENU_INPUT_LEFT;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_LEFT;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_D:
-                    return gameView && gameView->active
-                               ? M12_MENU_INPUT_STRAFE_RIGHT
-                               : M12_MENU_INPUT_RIGHT;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_RIGHT;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_W:
-                    return M12_MENU_INPUT_UP;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_UP;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_S:
-                    return M12_MENU_INPUT_DOWN;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_DOWN;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;
@@ -659,17 +667,25 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
                 case SDLK_A:
-                    return gameView && gameView->active
-                               ? M12_MENU_INPUT_STRAFE_LEFT
-                               : M12_MENU_INPUT_LEFT;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_LEFT;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_D:
-                    return gameView && gameView->active
-                               ? M12_MENU_INPUT_STRAFE_RIGHT
-                               : M12_MENU_INPUT_RIGHT;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_RIGHT;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_W:
-                    return M12_MENU_INPUT_UP;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_UP;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_S:
-                    return M12_MENU_INPUT_DOWN;
+                    if (menuState && menuState->settings.wasdMovementEnabled) {
+                        return M12_MENU_INPUT_DOWN;
+                    }
+                    return M12_MENU_INPUT_NONE;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;

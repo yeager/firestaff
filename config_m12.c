@@ -221,6 +221,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->integerScaling = 1;
     config->scalingFilterIndex = 0;
     config->vsyncIndex = 1;
+    config->wasdMovementEnabled = 1;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -286,6 +287,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "vsync_index")) {
         config->vsyncIndex = m12_parse_int(value, config->vsyncIndex);
+        return;
+    }
+    if (m12_string_equals(key, "wasd_movement_enabled")) {
+        config->wasdMovementEnabled = m12_parse_int(value, config->wasdMovementEnabled) ? 1 : 0;
         return;
     }
     if (strncmp(key, "game_", 5) == 0) {
@@ -360,6 +365,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "integer_scaling = %d\n", config->integerScaling ? 1 : 0);
     fprintf(fp, "scaling_filter_index = %d\n", config->scalingFilterIndex);
     fprintf(fp, "vsync_index = %d\n", config->vsyncIndex);
+    fprintf(fp, "wasd_movement_enabled = %d\n", config->wasdMovementEnabled ? 1 : 0);
     {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {

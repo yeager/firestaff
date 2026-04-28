@@ -75,6 +75,7 @@ typedef struct {
     int integerScaling;
     int scalingFilterIndex;
     int vsyncIndex;
+    int wasdMovementEnabled;
 } M12_MenuSettingsState;
 
 typedef enum {
