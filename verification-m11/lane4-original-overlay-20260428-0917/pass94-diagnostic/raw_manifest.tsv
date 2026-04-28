@@ -1,0 +1,7 @@
+index	path	mtime_epoch_ns	mtime_iso	sha256	size_bytes	width	height
+00	/home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0001-raw.png	1777361125405578105	2026-04-28T07:25:25.405578Z	71607bffd8c13576a04dafcf2f8d6a7170dd4ece33048585809b9c7e858a9cb0	8907	320	200
+01	/home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0002-raw.png	1777361125405578105	2026-04-28T07:25:25.405578Z	9f95e1d8fae6b5dd5d2dcbeba09a164f96774347634ef9328937441bb87fbe19	12730	320	200
+02	/home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0003-raw.png	1777361125405578105	2026-04-28T07:25:25.405578Z	17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8	14920	320	200
+03	/home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0004-raw.png	1777361125406578091	2026-04-28T07:25:25.406578Z	17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8	14920	320	200
+04	/home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0005-raw.png	1777361125406578091	2026-04-28T07:25:25.406578Z	355a191cd07b5f630fe323b8c54c13321ad811330dc075155461a5c8ba346cbe	8010	320	200
+05	/home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0006-raw.png	1777361125406578091	2026-04-28T07:25:25.406578Z	48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397	8017	320	200

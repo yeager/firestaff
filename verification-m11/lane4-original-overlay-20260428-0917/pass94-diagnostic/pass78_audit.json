@@ -1,0 +1,60 @@
+{
+  "schema": "pass78_original_route_attempt_audit.v1",
+  "attempt_dir": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "320x200": 6
+  },
+  "all_gameplay_320x200": true,
+  "honesty": "Only 320x200 raw DOSBox graphics frames may be normalized as original DM1 viewport references. 720x400 text-mode selector/prompt captures are blockers.",
+  "captures": [
+    {
+      "file": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 8907,
+      "sha256": "71607bffd8c13576a04dafcf2f8d6a7170dd4ece33048585809b9c7e858a9cb0",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 12730,
+      "sha256": "9f95e1d8fae6b5dd5d2dcbeba09a164f96774347634ef9328937441bb87fbe19",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 14920,
+      "sha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0004-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 14920,
+      "sha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0005-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 8010,
+      "sha256": "355a191cd07b5f630fe323b8c54c13321ad811330dc075155461a5c8ba346cbe",
+      "classification": "gameplay_graphics_candidate"
+    },
+    {
+      "file": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/image0006-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 8017,
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "classification": "gameplay_graphics_candidate"
+    }
+  ]
+}

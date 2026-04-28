@@ -1,0 +1,19 @@
+{
+  "captures": 6,
+  "class_counts": {
+    "entrance_menu": 3,
+    "graphics_320x200_unclassified": 1,
+    "wall_closeup": 2
+  },
+  "warnings": [],
+  "problems": [
+    "image0001-raw.png: classified graphics_320x200_unclassified, expected title_or_menu",
+    "image0003-raw.png: classified entrance_menu, expected dungeon_gameplay",
+    "image0004-raw.png: classified entrance_menu, expected dungeon_gameplay",
+    "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+    "image0006-raw.png: classified wall_closeup, expected dungeon_gameplay",
+    "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+  ],
+  "json": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/pass80_classifier.json",
+  "markdown": "verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/pass80_classifier.md"
+}

@@ -1,0 +1,7 @@
+index	filename	route_label	route_token
+01	01_ingame_start_original_viewport_224x136.ppm	title	shot:title
+02	02_ingame_turn_right_original_viewport_224x136.ppm	pre_enter_menu	shot:pre_enter_menu
+03	03_ingame_move_forward_original_viewport_224x136.ppm	after_enter_click	shot:after_enter_click
+04	04_ingame_spell_panel_original_viewport_224x136.ppm	forward_1	shot:forward_1
+05	05_ingame_after_cast_original_viewport_224x136.ppm	forward_2	shot:forward_2
+06	06_ingame_inventory_panel_original_viewport_224x136.ppm	left_turn_probe	shot:left_turn_probe

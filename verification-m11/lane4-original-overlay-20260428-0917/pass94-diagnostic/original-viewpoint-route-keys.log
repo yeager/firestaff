@@ -1,0 +1,21 @@
+route-token wait:7000
+route-token shot:title
+route-token enter
+route-token wait:1200
+route-token shot:pre_enter_menu
+route-token click:260,50
+click-mapped 260,50 -> 841,413 window=640x400
+route-token wait:1200
+route-token shot:after_enter_click
+route-token click:276,140
+click-mapped 276,140 -> 873,593 window=640x400
+route-token wait:600
+route-token shot:forward_1
+route-token click:276,140
+click-mapped 276,140 -> 873,593 window=640x400
+route-token wait:600
+route-token shot:forward_2
+route-token click:246,140
+click-mapped 246,140 -> 813,593 window=640x400
+route-token wait:600
+route-token shot:left_turn_probe
