@@ -23,6 +23,7 @@ CONF="${OUT_DIR}/dosbox-original-viewports.conf"
 LOG="${OUT_DIR}/dosbox-original-viewports.log"
 PID_FILE="${OUT_DIR}/dosbox.pid"
 KEY_HELPER="${OUT_DIR}/original_viewport_route_keys.swift"
+KEY_HELPER_XDOTOOL="${OUT_DIR}/original_viewport_route_keys_xdotool.sh"
 KEY_LOG="${OUT_DIR}/original-viewpoint-route-keys.log"
 SHOT_LABEL_MANIFEST="${OUT_DIR}/original_viewport_shot_labels.tsv"
 RAW_MANIFEST="${OUT_DIR}/raw_manifest.tsv"
@@ -75,6 +76,11 @@ Optional environment:
                     mixed mouse/keyboard commands can be lost when packed tightly.
   manifest:        ${CROP_MANIFEST}
   shot labels:     ${SHOT_LABEL_MANIFEST}
+
+Linux/N2 note:
+  On Linux, run --run under an X server, for example:
+    DOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
+  The script uses xdotool as the route injector when Swift/CGEvent is absent.
 
 Honesty note:
   The route string must be validated against the original runtime state that
@@ -222,6 +228,7 @@ output=opengl
 [dosbox]
 machine=svga_paradise
 memsize=4
+captures=${OUT_DIR}
 
 [cpu]
 core=normal
@@ -388,8 +395,141 @@ for token in route {
     }
 }
 SWIFT
+    cat > "${KEY_HELPER_XDOTOOL}" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 3 ]]; then
+    echo "usage: original_viewport_route_keys_xdotool.sh PID ROUTE_EVENTS SKIP_STARTUP_SELECTOR" >&2
+    exit 2
+fi
+
+pid="$1"
+route_events="$2"
+skip_startup_selector="$3"
+
+if [[ -z "${DISPLAY:-}" ]]; then
+    echo "ERROR: DISPLAY is not set; run DOSBox under an X server, e.g. xvfb-run -a ... --run" >&2
+    exit 6
+fi
+
+window="$(xdotool search --sync --pid "$pid" | head -n 1 || true)"
+if [[ -z "$window" ]]; then
+    echo "ERROR: could not find DOSBox X window for pid $pid" >&2
+    exit 3
+fi
+xdotool windowactivate --sync "$window" >/dev/null 2>&1 || true
+xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
+
+tap_key() {
+    local key="$1"
+    xdotool key --window "$window" "$key"
+    sleep 0.12
+}
+
+shot() {
+    # DOSBox 0.74 on Linux uses Ctrl+F5 for screenshots. DOSBox Staging accepts
+    # the same accelerator, and writes to the configured capture directory.
+    xdotool key --window "$window" ctrl+F5
+    sleep 0.18
+}
+
+click_original_frame() {
+    local x="$1" y="$2"
+    local geom gx gy gw gh px py
+    geom="$(xdotool getwindowgeometry --shell "$window")"
+    eval "$geom"
+    gx="$X"; gy="$Y"; gw="$WIDTH"; gh="$HEIGHT"
+    read -r px py < <(python3 - "$gx" "$gy" "$gw" "$gh" "$x" "$y" <<'PY'
+import sys
+gx, gy, gw, gh, x, y = map(float, sys.argv[1:])
+content_aspect = 320.0 / 200.0
+content_w = gw
+content_h = content_w / content_aspect
+if content_h > gh:
+    content_h = gh
+    content_w = content_h * content_aspect
+left = gx + (gw - content_w) / 2.0
+top = gy + (gh - content_h) / 2.0
+px = left + ((x + 0.5) / 320.0) * content_w
+py = top + ((y + 0.5) / 200.0) * content_h
+print(int(round(px)), int(round(py)))
+PY
+)
+    xdotool mousemove --window "$window" "$px" "$py" click 1
+    echo "click-mapped ${x},${y} -> ${px},${py} window=${gw}x${gh}"
+    sleep 0.18
+}
+
+key_for_token() {
+    case "$1" in
+        enter|return) echo Return ;;
+        esc|escape) echo Escape ;;
+        space) echo space ;;
+        up) echo Up ;;
+        down) echo Down ;;
+        left) echo Left ;;
+        right) echo Right ;;
+        one|1) echo 1 ;;
+        two|2) echo 2 ;;
+        three|3) echo 3 ;;
+        four|4) echo 4 ;;
+        five|5) echo 5 ;;
+        six|6) echo 6 ;;
+        zero|0) echo 0 ;;
+        f1) echo F1 ;;
+        f2) echo F2 ;;
+        f3) echo F3 ;;
+        f4) echo F4 ;;
+        kp0) echo KP_Insert ;;
+        kp1) echo KP_End ;;
+        kp2) echo KP_Down ;;
+        kp3) echo KP_Next ;;
+        kp4) echo KP_Left ;;
+        kp5) echo KP_Begin ;;
+        kp6) echo KP_Right ;;
+        kp7) echo KP_Home ;;
+        kp8) echo KP_Up ;;
+        kp9) echo KP_Prior ;;
+        kpenter) echo KP_Enter ;;
+        [a-z]) echo "$1" ;;
+        *) return 1 ;;
+    esac
+}
+
+if [[ "$skip_startup_selector" != "1" ]]; then
+    for _ in 1 2 3; do
+        tap_key 1
+        tap_key Return
+    done
+fi
+
+for token in $route_events; do
+    low="${token,,}"
+    echo "route-token $token"
+    case "$low" in
+        shot|capture|screenshot|shot:*) shot ;;
+        wait:*) sleep "$(python3 - "$low" <<'PY'
+import sys
+t = sys.argv[1]
+print(int(t.split(':', 1)[1]) / 1000.0)
+PY
+)" ;;
+        click:*)
+            coords="${low#click:}"
+            click_original_frame "${coords%,*}" "${coords#*,}"
+            ;;
+        *)
+            key="$(key_for_token "$low")" || { echo "unknown route token: $token" >&2; exit 2; }
+            tap_key "$key"
+            ;;
+    esac
+done
+SH
+    chmod +x "${KEY_HELPER_XDOTOOL}"
     echo "[pass-70] wrote ${CONF}"
     echo "[pass-70] wrote ${KEY_HELPER}"
+    echo "[pass-70] wrote ${KEY_HELPER_XDOTOOL}"
 }
 
 normalize_existing() {
@@ -406,6 +546,21 @@ import hashlib, struct, sys
 out = Path(sys.argv[1])
 manifest = Path(sys.argv[2])
 paths = sorted(out.glob("image*.png"))
+if not paths:
+    # DOSBox 0.74 names screenshots after the running program/screen instead of
+    # imageNNNN.png.  Normalize those raw 320x200 captures into the stable
+    # image000N-raw.png names expected by the downstream pass70/pass84 tools.
+    candidates = sorted(
+        [p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")],
+        key=lambda p: (p.stat().st_mtime_ns, p.name),
+    )
+    if len(candidates) == 6:
+        normalized = []
+        for idx, src in enumerate(candidates, 1):
+            dst = out / f"image{idx:04d}-raw.png"
+            dst.write_bytes(src.read_bytes())
+            normalized.append(dst)
+        paths = normalized
 if not paths:
     raise SystemExit(f"ERROR: no DOSBox raw screenshots found under {out}/image*.png")
 if len(paths) != 6:
@@ -568,15 +723,19 @@ case "$mode" in
             exit 5
         fi
         validate_route_shape
-        if ! command -v swift >/dev/null 2>&1; then
-            echo "ERROR: swift is required for targeted macOS CGEvent input" >&2
-            exit 6
-        fi
         if [[ ! -x "$DOSBOX" ]]; then
             echo "ERROR: DOSBox binary not executable: $DOSBOX" >&2
             exit 7
         fi
         write_helpers
+        if command -v swift >/dev/null 2>&1; then
+            route_injector=(swift "$KEY_HELPER")
+        elif command -v xdotool >/dev/null 2>&1; then
+            route_injector=("$KEY_HELPER_XDOTOOL")
+        else
+            echo "ERROR: swift or xdotool is required for targeted route input" >&2
+            exit 6
+        fi
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SIZE_LOG}"
         rm -f "${OUT_DIR}"/image*.png "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png
         "$DOSBOX" -conf "$CONF" >"$LOG" 2>&1 &
@@ -591,7 +750,7 @@ case "$mode" in
 print(${WAIT_BEFORE_INPUT_MS}/1000)
 PY
 )"
-        swift "$KEY_HELPER" "$pid" "$ROUTE_EVENTS" "$SKIP_STARTUP_SELECTOR" >"$KEY_LOG" 2>&1
+        "${route_injector[@]}" "$pid" "$ROUTE_EVENTS" "$SKIP_STARTUP_SELECTOR" >"$KEY_LOG" 2>&1
         python3 - "$OUT_DIR" "$NEW_FILE_TIMEOUT_MS" <<'PY'
 from pathlib import Path
 import sys, time
