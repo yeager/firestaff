@@ -1,0 +1,610 @@
+{
+  "archive_verified_command": "cd ~/.openclaw/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS",
+  "date_utc": "2026-04-28T11:39:23+00:00",
+  "entrance_sequence": "wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800",
+  "findings": [
+    "Original DOSBox capture path remains mechanically healthy: all probes produced six 320x200 raw PNGs and normalized manifests on N2.",
+    "F1 and spell-area/cast clicks after the proven entrance sequence did not open inventory or spell UI; frames 2-6 of probe-f1-spell-clicks are byte-identical gameplay frames and spell_area remains black.",
+    "Movement probes can create gameplay frames, but still include wall_closeup and duplicate hashes, so they are not pass70/pass84-ready.",
+    "The next blocker is semantic route state, not capture mechanics: likely no recruited champion/party state before inventory/spell input, or wrong original PC 3.4 control path for opening those panels."
+  ],
+  "honesty": "Evidence-only original DOS route/capture input-effect probe. Captures are not promoted as pass70/pass84 references.",
+  "host": "N2 / Firestaff-Worker-VM",
+  "original_stage_dir": "~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+  "pass": false,
+  "probes": [
+    {
+      "captures": [
+        {
+          "classification": "dungeon_gameplay",
+          "index": 1,
+          "label": "party_hud",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "355a191cd07b5f630fe323b8c54c13321ad811330dc075155461a5c8ba346cbe"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 2,
+          "label": "inventory_panel",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 3,
+          "label": "after_inventory_close",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 4,
+          "label": "spell_panel",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 5,
+          "label": "rune1",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 6,
+          "label": "after_cast",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        }
+      ],
+      "class_counts": {
+        "dungeon_gameplay": 6
+      },
+      "dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture/probe-f1-spell-clicks",
+      "duplicate_sha256_counts": {
+        "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
+      },
+      "labels": [
+        "party_hud",
+        "inventory_panel",
+        "after_inventory_close",
+        "spell_panel",
+        "rune1",
+        "after_cast"
+      ],
+      "name": "probe-f1-spell-clicks",
+      "transitions": [
+        {
+          "from": 1,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": false,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": true,
+          "to": 3
+        },
+        {
+          "from": 3,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": true,
+          "to": 4
+        },
+        {
+          "from": 4,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": true,
+          "to": 5
+        },
+        {
+          "from": 5,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": true,
+          "to": 6
+        }
+      ]
+    },
+    {
+      "captures": [
+        {
+          "classification": "dungeon_gameplay",
+          "index": 1,
+          "label": "dir0",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "355a191cd07b5f630fe323b8c54c13321ad811330dc075155461a5c8ba346cbe"
+        },
+        {
+          "classification": "wall_closeup",
+          "index": 2,
+          "label": "dir1",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 1.0,
+              "unique_colors": 5
+            }
+          },
+          "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 3,
+          "label": "dir2",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.7606,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "9fc8530431a30af7037beafcf02ef6e6ff5ca74f4a34a3744f2584c4bb34e2d2"
+        },
+        {
+          "classification": "wall_closeup",
+          "index": 4,
+          "label": "dir3",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 1.0,
+              "unique_colors": 5
+            }
+          },
+          "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 5,
+          "label": "dir4",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "classification": "wall_closeup",
+          "index": 6,
+          "label": "left_back",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 1.0,
+              "unique_colors": 5
+            }
+          },
+          "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde"
+        }
+      ],
+      "class_counts": {
+        "dungeon_gameplay": 3,
+        "wall_closeup": 3
+      },
+      "dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture/probe-turn-cycle",
+      "duplicate_sha256_counts": {
+        "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 3
+      },
+      "labels": [
+        "dir0",
+        "dir1",
+        "dir2",
+        "dir3",
+        "dir4",
+        "left_back"
+      ],
+      "name": "probe-turn-cycle",
+      "transitions": [
+        {
+          "from": 1,
+          "pixel_diff_ratio": 0.2986,
+          "same_sha256": false,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "pixel_diff_ratio": 0.2912,
+          "same_sha256": false,
+          "to": 3
+        },
+        {
+          "from": 3,
+          "pixel_diff_ratio": 0.2912,
+          "same_sha256": false,
+          "to": 4
+        },
+        {
+          "from": 4,
+          "pixel_diff_ratio": 0.2986,
+          "same_sha256": false,
+          "to": 5
+        },
+        {
+          "from": 5,
+          "pixel_diff_ratio": 0.2986,
+          "same_sha256": false,
+          "to": 6
+        }
+      ]
+    },
+    {
+      "captures": [
+        {
+          "classification": "dungeon_gameplay",
+          "index": 1,
+          "label": "start",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "355a191cd07b5f630fe323b8c54c13321ad811330dc075155461a5c8ba346cbe"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 2,
+          "label": "forward",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.925,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "classification": "wall_closeup",
+          "index": 3,
+          "label": "right",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 1.0,
+              "unique_colors": 5
+            }
+          },
+          "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde"
+        },
+        {
+          "classification": "wall_closeup",
+          "index": 4,
+          "label": "forward2",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 1.0,
+              "unique_colors": 5
+            }
+          },
+          "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 5,
+          "label": "right2",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.7606,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "9fc8530431a30af7037beafcf02ef6e6ff5ca74f4a34a3744f2584c4bb34e2d2"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "index": 6,
+          "label": "forward3",
+          "regions": {
+            "right_action": {
+              "nonblack_ratio": 0.1222,
+              "unique_colors": 2
+            },
+            "spell_area": {
+              "nonblack_ratio": 0.0194,
+              "unique_colors": 2
+            },
+            "top_hud": {
+              "nonblack_ratio": 0.0,
+              "unique_colors": 1
+            },
+            "viewport": {
+              "nonblack_ratio": 0.7606,
+              "unique_colors": 6
+            }
+          },
+          "sha256": "9fc8530431a30af7037beafcf02ef6e6ff5ca74f4a34a3744f2584c4bb34e2d2"
+        }
+      ],
+      "class_counts": {
+        "dungeon_gameplay": 4,
+        "wall_closeup": 2
+      },
+      "dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture/probe-move-turn-mix",
+      "duplicate_sha256_counts": {
+        "9fc8530431a30af7037beafcf02ef6e6ff5ca74f4a34a3744f2584c4bb34e2d2": 2,
+        "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+      },
+      "labels": [
+        "start",
+        "forward",
+        "right",
+        "forward2",
+        "right2",
+        "forward3"
+      ],
+      "name": "probe-move-turn-mix",
+      "transitions": [
+        {
+          "from": 1,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": false,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "pixel_diff_ratio": 0.2986,
+          "same_sha256": false,
+          "to": 3
+        },
+        {
+          "from": 3,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": true,
+          "to": 4
+        },
+        {
+          "from": 4,
+          "pixel_diff_ratio": 0.2912,
+          "same_sha256": false,
+          "to": 5
+        },
+        {
+          "from": 5,
+          "pixel_diff_ratio": 0.0,
+          "same_sha256": true,
+          "to": 6
+        }
+      ]
+    }
+  ],
+  "run_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture",
+  "schema": "pass112_original_capture_input_effect_probe.v1"
+}
