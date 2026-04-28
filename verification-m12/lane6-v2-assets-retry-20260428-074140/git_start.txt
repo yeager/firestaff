@@ -1,0 +1,8 @@
+## sync/n2-dm1-v1-20260428...origin/main [ahead 29]
+ M scripts/dosbox_dm1_original_viewport_reference_capture.sh
+ M tools/pass80_original_frame_classifier.py
+?? ..-firestaff-worker-viewport-parity-20260427-040243/
+?? verification-m11/lane1-original-faithful-parity-20260428-072831/
+?? verification-m11/lane2-hud-20260428-070228/
+?? verification-m11/verification_summary.md
+?? verification-m12/lane6-v2-assets-retry-20260428-074140/

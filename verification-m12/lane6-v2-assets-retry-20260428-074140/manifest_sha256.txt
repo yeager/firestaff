@@ -1,0 +1,15 @@
+849b3bb164c1d5b9b2480ff703364fc17002ad3b86714175b2f348bc16e1180c  assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json
+a56d34bf4035309d046a71f7d445af5b239af2ca57e9dd4fa16fe954fb3d82ff  assets-v2/manifests/firestaff-v2-asset.schema.json
+7e4b54b71cb5cb02d3126c7f8c2888daa8b942dc396fb7002f15624e01779fd9  assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json
+45a4dc286c71cea7c9155e1c7ab9a39d117affd2c282b46022bca2dd09a54dfa  assets-v2/manifests/firestaff-v2-wave1-demon-family.manifest.json
+dfc03e1d6ce2242cb03eca0d2b4662845973bd13d6d7b7abf6e5eb3101927e1a  assets-v2/manifests/firestaff-v2-wave1-giant-scorpion-family.manifest.json
+453b028b9620de3c9b6290c1e5bc8ee57d0b3c9d669352677b5cd14b0d599286  assets-v2/manifests/firestaff-v2-wave1-giggler-family.manifest.json
+24abc1915ebdad6bad280ab6efc1c233b4cd38392f08647d4a9904cf1b1a60aa  assets-v2/manifests/firestaff-v2-wave1-mummy-family.manifest.json
+efdd7c86283171735797ef66fe26941e2215f5a4bf03ba1eff2d296e3c8cfc82  assets-v2/manifests/firestaff-v2-wave1-red-dragon-family.manifest.json
+644637936717b4b253d05b636a70c7d3d37d000e3a679cadcbd5cadb2d89f03f  assets-v2/manifests/firestaff-v2-wave1-screamer-family.manifest.json
+6aea68eae09e923bc8abe8ee3c0bd7bf274129bf2bdc59cbda31a5a9d2b81933  assets-v2/manifests/firestaff-v2-wave1-skeleton-family.manifest.json
+4ed6d832eaf9e7e434abbcc17d15cc6365a9774be8ad76f7f2c9e67e3395dfe2  assets-v2/manifests/firestaff-v2-wave1-stone-golem-family.manifest.json
+59ad02257d4a137a6186f7f9986bad723db16370961f5909f31b3696be7c8c4e  assets-v2/manifests/firestaff-v2-wave1-swamp-slime-family.manifest.json
+830ba0a7782fec02d43a72e376be9eee5c23091bb1fa3043d4422f2ac778a20e  assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json
+0c19b86b7088305eaa658d61efa332283f245dd1ecde0d6edc9fa4c11df0ed81  assets-v2/manifests/firestaff-v2-wave1-vertical-slice.manifest.json
+e006608319974e2cdcae62fbee36f9de7c907db3fe76c543fbe9ddf1b17846a0  assets-v2/manifests/firestaff-v2-wave1-vexirk-family.manifest.json

@@ -1,0 +1,14 @@
+firestaff-v2-all-assets-foundation.manifest.json: 12 assets
+firestaff-v2-wave1-creatures.manifest.json: 30 assets
+firestaff-v2-wave1-demon-family.manifest.json: 3 assets
+firestaff-v2-wave1-giant-scorpion-family.manifest.json: 3 assets
+firestaff-v2-wave1-giggler-family.manifest.json: 3 assets
+firestaff-v2-wave1-mummy-family.manifest.json: 3 assets
+firestaff-v2-wave1-red-dragon-family.manifest.json: 3 assets
+firestaff-v2-wave1-screamer-family.manifest.json: 3 assets
+firestaff-v2-wave1-skeleton-family.manifest.json: 3 assets
+firestaff-v2-wave1-stone-golem-family.manifest.json: 3 assets
+firestaff-v2-wave1-swamp-slime-family.manifest.json: 3 assets
+firestaff-v2-wave1-ui.manifest.json: 10 assets
+firestaff-v2-wave1-vertical-slice.manifest.json: 16 assets
+firestaff-v2-wave1-vexirk-family.manifest.json: 3 assets

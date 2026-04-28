@@ -1,0 +1,13 @@
+WARN: assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json: fs.v2.foundation.ui-hud-shells.wave1 has no PNG in assets-v2/ui/wave1 with expected size 3200x2000
+WARN: assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json: fs.v2.foundation.ui-hud-shells.wave1 has no PNG in assets-v2/ui/wave1 with expected size 1600x1000
+WARN: assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json: fs.v2.foundation.creatures.wave1 has no PNG in assets-v2/creatures/wave1 with expected size 1200x1200
+WARN: assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json: fs.v2.foundation.creatures.wave1 has no PNG in assets-v2/creatures/wave1 with expected size 600x600
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.action-area.base has no PNG in assets-v2/ui/wave1/action-area/masters/4k with expected size 870x450
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.action-area.base has no PNG in assets-v2/ui/wave1/action-area/exports/1080p with expected size 435x225
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.status-box.left-frame has no PNG in assets-v2/ui/wave1/status-boxes/masters/4k with expected size 670x290
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.status-box.left-frame has no PNG in assets-v2/ui/wave1/status-boxes/exports/1080p with expected size 335x145
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.status-box.right-frame has no PNG in assets-v2/ui/wave1/status-boxes/masters/4k with expected size 670x290
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.status-box.right-frame has no PNG in assets-v2/ui/wave1/status-boxes/exports/1080p with expected size 335x145
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.party-hud-slot.standard has no PNG in assets-v2/ui/wave1/party-hud-cells/masters/4k with expected size 216x216
+WARN: assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json: fs.v2.ui.party-hud-slot.standard has no PNG in assets-v2/ui/wave1/party-hud-cells/exports/1080p with expected size 108x108
+validated 14 V2 manifest(s), 98 asset entries, 0 error(s), 12 warning(s)

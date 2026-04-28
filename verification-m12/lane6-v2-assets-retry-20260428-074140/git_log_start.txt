@@ -1,0 +1,5 @@
+7eb50a2 Record V2 asset scaffold follow-up evidence
+e13e14f Verify V2 asset scaffolding follow-up
+ded8db5 Record DM1 V1 original-faithful parity retry evidence
+cc74c75 Record lane4 original overlay capture evidence
+64a00bd Record lane5 original-faithful gate status
