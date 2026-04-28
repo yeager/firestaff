@@ -4748,6 +4748,35 @@ int main(int argc, char** argv) {
                      M11_GameView_GetCreaturePaletteChange(1, 14) == 14,
                      "creature D3/D2 palette-change samples match G0221/G0222");
 
+        /* INV_GV_114F2: Creature replacement-color set indices from
+         * G0243_as_Graphic559_CreatureInfo resolve through the
+         * VIDRV_12_SetCreatureReplacementColors target palette table.
+         * This pins the renderer-facing slot-9/slot-10 remap used by
+         * m11_draw_creature_sprite_ex before creature compositing. */
+        {
+            int a9 = -1, a10 = -1;
+            int b9 = -1, b10 = -1;
+            int c9 = -1, c10 = -1;
+            int d9 = -1, d10 = -1;
+            int e9 = -1, e10 = -1;
+            int none9 = -1, none10 = -1;
+            int a = M11_GameView_GetCreatureReplacementColors(0, &a9, &a10);
+            int b = M11_GameView_GetCreatureReplacementColors(1, &b9, &b10);
+            int c = M11_GameView_GetCreatureReplacementColors(15, &c9, &c10);
+            int d = M11_GameView_GetCreatureReplacementColors(20, &d9, &d10);
+            int e = M11_GameView_GetCreatureReplacementColors(22, &e9, &e10);
+            int none = M11_GameView_GetCreatureReplacementColors(2, &none9, &none10);
+            probe_record(&tally,
+                         "INV_GV_114F2",
+                         a == 1 && a9 == 4 && a10 == 10 &&
+                         b == 1 && b9 == 9 && b10 == 14 &&
+                         c == 1 && c9 == 5 && c10 == 14 &&
+                         d == 1 && d9 == 5 && d10 == 9 &&
+                         e == 1 && e9 == 1 && e10 == 14 &&
+                         none == 0 && none9 == -1 && none10 == -1,
+                         "creature slot-9/slot-10 replacement colors match source samples");
+        }
+
         /* INV_GV_115: Draw with item sprites on floor produces different
          * output from draw without items.  We place an item and compare. */
         {
