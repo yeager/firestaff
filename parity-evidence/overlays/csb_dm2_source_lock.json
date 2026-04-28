@@ -1,0 +1,196 @@
+{
+  "schema": "firestaff.csb_dm2_source_lock.v1",
+  "root_source": "FIRESTAFF_ORIGINAL_DM_ROOT/local original archive directory; path intentionally not recorded",
+  "pass": true,
+  "archives_checked": 6,
+  "members_checked": 17,
+  "source_locks": [
+    {
+      "game": "CSB Amiga hard-disk candidate",
+      "archive": "Game,Chaos_Strikes_Back,Amiga,Software.7z",
+      "archive_sha256": "77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58",
+      "expected_archive_sha256": "77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58",
+      "archive_ok": true,
+      "locked_status": "archive_and_candidate_members_locked_not_yet_curated",
+      "members": [
+        {
+          "role": "dungeon",
+          "path": "HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Dungeon.DAT",
+          "sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+          "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+          "ok": true
+        },
+        {
+          "role": "graphics",
+          "path": "HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT",
+          "sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+          "expected_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "game": "CSB Atari ST hard-disk candidate",
+      "archive": "Game,Chaos_Strikes_Back,Atari_ST,Software.7z",
+      "archive_sha256": "ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5",
+      "expected_archive_sha256": "ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5",
+      "archive_ok": true,
+      "locked_status": "archive_and_candidate_members_locked_not_yet_curated",
+      "members": [
+        {
+          "role": "dungeon",
+          "path": "HardDisk/2009-02-22 PP/DUNGEON.DAT",
+          "sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+          "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+          "ok": true
+        },
+        {
+          "role": "graphics",
+          "path": "HardDisk/2009-02-22 PP/GRAPHICS.DAT",
+          "sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+          "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "game": "DM2 DOS EN release",
+      "archive": "Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+      "archive_sha256": "d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929",
+      "expected_archive_sha256": "d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929",
+      "archive_ok": true,
+      "locked_status": "archive_and_members_locked",
+      "members": [
+        {
+          "role": "dungeon",
+          "path": "data/dungeon.dat",
+          "sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+          "expected_sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+          "ok": true
+        },
+        {
+          "role": "graphics",
+          "path": "data/graphics.dat",
+          "sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+          "expected_sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+          "ok": true
+        },
+        {
+          "role": "songlist",
+          "path": "data/songlist.dat",
+          "sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72",
+          "expected_sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72",
+          "ok": true
+        },
+        {
+          "role": "runtime",
+          "path": "skull.exe",
+          "sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35",
+          "expected_sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "game": "DM2 DOS repack",
+      "archive": "Dungeon Master 2.zip",
+      "archive_sha256": "56716eea8ed4e64a5a4ce66d2f3d0c4ab19b462129b7ef7b0219f4166d4c6812",
+      "expected_archive_sha256": "56716eea8ed4e64a5a4ce66d2f3d0c4ab19b462129b7ef7b0219f4166d4c6812",
+      "archive_ok": true,
+      "locked_status": "archive_and_core_data_locked_runtime_differs_from_en_release",
+      "members": [
+        {
+          "role": "dungeon",
+          "path": "GAME/DATA/DUNGEON.DAT",
+          "sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+          "expected_sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+          "ok": true
+        },
+        {
+          "role": "graphics",
+          "path": "GAME/DATA/GRAPHICS.DAT",
+          "sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+          "expected_sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+          "ok": true
+        },
+        {
+          "role": "songlist",
+          "path": "GAME/DATA/SONGLIST.DAT",
+          "sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72",
+          "expected_sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72",
+          "ok": true
+        },
+        {
+          "role": "runtime",
+          "path": "GAME/SKULL.EXE",
+          "sha256": "0efc121cab852aadb01302e517296c1b63e301abb17c31390b27565607a1151a",
+          "expected_sha256": "0efc121cab852aadb01302e517296c1b63e301abb17c31390b27565607a1151a",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "game": "DM2 DOS CD/layout candidate",
+      "archive": "Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip",
+      "archive_sha256": "a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228",
+      "expected_archive_sha256": "a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228",
+      "archive_ok": true,
+      "locked_status": "archive_and_core_data_locked",
+      "members": [
+        {
+          "role": "dungeon",
+          "path": "dumast2/DATA/DUNGEON.DAT",
+          "sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+          "expected_sha256": "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef",
+          "ok": true
+        },
+        {
+          "role": "graphics",
+          "path": "dumast2/DATA/GRAPHICS.DAT",
+          "sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+          "expected_sha256": "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346",
+          "ok": true
+        },
+        {
+          "role": "songlist",
+          "path": "dumast2/DATA/SONGLIST.DAT",
+          "sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72",
+          "expected_sha256": "401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72",
+          "ok": true
+        },
+        {
+          "role": "runtime",
+          "path": "dumast2/SKULL.EXE",
+          "sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35",
+          "expected_sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "game": "DM2 DOS source disassembly",
+      "archive": "Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z",
+      "archive_sha256": "beb703174fe2e263d47e80f56d90b61fad30d2ce04a39e896e5205d6d698265a",
+      "expected_archive_sha256": "beb703174fe2e263d47e80f56d90b61fad30d2ce04a39e896e5205d6d698265a",
+      "archive_ok": true,
+      "locked_status": "archive_and_source_member_locked_curated_extract_present",
+      "members": [
+        {
+          "role": "source_disassembly",
+          "path": "SKULL.ASM",
+          "sha256": "a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099",
+          "expected_sha256": "a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "missing_gates": [
+    "No curated CSB extracted source-manifest is present in repo; CSB remains archive/member-candidate locked only.",
+    "No CSB equivalent of tools/greatstone_dm1_source_lock_check.py exists yet.",
+    "No DM2 runtime/source-manifest gate maps SKULL.ASM symbols to Firestaff code paths yet.",
+    "No CSB/DM2 DOSBox/original capture or rendering parity probe is enabled."
+  ],
+  "parity_claimed": false,
+  "failures": []
+}

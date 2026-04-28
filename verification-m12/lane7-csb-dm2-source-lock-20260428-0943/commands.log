@@ -1,0 +1,90 @@
+$ python3 -m py_compile tools/validate_csb_dm2_source_lock.py
+$ python3 tools/validate_csb_dm2_source_lock.py --json-out parity-evidence/overlays/csb_dm2_source_lock.json --markdown-out parity-evidence/csb_dm2_source_lock.md
+PASS csb/dm2 source lock: 6 archives, 17 members
+$ python3 tools/csb_v1_bootstrap_scout.py
+{
+  "checks": [
+    {
+      "check_id": "CSB_SLOT_PRESENT",
+      "detail": "startup/config model carries a CSB game slot",
+      "ok": true
+    },
+    {
+      "check_id": "CSB_LAUNCH_GATED",
+      "detail": "m12_game_supported() still gates launch support to DM1 only",
+      "ok": true
+    },
+    {
+      "check_id": "CSB_GRAPHICS_HASHES_ONLY",
+      "detail": "asset status recognizes CSB graphics hashes but required-file count is one file, not graphics+dungeon",
+      "ok": true
+    },
+    {
+      "check_id": "DM1_SOURCE_LOCK_TOOL_ONLY",
+      "detail": "DM1 has a source-lock helper; CSB does not yet have an equivalent helper",
+      "ok": true
+    },
+    {
+      "check_id": "DM1_CAPTURE_ONLY",
+      "detail": "DOSBox/original capture tooling is DM1-only today",
+      "ok": true
+    },
+    {
+      "check_id": "NO_CSB_RENDERING_PROBE",
+      "detail": "no CSB V1 rendering/runtime probe exists yet, so first evidence step should stay asset/source-only",
+      "ok": true
+    }
+  ],
+  "recommended_first_safe_step": "Add a CSB source-lock/asset-manifest probe that verifies CSBGRAPH.DAT plus the matching dungeon/runtime data by hash before enabling launch or rendering paths.",
+  "scope": "CSB V1 bootstrap scout, static evidence only",
+  "source_hits": [
+    "menu_startup_m12.c:46:M12_MUSEUM_CATEGORY_CSB,",
+    "menu_startup_m12.c:185:{.title = \"CHAOS STRIKES BACK\", .gameId = \"csb\", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},",
+    "menu_startup_m12.c:213:{\"EXPANSION AND SEQUEL DESIGN\", \"DUNGEON MASTER SYSTEMS BECOME DENSER\", \"THE CORBUM QUEST REPLACES SIMPLE DESCENT\", \"FOUR PATHS TEST MASTERY\", \"CSB REWARDS MAP MEMORY AND NERVE\"},",
+    "menu_startup_m12.c:215:{\"ARCHIVE STATUS\", \"CSBGRAPH DAT AND CSB DAT ARE TRACKED\", \"VERSION SLOTS USE HASH EVIDENCE\", \"LAUNCHER SHOWS READY ONLY WHEN MATCHED\", \"MUSEUM CONTENT STAYS STATIC AND BOUNDED\"}",
+    "menu_startup_m12.c:939:if (strcmp(gameId, \"csb\") == 0) {",
+    "menu_startup_m12.c:949:/* Only DM1 is launch-supported in the current runtime. CSB and DM2",
+    "menu_startup_m12.c:957:static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {\"dm1\", \"csb\", \"dm2\"};",
+    "menu_startup_m12.c:979:static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {\"dm1\", \"csb\", \"dm2\"};",
+    "menu_startup_m12.c:1846:if (gameId && strcmp(gameId, \"csb\") == 0) {",
+    "menu_startup_m12.c:1865:if (entry->gameId && strcmp(entry->gameId, \"csb\") == 0) {",
+    "menu_startup_m12.c:1866:return \"CSB\";",
+    "menu_startup_m12.c:1983:if (entry->gameId && strcmp(entry->gameId, \"csb\") == 0) {",
+    "menu_startup_m12.c:3592:/* Three game cards: DM1, CSB, DM2 */",
+    "asset_status_m12.c:34:static const char* const g_csbGraphicsNames[] = {\"GRAPHICS.DAT\", \"CSBGRAPH.DAT\", NULL};",
+    "asset_status_m12.c:43:static const M12_VersionSpec g_csbVersions[] = {",
+    "asset_status_m12.c:44:{\"csb\", \"st20-21-en\", \"Atari ST 2.0/2.1 English\", \"ST 2.1 EN\", g_csbGraphicsNames, \"ebf6a57af3f27782e358c0490bfd2f2e\"},",
+    "asset_status_m12.c:45:{\"csb\", \"amiga35-en\", \"Amiga 3.5 English\", \"Amiga 3.5 EN\", g_csbGraphicsNames, \"291e1bc6803e3dc4b974c60117ca5d68\"},",
+    "asset_status_m12.c:46:{\"csb\", \"amiga35-multi\", \"Amiga 3.5 Multilanguage\", \"Amiga 3.5 ML\", g_csbGraphicsNames, \"cefaddfdf5651df2c91f61b5611a8362\"}",
+    "asset_status_m12.c:57:{\"csb\", g_csbVersions, sizeof(g_csbVersions) / sizeof(g_csbVersions[0])},",
+    "asset_status_m12.c:357:} else if (strcmp(gameSpec->gameId, \"csb\") == 0) {",
+    "asset_status_m12.c:358:status->csbAvailable = matchedAny;",
+    "asset_status_m12.c:391:if (strcmp(gameId, \"csb\") == 0) {",
+    "asset_status_m12.c:392:return status->csbAvailable;",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:163:char csbGraphicsPath[1024];",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:164:char csbDungeonPath[1024];",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:191:snprintf(csbGraphicsPath, sizeof(csbGraphicsPath), \"%s/CSBGRAPH.DAT\", dataDir);",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:192:snprintf(csbDungeonPath, sizeof(csbDungeonPath), \"%s/CSB.DAT\", dataDir);",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:254:make_file_with_text(csbGraphicsPath, \"ok\");",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:255:make_file_with_text(csbDungeonPath, \"ok\");",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:263:state.assetStatus.csbAvailable == 0 &&",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:266:M12_AssetStatus_GameHasCompleteHashSet(\"csb\") == 1 &&",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:269:M12_AssetStatus_GameKnownHashCount(\"csb\") == 3U &&",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:369:\"enter on CSB shows unsupported/coming-soon messaging without requesting launch\");",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:440:M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* csb */",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:610:langState.gameOptions[1].languageIndex = 2; /* CSB = FR */",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:617:\"per-game language index is independently settable for DM1/CSB/DM2\");",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:800:\"CSB is not launchable and reports unsupported/coming-soon without requesting launch\");",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:803:modeState.assetStatus.csbAvailable = 1;",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:812:int csbBlocked = modeState.view == M12_MENU_VIEW_MESSAGE &&",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:822:csbBlocked &&",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:827:\"CSB and DM2 remain disabled and non-launchable even if asset scanning reports matches\");",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:886:remove_if_present(csbDungeonPath);",
+    "probes/m12/firestaff_m12_startup_menu_probe.c:887:remove_if_present(csbGraphicsPath);",
+    "vga_palette_pc34_compat.h:1:#ifndef REDMCSB_VGA_PALETTE_PC34_COMPAT_H",
+    "vga_palette_pc34_compat.h:2:#define REDMCSB_VGA_PALETTE_PC34_COMPAT_H",
+    "vga_palette_pc34_compat.h:5:* VGA palette for DM/CSB PC 3.4 \u2014 original VGA DAC values.",
+    "vga_palette_pc34_compat.h:7:* Source: VIDEODRV.C from ReDMCSB (G8149_ICON, G8151\u2013G8156 LIGHT0\u2013LIGHT5)."
+  ]
+}
+CSB_V1_BOOTSTRAP_SCOUT: PASS
