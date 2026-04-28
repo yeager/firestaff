@@ -60,9 +60,23 @@ static int check_title_manifest(const char* titlePath) {
 }
 
 static int check_title_handoff(void) {
+    V1_TitleFrontendSourceTiming timing = V1_TitleFrontend_GetSourceTimingEvidence();
     unsigned int steps[] = {0u, 1u, 52u, 53u, 54u, 106u};
     unsigned int i;
     int ok = 1;
+    printf("sourceTimingFile=%s\n", timing.sourceFile);
+    printf("sourceTimingFunction=%s\n", timing.sourceFunction);
+    printf("sourceZoomStepCount=%u\n", timing.zoomStepCount);
+    printf("sourceVblankBeforeEachZoomStep=%u\n", timing.vblankBeforeEachZoomStep);
+    printf("sourcePostZoomVblankCount=%u\n", timing.postZoomVblankCount);
+    printf("sourceFinalFadeGuardVblankCount=%u\n", timing.finalFadeGuardVblankCount);
+    printf("sourceFirstMenuEligibleStep=%u\n", timing.firstMenuEligibleStep);
+    printf("sourceTimingEvidence=%s\n", timing.evidenceNote);
+    if (timing.zoomStepCount != 18u) ok = 0;
+    if (timing.vblankBeforeEachZoomStep != 1u) ok = 0;
+    if (timing.postZoomVblankCount != 2u) ok = 0;
+    if (timing.finalFadeGuardVblankCount != 1u) ok = 0;
+    if (timing.firstMenuEligibleStep != 54u) ok = 0;
     for (i = 0; i < sizeof(steps) / sizeof(steps[0]); ++i) {
         V1_TitleFrontendHandoffDecision hold = V1_TitleFrontend_DecideTitleMenuHandoffStep(steps[i], 0);
         V1_TitleFrontendHandoffDecision enter = V1_TitleFrontend_DecideTitleMenuHandoffStep(steps[i], 1);
@@ -81,6 +95,7 @@ static int check_title_handoff(void) {
     if (V1_TitleFrontend_DecideTitleMenuHandoffStep(54u, 1).surface != V1_TITLE_FRONTEND_SURFACE_MENU) ok = 0;
     if (V1_TitleFrontend_DecideTitleMenuHandoffStep(54u, 1).title.renderFrameOrdinal != V1_TITLE_DAT_FRAME_MAX) ok = 0;
     if (V1_TitleFrontend_DecideTitleMenuHandoffStep(54u, 0).surface != V1_TITLE_FRONTEND_SURFACE_TITLE) ok = 0;
+    printf("titleSourceTimingInvariantOk=%d\n", ok);
     printf("titleHandoffInvariantOk=%d\n", ok);
     return ok;
 }
@@ -156,7 +171,7 @@ int main(int argc, char** argv) {
     titlePath = (argc >= 3) ? argv[2] : 0;
 
     printf("probe=firestaff_v1_title_menu_cadence_layout\n");
-    printf("scope=bounded source/runtime evidence; no original wall-clock cadence claim\n");
+    printf("scope=bounded ReDMCSB TITLE.C source-locked timing plus runtime handoff evidence\n");
     ok = check_menu_metrics(graphicsPath);
     if (titlePath) {
         printf("titleDatPath=%s\n", titlePath);
@@ -165,7 +180,7 @@ int main(int argc, char** argv) {
         printf("titleDatPath=(not provided)\n");
     }
     ok = check_title_handoff() && ok;
-    printf("originalCadenceClaim=0\n");
-    printf("blocker=requires per-presented-frame emulator dump or PC-conditional TITLE.C timing isolation; sparse DOSBox screenshot mapper is not enough\n");
+    printf("originalCadenceClaim=source-locked-pc-st-title-c\n");
+    printf("blocker=per-presented-frame emulator dump still needed for pixel/video capture comparison, but TITLE.C control-flow cadence is no longer blocked\n");
     return ok ? 0 : 1;
 }

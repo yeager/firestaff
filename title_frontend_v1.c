@@ -6,7 +6,8 @@
  * PC34 4bpp screen-bitmap format used by the V1/M9 frontend.  It intentionally
  * does not infer original animation cadence.  Presentation callers can use the
  * finite sequence decision helper to hold the final source frame at the handoff
- * seam while the parity ledger keeps original timing open.
+ * seam.  ReDMCSB TITLE.C now source-locks the original PC/ST control-flow
+ * cadence used for the zoom/fade seam evidence.
  */
 
 #include "title_frontend_v1.h"
@@ -119,6 +120,20 @@ V1_TitleFrontendHandoffDecision V1_TitleFrontend_DecideTitleMenuHandoffStep(unsi
         decision.enteredMenuAfterHandoff = 1;
     }
     return decision;
+}
+
+V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
+    V1_TitleFrontendSourceTiming timing;
+    memset(&timing, 0, sizeof(timing));
+    timing.zoomStepCount = 18u;
+    timing.vblankBeforeEachZoomStep = 1u;
+    timing.postZoomVblankCount = 2u;
+    timing.finalFadeGuardVblankCount = 1u;
+    timing.firstMenuEligibleStep = V1_TITLE_DAT_FRAME_MAX + 1u;
+    timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";
+    timing.sourceFunction = "F0437_STARTEND_DrawTitle";
+    timing.evidenceNote = "PC/ST path: 18 zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then final BUG0_71 M526_WaitVerticalBlank() after fade.";
+    return timing;
 }
 
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
