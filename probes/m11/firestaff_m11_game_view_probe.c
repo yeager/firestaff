@@ -7154,6 +7154,63 @@ int main(int argc, char** argv) {
                      "normal V1 inventory slot click picks object into dedicated leader-hand runtime state");
     }
 
+    /* INV_GV_362B: Source backpack boxes C528..C536 are real click
+     * zones/commands, but they must not alias Firestaff's compact eight-slot
+     * champion backpack model.  Until the champion model grows the remaining
+     * original DM1 backpack slots, clicks on source slot-box indices 29..37
+     * should route to COMMAND.C C049..C057 and then stop safely with no
+     * inventory mutation and no transient leader-hand pickup. */
+    {
+        M11_GameViewState clickInv;
+        unsigned short readyThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        unsigned short backpackThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        int ok = 1;
+        int sourceSlotBox;
+        memcpy(&clickInv, &gameView, sizeof(clickInv));
+        clickInv.showDebugHUD = 0;
+        clickInv.inventoryPanelActive = 1;
+        clickInv.world.party.activeChampionIndex = 0;
+        clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = readyThing;
+        clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_8] = backpackThing;
+        M11_GameView_ClearV1LeaderHandObject(&clickInv);
+        for (sourceSlotBox = 29; sourceSlotBox <= 37; ++sourceSlotBox) {
+            int sx = 0, sy = 0, sw = 0, sh = 0;
+            int space = M11_DM1_MOUSE_SPACE_NONE;
+            int zoneId = 0;
+            int command;
+            if (!M11_GameView_GetV1InventorySourceSlotBoxZone(sourceSlotBox,
+                                                              &sx, &sy, &sw, &sh)) {
+                ok = 0;
+                break;
+            }
+            command = M11_GameView_GetV1MouseCommandForPoint(
+                M11_DM1_MOUSE_LIST_INVENTORY,
+                sx + (sw / 2),
+                33 + sy + (sh / 2),
+                M11_DM1_MOUSE_MASK_LEFT,
+                &space,
+                &zoneId);
+            if (command != sourceSlotBox + 20 ||
+                space != M11_DM1_MOUSE_SPACE_VIEWPORT ||
+                zoneId != sourceSlotBox + 499 ||
+                M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(sourceSlotBox) != -1 ||
+                M11_GameView_HandlePointer(&clickInv,
+                                           sx + (sw / 2),
+                                           33 + sy + (sh / 2),
+                                           1) != M11_GAME_INPUT_IGNORED ||
+                clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] != readyThing ||
+                clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_8] != backpackThing ||
+                M11_GameView_GetV1LeaderHandThing(&clickInv) != THING_NONE) {
+                ok = 0;
+                break;
+            }
+        }
+        probe_record(&tally,
+                     "INV_GV_362B",
+                     ok,
+                     "V1 source backpack slots C528..C536 route but do not alias compact Firestaff backpack slots");
+    }
+
     /* INV_GV_363: Normal V1 inventory draws pouch/quiver/backpack dynamic
      * icons only inside their source C513/C514/C527 slot boxes. */
     {
