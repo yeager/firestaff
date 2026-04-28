@@ -1,0 +1,2007 @@
+{
+  "schema": "pass143_frame48ed_control_delta_atlas.v1",
+  "run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-192537-pass141-pm-f1-dungeon-control-readiness",
+  "rows": [
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "initial",
+      "value": "initial",
+      "sha12": "ceb0c2eec633",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0001-initial.png",
+      "stats": {
+        "mean": [
+          65.48,
+          43.99,
+          13.05
+        ],
+        "nonblack": 1.0
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Return",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0002-key_Return_2.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 62,
+        "changed_ratio": 0.000969,
+        "bbox": [
+          245,
+          36,
+          256,
+          51
+        ],
+        "mean_delta": [
+          0.133,
+          0.121,
+          0.021
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "wait",
+      "value": "wait_3",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0003-wait_3.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "F1",
+      "sha12": "38f411f2ea7e",
+      "class": "inventory",
+      "file": "f1_key4_movement/image0004-key_F1_4.png",
+      "stats": {
+        "mean": [
+          16.58,
+          14.84,
+          12.1
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 15168,
+        "changed_ratio": 0.237,
+        "bbox": [
+          16,
+          25,
+          319,
+          146
+        ],
+        "mean_delta": [
+          48.799,
+          29.08,
+          0.951
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "wait",
+      "value": "wait_5",
+      "sha12": "67893775f5c1",
+      "class": "title_or_menu",
+      "file": "f1_key4_movement/image0005-wait_5.png",
+      "stats": {
+        "mean": [
+          74.15,
+          75.26,
+          50.64
+        ],
+        "nonblack": 0.57827
+      },
+      "delta_from_prev": {
+        "changed_pixels": 64000,
+        "changed_ratio": 1.0,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          76.334,
+          74.877,
+          52.093
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "4",
+      "sha12": "672193a5deba",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0006-key_4_6.png",
+      "stats": {
+        "mean": [
+          114.75,
+          117.71,
+          94.5
+        ],
+        "nonblack": 0.80281
+      },
+      "delta_from_prev": {
+        "changed_pixels": 22459,
+        "changed_ratio": 0.350922,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          45.536,
+          46.033,
+          46.863
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "wait",
+      "value": "wait_7",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0007-wait_7.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 8733,
+        "changed_ratio": 0.136453,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          20.311,
+          20.725,
+          20.933
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0008-key_Up_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0009-key_Left_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_key4_movement/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Down",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_key4_movement/image0011-key_Down_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "initial",
+      "value": "initial",
+      "sha12": "ceb0c2eec633",
+      "class": "entrance_menu",
+      "file": "f1_panel_clicks_then_move/image0001-initial.png",
+      "stats": {
+        "mean": [
+          65.48,
+          43.99,
+          13.05
+        ],
+        "nonblack": 1.0
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "Return",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_panel_clicks_then_move/image0002-key_Return_2.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 62,
+        "changed_ratio": 0.000969,
+        "bbox": [
+          245,
+          36,
+          256,
+          51
+        ],
+        "mean_delta": [
+          0.133,
+          0.121,
+          0.021
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "wait",
+      "value": "wait_3",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_panel_clicks_then_move/image0003-wait_3.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "F1",
+      "sha12": "f2b6ba10f514",
+      "class": "inventory",
+      "file": "f1_panel_clicks_then_move/image0004-key_F1_4.png",
+      "stats": {
+        "mean": [
+          13.76,
+          13.07,
+          12.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 16040,
+        "changed_ratio": 0.250625,
+        "bbox": [
+          16,
+          25,
+          319,
+          146
+        ],
+        "mean_delta": [
+          51.615,
+          30.848,
+          1.001
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "wait",
+      "value": "wait_5",
+      "sha12": "7addedda4327",
+      "class": "title_or_menu",
+      "file": "f1_panel_clicks_then_move/image0005-wait_5.png",
+      "stats": {
+        "mean": [
+          72.37,
+          73.37,
+          48.67
+        ],
+        "nonblack": 0.5675
+      },
+      "delta_from_prev": {
+        "changed_pixels": 64000,
+        "changed_ratio": 1.0,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          73.5,
+          72.345,
+          50.398
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "click",
+      "value": "click_235_52_6",
+      "sha12": "8bc78f18f48a",
+      "class": "entrance_menu",
+      "file": "f1_panel_clicks_then_move/image0006-click_235_52_6.png",
+      "stats": {
+        "mean": [
+          117.68,
+          120.81,
+          97.72
+        ],
+        "nonblack": 0.81739
+      },
+      "delta_from_prev": {
+        "changed_pixels": 24327,
+        "changed_ratio": 0.380109,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          49.89,
+          50.683,
+          51.76
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "click",
+      "value": "click_276_158_7",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_panel_clicks_then_move/image0007-click_276_158_7.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 7439,
+        "changed_ratio": 0.116234,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          17.195,
+          17.577,
+          17.73
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "wait",
+      "value": "wait_8",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_panel_clicks_then_move/image0008-wait_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "1ee706538fb3",
+      "class": "dungeon_gameplay",
+      "file": "f1_panel_clicks_then_move/image0009-key_Up_9.png",
+      "stats": {
+        "mean": [
+          69.52,
+          69.52,
+          69.52
+        ],
+        "nonblack": 0.44028
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29556,
+        "changed_ratio": 0.461813,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.109,
+          68.684,
+          45.762
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_panel_clicks_then_move/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 1201,
+        "changed_ratio": 0.018766,
+        "bbox": [
+          233,
+          53,
+          320,
+          169
+        ],
+        "mean_delta": [
+          0.215,
+          4.14,
+          4.14
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_panel_clicks_then_move/image0011-key_Left_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "initial",
+      "value": "initial",
+      "sha12": "ceb0c2eec633",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0001-initial.png",
+      "stats": {
+        "mean": [
+          65.48,
+          43.99,
+          13.05
+        ],
+        "nonblack": 1.0
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Return",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0002-key_Return_2.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 62,
+        "changed_ratio": 0.000969,
+        "bbox": [
+          245,
+          36,
+          256,
+          51
+        ],
+        "mean_delta": [
+          0.133,
+          0.121,
+          0.021
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "wait",
+      "value": "wait_3",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0003-wait_3.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "F1",
+      "sha12": "d15db869b9f6",
+      "class": "graphics_320x200_unclassified",
+      "file": "f1_return_movement/image0004-key_F1_4.png",
+      "stats": {
+        "mean": [
+          20.44,
+          17.13,
+          12.16
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 13947,
+        "changed_ratio": 0.217922,
+        "bbox": [
+          16,
+          25,
+          319,
+          146
+        ],
+        "mean_delta": [
+          44.939,
+          26.787,
+          0.887
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "wait",
+      "value": "wait_5",
+      "sha12": "7addedda4327",
+      "class": "title_or_menu",
+      "file": "f1_return_movement/image0005-wait_5.png",
+      "stats": {
+        "mean": [
+          72.37,
+          73.37,
+          48.67
+        ],
+        "nonblack": 0.5675
+      },
+      "delta_from_prev": {
+        "changed_pixels": 64000,
+        "changed_ratio": 1.0,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          76.818,
+          74.472,
+          50.454
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Return",
+      "sha12": "1eb3c7fe6494",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0006-key_Return_6.png",
+      "stats": {
+        "mean": [
+          114.67,
+          117.63,
+          94.43
+        ],
+        "nonblack": 0.80244
+      },
+      "delta_from_prev": {
+        "changed_pixels": 23403,
+        "changed_ratio": 0.365672,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          47.362,
+          47.928,
+          48.865
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "wait",
+      "value": "wait_7",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0007-wait_7.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 8761,
+        "changed_ratio": 0.136891,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          20.386,
+          20.8,
+          21.008
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0008-key_Up_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0009-key_Up_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_return_movement/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_return_movement/image0011-key_Left_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "initial",
+      "value": "initial",
+      "sha12": "ceb0c2eec633",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0001-initial.png",
+      "stats": {
+        "mean": [
+          65.48,
+          43.99,
+          13.05
+        ],
+        "nonblack": 1.0
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Return",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0002-key_Return_2.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 62,
+        "changed_ratio": 0.000969,
+        "bbox": [
+          245,
+          36,
+          256,
+          51
+        ],
+        "mean_delta": [
+          0.133,
+          0.121,
+          0.021
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "wait",
+      "value": "wait_3",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0003-wait_3.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "F1",
+      "sha12": "f2b6ba10f514",
+      "class": "inventory",
+      "file": "f1_space_movement/image0004-key_F1_4.png",
+      "stats": {
+        "mean": [
+          13.76,
+          13.07,
+          12.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 16040,
+        "changed_ratio": 0.250625,
+        "bbox": [
+          16,
+          25,
+          319,
+          146
+        ],
+        "mean_delta": [
+          51.615,
+          30.848,
+          1.001
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "wait",
+      "value": "wait_5",
+      "sha12": "7addedda4327",
+      "class": "title_or_menu",
+      "file": "f1_space_movement/image0005-wait_5.png",
+      "stats": {
+        "mean": [
+          72.37,
+          73.37,
+          48.67
+        ],
+        "nonblack": 0.5675
+      },
+      "delta_from_prev": {
+        "changed_pixels": 64000,
+        "changed_ratio": 1.0,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          73.5,
+          72.345,
+          50.398
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Space",
+      "sha12": "5257b4c8ee2d",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0006-key_Space_6.png",
+      "stats": {
+        "mean": [
+          113.99,
+          116.88,
+          93.63
+        ],
+        "nonblack": 0.79937
+      },
+      "delta_from_prev": {
+        "changed_pixels": 23174,
+        "changed_ratio": 0.362094,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          46.742,
+          47.229,
+          48.12
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "wait",
+      "value": "wait_7",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0007-wait_7.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 9102,
+        "changed_ratio": 0.142219,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          21.159,
+          21.606,
+          21.837
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0008-key_Up_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0009-key_Right_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Down",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_space_movement/image0010-key_Down_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "initial",
+      "value": "initial",
+      "sha12": "ceb0c2eec633",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0001-initial.png",
+      "stats": {
+        "mean": [
+          65.48,
+          43.99,
+          13.05
+        ],
+        "nonblack": 1.0
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "Return",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0002-key_Return_2.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 62,
+        "changed_ratio": 0.000969,
+        "bbox": [
+          245,
+          36,
+          256,
+          51
+        ],
+        "mean_delta": [
+          0.133,
+          0.121,
+          0.021
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "wait",
+      "value": "wait_3",
+      "sha12": "014ed52c71a0",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0003-wait_3.png",
+      "stats": {
+        "mean": [
+          65.38,
+          43.92,
+          13.05
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "F1",
+      "sha12": "183f110f5d3b",
+      "class": "graphics_320x200_unclassified",
+      "file": "f1_top_clicks_then_move/image0004-key_F1_4.png",
+      "stats": {
+        "mean": [
+          25.49,
+          20.17,
+          12.28
+        ],
+        "nonblack": 1.0
+      },
+      "delta_from_prev": {
+        "changed_pixels": 12385,
+        "changed_ratio": 0.193516,
+        "bbox": [
+          17,
+          25,
+          319,
+          146
+        ],
+        "mean_delta": [
+          39.887,
+          23.75,
+          0.769
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "wait",
+      "value": "wait_5",
+      "sha12": "f8d841d4357c",
+      "class": "title_or_menu",
+      "file": "f1_top_clicks_then_move/image0005-wait_5.png",
+      "stats": {
+        "mean": [
+          70.15,
+          71.09,
+          46.33
+        ],
+        "nonblack": 0.55414
+      },
+      "delta_from_prev": {
+        "changed_pixels": 64000,
+        "changed_ratio": 1.0,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          77.741,
+          74.279,
+          48.521
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "click",
+      "value": "click_190_8_6",
+      "sha12": "1eb3c7fe6494",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0006-click_190_8_6.png",
+      "stats": {
+        "mean": [
+          114.67,
+          117.63,
+          94.43
+        ],
+        "nonblack": 0.80244
+      },
+      "delta_from_prev": {
+        "changed_pixels": 24443,
+        "changed_ratio": 0.381922,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          49.671,
+          50.12,
+          51.04
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "click",
+      "value": "click_244_9_7",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0007-click_244_9_7.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 8761,
+        "changed_ratio": 0.136891,
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "mean_delta": [
+          20.386,
+          20.8,
+          21.008
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "wait",
+      "value": "wait_8",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0008-wait_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0009-key_Up_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_top_clicks_then_move/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_top_clicks_then_move/image0011-key_Left_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "focus": [
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0008-key_Up_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_key4_movement/image0009-key_Left_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_key4_movement/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_key4_movement",
+      "phase": "key",
+      "value": "Down",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_key4_movement/image0011-key_Down_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "1ee706538fb3",
+      "class": "dungeon_gameplay",
+      "file": "f1_panel_clicks_then_move/image0009-key_Up_9.png",
+      "stats": {
+        "mean": [
+          69.52,
+          69.52,
+          69.52
+        ],
+        "nonblack": 0.44028
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29556,
+        "changed_ratio": 0.461813,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.109,
+          68.684,
+          45.762
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_panel_clicks_then_move/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 1201,
+        "changed_ratio": 0.018766,
+        "bbox": [
+          233,
+          53,
+          320,
+          169
+        ],
+        "mean_delta": [
+          0.215,
+          4.14,
+          4.14
+        ]
+      }
+    },
+    {
+      "scenario": "f1_panel_clicks_then_move",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_panel_clicks_then_move/image0011-key_Left_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0008-key_Up_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_return_movement/image0009-key_Up_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_return_movement/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_return_movement",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_return_movement/image0011-key_Left_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0008-key_Up_8.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_space_movement/image0009-key_Right_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_space_movement",
+      "phase": "key",
+      "value": "Down",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_space_movement/image0010-key_Down_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "Up",
+      "sha12": "17bd7e878157",
+      "class": "entrance_menu",
+      "file": "f1_top_clicks_then_move/image0009-key_Up_9.png",
+      "stats": {
+        "mean": [
+          134.63,
+          138.2,
+          115.28
+        ],
+        "nonblack": 0.90209
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "Right",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_top_clicks_then_move/image0010-key_Right_10.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 29566,
+        "changed_ratio": 0.461969,
+        "bbox": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "mean_delta": [
+          65.07,
+          66.887,
+          48.806
+        ]
+      }
+    },
+    {
+      "scenario": "f1_top_clicks_then_move",
+      "phase": "key",
+      "value": "Left",
+      "sha12": "48ed3743ab6a",
+      "class": "dungeon_gameplay",
+      "file": "f1_top_clicks_then_move/image0011-key_Left_11.png",
+      "stats": {
+        "mean": [
+          69.73,
+          73.66,
+          73.66
+        ],
+        "nonblack": 0.45905
+      },
+      "delta_from_prev": {
+        "changed_pixels": 0,
+        "changed_ratio": 0.0,
+        "bbox": null,
+        "mean_delta": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "hash_counts": {
+    "014ed52c71a0": 10,
+    "17bd7e878157": 14,
+    "183f110f5d3b": 1,
+    "1eb3c7fe6494": 2,
+    "1ee706538fb3": 1,
+    "38f411f2ea7e": 1,
+    "48ed3743ab6a": 9,
+    "5257b4c8ee2d": 1,
+    "672193a5deba": 1,
+    "67893775f5c1": 1,
+    "7addedda4327": 3,
+    "8bc78f18f48a": 1,
+    "ceb0c2eec633": 5,
+    "d15db869b9f6": 1,
+    "f2b6ba10f514": 2,
+    "f8d841d4357c": 1
+  }
+}
