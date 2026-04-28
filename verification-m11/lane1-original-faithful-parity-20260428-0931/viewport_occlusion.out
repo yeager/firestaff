@@ -1,0 +1,11 @@
+V1 viewport occlusion gate source-shape verification passed
+- maxVisibleForward source: m11_game_view.c:8771
+- pits gate before sampling: m11_game_view.c:8815
+- floor ornaments gate before sampling: m11_game_view.c:8871
+- stairs gate before sampling: m11_game_view.c:9058
+- teleporter fields gate before sampling: m11_game_view.c:9122
+- side walls gate before sampling: m11_game_view.c:9185
+- side doors gate before sampling: m11_game_view.c:9536
+- side door ornaments gate before sampling: m11_game_view.c:9626
+- side destroyed-door masks gate before sampling: m11_game_view.c:9698
+- viewport call-site wiring: m11_game_view.c:16788

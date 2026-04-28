@@ -1,0 +1,7 @@
+[pass-70] wrote /home/trv2/work/firestaff/verification-screens/pass70-original-dm1-viewports/dosbox-original-viewports.conf
+[pass-70] wrote /home/trv2/work/firestaff/verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys.swift
+[pass-70] wrote /home/trv2/work/firestaff/verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys_xdotool.sh
+[pass-70] route events: wait:5000 shot:party_hud f1 wait:500 shot f2 wait:500 shot one wait:500 shot:spell_panel four wait:100 four wait:100 enter wait:1000 shot i wait:800 shot:inventory_panel
+[pass-70] route shape OK: 21 tokens, 6 shots, 3 labeled
+[pass-70] shot label plan: 01:party_hud, 02:(unlabeled), 03:(unlabeled), 04:spell_panel, 05:(unlabeled), 06:inventory_panel
+[pass-70] normalize command after raw screenshots exist: scripts/dosbox_dm1_original_viewport_reference_capture.sh --normalize-only
