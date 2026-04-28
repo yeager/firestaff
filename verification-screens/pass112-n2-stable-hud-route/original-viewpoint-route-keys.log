@@ -1,0 +1,26 @@
+route-token wait:7000
+route-token enter
+route-token wait:1500
+route-token one
+route-token wait:1500
+route-token click:276,140
+click-mapped 276,140 -> window-relative 553,281 window=640x400 origin=320,312
+route-token wait:1500
+route-token one
+route-token wait:1500
+route-token shot:party_hud
+route-token kp5
+route-token wait:700
+route-token shot
+route-token kp5
+route-token wait:700
+route-token shot
+route-token f1
+route-token wait:700
+route-token shot:spell_panel
+route-token one
+route-token wait:700
+route-token shot
+route-token i
+route-token wait:700
+route-token shot:inventory_panel
