@@ -1,0 +1,512 @@
+{
+  "schema": "pass80_original_frame_classifier.v1",
+  "attempt_dir": "verification-screens/pass112-n2-route-probe",
+  "capture_count": 6,
+  "dimensions_seen": {
+    "320x200": 6
+  },
+  "expected_sequence": [
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "spell_panel",
+    "dungeon_gameplay",
+    "inventory"
+  ],
+  "class_counts": {
+    "entrance_menu": 2,
+    "graphics_320x200_unclassified": 1,
+    "title_or_menu": 3
+  },
+  "duplicate_sha256_counts": {
+    "307323fbc1f7772cb259160f2f988a482981e33a339e4414b0bfc8c85f8d4bd0": 3
+  },
+  "honesty": "Classifier/audit only. A 320x200 frame is not parity evidence until its semantic class matches the intended route state.",
+  "captures": [
+    {
+      "file": "verification-screens/pass112-n2-route-probe/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 9628,
+      "sha256": "f7f58cbefcf23bc5f495dcf166d77997680a80d71f07f1722097e5174a090f8d",
+      "classification": "graphics_320x200_unclassified",
+      "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass112-n2-route-probe/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 9670,
+      "sha256": "307323fbc1f7772cb259160f2f988a482981e33a339e4414b0bfc8c85f8d4bd0",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass112-n2-route-probe/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 9670,
+      "sha256": "307323fbc1f7772cb259160f2f988a482981e33a339e4414b0bfc8c85f8d4bd0",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass112-n2-route-probe/image0004-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 9670,
+      "sha256": "307323fbc1f7772cb259160f2f988a482981e33a339e4414b0bfc8c85f8d4bd0",
+      "classification": "title_or_menu",
+      "reason": "sparse viewport plus colorful/right-column title-menu art",
+      "expected_class": "spell_panel",
+      "expected_match": false,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.2263,
+          "color_ratio": 0.0711,
+          "unique_colors": 5,
+          "mean_rgb": [
+            20.9,
+            15.29,
+            11.33
+          ],
+          "luma_stddev": 30.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.8966,
+          "color_ratio": 0.8766,
+          "unique_colors": 12,
+          "mean_rgb": [
+            154.3,
+            126.77,
+            90.08
+          ],
+          "luma_stddev": 57.21
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9168,
+          "color_ratio": 0.9149,
+          "unique_colors": 11,
+          "mean_rgb": [
+            146.93,
+            129.94,
+            84.92
+          ],
+          "luma_stddev": 50.13
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9312,
+          "color_ratio": 0.8713,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.78,
+            136.82,
+            68.87
+          ],
+          "luma_stddev": 49.02
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.2545,
+          "color_ratio": 0.0742,
+          "unique_colors": 5,
+          "mean_rgb": [
+            23.13,
+            17.07,
+            13.16
+          ],
+          "luma_stddev": 31.86
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass112-n2-route-probe/image0005-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 12375,
+      "sha256": "074422f14319b090cd4305174528c0586b0a5aa0b314304cd8a83a323188f5c0",
+      "classification": "entrance_menu",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.5249,
+          "color_ratio": 0.0471,
+          "unique_colors": 9,
+          "mean_rgb": [
+            69.06,
+            65.36,
+            62.85
+          ],
+          "luma_stddev": 72.96
+        },
+        "right_action": {
+          "nonblack_ratio": 0.9045,
+          "color_ratio": 0.8902,
+          "unique_colors": 12,
+          "mean_rgb": [
+            153.45,
+            126.85,
+            88.68
+          ],
+          "luma_stddev": 53.17
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9269,
+          "color_ratio": 0.9011,
+          "unique_colors": 11,
+          "mean_rgb": [
+            147.51,
+            131.53,
+            86.66
+          ],
+          "luma_stddev": 47.98
+        },
+        "right_column": {
+          "nonblack_ratio": 0.9376,
+          "color_ratio": 0.8653,
+          "unique_colors": 16,
+          "mean_rgb": [
+            115.73,
+            137.6,
+            69.57
+          ],
+          "luma_stddev": 47.14
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.4513,
+          "color_ratio": 0.0431,
+          "unique_colors": 8,
+          "mean_rgb": [
+            47.25,
+            43.47,
+            41.14
+          ],
+          "luma_stddev": 53.24
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass112-n2-route-probe/image0006-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 14670,
+      "sha256": "880d853d1bbe6ad4abc88f6a158ce4220a272e87253db6f379f034f0768b5d22",
+      "classification": "entrance_menu",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "expected_class": "inventory",
+      "expected_match": false,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9116,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            143.64,
+            143.64,
+            143.64
+          ],
+          "luma_stddev": 59.7
+        },
+        "right_action": {
+          "nonblack_ratio": 0.9231,
+          "color_ratio": 0.8971,
+          "unique_colors": 13,
+          "mean_rgb": [
+            154.68,
+            127.58,
+            89.53
+          ],
+          "luma_stddev": 51.28
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.9398,
+          "color_ratio": 0.914,
+          "unique_colors": 11,
+          "mean_rgb": [
+            148.58,
+            131.65,
+            86.66
+          ],
+          "luma_stddev": 46.84
+        },
+        "right_column": {
+          "nonblack_ratio": 0.942,
+          "color_ratio": 0.8691,
+          "unique_colors": 16,
+          "mean_rgb": [
+            116.04,
+            137.63,
+            69.61
+          ],
+          "luma_stddev": 46.79
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.7627,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            105.16,
+            105.16,
+            105.16
+          ],
+          "luma_stddev": 69.81
+        },
+        "title_top": {
+          "nonblack_ratio": 0.5526,
+          "color_ratio": 0.4793,
+          "unique_colors": 8,
+          "mean_rgb": [
+            76.48,
+            54.08,
+            35.52
+          ],
+          "luma_stddev": 60.32
+        }
+      }
+    }
+  ],
+  "warnings": [],
+  "problems": [
+    "image0001-raw.png: classified graphics_320x200_unclassified, expected dungeon_gameplay",
+    "image0002-raw.png: classified title_or_menu, expected dungeon_gameplay",
+    "image0003-raw.png: classified title_or_menu, expected dungeon_gameplay",
+    "image0004-raw.png: classified title_or_menu, expected spell_panel",
+    "image0005-raw.png: classified entrance_menu, expected dungeon_gameplay",
+    "image0006-raw.png: classified entrance_menu, expected inventory",
+    "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+  ],
+  "pass": false
+}

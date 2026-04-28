@@ -1,0 +1,30 @@
+{
+  "schema": "pass112_original_semantic_route_audit.v1",
+  "attempt_dir": "verification-screens/pass70-original-dm1-viewports",
+  "label_manifest": "verification-screens/pass70-original-dm1-viewports/original_viewport_shot_labels.tsv",
+  "classifier_json": "verification-screens/pass70-original-dm1-viewports/pass80_original_frame_classifier.json",
+  "honesty": "Semantic route audit only. Passing this gate makes original-vs-Firestaff overlay inputs eligible for pixel comparison; it does not claim pixel parity.",
+  "expected_route_labels": [
+    "party_hud",
+    "",
+    "",
+    "spell_panel",
+    "",
+    "inventory_panel"
+  ],
+  "expected_frame_classes": [
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "spell_panel",
+    "dungeon_gameplay",
+    "inventory"
+  ],
+  "rows": [],
+  "warnings": [],
+  "problems": [
+    "missing shot-label manifest: verification-screens/pass70-original-dm1-viewports/original_viewport_shot_labels.tsv",
+    "missing pass80 classifier JSON: verification-screens/pass70-original-dm1-viewports/pass80_original_frame_classifier.json"
+  ],
+  "semantic_route_ready_for_overlay": false
+}
