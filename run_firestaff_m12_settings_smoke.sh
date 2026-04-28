@@ -94,7 +94,8 @@ cc $CFLAGS_COMMON $SDL_FLAG $SDL_CFLAGS \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
     "$VGA_OBJ" \
     $GFX_OBJS \
-    $SDL_LIBS
+    $SDL_LIBS \
+    -lm
 
 export SDL_VIDEODRIVER=dummy
 "$BIN" | tee "$OUT_DIR/settings_smoke.log"

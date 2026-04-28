@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"

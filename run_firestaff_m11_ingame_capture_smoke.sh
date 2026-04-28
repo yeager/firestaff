@@ -13,6 +13,15 @@ cleanup() {
 trap cleanup EXIT
 
 if [[ ! -x "$CAPTURE_BIN" ]]; then
+  if command -v cmake >/dev/null 2>&1; then
+    if [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
+      cmake -S "$ROOT" -B "$BUILD_DIR"
+    fi
+    cmake --build "$BUILD_DIR" --target capture_ingame_series -- -j"${FIRESTAFF_BUILD_JOBS:-2}"
+  fi
+fi
+
+if [[ ! -x "$CAPTURE_BIN" ]]; then
   echo "capture binary not executable: $CAPTURE_BIN" >&2
   exit 1
 fi
