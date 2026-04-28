@@ -1,0 +1,25 @@
+PASS INV_P41_01 DEFS.H:2157 C69_CHAMPION_STATUS_BOX_SPACING == 69
+PASS INV_P41_02 C007_GRAPHIC_STATUS_BOX dimensions == 67x29 (M11 asset probe INV_GV_205)
+PASS INV_P41_03 zones_h_reconstruction locks C150 67x29 and C154 source offset x=207
+PASS INV_P41_04 m11_game_view.c enum carries M11_V1_PARTY_SLOT_STEP == 69
+PASS INV_P41_05 m11_game_view.c enum carries M11_V1_PARTY_SLOT_W == 67
+PASS INV_P41_06 m11_game_view.c enum keeps M11_PARTY_SLOT_STEP == 77 as V2 fallback
+PASS INV_P41_07 m11_game_view.c enum keeps M11_PARTY_SLOT_W == 71 as V2 fallback
+PASS INV_P41_08 m11_game_view.c defines static m11_party_slot_step(void)
+PASS INV_P41_09 m11_game_view.c defines static m11_party_slot_w(void)
+PASS INV_P41_10 helpers branch on V1 override constants, including source x=0
+PASS INV_P41_11 helpers return V2 values only when vertical slice is enabled
+PASS INV_P41_12 V1 slot 0: x=0..66 (W=67)
+PASS INV_P41_12 V1 slot 1: x=69..135 (W=67)
+PASS INV_P41_12 V1 slot 2: x=138..204 (W=67)
+PASS INV_P41_12 V1 slot 3: x=207..273 (W=67)
+PASS INV_P41_13 V1 slot rects are strictly non-overlapping (gap = spacing - width = 2 px)
+PASS INV_P41_14 V1 source party-panel right edge = 274 (<= 320 screen width)
+PASS INV_P41_15 stride delta V2 -> V1 == 8 px/slot (pass 34 evidence)
+PASS INV_P41_16 slot width delta V2 -> V1 == 4 px/slot (V2 71 -> V1 67 = C007 graphic width)
+PASS INV_P41_17 total party-panel width shrinks from 302 (V2) to 274 (V1), saving 28 px of horizontal chrome
+PASS INV_P41_18 V1 highlight outer border (offset 1, W = slotW - 2 = 65) fits strictly inside the 67-wide status-box frame
+PASS INV_P41_19 V1 highlight inner border (offset 2, W = slotW - 4 = 63) fits strictly inside the 67-wide status-box frame
+PASS INV_P41_20 hit-test + draw call sites iterate using slotStep (helper-bound)
+PASS INV_P41_21 draw site caches slotW via m11_party_slot_w()
+# summary: 24/24 invariants passed

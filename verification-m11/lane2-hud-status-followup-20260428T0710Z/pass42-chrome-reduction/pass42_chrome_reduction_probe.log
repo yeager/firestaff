@@ -1,0 +1,34 @@
+# firestaff_m11_pass42_chrome_reduction_probe
+PASS INV_P42_01 default (no env) => V1 chrome mode ON
+PASS INV_P42_02 FIRESTAFF_V1_CHROME=0 => V1 chrome mode OFF
+PASS INV_P42_03 FIRESTAFF_V1_CHROME=1 => V1 chrome mode ON
+PASS INV_P42_04 FIRESTAFF_V1_CHROME= (empty) => V1 chrome mode ON
+PASS INV_P42_05 FIRESTAFF_V2_VERTICAL_SLICE=1 overrides V1 chrome mode to OFF
+PASS INV_P42_06 FIRESTAFF_V2_VERTICAL_SLICE=1 + FIRESTAFF_V1_CHROME=1 => OFF (V2 wins)
+PASS INV_P42_07 FIRESTAFF_V2_VERTICAL_SLICE=0 + FIRESTAFF_V1_CHROME=1 => ON
+PASS INV_P42_08 status reroute payload form is "ACTION - OUTCOME"
+PASS INV_P42_09 inspect reroute payload form is "TITLE: DETAIL"
+PASS INV_P42_10 extract_key picks outcome after " - "
+PASS INV_P42_11 extract_key picks detail after ": "
+PASS INV_P42_12 extract_key returns whole text when neither separator present
+PASS INV_P42_13 player-facing: STAIRS - ASCENDED TO PREVIOUS LEVEL
+PASS INV_P42_14 player-facing: PIT - FELL TO NEXT LEVEL
+PASS INV_P42_15 player-facing: USE - POTION CONSUMED
+PASS INV_P42_16 suppressed: BOOT - GAME VIEW NOT STARTED
+PASS INV_P42_17 suppressed: PARTY MOVED TO ...
+PASS INV_P42_18 suppressed: SPELL PANEL OPENED
+PASS INV_P42_19 suppressed: RUNE ... readout
+PASS INV_P42_20 suppressed: IDLE TICK ...
+PASS INV_P42_21 empty string is never player-facing
+PASS INV_P42_22 dedup skips reroute when key phrase already in recent log
+PASS INV_P42_23 dedup allows reroute when no recent log entry shares key phrase
+PASS INV_P42_24 pass-40 M11_DM1_VIEWPORT_* anchors preserved
+PASS INV_P42_25 pass-41 M11_V1_PARTY_SLOT_* constants preserved
+PASS INV_P42_26 M11_CONTROL_STRIP_* enum preserved (pass 42 suppresses the draw, not the rect)
+PASS INV_P42_27 m11_v1_chrome_mode_enabled() defined in m11_game_view.c
+PASS INV_P42_28 m11_chrome_reroute_push_pass42 defined in m11_game_view.c
+PASS INV_P42_29 state->chromeRerouteLast{Status,Inspect} fields declared in header
+PASS INV_P42_30 m11_draw_control_strip call is guarded by showDebugHUD && !m11_v1_chrome_mode_enabled()
+PASS INV_P42_31 bottom message surface renders the source C015 four-row V1 message area
+PASS INV_P42_32 chrome-mode decision function matches runtime policy for all 3 cases
+# summary: 32/32 invariants passed

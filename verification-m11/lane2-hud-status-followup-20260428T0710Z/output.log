@@ -1,0 +1,1385 @@
+RUN=verification-m11/lane2-hud-status-followup-20260428T0710Z
+START=2026-04-28T07:11:30Z
+CMD ./run_firestaff_m11_pass41_status_box_stride_probe.sh "$RUN/pass41-status-box-stride"
+PASS INV_P41_01 DEFS.H:2157 C69_CHAMPION_STATUS_BOX_SPACING == 69
+PASS INV_P41_02 C007_GRAPHIC_STATUS_BOX dimensions == 67x29 (M11 asset probe INV_GV_205)
+PASS INV_P41_03 zones_h_reconstruction locks C150 67x29 and C154 source offset x=207
+PASS INV_P41_04 m11_game_view.c enum carries M11_V1_PARTY_SLOT_STEP == 69
+PASS INV_P41_05 m11_game_view.c enum carries M11_V1_PARTY_SLOT_W == 67
+PASS INV_P41_06 m11_game_view.c enum keeps M11_PARTY_SLOT_STEP == 77 as V2 fallback
+PASS INV_P41_07 m11_game_view.c enum keeps M11_PARTY_SLOT_W == 71 as V2 fallback
+PASS INV_P41_08 m11_game_view.c defines static m11_party_slot_step(void)
+PASS INV_P41_09 m11_game_view.c defines static m11_party_slot_w(void)
+PASS INV_P41_10 helpers branch on V1 override constants, including source x=0
+PASS INV_P41_11 helpers return V2 values only when vertical slice is enabled
+PASS INV_P41_12 V1 slot 0: x=0..66 (W=67)
+PASS INV_P41_12 V1 slot 1: x=69..135 (W=67)
+PASS INV_P41_12 V1 slot 2: x=138..204 (W=67)
+PASS INV_P41_12 V1 slot 3: x=207..273 (W=67)
+PASS INV_P41_13 V1 slot rects are strictly non-overlapping (gap = spacing - width = 2 px)
+PASS INV_P41_14 V1 source party-panel right edge = 274 (<= 320 screen width)
+PASS INV_P41_15 stride delta V2 -> V1 == 8 px/slot (pass 34 evidence)
+PASS INV_P41_16 slot width delta V2 -> V1 == 4 px/slot (V2 71 -> V1 67 = C007 graphic width)
+PASS INV_P41_17 total party-panel width shrinks from 302 (V2) to 274 (V1), saving 28 px of horizontal chrome
+PASS INV_P41_18 V1 highlight outer border (offset 1, W = slotW - 2 = 65) fits strictly inside the 67-wide status-box frame
+PASS INV_P41_19 V1 highlight inner border (offset 2, W = slotW - 4 = 63) fits strictly inside the 67-wide status-box frame
+PASS INV_P41_20 hit-test + draw call sites iterate using slotStep (helper-bound)
+PASS INV_P41_21 draw site caches slotW via m11_party_slot_w()
+# summary: 24/24 invariants passed
+Pass 41 status-box stride probe: # summary: 24/24 invariants passed
+CMD ./run_firestaff_m11_pass42_chrome_reduction_probe.sh "$RUN/pass42-chrome-reduction"
+# firestaff_m11_pass42_chrome_reduction_probe
+PASS INV_P42_01 default (no env) => V1 chrome mode ON
+PASS INV_P42_02 FIRESTAFF_V1_CHROME=0 => V1 chrome mode OFF
+PASS INV_P42_03 FIRESTAFF_V1_CHROME=1 => V1 chrome mode ON
+PASS INV_P42_04 FIRESTAFF_V1_CHROME= (empty) => V1 chrome mode ON
+PASS INV_P42_05 FIRESTAFF_V2_VERTICAL_SLICE=1 overrides V1 chrome mode to OFF
+PASS INV_P42_06 FIRESTAFF_V2_VERTICAL_SLICE=1 + FIRESTAFF_V1_CHROME=1 => OFF (V2 wins)
+PASS INV_P42_07 FIRESTAFF_V2_VERTICAL_SLICE=0 + FIRESTAFF_V1_CHROME=1 => ON
+PASS INV_P42_08 status reroute payload form is "ACTION - OUTCOME"
+PASS INV_P42_09 inspect reroute payload form is "TITLE: DETAIL"
+PASS INV_P42_10 extract_key picks outcome after " - "
+PASS INV_P42_11 extract_key picks detail after ": "
+PASS INV_P42_12 extract_key returns whole text when neither separator present
+PASS INV_P42_13 player-facing: STAIRS - ASCENDED TO PREVIOUS LEVEL
+PASS INV_P42_14 player-facing: PIT - FELL TO NEXT LEVEL
+PASS INV_P42_15 player-facing: USE - POTION CONSUMED
+PASS INV_P42_16 suppressed: BOOT - GAME VIEW NOT STARTED
+PASS INV_P42_17 suppressed: PARTY MOVED TO ...
+PASS INV_P42_18 suppressed: SPELL PANEL OPENED
+PASS INV_P42_19 suppressed: RUNE ... readout
+PASS INV_P42_20 suppressed: IDLE TICK ...
+PASS INV_P42_21 empty string is never player-facing
+PASS INV_P42_22 dedup skips reroute when key phrase already in recent log
+PASS INV_P42_23 dedup allows reroute when no recent log entry shares key phrase
+PASS INV_P42_24 pass-40 M11_DM1_VIEWPORT_* anchors preserved
+PASS INV_P42_25 pass-41 M11_V1_PARTY_SLOT_* constants preserved
+PASS INV_P42_26 M11_CONTROL_STRIP_* enum preserved (pass 42 suppresses the draw, not the rect)
+PASS INV_P42_27 m11_v1_chrome_mode_enabled() defined in m11_game_view.c
+PASS INV_P42_28 m11_chrome_reroute_push_pass42 defined in m11_game_view.c
+PASS INV_P42_29 state->chromeRerouteLast{Status,Inspect} fields declared in header
+PASS INV_P42_30 m11_draw_control_strip call is guarded by showDebugHUD && !m11_v1_chrome_mode_enabled()
+PASS INV_P42_31 bottom message surface renders the source C015 four-row V1 message area
+PASS INV_P42_32 chrome-mode decision function matches runtime policy for all 3 cases
+# summary: 32/32 invariants passed
+Pass 42 chrome reduction probe: # summary: 32/32 invariants passed
+CMD ./run_firestaff_m11_pass43_bar_graph_probe.sh "$RUN/pass43-bar-graphs"
+In file included from /home/trv2/work/firestaff/firestaff_m11_pass43_bar_graph_probe.c:10:
+/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+  135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
+      |                                           ^
+In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
+/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+  135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
+      |                                           ^
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
+      |                                           ^~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
+                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+In function ‘snprintf’,
+    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+ 7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                       ^~
+/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+ 7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                      ^~~~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                           ^~
+/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                          ^~~~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+ 4735 |              "F9 RESTORES TICK %u FROM %s",
+      |                                        ^~
+ 4736 |              (unsigned int)state->world.gameTick,
+ 4737 |              path);
+      |              ~~~~                       
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+ 4824 |              "TICK %u HASH %08X RELOADED FROM %s",
+      |                                               ^~
+......
+ 4827 |              path);
+      |              ~~~~                              
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+16594 |         snprintf(line, sizeof(line), "%s",
+      |                                       ^~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
+      |                                               ^~   ~~~~
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
+      |                                               ^~   ~~~~
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+  744 |         snprintf(line1, line1Size, "%s", text);
+      |                                     ^~
+In function ‘snprintf’,
+    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+19125 |                                               skillX, skillY, skillLine, &skillStyle);
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+19116 |                                 int skillX, skillY;
+      |                                             ^~~~~~
+/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+  256 |     snprintf(out, outSize, "%s", value);
+      |                             ^~
+......
+  312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+      |                                                                       ~~~~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+In function ‘snprintf’,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+  256 |     snprintf(out, outSize, "%s", value);
+      |                             ^~
+In function ‘snprintf’,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+  535 |     snprintf(out + len, outSize - len, "%s", value);
+      |                                         ^~
+......
+  683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
+      |                                                         ~~~~~~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+In function ‘snprintf’,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+  535 |     snprintf(out + len, outSize - len, "%s", value);
+      |                                         ^~
+......
+  695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
+      |                                                             ~~~~~~
+In function ‘snprintf’,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+Screenshot: verification-m11/lane2-hud-status-followup-20260428T0710Z/pass43-bar-graphs/pass43_party_bar_graphs.pgm
+PASS INV_P43_01 slot-0 top-row V1 bar origins resolve to x=46/53/60 and y=4 from the recovered zone geometry
+PASS INV_P43_02 local source/evidence anchors the champion-color table as {7,11,8,14}
+PASS INV_P43_03 m11_game_view.c carries the pass-43 V1 bar-graph geometry and mode switch
+PASS INV_P43_04 slot-0 HP bar is a full-height 4x25 green column at 100/100
+PASS INV_P43_05 slot-0 stamina bar blanks the top 13 px and fills the bottom 12 px at 50/100
+PASS INV_P43_06 slot-0 mana bar honors the CHAMDRAW min-1px fill rule at 1/100
+PASS INV_P43_07 slot-1 HP bar uses champion color 11 (yellow) from the source table
+PASS INV_P43_08 slot-2 HP bar uses champion color 8 (red) from the source table
+PASS INV_P43_09 slot-3 HP bar uses champion color 14 (light blue) from the source table
+PASS INV_P43_10 the old left-anchored horizontal strip body no longer carries colored stat fill in V1
+# summary: 10/10 invariants passed
+Pass 43 bar-graph probe: # summary: 10/10 invariants passed
+CMD ./run_firestaff_m11_pass44_spell_label_probe.sh "$RUN/pass44-spell-labels" "$HOME/.firestaff/data/GRAPHICS.DAT"
+In file included from /home/trv2/work/firestaff/firestaff_m11_pass44_spell_label_probe.c:9:
+/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+  135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
+      |                                           ^
+In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
+/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+  135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
+      |                                           ^
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
+      |                                           ^~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
+                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+In function ‘snprintf’,
+    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+ 7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                       ^~
+/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+ 7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                      ^~~~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                           ^~
+/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                          ^~~~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+ 4735 |              "F9 RESTORES TICK %u FROM %s",
+      |                                        ^~
+ 4736 |              (unsigned int)state->world.gameTick,
+ 4737 |              path);
+      |              ~~~~                       
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+ 4824 |              "TICK %u HASH %08X RELOADED FROM %s",
+      |                                               ^~
+......
+ 4827 |              path);
+      |              ~~~~                              
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+16594 |         snprintf(line, sizeof(line), "%s",
+      |                                       ^~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
+      |                                               ^~   ~~~~
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
+      |                                               ^~   ~~~~
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+  744 |         snprintf(line1, line1Size, "%s", text);
+      |                                     ^~
+In function ‘snprintf’,
+    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+19125 |                                               skillX, skillY, skillLine, &skillStyle);
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+19116 |                                 int skillX, skillY;
+      |                                             ^~~~~~
+/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+  256 |     snprintf(out, outSize, "%s", value);
+      |                             ^~
+......
+  312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+      |                                                                       ~~~~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+In function ‘snprintf’,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+  256 |     snprintf(out, outSize, "%s", value);
+      |                             ^~
+In function ‘snprintf’,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+  535 |     snprintf(out + len, outSize - len, "%s", value);
+      |                                         ^~
+......
+  683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
+      |                                                         ~~~~~~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+In function ‘snprintf’,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+  535 |     snprintf(out + len, outSize - len, "%s", value);
+      |                                         ^~
+......
+  695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
+      |                                                             ~~~~~~
+In function ‘snprintf’,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+Screenshot: verification-m11/lane2-hud-status-followup-20260428T0710Z/pass44-spell-labels/pass44_spell_label_cells.pgm
+PASS INV_P44_01 GRAPHICS.DAT C011 loads at the source-backed 14x39 size
+PASS INV_P44_02 spell-panel C011 cell placement resolves to C013 x=248/y=43 for selected runes and x=235/y=54 for available runes
+PASS INV_P44_03 selected rune slot 0 carries the native top band of C011 line 3 (champion-symbol cell)
+PASS INV_P44_04 selected rune slot 1 repeats the same C011 champion-symbol cell band
+PASS INV_P44_05 available rune slot 0 carries the native top band of C011 line 2 (available-symbol cell)
+PASS INV_P44_06 available rune slot 5 repeats the C011 available-symbol cell band at the far-right label position
+PASS INV_P44_07 both selected and available rows read directly from distinct C011 source slices
+PASS INV_P44_08 probe completed and captured pass-44 spell-label evidence
+# summary: 8/8 invariants passed
+Pass 44 spell-label probe: # summary: 8/8 invariants passed
+CMD ./run_firestaff_m10_champion_lifecycle_probe.sh "$HOME/.firestaff/data/DUNGEON.DAT" "$RUN/champion-lifecycle"
+Champion lifecycle probe complete. Output: verification-m11/lane2-hud-status-followup-20260428T0710Z/champion-lifecycle
+CMD FIRESTAFF_DATA="$HOME/.firestaff/data" ./run_firestaff_m11_game_view_probe.sh
+In file included from /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:1:
+/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+  135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
+      |                                           ^
+/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c: In function ‘main’:
+/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:49: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 512 [-Wformat-truncation=]
+ 2508 |             snprintf(gfxPath, sizeof(gfxPath), "%s/GRAPHICS.DAT", dataDir);
+      |                                                 ^~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
+                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+In function ‘snprintf’,
+    inlined from ‘main’ at /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:13:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 14 and 1037 bytes into a destination of size 512
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
+/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+  135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
+      |                                           ^
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
+      |                                           ^~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
+                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+In function ‘snprintf’,
+    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+ 7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                       ^~
+/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+ 7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                      ^~~~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                           ^~
+/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+      |                                                          ^~~~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+ 4735 |              "F9 RESTORES TICK %u FROM %s",
+      |                                        ^~
+ 4736 |              (unsigned int)state->world.gameTick,
+ 4737 |              path);
+      |              ~~~~                       
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+ 4824 |              "TICK %u HASH %08X RELOADED FROM %s",
+      |                                               ^~
+......
+ 4827 |              path);
+      |              ~~~~                              
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+16594 |         snprintf(line, sizeof(line), "%s",
+      |                                       ^~
+In function ‘snprintf’,
+    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
+      |                                               ^~   ~~~~
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
+      |                                               ^~   ~~~~
+In function ‘snprintf’,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+  744 |         snprintf(line1, line1Size, "%s", text);
+      |                                     ^~
+In function ‘snprintf’,
+    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
+/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+19125 |                                               skillX, skillY, skillLine, &skillStyle);
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+19116 |                                 int skillX, skillY;
+      |                                             ^~~~~~
+/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+  256 |     snprintf(out, outSize, "%s", value);
+      |                             ^~
+......
+  312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+      |                                                                       ~~~~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+In function ‘snprintf’,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+  256 |     snprintf(out, outSize, "%s", value);
+      |                             ^~
+In function ‘snprintf’,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+  535 |     snprintf(out + len, outSize - len, "%s", value);
+      |                                         ^~
+......
+  683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
+      |                                                         ~~~~~~
+In file included from /usr/include/stdio.h:980,
+                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+In function ‘snprintf’,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+  535 |     snprintf(out + len, outSize - len, "%s", value);
+      |                                         ^~
+......
+  695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
+      |                                                             ~~~~~~
+In function ‘snprintf’,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+PASS INV_GV_01 launcher exposes DM1 as the default builtin launch source with verified assets
+PASS INV_GV_02 launcher selection transitions into a real game view through the source hook
+PASS INV_GV_302A V1 message log strips Firestaff tick-prefix chrome from boot event text
+PASS INV_GV_302B normal V1 keeps source screen-clear gaps black while debug HUD retains slate chrome
+PASS INV_GV_430 DM1 primary mouse table maps right-click C151 champion-0 status box to command C007 toggle inventory
+PASS INV_GV_431 DM1 primary mouse table maps left-click C151 champion-0 name/hands to command C012 status-box click
+PASS INV_GV_432 DM1 primary mouse table scans C187 bar-graph left-click before C151 and returns command C007
+PASS INV_GV_433 DM1 mouse zone matching keeps source inclusive right/bottom edges for status boxes
+PASS INV_GV_433A DM1 primary mouse table maps left-click C013 spell area to command C100 before falling through
+PASS INV_GV_433B DM1 primary mouse table maps left-click C011 action area to command C111 before falling through
+PASS INV_GV_434 DM1 secondary movement table maps left-click C007 viewport to command C080 click-in-dungeon-view
+PASS INV_GV_435 DM1 secondary movement table maps right-click screen zone, including viewport, to command C083 toggle leader inventory
+PASS INV_GV_435A DM1 secondary movement table maps left-click C068 turn-left arrow to command C001
+PASS INV_GV_435B DM1 secondary movement table maps left-click C071 move-right arrow to command C004
+PASS INV_GV_436 DM1 inventory slot zones C507..C536 route screen clicks through viewport-relative coordinates to commands C028..C057
+PASS INV_GV_437 DM1 inventory table gives right-click screen-zone close inventory precedence over viewport-relative slot hits
+PASS INV_GV_438 DM1 inventory source slot boxes C507..C536 use source C033 normal slot-box graphic
+PASS INV_GV_400 M11 game view builds champion mirror catalog from DUNGEON.DAT at start
+PASS INV_GV_401 M11 mirror catalog exposes display name by ordinal
+PASS INV_GV_402 M11 mirror catalog exposes display title by ordinal
+PASS INV_GV_403 M11 can recruit champion identity by mirror catalog display name
+PASS INV_GV_404 M11 mirror ordinal recruit is idempotent for already-present champion
+PASS INV_GV_405 M11 resolves the source mirror TextString in the front viewport cell
+PASS INV_GV_406 M11 mirror click opens a source-backed resurrect/reincarnate candidate panel
+PASS INV_GV_407 M11 mirror panel resurrect command recruits the selected champion
+PASS INV_GV_408 viewport source zone C007 is locked to the DM1 224x136 rectangle at screen origin 0,33
+PASS INV_GV_409 inventory source panel seam is C020 graphic in layout-696 C101 at 80,52,144x73
+PASS INV_GV_410 inventory/action slot-box graphics are source C033/C034/C035 and overhang 16x16 icon cells as 18x18 boxes
+PASS INV_GV_411 inventory object-icon atlas seam is 32 icons per GRAPHICS.DAT page, 16x16 source cells starting at graphic 42
+PASS INV_GV_412 action-hand icons apply G0498 colour-12 cyan remap while inventory slot icons preserve source colour 12
+PASS INV_GV_413 viewport content placement seams expose source C2500 object, C3200 creature, and C2900 projectile points inside C007
+PASS INV_GV_414 viewport base uses source ceiling C079 224x39 then floor C078 224x97 inside the 224x136 aperture
+PASS INV_GV_415 viewport source draw-order seam is pinned from base/pits/ornaments/walls through doors/buttons
+PASS INV_GV_03 game view renders a non-empty dungeon-backed frame
+PASS INV_GV_04 game view input turns the party through the real tick orchestrator
+PASS INV_GV_05 turning changes the rendered pseudo-viewport frame, not just the inspector text
+PASS INV_GV_06 movement changes the rendered pseudo-viewport with real world movement
+PASS INV_GV_08 small minimap inset still renders in the corner
+PASS INV_GV_09 synthetic viewport harness initialises a focused 3x3 sample state
+PASS INV_GV_07 enter now inspects the front-cell target without spending a real tick
+PASS INV_GV_07B tab cycles the active front champion and updates the in-view readout
+PASS INV_GV_07C space turns front-cell creature contact into a real strike tick for the selected champion
+PASS INV_GV_07D clicking the viewport inspects the live front-cell target without spending a tick
+PASS INV_GV_07E clicking a champion slot directly arms that champion for the next action
+PASS INV_GV_07F clicking the left viewport lane turns the party through the real tick path
+PASS INV_GV_07G clicking the lower center viewport advances into a clear front cell without using the HUD arrows
+PASS INV_GV_07H clicking the on-screen action button drives the real front-cell attack flow
+PASS INV_GV_07I space toggles a closed front door into an animating step and updates the real dungeon square one state closer to OPEN
+PASS INV_GV_07M door interaction maps tick emissions to the M11 audio marker pipeline
+PASS INV_GV_07J idle cadence advances the real world clock without requiring a manual wait input
+PASS INV_GV_07K A strafes relative to facing and moves into the left lane through the real tick path
+PASS INV_GV_07L clicking the lower-right viewport lane performs a relative strafe instead of another turn
+PASS INV_GV_10 synthetic feature cells add door, stair, and occupancy cues inside the viewport
+PASS INV_GV_11 a side door accent stays visible without collapsing the forward corridor window
+PASS INV_GV_12 viewport slice and minimap inset coexist in the same frame
+PASS INV_GV_12B viewport item and effect cues appear when real thing chains include loot and projectiles
+PASS INV_GV_12C runtime viewport rect API returns source DM1 viewport geometry
+PASS INV_GV_12D runtime viewport crop is the deterministic 224x136 DM1 aperture inside 320x200
+PASS INV_GV_12E two same-state draws produce identical bytes for the 224x136 viewport crop
+PASS INV_GV_13 escape from the game view returns control to the launcher
+PASS INV_GV_13B quicksave serialises the live dungeon-backed world to a recoverable slot
+PASS INV_GV_13C quickload restores the exact live world snapshot after local state drift
+PASS INV_GV_13D sidebar save button writes a live quicksave without leaving the viewport
+PASS INV_GV_13E sidebar load button restores the last live quicksave in-place
+PASS INV_GV_13F sidebar menu header returns control to the launcher
+PASS INV_GV_14 sidebar HUD renders separate status and map framing beside the viewport
+PASS INV_GV_15 top HUD renders a dedicated party/status strip instead of a single inspector blob
+PASS INV_GV_15B party strip reflects source-colored champion bars when champion data exists
+PASS INV_GV_15C V1 champion HUD does not draw an invented active-slot yellow rectangle
+PASS INV_GV_15D V1 champion HUD leaves unrecruited party slots undrawn
+PASS INV_GV_15E V1 champion HUD draws source ready/action hand slot zones inside the status box
+PASS INV_GV_15E9 V1 champion HUD status box zones expose layout-696 C151..C154 ids and geometry
+PASS INV_GV_15E6 V1 status hand slot zones expose layout-696 C207..C210 parents and C211..C218 child ids/geometry
+PASS INV_GV_15V V1 status hand icon zones inset 16x16 object icons within hand slots
+PASS INV_GV_15W V1 status hand slot-box zones expose 18x18 C033/C034/C035 overdraw at hand origins
+PASS INV_GV_15X V1 status hand slot fallback renders the 18x18 C033 box extent, not the 16x16 parent zone
+PASS INV_GV_15E7 V1 status bar graph zones expose layout-696 C187..C190 and C195..C206 ids plus geometry
+PASS INV_GV_15E8 V1 status name text zones expose layout-696 C163..C166 ids and geometry
+PASS INV_GV_15Y V1 dead status-box fallback preserves source 67x29 C008 extent
+PASS INV_GV_15E2 V1 champion HUD name clear zones expose layout-696 C159..C162 ids and geometry
+PASS INV_GV_15Z V1 champion HUD name clear uses source C01 gray before centered name text
+PASS INV_GV_15AA V1 live status-box fill uses source C12 darkest-gray before overlays
+PASS INV_GV_15E3 V1 champion HUD name colors follow F0292 leader yellow / non-leader gold
+PASS INV_GV_15E4 V1 champion HUD renders source-colored names inside the compact status name zones
+PASS INV_GV_15E5 V1 dead champion HUD prints source centered name in C13 lightest gray
+PASS INV_GV_15E10 V1 champion HUD renders all four recruited champion status boxes with source zones, names, and bars
+PASS INV_GV_15F V1 champion HUD ready/action hands use normal slot-box graphic when idle
+PASS INV_GV_15G V1 champion HUD action hand switches to graphic 35 for the acting champion
+PASS INV_GV_15H V1 champion HUD ready-hand wound selects graphic 34 only for ready hand
+PASS INV_GV_15I V1 champion HUD action-hand wound selects graphic 34 when idle
+PASS INV_GV_15J V1 champion HUD acting action hand overrides wound graphic with graphic 35
+PASS INV_GV_15K V1 champion HUD empty normal hands use source icons 212/214
+PASS INV_GV_15L V1 champion HUD ready-hand wound advances empty icon to 213 only
+PASS INV_GV_15M V1 champion HUD action-hand wound advances empty icon to 215 only
+PASS INV_GV_15N V1 champion HUD acting hand changes the box graphic but keeps the source wounded empty icon
+PASS INV_GV_15O V1 champion HUD occupied wounded hand uses F0033 object icon instead of empty-hand icon
+PASS INV_GV_15OA V1 leader-hand runtime does not synthesize G4055 from the active champion ready-hand slot
+PASS INV_GV_15OB V1 leader-hand C017 resolver stays blank when no dedicated source mouse-hand object exists
+PASS INV_GV_15OC V1 leader-hand runtime carries a dedicated G4055-equivalent object with source icon/name resolution
+PASS INV_GV_15OD normal V1 draws the transient leader-hand object name into source C017
+PASS INV_GV_15OE V1 leader-hand remove flow clears the G4055-equivalent object instead of reading champion equipment
+PASS INV_GV_15Q V1 status box base graphic uses source dead box only for dead champions
+PASS INV_GV_15P V1 status shield border graphic priority follows spell/fire/party source order
+PASS INV_GV_15T V1 status shield border zone reuses C007 status box footprint
+PASS INV_GV_15R V1 poisoned label zone centers C032 under C007 status box geometry
+PASS INV_GV_15S V1 champion damage indicator zones expose C167-C170 ids and center C015 inside C007 geometry
+PASS INV_GV_15U V1 champion damage number origin is centered over the C015 damage banner
+PASS INV_GV_16 viewport framing uses layered face bands and bright dungeon edges
+PASS INV_GV_17 front-cell focus adds a threat-colored viewport reticle plus contextual inspect readout
+PASS INV_GV_18 near-lane scanner chips surface left, front, and right contact state inside the viewport
+PASS INV_GV_19 post-tick feedback strip renders attack-colored event telemetry inside the HUD
+PASS INV_GV_20 forward depth chips summarize the next three center-lane cells with live threat and traversal cues
+PASS INV_GV_21 message log contains at least one event after boot and gameplay
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/15_side_ornament_item_creature_count_fidelity.pgm
+PASS INV_GV_22 R toggles rest mode on and reports it through last action
+PASS INV_GV_22A resting mode uses the source PartyResting input list and suppresses movement ticks until wake-up
+PASS INV_GV_22B R again wakes the party from rest mode
+PASS INV_GV_23 X triggers stair descent or reports no stairs on the current cell
+PASS INV_GV_24 message log count increases or stays stable after gameplay ticks
+PASS INV_GV_25 survival drain reduces food over repeated idle ticks
+PASS INV_GV_26 party death is detected when all champions reach 0 HP after a tick
+PASS INV_GV_27 G picks up the first floor item into the active champion inventory
+PASS INV_GV_28 P drops the last held item back to the current cell
+PASS INV_GV_29 pickup on empty floor reports nothing to pick up without crashing
+PASS INV_GV_30 drop with empty inventory reports nothing to drop without crashing
+PASS INV_GV_31 HandleInput routes M12_MENU_INPUT_PICKUP_ITEM through the item pickup path
+PASS INV_GV_32 HandleInput routes M12_MENU_INPUT_DROP_ITEM through the item drop path
+PASS INV_GV_33 creature AI moves a skeleton toward the party within movement cadence
+PASS INV_GV_34 creature on party square deals autonomous damage over time
+PASS INV_GV_35 creature attack events appear in the message log
+PASS INV_GV_36 creature within sight range moves toward party at its cadence
+PASS INV_GV_37 dead creature group does not deal damage
+PASS INV_GV_38 creature AI handles constrained movement without crashing
+PASS INV_GV_38A focused viewport: D1C normal pit source blit changes the corridor frame
+PASS INV_GV_38X focused viewport: D1C normal pit clips inside the DM1 viewport rectangle
+PASS INV_GV_38B focused viewport: D1C invisible pit variant differs from normal pit
+PASS INV_GV_38Y focused viewport: D1C invisible pit clips inside the DM1 viewport rectangle
+PASS INV_GV_38C focused viewport: D1C stairs zone blit changes the corridor frame
+PASS INV_GV_38Z focused viewport: D1C stairs clips inside the DM1 viewport rectangle
+PASS INV_GV_38D focused viewport: D1C teleporter field zone blit changes the corridor frame
+PASS INV_GV_38AA focused viewport: D1C teleporter field clips inside the DM1 viewport rectangle
+PASS INV_GV_38L focused viewport: D1C Trolin creature sprite changes the corridor frame
+PASS INV_GV_38AB focused viewport: D1C Trolin creature clips inside the DM1 viewport rectangle
+PASS INV_GV_38R focused viewport: D1L side-cell Trolin creature differs from empty and center creature frames
+PASS INV_GV_38S focused viewport: extreme C3200 side creature clips inside the DM1 viewport rectangle
+PASS INV_GV_38M focused viewport: D1C fireball projectile sprite changes the corridor frame
+PASS INV_GV_38T focused viewport: D1C fireball projectile clips inside the DM1 viewport rectangle
+PASS INV_GV_38Q focused viewport: D1C lightning projectile differs from empty and fireball frames
+PASS INV_GV_38U focused viewport: D1C lightning projectile clips inside the DM1 viewport rectangle
+PASS INV_GV_38N focused viewport: D1C dagger object sprite changes the corridor frame
+PASS INV_GV_38V focused viewport: D1C dagger object clips inside the DM1 viewport rectangle
+PASS INV_GV_38O focused viewport: D1C object sprite with G0209 native-index gap changes the corridor frame
+PASS INV_GV_38W focused viewport: D1C multi-object pile clips inside the DM1 viewport rectangle
+PASS INV_GV_38P focused viewport: D1C multi-object pile differs from single-object frame
+PASS INV_GV_38E focused viewport: all normal pit zone specs visibly change their corridor frames
+PASS INV_GV_38F focused viewport: all invisible pit zone specs visibly change their corridor frames
+PASS INV_GV_38G focused viewport: all stairs front/side zone specs visibly change their corridor frames
+PASS INV_GV_38H focused viewport: all teleporter field zone specs visibly change their corridor frames
+PASS INV_GV_38I focused viewport: all visibly drawable floor ornament positions change their corridor frames
+PASS INV_GV_38J focused viewport: special footprints floor ornament family renders from pre-base graphics
+PASS INV_GV_38K focused viewport: all source-bound wall ornament specs change their wall frames
+PASS INV_GV_39 corridor square does not trigger pit or teleporter transition
+PASS INV_GV_40 corridor at (1,1) does not trigger transition
+PASS INV_GV_41 stepping on pit drops party to the level below
+PASS INV_GV_42 pit fall deals damage to champion HP
+PASS INV_GV_43 pit fall preserves X/Y coordinates on the lower level
+PASS INV_GV_44 pit fall writes a log entry mentioning PIT or FELL
+PASS INV_GV_45 teleporter transports party to target map and coordinates
+PASS INV_GV_46 teleporter applies relative rotation to party direction
+PASS INV_GV_47 audible teleporter writes a visible log entry
+PASS INV_GV_48 corridor on map 1 does not chain further transitions
+PASS INV_GV_49 opening spell panel sets spellPanelOpen flag
+PASS INV_GV_50 first rune enters buffer with correct encoded value
+PASS INV_GV_51 second rune advances row to 2
+PASS INV_GV_52 clear resets rune count and row to zero
+PASS INV_GV_53 close panel clears panel flag and buffer
+PASS INV_GV_54 casting with fewer than 2 runes returns 0
+PASS INV_GV_55 out-of-range symbol indices rejected
+PASS INV_GV_56 four consecutive rune entries fill the buffer
+PASS INV_GV_57 fifth rune entry rejected when buffer is full
+PASS INV_GV_58 SPELL_RUNE_1 input opens panel and enters rune
+PASS INV_GV_59 SPELL_CLEAR input closes panel
+PASS INV_GV_60 rune encoding matches DM1 formula 0x60+6*row+col
+PASS INV_GV_61 CMD_CAST_SPELL for Light spell emits EMIT_SPELL_EFFECT
+PASS INV_GV_62 Light spell application increases magicalLightAmount
+PASS INV_GV_63 Fireball spell emits EMIT_SPELL_EFFECT with PROJECTILE kind
+PASS INV_GV_64 Party Shield spell increases partyShieldDefense
+PASS INV_GV_65 invalid spell table index produces no SPELL_EFFECT emission
+PASS INV_GV_66 stairs-down (bit 0 clear) descends from map 0 to map 1
+PASS INV_GV_67 stairs-up (bit 0 set) ascends from map 1 back to map 0
+PASS INV_GV_68 stairs-up on top level (map 0) leads nowhere, party stays
+PASS INV_GV_69 stairs-up transition logs ASCENDED message
+PASS INV_GV_70 GetSkillLevel returns non-negative for a present champion
+PASS INV_GV_71 GetSkillLevel returns -1 for out-of-range champion
+PASS INV_GV_72 EMIT_DAMAGE_DEALT awards combat XP to active champion via lifecycle
+PASS INV_GV_73 EMIT_SPELL_EFFECT awards magic XP to casting champion via lifecycle
+PASS INV_GV_74 potion spell awards priest XP, not wizard XP
+PASS INV_GV_75 EMIT_KILL_NOTIFY awards kill XP to active champion
+PASS INV_GV_76 EMIT_KILL_NOTIFY with unknown creature type still awards fallback XP
+PASS INV_GV_77 UseItem with KU potion heals champion HP
+PASS INV_GV_78 doNotDiscard potion converts to empty flask after use
+PASS INV_GV_79 UseItem on empty flask returns 0
+PASS INV_GV_80 UseItem with empty hands returns 0
+PASS INV_GV_81 UseItem on a weapon returns 0 (not consumable)
+PASS INV_GV_82 UseItem with DES potion (poison) reduces HP
+PASS INV_GV_83 Non-doNotDiscard potion clears slot after use
+PASS INV_GV_84 asset loader initializes from GRAPHICS.DAT in the game data directory
+PASS INV_GV_85 asset loader enumerates more than 40 graphics from GRAPHICS.DAT
+PASS INV_GV_86 wall set graphic 42 loads as 256x32 with valid pixel data
+PASS INV_GV_87 wall texture contains at least 3 distinct palette colors
+PASS INV_GV_88 floor tile graphic 76 loads as 32x32 with valid pixel data
+PASS INV_GV_89 full-screen graphic 4 loads as 320x200
+PASS INV_GV_90 QuerySize returns 256x32 for wall set graphic 42
+PASS INV_GV_90B odd-width action/PASS area graphic 10 loads as 87x45 with visible palette data
+PASS INV_GV_90C movement arrows graphic 13 loads as 87x45 with visible palette data
+PASS INV_GV_91 blitting wall texture produces substantial non-zero pixel coverage
+PASS INV_GV_92 asset-backed viewport uses at least 6 distinct palette colors
+PASS INV_GV_93 repeated load of same graphic returns cached slot
+PASS INV_GV_94 zero-sized placeholder graphic returns NULL from loader
+PASS INV_GV_95 BlitScaled renders floor tile into 100x60 target rect
+PASS INV_GV_96 BlitRegion extracts 64x16 sub-rect from wall texture
+PASS INV_GV_97 viewport background graphic 0 loads as 224x136
+PASS INV_GV_98 door frame graphic 73 loads as 78x74 (mid depth)
+PASS INV_GV_99 door frame graphic 70 loads as 36x49 (far depth)
+PASS INV_GV_100 door side graphic 86 loads as 32x123
+PASS INV_GV_101 stair graphic 95 loads as 60x111
+PASS INV_GV_102 creature sprite base 584/M618 loads as 112x84
+PASS INV_GV_103 creature type 1 sprite 588 loads as 64x66
+PASS INV_GV_104 floor panel graphic 78 loads as 224x97
+PASS INV_GV_105 ceiling panel graphic 79 loads as 224x39
+PASS INV_GV_106 near corridor band has more content than dimmed far band
+PASS INV_GV_107 asset-backed game view uses at least 8 distinct palette entries
+PASS INV_GV_108 asset-backed full frame uses 10+ distinct palette entries
+PASS INV_GV_109 object sprite graphic 566 (M612 potion aspect) loads from GRAPHICS.DAT
+PASS INV_GV_110 per-map wall set index is in valid range (0-15)
+PASS INV_GV_110B source wall/stairs blits offset full wallset graphic range by current map wallSet
+PASS INV_GV_111 per-map floor set index is in valid range
+PASS INV_GV_112 object sprite graphic 583 (end of M612 family) loads from GRAPHICS.DAT
+PASS INV_GV_113 object sprite graphic 500 (scroll aspect) loads from GRAPHICS.DAT
+PASS INV_GV_114 wall ornament graphic 259/M615 is loadable from GRAPHICS.DAT
+PASS INV_GV_114B object sprite uses G0209 firstNative gap: weapon subtype 43 -> aspect 65 -> graphic 565
+PASS INV_GV_114C object source scale units match G2030 table
+PASS INV_GV_114C2 object source scale-index selection follows F0115 front/back cells
+PASS INV_GV_114C3 object placement binds C2500 layout-696 source zone samples
+PASS INV_GV_114D object pile shift index pairs match G0217 samples
+PASS INV_GV_114E object shift values match G0223 samples
+PASS INV_GV_114E2 object aspect GraphicInfo and CoordinateSet samples match G0209
+PASS INV_GV_114E3 object flip-on-right follows G0209 GraphicInfo and relative cell
+PASS INV_GV_114F creature D3/D2 palette-change samples match G0221/G0222
+PASS INV_GV_115 viewport rendering differs when item is on floor vs absent
+PASS INV_GV_116 light level is 0 when no light sources present
+PASS INV_GV_117 magicalLightAmount raises computed light level
+PASS INV_GV_118 light level clamps to 255
+PASS INV_GV_119 viewport rendering differs between dark and bright light
+PASS INV_GV_120 light indicator area has non-black content in utility panel
+PASS INV_GV_121 dark scene has more black pixels in viewport than bright
+PASS INV_GV_122 negative magicalLightAmount clamps to 0
+PASS INV_GV_123 torch fuel is 0 before first update
+PASS INV_GV_124 torch fuel initialized to INITIAL-1 after first update
+PASS INV_GV_125 flamitt fuel initialized to FLAMITT_INITIAL-1 after first update
+PASS INV_GV_126 full-fuel torch gives more light than half-fuel torch
+PASS INV_GV_127 torch extinguished when fuel reaches 0
+PASS INV_GV_128 GetTorchFuel returns 0 for out-of-range index
+PASS INV_GV_129 unlit torch does not consume fuel
+PASS INV_GV_130 light is 0 with extinguished torches and no magic
+PASS INV_GV_131 initial animTick is 0
+PASS INV_GV_132 initial damageFlashTimer is 0
+PASS INV_GV_133 initial attackCueTimer is 0
+PASS INV_GV_134 TickAnimation increments animTick
+PASS INV_GV_135 NotifyDamageFlash sets damageFlashTimer
+PASS INV_GV_136 NotifyDamageFlash sets attackCueTimer
+PASS INV_GV_137 TickAnimation decrements damageFlashTimer
+PASS INV_GV_138 TickAnimation decrements attackCueTimer
+PASS INV_GV_139 damageFlashTimer stays at 0 when already 0
+PASS INV_GV_140 CreatureAnimFrame returns 0 or 1
+PASS INV_GV_141 CreatureAnimFrame cycles through both frames
+PASS INV_GV_142 different creature types have different anim phase
+PASS INV_GV_143 flash timers fully decay to 0
+PASS INV_GV_144 damage flash renders red pixels on viewport border
+PASS INV_GV_145 attack cue renders yellow slash marks
+PASS INV_GV_146 NULL-state animation queries return 0 safely
+PASS INV_GV_147 NULL-state attack cue creature type returns -1
+PASS INV_GV_148 active attack cue reports correct creature type
+PASS INV_GV_149 NotifyDamageFlash sets attack cue creature type
+PASS INV_GV_150 side-cell creature drawing code path exercised safely
+PASS INV_GV_151 BlitScaledMirror produces horizontally flipped output
+PASS INV_GV_152 BlitScaledMirror skips transparent pixels
+PASS INV_GV_153 V1 depth dimming encodes palette level in upper bits
+PASS INV_GV_154 V1 depth dimming preserves original colour index
+PASS INV_GV_155 M11_FB_ENCODE/DECODE round-trip for all index/level combos
+PASS INV_GV_156 front-facing D1 GiantScorpion view selects native front bitmap (M618+0)
+PASS INV_GV_157 side-facing D1 GiantScorpion falls back to front (no SIDE bit, no FLIP_NON_ATTACK)
+PASS INV_GV_158 back-facing D2 GiantScorpion falls back to derived front D2 (no BACK bit)
+PASS INV_GV_159 front-facing attack GiantScorpion falls back to front (no ATTACK bit, no FLIP_ATTACK)
+PASS INV_GV_260 GiantScorpion GraphicInfo matches ReDMCSB CREATURE_INFO (0x0482)
+PASS INV_GV_261 Trolin GraphicInfo matches ReDMCSB CREATURE_INFO (0x05B8)
+PASS INV_GV_262 GiantScorpion has no side/back/attack bitmaps per MASK0x0008/0x0010/0x0020
+PASS INV_GV_263 Trolin has side/back/attack bitmaps (no FLIP_NON_ATTACK) per 0x05B8
+PASS INV_GV_264 side-facing D1 Trolin selects native side bitmap (584+43+1) with mirror for relFacing=1
+PASS INV_GV_265 back-facing D2 Trolin selects derived back D2 bitmap (663+5=668) without mirror
+PASS INV_GV_266 front-facing attack D1 Trolin selects native attack bitmap (584+43+3=630)
+PASS INV_GV_267 PainRat GraphicInfo 0x04B4: no SIDE, has BACK, has ATTACK, has FLIP_NON_ATTACK
+PASS INV_GV_268 side-facing D1 PainRat falls back to front (584+10) mirrored (FLIP_NON_ATTACK set)
+PASS INV_GV_269 back-facing D1 PainRat selects native back bitmap (584+10+2=596)
+PASS INV_GV_270 creature 0 (GiantScorpion) GI=0x0482: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=4 derivedCount=8
+PASS INV_GV_271 creature 1 (SwampSlime) GI=0x0480: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=2 derivedCount=2
+PASS INV_GV_272 creature 2 (Giggler) GI=0x4510: ADD=0 SPECIAL_D2=0 D2_FLIPPED=1 FLIP_DURING_ATTACK=1 maxH=0 maxV=1 nativeCount=2 derivedCount=4
+PASS INV_GV_273 creature 3 (PainRat) GI=0x04B4: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=4 derivedCount=6
+PASS INV_GV_274 creature 4 (Ruster) GI=0x0701: ADD=1 SPECIAL_D2=0 D2_FLIPPED=1 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=2 derivedCount=5
+PASS INV_GV_275 creature 5 (Screamer) GI=0x0581: ADD=1 SPECIAL_D2=1 D2_FLIPPED=1 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=2 derivedCount=5
+PASS INV_GV_276 creature 6 (Rockpile) GI=0x070C: ADD=0 SPECIAL_D2=0 D2_FLIPPED=1 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=2 derivedCount=4
+PASS INV_GV_277 creature 7 (GhostRive) GI=0x0300: ADD=0 SPECIAL_D2=0 D2_FLIPPED=1 FLIP_DURING_ATTACK=0 maxH=0 maxV=0 nativeCount=1 derivedCount=2
+PASS INV_GV_278 creature 8 (WaterElemental) GI=0x5864: ADD=0 SPECIAL_D2=0 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=1 maxV=1 nativeCount=2 derivedCount=4
+PASS INV_GV_279 creature 9 (Couatl) GI=0x0282: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=0 maxV=0 nativeCount=4 derivedCount=8
+PASS INV_GV_280 creature 10 (StoneGolem) GI=0x1480: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=1 maxV=0 nativeCount=2 derivedCount=2
+PASS INV_GV_281 creature 11 (Mummy) GI=0x18C6: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=1 maxV=0 nativeCount=2 derivedCount=8
+PASS INV_GV_282 creature 12 (Skeleton) GI=0x1280: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=1 maxV=0 nativeCount=2 derivedCount=2
+PASS INV_GV_283 creature 13 (MagentaWorm) GI=0x14A2: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=1 maxV=0 nativeCount=5 derivedCount=10
+PASS INV_GV_284 creature 14 (Trolin) GI=0x05B8: ADD=0 SPECIAL_D2=1 D2_FLIPPED=1 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=4 derivedCount=8
+PASS INV_GV_285 creature 15 (GiantWasp) GI=0x0381: ADD=1 SPECIAL_D2=1 D2_FLIPPED=1 FLIP_DURING_ATTACK=0 maxH=0 maxV=0 nativeCount=2 derivedCount=5
+PASS INV_GV_286 creature 16 (Antman) GI=0x0680: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=2 derivedCount=2
+PASS INV_GV_287 creature 17 (Vexirk) GI=0x04A0: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=3 derivedCount=4
+PASS INV_GV_288 creature 18 (AnimatedArmour) GI=0x0280: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=0 maxV=0 nativeCount=2 derivedCount=2
+PASS INV_GV_289 creature 19 (Materializer) GI=0x4060: ADD=0 SPECIAL_D2=0 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=0 maxV=1 nativeCount=2 derivedCount=4
+PASS INV_GV_290 creature 20 (RedDragon) GI=0x10DE: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=1 maxV=0 nativeCount=4 derivedCount=12
+PASS INV_GV_291 creature 21 (Oitu) GI=0x0082: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=0 maxV=0 nativeCount=4 derivedCount=8
+PASS INV_GV_292 creature 22 (Demon) GI=0x1480: ADD=0 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=1 maxV=0 nativeCount=2 derivedCount=2
+PASS INV_GV_293 creature 23 (LordChaos) GI=0x78AA: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=3 maxV=1 nativeCount=6 derivedCount=12
+PASS INV_GV_294 creature 24 (LordOrder) GI=0x068A: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=1 maxH=0 maxV=0 nativeCount=5 derivedCount=10
+PASS INV_GV_295 creature 25 (GreyLord) GI=0x78AA: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=3 maxV=1 nativeCount=6 derivedCount=12
+PASS INV_GV_296 creature 26 (LordChaosRedDragon) GI=0x78AA: ADD=2 SPECIAL_D2=1 D2_FLIPPED=0 FLIP_DURING_ATTACK=0 maxH=3 maxV=1 nativeCount=6 derivedCount=12
+PASS INV_GV_297 out-of-range creature type returns 0 for all source-backed GraphicInfo queries
+PASS INV_GV_298 every creature has ≥ 1 native + ≥ 2 derived slots (source-backed cumulative totals)
+PASS INV_GV_299 native-bitmap count matches independent F097_xxxx_DUNGEONVIEW_LoadGraphics recomputation for all 27 creatures
+PASS INV_GV_156 Font init produces unloaded state
+PASS INV_GV_157 Original DM1 font loads from GRAPHICS.DAT
+PASS INV_GV_158 Font DrawChar 'A' produces visible pixels
+PASS INV_GV_159 Font DrawString 'HELLO' renders visible text
+PASS INV_GV_160 Font MeasureString('ABC') == 18 pixels
+PASS INV_GV_161 Game view Draw uses original DM1 font when available
+PASS INV_GV_162 IsGameWon returns 0 for fresh game view
+PASS INV_GV_163 GetGameWonTick returns 0 for fresh game view
+PASS INV_GV_164 gameWon flag and tick are queryable
+PASS INV_GV_165 Endgame victory overlay renders differently from normal
+PASS INV_GV_165B V1 endgame overlay keeps invented tick/help text out of default source path
+PASS INV_GV_165C V1 endgame uses source C006 The End graphic
+PASS INV_GV_165D V1 endgame uses source champion mirror graphic zone
+PASS INV_GV_165H V1 endgame blits source champion portrait into C416
+PASS INV_GV_165E V1 endgame prints champion name at source coordinate
+PASS INV_GV_165I V1 endgame prints raw source champion title after name
+PASS INV_GV_165L V1 endgame does not invent champion title from name alone
+PASS INV_GV_165K V1 endgame prefers raw Champion.Title bytes when present
+PASS INV_GV_165M V1 endgame title x spacing honors source punctuation rule
+PASS INV_GV_165F V1 endgame prints source fighter skill-title line
+PASS INV_GV_165G V1 endgame prints source ninja/priest/wizard skill-title lines
+PASS INV_GV_165J V1 endgame skill levels ignore temporary XP
+PASS INV_GV_166 HandleInput ignores movement when game is won
+PASS INV_GV_167 HandleInput accepts ESC to return to menu when game won
+PASS INV_GV_168 AdvanceIdleTick blocked when game is won
+PASS INV_GV_169 IsDialogOverlayActive returns 0 for fresh game view
+PASS INV_GV_170 ShowDialogOverlay activates overlay
+PASS INV_GV_171 DismissDialogOverlay clears overlay
+PASS INV_GV_172 Dialog overlay renders differently from normal
+PASS INV_GV_172B V1 dialog overlay keeps placeholder title/footer debug-only
+PASS INV_GV_173 HandleInput dismisses dialog overlay on keypress
+PASS INV_GV_172C V1 dialog overlay blits source C000 dialog-box backdrop
+PASS INV_GV_172D V1 dialog overlay prints source C450 version-zone text
+PASS INV_GV_172E V1 dialog message text is centered in source viewport region
+PASS INV_GV_172F V1 single-choice dialog message uses reconstructed C469 vertical zone
+PASS INV_GV_172G V1 long dialog message uses source-width two-line split
+PASS INV_GV_172H V1 source dialog renders bottom C462 choice text zone
+PASS INV_GV_172I V1 two-choice dialog uses source C471/C463/C462 zones
+PASS INV_GV_172J V1 three-choice dialog uses source C463/C466/C467 zones
+PASS INV_GV_172K V1 four-choice dialog uses source C464-C467 zones
+PASS INV_GV_172L V1 dialog accept selects first source choice
+PASS INV_GV_172M V1 dialog mouse hit selects source choice zone
+PASS INV_GV_172N V1 single-choice dialog applies source M621/C451 patch
+PASS INV_GV_172O V1 two/four-choice dialogs apply source M622/M623 patches
+PASS INV_GV_174 AdvanceIdleTick blocked during dialog overlay
+PASS INV_GV_175 EMIT_GAME_WON emission sets gameWon flag
+PASS INV_GV_176 EMIT_PARTY_DEAD emission sets partyDead flag
+PASS INV_GV_177 Dialog/endgame query APIs are NULL-safe
+PASS INV_GV_178 Map overlay is initially inactive
+PASS INV_GV_179 ToggleMapOverlay activates map
+PASS INV_GV_180 ToggleMapOverlay twice deactivates map
+PASS INV_GV_181 MAP_TOGGLE input activates debug map overlay
+PASS INV_GV_181B default V1 parity input ignores invented map overlay
+PASS INV_GV_182 Movement blocked while map overlay active
+PASS INV_GV_183 ESC closes map overlay
+PASS INV_GV_184 Map overlay renders differently from normal view
+PASS INV_GV_185 AdvanceIdleTick blocked during map overlay
+PASS INV_GV_186 MAP_TOGGLE while map active deactivates it
+PASS INV_GV_187 Inventory panel is initially inactive
+PASS INV_GV_188 ToggleInventoryPanel activates inventory
+PASS INV_GV_189 ToggleInventoryPanel twice deactivates inventory
+PASS INV_GV_190 INVENTORY_TOGGLE input activates inventory panel
+PASS INV_GV_191 Inventory panel renders differently from normal view
+PASS INV_GV_359 normal V1 inventory only changes source viewport replacement rectangle
+PASS INV_GV_360 normal V1 inventory ready-hand icon is confined to source C507 slot box
+PASS INV_GV_361 normal V1 inventory head icon is confined to source C509 slot box
+PASS INV_GV_362 V1 inventory champion slots map to source slot-box indices C513..C527 without alias leakage
+PASS INV_GV_362A normal V1 inventory slot click picks object into dedicated leader-hand runtime state
+PASS INV_GV_363 normal V1 inventory pouch/quiver/backpack icons are confined to source C513/C514/C527 boxes
+PASS INV_GV_192 Movement blocked while inventory panel active
+PASS INV_GV_193 ESC closes inventory panel
+PASS INV_GV_194 AdvanceIdleTick blocked during inventory panel
+PASS INV_GV_195 Selected slot starts at 0 when inventory opens
+PASS INV_GV_196 DOWN input in inventory advances selected slot
+PASS INV_GV_197 MAP_TOGGLE closes inventory and opens debug map
+PASS INV_GV_198 INVENTORY_TOGGLE closes map and opens inventory
+PASS INV_GV_199 SlotName returns non-NULL for all named slots
+PASS INV_GV_200 Map/inventory query APIs are NULL-safe
+PASS INV_GV_353 V1 inventory equipment slot zones expose layout-696 C507..C519 ids and geometry
+PASS INV_GV_354 V1 inventory backpack grid exposes layout-696 C520..C536 ids and geometry
+PASS INV_GV_355 V1 inventory source-zone helpers reject invalid ordinals
+PASS INV_GV_356 V1 inventory source slot-box helper preserves DEFS.H indices 8..37
+PASS INV_GV_357 V1 inventory backdrop exposes source C017 in viewport replacement zone
+PASS INV_GV_358 inventory backdrop C017 loads as 224x136 from GRAPHICS.DAT
+PASS INV_GV_201 slot box normal (graphic 33) loads as 18x18 from GRAPHICS.DAT
+PASS INV_GV_202 slot box wounded (graphic 34) loads as 18x18 from GRAPHICS.DAT
+PASS INV_GV_203 slot box acting-hand (graphic 35) loads as 18x18 from GRAPHICS.DAT
+PASS INV_GV_204 panel empty (graphic 20) loads as 144x73 from GRAPHICS.DAT
+PASS INV_GV_205 status box frame (graphic 7) loads as 67x29 from GRAPHICS.DAT
+PASS INV_GV_206 status box dead (graphic 8) loads as 67x29 from GRAPHICS.DAT
+PASS INV_GV_207 champion portraits (graphic 26) loads as 256x87 from GRAPHICS.DAT
+PASS INV_GV_208 food label (graphic 30) loads as 34x9 from GRAPHICS.DAT
+PASS INV_GV_209 water label (graphic 31) loads as 46x9 from GRAPHICS.DAT
+PASS INV_GV_210 poisoned label (graphic 32) loads as 96x15 from GRAPHICS.DAT
+PASS INV_GV_211 party shield border (graphic 37) loads as 67x29 from GRAPHICS.DAT
+PASS INV_GV_212 fire shield border (graphic 38) loads as 67x29 from GRAPHICS.DAT
+PASS INV_GV_213 spell shield border (graphic 39) loads as 67x29 from GRAPHICS.DAT
+PASS INV_GV_214 shield border drawn when partyShieldDefense > 0
+PASS INV_GV_215 POISONED label drawn when champion poisonDose > 0
+PASS INV_GV_216 damage to champion small (graphic 15) loads as 45x7 from GRAPHICS.DAT
+PASS INV_GV_217 damage to champion big (graphic 16) loads as 32x29 from GRAPHICS.DAT
+PASS INV_GV_218 damage to creature (graphic 14) loads as 88x45 from GRAPHICS.DAT
+PASS INV_GV_219 per-champion damage indicator drawn when timer > 0
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/inventory_slotbox_gfx.pgm
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/party_hud_statusbox_gfx.pgm
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/party_hud_statusbox_gfx_vga.ppm
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/party_hud_four_champions_vga.ppm
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/map_overlay_p5.pgm
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/shield_poison_hud.pgm
+PASS INV_GV_220 NotifyCreatureHit sets overlay timer and damage amount
+PASS INV_GV_221 creature-hit overlay timer reaches 0 after sufficient ticks
+PASS INV_GV_222 graphic-14 creature-hit overlay changes viewport pixels
+PASS INV_GV_223 graphic-16 inventory damage overlay draws when active champion hit
+PASS INV_GV_224 creature anim frames valid for types 0 and 1
+PASS INV_GV_225 projectile sprite (graphic 454/M613) loads as 14x11 from GRAPHICS.DAT
+PASS INV_GV_226 all 32 projectile sprites (454-485/M613 family) load from GRAPHICS.DAT
+PASS INV_GV_227 projectile sprite (graphic 479) loads as 84x18 from GRAPHICS.DAT
+PASS INV_GV_228 projectile sprite (graphic 480) loads as 8x14 from GRAPHICS.DAT
+PASS INV_GV_229 side-cell creature perspective scaling: Giggler large sprite loadable
+PASS INV_GV_230 floor item scatter: different types/subtypes produce different positions
+PASS INV_GV_231 explosion type classification: fire/poison/lightning ranges are non-overlapping
+PASS INV_GV_232 multi-creature stacking: single creature group produces visible viewport pixels
+PASS INV_GV_233 multi-item floor scatter: floor area has visible content when items present
+PASS INV_GV_234 wall ornament depth scaling: scale factors decrease monotonically with depth
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/combat_damage_overlays.pgm
+PASS INV_GV_235 door ornament depth scaling: side-pane scale factors decrease monotonically
+PASS INV_GV_236 viewport area has visible content after draw (items/creatures/ornaments)
+PASS INV_GV_237 creature group count+1 is at least 1 for first group
+PASS INV_GV_238 side-pane wall ornament graphic base index is valid
+PASS INV_GV_239 side-pane projectile gfx index range covers arrow-type projectile
+PASS INV_GV_240 creature duplication count matches group size for 3-creature group
+PASS INV_GV_241 creature duplication clamps correctly for 7-creature group
+PASS INV_GV_242 projectile relative direction computation is correct for all quadrants
+PASS INV_GV_243 projectile sprite mirroring triggers only for relDir=1 (right-bound)
+PASS INV_GV_244 side-pane creature attack pose activates at depth 0 for both sides
+PASS INV_GV_245 projectile sprite transparency key is palette index 10 (C10_COLOR_FLESH)
+PASS INV_GV_245B projectile source scale units match G0215 for D1/D2/D3 front/back cells
+PASS INV_GV_245C projectile aspect firstNative/GraphicInfo samples match G0210
+PASS INV_GV_245D projectile G0210 aspect bitmap delta handles lightning rotation and fireball no-rotation
+PASS INV_GV_245E projectile C0 back/rotation aspect applies horizontal+vertical flip flags while C3 fireball stays unflipped
+PASS INV_GV_245F projectile placement binds C2900 layout-696 source zone samples
+PASS INV_GV_246 projectile sub-cell rotation produces correct relative cells
+PASS INV_GV_247 Z-order: floor items drawn before creatures (structural)
+PASS INV_GV_248 floor ornament index cache stores values (not skipped)
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/16_projectile_facing_creature_attack_ornament.pgm
+PASS INV_GV_250 creature type 0 (GiantScorpion) coordSet=1 transparent=13
+PASS INV_GV_251 creature type 6 (Rockpile) coordSet=0 transparent=13
+PASS INV_GV_252 creature type 20 (RedDragon) coordSet=1 transparent=4
+PASS INV_GV_253 out-of-range creature type returns coordSet=0 transparent=0
+PASS INV_GV_254 coord set 1 single creature uses original D1 c10 center/bottom
+PASS INV_GV_255 coord set 1 D2 pair uses original c6/c7 positions
+PASS INV_GV_256 coord set 0 single creature uses original D3 c5 center/bottom
+PASS INV_GV_256B creature placement binds C3200 layout-696 source zone samples
+PASS INV_GV_256C creature draw path prefers C3200 over older G0224 midpoint for single front slot
+PASS INV_GV_256D side-cell creature placement binds C3200 left/right source zone samples
+PASS INV_GV_257 floor ornament ordinal query returns >= 0 for front cell
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/17_floor_ornament_creature_aspect.pgm
+PASS INV_GV_15AF V1 champion icons select C028 strip cells via M026 direction-relative source index
+PASS INV_GV_15AG V1 champion HUD renders source-colored C113/C114 icon cells and leaves absent icon slots black
+PASS INV_GV_350 normal V1 top chrome outside source status boxes/icons contains no title/debug text pixels
+PASS INV_GV_351 normal V1 viewport floor/ceiling obeys DM1 parity flip
+PASS INV_GV_300D action-hand icon cell zones expose layout-696 C088..C096 ids and geometry
+PASS INV_GV_300K V1 object icon source zones resolve 16x16 cells across F0042+ graphics
+PASS INV_GV_300L V1 action object icon palette remaps color-12 nybbles to cyan only in action cells
+PASS INV_GV_300N V1 action icon cell backdrop color is cyan for living, black for dead, absent ignored
+PASS INV_GV_300M V1 action icon hatch gate follows resting/candidate global source disable states
+PASS INV_GV_300AL movement arrow panel exposes DATA.C outer box, C009/C013, and layout-696 C068-C073 geometry
+PASS INV_GV_300AN screen and centered-dialog zones expose layout-696 C002/C005 geometry
+PASS INV_GV_300AO explosion pattern and viewport-centered text zones expose layout-696 C004/C006 geometry
+PASS INV_GV_300AM message area zone exposes layout-696 C014/C015 bottom-anchored geometry
+PASS INV_GV_300AM2 V1 message area renders player-facing rows in source C015 and suppresses telemetry
+PASS INV_GV_300AJ viewport zone exposes layout-696 C007 id and DM1 PC geometry
+PASS INV_GV_300AH leader hand object-name zone exposes layout-696 C017 id and geometry
+PASS INV_GV_300H action area zone exposes source C011/COMMAND.C right-column geometry
+PASS INV_GV_300I spell area graphic anchors at ReDMCSB C013 right-column source position
+PASS INV_GV_300AC spell caster panel zones expose layout-696 C221/C224 ids at ReDMCSB C013 position
+PASS INV_GV_300AE action result zone exposes layout-696 C075 id and action-area geometry
+PASS INV_GV_300AD action PASS zone exposes ReDMCSB COMMAND.C C112 right-aligned geometry
+PASS INV_GV_300AF action menu graphic zones route C079/C077/C011 to source-sized rectangles at COMMAND.C position
+PASS INV_GV_300AI inventory panel and food/water zones expose layout-696 C101/C103/C104 geometry
+PASS INV_GV_300P right-column V1 action graphic uses source C010 with C079/C077/C011 menu zones
+PASS INV_GV_300R V1 action+spell strip union covers source C013/C011 right-column stack
+PASS INV_GV_300S V1 champion identity graphics use source C026 portraits and C028 icons
+PASS INV_GV_300AR V1 champion icon invisibility palette mirrors source G2362 remap bytes
+PASS INV_GV_300AK champion icon zones expose layout-696 C113-C116 ids and clipped geometry
+PASS INV_GV_300T V1 HUD condition/damage graphics use source C032/C015/C016/C014 ids
+PASS INV_GV_300U V1 inventory panel status uses source C020 panel and C030/C031 food-water labels
+PASS INV_GV_300V V1 endgame graphics use source C006 The End and C346 champion mirror ids
+PASS INV_GV_300AP V1 endgame zones expose source C412-C419, title, text, skill and restart/quit geometry
+PASS INV_GV_300W V1 status slot and shield frame graphics use source C007/C008/C033-C035/C037-C039 ids
+PASS INV_GV_300Y V1 champion bar colors use source G0046 order with C12 blank bars
+PASS INV_GV_300X V1 dialog backdrop/version/choice patches use source C000/C450/M621-M623 geometry
+PASS INV_GV_300Z V1 dialog message zones and vertical origins use source C469/C471 geometry
+PASS INV_GV_300AA V1 dialog choice text zone ids expose source C462-C467 layout cases
+PASS INV_GV_300AB V1 dialog pointer hit zones expose source C456-C461 button zones
+PASS INV_GV_300AG spell symbol zones expose layout-696 C245-C260, C261-C264, C252 and C254 ids
+PASS INV_GV_300Q V1 spell label cells use source C011 lines graphic rows for available/selected states
+PASS INV_GV_300AQ normal V1 spell panel stays in C013 right-column area and uses selected C011 cells, not the old modal viewport panel
+PASS INV_GV_300G action menu header zone exposes F0387 source zone 80 geometry
+PASS INV_GV_300F action menu row zones expose COMMAND.C C113-C115 / F0387 zones 85-87 geometry
+PASS INV_GV_300J action menu text origins match ACTIDRAW.C F0387 PC coordinates
+PASS INV_GV_300O action menu colors match F0387 cyan header/black name and black rows/cyan actions
+PASS INV_GV_300E action-hand icon pointer hit uses source C092 rightmost cell geometry
+# DM-action-icon-cells probe: assetsAvailable=1 cyanCellsDrawn=2
+PASS INV_GV_300 action-hand icon cells: both living champions get cyan backdrop (or no assets)
+PASS INV_GV_300A action icon mode fills the source action area top band black before drawing cells
+PASS INV_GV_300B action-hand icon cells: empty living hand blits source empty-hand icon
+PASS INV_GV_300C action-hand icon cells hatch living cells during rest/candidate lockout
+PASS INV_GV_301 action-hand icon cells: dead champion cell is solid black
+PASS INV_GV_302 action-hand icon cells: absent champion slot does not receive a full cyan overlay
+PASS INV_GV_303 action-hand icon cells: rightmost cell ends at x=318 (in-bounds)
+PASS INV_GV_304 action-hand icon cells: ActionSetIndex==0 item (Compass) leaves inner cell fully cyan
+PASS INV_GV_305 action-hand icon cells: ActionSetIndex>0 item blits source object icon
+PASS INV_GV_306 action-hand icon cells: source object icon applies G0498 color-12-to-cyan palette change
+PASS INV_GV_307 action-hand icon cells: lit torch uses source charge-count icon variant
+PASS INV_GV_308 action-hand icon cells: charged weapon uses source +1 icon variant
+PASS INV_GV_309 object icon resolver follows source scroll, compass, and charged-junk variants
+PASS INV_GV_309B inventory slot icons use source object icons without action palette remap
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/18_dm_action_hand_icon_cells.pgm
+PASS INV_GV_310 action-menu: empty-hand champion activates with ActionSet 2
+PASS INV_GV_311 action-menu: acting ordinal stored as DM1 1-based value
+PASS INV_GV_312 action-menu: empty-hand ActionSet yields PUNCH/KICK/WAR CRY indices
+PASS INV_GV_313 action-menu: header band is cyan when acting champion set
+PASS INV_GV_314 action-menu: inner icon-cell cyan fill is suppressed vs icon-mode
+PASS INV_GV_315 action-menu: ClearActingChampion returns to idle mode
+PASS INV_GV_316 action-menu: ready-hand-only object does not override empty action hand
+PASS INV_GV_320 action-menu: invalid row index leaves acting champion set
+PASS INV_GV_321 action-menu: PUNCH row click performs action, clears menu, logs message
+PASS INV_GV_322 action-menu: PUNCH row click advances (or holds) game tick via CMD_ATTACK
+PASS INV_GV_323 action-menu: WAR CRY row click clears menu and logs without committing a strike tick
+PASS INV_GV_324 action-menu: TriggerActionRow in idle mode is a no-op
+PASS INV_GV_325 action-menu: HandlePointer row-hit closes menu and redraws
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/19_dm_action_menu_mode.pgm
+Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/20_dm_action_menu_post_click.pgm
+PASS INV_GV_326 non-melee action: WAR CRY emits an audio marker
+PASS INV_GV_327 non-melee action: WAR CRY advances a time-passes tick
+PASS INV_GV_328 non-melee action: acting champion becomes party leader
+PASS INV_GV_329 non-melee action: action name 36 is HEAL per G0490 table
+PASS INV_GV_330 non-melee action: action name 38 is LIGHT per G0490 table
+PASS INV_GV_331 non-melee action: action name 11 is FREEZE LIFE per G0490 table
+PASS INV_GV_332 projectile action: rows 20/23/21 are FIREBALL/LIGHTNING/DISPELL per G0490 table
+PASS INV_GV_333 projectile action: rows 27/32/42 are INVOKE/SHOOT/THROW per G0490 table
+PASS INV_GV_334 projectile action: FIREBALL spawns subtype 0x80
+PASS INV_GV_335 projectile action: LIGHTNING spawns subtype 0x82
+PASS INV_GV_336 projectile action: DISPELL spawns subtype 0x83
+PASS INV_GV_337 projectile action: INVOKE spawns one of the 4 F0407 C027 subtypes
+PASS INV_GV_338 projectile action: SHOOT with empty ready hand emits NO AMMUNITION and spawns nothing
+PASS INV_GV_339 projectile action: SHOOT with ready-hand ammo spawns kinetic projectile
+PASS INV_GV_340 projectile action: THROW with item in action hand spawns kinetic projectile
+PASS INV_GV_341 projectile travel: FIREBALL spawns at party cell (startY)
+PASS INV_GV_342 projectile travel: first advance steps fireball one cell north (mapY = startY - 1)
+PASS INV_GV_343 projectile travel: second cross-cell step reaches mapY = startY - 2
+PASS INV_GV_344 projectile travel: runtime-only projectile is reflected in viewport cell summary
+PASS INV_GV_345 projectile detonation: fireball eventually impacts and is removed from world.projectiles
+PASS INV_GV_346 projectile detonation: magical impact spawns an explosion into world.explosions
+PASS INV_GV_347 projectile detonation: explosion is fireball type and appears in viewport cell summary
+PASS INV_GV_348 explosion aftermath: F0822 advance ran (frame incremented or one-shot despawned)
+PASS INV_GV_349 persistent smoke: F0822 decays attack and increments currentFrame across ticks
+# summary: 578/578 invariants passed
+M11 game-view probe: # summary: 578/578 invariants passed
+CMD FIRESTAFF_DATA="$HOME/.firestaff/data" ./run_firestaff_m11_ingame_capture_smoke.sh
+In-game capture smoke PASS: 6 screenshots
+END=2026-04-28T07:12:31Z

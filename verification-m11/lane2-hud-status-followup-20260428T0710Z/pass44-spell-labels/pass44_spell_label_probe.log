@@ -1,0 +1,10 @@
+Screenshot: verification-m11/lane2-hud-status-followup-20260428T0710Z/pass44-spell-labels/pass44_spell_label_cells.pgm
+PASS INV_P44_01 GRAPHICS.DAT C011 loads at the source-backed 14x39 size
+PASS INV_P44_02 spell-panel C011 cell placement resolves to C013 x=248/y=43 for selected runes and x=235/y=54 for available runes
+PASS INV_P44_03 selected rune slot 0 carries the native top band of C011 line 3 (champion-symbol cell)
+PASS INV_P44_04 selected rune slot 1 repeats the same C011 champion-symbol cell band
+PASS INV_P44_05 available rune slot 0 carries the native top band of C011 line 2 (available-symbol cell)
+PASS INV_P44_06 available rune slot 5 repeats the C011 available-symbol cell band at the far-right label position
+PASS INV_P44_07 both selected and available rows read directly from distinct C011 source slices
+PASS INV_P44_08 probe completed and captured pass-44 spell-label evidence
+# summary: 8/8 invariants passed
