@@ -1,0 +1,24 @@
+{
+  "party": {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 2},
+  "cells": [
+    {"depth":0,"lane":-1,"valid":1,"mapX":2,"mapY":3,"square":0,"elementType":0,"thingCount":5,"doorCount":0,"groupCount":0,"itemCount":4,"sensorCount":1},
+    {"depth":0,"lane":0,"valid":1,"mapX":1,"mapY":3,"square":100,"elementType":3,"thingCount":1,"doorCount":0,"groupCount":0,"itemCount":0,"sensorCount":0},
+    {"depth":0,"lane":1,"valid":1,"mapX":0,"mapY":3,"square":198,"elementType":6,"thingCount":3,"doorCount":0,"groupCount":0,"itemCount":0,"sensorCount":2},
+    {"depth":1,"lane":-1,"valid":1,"mapX":2,"mapY":4,"square":104,"elementType":3,"thingCount":1,"doorCount":0,"groupCount":0,"itemCount":0,"sensorCount":0},
+    {"depth":1,"lane":0,"valid":1,"mapX":1,"mapY":4,"square":0,"elementType":0,"thingCount":7,"doorCount":0,"groupCount":0,"itemCount":6,"sensorCount":1},
+    {"depth":1,"lane":1,"valid":1,"mapX":0,"mapY":4,"square":55,"elementType":1,"thingCount":2,"doorCount":0,"groupCount":0,"itemCount":0,"sensorCount":1},
+    {"depth":2,"lane":-1,"valid":1,"mapX":2,"mapY":5,"square":0,"elementType":0,"thingCount":6,"doorCount":0,"groupCount":0,"itemCount":5,"sensorCount":1},
+    {"depth":2,"lane":0,"valid":1,"mapX":1,"mapY":5,"square":102,"elementType":3,"thingCount":1,"doorCount":0,"groupCount":0,"itemCount":0,"sensorCount":0},
+    {"depth":2,"lane":1,"valid":1,"mapX":0,"mapY":5,"square":0,"elementType":0,"thingCount":1,"doorCount":1,"groupCount":0,"itemCount":0,"sensorCount":0}
+  ],
+  "assets": [
+    {"graphic":0,"width":224,"height":136,"ok":1},
+    {"graphic":78,"width":224,"height":97,"ok":1},
+    {"graphic":79,"width":224,"height":39,"ok":1},
+    {"graphic":8,"width":67,"height":29,"ok":1},
+    {"graphic":9,"width":87,"height":25,"ok":1},
+    {"graphic":10,"width":87,"height":45,"ok":1},
+    {"graphic":42,"width":256,"height":32,"ok":1}
+  ],
+  "pass": true
+}
