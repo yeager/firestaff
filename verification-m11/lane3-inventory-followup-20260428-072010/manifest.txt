@@ -1,0 +1,4 @@
+# lane3 inventory follow-up
+utc=2026-04-28T07:20:10Z
+branch=sync/n2-dm1-v1-20260428
+head=f532cc4
