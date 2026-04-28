@@ -19,6 +19,9 @@ CLASSIFIER_JSON_NAME = "pass80_original_frame_classifier.json"
 
 CONTROL_CLASSES = {"spell_panel", "inventory"}
 UNSAFE_CLASSES = {"title_or_menu", "entrance_menu", "wall_closeup", "non_graphics_blocker", "graphics_320x200_unclassified"}
+# Pass151/pass153 proved this hash is a static no-party dungeon placeholder:
+# helper keys, xdotool keys/types, and panel clicks do not yield party control.
+STATIC_NO_PARTY_DUNGEON_HASHES = {"48ed3743ab6a"}
 
 
 def display(path: Path) -> str:
@@ -92,9 +95,11 @@ def audit(attempt_dir: Path, label_manifest: Path, classifier_json: Path) -> dic
 
     classes = [str(row.get("classification", "")) for row in captures]
     labels = [row.get("route_label", "") for row in label_rows]
+    capture_sha12s = [str(row.get("sha256", ""))[:12] for row in captures]
 
     unsafe_seen = sorted({cls for cls in classes if cls in UNSAFE_CLASSES})
     control_seen = sorted({cls for cls in classes if cls in CONTROL_CLASSES})
+    static_no_party_seen = sorted({sha for sha in capture_sha12s if sha in STATIC_NO_PARTY_DUNGEON_HASHES})
     blank_right_column_frames = 0
     for row in captures:
         if _region_value(row, "right_column", "nonblack_ratio") < 0.15 and _region_value(row, "spell_area", "nonblack_ratio") < 0.05:
@@ -105,12 +110,18 @@ def audit(attempt_dir: Path, label_manifest: Path, classifier_json: Path) -> dic
         all_gameplay
         and not control_seen
         and blank_right_column_frames >= max(1, len(captures) - 1)
-        and bool(duplicate_sha256_counts)
+        and (bool(duplicate_sha256_counts) or bool(static_no_party_seen))
     )
-    party_control_ready = bool(control_seen) and not unsafe_seen and not duplicate_sha256_counts and len(captures) == 6
+    party_control_ready = (
+        bool(control_seen)
+        and not unsafe_seen
+        and not duplicate_sha256_counts
+        and not static_no_party_seen
+        and len(captures) == 6
+    )
 
     if direct_start_no_party_signature:
-        problems.append("direct-start/no-party signature: dungeon viewport reached, but right-column control areas stay blank and movement/probe frames repeat")
+        problems.append("direct-start/no-party signature: static no-party dungeon viewport reached (including known 48ed placeholder), but party/HUD/spell/inventory control was not proven")
     elif not party_control_ready:
         problems.append("party-control state not proven: capture lacks a clean six-frame spell/inventory/HUD-ready sequence")
 
@@ -136,6 +147,7 @@ def audit(attempt_dir: Path, label_manifest: Path, classifier_json: Path) -> dic
         "classes": classes,
         "labels": labels,
         "duplicate_sha256_counts": duplicate_sha256_counts,
+        "static_no_party_hashes_seen": static_no_party_seen,
         "unsafe_classes_seen": unsafe_seen,
         "control_classes_seen": control_seen,
         "blank_right_column_frames": blank_right_column_frames,
@@ -216,8 +228,32 @@ def run_self_test() -> int:
         a = audit(d, labels, cj)
         cj.write_text(json.dumps(blank))
         b = audit(d, labels, cj)
-    passed = a["party_control_ready"] is True and b["direct_start_no_party_signature"] is True and b["party_control_ready"] is False
-    print(json.dumps({"pass": passed, "ready_party_control": a["party_control_ready"], "blank_no_party_signature": b["direct_start_no_party_signature"]}, indent=2))
+    static48ed = {
+        "schema": "pass80_original_frame_classifier.v1",
+        "captures": [
+            {"classification": "dungeon_gameplay", "sha256": "48ed3743ab6a" + str(i).zfill(52), "regions": {"right_column": {"nonblack_ratio": 0.01}, "spell_area": {"nonblack_ratio": 0.0}}}
+            for i in range(6)
+        ],
+        "problems": [],
+        "warnings": [],
+        "duplicate_sha256_counts": {},
+    }
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        labels = d / LABEL_MANIFEST_NAME
+        labels.write_text("index\tfilename\troute_label\troute_token\n" + "\n".join(f"{i:02d}\timage{i:04d}-raw.png\tprobe{i}\tshot:probe{i}" for i in range(1, 7)) + "\n")
+        cj = d / CLASSIFIER_JSON_NAME
+        cj.write_text(json.dumps(static48ed))
+        c = audit(d, labels, cj)
+    passed = (
+        a["party_control_ready"] is True
+        and b["direct_start_no_party_signature"] is True
+        and b["party_control_ready"] is False
+        and c["direct_start_no_party_signature"] is True
+        and c["party_control_ready"] is False
+        and c["static_no_party_hashes_seen"] == ["48ed3743ab6a"]
+    )
+    print(json.dumps({"pass": passed, "ready_party_control": a["party_control_ready"], "blank_no_party_signature": b["direct_start_no_party_signature"], "static48ed_blocked": c["direct_start_no_party_signature"], "static48ed_ready": c["party_control_ready"], "static_no_party_hashes_seen": c["static_no_party_hashes_seen"]}, indent=2))
     return 0 if passed else 1
 
 
