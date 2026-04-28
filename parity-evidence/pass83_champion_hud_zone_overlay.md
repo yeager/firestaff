@@ -10,6 +10,12 @@ Honesty: these files are evidence aids only. They do not claim pixel-perfect par
 - scenes: 3
 - pass: `True`
 
+## Geometry acceptance
+
+- status boxes: `4` at `67x29` with `69` px stride
+- right edge: `x=274`; champion icon lane starts at `x=281`; gap `7` px
+- geometry pass: `True`
+
 ## Generated overlays
 
 - `party_hud_with_champions`: `parity-evidence/overlays/pass83/party_hud_with_champions_champion_hud_zones_overlay.png` from `verification-screens/07_party_hud_with_champions.png`

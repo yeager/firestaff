@@ -22,6 +22,10 @@ FRAME_W, FRAME_H = 320, 200
 # spacing. Firestaff's old 12px party-panel inset is V2-only chrome; keep
 # this evidence overlay aligned with the V1 source-origin locked in pass90.
 PARTY_X, PARTY_Y, SLOT_W, SLOT_H, SLOT_STEP = 0, 0, 67, 29, 69
+# Source layout-696 C113/C116 champion icon clusters start at x=281.
+# Keep this explicit so evidence generation fails if a future HUD-zone refresh
+# accidentally pushes the fourth status box into the top-right icon lane.
+CHAMPION_ICON_LANE_X = 281
 
 @dataclass(frozen=True)
 class Scene:
@@ -161,6 +165,43 @@ def zone_table() -> list[Zone]:
 
 ZONES = tuple(zone_table())
 
+def _inside(parent: tuple[int, int, int, int], child: tuple[int, int, int, int]) -> bool:
+    px, py, pw, ph = parent
+    cx, cy, cw, ch = child
+    return cx >= px and cy >= py and cx + cw <= px + pw and cy + ch <= py + ph
+
+def geometry_acceptance(zones: Iterable[Zone] = ZONES) -> dict[str, object]:
+    zone_list = list(zones)
+    status_boxes = [z for z in zone_list if "status_box" in z.name]
+    problems: list[str] = []
+    if len(status_boxes) != 4:
+        problems.append(f"expected 4 status boxes, found {len(status_boxes)}")
+    for i, box in enumerate(status_boxes):
+        bx, by, bw, bh = box.xywh
+        expected_x = PARTY_X + i * SLOT_STEP
+        if box.xywh != (expected_x, PARTY_Y, SLOT_W, SLOT_H):
+            problems.append(f"slot {i} status box {box.xywh} != {(expected_x, PARTY_Y, SLOT_W, SLOT_H)}")
+        if bx + bw > CHAMPION_ICON_LANE_X:
+            problems.append(f"slot {i} status box right edge {bx + bw} overlaps icon lane x={CHAMPION_ICON_LANE_X}")
+        if i and bx < status_boxes[i - 1].xywh[0] + status_boxes[i - 1].xywh[2]:
+            problems.append(f"slot {i} status box overlaps previous slot")
+        for child in zone_list:
+            if child is box or not child.name.endswith(f"_slot{i}"):
+                continue
+            if not _inside(box.xywh, child.xywh):
+                problems.append(f"{child.name} {child.xywh} escapes {box.name} {box.xywh}")
+    right_edge = max(x + w for x, _y, w, _h in (z.xywh for z in status_boxes)) if status_boxes else 0
+    return {
+        "pass": not problems,
+        "status_box_count": len(status_boxes),
+        "status_box_stride": SLOT_STEP,
+        "status_box_width": SLOT_W,
+        "status_box_right_edge": right_edge,
+        "champion_icon_lane_x": CHAMPION_ICON_LANE_X,
+        "icon_lane_gap_px": CHAMPION_ICON_LANE_X - right_edge,
+        "problems": problems,
+    }
+
 def crop_metrics(crop: RGBImage) -> dict[str, object]:
     nonblack = sum(1 for p in crop.pixels if p != (0, 0, 0))
     return {"nonblack_pixels": nonblack, "total_pixels": len(crop.pixels), "nonblack_ratio": round(nonblack / len(crop.pixels), 4), "unique_colors": len(set(crop.pixels))}
@@ -183,6 +224,10 @@ def write_markdown(result: dict[str, object]) -> None:
         "Pass 96 refresh: these overlays now use the V1 source-origin champion-box x=0 geometry from pass90, not Firestaff's legacy V2-only 12px party-panel inset.", "",
         "Honesty: these files are evidence aids only. They do not claim pixel-perfect parity with original runtime screenshots.", "",
         f"- stats: `{result['stats']}`", f"- scenes: {len(result['scenes'])}", f"- pass: `{result['pass']}`", "",
+        "## Geometry acceptance", "",
+        f"- status boxes: `{result['geometry_acceptance']['status_box_count']}` at `{result['geometry_acceptance']['status_box_width']}x{SLOT_H}` with `{result['geometry_acceptance']['status_box_stride']}` px stride",
+        f"- right edge: `x={result['geometry_acceptance']['status_box_right_edge']}`; champion icon lane starts at `x={result['geometry_acceptance']['champion_icon_lane_x']}`; gap `{result['geometry_acceptance']['icon_lane_gap_px']}` px",
+        f"- geometry pass: `{result['geometry_acceptance']['pass']}`", "",
         "## Generated overlays", "",
     ]
     for scene in result["scenes"]:  # type: ignore[index]
@@ -200,7 +245,12 @@ def run_self_test() -> int:
     assert zones[24].xywh == (207, 0, 67, 29)
     assert any(z.name == "C203_mana_bar_slot0" and z.xywh == (60, 4, 4, 25) for z in zones)
     assert any(z.name == "C206_mana_bar_slot3" and z.xywh == (267, 4, 4, 25) for z in zones)
-    print(json.dumps({"pass": True, "zones": len(zones)}, indent=2)); return 0
+    acceptance = geometry_acceptance(zones)
+    assert acceptance["pass"], acceptance["problems"]
+    assert acceptance["status_box_right_edge"] == 274
+    assert acceptance["champion_icon_lane_x"] == 281
+    assert acceptance["icon_lane_gap_px"] == 7
+    print(json.dumps({"pass": True, "zones": len(zones), "geometry_acceptance": acceptance}, indent=2)); return 0
 
 def main(argv: Iterable[str] | None = None) -> int:
     ap = argparse.ArgumentParser(); ap.add_argument("--self-test", action="store_true"); args = ap.parse_args(argv)
@@ -218,7 +268,9 @@ def main(argv: Iterable[str] | None = None) -> int:
             crop_path = OUT_DIR / f"{scene.name}_{zone.name}.png"; save_png(crop, crop_path)
             zone_rows.append({"name": zone.name, "xywh": [x, y, w, h], "source_reference": zone.source_reference, "crop": rel(crop_path), "crop_sha256": sha256(crop_path), "metrics": crop_metrics(crop)})
         scenes.append({"scene": scene.name, "screenshot": rel(screen_path), "screenshot_sha256": sha256(screen_path), "overlay": rel(overlay_path), "overlay_sha256": sha256(overlay_path), "zones": zone_rows})
-    result = {"schema": "pass83_champion_hud_zone_overlay_probe.v2", "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims. Pass96 refresh keeps the evidence geometry at source x=0, matching pass90 and layout-696 C151..C154.", "frame_size": [FRAME_W, FRAME_H], "zones": [{"name": z.name, "xywh": list(z.xywh), "source_reference": z.source_reference} for z in ZONES], "scenes": scenes, "problems": problems, "pass": bool(scenes) and not problems, "stats": rel(STATS)}
+    acceptance = geometry_acceptance()
+    problems.extend(acceptance["problems"])
+    result = {"schema": "pass83_champion_hud_zone_overlay_probe.v3", "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims. Pass96 refresh keeps the evidence geometry at source x=0, matching pass90 and layout-696 C151..C154. Pass100 adds a geometry-acceptance guard for status-box children, inter-slot overlap, and the C113/C116 champion-icon lane gap.", "frame_size": [FRAME_W, FRAME_H], "zones": [{"name": z.name, "xywh": list(z.xywh), "source_reference": z.source_reference} for z in ZONES], "geometry_acceptance": acceptance, "scenes": scenes, "problems": problems, "pass": bool(scenes) and not problems, "stats": rel(STATS)}
     STATS.write_text(json.dumps(result, indent=2) + "\n"); write_markdown(result)
     print(json.dumps({"scenes": len(scenes), "zones": len(ZONES), "problems": problems, "stats": rel(STATS), "markdown": rel(MD)}, indent=2))
     return 0 if result["pass"] else 1

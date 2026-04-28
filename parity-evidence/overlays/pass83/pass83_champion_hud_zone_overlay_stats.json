@@ -1,6 +1,6 @@
 {
-  "schema": "pass83_champion_hud_zone_overlay_probe.v2",
-  "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims. Pass96 refresh keeps the evidence geometry at source x=0, matching pass90 and layout-696 C151..C154.",
+  "schema": "pass83_champion_hud_zone_overlay_probe.v3",
+  "honesty": "Evidence only. These overlays/crops expose current Firestaff V1 pixels against source-zone geometry; they are not original-runtime parity claims. Pass96 refresh keeps the evidence geometry at source x=0, matching pass90 and layout-696 C151..C154. Pass100 adds a geometry-acceptance guard for status-box children, inter-slot overlap, and the C113/C116 champion-icon lane gap.",
   "frame_size": [
     320,
     200
@@ -327,6 +327,16 @@
       "source_reference": "layout-696 C203..C206: F0287 mana vertical bar container"
     }
   ],
+  "geometry_acceptance": {
+    "pass": true,
+    "status_box_count": 4,
+    "status_box_stride": 69,
+    "status_box_width": 67,
+    "status_box_right_edge": 274,
+    "champion_icon_lane_x": 281,
+    "icon_lane_gap_px": 7,
+    "problems": []
+  },
   "scenes": [
     {
       "scene": "party_hud_with_champions",
