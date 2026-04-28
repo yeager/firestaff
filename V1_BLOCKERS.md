@@ -177,6 +177,12 @@ first, then visual parity, then typography / honesty.
     in DM1 PC 3.4 — creatures are blocked outright, which is the
     landed behavior).
 
+## Current original-route blocker — **OPEN (pass 113, 2026-04-28)**
+- **Area:** `VISUAL` / original-runtime reference capture
+- **Status:** Still blocked on a usable original PC 3.4 party/champion state. Pass 113 checked N2 local original data and Greatstone DUNGEON XML: the source-plausible first champion route is start `(3,2)` facing east to Elija portrait at wall `(10,2)` west side. However, direct-start N2 DOSBox probes (`probe-forward-to-elija`, `probe-kp8-to-elija`) repeat dungeon frames with blank right-column/spell control regions instead of moving/recruiting/opening controls.
+- **Evidence:** `parity-evidence/pass113_original_party_state_followup.md`, `parity-evidence/pass113_original_party_state_probe.md`, and `tools/pass113_original_party_state_probe.py`.
+- **Next unblocker:** determine or manually capture the original runtime Hall-of-Champions movement/recruitment input path to reach `(9,2)` facing east and recruit/open Elija before attempting HUD/spell/inventory overlay references. Do not promote direct-start/no-party captures as parity references.
+
 ## 4. Viewport region −28×−18 px vs DM1 original — **LOCKED (pass 40)**
 - **Area:** `VISUAL`
 - **Status:** Drift explicitly locked as a V1 `KNOWN_DIFF` with a

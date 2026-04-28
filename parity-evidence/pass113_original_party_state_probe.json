@@ -1,0 +1,87 @@
+{
+  "schema": "pass113_original_party_state_probe.v1",
+  "attempt_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1344-party-state-followup/probe-kp8-to-elija",
+  "label_manifest": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1344-party-state-followup/probe-kp8-to-elija/original_viewport_shot_labels.tsv",
+  "classifier_json": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1344-party-state-followup/probe-kp8-to-elija/pass80_original_frame_classifier.json",
+  "honesty": "Party-state semantic probe only. It can block unsafe original captures; it does not claim pixel parity or champion identity.",
+  "capture_count": 6,
+  "classes": [
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay",
+    "dungeon_gameplay"
+  ],
+  "labels": [
+    "start",
+    "kp8_1",
+    "kp8_2",
+    "kp8_3",
+    "kp8_4",
+    "kp8_5"
+  ],
+  "duplicate_sha256_counts": {
+    "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
+  },
+  "unsafe_classes_seen": [],
+  "control_classes_seen": [],
+  "blank_right_column_frames": 6,
+  "direct_start_no_party_signature": true,
+  "party_control_ready": false,
+  "rows": [
+    {
+      "index": 1,
+      "route_label": "start",
+      "classification": "dungeon_gameplay",
+      "sha256": "1ee706538fb340a34ccf6599edc0fef09bfd14d072dd56b61d433ff0d0c64002",
+      "right_column_nonblack_ratio": 0.0,
+      "spell_area_nonblack_ratio": 0.0
+    },
+    {
+      "index": 2,
+      "route_label": "kp8_1",
+      "classification": "dungeon_gameplay",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "right_column_nonblack_ratio": 0.0626,
+      "spell_area_nonblack_ratio": 0.0
+    },
+    {
+      "index": 3,
+      "route_label": "kp8_2",
+      "classification": "dungeon_gameplay",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "right_column_nonblack_ratio": 0.0626,
+      "spell_area_nonblack_ratio": 0.0
+    },
+    {
+      "index": 4,
+      "route_label": "kp8_3",
+      "classification": "dungeon_gameplay",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "right_column_nonblack_ratio": 0.0626,
+      "spell_area_nonblack_ratio": 0.0
+    },
+    {
+      "index": 5,
+      "route_label": "kp8_4",
+      "classification": "dungeon_gameplay",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "right_column_nonblack_ratio": 0.0626,
+      "spell_area_nonblack_ratio": 0.0
+    },
+    {
+      "index": 6,
+      "route_label": "kp8_5",
+      "classification": "dungeon_gameplay",
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "right_column_nonblack_ratio": 0.0626,
+      "spell_area_nonblack_ratio": 0.0
+    }
+  ],
+  "warnings": [],
+  "problems": [
+    "duplicate raw frames detected: 1 unique sha256 value(s) repeat",
+    "direct-start/no-party signature: dungeon viewport reached, but right-column control areas stay blank and movement/probe frames repeat"
+  ]
+}
