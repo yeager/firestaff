@@ -1,9 +1,9 @@
 /*
  * Pass 44 bounded probe — spell-panel rune labels use C011 cell blits.
  *
- * Scope: V1_BLOCKERS.md §8. Verifies that the spell-panel overlay now
- * blits the native C011 14x13 available-symbol and champion-symbol
- * cells instead of relying solely on the previous text-over-grid path.
+ * Scope: V1_BLOCKERS.md §8. Verifies that the normal V1 right-column
+ * spell-area overlay blits the native C011 14x13 available-symbol and
+ * champion-symbol cells inside C013, without reviving the old viewport modal.
  */
 
 #include "m11_game_view.h"
@@ -19,14 +19,13 @@ unsigned char* G2160_puc_Bitmap_Destination;
 enum {
     SCREEN_W = 320,
     SCREEN_H = 200,
-    PANEL_X = 24,
-    PANEL_Y = 36,
-    PANEL_W = 180,
+    SPELL_X = 233,
+    SPELL_Y = 42,
     CELL_W = 14,
     CELL_H = 13,
     CELL_GAP = 2,
-    SELECTED_Y = PANEL_Y + 7,
-    AVAILABLE_Y = PANEL_Y + 38,
+    SELECTED_Y = SPELL_Y + 1,
+    AVAILABLE_Y = SPELL_Y + 12,
     SELECTED_SRC_Y = 26,
     AVAILABLE_SRC_Y = 13,
     C011_INDEX = 11
@@ -89,8 +88,8 @@ int main(int argc, char** argv) {
     const char* outDir = (argc > 1) ? argv[1] : "verification-m11/pass44-spell-labels";
     const char* graphicsPath = (argc > 2) ? argv[2] : NULL;
     char pgmPath[512];
-    int selectedStartX = PANEL_X + ((PANEL_W - ((4 * CELL_W) + (3 * CELL_GAP))) / 2);
-    int availableStartX = PANEL_X + ((PANEL_W - ((6 * CELL_W) + (5 * CELL_GAP))) / 2);
+    int selectedStartX = SPELL_X + 15;
+    int availableStartX = SPELL_X + 2;
 
     if (!graphicsPath || graphicsPath[0] == '\0') {
         fprintf(stderr, "usage: %s <out-dir> <GRAPHICS.DAT>\n", argv[0]);
@@ -128,16 +127,16 @@ int main(int argc, char** argv) {
            "GRAPHICS.DAT C011 loads at the source-backed 14x39 size");
 
     record("INV_P44_02",
-           selectedStartX == 83 && availableStartX == 67 &&
-           SELECTED_Y == 43 && AVAILABLE_Y == 74,
-           "spell-panel C011 cell placement resolves to x=83/y=43 for selected runes and x=67/y=74 for available runes");
+           selectedStartX == 248 && availableStartX == 235 &&
+           SELECTED_Y == 43 && AVAILABLE_Y == 54,
+           "spell-panel C011 cell placement resolves to C013 x=248/y=43 for selected runes and x=235/y=54 for available runes");
 
     record("INV_P44_03",
            compare_top_band(fb, SCREEN_W, selectedStartX, SELECTED_Y, c011, SELECTED_SRC_Y),
            "selected rune slot 0 carries the native top band of C011 line 3 (champion-symbol cell)");
 
     record("INV_P44_04",
-           compare_top_band(fb, SCREEN_W, selectedStartX + (CELL_W + CELL_GAP), SELECTED_Y, c011, SELECTED_SRC_Y),
+           compare_top_band(fb, SCREEN_W, selectedStartX + CELL_W, SELECTED_Y, c011, SELECTED_SRC_Y),
            "selected rune slot 1 repeats the same C011 champion-symbol cell band");
 
     record("INV_P44_05",
@@ -145,7 +144,7 @@ int main(int argc, char** argv) {
            "available rune slot 0 carries the native top band of C011 line 2 (available-symbol cell)");
 
     record("INV_P44_06",
-           compare_top_band(fb, SCREEN_W, availableStartX + 5 * (CELL_W + CELL_GAP), AVAILABLE_Y, c011, AVAILABLE_SRC_Y),
+           compare_top_band(fb, SCREEN_W, availableStartX + 5 * CELL_W, AVAILABLE_Y, c011, AVAILABLE_SRC_Y),
            "available rune slot 5 repeats the C011 available-symbol cell band at the far-right label position");
 
     record("INV_P44_07",

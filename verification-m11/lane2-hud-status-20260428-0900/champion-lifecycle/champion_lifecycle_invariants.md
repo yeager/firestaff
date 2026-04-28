@@ -1,0 +1,53 @@
+# Champion Lifecycle Invariants
+
+- PASS: A1: sizeof(SkillState_Compat) == 8
+- PASS: A2: sizeof(MoveTimerState_Compat) == 12
+- PASS: A3: sizeof(StatusEffectState_Compat) == 16
+- PASS: A4: sizeof(RestState_Compat) == 12
+- PASS: A5: sizeof(ChampionLifecycleState_Compat) == 208
+- PASS: A6: sizeof(LifecycleState_Compat) == 872
+- PASS: B1: LifecycleState round-trip (zero-init) bit-identical
+- PASS: B2: LifecycleState round-trip (non-zero mixed fields) bit-identical
+- PASS: B3: food/water boundary (-1024 and 32000) round-trips exact
+- PASS: B4: SkillState exp=128000 (level 10) round-trips
+- PASS: B5: Serialize writes exactly LIFECYCLE_STATE_SERIALIZED_SIZE (872) bytes
+- PASS: C1: Food >= 0 & aboveHalf: drops by 2 per hunger cycle
+- PASS: C2: Water >= 0 & aboveHalf: drops by 1 per hunger cycle
+- PASS: C3: Food at -512 threshold still decays (>= -512 branch runs)
+- PASS: C4: Food/water clamp: after extreme decay both >= -1024
+- PASS: D1: When food < -512 AND water < -512: stamina LOSS is positive
+- PASS: D2: When food >= 0 AND water >= 0: stamina LOSS is negative (gain)
+- PASS: D3: Starvation stamina overflow (current<0 after loss) emits health damage = X >> 1
+- PASS: E1: Fireshield defense 10 expires -> FireShieldDefense returns to 0
+- PASS: E2: Spellshield defense 15 expires -> SpellShieldDefense returns to 0
+- PASS: E3: Invisibility count=1 expires -> count=0
+- PASS: E4: Champion shield defense 20 expires -> champion.shieldDefense=0
+- PASS: E5: Poison attack=64 -> damage=1, attack->63, reschedule at +36
+- PASS: F1: Two fireshields (10+15=25); expire first -> total=15
+- PASS: F2: Two poisons (attack 64,32) -> PoisonEventCount=2 independent chains
+- PASS: G1: Light load (40/100 = 40% of max): moveTicks = 2
+- PASS: G2: Heavy load (150/100 = +50% overloaded): moveTicks = 6
+- PASS: G3: Wounded feet + normal load: 2+1=3; with Boot of Speed: 2
+- PASS: H1: Resting health regen: (128>>7)+1=2, doubled=4; hp 50->54
+- PASS: H2: Mana regen: gain=5 (2*2+1), stamina cost=50 -> mana 20->25, stamina 200->150
+- PASS: H3: Rest interrupt (monster adjacent) -> isResting=false, reason=MONSTER
+- PASS: H4: Rest interrupt (projectile on square) -> isResting=false, reason=PROJECTILE
+- PASS: I1: Level thresholds: exp 0->L1, 500->L2, 999->L2, 1000->L3
+- PASS: I2: Award 500 XP to SKILL_SWING (map diff=1): base FIGHTER also gets 500
+- PASS: I3: Fighter level-up 1->2: maxHealth↑, maxStamina↑, strength↑
+- PASS: I4: Wizard level-up 1->2: maxMana rises by at least level+level/2 (>=3)
+- PASS: I5: MaxHealth<=999, MaxStamina<=9999, MaxMana<=900 after repeated level-ups
+- PASS: J1: HUNGER_THIRST event scheduled at currentTick+1 with championIndex in aux2
+- PASS: J2: STATUS_TIMEOUT consumed: thievesEyeCount decremented (3->2)
+- PASS: J3: Phase 15 integration — LifecycleState ser->de bit-identical (init)
+- PASS: J4: Phase 15 integration — LifecycleState all-fields-max round-trips
+- PASS: J5: Phase 15 integration — LifecycleState all-fields-zero round-trips
+- PASS: J6: NULL pointer inputs return 0 (no crash)
+- PASS: J7: Food=0, water=0: no positive stamina loss (both >= 0 branch)
+- PASS: J8: Purity — F0833 twice with same input -> same output + state
+- PASS: K1: 1000 HUNGER_THIRST ticks: food/water stay within [-1024, +32000]; no infinite loop / overflow
+- PASS: K2: Purity — F0848 level computation is side-effect-free (call twice -> same result)
+- PASS: K3: Real DUNGEON.DAT: champion 0 food/water sign-extended into [0, 2048] range
+
+Invariant count: 48
+Status: PASS
