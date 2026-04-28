@@ -20,4 +20,3 @@
 ## DUNGEON.DAT integration
 
 - sign-extended food=230, water=210 from Phase 10 uint8 seeds
-
