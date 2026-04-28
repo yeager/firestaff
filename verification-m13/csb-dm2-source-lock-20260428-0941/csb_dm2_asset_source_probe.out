@@ -1,0 +1,10 @@
+source {'type': 'email', 'subject': 'Checksums', 'from': 'Daniel Nylander <daniel@danielnylander.se>', 'date': '2026-04-20 18:12 Europe/Stockholm'}
+csb: entries=26 filenames=['ANIMATE.DAT', 'CEDTLS.DAT', 'DRAGON.AMG', 'ENTER.SNG', 'EXPLOS1.AMG', 'GRAPHICS.DAT', 'HCSB.DAT', 'MAGEXPLO.AMG', 'NAKED.AMG', 'SWIPE.AMG', 'TELE2.AMG']
+csb: graphics_hashes=['61fbfd56887c94adc26888a9491c6611', '291e1bc6803e3dc4b974c60117ca5d68', 'cefaddfdf5651df2c91f61b5611a8362', '21197b1d4994fd835c403d5a33dcac2b', 'ebf6a57af3f27782e358c0490bfd2f2e', '405b757038eea3c263e60f240854d6de', '761d6fc588b31aeaaa9caf3725e111b9', '761d6fc588b31aeaaa9caf3725e111b9', '8fe59d4f2af5b57a4cb14447c011d3f1']
+dm2: entries=20 filenames=['DMCOORD.DAT', 'GRAPHICS.DAT']
+dm2: graphics_hashes=['1c940ea95703eaea0ecdf84d17e954b9', '027ff3b8ddc2c4c4cdda7ada0b0bc46c', 'f926a7554bdfb5852105179e67b8a264', '4bf28b3d84e6799d7686c6aaf96cbf23', '5cab25f6b975957eae4a203174e7f2a6', '283d5456c4f676609489e200219605bb', '0a63e22cd83fe3c90aacffda5c0f062c', 'bd2d316eb77c6d6d217bfb76bd0d7e41', '43cf7e8579e83e9f1fa9b411695842fd', '9a6aa706ae9bed5ddd68ffd730524476', '25247ede4dabb6a71e5dabdfbcd5907d', 'b4d733576ea60c41737f79f212faf528', 'e52ab5e01715042b16a4dcff02052e5d', 'a0277195099b2ace51d4e085f7eef835', 'a669adf2a6ff887e0d451d93c846f57f', 'a31023db49d5d85e469c9323671812c7', 'a80c555a858ef7770e1d7f3d2e37fec3', 'dbced13a38d3036f42b9797175b7ec88', 'a654ba19e9a6919f46818ecd23d7ea9d']
+csb: hardcoded_hashes=['ebf6a57af3f27782e358c0490bfd2f2e', '291e1bc6803e3dc4b974c60117ca5d68', 'cefaddfdf5651df2c91f61b5611a8362']
+csb: hardcoded_hashes_in_json=True missing=[]
+dm2: hardcoded_hashes=['25247ede4dabb6a71e5dabdfbcd5907d', 'b4d733576ea60c41737f79f212faf528', 'e52ab5e01715042b16a4dcff02052e5d']
+dm2: hardcoded_hashes_in_json=True missing=[]
+required_file_count_model=one matched version spec per game; not paired graphics+dungeon

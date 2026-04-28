@@ -1,0 +1,1 @@
+rm -rf /tmp/firestaff-csb-dm2-source-lock-build && cmake -S . -B /tmp/firestaff-csb-dm2-source-lock-build -DCMAKE_BUILD_TYPE=Release && cmake --build /tmp/firestaff-csb-dm2-source-lock-build --target firestaff_m12_startup_menu_probe -j2 && /tmp/firestaff-csb-dm2-source-lock-build/firestaff_m12_startup_menu_probe

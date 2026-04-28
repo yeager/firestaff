@@ -1,0 +1,1 @@
+set -eu; for f in "$HOME/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z" "$HOME/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z"; do echo "## $f"; 7z l "$f" | sed -n "1,80p"; done

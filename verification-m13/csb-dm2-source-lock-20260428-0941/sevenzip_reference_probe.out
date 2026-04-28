@@ -1,0 +1,105 @@
+## /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
+
+7-Zip 23.01 (x64) : Copyright (c) 1999-2023 Igor Pavlov : 2023-06-20
+ 64-bit locale=C.UTF-8 Threads:8 OPEN_MAX:1048576
+
+Scanning the drive for archives:
+1 file, 1669479 bytes (1631 KiB)
+
+Listing archive: /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
+
+--
+Path = /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
+Type = 7z
+Physical Size = 1669479
+Headers Size = 1255
+Method = LZMA2:23
+Solid = +
+Blocks = 1
+
+   Date      Time    Attr         Size   Compressed  Name
+------------------- ----- ------------ ------------  ------------------------
+2025-08-15 12:23:01 D....            0            0  Floppy Disks MSA
+2025-08-15 13:00:39 D....            0            0  Floppy Disks ST
+2025-08-15 12:17:52 D....            0            0  Floppy Disks STX
+2025-08-15 13:01:37 D....            0            0  HardDisk
+2009-03-01 21:43:02 D....            0            0  HardDisk/2000-02-07 ELiTE
+2009-03-01 21:43:03 D....            0            0  HardDisk/2009-02-22 PP
+2009-03-01 21:43:03 D...A            0            0  HardDisk/2009-02-22 PP/PORTRAIT
+1996-04-18 05:05:00 ....A       404254      1668224  Floppy Disks MSA/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).msa
+2000-08-13 14:01:26 ....A       730035               Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa
+1996-04-18 05:09:38 ....A       375614               Floppy Disks MSA/Chaos Strikes Back for Atari ST Utility Disk v2.0 (English).msa
+2002-07-28 01:07:14 ....A       839680               Floppy Disks ST/Chaos Strikes Back for Atari ST v2.0 (English) Cracked (Automation Disk 192).st
+2004-06-02 22:58:00 ....A       411568               Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).stx
+2005-09-10 14:02:28 ....A       941828               Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx
+2004-06-02 23:04:50 ....A       411568               Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk v2.0 (English).stx
+2005-09-10 14:11:50 ....A       940282               Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk v2.1 (English).stx
+2000-09-20 20:19:38 ....A       819200               HardDisk/2000-02-07 ELiTE/ChaosStrikesBackAtariST20HDDisk1.st
+2001-03-15 11:45:32 ....A       819200               HardDisk/2000-02-07 ELiTE/ChaosStrikesBackAtariST20HDDisk2.st
+2000-02-07 11:09:10 ....A         4334               HardDisk/2000-02-07 ELiTE/E!_REGGY.NFO
+1999-12-27 11:46:34 ....A         5999               HardDisk/2000-02-07 ELiTE/ELITE99!.NFO
+2000-02-07 11:35:12 ....A          867               HardDisk/2000-02-07 ELiTE/FILE_ID1.DIZ
+2000-02-07 11:37:02 ....A          956               HardDisk/2000-02-07 ELiTE/FILE_ID2.DIZ
+1985-11-19 14:01:24 ....A        58683               HardDisk/2009-02-22 PP/ANIMATE.DAT
+1985-11-19 14:01:26 ....A        21128               HardDisk/2009-02-22 PP/ANIMATE.FTL
+1985-11-19 14:01:28 ....A         1802               HardDisk/2009-02-22 PP/ANIMATE.SCR
+1985-11-19 14:01:26 ....A        42090               HardDisk/2009-02-22 PP/CHAOS.FTL
+2009-02-22 03:55:38 ....A         1046               HardDisk/2009-02-22 PP/CHAOSSTB.TXT
+2009-02-22 02:48:10 ....A       145446               HardDisk/2009-02-22 PP/CMAIN
+1985-11-19 14:00:52 ....A         2098               HardDisk/2009-02-22 PP/DUNGEON.DAT
+2009-02-20 01:22:14 ....A        15080               HardDisk/2009-02-22 PP/FTLCODE
+2009-02-20 10:42:36 ....A        20817               HardDisk/2009-02-22 PP/GAME.PRG
+2009-02-22 01:10:14 ....A       319080               HardDisk/2009-02-22 PP/GRAPHICS.DAT
+1985-11-19 14:01:24 ....A        30793               HardDisk/2009-02-22 PP/HCSB.DAT
+1985-11-19 14:01:28 ....A        66172               HardDisk/2009-02-22 PP/HCSB.HTC
+1985-11-19 14:01:28 ....A        49436               HardDisk/2009-02-22 PP/HINT.FTL
+1985-11-19 14:01:26 ....A        42815               HardDisk/2009-02-22 PP/MINI.DAT
+1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/ALEX.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/AZIZI.CMP
+1985-11-19 14:01:24 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/AZIZI_2.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/BORIS.CMP
+1985-11-19 14:01:24 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/CHANI.CMP
+1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/DAROOU.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/ELIJA.CMP
+1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/GANDO.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/GOTHMOG.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/HALK.CMP
+1985-11-19 14:01:24 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/HAWK.CMP
+1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/HISSSSA.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/IAIDO.CMP
+1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/LEIF.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/LEYLA.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/LINFLAS.CMP
+1985-11-19 14:01:24 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/MOPHUS.CMP
+1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/NABI.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/SONJA.CMP
+1985-11-19 14:01:24 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/SONJA_2.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/STAMM.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/SYRA.CMP
+1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/TIGGY.CMP
+1985-11-19 14:01:24 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/WUTSE.CMP
+1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/WUUF.CMP
+## /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
+
+7-Zip 23.01 (x64) : Copyright (c) 1999-2023 Igor Pavlov : 2023-06-20
+ 64-bit locale=C.UTF-8 Threads:8 OPEN_MAX:1048576
+
+Scanning the drive for archives:
+1 file, 379848 bytes (371 KiB)
+
+Listing archive: /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
+
+--
+Path = /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
+Type = 7z
+Physical Size = 379848
+Headers Size = 122
+Method = LZMA2:23
+Solid = -
+Blocks = 1
+
+   Date      Time    Attr         Size   Compressed  Name
+------------------- ----- ------------ ------------  ------------------------
+2002-12-14 12:32:54 ....A      7841116       379726  SKULL.ASM
+------------------- ----- ------------ ------------  ------------------------
+2002-12-14 12:32:54            7841116       379726  1 files

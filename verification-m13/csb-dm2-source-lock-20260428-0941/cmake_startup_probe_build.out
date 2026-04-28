@@ -1,0 +1,198 @@
+-- The C compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Configuring done (0.4s)
+-- Generating done (0.1s)
+-- Build files have been written to: /tmp/firestaff-csb-dm2-source-lock-build
+[  1%] Building C object CMakeFiles/firestaff_m10.dir/bitmap_call_pc34_compat.c.o
+[  1%] Building C object CMakeFiles/firestaff_m10.dir/bitmap_copy_pc34_compat.c.o
+[  2%] Building C object CMakeFiles/firestaff_m10.dir/boot_plan_runtime_pc34_compat.c.o
+[  3%] Building C object CMakeFiles/firestaff_m10.dir/boot_plan_script_pc34_compat.c.o
+[  3%] Building C object CMakeFiles/firestaff_m10.dir/boot_program_runtime_pc34_compat.c.o
+[  4%] Building C object CMakeFiles/firestaff_m10.dir/boot_sequence_runtime_pc34_compat.c.o
+[  5%] Building C object CMakeFiles/firestaff_m10.dir/byteops_pc34_compat.c.o
+[  5%] Building C object CMakeFiles/firestaff_m10.dir/derived_bitmap_cache_pc34_compat.c.o
+[  6%] Building C object CMakeFiles/firestaff_m10.dir/dialog_frontend_pc34_compat.c.o
+[  7%] Building C object CMakeFiles/firestaff_m10.dir/endgame_frontend_pc34_compat.c.o
+[  7%] Building C object CMakeFiles/firestaff_m10.dir/expand_frontend_pc34_compat.c.o
+[  8%] Building C object CMakeFiles/firestaff_m10.dir/graphics_dat_entry_classify_pc34_compat.c.o
+[ 10%] Building C object CMakeFiles/firestaff_m10.dir/host_video_pgm_backend_pc34_compat.c.o
+[ 10%] Building C object CMakeFiles/firestaff_m10.dir/image_backend_pc34_compat.c.o
+[ 11%] Building C object CMakeFiles/firestaff_m10.dir/image_expand_pc34_compat.c.o
+[ 12%] Building C object CMakeFiles/firestaff_m10.dir/late_special_dispatch_pc34_compat.c.o
+[ 12%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_access_pc34_compat.c.o
+[ 13%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_allocate_or_reuse_pc34_compat.c.o
+[ 14%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_allocation_boundary_pc34_compat.c.o
+[ 14%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_allocator_defrag_pc34_compat.c.o
+[ 15%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_allocator_pc34_compat.c.o
+[ 16%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_block_pc34_compat.c.o
+[ 16%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_compact_used_pc34_compat.c.o
+[ 17%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_defrag_apply_pc34_compat.c.o
+[ 19%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_defrag_branch_pc34_compat.c.o
+[ 19%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_defrag_loop_pc34_compat.c.o
+[ 20%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_defrag_orchestrator_pc34_compat.c.o
+[ 21%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_defrag_result_pc34_compat.c.o
+[ 21%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_frontend_pc34_compat.c.o
+[ 22%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_gated_access_pc34_compat.c.o
+[ 23%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_index_pc34_compat.c.o
+[ 23%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_reuse_pc34_compat.c.o
+[ 24%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_reuse_split_pc34_compat.c.o
+[ 25%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_segment_scan_pc34_compat.c.o
+[ 25%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_timegate_pc34_compat.c.o
+[ 26%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_unused_blocks_pc34_compat.c.o
+[ 26%] Building C object CMakeFiles/firestaff_m10.dir/memory_cache_usage_pc34_compat.c.o
+[ 28%] Building C object CMakeFiles/firestaff_m10.dir/memory_champion_lifecycle_pc34_compat.c.o
+[ 29%] Building C object CMakeFiles/firestaff_m10.dir/memory_champion_state_pc34_compat.c.o
+[ 29%] Building C object CMakeFiles/firestaff_m10.dir/memory_combat_pc34_compat.c.o
+[ 30%] Building C object CMakeFiles/firestaff_m10.dir/memory_creature_ai_pc34_compat.c.o
+[ 31%] Building C object CMakeFiles/firestaff_m10.dir/memory_door_action_pc34_compat.c.o
+[ 31%] Building C object CMakeFiles/firestaff_m10.dir/memory_dungeon_dat_pc34_compat.c.o
+[ 32%] Building C object CMakeFiles/firestaff_m10.dir/memory_frontend_pc34_compat.c.o
+[ 33%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_allocator_boundary_pc34_compat.c.o
+[ 33%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_allocator_entry_pc34_compat.c.o
+[ 34%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_allocator_orchestrator_pc34_compat.c.o
+[ 35%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_bitmap_path_pc34_compat.c.o
+[ 35%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_bitmap_reuse_pc34_compat.c.o
+[ 37%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_block_index_pc34_compat.c.o
+[ 38%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_boot_pc34_compat.c.o
+[ 38%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_composed_transaction_pc34_compat.c.o
+[ 39%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_defrag_entry_pc34_compat.c.o
+[ 40%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_defrag_loop_pc34_compat.c.o
+[ 40%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_dialog_path_pc34_compat.c.o
+[ 41%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_event_dispatch_pc34_compat.c.o
+[ 42%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_first_frame_pc34_compat.c.o
+[ 42%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_header_pc34_compat.c.o
+[ 43%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_input_command_queue_pc34_compat.c.o
+[ 44%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_main_loop_command_loop_pc34_compat.c.o
+[ 44%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_main_loop_command_pc34_compat.c.o
+[ 46%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_main_loop_command_queue_pc34_compat.c.o
+[ 47%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_main_loop_entry_pc34_compat.c.o
+[ 47%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_main_loop_typed_command_queue_pc34_compat.c.o
+[ 48%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_menu_activate_consequence_pc34_compat.c.o
+[ 49%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_menu_activate_pc34_compat.c.o
+[ 49%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_menu_render_effect_pc34_compat.c.o
+[ 50%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_menu_state_pc34_compat.c.o
+[ 51%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_metadata_pc34_compat.c.o
+[ 51%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_pc34_compat.c.o
+[ 52%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_runtime_transaction_pc34_compat.c.o
+[ 53%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_select_pc34_compat.c.o
+[ 53%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_slots_pc34_compat.c.o
+[ 55%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_special_pc34_compat.c.o
+[ 55%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_startup_dispatch_pc34_compat.c.o
+[ 56%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_startup_pc34_compat.c.o
+[ 57%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_startup_tick_pc34_compat.c.o
+[ 57%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_startup_wiring_pc34_compat.c.o
+[ 58%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_state_pc34_compat.c.o
+[ 59%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_submenu_consequence_pc34_compat.c.o
+[ 59%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_transaction_pc34_compat.c.o
+[ 60%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_used_list_pc34_compat.c.o
+[ 61%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_viewport_path_pc34_compat.c.o
+[ 62%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_pipeline_pc34_compat.c.o
+[ 61%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_expand_pc34_compat.c.o
+[ 64%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_session_pc34_compat.c.o
+[ 64%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_transaction_pc34_compat.c.o
+[ 65%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_wrappers_pc34_compat.c.o
+[ 66%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_wrappers_transaction_pc34_compat.c.o
+[ 66%] Building C object CMakeFiles/firestaff_m10.dir/memory_magic_pc34_compat.c.o
+[ 67%] Building C object CMakeFiles/firestaff_m10.dir/memory_movement_pc34_compat.c.o
+[ 68%] Building C object CMakeFiles/firestaff_m10.dir/memory_native_or_graphic_pc34_compat.c.o
+[ 68%] Building C object CMakeFiles/firestaff_m10.dir/memory_projectile_pc34_compat.c.o
+[ 69%] Building C object CMakeFiles/firestaff_m10.dir/memory_runtime_dynamics_pc34_compat.c.o
+[ 70%] Building C object CMakeFiles/firestaff_m10.dir/memory_savegame_pc34_compat.c.o
+[ 70%] Building C object CMakeFiles/firestaff_m10.dir/memory_sensor_execution_pc34_compat.c.o
+[ 71%] Building C object CMakeFiles/firestaff_m10.dir/memory_tick_orchestrator_pc34_compat.c.o
+[ 73%] Building C object CMakeFiles/firestaff_m10.dir/memory_timeline_pc34_compat.c.o
+[ 73%] Building C object CMakeFiles/firestaff_m10.dir/multi_frame_runtime_driver_pc34_compat.c.o
+[ 74%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_export_pgm_pc34_compat.c.o
+[ 75%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_export_ppm_falsecolor_pc34_compat.c.o
+[ 75%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_export_ppm_vga_pc34_compat.c.o
+[ 76%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_present_pc34_compat.c.o
+[ 77%] Building C object CMakeFiles/firestaff_m10.dir/selector_frontend_pc34_compat.c.o
+[ 77%] Building C object CMakeFiles/firestaff_m10.dir/startup_runtime_driver_pc34_compat.c.o
+[ 78%] Building C object CMakeFiles/firestaff_m10.dir/stateful_boot_plan_reachability_pc34_compat.c.o
+[ 79%] Building C object CMakeFiles/firestaff_m10.dir/stateful_runtime_driver_pc34_compat.c.o
+[ 79%] Building C object CMakeFiles/firestaff_m10.dir/swsh_frontend_pc34_compat.c.o
+[ 80%] Building C object CMakeFiles/firestaff_m10.dir/vga_palette_pc34_compat.c.o
+[ 82%] Linking C static library libfirestaff_m10.a
+[ 82%] Built target firestaff_m10
+[ 83%] Building C object CMakeFiles/firestaff_m11.dir/m11_game_view.c.o
+[ 83%] Building C object CMakeFiles/firestaff_m11.dir/main_loop_m11.c.o
+[ 83%] Building C object CMakeFiles/firestaff_m11.dir/render_sdl_m11.c.o
+[ 84%] Building C object CMakeFiles/firestaff_m11.dir/audio_sdl_m11.c.o
+[ 85%] Building C object CMakeFiles/firestaff_m11.dir/graphics_dat_snd3_loader_v1.c.o
+[ 85%] Building C object CMakeFiles/firestaff_m11.dir/song_dat_loader_v1.c.o
+[ 86%] Building C object CMakeFiles/firestaff_m11.dir/sound_event_snd3_map_v1.c.o
+[ 87%] Building C object CMakeFiles/firestaff_m11.dir/asset_loader_m11.c.o
+[ 87%] Building C object CMakeFiles/firestaff_m11.dir/font_m11.c.o
+[ 88%] Building C object CMakeFiles/firestaff_m11.dir/fs_portable_compat.c.o
+[ 89%] Linking C static library libfirestaff_m11.a
+[ 89%] Built target firestaff_m11
+[ 91%] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_m12.c.o
+[ 91%] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_render_modern_m12.c.o
+[ 92%] Building C object CMakeFiles/firestaff_m12.dir/menu_hit_m12.c.o
+[ 93%] Building C object CMakeFiles/firestaff_m12.dir/config_m12.c.o
+[ 93%] Building C object CMakeFiles/firestaff_m12.dir/asset_status_m12.c.o
+[ 94%] Building C object CMakeFiles/firestaff_m12.dir/card_art_m12.c.o
+[ 95%] Building C object CMakeFiles/firestaff_m12.dir/card_art_generated_m12.c.o
+[ 95%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_m12.c.o
+[ 96%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_readme_m12.c.o
+[ 97%] Building C object CMakeFiles/firestaff_m12.dir/creature_art_m12.c.o
+[ 97%] Linking C static library libfirestaff_m12.a
+[ 97%] Built target firestaff_m12
+[ 98%] Building C object CMakeFiles/firestaff_m12_startup_menu_probe.dir/probes/m12/firestaff_m12_startup_menu_probe.c.o
+[100%] Linking C executable firestaff_m12_startup_menu_probe
+[100%] Built target firestaff_m12_startup_menu_probe
+PASS INV_M12_00A system Swedish auto-selects the startup-menu language when no explicit override exists and unsupported games stay non-launching
+PASS INV_M12_01 startup menu exposes three games, museum, and settings
+PASS INV_M12_02 startup state loads defaults, writes config, seeds built-in card art, and points the validator at the requested originals directory
+PASS INV_M12_02B card-art loader promotes external slot files when present
+PASS INV_M12_03 asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable
+PASS INV_M12_04 down moves selection to second row
+PASS INV_M12_05 up moves selection back to first row
+PASS INV_M12_06 enter on available entry opens game options
+PASS INV_M12_06B game options default to the first supported version, English, cheats off, speed normal, and hotkeys disabled
+PASS INV_M12_06B2 game options expose a per-game language selector
+PASS INV_M12_06C enabling cheats unlocks speed hotkeys
+PASS INV_M12_06D game speed cycles to faster with cheats on
+PASS INV_M12_06E disabling cheats resets speed to normal and disables hotkeys
+PASS INV_M12_06F launch from game options opens ready message
+PASS INV_M12_07 escape returns from message view to main menu
+PASS INV_M12_08 enter on CSB shows unsupported/coming-soon messaging without requesting launch
+PASS INV_M12_MUSEUM_01 museum row opens the Museum of Lore from the startup menu
+PASS INV_M12_MUSEUM_02 museum keyboard navigation cycles sections and pages while unknown keys are no-ops
+PASS INV_M12_MUSEUM_03 museum left cycles pages backward and escape returns to main menu
+PASS INV_M12_MUSEUM_04 museum mouse hits select categories and cycle pages through shared menu state
+PASS INV_M12_09 settings row opens settings screen
+PASS INV_M12_10 settings screen cycles persisted presentation, renderer backend, and window values from keyboard input
+PASS INV_M12_11 settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, and per-game language
+PASS INV_M12_11D readable presentation_mode config key loads and round-trips V3 mode without relying on numeric graphics terminology
+PASS INV_M12_11B system French auto-selects the startup-menu language while unsupported games stay non-launching
+PASS INV_M12_11C missing runtime catalog falls back safely while unsupported games stay coming-soon
+PASS INV_M12_12 draw renders structured non-empty menu pixels for the visual pass
+PASS INV_M12_12B language and presentation mode selections change the rendered launcher output
+PASS INV_M12_24 runtime Swedish and French renders differ from English, while uncatalogued locales still fall back safely
+PASS INV_M12_25 per-game language index is independently settable for DM1/CSB/DM2
+PASS INV_M12_14 V1 mode enforces original aspect and 320x200 resolution on entry
+PASS INV_M12_15 V1 mode blocks aspect ratio cycling
+PASS INV_M12_16 V1 mode blocks resolution cycling
+PASS INV_M12_17 RowLockedByMode reports correct constraints per mode
+PASS INV_M12_18 V2 mode allows free aspect and resolution cycling
+PASS INV_M12_19 V1 launch intent carries the selected version, correct mode, and constrained options
+PASS INV_M12_20 V2 launch intent carries the selected version and enhanced resolution options
+PASS INV_M12_21 V3 launch intent is invalid (coming soon)
+PASS INV_M12_22 V3 launch attempt shows COMING SOON message without requesting launch
+PASS INV_M12_26 launch row marks a valid launch request for the runtime
+PASS INV_M12_26B space/action dismisses message view safely
+PASS INV_M12_26C space/action activates cards and launch row like enter
+PASS INV_M12_27 mouse launch hit follows the same launch request path
+PASS INV_M12_28 CSB is not launchable and reports unsupported/coming-soon without requesting launch
+PASS INV_M12_28B CSB and DM2 remain disabled and non-launchable even if asset scanning reports matches
+PASS INV_M12_29 startup input matrix covers arrows, accept/action/back, gameplay hotkeys, invalid keys, mouse launch, and corrupt state bounds without crashing
+PASS INV_M12_23 presentation mode API returns correct mode and label
+PASS INV_M12_30 renderer backend API exposes selectable Vulkan with honest availability status
+PASS INV_M12_31 Vulkan selection is carried in launch intent but blocks runtime handoff until a real backend exists
+PASS INV_M12_13 escape on top-level requests exit
+# summary: 50/50 invariants passed

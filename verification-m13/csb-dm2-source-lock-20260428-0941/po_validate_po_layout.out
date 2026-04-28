@@ -1,0 +1,11 @@
+=== po/ layout validation ===
+OK:   startup-menu.pot exists
+OK:   startup-menu.en.po exists
+OK:   dm1.pot exists
+OK:   dm1.en.po exists
+OK:   csb.pot exists
+OK:   csb.en.po exists
+OK:   dm2.pot exists
+OK:   dm2.en.po exists
+
+PASS: all 4 domains validated (4 .pot + 4 .en.po)

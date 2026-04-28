@@ -1,0 +1,12 @@
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z size=1669479 sha256=ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Amiga,Software.7z size=3327297 sha256=77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z size=379848 sha256=beb703174fe2e263d47e80f56d90b61fad30d2ce04a39e896e5205d6d698265a
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,US,DOS,HMI_Update,Software.7z size=247987 sha256=3d54b0855442820d33cab0463bcdf294b457da0331c7d104a8e1125b5714a549
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,US,DOS,Patch,Software.7z size=241935 sha256=878e59f33c679a15dce20e6553070c2e7bc28189368639958574f12ba2ae51a8
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Dungeon-Master-II-Skullkeep_DOS_EN.zip size=13203537 sha256=d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip size=46596215 sha256=a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/Dungeon Master 2.zip size=15241734 sha256=56716eea8ed4e64a5a4ce66d2f3d0c4ab19b462129b7ef7b0219f4166d4c6812
+FOUND /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM size=7841116 sha256=a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099
+REDMCSB_REF FOUND /home/trv2/.openclaw/data/firestaff-redmcsb-source/README_FIRESTAFF.md
+REDMCSB_REF FOUND /home/trv2/.openclaw/data/firestaff-redmcsb-source/dmweb.free.fr_Stuff_ReDMCSB_Documentation_BugsAndChanges.htm.html
+REDMCSB_REF FOUND /home/trv2/.openclaw/data/firestaff-redmcsb-source/local-candidates.txt
