@@ -1,0 +1,1 @@
+python3 scripts/validate_v2_asset_manifests.py

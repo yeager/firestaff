@@ -1,0 +1,8 @@
+-- Configuring done (0.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/trv2/work/firestaff/build
+[ 82%] Built target firestaff_m10
+[ 89%] Built target firestaff_m11
+[ 97%] Built target firestaff_m12
+[ 98%] Linking C executable firestaff_m11_v2_initial_4k_capture
+[100%] Built target firestaff_m11_v2_initial_4k_capture

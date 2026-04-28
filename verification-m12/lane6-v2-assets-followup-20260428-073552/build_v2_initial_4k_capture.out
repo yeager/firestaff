@@ -1,0 +1,5 @@
+[ 82%] Built target firestaff_m10
+[ 89%] Built target firestaff_m11
+[ 97%] Built target firestaff_m12
+[ 98%] Building C object CMakeFiles/firestaff_m11_v2_initial_4k_capture.dir/probes/m11/firestaff_m11_v2_initial_4k_capture.c.o
+[100%] Linking C executable firestaff_m11_v2_initial_4k_capture

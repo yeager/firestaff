@@ -1,0 +1,79 @@
+## sync/n2-dm1-v1-20260428...origin/main [ahead 27]
+ M CMakeLists.txt
+ M scripts/dosbox_dm1_original_viewport_reference_capture.sh
+?? ..-firestaff-worker-viewport-parity-20260427-040243/
+?? verification-m11/lane1-original-faithful-parity-20260428-072831/
+?? verification-m11/lane2-hud-20260428-070228/
+?? verification-m11/verification_summary.md
+?? verification-m12/lane6-v2-assets-followup-20260428-073552/
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7281d23..7b05e10 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -113,7 +113,7 @@ endif()
+ 
+ # V2 initial 4K capture scene (real M11 draw path for offline 4K composition)
+ add_executable(firestaff_m11_v2_initial_4k_capture probes/m11/firestaff_m11_v2_initial_4k_capture.c)
+-target_link_libraries(firestaff_m11_v2_initial_4k_capture PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
++target_link_libraries(firestaff_m11_v2_initial_4k_capture PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10)
+ if(NOT MSVC)
+     target_compile_options(firestaff_m11_v2_initial_4k_capture PRIVATE -Wall -Wextra -O2)
+ endif()
+verification-m12/lane6-v2-assets-followup-20260428-073552/SUMMARY.md
+verification-m12/lane6-v2-assets-followup-20260428-073552/assets_v2_inventory_summary.txt
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture_after_fix.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture_after_fix.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture_after_fix.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/build_v2_initial_4k_capture_after_fix.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_after_fix.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_after_fix.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_after_fix.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_after_fix.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_with_args.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_with_args.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_with_args.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/firestaff_m11_v2_initial_4k_capture_with_args.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/fix_cmake_v2_capture_link.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/fix_cmake_v2_capture_link.diff
+verification-m12/lane6-v2-assets-followup-20260428-073552/git_and_files_after.txt
+verification-m12/lane6-v2-assets-followup-20260428-073552/git_start.txt
+verification-m12/lane6-v2-assets-followup-20260428-073552/run_dir.txt
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files_text.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files_text.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files_text.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_check_files_text.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_json.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_json.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_json.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_json.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_selftest.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_selftest.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_selftest.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_selftest.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_strict_files.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_strict_files.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_strict_files.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/tools_validate_v2_manifests_strict_files.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/v2_file_inventory.txt
+verification-m12/lane6-v2-assets-followup-20260428-073552/v2_initial_4k_capture/base_scene.ppm
+verification-m12/lane6-v2-assets-followup-20260428-073552/v2_initial_4k_capture/creature_scene.ppm
+verification-m12/lane6-v2-assets-followup-20260428-073552/v2_initial_4k_capture/scene_meta.txt
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests.out
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests_strict.cmd
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests_strict.err
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests_strict.exit
+verification-m12/lane6-v2-assets-followup-20260428-073552/validate_v2_asset_manifests_strict.out

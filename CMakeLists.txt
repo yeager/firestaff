@@ -113,7 +113,8 @@ endif()
 
 # V2 initial 4K capture scene (real M11 draw path for offline 4K composition)
 add_executable(firestaff_m11_v2_initial_4k_capture probes/m11/firestaff_m11_v2_initial_4k_capture.c)
-target_link_libraries(firestaff_m11_v2_initial_4k_capture PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
+# M11 calls a small set of M12 startup/asset helpers; repeat m12 after m11 for static linkers.
+target_link_libraries(firestaff_m11_v2_initial_4k_capture PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_v2_initial_4k_capture PRIVATE -Wall -Wextra -O2)
 endif()

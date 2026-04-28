@@ -1,0 +1,171 @@
+{
+  "checks": {
+    "downscalePolicy": {
+      "checkedAssets": 98,
+      "failures": 0,
+      "rule": "master4k == derived1080p * 2"
+    },
+    "duplicatePackIds": {
+      "duplicates": [],
+      "failures": 0
+    }
+  },
+  "errors": 0,
+  "manifests": [
+    {
+      "assets": 12,
+      "downscaleChecks": 12,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 4,
+      "fileMissing": 4,
+      "manifest": "assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json",
+      "packId": "firestaff-v2-all-assets-foundation",
+      "warnings": 4
+    },
+    {
+      "assets": 30,
+      "downscaleChecks": 30,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 60,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json",
+      "packId": "firestaff-v2-wave1-creatures",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-demon-family.manifest.json",
+      "packId": "firestaff-v2-wave1-demon-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-giant-scorpion-family.manifest.json",
+      "packId": "firestaff-v2-wave1-giant-scorpion-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-giggler-family.manifest.json",
+      "packId": "firestaff-v2-wave1-giggler-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-mummy-family.manifest.json",
+      "packId": "firestaff-v2-wave1-mummy-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-red-dragon-family.manifest.json",
+      "packId": "firestaff-v2-wave1-red-dragon-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-screamer-family.manifest.json",
+      "packId": "firestaff-v2-wave1-screamer-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-skeleton-family.manifest.json",
+      "packId": "firestaff-v2-wave1-skeleton-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-stone-golem-family.manifest.json",
+      "packId": "firestaff-v2-wave1-stone-golem-family",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-swamp-slime-family.manifest.json",
+      "packId": "firestaff-v2-wave1-swamp-slime-family",
+      "warnings": 0
+    },
+    {
+      "assets": 10,
+      "downscaleChecks": 10,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 16,
+      "fileMissing": 8,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json",
+      "packId": "firestaff-v2-wave1-ui",
+      "warnings": 8
+    },
+    {
+      "assets": 16,
+      "downscaleChecks": 16,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 28,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-vertical-slice.manifest.json",
+      "packId": "firestaff-v2-wave1-vertical-slice",
+      "warnings": 0
+    },
+    {
+      "assets": 3,
+      "downscaleChecks": 3,
+      "downscaleFailures": 0,
+      "errors": 0,
+      "fileChecks": 6,
+      "fileMissing": 0,
+      "manifest": "assets-v2/manifests/firestaff-v2-wave1-vexirk-family.manifest.json",
+      "packId": "firestaff-v2-wave1-vexirk-family",
+      "warnings": 0
+    }
+  ],
+  "warnings": 12
+}

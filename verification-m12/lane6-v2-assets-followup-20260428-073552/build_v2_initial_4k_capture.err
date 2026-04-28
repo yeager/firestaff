@@ -1,0 +1,15 @@
+In file included from /home/trv2/work/firestaff/probes/m11/firestaff_m11_v2_initial_4k_capture.c:1:
+/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+  135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
+      |                                           ^
+/usr/bin/ld: libfirestaff_m11.a(m11_game_view.c.o): in function `M11_GameView_OpenSelectedMenuEntry':
+m11_game_view.c:(.text+0x15d62): undefined reference to `M12_StartupMenu_GetEntry'
+/usr/bin/ld: m11_game_view.c:(.text+0x15d6d): undefined reference to `M12_StartupMenu_GetRendererBackend'
+/usr/bin/ld: m11_game_view.c:(.text+0x15dbc): undefined reference to `M12_StartupMenu_GetLaunchIntent'
+/usr/bin/ld: m11_game_view.c:(.text+0x15dd2): undefined reference to `M12_StartupMenu_GetEntry'
+/usr/bin/ld: m11_game_view.c:(.text+0x15e0b): undefined reference to `M12_AssetStatus_GetDataDir'
+collect2: error: ld returned 1 exit status
+gmake[3]: *** [CMakeFiles/firestaff_m11_v2_initial_4k_capture.dir/build.make:101: firestaff_m11_v2_initial_4k_capture] Error 1
+gmake[2]: *** [CMakeFiles/Makefile2:299: CMakeFiles/firestaff_m11_v2_initial_4k_capture.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:306: CMakeFiles/firestaff_m11_v2_initial_4k_capture.dir/rule] Error 2
+gmake: *** [Makefile:258: firestaff_m11_v2_initial_4k_capture] Error 2

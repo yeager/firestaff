@@ -1,0 +1,51 @@
+# manifest list
+assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json
+assets-v2/manifests/firestaff-v2-asset.schema.json
+assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-demon-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-giant-scorpion-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-giggler-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-mummy-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-red-dragon-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-screamer-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-skeleton-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-stone-golem-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-swamp-slime-family.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-vertical-slice.manifest.json
+assets-v2/manifests/firestaff-v2-wave1-vexirk-family.manifest.json
+assets-v2/manifests/schema/README.md
+assets-v2/manifests/schema/asset-entry.schema.json
+assets-v2/manifests/schema/asset-pack.schema.json
+
+# asset counts
+      1 assets-v2/ALL_ASSETS_V2_COVERAGE.md
+      1 assets-v2/all-assets/v2_asset_class_inventory.json
+      5 assets-v2/branding/wave1
+      3 assets-v2/catalog/logical-ids
+     97 assets-v2/creatures/wave1
+      5 assets-v2/effects/wave1
+      5 assets-v2/environment/wave1
+      5 assets-v2/items/wave1
+      1 assets-v2/manifests/firestaff-v2-all-assets-foundation.manifest.json
+      1 assets-v2/manifests/firestaff-v2-asset.schema.json
+      1 assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-demon-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-giant-scorpion-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-giggler-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-mummy-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-red-dragon-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-screamer-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-skeleton-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-stone-golem-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-swamp-slime-family.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-vertical-slice.manifest.json
+      1 assets-v2/manifests/firestaff-v2-wave1-vexirk-family.manifest.json
+      3 assets-v2/manifests/schema
+     55 assets-v2/portraits/wave1
+      1 assets-v2/reference/README.md
+      1 assets-v2/reference/reference-input-lock.json
+      1 assets-v2/store/README.md
+      3 assets-v2/typography/wave1
+     81 assets-v2/ui/wave1
