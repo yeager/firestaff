@@ -1,0 +1,675 @@
+{
+  "schema": "pass107_v1_hud_status_source_chain_audit.v1",
+  "honesty": "Source-chain audit only. It ties pass83 HUD/status overlay zones to layout-696 records; it does not promote original-runtime pixel parity.",
+  "source": "zones_h_reconstruction.json",
+  "pass83_stats": "parity-evidence/overlays/pass83/pass83_champion_hud_zone_overlay_stats.json",
+  "checked": {
+    "layout_provenance": {
+      "source_file": "GRAPHICS.DAT (DM1 PC 3.4 English / I34E)",
+      "source_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "graphics_dat_entry_index": 696,
+      "graphics_dat_entry_constant": "C696_GRAPHIC_LAYOUT",
+      "blob_magic": "0xFC0D",
+      "blob_absolute_offset": 293487,
+      "blob_byte_count": 9160,
+      "format_reference": "ReDMCSB_WIP20210206 Toolchains/Common/Source/COORD.C F0639_LoadLayoutRanges / F0635_ / F0637_GetProportionalZone",
+      "defs_h_reference": "ReDMCSB_WIP20210206 Toolchains/Common/Source/DEFS.H zone constants C002..C701 (range 3748..4041)",
+      "record_struct": "typedef struct { uint16 RecordType; int16 ParentRecordIndex; int16 Data1; int16 Data2; } LAYOUT_RECORD;  // 8 bytes",
+      "note": "This is a verbatim dump of the original runtime layout table. It is NOT invented. Field meanings, record types, and resolver algorithm are documented by the cited ReDMCSB source files. Media variant targeted: I34E (DOS PC 3.4 English)."
+    },
+    "status_template": {
+      "type": 9,
+      "parent": 0,
+      "d1": 67,
+      "d2": 29
+    },
+    "status_slots": [
+      {
+        "zone": 151,
+        "record": {
+          "type": 1,
+          "parent": 150,
+          "d1": 0,
+          "d2": 0
+        },
+        "pass83_xywh": [
+          0,
+          0,
+          67,
+          29
+        ]
+      },
+      {
+        "zone": 152,
+        "record": {
+          "type": 1,
+          "parent": 150,
+          "d1": 69,
+          "d2": 0
+        },
+        "pass83_xywh": [
+          69,
+          0,
+          67,
+          29
+        ]
+      },
+      {
+        "zone": 153,
+        "record": {
+          "type": 1,
+          "parent": 150,
+          "d1": 138,
+          "d2": 0
+        },
+        "pass83_xywh": [
+          138,
+          0,
+          67,
+          29
+        ]
+      },
+      {
+        "zone": 154,
+        "record": {
+          "type": 1,
+          "parent": 150,
+          "d1": 207,
+          "d2": 0
+        },
+        "pass83_xywh": [
+          207,
+          0,
+          67,
+          29
+        ]
+      }
+    ],
+    "name_zones": [
+      {
+        "slot": 0,
+        "clear_template_zone": 155,
+        "clear_template_record": {
+          "type": 9,
+          "parent": 151,
+          "d1": 43,
+          "d2": 7
+        },
+        "clear_zone": 159,
+        "clear_record": {
+          "type": 1,
+          "parent": 155,
+          "d1": 0,
+          "d2": 0
+        },
+        "text_zone": 163,
+        "text_record": {
+          "type": 18,
+          "parent": 159,
+          "d1": 1,
+          "d2": 0
+        },
+        "pass83_clear_xywh": [
+          0,
+          0,
+          43,
+          7
+        ],
+        "pass83_text_xywh": [
+          1,
+          0,
+          42,
+          7
+        ]
+      },
+      {
+        "slot": 1,
+        "clear_template_zone": 156,
+        "clear_template_record": {
+          "type": 9,
+          "parent": 152,
+          "d1": 43,
+          "d2": 7
+        },
+        "clear_zone": 160,
+        "clear_record": {
+          "type": 1,
+          "parent": 156,
+          "d1": 0,
+          "d2": 0
+        },
+        "text_zone": 164,
+        "text_record": {
+          "type": 18,
+          "parent": 160,
+          "d1": 1,
+          "d2": 0
+        },
+        "pass83_clear_xywh": [
+          69,
+          0,
+          43,
+          7
+        ],
+        "pass83_text_xywh": [
+          70,
+          0,
+          42,
+          7
+        ]
+      },
+      {
+        "slot": 2,
+        "clear_template_zone": 157,
+        "clear_template_record": {
+          "type": 9,
+          "parent": 153,
+          "d1": 43,
+          "d2": 7
+        },
+        "clear_zone": 161,
+        "clear_record": {
+          "type": 1,
+          "parent": 157,
+          "d1": 0,
+          "d2": 0
+        },
+        "text_zone": 165,
+        "text_record": {
+          "type": 18,
+          "parent": 161,
+          "d1": 1,
+          "d2": 0
+        },
+        "pass83_clear_xywh": [
+          138,
+          0,
+          43,
+          7
+        ],
+        "pass83_text_xywh": [
+          139,
+          0,
+          42,
+          7
+        ]
+      },
+      {
+        "slot": 3,
+        "clear_template_zone": 158,
+        "clear_template_record": {
+          "type": 9,
+          "parent": 154,
+          "d1": 43,
+          "d2": 7
+        },
+        "clear_zone": 162,
+        "clear_record": {
+          "type": 1,
+          "parent": 158,
+          "d1": 0,
+          "d2": 0
+        },
+        "text_zone": 166,
+        "text_record": {
+          "type": 18,
+          "parent": 162,
+          "d1": 1,
+          "d2": 0
+        },
+        "pass83_clear_xywh": [
+          207,
+          0,
+          43,
+          7
+        ],
+        "pass83_text_xywh": [
+          208,
+          0,
+          42,
+          7
+        ]
+      }
+    ],
+    "bar_graph_chains": [
+      {
+        "slot": 0,
+        "graph_template_zone": 183,
+        "graph_template_record": {
+          "type": 9,
+          "parent": 151,
+          "d1": 24,
+          "d2": 29
+        },
+        "graph_anchor_zone": 187,
+        "graph_anchor_record": {
+          "type": 1,
+          "parent": 183,
+          "d1": 43,
+          "d2": 0
+        },
+        "bar_template_zone": 191,
+        "bar_template_record": {
+          "type": 9,
+          "parent": 187,
+          "d1": 4,
+          "d2": 25
+        },
+        "value_zones": [
+          195,
+          199,
+          203
+        ],
+        "value_records": [
+          {
+            "type": 7,
+            "parent": 191,
+            "d1": 5,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 191,
+            "d1": 12,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 191,
+            "d1": 19,
+            "d2": 26
+          }
+        ],
+        "pass83_value_xywh": [
+          [
+            46,
+            4,
+            4,
+            25
+          ],
+          [
+            53,
+            4,
+            4,
+            25
+          ],
+          [
+            60,
+            4,
+            4,
+            25
+          ]
+        ]
+      },
+      {
+        "slot": 1,
+        "graph_template_zone": 184,
+        "graph_template_record": {
+          "type": 9,
+          "parent": 152,
+          "d1": 24,
+          "d2": 29
+        },
+        "graph_anchor_zone": 188,
+        "graph_anchor_record": {
+          "type": 1,
+          "parent": 184,
+          "d1": 43,
+          "d2": 0
+        },
+        "bar_template_zone": 192,
+        "bar_template_record": {
+          "type": 9,
+          "parent": 188,
+          "d1": 4,
+          "d2": 25
+        },
+        "value_zones": [
+          196,
+          200,
+          204
+        ],
+        "value_records": [
+          {
+            "type": 7,
+            "parent": 192,
+            "d1": 5,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 192,
+            "d1": 12,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 192,
+            "d1": 19,
+            "d2": 26
+          }
+        ],
+        "pass83_value_xywh": [
+          [
+            115,
+            4,
+            4,
+            25
+          ],
+          [
+            122,
+            4,
+            4,
+            25
+          ],
+          [
+            129,
+            4,
+            4,
+            25
+          ]
+        ]
+      },
+      {
+        "slot": 2,
+        "graph_template_zone": 185,
+        "graph_template_record": {
+          "type": 9,
+          "parent": 153,
+          "d1": 24,
+          "d2": 29
+        },
+        "graph_anchor_zone": 189,
+        "graph_anchor_record": {
+          "type": 1,
+          "parent": 185,
+          "d1": 43,
+          "d2": 0
+        },
+        "bar_template_zone": 193,
+        "bar_template_record": {
+          "type": 9,
+          "parent": 189,
+          "d1": 4,
+          "d2": 25
+        },
+        "value_zones": [
+          197,
+          201,
+          205
+        ],
+        "value_records": [
+          {
+            "type": 7,
+            "parent": 193,
+            "d1": 5,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 193,
+            "d1": 12,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 193,
+            "d1": 19,
+            "d2": 26
+          }
+        ],
+        "pass83_value_xywh": [
+          [
+            184,
+            4,
+            4,
+            25
+          ],
+          [
+            191,
+            4,
+            4,
+            25
+          ],
+          [
+            198,
+            4,
+            4,
+            25
+          ]
+        ]
+      },
+      {
+        "slot": 3,
+        "graph_template_zone": 186,
+        "graph_template_record": {
+          "type": 9,
+          "parent": 154,
+          "d1": 24,
+          "d2": 29
+        },
+        "graph_anchor_zone": 190,
+        "graph_anchor_record": {
+          "type": 1,
+          "parent": 186,
+          "d1": 43,
+          "d2": 0
+        },
+        "bar_template_zone": 194,
+        "bar_template_record": {
+          "type": 9,
+          "parent": 190,
+          "d1": 4,
+          "d2": 25
+        },
+        "value_zones": [
+          198,
+          202,
+          206
+        ],
+        "value_records": [
+          {
+            "type": 7,
+            "parent": 194,
+            "d1": 5,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 194,
+            "d1": 12,
+            "d2": 26
+          },
+          {
+            "type": 7,
+            "parent": 194,
+            "d1": 19,
+            "d2": 26
+          }
+        ],
+        "pass83_value_xywh": [
+          [
+            253,
+            4,
+            4,
+            25
+          ],
+          [
+            260,
+            4,
+            4,
+            25
+          ],
+          [
+            267,
+            4,
+            4,
+            25
+          ]
+        ]
+      }
+    ],
+    "hand_zones": [
+      {
+        "slot": 0,
+        "hand_template_zone": 207,
+        "hand_template_record": {
+          "type": 9,
+          "parent": 151,
+          "d1": 16,
+          "d2": 16
+        },
+        "ready_zone": 211,
+        "ready_record": {
+          "type": 1,
+          "parent": 207,
+          "d1": 4,
+          "d2": 10
+        },
+        "action_zone": 212,
+        "action_record": {
+          "type": 1,
+          "parent": 207,
+          "d1": 24,
+          "d2": 10
+        },
+        "pass83_ready_xywh": [
+          4,
+          10,
+          16,
+          16
+        ],
+        "pass83_action_xywh": [
+          24,
+          10,
+          16,
+          16
+        ]
+      },
+      {
+        "slot": 1,
+        "hand_template_zone": 208,
+        "hand_template_record": {
+          "type": 9,
+          "parent": 152,
+          "d1": 16,
+          "d2": 16
+        },
+        "ready_zone": 213,
+        "ready_record": {
+          "type": 1,
+          "parent": 208,
+          "d1": 4,
+          "d2": 10
+        },
+        "action_zone": 214,
+        "action_record": {
+          "type": 1,
+          "parent": 208,
+          "d1": 24,
+          "d2": 10
+        },
+        "pass83_ready_xywh": [
+          73,
+          10,
+          16,
+          16
+        ],
+        "pass83_action_xywh": [
+          93,
+          10,
+          16,
+          16
+        ]
+      },
+      {
+        "slot": 2,
+        "hand_template_zone": 209,
+        "hand_template_record": {
+          "type": 9,
+          "parent": 153,
+          "d1": 16,
+          "d2": 16
+        },
+        "ready_zone": 215,
+        "ready_record": {
+          "type": 1,
+          "parent": 209,
+          "d1": 4,
+          "d2": 10
+        },
+        "action_zone": 216,
+        "action_record": {
+          "type": 1,
+          "parent": 209,
+          "d1": 24,
+          "d2": 10
+        },
+        "pass83_ready_xywh": [
+          142,
+          10,
+          16,
+          16
+        ],
+        "pass83_action_xywh": [
+          162,
+          10,
+          16,
+          16
+        ]
+      },
+      {
+        "slot": 3,
+        "hand_template_zone": 210,
+        "hand_template_record": {
+          "type": 9,
+          "parent": 154,
+          "d1": 16,
+          "d2": 16
+        },
+        "ready_zone": 217,
+        "ready_record": {
+          "type": 1,
+          "parent": 210,
+          "d1": 4,
+          "d2": 10
+        },
+        "action_zone": 218,
+        "action_record": {
+          "type": 1,
+          "parent": 210,
+          "d1": 24,
+          "d2": 10
+        },
+        "pass83_ready_xywh": [
+          211,
+          10,
+          16,
+          16
+        ],
+        "pass83_action_xywh": [
+          231,
+          10,
+          16,
+          16
+        ]
+      }
+    ],
+    "pass83_overlay_zones": {
+      "schema": "pass83_champion_hud_zone_overlay_probe.v3",
+      "geometry_acceptance": {
+        "pass": true,
+        "status_box_count": 4,
+        "status_box_stride": 69,
+        "status_box_width": 67,
+        "status_box_right_edge": 274,
+        "champion_icon_lane_x": 281,
+        "icon_lane_gap_px": 7,
+        "problems": []
+      }
+    }
+  },
+  "remaining_hud_blocker": "Independent Python re-resolution of type=7 proportional bar-value records is still not implemented here; bar pixel-fill parity remains covered by M11 C probes and pass83 crops, not by original runtime screenshots.",
+  "problems": [],
+  "pass": true
+}
