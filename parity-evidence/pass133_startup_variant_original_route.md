@@ -1,0 +1,163 @@
+# Pass 133 — original startup variant route matrix
+
+- run base: /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-183628-pass133b-startup-variant-original-route
+- scenarios: 12
+- completed: 12
+- errors: 0
+- interesting rows: 138
+
+## Interesting rows
+
+- pk_flags_enter_only: initial initial -> ceb0c2eec633 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pk_flags_enter_only: key Return -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_Return_2.png
+- pk_flags_enter_only: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pk_flags_enter_only: key F1 -> 3ad66a894ed8 graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0004-key_F1_4.png
+- pk_flags_enter_only: key F2 -> 3e1d7584a3aa graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0005-key_F2_5.png
+- pk_flags_enter_only: key F3 -> f938fdba63a1 entrance_menu dungeon entrance/menu controls still occupy the right column file image0006-key_F3_6.png
+- pk_flags_pass112_stable: initial initial -> ceb0c2eec633 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pk_flags_pass112_stable: key Return -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_Return_2.png
+- pk_flags_pass112_stable: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pk_flags_pass112_stable: key 1 -> 3ad66a894ed8 graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0004-key_1_4.png
+- pk_flags_pass112_stable: wait wait_5 -> f78ac22de2b8 entrance_menu dungeon entrance/menu controls still occupy the right column file image0005-wait_5.png
+- pk_flags_selector_vga_keyboard: initial initial -> ceb0c2eec633 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pk_flags_selector_vga_keyboard: key 2 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_2_2.png
+- pk_flags_selector_vga_keyboard: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pk_flags_selector_vga_keyboard: key 2 -> dbbd4d039d90 graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0004-key_2_4.png
+- pk_flags_selector_vga_keyboard: wait wait_5 -> 307323fbc1f7 title_or_menu sparse viewport plus colorful/right-column title-menu art file image0005-wait_5.png
+- pk_flags_selector_vga_keyboard: key 2 -> 307323fbc1f7 title_or_menu sparse viewport plus colorful/right-column title-menu art file image0006-key_2_6.png
+- pk_flags_selector_vga_keyboard: wait wait_7 -> 307323fbc1f7 title_or_menu sparse viewport plus colorful/right-column title-menu art file image0007-wait_7.png
+- pk_flags_selector_vga_keyboard: key Return -> 3e1d7584a3aa graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0008-key_Return_8.png
+- pk_flags_selector_enter_chain: initial initial -> ceb0c2eec633 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pk_flags_selector_enter_chain: key Return -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_Return_2.png
+- pk_flags_selector_enter_chain: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pk_flags_selector_enter_chain: key Return -> 27200e9961c3 entrance_menu dungeon entrance/menu controls still occupy the right column file image0004-key_Return_4.png
+- pk_flags_selector_enter_chain: wait wait_5 -> 3ad66a894ed8 graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0005-wait_5.png
+- pk_flags_selector_enter_chain: key Return -> e9303e850433 entrance_menu dungeon entrance/menu controls still occupy the right column file image0006-key_Return_6.png
+- pm_flags_enter_only: initial initial -> ceb0c2eec633 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pm_flags_enter_only: key Return -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_Return_2.png
+- pm_flags_enter_only: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pm_flags_enter_only: key F1 -> 3ad66a894ed8 graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0004-key_F1_4.png
+- pm_flags_enter_only: key F2 -> d876ccf79dfb graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0005-key_F2_5.png
+- pm_flags_enter_only: key F3 -> 24712fca8db3 entrance_menu dungeon entrance/menu controls still occupy the right column file image0006-key_F3_6.png
+- pm_flags_pass112_stable: initial initial -> ceb0c2eec633 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pm_flags_pass112_stable: key Return -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_Return_2.png
+- pm_flags_pass112_stable: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pm_flags_pass112_stable: key 1 -> d15db869b9f6 graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0004-key_1_4.png
+- pm_flags_pass112_stable: wait wait_5 -> 074422f14319 entrance_menu dungeon entrance/menu controls still occupy the right column file image0005-wait_5.png
+- pm_flags_selector_vga_keyboard: initial initial -> ab7acc8ca298 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pm_flags_selector_vga_keyboard: key 2 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_2_2.png
+- pm_flags_selector_vga_keyboard: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pm_flags_selector_vga_keyboard: key 2 -> 1d95bd04399d entrance_menu dungeon entrance/menu controls still occupy the right column file image0004-key_2_4.png
+- pm_flags_selector_vga_keyboard: wait wait_5 -> 307323fbc1f7 title_or_menu sparse viewport plus colorful/right-column title-menu art file image0005-wait_5.png
+- pm_flags_selector_vga_keyboard: key 2 -> 307323fbc1f7 title_or_menu sparse viewport plus colorful/right-column title-menu art file image0006-key_2_6.png
+- pm_flags_selector_vga_keyboard: wait wait_7 -> 307323fbc1f7 title_or_menu sparse viewport plus colorful/right-column title-menu art file image0007-wait_7.png
+- pm_flags_selector_vga_keyboard: key Return -> 3e1d7584a3aa graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0008-key_Return_8.png
+- pm_flags_selector_enter_chain: initial initial -> ceb0c2eec633 entrance_menu dungeon entrance/menu controls still occupy the right column file image0001-initial.png
+- pm_flags_selector_enter_chain: key Return -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0002-key_Return_2.png
+- pm_flags_selector_enter_chain: wait wait_3 -> 014ed52c71a0 entrance_menu dungeon entrance/menu controls still occupy the right column file image0003-wait_3.png
+- pm_flags_selector_enter_chain: key Return -> df968318be5a entrance_menu dungeon entrance/menu controls still occupy the right column file image0004-key_Return_4.png
+- pm_flags_selector_enter_chain: wait wait_5 -> fbc4bf08100a graphics_320x200_unclassified 320x200 graphics frame, but layout heuristics did not match a known class file image0005-wait_5.png
+- pm_flags_selector_enter_chain: key Return -> e9303e850433 entrance_menu dungeon entrance/menu controls still occupy the right column file image0006-key_Return_6.png
+- default_dm_enter_only: initial initial -> 0d28840050d0 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0001-initial.png
+- default_dm_enter_only: key Return -> 67fad0eb9b1f non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0002-key_Return_2.png
+- default_dm_enter_only: wait wait_3 -> 4e184f5c3cff non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0003-wait_3.png
+- default_dm_enter_only: key F1 -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0004-key_F1_4.png
+- default_dm_enter_only: key F2 -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0005-key_F2_5.png
+- default_dm_enter_only: key F3 -> c3a141632b5b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0006-key_F3_6.png
+- default_dm_enter_only: key F4 -> c3a141632b5b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0007-key_F4_7.png
+- default_dm_enter_only: key i -> c3a141632b5b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0008-key_i_8.png
+- default_dm_enter_only: key I -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0009-key_I_9.png
+- default_dm_enter_only: key 1 -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0010-key_1_10.png
+- default_dm_enter_only: key 2 -> c3a141632b5b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0011-key_2_11.png
+- default_dm_enter_only: key 3 -> c3a141632b5b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0012-key_3_12.png
+- default_dm_enter_only: key 4 -> c3a141632b5b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0013-key_4_13.png
+- default_dm_enter_only: key Space -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0014-key_Space_14.png
+- default_dm_enter_only: key Return -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0015-key_Return_15.png
+- default_dm_enter_only: click click_260_50_16 -> c3a141632b5b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0016-click_260_50_16.png
+- default_dm_enter_only: click click_276_140_17 -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0017-click_276_140_17.png
+- default_dm_enter_only: click click_276_158_18 -> 9052a70c835b non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0018-click_276_158_18.png
+- default_dm_pass112_stable: initial initial -> 63de3073b94c non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0001-initial.png
+- default_dm_pass112_stable: key Return -> 67fad0eb9b1f non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0002-key_Return_2.png
+- default_dm_pass112_stable: wait wait_3 -> 4e184f5c3cff non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0003-wait_3.png
+- default_dm_pass112_stable: key 1 -> 19a83d169035 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0004-key_1_4.png
+- default_dm_pass112_stable: wait wait_5 -> ed037256e570 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0005-wait_5.png
+- default_dm_pass112_stable: click click_276_140_6 -> 19a83d169035 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0006-click_276_140_6.png
+- default_dm_pass112_stable: wait wait_7 -> ed037256e570 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0007-wait_7.png
+- default_dm_pass112_stable: key 1 -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0008-key_1_8.png
+- default_dm_pass112_stable: wait wait_9 -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0009-wait_9.png
+- default_dm_pass112_stable: key F1 -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0010-key_F1_10.png
+- default_dm_pass112_stable: key F2 -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0011-key_F2_11.png
+- default_dm_pass112_stable: key F3 -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0012-key_F3_12.png
+- default_dm_pass112_stable: key F4 -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0013-key_F4_13.png
+- default_dm_pass112_stable: key i -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0014-key_i_14.png
+- default_dm_pass112_stable: key I -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0015-key_I_15.png
+- default_dm_pass112_stable: key 1 -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0016-key_1_16.png
+- default_dm_pass112_stable: key 2 -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0017-key_2_17.png
+- default_dm_pass112_stable: key 3 -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0018-key_3_18.png
+- default_dm_pass112_stable: key 4 -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0019-key_4_19.png
+- default_dm_pass112_stable: key Space -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0020-key_Space_20.png
+- default_dm_pass112_stable: key Return -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0021-key_Return_21.png
+- default_dm_pass112_stable: click click_260_50_22 -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0022-click_260_50_22.png
+- default_dm_pass112_stable: click click_276_140_23 -> c1da7f034451 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0023-click_276_140_23.png
+- default_dm_pass112_stable: click click_276_158_24 -> 944b5d20002e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0024-click_276_158_24.png
+- default_dm_selector_vga_keyboard: initial initial -> 63de3073b94c non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0001-initial.png
+- default_dm_selector_vga_keyboard: key 2 -> 4811058f5c4e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0002-key_2_2.png
+- default_dm_selector_vga_keyboard: wait wait_3 -> f2fa352150b6 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0003-wait_3.png
+- default_dm_selector_vga_keyboard: key 2 -> a4658b5c17da non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0004-key_2_4.png
+- default_dm_selector_vga_keyboard: wait wait_5 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0005-wait_5.png
+- default_dm_selector_vga_keyboard: key 2 -> a4658b5c17da non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0006-key_2_6.png
+- default_dm_selector_vga_keyboard: wait wait_7 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0007-wait_7.png
+- default_dm_selector_vga_keyboard: key Return -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0008-key_Return_8.png
+- default_dm_selector_vga_keyboard: wait wait_9 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0009-wait_9.png
+- default_dm_selector_vga_keyboard: key F1 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0010-key_F1_10.png
+- default_dm_selector_vga_keyboard: key F2 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0011-key_F2_11.png
+- default_dm_selector_vga_keyboard: key F3 -> a4658b5c17da non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0012-key_F3_12.png
+- default_dm_selector_vga_keyboard: key F4 -> a4658b5c17da non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0013-key_F4_13.png
+- default_dm_selector_vga_keyboard: key i -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0014-key_i_14.png
+- default_dm_selector_vga_keyboard: key I -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0015-key_I_15.png
+- default_dm_selector_vga_keyboard: key 1 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0016-key_1_16.png
+- default_dm_selector_vga_keyboard: key 2 -> a4658b5c17da non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0017-key_2_17.png
+- default_dm_selector_vga_keyboard: key 3 -> a4658b5c17da non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0018-key_3_18.png
+- default_dm_selector_vga_keyboard: key 4 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0019-key_4_19.png
+- default_dm_selector_vga_keyboard: key Space -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0020-key_Space_20.png
+- default_dm_selector_vga_keyboard: key Return -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0021-key_Return_21.png
+- default_dm_selector_vga_keyboard: click click_260_50_22 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0022-click_260_50_22.png
+- default_dm_selector_vga_keyboard: click click_276_140_23 -> a4658b5c17da non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0023-click_276_140_23.png
+- default_dm_selector_vga_keyboard: click click_276_158_24 -> 0018f1da65fc non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0024-click_276_158_24.png
+- default_dm_selector_enter_chain: initial initial -> 63de3073b94c non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0001-initial.png
+- default_dm_selector_enter_chain: key Return -> 67fad0eb9b1f non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0002-key_Return_2.png
+- default_dm_selector_enter_chain: wait wait_3 -> 4e184f5c3cff non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0003-wait_3.png
+- default_dm_selector_enter_chain: key Return -> 0f839b967150 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0004-key_Return_4.png
+- default_dm_selector_enter_chain: wait wait_5 -> 0f839b967150 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0005-wait_5.png
+- default_dm_selector_enter_chain: key Return -> 47762065a5e4 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0006-key_Return_6.png
+- default_dm_selector_enter_chain: wait wait_7 -> 56315599525e non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0007-wait_7.png
+- default_dm_selector_enter_chain: key F1 -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0008-key_F1_8.png
+- default_dm_selector_enter_chain: key F2 -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0009-key_F2_9.png
+- default_dm_selector_enter_chain: key F3 -> e2614071fba5 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0010-key_F3_10.png
+- default_dm_selector_enter_chain: key F4 -> e2614071fba5 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0011-key_F4_11.png
+- default_dm_selector_enter_chain: key i -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0012-key_i_12.png
+- default_dm_selector_enter_chain: key I -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0013-key_I_13.png
+- default_dm_selector_enter_chain: key 1 -> e2614071fba5 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0014-key_1_14.png
+- default_dm_selector_enter_chain: key 2 -> e2614071fba5 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0015-key_2_15.png
+- default_dm_selector_enter_chain: key 3 -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0016-key_3_16.png
+- default_dm_selector_enter_chain: key 4 -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0017-key_4_17.png
+- default_dm_selector_enter_chain: key Space -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0018-key_Space_18.png
+- default_dm_selector_enter_chain: key Return -> e2614071fba5 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0019-key_Return_19.png
+- default_dm_selector_enter_chain: click click_260_50_20 -> 12dff9aae179 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0020-click_260_50_20.png
+- default_dm_selector_enter_chain: click click_276_140_21 -> e2614071fba5 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0021-click_276_140_21.png
+- default_dm_selector_enter_chain: click click_276_158_22 -> e2614071fba5 non_graphics_blocker raw dimensions are 640x400, not 320x200 file image0022-click_276_158_22.png
+
+## Scenario summary
+
+- pk_flags_enter_only: program=DM -vv -sn -pk classes=entrance_menu,entrance_menu,entrance_menu,graphics_320x200_unclassified,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,17bd7e878157,3ad66a894ed8,3e1d7584a3aa,48ed3743ab6a,ceb0c2eec633,f938fdba63a1
+- pk_flags_pass112_stable: program=DM -vv -sn -pk classes=entrance_menu,entrance_menu,entrance_menu,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,17bd7e878157,3ad66a894ed8,48ed3743ab6a,ceb0c2eec633,f78ac22de2b8
+- pk_flags_selector_vga_keyboard: program=DM -vv -sn -pk classes=entrance_menu,entrance_menu,entrance_menu,graphics_320x200_unclassified,title_or_menu,title_or_menu,title_or_menu,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,17bd7e878157,307323fbc1f7,3e1d7584a3aa,48ed3743ab6a,ceb0c2eec633,dbbd4d039d90
+- pk_flags_selector_enter_chain: program=DM -vv -sn -pk classes=entrance_menu,entrance_menu,entrance_menu,entrance_menu,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,17bd7e878157,27200e9961c3,3ad66a894ed8,48ed3743ab6a,ceb0c2eec633,e9303e850433
+- pm_flags_enter_only: program=DM -vv -sn -pm classes=entrance_menu,entrance_menu,entrance_menu,graphics_320x200_unclassified,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,17bd7e878157,24712fca8db3,3ad66a894ed8,48ed3743ab6a,ceb0c2eec633,d876ccf79dfb
+- pm_flags_pass112_stable: program=DM -vv -sn -pm classes=entrance_menu,entrance_menu,entrance_menu,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,074422f14319,17bd7e878157,48ed3743ab6a,ceb0c2eec633,d15db869b9f6
+- pm_flags_selector_vga_keyboard: program=DM -vv -sn -pm classes=entrance_menu,entrance_menu,entrance_menu,entrance_menu,title_or_menu,title_or_menu,title_or_menu,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,17bd7e878157,1d95bd04399d,307323fbc1f7,3e1d7584a3aa,48ed3743ab6a,ab7acc8ca298
+- pm_flags_selector_enter_chain: program=DM -vv -sn -pm classes=entrance_menu,entrance_menu,entrance_menu,entrance_menu,graphics_320x200_unclassified,entrance_menu,entrance_menu,entrance_menu,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay hashes=014ed52c71a0,17bd7e878157,48ed3743ab6a,ceb0c2eec633,df968318be5a,e9303e850433,fbc4bf08100a
+- default_dm_enter_only: program=DM classes=non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker hashes=0d28840050d0,4e184f5c3cff,67fad0eb9b1f,9052a70c835b,c3a141632b5b
+- default_dm_pass112_stable: program=DM classes=non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker hashes=19a83d169035,4e184f5c3cff,63de3073b94c,67fad0eb9b1f,944b5d20002e,c1da7f034451,ed037256e570
+- default_dm_selector_vga_keyboard: program=DM classes=non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker hashes=0018f1da65fc,4811058f5c4e,63de3073b94c,a4658b5c17da,f2fa352150b6
+- default_dm_selector_enter_chain: program=DM classes=non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker,non_graphics_blocker hashes=0f839b967150,12dff9aae179,47762065a5e4,4e184f5c3cff,56315599525e,63de3073b94c,67fad0eb9b1f,e2614071fba5
