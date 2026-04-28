@@ -4694,6 +4694,20 @@ int main(int argc, char** argv) {
                          "object placement binds C2500 layout-696 source zone samples");
         }
 
+
+        {
+            int x5 = 0, y5 = 0, x11 = 0, y11 = 0, x16 = 0, y16 = 0;
+            int ok5 = M11_GameView_GetC2500ObjectRawZonePoint(5, 1, &x5, &y5);
+            int ok11 = M11_GameView_GetC2500ObjectRawZonePoint(11, 1, &x11, &y11);
+            int ok16 = M11_GameView_GetC2500ObjectRawZonePoint(16, 3, &x16, &y16);
+            probe_record(&tally,
+                         "INV_GV_114C4",
+                         ok5 && x5 == 131 && y5 == 78 &&
+                         ok11 && x11 == 158 && y11 == 133 &&
+                         ok16 && x16 == 218 && y16 == 74,
+                         "object raw C2500 rows 5..16 expose the full layout-696 side/deep source family");
+        }
+
         /* INV_GV_114D: Object pile shift index table is G0217. */
         {
             int x0 = -1, y0 = -1, x10 = -1, y10 = -1, x15 = -1, y15 = -1;
@@ -8578,6 +8592,26 @@ int main(int argc, char** argv) {
                      ok1 && x1 == 25 && y1 == 47 &&
                      ok4 && x4 == 202 && y4 == 47,
                      "projectile placement binds C2900 layout-696 source zone samples");
+    }
+
+
+    /* INV_GV_245G: full C2900 source family rows remain probe-visible.
+     * The renderer's legacy helper covers rows 0..4; rows 5..11 are the
+     * source-backed side/deep projectile blocker surface for the exact
+     * F0115 viewSquareTo reconciliation. */
+    {
+        int x5 = 0, y5 = 0, x8 = 0, y8 = 0, x10 = 0, y10 = 0, x11 = 0, y11 = 0;
+        int ok5 = M11_GameView_GetC2900ProjectileRawZonePoint(5, 1, &x5, &y5);
+        int ok8 = M11_GameView_GetC2900ProjectileRawZonePoint(8, 3, &x8, &y8);
+        int ok10 = M11_GameView_GetC2900ProjectileRawZonePoint(10, 2, &x10, &y10);
+        int ok11 = M11_GameView_GetC2900ProjectileRawZonePoint(11, 1, &x11, &y11);
+        probe_record(&tally,
+                     "INV_GV_245G",
+                     ok5 && x5 == 132 && y5 == 46 &&
+                     ok8 && x8 == 76 && y8 == 47 &&
+                     ok10 && x10 == 301 && y10 == 47 &&
+                     ok11 && x11 == 158 && y11 == 47,
+                     "projectile raw C2900 rows 5..11 expose the full layout-696 side/deep source family");
     }
 
     /* INV_GV_246: projectile sub-cell positioning — the firstProjectileCell

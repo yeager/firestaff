@@ -5834,6 +5834,42 @@ static int m11_c2900_projectile_zone_point(int scaleIndex,
     return 1;
 }
 
+
+static int m11_c2900_projectile_raw_zone_point(int rowIndex,
+                                               int relativeCell,
+                                               int* outX,
+                                               int* outY) {
+    /* Full layout-696 C2900_ZONE_ family.  The normal renderer still uses
+     * m11_c2900_projectile_zone_point() for the legacy five-row path; this
+     * raw helper exposes every source row (C2900..C2947) so side/deep
+     * projectile work can be gated without silently dropping rows 5..11.
+     * Ref: GRAPHICS.DAT #696 / zones_h_reconstruction.json, pass83. */
+    static const short kC2900Raw[12][4][2] = {
+        {{  0,  0}, {  0,  0}, {129, 47}, { 95, 47}},
+        {{  0,  0}, {  0,  0}, { 62, 47}, { 25, 47}},
+        {{  0,  0}, {  0,  0}, {200, 47}, {162, 47}},
+        {{  0,  0}, {  0,  0}, {  2, 47}, {-35, 47}},
+        {{  0,  0}, {  0,  0}, {258, 47}, {202, 47}},
+        {{ 92, 47}, {132, 46}, {136, 47}, { 88, 47}},
+        {{ 10, 47}, { 53, 47}, { 41, 47}, {-14, 47}},
+        {{171, 47}, {218, 47}, {236, 47}, {183, 47}},
+        {{ 83, 47}, {140, 47}, {148, 47}, { 76, 47}},
+        {{-40, 47}, { 26, 47}, {  5, 47}, {-79, 47}},
+        {{197, 47}, {262, 47}, {301, 47}, {220, 47}},
+        {{ 66, 47}, {158, 47}, {  0,  0}, {  0,  0}}
+    };
+    int zx;
+    int zy;
+    if (rowIndex < 0 || rowIndex >= 12) return 0;
+    if (relativeCell < 0 || relativeCell > 3) return 0;
+    zx = (int)kC2900Raw[rowIndex][relativeCell][0];
+    zy = (int)kC2900Raw[rowIndex][relativeCell][1];
+    if (zx == 0 && zy == 0) return 0;
+    if (outX) *outX = zx;
+    if (outY) *outY = zy;
+    return 1;
+}
+
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -9978,6 +10014,46 @@ static int m11_c2500_object_zone_point(int scaleIndex,
     return 1;
 }
 
+
+static int m11_c2500_object_raw_zone_point(int rowIndex,
+                                           int relativeCell,
+                                           int* outX,
+                                           int* outY) {
+    /* Full layout-696 C2500_ZONE_ family (C2500..C2567).  This raw
+     * evidence helper keeps all 17 source rows probe-visible while the
+     * renderer's normal object path remains on the existing five-row
+     * helper pending the exact F0115 viewSquareTo mapping. */
+    static const short kC2500Raw[17][4][2] = {
+        {{  0,  0}, {  0,  0}, {127, 70}, { 98, 70}},
+        {{  0,  0}, {  0,  0}, { 62, 70}, { 25, 70}},
+        {{  0,  0}, {  0,  0}, {200, 70}, {162, 70}},
+        {{  0,  0}, {  0,  0}, {  2, 70}, {-35, 70}},
+        {{  0,  0}, {  0,  0}, {258, 70}, {222, 70}},
+        {{ 94, 78}, {131, 78}, {136, 88}, { 89, 88}},
+        {{ 10, 78}, { 53, 79}, { 41, 88}, {-14, 89}},
+        {{171, 78}, {218, 78}, {236, 89}, {184, 88}},
+        {{ 83, 99}, {141, 99}, {150,115}, { 76,115}},
+        {{-40,101}, { 24, 99}, {  5,114}, {-79,117}},
+        {{200, 99}, {262,101}, {301,117}, {220,114}},
+        {{ 66,133}, {158,133}, {  0,  0}, {  0,  0}},
+        {{113, 62}, { 46, 61}, {180, 61}, {115, 74}},
+        {{  8, 73}, {220, 74}, {115, 92}, {112, 60}},
+        {{ 45, 61}, {179, 60}, {114, 73}, {  4, 73}},
+        {{219, 73}, {114, 88}, {113, 63}, { 45, 62}},
+        {{181, 62}, {114, 74}, { 11, 73}, {218, 74}}
+    };
+    int zx;
+    int zy;
+    if (rowIndex < 0 || rowIndex >= 17) return 0;
+    if (relativeCell < 0 || relativeCell > 3) return 0;
+    zx = (int)kC2500Raw[rowIndex][relativeCell][0];
+    zy = (int)kC2500Raw[rowIndex][relativeCell][1];
+    if (zx == 0 && zy == 0) return 0;
+    if (outX) *outX = zx;
+    if (outY) *outY = zy;
+    return 1;
+}
+
 static unsigned int m11_object_aspect_graphic_info(int aspectIndex) {
     /* DUNVIEW.C G0209_as_Graphic558_ObjectAspects[].GraphicInfo. */
     static const unsigned char kGraphicInfo[85] = {
@@ -13674,11 +13750,25 @@ int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
     return m11_c2500_object_zone_point(scaleIndex, relativeCell, outX, outY);
 }
 
+int M11_GameView_GetC2500ObjectRawZonePoint(int rowIndex,
+                                            int relativeCell,
+                                            int* outX,
+                                            int* outY) {
+    return m11_c2500_object_raw_zone_point(rowIndex, relativeCell, outX, outY);
+}
+
 int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
                                              int relativeCell,
                                              int* outX,
                                              int* outY) {
     return m11_c2900_projectile_zone_point(scaleIndex, relativeCell, outX, outY);
+}
+
+int M11_GameView_GetC2900ProjectileRawZonePoint(int rowIndex,
+                                                int relativeCell,
+                                                int* outX,
+                                                int* outY) {
+    return m11_c2900_projectile_raw_zone_point(rowIndex, relativeCell, outX, outY);
 }
 
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex) {

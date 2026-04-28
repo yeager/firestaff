@@ -559,10 +559,18 @@ int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
                                          int relativeCell,
                                          int* outX,
                                          int* outY);
+int M11_GameView_GetC2500ObjectRawZonePoint(int rowIndex,
+                                            int relativeCell,
+                                            int* outX,
+                                            int* outY);
 int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
                                              int relativeCell,
                                              int* outX,
                                              int* outY);
+int M11_GameView_GetC2900ProjectileRawZonePoint(int rowIndex,
+                                                int relativeCell,
+                                                int* outX,
+                                                int* outY);
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_GetV1ViewportBaseGraphic(int layer,
