@@ -91,7 +91,9 @@ endif()
 
 # ── Main executable ──────────────────────────────────────────────────
 add_executable(firestaff firestaff_main_m11.c)
-target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+# M11 objects referenced by the executable call back into M12 menu/asset helpers;
+# repeat M12 after M11 so static linkers resolve both directions.
+target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(firestaff PRIVATE -Wall -Wextra -O2)
 endif()
@@ -121,7 +123,9 @@ endif()
 
 # Deterministic source-driven viewport state anchor (DUNGEON.DAT + GRAPHICS.DAT)
 add_executable(firestaff_m11_viewport_state_probe probes/m11/firestaff_m11_viewport_state_probe.c)
-target_link_libraries(firestaff_m11_viewport_state_probe PRIVATE firestaff_m11 firestaff_m10)
+# M11 viewport state probe pulls m11_game_view, which references M12 menu/asset helpers.
+# Repeat firestaff_m12 after firestaff_m11 for static linkers.
+target_link_libraries(firestaff_m11_viewport_state_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_viewport_state_probe PRIVATE -Wall -Wextra -O2)
 endif()
