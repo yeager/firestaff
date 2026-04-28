@@ -1,0 +1,945 @@
+{
+  "schema": "pass135_pass133_unclassified_frame_atlas.v1",
+  "run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-183628-pass133b-startup-variant-original-route",
+  "unclassified_rows": 11,
+  "unique_hashes": 6,
+  "ranked_unique": [
+    {
+      "scenario": "pk_flags_selector_vga_keyboard",
+      "phase": "key",
+      "value": "2",
+      "label": "key_2_4",
+      "sha12": "dbbd4d039d90",
+      "file": "pk_flags_selector_vga_keyboard/image0004-key_2_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 1.0,
+          "bright": 0.1567,
+          "mean": [
+            46.44,
+            32.54,
+            12.7
+          ]
+        },
+        "viewport": {
+          "nonblack": 1.0,
+          "bright": 0.2566,
+          "mean": [
+            68.82,
+            46.11,
+            13.13
+          ]
+        },
+        "right_column": {
+          "nonblack": 1.0,
+          "bright": 0.1129,
+          "mean": [
+            36.09,
+            26.33,
+            12.56
+          ]
+        },
+        "spell_area": {
+          "nonblack": 1.0,
+          "bright": 0.4056,
+          "mean": [
+            94.22,
+            82.98,
+            15.58
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 1.0,
+          "bright": 0.0022,
+          "mean": [
+            12.53,
+            12.0,
+            12.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_pass112_stable",
+      "phase": "key",
+      "value": "1",
+      "label": "key_1_4",
+      "sha12": "d15db869b9f6",
+      "file": "pm_flags_pass112_stable/image0004-key_1_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 1.0,
+          "bright": 0.0387,
+          "mean": [
+            20.44,
+            17.13,
+            12.16
+          ]
+        },
+        "viewport": {
+          "nonblack": 1.0,
+          "bright": 0.0634,
+          "mean": [
+            25.94,
+            20.61,
+            12.27
+          ]
+        },
+        "right_column": {
+          "nonblack": 1.0,
+          "bright": 0.0278,
+          "mean": [
+            17.91,
+            15.45,
+            12.11
+          ]
+        },
+        "spell_area": {
+          "nonblack": 1.0,
+          "bright": 0.0985,
+          "mean": [
+            31.8,
+            29.01,
+            12.69
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 1.0,
+          "bright": 0.0004,
+          "mean": [
+            12.11,
+            12.0,
+            12.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_enter_only",
+      "phase": "key",
+      "value": "F2",
+      "label": "key_F2_5",
+      "sha12": "d876ccf79dfb",
+      "file": "pm_flags_enter_only/image0005-key_F2_5.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.6379,
+          "bright": 0.5811,
+          "mean": [
+            84.14,
+            85.54,
+            61.21
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.4731,
+          "bright": 0.4315,
+          "mean": [
+            58.45,
+            49.89,
+            43.45
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.9333,
+          "bright": 0.8283,
+          "mean": [
+            115.28,
+            137.26,
+            69.38
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.922,
+          "bright": 0.8871,
+          "mean": [
+            151.89,
+            130.09,
+            89.22
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.6919,
+          "bright": 0.6133,
+          "mean": [
+            87.1,
+            107.68,
+            74.92
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pk_flags_enter_only",
+      "phase": "key",
+      "value": "F2",
+      "label": "key_F2_5",
+      "sha12": "3e1d7584a3aa",
+      "file": "pk_flags_enter_only/image0005-key_F2_5.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.6229,
+          "bright": 0.5659,
+          "mean": [
+            81.73,
+            83.08,
+            58.7
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.4525,
+          "bright": 0.4106,
+          "mean": [
+            55.48,
+            46.81,
+            40.29
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.9299,
+          "bright": 0.8248,
+          "mean": [
+            115.02,
+            137.01,
+            69.14
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.9247,
+          "bright": 0.8898,
+          "mean": [
+            152.08,
+            130.29,
+            89.41
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.6757,
+          "bright": 0.5972,
+          "mean": [
+            84.02,
+            104.58,
+            71.79
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pk_flags_enter_only",
+      "phase": "key",
+      "value": "F1",
+      "label": "key_F1_4",
+      "sha12": "3ad66a894ed8",
+      "file": "pk_flags_enter_only/image0004-key_F1_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_selector_enter_chain",
+      "phase": "wait",
+      "value": null,
+      "label": "wait_5",
+      "sha12": "fbc4bf08100a",
+      "file": "pm_flags_selector_enter_chain/image0005-wait_5.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "scenario": "pk_flags_enter_only",
+      "phase": "key",
+      "value": "F1",
+      "label": "key_F1_4",
+      "sha12": "3ad66a894ed8",
+      "file": "pk_flags_enter_only/image0004-key_F1_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pk_flags_enter_only",
+      "phase": "key",
+      "value": "F2",
+      "label": "key_F2_5",
+      "sha12": "3e1d7584a3aa",
+      "file": "pk_flags_enter_only/image0005-key_F2_5.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.6229,
+          "bright": 0.5659,
+          "mean": [
+            81.73,
+            83.08,
+            58.7
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.4525,
+          "bright": 0.4106,
+          "mean": [
+            55.48,
+            46.81,
+            40.29
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.9299,
+          "bright": 0.8248,
+          "mean": [
+            115.02,
+            137.01,
+            69.14
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.9247,
+          "bright": 0.8898,
+          "mean": [
+            152.08,
+            130.29,
+            89.41
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.6757,
+          "bright": 0.5972,
+          "mean": [
+            84.02,
+            104.58,
+            71.79
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pk_flags_pass112_stable",
+      "phase": "key",
+      "value": "1",
+      "label": "key_1_4",
+      "sha12": "3ad66a894ed8",
+      "file": "pk_flags_pass112_stable/image0004-key_1_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pk_flags_selector_vga_keyboard",
+      "phase": "key",
+      "value": "2",
+      "label": "key_2_4",
+      "sha12": "dbbd4d039d90",
+      "file": "pk_flags_selector_vga_keyboard/image0004-key_2_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 1.0,
+          "bright": 0.1567,
+          "mean": [
+            46.44,
+            32.54,
+            12.7
+          ]
+        },
+        "viewport": {
+          "nonblack": 1.0,
+          "bright": 0.2566,
+          "mean": [
+            68.82,
+            46.11,
+            13.13
+          ]
+        },
+        "right_column": {
+          "nonblack": 1.0,
+          "bright": 0.1129,
+          "mean": [
+            36.09,
+            26.33,
+            12.56
+          ]
+        },
+        "spell_area": {
+          "nonblack": 1.0,
+          "bright": 0.4056,
+          "mean": [
+            94.22,
+            82.98,
+            15.58
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 1.0,
+          "bright": 0.0022,
+          "mean": [
+            12.53,
+            12.0,
+            12.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pk_flags_selector_vga_keyboard",
+      "phase": "key",
+      "value": "Return",
+      "label": "key_Return_8",
+      "sha12": "3e1d7584a3aa",
+      "file": "pk_flags_selector_vga_keyboard/image0008-key_Return_8.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.6229,
+          "bright": 0.5659,
+          "mean": [
+            81.73,
+            83.08,
+            58.7
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.4525,
+          "bright": 0.4106,
+          "mean": [
+            55.48,
+            46.81,
+            40.29
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.9299,
+          "bright": 0.8248,
+          "mean": [
+            115.02,
+            137.01,
+            69.14
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.9247,
+          "bright": 0.8898,
+          "mean": [
+            152.08,
+            130.29,
+            89.41
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.6757,
+          "bright": 0.5972,
+          "mean": [
+            84.02,
+            104.58,
+            71.79
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pk_flags_selector_enter_chain",
+      "phase": "wait",
+      "value": null,
+      "label": "wait_5",
+      "sha12": "3ad66a894ed8",
+      "file": "pk_flags_selector_enter_chain/image0005-wait_5.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_enter_only",
+      "phase": "key",
+      "value": "F1",
+      "label": "key_F1_4",
+      "sha12": "3ad66a894ed8",
+      "file": "pm_flags_enter_only/image0004-key_F1_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_enter_only",
+      "phase": "key",
+      "value": "F2",
+      "label": "key_F2_5",
+      "sha12": "d876ccf79dfb",
+      "file": "pm_flags_enter_only/image0005-key_F2_5.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.6379,
+          "bright": 0.5811,
+          "mean": [
+            84.14,
+            85.54,
+            61.21
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.4731,
+          "bright": 0.4315,
+          "mean": [
+            58.45,
+            49.89,
+            43.45
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.9333,
+          "bright": 0.8283,
+          "mean": [
+            115.28,
+            137.26,
+            69.38
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.922,
+          "bright": 0.8871,
+          "mean": [
+            151.89,
+            130.09,
+            89.22
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.6919,
+          "bright": 0.6133,
+          "mean": [
+            87.1,
+            107.68,
+            74.92
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_pass112_stable",
+      "phase": "key",
+      "value": "1",
+      "label": "key_1_4",
+      "sha12": "d15db869b9f6",
+      "file": "pm_flags_pass112_stable/image0004-key_1_4.png",
+      "stats": {
+        "full": {
+          "nonblack": 1.0,
+          "bright": 0.0387,
+          "mean": [
+            20.44,
+            17.13,
+            12.16
+          ]
+        },
+        "viewport": {
+          "nonblack": 1.0,
+          "bright": 0.0634,
+          "mean": [
+            25.94,
+            20.61,
+            12.27
+          ]
+        },
+        "right_column": {
+          "nonblack": 1.0,
+          "bright": 0.0278,
+          "mean": [
+            17.91,
+            15.45,
+            12.11
+          ]
+        },
+        "spell_area": {
+          "nonblack": 1.0,
+          "bright": 0.0985,
+          "mean": [
+            31.8,
+            29.01,
+            12.69
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 1.0,
+          "bright": 0.0004,
+          "mean": [
+            12.11,
+            12.0,
+            12.0
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_selector_vga_keyboard",
+      "phase": "key",
+      "value": "Return",
+      "label": "key_Return_8",
+      "sha12": "3e1d7584a3aa",
+      "file": "pm_flags_selector_vga_keyboard/image0008-key_Return_8.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.6229,
+          "bright": 0.5659,
+          "mean": [
+            81.73,
+            83.08,
+            58.7
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.4525,
+          "bright": 0.4106,
+          "mean": [
+            55.48,
+            46.81,
+            40.29
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.9299,
+          "bright": 0.8248,
+          "mean": [
+            115.02,
+            137.01,
+            69.14
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.9247,
+          "bright": 0.8898,
+          "mean": [
+            152.08,
+            130.29,
+            89.41
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.6757,
+          "bright": 0.5972,
+          "mean": [
+            84.02,
+            104.58,
+            71.79
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "pm_flags_selector_enter_chain",
+      "phase": "wait",
+      "value": null,
+      "label": "wait_5",
+      "sha12": "fbc4bf08100a",
+      "file": "pm_flags_selector_enter_chain/image0005-wait_5.png",
+      "stats": {
+        "full": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "viewport": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "right_column": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "spell_area": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "lower_panel": {
+          "nonblack": 0.0,
+          "bright": 0.0,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  ]
+}
