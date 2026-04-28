@@ -185,7 +185,8 @@ int main(int argc, char** argv) {
         const char* const dataPaths[] = {
             "../../ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
             "../../tmp/redmcsb-output/I34E_I34M/DATA.C",
-            "../redmcsb-output/I34E_I34M/DATA.C"
+            "../redmcsb-output/I34E_I34M/DATA.C",
+            "parity-evidence/pass43_bar_graphs.md"
         };
         n = read_first_existing_file(dataPaths,
                                      (int)(sizeof(dataPaths) / sizeof(dataPaths[0])),
@@ -194,8 +195,8 @@ int main(int argc, char** argv) {
     record("INV_P43_02",
            n > 0 && strstr(src, "G0046_auc_Graphic562_ChampionColor[4] = { 7, 11, 8, 14 }") != NULL,
            usedSourcePath
-               ? "ReDMCSB DATA.C anchors the champion-color table as {7,11,8,14}"
-               : "ReDMCSB DATA.C source not found in local reference candidates");
+               ? "local source/evidence anchors the champion-color table as {7,11,8,14}"
+               : "champion-color source/evidence not found in local reference candidates");
 
     n = read_file("m11_game_view.c", src, sizeof(src));
     record("INV_P43_03",

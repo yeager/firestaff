@@ -39,8 +39,8 @@
  *      is defined in m11_game_view.c.
  *  13. The per-surface state fields chromeRerouteLastStatus /
  *      chromeRerouteLastInspect are declared in m11_game_view.h.
- *  14. The renderer guards m11_draw_control_strip behind a V1
- *      chrome-mode check (no unconditional draw in V1 mode).
+ *  14. The renderer guards m11_draw_control_strip behind both a debug-HUD
+ *      and V1 chrome-mode opt-out check (no unconditional draw in V1 mode).
  *
  * This probe is diagnostic-only.  It does not link the full
  * m11_game_view translation unit (which would drag SDL headers);
@@ -185,9 +185,14 @@ static int source_has_guarded_control_strip(const char* path) {
     if (!f) {
         return 0;
     }
-    /* Walk the file line by line; after we see the pass-42 guard\n     * pattern "if (!m11_v1_chrome_mode_enabled())", the next\n     * non-empty non-comment line must be the control-strip call.\n     * Any other bare m11_draw_control_strip(...) call outside the\n     * function body that is not inside the guard is treated as\n     * an unguarded call and fails the invariant. */
+    /* Walk the file line by line; after we see the pass-42 guard
+     * pattern containing both showDebugHUD and !m11_v1_chrome_mode_enabled(),
+     * any following m11_draw_control_strip(...) before the closing brace is
+     * considered guarded.  Any other bare call is treated as unguarded. */
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, "if (!m11_v1_chrome_mode_enabled())") != NULL) {
+        if (strstr(line, "if (") != NULL &&
+            strstr(line, "showDebugHUD") != NULL &&
+            strstr(line, "!m11_v1_chrome_mode_enabled()") != NULL) {
             inGuard = 1;
             continue;
         }
@@ -365,15 +370,17 @@ int main(void) {
     /* 14. Renderer call-site guard. */
     rec("INV_P42_30",
         source_has_guarded_control_strip(src),
-        "m11_draw_control_strip call is guarded by !m11_v1_chrome_mode_enabled()");
+        "m11_draw_control_strip call is guarded by showDebugHUD && !m11_v1_chrome_mode_enabled()");
 
-    /* 15. Reroute feeds both surfaces (the message-log surface
-     * renders the reroute payload alongside m11_log_event entries;
-     * we verify by checking that the bottom message surface scans
-     * up to M11_MESSAGE_LOG_CAPACITY entries in chrome mode). */
+    /* 15. Reroute feeds the source-bound bottom message surface.
+     * Later V1 parity work replaced the temporary 3-line Firestaff strip
+     * with TEXT.C's four-row C015 message area.  Keep pass 42 aligned with
+     * that source-faithful top-row/HUD behavior instead of the superseded
+     * debug-band implementation. */
     rec("INV_P42_31",
-        file_contains(src, "maxLines = chromeMode ? 3 : 1") == 1,
-        "bottom message surface renders 3 lines in V1 chrome mode, 1 otherwise");
+        file_contains(src, "M11_V1_MESSAGE_ROW_COUNT = 4") == 1 &&
+        file_contains(src, "m11_draw_v1_message_area(state, framebuffer") == 1,
+        "bottom message surface renders the source C015 four-row V1 message area");
 
     /* 16. Env opt-out is respected: the probe mirror produces the\n     * same decision as the runtime for each input. */
     rec("INV_P42_32",
