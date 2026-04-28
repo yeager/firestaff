@@ -46,4 +46,3 @@ Scope: V2-only manifest/scaffold/assets verification on N2. No DM1 V1 HUD/viewpo
 - `v2_initial_4k_capture/base_scene.ppm` (192015 bytes)
 - `v2_initial_4k_capture/creature_scene.ppm` (192015 bytes)
 - `v2_initial_4k_capture/scene_meta.txt` (207 bytes)
-

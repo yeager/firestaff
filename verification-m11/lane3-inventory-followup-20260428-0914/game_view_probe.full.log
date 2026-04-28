@@ -77,7 +77,7 @@ In function ‘snprintf’,
       |                                        ^~
  4736 |              (unsigned int)state->world.gameTick,
  4737 |              path);
-      |              ~~~~                       
+      |              ~~~~
 In function ‘snprintf’,
     inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
@@ -93,7 +93,7 @@ In function ‘snprintf’,
       |                                               ^~
 ......
  4827 |              path);
-      |              ~~~~                              
+      |              ~~~~
 In function ‘snprintf’,
     inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128

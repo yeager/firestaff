@@ -11,7 +11,7 @@ index 7281d23..2f1581e 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -113,7 +113,8 @@ endif()
- 
+
  # V2 initial 4K capture scene (real M11 draw path for offline 4K composition)
  add_executable(firestaff_m11_v2_initial_4k_capture probes/m11/firestaff_m11_v2_initial_4k_capture.c)
 -target_link_libraries(firestaff_m11_v2_initial_4k_capture PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
