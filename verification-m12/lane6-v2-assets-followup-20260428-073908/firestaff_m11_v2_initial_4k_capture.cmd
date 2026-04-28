@@ -1,0 +1,1 @@
+build/firestaff_m11_v2_initial_4k_capture verification-m12/lane6-v2-assets-followup-20260428-073908/v2_initial_4k_capture /home/trv2/.openclaw/data/firestaff-original-games/DM

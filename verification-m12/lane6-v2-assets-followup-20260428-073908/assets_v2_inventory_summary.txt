@@ -1,0 +1,7 @@
+assets-v2 files: 282
+manifest json files: 15
+png files: 150
+ui/wave1: files=81
+creatures/wave1: files=97
+manifests: files=18
+all-assets: files=1

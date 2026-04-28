@@ -1,0 +1,1 @@
+validator self-test passed: exact 50% downscale accepted; non-50% downscale and duplicate packId rejected
