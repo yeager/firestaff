@@ -1,0 +1,90 @@
+{
+  "checks": [
+    {
+      "count": 30,
+      "detail": "C507..C536 slot-box table is the expected 30-entry source namespace",
+      "first": [
+        [
+          507,
+          6,
+          53
+        ]
+      ],
+      "id": "INV_P111_01",
+      "last": [
+        [
+          536,
+          202,
+          33
+        ]
+      ],
+      "ok": true
+    },
+    {
+      "count": 13,
+      "detail": "equipment helper covers only C507..C519",
+      "id": "INV_P111_02",
+      "ok": true
+    },
+    {
+      "count": 17,
+      "detail": "backpack helper covers C520..C536, including the first backpack slot plus 8x2 carried-object rows",
+      "id": "INV_P111_03",
+      "ok": true
+    },
+    {
+      "detail": "inventory source slot boxes resolve to C033 normal slot-box bitmap",
+      "id": "INV_P111_04",
+      "ok": true
+    },
+    {
+      "detail": "bidirectional inventory source-slot/champion-slot mapping is exported for probes",
+      "id": "INV_P111_05",
+      "ok": true
+    },
+    {
+      "detail": "inventory icons are documented on the direct F0038 path, distinct from action-area G0498 palette remap",
+      "id": "INV_P111_06",
+      "ok": true
+    },
+    {
+      "detail": "Greatstone atlas keyword index is present and contains item/object reference pages",
+      "hits": 22,
+      "id": "INV_P111_07",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/keyword_hits.json"
+    },
+    {
+      "detail": "ReDMCSB reference directory is present on N2 (currently documentation/locator pack, not extracted C source)",
+      "files": [
+        "README_FIRESTAFF.md",
+        "dmweb.free.fr_Stuff_ReDMCSB_Documentation_BugsAndChanges.htm.html",
+        "dmweb.free.fr_community_redmcsb_.html",
+        "local-candidates.txt"
+      ],
+      "id": "INV_P111_08",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source"
+    },
+    {
+      "detail": "original DM PC 3.4 GRAPHICS.DAT checksum matches worker reference",
+      "expected": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "id": "INV_P111_SHA_GRAPHICS.DAT",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "detail": "original DM PC 3.4 DUNGEON.DAT checksum matches worker reference",
+      "expected": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "id": "INV_P111_SHA_DUNGEON.DAT",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    }
+  ],
+  "lane": "dm1_v1_inventory_slots_icons_evidence",
+  "ok": true,
+  "pass": 111,
+  "source": "/home/trv2/work/firestaff/m11_game_view.c"
+}

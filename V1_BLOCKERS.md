@@ -1005,6 +1005,12 @@ first, then visual parity, then typography / honesty.
   - `run_firestaff_m11_ingame_capture_smoke.sh`: `PASS` with action/inventory
     icon palette split and C011 selected-rune checks.
 - **Remaining gaps:**
+  - Pass 111 adds a repeatable worker verifier for the V1 inventory
+    source-slot namespace: C507..C536 (30 slot boxes), equipment helper
+    C507..C519, backpack helper C520..C536, C033 normal slot boxes, and the
+    inventory/direct-F0038 icon path separated from action-area G0498 remap.
+    Evidence: `parity-evidence/pass111_v1_inventory_slot_namespace_audit.md`
+    and `parity-evidence/overlays/pass111_v1_inventory_slot_namespace_audit.json`.
   - Pointer/held-object icon surfaces are not implemented/audited yet.
   - Exact inventory and spell-panel placement still require original overlay
     evidence.
