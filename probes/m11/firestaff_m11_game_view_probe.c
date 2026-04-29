@@ -853,6 +853,17 @@ int main(int argc, char** argv) {
                      "M11 mirror click opens a source-backed resurrect/reincarnate candidate panel");
         {
             M11_GameViewState pointerMirror;
+            M11_GameViewState pointerMirrorMiss;
+            memcpy(&pointerMirrorMiss, &mirrorView, sizeof(pointerMirrorMiss));
+            pointerMirrorMiss.world.party.championCount = 0;
+            pointerMirrorMiss.candidateMirrorPanelActive = 0;
+            pointerMirrorMiss.candidateMirrorOrdinal = -1;
+            probe_record(&tally,
+                         "INV_GV_407A0",
+                         M11_GameView_HandlePointer(&pointerMirrorMiss, 20, 82, 1) == M11_GAME_INPUT_IGNORED &&
+                             pointerMirrorMiss.candidateMirrorPanelActive == 0 &&
+                             pointerMirrorMiss.world.party.direction == mirrorView.world.party.direction,
+                         "non-portrait C007 viewport click follows C080 source routing and does not use Firestaff procedural turn shortcuts or open the mirror panel");
             memcpy(&pointerMirror, &mirrorView, sizeof(pointerMirror));
             pointerMirror.world.party.championCount = 0;
             pointerMirror.candidateMirrorPanelActive = 0;

@@ -1931,6 +1931,9 @@ static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel);
 static void m11_check_party_death(M11_GameViewState* state);
+static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
+                                                       int x,
+                                                       int y);
 static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
                                                 int x,
                                                 int y);
@@ -5500,6 +5503,26 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                           M11_VIEWPORT_Y,
                           M11_VIEWPORT_W,
                           M11_VIEWPORT_H)) {
+        if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+            int space = M11_DM1_MOUSE_SPACE_NONE;
+            int zoneId = 0;
+            int command = M11_GameView_GetV1MouseCommandForPoint(
+                M11_DM1_MOUSE_LIST_MOVEMENT,
+                x, y,
+                M11_DM1_MOUSE_MASK_LEFT,
+                &space,
+                &zoneId);
+            if (command == 80 && space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7) {
+                /* ReDMCSB COMMAND.C G0448 maps a left-click in C007_ZONE_VIEWPORT
+                 * to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.  The source then enters
+                 * CLIKVIEW.C F0377/F0372/F0275 to test front-wall sensors,
+                 * champion mirrors, door buttons and wall ornaments.  Do not use
+                 * Firestaff's procedural left/right viewport steering shortcuts in
+                 * V1 chrome mode; movement is owned by the original arrow zones. */
+                return m11_process_v1_c080_click(state, x, y);
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         return M11_GameView_HandleInput(state, m11_pointer_viewport_input(state, x, y));
     }
 
@@ -7230,6 +7253,36 @@ static int m11_build_front_text_readout(const M11_GameViewState* state,
     }
 
     return 0;
+}
+
+static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
+                                                       int x,
+                                                       int y) {
+    int localX;
+    int localY;
+
+    if (!state || !state->active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    localX = x - M11_VIEWPORT_X;
+    localY = y - M11_VIEWPORT_Y;
+
+    /* ReDMCSB CLIKVIEW.C F0377 subtracts COORD.C viewport origin
+     * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[].
+     * For a front-wall champion mirror DUNVIEW.C copies the drawn
+     * portrait zone into C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT:
+     * viewport-relative x=96..127, y=35..63.  Only that hit opens the
+     * resurrect/reincarnate/cancel panel; a generic viewport click must not
+     * be treated as Firestaff steering or as a mirror confirmation route. */
+    if (localX >= 96 && localX <= 127 &&
+        localY >= 35 && localY <= 63 &&
+        m11_front_cell_mirror_ordinal(state) >= 0 &&
+        M11_GameView_SelectFrontMirrorCandidate(state) == 1) {
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static int m11_inspect_front_cell(M11_GameViewState* state) {
