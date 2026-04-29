@@ -1,8 +1,8 @@
 # Pass168 — Firestaff pass → ReDMCSB source map
 
-- source root: `<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
-- pass groups: 268
-- status counts: {'needs-redmcsb-anchor': 11, 'source-locked': 211, 'source-mentioned-unresolved': 46}
+- source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- pass groups: 274
+- status counts: {'needs-redmcsb-anchor': 11, 'source-locked': 217, 'source-mentioned-unresolved': 46}
 
 ## Priority unmapped / weakly mapped
 
@@ -56,7 +56,7 @@
 - pass `155`: **needs-redmcsb-anchor** — artifacts=2 — first=`tools/pass155_champion_route_seed_finder.py`
 - pass `157`: **needs-redmcsb-anchor** — artifacts=3 — first=`tools/pass157_082b_dungeon_control_probe.py`
 - pass `158`: **source-mentioned-unresolved** — artifacts=3 — first=`tools/pass158_party_control_readiness_route_probe.py`
-- pass `172`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase172_196_champion_mirror_presentation_state_batch.md`
+- pass `171`: **source-mentioned-unresolved** — artifacts=3 — first=`tools/pass171_redmcsb_source_lock_closure.py`
 - pass `197`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase197_246_champion_mirror_catalog_batch.md`
 - pass `247`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase247_296_m11_mirror_catalog_wire_batch.md`
 - pass `1677`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase1677_1696_v1_object_icon_source_zones.md`
@@ -191,7 +191,7 @@
 - pass `124`: **source-locked**; files=-; anchors=C000→BLIT.C:13; C028→CHAMDRAW.C:1025; C065→CEDT004.C:322; C346→DEFS.H:2263; C412→DEFS.H:3827
 - pass `125`: **source-locked**; files=COMMAND.C, DUNVIEW.C, ENDGAME.C; anchors=COMMAND.C→COMMAND.C:1; DUNVIEW.C→DUNVIEW.C:1; ENDGAME.C→ENDGAME.C:1; C000_COMMAND_NONE→CLIKMENU.C:468; C007→ACTIDRAW.C:358
 - pass `126`: **source-locked**; files=CHAMDRAW.C, ENDGAME.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; ENDGAME.C→ENDGAME.C:1; C008→ACTIDRAW.C:277; C033→CHAMDRAW.C:607; C035→CHAMDRAW.C:611
-- pass `127`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; C026_GRAPHIC_CHAMPION_PORTRAITS→DEFS.H:2186; C412→DEFS.H:3827; C412_ZONE_ENDGAME_CHAMPION_MIRROR_0→DEFS.H:3827; C413→DEFS.H:3828
+- pass `127`: **source-locked**; files=DEFS.H, DUNVIEW.C, ENDGAME.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; ENDGAME.C→ENDGAME.C:1; C026_GRAPHIC_CHAMPION_PORTRAITS→DEFS.H:2186; C2500→DEFS.H:4228
 - pass `128`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; F0443_STARTEND_EndgamePrintString→DEFS.H:8607; F0444_STARTEND_Endgame→ATARIST.H:218
 - pass `129`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; F0303_CHAMPION_GetSkillLevel→ATARIST.H:165; F0444_STARTEND_Endgame→ATARIST.H:218
 - pass `130`: **source-locked**; files=DEFS.H, ENDGAME.C; anchors=DEFS.H→DEFS.H:1; ENDGAME.C→ENDGAME.C:1; F0444_STARTEND_Endgame→ATARIST.H:218
@@ -216,7 +216,7 @@
 - pass `153`: **needs-redmcsb-anchor**; files=-; anchors=-
 - pass `154`: **needs-redmcsb-anchor**; files=-; anchors=-
 - pass `155`: **needs-redmcsb-anchor**; files=-; anchors=-
-- pass `156`: **source-locked**; files=TITLE.C; anchors=TITLE.C→TITLE.C:1; F0437_STARTEND_DrawTitle→DEFS.H:8581; M526_WaitVerticalBlank→ANIM.C:282
+- pass `156`: **source-locked**; files=DATA.C, TITLE.C; anchors=DATA.C→DATA.C:1; TITLE.C→TITLE.C:1; F0437_STARTEND_DrawTitle→DEFS.H:8581; M526_WaitVerticalBlank→ANIM.C:282
 - pass `157`: **needs-redmcsb-anchor**; files=-; anchors=-
 - pass `158`: **source-mentioned-unresolved**; files=-; anchors=-
 - pass `159`: **source-locked**; files=-; anchors=C2500→DEFS.H:4228; C2900→DEFS.H:4230; C3200→DEFS.H:4236
@@ -226,9 +226,15 @@
 - pass `163`: **source-locked**; files=COMMAND.C, MOVESENS.C, REVIVE.C; anchors=COMMAND.C→COMMAND.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1; C127→CEDT004.C:230; C127_SENSOR_WALL_CHAMPION_PORTRAIT→DEFS.H:1284
 - pass `164`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, DUNGEON.C, MOVESENS.C, REVIVE.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; DUNGEON.C→DUNGEON.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1
 - pass `165`: **source-locked**; files=CLIKVIEW.C, COORD.C, DUNVIEW.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; C026_GRAPHIC_CHAMPION_PORTRAITS→DEFS.H:2186; C161→COMMAND.C:232
-- pass `166`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, COORD.C, DUNVIEW.C, MOVESENS.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; MOVESENS.C→MOVESENS.C:1
+- pass `166`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, COORD.C, DUNVIEW.C, MOVESENS.C, REVIVE.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; MOVESENS.C→MOVESENS.C:1
 - pass `168`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, COORD.C, DEFS.H, DRAWVIEW.C, DUNVIEW.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DRAWVIEW.C→DRAWVIEW.C:1
-- pass `172`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `169`: **source-locked**; files=ACTIDRAW.C, ANIMIMG.C, ATARIST.H, CHAMDRAW.C, CHAMPION.C, CLIKMENU.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; ANIMIMG.C→ANIMIMG.C:1; ATARIST.H→ATARIST.H:1; CHAMDRAW.C→CHAMDRAW.C:1; CHAMPION.C→CHAMPION.C:1
+- pass `170`: **source-locked**; files=ACTIDRAW.C, ANIM.C, ATARIST.H, BASE.C, CEDT006.C, CEDTINCF.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; ANIM.C→ANIM.C:1; ATARIST.H→ATARIST.H:1; BASE.C→BASE.C:1; CEDT006.C→CEDT006.C:1
+- pass `171`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `172`: **source-locked**; files=ACTIDRAW.C, ANIM.C, ANIMSND.C, ANIMTOWN.C, BASE.C, BLITFILL.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; ANIM.C→ANIM.C:1; ANIMSND.C→ANIMSND.C:1; ANIMTOWN.C→ANIMTOWN.C:1; BASE.C→BASE.C:1
+- pass `173`: **source-locked**; files=CHAMDRAW.C, CLIKVIEW.C, COMMAND.C, COORD.C, DUNGEON.C, DUNVIEW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DUNGEON.C→DUNGEON.C:1
+- pass `174`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, COORD.C, DUNVIEW.C, MOVESENS.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; MOVESENS.C→MOVESENS.C:1
+- pass `175`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, COORD.C, DUNVIEW.C, MOVESENS.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; MOVESENS.C→MOVESENS.C:1
 - pass `197`: **source-mentioned-unresolved**; files=-; anchors=-
 - pass `247`: **source-mentioned-unresolved**; files=-; anchors=-
 - pass `297`: **source-locked**; files=-; anchors=C161_COMMAND_CLICK_IN_PANEL_REINCARNATE→COMMAND.C:232; C162_COMMAND_CLICK_IN_PANEL_CANCEL→COMMAND.C:233; F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel→ATARIST.H:151; M568_PANEL_RESURRECT_REINCARNATE→COMMAND.C:1985; M664_ZONE_RESURRECT→COMMAND.C:509
@@ -333,7 +339,7 @@
 - pass `2997`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; C2500→DEFS.H:4228; C3200→DEFS.H:4236; G0210→DEFS.H:5578; M613→DEFS.H:2317
 - pass `3017`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF→DEFS.H:6978; G0194_auc_Graphic558_WallOrnamentCoordinateSetIndices→DEFS.H:5562; G0198→DEFS.H:5566
 - pass `3037`: **source-locked**; files=CHAMPION.C, DEFS.H, DUNVIEW.C; anchors=CHAMPION.C→CHAMPION.C:1; DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C007→ACTIDRAW.C:358; C015→CHAMDRAW.C:692
-- pass `unclassified`: **source-locked**; files=CASTER.C, CHAMPION.C, CLIKVIEW.C, COMMAND.C, DEFS.H, DRAWVIEW.C; anchors=CASTER.C→CASTER.C:1; CHAMPION.C→CHAMPION.C:1; CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; DEFS.H→DEFS.H:1
+- pass `unclassified`: **source-locked**; files=CASTER.C, CEDTINC8.C, CEDTINCH.C, CEDTINCU.C, CHAMPION.C, CLIKVIEW.C; anchors=CASTER.C→CASTER.C:1; CEDTINC8.C→CEDTINC8.C:1; CEDTINCH.C→CEDTINCH.C:1; CEDTINCU.C→CEDTINCU.C:1; CHAMPION.C→CHAMPION.C:1
 
 ## Next action
 

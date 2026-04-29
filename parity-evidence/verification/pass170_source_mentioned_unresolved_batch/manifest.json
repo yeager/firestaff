@@ -1,7 +1,7 @@
 {
   "schema": "pass170_source_mentioned_unresolved_batch.v1",
-  "input": "<repo>/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
-  "source_root": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "input": "/home/trv2/work/firestaff/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "total": 46,
   "source_locked": 46,
   "records": [
@@ -8781,20 +8781,22 @@
       ]
     },
     {
-      "pass": "172",
-      "category": "champion",
+      "pass": "171",
+      "category": "viewport",
       "artifacts": [
-        "parity-evidence/dm1_all_graphics_phase172_196_champion_mirror_presentation_state_batch.md"
+        "tools/pass171_redmcsb_source_lock_closure.py",
+        "parity-evidence/verification/pass171_redmcsb_source_lock_closure/README.md",
+        "parity-evidence/verification/pass171_redmcsb_source_lock_closure/manifest.json"
       ],
       "status": "source-locked",
       "missing": [],
       "anchors": [
         {
           "kind": "file",
-          "token": "CHAMDRAW.C",
+          "token": "DRAWVIEW.C",
           "hits": [
             {
-              "file": "CHAMDRAW.C",
+              "file": "DRAWVIEW.C",
               "line": 1,
               "text": "file exists"
             }
@@ -8802,10 +8804,10 @@
         },
         {
           "kind": "file",
-          "token": "CHAMPION.C",
+          "token": "DUNVIEW.C",
           "hits": [
             {
-              "file": "CHAMPION.C",
+              "file": "DUNVIEW.C",
               "line": 1,
               "text": "file exists"
             }
@@ -8813,10 +8815,10 @@
         },
         {
           "kind": "file",
-          "token": "MOVESENS.C",
+          "token": "IMAGE5.C",
           "hits": [
             {
-              "file": "MOVESENS.C",
+              "file": "IMAGE5.C",
               "line": 1,
               "text": "file exists"
             }
@@ -8824,166 +8826,212 @@
         },
         {
           "kind": "file",
-          "token": "REVIVE.C",
+          "token": "DATA.C",
           "hits": [
             {
-              "file": "REVIVE.C",
+              "file": "DATA.C",
               "line": 1,
               "text": "file exists"
             }
           ]
         },
         {
-          "kind": "token",
-          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "kind": "file",
+          "token": "DEFS.H",
           "hits": [
             {
               "file": "DEFS.H",
-              "line": 1284,
-              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
-            },
-            {
-              "file": "DUNGEON.C",
-              "line": 2608,
-              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
-            },
-            {
-              "file": "MOVESENS.C",
-              "line": 1392,
-              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
-            },
-            {
-              "file": "MOVESENS.C",
-              "line": 1501,
-              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+              "line": 1,
+              "text": "file exists"
             }
           ]
         },
         {
           "kind": "token",
-          "token": "F0280_CHAMPION_AddCandidateChampionToParty",
+          "token": "F0097_DUNGEONVIEW_DrawViewport",
           "hits": [
             {
               "file": "ATARIST.H",
-              "line": 150,
-              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F280_agzz_"
+              "line": 60,
+              "text": "#define F0097_DUNGEONVIEW_DrawViewport                                            F097_lzzz_"
             },
             {
               "file": "CHAMDRAW.C",
-              "line": 542,
-              "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31"
+              "line": 1107,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C0_VIEWPORT_NOT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2346,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C2_VIEWPORT_AS_BEFORE_REST_OR_FREEZE_GAME);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2410,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C2_VIEWPORT_AS_BEFORE_REST_OR_FREEZE_GAME);"
             },
             {
               "file": "DEFS.H",
-              "line": 7845,
-              "text": "extern void F0280_CHAMPION_AddCandidateChampionToParty("
+              "line": 6956,
+              "text": "extern void F0097_DUNGEONVIEW_DrawViewport("
             },
             {
-              "file": "FMTOWNS.H",
-              "line": 225,
-              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                PICK_CHARACTER"
+              "file": "DIALOG.C",
+              "line": 288,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C0_VIEWPORT_NOT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 862,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C0_VIEWPORT_NOT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 709,
+              "text": "void F0097_DUNGEONVIEW_DrawViewport("
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8606,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8610,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0127_DUNGEONVIEW_DrawSquare",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 7003,
+              "text": "/*STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C();*/"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 1983,
+              "text": "STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C("
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8164,
+              "text": "STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C("
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8542,
+              "text": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
             },
             {
               "file": "IIGS.H",
-              "line": 1445,
-              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F0280_"
-            },
-            {
-              "file": "MOVESENS.C",
-              "line": 1502,
-              "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
-            },
-            {
-              "file": "REVIVE.C",
-              "line": 63,
-              "text": "void F0280_CHAMPION_AddCandidateChampionToParty("
-            },
-            {
-              "file": "REVIVE.C",
-              "line": 810,
-              "text": "for (AL0823_ui_StatisticIndex = C1_STATISTIC_STRENGTH; AL0823_ui_StatisticIndex <= C6_STATISTIC_ANTIFIRE; AL0823_ui_StatisticIndex++) { /* This loop does not affect Luck. When the "
-            },
-            {
-              "file": "STARTUP2.C",
-              "line": 383,
-              "text": "F0067_MOUSE_SetPointerToNormal(C0_POINTER_ARROW); /* BUG0_60 On the Reincarnate/Resurrect screen, the 'Arrow' mouse pointer is replaced by the 'Hand' pointer after you grab an obje"
+              "line": 1293,
+              "text": "#define F0127_DUNGEONVIEW_DrawSquareD0C                                           F0127_"
             }
           ]
         },
         {
           "kind": "token",
-          "token": "F0296_CHAMPION_DrawChangedObjectIcons",
+          "token": "C000_DERIVED_BITMAP_VIEWPORT",
           "hits": [
             {
-              "file": "ATARIST.H",
-              "line": 159,
-              "text": "#define F0296_CHAMPION_DrawChangedObjectIcons                                     F296_aizz_"
+              "file": "DEFS.H",
+              "line": 2407,
+              "text": "#define C000_DERIVED_BITMAP_VIEWPORT                    0 /* Versions 1.x and 2.x: Used while drawing fields (graphics #73 to #74) and explosion patterns (graphics #351 to #359) ov"
             },
             {
-              "file": "CHAMDRAW.C",
-              "line": 626,
-              "text": "|| (L0853_i_IconIndex == C030_ICON_SCROLL_SCROLL_OPEN) /* BUG2_00 The closed scroll icon is drawn when the scroll is open. If you open the inventory of a champion and place a scrol"
+              "file": "DIALOG.C",
+              "line": 901,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
             },
             {
-              "file": "CHAMDRAW.C",
-              "line": 1185,
-              "text": "void F0296_CHAMPION_DrawChangedObjectIcons("
+              "file": "DIALOG.C",
+              "line": 902,
+              "text": "L1315_puc_Bitmap_DialogPatch = F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
             },
             {
-              "file": "CHAMPION.C",
-              "line": 130,
-              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+              "file": "DIALOG.C",
+              "line": 970,
+              "text": "F0493_CACHE_AddDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
             },
             {
-              "file": "CHAMPION.C",
-              "line": 151,
-              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+              "file": "DIALOG.C",
+              "line": 971,
+              "text": "F0480_CACHE_ReleaseBlock(C000_DERIVED_BITMAP_VIEWPORT | MASK0x8000_DERIVED_BITMAP);"
             },
             {
-              "file": "CHAMPION.C",
-              "line": 173,
-              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+              "file": "DUNVIEW.C",
+              "line": 4453,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
             },
             {
-              "file": "CHAMPION.C",
-              "line": 549,
-              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+              "file": "DUNVIEW.C",
+              "line": 4461,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_"
             },
             {
-              "file": "CHAMPION.C",
-              "line": 555,
-              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+              "file": "DUNVIEW.C",
+              "line": 4464,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_"
             },
             {
-              "file": "CHAMPION.C",
-              "line": 628,
-              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+              "file": "DUNVIEW.C",
+              "line": 4467,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), L2472_ai_X"
             },
             {
-              "file": "CHAMPION.C",
-              "line": 634,
-              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+              "file": "DUNVIEW.C",
+              "line": 4470,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), L2472_ai_X"
             }
           ]
         },
         {
           "kind": "token",
-          "token": "C211_ZONE_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND",
+          "token": "C007_ZONE_VIEWPORT",
           "hits": [
             {
               "file": "COMMAND.C",
-              "line": 489,
-              "text": "{ C020_COMMAND_CLICK_ON_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND,  CM1_SCREEN_RELATIVE, C211_ZONE_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND,  0, 0, MASK0x0002_MOUSE_LEFT_BUT"
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
             },
             {
-              "file": "DATA.C",
-              "line": 978,
-              "text": "{ C211_ZONE_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND, 0 },"
+              "file": "COMMAND.C",
+              "line": 454,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
             },
             {
               "file": "DEFS.H",
-              "line": 3800,
-              "text": "#define C211_ZONE_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND  211"
+              "line": 3752,
+              "text": "#define C007_ZONE_VIEWPORT                                        7"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 842,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 847,
+              "text": "F0638_GetZone(C007_ZONE_VIEWPORT, L2413_ai_Box);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 850,
+              "text": "F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1056,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1067,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
             }
           ]
         }

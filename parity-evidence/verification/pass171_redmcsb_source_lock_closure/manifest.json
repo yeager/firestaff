@@ -1,15 +1,15 @@
 {
   "schema": "pass171_redmcsb_source_lock_closure.v1",
   "status": "closed",
-  "pass168_total": 268,
-  "pass168_direct_source_locked": 211,
+  "pass168_total": 274,
+  "pass168_direct_source_locked": 217,
   "pass169_needs_anchor_resolved": 11,
   "pass170_source_mentioned_resolved": 46,
-  "closed": 268,
+  "closed": 274,
   "remaining": 0,
   "inputs": [
-    "<repo>/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
-    "<repo>/parity-evidence/verification/pass169_redmcsb_anchor_gap_resolution/manifest.json",
-    "<repo>/parity-evidence/verification/pass170_source_mentioned_unresolved_batch/manifest.json"
+    "/home/trv2/work/firestaff/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
+    "/home/trv2/work/firestaff/parity-evidence/verification/pass169_redmcsb_anchor_gap_resolution/manifest.json",
+    "/home/trv2/work/firestaff/parity-evidence/verification/pass170_source_mentioned_unresolved_batch/manifest.json"
   ]
 }

@@ -1,11 +1,11 @@
 {
   "schema": "pass168_redmcsb_pass_source_map.v1",
-  "source_root": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "artifact_count": 425,
-  "passes": 268,
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "artifact_count": 452,
+  "passes": 274,
   "status_counts": {
     "needs-redmcsb-anchor": 11,
-    "source-locked": 211,
+    "source-locked": 217,
     "source-mentioned-unresolved": 46
   },
   "records": [
@@ -31114,10 +31114,11 @@
     {
       "pass": "126",
       "status": "source-locked",
-      "artifact_count": 3,
+      "artifact_count": 4,
       "artifacts": [
         "parity-evidence/pass126_hud_status_shield_border_stack.md",
         "parity-evidence/pass126_m12_v2_scaffolding_assets_probe_rerun.md",
+        "parity-evidence/pass126_v1_viewport_world_zone_gates_in_ctest.md",
         "parity-evidence/dm1_all_graphics_phase126_endgame_all_skill_lines.md"
       ],
       "source_files": [
@@ -31134,6 +31135,11 @@
         "C038_GRAPHIC_BORDER_PARTY_FIRESHIELD",
         "C039",
         "C039_GRAPHIC_BORDER_PARTY_SPELLSHIELD",
+        "C2500",
+        "C2567",
+        "C2900",
+        "C2947",
+        "C3200",
         "C416",
         "C419",
         "F0292_CHAMPION_DrawState",
@@ -31358,6 +31364,69 @@
               "file": "DATA.C",
               "line": 687,
               "text": "C039_GRAPHIC_BORDER_PARTY_SPELLSHIELD }; /* Indices of graphics that must always be loaded */"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C2500",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4228,
+              "text": "#define C2500_ZONE_                                            2500"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4929,
+              "text": "L2474_i_ZoneIndex = C2500_ZONE_;"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5075,
+              "text": "L2474_i_ZoneIndex = (C2500_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES) + (L2476_i_ * 4) + AL0126_i_ViewCell;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C2900",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4230,
+              "text": "#define C2900_ZONE_                                            2900"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5683,
+              "text": "L2474_i_ZoneIndex = C2900_ZONE_ + ((unsigned int16_t)L2479_i_ * 4) + AL0126_i_ViewCell;"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5876,
+              "text": "F0791_DUNGEONVIEW_DrawBitmapXX(F0675_DUNGEONVIEW_GetScaledBitmap(AL0127_i_NativeBitmapIndex, L0134_i_DerivedBitmapIndex, L0176_i_Scale, L0176_i_Scale, L0131_puc_PaletteChanges), G0"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C3200",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4236,
+              "text": "#define C3200_ZONE_                                            3200"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5613,
+              "text": "L2474_i_ZoneIndex = (C3200_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES) + (M071_COORDINATE_SET((CREATURE_ASPECT*)L0129_ps_ObjectAspect) * 55) + (P0145_i_ViewSquareIndex * 5) + A"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5616,
+              "text": "L2474_i_ZoneIndex = (C3200_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES) + (M071_COORDINATE_SET((CREATURE_ASPECT*)L0129_ps_ObjectAspect) * 65) + (L2477_i_ * 5) + AL0126_i_ViewCel"
             }
           ]
         },
@@ -31615,15 +31684,22 @@
     {
       "pass": "127",
       "status": "source-locked",
-      "artifact_count": 1,
+      "artifact_count": 2,
       "artifacts": [
+        "parity-evidence/pass127_viewport_world_f0115_row_mapping.md",
         "parity-evidence/dm1_all_graphics_phase127_endgame_portrait_blits.md"
       ],
       "source_files": [
+        "DEFS.H",
+        "DUNVIEW.C",
         "ENDGAME.C"
       ],
       "tokens": [
         "C026_GRAPHIC_CHAMPION_PORTRAITS",
+        "C2500",
+        "C2500_ZONE_",
+        "C2900",
+        "C2900_ZONE_",
         "C412",
         "C412_ZONE_ENDGAME_CHAMPION_MIRROR_0",
         "C413",
@@ -31633,9 +31709,34 @@
         "C417",
         "C419",
         "F0021_MAIN_BlitToScreen",
-        "F0444_STARTEND_Endgame"
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "F0444_STARTEND_Endgame",
+        "G2028",
+        "G2028_ac_ViewSquareIndexTo"
       ],
       "anchors": [
+        {
+          "kind": "file",
+          "token": "DEFS.H",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
         {
           "kind": "file",
           "token": "ENDGAME.C",
@@ -31665,6 +31766,120 @@
               "file": "DUNVIEW.C",
               "line": 3916,
               "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3919,
+              "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3928,
+              "text": "F0654_Call_F0132_VIDEO_Blit(M772_CAST_PC(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS)), M772_CAST_PC(G0296_puc_Bitmap_Viewport), F0635_(NULL, L2454_ai_XYZ"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C2500",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4228,
+              "text": "#define C2500_ZONE_                                            2500"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4929,
+              "text": "L2474_i_ZoneIndex = C2500_ZONE_;"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5075,
+              "text": "L2474_i_ZoneIndex = (C2500_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES) + (L2476_i_ * 4) + AL0126_i_ViewCell;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C2500_ZONE_",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4228,
+              "text": "#define C2500_ZONE_                                            2500"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4929,
+              "text": "L2474_i_ZoneIndex = C2500_ZONE_;"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5075,
+              "text": "L2474_i_ZoneIndex = (C2500_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES) + (L2476_i_ * 4) + AL0126_i_ViewCell;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C2900",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4230,
+              "text": "#define C2900_ZONE_                                            2900"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5683,
+              "text": "L2474_i_ZoneIndex = C2900_ZONE_ + ((unsigned int16_t)L2479_i_ * 4) + AL0126_i_ViewCell;"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5876,
+              "text": "F0791_DUNGEONVIEW_DrawBitmapXX(F0675_DUNGEONVIEW_GetScaledBitmap(AL0127_i_NativeBitmapIndex, L0134_i_DerivedBitmapIndex, L0176_i_Scale, L0176_i_Scale, L0131_puc_PaletteChanges), G0"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5879,
+              "text": "F0791_DUNGEONVIEW_DrawBitmapXX(F0675_DUNGEONVIEW_GetScaledBitmap(AL0127_i_NativeBitmapIndex, CM1_DERIVED_BITMAP_NONE, L0143_B_FlipHorizontal, L0134_i_DerivedBitmapIndex, L0176_i_Sc"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5889,
+              "text": "L2474_i_ZoneIndex = C2900_ZONE_;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C2900_ZONE_",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4230,
+              "text": "#define C2900_ZONE_                                            2900"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5683,
+              "text": "L2474_i_ZoneIndex = C2900_ZONE_ + ((unsigned int16_t)L2479_i_ * 4) + AL0126_i_ViewCell;"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5876,
+              "text": "F0791_DUNGEONVIEW_DrawBitmapXX(F0675_DUNGEONVIEW_GetScaledBitmap(AL0127_i_NativeBitmapIndex, L0134_i_DerivedBitmapIndex, L0176_i_Scale, L0176_i_Scale, L0131_puc_PaletteChanges), G0"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5879,
+              "text": "F0791_DUNGEONVIEW_DrawBitmapXX(F0675_DUNGEONVIEW_GetScaledBitmap(AL0127_i_NativeBitmapIndex, CM1_DERIVED_BITMAP_NONE, L0143_B_FlipHorizontal, L0134_i_DerivedBitmapIndex, L0176_i_Sc"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5889,
+              "text": "L2474_i_ZoneIndex = C2900_ZONE_;"
             }
           ]
         },
@@ -31796,6 +32011,21 @@
               "text": "M520_F0021_MAIN_BlitToScreen(L1182_puc_Bitmap_Icon, L1185_ai_Box, C008_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 16);"
             },
             {
+              "file": "DEFS.H",
+              "line": 3106,
+              "text": "#define M520_F0021_MAIN_BlitToScreen(a, b, c, d, e)                      F0021_MAIN_BlitToScreen(a, b, c, d)"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3110,
+              "text": "#define M520_F0021_MAIN_BlitToScreen(a, b, c, d, e)                      F0021_MAIN_BlitToScreen(a, b, c, d, e)"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 6595,
+              "text": "extern void F0021_MAIN_BlitToScreen("
+            },
+            {
               "file": "ENDGAME.C",
               "line": 347,
               "text": "M520_F0021_MAIN_BlitToScreen(L1418_puc_Bitmap_ChampionMirror, G0015_ai_Graphic562_Box_Endgame_ChampionMirror, C032_BYTE_WIDTH, C10_COLOR_FLESH, 43);"
@@ -31804,21 +32034,52 @@
               "file": "ENDGAME.C",
               "line": 350,
               "text": "F0021_MAIN_BlitToScreen(L1418_puc_Bitmap_ChampionMirror, C412_ZONE_ENDGAME_CHAMPION_MIRROR_0 + AL1409_i_ChampionIndex, C10_COLOR_FLESH);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1626,
+              "text": "but never used in F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
             },
             {
-              "file": "ENDGAME.C",
-              "line": 353,
-              "text": "F0021_MAIN_BlitToScreen(L1416_ps_Champion->Portrait, G0016_ai_Graphic562_Box_Endgame_ChampionPortrait, C016_BYTE_WIDTH, C01_COLOR_DARK_GRAY);"
+              "file": "DEFS.H",
+              "line": 6991,
+              "text": "/*STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF();*/"
             },
             {
-              "file": "ENDGAME.C",
-              "line": 357,
-              "text": "F0021_MAIN_BlitToScreen(L1651_puc_Bitmap_Portrait_ChipMemory, G0016_ai_Graphic562_Box_Endgame_ChampionPortrait, C016_BYTE_WIDTH, C01_COLOR_DARK_GRAY, 29);"
+              "file": "DUNVIEW.C",
+              "line": 4547,
+              "text": "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF("
             },
             {
-              "file": "ENDGAME.C",
-              "line": 360,
-              "text": "F0021_MAIN_BlitToScreen(M774_CAST_PUC(L1416_ps_Champion->Portrait), C416_ZONE_ENDGAME_CHAMPION_PORTRAIT_0 + AL1409_i_ChampionIndex, C01_COLOR_DARK_GRAY);"
+              "file": "DUNVIEW.C",
+              "line": 6271,
+              "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L2484_ai_SquareAspect[M550_FIRST_THING], P2087_i_Direction, P2088_i_MapX, P2089_i_MapY, C14_VIEW_SQUARE_D3L2, C0x0"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 6286,
+              "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L2484_ai_SquareAspect[M550_FIRST_THING], P2087_i_Direction, P2088_i_MapX, P2089_i_MapY, C14_VIEW_SQUARE_D3L2, L248"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 6338,
+              "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L2486_ai_SquareAspect[M550_FIRST_THING], P2090_i_Direction, P2091_i_MapX, P2092_i_MapY, C15_VIEW_SQUARE_D3R2, C0x0"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 6353,
+              "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L2486_ai_SquareAspect[M550_FIRST_THING], P2090_i_Direction, P2091_i_MapX, P2092_i_MapY, C15_VIEW_SQUARE_D3R2, L248"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 6444,
+              "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0201_ai_SquareAspect[M550_FIRST_THING], P0147_i_Direction, P0148_i_MapX, P0149_i_MapY, M601_VIEW_SQUARE_D3L, C0x0"
             }
           ]
         },
@@ -31850,6 +32111,58 @@
               "file": "ENDGAME.C",
               "line": 961,
               "text": "F0444_STARTEND_Endgame(C1_TRUE);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2028",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 6457,
+              "text": "extern char G2028_ac_ViewSquareIndexTo[23];"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 373,
+              "text": "char G2028_ac_ViewSquareIndexTo[23] = { 11, -1, -1, 8, 9, 10, 5, 6, 7, -1, -1, 0, 1, 2, 3, 4, -1, -1, -1, -1, -1, -1, -1 };"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4811,
+              "text": "L2476_i_ = G2028_ac_ViewSquareIndexTo[P0145_i_ViewSquareIndex];"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5668,
+              "text": "if ((L2479_i_ = G2028_ac_ViewSquareIndexTo[P0145_i_ViewSquareIndex]) < 0) {"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2028_ac_ViewSquareIndexTo",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 6457,
+              "text": "extern char G2028_ac_ViewSquareIndexTo[23];"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 373,
+              "text": "char G2028_ac_ViewSquareIndexTo[23] = { 11, -1, -1, 8, 9, 10, 5, 6, 7, -1, -1, 0, 1, 2, 3, 4, -1, -1, -1, -1, -1, -1, -1 };"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4811,
+              "text": "L2476_i_ = G2028_ac_ViewSquareIndexTo[P0145_i_ViewSquareIndex];"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 5668,
+              "text": "if ((L2479_i_ = G2028_ac_ViewSquareIndexTo[P0145_i_ViewSquareIndex]) < 0) {"
             }
           ]
         }
@@ -32432,6 +32745,7 @@
         "parity-evidence/verification/pass156_pass155_candidate_replay/manifest.json"
       ],
       "source_files": [
+        "DATA.C",
         "TITLE.C"
       ],
       "tokens": [
@@ -32439,6 +32753,17 @@
         "M526_WaitVerticalBlank"
       ],
       "anchors": [
+        {
+          "kind": "file",
+          "token": "DATA.C",
+          "hits": [
+            {
+              "file": "DATA.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
         {
           "kind": "file",
           "token": "TITLE.C",
@@ -35457,9 +35782,12 @@
     {
       "pass": "166",
       "status": "source-locked",
-      "artifact_count": 3,
+      "artifact_count": 6,
       "artifacts": [
         "tools/pass166_source_portrait_click_route_probe.py",
+        "parity-evidence/pass166_pass2_reincarnate_only.md",
+        "parity-evidence/pass166_pass2_source_audit.md",
+        "parity-evidence/pass166_pass3_source_portrait_route.md",
         "parity-evidence/verification/pass166_source_portrait_click_route_probe/README.md",
         "parity-evidence/verification/pass166_source_portrait_click_route_probe/manifest.json"
       ],
@@ -35468,14 +35796,27 @@
         "COMMAND.C",
         "COORD.C",
         "DUNVIEW.C",
-        "MOVESENS.C"
+        "MOVESENS.C",
+        "REVIVE.C"
       ],
       "tokens": [
+        "C001_MODE_LOAD_DUNGEON",
         "C127",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
         "C160",
         "C161",
+        "C162",
+        "C200_COMMAND_ENTRANCE_ENTER_DUNGEON",
+        "C407_ZONE_ENTRANCE_ENTER",
         "F0280_CHAMPION_AddCandidateChampionToParty",
-        "G0109_auc_Graphic558_Box_ChampionPortraitOnWall"
+        "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+        "G0109_auc_Graphic558_Box_ChampionPortraitOnWall",
+        "G0298_B_NewGame",
+        "G2067_i_ViewportScreenX",
+        "G2068_i_ViewportScreenY",
+        "M664_ZONE_RESURRECT",
+        "M665_ZONE_REINCARNATE"
       ],
       "anchors": [
         {
@@ -35534,6 +35875,38 @@
           ]
         },
         {
+          "kind": "file",
+          "token": "REVIVE.C",
+          "hits": [
+            {
+              "file": "REVIVE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C001_MODE_LOAD_DUNGEON",
+          "hits": [
+            {
+              "file": "BASE.C",
+              "line": 39,
+              "text": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2439,
+              "text": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2444,
+              "text": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+            }
+          ]
+        },
+        {
           "kind": "token",
           "token": "C127",
           "hits": [
@@ -35551,6 +35924,32 @@
               "file": "COMMAND.C",
               "line": 90,
               "text": "{ C127_COMMAND_CLICK_ON_CHAMPION_ICON_BOTTOM_RIGHT, 301, 319,  15,  28, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
             }
           ]
         },
@@ -35577,6 +35976,104 @@
               "file": "COMMAND.C",
               "line": 510,
               "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, CM2_VIEWPORT_RELATIVE, M665_ZONE_REINCARNATE, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 806,
+              "text": "if (P0598_i_Command == C161_COMMAND_CLICK_IN_PANEL_REINCARNATE) {"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C162",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 233,
+              "text": "{ C162_COMMAND_CLICK_IN_PANEL_CANCEL,      104, 217, 146, 156, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 217, 146, 156 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 238,
+              "text": "{ C162_COMMAND_CLICK_IN_PANEL_CANCEL,      108, 211, 141, 153, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 217, 146, 156 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 488,
+              "text": "{ C019_COMMAND_SET_LEADER_CHAMPION_3,                                  CM1_SCREEN_RELATIVE, C162_ZONE_CHAMPION_3_STATUS_BOX_NAME,                    0, 0, MASK0x0002_MOUSE_LEFT_BUT"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 511,
+              "text": "{ C162_COMMAND_CLICK_IN_PANEL_CANCEL,      CM2_VIEWPORT_RELATIVE, M666_ZONE_CANCEL,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 745,
+              "text": "if (P0598_i_Command == C162_COMMAND_CLICK_IN_PANEL_CANCEL) {"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C200_COMMAND_ENTRANCE_ENTER_DUNGEON",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 2438,
+              "text": "if (L1160_i_Command == C200_COMMAND_ENTRANCE_ENTER_DUNGEON) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 346,
+              "text": "{ C200_COMMAND_ENTRANCE_ENTER_DUNGEON,       CM1_SCREEN_RELATIVE, C407_ZONE_ENTRANCE_ENTER,   0, 0, MASK0x0002_MOUSE_LEFT_BUTTON   },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 557,
+              "text": "{ C200_COMMAND_ENTRANCE_ENTER_DUNGEON, 0x4400 },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 564,
+              "text": "{ C200_COMMAND_ENTRANCE_ENTER_DUNGEON, 0x000D },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 569,
+              "text": "{ C200_COMMAND_ENTRANCE_ENTER_DUNGEON, 0x001C },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 574,
+              "text": "{ C200_COMMAND_ENTRANCE_ENTER_DUNGEON, 0x001D },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 64,
+              "text": "{ C200_COMMAND_ENTRANCE_ENTER_DUNGEON,       244, 298,  45,  58, MASK0x0002_MOUSE_LEFT_BUTTON   },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C407_ZONE_ENTRANCE_ENTER",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 346,
+              "text": "{ C200_COMMAND_ENTRANCE_ENTER_DUNGEON,       CM1_SCREEN_RELATIVE, C407_ZONE_ENTRANCE_ENTER,   0, 0, MASK0x0002_MOUSE_LEFT_BUTTON   },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 347,
+              "text": "{ C201_COMMAND_ENTRANCE_ENTER_BONUS_DUNGEON, CM1_SCREEN_RELATIVE, C407_ZONE_ENTRANCE_ENTER,   0, 0, MASK0x0010_MOUSE_BONUS_DUNGEON },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3824,
+              "text": "#define C407_ZONE_ENTRANCE_ENTER                                407"
             }
           ]
         },
@@ -35603,6 +36100,63 @@
               "file": "MOVESENS.C",
               "line": 1502,
               "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 63,
+              "text": "void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 810,
+              "text": "for (AL0823_ui_StatisticIndex = C1_STATISTIC_STRENGTH; AL0823_ui_StatisticIndex <= C6_STATISTIC_ANTIFIRE; AL0823_ui_StatisticIndex++) { /* This loop does not affect Luck. When the "
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 151,
+              "text": "#define F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel   F282_xzzz_"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1990,
+              "text": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command);"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7851,
+              "text": "extern void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel("
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 704,
+              "text": "void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel("
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 431,
+              "text": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 496,
+              "text": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 5,
+              "text": "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor("
             }
           ]
         },
@@ -35634,6 +36188,151 @@
               "file": "DUNVIEW.C",
               "line": 525,
               "text": "unsigned char G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4] = { 96, 127, 35, 63 };"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G0298_B_NewGame",
+          "hits": [
+            {
+              "file": "BASE.C",
+              "line": 36,
+              "text": "BOOLEAN G0298_B_NewGame;"
+            },
+            {
+              "file": "BASE.C",
+              "line": 39,
+              "text": "BOOLEAN G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+            },
+            {
+              "file": "CHAMPRST.C",
+              "line": 20,
+              "text": "if (!G0298_B_NewGame) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2439,
+              "text": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2444,
+              "text": "G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2450,
+              "text": "G0298_B_NewGame = C000_MODE_LOAD_SAVED_GAME;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2067_i_ViewportScreenX",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 348,
+              "text": "P0752_i_X -= G2067_i_ViewportScreenX;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1122,
+              "text": "M704_ZONE_LEFT(L2283_ai_XYZ) += G2067_i_ViewportScreenX;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1409,
+              "text": "if (((P0722_i_X - G2067_i_ViewportScreenX) <= M705_ZONE_RIGHT(L2286_ai_XYZ)) && ((P0722_i_X - G2067_i_ViewportScreenX) >= M704_ZONE_LEFT(L2286_ai_XYZ)) && ((P0723_i_Y - G2068_i_Vie"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1412,
+              "text": "if (F0798_COMMAND_IsPointInZone(L2286_ai_XYZ, P0722_i_X - G2067_i_ViewportScreenX, P0723_i_Y - G2068_i_ViewportScreenY))"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1693,
+              "text": "int16_t G2067_i_ViewportScreenX = 0;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2068_i_ViewportScreenY",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 349,
+              "text": "P0753_i_Y -= G2068_i_ViewportScreenY;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1123,
+              "text": "M706_ZONE_TOP(L2283_ai_XYZ) += G2068_i_ViewportScreenY;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1409,
+              "text": "if (((P0722_i_X - G2067_i_ViewportScreenX) <= M705_ZONE_RIGHT(L2286_ai_XYZ)) && ((P0722_i_X - G2067_i_ViewportScreenX) >= M704_ZONE_LEFT(L2286_ai_XYZ)) && ((P0723_i_Y - G2068_i_Vie"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1412,
+              "text": "if (F0798_COMMAND_IsPointInZone(L2286_ai_XYZ, P0722_i_X - G2067_i_ViewportScreenX, P0723_i_Y - G2068_i_ViewportScreenY))"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1695,
+              "text": "int16_t G2068_i_ViewportScreenY = 31;"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1698,
+              "text": "int16_t G2068_i_ViewportScreenY = 33;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "M664_ZONE_RESURRECT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 509,
+              "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   CM2_VIEWPORT_RELATIVE, M664_ZONE_RESURRECT,   0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3941,
+              "text": "#define M664_ZONE_RESURRECT                                     572"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3980,
+              "text": "#define M664_ZONE_RESURRECT                                     570"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "M665_ZONE_REINCARNATE",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 510,
+              "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, CM2_VIEWPORT_RELATIVE, M665_ZONE_REINCARNATE, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3942,
+              "text": "#define M665_ZONE_REINCARNATE                                   573"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3981,
+              "text": "#define M665_ZONE_REINCARNATE                                   571"
             }
           ]
         }
@@ -35785,15 +36484,3132 @@
       ]
     },
     {
-      "pass": "172",
-      "status": "source-mentioned-unresolved",
-      "artifact_count": 1,
+      "pass": "169",
+      "status": "source-locked",
+      "artifact_count": 3,
       "artifacts": [
-        "parity-evidence/dm1_all_graphics_phase172_196_champion_mirror_presentation_state_batch.md"
+        "tools/pass169_resolve_redmcsb_anchor_gaps.py",
+        "parity-evidence/verification/pass169_redmcsb_anchor_gap_resolution/README.md",
+        "parity-evidence/verification/pass169_redmcsb_anchor_gap_resolution/manifest.json"
+      ],
+      "source_files": [
+        "ACTIDRAW.C",
+        "ANIMIMG.C",
+        "ATARIST.H",
+        "CHAMDRAW.C",
+        "CHAMPION.C",
+        "CLIKMENU.C",
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COMPILE.H",
+        "COORD.C",
+        "DATA.C",
+        "DEFS.H",
+        "DIALOG.C",
+        "DM.C",
+        "DRAWVIEW.C",
+        "DUNGEON.C",
+        "DUNVIEW.C",
+        "ENTRANCE.C",
+        "FMTOWNS.H",
+        "IIGS.H",
+        "IMAGE2.C",
+        "IMAGE3.C",
+        "IMAGE5.C",
+        "IO.C",
+        "MOVESENS.C",
+        "NEC816.C",
+        "OBJECT.C",
+        "PANEL.C",
+        "PC.H",
+        "PCGLB.H"
+      ],
+      "tokens": [
+        "C000_DERIVED_BITMAP_VIEWPORT",
+        "C001_COMMAND_TURN_LEFT",
+        "C002_ZONE_SCREEN",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C007_GRAPHIC_STATUS_BOX",
+        "C007_ZONE_VIEWPORT",
+        "C010_GRAPHIC_MENU_ACTION_AREA",
+        "C030_ICON_SCROLL_SCROLL_OPEN",
+        "C048_BYTE_WIDTH",
+        "C068_ZONE_TURN_LEFT",
+        "C069_ZONE_TURN_RIGHT",
+        "C070_ZONE_MOVE_FORWARD",
+        "C080",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C083_COMMAND_TOGGLE_INVENTORY_LEADER",
+        "C127",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "C146_COMMAND_WAKE_UP",
+        "C160",
+        "C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+        "C161",
+        "C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+        "C255_MAP_INDEX_ENTRANCE",
+        "F0021_MAIN_BlitToScreen",
+        "F0047_TEXT_MESSAGEAREA_PrintMessage",
+        "F0067_MOUSE_SetPointerToNormal",
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "F0127_DUNGEONVIEW_DrawSquare",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap",
+        "F0134_VIDEO_FillBitmap",
+        "F0275_SENSOR_IsTriggeredByClickOnWall",
+        "F0280_CHAMPION_AddCandidateChampionToParty",
+        "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+        "F0296_CHAMPION_DrawChangedObjectIcons",
+        "F0351_INVENTORY_DrawChampionSkillsAndStatistics",
+        "F0362_COMMAND_HighlightBoxEnable",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "F0437_STARTEND_DrawTitle",
+        "F0480_CACHE_ReleaseBlock",
+        "F0489_MEMORY_GetNativeBitmapOrGraphic",
+        "F0491_CACHE_IsDerivedBitmapInCache",
+        "F0492_CACHE_GetDerivedBitmap",
+        "F0493_CACHE_AddDerivedBitmap",
+        "F0606_AllocateMemForGraphic",
+        "F0625_GetZoneInitializedFromDimensions",
+        "F0638_GetZone",
+        "F0680_CopyPixelsToScreenWithoutTransparency",
+        "F0798_COMMAND_IsPointInZone",
+        "F097_lzzz_",
+        "F280_agzz_",
+        "F282_xzzz_",
+        "F296_aizz_",
+        "F8073_IsTandy1000ComputerDetected",
+        "F8076_IsVGAGraphicsDetected",
+        "F8077_IsEGAGraphicsDetected",
+        "F8078_strcpy",
+        "F8086_GetMenuChoice",
+        "G0296_puc_Bitmap_Viewport",
+        "G0309_i_PartyMapIndex"
+      ],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "ACTIDRAW.C",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ANIMIMG.C",
+          "hits": [
+            {
+              "file": "ANIMIMG.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ATARIST.H",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CHAMDRAW.C",
+          "hits": [
+            {
+              "file": "CHAMDRAW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CHAMPION.C",
+          "hits": [
+            {
+              "file": "CHAMPION.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CLIKMENU.C",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CLIKVIEW.C",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMPILE.H",
+          "hits": [
+            {
+              "file": "COMPILE.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COORD.C",
+          "hits": [
+            {
+              "file": "COORD.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DATA.C",
+          "hits": [
+            {
+              "file": "DATA.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DEFS.H",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DIALOG.C",
+          "hits": [
+            {
+              "file": "DIALOG.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DM.C",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DRAWVIEW.C",
+          "hits": [
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNGEON.C",
+          "hits": [
+            {
+              "file": "DUNGEON.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ENTRANCE.C",
+          "hits": [
+            {
+              "file": "ENTRANCE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "FMTOWNS.H",
+          "hits": [
+            {
+              "file": "FMTOWNS.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "IIGS.H",
+          "hits": [
+            {
+              "file": "IIGS.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C000_DERIVED_BITMAP_VIEWPORT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 2407,
+              "text": "#define C000_DERIVED_BITMAP_VIEWPORT                    0 /* Versions 1.x and 2.x: Used while drawing fields (graphics #73 to #74) and explosion patterns (graphics #351 to #359) ov"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 901,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 902,
+              "text": "L1315_puc_Bitmap_DialogPatch = F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 970,
+              "text": "F0493_CACHE_AddDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 971,
+              "text": "F0480_CACHE_ReleaseBlock(C000_DERIVED_BITMAP_VIEWPORT | MASK0x8000_DERIVED_BITMAP);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4453,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4461,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4464,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C001_COMMAND_TURN_LEFT",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 158,
+              "text": "if (P0734_i_Command == C001_COMMAND_TURN_LEFT) {"
+            },
+            {
+              "file": "CLIKMENU.C",
+              "line": 165,
+              "text": "F0362_COMMAND_HighlightBoxEnable((P0734_i_Command == C001_COMMAND_TURN_LEFT) ? C068_ZONE_TURN_LEFT : C069_ZONE_TURN_RIGHT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 108,
+              "text": "{ C001_COMMAND_TURN_LEFT,             234, 261, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2150,
+              "text": "if ((L1160_i_Command == C002_COMMAND_TURN_RIGHT) || (L1160_i_Command == C001_COMMAND_TURN_LEFT)) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 254,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x0088 }, /* Numeric pad 4 Atari ST: Code = 0x5200 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 274,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0xAB34 }, /* Numeric pad 4 Atari ST: Code = 0x5200 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 286,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x007F }, /* Del (0x7F) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 288,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x9B61 }, /* Shift Forward Arrow (<CSI> A) */"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C002_ZONE_SCREEN",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 404,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,        0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 412,
+              "text": "{ C011_COMMAND_CLOSE_INVENTORY,                                 CM1_SCREEN_RELATIVE,   C002_ZONE_SCREEN,                                 0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 455,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,   0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 458,
+              "text": "{ C148_COMMAND_UNFREEZE_GAME, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 459,
+              "text": "{ C148_COMMAND_UNFREEZE_GAME, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN, 0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 548,
+              "text": "{ C198_COMMAND_RENAME_SPACE,     CM1_SCREEN_RELATIVE,   C002_ZONE_SCREEN,           0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3280,
+              "text": "#define M518_FillScreenBlack()                                           F0733_FillZoneByIndex(C002_ZONE_SCREEN, C00_COLOR_BLACK)"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3748,
+              "text": "#define C002_ZONE_SCREEN                                          2"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C003_COMMAND_MOVE_FORWARD",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 256,
+              "text": "AL1118_ui_MovementArrowIndex = P0735_ui_Command - C003_COMMAND_MOVE_FORWARD;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 109,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2096,
+              "text": "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && ("
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2106,
+              "text": "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && ("
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2154,
+              "text": "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT)) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 255,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x000B }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 275,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0xAB35 }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 280,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x9B41 }, /* Up Arrow (<CSI>A) */"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "170",
+      "status": "source-locked",
+      "artifact_count": 3,
+      "artifacts": [
+        "tools/pass170_resolve_source_mentioned_unresolved.py",
+        "parity-evidence/verification/pass170_source_mentioned_unresolved_batch/README.md",
+        "parity-evidence/verification/pass170_source_mentioned_unresolved_batch/manifest.json"
+      ],
+      "source_files": [
+        "ACTIDRAW.C",
+        "ANIM.C",
+        "ATARIST.H",
+        "BASE.C",
+        "CEDT006.C",
+        "CEDTINCF.C",
+        "CHAMDRAW.C",
+        "CHAMPION.C",
+        "CLIKMENU.C",
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COORD.C",
+        "DATA.C",
+        "DEFS.H",
+        "DIALOG.C",
+        "DM.C",
+        "DRAWVIEW.C",
+        "DUNGEON.C",
+        "DUNVIEW.C",
+        "FMTOWNS.H",
+        "IIGS.H",
+        "IMAGE5.C",
+        "IO.C",
+        "MOVESENS.C",
+        "OBJECT.C",
+        "PANEL.C",
+        "REVIVE.C",
+        "STARTUP1.C",
+        "STARTUP2.C",
+        "TITLE.C"
+      ],
+      "tokens": [
+        "C000_DERIVED_BITMAP_VIEWPORT",
+        "C001_GRAPHIC_TITLE",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C007_ZONE_VIEWPORT",
+        "C010_GRAPHIC_MENU_ACTION_AREA",
+        "C020_COMMAND_CLICK_ON_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND",
+        "C030_ICON_SCROLL_SCROLL_OPEN",
+        "C048_BYTE_WIDTH",
+        "C070_ZONE_MOVE_FORWARD",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "C146_COMMAND_WAKE_UP",
+        "C210_COMMAND_CLICK_ON_DIALOG_CHOICE_1",
+        "C211_COMMAND_CLICK_ON_DIALOG_CHOICE_2",
+        "C211_ZONE_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND",
+        "C213_COMMAND_CLICK_ON_DIALOG_CHOICE_4",
+        "C255_MAP_INDEX_ENTRANCE",
+        "C456_ZONE_DIALOG_BOTTOM_BUTTON",
+        "C457_ZONE_DIALOG_TOP_BUTTON",
+        "C461_ZONE_DIALOG_BOTTOM_RIGHT_BUTTON",
+        "F0021_MAIN_BlitToScreen",
+        "F0067_MOUSE_SetPointerToNormal",
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "F0127_DUNGEONVIEW_DrawSquare",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap",
+        "F0134_VIDEO_FillBitmap",
+        "F0275_SENSOR_IsTriggeredByClickOnWall",
+        "F0280_CHAMPION_AddCandidateChampionToParty",
+        "F0296_CHAMPION_DrawChangedObjectIcons",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "F0437_STARTEND_DrawTitle",
+        "F0480_CACHE_ReleaseBlock",
+        "F0489_MEMORY_GetNativeBitmapOrGraphic",
+        "F0490_MEMORY_LoadDecompressAndExpandGraphic",
+        "F0491_CACHE_IsDerivedBitmapInCache",
+        "F0492_CACHE_GetDerivedBitmap",
+        "F0493_CACHE_AddDerivedBitmap",
+        "F0606_AllocateMemForGraphic",
+        "F0625_GetZoneInitializedFromDimensions",
+        "F0638_GetZone",
+        "F0763_LoadEndgameBitmapExpanded",
+        "F097_lzzz_",
+        "F280_agzz_",
+        "F296_aizz_",
+        "G0296_puc_Bitmap_Viewport",
+        "G0309_i_PartyMapIndex",
+        "G0411_i_LeaderIndex",
+        "G2007_ai_XYZ",
+        "G2075_ObjectIconWidth",
+        "G2076_ObjectIconHeight",
+        "G2185_Unreferenced",
+        "G4055_s_LeaderHandObject",
+        "M039_TYPE",
+        "M100_PIXEL_WIDTH",
+        "M101_PIXEL_HEIGHT",
+        "M103_BITMAP_BYTE_COUNT",
+        "M520_F0021_MAIN_BlitToScreen",
+        "M526_WaitVerticalBlank",
+        "M705_ZONE_RIGHT"
+      ],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "ACTIDRAW.C",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ANIM.C",
+          "hits": [
+            {
+              "file": "ANIM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ATARIST.H",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "BASE.C",
+          "hits": [
+            {
+              "file": "BASE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT006.C",
+          "hits": [
+            {
+              "file": "CEDT006.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINCF.C",
+          "hits": [
+            {
+              "file": "CEDTINCF.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CHAMDRAW.C",
+          "hits": [
+            {
+              "file": "CHAMDRAW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CHAMPION.C",
+          "hits": [
+            {
+              "file": "CHAMPION.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CLIKMENU.C",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CLIKVIEW.C",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COORD.C",
+          "hits": [
+            {
+              "file": "COORD.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DATA.C",
+          "hits": [
+            {
+              "file": "DATA.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DEFS.H",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DIALOG.C",
+          "hits": [
+            {
+              "file": "DIALOG.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DM.C",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DRAWVIEW.C",
+          "hits": [
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNGEON.C",
+          "hits": [
+            {
+              "file": "DUNGEON.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "FMTOWNS.H",
+          "hits": [
+            {
+              "file": "FMTOWNS.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C000_DERIVED_BITMAP_VIEWPORT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 2407,
+              "text": "#define C000_DERIVED_BITMAP_VIEWPORT                    0 /* Versions 1.x and 2.x: Used while drawing fields (graphics #73 to #74) and explosion patterns (graphics #351 to #359) ov"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 901,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 902,
+              "text": "L1315_puc_Bitmap_DialogPatch = F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 970,
+              "text": "F0493_CACHE_AddDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 971,
+              "text": "F0480_CACHE_ReleaseBlock(C000_DERIVED_BITMAP_VIEWPORT | MASK0x8000_DERIVED_BITMAP);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4453,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4461,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4464,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C001_GRAPHIC_TITLE",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 2165,
+              "text": "#define C001_GRAPHIC_TITLE                              1"
+            },
+            {
+              "file": "TITLE.C",
+              "line": 310,
+              "text": "F0490_MEMORY_LoadDecompressAndExpandGraphic(C001_GRAPHIC_TITLE, L1384_puc_Bitmap_Title, 0, 0);"
+            },
+            {
+              "file": "TITLE.C",
+              "line": 424,
+              "text": "L1384_puc_Bitmap_Title = F0763_LoadEndgameBitmapExpanded(C001_GRAPHIC_TITLE);"
+            },
+            {
+              "file": "TITLE.C",
+              "line": 94,
+              "text": "F0490_MEMORY_LoadDecompressAndExpandGraphic(C001_GRAPHIC_TITLE, L1384_puc_Bitmap_Title = (unsigned char*)L1383_l_Bitmap_TitleSteps, 0, 0);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C003_COMMAND_MOVE_FORWARD",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 256,
+              "text": "AL1118_ui_MovementArrowIndex = P0735_ui_Command - C003_COMMAND_MOVE_FORWARD;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 109,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2096,
+              "text": "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && ("
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2106,
+              "text": "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && ("
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2154,
+              "text": "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT)) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 255,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x000B }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 275,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0xAB35 }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 280,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x9B41 }, /* Up Arrow (<CSI>A) */"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007_ZONE_VIEWPORT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 454,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3752,
+              "text": "#define C007_ZONE_VIEWPORT                                        7"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1056,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1067,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 842,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 847,
+              "text": "F0638_GetZone(C007_ZONE_VIEWPORT, L2413_ai_Box);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 850,
+              "text": "F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "171",
+      "status": "source-mentioned-unresolved",
+      "artifact_count": 3,
+      "artifacts": [
+        "tools/pass171_redmcsb_source_lock_closure.py",
+        "parity-evidence/verification/pass171_redmcsb_source_lock_closure/README.md",
+        "parity-evidence/verification/pass171_redmcsb_source_lock_closure/manifest.json"
       ],
       "source_files": [],
       "tokens": [],
       "anchors": []
+    },
+    {
+      "pass": "172",
+      "status": "source-locked",
+      "artifact_count": 4,
+      "artifacts": [
+        "tools/pass172_redmcsb_patch_gap_inventory.py",
+        "parity-evidence/dm1_all_graphics_phase172_196_champion_mirror_presentation_state_batch.md",
+        "parity-evidence/verification/pass172_redmcsb_patch_gap_inventory/README.md",
+        "parity-evidence/verification/pass172_redmcsb_patch_gap_inventory/manifest.json"
+      ],
+      "source_files": [
+        "ACTIDRAW.C",
+        "ANIM.C",
+        "ANIMSND.C",
+        "ANIMTOWN.C",
+        "BASE.C",
+        "BLITFILL.C",
+        "CASTER.C",
+        "CEDT001.C",
+        "CEDT007.C",
+        "CEDT012.C",
+        "CEDT013.C",
+        "CEDT017.C",
+        "CEDT023.C",
+        "CEDT026.C",
+        "CEDT027.C",
+        "CEDT030.C",
+        "CEDTINC1.C",
+        "CEDTINC4.C",
+        "CEDTINC8.C",
+        "CEDTINCD.C",
+        "CEDTINCI.C",
+        "CEDTINCR.C",
+        "CEDTTXT.C",
+        "CHAMDRAW.C",
+        "CHAMPION.C",
+        "CHEST.C",
+        "CLIKMENU.C",
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COMPILE.H"
+      ],
+      "tokens": [
+        "C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA",
+        "C007",
+        "C030_ICON_SCROLL_SCROLL_OPEN",
+        "C048_BYTE_WIDTH",
+        "C080",
+        "C112_BYTE_WIDTH_VIEWPORT",
+        "C127",
+        "C136_HEIGHT_VIEWPORT",
+        "C145_COMMAND_REST",
+        "C160",
+        "C161",
+        "C801_ZONE_STAIRS_UP_FRONT_D3C",
+        "F0033_OBJECT_GetIconIndex",
+        "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap",
+        "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF",
+        "F0108_DUNGEONVIEW_DrawFloorOrnament",
+        "F0109_DUNGEONVIEW_DrawDoorOrnament",
+        "F0132_VIDEO_Blit",
+        "F0212_PROJECTILE_Create",
+        "F0238_TIMELINE_AddEvent_GetEventIndex_CPSE",
+        "F0286_CHAMPION_GetTargetChampionIndex",
+        "F0292_CHAMPION_DrawState",
+        "F0296_CHAMPION_DrawChangedObjectIcons",
+        "F0297_CHAMPION_PutObjectInLeaderHand",
+        "F0300_CHAMPION_GetObjectRemovedFromSlot",
+        "F0301_CHAMPION_AddObjectInSlot",
+        "F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage",
+        "F0326_CHAMPION_ShootProjectile",
+        "F0333_INVENTORY_OpenAndDrawChest",
+        "F0338_INVENTORY_DecreaseTorchesLightPower_CPSE",
+        "F0361_COMMAND_ProcessKeyPress",
+        "F0436_STARTEND_FadeToPalette",
+        "F0492_CACHE_GetDerivedBitmap",
+        "F2165_PrintErrorMessage",
+        "F7020_RemoveObjectModifiersFromStatistics",
+        "F7090_MakeNewAdventure",
+        "G0054_ai_Graphic562_Box_ChampionIcons",
+        "G0106_auc_Graphic558_Box_ThievesEye_ViewportVisibleArea",
+        "G0107_auc_Graphic558_Box_ThievesEye_VisibleArea",
+        "G0289_i_DungeonView_ChampionPortraitOrdinal",
+        "G0290_T_DungeonView_InscriptionThing",
+        "G0293_ai_FuzzyBits_CPSE",
+        "G0296_puc_Bitmap_Viewport",
+        "G0299_ui_CandidateChampionOrdinal",
+        "G0302_B_GameWon",
+        "G0305_ui_PartyChampionCount",
+        "G0308_i_PartyDirection",
+        "G0313_ul_GameTime",
+        "G0435_B_CommandQueueLocked",
+        "G0506_ui_ActingChampionOrdinal",
+        "G0509_B_ActionAreaContainsIcons",
+        "G0514_i_MagicCasterChampionIndex",
+        "G0575_ac_SavedGameFileName",
+        "G0733_ps_Msg",
+        "G2247_CommandQueue",
+        "G7004_SavedGameFileHandle",
+        "M000_INDEX_TO_ORDINAL",
+        "M004_RANDOM",
+        "M021_NORMALIZE",
+        "M026_CHAMPION_ICON_INDEX"
+      ],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "ACTIDRAW.C",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ANIM.C",
+          "hits": [
+            {
+              "file": "ANIM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ANIMSND.C",
+          "hits": [
+            {
+              "file": "ANIMSND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ANIMTOWN.C",
+          "hits": [
+            {
+              "file": "ANIMTOWN.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "BASE.C",
+          "hits": [
+            {
+              "file": "BASE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "BLITFILL.C",
+          "hits": [
+            {
+              "file": "BLITFILL.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CASTER.C",
+          "hits": [
+            {
+              "file": "CASTER.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT001.C",
+          "hits": [
+            {
+              "file": "CEDT001.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT007.C",
+          "hits": [
+            {
+              "file": "CEDT007.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT012.C",
+          "hits": [
+            {
+              "file": "CEDT012.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT013.C",
+          "hits": [
+            {
+              "file": "CEDT013.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT017.C",
+          "hits": [
+            {
+              "file": "CEDT017.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT023.C",
+          "hits": [
+            {
+              "file": "CEDT023.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT026.C",
+          "hits": [
+            {
+              "file": "CEDT026.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT027.C",
+          "hits": [
+            {
+              "file": "CEDT027.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDT030.C",
+          "hits": [
+            {
+              "file": "CEDT030.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINC1.C",
+          "hits": [
+            {
+              "file": "CEDTINC1.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINC4.C",
+          "hits": [
+            {
+              "file": "CEDTINC4.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINC8.C",
+          "hits": [
+            {
+              "file": "CEDTINC8.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINCD.C",
+          "hits": [
+            {
+              "file": "CEDTINCD.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 2409,
+              "text": "#define C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA    1 /* Used to store the visible area behind hole in wall or door (96x95 pixels) */"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 7790,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 7792,
+              "text": "F0132_VIDEO_Blit(G0296_puc_Bitmap_Viewport, F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0107_auc_Graphic558_Box_ThievesEye_VisibleArea, M768_BOX_LE"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 7795,
+              "text": "F0132_VIDEO_Blit(G0296_puc_Bitmap_Viewport, F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0107_auc_Graphic558_Box_ThievesEye_VisibleArea, M768_BOX_LE"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 7799,
+              "text": "F0132_VIDEO_Blit(L0219_puc_Bitmap, F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0107_auc_Graphic558_Box_ThievesEye_VisibleArea, 0, 0, C048_BYTE_WIDT"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 7802,
+              "text": "F0132_VIDEO_Blit(L0219_puc_Bitmap, F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0107_auc_Graphic558_Box_ThievesEye_VisibleArea, 0, 0, C048_BYTE_WIDT"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 7805,
+              "text": "F0615_CopyBitmapDimensions(L0219_puc_Bitmap, L2491_puc_Bitmap = F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA));"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 7848,
+              "text": "F0132_VIDEO_Blit(F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0296_puc_Bitmap_Viewport, G0106_auc_Graphic558_Box_ThievesEye_ViewportVisibleArea, 0, "
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 358,
+              "text": "M721_F0041_TEXT_PrintWithTrailingSpaces(G0348_Bitmap_Screen, C160_BYTE_WIDTH_SCREEN, 235, 83, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX(G0506_ui_ActingC"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 361,
+              "text": "F0041_TEXT_PrintWithTrailingSpaces(G0348_Bitmap_Screen, C160_BYTE_WIDTH_SCREEN, 235, 83, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX(G0506_ui_ActingChampi"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 364,
+              "text": "M722_F0768_TEXT_PrintToZoneWithTrailingSpaces(G0348_Bitmap_Screen, G2071_C320_ScreenPixelWidth, 80, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX((unsigned "
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 552,
+              "text": "if ((L0895_i_IconIndex >= C004_ICON_WEAPON_TORCH_UNLIT) && (L0895_i_IconIndex <= C007_ICON_WEAPON_TORCH_LIT)) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2180,
+              "text": "if ((L1160_i_Command >= C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0) && (L1160_i_Command <= C011_COMMAND_CLOSE_INVENTORY)) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2181,
+              "text": "if ((((AL1159_i_ChampionIndex = L1160_i_Command - C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0) == C04_CHAMPION_CLOSE_INVENTORY) || (AL1159_i_ChampionIndex < G0305_ui_PartyChampionCoun"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 245,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 0x00B1 }, /* F1 (<CSI>1~) Atari ST: Code = 0x3B00 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 265,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 0x9B30 }, /* F1 (<CSI>1~) Atari ST: Code = 0x3B00 */"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C030_ICON_SCROLL_SCROLL_OPEN",
+          "hits": [
+            {
+              "file": "CHAMDRAW.C",
+              "line": 626,
+              "text": "|| (L0853_i_IconIndex == C030_ICON_SCROLL_SCROLL_OPEN) /* BUG2_00 The closed scroll icon is drawn when the scroll is open. If you open the inventory of a champion and place a scrol"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 547,
+              "text": "if ((L0895_i_IconIndex >= C030_ICON_SCROLL_SCROLL_OPEN) && (L0895_i_IconIndex <= C031_ICON_SCROLL_SCROLL_CLOSED)) {"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 573,
+              "text": "if ((L0895_i_IconIndex >= C030_ICON_SCROLL_SCROLL_OPEN) && (L0895_i_IconIndex <= C031_ICON_SCROLL_SCROLL_CLOSED)) {"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 626,
+              "text": "if ((L0899_i_IconIndex >= C030_ICON_SCROLL_SCROLL_OPEN) && (L0899_i_IconIndex <= C031_ICON_SCROLL_SCROLL_CLOSED)) {"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 637,
+              "text": "((L0899_i_IconIndex == C144_ICON_CONTAINER_CHEST_CLOSED) || ((L0899_i_IconIndex >= C030_ICON_SCROLL_SCROLL_OPEN) && (L0899_i_IconIndex <= C031_ICON_SCROLL_SCROLL_CLOSED)))) {"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 1906,
+              "text": "#define C030_ICON_SCROLL_SCROLL_OPEN                   30"
+            },
+            {
+              "file": "OBJECT.C",
+              "line": 181,
+              "text": "case C030_ICON_SCROLL_SCROLL_OPEN:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C048_BYTE_WIDTH",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 125,
+              "text": "L1175_i_ByteWidth = C048_BYTE_WIDTH;"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 352,
+              "text": "M520_F0021_MAIN_BlitToScreen(F0489_MEMORY_GetNativeBitmapOrGraphic(C010_GRAPHIC_MENU_ACTION_AREA), L1187_pi_Box, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 45);"
+            },
+            {
+              "file": "CASTER.C",
+              "line": 24,
+              "text": "M520_F0021_MAIN_BlitToScreen(F0489_MEMORY_GetNativeBitmapOrGraphic(C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND), G0000_ai_Graphic562_Box_SpellArea, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSP"
+            },
+            {
+              "file": "CASTER.C",
+              "line": 54,
+              "text": "M520_F0021_MAIN_BlitToScreen(G0515_aui_Bitmap_SpellAreaLine, G1072_ai_Box_SpellAreaLine2, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 12);"
+            },
+            {
+              "file": "CASTER.C",
+              "line": 57,
+              "text": "M520_F0021_MAIN_BlitToScreen(G1069_puc_Bitmap_SpellAreaLine, G1072_ai_Box_SpellAreaLine2, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 12);"
+            },
+            {
+              "file": "CASTER.C",
+              "line": 70,
+              "text": "M520_F0021_MAIN_BlitToScreen(G0515_aui_Bitmap_SpellAreaLine, G1073_ai_Box_SpellAreaLine3, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 12);"
+            },
+            {
+              "file": "CASTER.C",
+              "line": 73,
+              "text": "M520_F0021_MAIN_BlitToScreen(G1069_puc_Bitmap_SpellAreaLine, G1073_ai_Box_SpellAreaLine3, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 12);"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 2475,
+              "text": "#define C048_BYTE_WIDTH           48"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "173",
+      "status": "source-locked",
+      "artifact_count": 5,
+      "artifacts": [
+        "tools/pass173_source_portrait_route_gate_probe.py",
+        "parity-evidence/verification/pass173_redmcsb_christophe_patch_packet/README.md",
+        "parity-evidence/verification/pass173_source_portrait_route_gate_probe/README.md",
+        "parity-evidence/verification/pass173_redmcsb_christophe_patch_packet/manifest.json",
+        "parity-evidence/verification/pass173_source_portrait_route_gate_probe/manifest.json"
+      ],
+      "source_files": [
+        "CHAMDRAW.C",
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COORD.C",
+        "DUNGEON.C",
+        "DUNVIEW.C",
+        "ENDGAME.C",
+        "ENTRANCE.C",
+        "MOVESENS.C",
+        "REVIVE.C",
+        "TITLE.C"
+      ],
+      "tokens": [
+        "C007",
+        "C007_ZONE_VIEWPORT",
+        "C080",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C127",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "C160",
+        "C161",
+        "F0275_SENSOR_IsTriggeredByClickOnWall",
+        "F0280_CHAMPION_AddCandidateChampionToParty",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "G0289_i_DungeonView_ChampionPortraitOrdinal",
+        "M635_ZONE_PORTRAIT_ON_WALL"
+      ],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "CHAMDRAW.C",
+          "hits": [
+            {
+              "file": "CHAMDRAW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CLIKVIEW.C",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COORD.C",
+          "hits": [
+            {
+              "file": "COORD.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNGEON.C",
+          "hits": [
+            {
+              "file": "DUNGEON.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ENDGAME.C",
+          "hits": [
+            {
+              "file": "ENDGAME.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "ENTRANCE.C",
+          "hits": [
+            {
+              "file": "ENTRANCE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "REVIVE.C",
+          "hits": [
+            {
+              "file": "REVIVE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "TITLE.C",
+          "hits": [
+            {
+              "file": "TITLE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 358,
+              "text": "M721_F0041_TEXT_PrintWithTrailingSpaces(G0348_Bitmap_Screen, C160_BYTE_WIDTH_SCREEN, 235, 83, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX(G0506_ui_ActingC"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 361,
+              "text": "F0041_TEXT_PrintWithTrailingSpaces(G0348_Bitmap_Screen, C160_BYTE_WIDTH_SCREEN, 235, 83, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX(G0506_ui_ActingChampi"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 364,
+              "text": "M722_F0768_TEXT_PrintToZoneWithTrailingSpaces(G0348_Bitmap_Screen, G2071_C320_ScreenPixelWidth, 80, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX((unsigned "
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2180,
+              "text": "if ((L1160_i_Command >= C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0) && (L1160_i_Command <= C011_COMMAND_CLOSE_INVENTORY)) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2181,
+              "text": "if ((((AL1159_i_ChampionIndex = L1160_i_Command - C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0) == C04_CHAMPION_CLOSE_INVENTORY) || (AL1159_i_ChampionIndex < G0305_ui_PartyChampionCoun"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 245,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 0x00B1 }, /* F1 (<CSI>1~) Atari ST: Code = 0x3B00 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 265,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 0x9B30 }, /* F1 (<CSI>1~) Atari ST: Code = 0x3B00 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 376,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0,         CM1_SCREEN_RELATIVE, C151_ZONE_CHAMPION_0_STATUS_BOX_NAME_HANDS,   0,   0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007_ZONE_VIEWPORT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 454,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3752,
+              "text": "#define C007_ZONE_VIEWPORT                                        7"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127",
+          "hits": [
+            {
+              "file": "CEDT004.C",
+              "line": 230,
+              "text": "L3855_i_ = C127_OBJECT_INFO_INDEX_FIRST_JUNK;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 390,
+              "text": "{ C127_COMMAND_CLICK_ON_CHAMPION_ICON_BOTTOM_RIGHT, CM1_SCREEN_RELATIVE, C115_ZONE_CHAMPION_ICON_BOTTOM_RIGHT,         0,   0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 90,
+              "text": "{ C127_COMMAND_CLICK_ON_CHAMPION_ICON_BOTTOM_RIGHT, 301, 319,  15,  28, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 1152,
+              "text": "return C127_OBJECT_INFO_INDEX_FIRST_JUNK + ((JUNK*)L0240_ps_Generic)->Type;"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 533,
+              "text": "C127_OBJECT_INFO_INDEX_FIRST_JUNK + C25_JUNK_BOULDER,"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 534,
+              "text": "C127_OBJECT_INFO_INDEX_FIRST_JUNK + C25_JUNK_BOULDER | MASK0x8000_RANDOM_DROP,"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 538,
+              "text": "C127_OBJECT_INFO_INDEX_FIRST_JUNK + C35_JUNK_DRUMSTICK_SHANK,"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C161",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 232,
+              "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, 163, 217,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 163, 217,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 237,
+              "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, 161, 211,  90, 138, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 163, 217,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 487,
+              "text": "{ C018_COMMAND_SET_LEADER_CHAMPION_2,                                  CM1_SCREEN_RELATIVE, C161_ZONE_CHAMPION_2_STATUS_BOX_NAME,                    0, 0, MASK0x0002_MOUSE_LEFT_BUT"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 510,
+              "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, CM2_VIEWPORT_RELATIVE, M665_ZONE_REINCARNATE, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 806,
+              "text": "if (P0598_i_Command == C161_COMMAND_CLICK_IN_PANEL_REINCARNATE) {"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0275_SENSOR_IsTriggeredByClickOnWall",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 146,
+              "text": "#define F0275_SENSOR_IsTriggeredByClickOnWall                                     F275_aszz_"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 25,
+              "text": "G0321_B_StopWaitingForPlayerInput = F0275_SENSOR_IsTriggeredByClickOnWall(L1135_ui_MapX, L1136_ui_MapY, M018_OPPOSITE(G0308_i_PartyDirection));"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 1266,
+              "text": "#define C001_SENSOR_WALL_ORNAMENT_CLICK                                               1 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1309,
+              "text": "BOOLEAN F0275_SENSOR_IsTriggeredByClickOnWall("
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0280_CHAMPION_AddCandidateChampionToParty",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 150,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F280_agzz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 542,
+              "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7845,
+              "text": "extern void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1502,
+              "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 63,
+              "text": "void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 810,
+              "text": "for (AL0823_ui_StatisticIndex = C1_STATISTIC_STRENGTH; AL0823_ui_StatisticIndex <= C6_STATISTIC_ANTIFIRE; AL0823_ui_StatisticIndex++) { /* This loop does not affect Luck. When the "
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 431,
+              "text": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 496,
+              "text": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 5,
+              "text": "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor("
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 311,
+              "text": "void F0377_COMMAND_ProcessType80_ClickInDungeonView("
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2323,
+              "text": "F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 8293,
+              "text": "extern void F0377_COMMAND_ProcessType80_ClickInDungeonView("
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G0289_i_DungeonView_ChampionPortraitOrdinal",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 5662,
+              "text": "extern int16_t G0289_i_DungeonView_ChampionPortraitOrdinal;"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 1022,
+              "text": "int16_t G0289_i_DungeonView_ChampionPortraitOrdinal;"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2558,
+              "text": "G0289_i_DungeonView_ChampionPortraitOrdinal = 0; /* BUG0_75 Multiple champion portraits are drawn (one at a time) then the game crashes. This variable is only reset to 0 when at le"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2612,
+              "text": "G0289_i_DungeonView_ChampionPortraitOrdinal = M000_INDEX_TO_ORDINAL(M040_DATA(L0308_ps_Sensor));"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3913,
+              "text": "if ((P0117_i_ViewWallIndex == M587_VIEW_WALL_D1C_FRONT) && G0289_i_DungeonView_ChampionPortraitOrdinal--) { /* BUG0_05 A champion portrait sensor on a wall square is visible on all"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3916,
+              "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3919,
+              "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3925,
+              "text": "if (G0289_i_DungeonView_ChampionPortraitOrdinal--) {"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "M635_ZONE_PORTRAIT_ON_WALL",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 4099,
+              "text": "#define M635_ZONE_PORTRAIT_ON_WALL                              733"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 4135,
+              "text": "#define M635_ZONE_PORTRAIT_ON_WALL                              737"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3928,
+              "text": "F0654_Call_F0132_VIDEO_Blit(M772_CAST_PC(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS)), M772_CAST_PC(G0296_puc_Bitmap_Viewport), F0635_(NULL, L2454_ai_XYZ"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "174",
+      "status": "source-locked",
+      "artifact_count": 3,
+      "artifacts": [
+        "tools/pass174_redmcsb_c080_delivery_probe.py",
+        "parity-evidence/verification/pass174_redmcsb_c080_delivery_probe/README.md",
+        "parity-evidence/verification/pass174_redmcsb_c080_delivery_probe/manifest.json"
+      ],
+      "source_files": [
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COORD.C",
+        "DUNVIEW.C",
+        "MOVESENS.C"
+      ],
+      "tokens": [
+        "C007",
+        "C007_ZONE_VIEWPORT",
+        "C080",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0275_SENSOR_IsTriggeredByClickOnWall",
+        "F0280_CHAMPION_AddCandidateChampionToParty",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "G2067_i_ViewportScreenX",
+        "G2068_i_ViewportScreenY"
+      ],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "CLIKVIEW.C",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COORD.C",
+          "hits": [
+            {
+              "file": "COORD.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 358,
+              "text": "M721_F0041_TEXT_PrintWithTrailingSpaces(G0348_Bitmap_Screen, C160_BYTE_WIDTH_SCREEN, 235, 83, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX(G0506_ui_ActingC"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 361,
+              "text": "F0041_TEXT_PrintWithTrailingSpaces(G0348_Bitmap_Screen, C160_BYTE_WIDTH_SCREEN, 235, 83, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX(G0506_ui_ActingChampi"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 364,
+              "text": "M722_F0768_TEXT_PrintToZoneWithTrailingSpaces(G0348_Bitmap_Screen, G2071_C320_ScreenPixelWidth, 80, C00_COLOR_BLACK, C04_COLOR_CYAN, M516_CHAMPIONS[M001_ORDINAL_TO_INDEX((unsigned "
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2180,
+              "text": "if ((L1160_i_Command >= C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0) && (L1160_i_Command <= C011_COMMAND_CLOSE_INVENTORY)) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2181,
+              "text": "if ((((AL1159_i_ChampionIndex = L1160_i_Command - C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0) == C04_CHAMPION_CLOSE_INVENTORY) || (AL1159_i_ChampionIndex < G0305_ui_PartyChampionCoun"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 245,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 0x00B1 }, /* F1 (<CSI>1~) Atari ST: Code = 0x3B00 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 265,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0, 0x9B30 }, /* F1 (<CSI>1~) Atari ST: Code = 0x3B00 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 376,
+              "text": "{ C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0,         CM1_SCREEN_RELATIVE, C151_ZONE_CHAMPION_0_STATUS_BOX_NAME_HANDS,   0,   0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007_ZONE_VIEWPORT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 454,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3752,
+              "text": "#define C007_ZONE_VIEWPORT                                        7"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0275_SENSOR_IsTriggeredByClickOnWall",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 146,
+              "text": "#define F0275_SENSOR_IsTriggeredByClickOnWall                                     F275_aszz_"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 25,
+              "text": "G0321_B_StopWaitingForPlayerInput = F0275_SENSOR_IsTriggeredByClickOnWall(L1135_ui_MapX, L1136_ui_MapY, M018_OPPOSITE(G0308_i_PartyDirection));"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 1266,
+              "text": "#define C001_SENSOR_WALL_ORNAMENT_CLICK                                               1 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1309,
+              "text": "BOOLEAN F0275_SENSOR_IsTriggeredByClickOnWall("
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0280_CHAMPION_AddCandidateChampionToParty",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 150,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F280_agzz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 542,
+              "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7845,
+              "text": "extern void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1502,
+              "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 311,
+              "text": "void F0377_COMMAND_ProcessType80_ClickInDungeonView("
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2323,
+              "text": "F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 8293,
+              "text": "extern void F0377_COMMAND_ProcessType80_ClickInDungeonView("
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2067_i_ViewportScreenX",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 348,
+              "text": "P0752_i_X -= G2067_i_ViewportScreenX;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1122,
+              "text": "M704_ZONE_LEFT(L2283_ai_XYZ) += G2067_i_ViewportScreenX;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1409,
+              "text": "if (((P0722_i_X - G2067_i_ViewportScreenX) <= M705_ZONE_RIGHT(L2286_ai_XYZ)) && ((P0722_i_X - G2067_i_ViewportScreenX) >= M704_ZONE_LEFT(L2286_ai_XYZ)) && ((P0723_i_Y - G2068_i_Vie"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1412,
+              "text": "if (F0798_COMMAND_IsPointInZone(L2286_ai_XYZ, P0722_i_X - G2067_i_ViewportScreenX, P0723_i_Y - G2068_i_ViewportScreenY))"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1693,
+              "text": "int16_t G2067_i_ViewportScreenX = 0;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2068_i_ViewportScreenY",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 349,
+              "text": "P0753_i_Y -= G2068_i_ViewportScreenY;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1123,
+              "text": "M706_ZONE_TOP(L2283_ai_XYZ) += G2068_i_ViewportScreenY;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1409,
+              "text": "if (((P0722_i_X - G2067_i_ViewportScreenX) <= M705_ZONE_RIGHT(L2286_ai_XYZ)) && ((P0722_i_X - G2067_i_ViewportScreenX) >= M704_ZONE_LEFT(L2286_ai_XYZ)) && ((P0723_i_Y - G2068_i_Vie"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1412,
+              "text": "if (F0798_COMMAND_IsPointInZone(L2286_ai_XYZ, P0722_i_X - G2067_i_ViewportScreenX, P0723_i_Y - G2068_i_ViewportScreenY))"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1695,
+              "text": "int16_t G2068_i_ViewportScreenY = 31;"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1698,
+              "text": "int16_t G2068_i_ViewportScreenY = 33;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "175",
+      "status": "source-locked",
+      "artifact_count": 1,
+      "artifacts": [
+        "parity-evidence/verification/pass175_redmcsb_c080_no_delta_blocker_audit/README.md"
+      ],
+      "source_files": [
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COORD.C",
+        "DUNVIEW.C",
+        "MOVESENS.C"
+      ],
+      "tokens": [
+        "C000_SENSOR_DISABLED",
+        "C002_ZONE_SCREEN",
+        "C004_COMMAND_MOVE_RIGHT",
+        "C005_COMMAND_MOVE_BACKWARD",
+        "C007_ZONE_VIEWPORT",
+        "C026_GRAPHIC_CHAMPION_PORTRAITS",
+        "C071_ZONE_MOVE_RIGHT",
+        "C072_ZONE_MOVE_BACKWARD",
+        "C080",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C083_COMMAND_TOGGLE_INVENTORY_LEADER",
+        "C112_BYTE_WIDTH_VIEWPORT",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "C128_BYTE_WIDTH",
+        "C136_HEIGHT_VIEWPORT",
+        "C146_COMMAND_WAKE_UP",
+        "F0132_VIDEO_Blit",
+        "F0161_DUNGEON_GetSquareFirstThing",
+        "F0280_CHAMPION_AddCandidateChampionToParty",
+        "F0361_COMMAND_ProcessKeyPress",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+        "F0376_COMMAND_IsPointInBox",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "F0489_MEMORY_GetNativeBitmapOrGraphic",
+        "F0654_Call_F0132_VIDEO_Blit",
+        "F0798_COMMAND_IsPointInZone",
+        "G0107_auc_Graphic558_Box_ThievesEye_VisibleArea",
+        "G0108_auc_Graphic558_Box_ThievesEye_HoleInDoorFrame",
+        "G0109_auc_Graphic558_Box_ChampionPortraitOnWall",
+        "G0110_auc_Graphic558_Frame_StairsUpFront_D3L",
+        "G0111_auc_Graphic558_Frame_StairsUpFront_D3C",
+        "G0284_apuc_ThingData",
+        "G0289_i_DungeonView_ChampionPortraitOrdinal",
+        "G0291_aauc_DungeonViewClickableBoxes",
+        "G0296_puc_Bitmap_Viewport",
+        "G0411_i_LeaderIndex",
+        "G0415_ui_LeaderEmptyHanded",
+        "G0435_B_CommandQueueLocked",
+        "G0450_as_Graphic561_PrimaryMouseInput_PartyResting",
+        "G2067_i_ViewportScreenX",
+        "G2068_i_ViewportScreenY",
+        "G2078_C32_PortraitWidth",
+        "G2079_C29_PortraitHeight",
+        "G2210_aai_XYZ_DungeonViewClickable",
+        "M013_INDEX",
+        "M039_TYPE",
+        "M635_ZONE_PORTRAIT_ON_WALL",
+        "M772_CAST_PC"
+      ],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "CLIKVIEW.C",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COORD.C",
+          "hits": [
+            {
+              "file": "COORD.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C000_SENSOR_DISABLED",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1256,
+              "text": "#define C000_SENSOR_DISABLED                                                          0 /* Never triggered, may be used for a floor or wall ornament */"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1390,
+              "text": "if ((L0757_ui_SensorType = M039_TYPE(L0755_ps_Sensor)) == C000_SENSOR_DISABLED)"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1660,
+              "text": "if (M039_TYPE(L0769_ps_Sensor) == C000_SENSOR_DISABLED)"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C002_ZONE_SCREEN",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 404,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,        0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 412,
+              "text": "{ C011_COMMAND_CLOSE_INVENTORY,                                 CM1_SCREEN_RELATIVE,   C002_ZONE_SCREEN,                                 0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 455,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,   0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 458,
+              "text": "{ C148_COMMAND_UNFREEZE_GAME, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 459,
+              "text": "{ C148_COMMAND_UNFREEZE_GAME, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN, 0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 548,
+              "text": "{ C198_COMMAND_RENAME_SPACE,     CM1_SCREEN_RELATIVE,   C002_ZONE_SCREEN,           0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C004_COMMAND_MOVE_RIGHT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 113,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,            291, 318, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 259,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,    0x0015 }, /* Numeric pad 3 Atari ST: Code = 0x4D00. Remaining entries below not present */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 279,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,    0xAB33 }, /* Numeric pad 3 Atari ST: Code = 0x4D00. Remaining entries below not present */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 284,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,    0x9B43 }, /* Forward Arrow (<CSI>C) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 291,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,    0x9B6F }, /* Shift Help (<CSI>?~) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 296,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,    0x9B43 }, /* Forward Arrow (<CSI>C) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 297,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,    0x9B60 }, /* Shift Backward Arrow (<CSI> @) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 402,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,              CM1_SCREEN_RELATIVE, C071_ZONE_MOVE_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C005_COMMAND_MOVE_BACKWARD",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 112,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD,         263, 289, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 258,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD, 0x000A }, /* Numeric pad 2 Atari ST: Code = 0x5000 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 278,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD, 0xAB32 }, /* Numeric pad 2 Atari ST: Code = 0x5000 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 285,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD, 0x9B42 }, /* Down arrow (<CSI>B) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 292,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD, 0x9B53 }, /* Shift Down arrow (<CSI>S) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 298,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD, 0x9B42 }, /* Down arrow (<CSI>B) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 299,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD, 0x9B53 }, /* Shift Down arrow (<CSI>S) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 401,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD,           CM1_SCREEN_RELATIVE, C072_ZONE_MOVE_BACKWARD, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007_ZONE_VIEWPORT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 454,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3752,
+              "text": "#define C007_ZONE_VIEWPORT                                        7"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C026_GRAPHIC_CHAMPION_PORTRAITS",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 2186,
+              "text": "#define C026_GRAPHIC_CHAMPION_PORTRAITS                26"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 2466,
+              "text": "L0077_pi_GraphicIndices[AL0075_ui_GraphicCount++] = C026_GRAPHIC_CHAMPION_PORTRAITS;"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3916,
+              "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3919,
+              "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3928,
+              "text": "F0654_Call_F0132_VIDEO_Blit(M772_CAST_PC(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS)), M772_CAST_PC(G0296_puc_Bitmap_Viewport), F0635_(NULL, L2454_ai_XYZ"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C071_ZONE_MOVE_RIGHT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 402,
+              "text": "{ C004_COMMAND_MOVE_RIGHT,              CM1_SCREEN_RELATIVE, C071_ZONE_MOVE_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3761,
+              "text": "#define C071_ZONE_MOVE_RIGHT                                     71"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C072_ZONE_MOVE_BACKWARD",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 401,
+              "text": "{ C005_COMMAND_MOVE_BACKWARD,           CM1_SCREEN_RELATIVE, C072_ZONE_MOVE_BACKWARD, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3762,
+              "text": "#define C072_ZONE_MOVE_BACKWARD                                  72"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C083_COMMAND_TOGGLE_INVENTORY_LEADER",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 116,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, 0, 319,   0, 199, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 119,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, 0, 319,  33, 199, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2296,
+              "text": "if (L1160_i_Command == C083_COMMAND_TOGGLE_INVENTORY_LEADER) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 404,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,        0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C112_BYTE_WIDTH_VIEWPORT",
+          "hits": [
+            {
+              "file": "BASE.C",
+              "line": 1275,
+              "text": "G0578_B_UseByteBoxCoordinates = C0_FALSE, F0132_VIDEO_Blit(P0019_puc_Bitmap, G0296_puc_Bitmap_Viewport, P0020_pi_Box, 0, 0, P0021_i_BitmapByteWidth, C112_BYTE_WIDTH_VIEWPORT, P0022"
+            },
+            {
+              "file": "BASE.C",
+              "line": 1278,
+              "text": "G0578_B_UseByteBoxCoordinates = C0_FALSE, F0132_VIDEO_Blit(P0019_puc_Bitmap, G0296_puc_Bitmap_Viewport, P0020_pi_Box, 0, 0, P0021_i_BitmapByteWidth, C112_BYTE_WIDTH_VIEWPORT, P0022"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 567,
+              "text": "L0861_i_DestinationByteWidth = C112_BYTE_WIDTH_VIEWPORT;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2009,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 93, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"WAKE UP\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2012,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 96, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"WECKEN\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2015,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 72, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"REVEILLEZ-VOUS\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2393,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 81, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"GAME FROZEN\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2396,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 66, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"SPIEL ANGEHALTEN\", C136_HEIGHT_VIEWPORT);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C128_BYTE_WIDTH",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 2479,
+              "text": "#define C128_BYTE_WIDTH          128"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3916,
+              "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 3919,
+              "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_Dungeo"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C136_HEIGHT_VIEWPORT",
+          "hits": [
+            {
+              "file": "BASE.C",
+              "line": 1278,
+              "text": "G0578_B_UseByteBoxCoordinates = C0_FALSE, F0132_VIDEO_Blit(P0019_puc_Bitmap, G0296_puc_Bitmap_Viewport, P0020_pi_Box, 0, 0, P0021_i_BitmapByteWidth, C112_BYTE_WIDTH_VIEWPORT, P0022"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 573,
+              "text": "L1641_i_DestinationHeight = C136_HEIGHT_VIEWPORT;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2009,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 93, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"WAKE UP\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2012,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 96, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"WECKEN\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2015,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 72, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"REVEILLEZ-VOUS\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2393,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 81, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"GAME FROZEN\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2396,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 66, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"SPIEL ANGEHALTEN\", C136_HEIGHT_VIEWPORT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2399,
+              "text": "M521_F0040_TEXT_Print(G0296_puc_Bitmap_Viewport, C112_BYTE_WIDTH_VIEWPORT, 84, 69, C04_COLOR_CYAN, C00_COLOR_BLACK, \"JEU BLOQUE\", C136_HEIGHT_VIEWPORT);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C146_COMMAND_WAKE_UP",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 164,
+              "text": "{ C146_COMMAND_WAKE_UP, 0, 223, 33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 166,
+              "text": "{ C146_COMMAND_WAKE_UP, 0, 319,  0, 199, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 169,
+              "text": "{ C146_COMMAND_WAKE_UP, 0, 223, 33, 168, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2361,
+              "text": "if (L1160_i_Command == C146_COMMAND_WAKE_UP) {"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 310,
+              "text": "{ C146_COMMAND_WAKE_UP,     0x000D }, /* Return */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 454,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 455,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,   0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 688,
+              "text": "{ C146_COMMAND_WAKE_UP,     0x001D },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0132_VIDEO_Blit",
+          "hits": [
+            {
+              "file": "ANIM.C",
+              "line": 283,
+              "text": "F0132_VIDEO_Blit(L5288_, L5289_, &G3567_as_AnimationItems[L5297_]._s_0x0C_Box, M768_BOX_LEFT(G3567_as_AnimationItems[L5298_]._s_0x0C_Box), M770_BOX_TOP(G3567_as_AnimationItems[L529"
+            },
+            {
+              "file": "ANIMTOWN.C",
+              "line": 611,
+              "text": "F0132_VIDEO_Blit(P6110_, NULL, L6564_, 0, 0, 320, 320, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "ATARIST.H",
+              "line": 65,
+              "text": "#define F0132_VIDEO_Blit                                                          F132_xzzz_"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0161_DUNGEON_GetSquareFirstThing",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 90,
+              "text": "#define F0161_DUNGEON_GetSquareFirstThing                                         F161_szzz_"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 367,
+              "text": "if ((((DOOR*)G0284_apuc_ThingData[C00_THING_TYPE_DOOR])[M013_INDEX(F0161_DUNGEON_GetSquareFirstThing(L1155_i_MapX, L1156_i_MapY))].Button) && (F0376_COMMAND_IsPointInBox(G0291_aauc"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7316,
+              "text": "extern THING F0161_DUNGEON_GetSquareFirstThing("
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1127,
+              "text": "L0732_T_FirstSensorThing = F0161_DUNGEON_GetSquareFirstThing(G0404_i_SensorRotationEffectMapX, G0405_i_SensorRotationEffectMapY);"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1375,
+              "text": "L0764_T_SquareFirstThing = L0750_T_ThingBeingProcessed = F0161_DUNGEON_GetSquareFirstThing(P0585_i_MapX, P0586_i_MapY);"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1624,
+              "text": "L0766_T_Thing = F0161_DUNGEON_GetSquareFirstThing(P0588_ui_MapX, P0589_ui_MapY);"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1656,
+              "text": "L0766_T_Thing = F0161_DUNGEON_GetSquareFirstThing(P0588_ui_MapX, P0589_ui_MapY);"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 292,
+              "text": "L0697_T_Thing = F0161_DUNGEON_GetSquareFirstThing(L0704_ui_ProjectileMapX, L0705_ui_ProjectileMapY);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0280_CHAMPION_AddCandidateChampionToParty",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 150,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F280_agzz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 542,
+              "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7845,
+              "text": "extern void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1502,
+              "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+            }
+          ]
+        }
+      ]
     },
     {
       "pass": "197",
@@ -53254,18 +57070,22 @@
     {
       "pass": "unclassified",
       "status": "source-locked",
-      "artifact_count": 7,
+      "artifact_count": 8,
       "artifacts": [
         "tools/verify_v1_redmcsb_source_lock.py",
         "tools/verify_v1_viewport_draw_order_gate.py",
         "tools/verify_v1_viewport_occlusion_gate.py",
         "tools/verify_v1_viewport_source_zone_tables.py",
+        "parity-evidence/pass-csb-dm2-source-lock-boundary-guard.md",
         "parity-evidence/pass_hud_spell_action_c013_overlay.md",
         "parity-evidence/dm1_all_graphics_phase_leader_hand_runtime_ready_source.md",
         "parity-evidence/dm1_all_graphics_phase_v1_leader_hand_transient_state.md"
       ],
       "source_files": [
         "CASTER.C",
+        "CEDTINC8.C",
+        "CEDTINCH.C",
+        "CEDTINCU.C",
         "CHAMPION.C",
         "CLIKVIEW.C",
         "COMMAND.C",
@@ -53315,9 +57135,13 @@
         "F0398_MENUS_DrawChampionSymbols",
         "F0438_STARTEND_OpenEntranceDoors",
         "F0733_FillZoneByIndex",
+        "F7086_IsReadyToMakeNewAdventure",
+        "F7272_IsDungeonValid",
         "G4055",
         "G4055_s_LeaderHandObject",
-        "M526_WaitVerticalBlank"
+        "M526_WaitVerticalBlank",
+        "M745_FILE_ID_SAVE_DMSAVE_DAT",
+        "M746_FILE_ID_SAVE_CSBGAME_DAT"
       ],
       "anchors": [
         {
@@ -53326,6 +57150,39 @@
           "hits": [
             {
               "file": "CASTER.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINC8.C",
+          "hits": [
+            {
+              "file": "CEDTINC8.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINCH.C",
+          "hits": [
+            {
+              "file": "CEDTINCH.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CEDTINCU.C",
+          "hits": [
+            {
+              "file": "CEDTINCU.C",
               "line": 1,
               "text": "file exists"
             }
@@ -53803,79 +57660,6 @@
               "file": "DEFS.H",
               "line": 254,
               "text": "#define C017_COMMAND_SET_LEADER_CHAMPION_1                                   17"
-            }
-          ]
-        },
-        {
-          "kind": "token",
-          "token": "C017_ZONE_LEADER_HAND_OBJECT_NAME",
-          "hits": [
-            {
-              "file": "DEFS.H",
-              "line": 3757,
-              "text": "#define C017_ZONE_LEADER_HAND_OBJECT_NAME                        17"
-            },
-            {
-              "file": "OBJECT.C",
-              "line": 270,
-              "text": "M722_F0768_TEXT_PrintToZoneWithTrailingSpaces(G0348_Bitmap_Screen, G2071_C320_ScreenPixelWidth, C017_ZONE_LEADER_HAND_OBJECT_NAME, C04_COLOR_CYAN, C00_COLOR_BLACK, L0008_pc_ObjectN"
-            },
-            {
-              "file": "OBJECT.C",
-              "line": 284,
-              "text": "F0733_FillZoneByIndex(C017_ZONE_LEADER_HAND_OBJECT_NAME, C00_COLOR_BLACK);"
-            }
-          ]
-        },
-        {
-          "kind": "token",
-          "token": "C080",
-          "hits": [
-            {
-              "file": "COMMAND.C",
-              "line": 114,
-              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
-            },
-            {
-              "file": "COMMAND.C",
-              "line": 2322,
-              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
-            },
-            {
-              "file": "COMMAND.C",
-              "line": 403,
-              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
-            },
-            {
-              "file": "DEFS.H",
-              "line": 305,
-              "text": "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80"
-            }
-          ]
-        },
-        {
-          "kind": "token",
-          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
-          "hits": [
-            {
-              "file": "COMMAND.C",
-              "line": 114,
-              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
-            },
-            {
-              "file": "COMMAND.C",
-              "line": 2322,
-              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
-            },
-            {
-              "file": "COMMAND.C",
-              "line": 403,
-              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
-            },
-            {
-              "file": "DEFS.H",
-              "line": 305,
-              "text": "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80"
             }
           ]
         }

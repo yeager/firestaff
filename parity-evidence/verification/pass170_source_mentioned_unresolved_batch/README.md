@@ -1,6 +1,6 @@
 # Pass170 — batch-resolve pass168 `source-mentioned-unresolved` groups
 
-- source root: `<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - input groups: 46
 - source-locked: 46/46
 
@@ -46,7 +46,7 @@
 - pass `149`: **source-locked** / viewport — tools/pass149_dm1_sv_case_review.py, parity-evidence/pass149_dm1_sv_case_review.md — anchors: DRAWVIEW.C→DRAWVIEW.C:1; DUNVIEW.C→DUNVIEW.C:1; IMAGE5.C→IMAGE5.C:1; DATA.C→DATA.C:1
 - pass `152`: **source-locked** / champion — parity-evidence/dm1_all_graphics_phase152_161_champion_mirror_collection_batch.md — anchors: CHAMDRAW.C→CHAMDRAW.C:1; CHAMPION.C→CHAMPION.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1
 - pass `158`: **source-locked** / route — tools/pass158_party_control_readiness_route_probe.py, parity-evidence/verification/pass158_party_control_readiness_route_probe/README.md — anchors: DM.C→DM.C:1; COMMAND.C→COMMAND.C:1; CLIKVIEW.C→CLIKVIEW.C:1; MOVESENS.C→MOVESENS.C:1
-- pass `172`: **source-locked** / champion — parity-evidence/dm1_all_graphics_phase172_196_champion_mirror_presentation_state_batch.md — anchors: CHAMDRAW.C→CHAMDRAW.C:1; CHAMPION.C→CHAMPION.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1
+- pass `171`: **source-locked** / viewport — tools/pass171_redmcsb_source_lock_closure.py, parity-evidence/verification/pass171_redmcsb_source_lock_closure/README.md — anchors: DRAWVIEW.C→DRAWVIEW.C:1; DUNVIEW.C→DUNVIEW.C:1; IMAGE5.C→IMAGE5.C:1; DATA.C→DATA.C:1
 - pass `197`: **source-locked** / champion — parity-evidence/dm1_all_graphics_phase197_246_champion_mirror_catalog_batch.md — anchors: CHAMDRAW.C→CHAMDRAW.C:1; CHAMPION.C→CHAMPION.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1
 - pass `247`: **source-locked** / viewport — parity-evidence/dm1_all_graphics_phase247_296_m11_mirror_catalog_wire_batch.md — anchors: DRAWVIEW.C→DRAWVIEW.C:1; DUNVIEW.C→DUNVIEW.C:1; IMAGE5.C→IMAGE5.C:1; DATA.C→DATA.C:1
 - pass `1677`: **source-locked** / inventory_action — parity-evidence/dm1_all_graphics_phase1677_1696_v1_object_icon_source_zones.md — anchors: PANEL.C→PANEL.C:1; ACTIDRAW.C→ACTIDRAW.C:1; CHAMDRAW.C→CHAMDRAW.C:1; COORD.C→COORD.C:1

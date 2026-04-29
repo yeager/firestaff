@@ -3,11 +3,11 @@
 ## Result
 
 - status: **closed**
-- pass168 total pass groups: **268**
-- pass168 directly source-locked: **211**
+- pass168 total pass groups: **274**
+- pass168 directly source-locked: **217**
 - pass169 resolved `needs-redmcsb-anchor`: **11**
 - pass170 resolved `source-mentioned-unresolved`: **46**
-- closed: **268/268**
+- closed: **274/274**
 - remaining: **0**
 
 ## Inputs
@@ -18,4 +18,4 @@
 
 ## Interpretation
 
-The full historical pass corpus covered by pass168 now has a ReDMCSB source-lock path: direct anchors for 211 groups, explicit addendum anchors for the 11 weak/missing groups, and lane-level source anchors for the 46 source-mentioned unresolved groups.
+The full historical pass corpus covered by pass168 now has a ReDMCSB source-lock path: direct anchors for 217 groups, explicit addendum anchors for the 11 weak/missing groups, and lane-level source anchors for the 46 source-mentioned unresolved groups.
