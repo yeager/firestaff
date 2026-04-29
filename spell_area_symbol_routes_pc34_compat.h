@@ -1,0 +1,5 @@
+#ifndef SPELL_AREA_SYMBOL_ROUTES_PC34_COMPAT_H
+#define SPELL_AREA_SYMBOL_ROUTES_PC34_COMPAT_H
+const char* spell_area_symbol_routes_GetEvidence(void);
+unsigned int spell_area_symbol_routes_GetInvariant(void);
+#endif

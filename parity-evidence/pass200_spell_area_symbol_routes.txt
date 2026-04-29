@@ -1,0 +1,10 @@
+# Pass 200 — ReDMCSB spell area symbol routes
+
+Source-first audit:
+COMMAND.C:473-483 defines G0454_as_Graphic561_MouseInput_SpellArea: caster selector C109, rune symbols C101-C106, cast C108, and recant C107.
+
+Probe output:
+
+probe=firestaff_spell_area_symbol_routes
+sourceEvidence=COMMAND.C:473-483 defines G0454_as_Graphic561_MouseInput_SpellArea: caster selector C109, rune symbols C101-C106, cast C108, and recant C107.
+spellAreaSymbolRoutesInvariantOk=1
