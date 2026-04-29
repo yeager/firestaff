@@ -1,0 +1,5 @@
+#ifndef PANEL_CHEST_MOUSE_ROUTES_PC34_COMPAT_H
+#define PANEL_CHEST_MOUSE_ROUTES_PC34_COMPAT_H
+const char* panel_chest_mouse_routes_GetEvidence(void);
+unsigned int panel_chest_mouse_routes_GetInvariant(void);
+#endif
