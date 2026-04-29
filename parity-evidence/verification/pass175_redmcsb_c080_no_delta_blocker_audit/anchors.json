@@ -1,0 +1,182 @@
+[
+  {
+    "file": "COMMAND.C",
+    "needle": "C007_ZONE_VIEWPORT",
+    "hits": [
+      {
+        "line": 403,
+        "excerpt": "401:         { C005_COMMAND_MOVE_BACKWARD,           CM1_SCREEN_RELATIVE, C072_ZONE_MOVE_BACKWARD, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n402:         { C004_COMMAND_MOVE_RIGHT,              CM1_SCREEN_RELATIVE, C071_ZONE_MOVE_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n403:         { C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n404:         { C083_COMMAND_TOGGLE_INVENTORY_LEADER, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,        0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },\n405:         { 0, 0, 0, 0, 0, 0 } };"
+      },
+      {
+        "line": 454,
+        "excerpt": "452:         { 0, 0, 0, 0, 0, 0 } };\n453: MOUSE_INPUT G0450_as_Graphic561_PrimaryMouseInput_PartyResting[3] = {\n454:         { C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n455:         { C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,   0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },\n456:         { 0, 0, 0, 0, 0, 0 } };"
+      }
+    ]
+  },
+  {
+    "file": "COMMAND.C",
+    "needle": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+    "hits": [
+      {
+        "line": 114,
+        "excerpt": "112:         { C005_COMMAND_MOVE_BACKWARD,         263, 289, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\n113:         { C004_COMMAND_MOVE_RIGHT,            291, 318, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\n114:         { C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },\n115: #ifdef MEDIA351_G14ED_G20E_G21E\n116:         { C083_COMMAND_TOGGLE_INVENTORY_LEADER, 0, 319,   0, 199, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+      },
+      {
+        "line": 403,
+        "excerpt": "401:         { C005_COMMAND_MOVE_BACKWARD,           CM1_SCREEN_RELATIVE, C072_ZONE_MOVE_BACKWARD, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n402:         { C004_COMMAND_MOVE_RIGHT,              CM1_SCREEN_RELATIVE, C071_ZONE_MOVE_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n403:         { C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n404:         { C083_COMMAND_TOGGLE_INVENTORY_LEADER, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,        0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },\n405:         { 0, 0, 0, 0, 0, 0 } };"
+      },
+      {
+        "line": 2322,
+        "excerpt": "2320:                 goto T0380042;\n2321:         }\n2322:         if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {\n2323:                 F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);\n2324:                 goto T0380042;"
+      }
+    ]
+  },
+  {
+    "file": "COMMAND.C",
+    "needle": "BUG0_73",
+    "hits": [
+      {
+        "line": 1478,
+        "excerpt": "1476:         asm {\n1477:                         tas     G0435_B_CommandQueueLocked(A4)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\n1478:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\n1479:                         beq.s   T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\n1480:         }"
+      },
+      {
+        "line": 1485,
+        "excerpt": "1483:         asm {\n1484:                         tas     G0435_B_CommandQueueLocked(A5)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\n1485:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\n1486:                         beq.s   @T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\n1487:         }"
+      },
+      {
+        "line": 1753,
+        "excerpt": "1751:                         goto T0361014;\n1752: #endif\n1753:                 /* BUG0_73 A mouse click may be ignored. At this point, the command index where the keyboard command will be stored in the command queue is determined by L1110_i_CommandQueueIndex. If a mouse click interrupt occurs before the command is actually written into the command queue below then the mouse command will be stored at the same location in the queue and then be overwritten by the keyboard command */\n1754:                 while (L1111_i_Command = L1112_ps_KeyboardInput->Command) {\n1755: #ifdef MEDIA008_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E"
+      }
+    ]
+  },
+  {
+    "file": "CLIKVIEW.C",
+    "needle": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+    "hits": [
+      {
+        "line": 311,
+        "excerpt": "309: #endif\n310: \n311: void F0377_COMMAND_ProcessType80_ClickInDungeonView(\n312: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n313: P0752_i_X, P0753_i_Y)"
+      }
+    ]
+  },
+  {
+    "file": "CLIKVIEW.C",
+    "needle": "C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT",
+    "hits": [
+      {
+        "line": 367,
+        "excerpt": "365:                 if (G0415_ui_LeaderEmptyHanded) {\n366: #ifdef MEDIA001_S10EA_S10EB /* CHANGE2_01_OPTIMIZATION Inline code replaced by function calls */\n367:                         if ((((DOOR*)G0284_apuc_ThingData[C00_THING_TYPE_DOOR])[M013_INDEX(F0161_DUNGEON_GetSquareFirstThing(L1155_i_MapX, L1156_i_MapY))].Button) && (F0376_COMMAND_IsPointInBox(G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], P0752_i_X, P0753_i_Y - 33))) {\n368: #endif\n369: #ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J /* CHANGE2_01_OPTIMIZATION Inline code replaced by function calls */"
+      },
+      {
+        "line": 373,
+        "excerpt": "371: #endif\n372: #ifdef MEDIA224_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G /* CHANGE2_01_OPTIMIZATION Inline code replaced by function calls */\n373:                         if ((((DOOR*)L1151_ps_Junk)->Button) && (F0376_COMMAND_IsPointInBox(G0291_aauc_DungeonViewClickableBoxes[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], P0752_i_X, P0753_i_Y - 33))) {\n374: #endif\n375: #ifdef MEDIA508_F20E_F20J_X30J_P20JA_P20JB /* CHANGE2_01_OPTIMIZATION Inline code replaced by function calls */"
+      },
+      {
+        "line": 376,
+        "excerpt": "374: #endif\n375: #ifdef MEDIA508_F20E_F20J_X30J_P20JA_P20JB /* CHANGE2_01_OPTIMIZATION Inline code replaced by function calls */\n376:                         if ((((DOOR*)L1151_ps_Junk)->Button) && (F0376_COMMAND_IsPointInBox(G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], P0752_i_X, P0753_i_Y))) {\n377: #endif\n378: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J"
+      },
+      {
+        "line": 379,
+        "excerpt": "377: #endif\n378: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n379:                         if ((((DOOR*)L1151_ps_Junk)->Button) && (F0798_COMMAND_IsPointInZone(G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], P0752_i_X, P0753_i_Y))) {\n380: #endif\n381: #ifdef MEDIA014_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J"
+      }
+    ]
+  },
+  {
+    "file": "CLIKVIEW.C",
+    "needle": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+    "hits": [
+      {
+        "line": 5,
+        "excerpt": "3: #endif\n4: #ifdef MEDIA042_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n5: STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor(\n6: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n7: void"
+      },
+      {
+        "line": 431,
+        "excerpt": "429:         L1150_ui_Multiple++;\n430: #endif\n431:                                                 F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();\n432:                                         }\n433:                                 } else {"
+      },
+      {
+        "line": 496,
+        "excerpt": "494:                                         }\n495:                                         T0377019:\n496:                                         F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();\n497:                                 }\n498:                         }"
+      }
+    ]
+  },
+  {
+    "file": "MOVESENS.C",
+    "needle": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+    "hits": [
+      {
+        "line": 1392,
+        "excerpt": "1390:                         if ((L0757_ui_SensorType = M039_TYPE(L0755_ps_Sensor)) == C000_SENSOR_DISABLED)\n1391:                                 goto T0275058_ProceedToNextThing;\n1392:                         if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))\n1393:                                 goto T0275058_ProceedToNextThing;\n1394:                         if (L0752_ui_Cell != P0587_ui_Cell)"
+      },
+      {
+        "line": 1501,
+        "excerpt": "1499:                                         L0753_B_DoNotTriggerSensor = C0_FALSE;\n1500:                                         break;\n1501:                                 case C127_SENSOR_WALL_CHAMPION_PORTRAIT:\n1502:                                         F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);\n1503:                                         goto T0275058_ProceedToNextThing;"
+      }
+    ]
+  },
+  {
+    "file": "MOVESENS.C",
+    "needle": "F0280_CHAMPION_AddCandidateChampionToParty",
+    "hits": [
+      {
+        "line": 1502,
+        "excerpt": "1500:                                         break;\n1501:                                 case C127_SENSOR_WALL_CHAMPION_PORTRAIT:\n1502:                                         F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);\n1503:                                         goto T0275058_ProceedToNextThing;\n1504: #ifdef MEDIA006_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB /* CHANGE7_14_FIX Useless code removed */"
+      }
+    ]
+  },
+  {
+    "file": "DUNVIEW.C",
+    "needle": "G0109_auc_Graphic558_Box_ChampionPortraitOnWall",
+    "hits": [
+      {
+        "line": 384,
+        "excerpt": "382: unsigned char G0107_auc_Graphic558_Box_ThievesEye_VisibleArea[4];\n383: unsigned char G0108_auc_Graphic558_Box_ThievesEye_HoleInDoorFrame[4];\n384: unsigned char G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4];\n385: unsigned char G0110_auc_Graphic558_Frame_StairsUpFront_D3L[8];\n386: unsigned char G0111_auc_Graphic558_Frame_StairsUpFront_D3C[8];"
+      },
+      {
+        "line": 525,
+        "excerpt": "523: unsigned char G0107_auc_Graphic558_Box_ThievesEye_VisibleArea[4] = { 0, 95, 0, 94 };\n524: unsigned char G0108_auc_Graphic558_Box_ThievesEye_HoleInDoorFrame[4] = { 0, 31, 19, 113 };\n525: unsigned char G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4] = { 96, 127, 35, 63 };\n526: unsigned char G0110_auc_Graphic558_Frame_StairsUpFront_D3L[8] = { 0, 79, 25, 70, 40, 46, 0, 0 };\n527: unsigned char G0111_auc_Graphic558_Frame_StairsUpFront_D3C[8] = { 64, 159, 25, 70, 48, 46, 0, 0 };"
+      },
+      {
+        "line": 3916,
+        "excerpt": "3914: #endif\n3915: #ifdef MEDIA008_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E\n3916:                         F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_DungeonView_ChampionPortraitOrdinal & 0x0007) << 5, (G0289_i_DungeonView_ChampionPortraitOrdinal >> 3) * 29, C128_BYTE_WIDTH, C112_BYTE_WIDTH_VIEWPORT, C01_COLOR_DARK_GRAY); /* A portrait is 32x29 pixels */\n3917: #endif\n3918: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G"
+      },
+      {
+        "line": 3919,
+        "excerpt": "3917: #endif\n3918: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n3919:                         F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_DungeonView_ChampionPortraitOrdinal & 0x0007) << 5, (G0289_i_DungeonView_ChampionPortraitOrdinal >> 3) * 29, C128_BYTE_WIDTH, C112_BYTE_WIDTH_VIEWPORT, C01_COLOR_DARK_GRAY, 87, C136_HEIGHT_VIEWPORT); /* A portrait is 32x29 pixels */\n3920: #endif\n3921: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J"
+      }
+    ]
+  },
+  {
+    "file": "DUNVIEW.C",
+    "needle": "M635_ZONE_PORTRAIT_ON_WALL",
+    "hits": [
+      {
+        "line": 3928,
+        "excerpt": "3926:                                 L2452_i_Width = G2078_C32_PortraitWidth;\n3927:                                 L2453_i_Height = G2079_C29_PortraitHeight;\n3928:                                 F0654_Call_F0132_VIDEO_Blit(M772_CAST_PC(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS)), M772_CAST_PC(G0296_puc_Bitmap_Viewport), F0635_(NULL, L2454_ai_XYZ, M635_ZONE_PORTRAIT_ON_WALL, &L2452_i_Width, &L2453_i_Height), (G0289_i_DungeonView_ChampionPortraitOrdinal & 0x0007) * G2078_C32_PortraitWidth, (G0289_i_DungeonView_ChampionPortraitOrdinal >> 3) * G2079_C29_PortraitHeight, C01_COLOR_DARK_GRAY);\n3929:                         }\n3930: #endif"
+      }
+    ]
+  },
+  {
+    "file": "COORD.C",
+    "needle": "G2067_i_ViewportScreenX",
+    "hits": [
+      {
+        "line": 1693,
+        "excerpt": "1691: #endif\n1692: #endif\n1693: int16_t G2067_i_ViewportScreenX = 0;\n1694: #ifdef MEDIA571_F20J_X30J_P20JA_P20JB_F31J_X31J_P31J\n1695: int16_t G2068_i_ViewportScreenY = 31;"
+      }
+    ]
+  },
+  {
+    "file": "COORD.C",
+    "needle": "G2068_i_ViewportScreenY",
+    "hits": [
+      {
+        "line": 1695,
+        "excerpt": "1693: int16_t G2067_i_ViewportScreenX = 0;\n1694: #ifdef MEDIA571_F20J_X30J_P20JA_P20JB_F31J_X31J_P31J\n1695: int16_t G2068_i_ViewportScreenY = 31;\n1696: #endif\n1697: #ifdef MEDIA562_F20E_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E"
+      },
+      {
+        "line": 1698,
+        "excerpt": "1696: #endif\n1697: #ifdef MEDIA562_F20E_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E\n1698: int16_t G2068_i_ViewportScreenY = 33;\n1699: #endif\n1700: #ifdef MEDIA508_F20E_F20J_X30J_P20JA_P20JB"
+      }
+    ]
+  }
+]
