@@ -11613,6 +11613,36 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                    pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
                 }
             }
+
+            if (cell->summary.explosions > 0) {
+                int expArea = paneH / 2;
+                int expY;
+                if (expArea < 7) expArea = 7;
+                expY = paneY + (paneH - expArea) / 2;
+                if (!g_drawState ||
+                    !m11_draw_explosion_sprite(g_drawState, framebuffer,
+                                               framebufferWidth, framebufferHeight,
+                                               paneX + 1, expY,
+                                               paneW - 2, expArea,
+                                               cell->firstExplosionType,
+                                               cell->firstExplosionFrame,
+                                               cell->firstExplosionMaxFrames,
+                                               cell->firstExplosionAttack,
+                                               depth + 1)) {
+                    int ecx = paneX + paneW / 2;
+                    int ecy = paneY + paneH / 2;
+                    int er = depth == 0 ? 3 : 2;
+                    /* F0115 draws explosions after the projectile pass for the
+                     * same view cell; keep a visible side-lane fallback when
+                     * GRAPHICS.DAT is absent in probes. */
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  ecx - er, ecy - er, er * 2 + 1, er * 2 + 1,
+                                  M11_COLOR_LIGHT_RED);
+                    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  ecx - er - 1, ecy - er - 1,
+                                  er * 2 + 3, er * 2 + 3, M11_COLOR_YELLOW);
+                }
+            }
         }
     }
 }

@@ -2606,6 +2606,7 @@ int main(int argc, char** argv) {
         unsigned char teleporterFb[320 * 200];
         unsigned char creatureFb[320 * 200];
         unsigned char sideCreatureFb[320 * 200];
+        unsigned char sideExplosionFb[320 * 200];
         unsigned char projectileFb[320 * 200];
         unsigned char lightningFb[320 * 200];
         unsigned char objectFb[320 * 200];
@@ -2715,6 +2716,29 @@ int main(int argc, char** argv) {
         focusView.world.projectiles.count = 0;
         memset(&focusView.world.projectiles.entries[0], 0,
                sizeof(focusView.world.projectiles.entries[0]));
+
+        focusView.world.explosions.count = 1;
+        memset(&focusView.world.explosions.entries[0], 0,
+               sizeof(focusView.world.explosions.entries[0]));
+        focusView.world.explosions.entries[0].slotIndex = 0;
+        focusView.world.explosions.entries[0].explosionType = C000_EXPLOSION_FIREBALL;
+        focusView.world.explosions.entries[0].mapIndex = 0;
+        focusView.world.explosions.entries[0].mapX = 2;
+        focusView.world.explosions.entries[0].mapY = 1;
+        focusView.world.explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
+        focusView.world.explosions.entries[0].centered = 1;
+        focusView.world.explosions.entries[0].attack = 160;
+        focusView.world.explosions.entries[0].currentFrame = 0;
+        focusView.world.explosions.entries[0].maxFrames = 3;
+        memset(sideExplosionFb, 0, sizeof(sideExplosionFb));
+        M11_GameView_Draw(&focusView, sideExplosionFb, 320, 200);
+        if (ssDir && ssDir[0]) {
+            probe_capture_vga_frame(&focusView, ssDir,
+                                    "42_focused_d1l_fireball_explosion_vga");
+        }
+        focusView.world.explosions.count = 0;
+        memset(&focusView.world.explosions.entries[0], 0,
+               sizeof(focusView.world.explosions.entries[0]));
 
         focusView.world.things->weapons[0].type = 8; /* dagger */
         focusView.world.things->weapons[0].next = THING_ENDOFLIST;
@@ -2887,6 +2911,19 @@ int main(int argc, char** argv) {
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: extreme C3200 side creature clips inside the DM1 viewport rectangle");
+        probe_record(&tally, "INV_GV_38AI",
+                     haveAssets && memcmp(baseFb, sideExplosionFb, sizeof(baseFb)) != 0 &&
+                     memcmp(sideCreatureFb, sideExplosionFb, sizeof(sideCreatureFb)) != 0,
+                     "focused viewport: D1L side-cell fireball explosion changes the corridor frame");
+        probe_record(&tally, "INV_GV_38AJ",
+                     haveAssets &&
+                     probe_count_diffs_outside_rect(baseFb, sideExplosionFb,
+                                                    320, 200,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H) == 0,
+                     "focused viewport: D1L side-cell fireball explosion clips inside the DM1 viewport rectangle");
         probe_record(&tally, "INV_GV_38M",
                      haveAssets && memcmp(baseFb, projectileFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C fireball projectile sprite changes the corridor frame");
