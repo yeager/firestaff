@@ -2929,7 +2929,10 @@ int main(int argc, char** argv) {
                 {0,-1},{0,0},{0,1}
             };
             static const ProbeFocusedPos kFloorOrnamentPositions[] = {
-                {3,2},{3,-1},{3,0},{3,1},
+                /* ReDMCSB DUNVIEW.C G0206 has exactly three floor
+                 * ornament slots per depth (L/C/R), not the far-side
+                 * D3 +/-2 slivers used by wall/side panels. */
+                {3,-1},{3,0},{3,1},
                 {2,-1},{2,0},{2,1},
                 {1,-1},{1,0},{1,1}
             };
@@ -4763,6 +4766,26 @@ int main(int argc, char** argv) {
                      M11_GameView_GetF0115C2500C2900Row(2, 0) == 5 &&
                      M11_GameView_GetF0115C2500C2900Row(3, 1) == 2,
                      "relative viewport cells source-map through ReDMCSB F0115 G2028 rows");
+
+        /* INV_GV_114C2C: DM1/PC 3.4 floor ornaments use ReDMCSB
+         * DUNVIEW.C G0206 coordinate-set 0: 9 floor slots only, with
+         * right-side slots horizontally flipped and native-bitmap increments
+         * from G0191. */
+        {
+            int inc = -1, flip = -1, x = -1, y = -1, w = -1, h = -1;
+            int okD3L = M11_GameView_GetDM1FloorOrnamentSourceZone(3, -1, &inc, &flip, &x, &y, &w, &h) &&
+                        inc == 0 && flip == 0 && x == 32 && y == 66 && w == 48 && h == 6;
+            int okD2C = M11_GameView_GetDM1FloorOrnamentSourceZone(2, 0, &inc, &flip, &x, &y, &w, &h) &&
+                        inc == 3 && flip == 0 && x == 80 && y == 77 && w == 64 && h == 11;
+            int okD1R = M11_GameView_GetDM1FloorOrnamentSourceZone(1, 1, &inc, &flip, &x, &y, &w, &h) &&
+                        inc == 4 && flip == 1 && x == 192 && y == 92 && w == 32 && h == 25;
+            int noFarSliver = !M11_GameView_GetDM1FloorOrnamentSourceZone(3, 2, &inc, &flip, &x, &y, &w, &h) &&
+                              !M11_GameView_GetDM1FloorOrnamentSourceZone(3, -2, &inc, &flip, &x, &y, &w, &h);
+            probe_record(&tally,
+                         "INV_GV_114C2C",
+                         okD3L && okD2C && okD1R && noFarSliver,
+                         "floor ornament placement locks ReDMCSB G0206 set-0 zones/increments and excludes D3 far slivers");
+        }
 
         /* INV_GV_114C3: C2500 object/creature source zone points from
          * layout-696 are bound for the non-alcove object placement path. */

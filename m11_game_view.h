@@ -557,6 +557,14 @@ int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex);
 int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell);
 int M11_GameView_GetF0115ViewSquareIndex(int relForward, int relSide);
 int M11_GameView_GetF0115C2500C2900Row(int relForward, int relSide);
+int M11_GameView_GetDM1FloorOrnamentSourceZone(int relForward,
+                                               int relSide,
+                                               int* outIncrement,
+                                               int* outFlipHorizontal,
+                                               int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH);
 int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
                                          int relativeCell,
                                          int* outX,
