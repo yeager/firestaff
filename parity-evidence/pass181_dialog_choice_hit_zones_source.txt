@@ -1,0 +1,17 @@
+# Pass 181 — ReDMCSB dialog choice hit zones
+
+Source-first audit:
+- `COMMAND.C:1906-1921` maps dialog choices `C210..C213` to zones `C456/C457/C460/C461` in the PC/F20+ path.
+- `COMMAND.C:1936-1939` mirrors the same zones for centered-dialog input.
+- `COMMAND.C:2459-2461` converts commands `C210..C213` to `G0335_ui_SelectedDialogChoice = command - C209`.
+- `DEFS.H:3854-3865` defines the dialog button/text zone IDs.
+
+Probe output:
+
+probe=firestaff_dialog_choice_hit_zones_source
+choiceHitZoneEvidence=ReDMCSB source lock: COMMAND.C defines dialog choice mouse input arrays for C210..C213 using viewport/screen-centered dialog zone IDs C456/C457/C460/C461, and COMMAND.C:2459-2461 converts command C210..C213 to G0335_ui_SelectedDialogChoice = command - C209.
+choiceHitZone[1]=command:210 zone:456 name:BOTTOM_BUTTON evidence:COMMAND.C:1906-1921 maps C210 choice 1 to C456_ZONE_DIALOG_BOTTOM_BUTTON
+choiceHitZone[2]=command:211 zone:457 name:TOP_BUTTON evidence:COMMAND.C:1906-1921 maps C211 choice 2 to C457_ZONE_DIALOG_TOP_BUTTON
+choiceHitZone[3]=command:212 zone:460 name:BOTTOM_LEFT_BUTTON evidence:COMMAND.C:1906-1921 maps C212 choice 3 to C460_ZONE_DIALOG_BOTTOM_LEFT_BUTTON
+choiceHitZone[4]=command:213 zone:461 name:BOTTOM_RIGHT_BUTTON evidence:COMMAND.C:1906-1921 maps C213 choice 4 to C461_ZONE_DIALOG_BOTTOM_RIGHT_BUTTON
+dialogChoiceHitZonesInvariantOk=1

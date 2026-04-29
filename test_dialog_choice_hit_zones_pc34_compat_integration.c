@@ -1,0 +1,3 @@
+#include <stdio.h>
+#include "dialog_choice_hit_zones_pc34_compat.h"
+int main(void){ unsigned int i; int ok=1; DialogChoiceHitZoneCompat z; printf("probe=firestaff_dialog_choice_hit_zones_source\n"); printf("choiceHitZoneEvidence=%s\n",DIALOG_Compat_GetChoiceHitZoneEvidence()); if(DIALOG_Compat_GetChoiceHitZoneCount()!=4u)ok=0; for(i=1;i<=4;i++){ if(!DIALOG_Compat_GetChoiceHitZone(i,&z)){ok=0;continue;} printf("choiceHitZone[%u]=command:%u zone:%u name:%s evidence:%s\n",i,z.commandId,z.zoneIndex,z.name,z.evidence); if(z.commandId!=209u+i)ok=0; } if(!DIALOG_Compat_GetChoiceHitZone(1,&z)||z.zoneIndex!=456u)ok=0; if(!DIALOG_Compat_GetChoiceHitZone(4,&z)||z.zoneIndex!=461u)ok=0; printf("dialogChoiceHitZonesInvariantOk=%d\n",ok); return ok?0:1; }
