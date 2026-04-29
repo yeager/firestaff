@@ -1,0 +1,341 @@
+# Pass168 — Firestaff pass → ReDMCSB source map
+
+- source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- pass groups: 268
+- status counts: {'needs-redmcsb-anchor': 11, 'source-locked': 211, 'source-mentioned-unresolved': 46}
+
+## Priority unmapped / weakly mapped
+
+- pass `0`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase0_baseline.md`
+- pass `1`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase1_asset_boundary.md`
+- pass `2`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase2_3_decode_and_debug.md`
+- pass `6`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase6_viewport_debug_cleanup.md`
+- pass `17`: **needs-redmcsb-anchor** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase17_vga_screenshot_export.md`
+- pass `29`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase29_focused_zone_scenes.md`
+- pass `30`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase30_focused_zone_matrix.md`
+- pass `55`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase55_clean_ingame_top_chrome.md`
+- pass `56`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase56_viewport_floor_ceiling_parity.md`
+- pass `63`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass63_v1_title_dosbox_input_automation.md`
+- pass `64`: **needs-redmcsb-anchor** — artifacts=2 — first=`parity-evidence/pass64_v1_title_clean_window_capture.md`
+- pass `65`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass65_v1_title_crop_compare.md`
+- pass `66`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass66_v1_title_timestamp_sequence.md`
+- pass `70`: **source-mentioned-unresolved** — artifacts=7 — first=`tools/pass70_viewport_pair_compare.py`
+- pass `71`: **needs-redmcsb-anchor** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase71_ingame_capture_smoke_gate.md`
+- pass `72`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass72_source_driven_viewport_state_probe.md`
+- pass `75`: **source-mentioned-unresolved** — artifacts=3 — first=`tools/pass75_menu_candidate_asset_sheet.py`
+- pass `76`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass76_capture_route_state_probe.md`
+- pass `77`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass77_actual_after_cast_fixture.md`
+- pass `78`: **needs-redmcsb-anchor** — artifacts=3 — first=`tools/pass78_original_route_attempt_audit.py`
+- pass `80`: **source-mentioned-unresolved** — artifacts=4 — first=`tools/pass80_original_frame_classifier.py`
+- pass `93`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass93_original_route_key_explore_diagnostic.md`
+- pass `94`: **source-mentioned-unresolved** — artifacts=3 — first=`parity-evidence/pass94_dm1_hall_map_route_assumptions.md`
+- pass `95`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass95_spell_c011_capture_gate_anchor_update.md`
+- pass `97`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass97_original_overlay_capture_unblock_verification.md`
+- pass `99`: **source-mentioned-unresolved** — artifacts=3 — first=`parity-evidence/pass99_original_overlay_capture_rerun_after_68907f6.md`
+- pass `101`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass101_v1_viewport_world_visuals_rerun.md`
+- pass `103`: **source-mentioned-unresolved** — artifacts=2 — first=`parity-evidence/pass103_n2_linux_original_overlay_capture_route.md`
+- pass `131`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase131_champion_mirror_text_identity.md`
+- pass `132`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase132_champion_mirror_sex_byte.md`
+- pass `134`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase134_champion_mirror_encoded_fields.md`
+- pass `135`: **source-mentioned-unresolved** — artifacts=3 — first=`tools/pass135_pass133_unclassified_frame_atlas.py`
+- pass `136`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase136_endgame_title_spacing_helper.md`
+- pass `137`: **needs-redmcsb-anchor** — artifacts=3 — first=`tools/pass137_f2_high_density_route_probe.py`
+- pass `138`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase138_champion_mirror_sex_guard.md`
+- pass `139`: **source-mentioned-unresolved** — artifacts=3 — first=`tools/pass139_pm_f1_inventory_control_route.py`
+- pass `140`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase140_champion_mirror_empty_field_guard.md`
+- pass `141`: **source-mentioned-unresolved** — artifacts=3 — first=`tools/pass141_pm_f1_dungeon_control_readiness.py`
+- pass `142`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase142_151_champion_mirror_recruitment_batch.md`
+- pass `143`: **source-mentioned-unresolved** — artifacts=2 — first=`tools/pass143_frame48ed_control_delta_atlas.py`
+- pass `145`: **source-mentioned-unresolved** — artifacts=2 — first=`tools/pass145_follow_frame48ed_next_route.py`
+- pass `147`: **source-mentioned-unresolved** — artifacts=2 — first=`tools/pass147_nonstatic_48ed_long_replay.py`
+- pass `149`: **source-mentioned-unresolved** — artifacts=2 — first=`tools/pass149_dm1_sv_case_review.py`
+- pass `151`: **needs-redmcsb-anchor** — artifacts=2 — first=`tools/pass151_48ed_extended_control_bbox.py`
+- pass `152`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase152_161_champion_mirror_collection_batch.md`
+- pass `153`: **needs-redmcsb-anchor** — artifacts=2 — first=`tools/pass153_xvfb_input_delivery_matrix.py`
+- pass `154`: **needs-redmcsb-anchor** — artifacts=1 — first=`parity-evidence/pass154_static48ed_guard_fix.md`
+- pass `155`: **needs-redmcsb-anchor** — artifacts=2 — first=`tools/pass155_champion_route_seed_finder.py`
+- pass `157`: **needs-redmcsb-anchor** — artifacts=3 — first=`tools/pass157_082b_dungeon_control_probe.py`
+- pass `158`: **source-mentioned-unresolved** — artifacts=3 — first=`tools/pass158_party_control_readiness_route_probe.py`
+- pass `172`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase172_196_champion_mirror_presentation_state_batch.md`
+- pass `197`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase197_246_champion_mirror_catalog_batch.md`
+- pass `247`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase247_296_m11_mirror_catalog_wire_batch.md`
+- pass `1677`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase1677_1696_v1_object_icon_source_zones.md`
+- pass `1757`: **needs-redmcsb-anchor** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase1757_1776_v1_status_hand_icon_zones.md`
+- pass `1937`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase1937_1956_v1_action_menu_row_count.md`
+- pass `2197`: **source-mentioned-unresolved** — artifacts=1 — first=`parity-evidence/dm1_all_graphics_phase2197_2216_v1_dialog_choice_hit_zones.md`
+
+## Source-locked matrix
+
+- pass `0`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `1`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `2`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `5`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C009→ENDGAME.C:1012; C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND→DEFS.H:2216; C010→SWSHGDAT.C:182; C010_GRAPHIC_MENU_ACTION_AREA→DEFS.H:2173
+- pass `6`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `7`: **source-locked**; files=COORD.C, DEFS.H; anchors=COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; G2067_i_ViewportScreenX→TOWNSGLB.H:1143; G2068_i_ViewportScreenY→COORD.C:1695
+- pass `8`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C700_ZONE_VIEWPORT_CEILING_AREA→DUNVIEW.C:8374; C701_ZONE_VIEWPORT_FLOOR_AREA→DUNVIEW.C:8368; F0094_DUNGEONVIEW_LoadFloorSet→DUNVIEW.C:2026
+- pass `9`: **source-locked**; files=COORD.C, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; C095_GRAPHIC_WALLSET_0_D1R→STARTUP2.C:635; C096_GRAPHIC_WALLSET_0_D1L→STARTUP2.C:636; C097_GRAPHIC_WALLSET_0_D1C→DEFS.H:2363
+- pass `10`: **source-locked**; files=COORD.C, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; C097_GRAPHIC_WALLSET_0_D1C→STARTUP2.C:637; C102_GRAPHIC_WALLSET_0_D2C→STARTUP2.C:634; C107_GRAPHIC_WALLSET_0_D3C→STARTUP2.C:629
+- pass `11`: **source-locked**; files=COORD.C, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; C702→DUNVIEW.C:6219; C703→DUNVIEW.C:6323; C705→DUNVIEW.C:6412
+- pass `12`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; F0127_DUNGEONVIEW_DrawSquare→DUNVIEW.C:1983
+- pass `13`: **source-locked**; files=COORD.C, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; C722→DEFS.H:4065; C723→DUNVIEW.C:6735; C724→DUNVIEW.C:7329
+- pass `14`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; F0111_DUNGEONVIEW_DrawDoor→DUNVIEW.C:4218; G0693_ai_DoorNativeBitmapIndex_Front_D3LCR→TOWNSGLB.H:1059; G0694_ai_DoorNativeBitmapIndex_Front_D2LCR→TOWNSGLB.H:1060; G0695_ai_DoorNativeBitmapIndex_Front_D1LCR→TOWNSGLB.H:1061
+- pass `15`: **source-locked**; files=COORD.C; anchors=COORD.C→COORD.C:1; C3700→DUNVIEW.C:6272; C3710→DUNVIEW.C:6339; C718→DUNVIEW.C:6453; C719→DEFS.H:4062
+- pass `16`: **source-locked**; files=COORD.C, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; F0111_DUNGEONVIEW_DrawDoor→DUNVIEW.C:4218; M625_ZONE_DOOR_D3C→DUNVIEW.C:6744; M628_ZONE_DOOR_D2C→DUNVIEW.C:7339
+- pass `17`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `18`: **source-locked**; files=COORD.C; anchors=COORD.C→COORD.C:1; F0109_DUNGEONVIEW_DrawDoorOrnament→DEFS.H:6980; F0110_DUNGEONVIEW_DrawDoorButton→DUNVIEW.C:4119; F0111_DUNGEONVIEW_DrawDoor→DUNVIEW.C:4218; M649_GRAPHIC_DOOR_MASK_DESTROYED→DUNVIEW.C:2919
+- pass `19`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; C1950_ZONE_DOOR_BUTTON→DUNVIEW.C:4210; F0110_DUNGEONVIEW_DrawDoorButton→DUNVIEW.C:4119; G0197_auc_Graphic558_DoorButtonCoordinateSet→TOWNSGLB.H:1097; G0198→TOWNSGLB.H:1098
+- pass `20`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; C1950_ZONE_DOOR_BUTTON→DUNVIEW.C:4210; F0109_DUNGEONVIEW_DrawDoorOrnament→DUNVIEW.C:4013; F0110_DUNGEONVIEW_DrawDoorButton→DUNVIEW.C:4119; G0198→TOWNSGLB.H:1098
+- pass `21`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; C2000_ZONE_DOOR_ORNAMENT→DUNVIEW.C:4114; F0109_DUNGEONVIEW_DrawDoorOrnament→DUNVIEW.C:4013; F0111_DUNGEONVIEW_DrawDoor→DUNVIEW.C:4218; G0196_auc_Graphic558_DoorOrnamentCoordinateSetIndices→TOWNSGLB.H:1096
+- pass `22`: **source-locked**; files=-; anchors=G0196_auc_Graphic558_DoorOrnamentCoordinateSetIndices→TOWNSGLB.H:1096; G0200→TOWNSGLB.H:1100; G0201→TOWNSGLB.H:1101; M617_GRAPHIC_FIRST_DOOR_ORNAMENT→DUNVIEW.C:2746
+- pass `23`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; F0109_DUNGEONVIEW_DrawDoorOrnament→DUNVIEW.C:4013; F0111_DUNGEONVIEW_DrawDoor→DUNVIEW.C:4218; G0103→TOWNSGLB.H:1022
+- pass `24`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; G0198_auc_Graphic558_PaletteChanges_DoorButtonAndWallOrnament_D3→TOWNSGLB.H:1098; G0199_auc_Graphic558_PaletteChanges_DoorButtonAndWallOrnament_D2→DUNVIEW.C:476; G0200_auc_Graphic558_PaletteChanges_DoorOrnament_D3→TOWNSGLB.H:1100; G0201_auc_Graphic558_PaletteChanges_DoorOrnament_D2→TOWNSGLB.H:1101
+- pass `25`: **source-locked**; files=COORD.C, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; C049_GRAPHIC_FLOOR_PIT_D3L2→DUNVIEW.C:6277; C850→DUNVIEW.C:6277; C851→DUNVIEW.C:6344
+- pass `26`: **source-locked**; files=COORD.C, DEFS.H, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C018_STAIRS_GRAPHIC_COUNT→TOWNSGLB.H:1057; C800→STARTUP2.C:194
+- pass `27`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; C076_GRAPHIC_FIELD_TELEPORTER→DEFS.H:2261; C077_GRAPHIC_FIELD_FLUXCAGE→DEFS.H:2262; C702→DUNVIEW.C:6219; C717→DUNVIEW.C:6586
+- pass `28`: **source-locked**; files=COORD.C, DEFS.H, DUNGEON.C, DUNVIEW.C; anchors=COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DUNGEON.C→DUNGEON.C:1; DUNVIEW.C→DUNVIEW.C:1; C855→DUNVIEW.C:7013
+- pass `29`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `30`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `31`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C1500→DUNVIEW.C:3995; F0108_DUNGEONVIEW_DrawFloorOrnament→DEFS.H:6979; G0191_auc_Graphic558_FloorOrnamentNativeBitmapIndexIncrements→TOWNSGLB.H:1076
+- pass `32`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C1500→DEFS.H:4223; C1500_ZONE_FLOOR_ORNAMENT→DUNVIEW.C:3995; F0108_DUNGEONVIEW_DrawFloorOrnament→DUNVIEW.C:3940
+- pass `33`: **source-locked**; files=DEFS.H, DRAWVIEW.C, DUNVIEW.C, VIDEODRV.C; anchors=DEFS.H→DEFS.H:1; DRAWVIEW.C→DRAWVIEW.C:1; DUNVIEW.C→DUNVIEW.C:1; VIDEODRV.C→VIDEODRV.C:1; C000_DERIVED_BITMAP_VIEWPORT→DUNVIEW.C:4453
+- pass `34`: **source-locked**; files=ACTIDRAW.C, CHAMPION.C, COORD.C, DEFS.H, DUNVIEW.C, PANEL.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; CHAMPION.C→CHAMPION.C:1; COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1
+- pass `35`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C1004_ZONE_WALL_ORNAMENT→DUNVIEW.C:3584; F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF→DUNGEON.C:2558; G0194→TOWNSGLB.H:1094
+- pass `36`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C1004_ZONE_WALL_ORNAMENT→DUNVIEW.C:3584; F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF→DUNGEON.C:2558; G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement→TOWNSGLB.H:1075
+- pass `37`: **source-locked**; files=DEFS.H, DUNGEON.C, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNGEON.C→DUNGEON.C:1; DUNVIEW.C→DUNVIEW.C:1; C2900_ZONE_→DUNVIEW.C:5683; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547
+- pass `38`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C3200_ZONE_→DUNVIEW.C:5613; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0219_as_Graphic558_CreatureAspects→TOWNSGLB.H:1025
+- pass `39`: **source-locked**; files=DEFS.H, DUNGEON.C, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNGEON.C→DUNGEON.C:1; DUNVIEW.C→DUNVIEW.C:1; C2500_ZONE_→DUNVIEW.C:4929; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547
+- pass `40`: **source-locked**; files=COORD.C, DEFS.H, DUNVIEW.C, PANEL.C, ZONES.H; anchors=COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; PANEL.C→PANEL.C:1; C000_DERIVED_BITMAP_VIEWPORT→DUNVIEW.C:4453
+- pass `41`: **source-locked**; files=CHAMDRAW.C, DEFS.H, DUNVIEW.C, ZONES.H; anchors=CHAMDRAW.C→CHAMDRAW.C:1; DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C007→PANEL.C:378; C007_GRAPHIC_STATUS_BOX→DEFS.H:2171
+- pass `42`: **source-locked**; files=DEFS.H, DUNVIEW.C, TEXT.C, ZONES.H; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; TEXT.C→TEXT.C:1; C007→DUNGEON.C:2163; C007_GRAPHIC_STATUS_BOX→DEFS.H:2171
+- pass `43`: **source-locked**; files=CHAMDRAW.C, DATA.C, DUNVIEW.C, ZONES.H; anchors=CHAMDRAW.C→CHAMDRAW.C:1; DATA.C→DATA.C:1; DUNVIEW.C→DUNVIEW.C:1; C007_GRAPHIC_STATUS_BOX→DEFS.H:2171; C011→NEWMAP.C:66
+- pass `44`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C2500_ZONE_→DUNVIEW.C:4929; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0209→TOWNSGLB.H:1023
+- pass `45`: **source-locked**; files=DUNVIEW.C, TEXT.C; anchors=DUNVIEW.C→DUNVIEW.C:1; TEXT.C→TEXT.C:1; C2500→DUNVIEW.C:4929; C2500_ZONE_→DUNVIEW.C:4929; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547
+- pass `46`: **source-locked**; files=DUNVIEW.C, VIDEODRV.C; anchors=DUNVIEW.C→DUNVIEW.C:1; VIDEODRV.C→VIDEODRV.C:1; C2500_ZONE_→DUNVIEW.C:4929; C3200→DUNVIEW.C:5613; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547
+- pass `47`: **source-locked**; files=COORD.C, DEFS.H, DRAWVIEW.C, DUNVIEW.C, MEMORY.C, PANEL.C; anchors=COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DRAWVIEW.C→DRAWVIEW.C:1; DUNVIEW.C→DUNVIEW.C:1; MEMORY.C→MEMORY.C:1
+- pass `48`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C014_PROJECTILE_ASPECT_COUNT→TOWNSGLB.H:1024; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0210→TOWNSGLB.H:1024
+- pass `49`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; C2500→DUNVIEW.C:4929; C2500_ZONE_→DUNVIEW.C:4929; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0209→TOWNSGLB.H:1023
+- pass `50`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C2500_ZONE_→DUNVIEW.C:4929; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0217→TOWNSGLB.H:1105
+- pass `51`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C2548_ZONE_→DUNVIEW.C:5073; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0209→TOWNSGLB.H:1023
+- pass `52`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C2500→DUNVIEW.C:4929; C2500_ZONE_→DUNVIEW.C:4929; C2548→DUNVIEW.C:5073
+- pass `53`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C2500_ZONE_→DUNVIEW.C:4929; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DEFS.H:1626; G0210→TOWNSGLB.H:1024
+- pass `54`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C2500_ZONE_→DEFS.H:4228; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0210→TOWNSGLB.H:1024
+- pass `55`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `56`: **source-mentioned-unresolved**; files=-; anchors=F0128_DUNGEONVIEW_Draw_CPSF→DUNVIEW.C:7155
+- pass `57`: **source-locked**; files=-; anchors=C2500_ZONE_→DUNVIEW.C:4929; F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF→DUNVIEW.C:4547; G0210→TOWNSGLB.H:1024
+- pass `58`: **source-locked**; files=-; anchors=C2500→DUNVIEW.C:4929; C2500_ZONE_→DUNVIEW.C:4929; C2900_ZONE_→DUNVIEW.C:5683; C3200_ZONE_→DUNVIEW.C:5613; G0217→TOWNSGLB.H:1105
+- pass `59`: **source-locked**; files=-; anchors=C2900→DEFS.H:4230; C2900_ZONE_→DEFS.H:4230; C3200_ZONE_→DUNVIEW.C:5613
+- pass `60`: **source-locked**; files=-; anchors=C3200→DUNVIEW.C:5613; C3200_ZONE_→DUNVIEW.C:5613; G0224→DUNVIEW.C:513
+- pass `61`: **source-locked**; files=-; anchors=C3200→DUNVIEW.C:5613; C3200_ZONE_→DUNVIEW.C:5613; G0224→DUNVIEW.C:513
+- pass `62`: **source-locked**; files=-; anchors=C3200→DUNVIEW.C:5613; C3200_ZONE_→DUNVIEW.C:5613
+- pass `63`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `64`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `65`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `66`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `67`: **source-locked**; files=TITLE.C; anchors=TITLE.C→TITLE.C:1; F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap→DUNVIEW.C:3113; F0792_DUNGEONVIEW_DrawBitmapYYY→DUNVIEW.C:3288; M647_WALL_SET_GRAPHIC_COUNT→DUNVIEW.C:2153
+- pass `68`: **source-locked**; files=DRAWVIEW.C, TITLE.C; anchors=DRAWVIEW.C→DRAWVIEW.C:1; TITLE.C→TITLE.C:1; G8147_CREDITS→TOWNSGLB.H:17; G8148_ENTRANCE→TOWNSGLB.H:18; M526_WaitVerticalBlank→CEDT006.C:1372
+- pass `69`: **source-locked**; files=-; anchors=C007→SWSHGDAT.C:464; M646_GRAPHIC_FIRST_WALL_SET→DUNVIEW.C:2153; M647_WALL_SET_GRAPHIC_COUNT→DUNVIEW.C:2153
+- pass `70`: **source-mentioned-unresolved**; files=-; anchors=C079→DEFS.H:3766
+- pass `71`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `72`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `73`: **source-locked**; files=ZONES.H; anchors=C3200→DUNVIEW.C:5613; C3200_ZONE_→DUNVIEW.C:5613; C696_GRAPHIC_LAYOUT→COORD.C:2569
+- pass `74`: **source-locked**; files=-; anchors=C011→ENDGAME.C:1011; C013→ENDGAME.C:1010; C3200→DUNVIEW.C:5613
+- pass `75`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `76`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `77`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `78`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `79`: **source-locked**; files=DM.C; anchors=DM.C→DM.C:1
+- pass `80`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `81`: **source-locked**; files=-; anchors=C151_ZONE_CHAMPION_0_STATUS_BOX_NAME_HANDS→DEFS.H:3783; C159_ZONE_CHAMPION_0_STATUS_BOX_NAME→CHAMDRAW.C:893; C187_ZONE_CHAMPION_0_STATUS_BOX_BAR_GRAPHS→DEFS.H:3795
+- pass `82`: **source-locked**; files=COORD.C, DEFS.H, DRAWMSGA.C, TEXT.C; anchors=COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DRAWMSGA.C→DRAWMSGA.C:1; TEXT.C→TEXT.C:1; C000→DM.C:421
+- pass `83`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C113→CHAMPION.C:1642; C116→CLIKMENU.C:581; C151→REVIVE.C:773; C154→DEFS.H:3786
+- pass `84`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; C201_ICON_ACTION_ICON_EMPTY_HAND→DEFS.H:1952; F0036_OBJECT_ExtractIconFromBitmap→PANEL.C:141; F0386_MENUS_DrawActionIcon→ACTIDRAW.C:201; F0662_ApplyPaletteChanges→IO.C:2089
+- pass `85`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; F0033_OBJECT_GetIconIndex→PANEL.C:462; F0036_OBJECT_ExtractIconFromBitmap→CHAMPION.C:254; F0141_DUNGEON_GetObjectInfoIndex→DUNVIEW.C:4854; F0386_MENUS_DrawActionIcon→REVIVE.C:289
+- pass `86`: **source-locked**; files=-; anchors=C201→ACTIDRAW.C:249; C201_ICON_ACTION_ICON_EMPTY_HAND→ACTIDRAW.C:249
+- pass `87`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; F0662_ApplyPaletteChanges→IO.C:2089; G0498→TOWNSGLB.H:635; G0498_auc_Graphic560_PaletteChanges_ActionAreaObjectIcon→TOWNSGLB.H:635
+- pass `88`: **source-locked**; files=CASTER.C, DEFS.H, PANEL.C, TEXT.C; anchors=CASTER.C→CASTER.C:1; DEFS.H→DEFS.H:1; PANEL.C→PANEL.C:1; TEXT.C→TEXT.C:1; C004_ICON_WEAPON_TORCH_UNLIT→CHAMPION.C:552
+- pass `89`: **source-locked**; files=-; anchors=C014_ICON_WEAPON_FLAMITT_EMPTY→DEFS.H:1897; C016_ICON_WEAPON_EYE_OF_TIME_EMPTY→DEFS.H:1898; C018_ICON_WEAPON_STORMRING_EMPTY→DEFS.H:1899; C020_ICON_WEAPON_STAFF_OF_CLAWS_EMPTY→CEDT004.C:296; C023_ICON_WEAPON_BOLT_BLADE_STORM_EMPTY→OBJECT.C:199
+- pass `90`: **source-locked**; files=-; anchors=C113→CHAMPION.C:1642; C116→DEFS.H:323; C150→DUNVIEW.C:3995; C151→REVIVE.C:773; C154→DEFS.H:3786
+- pass `91`: **source-locked**; files=-; anchors=F0038_OBJECT_DrawIconInSlotBox→CHEST.C:45; G0498→TOWNSGLB.H:635
+- pass `92`: **source-locked**; files=OBJECT.C; anchors=OBJECT.C→OBJECT.C:1; F0033_OBJECT_GetIconIndex→PANEL.C:462; F0038_OBJECT_DrawIconInSlotBox→CHEST.C:45; G0029→TOWNSGLB.H:1311; G0498→TOWNSGLB.H:635
+- pass `93`: **source-mentioned-unresolved**; files=-; anchors=F0038_OBJECT_DrawIconInSlotBox→CHEST.C:45
+- pass `94`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `95`: **source-mentioned-unresolved**; files=-; anchors=G0498→TOWNSGLB.H:635
+- pass `96`: **source-locked**; files=SYMBOL.C; anchors=SYMBOL.C→SYMBOL.C:1; C011→CEDT004.C:372; C011_GRAPHIC_MENU_SPELL_AREA_LINES→MENUDRAW.C:35; C151→REVIVE.C:773; C154→DEFS.H:3786
+- pass `97`: **source-mentioned-unresolved**; files=-; anchors=C011→CEDT004.C:372
+- pass `98`: **source-locked**; files=OBJECT.C; anchors=OBJECT.C→OBJECT.C:1; C033→MENU.C:1456; C034→CHAMDRAW.C:600; C035→MENU.C:1495; F0038_OBJECT_DrawIconInSlotBox→CHEST.C:45
+- pass `99`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `100`: **source-locked**; files=-; anchors=C011→ENDGAME.C:1011; C201→DEFS.H:381; F0033_OBJECT_GetIconIndex→PANEL.C:462; F0038_OBJECT_DrawIconInSlotBox→CHEST.C:45; G0498→TOWNSGLB.H:635
+- pass `101`: **source-mentioned-unresolved**; files=-; anchors=M615→DUNVIEW.C:2678
+- pass `102`: **source-locked**; files=NEWMAP.C; anchors=NEWMAP.C→NEWMAP.C:1; F0003_MAIN_ProcessNewPartyMap_CPSE→STARTUP2.C:1096; F0096_DUNGEONVIEW_LoadCurrentMapGraphics_CPSDF→NEWMAP.C:34; F0174_DUNGEON_SetCurrentMapAndPartyMap→DUNGEON.C:2742; F0194_GROUP_RemoveAllActiveGroups→NEWMAP.C:28
+- pass `103`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `104`: **source-locked**; files=NEWMAP.C; anchors=NEWMAP.C→NEWMAP.C:1
+- pass `105`: **source-locked**; files=DIALOG.C, ENDGAME.C; anchors=DIALOG.C→DIALOG.C:1; ENDGAME.C→ENDGAME.C:1; C450_ZONE_DIALOG_VERSION→DIALOG.C:715; F0427_DIALOG_Draw→STARTUP2.C:1108; F0600_DIALOG_subroutine→DIALOG.C:271
+- pass `106`: **source-locked**; files=DIALOG.C, NEWMAP.C; anchors=DIALOG.C→DIALOG.C:1; NEWMAP.C→NEWMAP.C:1; F0427_DIALOG_Draw→STARTUP2.C:1108
+- pass `107`: **source-locked**; files=-; anchors=C150→DUNVIEW.C:3995; C151→REVIVE.C:773; C154→COMMAND.C:379; C166→REVIVE.C:622; C183→DEFS.H:359
+- pass `108`: **source-locked**; files=DIALOG.C, ENDGAME.C; anchors=DIALOG.C→DIALOG.C:1; ENDGAME.C→ENDGAME.C:1; F0427_DIALOG_Draw→STARTUP2.C:1108
+- pass `109`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C000→EXPAND.C:300; C000_GRAPHIC_DIALOG_BOX→MEMORY.C:1475; F0427_DIALOG_Draw→STARTUP2.C:1108; G0343_puc_Graphic_DialogBox→TOWNSGLB.H:1428
+- pass `110`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C000→DM.C:421; C000_GRAPHIC_DIALOG_BOX→MEMORY.C:1475; C151→DEFS.H:3783; C154→DEFS.H:3786
+- pass `111`: **source-locked**; files=INVNTORY.C, OBJECT.C; anchors=OBJECT.C→OBJECT.C:1; C000→DM.C:421; C000_GRAPHIC_DIALOG_BOX→DEFS.H:2164; C033→DEFS.H:270; C450→DEFS.H:3850
+- pass `112`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C000→IMAGE.C:67; C450→DEFS.H:3850; C469→DEFS.H:3866; C471→DEFS.H:3867
+- pass `113`: **source-locked**; files=-; anchors=C469→DEFS.H:3866; C471→DEFS.H:3867
+- pass `114`: **source-locked**; files=-; anchors=C000→DM.C:421; C000_GRAPHIC_DIALOG_BOX→DEFS.H:2164; C450→DEFS.H:3850; C450_ZONE_DIALOG_VERSION→DIALOG.C:715; C469→DIALOG.C:908
+- pass `115`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C000→EXPAND.C:300; C450→DEFS.H:3850; C469→DEFS.H:3866; C469_ZONE_DIALOG→DEFS.H:3866
+- pass `116`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C000→PANEL.C:731; C450→DEFS.H:3850; C462→DEFS.H:3860; C467→DEFS.H:3865
+- pass `117`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C000→EXPAND.C:300; C450→DEFS.H:3850; C456→DEFS.H:3854; C462→DEFS.H:3860
+- pass `118`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C000→DM.C:421; C450→DEFS.H:3850; C462→DEFS.H:3860; C462_ZONE_DIALOG_BOTTOM_CHOICE→DEFS.H:3860
+- pass `119`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C462→DEFS.H:3860; C463→DEFS.H:3861; C463_ZONE_DIALOG_TOP_CHOICE→DEFS.H:3861; C464→DEFS.H:3862
+- pass `120`: **source-locked**; files=-; anchors=C210→DEFS.H:385; C210_COMMAND_CLICK_ON_DIALOG_CHOICE_1→DEFS.H:385; C211_COMMAND_CLICK_ON_DIALOG_CHOICE_2→COMMAND.C:1872; C212_COMMAND_CLICK_ON_DIALOG_CHOICE_3→DEFS.H:387; C213_COMMAND_CLICK_ON_DIALOG_CHOICE_4→COMMAND.C:1883
+- pass `121`: **source-locked**; files=COORD.C; anchors=COORD.C→COORD.C:1; C451→DEFS.H:3851; C451_ZONE_DIALOG_PATCH_1_CHOICE→DEFS.H:3851; C452→DEFS.H:3852; C452_ZONE_DIALOG_PATCH_2_CHOICES→DIALOG.C:921
+- pass `122`: **source-locked**; files=DATA.C, ENDGAME.C; anchors=DATA.C→DATA.C:1; ENDGAME.C→ENDGAME.C:1; C006_GRAPHIC_THE_END→ENDGAME.C:238; C346_GRAPHIC_WALL_ORNAMENT_43_CHAMPION_MIRROR→ENDGAME.C:272; C412→ENDGAME.C:350
+- pass `123`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; C412_ZONE_ENDGAME_CHAMPION_MIRROR_0→ENDGAME.C:350; C416→ENDGAME.C:360; C416_ZONE_ENDGAME_CHAMPION_PORTRAIT_0→ENDGAME.C:360; C419→DEFS.H:3834
+- pass `124`: **source-locked**; files=-; anchors=C000→EXPAND.C:300; C028→CHAMPION.C:774; C065→CEDT004.C:322; C346→ENDGAME.C:272; C412→ENDGAME.C:350
+- pass `125`: **source-locked**; files=COMMAND.C, DUNVIEW.C, ENDGAME.C; anchors=COMMAND.C→COMMAND.C:1; DUNVIEW.C→DUNVIEW.C:1; ENDGAME.C→ENDGAME.C:1; C000_COMMAND_NONE→COMMAND.C:1119; C007→DUNGEON.C:2163
+- pass `126`: **source-locked**; files=CHAMDRAW.C, ENDGAME.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; ENDGAME.C→ENDGAME.C:1; C008→PANEL.C:142; C033→MENU.C:1456; C035→DEFS.H:272
+- pass `127`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; C026_GRAPHIC_CHAMPION_PORTRAITS→DUNVIEW.C:2466; C412→ENDGAME.C:350; C412_ZONE_ENDGAME_CHAMPION_MIRROR_0→ENDGAME.C:350; C413→DEFS.H:3828
+- pass `128`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; F0443_STARTEND_EndgamePrintString→ENDGAME.C:40; F0444_STARTEND_Endgame→TIMELINE.C:1338
+- pass `129`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; F0303_CHAMPION_GetSkillLevel→CHAMPION.C:715; F0444_STARTEND_Endgame→TIMELINE.C:1338
+- pass `130`: **source-locked**; files=DEFS.H, ENDGAME.C; anchors=DEFS.H→DEFS.H:1; ENDGAME.C→ENDGAME.C:1; F0444_STARTEND_Endgame→STARTUP2.C:1453
+- pass `131`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `132`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `133`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; F0444_STARTEND_Endgame→ENDGAME.C:27
+- pass `134`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `135`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `136`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `137`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `138`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `139`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `140`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `141`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `142`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `143`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `145`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `147`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `149`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `151`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `152`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `153`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `154`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `155`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `156`: **source-locked**; files=TITLE.C; anchors=TITLE.C→TITLE.C:1; F0437_STARTEND_DrawTitle→STARTUP2.C:1392; M526_WaitVerticalBlank→PANEL.C:2431
+- pass `157`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `158`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `159`: **source-locked**; files=-; anchors=C2500→DUNVIEW.C:4929; C2900→DUNVIEW.C:5683; C3200→DUNVIEW.C:5613
+- pass `160`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, DRAWVIEW.C, ENTRANCE.C, MOVESENS.C, TITLE.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; DRAWVIEW.C→DRAWVIEW.C:1; ENTRANCE.C→ENTRANCE.C:1; MOVESENS.C→MOVESENS.C:1
+- pass `161`: **source-locked**; files=CLIKVIEW.C, COMMAND.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; C007→DUNGEON.C:2163; C007_ZONE_VIEWPORT→DRAWVIEW.C:842; C080→DEFS.H:305
+- pass `162`: **source-locked**; files=COMMAND.C, ENTRANCE.C, MOVESENS.C, REVIVE.C; anchors=COMMAND.C→COMMAND.C:1; ENTRANCE.C→ENTRANCE.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1; C001_MODE_LOAD_DUNGEON→DEFS.H:2992
+- pass `163`: **source-locked**; files=COMMAND.C, MOVESENS.C, REVIVE.C; anchors=COMMAND.C→COMMAND.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1; C127→PANEL.C:1413; C127_SENSOR_WALL_CHAMPION_PORTRAIT→DUNGEON.C:2608
+- pass `164`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, DUNGEON.C, MOVESENS.C, REVIVE.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; DUNGEON.C→DUNGEON.C:1; MOVESENS.C→MOVESENS.C:1; REVIVE.C→REVIVE.C:1
+- pass `165`: **source-locked**; files=CLIKVIEW.C, COORD.C, DUNVIEW.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; C026_GRAPHIC_CHAMPION_PORTRAITS→DUNVIEW.C:2466; C161→REVIVE.C:806
+- pass `166`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, COORD.C, DUNVIEW.C, MOVESENS.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DUNVIEW.C→DUNVIEW.C:1; MOVESENS.C→MOVESENS.C:1
+- pass `168`: **source-locked**; files=CLIKVIEW.C, COMMAND.C, COORD.C, DEFS.H, DRAWVIEW.C, DUNVIEW.C; anchors=CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; COORD.C→COORD.C:1; DEFS.H→DEFS.H:1; DRAWVIEW.C→DRAWVIEW.C:1
+- pass `172`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `197`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `247`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `297`: **source-locked**; files=-; anchors=C161_COMMAND_CLICK_IN_PANEL_REINCARNATE→REVIVE.C:806; C162_COMMAND_CLICK_IN_PANEL_CANCEL→DEFS.H:340; F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel→DEFS.H:7851; M568_PANEL_RESURRECT_REINCARNATE→PANEL.C:1626; M664_ZONE_RESURRECT→DEFS.H:3941
+- pass `397`: **source-locked**; files=CHAMPION.C, DEFS.H; anchors=CHAMPION.C→CHAMPION.C:1; DEFS.H→DEFS.H:1; C007_GRAPHIC_STATUS_BOX→DEFS.H:2171; C008_GRAPHIC_STATUS_BOX_DEAD_CHAMPION→DEFS.H:2172; F0292_CHAMPION_DrawState→CHAMPION.C:266
+- pass `497`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C035_GRAPHIC_SLOT_BOX_ACTING_HAND→CHAMDRAW.C:611; C211→DEFS.H:386; C212→DEFS.H:387; C214→DEFS.H:3803
+- pass `597`: **source-locked**; files=-; anchors=C033_GRAPHIC_SLOT_BOX_NORMAL→CHAMDRAW.C:607; C035_GRAPHIC_SLOT_BOX_ACTING_HAND→DEFS.H:2195; F0291_CHAMPION_DrawSlot→CHAMPION.C:537; G0506_ui_ActingChampionOrdinal→STARTUP2.C:413; M618→STARTUP2.C:872
+- pass `697`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C034_GRAPHIC_SLOT_BOX_WOUNDED→DEFS.H:2194; C035_GRAPHIC_SLOT_BOX_ACTING_HAND→DEFS.H:2195; F0291_CHAMPION_DrawSlot→CHAMPION.C:537; M618→DUNVIEW.C:2864
+- pass `797`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C035_GRAPHIC_SLOT_BOX_ACTING_HAND→DEFS.H:2195; C201_ICON_ACTION_ICON_EMPTY_HAND→DEFS.H:1952; C212_ICON_READY_HAND→DEFS.H:1958; F0033_OBJECT_GetIconIndex→CHAMPION.C:254
+- pass `897`: **source-locked**; files=-; anchors=C159→COMMAND.C:485; C162→DEFS.H:340; C163→PANEL.C:1183; C166→REVIVE.C:622; F0292_CHAMPION_DrawState→PANEL.C:1949
+- pass `997`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C008_GRAPHIC_STATUS_BOX_DEAD_CHAMPION→DEFS.H:2172; C159→CHAMDRAW.C:893; C162→DEFS.H:340; C163→PANEL.C:1183
+- pass `1097`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C011_ZONE_ACTION_AREA→ENDGAME.C:1011; F0387_MENUS_DrawActionArea→STARTUP2.C:417; F0733_FillZoneByIndex→IMAGE.C:77; G0509_B_ActionAreaContainsIcons→STARTUP2.C:414
+- pass `1197`: **source-locked**; files=VIDEODRV.C; anchors=VIDEODRV.C→VIDEODRV.C:1; C089_ZONE_ACTION_AREA_CHAMPION_0_ACTION→DEFS.H:3770; F0136_VIDEO_HatchScreenBox→PANEL.C:2239; F0386_MENUS_DrawActionIcon→DEFS.H:8327; F8155_VIDRV_06_HatchScreenBox→NEC816.C:2024
+- pass `1217`: **source-locked**; files=-; anchors=C089→DEFS.H:3770; C092→DEFS.H:3773; C092_ZONE_ACTION_AREA_CHAMPION_→DEFS.H:3773; C093→DEFS.H:3774; C096→STARTUP2.C:636
+- pass `1237`: **source-locked**; files=-; anchors=C089→DEFS.H:3770; C092→DEFS.H:3773; C092_ZONE_ACTION_AREA_CHAMPION_→DEFS.H:3773; C116→DEFS.H:323; C119→CHAMPION.C:1172
+- pass `1257`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C211→DEFS.H:386; C212→DEFS.H:387; C213→COMMAND.C:491; C214→DEFS.H:3803
+- pass `1277`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C187→DEFS.H:363; C191→DEFS.H:367; C195→PANEL.C:1183; C199→TOWNSGLB.H:829
+- pass `1297`: **source-locked**; files=-; anchors=C159→CHAMDRAW.C:893; C162→REVIVE.C:745; C163→PANEL.C:1183; C166→REVIVE.C:622; C696→COORD.C:2569
+- pass `1317`: **source-locked**; files=CHAMPION.C; anchors=CHAMPION.C→CHAMPION.C:1; C159→DEFS.H:3787; C162→DEFS.H:340; C163→PANEL.C:1183; C166→REVIVE.C:622
+- pass `1337`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; C011→ENDGAME.C:1011; F0387_MENUS_DrawActionArea→STARTUP2.C:417
+- pass `1357`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; C011→IO.C:3440; F0387_MENUS_DrawActionArea→STARTUP2.C:417
+- pass `1377`: **source-locked**; files=ACTIDRAW.C, DEFS.H; anchors=ACTIDRAW.C→ACTIDRAW.C:1; DEFS.H→DEFS.H:1; C010_GRAPHIC_MENU_ACTION_AREA→ACTIDRAW.C:352; C011→CEDT004.C:372; C011_ZONE_ACTION_AREA→ENDGAME.C:1011
+- pass `1397`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND→DEFS.H:2216; C011→CEDT004.C:372; C013→CHAMPION.C:527; C013_ZONE_SPELL_AREA→ENDGAME.C:1010
+- pass `1417`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C007→PANEL.C:378; C007_GRAPHIC_STATUS_BOX→DEFS.H:2171
+- pass `1437`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; F0387_MENUS_DrawActionArea→STARTUP2.C:417
+- pass `1457`: **source-locked**; files=INVNTORY.C; anchors=C037→MENU.C:951; C038→CEDT004.C:330; C039→MENU.C:1540
+- pass `1477`: **source-locked**; files=CHAMPION.C; anchors=CHAMPION.C→CHAMPION.C:1; C007_GRAPHIC_STATUS_BOX→DEFS.H:2171; C008→PANEL.C:142; C008_GRAPHIC_STATUS_BOX_DEAD_CHAMPION→CHAMDRAW.C:818
+- pass `1497`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C007→TIMELINE.C:1073; C008→PANEL.C:142
+- pass `1517`: **source-locked**; files=-; anchors=C007→DUNVIEW.C:5958; C037→MENU.C:951; C038→CEDT004.C:330; C039→MENU.C:1540
+- pass `1537`: **source-locked**; files=MENUS.C; anchors=C089→DEFS.H:3770; C096→STARTUP2.C:636; F0386_MENUS_DrawActionIcon→ACTIDRAW.C:201
+- pass `1557`: **source-locked**; files=-; anchors=C007→CHAMPION.C:552; C008→PANEL.C:142; C032_GRAPHIC_POISONED→PANEL.C:1603
+- pass `1577`: **source-locked**; files=CHAMPION.C; anchors=CHAMPION.C→CHAMPION.C:1; C007→PANEL.C:378; C008→TIMELINE.C:1074; C015_GRAPHIC_DAMAGE_TO_CHAMPION_SMALL→CHAMPION.C:1763
+- pass `1597`: **source-locked**; files=-; anchors=C007→TIMELINE.C:1073; C008→PANEL.C:142; C032→PANEL.C:1589; C032_GRAPHIC_POISONED→PANEL.C:1603
+- pass `1617`: **source-locked**; files=CHAMPION.C; anchors=CHAMPION.C→CHAMPION.C:1; C007→CHAMPION.C:552; C008→PANEL.C:142; C015→TEXT.C:121; C015_GRAPHIC_DAMAGE_TO_CHAMPION_SMALL→CHAMPION.C:1763
+- pass `1637`: **source-locked**; files=-; anchors=C037_GRAPHIC_BORDER_PARTY_SHIELD→CHAMDRAW.C:800; C038_GRAPHIC_BORDER_PARTY_FIRESHIELD→DEFS.H:2198; C039_GRAPHIC_BORDER_PARTY_SPELLSHIELD→DEFS.H:2199
+- pass `1657`: **source-locked**; files=CHAMPION.C; anchors=CHAMPION.C→CHAMPION.C:1; C007→CHAMPION.C:552; C008→PANEL.C:142; C015→DRAWMSGA.C:55; C015_GRAPHIC_DAMAGE_TO_CHAMPION_SMALL→CHAMPION.C:1763
+- pass `1677`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `1697`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1
+- pass `1717`: **source-locked**; files=MENUS.C; anchors=F0386_MENUS_DrawActionIcon→REVIVE.C:289; G0299_ui_CandidateChampionOrdinal→PANEL.C:455; G0300_B_PartyIsResting→TOWNSGLB.H:1375
+- pass `1737`: **source-locked**; files=MENUS.C; anchors=F0386_MENUS_DrawActionIcon→REVIVE.C:289
+- pass `1757`: **needs-redmcsb-anchor**; files=-; anchors=-
+- pass `1777`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C033→DEFS.H:270; C034→DEFS.H:271; C035→MENU.C:1495; C211→COMMAND.C:489
+- pass `1797`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C033→MENU.C:1456; C034→MENU.C:1457; C035→MENU.C:1495; C211→DEFS.H:386
+- pass `1817`: **source-locked**; files=-; anchors=C007_GRAPHIC_STATUS_BOX→DEFS.H:2171; C008→PANEL.C:142; C008_GRAPHIC_STATUS_BOX_DEAD→DEFS.H:2172
+- pass `1837`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C159→CHAMDRAW.C:893; C163→PANEL.C:1183
+- pass `1857`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1
+- pass `1877`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; F0387_MENUS_DrawActionArea→MENU.C:731
+- pass `1897`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C009→ENDGAME.C:1012; C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND→DEFS.H:2216; C010→CEDT004.C:372; C010_GRAPHIC_MENU_ACTION_AREA→DEFS.H:2173
+- pass `1917`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C011→IO.C:3440; C011_GRAPHIC_MENU_SPELL_AREA_LINES→MENUDRAW.C:35
+- pass `1937`: **source-mentioned-unresolved**; files=-; anchors=F0387_MENUS_DrawActionArea→ACTIDRAW.C:302
+- pass `1957`: **source-locked**; files=-; anchors=C080→DEFS.H:305; C085→TOWNSGLB.H:1023; C087→STARTUP2.C:596; F0387_MENUS_DrawActionArea→STARTUP2.C:417
+- pass `1977`: **source-locked**; files=-; anchors=C009→PANEL.C:1324; C010→TIMELINE.C:1076; F0387_MENUS_DrawActionArea→STARTUP2.C:417
+- pass `1997`: **source-locked**; files=ZONES.H; anchors=C011→ENDGAME.C:1011; C011_ZONE_ACTION_AREA→ENDGAME.C:1011; C013→ENDGAME.C:1010; C013_ZONE_SPELL_AREA→ENDGAME.C:1010
+- pass `2017`: **source-locked**; files=-; anchors=C026→DUNVIEW.C:2466; C026_GRAPHIC_CHAMPION_PORTRAITS→DUNVIEW.C:2466; C028→CHAMPION.C:774; C028_GRAPHIC_CHAMPION_ICONS→CHAMDRAW.C:54
+- pass `2037`: **source-locked**; files=-; anchors=C014→TOWNSGLB.H:1024; C014_GRAPHIC_DAMAGE_TO_CREATURE→ACTIDRAW.C:123; C015→TEXT.C:121; C015_GRAPHIC_DAMAGE_TO_CHAMPION_SMALL→CHAMPION.C:1763; C016→DUNVIEW.C:8192
+- pass `2057`: **source-locked**; files=-; anchors=C020→CHAMPION.C:359; C020_GRAPHIC_PANEL_EMPTY→PANEL.C:1140; C030→PANEL.C:1585; C030_GRAPHIC_FOOD_LABEL→PANEL.C:1585; C031→PANEL.C:1586
+- pass `2077`: **source-locked**; files=-; anchors=C006_GRAPHIC_THE_END→ENDGAME.C:238; C346→ENDGAME.C:272
+- pass `2097`: **source-locked**; files=-; anchors=C007→PANEL.C:378; C007_GRAPHIC_STATUS_BOX→DEFS.H:2171; C008→PANEL.C:142; C008_GRAPHIC_STATUS_BOX_DEAD_CHAMPION→CHAMDRAW.C:818; C033→DEFS.H:270
+- pass `2117`: **source-locked**; files=-; anchors=C000→EXPAND.C:300; C000_GRAPHIC_DIALOG_BOX→MEMORY.C:1475; C450→DEFS.H:3850; C450_ZONE_DIALOG_VERSION→DEFS.H:3850; M621→DEFS.H:3666
+- pass `2137`: **source-locked**; files=CHAMDRAW.C, DATA.C, DUNVIEW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; DATA.C→DATA.C:1; DUNVIEW.C→DUNVIEW.C:1; C2500→DUNVIEW.C:4929; C3200→DUNVIEW.C:5613
+- pass `2157`: **source-locked**; files=-; anchors=C469→DEFS.H:3866; C471→DEFS.H:3867
+- pass `2177`: **source-locked**; files=-; anchors=C462→DEFS.H:3860; C464→DEFS.H:3862; C467→DEFS.H:3865
+- pass `2197`: **source-mentioned-unresolved**; files=-; anchors=-
+- pass `2217`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C469→DEFS.H:3866; C469_ZONE_DIALOG→DEFS.H:3866; C471→DEFS.H:3867; C471_ZONE_DIALOG→DEFS.H:3867
+- pass `2237`: **source-locked**; files=DIALOG.C; anchors=DIALOG.C→DIALOG.C:1; C462→DEFS.H:3860; C462_ZONE_DIALOG_BOTTOM_CHOICE→DIALOG.C:912; C463_ZONE_DIALOG_TOP_CHOICE→DEFS.H:3861; C464_ZONE_DIALOG_TOP_LEFT_CHOICE→DEFS.H:3862
+- pass `2257`: **source-locked**; files=DEFS.H, DIALOG.C; anchors=DEFS.H→DEFS.H:1; DIALOG.C→DIALOG.C:1; C456→DEFS.H:3854; C456_ZONE_DIALOG_BOTTOM_BUTTON→DEFS.H:3854; C457_ZONE_DIALOG_TOP_BUTTON→DEFS.H:3855
+- pass `2277`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; F0387_MENUS_DrawActionArea→STARTUP2.C:417
+- pass `2297`: **source-locked**; files=ACTIDRAW.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; C010→TIMELINE.C:1076; C010_GRAPHIC_MENU_ACTION_AREA→ACTIDRAW.C:352; C011→ENDGAME.C:1011; C011_ZONE_ACTION_AREA→ENDGAME.C:1011
+- pass `2317`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C082_ZONE_ACTION_AREA_ACTION_0→DEFS.H:3767; C083_ZONE_ACTION_AREA_ACTION_1→DEFS.H:3768; C084_ZONE_ACTION_AREA_ACTION_2→COMMAND.C:465
+- pass `2337`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C211→DEFS.H:386; C212→DEFS.H:387; C213→DEFS.H:388; C214→DEFS.H:3803
+- pass `2357`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C187→COMMAND.C:380; C191→COMMAND.C:540; C195→PANEL.C:1183; C199→TOWNSGLB.H:829
+- pass `2377`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C159→CHAMDRAW.C:893; C162→DEFS.H:340; C163→PANEL.C:1183; C166→DEFS.H:342
+- pass `2397`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C151→REVIVE.C:773; C151_ZONE_CHAMPION_0_STATUS_BOX_NAME_HANDS→CHAMDRAW.C:778; C152_ZONE_CHAMPION_1_STATUS_BOX_NAME_HANDS→DEFS.H:3784; C153_ZONE_CHAMPION_2_STATUS_BOX_NAME_HANDS→DEFS.H:3785
+- pass `2417`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C187→DEFS.H:363; C190→DEFS.H:366; C195→PANEL.C:1183; C198→DEFS.H:374
+- pass `2437`: **source-locked**; files=CHAMDRAW.C; anchors=CHAMDRAW.C→CHAMDRAW.C:1; C210→COMMAND.C:1868; C211→DEFS.H:386; C218→DEFS.H:3807; F0291_CHAMPION_DrawSlot→CHAMPION.C:537
+- pass `2457`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C013→CHAMPION.C:527; C013_ZONE_SPELL_AREA→ENDGAME.C:1010
+- pass `2477`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C011→ENDGAME.C:1011; C011_ZONE_ACTION_AREA→ENDGAME.C:1011
+- pass `2497`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C089→COMMAND.C:468; C092→COMMAND.C:471; C093→ACTIDRAW.C:281; C096→STARTUP2.C:636
+- pass `2517`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C011_ZONE_ACTION_AREA→ENDGAME.C:1011; C088→STARTUP2.C:593; C089→DEFS.H:3770; C092→DEFS.H:3773
+- pass `2537`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C013→CHAMPION.C:527; C013_ZONE_SPELL_AREA→ENDGAME.C:1010; C221→SPELDRAW.C:87; C221_ZONE_SPELL_AREA_SET_MAGIC_CASTER→DEFS.H:3808
+- pass `2557`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C011→CHAMPION.C:455; C011_ZONE_ACTION_AREA→ENDGAME.C:1011; C097→STARTUP2.C:637; C098→STARTUP2.C:630
+- pass `2577`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C011→CEDT004.C:372; C011_ZONE_ACTION_AREA→ENDGAME.C:1011
+- pass `2597`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C011→IO.C:3440; C011_ZONE_ACTION_AREA→STARTUP2.C:381; C077→ACTIDRAW.C:340; C077_ZONE_ACTION_AREA_TWO_ACTIONS_MENU→DEFS.H:3765
+- pass `2617`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C245→DEFS.H:3810; C250→DEFS.H:3815; C255→DUNGEON.C:1534; C261→MENUDRAW.C:107
+- pass `2637`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C245→DEFS.H:3810; C252→COMMAND.C:481; C252_ZONE_SPELL_AREA_CAST_SPELL→DEFS.H:3816; C254→SWITCH.C:717
+- pass `2657`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C016→PANEL.C:1141; C017→PANEL.C:2376; C017_ZONE_LEADER_HAND_OBJECT_NAME→OBJECT.C:270
+- pass `2677`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C020→PANEL.C:1140; C030→CHAMPION.C:547; C031→PANEL.C:1586; C100→DUNVIEW.C:3584
+- pass `2697`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C007→NEWMAP.C:61; C007_ZONE_VIEWPORT→DRAWVIEW.C:842
+- pass `2717`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C111→COMMAND.C:103; C112→TEXT.C:1893; C113→IO.C:2557; C113_ZONE_CHAMPION_ICON_TOP_LEFT→CHAMPION.C:1642
+- pass `2737`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C009→CLIKVIEW.C:483; C009_ZONE_MOVEMENT_ARROWS→PANEL.C:2372; C068→STARTUP2.C:703; C068_ZONE_TURN_LEFT→DEFS.H:3758
+- pass `2757`: **source-locked**; files=-; anchors=C009_ZONE_MOVEMENT_ARROWS→PANEL.C:2372; C068→DUNVIEW.C:2758; C069→DUNGEON.C:520; C070→SWSHGDAT.C:187; C071→COMMAND.C:136
+- pass `2777`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C014→STARTUP2.C:785; C015→DRAWMSGA.C:55; C015_ZONE_MESSAGE_AREA→DRAWMSGA.C:55
+- pass `2797`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C002→DUNVIEW.C:2043; C002_ZONE_SCREEN→IMAGE.C:77; C005→PANEL.C:2289; C005_ZONE_SCREEN_CENTERED_DIALOG→ENDGAME.C:450
+- pass `2817`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C003→TOWNSGLB.H:602; C004→CHAMPION.C:552; C004_ZONE_EXPLOSION_PATTERN_D0C→DEFS.H:3749
+- pass `2837`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C507→DEFS.H:3876; C519→DEFS.H:3888; C520→COMMAND.C:434; C521→DEFS.H:3890
+- pass `2857`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C507→COMMAND.C:419; C507_ZONE_SLOT_BOX_08_INVENTORY_READY_HAND→COMMAND.C:419; C519→DEFS.H:3888; C519_ZONE_SLOT_BOX_20_INVENTORY_QUIVER_LINE1_1→DEFS.H:3888
+- pass `2877`: **source-locked**; files=DEFS.H; anchors=DEFS.H→DEFS.H:1; C017→PANEL.C:2376; C017_GRAPHIC_INVENTORY→PANEL.C:2376
+- pass `2897`: **source-locked**; files=-; anchors=C007→PANEL.C:378; C017→PANEL.C:2376; C020→PANEL.C:1140; C033→MENU.C:1456; C034→MENU.C:1457
+- pass `2917`: **source-locked**; files=-; anchors=C017→PANEL.C:2376; C507→DEFS.H:3876; C507_ZONE_SLOT_BOX_08_INVENTORY_READY_HAND→DEFS.H:3876; C508_ZONE_SLOT_BOX_09_INVENTORY_ACTION_HAND→COMMAND.C:420; C536→DEFS.H:3905
+- pass `2937`: **source-locked**; files=-; anchors=C017→PANEL.C:2376; C507→DEFS.H:3876; C508→DEFS.H:3877; C509→DEFS.H:3878; C512→DEFS.H:3881
+- pass `2957`: **source-locked**; files=ENDGAME.C; anchors=ENDGAME.C→ENDGAME.C:1; C006_GRAPHIC_THE_END→ENDGAME.C:238; C346_GRAPHIC_WALL_ORNAMENT_43_CHAMPION_MIRROR→ENDGAME.C:272; C412→ENDGAME.C:350; C415→DEFS.H:3830
+- pass `2977`: **source-locked**; files=ACTIDRAW.C, COMMAND.C, DEFS.H, MENU.C; anchors=ACTIDRAW.C→ACTIDRAW.C:1; COMMAND.C→COMMAND.C:1; DEFS.H→DEFS.H:1; MENU.C→MENU.C:1; C028→MENU.C:1327
+- pass `2997`: **source-locked**; files=DUNVIEW.C; anchors=DUNVIEW.C→DUNVIEW.C:1; C2500→DUNVIEW.C:4929; C3200→DUNVIEW.C:5613; G0210→TOWNSGLB.H:1024; M613→DUNVIEW.C:2616
+- pass `3017`: **source-locked**; files=DEFS.H, DUNVIEW.C; anchors=DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF→DUNVIEW.C:3502; G0194_auc_Graphic558_WallOrnamentCoordinateSetIndices→TOWNSGLB.H:1094; G0198→TOWNSGLB.H:1098
+- pass `3037`: **source-locked**; files=CHAMPION.C, DEFS.H, DUNVIEW.C; anchors=CHAMPION.C→CHAMPION.C:1; DEFS.H→DEFS.H:1; DUNVIEW.C→DUNVIEW.C:1; C007→NEWMAP.C:61; C015→TEXT.C:121
+- pass `unclassified`: **source-locked**; files=CASTER.C, CHAMPION.C, CLIKVIEW.C, COMMAND.C, DEFS.H, DRAWVIEW.C; anchors=CASTER.C→CASTER.C:1; CHAMPION.C→CHAMPION.C:1; CLIKVIEW.C→CLIKVIEW.C:1; COMMAND.C→COMMAND.C:1; DEFS.H→DEFS.H:1
+
+## Next action
+
+- Prioritize replacing `needs-redmcsb-anchor` route/capture passes with explicit source-file/function evidence before doing coordinate or emulator tuning.
+- For already source-locked route blockers, run runtime probes only after the source sequence is represented in `M11_GameView_HandlePointer`/mouse resolver tests.
