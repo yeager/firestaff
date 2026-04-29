@@ -243,6 +243,71 @@ static int m11_draw_entrance_screen_asset(M11_GameViewState* gameView,
     return 1;
 }
 
+
+static int m11_draw_entrance_closed_doors_asset(M11_GameViewState* gameView,
+                                                unsigned char* framebuffer) {
+    const M11_AssetSlot* leftDoor;
+    const M11_AssetSlot* rightDoor;
+    if (!gameView || !framebuffer || !gameView->assetsAvailable) {
+        return 0;
+    }
+    leftDoor = M11_AssetLoader_Load(&gameView->assetLoader, 2U);
+    rightDoor = M11_AssetLoader_Load(&gameView->assetLoader, 3U);
+    if (!leftDoor || !rightDoor || leftDoor->height < 161U || rightDoor->height < 161U) {
+        return 0;
+    }
+    /* ReDMCSB DATA.C PC boxes: closed left {0,104,28,188},
+     * closed right {105,231,28,188}; ENTRANCE.C:574-579 blits C002/C003
+     * over C004 before the command wait / door opening. */
+    M11_AssetLoader_BlitRegion(leftDoor, 0, 0, 105, 161,
+                               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                               0, 28, -1);
+    M11_AssetLoader_BlitRegion(rightDoor, 0, 0, 127, 161,
+                               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                               105, 28, -1);
+    return 1;
+}
+
+static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
+                                                 unsigned char* framebuffer,
+                                                 const EntranceCompatDoorStep* door) {
+    const M11_AssetSlot* leftDoor;
+    const M11_AssetSlot* rightDoor;
+    int drew = 0;
+    if (!gameView || !framebuffer || !door || !gameView->assetsAvailable) {
+        return 0;
+    }
+    leftDoor = M11_AssetLoader_Load(&gameView->assetLoader, 2U);
+    rightDoor = M11_AssetLoader_Load(&gameView->assetLoader, 3U);
+    if (!leftDoor || !rightDoor) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C:189-231 blits source door strips from the
+     * precomputed C002/C003 animation-step bitmaps using the DATA.C opening
+     * boxes.  The compat schedule already exposes those boxes/source X values. */
+    if (door->leftBoxW > 0U && leftDoor->height >= door->leftBoxH &&
+        leftDoor->width >= door->leftSourceX + door->leftBoxW) {
+        M11_AssetLoader_BlitRegion(leftDoor,
+                                   (int)door->leftSourceX, 0,
+                                   (int)door->leftBoxW, (int)door->leftBoxH,
+                                   framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                                   (int)door->leftBoxX, 28 + (int)door->leftBoxY,
+                                   -1);
+        drew = 1;
+    }
+    if (door->rightBoxW > 0U && rightDoor->height >= door->rightBoxH &&
+        rightDoor->width >= door->rightSourceX + door->rightBoxW) {
+        M11_AssetLoader_BlitRegion(rightDoor,
+                                   (int)door->rightSourceX, 0,
+                                   (int)door->rightBoxW, (int)door->rightBoxH,
+                                   framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                                   (int)door->rightBoxX, 28 + (int)door->rightBoxY,
+                                   -1);
+        drew = 1;
+    }
+    return drew;
+}
+
 static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
                                          int x,
                                          int y,
@@ -276,9 +341,9 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
      * - F0438_STARTEND_OpenEntranceDoors() runs 31 one-VBlank steps.
      * - ENTRANCE.C:149-231 moves the left/right door boxes by 4px/step
      *   from DATA.C source boxes left {0,100,0,160}, right {109,231,0,160}.
-     * This runtime transition uses the source schedule/boxes here; C004 is
-     * blitted from GRAPHICS.DAT when available, while C002/C003 door-panel
-     * blits remain a bounded follow-up over the same timing/geometry. */
+     * This runtime transition uses the source schedule/boxes here; C004 and
+     * C002/C003 are blitted from GRAPHICS.DAT when available, with palette-fill
+     * fallback preserving timing/geometry if assets are missing. */
     for (sourceStep = 1U; sourceStep <= ENTRANCE_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
         EntranceCompatSourceAnimationStep step;
         if (!ENTRANCE_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
@@ -289,7 +354,9 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
                    step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT ||
                    step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND ||
                    step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
-            if (!m11_draw_entrance_screen_asset(gameView, framebuffer)) {
+            if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
+                (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
+            } else {
                 memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
                 m11_draw_entrance_door_panel(framebuffer, 0, 28, 101, 161, 5);
                 m11_draw_entrance_door_panel(framebuffer, 109, 28, 123, 161, 5);
@@ -298,21 +365,23 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
             EntranceCompatDoorStep door;
             memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
             if (ENTRANCE_Compat_GetDoorAnimationStep(sourceStep - 6U, &door)) {
-                if (door.leftBoxW > 0U) {
-                    m11_draw_entrance_door_panel(framebuffer,
-                                                 (int)door.leftBoxX,
-                                                 28 + (int)door.leftBoxY,
-                                                 (int)door.leftBoxW,
-                                                 (int)door.leftBoxH,
-                                                 5);
-                }
-                if (door.rightBoxW > 0U) {
-                    m11_draw_entrance_door_panel(framebuffer,
-                                                 (int)door.rightBoxX,
-                                                 28 + (int)door.rightBoxY,
-                                                 (int)door.rightBoxW,
-                                                 (int)door.rightBoxH,
-                                                 5);
+                if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, &door)) {
+                    if (door.leftBoxW > 0U) {
+                        m11_draw_entrance_door_panel(framebuffer,
+                                                     (int)door.leftBoxX,
+                                                     28 + (int)door.leftBoxY,
+                                                     (int)door.leftBoxW,
+                                                     (int)door.leftBoxH,
+                                                     5);
+                    }
+                    if (door.rightBoxW > 0U) {
+                        m11_draw_entrance_door_panel(framebuffer,
+                                                     (int)door.rightBoxX,
+                                                     28 + (int)door.rightBoxY,
+                                                     (int)door.rightBoxW,
+                                                     (int)door.rightBoxH,
+                                                     5);
+                    }
                 }
             }
         } else {

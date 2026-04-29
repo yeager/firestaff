@@ -34,3 +34,24 @@ cmake --build build --target firestaff -j2
 ./run_firestaff_m11_game_view_probe.sh  # 592/592 invariants passed
 ./test_entrance_frontend_pc34_compat_integration  # entranceSourceAnimationScheduleInvariantOk=1
 ```
+
+## 2026-04-29 follow-up: C002/C003 door-panel runtime blits
+
+The entrance transition now also blits GRAPHICS.DAT graphics 2/3 (`C002_GRAPHIC_ENTRANCE_LEFT_DOOR`, `C003_GRAPHIC_ENTRANCE_RIGHT_DOOR`) when assets are available.
+
+Source anchors:
+
+- `DEFS.H:2166-2168` defines C002/C003/C004 entrance graphics.
+- `DATA.C:125-130` / PC branches define entrance viewport, opening-door, closed-door boxes.
+- `ENTRANCE.C:574-579` blits closed C002/C003 door panels over the C004 entrance screen.
+- `ENTRANCE.C:189-231` blits opening left/right door strips with moving boxes/source X during the 31-step `F0438_STARTEND_OpenEntranceDoors()` loop.
+
+The existing palette panel fallback remains only for missing/unavailable assets; source timing and boxes remain driven by `entrance_frontend_pc34_compat`.
+
+Verification after patch:
+
+```text
+cmake --build build --target firestaff -j2
+./run_firestaff_m11_game_view_probe.sh  # 592/592 invariants passed
+./test_entrance_frontend_pc34_compat_integration  # entranceSourceAnimationScheduleInvariantOk=1
+```
