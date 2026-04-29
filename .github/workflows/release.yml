@@ -1,0 +1,83 @@
+name: Preview release artifacts
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, e.g. 0.2.5-preview'
+        required: true
+        default: '0.2.5-preview'
+
+jobs:
+  macos-artifact:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "FIRESTAFF_VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+          else
+            echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          fi
+      - name: Install SDL3
+        run: brew install sdl3 || true
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package macOS preview
+        run: |
+          VERSION="$FIRESTAFF_VERSION" SHORT_VERSION="${FIRESTAFF_VERSION%%-*}" RELEASE_NOTES_SRC="$PWD/RELEASE_0_2_5_PREVIEW.md" ./scripts/package_macos_preview.sh
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-macos
+          path: |
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}.dmg
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}.zip
+
+  windows-artifact:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "FIRESTAFF_VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+          else
+            echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          fi
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-SDL3
+            mingw-w64-ucrt-x86_64-7zip
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package Windows preview
+        run: VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/RELEASE_0_2_5_PREVIEW.md" ./scripts/package_windows_preview.sh
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-windows
+          path: release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows.zip

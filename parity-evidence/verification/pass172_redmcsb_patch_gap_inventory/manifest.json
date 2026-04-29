@@ -1,6 +1,6 @@
 {
   "schema": "pass172_redmcsb_patch_gap_inventory.v1",
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206",
+  "source_root": "ReDMCSB_WIP20210206",
   "priority_bug_count": 18,
   "structural_gap_count": 5,
   "priority_bugs": [

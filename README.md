@@ -23,7 +23,7 @@ An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Bac
 
 ## Status
 
-**Firestaff 0.2.0 is an early macOS preview release.**
+**Firestaff 0.2.5 is an early macOS and Windows preview release.**
 
 It already has a real launcher, a real in-game DM1 slice, a modern high-resolution startup menu, bounded original-version detection, and a growing verified engine core. Recent work has also tightened V1 parity honestly: movement / door / sensor ownership is being pushed into source-backed compat/runtime paths, original-reference tooling is now in-tree, and `SONG.DAT` decoding groundwork has landed.
 
@@ -33,7 +33,7 @@ It already has a real launcher, a real in-game DM1 slice, a modern high-resoluti
 - persistent startup settings
 - selected-version status and per-game checksum indicators in the startup menu
 - MD5-based original-data detection for bounded DM1 / CSB / DM2 version sets
-- self-contained macOS app packaging with bundled SDL3 for preview releases
+- self-contained macOS app packaging with bundled SDL3 and Windows preview zip packaging
 - explicit launcher / game / settings flow
 - real dungeon loading from `DUNGEON.DAT`
 - real movement / facing / ticking backed by world state
@@ -110,7 +110,7 @@ The project is built around portable C, explicit data structures, and aggressive
 
 ## Running Firestaff
 
-### Quick start for macOS preview
+### Quick start for preview builds
 
 1. Put your legal original game files under `~/.firestaff/originals/`
 2. Launch Firestaff

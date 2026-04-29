@@ -61,7 +61,7 @@ def main():
         {'area':'candidate champion recruit path','redmcsb':['MOVESENS.C','REVIVE.C','COMMAND.C'],'firestaff_evidence':['pass163_champion_recruit_source_path_lock'],'patch_shape':'clarify that C160/C161 only works after C127/F0280 candidate state; avoid misleading panel-first route assumptions'},
         {'area':'object/status/action icon geometry','redmcsb':['CHAMDRAW.C','ACTIDRAW.C','PANEL.C','COORD.C'],'firestaff_evidence':['pass169_redmcsb_anchor_gap_resolution','pass170_source_mentioned_unresolved_batch'],'patch_shape':'extract/label source constants for 16x16 object icons and status/action hand zones'},
     ]
-    manifest={'schema':'pass172_redmcsb_patch_gap_inventory.v1','source_root':str(SRC),'priority_bug_count':len(bugs),'structural_gap_count':len(structural),'priority_bugs':bugs,'structural_gaps':structural,'firestaff_supported_patch_candidates':firestaff_supported}
+    manifest={'schema':'pass172_redmcsb_patch_gap_inventory.v1','source_root':'ReDMCSB_WIP20210206','priority_bug_count':len(bugs),'structural_gap_count':len(structural),'priority_bugs':bugs,'structural_gaps':structural,'firestaff_supported_patch_candidates':firestaff_supported}
     (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     lines=['# Pass172 — ReDMCSB patch gap inventory for Christophe','','## Executive take','', 'ReDMCSB is not “missing answers” for DM1/V1 parity; it is missing a clean patch queue around known documented bugs/anomalies and a few source facts that Firestaff has now independently gated. Highest value is to send small, source-local patches with repro/evidence, not a giant rewrite.','','## Priority patch candidates','']
     for b in bugs:
