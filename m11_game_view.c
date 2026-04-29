@@ -17845,9 +17845,9 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * (max-current)/max fraction of the bar at the top is
              * filled with darkest-gray first, and only the remaining
              * bottom portion shows the champion color.  Dead
-             * champion (current==0) gets all darkest-gray and skips
-             * the colored fill entirely (matches F0287's
-             * L2254_i_Bars[...][0] != 0 guard).
+             * champions skip F0287 entirely after F0292 blits C008
+             * and prints the name (CHAMDRAW.C:816-842), so V1 must
+             * leave the dead-box graphic unobscured by bar columns.
              *
              * V2 vertical-slice / opt-out: legacy horizontal 59x{2,1,1}
              * strip preserved so the pre-baked HUD sprite stays
@@ -17856,7 +17856,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * Ref: firestaff_pc34_core_amalgam.c l.11229..11260 for
              * F0287; zones_h_reconstruction.json records 187..206;
              * parity-evidence/pass43_bar_graphs.md. */
-            if (m11_v1_bar_graphs_enabled()) {
+            if (!isDead && m11_v1_bar_graphs_enabled()) {
                 int statIdx;
                 unsigned char champColor =
                     isDead
@@ -17902,11 +17902,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                           barW, fillHeight, champColor);
                         }
                     }
-                    /* current == 0 leaves the container all-blank,
-                     * matching F0287's L2254_i_Bars[...][0] != 0
-                     * final-color guard. */
+                    /* current == 0 leaves the container all-blank for
+                     * living champions whose individual stat reached zero. */
                 }
-            } else {
+            } else if (!m11_v1_bar_graphs_enabled()) {
                 int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
                 int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
                 int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;

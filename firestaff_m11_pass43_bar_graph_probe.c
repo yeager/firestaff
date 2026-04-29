@@ -248,6 +248,33 @@ int main(int argc, char** argv) {
                             PROBE_COLOR_LIGHT_BLUE) == 0,
            "the old left-anchored horizontal strip body no longer carries colored stat fill in V1");
 
+    /* CHAMDRAW.C F0292 draws C008 + name for dead champions and jumps
+     * past F0287, so a dead V1 status box must not be overpainted by
+     * any HP/stamina/mana bar column even if the non-health stats are
+     * non-zero in state. */
+    view.world.party.champions[0].hp.current = 0;
+    view.world.party.champions[0].stamina.current = 100;
+    view.world.party.champions[0].mana.current = 100;
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(&view, fb, SCREEN_W, SCREEN_H);
+    snprintf(pgmPath, sizeof(pgmPath), "%s/pass43_dead_status_no_bars.pgm", outDir);
+    dump_pgm(pgmPath, fb);
+    printf("Screenshot: %s\n", pgmPath);
+    record("INV_P43_11",
+           count_color_rect(fb, SCREEN_W, BAR_HP_X, BAR_TOP_Y, BAR_W, BAR_H,
+                            PROBE_COLOR_DARK_GRAY) == 0 &&
+           count_color_rect(fb, SCREEN_W, BAR_HP_X, BAR_TOP_Y, BAR_W, BAR_H,
+                            PROBE_COLOR_LIGHT_GREEN) == 0 &&
+           count_color_rect(fb, SCREEN_W, BAR_STA_X, BAR_TOP_Y, BAR_W, BAR_H,
+                            PROBE_COLOR_DARK_GRAY) == 0 &&
+           count_color_rect(fb, SCREEN_W, BAR_STA_X, BAR_TOP_Y, BAR_W, BAR_H,
+                            PROBE_COLOR_LIGHT_GREEN) == 0 &&
+           count_color_rect(fb, SCREEN_W, BAR_MANA_X, BAR_TOP_Y, BAR_W, BAR_H,
+                            PROBE_COLOR_DARK_GRAY) == 0 &&
+           count_color_rect(fb, SCREEN_W, BAR_MANA_X, BAR_TOP_Y, BAR_W, BAR_H,
+                            PROBE_COLOR_LIGHT_GREEN) == 0,
+           "dead V1 champion status box skips F0287 bar drawing after the C008/name path");
+
     printf("# summary: %d/%d invariants passed\n", g_pass, g_pass + g_fail);
     M11_GameView_Shutdown(&view);
     return g_fail ? 1 : 0;
