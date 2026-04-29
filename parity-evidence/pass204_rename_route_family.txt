@@ -1,0 +1,10 @@
+# Pass 204 — ReDMCSB rename route family
+
+Source-first audit:
+COMMAND.C:520-549 and 730-761 define rename mouse/keyboard commands C165-C198, mapping title/backspace/letters/comma/period/semicolon/colon/space to rename zones and key codes.
+
+Probe output:
+
+probe=firestaff_rename_route_family
+sourceEvidence=COMMAND.C:520-549 and 730-761 define rename mouse/keyboard commands C165-C198, mapping title/backspace/letters/comma/period/semicolon/colon/space to rename zones and key codes.
+renameRouteFamilyInvariantOk=1
