@@ -1,0 +1,39 @@
+window-found 4194321 via search --class DOSBox
+window-found 4194330 via search --class DOSBox
+capture initial selector_000.png sha=014ed52c71a0
+window-found 4194330 via search --class DOSBox
+key Return
+window-found 4194330 via search --class DOSBox
+capture key_Return_2 selector_000.png sha=014ed52c71a0
+window-found 4194330 via search --class DOSBox
+capture after_enter selector_000.png sha=014ed52c71a0
+window-found 4194330 via search --class DOSBox
+key F1
+window-found 4194330 via search --class DOSBox
+capture key_F1_4 selector_000.png sha=3ad66a894ed8
+window-found 4194330 via search --class DOSBox
+capture candidate_inventory_lead selector_000.png sha=0d7d3032c3be
+window-found 4194330 via search --class DOSBox
+click 178,165 mapped 357,331 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_178_165_6 selector_000.png sha=0739ee066356
+window-found 4194330 via search --class DOSBox
+capture after_reincarnate fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+key Return
+window-found 4194330 via search --class DOSBox
+capture key_Return_8 fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+capture after_confirm fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key F1
+window-found 4194330 via search --class DOSBox
+capture key_F1_10 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture f1_readiness fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key F4
+window-found 4194330 via search --class DOSBox
+capture key_F4_12 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture f4_readiness fires_000.png sha=48ed3743ab6a

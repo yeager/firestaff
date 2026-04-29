@@ -1,0 +1,59 @@
+window-found 4194321 via search --class DOSBox
+window-found 4194330 via search --class DOSBox
+capture initial selector_000.png sha=014ed52c71a0
+window-found 4194330 via search --class DOSBox
+key Return
+window-found 4194330 via search --class DOSBox
+capture key_Return_2 selector_000.png sha=014ed52c71a0
+window-found 4194330 via search --class DOSBox
+click 45,35 mapped 91,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_45_35_3 selector_000.png sha=c2ef423da2b7
+window-found 4194330 via search --class DOSBox
+click 95,35 mapped 191,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_95_35_4 selector_000.png sha=eded77444a51
+window-found 4194330 via search --class DOSBox
+click 150,35 mapped 301,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_150_35_5 fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+click 220,35 mapped 441,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_220_35_6 fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+click 280,35 mapped 561,71 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_280_35_7 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_082b_seed fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+click 112,60 mapped 225,121 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_112_60_9 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_portrait_center fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+click 178,165 mapped 357,331 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_178_165_11 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_reincarnate fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key Return
+window-found 4194330 via search --class DOSBox
+capture key_Return_13 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_confirm fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key F1
+window-found 4194330 via search --class DOSBox
+capture key_F1_15 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture f1_readiness fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key F4
+window-found 4194330 via search --class DOSBox
+capture key_F4_17 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture f4_readiness fires_000.png sha=48ed3743ab6a
