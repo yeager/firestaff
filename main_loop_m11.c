@@ -222,6 +222,27 @@ static void m11_fill_rect_indexed(unsigned char* framebuffer,
     }
 }
 
+
+static int m11_draw_entrance_screen_asset(M11_GameViewState* gameView,
+                                          unsigned char* framebuffer) {
+    const M11_AssetSlot* entranceScreen;
+    if (!gameView || !framebuffer || !gameView->assetsAvailable) {
+        return 0;
+    }
+    entranceScreen = M11_AssetLoader_Load(&gameView->assetLoader, 4U);
+    if (!entranceScreen || entranceScreen->width != 320U || entranceScreen->height != 200U) {
+        return 0;
+    }
+    M11_AssetLoader_Blit(entranceScreen,
+                         framebuffer,
+                         M11_FB_WIDTH,
+                         M11_FB_HEIGHT,
+                         0,
+                         0,
+                         -1);
+    return 1;
+}
+
 static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
                                          int x,
                                          int y,
@@ -255,9 +276,9 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
      * - F0438_STARTEND_OpenEntranceDoors() runs 31 one-VBlank steps.
      * - ENTRANCE.C:149-231 moves the left/right door boxes by 4px/step
      *   from DATA.C source boxes left {0,100,0,160}, right {109,231,0,160}.
-     * This runtime transition uses the source schedule/boxes here; decoded
-     * C002/C003/C004 entrance graphics can replace the temporary palette
-     * fills without changing timing or geometry. */
+     * This runtime transition uses the source schedule/boxes here; C004 is
+     * blitted from GRAPHICS.DAT when available, while C002/C003 door-panel
+     * blits remain a bounded follow-up over the same timing/geometry. */
     for (sourceStep = 1U; sourceStep <= ENTRANCE_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
         EntranceCompatSourceAnimationStep step;
         if (!ENTRANCE_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
@@ -268,9 +289,11 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
                    step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT ||
                    step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND ||
                    step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
-            memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-            m11_draw_entrance_door_panel(framebuffer, 0, 28, 101, 161, 5);
-            m11_draw_entrance_door_panel(framebuffer, 109, 28, 123, 161, 5);
+            if (!m11_draw_entrance_screen_asset(gameView, framebuffer)) {
+                memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
+                m11_draw_entrance_door_panel(framebuffer, 0, 28, 101, 161, 5);
+                m11_draw_entrance_door_panel(framebuffer, 109, 28, 123, 161, 5);
+            }
         } else if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP) {
             EntranceCompatDoorStep door;
             memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);

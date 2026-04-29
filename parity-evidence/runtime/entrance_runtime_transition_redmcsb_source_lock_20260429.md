@@ -20,3 +20,17 @@ Verification:
 - `cmake --build build --target firestaff -j2` passed.
 - `./run_firestaff_m11_game_view_probe.sh` passed: 592/592 invariants.
 - `./test_entrance_frontend_pc34_compat_integration` passed: 31 door steps, 11 rattles, 38 source animation steps.
+
+## 2026-04-29 follow-up: C004 runtime blit
+
+The entrance pre-open surface now blits GRAPHICS.DAT graphic 4 (`C004`, 320x200) through the M11 asset loader when available, matching the ReDMCSB `ENTRANCE.C:446-595` source stage that draws the entrance screen before the door-opening loop.
+
+C002/C003 door-panel blits remain bounded follow-up work; the timing and source door boxes from `ENTRANCE.C:142-304` / DATA.C are unchanged.
+
+Verification after patch:
+
+```text
+cmake --build build --target firestaff -j2
+./run_firestaff_m11_game_view_probe.sh  # 592/592 invariants passed
+./test_entrance_frontend_pc34_compat_integration  # entranceSourceAnimationScheduleInvariantOk=1
+```
