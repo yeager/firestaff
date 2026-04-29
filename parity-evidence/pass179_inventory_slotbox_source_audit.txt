@@ -1,0 +1,77 @@
+# Pass 179 — ReDMCSB inventory slot-box consolidation
+
+Source-first audit:
+
+- `DEFS.H:778-817` defines slots `0..37`, including inventory `0..29` and chest `C30_SLOT_CHEST_1` through `C37_SLOT_CHEST_8`.
+- `DEFS.H:1873-1878` defines slot-box constants:
+  - `C08_SLOT_BOX_INVENTORY_FIRST_SLOT = 8`
+  - `C38_SLOT_BOX_CHEST_FIRST_SLOT = 38`
+  - `M070_HAND_SLOT_INDEX(slotboxindex) ((slotboxindex) & 0x0001)`
+- `DATA.C:977-1023` maps PC/F20+ `G0030_as_Graphic562_SlotBoxes[46]` to zone IDs:
+  - status slot boxes `0..7` -> `C211..C218`
+  - inventory slot boxes `8..37` -> `C507..C536`
+  - chest slot boxes `38..45` -> `C537..C544`
+- `DATA.C:1049-1087` maps slot allowed masks for the 30 inventory slots and 8 chest slots.
+- `COMMAND.C:419-450` maps inventory mouse commands `C028..C057` to zones `C507..C536`.
+- `COMMAND.C:499-506` maps chest mouse commands `C058..C065` to zones `C537..C544`.
+- `COMMAND.C:2174-2177` dispatches commands `C028..C065` as `command - C020_COMMAND_CLICK_ON_SLOT_BOX_00...`, i.e. `command - 20` -> slot-box index.
+- `CHAMPION.C:677-692` maps slot-box index to either status champion hands or inventory/chest storage:
+  - `< 8`: champion index `slotBox >> 1`, hand slot `M070_HAND_SLOT_INDEX(slotBox)`
+  - `>= 8`: inventory champion, slot index `slotBox - 8`; `>= C30_SLOT_CHEST_1` uses `G0425_aT_ChestSlots`.
+
+Firestaff implementation:
+
+- `inventory_slotbox_pc34_compat.[ch]` exposes the source-locked slot-box -> slot/command/zone/mask mapping and command dispatch route.
+- This consolidates inventory and chest slot-box facts into one probeable module.
+
+Probe output:
+
+probe=firestaff_inventory_slotbox_source_audit
+slotBoxSourceEvidence=ReDMCSB source lock: DEFS.H:778-817 defines slots 0..37 and C30 chest start; DEFS.H:1873-1878 defines C08 inventory first slot, C38 chest first slot, and M070 hand slot; DATA.C:977-1023 maps PC/F20+ G0030_as_Graphic562_SlotBoxes to zone indices; COMMAND.C:419-450 and 499-506 bind mouse commands to inventory/chest slot zones; COMMAND.C:2174-2177 dispatches C028..C065 via command-20 slotBox index; CHAMPION.C:677-692 resolves status/inventory/chest slot storage.
+inventorySlotBoxCount=30
+chestSlotBoxCount=8
+totalSlotBoxCount=46
+inventorySlotBox[8]=slot:0 command:28 zone:507 name:READY_HAND mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[9]=slot:1 command:29 zone:508 name:ACTION_HAND mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[10]=slot:2 command:30 zone:509 name:HEAD mask:MASK0x0002_HEAD evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[11]=slot:3 command:31 zone:510 name:TORSO mask:MASK0x0008_TORSO evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[12]=slot:4 command:32 zone:511 name:LEGS mask:MASK0x0010_LEGS evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[13]=slot:5 command:33 zone:512 name:FEET mask:MASK0x0020_FEET evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[14]=slot:6 command:34 zone:513 name:POUCH_2 mask:MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[15]=slot:7 command:35 zone:514 name:QUIVER_LINE2_1 mask:MASK0x0080_QUIVER_LINE2 evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[16]=slot:8 command:36 zone:515 name:QUIVER_LINE1_2 mask:MASK0x0080_QUIVER_LINE2 evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[17]=slot:9 command:37 zone:516 name:QUIVER_LINE2_2 mask:MASK0x0080_QUIVER_LINE2 evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[18]=slot:10 command:38 zone:517 name:NECK mask:MASK0x0004_NECK evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[19]=slot:11 command:39 zone:518 name:POUCH_1 mask:MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[20]=slot:12 command:40 zone:519 name:QUIVER_LINE1_1 mask:MASK0x0040_QUIVER_LINE1 evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[21]=slot:13 command:41 zone:520 name:BACKPACK_LINE1_1 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[22]=slot:14 command:42 zone:521 name:BACKPACK_LINE2_2 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[23]=slot:15 command:43 zone:522 name:BACKPACK_LINE2_3 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[24]=slot:16 command:44 zone:523 name:BACKPACK_LINE2_4 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[25]=slot:17 command:45 zone:524 name:BACKPACK_LINE2_5 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[26]=slot:18 command:46 zone:525 name:BACKPACK_LINE2_6 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[27]=slot:19 command:47 zone:526 name:BACKPACK_LINE2_7 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[28]=slot:20 command:48 zone:527 name:BACKPACK_LINE2_8 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[29]=slot:21 command:49 zone:528 name:BACKPACK_LINE2_9 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[30]=slot:22 command:50 zone:529 name:BACKPACK_LINE1_2 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[31]=slot:23 command:51 zone:530 name:BACKPACK_LINE1_3 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[32]=slot:24 command:52 zone:531 name:BACKPACK_LINE1_4 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[33]=slot:25 command:53 zone:532 name:BACKPACK_LINE1_5 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[34]=slot:26 command:54 zone:533 name:BACKPACK_LINE1_6 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[35]=slot:27 command:55 zone:534 name:BACKPACK_LINE1_7 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[36]=slot:28 command:56 zone:535 name:BACKPACK_LINE1_8 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+inventorySlotBox[37]=slot:29 command:57 zone:536 name:BACKPACK_LINE1_9 mask:MASK0xFFFF_ANY_SLOT evidence:DATA.C:977-1023 maps slot boxes 8..37 to C507..C536; COMMAND.C:419-450 maps commands C028..C057 to those zones; DATA.C:1049-1087 maps slot masks
+chestSlotBox[38]=slot:30 command:58 zone:537 name:CHEST_1 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+chestSlotBox[39]=slot:31 command:59 zone:538 name:CHEST_2 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+chestSlotBox[40]=slot:32 command:60 zone:539 name:CHEST_3 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+chestSlotBox[41]=slot:33 command:61 zone:540 name:CHEST_4 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+chestSlotBox[42]=slot:34 command:62 zone:541 name:CHEST_5 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+chestSlotBox[43]=slot:35 command:63 zone:542 name:CHEST_6 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+chestSlotBox[44]=slot:36 command:64 zone:543 name:CHEST_7 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+chestSlotBox[45]=slot:37 command:65 zone:544 name:CHEST_8 mask:MASK0x0400_CONTAINER evidence:DATA.C:1016-1023 maps chest slot boxes 38..45 to C537..C544; COMMAND.C:499-506 maps commands C058..C065; DATA.C:1080-1087 gives MASK0x0400_CONTAINER
+slotRouteFromCommand[20]=slotBox:0 championFromStatus:0 slot:0 inventoryChampion:0 chest:0 evidence:CHAMPION.C:677-683 maps status-box slotBox < 8 to championIndex=slotBox>>1 and hand slot=M070_HAND_SLOT_INDEX(slotBox)
+slotRouteFromCommand[21]=slotBox:1 championFromStatus:0 slot:1 inventoryChampion:0 chest:0 evidence:CHAMPION.C:677-683 maps status-box slotBox < 8 to championIndex=slotBox>>1 and hand slot=M070_HAND_SLOT_INDEX(slotBox)
+slotRouteFromCommand[28]=slotBox:8 championFromStatus:0 slot:0 inventoryChampion:1 chest:0 evidence:CHAMPION.C:685-692 maps inventory/chest commands to inventory champion and slotIndex=slotBox-8, then C30+ uses G0425_aT_ChestSlots
+slotRouteFromCommand[57]=slotBox:37 championFromStatus:0 slot:29 inventoryChampion:1 chest:0 evidence:CHAMPION.C:685-692 maps inventory/chest commands to inventory champion and slotIndex=slotBox-8, then C30+ uses G0425_aT_ChestSlots
+slotRouteFromCommand[65]=slotBox:45 championFromStatus:0 slot:37 inventoryChampion:1 chest:1 evidence:CHAMPION.C:685-692 maps inventory/chest commands to inventory champion and slotIndex=slotBox-8, then C30+ uses G0425_aT_ChestSlots
+inventorySlotBoxSourceAuditInvariantOk=1
