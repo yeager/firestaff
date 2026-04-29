@@ -15,6 +15,49 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+
+#if defined(_WIN32)
+#include <process.h>
+static int portable_make_dir(const char* path) {
+    return mkdir(path) == 0;
+}
+static char* portable_mkdtemp(char* templ) {
+    char* marker = strstr(templ, "XXXXXX");
+    int i;
+    if (!marker) {
+        return NULL;
+    }
+    for (i = 0; i < 1000; ++i) {
+        snprintf(marker, 7, "%06ld", ((long)_getpid() + i) % 1000000L);
+        if (mkdir(templ) == 0) {
+            return templ;
+        }
+    }
+    return NULL;
+}
+static int portable_setenv(const char* name, const char* value, int overwrite) {
+    (void)overwrite;
+    return _putenv_s(name, value);
+}
+static int portable_unsetenv(const char* name) {
+    return _putenv_s(name, "");
+}
+#else
+static int portable_make_dir(const char* path) {
+    return mkdir(path, 0777) == 0;
+}
+static char* portable_mkdtemp(char* templ) {
+    return mkdtemp(templ);
+}
+static int portable_setenv(const char* name, const char* value, int overwrite) {
+    return setenv(name, value, overwrite);
+}
+static int portable_unsetenv(const char* name) {
+    return unsetenv(name);
+}
+#endif
+
+
 typedef struct {
     int total;
     int passed;
@@ -48,7 +91,7 @@ static unsigned long smoke_checksum(const unsigned char* data, size_t size) {
 }
 
 static int make_dir(const char* path) {
-    return mkdir(path, 0777) == 0;
+    return portable_make_dir(path);
 }
 
 static int make_file_with_text(const char* path, const char* text) {
@@ -88,15 +131,15 @@ int main(void) {
     char dungeonPath[1024];
     char cardsDir[1024];
     char cardPath[1024];
-    char* rootDir = mkdtemp(rootTemplate);
+    char* rootDir = portable_mkdtemp(rootTemplate);
 
     if (!rootDir) {
         perror("mkdtemp");
         return 2;
     }
-    if (setenv("HOME", rootDir, 1) != 0 ||
-        setenv("SDL_VIDEODRIVER", "dummy", 1) != 0 ||
-        setenv("LANG", "fr_FR.UTF-8", 1) != 0) {
+    if (portable_setenv("HOME", rootDir, 1) != 0 ||
+        portable_setenv("SDL_VIDEODRIVER", "dummy", 1) != 0 ||
+        portable_setenv("LANG", "fr_FR.UTF-8", 1) != 0) {
         perror("setenv");
         return 2;
     }
