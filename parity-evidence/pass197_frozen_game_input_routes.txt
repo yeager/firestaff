@@ -1,0 +1,10 @@
+# Pass 197 — ReDMCSB frozen game input routes
+
+Source-first audit:
+COMMAND.C:457-460 defines G0451_as_Graphic561_PrimaryMouseInput_FrozenGame: C148_COMMAND_UNFREEZE_GAME on screen left/right click; COMMAND.C handles freeze/unfreeze separately from active inventory/viewport inputs.
+
+Probe output:
+
+probe=firestaff_frozen_game_input_routes
+sourceEvidence=COMMAND.C:457-460 defines G0451_as_Graphic561_PrimaryMouseInput_FrozenGame: C148_COMMAND_UNFREEZE_GAME on screen left/right click; COMMAND.C handles freeze/unfreeze separately from active inventory/viewport inputs.
+frozenGameInputRoutesInvariantOk=1

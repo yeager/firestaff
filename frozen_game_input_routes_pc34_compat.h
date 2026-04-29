@@ -1,0 +1,5 @@
+#ifndef FROZEN_GAME_INPUT_ROUTES_PC34_COMPAT_H
+#define FROZEN_GAME_INPUT_ROUTES_PC34_COMPAT_H
+const char* frozen_game_input_routes_GetEvidence(void);
+unsigned int frozen_game_input_routes_GetInvariant(void);
+#endif
