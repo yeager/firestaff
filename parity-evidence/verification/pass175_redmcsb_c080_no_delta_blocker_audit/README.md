@@ -37,9 +37,12 @@ Pass174 proved that twelve source-derived click delivery variants at/near the po
 ## Interpretation
 
 - The click coordinates remain source-backed: viewport portrait box `{96,127,35,63}` and PC viewport origin `(0,33)` imply screen center `(111,82)`.
-- Because pass174 saw no pixel delta for helper, absolute, down/up, and repeat-click variants, the next blocker is not another blind x/y permutation.
-- The source path to verify next is command delivery/state precondition: whether the runtime has actually left entrance/menu command mode before C007/C080 is eligible, and whether BUG0_73-style queue ordering can drop the mouse command.
-- Next runtime pass should instrument/state-gate around the exact transition into dungeon command processing, then issue one C007 click and immediately test for a candidate-state/panel transition before C160/C161. If no instrumentation exists, add a Firestaff-side gate that rejects unchanged pass174 frames and records the active frame class before clicking.
+- Pass175 original no-delta finding was valid for the pass174 raw original-capture route, but it is **no longer an active Firestaff implementation blocker**.
+- Superseding implementation/evidence:
+  - `fa3d5b5` routes V1 viewport mirror/portrait clicks through the C080 handler instead of bypassing the viewport command path.
+  - `d150071` routes V1 C080 front-door button clicks and adds probe coverage for both the no-op miss case and the source button hit case.
+  - `run_firestaff_m11_game_view_probe.sh` covers `INV_GV_07I0` (non-button C080 viewport click is ignored) and `INV_GV_07I1` (source D1C door-button zone `x167..174/y43..51` toggles the front door through the door animation path).
+- Therefore this file is retained as historical pass174/pass175 evidence only. Do not list pass175 as a current blocker; follow-up work should use the active C080/mirror/door probes and source-gated runtime state checks instead of repeating pass174 coordinate permutations.
 
 ## Anchor excerpts
 
