@@ -68,6 +68,32 @@ static uint32_t dungeon_file_fingerprint(const char* path) {
     return c ^ 0xFFFFFFFFu;
 }
 
+static void set_party_direction_redmcsb_compat(struct PartyState_Compat* party, int newDirection) {
+    int oldDirection;
+    int delta;
+    int i;
+    if (!party) return;
+    newDirection &= 3;
+    oldDirection = party->direction & 3;
+    if (newDirection == oldDirection) {
+        party->direction = newDirection;
+        return;
+    }
+    /* ReDMCSB CHAMPION.C:117-130, F0284_CHAMPION_SetPartyDirection:
+     * if direction changes, delta = new - old normalized to [0..3], then
+     * every party champion Cell and Direction are rotated by delta before
+     * G0308_i_PartyDirection is updated. Compat currently stores champion
+     * Direction (not Cell), so keep it source-aligned here. */
+    delta = newDirection - oldDirection;
+    if (delta < 0) delta += 4;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (party->champions[i].present) {
+            party->champions[i].direction = (unsigned char)((party->champions[i].direction + delta) & 3);
+        }
+    }
+    party->direction = newDirection;
+}
+
 /* Emit a single emission into the result, ignoring overflow. */
 static void emit(struct TickResult_Compat* r, uint8_t kind,
                  int32_t a, int32_t b, int32_t c, int32_t d) {
@@ -821,7 +847,7 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     outWorld->party.mapIndex = 0;
     outWorld->party.mapX = px;
     outWorld->party.mapY = py;
-    outWorld->party.direction = direction;
+    set_party_direction_redmcsb_compat(&outWorld->party, direction);
     outWorld->partyMapIndex = 0;
 
     /* Schedule an initial watchdog / generator-placeholder event at tick 1
@@ -926,14 +952,27 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         if (!world->dungeon) {
             /* no dungeon: succeed deterministically (unit-test path) */
             if (mv == MOVE_TURN_LEFT || mv == MOVE_TURN_RIGHT) {
-                world->party.direction = F0700_MOVEMENT_TurnDirection_Compat(
-                    world->party.direction, mv == MOVE_TURN_RIGHT);
+                set_party_direction_redmcsb_compat(&world->party,
+                    F0700_MOVEMENT_TurnDirection_Compat(world->party.direction, mv == MOVE_TURN_RIGHT));
             }
             return 1;
         } else {
             struct MovementResult_Compat mr;
             memset(&mr, 0, sizeof(mr));
             F0702_MOVEMENT_TryMove_Compat(world->dungeon, &world->party, mv, &mr);
+            if (mr.resultCode == MOVE_TURN_ONLY) {
+                /* ReDMCSB source-lock: COMMAND.C:2150-2152 routes
+                 * C001/C002 turn commands to F0365_COMMAND_ProcessTypes1To2_TurnParty;
+                 * CLIKMENU.C:171-173 processes walk-off/walk-on sensors around
+                 * F0284_CHAMPION_SetPartyDirection(M021_NORMALIZE(...)).
+                 * A turn therefore mutates G0308_i_PartyDirection without
+                 * requiring map-coordinate movement. */
+                set_party_direction_redmcsb_compat(&world->party, mr.newDirection);
+                emit(result, EMIT_PARTY_MOVED,
+                     world->party.mapX, world->party.mapY,
+                     world->party.direction, world->party.mapIndex);
+                return 1;
+            }
             if (mr.resultCode == MOVE_OK) {
                 struct PartyState_Compat movedParty = world->party;
                 struct PostMoveResolution_Compat postMove;
@@ -956,7 +995,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
 
                 world->party.mapX = postMove.finalMapX;
                 world->party.mapY = postMove.finalMapY;
-                world->party.direction = postMove.finalDirection;
+                set_party_direction_redmcsb_compat(&world->party, postMove.finalDirection);
                 world->party.mapIndex = postMove.finalMapIndex;
                 for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
                     if (postMove.championFallDamage[i] > 0 &&
@@ -1039,11 +1078,6 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                              SENSOR_EVENT_WALK_ON, p3);
                     }
                 }
-            } else if (mr.resultCode == MOVE_TURN_ONLY) {
-                world->party.direction = mr.newDirection;
-                emit(result, EMIT_PARTY_MOVED,
-                     world->party.mapX, world->party.mapY,
-                     world->party.direction, world->party.mapIndex);
             }
             return 1;
         }

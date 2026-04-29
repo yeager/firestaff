@@ -355,6 +355,30 @@ int main(int argc, char** argv) {
         CHECK(rc != 1 || found, "17: CMD_MOVE on walkable tile emits EMIT_PARTY_MOVED (or all dirs blocked)");
     }
     {
+        /* ReDMCSB COMMAND.C:2150-2152 routes C001/C002 to the turn path,
+         * and CLIKMENU.C:171-173 calls F0284_CHAMPION_SetPartyDirection
+         * without requiring a map-coordinate move.  The runtime must not
+         * drop MOVE_TURN_ONLY when a real dungeon is loaded. */
+        struct GameWorld_Compat w;
+        struct TickInput_Compat in;
+        struct TickResult_Compat r;
+        int beforeDir;
+        int beforeChampDir;
+        int rc = F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 42u, &w);
+        memset(&in, 0, sizeof(in));
+        in.command = CMD_TURN_RIGHT;
+        beforeDir = (rc == 1) ? w.party.direction : -1;
+        beforeChampDir = (rc == 1 && w.party.champions[0].present) ? w.party.champions[0].direction : -1;
+        CHECK(rc != 1 ||
+              (F0884_ORCH_AdvanceOneTick_Compat(&w, &in, &r) == ORCH_OK &&
+               w.party.direction == ((beforeDir + 1) & 3)),
+              "17b: CMD_TURN_RIGHT updates party direction with real dungeon loaded");
+        CHECK(rc != 1 || !w.party.champions[0].present ||
+              w.party.champions[0].direction == ((beforeChampDir + 1) & 3),
+              "17c: CMD_TURN_RIGHT rotates champion direction per F0284");
+        if (rc == 1) F0883_WORLD_Free_Compat(&w);
+    }
+    {
         /* Added Pass 29 scenario: move -> teleporter -> pit -> teleporter
          * resolves inside compat/runtime ownership and emits transition markers. */
         struct GameWorld_Compat w;
