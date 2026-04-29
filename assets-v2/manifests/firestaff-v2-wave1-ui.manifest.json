@@ -83,14 +83,52 @@
       "role": "party action panel base container",
       "productionClass": "preserve-scale-repaint",
       "sourceReference": {
-        "origin": "GRAPHICS.DAT graphic 0010",
+        "origin": "ReDMCSB DEFS.H C010_GRAPHIC_MENU_ACTION_AREA / DATA.C+MENU.C action-area boxes / ACTIDRAW.C F0387_MENUS_DrawActionArea",
         "graphicsDatIndices": [
           10
         ],
         "originalSize": {
           "width": 87,
           "height": 45
-        }
+        },
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "graphic constants",
+            "lines": {
+              "start": 2168,
+              "end": 2174
+            },
+            "assertion": "C010_GRAPHIC_MENU_ACTION_AREA is GRAPHICS.DAT graphic index 10 for the action-area source asset."
+          },
+          {
+            "file": "DATA.C",
+            "function": "G0001_ai_Graphic562_Box_ActionArea",
+            "lines": {
+              "start": 119,
+              "end": 121
+            },
+            "assertion": "The DM action-area screen box is x=224..319, y=77..121, matching a 96x45 inclusive destination box."
+          },
+          {
+            "file": "MENU.C",
+            "function": "G0499/G0500/G0501 action menu boxes",
+            "lines": {
+              "start": 494,
+              "end": 498
+            },
+            "assertion": "The one/two/three-action menu variants share the same left/right/top and bottom at y=97/109/121 for the 45/33/21 px menu heights."
+          },
+          {
+            "file": "ACTIDRAW.C",
+            "function": "F0387_MENUS_DrawActionArea",
+            "lines": {
+              "start": 317,
+              "end": 356
+            },
+            "assertion": "F0387 clears the action-area box, chooses the action-count box, then blits C010_GRAPHIC_MENU_ACTION_AREA with byte width C048 and height 45."
+          }
+        ]
       },
       "sizes": {
         "master4k": {

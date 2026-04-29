@@ -22,6 +22,8 @@ REQUIRED_TOP_LEVEL = {"manifestVersion", "packId", "targetPolicy", "assets"}
 REQUIRED_TARGET_POLICY = {"masterResolution", "derivedResolutions", "layoutSkeleton"}
 REQUIRED_ASSET = {"id", "family", "role", "productionClass", "sourceReference", "sizes", "paths", "status"}
 REQUIRED_SOURCE_REF = {"origin", "originalSize"}
+REQUIRED_SOURCE_EVIDENCE = {"file", "function", "lines", "assertion"}
+REQUIRED_LINE_RANGE = {"start", "end"}
 REQUIRED_SIZE = {"width", "height"}
 REQUIRED_PATHS = {"masterDir", "derivedDir", "spec"}
 
@@ -49,7 +51,25 @@ def require_size(value: Any, label: str) -> tuple[int, int]:
     return width, height
 
 
-def validate_asset(manifest_path: Path, asset: Any, seen_ids: set[str], *, strict_paths: bool) -> list[str]:
+def validate_source_evidence(value: Any, label: str) -> None:
+    require(isinstance(value, list) and value, f"{label}.sourceEvidence must be a non-empty array")
+    for index, entry in enumerate(value):
+        entry_label = f"{label}.sourceEvidence[{index}]"
+        require(isinstance(entry, dict), f"{entry_label} must be an object")
+        require(REQUIRED_SOURCE_EVIDENCE <= set(entry), f"{entry_label} missing {sorted(REQUIRED_SOURCE_EVIDENCE - set(entry))}")
+        require_string(entry["file"], f"{entry_label}.file")
+        require_string(entry["function"], f"{entry_label}.function")
+        require_string(entry["assertion"], f"{entry_label}.assertion")
+        lines = entry["lines"]
+        require(isinstance(lines, dict), f"{entry_label}.lines must be an object")
+        require(REQUIRED_LINE_RANGE <= set(lines), f"{entry_label}.lines missing {sorted(REQUIRED_LINE_RANGE - set(lines))}")
+        start = lines["start"]
+        end = lines["end"]
+        require(isinstance(start, int) and start > 0, f"{entry_label}.lines.start must be a positive integer")
+        require(isinstance(end, int) and end >= start, f"{entry_label}.lines.end must be >= start")
+
+
+def validate_asset(manifest_path: Path, asset: Any, seen_ids: set[str], *, strict_paths: bool, required_source_evidence_ids: set[str]) -> list[str]:
     require(isinstance(asset, dict), f"{manifest_path}: asset entry must be an object")
     label = f"{manifest_path}:{asset.get('id', '<missing id>')}"
     require(REQUIRED_ASSET <= set(asset), f"{label} missing {sorted(REQUIRED_ASSET - set(asset))}")
@@ -72,6 +92,9 @@ def validate_asset(manifest_path: Path, asset: Any, seen_ids: set[str], *, stric
         require(isinstance(indices, list), f"{label}.sourceReference.graphicsDatIndices must be an array")
         require(all(isinstance(i, int) and i >= 0 for i in indices), f"{label}.sourceReference.graphicsDatIndices must contain non-negative integers")
     require_size(source["originalSize"], f"{label}.sourceReference.originalSize")
+    if "sourceEvidence" in source:
+        validate_source_evidence(source["sourceEvidence"], f"{label}.sourceReference")
+    require(asset_id not in required_source_evidence_ids or "sourceEvidence" in source, f"{label}.sourceReference.sourceEvidence is required by --require-source-evidence")
 
     sizes = asset["sizes"]
     require(isinstance(sizes, dict), f"{label}.sizes must be an object")
@@ -110,7 +133,7 @@ def validate_asset(manifest_path: Path, asset: Any, seen_ids: set[str], *, stric
     return warnings
 
 
-def validate_manifest(path: Path, seen_pack_ids: set[str], *, strict_paths: bool) -> tuple[int, list[str]]:
+def validate_manifest(path: Path, seen_pack_ids: set[str], *, strict_paths: bool, required_source_evidence_ids: set[str]) -> tuple[int, list[str], set[str]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     require(isinstance(data, dict), f"{path}: manifest must be an object")
     require(REQUIRED_TOP_LEVEL <= set(data), f"{path}: missing {sorted(REQUIRED_TOP_LEVEL - set(data))}")
@@ -136,15 +159,19 @@ def validate_manifest(path: Path, seen_pack_ids: set[str], *, strict_paths: bool
     require(assets, f"{path}.assets must not be empty")
     warnings: list[str] = []
     seen_ids: set[str] = set()
+    seen_required_ids: set[str] = set()
     for asset in assets:
-        warnings.extend(validate_asset(path, asset, seen_ids, strict_paths=strict_paths))
-    return len(assets), warnings
+        if isinstance(asset, dict) and asset.get("id") in required_source_evidence_ids:
+            seen_required_ids.add(asset["id"])
+        warnings.extend(validate_asset(path, asset, seen_ids, strict_paths=strict_paths, required_source_evidence_ids=required_source_evidence_ids))
+    return len(assets), warnings, seen_required_ids
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifests", nargs="*", type=Path, help="manifest files to validate; defaults to assets-v2/manifests/firestaff-v2-*.manifest.json")
     parser.add_argument("--strict-paths", action="store_true", help="fail if manifest scaffold directories/specs are missing")
+    parser.add_argument("--require-source-evidence", action="append", default=[], metavar="ASSET_ID", help="require sourceReference.sourceEvidence for the exact asset id; may be repeated")
     return parser.parse_args()
 
 
@@ -155,10 +182,15 @@ def main() -> int:
     seen_pack_ids: set[str] = set()
     total_assets = 0
     all_warnings: list[str] = []
+    required_source_evidence_ids = set(args.require_source_evidence)
+    found_required_source_evidence_ids: set[str] = set()
     for manifest in manifests:
-        count, warnings = validate_manifest(manifest, seen_pack_ids, strict_paths=args.strict_paths)
+        count, warnings, found_required = validate_manifest(manifest, seen_pack_ids, strict_paths=args.strict_paths, required_source_evidence_ids=required_source_evidence_ids)
         total_assets += count
         all_warnings.extend(warnings)
+        found_required_source_evidence_ids.update(found_required)
+    missing_required = required_source_evidence_ids - found_required_source_evidence_ids
+    require(not missing_required, f"--require-source-evidence asset ids not found: {sorted(missing_required)}")
     for warning in all_warnings:
         print(f"warning: {warning}", file=sys.stderr)
     print(f"validated {len(manifests)} V2 manifests / {total_assets} assets")
