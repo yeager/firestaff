@@ -1,0 +1,5 @@
+#ifndef INVENTORY_MOUTH_EYE_ROUTES_PC34_COMPAT_H
+#define INVENTORY_MOUTH_EYE_ROUTES_PC34_COMPAT_H
+const char* inventory_mouth_eye_routes_GetEvidence(void);
+unsigned int inventory_mouth_eye_routes_GetInvariant(void);
+#endif

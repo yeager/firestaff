@@ -1,0 +1,10 @@
+# Pass 191 — ReDMCSB inventory mouth/eye routes
+
+Source-first audit:
+COMMAND.C:426-427 maps inventory secondary mouse input C070 mouth to C545_ZONE_MOUTH and C071 eye to C546_ZONE_EYE; COMMAND.C:2314-2320 dispatches them to F0349_INVENTORY_ProcessCommand70_ClickOnMouth and F0352_INVENTORY_ProcessCommand71_ClickOnEye.
+
+Probe output:
+
+probe=firestaff_inventory_mouth_eye_routes
+sourceEvidence=COMMAND.C:426-427 maps inventory secondary mouse input C070 mouth to C545_ZONE_MOUTH and C071 eye to C546_ZONE_EYE; COMMAND.C:2314-2320 dispatches them to F0349_INVENTORY_ProcessCommand70_ClickOnMouth and F0352_INVENTORY_ProcessCommand71_ClickOnEye.
+inventoryMouthEyeRoutesInvariantOk=1
