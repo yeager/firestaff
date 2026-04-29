@@ -1,0 +1,283 @@
+# Firestaff — DM1 Spanish catalog extracted from original Spanish GRAPHICS.DAT.
+# Source artifact: ~/.openclaw/data/firestaff-spanish-extract/spanish_graphics_dat_spanish_hits.txt
+# NOTE: msgids are stable GRAPHICS.DAT item ids because the extraction source is item-indexed text, not merged runtime keys yet.
+# French/German false positives from the candidate extractor were excluded during catalog generation.
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-dm1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 05:45+0200\n"
+"PO-Revision-Date: 2026-04-29 07:37+0000\n"
+"Last-Translator: OpenClaw extraction pass\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Firestaff-Source: Spanish GRAPHICS.DAT text candidates\n"
+"X-Firestaff-Extraction: spanish_graphics_dat_spanish_hits.txt\n"
+"X-Firestaff-Excluded-Candidates: 13\n"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0014 (TXT3, 28 bytes, score 1.00, spanish_terms 3)
+msgctxt "graphics-dat-item-0014"
+msgid "dm1.graphics_dat.item.0014"
+msgstr "ESTE NO ES EL DISCO MASTER!"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0017 (TXT3, 35 bytes, score 0.89, spanish_terms 2)
+msgctxt "graphics-dat-item-0017"
+msgid "dm1.graphics_dat.item.0017"
+msgstr "NO SE PUEDE MODIFICAR {1}\" EL DISCO!"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0025 (TXT3, 34 bytes, score 1.00, spanish_terms 3)
+msgctxt "graphics-dat-item-0025"
+msgid "dm1.graphics_dat.item.0025"
+msgstr "ES UN DISCO DE GUARDADO DE JUEGO!"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0028 (TXT3, 32 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-0028"
+msgid "dm1.graphics_dat.item.0028"
+msgstr "NO SE PUEDE FORMATEAR EL DISCO!"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0034 (TXT3, 32 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-0034"
+msgid "dm1.graphics_dat.item.0034"
+msgstr "NO SE PUEDE GUARDAR LA PARTIDA!"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0037 (TXT3, 43 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-0037"
+msgid "dm1.graphics_dat.item.0037"
+msgstr "NO SE PUEDE ENCONTRAR LA PARTIDA GUARDADA!"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0043 (TXT3, 24 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-0043"
+msgid "dm1.graphics_dat.item.0043"
+msgstr "EL JUEGO ESTA CORRUPTO!"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0047 (TXT3, 35 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-0047"
+msgid "dm1.graphics_dat.item.0047"
+msgstr "FORMATEAR EL DISCO DE TODOS MODOS?"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0080 (TXT3, 37 bytes, score 0.90, spanish_terms 2)
+msgctxt "graphics-dat-item-0080"
+msgid "dm1.graphics_dat.item.0080"
+msgstr "INSERTA EL CD {1}\" EN LA UNIDAD CD-ROM"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0085 (TXT3, 46 bytes, score 0.72, spanish_terms 2)
+msgctxt "graphics-dat-item-0085"
+msgid "dm1.graphics_dat.item.0085"
+msgstr ""
+"INSERTA EL DISCO {1}\" EN {1}#\n"
+"Y EL DISCO {1}; EN {1}$"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0143 (TXT3, 61 bytes, score 1.00, spanish_terms 3)
+msgctxt "graphics-dat-item-0143"
+msgid "dm1.graphics_dat.item.0143"
+msgstr ""
+"ANTES DE USAR\n"
+"ACTIVAR CALDERA\n"
+"ABRIR VALVULAS\n"
+"SUBIR 2 NIVELES"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0149 (TXT3, 64 bytes, score 1.00, spanish_terms 3)
+msgctxt "graphics-dat-item-0149"
+msgid "dm1.graphics_dat.item.0149"
+msgstr ""
+"INVOCA\n"
+"ZO EW KU\n"
+"PARA CREAR UN\n"
+"MINION QUE\n"
+"ATACARA\n"
+"A TUS ENEMIGOS"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0152 (TXT3, 48 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-0152"
+msgid "dm1.graphics_dat.item.0152"
+msgstr ""
+"INVOCA\n"
+"ZO EW NETA\n"
+"PARA CREAR UN\n"
+"MINION\n"
+"GUARDIAN"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0155 (TXT3, 37 bytes, score 1.00, spanish_terms 4)
+msgctxt "graphics-dat-item-0155"
+msgid "dm1.graphics_dat.item.0155"
+msgstr ""
+"RESUCITA LA VIDA\n"
+"DE UN CAMPEON\n"
+"CAIDO"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0161 (TXT3, 111 bytes, score 1.00, spanish_terms 12)
+msgctxt "graphics-dat-item-0161"
+msgid "dm1.graphics_dat.item.0161"
+msgstr ""
+"PARA ABRIR LA\n"
+"PUERTA DEL\n"
+"CASTILLO DEBES\n"
+"CONSEGUIE UNA PIEZA\n"
+"DE LLAVE DE CADA\n"
+"UNO DE LOS CUATRO\n"
+"TROZOS DE LLAVE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0164 (TXT3, 68 bytes, score 1.00, spanish_terms 4)
+msgctxt "graphics-dat-item-0164"
+msgid "dm1.graphics_dat.item.0164"
+msgstr ""
+"INVOCA ZO PARA\n"
+"CERRAR PORTALES\n"
+"QUE LOS\n"
+"MINIONS MALVADOS\n"
+"HAN ABIERTO"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0207 (TXT3, 33 bytes, score 0.89, spanish_terms 2)
+msgctxt "graphics-dat-item-0207"
+msgid "dm1.graphics_dat.item.0207"
+msgstr "{1}' SUBISTE DE NIVEL DE GUERRERO."
+
+#. Extracted from Spanish GRAPHICS.DAT item 0210 (TXT3, 30 bytes, score 0.88, spanish_terms 2)
+msgctxt "graphics-dat-item-0210"
+msgid "dm1.graphics_dat.item.0210"
+msgstr "{1}' SUBISTE DE NIVEL DE NINJA."
+
+#. Extracted from Spanish GRAPHICS.DAT item 0213 (TXT3, 34 bytes, score 0.89, spanish_terms 2)
+msgctxt "graphics-dat-item-0213"
+msgid "dm1.graphics_dat.item.0213"
+msgstr "{1}' SUBISTE DE NIVEL DE SACERDOTE."
+
+#. Extracted from Spanish GRAPHICS.DAT item 0216 (TXT3, 29 bytes, score 0.87, spanish_terms 2)
+msgctxt "graphics-dat-item-0216"
+msgid "dm1.graphics_dat.item.0216"
+msgstr "{1}' SUBISTE DE NIVEL DE MAGO."
+
+#. Extracted from Spanish GRAPHICS.DAT item 0328 (TXT3, 9 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-0328"
+msgid "dm1.graphics_dat.item.0328"
+msgstr "GUERRERO"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0332 (TXT3, 10 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-0332"
+msgid "dm1.graphics_dat.item.0332"
+msgstr "SACERDOTE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0545 (TXT3, 12 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-0545"
+msgid "dm1.graphics_dat.item.0545"
+msgstr "ESPADA AZUL"
+
+#. Extracted from Spanish GRAPHICS.DAT item 0957 (TXT3, 7 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-0957"
+msgid "dm1.graphics_dat.item.0957"
+msgstr "ESPADA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1616 (TXT3, 16 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-1616"
+msgid "dm1.graphics_dat.item.1616"
+msgstr "LLAVE DE SANGRE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1653 (TXT3, 17 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1653"
+msgid "dm1.graphics_dat.item.1653"
+msgstr "PIEZA LLAVE CLAN"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1663 (TXT3, 8 bytes, score 0.73, spanish_terms 1)
+msgctxt "graphics-dat-item-1663"
+msgid "dm1.graphics_dat.item.1663"
+msgstr "{IR} LLAVE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1681 (TXT3, 11 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1681"
+msgid "dm1.graphics_dat.item.1681"
+msgstr "LLAVE CRUZ"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1716 (TXT3, 8 bytes, score 0.75, spanish_terms 1)
+msgctxt "graphics-dat-item-1716"
+msgid "dm1.graphics_dat.item.1716"
+msgstr "{FUL} LLAVE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1731 (TXT3, 13 bytes, score 1.00, spanish_terms 3)
+msgctxt "graphics-dat-item-1731"
+msgid "dm1.graphics_dat.item.1731"
+msgstr "LLAVE DE ORO"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1757 (TXT3, 16 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-1757"
+msgid "dm1.graphics_dat.item.1757"
+msgstr "LLAVE DE HIERRO"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1771 (TXT3, 16 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1771"
+msgid "dm1.graphics_dat.item.1771"
+msgstr "LLAVE RELAMPAGO"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1788 (TXT3, 13 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-1788"
+msgid "dm1.graphics_dat.item.1788"
+msgstr "FLOR DE MANA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1798 (TXT3, 11 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1798"
+msgid "dm1.graphics_dat.item.1798"
+msgstr "LLAVE LUNA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1807 (TXT3, 14 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1807"
+msgid "dm1.graphics_dat.item.1807"
+msgstr "LLAVE MAESTRA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1812 (TXT3, 8 bytes, score 0.73, spanish_terms 1)
+msgctxt "graphics-dat-item-1812"
+msgid "dm1.graphics_dat.item.1812"
+msgstr "{OH} LLAVE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1817 (TXT3, 11 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1817"
+msgid "dm1.graphics_dat.item.1817"
+msgstr "LLAVE ONYX"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1831 (TXT3, 8 bytes, score 0.73, spanish_terms 1)
+msgctxt "graphics-dat-item-1831"
+msgid "dm1.graphics_dat.item.1831"
+msgstr "{RA} LLAVE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1870 (TXT3, 15 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1870"
+msgid "dm1.graphics_dat.item.1870"
+msgstr "LLAVE CALAVERA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1875 (TXT3, 13 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-1875"
+msgid "dm1.graphics_dat.item.1875"
+msgstr "LLAVE SOLIDA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1918 (TXT3, 8 bytes, score 0.73, spanish_terms 1)
+msgctxt "graphics-dat-item-1918"
+msgid "dm1.graphics_dat.item.1918"
+msgstr "{VI} LLAVE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 1928 (TXT3, 8 bytes, score 0.73, spanish_terms 1)
+msgctxt "graphics-dat-item-1928"
+msgid "dm1.graphics_dat.item.1928"
+msgstr "{YA} LLAVE"
+
+#. Extracted from Spanish GRAPHICS.DAT item 3650 (TXT3, 19 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-3650"
+msgid "dm1.graphics_dat.item.3650"
+msgstr "GUERRERO CON HACHA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 3958 (TXT3, 16 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-3958"
+msgid "dm1.graphics_dat.item.3958"
+msgstr "PUERTA FANTASMA"
+
+#. Extracted from Spanish GRAPHICS.DAT item 4906 (TXT3, 14 bytes, score 1.00, spanish_terms 2)
+msgctxt "graphics-dat-item-4906"
+msgid "dm1.graphics_dat.item.4906"
+msgstr "GEMA DE PODER"
+
+#. Extracted from Spanish GRAPHICS.DAT item 5485 (TXT3, 17 bytes, score 1.00, spanish_terms 1)
+msgctxt "graphics-dat-item-5485"
+msgid "dm1.graphics_dat.item.5485"
+msgstr "PUERTA DEL VACIO"
+
