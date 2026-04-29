@@ -39,6 +39,10 @@ The handoff packet contains five patches:
 - Pass160–171 closed the ReDMCSB source-lock coverage used to avoid emulator-only guessing.
 - The packet deliberately avoids DANNESBURK/local machine paths and avoids sending internal worker/runner metadata.
 
+## Sequential apply gate
+
+After the initial packet, patch 0004 was regenerated as v2 because it also touches `COMMAND.C` and must be based on the state after patch 0001. The corrected v2 packet was verified with `patch --dry-run -p1` and then real sequential `patch -p1` application in filename order against ReDMCSB WIP 20210206 `Toolchains/Common/Source`.
+
 ## Recommendation
 
 Send/review the first four patches as comment/test-note patches first, then discuss the `CHAMDRAW.C` code-fix candidate separately. This keeps the upstream conversation friendly and reviewable.

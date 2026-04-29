@@ -5,31 +5,44 @@
   "patches": [
     {
       "name": "0001-document-dm1-v1-recruit-route.patch",
-      "files": ["COMMAND.C", "MOVESENS.C"],
+      "files": [
+        "COMMAND.C",
+        "MOVESENS.C"
+      ],
       "risk": "low",
       "kind": "documentation"
     },
     {
       "name": "0002-document-champion-portrait-geometry.patch",
-      "files": ["DUNVIEW.C"],
+      "files": [
+        "DUNVIEW.C"
+      ],
       "risk": "low",
       "kind": "documentation"
     },
     {
       "name": "0003-document-bug0-71-vblank-timing.patch",
-      "files": ["TITLE.C", "ENTRANCE.C", "ENDGAME.C"],
+      "files": [
+        "TITLE.C",
+        "ENTRANCE.C",
+        "ENDGAME.C"
+      ],
       "risk": "low",
       "kind": "documentation"
     },
     {
       "name": "0004-document-bug0-73-command-queue-race.patch",
-      "files": ["COMMAND.C"],
+      "files": [
+        "COMMAND.C"
+      ],
       "risk": "low",
       "kind": "documentation"
     },
     {
       "name": "0005-fix-bug0-35-without-bug2-00-scroll-regression.patch",
-      "files": ["CHAMDRAW.C"],
+      "files": [
+        "CHAMDRAW.C"
+      ],
       "risk": "moderate",
       "kind": "code-fix-candidate"
     }
@@ -43,5 +56,8 @@
     "contains_private_paths": false,
     "contains_credentials": false,
     "contains_internal_runner_metadata": false
-  }
+  },
+  "packet_version": "v2",
+  "sequential_apply_verified": true,
+  "sequential_apply_note": "Patch 0004 is generated against the state after patch 0001 because both touch COMMAND.C. Verified with patch --dry-run and real sequential patch application."
 }
