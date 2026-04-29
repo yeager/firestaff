@@ -1,0 +1,35 @@
+window-found 4194321 via search --class DOSBox
+window-found 4194330 via search --class DOSBox
+capture initial anim_000.png sha=c6f457763e2e
+window-found 4194330 via search --class DOSBox
+window-found 4194330 via search --class DOSBox
+capture gate01 selector_000.png sha=014ed52c71a0
+key Return
+window-found 4194330 via search --class DOSBox
+capture gate02 selector_000.png sha=014ed52c71a0
+key Return
+window-found 4194330 via search --class DOSBox
+capture gate03 selector_000.png sha=014ed52c71a0
+key Return
+window-found 4194330 via search --class DOSBox
+capture gate04 selector_000.png sha=3ad66a894ed8
+window-found 4194330 via search --class DOSBox
+capture gate05 selector_000.png sha=eded77444a51
+window-found 4194330 via search --class DOSBox
+capture gate06 selector_000.png sha=c25f445326ba
+key Return
+window-found 4194330 via search --class DOSBox
+capture gate07 fires_000.png sha=17bd7e878157
+key Return
+window-found 4194330 via search --class DOSBox
+capture gate08 fires_000.png sha=17bd7e878157
+key Return
+window-found 4194330 via search --class DOSBox
+capture gate09 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+click 111,82 mapped 223,165 window=640x400
+window-found 4194330 via search --class DOSBox
+capture after_click fires_000.png sha=48ed3743ab6a
+key F1
+window-found 4194330 via search --class DOSBox
+capture after_f1 fires_000.png sha=48ed3743ab6a

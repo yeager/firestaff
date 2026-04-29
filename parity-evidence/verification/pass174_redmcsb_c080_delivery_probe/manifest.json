@@ -1,0 +1,2353 @@
+{
+  "schema": "pass174_redmcsb_c080_delivery_probe.v1",
+  "run_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe",
+  "evidence_root": "parity-evidence/verification/pass174_redmcsb_c080_delivery_probe",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "lines": "397-403,2322-2323",
+      "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "348-349",
+      "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "407-431",
+      "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "21-25",
+      "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "1392,1501-1502",
+      "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lines": "525,3913-3928",
+      "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+    },
+    {
+      "file": "COORD.C",
+      "lines": "1693-1698",
+      "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+    }
+  ],
+  "points": [
+    [
+      111,
+      82,
+      "source_screen_portrait_center"
+    ],
+    [
+      111,
+      80,
+      "source_center_if_viewport_y31"
+    ],
+    [
+      112,
+      83,
+      "source_center_plus_one"
+    ]
+  ],
+  "methods": [
+    "helper_scaled_window_relative",
+    "absolute_screen_click",
+    "window_relative_down_up",
+    "window_relative_click_repeat3"
+  ],
+  "completed": 12,
+  "errors": [],
+  "buckets": {
+    "click-no-visible-delta": 12
+  },
+  "results": [
+    {
+      "name": "helper_scaled_window_relative_source_screen_portrait_center",
+      "method": "helper_scaled_window_relative",
+      "point": {
+        "x": 111,
+        "y": 82,
+        "label": "helper_scaled_window_relative_source_screen_portrait_center"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0001-initial.png",
+          "sha12": "c6f457763e2e",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0006-gate05.png",
+          "sha12": "eded77444a51",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0007-gate06.png",
+          "sha12": "c25f445326ba",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "helper_scaled_window_relative",
+          "x": 111,
+          "y": 82,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 165,
+            "abs_x": 543,
+            "abs_y": 477
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_screen_portrait_center"
+    },
+    {
+      "name": "helper_scaled_window_relative_source_center_if_viewport_y31",
+      "method": "helper_scaled_window_relative",
+      "point": {
+        "x": 111,
+        "y": 80,
+        "label": "helper_scaled_window_relative_source_center_if_viewport_y31"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0001-initial.png",
+          "sha12": "ab7acc8ca298",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0005-gate04.png",
+          "sha12": "223378736825",
+          "class": "inventory",
+          "reason": "dense low-color inventory extent over viewport",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0006-gate05.png",
+          "sha12": "f8d841d4357c",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0007-gate06.png",
+          "sha12": "cb59cad5c225",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "helper_scaled_window_relative",
+          "x": 111,
+          "y": 80,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 161,
+            "abs_x": 543,
+            "abs_y": 473
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_if_viewport_y31"
+    },
+    {
+      "name": "helper_scaled_window_relative_source_center_plus_one",
+      "method": "helper_scaled_window_relative",
+      "point": {
+        "x": 112,
+        "y": 83,
+        "label": "helper_scaled_window_relative_source_center_plus_one"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0005-gate04.png",
+          "sha12": "b507edcd46c6",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0006-gate05.png",
+          "sha12": "bfe3b335112f",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0007-gate06.png",
+          "sha12": "2456e272bbda",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "helper_scaled_window_relative",
+          "x": 112,
+          "y": 83,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 225,
+            "rel_y": 167,
+            "abs_x": 545,
+            "abs_y": 479
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/helper_scaled_window_relative_source_center_plus_one"
+    },
+    {
+      "name": "absolute_screen_click_source_screen_portrait_center",
+      "method": "absolute_screen_click",
+      "point": {
+        "x": 111,
+        "y": 82,
+        "label": "absolute_screen_click_source_screen_portrait_center"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0001-initial.png",
+          "sha12": "ab7acc8ca298",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0006-gate05.png",
+          "sha12": "a9da0dd6b19e",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0007-gate06.png",
+          "sha12": "d498c3efc218",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "absolute_screen_click",
+          "x": 111,
+          "y": 82,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 165,
+            "abs_x": 543,
+            "abs_y": 477
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_screen_portrait_center"
+    },
+    {
+      "name": "absolute_screen_click_source_center_if_viewport_y31",
+      "method": "absolute_screen_click",
+      "point": {
+        "x": 111,
+        "y": 80,
+        "label": "absolute_screen_click_source_center_if_viewport_y31"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0006-gate05.png",
+          "sha12": "a9da0dd6b19e",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0007-gate06.png",
+          "sha12": "8bc78f18f48a",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "absolute_screen_click",
+          "x": 111,
+          "y": 80,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 161,
+            "abs_x": 543,
+            "abs_y": 473
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_if_viewport_y31"
+    },
+    {
+      "name": "absolute_screen_click_source_center_plus_one",
+      "method": "absolute_screen_click",
+      "point": {
+        "x": 112,
+        "y": 83,
+        "label": "absolute_screen_click_source_center_plus_one"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0006-gate05.png",
+          "sha12": "a9da0dd6b19e",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0007-gate06.png",
+          "sha12": "8bc78f18f48a",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "absolute_screen_click",
+          "x": 112,
+          "y": 83,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 225,
+            "rel_y": 167,
+            "abs_x": 545,
+            "abs_y": 479
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/absolute_screen_click_source_center_plus_one"
+    },
+    {
+      "name": "window_relative_down_up_source_screen_portrait_center",
+      "method": "window_relative_down_up",
+      "point": {
+        "x": 111,
+        "y": 82,
+        "label": "window_relative_down_up_source_screen_portrait_center"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0006-gate05.png",
+          "sha12": "96da7929352b",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0007-gate06.png",
+          "sha12": "1eb3c7fe6494",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "window_relative_down_up",
+          "x": 111,
+          "y": 82,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 165,
+            "abs_x": 543,
+            "abs_y": 477
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_screen_portrait_center"
+    },
+    {
+      "name": "window_relative_down_up_source_center_if_viewport_y31",
+      "method": "window_relative_down_up",
+      "point": {
+        "x": 111,
+        "y": 80,
+        "label": "window_relative_down_up_source_center_if_viewport_y31"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0005-gate04.png",
+          "sha12": "486ae09cadc3",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0006-gate05.png",
+          "sha12": "bfe3b335112f",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0007-gate06.png",
+          "sha12": "2456e272bbda",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "window_relative_down_up",
+          "x": 111,
+          "y": 80,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 161,
+            "abs_x": 543,
+            "abs_y": 473
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_if_viewport_y31"
+    },
+    {
+      "name": "window_relative_down_up_source_center_plus_one",
+      "method": "window_relative_down_up",
+      "point": {
+        "x": 112,
+        "y": 83,
+        "label": "window_relative_down_up_source_center_plus_one"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0005-gate04.png",
+          "sha12": "caaef23e3786",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0006-gate05.png",
+          "sha12": "7addedda4327",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0007-gate06.png",
+          "sha12": "594ef0208e49",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "window_relative_down_up",
+          "x": 112,
+          "y": 83,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 225,
+            "rel_y": 167,
+            "abs_x": 545,
+            "abs_y": 479
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_down_up_source_center_plus_one"
+    },
+    {
+      "name": "window_relative_click_repeat3_source_screen_portrait_center",
+      "method": "window_relative_click_repeat3",
+      "point": {
+        "x": 111,
+        "y": 82,
+        "label": "window_relative_click_repeat3_source_screen_portrait_center"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0001-initial.png",
+          "sha12": "c6f457763e2e",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0006-gate05.png",
+          "sha12": "4483d4f2e3d3",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0007-gate06.png",
+          "sha12": "c25f445326ba",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "window_relative_click_repeat3",
+          "x": 111,
+          "y": 82,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 165,
+            "abs_x": 543,
+            "abs_y": 477
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_screen_portrait_center"
+    },
+    {
+      "name": "window_relative_click_repeat3_source_center_if_viewport_y31",
+      "method": "window_relative_click_repeat3",
+      "point": {
+        "x": 111,
+        "y": 80,
+        "label": "window_relative_click_repeat3_source_center_if_viewport_y31"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0006-gate05.png",
+          "sha12": "0c4d5f573cdd",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0007-gate06.png",
+          "sha12": "8bc78f18f48a",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "window_relative_click_repeat3",
+          "x": 111,
+          "y": 80,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 223,
+            "rel_y": 161,
+            "abs_x": 543,
+            "abs_y": 473
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_if_viewport_y31"
+    },
+    {
+      "name": "window_relative_click_repeat3_source_center_plus_one",
+      "method": "window_relative_click_repeat3",
+      "point": {
+        "x": 112,
+        "y": 83,
+        "label": "window_relative_click_repeat3_source_center_plus_one"
+      },
+      "classification": "click-no-visible-delta",
+      "delta": {
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "source_audit": [
+        {
+          "file": "COMMAND.C",
+          "lines": "397-403,2322-2323",
+          "claim": "C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "348-349",
+          "claim": "PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "407-431",
+          "claim": "with empty leader hand, a hit in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT calls F0372."
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "lines": "21-25",
+          "claim": "F0372 computes the front square and calls F0275_SENSOR_IsTriggeredByClickOnWall on the opposite side."
+        },
+        {
+          "file": "MOVESENS.C",
+          "lines": "1392,1501-1502",
+          "claim": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "lines": "525,3913-3928",
+          "claim": "the portrait box is source-locked to viewport x=96..127 y=35..63; center maps to screen x=111,y=82 for PC y-origin 33."
+        },
+        {
+          "file": "COORD.C",
+          "lines": "1693-1698",
+          "claim": "G2067_i_ViewportScreenX=0 and F20E G2068_i_ViewportScreenY=33."
+        }
+      ],
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column"
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0005-gate04.png",
+          "sha12": "164948092f4c",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate"
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0006-gate05.png",
+          "sha12": "7addedda4327",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate"
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0007-gate06.png",
+          "sha12": "2456e272bbda",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate"
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate"
+        },
+        {
+          "phase": "click",
+          "method": "window_relative_click_repeat3",
+          "x": 112,
+          "y": 83,
+          "mapping": {
+            "window_x": 320,
+            "window_y": 312,
+            "window_w": 640,
+            "window_h": 400,
+            "rel_x": 225,
+            "rel_y": 167,
+            "abs_x": 545,
+            "abs_y": 479
+          },
+          "index": 11,
+          "label": "after_click",
+          "file": "image0011-after_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0011-after_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        },
+        {
+          "phase": "key_control",
+          "key": "F1",
+          "index": 12,
+          "label": "after_f1",
+          "file": "image0012-after_f1.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one/image0012-after_f1.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column"
+        }
+      ],
+      "evidence_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe/window_relative_click_repeat3_source_center_plus_one"
+    }
+  ]
+}
