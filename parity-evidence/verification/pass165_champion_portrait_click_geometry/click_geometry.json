@@ -1,0 +1,157 @@
+{
+  "schema": "pass165_champion_portrait_click_geometry.v1",
+  "recommended_click": {
+    "viewport_x1": 96,
+    "viewport_x2": 127,
+    "viewport_y1": 35,
+    "viewport_y2": 63,
+    "viewport_center_x": 111,
+    "viewport_center_y": 49,
+    "screen_center_x": 111,
+    "screen_center_y": 82,
+    "viewport_origin_x": 0,
+    "viewport_origin_y": 33
+  },
+  "checks": [
+    {
+      "id": "SRC_GEOM_001",
+      "file": "DUNVIEW.C",
+      "needles": [
+        "unsigned char G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4] = { 96, 127, 35, 63 };",
+        "C026_GRAPHIC_CHAMPION_PORTRAITS",
+        "A portrait is 32x29 pixels"
+      ],
+      "claim": "Legacy/byte-box portrait-on-wall area is viewport-relative x=96..127 y=35..63 (32x29).",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "needle": "unsigned char G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4] = { 96, 127, 35, 63 };",
+          "line": 525,
+          "text": "unsigned char G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4] = { 96, 127, 35, 63 };"
+        },
+        {
+          "needle": "C026_GRAPHIC_CHAMPION_PORTRAITS",
+          "line": 2466,
+          "text": "L0077_pi_GraphicIndices[AL0075_ui_GraphicCount++] = C026_GRAPHIC_CHAMPION_PORTRAITS;"
+        },
+        {
+          "needle": "A portrait is 32x29 pixels",
+          "line": 3916,
+          "text": "F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), G0296_puc_Bitmap_Viewport, G0109_auc_Graphic558_Box_ChampionPortraitOnWall, (G0289_i_DungeonView_ChampionPortraitOrdinal & 0x0007) << 5, (G0289_i_DungeonView_ChampionPortraitOrdinal >> 3) * 29, C128_BYTE_WIDTH, C112_BYTE_WIDTH_VIEWPORT, C01_COLOR_DARK_GRAY); /* A portrait is 32x29 pixels */"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_GEOM_002",
+      "file": "COORD.C",
+      "needles": [
+        "int16_t G2067_i_ViewportScreenX = 0;",
+        "int16_t G2068_i_ViewportScreenY = 33;",
+        "int16_t G2078_C32_PortraitWidth = 32;",
+        "int16_t G2079_C29_PortraitHeight = 29;"
+      ],
+      "claim": "PC viewport origin is screen x=0 y=33; champion portrait dimensions are 32x29.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "hits": [
+        {
+          "needle": "int16_t G2067_i_ViewportScreenX = 0;",
+          "line": 1693,
+          "text": "int16_t G2067_i_ViewportScreenX = 0;"
+        },
+        {
+          "needle": "int16_t G2068_i_ViewportScreenY = 33;",
+          "line": 1698,
+          "text": "int16_t G2068_i_ViewportScreenY = 33;"
+        },
+        {
+          "needle": "int16_t G2078_C32_PortraitWidth = 32;",
+          "line": 1748,
+          "text": "int16_t G2078_C32_PortraitWidth = 32;"
+        },
+        {
+          "needle": "int16_t G2079_C29_PortraitHeight = 29;",
+          "line": 1749,
+          "text": "int16_t G2079_C29_PortraitHeight = 29;"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_GEOM_003",
+      "file": "DUNVIEW.C",
+      "needles": [
+        "if (P0117_i_ViewWallIndex == M587_VIEW_WALL_D1C_FRONT)",
+        "F0007_MAIN_CopyBytes((char*)G2032_ai_XYZ, (char*)G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]",
+        "M635_ZONE_PORTRAIT_ON_WALL",
+        "F0654_Call_F0132_VIDEO_Blit"
+      ],
+      "claim": "For the front wall, the source copies the drawn wall/portrait zone into C05 clickable storage before drawing the portrait.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "needle": "if (P0117_i_ViewWallIndex == M587_VIEW_WALL_D1C_FRONT)",
+          "line": 3609,
+          "text": "if (P0117_i_ViewWallIndex == M587_VIEW_WALL_D1C_FRONT) {"
+        },
+        {
+          "needle": "F0007_MAIN_CopyBytes((char*)G2032_ai_XYZ, (char*)G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]",
+          "line": 3924,
+          "text": "F0007_MAIN_CopyBytes((char*)G2032_ai_XYZ, (char*)G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT], (long)sizeof(G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]));"
+        },
+        {
+          "needle": "M635_ZONE_PORTRAIT_ON_WALL",
+          "line": 3928,
+          "text": "F0654_Call_F0132_VIDEO_Blit(M772_CAST_PC(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS)), M772_CAST_PC(G0296_puc_Bitmap_Viewport), F0635_(NULL, L2454_ai_XYZ, M635_ZONE_PORTRAIT_ON_WALL, &L2452_i_Width, &L2453_i_Height), (G0289_i_DungeonView_ChampionPortraitOrdinal & 0x0007) * G2078_C32_PortraitWidth, (G0289_i_DungeonView_ChampionPortraitOrdinal >> 3) * G2079_C29_PortraitHeight, C01_COLOR_DARK_GRAY);"
+        },
+        {
+          "needle": "F0654_Call_F0132_VIDEO_Blit",
+          "line": 2105,
+          "text": "F0654_Call_F0132_VIDEO_Blit(M772_CAST_PC(G0296_puc_Bitmap_Viewport), M772_CAST_PC(L2425_puc_), L2427_ai_XYZ, 2 - (L2428_i_Width & 1), 0, CM1_COLOR_NO_TRANSPARENCY);"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_GEOM_004",
+      "file": "CLIKVIEW.C",
+      "needles": [
+        "P0752_i_X -= G2067_i_ViewportScreenX;",
+        "P0753_i_Y -= G2068_i_ViewportScreenY;",
+        "if (F0798_COMMAND_IsPointInZone(G2210_aai_XYZ_DungeonViewClickable[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y))",
+        "if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT)",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+      ],
+      "claim": "Runtime clicks are converted to viewport-relative coordinates, then tested against C05; C05 triggers F0372.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "hits": [
+        {
+          "needle": "P0752_i_X -= G2067_i_ViewportScreenX;",
+          "line": 348,
+          "text": "P0752_i_X -= G2067_i_ViewportScreenX;"
+        },
+        {
+          "needle": "P0753_i_Y -= G2068_i_ViewportScreenY;",
+          "line": 349,
+          "text": "P0753_i_Y -= G2068_i_ViewportScreenY;"
+        },
+        {
+          "needle": "if (F0798_COMMAND_IsPointInZone(G2210_aai_XYZ_DungeonViewClickable[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y))",
+          "line": 415,
+          "text": "if (F0798_COMMAND_IsPointInZone(G2210_aai_XYZ_DungeonViewClickable[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y)) {"
+        },
+        {
+          "needle": "if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT)",
+          "line": 417,
+          "text": "if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT) {"
+        },
+        {
+          "needle": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();",
+          "line": 431,
+          "text": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+        }
+      ],
+      "status": "PASS"
+    }
+  ]
+}
