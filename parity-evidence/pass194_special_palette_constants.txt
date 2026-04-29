@@ -1,0 +1,10 @@
+# Pass 194 — ReDMCSB special palette constants
+
+Source-first audit:
+DATA.C:25-26 declares credits and entrance palettes; DATA.C:789-811 provides media-specific G0019_aui_Graphic562_Palette_Credits and G0020_aui_Graphic562_Palette_Entrance rows; ENDGAME.C:680 fades to credits palette, ENTRANCE.C:595 fades to entrance palette, and ENTRANCE.C:1061 uses credits palette for entrance credits.
+
+Probe output:
+
+probe=firestaff_special_palette_constants
+sourceEvidence=DATA.C:25-26 declares credits and entrance palettes; DATA.C:789-811 provides media-specific G0019_aui_Graphic562_Palette_Credits and G0020_aui_Graphic562_Palette_Entrance rows; ENDGAME.C:680 fades to credits palette, ENTRANCE.C:595 fades to entrance palette, and ENTRANCE.C:1061 uses credits palette for entrance credits.
+specialPaletteConstantsInvariantOk=1

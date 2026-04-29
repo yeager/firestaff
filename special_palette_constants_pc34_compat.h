@@ -1,0 +1,5 @@
+#ifndef SPECIAL_PALETTE_CONSTANTS_PC34_COMPAT_H
+#define SPECIAL_PALETTE_CONSTANTS_PC34_COMPAT_H
+const char* special_palette_constants_GetEvidence(void);
+unsigned int special_palette_constants_GetInvariant(void);
+#endif
