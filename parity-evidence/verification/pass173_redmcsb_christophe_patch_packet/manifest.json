@@ -1,0 +1,47 @@
+{
+  "pass": "pass173_redmcsb_christophe_patch_packet",
+  "purpose": "Record the English source-local ReDMCSB patch packet prepared for Christophe after pass172.",
+  "patch_count": 5,
+  "patches": [
+    {
+      "name": "0001-document-dm1-v1-recruit-route.patch",
+      "files": ["COMMAND.C", "MOVESENS.C"],
+      "risk": "low",
+      "kind": "documentation"
+    },
+    {
+      "name": "0002-document-champion-portrait-geometry.patch",
+      "files": ["DUNVIEW.C"],
+      "risk": "low",
+      "kind": "documentation"
+    },
+    {
+      "name": "0003-document-bug0-71-vblank-timing.patch",
+      "files": ["TITLE.C", "ENTRANCE.C", "ENDGAME.C"],
+      "risk": "low",
+      "kind": "documentation"
+    },
+    {
+      "name": "0004-document-bug0-73-command-queue-race.patch",
+      "files": ["COMMAND.C"],
+      "risk": "low",
+      "kind": "documentation"
+    },
+    {
+      "name": "0005-fix-bug0-35-without-bug2-00-scroll-regression.patch",
+      "files": ["CHAMDRAW.C"],
+      "risk": "moderate",
+      "kind": "code-fix-candidate"
+    }
+  ],
+  "source_lock_inputs": [
+    "pass160_redmcsb_source_lock",
+    "pass171_redmcsb_source_lock_closure",
+    "pass172_redmcsb_patch_gap_inventory"
+  ],
+  "public_safety": {
+    "contains_private_paths": false,
+    "contains_credentials": false,
+    "contains_internal_runner_metadata": false
+  }
+}
