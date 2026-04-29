@@ -851,6 +851,39 @@ int main(int argc, char** argv) {
                          mirrorView.candidateMirrorPanelActive == 1 &&
                          mirrorView.candidateMirrorOrdinal == mirrorOrdinal,
                      "M11 mirror click opens a source-backed resurrect/reincarnate candidate panel");
+        {
+            M11_GameViewState pointerMirror;
+            memcpy(&pointerMirror, &mirrorView, sizeof(pointerMirror));
+            pointerMirror.world.party.championCount = 0;
+            pointerMirror.candidateMirrorPanelActive = 0;
+            pointerMirror.candidateMirrorOrdinal = -1;
+            probe_record(&tally,
+                         "INV_GV_407A",
+                         M11_GameView_HandlePointer(&pointerMirror, 111, 82, 1) == M11_GAME_INPUT_REDRAW &&
+                             pointerMirror.candidateMirrorPanelActive == 1 &&
+                             pointerMirror.candidateMirrorOrdinal == mirrorOrdinal,
+                         "source portrait click center x111/y82 opens the mirror candidate panel when a mirror TextString is in the front cell");
+            probe_record(&tally,
+                         "INV_GV_407B",
+                         M11_GameView_HandlePointer(&pointerMirror, 130, 115, 1) == M11_GAME_INPUT_REDRAW &&
+                             pointerMirror.candidateMirrorPanelActive == 0 &&
+                             pointerMirror.world.party.championCount == 1,
+                         "source C160 resurrect center x130/y115 confirms the open mirror candidate panel");
+        }
+        {
+            M11_GameViewState pointerMirrorReincarnate;
+            memcpy(&pointerMirrorReincarnate, &mirrorView, sizeof(pointerMirrorReincarnate));
+            pointerMirrorReincarnate.world.party.championCount = 0;
+            pointerMirrorReincarnate.candidateMirrorPanelActive = 0;
+            pointerMirrorReincarnate.candidateMirrorOrdinal = -1;
+            (void)M11_GameView_HandlePointer(&pointerMirrorReincarnate, 111, 82, 1);
+            probe_record(&tally,
+                         "INV_GV_407C",
+                         M11_GameView_HandlePointer(&pointerMirrorReincarnate, 186, 115, 1) == M11_GAME_INPUT_REDRAW &&
+                             pointerMirrorReincarnate.candidateMirrorPanelActive == 0 &&
+                             pointerMirrorReincarnate.world.party.championCount == 1,
+                         "source C161 reincarnate center x186/y115 confirms the open mirror candidate panel");
+        }
         probe_record(&tally,
                      "INV_GV_407",
                      M11_GameView_ConfirmMirrorCandidate(&mirrorView, 0) == 1 &&

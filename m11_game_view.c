@@ -5343,6 +5343,32 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
+    /* Source-backed champion mirror panel.  ReDMCSB routes the
+     * Resurrect/Reincarnate/Cancel overlay through COMMAND.C C160..C162
+     * with PC boxes 104..158/163..217 x 86..142 and cancel 104..217 x
+     * 146..156 (Atari boxes are slightly wider; these are the PC rows
+     * behind COMMAND.C 231..238 and 509..511).  Handle them before the
+     * generic viewport hit test so x=130/y=115 and x=186/y=115 do not
+     * get reinterpreted as movement/inspect clicks. */
+    if (state->candidateMirrorPanelActive) {
+        if (m11_point_in_rect(x, y, 104, 86, 55, 57)) {
+            return M11_GameView_ConfirmMirrorCandidate(state, 0)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_point_in_rect(x, y, 163, 86, 55, 57)) {
+            return M11_GameView_ConfirmMirrorCandidate(state, 1)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_point_in_rect(x, y, 104, 146, 114, 11)) {
+            return M11_GameView_CancelMirrorCandidate(state)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     if (state->inventoryPanelActive && !state->showDebugHUD) {
         int space = M11_DM1_MOUSE_SPACE_NONE;
         int zoneId = 0;
