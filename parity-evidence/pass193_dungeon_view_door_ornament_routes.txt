@@ -1,0 +1,10 @@
+# Pass 193 — ReDMCSB dungeon-view door/ornament routes
+
+Source-first audit:
+CLIKVIEW.C:311-349 normalizes click coordinates to viewport; CLIKVIEW.C:356-390 handles front-door button clicks with switch sound and C10_EVENT_DOOR toggle; CLIKVIEW.C:406-438 routes empty-handed clickable view cells to wall ornament/fountain/sensor or floor-object grabs; CLIKVIEW.C:443-445 handles knock-on-wall zones.
+
+Probe output:
+
+probe=firestaff_dungeon_view_door_ornament_routes
+sourceEvidence=CLIKVIEW.C:311-349 normalizes click coordinates to viewport; CLIKVIEW.C:356-390 handles front-door button clicks with switch sound and C10_EVENT_DOOR toggle; CLIKVIEW.C:406-438 routes empty-handed clickable view cells to wall ornament/fountain/sensor or floor-object grabs; CLIKVIEW.C:443-445 handles knock-on-wall zones.
+dungeonViewDoorOrnamentRoutesInvariantOk=1

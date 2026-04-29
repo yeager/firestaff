@@ -1,0 +1,5 @@
+#ifndef DUNGEON_VIEW_DOOR_ORNAMENT_ROUTES_PC34_COMPAT_H
+#define DUNGEON_VIEW_DOOR_ORNAMENT_ROUTES_PC34_COMPAT_H
+const char* dungeon_view_door_ornament_routes_GetEvidence(void);
+unsigned int dungeon_view_door_ornament_routes_GetInvariant(void);
+#endif
