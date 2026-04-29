@@ -1,0 +1,95 @@
+{
+  "blocked_original_route_evidence": {
+    "ok": true,
+    "path": "/home/trv2/work/firestaff/verification-m11/n2-original-overlay-unblock-20260429/pass94-fixed-clean/pass80_original_frame_classifier.md",
+    "reason": "existing classifier records static no-party hash 48ed3743ab6a / duplicate raw frames, so quartet acceptance remains blocked until Lane A party/control route is solved"
+  },
+  "firestaff_results": [
+    {
+      "missing_patterns": [],
+      "name": "firestaff_viewport_constants_match_source",
+      "ok": true,
+      "path": "/home/trv2/work/firestaff/m11_game_view.c"
+    },
+    {
+      "missing_patterns": [],
+      "name": "original_capture_script_crops_source_viewport_rect",
+      "ok": true,
+      "path": "/home/trv2/work/firestaff/scripts/dosbox_dm1_original_viewport_reference_capture.sh"
+    }
+  ],
+  "invariant": {
+    "pc_vga_viewport_palette_offset": "VIDEODRV.C F8161 sets G8177_c_ViewportColorIndexOffset=0x10 only around viewport blit",
+    "timing": "title zoom, entrance wait/open, and gameplay viewport blit are source-gated by WaitVerticalBlank/Delay, not by emulator screenshot cadence",
+    "viewport_rect": {
+      "height": 136,
+      "width": 224,
+      "x": 0,
+      "y": 33
+    }
+  },
+  "pass": true,
+  "scope": "source-anchored preflight invariant only; no final original/Firestaff pixel parity claim",
+  "source_results": [
+    {
+      "line_range": [
+        201,
+        251
+      ],
+      "missing_patterns": [],
+      "name": "title_zoom_waits_and_bug071",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C"
+    },
+    {
+      "line_range": [
+        147,
+        239
+      ],
+      "missing_patterns": [],
+      "name": "entrance_door_steps_wait_vblank",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C"
+    },
+    {
+      "line_range": [
+        850,
+        943
+      ],
+      "missing_patterns": [],
+      "name": "entrance_wait_loop_to_open_doors",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C"
+    },
+    {
+      "line_range": [
+        709,
+        723
+      ],
+      "missing_patterns": [],
+      "name": "gameplay_viewport_request_wait",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "line_range": [
+        3566,
+        3580
+      ],
+      "missing_patterns": [],
+      "name": "pc_vga_blitviewport_224_palette_offset",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C"
+    },
+    {
+      "line_range": [
+        20,
+        96
+      ],
+      "missing_patterns": [],
+      "name": "amiga_viewport_origin_and_224x136_plane_copy",
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIEWPORT.C"
+    }
+  ]
+}
