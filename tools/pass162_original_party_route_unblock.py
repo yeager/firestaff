@@ -1,0 +1,270 @@
+#!/usr/bin/env python3
+"""Pass162: original DM1 V1 party/control route unblock classifier.
+
+This is Lane A from DM1_V1_FINISH_PLAN.md: stop treating any raw
+`dungeon_gameplay` classifier hit as overlay-ready.  A frame sequence is only
+party/control-ready if it has all three:
+
+1. it is not a known static/no-party hash;
+2. control inputs produce distinct dungeon/inventory/spell states; and
+3. the sequence contains a party semantic marker (right-panel/status/inventory
+   readiness), not just title/entrance/menu churn.
+
+The pass reuses the strongest known pass141 candidate route as the first
+consolidated gate and records exact source reasons for rejection/acceptance.
+"""
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+from PIL import Image, ImageChops, ImageStat
+
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO))
+from tools.pass118_state_aware_original_route_driver import (  # noqa: E402
+    wait_window,
+    capture_new,
+    classify_file,
+    tap,
+    click_original,
+)
+from tools.pass80_original_frame_classifier import sha256  # noqa: E402
+
+STAGE = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+DOSBOX = "/usr/bin/dosbox"
+OUT_ROOT = Path("parity-evidence/verification/pass162_original_party_route_unblock")
+RUN_BASE_ROOT = Path.home() / ".openclaw/data/firestaff-n2-runs"
+
+STATIC_NO_PARTY_HASHES = {"48ed3743ab6a", "082b4d249740"}
+CONTROL_CLASSES = {"inventory", "spell_panel"}
+DUNGEON_CLASSES = {"dungeon_gameplay"}
+UNSAFE_CLASSES = {"title_or_menu", "entrance_menu", "wall_closeup", "non_graphics_blocker"}
+
+CROPS = {
+    "viewport": (0, 0, 224, 136),
+    "right_panel": (224, 0, 320, 136),
+    "lower_panel": (0, 136, 320, 200),
+    "top_party_strip": (0, 0, 320, 48),
+    "movement_panel": (224, 112, 320, 180),
+}
+
+SOURCE_LOCKS = [
+    {
+        "file": "ENTRANCE.C",
+        "lines": "857-883",
+        "point": "F0441_STARTEND_ProcessEntrance sets G0298_B_NewGame=C099_MODE_WAITING_ON_ENTRANCE and only exits after command/key changes it; keyboard/mouse input is processed before dungeon load.",
+    },
+    {
+        "file": "COMMAND.C",
+        "lines": "346-352, 557, 2438-2455",
+        "point": "C200_COMMAND_ENTRANCE_ENTER_DUNGEON maps to C407_ZONE_ENTRANCE_ENTER / Return and sets G0298_B_NewGame=C001_MODE_LOAD_DUNGEON; resume maps to saved game, credits loops.",
+    },
+    {
+        "file": "REVIVE.C",
+        "lines": "63-150",
+        "point": "F0280_CHAMPION_AddCandidateChampionToParty is the source transition that increments/uses G0305_ui_PartyChampionCount; inventory-looking candidate frames are not enough without this semantic transition.",
+    },
+]
+
+SCENARIOS: list[dict[str, Any]] = [
+    {
+        "name": "pm_f1_panel_clicks_route_recheck",
+        "program": "DM -vv -sn -pm",
+        "purpose": "Recheck pass141's strongest candidate: Return -> F1 candidate -> panel clicks -> movement. This produced dynamic dungeon hash 1ee706538fb3 once, then 48ed; classify strictly.",
+        "actions": [
+            ("key", "Return"), ("wait", 1.3), ("shot", "after_enter"),
+            ("key", "F1"), ("wait", 1.3), ("shot", "after_f1_candidate"),
+            ("click", 235, 52), ("wait", 0.9), ("shot", "after_panel_click_235_52"),
+            ("click", 276, 158), ("wait", 0.9), ("shot", "after_panel_click_276_158"),
+            ("key", "Up"), ("wait", 1.0), ("shot", "after_move_up"),
+            ("key", "Right"), ("wait", 1.0), ("shot", "after_turn_right"),
+            ("key", "Left"), ("wait", 1.0), ("shot", "after_turn_left"),
+            ("key", "F1"), ("wait", 1.0), ("shot", "after_f1_readiness"),
+            ("key", "F4"), ("wait", 1.0), ("shot", "after_f4_readiness"),
+        ],
+    },
+    {
+        "name": "source_enter_zone_then_candidate_buttons",
+        "program": "DM -vv -sn",
+        "purpose": "Use source C407 enter zone rather than generic Return, then mirror/candidate button coordinates from previous probes.",
+        "actions": [
+            ("click", 270, 52), ("wait", 1.5), ("shot", "after_c407_enter_click"),
+            ("click", 112, 60), ("wait", 1.1), ("shot", "after_portrait_center"),
+            ("click", 92, 165), ("wait", 1.1), ("shot", "after_resurrect_button"),
+            ("key", "Return"), ("wait", 1.1), ("shot", "after_confirm"),
+            ("key", "Up"), ("wait", 1.0), ("shot", "after_move_up"),
+            ("key", "Right"), ("wait", 1.0), ("shot", "after_turn_right"),
+            ("key", "F1"), ("wait", 1.0), ("shot", "after_f1_readiness"),
+            ("key", "F4"), ("wait", 1.0), ("shot", "after_f4_readiness"),
+        ],
+    },
+]
+
+
+def slug(s: str) -> str:
+    return "".join(c.lower() if c.isalnum() else "_" for c in s).strip("_")
+
+
+def conf(out: Path, program: str) -> Path:
+    p = out / "dosbox-pass162.conf"
+    p.write_text(f"""[sdl]\nfullscreen=false\noutput=opengl\n[dosbox]\nmachine=svga_paradise\nmemsize=4\ncaptures={out}\n[cpu]\ncore=normal\ncputype=386\ncpu_cycles=3000\n[render]\naspect=false\ninteger_scaling=false\n[mixer]\nnosound=true\n[speaker]\npcspeaker=false\ntandy=off\n[capture]\ncapture_dir={out}\ndefault_image_capture_formats=raw\n[autoexec]\nmount c \"{STAGE}\"\nc:\n{program}\n""")
+    return p
+
+
+def shot(out: Path, log: list[str], label: str, idx: int) -> dict[str, Any]:
+    raw = capture_new(wait_window(log, timeout=5.0), out, label, log)
+    dst = out / f"image{idx:04d}-{slug(label)}.png"
+    if dst.exists():
+        dst.unlink()
+    shutil.move(str(raw), dst)
+    cls, reason = classify_file(dst)
+    return {"index": idx, "label": label, "file": dst.name, "path": str(dst), "sha12": sha256(dst)[:12], "class": cls, "reason": reason}
+
+
+def do_action(out: Path, log: list[str], action: tuple[Any, ...], idx: int) -> dict[str, Any] | None:
+    kind = action[0]
+    if kind == "wait":
+        time.sleep(float(action[1])); return None
+    if kind == "shot":
+        return {"phase": "shot", **shot(out, log, str(action[1]), idx)}
+    if kind == "key":
+        key = str(action[1])
+        tap(wait_window(log, timeout=5.0), key, log, delay=0.6)
+        return {"phase": "key", "value": key, **shot(out, log, f"key_{key}_{idx}", idx)}
+    if kind == "click":
+        x, y = int(action[1]), int(action[2])
+        click_original(wait_window(log, timeout=5.0), x, y, log, delay=0.6)
+        return {"phase": "click", "x": x, "y": y, **shot(out, log, f"click_{x}_{y}_{idx}", idx)}
+    raise ValueError(action)
+
+
+def crop_stats(path: Path) -> dict[str, Any]:
+    im = Image.open(path).convert("RGB")
+    stats: dict[str, Any] = {}
+    for name, box in CROPS.items():
+        cr = im.crop(box)
+        st = ImageStat.Stat(cr)
+        colors = cr.convert("P", palette=Image.Palette.ADAPTIVE, colors=64).getcolors(maxcolors=100000) or []
+        nonblack = sum(1 for px in cr.getdata() if px != (0, 0, 0))
+        stats[name] = {
+            "mean_rgb": [round(x, 2) for x in st.mean],
+            "nonblack_ratio": round(nonblack / (cr.size[0] * cr.size[1]), 6),
+            "palette64_colors": len(colors),
+        }
+    return stats
+
+
+def diff_stats(a: Path, b: Path) -> dict[str, Any]:
+    ia, ib = Image.open(a).convert("RGB"), Image.open(b).convert("RGB")
+    d = ImageChops.difference(ia, ib)
+    bbox = d.getbbox()
+    nz = sum(1 for px in d.getdata() if px != (0, 0, 0))
+    return {"bbox": list(bbox) if bbox else None, "changed_pixels": nz, "changed_ratio": round(nz / (320 * 200), 6)}
+
+
+def classify_route(rows: list[dict[str, Any]]) -> tuple[str, str, dict[str, Any]]:
+    shots = [r for r in rows if "sha12" in r]
+    hashes = [r["sha12"] for r in shots]
+    classes = [r["class"] for r in shots]
+    static_hits = sorted(set(hashes) & STATIC_NO_PARTY_HASHES)
+    dungeon = [r for r in shots if r["class"] in DUNGEON_CLASSES]
+    control = [r for r in shots if r["class"] in CONTROL_CLASSES]
+    unsafe_after_route = [r for r in shots[-5:] if r["class"] in UNSAFE_CLASSES]
+    diffs = []
+    for prev, cur in zip(shots, shots[1:]):
+        diffs.append({"from": prev["label"], "to": cur["label"], **diff_stats(Path(prev["path"]), Path(cur["path"]))})
+    dynamic_dungeon = [d for d in diffs if d["changed_ratio"] > 0.01 and any(tok in d["to"] for tok in ("move", "turn", "key_Up", "key_Right", "key_Left"))]
+    evidence = {
+        "hashes": hashes,
+        "classes": classes,
+        "unique_hashes": sorted(set(hashes)),
+        "static_hits": static_hits,
+        "dungeon_count": len(dungeon),
+        "control_count": len(control),
+        "unsafe_tail_count": len(unsafe_after_route),
+        "dynamic_dungeon_inputs": dynamic_dungeon,
+    }
+    if static_hits:
+        return "blocked/static-no-party", f"known static no-party hash present: {', '.join(static_hits)}", evidence
+    if not dungeon:
+        return "blocked/no-dungeon", "route never produced a dungeon gameplay frame", evidence
+    if unsafe_after_route:
+        return "blocked/unsafe-tail", "tail still contains title/entrance/menu frames, not stable gameplay", evidence
+    if not dynamic_dungeon:
+        return "blocked/no-input-delta", "movement/control inputs did not produce non-trivial dungeon deltas", evidence
+    if not control:
+        return "blocked/no-party-control-marker", "dynamic dungeon exists but no inventory/spell/control marker proves a recruited party", evidence
+    return "party-control-ready-candidate", "non-static dynamic dungeon plus control marker; next pass can capture overlay quartet", evidence
+
+
+def run_scenario(run_base: Path, scenario: dict[str, Any]) -> dict[str, Any]:
+    out = run_base / slug(scenario["name"])
+    out.mkdir(parents=True, exist_ok=True)
+    log: list[str] = []
+    rows: list[dict[str, Any]] = []
+    proc = subprocess.Popen([DOSBOX, "-conf", str(conf(out, scenario["program"]))], stdout=(out / "dosbox.log").open("w"), stderr=subprocess.STDOUT, text=True)
+    try:
+        wait_window(log, timeout=6.0)
+        time.sleep(7.0)
+        rows.append({"phase": "initial", **shot(out, log, "initial", 1)})
+        idx = 2
+        for action in scenario["actions"]:
+            row = do_action(out, log, action, idx)
+            if row:
+                row["crop_stats"] = crop_stats(Path(row["path"]))
+                rows.append(row); idx += 1
+    finally:
+        try: proc.terminate(); proc.wait(timeout=2)
+        except Exception: proc.kill()
+        (out / "pass162_driver.log").write_text("\n".join(log) + "\n")
+    classification, reason, evidence = classify_route(rows)
+    summary = {"name": scenario["name"], "program": scenario["program"], "purpose": scenario["purpose"], "classification": classification, "reason": reason, "source_locks": SOURCE_LOCKS, "route_evidence": evidence, "rows": rows, "evidence_dir": str(out)}
+    (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    return summary
+
+
+def main() -> int:
+    OUT_ROOT.mkdir(parents=True, exist_ok=True)
+    run_base = RUN_BASE_ROOT / (time.strftime("%Y%m%d-%H%M%S") + "-pass162-original-party-route-unblock")
+    run_base.mkdir(parents=True, exist_ok=True)
+    results, errors = [], []
+    for scenario in SCENARIOS:
+        try:
+            result = run_scenario(run_base, scenario)
+            ev = OUT_ROOT / slug(scenario["name"])
+            if ev.exists(): shutil.rmtree(ev)
+            shutil.copytree(Path(result["evidence_dir"]), ev)
+            result["evidence_dir"] = str(ev)
+            (ev / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
+            results.append(result)
+        except Exception as exc:
+            errors.append({"scenario": scenario["name"], "program": scenario["program"], "error": str(exc)})
+    buckets: dict[str, int] = {}
+    for r in results: buckets[r["classification"]] = buckets.get(r["classification"], 0) + 1
+    manifest = {"schema": "pass162_original_party_route_unblock.v1", "run_base": str(run_base), "evidence_root": str(OUT_ROOT), "source_locks": SOURCE_LOCKS, "completed": len(results), "errors": errors, "buckets": buckets, "results": results}
+    (OUT_ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    lines = ["# Pass 162 — original party/control route unblock", "", "Lane A gate from `DM1_V1_FINISH_PLAN.md`.", "", f"- run base: `{run_base}`", f"- evidence root: `{OUT_ROOT}`", f"- completed: {len(results)}", f"- errors: {len(errors)}", f"- buckets: {', '.join(f'{k}={v}' for k, v in sorted(buckets.items()))}", "", "## Source locks", ""]
+    lines += [f"- `{s['file']}` {s['lines']}: {s['point']}" for s in SOURCE_LOCKS]
+    lines += ["", "## Result matrix", ""]
+    for r in results:
+        ev = r["route_evidence"]
+        lines.append(f"- `{r['name']}` `{r['program']}`: **{r['classification']}** — {r['reason']} — unique hashes: {', '.join(ev['unique_hashes'])} — `{r['evidence_dir']}`")
+    if errors:
+        lines += ["", "## Errors", ""]
+        lines += [f"- `{e['scenario']}` `{e['program']}`: {e['error']}" for e in errors]
+    lines += ["", "## Interpretation", "", "A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass rejects any route containing known static no-party hash `48ed3743ab6a`/`082b4d249740`, then requires both dynamic input deltas and a party/control marker."]
+    (OUT_ROOT / "README.md").write_text("\n".join(lines) + "\n")
+    print(f"wrote {OUT_ROOT}/README.md")
+    print(f"run_base={run_base}")
+    print(f"completed={len(results)} errors={len(errors)} buckets={buckets}")
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
