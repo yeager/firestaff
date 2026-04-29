@@ -1,0 +1,5 @@
+#ifndef CHAMPION_NAME_HAND_ROUTES_PC34_COMPAT_H
+#define CHAMPION_NAME_HAND_ROUTES_PC34_COMPAT_H
+const char* champion_name_hand_routes_GetEvidence(void);
+unsigned int champion_name_hand_routes_GetInvariant(void);
+#endif

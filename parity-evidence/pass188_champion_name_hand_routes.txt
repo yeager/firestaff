@@ -1,0 +1,10 @@
+# Pass 188 — ReDMCSB champion name/hand routes
+
+Source-first audit:
+COMMAND.C:484-497 defines G0455_as_Graphic561_MouseInput_ChampionNamesHands: C016..C019 set leader by champion name zones C159..C162, and C020..C027 map top-row ready/action hands to zones C211..C218; COMMAND.C:2180-2184 dispatches inventory toggle/close through F0355_INVENTORY_Toggle_CPSE.
+
+Probe output:
+
+probe=firestaff_champion_name_hand_routes
+sourceEvidence=COMMAND.C:484-497 defines G0455_as_Graphic561_MouseInput_ChampionNamesHands: C016..C019 set leader by champion name zones C159..C162, and C020..C027 map top-row ready/action hands to zones C211..C218; COMMAND.C:2180-2184 dispatches inventory toggle/close through F0355_INVENTORY_Toggle_CPSE.
+championNameHandRoutesInvariantOk=1
