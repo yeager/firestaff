@@ -308,8 +308,13 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
 }
 
 int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
+    int rc;
     const char* envData;
     char userDir[FSP_PATH_MAX];
+#if !defined(_WIN32)
+    char legacyDir[FSP_PATH_MAX];
+    const char* home;
+#endif
 
     if (!out || outSize == 0U) {
         return 0;
@@ -328,12 +333,27 @@ int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
         return 1;
     }
 
-    /* Priority 3: <user-data-dir>/data */
+#if !defined(_WIN32)
+    /* Priority 3: legacy ~/.firestaff/data when it already exists.
+     * Earlier Firestaff builds and N2's verified PC34 asset setup used this
+     * tree.  Preserve it as a read-side compatibility root so startup/title
+     * assets are not skipped in favour of an empty XDG data directory. */
+    home = getenv("HOME");
+    if (home && home[0] != '\0') {
+        rc = snprintf(legacyDir, sizeof(legacyDir), "%s/.firestaff/data", home);
+        if (rc > 0 && (size_t)rc < sizeof(legacyDir) && FSP_DirExists(legacyDir)) {
+            fsp_copy(out, outSize, legacyDir);
+            return 1;
+        }
+    }
+#endif
+
+    /* Priority 4: <user-data-dir>/data */
     if (FSP_GetUserDataDir(userDir, sizeof(userDir))) {
         return FSP_JoinPath(out, outSize, userDir, "data");
     }
 
-    /* Priority 4: current directory. */
+    /* Priority 5: current directory. */
     fsp_copy(out, outSize, ".");
     return 1;
 }

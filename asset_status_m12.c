@@ -320,7 +320,8 @@ static int m12_try_match_version(const char* root,
 static void m12_fill_game_versions(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
-                                   size_t rootCount) {
+                                   size_t rootCount,
+                                   int* dataDirResolvedToMatchedRoot) {
     size_t i;
     size_t rootIndex;
     int matchedAny = 0;
@@ -344,8 +345,15 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                                       version->matchedMd5)) {
                 version->matched = 1;
                 matchedAny = 1;
-                if (status->dataDir[0] == '\0') {
+                if (dataDirResolvedToMatchedRoot && !*dataDirResolvedToMatchedRoot) {
+                    /* Runtime source path: when the saved/default data_dir is the
+                     * preferred ~/.firestaff/originals but the verified PC34 files
+                     * only exist in the legacy ~/.firestaff/data tree, launch must
+                     * use the root that actually matched.  Otherwise TITLE and
+                     * GRAPHICS.DAT-backed startup animation code is present but
+                     * starved of assets at runtime. */
                     m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[rootIndex]);
+                    *dataDirResolvedToMatchedRoot = 1;
                 }
                 break;
             }
@@ -364,6 +372,7 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir) {
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     size_t rootCount;
+    int dataDirResolvedToMatchedRoot = 0;
     int i;
     if (!status) {
         return;
@@ -376,7 +385,7 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
         m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[0]);
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
-        m12_fill_game_versions(status, i, roots, rootCount);
+        m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot);
     }
 }
 

@@ -108,8 +108,9 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize);
  * Resolve the game data directory.  Priority:
  *   1. `requestedDir` if non-NULL and non-empty
  *   2. FIRESTAFF_DATA environment variable
- *   3. <user-data-dir>/data
- *   4. Current directory "."
+ *   3. Existing legacy ~/.firestaff/data on POSIX
+ *   4. <user-data-dir>/data
+ *   5. Current directory "."
  * Returns 1 on success, 0 on error.
  */
 int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir);
