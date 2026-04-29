@@ -1,6 +1,6 @@
 # Lane HUD/status follow-up — DM1 V1 champion top row/status panel
 
-Run: `verification-m11/lane2-hud-status-followup-20260428T0710Z` on N2 (`/home/trv2/work/firestaff`).
+Run: `verification-m11/lane2-hud-status-followup-20260428T0710Z` on N2 (`<repo>`).
 Timestamp: 2026-04-28T07:10Z–2026-04-28T07:12Z.
 
 ## Commands

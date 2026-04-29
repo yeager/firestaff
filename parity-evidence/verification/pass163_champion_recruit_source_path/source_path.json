@@ -9,7 +9,7 @@
         "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)"
       ],
       "claim": "The source candidate-add transition is triggered by wall sensor C127, not by the panel button.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "hits": [
         {
           "needle": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT",
@@ -32,7 +32,7 @@
         "if (++G0305_ui_PartyChampionCount == 1)"
       ],
       "claim": "F0280 marks a candidate and increments party count before the resurrect/reincarnate decision panel is finalized.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "hits": [
         {
           "needle": "G0299_ui_CandidateChampionOrdinal = L0799_ui_PreviousPartyChampionCount + 1",
@@ -55,7 +55,7 @@
         "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command)"
       ],
       "claim": "Panel clicks dispatch to F0282 only when the panel content is already Resurrect/Reincarnate.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "hits": [
         {
           "needle": "case M568_PANEL_RESURRECT_REINCARNATE",
@@ -79,7 +79,7 @@
         "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE)"
       ],
       "claim": "F0282 assumes F0280 already inserted a candidate at party_count-1, then clears candidate state after Resurrect/Reincarnate/Cancel.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "hits": [
         {
           "needle": "void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
@@ -109,7 +109,7 @@
         "163, 217,  86, 142"
       ],
       "claim": "The old y=165 route was outside the original C160/C161 boxes; pass162 corrected this but still hit static-no-party, proving the missing step is earlier C127/F0280 candidate creation.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "hits": [
         {
           "needle": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT",

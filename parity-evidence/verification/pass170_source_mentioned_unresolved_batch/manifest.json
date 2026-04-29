@@ -1,7 +1,7 @@
 {
   "schema": "pass170_source_mentioned_unresolved_batch.v1",
-  "input": "/home/trv2/work/firestaff/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "input": "<repo>/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
+  "source_root": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "total": 46,
   "source_locked": 46,
   "records": [

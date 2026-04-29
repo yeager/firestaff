@@ -1,5 +1,5 @@
-In file included from /home/trv2/work/firestaff/probes/m11/firestaff_m11_v2_initial_4k_capture.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/probes/m11/firestaff_m11_v2_initial_4k_capture.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
 /usr/bin/ld: libfirestaff_m11.a(m11_game_view.c.o): in function `M11_GameView_OpenSelectedMenuEntry':

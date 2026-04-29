@@ -16,7 +16,7 @@ DM1/V1 champion status-box HUD parity: replace the previous single “highest ac
   - `C037` party shield border
   - `C038` fire shield border
   - `C039` spell shield border
-- The required source-reference path remains preserved for broader ReDMCSB context: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/dmweb.free.fr_Stuff_ReDMCSB_Documentation_BugsAndChanges.htm.html`.
+- The required source-reference path remains preserved for broader ReDMCSB context: `<N2_REDMCSB_SOURCE>/dmweb.free.fr_Stuff_ReDMCSB_Documentation_BugsAndChanges.htm.html`.
 
 ## Implemented
 
@@ -38,7 +38,7 @@ DM1/V1 champion status-box HUD parity: replace the previous single “highest ac
 
 ## Verification
 
-Commands run on N2 worktree `/home/trv2/.openclaw/data/firestaff-worktrees/pass126-hud-auto-1777392327`:
+Commands run on N2 worktree `<N2_WORKTREES>/pass126-hud-auto-1777392327`:
 
 ```text
 cmake -S . -B build

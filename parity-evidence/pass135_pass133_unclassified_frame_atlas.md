@@ -1,6 +1,6 @@
 # Pass 135 — pass133 unclassified frame atlas
 
-- run source: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-183628-pass133b-startup-variant-original-route`
+- run source: `<N2_RUNS>/20260428-183628-pass133b-startup-variant-original-route`
 - unclassified rows: 11
 - unique unclassified hashes: 6
 

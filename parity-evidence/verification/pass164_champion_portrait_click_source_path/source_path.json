@@ -10,7 +10,7 @@
         "F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY)"
       ],
       "claim": "Left-clicks in source viewport zone C007 dispatch as command C080 into F0377.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "hits": [
         {
           "needle": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT",
@@ -39,7 +39,7 @@
         "P0753_i_Y -= G2068_i_ViewportScreenY"
       ],
       "claim": "F0377 converts screen coordinates to viewport-relative coordinates before testing dungeon-view boxes/zones.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "hits": [
         {
           "needle": "void F0377_COMMAND_ProcessType80_ClickInDungeonView",
@@ -69,7 +69,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor()"
       ],
       "claim": "When leader hand is empty, clicking the front wall ornament/door-button view cell C05 and not facing an alcove calls F0372.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "hits": [
         {
           "needle": "for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++)",
@@ -104,7 +104,7 @@
         "F0275_SENSOR_IsTriggeredByClickOnWall(L1135_ui_MapX, L1136_ui_MapY, M018_OPPOSITE(G0308_i_PartyDirection))"
       ],
       "claim": "F0372 targets the square in front of the party and the opposite wall cell \u2014 exactly the wall the party is looking at.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "hits": [
         {
           "needle": "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
@@ -140,7 +140,7 @@
         "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)"
       ],
       "claim": "F0275 explicitly allows C127 even with no leader, requires the clicked wall cell, then calls F0280 with sensor data.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "hits": [
         {
           "needle": "BOOLEAN F0275_SENSOR_IsTriggeredByClickOnWall",
@@ -178,7 +178,7 @@
         "G0289_i_DungeonView_ChampionPortraitOrdinal = M000_INDEX_TO_ORDINAL(M040_DATA(L0308_ps_Sensor))"
       ],
       "claim": "The visible champion portrait ordinal is sourced from the same C127 sensor data later used by F0280.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
       "hits": [
         {
           "needle": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT)",

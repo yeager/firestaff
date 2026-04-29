@@ -1,16 +1,16 @@
 # Pass 118 — state-aware original route driver
 
 - date: 2026-04-28T16:00+02:00
-- host: N2 / firestaff-worker via `trv2@192.168.3.121`
+- host: N2 / firestaff-worker via `N2`
 - branch: `sync/n2-dm1-v1-20260428`
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1600-pass118-state-aware-route-driver`
-- attempt: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1600-pass118-state-aware-route-driver/state_aware_driver`
+- run base: `<N2_RUNS>/20260428-1600-pass118-state-aware-route-driver`
+- attempt: `<N2_RUNS>/20260428-1600-pass118-state-aware-route-driver/state_aware_driver`
 - scope: one consolidated sequential pass to replace fixed-sleep route spraying with a frame-classified entrance-menu disappearance gate before movement/control probes.
 
 ## Commands
 
 ```bash
-RUN=/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1600-pass118-state-aware-route-driver
+RUN=<N2_RUNS>/20260428-1600-pass118-state-aware-route-driver
 rm -rf "$RUN/state_aware_driver" && mkdir -p "$RUN/state_aware_driver"
 xvfb-run -a python3 tools/pass118_state_aware_original_route_driver.py --out "$RUN/state_aware_driver" > "$RUN/state_aware_driver.run.log" 2>&1
 python3 tools/pass80_original_frame_classifier.py "$RUN/state_aware_driver" --expected pass77 > "$RUN/pass80.log" 2>&1

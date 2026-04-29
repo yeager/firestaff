@@ -1,7 +1,7 @@
 # Pass 155 — champion/control route seed finder
 
 - purpose: pivot away from static 48ed and identify non-48ed route seeds for champion/party-control capture.
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder`
+- run base: `<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder`
 - completed scenarios: 20
 - errors: 0
 

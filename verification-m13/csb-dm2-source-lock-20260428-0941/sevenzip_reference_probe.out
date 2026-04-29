@@ -1,4 +1,4 @@
-## /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
+## <N2_ORIGINAL_GAMES>/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
 
 7-Zip 23.01 (x64) : Copyright (c) 1999-2023 Igor Pavlov : 2023-06-20
  64-bit locale=C.UTF-8 Threads:8 OPEN_MAX:1048576
@@ -6,10 +6,10 @@
 Scanning the drive for archives:
 1 file, 1669479 bytes (1631 KiB)
 
-Listing archive: /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
+Listing archive: <N2_ORIGINAL_GAMES>/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
 
 --
-Path = /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
+Path = <N2_ORIGINAL_GAMES>/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z
 Type = 7z
 Physical Size = 1669479
 Headers Size = 1255
@@ -79,7 +79,7 @@ Blocks = 1
 1985-11-19 14:01:22 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/TIGGY.CMP
 1985-11-19 14:01:24 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/WUTSE.CMP
 1985-11-19 14:01:20 ....A          508               HardDisk/2009-02-22 PP/PORTRAIT/WUUF.CMP
-## /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
+## <N2_ORIGINAL_GAMES>/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
 
 7-Zip 23.01 (x64) : Copyright (c) 1999-2023 Igor Pavlov : 2023-06-20
  64-bit locale=C.UTF-8 Threads:8 OPEN_MAX:1048576
@@ -87,10 +87,10 @@ Blocks = 1
 Scanning the drive for archives:
 1 file, 379848 bytes (371 KiB)
 
-Listing archive: /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
+Listing archive: <N2_ORIGINAL_GAMES>/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
 
 --
-Path = /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
+Path = <N2_ORIGINAL_GAMES>/DM/Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z
 Type = 7z
 Physical Size = 379848
 Headers Size = 122

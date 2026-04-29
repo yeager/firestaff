@@ -15,7 +15,7 @@ This turns the known backpack-model gap into an explicit non-aliasing regression
 
 ## Commands and outputs
 
-Run dir: `/home/trv2/work/firestaff`
+Run dir: `<repo>`
 
 ```sh
 mkdir -p verification-m11/lane3-inventory-followup-20260428-1100

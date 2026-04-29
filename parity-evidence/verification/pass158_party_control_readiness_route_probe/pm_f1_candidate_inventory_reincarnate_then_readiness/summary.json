@@ -10,7 +10,7 @@
       "index": 1,
       "label": "initial",
       "file": "image0001-initial.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0001-initial.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0001-initial.png",
       "sha12": "014ed52c71a0",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -21,7 +21,7 @@
       "index": 2,
       "label": "key_Return_2",
       "file": "image0002-key_return_2.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0002-key_return_2.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0002-key_return_2.png",
       "sha12": "014ed52c71a0",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -31,7 +31,7 @@
       "index": 3,
       "label": "after_enter",
       "file": "image0003-after_enter.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0003-after_enter.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0003-after_enter.png",
       "sha12": "014ed52c71a0",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -42,7 +42,7 @@
       "index": 4,
       "label": "key_F1_4",
       "file": "image0004-key_f1_4.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0004-key_f1_4.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0004-key_f1_4.png",
       "sha12": "3ad66a894ed8",
       "class": "graphics_320x200_unclassified",
       "reason": "320x200 graphics frame, but layout heuristics did not match a known class"
@@ -52,7 +52,7 @@
       "index": 5,
       "label": "candidate_inventory_lead",
       "file": "image0005-candidate_inventory_lead.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0005-candidate_inventory_lead.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0005-candidate_inventory_lead.png",
       "sha12": "0d7d3032c3be",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -64,7 +64,7 @@
       "index": 6,
       "label": "click_178_165_6",
       "file": "image0006-click_178_165_6.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0006-click_178_165_6.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0006-click_178_165_6.png",
       "sha12": "0739ee066356",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -74,7 +74,7 @@
       "index": 7,
       "label": "after_reincarnate",
       "file": "image0007-after_reincarnate.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0007-after_reincarnate.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0007-after_reincarnate.png",
       "sha12": "17bd7e878157",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -85,7 +85,7 @@
       "index": 8,
       "label": "key_Return_8",
       "file": "image0008-key_return_8.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0008-key_return_8.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0008-key_return_8.png",
       "sha12": "17bd7e878157",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -95,7 +95,7 @@
       "index": 9,
       "label": "after_confirm",
       "file": "image0009-after_confirm.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0009-after_confirm.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0009-after_confirm.png",
       "sha12": "48ed3743ab6a",
       "class": "dungeon_gameplay",
       "reason": "viewport content with mostly dark in-game right column"
@@ -106,7 +106,7 @@
       "index": 10,
       "label": "key_F1_10",
       "file": "image0010-key_f1_10.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0010-key_f1_10.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0010-key_f1_10.png",
       "sha12": "48ed3743ab6a",
       "class": "dungeon_gameplay",
       "reason": "viewport content with mostly dark in-game right column"
@@ -116,7 +116,7 @@
       "index": 11,
       "label": "f1_readiness",
       "file": "image0011-f1_readiness.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0011-f1_readiness.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0011-f1_readiness.png",
       "sha12": "48ed3743ab6a",
       "class": "dungeon_gameplay",
       "reason": "viewport content with mostly dark in-game right column"
@@ -127,7 +127,7 @@
       "index": 12,
       "label": "key_F4_12",
       "file": "image0012-key_f4_12.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0012-key_f4_12.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0012-key_f4_12.png",
       "sha12": "48ed3743ab6a",
       "class": "dungeon_gameplay",
       "reason": "viewport content with mostly dark in-game right column"
@@ -137,7 +137,7 @@
       "index": 13,
       "label": "f4_readiness",
       "file": "image0013-f4_readiness.png",
-      "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0013-f4_readiness.png",
+      "path": "<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe/pm_f1_candidate_inventory_reincarnate_then_readiness/image0013-f4_readiness.png",
       "sha12": "48ed3743ab6a",
       "class": "dungeon_gameplay",
       "reason": "viewport content with mostly dark in-game right column"

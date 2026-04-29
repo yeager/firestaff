@@ -1,6 +1,6 @@
 # Pass169 — resolve ReDMCSB anchor gaps from pass168
 
-- source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- source root: `<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - resolved: 11/11
 
 ## Resolution matrix

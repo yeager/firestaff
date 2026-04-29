@@ -9,7 +9,7 @@ from tools.pass155_champion_route_seed_finder import run_one, SCENARIOS
 from tools.pass80_original_frame_classifier import sha256
 from tools.pass118_state_aware_original_route_driver import classify_file
 
-PASS155_JSON=Path('/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/pass155_results.json')
+PASS155_JSON=Path('<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/pass155_results.json')
 OUT_ROOT=Path('parity-evidence/verification/pass156_pass155_candidate_replay')
 CROPS={
   'viewport': (0,0,224,136),
@@ -54,7 +54,7 @@ def main():
     grouped={}
     for c in candidates: grouped.setdefault((c['program'],c['scenario']),[]).append(c)
     manifest=[]; errors=[]
-    run_base=Path('/home/trv2/.openclaw/data/firestaff-n2-runs')/(time.strftime('%Y%m%d-%H%M%S')+'-pass156-pass155-candidate-replay')
+    run_base=Path('<N2_RUNS>')/(time.strftime('%Y%m%d-%H%M%S')+'-pass156-pass155-candidate-replay')
     for (program,scenario), cs in grouped.items():
         try:
             rr=run_one(run_base,program,scenario,SCENARIOS[scenario])

@@ -18,7 +18,7 @@ Reference sources that should be consulted whenever they materially unblock a bl
 - `http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z`
 - `http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm`
 - Local unpacked ReDMCSB archive:
-  - `/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206`
+  - `<workspace>/ReDMCSB_WIP20210206`
   - local Firestaff-facing analysis: `REDMCSB_LOCAL_ANALYSIS_2026-04-24.md`
   - current V1 target label: `I34E` = DM PC 3.4 English; `I34M` = multilingual PC 3.4 comparison target only
   - source roots: `Toolchains/Common/Source` plus `Toolchains/IBM PC/Source`

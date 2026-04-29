@@ -1,6 +1,6 @@
 # Pass 119 — champion selection gate probe
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-144011-pass119-champion-selection-gate-probe`
+- run base: `<N2_RUNS>/20260428-144011-pass119-champion-selection-gate-probe`
 - scope: deterministic post-`dungeon_gameplay` probes for original PC DM1 champion/party-control readiness after pass118 state gate.
 
 ## Scenario outcomes
@@ -65,4 +65,3 @@ This pass is evidence-only. A successful unblock requires any scenario to leave 
 - party control ready: `false`
 - direct-start/no-party signature: `true`
 - direct-start/no-party signature: dungeon viewport reached, but right-column control areas stay blank and movement/probe frames repeat
-

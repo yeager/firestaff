@@ -8,7 +8,7 @@ This pass deliberately does not promote original frames into `verification-scree
 
 - Added a focused evidence JSON for three sequential N2 route probes.
 - Verified the original archive manifest on N2 with `sha256sum -c SHA256SUMS` (OK).
-- Captured three six-shot original DOSBox routes under `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture/`.
+- Captured three six-shot original DOSBox routes under `<N2_RUNS>/20260428-1335-original-overlay-capture/`.
 
 ## Result
 

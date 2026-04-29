@@ -1,6 +1,6 @@
 # Pass 133 — original startup variant route matrix
 
-- run base: /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-183628-pass133b-startup-variant-original-route
+- run base: <N2_RUNS>/20260428-183628-pass133b-startup-variant-original-route
 - scenarios: 12
 - completed: 12
 - errors: 0

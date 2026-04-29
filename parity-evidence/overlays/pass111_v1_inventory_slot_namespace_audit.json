@@ -52,7 +52,7 @@
       "hits": 22,
       "id": "INV_P111_07",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/keyword_hits.json"
+      "path": "<N2_GREATSTONE_ATLAS>/index/keyword_hits.json"
     },
     {
       "detail": "ReDMCSB reference directory is present on N2 (currently documentation/locator pack, not extracted C source)",
@@ -64,14 +64,14 @@
       ],
       "id": "INV_P111_08",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source"
+      "path": "<N2_REDMCSB_SOURCE>"
     },
     {
       "detail": "original DM PC 3.4 GRAPHICS.DAT checksum matches worker reference",
       "expected": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "id": "INV_P111_SHA_GRAPHICS.DAT",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "path": "<N2_ORIGINAL_GAMES>/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
@@ -79,12 +79,12 @@
       "expected": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "id": "INV_P111_SHA_DUNGEON.DAT",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "path": "<N2_ORIGINAL_GAMES>/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     }
   ],
   "lane": "dm1_v1_inventory_slots_icons_evidence",
   "ok": true,
   "pass": 111,
-  "source": "/home/trv2/work/firestaff/m11_game_view.c"
+  "source": "<repo>/m11_game_view.c"
 }

@@ -1,6 +1,6 @@
 # Pass 151 — 48ed extended control bbox probe
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-203050-pass151d-48ed-control-bbox-xvfb-validate`
+- run base: `<N2_RUNS>/20260428-203050-pass151d-48ed-control-bbox-xvfb-validate`
 - completed: 3
 - errors: 0
 

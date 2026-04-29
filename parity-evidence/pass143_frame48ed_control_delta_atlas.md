@@ -1,6 +1,6 @@
 # Pass 143 — frame 48ed control delta atlas
 
-- source run: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-192537-pass141-pm-f1-dungeon-control-readiness`
+- source run: `<N2_RUNS>/20260428-192537-pass141-pm-f1-dungeon-control-readiness`
 - purpose: test whether the repeated `48ed3743ab6a` dungeon frame hides real control changes or is a static no-party/start frame.
 - total rows: 54
 - unique hashes: 16

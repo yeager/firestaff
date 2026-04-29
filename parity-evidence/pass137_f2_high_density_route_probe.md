@@ -1,6 +1,6 @@
 # Pass 137 — F2/high-density original route probe
 
-- run base: /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-185537-pass137-f2-high-density-route-probe
+- run base: <N2_RUNS>/20260428-185537-pass137-f2-high-density-route-probe
 - scenarios: 6
 - completed: 6
 - errors: 0

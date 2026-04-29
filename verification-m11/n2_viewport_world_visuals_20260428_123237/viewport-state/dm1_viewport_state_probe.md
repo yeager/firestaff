@@ -4,8 +4,8 @@ This is a deterministic source-state anchor from `DUNGEON.DAT` + `GRAPHICS.DAT`;
 
 ## Inputs
 
-- DUNGEON.DAT: `/home/trv2/.firestaff/data/DUNGEON.DAT`
-- GRAPHICS.DAT: `/home/trv2/.firestaff/data/GRAPHICS.DAT`
+- DUNGEON.DAT: `$FIRESTAFF_DATA/DUNGEON.DAT`
+- GRAPHICS.DAT: `$FIRESTAFF_DATA/GRAPHICS.DAT`
 - Maps: 14
 - Square-first-thing entries: 1679
 

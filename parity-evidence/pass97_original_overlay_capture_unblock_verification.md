@@ -4,8 +4,8 @@ Date: 2026-04-28
 Host: N2 (`Firestaff-Worker-VM`)
 Branch: `sync/n2-dm1-v1-20260428`
 Base commit before this note: `056bde43badd0489350914cacb5bd21e12024d69`
-Run directory: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-0825-overlay-capture-verify/`
-Original PC 3.4 data: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
+Run directory: `<N2_RUNS>/20260428-0825-overlay-capture-verify/`
+Original PC 3.4 data: `<N2_ORIGINAL_GAMES>/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
 
 ## Wrapper gates requested by the worker lane
 

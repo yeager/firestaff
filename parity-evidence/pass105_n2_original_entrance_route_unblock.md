@@ -4,7 +4,7 @@ Date: 2026-04-28
 Lane: original DOSBox route/capture unblock
 Host: N2 (`Firestaff-Worker-VM`)
 Branch: `sync/n2-dm1-v1-20260428`
-Run-dir: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-0930-original-route-unblock/`
+Run-dir: `<N2_RUNS>/20260428-0930-original-route-unblock/`
 
 ## Scope
 

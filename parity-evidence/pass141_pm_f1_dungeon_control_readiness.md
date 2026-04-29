@@ -1,6 +1,6 @@
 # Pass 141 — PM F1 dungeon control readiness
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-192537-pass141-pm-f1-dungeon-control-readiness`
+- run base: `<N2_RUNS>/20260428-192537-pass141-pm-f1-dungeon-control-readiness`
 - route base: DM `-pm`, Return → F1, then a pass139-proven dungeon exit, then movement keys
 - scenarios: 5
 - completed: 5

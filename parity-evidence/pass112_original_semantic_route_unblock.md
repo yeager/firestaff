@@ -34,7 +34,7 @@ The gate also rejects duplicate raw-frame hashes and anything other than exactly
 
 ## N2 original-data source checked
 
-Host: `trv2@192.168.3.121` (`firestaff-worker`)
+Host: `N2` (`firestaff-worker`)
 
 Commands:
 

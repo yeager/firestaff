@@ -2,7 +2,7 @@
 
 - date: 2026-04-28T13:33:07+00:00
 - host: firestaff-worker
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-133035-original-input-program-matrix`
+- run base: `<N2_RUNS>/20260428-133035-original-input-program-matrix`
 - scope: diagnose pass115 no-movement/no-party-control blocker by varying original program invocation and input family. Evidence only; no pixel parity claim.
 
 ## Attempts
@@ -50,4 +50,3 @@
 - classes: `non_graphics_blocker, non_graphics_blocker, non_graphics_blocker, non_graphics_blocker, non_graphics_blocker, non_graphics_blocker`
 - duplicate hashes: `{'e5c3caeb8406c54a69b245ed0f84dcdb130e2cda68cc8daae98b6ac249533b32': 3, '82d0a42d7a05ed137d919c07deb65931bb0a08c0b49234f51b173f81774f347d': 3}`
 - shas: `e5c3caeb8406, 82d0a42d7a05, 82d0a42d7a05, e5c3caeb8406, 82d0a42d7a05, e5c3caeb8406`
-

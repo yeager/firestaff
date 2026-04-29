@@ -1,6 +1,6 @@
 # Pass 121 — original keypad route atlas
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-151524-pass121-keypad-route-atlas`
+- run base: `<N2_RUNS>/20260428-151524-pass121-keypad-route-atlas`
 - scope: use pass120 discovery (`KP_Left`/`KP_Right` change original viewport) to map short keypad sequences and F1/F4 response after each route.
 
 ## Summary
@@ -23,4 +23,3 @@
 ## Interpretation
 
 This is route-atlas evidence only. It is successful only if a sequence produces non-repeating original gameplay states and/or changes F1/F4 away from the no-party response; otherwise the champion/party-ready blocker remains upstream of overlay parity.
-

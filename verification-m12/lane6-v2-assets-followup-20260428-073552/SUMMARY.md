@@ -7,7 +7,7 @@ Scope: V2-only manifest/scaffold/assets verification on N2. No DM1 V1 HUD/viewpo
 - `build_v2_initial_4k_capture_after_fix`: exit `0` — `cmake --build build --target firestaff_m11_v2_initial_4k_capture -j2`
 - `firestaff_m11_v2_initial_4k_capture`: exit `127` — ``
 - `firestaff_m11_v2_initial_4k_capture_after_fix`: exit `2` — `build/firestaff_m11_v2_initial_4k_capture`
-- `firestaff_m11_v2_initial_4k_capture_with_args`: exit `0` — `build/firestaff_m11_v2_initial_4k_capture verification-m12/lane6-v2-assets-followup-20260428-073552/v2_initial_4k_capture /home/trv2/.openclaw/data/firestaff-original-games/DM`
+- `firestaff_m11_v2_initial_4k_capture_with_args`: exit `0` — `build/firestaff_m11_v2_initial_4k_capture verification-m12/lane6-v2-assets-followup-20260428-073552/v2_initial_4k_capture <N2_ORIGINAL_GAMES>/DM`
 - `tools_validate_v2_manifests_check_files`: exit `0` — `python3 tools/validate_v2_manifests.py --check-files --json`
 - `tools_validate_v2_manifests_check_files_text`: exit `0` — `python3 tools/validate_v2_manifests.py --check-files`
 - `tools_validate_v2_manifests_json`: exit `0` — `python3 tools/validate_v2_manifests.py --json`

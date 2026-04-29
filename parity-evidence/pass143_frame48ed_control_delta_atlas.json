@@ -1,6 +1,6 @@
 {
   "schema": "pass143_frame48ed_control_delta_atlas.v1",
-  "run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-192537-pass141-pm-f1-dungeon-control-readiness",
+  "run": "<N2_RUNS>/20260428-192537-pass141-pm-f1-dungeon-control-readiness",
   "rows": [
     {
       "scenario": "f1_key4_movement",

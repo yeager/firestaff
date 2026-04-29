@@ -3,8 +3,8 @@
 ## Result
 
 - Evidence root: `parity-evidence/verification/pass156_pass155_candidate_replay`
-- Pass155 exact source base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder`
-- Replay run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay`
+- Pass155 exact source base: `<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder`
+- Replay run base: `<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay`
 - Candidates classified: 26
 - Replay errors: 0
 - Exact hash replay matches: 5/26 (title/logo animation timing drifts; exact pass155 frames were copied beside replay frames for classification).
@@ -61,7 +61,7 @@ Each candidate directory contains:
 ```
 xvfb-run -a python3 tools/pass156_verify_pass155_candidates.py
 wrote parity-evidence/verification/pass156_pass155_candidate_replay/README.md
-run_base=/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay
+run_base=<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay
 captured=26 errors=0
 ```
 

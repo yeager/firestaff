@@ -1,6 +1,6 @@
 # Pass 147 — nonstatic 48ed long replay
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-195541-pass147-nonstatic-48ed-long-replay`
+- run base: `<N2_RUNS>/20260428-195541-pass147-nonstatic-48ed-long-replay`
 - source: pass145 recommended replaying non-static 48ed scenarios with longer waits and movement/action sequences.
 - completed: 5
 - errors: 0
@@ -16,4 +16,3 @@
 ## Interpretation
 
 If these long replays keep producing multiple dungeon hashes after movement, the route is a real dynamic-control candidate; if they collapse back to static menu/dungeon hashes, pivot to Hall-of-Champions/source-backed champion setup.
-

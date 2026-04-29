@@ -4,10 +4,10 @@ Scope: verification-only rerun after N2 smoke probe runner fixes. No source chan
 
 Host/context:
 
-- Worker: N2 (`Firestaff-Worker-VM`), repo `/home/trv2/work/firestaff`.
+- Worker: N2 (`Firestaff-Worker-VM`), repo `<repo>`.
 - Branch: `sync/n2-dm1-v1-20260428`.
 - Starting HEAD: `056bde4 Fix N2 smoke probe runners` (ahead of `origin/main` by local-only fixes).
-- Rerun directory: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-0625-v2-assets-verify/`.
+- Rerun directory: `<N2_RUNS>/20260428-0625-v2-assets-verify/`.
 
 Commands and results:
 

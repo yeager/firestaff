@@ -1,6 +1,6 @@
-[pass-70] wrote /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/dry-run/dosbox-original-viewports.conf
-[pass-70] wrote /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/dry-run/original_viewport_route_keys.swift
-[pass-70] wrote /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/dry-run/original_viewport_route_keys_xdotool.sh
+[pass-70] wrote <repo>/verification-m11/lane4-original-overlay-20260428-0917/dry-run/dosbox-original-viewports.conf
+[pass-70] wrote <repo>/verification-m11/lane4-original-overlay-20260428-0917/dry-run/original_viewport_route_keys.swift
+[pass-70] wrote <repo>/verification-m11/lane4-original-overlay-20260428-0917/dry-run/original_viewport_route_keys_xdotool.sh
 [pass-70] route events: wait:7000 shot:party_hud right wait:300 shot up wait:300 shot wait:300 shot:spell_panel wait:300 shot wait:300 shot:inventory_panel
 [pass-70] route shape OK: 14 tokens, 6 shots, 3 labeled
 [pass-70] shot label plan: 01:party_hud, 02:(unlabeled), 03:(unlabeled), 04:spell_panel, 05:(unlabeled), 06:inventory_panel

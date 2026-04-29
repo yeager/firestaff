@@ -1,6 +1,6 @@
 # Pass 145 — follow frame48ed next route
 
-- source atlas: `/home/trv2/.openclaw/data/firestaff-worktrees/pass145b-follow-frame48ed-next-route-1777405537/parity-evidence/pass143_frame48ed_control_delta_atlas.json`
+- source atlas: `<N2_WORKTREES>/pass145b-follow-frame48ed-next-route-1777405537/parity-evidence/pass143_frame48ed_control_delta_atlas.json`
 - focus rows: 17
 - 48ed static/near-static rows: 4
 - 48ed non-static rows: 5

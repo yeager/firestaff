@@ -163,7 +163,7 @@
       "class_counts": {
         "dungeon_gameplay": 6
       },
-      "dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture/probe-f1-spell-clicks",
+      "dir": "<N2_RUNS>/20260428-1335-original-overlay-capture/probe-f1-spell-clicks",
       "duplicate_sha256_counts": {
         "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 5
       },
@@ -360,7 +360,7 @@
         "dungeon_gameplay": 3,
         "wall_closeup": 3
       },
-      "dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture/probe-turn-cycle",
+      "dir": "<N2_RUNS>/20260428-1335-original-overlay-capture/probe-turn-cycle",
       "duplicate_sha256_counts": {
         "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 3
       },
@@ -557,7 +557,7 @@
         "dungeon_gameplay": 4,
         "wall_closeup": 2
       },
-      "dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture/probe-move-turn-mix",
+      "dir": "<N2_RUNS>/20260428-1335-original-overlay-capture/probe-move-turn-mix",
       "duplicate_sha256_counts": {
         "9fc8530431a30af7037beafcf02ef6e6ff5ca74f4a34a3744f2584c4bb34e2d2": 2,
         "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
@@ -605,6 +605,6 @@
       ]
     }
   ],
-  "run_dir": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1335-original-overlay-capture",
+  "run_dir": "<N2_RUNS>/20260428-1335-original-overlay-capture",
   "schema": "pass112_original_capture_input_effect_probe.v1"
 }

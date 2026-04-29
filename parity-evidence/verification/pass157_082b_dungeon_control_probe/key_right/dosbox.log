@@ -2,22 +2,22 @@ ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission den
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/dosbox-pass157.conf
+CONFIG:Loading primary settings from config file <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/dosbox-pass157.conf
 MIXER:No Sound Mode Selected.
 ALSA:Can't open sequencer
 MIDI:Opened device:none
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/anim_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
-Capturing Screenshot to /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/anim_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/selector_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png
+Capturing Screenshot to <N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/fires_000.png

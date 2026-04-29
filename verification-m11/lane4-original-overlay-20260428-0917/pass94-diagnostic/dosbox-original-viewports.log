@@ -4,13 +4,13 @@ XIO:  fatal IO error 11 (Resource temporarily unavailable) on X server ":101"
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/dosbox-original-viewports.conf
+CONFIG:Loading primary settings from config file <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/dosbox-original-viewports.conf
 MIXER:No Sound Mode Selected.
 ALSA:Can't open sequencer
 MIDI:Opened device:none
-Capturing Screenshot to /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/selector_000.png
-Capturing Screenshot to /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/selector_001.png
-Capturing Screenshot to /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_000.png
-Capturing Screenshot to /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_001.png
-Capturing Screenshot to /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_002.png
-Capturing Screenshot to /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_003.png
+Capturing Screenshot to <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/selector_000.png
+Capturing Screenshot to <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/selector_001.png
+Capturing Screenshot to <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_000.png
+Capturing Screenshot to <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_001.png
+Capturing Screenshot to <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_002.png
+Capturing Screenshot to <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/fires_003.png

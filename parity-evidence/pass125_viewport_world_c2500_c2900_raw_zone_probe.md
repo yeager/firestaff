@@ -1,7 +1,7 @@
 # Pass125 viewport/world — C2500/C2900 raw source-zone blocker probe
 
 Date: 2026-04-28
-Worktree: `/home/trv2/.openclaw/data/firestaff-worktrees/pass125-viewport-world-auto-1777391888`
+Worktree: `<N2_WORKTREES>/pass125-viewport-world-auto-1777391888`
 Branch: `worker/pass125-viewport-world-auto-1777391888`
 Base: `sync/n2-dm1-v1-20260428`
 

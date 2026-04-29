@@ -1,9 +1,9 @@
 # Pass 113 — DM1 PC 3.4 original party-state route follow-up
 
 Date: 2026-04-28
-Host: N2 (`Firestaff-Worker-VM`, `trv2@192.168.3.121`)
+Host: N2 (`Firestaff-Worker-VM`, `N2`)
 Branch: `sync/n2-dm1-v1-20260428`
-Run dir: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1344-party-state-followup/`
+Run dir: `<N2_RUNS>/20260428-1344-party-state-followup/`
 
 ## Scope
 

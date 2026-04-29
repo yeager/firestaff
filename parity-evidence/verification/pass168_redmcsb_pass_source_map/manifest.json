@@ -1,6 +1,6 @@
 {
   "schema": "pass168_redmcsb_pass_source_map.v1",
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "artifact_count": 425,
   "passes": 268,
   "status_counts": {

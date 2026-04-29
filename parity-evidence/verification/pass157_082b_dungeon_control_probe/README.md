@@ -2,7 +2,7 @@
 
 - program: `DM -vv -sn`
 - seed route: `pre_dungeon_click_grid` through `wait_13` (pass155 hash `082b4d249740`)
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe`
+- run base: `<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe`
 - evidence root: `parity-evidence/verification/pass157_082b_dungeon_control_probe`
 - probes: 15 (includes settle_baseline)
 - completed: 15

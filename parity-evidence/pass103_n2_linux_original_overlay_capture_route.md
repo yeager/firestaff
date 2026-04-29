@@ -4,7 +4,7 @@ Date: 2026-04-28
 Lane: 4 — original overlay/capture unblock for HUD/viewport
 Host: N2 (`Firestaff-Worker-VM`)
 Branch: `sync/n2-dm1-v1-20260428`
-Run-dir: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-0903-lane4-overlay-capture-route-followup/`
+Run-dir: `<N2_RUNS>/20260428-0903-lane4-overlay-capture-route-followup/`
 
 ## Scope
 

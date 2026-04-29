@@ -22,7 +22,7 @@
         "A portrait is 32x29 pixels"
       ],
       "claim": "Legacy/byte-box portrait-on-wall area is viewport-relative x=96..127 y=35..63 (32x29).",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "needle": "unsigned char G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4] = { 96, 127, 35, 63 };",
@@ -52,7 +52,7 @@
         "int16_t G2079_C29_PortraitHeight = 29;"
       ],
       "claim": "PC viewport origin is screen x=0 y=33; champion portrait dimensions are 32x29.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
       "hits": [
         {
           "needle": "int16_t G2067_i_ViewportScreenX = 0;",
@@ -87,7 +87,7 @@
         "F0654_Call_F0132_VIDEO_Blit"
       ],
       "claim": "For the front wall, the source copies the drawn wall/portrait zone into C05 clickable storage before drawing the portrait.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "needle": "if (P0117_i_ViewWallIndex == M587_VIEW_WALL_D1C_FRONT)",
@@ -123,7 +123,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
       ],
       "claim": "Runtime clicks are converted to viewport-relative coordinates, then tested against C05; C05 triggers F0372.",
-      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "hits": [
         {
           "needle": "P0752_i_X -= G2067_i_ViewportScreenX;",

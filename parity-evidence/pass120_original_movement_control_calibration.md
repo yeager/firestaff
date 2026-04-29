@@ -1,6 +1,6 @@
 # Pass 120 — original movement-control calibration
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-144814-pass120-movement-control-calibration`
+- run base: `<N2_RUNS>/20260428-144814-pass120-movement-control-calibration`
 - scope: after pass118/pass119 state-aware gate reaches no-party dungeon_gameplay, sweep visible movement-control click/key inputs to find any deterministic visual-state transition.
 
 ## Summary

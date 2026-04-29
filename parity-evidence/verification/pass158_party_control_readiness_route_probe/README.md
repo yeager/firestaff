@@ -2,7 +2,7 @@
 
 This consolidated pass probes champion selection / roster confirmation / party-control readiness before any dungeon movement claim.
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-012914-pass158-party-control-readiness-route-probe`
+- run base: `<N2_RUNS>/20260429-012914-pass158-party-control-readiness-route-probe`
 - evidence root: `parity-evidence/verification/pass158_party_control_readiness_route_probe`
 - scenarios: 5
 - completed: 5

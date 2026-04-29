@@ -2,23 +2,23 @@
 
 - date: 2026-04-28T13:55:00Z
 - host: firestaff-worker / N2
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1550-pass117-keyboard-movement-calibration`
+- run base: `<N2_RUNS>/20260428-1550-pass117-keyboard-movement-calibration`
 - scope: one focused follow-up to pass116. Pass116 showed the original PC DM1 direct-start route can reach a dungeon frame with visible cyan movement controls, but mouse clicks in the right-control grid did not change frames and no party/HUD state was proven. This pass tests the narrower next blocker: whether serialized keyboard arrows advance the original runtime differently from the pass116 mouse grid.
 
 ## Source-backed rationale
 
 ReDMCSB BUG0_73 documents an original-engine input queue issue where a mouse click may be ignored when keyboard/mouse commands collide. The local script also preserves this warning for original-route captures. Pass116 used mouse click grids after a keyboard `enter`; therefore pass117 intentionally used a keyboard-only arrow probe after startup, with 1200 ms waits between commands, to avoid mixed mouse/keyboard loss as the first-order variable.
 
-Relevant source note: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/dmweb.free.fr_Stuff_ReDMCSB_Documentation_BugsAndChanges.htm.html#BUG0_73` says: "A mouse click may be ignored" and describes mouse commands being overwritten in the command queue.
+Relevant source note: `<N2_REDMCSB_SOURCE>/dmweb.free.fr_Stuff_ReDMCSB_Documentation_BugsAndChanges.htm.html#BUG0_73` says: "A mouse click may be ignored" and describes mouse commands being overwritten in the command queue.
 
 ## Attempt: keyboard_arrows
 
 - program: `DM -vv -sn -pk`
-- stage: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
+- stage: `<N2_ORIGINAL_GAMES>/DM/_extracted/dm-pc34/DungeonMasterPC34`
 - route: `wait:7000 enter wait:1200 shot:start up wait:1200 shot:key_up right wait:1200 shot:key_right left wait:1200 shot:key_left down wait:1200 shot:key_down up wait:1200 shot:key_up2`
-- run log: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1550-pass117-keyboard-movement-calibration/keyboard_arrows.run.log`
-- classifier: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1550-pass117-keyboard-movement-calibration/keyboard_arrows/pass80_original_frame_classifier.{json,md}`
-- party-state probe: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1550-pass117-keyboard-movement-calibration/keyboard_arrows/pass113.{json,md}`
+- run log: `<N2_RUNS>/20260428-1550-pass117-keyboard-movement-calibration/keyboard_arrows.run.log`
+- classifier: `<N2_RUNS>/20260428-1550-pass117-keyboard-movement-calibration/keyboard_arrows/pass80_original_frame_classifier.{json,md}`
+- party-state probe: `<N2_RUNS>/20260428-1550-pass117-keyboard-movement-calibration/keyboard_arrows/pass113.{json,md}`
 
 ### Classifier outcome
 

@@ -1,6 +1,6 @@
 # Lane 6 — V2 scaffolding/assets retry (2026-04-28 07:41 UTC)
 
-Scope: V2-only scaffold/assets verification on N2 (`Firestaff-Worker-VM`), repo `/home/trv2/work/firestaff`. No DM1 V1 inventory/HUD/viewport implementation files were edited.
+Scope: V2-only scaffold/assets verification on N2 (`Firestaff-Worker-VM`), repo `<repo>`. No DM1 V1 inventory/HUD/viewport implementation files were edited.
 
 ## Results
 - PASS `python3 scripts/validate_v2_asset_manifests.py` — exit 0, validated 14 V2 manifests / 98 assets.
@@ -11,7 +11,7 @@ Scope: V2-only scaffold/assets verification on N2 (`Firestaff-Worker-VM`), repo 
 - EXPECTED BLOCKER `python3 tools/validate_v2_manifests.py --check-files --strict-files --json` — exit 1, 12 missing expected-size PNG deliverables.
 - PASS `python3 tools/validate_v2_manifests.py --self-test` — exit 0.
 - PASS `cmake --build build --target firestaff_m11_v2_initial_4k_capture -j2` — exit 0.
-- PASS `build/firestaff_m11_v2_initial_4k_capture verification-m12/lane6-v2-assets-retry-20260428-074140/v2_initial_4k_capture /home/trv2/.openclaw/data/firestaff-original-games/DM` — exit 0.
+- PASS `build/firestaff_m11_v2_initial_4k_capture verification-m12/lane6-v2-assets-retry-20260428-074140/v2_initial_4k_capture <N2_ORIGINAL_GAMES>/DM` — exit 0.
 
 ## Generated evidence
 - `v2_initial_4k_capture/base_scene.ppm`

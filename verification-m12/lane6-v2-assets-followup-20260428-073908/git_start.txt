@@ -1,4 +1,4 @@
-$ cd /home/trv2/work/firestaff && git status --short --branch && git log --oneline -12
+$ cd <repo> && git status --short --branch && git log --oneline -12
 ## sync/n2-dm1-v1-20260428...origin/main [ahead 28]
  M scripts/dosbox_dm1_original_viewport_reference_capture.sh
 ?? ..-firestaff-worker-viewport-parity-20260427-040243/

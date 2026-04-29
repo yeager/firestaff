@@ -2,7 +2,7 @@
 
 Lane: DM1 V1 original-faithful parity/evidence retry
 Host: N2 (`Firestaff-Worker-VM`)
-Repo: `/home/trv2/work/firestaff`
+Repo: `<repo>`
 Run-dir: `verification-m11/lane1-original-faithful-parity-20260428-0931/`
 
 ## Result
@@ -19,7 +19,7 @@ Evidence-only rerun completed. Source-data provenance and Firestaff source-shape
 | `build/firestaff_m11_game_view_probe` | 0 | PASS: `578/578 invariants passed`. |
 | `python3 tools/verify_v1_viewport_draw_order_gate.py` | 0 | PASS: viewport draw-order source-shape gate. |
 | `python3 tools/verify_v1_viewport_occlusion_gate.py` | 0 | PASS: viewport occlusion/source-sampling gate. |
-| `env DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 DM1_ORIGINAL_ROUTE_EVENTS='wait:5000 shot:party_hud f1 wait:500 shot f2 wait:500 shot one wait:500 shot:spell_panel four wait:100 four wait:100 enter wait:1000 shot i wait:800 shot:inventory_panel' scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run` | 0 | PASS: route shape validates as 21 tokens, 6 shots, 3 labeled (`party_hud`, `spell_panel`, `inventory_panel`). |
+| `env DM1_ORIGINAL_STAGE_DIR=<N2_ORIGINAL_GAMES>/DM/_extracted/dm-pc34/DungeonMasterPC34 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 DM1_ORIGINAL_ROUTE_EVENTS='wait:5000 shot:party_hud f1 wait:500 shot f2 wait:500 shot one wait:500 shot:spell_panel four wait:100 four wait:100 enter wait:1000 shot i wait:800 shot:inventory_panel' scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run` | 0 | PASS: route shape validates as 21 tokens, 6 shots, 3 labeled (`party_hud`, `spell_panel`, `inventory_panel`). |
 | `./run_firestaff_m11_ingame_capture_smoke.sh` | 0 | PASS: six Firestaff screenshots emitted. |
 
 ## pass84 blockers still present

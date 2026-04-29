@@ -1,16 +1,16 @@
 # N2 consolidated viewport/world visuals pass
 
 - host: firestaff-worker
-- repo: /home/trv2/work/firestaff
-- data: /home/trv2/.firestaff/data
-- original: /home/trv2/.openclaw/data/firestaff-original-games/DM
-- greatstone: /home/trv2/.openclaw/data/firestaff-greatstone-atlas
-- redmcsb: /home/trv2/.openclaw/data/firestaff-redmcsb-source
+- repo: <repo>
+- data: $FIRESTAFF_DATA
+- original: <N2_ORIGINAL_GAMES>/DM
+- greatstone: <N2_GREATSTONE_ATLAS>
+- redmcsb: <N2_REDMCSB_SOURCE>
 - started: 2026-04-28T12:32:37+00:00
 
 ### git status before
 ```sh
-git status --short --branch 
+git status --short --branch
 ```
 ```text
 ## sync/n2-dm1-v1-20260428...origin/main [ahead 46]
@@ -24,7 +24,7 @@ exit=0
 
 ### cmake build
 ```sh
-cmake --build build -j8 
+cmake --build build -j8
 ```
 ```text
 [ 73%] Built target firestaff_m10
@@ -45,34 +45,34 @@ exit=0
 
 ### m11 phase a probe
 ```sh
-./run_firestaff_m11_phase_a_probe.sh 
+./run_firestaff_m11_phase_a_probe.sh
 ```
 ```text
 # M11 Phase A probe: SDL=sdl3
-/home/trv2/work/firestaff/firestaff_m11_phase_a_probe.c: In function ‘main’:
-/home/trv2/work/firestaff/firestaff_m11_phase_a_probe.c:49:27: warning: implicit declaration of function ‘setenv’; did you mean ‘getenv’? [-Wimplicit-function-declaration]
+<repo>/firestaff_m11_phase_a_probe.c: In function ‘main’:
+<repo>/firestaff_m11_phase_a_probe.c:49:27: warning: implicit declaration of function ‘setenv’; did you mean ‘getenv’? [-Wimplicit-function-declaration]
    49 | # define m11_setenv(k, v) setenv((k), (v), 0)
       |                           ^~~~~~
-/home/trv2/work/firestaff/firestaff_m11_phase_a_probe.c:72:5: note: in expansion of macro ‘m11_setenv’
+<repo>/firestaff_m11_phase_a_probe.c:72:5: note: in expansion of macro ‘m11_setenv’
    72 |     m11_setenv("SDL_VIDEODRIVER", "dummy");
       |     ^~~~~~~~~~
-In file included from /home/trv2/work/firestaff/main_loop_m11.c:14:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/main_loop_m11.c:14:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/m11_game_view.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
-/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+<repo>/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
 18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
       |                                           ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+    inlined from ‘m11_draw_v1_message_area’ at <repo>/m11_game_view.c:18559:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,15 +80,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+<repo>/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                       ^~
-/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                      ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+    inlined from ‘m11_draw_wall_contents.isra’ at <repo>/m11_game_view.c:7840:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,15 +96,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+<repo>/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                           ^~
-/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                          ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+    inlined from ‘m11_draw_side_feature.isra’ at <repo>/m11_game_view.c:11139:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,15 +112,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
-/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+<repo>/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
  4735 |              "F9 RESTORES TICK %u FROM %s",
       |                                        ^~
  4736 |              (unsigned int)state->world.gameTick,
  4737 |              path);
-      |              ~~~~                       
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+    inlined from ‘M11_GameView_QuickSave’ at <repo>/m11_game_view.c:4734:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,15 +128,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
-/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+<repo>/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
  4824 |              "TICK %u HASH %08X RELOADED FROM %s",
       |                                               ^~
 ......
  4827 |              path);
-      |              ~~~~                              
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+    inlined from ‘M11_GameView_QuickLoad’ at <repo>/m11_game_view.c:4823:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,12 +144,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
-/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+<repo>/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
 16594 |         snprintf(line, sizeof(line), "%s",
       |                                       ^~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+    inlined from ‘m11_draw_utility_panel’ at <repo>/m11_game_view.c:16594:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,12 +157,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18804:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,12 +170,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18811:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -183,13 +183,13 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
   744 |         snprintf(line1, line1Size, "%s", text);
       |                                     ^~
 In function ‘snprintf’,
-    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+    inlined from ‘m11_dialog_source_split_two_lines’ at <repo>/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:19239:29:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -197,30 +197,30 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
 19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
       |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 19125 |                                               skillX, skillY, skillLine, &skillStyle);
       |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+<repo>/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
 19116 |                                 int skillX, skillY;
       |                                             ^~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 ......
   312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
       |                                                                       ~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+                 from <repo>/asset_status_m12.c:5:
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at <repo>/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,15 +228,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -244,19 +244,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                         ~~~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+                 from <repo>/menu_startup_m12.c:9:
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:683:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -264,17 +264,17 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                             ~~~~~~
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:695:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -282,42 +282,42 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c: In function ‘draw_card’:
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:879:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c: In function ‘draw_card’:
+<repo>/menu_startup_render_modern_m12.c:879:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
   879 |         if (li < 0) li = 0; if (li > 3) li = 3;
       |         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:879:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:879:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
   879 |         if (li < 0) li = 0; if (li > 3) li = 3;
       |                             ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:880:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:880:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
   880 |         if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:880:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:880:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
   880 |         if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |                             ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:881:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:881:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
   881 |         if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:881:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:881:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
   881 |         if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |                             ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c: In function ‘draw_settings_view’:
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1134:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c: In function ‘draw_settings_view’:
+<repo>/menu_startup_render_modern_m12.c:1134:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
  1134 |     if (li < 0) li = 0; if (li > 3) li = 3;
       |     ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1134:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:1134:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
  1134 |     if (li < 0) li = 0; if (li > 3) li = 3;
       |                         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1135:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:1135:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
  1135 |     if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |     ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1135:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:1135:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
  1135 |     if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |                         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1136:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:1136:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
  1136 |     if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |     ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1136:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:1136:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
  1136 |     if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |                         ^~
 # firestaff_m11_phase_a_probe
@@ -344,19 +344,19 @@ PASS INV_A12b shutdown + shutdown is idempotent
 # summary: 19/19 invariants passed
 M11 Phase A probe: # summary: 19/19 invariants passed
 M11 Phase A probe: PASS (19/19)
-In file included from /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/probes/m11/firestaff_m11_game_view_probe.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c: In function ‘main’:
-/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:49: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/probes/m11/firestaff_m11_game_view_probe.c: In function ‘main’:
+<repo>/probes/m11/firestaff_m11_game_view_probe.c:2508:49: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 512 [-Wformat-truncation=]
  2508 |             snprintf(gfxPath, sizeof(gfxPath), "%s/GRAPHICS.DAT", dataDir);
       |                                                 ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘main’ at /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:13:
+    inlined from ‘main’ at <repo>/probes/m11/firestaff_m11_game_view_probe.c:2508:13:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 14 and 1037 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -364,19 +364,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/m11_game_view.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
-/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+<repo>/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
 18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
       |                                           ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+    inlined from ‘m11_draw_v1_message_area’ at <repo>/m11_game_view.c:18559:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -384,15 +384,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+<repo>/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                       ^~
-/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                      ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+    inlined from ‘m11_draw_wall_contents.isra’ at <repo>/m11_game_view.c:7840:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -400,15 +400,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+<repo>/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                           ^~
-/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                          ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+    inlined from ‘m11_draw_side_feature.isra’ at <repo>/m11_game_view.c:11139:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -416,15 +416,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
-/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+<repo>/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
  4735 |              "F9 RESTORES TICK %u FROM %s",
       |                                        ^~
  4736 |              (unsigned int)state->world.gameTick,
  4737 |              path);
-      |              ~~~~                       
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+    inlined from ‘M11_GameView_QuickSave’ at <repo>/m11_game_view.c:4734:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -432,15 +432,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
-/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+<repo>/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
  4824 |              "TICK %u HASH %08X RELOADED FROM %s",
       |                                               ^~
 ......
  4827 |              path);
-      |              ~~~~                              
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+    inlined from ‘M11_GameView_QuickLoad’ at <repo>/m11_game_view.c:4823:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -448,12 +448,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
-/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+<repo>/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
 16594 |         snprintf(line, sizeof(line), "%s",
       |                                       ^~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+    inlined from ‘m11_draw_utility_panel’ at <repo>/m11_game_view.c:16594:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -461,12 +461,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18804:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -474,12 +474,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18811:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -487,13 +487,13 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
   744 |         snprintf(line1, line1Size, "%s", text);
       |                                     ^~
 In function ‘snprintf’,
-    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+    inlined from ‘m11_dialog_source_split_two_lines’ at <repo>/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:19239:29:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -501,30 +501,30 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
 19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
       |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 19125 |                                               skillX, skillY, skillLine, &skillStyle);
       |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+<repo>/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
 19116 |                                 int skillX, skillY;
       |                                             ^~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 ......
   312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
       |                                                                       ~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+                 from <repo>/asset_status_m12.c:5:
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at <repo>/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -532,15 +532,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -548,19 +548,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                         ~~~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+                 from <repo>/menu_startup_m12.c:9:
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:683:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -568,17 +568,17 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                             ~~~~~~
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:695:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -699,7 +699,7 @@ PASS INV_GV_18 near-lane scanner chips surface left, front, and right contact st
 PASS INV_GV_19 post-tick feedback strip renders attack-colored event telemetry inside the HUD
 PASS INV_GV_20 forward depth chips summarize the next three center-lane cells with live threat and traversal cues
 PASS INV_GV_21 message log contains at least one event after boot and gameplay
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/15_side_ornament_item_creature_count_fidelity.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/15_side_ornament_item_creature_count_fidelity.pgm
 PASS INV_GV_22 R toggles rest mode on and reports it through last action
 PASS INV_GV_22A resting mode uses the source PartyResting input list and suppresses movement ticks until wake-up
 PASS INV_GV_22B R again wakes the party from rest mode
@@ -1025,12 +1025,12 @@ PASS INV_GV_216 damage to champion small (graphic 15) loads as 45x7 from GRAPHIC
 PASS INV_GV_217 damage to champion big (graphic 16) loads as 32x29 from GRAPHICS.DAT
 PASS INV_GV_218 damage to creature (graphic 14) loads as 88x45 from GRAPHICS.DAT
 PASS INV_GV_219 per-champion damage indicator drawn when timer > 0
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/inventory_slotbox_gfx.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/party_hud_statusbox_gfx.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/party_hud_statusbox_gfx_vga.ppm
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/party_hud_four_champions_vga.ppm
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/map_overlay_p5.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/shield_poison_hud.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/inventory_slotbox_gfx.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/party_hud_statusbox_gfx.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/party_hud_statusbox_gfx_vga.ppm
+Screenshot: <repo>/verification-m11/phase-a/game-view/party_hud_four_champions_vga.ppm
+Screenshot: <repo>/verification-m11/phase-a/game-view/map_overlay_p5.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/shield_poison_hud.pgm
 PASS INV_GV_220 NotifyCreatureHit sets overlay timer and damage amount
 PASS INV_GV_221 creature-hit overlay timer reaches 0 after sufficient ticks
 PASS INV_GV_222 graphic-14 creature-hit overlay changes viewport pixels
@@ -1046,7 +1046,7 @@ PASS INV_GV_231 explosion type classification: fire/poison/lightning ranges are 
 PASS INV_GV_232 multi-creature stacking: single creature group produces visible viewport pixels
 PASS INV_GV_233 multi-item floor scatter: floor area has visible content when items present
 PASS INV_GV_234 wall ornament depth scaling: scale factors decrease monotonically with depth
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/combat_damage_overlays.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/combat_damage_overlays.pgm
 PASS INV_GV_235 door ornament depth scaling: side-pane scale factors decrease monotonically
 PASS INV_GV_236 viewport area has visible content after draw (items/creatures/ornaments)
 PASS INV_GV_237 creature group count+1 is at least 1 for first group
@@ -1066,7 +1066,7 @@ PASS INV_GV_245F projectile placement binds C2900 layout-696 source zone samples
 PASS INV_GV_246 projectile sub-cell rotation produces correct relative cells
 PASS INV_GV_247 Z-order: floor items drawn before creatures (structural)
 PASS INV_GV_248 floor ornament index cache stores values (not skipped)
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/16_projectile_facing_creature_attack_ornament.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/16_projectile_facing_creature_attack_ornament.pgm
 PASS INV_GV_250 creature type 0 (GiantScorpion) coordSet=1 transparent=13
 PASS INV_GV_251 creature type 6 (Rockpile) coordSet=0 transparent=13
 PASS INV_GV_252 creature type 20 (RedDragon) coordSet=1 transparent=4
@@ -1078,7 +1078,7 @@ PASS INV_GV_256B creature placement binds C3200 layout-696 source zone samples
 PASS INV_GV_256C creature draw path prefers C3200 over older G0224 midpoint for single front slot
 PASS INV_GV_256D side-cell creature placement binds C3200 left/right source zone samples
 PASS INV_GV_257 floor ornament ordinal query returns >= 0 for front cell
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/17_floor_ornament_creature_aspect.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/17_floor_ornament_creature_aspect.pgm
 PASS INV_GV_15AF V1 champion icons select C028 strip cells via M026 direction-relative source index
 PASS INV_GV_15AG V1 champion HUD renders source-colored C113/C114 icon cells and leaves absent icon slots black
 PASS INV_GV_350 normal V1 top chrome outside source status boxes/icons contains no title/debug text pixels
@@ -1140,7 +1140,7 @@ PASS INV_GV_307 action-hand icon cells: lit torch uses source charge-count icon 
 PASS INV_GV_308 action-hand icon cells: charged weapon uses source +1 icon variant
 PASS INV_GV_309 object icon resolver follows source scroll, compass, and charged-junk variants
 PASS INV_GV_309B inventory slot icons use source object icons without action palette remap
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/18_dm_action_hand_icon_cells.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/18_dm_action_hand_icon_cells.pgm
 PASS INV_GV_310 action-menu: empty-hand champion activates with ActionSet 2
 PASS INV_GV_311 action-menu: acting ordinal stored as DM1 1-based value
 PASS INV_GV_312 action-menu: empty-hand ActionSet yields PUNCH/KICK/WAR CRY indices
@@ -1154,8 +1154,8 @@ PASS INV_GV_322 action-menu: PUNCH row click advances (or holds) game tick via C
 PASS INV_GV_323 action-menu: WAR CRY row click clears menu and logs without committing a strike tick
 PASS INV_GV_324 action-menu: TriggerActionRow in idle mode is a no-op
 PASS INV_GV_325 action-menu: HandlePointer row-hit closes menu and redraws
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/19_dm_action_menu_mode.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/phase-a/game-view/20_dm_action_menu_post_click.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/19_dm_action_menu_mode.pgm
+Screenshot: <repo>/verification-m11/phase-a/game-view/20_dm_action_menu_post_click.pgm
 PASS INV_GV_326 non-melee action: WAR CRY emits an audio marker
 PASS INV_GV_327 non-melee action: WAR CRY advances a time-passes tick
 PASS INV_GV_328 non-melee action: acting champion becomes party leader
@@ -1182,29 +1182,29 @@ PASS INV_GV_348 explosion aftermath: F0822 advance ran (frame incremented or one
 PASS INV_GV_349 persistent smoke: F0822 decays attack and increments currentFrame across ticks
 # summary: 580/580 invariants passed
 M11 game-view probe: # summary: 580/580 invariants passed
-Artifact: /home/trv2/work/firestaff/verification-m11/phase-a/phase_a_probe.log
-Binary:   /home/trv2/work/firestaff/firestaff
+Artifact: <repo>/verification-m11/phase-a/phase_a_probe.log
+Binary:   <repo>/firestaff
 ```
 exit=0
 
 ### m11 game view probe
 ```sh
-./run_firestaff_m11_game_view_probe.sh 
+./run_firestaff_m11_game_view_probe.sh
 ```
 ```text
-In file included from /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/probes/m11/firestaff_m11_game_view_probe.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c: In function ‘main’:
-/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:49: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/probes/m11/firestaff_m11_game_view_probe.c: In function ‘main’:
+<repo>/probes/m11/firestaff_m11_game_view_probe.c:2508:49: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 512 [-Wformat-truncation=]
  2508 |             snprintf(gfxPath, sizeof(gfxPath), "%s/GRAPHICS.DAT", dataDir);
       |                                                 ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘main’ at /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:13:
+    inlined from ‘main’ at <repo>/probes/m11/firestaff_m11_game_view_probe.c:2508:13:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 14 and 1037 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1212,19 +1212,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/m11_game_view.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
-/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+<repo>/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
 18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
       |                                           ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+    inlined from ‘m11_draw_v1_message_area’ at <repo>/m11_game_view.c:18559:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1232,15 +1232,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+<repo>/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                       ^~
-/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                      ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+    inlined from ‘m11_draw_wall_contents.isra’ at <repo>/m11_game_view.c:7840:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1248,15 +1248,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+<repo>/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                           ^~
-/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                          ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+    inlined from ‘m11_draw_side_feature.isra’ at <repo>/m11_game_view.c:11139:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1264,15 +1264,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
-/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+<repo>/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
  4735 |              "F9 RESTORES TICK %u FROM %s",
       |                                        ^~
  4736 |              (unsigned int)state->world.gameTick,
  4737 |              path);
-      |              ~~~~                       
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+    inlined from ‘M11_GameView_QuickSave’ at <repo>/m11_game_view.c:4734:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1280,15 +1280,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
-/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+<repo>/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
  4824 |              "TICK %u HASH %08X RELOADED FROM %s",
       |                                               ^~
 ......
  4827 |              path);
-      |              ~~~~                              
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+    inlined from ‘M11_GameView_QuickLoad’ at <repo>/m11_game_view.c:4823:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1296,12 +1296,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
-/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+<repo>/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
 16594 |         snprintf(line, sizeof(line), "%s",
       |                                       ^~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+    inlined from ‘m11_draw_utility_panel’ at <repo>/m11_game_view.c:16594:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1309,12 +1309,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18804:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1322,12 +1322,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18811:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1335,13 +1335,13 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
   744 |         snprintf(line1, line1Size, "%s", text);
       |                                     ^~
 In function ‘snprintf’,
-    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+    inlined from ‘m11_dialog_source_split_two_lines’ at <repo>/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:19239:29:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1349,30 +1349,30 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
 19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
       |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 19125 |                                               skillX, skillY, skillLine, &skillStyle);
       |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+<repo>/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
 19116 |                                 int skillX, skillY;
       |                                             ^~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 ......
   312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
       |                                                                       ~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+                 from <repo>/asset_status_m12.c:5:
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at <repo>/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1380,15 +1380,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1396,19 +1396,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                         ~~~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+                 from <repo>/menu_startup_m12.c:9:
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:683:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1416,17 +1416,17 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                             ~~~~~~
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:695:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1547,7 +1547,7 @@ PASS INV_GV_18 near-lane scanner chips surface left, front, and right contact st
 PASS INV_GV_19 post-tick feedback strip renders attack-colored event telemetry inside the HUD
 PASS INV_GV_20 forward depth chips summarize the next three center-lane cells with live threat and traversal cues
 PASS INV_GV_21 message log contains at least one event after boot and gameplay
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/15_side_ornament_item_creature_count_fidelity.pgm
+Screenshot: <repo>/verification-m11/game-view/15_side_ornament_item_creature_count_fidelity.pgm
 PASS INV_GV_22 R toggles rest mode on and reports it through last action
 PASS INV_GV_22A resting mode uses the source PartyResting input list and suppresses movement ticks until wake-up
 PASS INV_GV_22B R again wakes the party from rest mode
@@ -1873,12 +1873,12 @@ PASS INV_GV_216 damage to champion small (graphic 15) loads as 45x7 from GRAPHIC
 PASS INV_GV_217 damage to champion big (graphic 16) loads as 32x29 from GRAPHICS.DAT
 PASS INV_GV_218 damage to creature (graphic 14) loads as 88x45 from GRAPHICS.DAT
 PASS INV_GV_219 per-champion damage indicator drawn when timer > 0
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/inventory_slotbox_gfx.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/party_hud_statusbox_gfx.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/party_hud_statusbox_gfx_vga.ppm
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/party_hud_four_champions_vga.ppm
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/map_overlay_p5.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/shield_poison_hud.pgm
+Screenshot: <repo>/verification-m11/game-view/inventory_slotbox_gfx.pgm
+Screenshot: <repo>/verification-m11/game-view/party_hud_statusbox_gfx.pgm
+Screenshot: <repo>/verification-m11/game-view/party_hud_statusbox_gfx_vga.ppm
+Screenshot: <repo>/verification-m11/game-view/party_hud_four_champions_vga.ppm
+Screenshot: <repo>/verification-m11/game-view/map_overlay_p5.pgm
+Screenshot: <repo>/verification-m11/game-view/shield_poison_hud.pgm
 PASS INV_GV_220 NotifyCreatureHit sets overlay timer and damage amount
 PASS INV_GV_221 creature-hit overlay timer reaches 0 after sufficient ticks
 PASS INV_GV_222 graphic-14 creature-hit overlay changes viewport pixels
@@ -1894,7 +1894,7 @@ PASS INV_GV_231 explosion type classification: fire/poison/lightning ranges are 
 PASS INV_GV_232 multi-creature stacking: single creature group produces visible viewport pixels
 PASS INV_GV_233 multi-item floor scatter: floor area has visible content when items present
 PASS INV_GV_234 wall ornament depth scaling: scale factors decrease monotonically with depth
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/combat_damage_overlays.pgm
+Screenshot: <repo>/verification-m11/game-view/combat_damage_overlays.pgm
 PASS INV_GV_235 door ornament depth scaling: side-pane scale factors decrease monotonically
 PASS INV_GV_236 viewport area has visible content after draw (items/creatures/ornaments)
 PASS INV_GV_237 creature group count+1 is at least 1 for first group
@@ -1914,7 +1914,7 @@ PASS INV_GV_245F projectile placement binds C2900 layout-696 source zone samples
 PASS INV_GV_246 projectile sub-cell rotation produces correct relative cells
 PASS INV_GV_247 Z-order: floor items drawn before creatures (structural)
 PASS INV_GV_248 floor ornament index cache stores values (not skipped)
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/16_projectile_facing_creature_attack_ornament.pgm
+Screenshot: <repo>/verification-m11/game-view/16_projectile_facing_creature_attack_ornament.pgm
 PASS INV_GV_250 creature type 0 (GiantScorpion) coordSet=1 transparent=13
 PASS INV_GV_251 creature type 6 (Rockpile) coordSet=0 transparent=13
 PASS INV_GV_252 creature type 20 (RedDragon) coordSet=1 transparent=4
@@ -1926,7 +1926,7 @@ PASS INV_GV_256B creature placement binds C3200 layout-696 source zone samples
 PASS INV_GV_256C creature draw path prefers C3200 over older G0224 midpoint for single front slot
 PASS INV_GV_256D side-cell creature placement binds C3200 left/right source zone samples
 PASS INV_GV_257 floor ornament ordinal query returns >= 0 for front cell
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/17_floor_ornament_creature_aspect.pgm
+Screenshot: <repo>/verification-m11/game-view/17_floor_ornament_creature_aspect.pgm
 PASS INV_GV_15AF V1 champion icons select C028 strip cells via M026 direction-relative source index
 PASS INV_GV_15AG V1 champion HUD renders source-colored C113/C114 icon cells and leaves absent icon slots black
 PASS INV_GV_350 normal V1 top chrome outside source status boxes/icons contains no title/debug text pixels
@@ -1988,7 +1988,7 @@ PASS INV_GV_307 action-hand icon cells: lit torch uses source charge-count icon 
 PASS INV_GV_308 action-hand icon cells: charged weapon uses source +1 icon variant
 PASS INV_GV_309 object icon resolver follows source scroll, compass, and charged-junk variants
 PASS INV_GV_309B inventory slot icons use source object icons without action palette remap
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/18_dm_action_hand_icon_cells.pgm
+Screenshot: <repo>/verification-m11/game-view/18_dm_action_hand_icon_cells.pgm
 PASS INV_GV_310 action-menu: empty-hand champion activates with ActionSet 2
 PASS INV_GV_311 action-menu: acting ordinal stored as DM1 1-based value
 PASS INV_GV_312 action-menu: empty-hand ActionSet yields PUNCH/KICK/WAR CRY indices
@@ -2002,8 +2002,8 @@ PASS INV_GV_322 action-menu: PUNCH row click advances (or holds) game tick via C
 PASS INV_GV_323 action-menu: WAR CRY row click clears menu and logs without committing a strike tick
 PASS INV_GV_324 action-menu: TriggerActionRow in idle mode is a no-op
 PASS INV_GV_325 action-menu: HandlePointer row-hit closes menu and redraws
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/19_dm_action_menu_mode.pgm
-Screenshot: /home/trv2/work/firestaff/verification-m11/game-view/20_dm_action_menu_post_click.pgm
+Screenshot: <repo>/verification-m11/game-view/19_dm_action_menu_mode.pgm
+Screenshot: <repo>/verification-m11/game-view/20_dm_action_menu_post_click.pgm
 PASS INV_GV_326 non-melee action: WAR CRY emits an audio marker
 PASS INV_GV_327 non-melee action: WAR CRY advances a time-passes tick
 PASS INV_GV_328 non-melee action: acting champion becomes party leader
@@ -2035,7 +2035,7 @@ exit=0
 
 ### m11 ingame capture smoke
 ```sh
-./run_firestaff_m11_ingame_capture_smoke.sh 
+./run_firestaff_m11_ingame_capture_smoke.sh
 ```
 ```text
 In-game capture smoke PASS: 6 screenshots
@@ -2044,33 +2044,33 @@ exit=0
 
 ### m11 launcher smoke
 ```sh
-./run_firestaff_m11_launcher_smoke.sh 
+./run_firestaff_m11_launcher_smoke.sh
 ```
 ```text
-/home/trv2/work/firestaff/firestaff_m11_phase_a_probe.c: In function ‘main’:
-/home/trv2/work/firestaff/firestaff_m11_phase_a_probe.c:49:27: warning: implicit declaration of function ‘setenv’; did you mean ‘getenv’? [-Wimplicit-function-declaration]
+<repo>/firestaff_m11_phase_a_probe.c: In function ‘main’:
+<repo>/firestaff_m11_phase_a_probe.c:49:27: warning: implicit declaration of function ‘setenv’; did you mean ‘getenv’? [-Wimplicit-function-declaration]
    49 | # define m11_setenv(k, v) setenv((k), (v), 0)
       |                           ^~~~~~
-/home/trv2/work/firestaff/firestaff_m11_phase_a_probe.c:72:5: note: in expansion of macro ‘m11_setenv’
+<repo>/firestaff_m11_phase_a_probe.c:72:5: note: in expansion of macro ‘m11_setenv’
    72 |     m11_setenv("SDL_VIDEODRIVER", "dummy");
       |     ^~~~~~~~~~
-In file included from /home/trv2/work/firestaff/main_loop_m11.c:14:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/main_loop_m11.c:14:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/m11_game_view.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
-/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+<repo>/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
 18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
       |                                           ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+    inlined from ‘m11_draw_v1_message_area’ at <repo>/m11_game_view.c:18559:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2078,15 +2078,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+<repo>/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                       ^~
-/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                      ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+    inlined from ‘m11_draw_wall_contents.isra’ at <repo>/m11_game_view.c:7840:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2094,15 +2094,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+<repo>/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                           ^~
-/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                          ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+    inlined from ‘m11_draw_side_feature.isra’ at <repo>/m11_game_view.c:11139:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2110,15 +2110,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
-/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+<repo>/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
  4735 |              "F9 RESTORES TICK %u FROM %s",
       |                                        ^~
  4736 |              (unsigned int)state->world.gameTick,
  4737 |              path);
-      |              ~~~~                       
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+    inlined from ‘M11_GameView_QuickSave’ at <repo>/m11_game_view.c:4734:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2126,15 +2126,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
-/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+<repo>/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
  4824 |              "TICK %u HASH %08X RELOADED FROM %s",
       |                                               ^~
 ......
  4827 |              path);
-      |              ~~~~                              
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+    inlined from ‘M11_GameView_QuickLoad’ at <repo>/m11_game_view.c:4823:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2142,12 +2142,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
-/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+<repo>/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
 16594 |         snprintf(line, sizeof(line), "%s",
       |                                       ^~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+    inlined from ‘m11_draw_utility_panel’ at <repo>/m11_game_view.c:16594:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2155,12 +2155,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18804:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2168,12 +2168,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18811:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2181,13 +2181,13 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
   744 |         snprintf(line1, line1Size, "%s", text);
       |                                     ^~
 In function ‘snprintf’,
-    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+    inlined from ‘m11_dialog_source_split_two_lines’ at <repo>/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:19239:29:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2195,30 +2195,30 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
 19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
       |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 19125 |                                               skillX, skillY, skillLine, &skillStyle);
       |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+<repo>/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
 19116 |                                 int skillX, skillY;
       |                                             ^~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 ......
   312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
       |                                                                       ~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+                 from <repo>/asset_status_m12.c:5:
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at <repo>/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2226,15 +2226,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2242,19 +2242,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                         ~~~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+                 from <repo>/menu_startup_m12.c:9:
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:683:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2262,17 +2262,17 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                             ~~~~~~
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:695:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2280,57 +2280,57 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c: In function ‘draw_card’:
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:879:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c: In function ‘draw_card’:
+<repo>/menu_startup_render_modern_m12.c:879:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
   879 |         if (li < 0) li = 0; if (li > 3) li = 3;
       |         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:879:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:879:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
   879 |         if (li < 0) li = 0; if (li > 3) li = 3;
       |                             ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:880:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:880:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
   880 |         if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:880:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:880:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
   880 |         if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |                             ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:881:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:881:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
   881 |         if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:881:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:881:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
   881 |         if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |                             ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c: In function ‘draw_settings_view’:
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1134:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c: In function ‘draw_settings_view’:
+<repo>/menu_startup_render_modern_m12.c:1134:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
  1134 |     if (li < 0) li = 0; if (li > 3) li = 3;
       |     ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1134:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:1134:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
  1134 |     if (li < 0) li = 0; if (li > 3) li = 3;
       |                         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1135:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:1135:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
  1135 |     if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |     ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1135:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:1135:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
  1135 |     if (gi < 0) gi = 0; if (gi > 2) gi = 2;
       |                         ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1136:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+<repo>/menu_startup_render_modern_m12.c:1136:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
  1136 |     if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |     ^~
-/home/trv2/work/firestaff/menu_startup_render_modern_m12.c:1136:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+<repo>/menu_startup_render_modern_m12.c:1136:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
  1136 |     if (wi < 0) wi = 0; if (wi > 1) wi = 1;
       |                         ^~
-In file included from /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/probes/m11/firestaff_m11_game_view_probe.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c: In function ‘main’:
-/home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:49: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/probes/m11/firestaff_m11_game_view_probe.c: In function ‘main’:
+<repo>/probes/m11/firestaff_m11_game_view_probe.c:2508:49: warning: ‘%s’ directive output may be truncated writing up to 1023 bytes into a region of size 512 [-Wformat-truncation=]
  2508 |             snprintf(gfxPath, sizeof(gfxPath), "%s/GRAPHICS.DAT", dataDir);
       |                                                 ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘main’ at /home/trv2/work/firestaff/probes/m11/firestaff_m11_game_view_probe.c:2508:13:
+    inlined from ‘main’ at <repo>/probes/m11/firestaff_m11_game_view_probe.c:2508:13:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 14 and 1037 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2338,19 +2338,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-In file included from /home/trv2/work/firestaff/m11_game_view.c:1:
-/home/trv2/work/firestaff/m11_game_view.h:135:43: warning: declaration does not declare anything
+In file included from <repo>/m11_game_view.c:1:
+<repo>/m11_game_view.h:135:43: warning: declaration does not declare anything
   135 |     enum { M11_TORCH_FUEL_CAPACITY = 256 };
       |                                           ^
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
-/home/trv2/work/firestaff/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_v1_message_area’:
+<repo>/m11_game_view.c:18559:43: warning: ‘%s’ directive output may be truncated writing up to 79 bytes into a region of size 54 [-Wformat-truncation=]
 18559 |         snprintf(clipped, maxChars + 1U, "%s", text);
       |                                           ^~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/memory_tick_orchestrator_pc34_compat.h:65,
-                 from /home/trv2/work/firestaff/m11_game_view.h:5:
+                 from <repo>/memory_tick_orchestrator_pc34_compat.h:65,
+                 from <repo>/m11_game_view.h:5:
 In function ‘snprintf’,
-    inlined from ‘m11_draw_v1_message_area’ at /home/trv2/work/firestaff/m11_game_view.c:18559:9:
+    inlined from ‘m11_draw_v1_message_area’ at <repo>/m11_game_view.c:18559:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 80 bytes into a destination of size 54
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2358,15 +2358,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_wall_contents.isra’:
+<repo>/m11_game_view.c:7840:55: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                       ^~
-/home/trv2/work/firestaff/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:7840:54: note: directive argument in the range [2, 2147483647]
  7840 |                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                      ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_wall_contents.isra’ at /home/trv2/work/firestaff/m11_game_view.c:7840:17:
+    inlined from ‘m11_draw_wall_contents.isra’ at <repo>/m11_game_view.c:7840:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2374,15 +2374,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
-/home/trv2/work/firestaff/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_side_feature.isra’:
+<repo>/m11_game_view.c:11139:59: warning: ‘%d’ directive output may be truncated writing between 1 and 10 bytes into a region of size 4 [-Wformat-truncation=]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                           ^~
-/home/trv2/work/firestaff/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
+<repo>/m11_game_view.c:11139:58: note: directive argument in the range [2, 2147483647]
 11139 |                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
       |                                                          ^~~~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_side_feature.isra’ at /home/trv2/work/firestaff/m11_game_view.c:11139:21:
+    inlined from ‘m11_draw_side_feature.isra’ at <repo>/m11_game_view.c:11139:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 2 and 11 bytes into a destination of size 4
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2390,15 +2390,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
-/home/trv2/work/firestaff/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickSave’:
+<repo>/m11_game_view.c:4735:40: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 95 and 104 [-Wformat-truncation=]
  4735 |              "F9 RESTORES TICK %u FROM %s",
       |                                        ^~
  4736 |              (unsigned int)state->world.gameTick,
  4737 |              path);
-      |              ~~~~                       
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickSave’ at /home/trv2/work/firestaff/m11_game_view.c:4734:5:
+    inlined from ‘M11_GameView_QuickSave’ at <repo>/m11_game_view.c:4734:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 25 and 545 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2406,15 +2406,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
-/home/trv2/work/firestaff/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_QuickLoad’:
+<repo>/m11_game_view.c:4824:47: warning: ‘%s’ directive output may be truncated writing up to 511 bytes into a region of size between 84 and 93 [-Wformat-truncation=]
  4824 |              "TICK %u HASH %08X RELOADED FROM %s",
       |                                               ^~
 ......
  4827 |              path);
-      |              ~~~~                              
+      |              ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_QuickLoad’ at /home/trv2/work/firestaff/m11_game_view.c:4823:5:
+    inlined from ‘M11_GameView_QuickLoad’ at <repo>/m11_game_view.c:4823:5:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 36 and 556 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2422,12 +2422,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘m11_draw_utility_panel’:
-/home/trv2/work/firestaff/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘m11_draw_utility_panel’:
+<repo>/m11_game_view.c:16594:39: warning: ‘%s’ directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
 16594 |         snprintf(line, sizeof(line), "%s",
       |                                       ^~
 In function ‘snprintf’,
-    inlined from ‘m11_draw_utility_panel’ at /home/trv2/work/firestaff/m11_game_view.c:16594:9:
+    inlined from ‘m11_draw_utility_panel’ at <repo>/m11_game_view.c:16594:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 64 bytes into a destination of size 32
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2435,12 +2435,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18804:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18804 |         snprintf(line2, sizeof(line2), "HERE  %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18804:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18804:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2448,12 +2448,12 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:18811:47: warning: ‘%s’ directive output may be truncated writing up to 95 bytes into a region of size 90 [-Wformat-truncation=]
 18811 |         snprintf(line2, sizeof(line2), "AHEAD %s", line);
       |                                               ^~   ~~~~
 In function ‘snprintf’,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:18811:9:
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:18811:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 7 and 102 bytes into a destination of size 96
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2461,13 +2461,13 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:744:37: warning: ‘%s’ directive output may be truncated writing up to 127 bytes into a region of size 80 [-Wformat-truncation=]
   744 |         snprintf(line1, line1Size, "%s", text);
       |                                     ^~
 In function ‘snprintf’,
-    inlined from ‘m11_dialog_source_split_two_lines’ at /home/trv2/work/firestaff/m11_game_view.c:744:9,
-    inlined from ‘M11_GameView_Draw’ at /home/trv2/work/firestaff/m11_game_view.c:19239:29:
+    inlined from ‘m11_dialog_source_split_two_lines’ at <repo>/m11_game_view.c:744:9,
+    inlined from ‘M11_GameView_Draw’ at <repo>/m11_game_view.c:19239:29:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 128 bytes into a destination of size 80
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2475,30 +2475,30 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c: In function ‘M11_GameView_Draw’:
-/home/trv2/work/firestaff/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
+<repo>/m11_game_view.c: In function ‘M11_GameView_Draw’:
+<repo>/m11_game_view.c:19124:33: warning: ‘skillY’ may be used uninitialized [-Wmaybe-uninitialized]
 19124 |                                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
       |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 19125 |                                               skillX, skillY, skillLine, &skillStyle);
       |                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
+<repo>/m11_game_view.c:19116:45: note: ‘skillY’ was declared here
 19116 |                                 int skillX, skillY;
       |                                             ^~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 575 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 ......
   312 |             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
       |                                                                       ~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/asset_status_m12.c:5:
+                 from <repo>/asset_status_m12.c:5:
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_try_match_version’ at /home/trv2/work/firestaff/asset_status_m12.c:312:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:341:17,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_try_match_version’ at <repo>/asset_status_m12.c:312:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:341:17,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 576 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2506,15 +2506,15 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
-/home/trv2/work/firestaff/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
+<repo>/asset_status_m12.c: In function ‘M12_AssetStatus_Scan’:
+<repo>/asset_status_m12.c:256:29: warning: ‘%s’ directive output may be truncated writing up to 1535 bytes into a region of size 512 [-Wformat-truncation=]
   256 |     snprintf(out, outSize, "%s", value);
       |                             ^~
 In function ‘snprintf’,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:256:5,
-    inlined from ‘m12_copy_string’ at /home/trv2/work/firestaff/asset_status_m12.c:249:13,
-    inlined from ‘m12_fill_game_versions’ at /home/trv2/work/firestaff/asset_status_m12.c:348:21,
-    inlined from ‘M12_AssetStatus_Scan’ at /home/trv2/work/firestaff/asset_status_m12.c:379:9:
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:256:5,
+    inlined from ‘m12_copy_string’ at <repo>/asset_status_m12.c:249:13,
+    inlined from ‘m12_fill_game_versions’ at <repo>/asset_status_m12.c:348:21,
+    inlined from ‘M12_AssetStatus_Scan’ at <repo>/asset_status_m12.c:379:9:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin_snprintf’ output between 1 and 1536 bytes into a destination of size 512
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2522,19 +2522,19 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   683 |                 m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                         ~~~~~~
 In file included from /usr/include/stdio.h:980,
-                 from /home/trv2/work/firestaff/menu_startup_m12.c:9:
+                 from <repo>/menu_startup_m12.c:9:
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:683:17:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:683:17:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2542,17 +2542,17 @@ In function ‘snprintf’,
       |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
-/home/trv2/work/firestaff/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
-/home/trv2/work/firestaff/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
+<repo>/menu_startup_m12.c: In function ‘m12_load_runtime_catalog’:
+<repo>/menu_startup_m12.c:535:41: warning: ‘%s’ directive output may be truncated writing up to 255 bytes into a region of size 128 [-Wformat-truncation=]
   535 |     snprintf(out + len, outSize - len, "%s", value);
       |                                         ^~
 ......
   695 |                     m12_append_string(msgid, sizeof(msgid), parsed);
       |                                                             ~~~~~~
 In function ‘snprintf’,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:535:5,
-    inlined from ‘m12_append_string’ at /home/trv2/work/firestaff/menu_startup_m12.c:526:13,
-    inlined from ‘m12_load_runtime_catalog’ at /home/trv2/work/firestaff/menu_startup_m12.c:695:21:
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:535:5,
+    inlined from ‘m12_append_string’ at <repo>/menu_startup_m12.c:526:13,
+    inlined from ‘m12_load_runtime_catalog’ at <repo>/menu_startup_m12.c:695:21:
 /usr/include/x86_64-linux-gnu/bits/stdio2.h:54:10: note: ‘__builtin___snprintf_chk’ output between 1 and 256 bytes into a destination of size 128
    54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
       |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2561,13 +2561,13 @@ In function ‘snprintf’,
    56 |                                    __va_arg_pack ());
       |                                    ~~~~~~~~~~~~~~~~~
 M11 launcher smoke: PASS
-Log: /home/trv2/work/firestaff/verification-m11/launcher-smoke/launcher_smoke.log
+Log: <repo>/verification-m11/launcher-smoke/launcher_smoke.log
 ```
 exit=0
 
 ### viewport state probe
 ```sh
-./build/firestaff_m11_viewport_state_probe /home/trv2/.firestaff/data verification-m11/n2_viewport_world_visuals_20260428_123237/viewport-state 
+./build/firestaff_m11_viewport_state_probe $FIRESTAFF_DATA verification-m11/n2_viewport_world_visuals_20260428_123237/viewport-state
 ```
 ```text
 PASS source-driven viewport state probe
@@ -2578,7 +2578,7 @@ exit=0
 
 ### capture route state probe
 ```sh
-./build/firestaff_m11_capture_route_state_probe /home/trv2/.firestaff/data verification-m11/n2_viewport_world_visuals_20260428_123237/capture-route-state 
+./build/firestaff_m11_capture_route_state_probe $FIRESTAFF_DATA verification-m11/n2_viewport_world_visuals_20260428_123237/capture-route-state
 ```
 ```text
 wrote verification-m11/n2_viewport_world_visuals_20260428_123237/capture-route-state/pass76_capture_route_state_probe.md and verification-m11/n2_viewport_world_visuals_20260428_123237/capture-route-state/pass76_capture_route_state_probe.json
@@ -2588,7 +2588,7 @@ exit=0
 
 ### pass83 viewport content points
 ```sh
-python3 tools/pass83_firestaff_viewport_content_points_probe.py 
+python3 tools/pass83_firestaff_viewport_content_points_probe.py
 ```
 ```text
 {
@@ -2603,7 +2603,7 @@ exit=0
 
 ### pass84 original overlay readiness
 ```sh
-python3 tools/pass84_original_overlay_readiness_probe.py 
+python3 tools/pass84_original_overlay_readiness_probe.py
 ```
 ```text
 {
@@ -2994,23 +2994,23 @@ exit=0
 
 ### greatstone source lock
 ```sh
-python3 tools/greatstone_dm1_source_lock_check.py 
+python3 tools/greatstone_dm1_source_lock_check.py
 ```
 ```text
-missing original source file: /home/trv2/work/firestaff/verification-screens/dm1-dosbox-capture/DungeonMasterPC34/DATA/GRAPHICS.DAT
+missing original source file: <repo>/verification-screens/dm1-dosbox-capture/DungeonMasterPC34/DATA/GRAPHICS.DAT
 ```
 exit=1
 
 ### resolve viewport zone
 ```sh
-python3 tools/resolve_dm1_zone.py viewport 
+python3 tools/resolve_dm1_zone.py viewport
 ```
 ```text
 Traceback (most recent call last):
-  File "/home/trv2/work/firestaff/tools/resolve_dm1_zone.py", line 241, in <module>
+  File "<repo>/tools/resolve_dm1_zone.py", line 241, in <module>
     manifest = _json.load(open(ROOT / "extracted-graphics-v1/manifest.json"))["entries"]
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: '/home/trv2/work/firestaff/extracted-graphics-v1/manifest.json'
+FileNotFoundError: [Errno 2] No such file or directory: '<repo>/extracted-graphics-v1/manifest.json'
 ```
 exit=1
 

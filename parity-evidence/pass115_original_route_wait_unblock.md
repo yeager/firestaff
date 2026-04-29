@@ -2,7 +2,7 @@
 
 - date: 2026-04-28T13:11:15+00:00
 - host: firestaff-worker
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-130807-original-route-wait-unblock`
+- run base: `<N2_RUNS>/20260428-130807-original-route-wait-unblock`
 - scope: follow-up to pass114. Adds the observed post-ENTER/menu transition wait, then tests movement/control routes. Route-unblock evidence only; not pixel parity.
 
 ## Attempts
@@ -60,4 +60,3 @@
 - classes: `dungeon_gameplay, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay`
 - duplicate hashes: `{'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': 6}`
 - shas: `48ed3743ab6a, 48ed3743ab6a, 48ed3743ab6a, 48ed3743ab6a, 48ed3743ab6a, 48ed3743ab6a`
-

@@ -1,6 +1,6 @@
 # Pass 139 — PM F1 inventory/control route
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-191522-pass139-pm-f1-inventory-control-route`
+- run base: `<N2_RUNS>/20260428-191522-pass139-pm-f1-inventory-control-route`
 - base route: Return → F1 (pass137 inventory hit)
 - scenarios: 5
 - completed: 5

@@ -2,7 +2,7 @@
 
 This pass113 gate classifies whether an original DM1 PC 3.4 capture is actually usable for party/HUD, spell, or inventory comparison after direct-start/recruitment attempts.
 
-- attempt dir: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1344-party-state-followup/probe-kp8-to-elija`
+- attempt dir: `<N2_RUNS>/20260428-1344-party-state-followup/probe-kp8-to-elija`
 - party control ready: `false`
 - direct-start/no-party signature: `true`
 - honesty: Party-state semantic probe only. It can block unsafe original captures; it does not claim pixel parity or champion identity.

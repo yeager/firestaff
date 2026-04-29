@@ -1,6 +1,6 @@
 # Pass 129 — DM1 V1 original champion route atlas
 
-- run base: /home/trv2/.openclaw/data/firestaff-n2-runs/20260428-175457-pass131-rerun-pass129-xvfb
+- run base: <N2_RUNS>/20260428-175457-pass131-rerun-pass129-xvfb
 - scenarios: 56
 - completed: 56
 - errors: 0

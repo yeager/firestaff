@@ -4,7 +4,7 @@ Date: 2026-04-28
 Lane: Viewport/world visuals (DM1 V1 walls/items/ornaments/creatures/draw-order/evidence)
 Host: N2 (`Firestaff-Worker-VM`)
 Branch: `sync/n2-dm1-v1-20260428`
-Run-dir: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1015-viewport-world-followup/`
+Run-dir: `<N2_RUNS>/20260428-1015-viewport-world-followup/`
 
 ## Scope
 
@@ -21,7 +21,7 @@ wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wai
 Command:
 
 ```sh
-RUN=/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1015-viewport-world-followup
+RUN=<N2_RUNS>/20260428-1015-viewport-world-followup
 ROUTE='wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800 shot:start kp4 wait:800 shot:kp4a kp4 wait:800 shot:kp4b kp8 wait:800 shot:kp8a kp6 wait:800 shot:kp6a kp8 wait:800 shot:kp8b'
 OUT_DIR="$RUN/probe-turn-left-forward-mix" \
 DM1_ORIGINAL_STAGE_DIR="$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
@@ -69,7 +69,7 @@ Interpretation: the entry prefix is mechanically usable, but this simple keypad 
 Command:
 
 ```sh
-RUN=/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1015-viewport-world-followup
+RUN=<N2_RUNS>/20260428-1015-viewport-world-followup
 ROUTE='wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800 shot:start click:246,140 wait:800 shot:c246_140 click:306,140 wait:800 shot:c306_140 click:276,140 wait:800 shot:c276_140 click:276,170 wait:800 shot:c276_170 click:246,170 wait:800 shot:c246_170'
 OUT_DIR="$RUN/probe-unlocked-mouse-controls" \
 DM1_ORIGINAL_STAGE_DIR="$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
@@ -130,7 +130,7 @@ V1 viewport draw-order source-shape verification passed
 # summary: 578/578 invariants passed
 ```
 
-Full local log: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-1015-viewport-world-followup/v1_viewport_gates.log`.
+Full local log: `<N2_RUNS>/20260428-1015-viewport-world-followup/v1_viewport_gates.log`.
 
 ## Conclusion
 

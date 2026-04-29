@@ -11,7 +11,7 @@ Scope: V2-only scaffold/assets verification on N2. No DM1 V1 viewport/HUD/invent
 - EXPECTED BLOCKER `python3 tools/validate_v2_manifests.py --check-files --strict-files --json` — exit 1, 12 missing expected-size PNG deliverables.
 - PASS `python3 tools/validate_v2_manifests.py --self-test` — exit 0, validator rejects non-50% downscale and duplicate packId fixtures.
 - PASS `cmake --build build --target firestaff_m11_v2_initial_4k_capture -j2` — exit 0.
-- PASS `build/firestaff_m11_v2_initial_4k_capture verification-m12/lane6-v2-assets-followup-20260428-073908/v2_initial_4k_capture /home/trv2/.openclaw/data/firestaff-original-games/DM` — exit 0.
+- PASS `build/firestaff_m11_v2_initial_4k_capture verification-m12/lane6-v2-assets-followup-20260428-073908/v2_initial_4k_capture <N2_ORIGINAL_GAMES>/DM` — exit 0.
 
 ## Generated evidence
 - `v2_initial_4k_capture/base_scene.ppm` — 192015 bytes.

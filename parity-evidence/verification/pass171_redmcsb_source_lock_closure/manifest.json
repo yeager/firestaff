@@ -8,8 +8,8 @@
   "closed": 268,
   "remaining": 0,
   "inputs": [
-    "/home/trv2/work/firestaff/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
-    "/home/trv2/work/firestaff/parity-evidence/verification/pass169_redmcsb_anchor_gap_resolution/manifest.json",
-    "/home/trv2/work/firestaff/parity-evidence/verification/pass170_source_mentioned_unresolved_batch/manifest.json"
+    "<repo>/parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json",
+    "<repo>/parity-evidence/verification/pass169_redmcsb_anchor_gap_resolution/manifest.json",
+    "<repo>/parity-evidence/verification/pass170_source_mentioned_unresolved_batch/manifest.json"
   ]
 }

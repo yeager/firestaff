@@ -1,6 +1,6 @@
 # Pass 122 — DM1 V1 original route solver
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-153524-pass122-dm1-v1-original-route-solver`
+- run base: `<N2_RUNS>/20260428-153524-pass122-dm1-v1-original-route-solver`
 - scope: larger consolidated original-route pass for DM1 V1 priority. It combines proven keypad route changes from pass120/121 with panel keys, inventory/champion keys, and click probes after each routed state.
 
 ## Route summaries
@@ -101,4 +101,3 @@
 ## Interpretation
 
 This pass is evidence-only. If it does not discover a party/spell/inventory classifier transition, the next blocker is not basic input delivery but original route semantics: the automation can turn the no-party viewport, but still lacks the original champion/recruitment path needed for DM1 V1 overlay parity.
-

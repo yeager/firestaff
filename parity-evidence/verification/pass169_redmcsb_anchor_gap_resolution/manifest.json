@@ -1,6 +1,6 @@
 {
   "schema": "pass169_redmcsb_anchor_gap_resolution.v1",
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "resolved": 11,
   "total": 11,
   "records": [

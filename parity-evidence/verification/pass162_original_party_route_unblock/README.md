@@ -2,7 +2,7 @@
 
 Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-042959-pass162-original-party-route-unblock`
+- run base: `<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock`
 - evidence root: `parity-evidence/verification/pass162_original_party_route_unblock`
 - completed: 3
 - errors: 0

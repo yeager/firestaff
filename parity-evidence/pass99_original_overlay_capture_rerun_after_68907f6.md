@@ -5,8 +5,8 @@ Host: N2 (`Firestaff-Worker-VM`)
 Branch: `sync/n2-dm1-v1-20260428`
 HEAD during rerun: `848f69d` (`Fix M12 modern menu mouse probes`)
 Relevant prior fix: `68907f6` (`Fix original graphics probe bitmap buffer sizing`)
-Run directory: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-0650-lane4-overlay-capture-rerun-after-68907f6/`
-Original PC 3.4 data: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
+Run directory: `<N2_RUNS>/20260428-0650-lane4-overlay-capture-rerun-after-68907f6/`
+Original PC 3.4 data: `<N2_ORIGINAL_GAMES>/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
 
 ## Scope
 

@@ -1,5 +1,5 @@
 {
-  "run_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
+  "run_base": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
   "rows": [
     {
       "program": "DM -vv -pm",
@@ -23,9 +23,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pre_dungeon_click_grid__wait_5__06ed65cfd731/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pre_dungeon_click_grid__wait_5__06ed65cfd731/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pre_dungeon_click_grid/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pre_dungeon_click_grid/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pre_dungeon_click_grid/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pre_dungeon_click_grid/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pre_dungeon_click_grid__wait_5__06ed65cfd731/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -52,9 +52,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__champion_name_keys__wait_5__1db7c4f32832/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__champion_name_keys__wait_5__1db7c4f32832/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__champion_name_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__champion_name_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__champion_name_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__champion_name_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__champion_name_keys__wait_5__1db7c4f32832/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -81,9 +81,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__champion_name_keys__key_C_6__3ad66a894ed8/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__champion_name_keys__key_C_6__3ad66a894ed8/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__champion_name_keys/image0006-key_C_6.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__champion_name_keys/image0006-key_C_6.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__champion_name_keys/image0006-key_C_6.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__champion_name_keys/image0006-key_C_6.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__champion_name_keys__key_C_6__3ad66a894ed8/pass155_frame.png",
       "visual_bucket": "blocker/unknown",
       "visual_note": "black frame"
@@ -110,9 +110,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f1_then_function_keys__key_F2_6__2946940fa8ac/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f1_then_function_keys__key_F2_6__2946940fa8ac/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f1_then_function_keys__key_F2_6__2946940fa8ac/pass155_frame.png",
       "visual_bucket": "blocker/unknown",
       "visual_note": "black frame"
@@ -139,9 +139,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f1_then_function_keys__wait_5__3776a62aee87/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f1_then_function_keys__wait_5__3776a62aee87/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f1_then_function_keys__wait_5__3776a62aee87/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -168,9 +168,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__champion_name_keys__key_C_6__2a5497129ae0/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__champion_name_keys__key_C_6__2a5497129ae0/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__champion_name_keys/image0006-key_C_6.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__champion_name_keys/image0006-key_C_6.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__champion_name_keys/image0006-key_C_6.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__champion_name_keys/image0006-key_C_6.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__champion_name_keys__key_C_6__2a5497129ae0/pass155_frame.png",
       "visual_bucket": "blocker/unknown",
       "visual_note": "black frame"
@@ -197,9 +197,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__champion_name_keys__wait_5__6bd5bd9ddfa1/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__champion_name_keys__wait_5__6bd5bd9ddfa1/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__champion_name_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__champion_name_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__champion_name_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__champion_name_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__champion_name_keys__wait_5__6bd5bd9ddfa1/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -226,9 +226,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__menu_numeric_roster__key_2_6__3ad66a894ed8/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__menu_numeric_roster__key_2_6__3ad66a894ed8/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__menu_numeric_roster/image0006-key_2_6.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__menu_numeric_roster/image0006-key_2_6.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__menu_numeric_roster/image0006-key_2_6.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__menu_numeric_roster/image0006-key_2_6.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__menu_numeric_roster__key_2_6__3ad66a894ed8/pass155_frame.png",
       "visual_bucket": "blocker/unknown",
       "visual_note": "black frame"
@@ -255,9 +255,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__menu_numeric_roster__wait_5__b1c934a63cb7/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__menu_numeric_roster__wait_5__b1c934a63cb7/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__menu_numeric_roster/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__menu_numeric_roster/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__menu_numeric_roster/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__menu_numeric_roster/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__menu_numeric_roster__wait_5__b1c934a63cb7/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -284,9 +284,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f1_then_function_keys__key_F2_6__3ad66a894ed8/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f1_then_function_keys__key_F2_6__3ad66a894ed8/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pm_enter_f1_then_function_keys/image0006-key_F2_6.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f1_then_function_keys__key_F2_6__3ad66a894ed8/pass155_frame.png",
       "visual_bucket": "blocker/unknown",
       "visual_note": "black frame"
@@ -313,9 +313,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f1_then_function_keys__wait_5__90ab0553d83c/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f1_then_function_keys__wait_5__90ab0553d83c/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pm_enter_f1_then_function_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pm_enter_f1_then_function_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pm_enter_f1_then_function_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pm_enter_f1_then_function_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f1_then_function_keys__wait_5__90ab0553d83c/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -342,9 +342,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__champion_name_keys__key_C_6__3ad66a894ed8/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__champion_name_keys__key_C_6__3ad66a894ed8/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__champion_name_keys/image0006-key_C_6.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__champion_name_keys/image0006-key_C_6.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__champion_name_keys/image0006-key_C_6.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__champion_name_keys/image0006-key_C_6.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__champion_name_keys__key_C_6__3ad66a894ed8/pass155_frame.png",
       "visual_bucket": "blocker/unknown",
       "visual_note": "black frame"
@@ -371,9 +371,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__champion_name_keys__wait_5__67dce89e1de2/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__champion_name_keys__wait_5__67dce89e1de2/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__champion_name_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__champion_name_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__champion_name_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__champion_name_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__champion_name_keys__wait_5__67dce89e1de2/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -400,9 +400,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__menu_numeric_roster__key_2_6__3ad66a894ed8/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__menu_numeric_roster__key_2_6__3ad66a894ed8/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__menu_numeric_roster/image0006-key_2_6.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__menu_numeric_roster/image0006-key_2_6.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__menu_numeric_roster/image0006-key_2_6.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__menu_numeric_roster/image0006-key_2_6.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__menu_numeric_roster__key_2_6__3ad66a894ed8/pass155_frame.png",
       "visual_bucket": "blocker/unknown",
       "visual_note": "black frame"
@@ -429,9 +429,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__menu_numeric_roster__wait_5__ee217343dcff/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__menu_numeric_roster__wait_5__ee217343dcff/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__menu_numeric_roster/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__menu_numeric_roster/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__menu_numeric_roster/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__menu_numeric_roster/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__menu_numeric_roster__wait_5__ee217343dcff/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "Dungeon Master logo/title frame"
@@ -458,9 +458,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pre_dungeon_click_grid__wait_5__489a3eeda949/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pre_dungeon_click_grid__wait_5__489a3eeda949/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__pre_dungeon_click_grid/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__pre_dungeon_click_grid/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__pre_dungeon_click_grid/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__pre_dungeon_click_grid/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pre_dungeon_click_grid__wait_5__489a3eeda949/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "dim/fade title-logo variant"
@@ -487,9 +487,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pm_enter_f2_function_keys__wait_5__6f7d7f18c50b/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pm_enter_f2_function_keys__wait_5__6f7d7f18c50b/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pm_enter_f2_function_keys__wait_5__6f7d7f18c50b/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "dim/fade title-logo variant"
@@ -516,9 +516,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__menu_numeric_roster__wait_5__7d0d3d21cc3a/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__menu_numeric_roster__wait_5__7d0d3d21cc3a/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__menu_numeric_roster/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__menu_numeric_roster/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__menu_numeric_roster/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__menu_numeric_roster/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__menu_numeric_roster__wait_5__7d0d3d21cc3a/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "dim/fade title-logo variant"
@@ -545,9 +545,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f2_function_keys__wait_5__850609db442a/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f2_function_keys__wait_5__850609db442a/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pm_enter_f2_function_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pm_enter_f2_function_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pm_enter_f2_function_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pm_enter_f2_function_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm_enter_f2_function_keys__wait_5__850609db442a/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "dim/fade title-logo variant"
@@ -574,9 +574,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f2_function_keys__wait_5__9b9627eee38d/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f2_function_keys__wait_5__9b9627eee38d/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_pm__pm_enter_f2_function_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__pm__pm_enter_f2_function_keys__wait_5__9b9627eee38d/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "dim/fade title-logo variant"
@@ -603,9 +603,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pm_enter_f1_then_function_keys__wait_5__d90583ca0e04/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pm_enter_f1_then_function_keys__wait_5__d90583ca0e04/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn_pm__pm_enter_f1_then_function_keys/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pm__pm_enter_f1_then_function_keys__wait_5__d90583ca0e04/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "dim/fade title-logo variant"
@@ -632,9 +632,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_5__ea2ea6bace0d/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_5__ea2ea6bace0d/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0005-wait_5.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0005-wait_5.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0005-wait_5.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0005-wait_5.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_5__ea2ea6bace0d/pass155_frame.png",
       "visual_bucket": "menu/title variant",
       "visual_note": "dim/fade title-logo variant"
@@ -661,9 +661,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_13__082b4d249740/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_13__082b4d249740/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0013-wait_13.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0013-wait_13.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0013-wait_13.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0013-wait_13.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_13__082b4d249740/pass155_frame.png",
       "visual_bucket": "dungeon gameplay",
       "visual_note": "clear in-dungeon corridor/control view; target pass155 seed 082b4d249740"
@@ -690,9 +690,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__click_220_35_10__17bd7e878157/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__click_220_35_10__17bd7e878157/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0010-click_220_35_10.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0010-click_220_35_10.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0010-click_220_35_10.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0010-click_220_35_10.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__click_220_35_10__17bd7e878157/pass155_frame.png",
       "visual_bucket": "dungeon gameplay",
       "visual_note": "entrance/dungeon view with right-side entry menu overlay"
@@ -719,9 +719,9 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_11__17bd7e878157/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_11__17bd7e878157/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0011-wait_11.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0011-wait_11.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0011-wait_11.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0011-wait_11.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__wait_11__17bd7e878157/pass155_frame.png",
       "visual_bucket": "dungeon gameplay",
       "visual_note": "same entrance/dungeon overlay as #24"
@@ -748,14 +748,14 @@
         "top_strip": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__click_280_35_12__17bd7e878157/top_strip.png"
       },
       "annotated_bbox": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__click_280_35_12__17bd7e878157/annotated_bbox.png",
-      "replay_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0012-click_280_35_12.png",
-      "replay_run": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-222128-pass156-pass155-candidate-replay",
-      "pass155_source": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0012-click_280_35_12.png",
+      "replay_source": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay/DM_vv_sn__pre_dungeon_click_grid/image0012-click_280_35_12.png",
+      "replay_run": "<N2_RUNS>/20260428-222128-pass156-pass155-candidate-replay",
+      "pass155_source": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder/DM_vv_sn__pre_dungeon_click_grid/image0012-click_280_35_12.png",
       "pass155_frame": "parity-evidence/verification/pass156_pass155_candidate_replay/dm__vv__sn__pre_dungeon_click_grid__click_280_35_12__17bd7e878157/pass155_frame.png",
       "visual_bucket": "dungeon gameplay",
       "visual_note": "same entrance/dungeon overlay as #24"
     }
   ],
   "errors": [],
-  "pass155_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-205557-pass155-champion-route-seed-finder"
+  "pass155_base": "<N2_RUNS>/20260428-205557-pass155-champion-route-seed-finder"
 }

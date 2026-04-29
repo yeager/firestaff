@@ -1,6 +1,6 @@
 # Pass 166 — source portrait click route probe
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-045405-pass166-source-portrait-click-route-probe`
+- run base: `<N2_RUNS>/20260429-045405-pass166-source-portrait-click-route-probe`
 - evidence root: `parity-evidence/verification/pass166_source_portrait_click_route_probe`
 - completed: 2
 - errors: 0

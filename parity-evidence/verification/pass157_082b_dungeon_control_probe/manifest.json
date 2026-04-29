@@ -1,7 +1,7 @@
 {
   "program": "DM -vv -sn",
   "seed": "pass155/pass156 DM -vv -sn pre_dungeon_click_grid wait_13 / 082b4d249740",
-  "run_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe",
+  "run_base": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe",
   "evidence_root": "parity-evidence/verification/pass157_082b_dungeon_control_probe",
   "results": [
     {
@@ -17,7 +17,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0013-seed_13.png",
         "sha12": "355a191cd07b",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -25,7 +25,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -33,7 +33,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -41,7 +41,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/settle_baseline/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -67,7 +67,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0013-seed_13.png",
         "sha12": "355a191cd07b",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -75,7 +75,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -83,7 +83,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -91,7 +91,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_up/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -117,7 +117,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0013-seed_13.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -125,7 +125,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -133,7 +133,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -141,7 +141,7 @@
       "result": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_down/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -167,7 +167,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0013-seed_13.png",
         "sha12": "355a191cd07b",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -175,7 +175,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -183,7 +183,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -191,7 +191,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_left/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -217,7 +217,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0013-seed_13.png",
         "sha12": "4f0687504d6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -225,7 +225,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -233,7 +233,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -241,7 +241,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_right/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -267,7 +267,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0013-seed_13.png",
         "sha12": "4f0687504d6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -275,7 +275,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -283,7 +283,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -291,7 +291,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_w/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -317,7 +317,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0013-seed_13.png",
         "sha12": "4e5d1adfaef9",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -325,7 +325,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -333,7 +333,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -341,7 +341,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_a/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -367,7 +367,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0013-seed_13.png",
         "sha12": "b5bace4ae767",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -375,7 +375,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -383,7 +383,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -391,7 +391,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_s/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -417,7 +417,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0013-seed_13.png",
         "sha12": "5f1bf5b12f9f",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -425,7 +425,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -433,7 +433,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -441,7 +441,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_d/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -467,7 +467,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0013-seed_13.png",
         "sha12": "4f0687504d6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -475,7 +475,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -483,7 +483,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -491,7 +491,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_space_use/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -517,7 +517,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0013-seed_13.png",
         "sha12": "4f0687504d6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -525,7 +525,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -533,7 +533,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -541,7 +541,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/key_return_action/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -568,7 +568,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0013-seed_13.png",
         "sha12": "355a191cd07b",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -576,7 +576,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -584,7 +584,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -592,7 +592,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_forward_panel/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -619,7 +619,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0013-seed_13.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -627,7 +627,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -635,7 +635,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -643,7 +643,7 @@
       "result": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_left_panel/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -670,7 +670,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0013-seed_13.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -678,7 +678,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -686,7 +686,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -694,7 +694,7 @@
       "result": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_right_panel/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -721,7 +721,7 @@
         ],
         "label": "seed_wait_13_before_control",
         "file": "image0013-seed_13.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0013-seed_13.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0013-seed_13.png",
         "sha12": "355a191cd07b",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -729,7 +729,7 @@
       "after": {
         "label": "after_control",
         "file": "image0014-after_control.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0014-after_control.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0014-after_control.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -737,7 +737,7 @@
       "settled": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"
@@ -745,7 +745,7 @@
       "result": {
         "label": "after_settle",
         "file": "image0015-after_settle.png",
-        "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0015-after_settle.png",
+        "path": "<N2_RUNS>/20260428-224314-pass157-082b-dungeon-control-probe/click_back_panel/image0015-after_settle.png",
         "sha12": "48ed3743ab6a",
         "class": "dungeon_gameplay",
         "reason": "viewport content with mostly dark in-game right column"

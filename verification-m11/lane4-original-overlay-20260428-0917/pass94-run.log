@@ -2,22 +2,22 @@
 [pass-70] shot label plan: 01:title, 02:pre_enter_menu, 03:after_enter_click, 04:forward_1, 05:forward_2, 06:left_turn_probe
 [pass-70] diagnostic-only labels present: title, pre_enter_menu, after_enter_click, forward_1, forward_2, left_turn_probe
 [pass-70] note: diagnostic labels are for manual/pass94 routing only; pass84 overlay readiness requires party_hud, blank, blank, spell_panel, blank, inventory_panel
-[pass-70] wrote /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/dosbox-original-viewports.conf
-[pass-70] wrote /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_route_keys.swift
-[pass-70] wrote /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_route_keys_xdotool.sh
--rw-rw-r-- 1 trv2 trv2  979 Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_224x136_manifest.tsv
--rw-rw-r-- 1 trv2 trv2  546 Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_shot_labels.tsv
--rw-rw-r-- 1 trv2 trv2 1.6K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/raw_manifest.tsv
--rw-rw-r-- 1 trv2 trv2  161 Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/01_ingame_start_original_viewport_224x136.png
--rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm
--rw-rw-r-- 1 trv2 trv2 4.8K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png
--rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm
--rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png
--rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm
--rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png
--rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm
--rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png
--rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm
--rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png
--rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm
-[pass-70] normalized original viewport crops: /home/trv2/work/firestaff/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_224x136_manifest.tsv
+[pass-70] wrote <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/dosbox-original-viewports.conf
+[pass-70] wrote <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_route_keys.swift
+[pass-70] wrote <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_route_keys_xdotool.sh
+-rw-rw-r-- 1 trv2 trv2  979 Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_224x136_manifest.tsv
+-rw-rw-r-- 1 trv2 trv2  546 Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_shot_labels.tsv
+-rw-rw-r-- 1 trv2 trv2 1.6K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/raw_manifest.tsv
+-rw-rw-r-- 1 trv2 trv2  161 Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/01_ingame_start_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 4.8K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K Apr 28 07:25 <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm
+[pass-70] normalized original viewport crops: <repo>/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/original_viewport_224x136_manifest.tsv

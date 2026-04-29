@@ -1,6 +1,6 @@
 # Pass170 — batch-resolve pass168 `source-mentioned-unresolved` groups
 
-- source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- source root: `<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - input groups: 46
 - source-locked: 46/46
 

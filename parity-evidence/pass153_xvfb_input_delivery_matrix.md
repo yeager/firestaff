@@ -1,6 +1,6 @@
 # Pass 153 — Xvfb input delivery matrix for 48ed blocker
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260428-204527-pass153-xvfb-input-delivery-matrix`
+- run base: `<N2_RUNS>/20260428-204527-pass153-xvfb-input-delivery-matrix`
 - completed: 4
 - errors: 0
 
