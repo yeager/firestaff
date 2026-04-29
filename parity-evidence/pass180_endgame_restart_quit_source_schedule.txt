@@ -1,0 +1,15 @@
+# Pass 180 — ReDMCSB endgame restart/quit source schedule
+
+Source-first audit:
+- `ENDGAME.C:485-543` draws restart/quit controls and installs restart-game mouse input.
+- `ENDGAME.C:559-568` clears `G0523_B_RestartGameRequested` then waits 900 VBlank/delay ticks for restart.
+- `ENDGAME.C:573-622` handles requested restart.
+- `COMMAND.C:2463-2468` maps `C215_COMMAND_RESTART_GAME` and `C216_COMMAND_QUIT`.
+- `DEFS.H:388-390` and `DEFS.H:3847-3848` define command and zone IDs.
+
+Probe output:
+
+probe=firestaff_endgame_restart_quit_source_schedule
+restartQuitEvidence=ReDMCSB source lock: DEFS.H defines C215_COMMAND_RESTART_GAME/C216_COMMAND_QUIT and C437/C438 endgame zones; ENDGAME.C draws restart and quit controls, installs G0446 restart-game mouse input, clears G0523, waits 900 VBlank/delay ticks for restart, and branches if requested; COMMAND.C dispatches restart/quit commands.
+restartCommand=215 quitCommand=216 restartZone=437 quitZone=438 waitVblanks=900 evidence:ENDGAME.C:485-543 draws restart/quit buttons at C437/C438; ENDGAME.C:559-568 clears restart flag then waits 900 VBlanks; COMMAND.C:2463-2468 maps C215 to G0523_B_RestartGameRequested and C216 to quit
+endgameRestartQuitInvariantOk=1
