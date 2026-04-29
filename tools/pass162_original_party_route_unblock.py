@@ -70,6 +70,11 @@ SOURCE_LOCKS = [
         "lines": "63-150",
         "point": "F0280_CHAMPION_AddCandidateChampionToParty is the source transition that increments/uses G0305_ui_PartyChampionCount; inventory-looking candidate frames are not enough without this semantic transition.",
     },
+    {
+        "file": "COMMAND.C",
+        "lines": "231-238, 509-511",
+        "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115.",
+    },
 ]
 
 SCENARIOS: list[dict[str, Any]] = [
@@ -92,11 +97,26 @@ SCENARIOS: list[dict[str, Any]] = [
     {
         "name": "source_enter_zone_then_candidate_buttons",
         "program": "DM -vv -sn",
-        "purpose": "Use source C407 enter zone rather than generic Return, then mirror/candidate button coordinates from previous probes.",
+        "purpose": "Use source C407 enter zone, then ReDMCSB C160/C161 panel boxes. Earlier probes clicked y=165, below the source Resurrect/Reincarnate boxes (COMMAND.C lines 231-238 / 509-511).",
         "actions": [
             ("click", 270, 52), ("wait", 1.5), ("shot", "after_c407_enter_click"),
             ("click", 112, 60), ("wait", 1.1), ("shot", "after_portrait_center"),
-            ("click", 92, 165), ("wait", 1.1), ("shot", "after_resurrect_button"),
+            ("click", 130, 115), ("wait", 1.1), ("shot", "after_source_c160_resurrect"),
+            ("key", "Return"), ("wait", 1.1), ("shot", "after_confirm"),
+            ("key", "Up"), ("wait", 1.0), ("shot", "after_move_up"),
+            ("key", "Right"), ("wait", 1.0), ("shot", "after_turn_right"),
+            ("key", "F1"), ("wait", 1.0), ("shot", "after_f1_readiness"),
+            ("key", "F4"), ("wait", 1.0), ("shot", "after_f4_readiness"),
+        ],
+    },
+    {
+        "name": "source_enter_zone_then_reincarnate_box",
+        "program": "DM -vv -sn",
+        "purpose": "Same source-driven route, but click Reincarnate inside COMMAND.C C161 box at x≈186/y≈115 instead of old y=165 candidate coordinate.",
+        "actions": [
+            ("click", 270, 52), ("wait", 1.5), ("shot", "after_c407_enter_click"),
+            ("click", 112, 60), ("wait", 1.1), ("shot", "after_portrait_center"),
+            ("click", 186, 115), ("wait", 1.1), ("shot", "after_source_c161_reincarnate"),
             ("key", "Return"), ("wait", 1.1), ("shot", "after_confirm"),
             ("key", "Up"), ("wait", 1.0), ("shot", "after_move_up"),
             ("key", "Right"), ("wait", 1.0), ("shot", "after_turn_right"),
