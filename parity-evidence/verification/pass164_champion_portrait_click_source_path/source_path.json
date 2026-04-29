@@ -1,0 +1,197 @@
+{
+  "schema": "pass164_champion_portrait_click_source_path.v1",
+  "checks": [
+    {
+      "id": "SRC_CLICK_001",
+      "file": "COMMAND.C",
+      "needles": [
+        "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT",
+        "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW)",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY)"
+      ],
+      "claim": "Left-clicks in source viewport zone C007 dispatch as command C080 into F0377.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "hits": [
+        {
+          "needle": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT",
+          "line": 403,
+          "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+        },
+        {
+          "needle": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW)",
+          "line": 2322,
+          "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+        },
+        {
+          "needle": "F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY)",
+          "line": 2323,
+          "text": "F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_CLICK_002",
+      "file": "CLIKVIEW.C",
+      "needles": [
+        "void F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "P0752_i_X -= G2067_i_ViewportScreenX",
+        "P0753_i_Y -= G2068_i_ViewportScreenY"
+      ],
+      "claim": "F0377 converts screen coordinates to viewport-relative coordinates before testing dungeon-view boxes/zones.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "hits": [
+        {
+          "needle": "void F0377_COMMAND_ProcessType80_ClickInDungeonView",
+          "line": 311,
+          "text": "void F0377_COMMAND_ProcessType80_ClickInDungeonView("
+        },
+        {
+          "needle": "P0752_i_X -= G2067_i_ViewportScreenX",
+          "line": 348,
+          "text": "P0752_i_X -= G2067_i_ViewportScreenX;"
+        },
+        {
+          "needle": "P0753_i_Y -= G2068_i_ViewportScreenY",
+          "line": 349,
+          "text": "P0753_i_Y -= G2068_i_ViewportScreenY;"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_CLICK_003",
+      "file": "CLIKVIEW.C",
+      "needles": [
+        "for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++)",
+        "if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT)",
+        "if (!G0286_B_FacingAlcove)",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor()"
+      ],
+      "claim": "When leader hand is empty, clicking the front wall ornament/door-button view cell C05 and not facing an alcove calls F0372.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "hits": [
+        {
+          "needle": "for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++)",
+          "line": 407,
+          "text": "for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++) {"
+        },
+        {
+          "needle": "if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT)",
+          "line": 417,
+          "text": "if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT) {"
+        },
+        {
+          "needle": "if (!G0286_B_FacingAlcove)",
+          "line": 424,
+          "text": "if (!G0286_B_FacingAlcove) {"
+        },
+        {
+          "needle": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor()",
+          "line": 431,
+          "text": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_CLICK_004",
+      "file": "CLIKVIEW.C",
+      "needles": [
+        "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+        "L1135_ui_MapX = G0306_i_PartyMapX",
+        "L1135_ui_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[G0308_i_PartyDirection]",
+        "F0275_SENSOR_IsTriggeredByClickOnWall(L1135_ui_MapX, L1136_ui_MapY, M018_OPPOSITE(G0308_i_PartyDirection))"
+      ],
+      "claim": "F0372 targets the square in front of the party and the opposite wall cell \u2014 exactly the wall the party is looking at.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "hits": [
+        {
+          "needle": "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+          "line": 5,
+          "text": "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor("
+        },
+        {
+          "needle": "L1135_ui_MapX = G0306_i_PartyMapX",
+          "line": 21,
+          "text": "L1135_ui_MapX = G0306_i_PartyMapX;"
+        },
+        {
+          "needle": "L1135_ui_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[G0308_i_PartyDirection]",
+          "line": 23,
+          "text": "L1135_ui_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[G0308_i_PartyDirection], L1136_ui_MapY += G0234_ai_Graphic559_DirectionToStepNorthCount[G0308_i_PartyDirection];"
+        },
+        {
+          "needle": "F0275_SENSOR_IsTriggeredByClickOnWall(L1135_ui_MapX, L1136_ui_MapY, M018_OPPOSITE(G0308_i_PartyDirection))",
+          "line": 25,
+          "text": "G0321_B_StopWaitingForPlayerInput = F0275_SENSOR_IsTriggeredByClickOnWall(L1135_ui_MapX, L1136_ui_MapY, M018_OPPOSITE(G0308_i_PartyDirection));"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_CLICK_005",
+      "file": "MOVESENS.C",
+      "needles": [
+        "BOOLEAN F0275_SENSOR_IsTriggeredByClickOnWall",
+        "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))",
+        "if (L0752_ui_Cell != P0587_ui_Cell)",
+        "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:",
+        "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)"
+      ],
+      "claim": "F0275 explicitly allows C127 even with no leader, requires the clicked wall cell, then calls F0280 with sensor data.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "hits": [
+        {
+          "needle": "BOOLEAN F0275_SENSOR_IsTriggeredByClickOnWall",
+          "line": 1309,
+          "text": "BOOLEAN F0275_SENSOR_IsTriggeredByClickOnWall("
+        },
+        {
+          "needle": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))",
+          "line": 1392,
+          "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+        },
+        {
+          "needle": "if (L0752_ui_Cell != P0587_ui_Cell)",
+          "line": 1394,
+          "text": "if (L0752_ui_Cell != P0587_ui_Cell)"
+        },
+        {
+          "needle": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:",
+          "line": 1501,
+          "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+        },
+        {
+          "needle": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)",
+          "line": 1502,
+          "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_CLICK_006",
+      "file": "DUNGEON.C",
+      "needles": [
+        "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT)",
+        "G0289_i_DungeonView_ChampionPortraitOrdinal = M000_INDEX_TO_ORDINAL(M040_DATA(L0308_ps_Sensor))"
+      ],
+      "claim": "The visible champion portrait ordinal is sourced from the same C127 sensor data later used by F0280.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "hits": [
+        {
+          "needle": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT)",
+          "line": 2608,
+          "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+        },
+        {
+          "needle": "G0289_i_DungeonView_ChampionPortraitOrdinal = M000_INDEX_TO_ORDINAL(M040_DATA(L0308_ps_Sensor))",
+          "line": 2612,
+          "text": "G0289_i_DungeonView_ChampionPortraitOrdinal = M000_INDEX_TO_ORDINAL(M040_DATA(L0308_ps_Sensor));"
+        }
+      ],
+      "status": "PASS"
+    }
+  ]
+}
