@@ -23,12 +23,18 @@ OUT_ROOT = Path("parity-evidence/verification/pass173_source_portrait_route_gate
 RUN_BASE_ROOT = Path.home()/".openclaw/data/firestaff-n2-runs"
 STATIC_NO_PARTY_HASHES={"48ed3743ab6a","082b4d249740"}
 CROPS={"viewport":(0,0,224,136),"right_panel":(224,0,320,136),"lower_panel":(0,136,320,200),"candidate_buttons":(70,80,225,148)}
+SOURCE_ROOT="/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 SOURCE_LOCKS=[
- {"file":"DUNGEON.DAT via pass4 helper","point":"initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."},
- {"file":"DUNVIEW.C","point":"G0109_auc_Graphic558_Box_ChampionPortraitOnWall = {96,127,35,63}."},
- {"file":"COORD.C","point":"PC viewport origin x=0,y=33 maps viewport center x=111,y=49 to screen x=111,y=82."},
- {"file":"CLIKVIEW.C/MOVESENS.C/REVIVE.C","point":"click -> F0377/F0372 -> C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280_CHAMPION_AddCandidateChampionToParty."},
- {"file":"COMMAND.C","point":"C160/C161 button centers are x=130,y=115 and x=186,y=115 after candidate state."},
+ {"file":"DUNGEON.DAT via pass4 helper","lines":"n/a","point":"initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."},
+ {"file":"COMMAND.C","lines":"397-403,2322-2323","point":"left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW and calls F0377_COMMAND_ProcessType80_ClickInDungeonView."},
+ {"file":"CLIKVIEW.C","lines":"348-349,407-431","point":"PC build subtracts viewport origin from screen coordinates; empty-hand click in C05 front-wall ornament/door-button zone calls F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor."},
+ {"file":"CLIKVIEW.C","lines":"21-25","point":"F0372 computes the square in front of the party and calls F0275_SENSOR_IsTriggeredByClickOnWall(frontX,frontY,oppositeDirection)."},
+ {"file":"MOVESENS.C","lines":"1392,1501-1502","point":"F0275 allows C127_SENSOR_WALL_CHAMPION_PORTRAIT even with no leader, then calls F0280_CHAMPION_AddCandidateChampionToParty(sensorData)."},
+ {"file":"REVIVE.C","lines":"63+","point":"F0280_CHAMPION_AddCandidateChampionToParty is the candidate-state creation entrypoint before C160/C161 are meaningful."},
+ {"file":"DUNGEON.C","lines":"2558,2608-2612","point":"while drawing wall square aspects, the same C127 sensor data sets G0289_i_DungeonView_ChampionPortraitOrdinal for visible champion portraits."},
+ {"file":"DUNVIEW.C","lines":"525,3913-3928","point":"portrait source box is {96,127,35,63}; drawing the D1C front wall copies/uses the C05 clickable zone and blits M635_ZONE_PORTRAIT_ON_WALL."},
+ {"file":"COORD.C","lines":"1693-1698","point":"PC viewport origin is x=0,y=33, so viewport portrait center (111,49) maps to screen x=111,y=82."},
+ {"file":"COMMAND.C","lines":"231-237,509-510","point":"candidate panel commands are C160/C161; old PC boxes include resurrect/reincarnate ranges around centers x=130,y=115 and x=186,y=115."},
 ]
 SCENARIOS=[("gate_click_portrait_then_resurrect",130,115,"C160 resurrect"),("gate_click_portrait_then_reincarnate",186,115,"C161 reincarnate")]
 
@@ -107,9 +113,11 @@ def main()->int:
   except Exception as e: errors.append({"scenario":name,"error":str(e)})
  buckets={}
  for r in results: buckets[r['classification']]=buckets.get(r['classification'],0)+1
- manifest={"schema":"pass173_source_portrait_route_gate_probe.v1","run_base":str(run_base),"evidence_root":str(OUT_ROOT),"completed":len(results),"errors":errors,"buckets":buckets,"source_locks":SOURCE_LOCKS,"results":results}
+ manifest={"schema":"pass173_source_portrait_route_gate_probe.v2","run_base":str(run_base),"evidence_root":str(OUT_ROOT),"completed":len(results),"errors":errors,"buckets":buckets,"source_root":SOURCE_ROOT,"source_locks":SOURCE_LOCKS,"results":results}
  (OUT_ROOT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
- lines=["# Pass 173 / pass 4 — gated source portrait route probe","",f"- run base: `{run_base}`",f"- evidence root: `{OUT_ROOT}`",f"- completed: {len(results)}",f"- errors: {len(errors)}",f"- buckets: {', '.join(f'{k}={v}' for k,v in sorted(buckets.items()))}","","## Route precondition","","- DM1 V1 initial party: map0 x=1 y=3 dir=South.","- Front wall square: map0 x=1 y=4 contains sensor 16 type C127 wall champion portrait.","- Therefore no movement is required; only entrance gate must be passed before clicking x=111,y=82.","","## Results",""]
+ lines=["# Pass 173 / pass 4 — gated source portrait route probe","",f"- run base: `{run_base}`",f"- evidence root: `{OUT_ROOT}`",f"- completed: {len(results)}",f"- errors: {len(errors)}",f"- buckets: {', '.join(f'{k}={v}' for k,v in sorted(buckets.items()))}",f"- ReDMCSB source root: `{SOURCE_ROOT}`","","## ReDMCSB source audit","", "This pass is source-first. The runtime clicks below are derived from these ReDMCSB anchors, not from emulator guessing.",""]
+ for s in SOURCE_LOCKS: lines.append(f"- `{s['file']}:{s['lines']}` — {s['point']}")
+ lines += ["","## Route precondition","","- DM1 V1 initial party: map0 x=1 y=3 dir=South.","- Front wall square: map0 x=1 y=4 contains sensor 16 type C127 wall champion portrait.","- Therefore no movement is required; only entrance gate must be passed before clicking x=111,y=82.","","## Results",""]
  for r in results: lines.append(f"- `{r['name']}`: **{r['classification']}** — {r['reason']} — `{r['evidence_dir']}`")
  if errors: lines += ["","## Errors",""]+[f"- `{e['scenario']}`: {e['error']}" for e in errors]
  (OUT_ROOT/'README.md').write_text('\n'.join(lines)+'\n')

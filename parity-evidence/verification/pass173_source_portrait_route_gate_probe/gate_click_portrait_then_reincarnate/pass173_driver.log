@@ -1,6 +1,6 @@
 window-found 4194321 via search --class DOSBox
 window-found 4194330 via search --class DOSBox
-capture initial anim_000.png sha=ceb0c2eec633
+capture initial anim_000.png sha=ab7acc8ca298
 window-found 4194330 via search --class DOSBox
 window-found 4194330 via search --class DOSBox
 capture gate01 selector_000.png sha=014ed52c71a0
@@ -14,9 +14,9 @@ key Return
 window-found 4194330 via search --class DOSBox
 capture gate04 selector_000.png sha=3ad66a894ed8
 window-found 4194330 via search --class DOSBox
-capture gate05 selector_000.png sha=3e1d7584a3aa
+capture gate05 selector_000.png sha=eded77444a51
 window-found 4194330 via search --class DOSBox
-capture gate06 selector_000.png sha=f3e2ebb479c1
+capture gate06 selector_000.png sha=4a9676290eb2
 key Return
 window-found 4194330 via search --class DOSBox
 capture gate07 fires_000.png sha=17bd7e878157
