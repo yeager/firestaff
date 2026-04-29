@@ -1,0 +1,3 @@
+#include <stdio.h>
+#include "inventory_panel_routes_pc34_compat.h"
+int main(void){unsigned int i;int ok=1;InventoryPanelRouteCompat r;printf("probe=firestaff_inventory_panel_routes_source\n");printf("inventoryPanelRouteEvidence=%s\n",INVENTORY_Compat_GetPanelRouteEvidence());if(INVENTORY_Compat_GetPanelRouteCount()!=6u)ok=0;for(i=1;i<=6;i++){if(!INVENTORY_Compat_GetPanelRoute(i,&r)){ok=0;continue;}printf("inventoryPanelRoute[%u]=command:%u zone:%u name:%s evidence:%s\n",i,r.commandId,r.zoneIndex,r.name,r.evidence);}if(!INVENTORY_Compat_GetPanelRoute(2,&r)||r.commandId!=140u||r.zoneIndex!=562u)ok=0;if(!INVENTORY_Compat_GetPanelRoute(4,&r)||r.commandId!=11u||r.zoneIndex!=566u)ok=0;printf("inventoryPanelRoutesInvariantOk=%d\n",ok);return ok?0:1;}

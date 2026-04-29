@@ -1,0 +1,24 @@
+# Pass 184 — ReDMCSB inventory panel routes
+
+Source-first audit:
+- `COMMAND.C:412-451` maps `G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory` control routes before/around slot boxes:
+  - right-click screen close inventory
+  - save game icon
+  - rest icon
+  - close inventory icon
+  - toggle music icon on PC/F20+ media
+  - generic panel click
+- `COMMAND.C:419-450` remains the slot-box sequence already locked by pass179; this pass isolates the non-slot panel controls.
+- `DEFS.H` defines the referenced command and zone IDs.
+
+Probe output:
+
+probe=firestaff_inventory_panel_routes_source
+inventoryPanelRouteEvidence=ReDMCSB source lock: COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory includes close/save/rest/toggle-music/icon-panel routes before slot-box rows, and COMMAND.C command loop dispatches these inventory secondary commands separately from slot boxes.
+inventoryPanelRoute[1]=command:11 zone:2 name:RIGHT_CLICK_CLOSE_INVENTORY evidence:COMMAND.C:412 maps right-button screen C002 to C011 close inventory
+inventoryPanelRoute[2]=command:140 zone:562 name:SAVE_GAME evidence:COMMAND.C:413 maps C140 save game to C562_ZONE_SAVE_GAME_ICON
+inventoryPanelRoute[3]=command:145 zone:564 name:REST evidence:COMMAND.C:414 maps C145 rest to C564_ZONE_REST_ICON
+inventoryPanelRoute[4]=command:11 zone:566 name:CLOSE_INVENTORY_ICON evidence:COMMAND.C:415 maps C011 close inventory to C566_ZONE_CLOSE_INVENTORY_ICON
+inventoryPanelRoute[5]=command:141 zone:565 name:TOGGLE_MUSIC evidence:COMMAND.C:416-417 PC/F20+ maps C141 toggle music to M701_ZONE_TOGGLE_MUSIC_ICON
+inventoryPanelRoute[6]=command:81 zone:101 name:PANEL_CLICK evidence:COMMAND.C:451 routes C081 click in panel to C101_ZONE_PANEL
+inventoryPanelRoutesInvariantOk=1
