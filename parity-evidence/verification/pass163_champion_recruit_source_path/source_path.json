@@ -1,0 +1,162 @@
+{
+  "schema": "pass163_champion_recruit_source_path.v1",
+  "checks": [
+    {
+      "id": "SRC_RECRUIT_001",
+      "file": "MOVESENS.C",
+      "needles": [
+        "case C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)"
+      ],
+      "claim": "The source candidate-add transition is triggered by wall sensor C127, not by the panel button.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "hits": [
+        {
+          "needle": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "line": 1501,
+          "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+        },
+        {
+          "needle": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)",
+          "line": 1502,
+          "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_RECRUIT_002",
+      "file": "REVIVE.C",
+      "needles": [
+        "G0299_ui_CandidateChampionOrdinal = L0799_ui_PreviousPartyChampionCount + 1",
+        "if (++G0305_ui_PartyChampionCount == 1)"
+      ],
+      "claim": "F0280 marks a candidate and increments party count before the resurrect/reincarnate decision panel is finalized.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "hits": [
+        {
+          "needle": "G0299_ui_CandidateChampionOrdinal = L0799_ui_PreviousPartyChampionCount + 1",
+          "line": 272,
+          "text": "G0299_ui_CandidateChampionOrdinal = L0799_ui_PreviousPartyChampionCount + 1;"
+        },
+        {
+          "needle": "if (++G0305_ui_PartyChampionCount == 1)",
+          "line": 276,
+          "text": "if (++G0305_ui_PartyChampionCount == 1) {"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_RECRUIT_003",
+      "file": "COMMAND.C",
+      "needles": [
+        "case M568_PANEL_RESURRECT_REINCARNATE",
+        "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command)"
+      ],
+      "claim": "Panel clicks dispatch to F0282 only when the panel content is already Resurrect/Reincarnate.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "hits": [
+        {
+          "needle": "case M568_PANEL_RESURRECT_REINCARNATE",
+          "line": 1985,
+          "text": "case M568_PANEL_RESURRECT_REINCARNATE:"
+        },
+        {
+          "needle": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command)",
+          "line": 1990,
+          "text": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command);"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_RECRUIT_004",
+      "file": "REVIVE.C",
+      "needles": [
+        "void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+        "L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1]",
+        "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE)"
+      ],
+      "claim": "F0282 assumes F0280 already inserted a candidate at party_count-1, then clears candidate state after Resurrect/Reincarnate/Cancel.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "hits": [
+        {
+          "needle": "void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+          "line": 704,
+          "text": "void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel("
+        },
+        {
+          "needle": "L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1]",
+          "line": 744,
+          "text": "L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];"
+        },
+        {
+          "needle": "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE)",
+          "line": 747,
+          "text": "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE);"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "SRC_RECRUIT_005",
+      "file": "COMMAND.C",
+      "needles": [
+        "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+        "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+        "104, 158,  86, 142",
+        "163, 217,  86, 142"
+      ],
+      "claim": "The old y=165 route was outside the original C160/C161 boxes; pass162 corrected this but still hit static-no-party, proving the missing step is earlier C127/F0280 candidate creation.",
+      "source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "hits": [
+        {
+          "needle": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+          "line": 231,
+          "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   104, 158,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 158,  86, 142 */"
+        },
+        {
+          "needle": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+          "line": 232,
+          "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, 163, 217,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 163, 217,  86, 142 */"
+        },
+        {
+          "needle": "104, 158,  86, 142",
+          "line": 231,
+          "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   104, 158,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 158,  86, 142 */"
+        },
+        {
+          "needle": "163, 217,  86, 142",
+          "line": 232,
+          "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, 163, 217,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 163, 217,  86, 142 */"
+        }
+      ],
+      "status": "PASS"
+    }
+  ],
+  "pass162_summary": {
+    "completed": 3,
+    "buckets": {
+      "blocked/static-no-party": 3
+    },
+    "all_static_blocked": true,
+    "scenarios": [
+      {
+        "name": "pm_f1_panel_clicks_route_recheck",
+        "classification": "blocked/static-no-party",
+        "reason": "known static no-party hash present: 48ed3743ab6a"
+      },
+      {
+        "name": "source_enter_zone_then_candidate_buttons",
+        "classification": "blocked/static-no-party",
+        "reason": "known static no-party hash present: 48ed3743ab6a"
+      },
+      {
+        "name": "source_enter_zone_then_reincarnate_box",
+        "classification": "blocked/static-no-party",
+        "reason": "known static no-party hash present: 48ed3743ab6a"
+      }
+    ]
+  }
+}
