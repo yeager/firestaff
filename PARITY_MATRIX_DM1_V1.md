@@ -177,11 +177,11 @@ Rules for this matrix:
 
 | Area | Status | Notes |
 |------|--------|-------|
-| CSB original data acquired | `BLOCKED_ON_REFERENCE` | Must acquire before any CSB parity work |
-| CSB parity matrix created | Not started | Depends on reference data |
-| DM2 original data acquired | `BLOCKED_ON_REFERENCE` | Must acquire before any DM2 parity work |
-| DM2 parity matrix created | Not started | Depends on reference data |
-| DM1 assumptions leaking into CSB/DM2 | No leakage — CSB/DM2 work has not started | Monitor when work begins |
+| CSB reference inventory | `SOURCE_LOCK_INVENTORIED` | Local CSB Atari ST/Amiga archives exist; source-lock boundary guard verifies ReDMCSB save-header, dungeon-ID, validation, New Adventure, and save-routing seams before any CSB parity claims. See `scripts/verify_csb_dm2_source_lock_boundaries.py` and `parity-evidence/pass-csb-dm2-source-lock-boundary-guard.md`. |
+| CSB parity matrix created | Not started | Depends on a CSB-specific source/runtime matrix; do not reuse the DM1 V1 matrix as a CSB claim. |
+| DM2 reference inventory | `SOURCE_LOCK_INVENTORIED` | Local DM2 DOS archives and extracted `dm2-dos-asm/SKULL.ASM` exist, but no ReDMCSB C source-lock exists for DM2; keep DM2 as inventory-only until a DM2-specific source matrix is written. |
+| DM2 parity matrix created | Not started | Depends on a DM2-specific disassembly/runtime matrix; do not infer from DM1 or CSB. |
+| DM1 assumptions leaking into CSB/DM2 | Guarded by lightweight source-lock probe | The guard cites source line ranges and records that Firestaff has 3 game config slots without promoting CSB/DM2 runtime parity. |
 
 ---
 
