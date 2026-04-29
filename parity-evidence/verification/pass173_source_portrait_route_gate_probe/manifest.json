@@ -1,0 +1,1858 @@
+{
+  "schema": "pass173_source_portrait_route_gate_probe.v1",
+  "run_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe",
+  "evidence_root": "parity-evidence/verification/pass173_source_portrait_route_gate_probe",
+  "completed": 2,
+  "errors": [],
+  "buckets": {
+    "blocked/static-no-party-after-gate": 2
+  },
+  "source_locks": [
+    {
+      "file": "DUNGEON.DAT via pass4 helper",
+      "point": "initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."
+    },
+    {
+      "file": "DUNVIEW.C",
+      "point": "G0109_auc_Graphic558_Box_ChampionPortraitOnWall = {96,127,35,63}."
+    },
+    {
+      "file": "COORD.C",
+      "point": "PC viewport origin x=0,y=33 maps viewport center x=111,y=49 to screen x=111,y=82."
+    },
+    {
+      "file": "CLIKVIEW.C/MOVESENS.C/REVIVE.C",
+      "point": "click -> F0377/F0372 -> C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280_CHAMPION_AddCandidateChampionToParty."
+    },
+    {
+      "file": "COMMAND.C",
+      "point": "C160/C161 button centers are x=130,y=115 and x=186,y=115 after candidate state."
+    }
+  ],
+  "results": [
+    {
+      "name": "gate_click_portrait_then_resurrect",
+      "choice": "C160 resurrect",
+      "classification": "blocked/static-no-party-after-gate",
+      "reason": "known no-party hash present after gate: 48ed3743ab6a",
+      "source_locks": [
+        {
+          "file": "DUNGEON.DAT via pass4 helper",
+          "point": "initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "point": "G0109_auc_Graphic558_Box_ChampionPortraitOnWall = {96,127,35,63}."
+        },
+        {
+          "file": "COORD.C",
+          "point": "PC viewport origin x=0,y=33 maps viewport center x=111,y=49 to screen x=111,y=82."
+        },
+        {
+          "file": "CLIKVIEW.C/MOVESENS.C/REVIVE.C",
+          "point": "click -> F0377/F0372 -> C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "COMMAND.C",
+          "point": "C160/C161 button centers are x=130,y=115 and x=186,y=115 after candidate state."
+        }
+      ],
+      "route_precondition": {
+        "map": 0,
+        "party": {
+          "x": 1,
+          "y": 3,
+          "dir": "South"
+        },
+        "front_wall_sensor": {
+          "x": 1,
+          "y": 4,
+          "sensor": 16,
+          "type": "C127_SENSOR_WALL_CHAMPION_PORTRAIT"
+        },
+        "click": {
+          "x": 111,
+          "y": 82
+        }
+      },
+      "route_evidence": {
+        "hashes": [
+          "ceb0c2eec633",
+          "014ed52c71a0",
+          "014ed52c71a0",
+          "014ed52c71a0",
+          "3ad66a894ed8",
+          "a9da0dd6b19e",
+          "8bc78f18f48a",
+          "17bd7e878157",
+          "17bd7e878157",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a"
+        ],
+        "unique_hashes": [
+          "014ed52c71a0",
+          "17bd7e878157",
+          "3ad66a894ed8",
+          "48ed3743ab6a",
+          "8bc78f18f48a",
+          "a9da0dd6b19e",
+          "ceb0c2eec633"
+        ],
+        "classes": [
+          "entrance_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "graphics_320x200_unclassified",
+          "title_or_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay"
+        ],
+        "static_hits": [
+          "48ed3743ab6a"
+        ],
+        "diffs": [
+          {
+            "from": "initial",
+            "to": "gate01",
+            "bbox": [
+              245,
+              36,
+              256,
+              51
+            ],
+            "changed_pixels": 62,
+            "changed_ratio": 0.000969
+          },
+          {
+            "from": "gate01",
+            "to": "gate02",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "gate02",
+            "to": "gate03",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "gate03",
+            "to": "gate04",
+            "bbox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "changed_pixels": 64000,
+            "changed_ratio": 1.0
+          },
+          {
+            "from": "gate04",
+            "to": "gate05",
+            "bbox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "changed_pixels": 38011,
+            "changed_ratio": 0.593922
+          },
+          {
+            "from": "gate05",
+            "to": "gate06",
+            "bbox": [
+              0,
+              33,
+              233,
+              194
+            ],
+            "changed_pixels": 21971,
+            "changed_ratio": 0.343297
+          },
+          {
+            "from": "gate06",
+            "to": "gate07",
+            "bbox": [
+              0,
+              33,
+              233,
+              194
+            ],
+            "changed_pixels": 7439,
+            "changed_ratio": 0.116234
+          },
+          {
+            "from": "gate07",
+            "to": "gate08",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "gate08",
+            "to": "gate09",
+            "bbox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "changed_pixels": 29566,
+            "changed_ratio": 0.461969
+          },
+          {
+            "from": "gate09",
+            "to": "after_portrait_click",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_portrait_click",
+            "to": "after_c160_resurrect",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_c160_resurrect",
+            "to": "after_confirm_return",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_confirm_return",
+            "to": "after_f1_probe",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_f1_probe",
+            "to": "after_f4_probe",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "portrait_click_delta": [
+          {
+            "from": "gate09",
+            "to": "after_portrait_click",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "choice_delta": [
+          {
+            "from": "after_portrait_click",
+            "to": "after_c160_resurrect",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ]
+      },
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.67,
+                45.33,
+                13.26
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.18,
+                45.0,
+                13.23
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.18,
+                45.0,
+                13.23
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.18,
+                45.0,
+                13.23
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            }
+          }
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0006-gate05.png",
+          "sha12": "a9da0dd6b19e",
+          "class": "title_or_menu",
+          "reason": "sparse viewport plus colorful/right-column title-menu art",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                50.32,
+                41.45,
+                34.73
+              ],
+              "nonblack_ratio": 0.416557
+            },
+            "right_panel": {
+              "mean_rgb": [
+                139.36,
+                134.07,
+                81.25
+              ],
+              "nonblack_ratio": 0.938036
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                76.47,
+                96.84,
+                63.87
+              ],
+              "nonblack_ratio": 0.638379
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                56.54,
+                52.07,
+                48.99
+              ],
+              "nonblack_ratio": 0.458444
+            }
+          }
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0007-gate06.png",
+          "sha12": "8bc78f18f48a",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                101.03,
+                94.63,
+                89.57
+              ],
+              "nonblack_ratio": 0.714745
+            },
+            "right_panel": {
+              "mean_rgb": [
+                139.22,
+                133.92,
+                81.1
+              ],
+              "nonblack_ratio": 0.936045
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                128.74,
+                151.37,
+                120.43
+              ],
+              "nonblack_ratio": 0.894434
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                103.23,
+                102.14,
+                101.35
+              ],
+              "nonblack_ratio": 0.749146
+            }
+          }
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                122.0,
+                116.57,
+                112.06
+              ],
+              "nonblack_ratio": 0.816406
+            },
+            "right_panel": {
+              "mean_rgb": [
+                143.85,
+                137.4,
+                83.43
+              ],
+              "nonblack_ratio": 0.965763
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                147.52,
+                170.89,
+                140.37
+              ],
+              "nonblack_ratio": 0.988965
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                130.79,
+                130.58,
+                130.37
+              ],
+              "nonblack_ratio": 0.882827
+            }
+          }
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                122.0,
+                116.57,
+                112.06
+              ],
+              "nonblack_ratio": 0.816406
+            },
+            "right_panel": {
+              "mean_rgb": [
+                143.85,
+                137.4,
+                83.43
+              ],
+              "nonblack_ratio": 0.965763
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                147.52,
+                170.89,
+                140.37
+              ],
+              "nonblack_ratio": 0.988965
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                130.79,
+                130.58,
+                130.37
+              ],
+              "nonblack_ratio": 0.882827
+            }
+          }
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "click",
+          "x": 111,
+          "y": 82,
+          "index": 11,
+          "label": "after_portrait_click",
+          "file": "image0011-after_portrait_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0011-after_portrait_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "click",
+          "x": 130,
+          "y": 115,
+          "index": 12,
+          "label": "after_c160_resurrect",
+          "file": "image0012-after_c160_resurrect.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0012-after_c160_resurrect.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "key",
+          "value": "Return",
+          "index": 13,
+          "label": "after_confirm_return",
+          "file": "image0013-after_confirm_return.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0013-after_confirm_return.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "key",
+          "value": "F1",
+          "index": 14,
+          "label": "after_f1_probe",
+          "file": "image0014-after_f1_probe.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0014-after_f1_probe.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "key",
+          "value": "F4",
+          "index": 15,
+          "label": "after_f4_probe",
+          "file": "image0015-after_f4_probe.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0015-after_f4_probe.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        }
+      ],
+      "evidence_dir": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect"
+    },
+    {
+      "name": "gate_click_portrait_then_reincarnate",
+      "choice": "C161 reincarnate",
+      "classification": "blocked/static-no-party-after-gate",
+      "reason": "known no-party hash present after gate: 48ed3743ab6a",
+      "source_locks": [
+        {
+          "file": "DUNGEON.DAT via pass4 helper",
+          "point": "initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."
+        },
+        {
+          "file": "DUNVIEW.C",
+          "point": "G0109_auc_Graphic558_Box_ChampionPortraitOnWall = {96,127,35,63}."
+        },
+        {
+          "file": "COORD.C",
+          "point": "PC viewport origin x=0,y=33 maps viewport center x=111,y=49 to screen x=111,y=82."
+        },
+        {
+          "file": "CLIKVIEW.C/MOVESENS.C/REVIVE.C",
+          "point": "click -> F0377/F0372 -> C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280_CHAMPION_AddCandidateChampionToParty."
+        },
+        {
+          "file": "COMMAND.C",
+          "point": "C160/C161 button centers are x=130,y=115 and x=186,y=115 after candidate state."
+        }
+      ],
+      "route_precondition": {
+        "map": 0,
+        "party": {
+          "x": 1,
+          "y": 3,
+          "dir": "South"
+        },
+        "front_wall_sensor": {
+          "x": 1,
+          "y": 4,
+          "sensor": 16,
+          "type": "C127_SENSOR_WALL_CHAMPION_PORTRAIT"
+        },
+        "click": {
+          "x": 111,
+          "y": 82
+        }
+      },
+      "route_evidence": {
+        "hashes": [
+          "ceb0c2eec633",
+          "014ed52c71a0",
+          "014ed52c71a0",
+          "014ed52c71a0",
+          "3ad66a894ed8",
+          "3e1d7584a3aa",
+          "f3e2ebb479c1",
+          "17bd7e878157",
+          "17bd7e878157",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a",
+          "48ed3743ab6a"
+        ],
+        "unique_hashes": [
+          "014ed52c71a0",
+          "17bd7e878157",
+          "3ad66a894ed8",
+          "3e1d7584a3aa",
+          "48ed3743ab6a",
+          "ceb0c2eec633",
+          "f3e2ebb479c1"
+        ],
+        "classes": [
+          "entrance_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "graphics_320x200_unclassified",
+          "graphics_320x200_unclassified",
+          "entrance_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "dungeon_gameplay"
+        ],
+        "static_hits": [
+          "48ed3743ab6a"
+        ],
+        "diffs": [
+          {
+            "from": "initial",
+            "to": "gate01",
+            "bbox": [
+              245,
+              36,
+              256,
+              51
+            ],
+            "changed_pixels": 62,
+            "changed_ratio": 0.000969
+          },
+          {
+            "from": "gate01",
+            "to": "gate02",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "gate02",
+            "to": "gate03",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "gate03",
+            "to": "gate04",
+            "bbox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "changed_pixels": 64000,
+            "changed_ratio": 1.0
+          },
+          {
+            "from": "gate04",
+            "to": "gate05",
+            "bbox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "changed_pixels": 39866,
+            "changed_ratio": 0.622906
+          },
+          {
+            "from": "gate05",
+            "to": "gate06",
+            "bbox": [
+              0,
+              33,
+              233,
+              194
+            ],
+            "changed_pixels": 21666,
+            "changed_ratio": 0.338531
+          },
+          {
+            "from": "gate06",
+            "to": "gate07",
+            "bbox": [
+              0,
+              33,
+              233,
+              194
+            ],
+            "changed_pixels": 4318,
+            "changed_ratio": 0.067469
+          },
+          {
+            "from": "gate07",
+            "to": "gate08",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "gate08",
+            "to": "gate09",
+            "bbox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "changed_pixels": 29566,
+            "changed_ratio": 0.461969
+          },
+          {
+            "from": "gate09",
+            "to": "after_portrait_click",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_portrait_click",
+            "to": "after_c161_reincarnate",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_c161_reincarnate",
+            "to": "after_confirm_return",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_confirm_return",
+            "to": "after_f1_probe",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "after_f1_probe",
+            "to": "after_f4_probe",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "portrait_click_delta": [
+          {
+            "from": "gate09",
+            "to": "after_portrait_click",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "choice_delta": [
+          {
+            "from": "after_portrait_click",
+            "to": "after_c161_reincarnate",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ]
+      },
+      "rows": [
+        {
+          "phase": "initial",
+          "index": 1,
+          "label": "initial",
+          "file": "image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0001-initial.png",
+          "sha12": "ceb0c2eec633",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.67,
+                45.33,
+                13.26
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 2,
+          "label": "gate01",
+          "file": "image0002-gate01.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0002-gate01.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.18,
+                45.0,
+                13.23
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 3,
+          "label": "gate02",
+          "file": "image0003-gate02.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0003-gate02.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.18,
+                45.0,
+                13.23
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 4,
+          "label": "gate03",
+          "file": "image0004-gate03.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0004-gate03.png",
+          "sha12": "014ed52c71a0",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                99.91,
+                64.92,
+                13.67
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                67.18,
+                45.0,
+                13.23
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                12.87,
+                12.0,
+                12.0
+              ],
+              "nonblack_ratio": 1.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                101.77,
+                33.62,
+                12.07
+              ],
+              "nonblack_ratio": 1.0
+            }
+          }
+        },
+        {
+          "index": 5,
+          "label": "gate04",
+          "file": "image0005-gate04.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0005-gate04.png",
+          "sha12": "3ad66a894ed8",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            },
+            "right_panel": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "nonblack_ratio": 0.0
+            }
+          }
+        },
+        {
+          "index": 6,
+          "label": "gate05",
+          "file": "image0006-gate05.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0006-gate05.png",
+          "sha12": "3e1d7584a3aa",
+          "class": "graphics_320x200_unclassified",
+          "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                55.48,
+                46.81,
+                40.29
+              ],
+              "nonblack_ratio": 0.452468
+            },
+            "right_panel": {
+              "mean_rgb": [
+                139.38,
+                134.01,
+                81.15
+              ],
+              "nonblack_ratio": 0.93773
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                84.02,
+                104.58,
+                71.79
+              ],
+              "nonblack_ratio": 0.675732
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                64.03,
+                59.67,
+                56.69
+              ],
+              "nonblack_ratio": 0.512619
+            }
+          }
+        },
+        {
+          "index": 7,
+          "label": "gate06",
+          "file": "image0007-gate06.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0007-gate06.png",
+          "sha12": "f3e2ebb479c1",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                112.33,
+                106.45,
+                101.71
+              ],
+              "nonblack_ratio": 0.769761
+            },
+            "right_panel": {
+              "mean_rgb": [
+                139.38,
+                134.0,
+                81.09
+              ],
+              "nonblack_ratio": 0.93704
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                136.25,
+                159.03,
+                128.21
+              ],
+              "nonblack_ratio": 0.934375
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                112.34,
+                111.63,
+                111.21
+              ],
+              "nonblack_ratio": 0.792694
+            }
+          }
+        },
+        {
+          "index": 8,
+          "label": "gate07",
+          "file": "image0008-gate07.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0008-gate07.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                122.0,
+                116.57,
+                112.06
+              ],
+              "nonblack_ratio": 0.816406
+            },
+            "right_panel": {
+              "mean_rgb": [
+                143.85,
+                137.4,
+                83.43
+              ],
+              "nonblack_ratio": 0.965763
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                147.52,
+                170.89,
+                140.37
+              ],
+              "nonblack_ratio": 0.988965
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                130.79,
+                130.58,
+                130.37
+              ],
+              "nonblack_ratio": 0.882827
+            }
+          }
+        },
+        {
+          "index": 9,
+          "label": "gate08",
+          "file": "image0009-gate08.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0009-gate08.png",
+          "sha12": "17bd7e878157",
+          "class": "entrance_menu",
+          "reason": "dungeon entrance/menu controls still occupy the right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                122.0,
+                116.57,
+                112.06
+              ],
+              "nonblack_ratio": 0.816406
+            },
+            "right_panel": {
+              "mean_rgb": [
+                143.85,
+                137.4,
+                83.43
+              ],
+              "nonblack_ratio": 0.965763
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                147.52,
+                170.89,
+                140.37
+              ],
+              "nonblack_ratio": 0.988965
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                130.79,
+                130.58,
+                130.37
+              ],
+              "nonblack_ratio": 0.882827
+            }
+          }
+        },
+        {
+          "index": 10,
+          "label": "gate09",
+          "file": "image0010-gate09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0010-gate09.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "phase": "gate",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "click",
+          "x": 111,
+          "y": 82,
+          "index": 11,
+          "label": "after_portrait_click",
+          "file": "image0011-after_portrait_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0011-after_portrait_click.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "click",
+          "x": 186,
+          "y": 115,
+          "index": 12,
+          "label": "after_c161_reincarnate",
+          "file": "image0012-after_c161_reincarnate.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0012-after_c161_reincarnate.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "key",
+          "value": "Return",
+          "index": 13,
+          "label": "after_confirm_return",
+          "file": "image0013-after_confirm_return.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0013-after_confirm_return.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "key",
+          "value": "F1",
+          "index": 14,
+          "label": "after_f1_probe",
+          "file": "image0014-after_f1_probe.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0014-after_f1_probe.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        },
+        {
+          "phase": "key",
+          "value": "F4",
+          "index": 15,
+          "label": "after_f4_probe",
+          "file": "image0015-after_f4_probe.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-075246-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_reincarnate/image0015-after_f4_probe.png",
+          "sha12": "48ed3743ab6a",
+          "class": "dungeon_gameplay",
+          "reason": "viewport content with mostly dark in-game right column",
+          "crop_stats": {
+            "viewport": {
+              "mean_rgb": [
+                103.45,
+                103.45,
+                103.45
+              ],
+              "nonblack_ratio": 0.682314
+            },
+            "right_panel": {
+              "mean_rgb": [
+                1.05,
+                5.68,
+                5.68
+              ],
+              "nonblack_ratio": 0.025276
+            },
+            "lower_panel": {
+              "mean_rgb": [
+                63.37,
+                72.68,
+                72.68
+              ],
+              "nonblack_ratio": 0.403467
+            },
+            "candidate_buttons": {
+              "mean_rgb": [
+                129.94,
+                129.94,
+                129.94
+              ],
+              "nonblack_ratio": 0.876376
+            }
+          }
+        }
+      ],
+      "evidence_dir": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate"
+    }
+  ]
+}
