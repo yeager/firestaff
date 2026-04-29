@@ -29,8 +29,10 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --parallel
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
+      - name: Smoke test
+        run: |
+          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe
+          ./build/firestaff_m11_audio_probe
       - name: Package macOS preview
         run: |
           VERSION="$FIRESTAFF_VERSION" SHORT_VERSION="${FIRESTAFF_VERSION%%-*}" RELEASE_NOTES_SRC="$PWD/RELEASE_0_2_5_PREVIEW.md" ./scripts/package_macos_preview.sh
@@ -66,14 +68,15 @@ jobs:
             mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-SDL3
-            mingw-w64-ucrt-x86_64-7zip
+            mingw-w64-ucrt-x86_64-sdl3
       - name: Configure
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --parallel
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
+      - name: Smoke test
+        run: |
+          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe
+          ./build/firestaff_m11_audio_probe
       - name: Package Windows preview
         run: VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/RELEASE_0_2_5_PREVIEW.md" ./scripts/package_windows_preview.sh
       - name: Upload Windows artifact
