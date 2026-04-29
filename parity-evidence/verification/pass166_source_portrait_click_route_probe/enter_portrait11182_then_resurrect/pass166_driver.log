@@ -1,0 +1,51 @@
+window-found 4194321 via search --class DOSBox
+window-found 4194330 via search --class DOSBox
+capture initial anim_000.png sha=ab7acc8ca298
+window-found 4194330 via search --class DOSBox
+click 270,52 mapped 541,105 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_270_52_2 selector_000.png sha=014ed52c71a0
+window-found 4194330 via search --class DOSBox
+capture after_c407_enter_click selector_000.png sha=014ed52c71a0
+window-found 4194330 via search --class DOSBox
+click 111,82 mapped 223,165 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_111_82_4 selector_000.png sha=84171db7b6d4
+window-found 4194330 via search --class DOSBox
+capture after_source_portrait_111_82 selector_000.png sha=307323fbc1f7
+window-found 4194330 via search --class DOSBox
+click 130,115 mapped 261,231 window=640x400
+window-found 4194330 via search --class DOSBox
+capture click_130_115_6 selector_000.png sha=342d4e7bdac2
+window-found 4194330 via search --class DOSBox
+capture after_source_c160_resurrect selector_000.png sha=1339aaf0473c
+window-found 4194330 via search --class DOSBox
+key Return
+window-found 4194330 via search --class DOSBox
+capture key_Return_8 fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+capture after_confirm fires_000.png sha=17bd7e878157
+window-found 4194330 via search --class DOSBox
+key Up
+window-found 4194330 via search --class DOSBox
+capture key_Up_10 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_move_up fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key Right
+window-found 4194330 via search --class DOSBox
+capture key_Right_12 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_turn_right fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key F1
+window-found 4194330 via search --class DOSBox
+capture key_F1_14 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_f1_readiness fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+key F4
+window-found 4194330 via search --class DOSBox
+capture key_F4_16 fires_000.png sha=48ed3743ab6a
+window-found 4194330 via search --class DOSBox
+capture after_f4_readiness fires_000.png sha=48ed3743ab6a
