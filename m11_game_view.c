@@ -5904,7 +5904,8 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       int gfxIndex, int depthIndex,
                                       int relativeDir,
                                       int relativeCell,
-                                      int flipFlags) {
+                                      int flipFlags,
+                                      int sourceZoneRow) {
     const M11_AssetSlot* slot;
     int drawW, drawH, drawX, drawY;
     int scale;
@@ -5936,7 +5937,10 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
         int qx = w / 4;  /* quarter-width offset */
         int qy = h / 4;  /* quarter-height offset */
         if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
-            m11_c2900_projectile_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)) {
+            ((sourceZoneRow >= 0 &&
+              m11_c2900_projectile_raw_zone_point(sourceZoneRow, relativeCell, &zoneX, &zoneY)) ||
+             (sourceZoneRow < 0 &&
+              m11_c2900_projectile_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)))) {
             drawX = M11_VIEWPORT_X + zoneX - drawW / 2;
             drawY = M11_VIEWPORT_Y + zoneY - drawH / 2;
         } else {
@@ -6236,7 +6240,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                         depthIndex,
                                         cell->firstProjectileRelDir,
                                         cell->firstProjectileCell,
-                                        cell->firstProjectileFlipFlags)) {
+                                        cell->firstProjectileFlipFlags,
+                                        -1)) {
             /* Fallback: cyan crosshair */
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
@@ -7600,7 +7605,8 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int x, int y, int w, int h,
                                 int thingType, int subtype,
                                 int relativeCell, int pileIndex,
-                                int depthIndex);
+                                int depthIndex,
+                                int sourceZoneRow);
 static int m11_draw_wall_ornament(const M11_GameViewState* state,
                                   unsigned char* framebuffer,
                                   int fbW, int fbH,
@@ -7786,7 +7792,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                       cell->floorItemTypes[ii],
                                       cell->floorItemSubtypes[ii],
                                       cell->floorItemCells[ii], ii,
-                                      depthIndex)) {
+                                      depthIndex,
+                                      -1)) {
                 /* Fallback cue only for the first item to avoid clutter */
                 if (ii == 0) {
                     m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
@@ -9958,6 +9965,35 @@ static int m11_item_aspect_index(int thingType, int subtype) {
     return (int)kObjectInfoAspect[objectInfoIndex];
 }
 
+
+static int m11_dm1_f0115_view_square_index(int relForward, int relSide) {
+    /* ReDMCSB DUNVIEW.C / DEFS.H MEDIA720 visible-square order:
+     * D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
+     * Firestaff samples relForward 1..3 from the party and relSide
+     * -1/0/+1.  Map that directly to the source P0145 view-square
+     * index before applying G2028 for C2500/C2900 rows. */
+    static const signed char kViewSquare[3][3] = {
+        { 4,  3,  5},
+        { 7,  6,  8},
+        {12, 11, 13}
+    };
+    if (relForward < 1 || relForward > 3) return -1;
+    if (relSide < -1 || relSide > 1) return -1;
+    return (int)kViewSquare[relForward - 1][relSide + 1];
+}
+
+static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide) {
+    /* DUNVIEW.C G2028_ac_ViewSquareIndexTo.  F0115 indexes
+     * C2500/C2900 as base + (G2028[viewSquare] * 4) + viewCell. */
+    static const signed char kG2028[23] = {
+        11, -1, -1,  8,  9, 10,  5,  6,  7, -1, -1,
+         0,  1,  2,  3,  4, -1, -1, -1, -1, -1, -1, -1
+    };
+    int viewSquare = m11_dm1_f0115_view_square_index(relForward, relSide);
+    if (viewSquare < 0 || viewSquare >= 23) return -1;
+    return (int)kG2028[viewSquare];
+}
+
 static int m11_object_source_scale_units(int scaleIndex) {
     /* DUNVIEW.C G2030_auc_ObjectScales: source object scale units for
      * the five distance/cell scale buckets used by F0115. */
@@ -10180,7 +10216,8 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int subtype,
                                 int relativeCell,
                                 int pileIndex,
-                                int depthIndex) {
+                                int depthIndex,
+                                int sourceZoneRow) {
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
     int spriteW, spriteH;
@@ -10237,7 +10274,10 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
         if (shiftSet > 2) shiftSet = 2;
         m11_object_source_pile_shift_indices(pileIndex, &shiftXIndex, &shiftYIndex);
         if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
-            m11_c2500_object_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)) {
+            ((sourceZoneRow >= 0 &&
+              m11_c2500_object_raw_zone_point(sourceZoneRow, relativeCell, &zoneX, &zoneY)) ||
+             (sourceZoneRow < 0 &&
+              m11_c2500_object_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)))) {
             drawX = M11_VIEWPORT_X + zoneX - (drawW / 2) +
                     m11_object_source_shift_value(shiftSet, shiftXIndex);
             drawY = M11_VIEWPORT_Y + zoneY - drawH +
@@ -11263,7 +11303,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                           cell->floorItemTypes[ii],
                                           cell->floorItemSubtypes[ii],
                                           cell->floorItemCells[ii], ii,
-                                          depthIndex + 1)) {
+                                          depthIndex + 1,
+                                          -1)) {
                     if (ii == 0) {
                         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                       paneX + paneW / 2 - 2, paneY + paneH - 4,
@@ -11290,7 +11331,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                             depthIndex + 1,
                                             cell->firstProjectileRelDir,
                                             cell->firstProjectileCell,
-                                            cell->firstProjectileFlipFlags)) {
+                                            cell->firstProjectileFlipFlags,
+                                            -1)) {
                 int pcx = paneX + paneW / 2;
                 int pcy = paneY + paneH / 2;
                 m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -11356,6 +11398,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
         for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
             int side = sideSlot == 0 ? -1 : 1;
             const M11_ViewportCell* cell = &cells[depth][side < 0 ? 0 : 2];
+            int sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward, cell->relSide);
             int paneX;
             int paneW;
             if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
@@ -11386,7 +11429,8 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                               cell->floorItemTypes[ii],
                                               cell->floorItemSubtypes[ii],
                                               cell->floorItemCells[ii], ii,
-                                              depth + 1)) {
+                                              depth + 1,
+                                              sourceZoneRow)) {
                         if (ii == 0) {
                             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                           paneX + paneW / 2 - 2, paneY + paneH - 4,
@@ -11462,7 +11506,8 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                                 depth + 1,
                                                 cell->firstProjectileRelDir,
                                                 cell->firstProjectileCell,
-                                                cell->firstProjectileFlipFlags)) {
+                                                cell->firstProjectileFlipFlags,
+                                                sourceZoneRow)) {
                     int pcx = paneX + paneW / 2;
                     int pcy = paneY + paneH / 2;
                     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -13763,6 +13808,14 @@ unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
 
 int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex) {
     return m11_object_source_scale_units(scaleIndex);
+}
+
+int M11_GameView_GetF0115ViewSquareIndex(int relForward, int relSide) {
+    return m11_dm1_f0115_view_square_index(relForward, relSide);
+}
+
+int M11_GameView_GetF0115C2500C2900Row(int relForward, int relSide) {
+    return m11_dm1_f0115_c2500_c2900_row(relForward, relSide);
 }
 
 int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell) {

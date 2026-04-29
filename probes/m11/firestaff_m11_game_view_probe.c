@@ -4747,6 +4747,23 @@ int main(int argc, char** argv) {
                      M11_GameView_GetObjectSourceScaleIndex(2, 0) == 4,
                      "object source scale-index selection follows F0115 front/back cells");
 
+        /* INV_GV_114C2B: Firestaff relative cells map back to F0115's
+         * MEDIA720 view-square indices and G2028 C2500/C2900 source rows. */
+        probe_record(&tally,
+                     "INV_GV_114C2B",
+                     M11_GameView_GetF0115ViewSquareIndex(1, 0) == 3 &&
+                     M11_GameView_GetF0115ViewSquareIndex(1, -1) == 4 &&
+                     M11_GameView_GetF0115ViewSquareIndex(1, 1) == 5 &&
+                     M11_GameView_GetF0115ViewSquareIndex(2, 0) == 6 &&
+                     M11_GameView_GetF0115ViewSquareIndex(3, 0) == 11 &&
+                     M11_GameView_GetF0115C2500C2900Row(1, 0) == 8 &&
+                     M11_GameView_GetF0115C2500C2900Row(1, -1) == 9 &&
+                     M11_GameView_GetF0115C2500C2900Row(1, 1) == 10 &&
+                     M11_GameView_GetF0115C2500C2900Row(2, -1) == 6 &&
+                     M11_GameView_GetF0115C2500C2900Row(2, 0) == 5 &&
+                     M11_GameView_GetF0115C2500C2900Row(3, 1) == 2,
+                     "relative viewport cells source-map through ReDMCSB F0115 G2028 rows");
+
         /* INV_GV_114C3: C2500 object/creature source zone points from
          * layout-696 are bound for the non-alcove object placement path. */
         {
