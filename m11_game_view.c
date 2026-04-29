@@ -7258,6 +7258,7 @@ static int m11_build_front_text_readout(const M11_GameViewState* state,
 static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                                        int x,
                                                        int y) {
+    M11_ViewportCell frontCell;
     int localX;
     int localY;
 
@@ -7269,10 +7270,29 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     localY = y - M11_VIEWPORT_Y;
 
     /* ReDMCSB CLIKVIEW.C F0377 subtracts COORD.C viewport origin
-     * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[].
-     * For a front-wall champion mirror DUNVIEW.C copies the drawn
-     * portrait zone into C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT:
-     * viewport-relative x=96..127, y=35..63.  Only that hit opens the
+     * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[]. */
+    memset(&frontCell, 0, sizeof(frontCell));
+    (void)m11_get_front_cell(state, &frontCell);
+
+    /* CLIKVIEW.C:356-390 handles the stängd-front-door button before the
+     * generic empty-hand view-cell loop.  DUNVIEW.C draws C1950/C3 button
+     * at viewport-relative x=167..174 y=43..51 for D1C.  Match that
+     * source zone: only a click on the visible button toggles the front
+     * door; broad center/side viewport clicks remain C080 no-ops here. */
+    if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
+        frontCell.hasDoorThing && state->world.things && state->world.things->doors) {
+        int doorIdx = THING_GET_INDEX(frontCell.firstThing);
+        if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
+            state->world.things->doors[doorIdx].button &&
+            localX >= 167 && localX <= 174 && localY >= 43 && localY <= 51 &&
+            m11_toggle_front_door(state)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+    }
+
+    /* For a front-wall champion mirror DUNVIEW.C copies the drawn portrait
+     * zone into C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT: viewport-relative
+     * x=96..127, y=35..63.  Only that hit opens the
      * resurrect/reincarnate/cancel panel; a generic viewport click must not
      * be treated as Firestaff steering or as a mirror confirmation route. */
     if (localX >= 96 && localX <= 127 &&

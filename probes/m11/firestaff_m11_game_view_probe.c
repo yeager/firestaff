@@ -1152,6 +1152,42 @@ int main(int argc, char** argv) {
                      strstr(syntheticView.inspectTitle, "TIGGY ATTACKS") != NULL,
                  "clicking the on-screen action button drives the real front-cell attack flow");
 
+    {
+        M11_GameViewState doorButtonMiss;
+        M11_GameViewState doorButtonHit;
+        (void)probe_init_synthetic_view(&doorButtonMiss);
+        doorButtonMiss.showDebugHUD = 0;
+        doorButtonMiss.world.party.direction = DIR_EAST;
+        doorButtonMiss.world.party.mapX = 2;
+        doorButtonMiss.world.party.mapY = 2;
+        doorButtonMiss.world.things->doors[0].button = 1;
+        initialTick = doorButtonMiss.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_07I0",
+                     M11_GameView_HandlePointer(&doorButtonMiss, 110, 78, 1) == M11_GAME_INPUT_IGNORED &&
+                         doorButtonMiss.world.gameTick == initialTick &&
+                         (doorButtonMiss.world.dungeon->tiles[0].squareData[3 * doorButtonMiss.world.dungeon->maps[0].height + 2] & 0x07) == 3,
+                     "V1 C080 front-door path ignores non-button viewport clicks instead of using procedural steering/toggle shortcuts");
+        probe_free_synthetic_view(&doorButtonMiss);
+
+        (void)probe_init_synthetic_view(&doorButtonHit);
+        doorButtonHit.showDebugHUD = 0;
+        doorButtonHit.world.party.direction = DIR_EAST;
+        doorButtonHit.world.party.mapX = 2;
+        doorButtonHit.world.party.mapY = 2;
+        doorButtonHit.world.things->doors[0].button = 1;
+        initialTick = doorButtonHit.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_07I1",
+                     M11_GameView_HandlePointer(&doorButtonHit, 171, 80, 1) == M11_GAME_INPUT_REDRAW &&
+                         doorButtonHit.world.gameTick == initialTick + 1 &&
+                         strcmp(doorButtonHit.lastAction, "DOOR") == 0 &&
+                         strcmp(doorButtonHit.lastOutcome, "DOOR OPENING") == 0 &&
+                         (doorButtonHit.world.dungeon->tiles[0].squareData[3 * doorButtonHit.world.dungeon->maps[0].height + 2] & 0x07) == 2,
+                     "V1 C080 source D1C door-button zone x167..174/y43..51 toggles the front door through the door animation path");
+        probe_free_synthetic_view(&doorButtonHit);
+    }
+
     syntheticView.world.party.direction = DIR_EAST;
     syntheticView.world.party.mapX = 2;
     syntheticView.world.party.mapY = 2;
