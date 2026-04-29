@@ -1,0 +1,5 @@
+#ifndef SAVE_REST_TOGGLE_CONSEQUENCES_PC34_COMPAT_H
+#define SAVE_REST_TOGGLE_CONSEQUENCES_PC34_COMPAT_H
+const char* save_rest_toggle_consequences_GetEvidence(void);
+unsigned int save_rest_toggle_consequences_GetInvariant(void);
+#endif
