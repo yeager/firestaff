@@ -1,0 +1,10 @@
+# Pass 199 — ReDMCSB action area icon routes
+
+Source-first audit:
+COMMAND.C:467-472 defines G0453_as_Graphic561_MouseInput_ActionAreaIcons with C116-C119 champion action icon hit zones C089-C092.
+
+Probe output:
+
+probe=firestaff_action_area_icon_routes
+sourceEvidence=COMMAND.C:467-472 defines G0453_as_Graphic561_MouseInput_ActionAreaIcons with C116-C119 champion action icon hit zones C089-C092.
+actionAreaIconRoutesInvariantOk=1
