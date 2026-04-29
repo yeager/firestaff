@@ -1,0 +1,5 @@
+#ifndef ENTRANCE_KEYBOARD_ROUTES_PC34_COMPAT_H
+#define ENTRANCE_KEYBOARD_ROUTES_PC34_COMPAT_H
+const char* entrance_keyboard_routes_GetEvidence(void);
+unsigned int entrance_keyboard_routes_GetInvariant(void);
+#endif

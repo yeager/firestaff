@@ -1,0 +1,10 @@
+# Pass 186 — ReDMCSB entrance keyboard routes
+
+Source-first audit:
+COMMAND.C:551-577 defines G2195_as_PrimaryKeyboardInput_Entrance: Enter maps to C200_COMMAND_ENTRANCE_ENTER_DUNGEON and platform-specific quit key maps to C216_COMMAND_QUIT; this is the keyboard sibling of the entrance mouse route pass.
+
+Probe output:
+
+probe=firestaff_entrance_keyboard_routes
+sourceEvidence=COMMAND.C:551-577 defines G2195_as_PrimaryKeyboardInput_Entrance: Enter maps to C200_COMMAND_ENTRANCE_ENTER_DUNGEON and platform-specific quit key maps to C216_COMMAND_QUIT; this is the keyboard sibling of the entrance mouse route pass.
+entranceKeyboardRoutesInvariantOk=1
