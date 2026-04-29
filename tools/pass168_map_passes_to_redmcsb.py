@@ -31,13 +31,13 @@ def pass_id(path: Path, text: str) -> str:
 
 def rg_token(token: str, files_hint: set[str]) -> list[dict]:
     if not SRC.exists(): return []
-    cmd = ['rg','-n','-F',token,str(SRC)]
+    cmd = ['rg','-n','--sort','path','-F',token,str(SRC)]
     try:
         out = subprocess.run(cmd, text=True, capture_output=True, timeout=4).stdout
     except Exception:
         return []
     hits=[]
-    for line in out.splitlines()[:20]:
+    for line in sorted(out.splitlines())[:40]:
         parts=line.split(':',2)
         if len(parts)<3: continue
         p=Path(parts[0])
@@ -55,6 +55,11 @@ def main() -> int:
     grouped=defaultdict(lambda: {'artifacts':[], 'files':set(), 'tokens':set(), 'mentions':0, 'bytes':0})
     for p in artifacts:
         if not p.is_file(): continue
+        try:
+            p.relative_to(OUT)
+            continue
+        except ValueError:
+            pass
         try:
             text=p.read_text(errors='ignore')
         except Exception:
