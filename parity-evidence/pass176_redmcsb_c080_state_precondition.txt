@@ -1,0 +1,68 @@
+pass=pass176_redmcsb_c080_state_precondition
+host=firestaff-worker
+branch=sync/n2-dm1-v1-20260428
+base_head_before_pass=6187565
+source_root=/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
+runtime_evidence_dir=parity-evidence/verification/pass176_redmcsb_c080_state_precondition/probe_run_data
+runtime_log=parity-evidence/verification/pass176_redmcsb_c080_state_precondition/probe_run_data/game_view_probe.log
+
+Purpose
+-------
+Source-first C080 pass after pass174/pass175. This pass does not try more x/y permutations. It narrows the no-visible-delta blocker to state/precondition: Firestaff C080 command delivery, source mirror-square state, candidate panel, resurrect/reincarnate confirm, and front-door button/no-op branch all verify when the game data directory is the actual DATA folder.
+
+Prior evidence checked
+----------------------
+- pass174 summary JSON records 12/12 source-derived portrait click variants as click-no-visible-delta. Representative: parity-evidence/verification/pass174_redmcsb_c080_delivery_probe/window_relative_down_up_source_center_plus_one/summary.json classification=click-no-visible-delta changed_pixels=0.
+- pass175 README says the raw original-capture no-delta finding is historical and should not cause more coordinate guessing; current follow-up should use source-gated runtime state checks.
+
+ReDMCSB source anchors (primary evidence)
+-----------------------------------------
+- COMMAND.C:108-114 and 397-403 map left-click viewport to C080_COMMAND_CLICK_IN_DUNGEON_VIEW; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.
+- COMMAND.C:1403-1414 shows PC zone-command hit testing against viewport-relative coordinates (x-G2067_i_ViewportScreenX, y-G2068_i_ViewportScreenY) before queueing the command.
+- COMMAND.C:1476-1485 and 1753 document BUG0_73: queue race/overwrite can ignore a mouse click only when a keyboard command collides. That is not the deterministic Firestaff probe path here.
+- CLIKVIEW.C:311 starts F0377_COMMAND_ProcessType80_ClickInDungeonView; CLIKVIEW.C:347-350 subtracts G2067_i_ViewportScreenX/G2068_i_ViewportScreenY for PC coordinates.
+- CLIKVIEW.C:356-386 handles front door button only if the leader is present/empty-handed and the click hits C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT; this is a separate C080 branch from champion mirrors.
+- CLIKVIEW.C:407-431 iterates dungeon-view cells; if C05 is hit and the party is not facing an alcove, it calls F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor.
+- CLIKVIEW.C:21-25 F0372 computes the square in front of the party and calls F0275_SENSOR_IsTriggeredByClickOnWall(frontX, frontY, opposite(partyDirection)).
+- MOVESENS.C:1309 begins F0275_SENSOR_IsTriggeredByClickOnWall; MOVESENS.C:1390-1394 permits C127_SENSOR_WALL_CHAMPION_PORTRAIT even when G0411_i_LeaderIndex == CM1_CHAMPION_NONE; MOVESENS.C:1501-1502 calls F0280_CHAMPION_AddCandidateChampionToParty(sensorData).
+- REVIVE.C:63-106 begins F0280_CHAMPION_AddCandidateChampionToParty; REVIVE.C:272 sets G0299_ui_CandidateChampionOrdinal after candidate creation; REVIVE.C:736-789 covers candidate-panel cancel/confirm setup; REVIVE.C:806-849 distinguishes C161 reincarnate and C160 resurrect confirm paths.
+- DUNVIEW.C:525 defines G0109_auc_Graphic558_Box_ChampionPortraitOnWall = {96,127,35,63}; DUNVIEW.C:3913-3919 blits C026 champion portraits into that D1C front-wall viewport box.
+- COORD.C:1693-1698 defines G2067_i_ViewportScreenX=0 and PC/F20E G2068_i_ViewportScreenY=33, so the source portrait-center screen point is x111/y82.
+
+Firestaff implementation/probe anchors
+--------------------------------------
+- m11_game_view.c routes V1 chrome left-clicks in C007 viewport through M11_GameView_GetV1MouseCommandForPoint; command==80, space==M11_DM1_MOUSE_SPACE_SCREEN, zoneId==7 calls m11_process_v1_c080_click(state,x,y).
+- probes/m11/firestaff_m11_game_view_probe.c includes the narrow state-precondition checks INV_GV_434*, INV_GV_400-407*, and INV_GV_07I*.
+
+Verification command and result
+-------------------------------
+Command:
+  ./run_firestaff_m11_game_view_probe.sh parity-evidence/verification/pass176_redmcsb_c080_state_precondition/probe_run_data ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA
+
+Result:
+  # summary: 597/597 invariants passed
+
+Relevant verifier lines:
+  PASS INV_GV_434  DM1 secondary movement table maps left-click C007 viewport to command C080 click-in-dungeon-view
+  PASS INV_GV_434A DM1 C080 viewport route includes the source C007 top-left edge
+  PASS INV_GV_434B DM1 C080 viewport route includes the source C007 bottom-right edge
+  PASS INV_GV_434C DM1 C080 viewport route stops outside C007 and does not leak into adjacent screen space
+  PASS INV_GV_400  M11 game view builds champion mirror catalog from DUNGEON.DAT at start
+  PASS INV_GV_405  M11 resolves the source mirror TextString in the front viewport cell
+  PASS INV_GV_406  M11 mirror click opens a source-backed resurrect/reincarnate candidate panel
+  PASS INV_GV_407A0 non-portrait C007 viewport click follows C080 source routing and does not use Firestaff procedural turn shortcuts or open the mirror panel
+  PASS INV_GV_407A source portrait click center x111/y82 opens the mirror candidate panel when a mirror TextString is in the front cell
+  PASS INV_GV_407B source C160 resurrect center x130/y115 confirms the open mirror candidate panel
+  PASS INV_GV_407C source C161 reincarnate center x186/y115 confirms the open mirror candidate panel
+  PASS INV_GV_407  M11 mirror panel resurrect command recruits the selected champion
+  PASS INV_GV_07I0 V1 C080 front-door path ignores non-button viewport clicks instead of using procedural steering/toggle shortcuts
+  PASS INV_GV_07I1 V1 C080 source D1C door-button zone x167..174/y43..51 toggles the front door through the door animation path
+  PASS INV_GV_07I  space toggles a closed front door into an animating step and updates the real dungeon square one state closer to OPEN
+
+Negative/control note
+---------------------
+I first ran the same probe against ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 (one level too high). It produced 456/597 with asset/mirror-catalog failures because GRAPHICS.DAT and DUNGEON.DAT live in the DATA subdirectory. Rerunning with .../DungeonMasterPC34/DATA passed 597/597.
+
+Conclusion / next blocker
+-------------------------
+The blocker is narrowed beyond x/y coordinates: current Firestaff command delivery, dungeon mirror data, party direction/front-square state, non-portrait no-op branch, candidate panel, and C160/C161 confirm path all pass deterministically. The remaining pass174 no-visible-delta observation is specific to the original/emulator capture precondition/handoff, not the Firestaff C080 implementation. Next work should verify the original run actual front square contains a visible C127 mirror sensor at click time (and is not still in entrance/title/handoff state) before considering BUG0_73 queue overwrite/drop; do not resume blind coordinate guessing.
