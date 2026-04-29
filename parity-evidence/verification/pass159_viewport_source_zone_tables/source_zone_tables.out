@@ -1,0 +1,8 @@
+V1 viewport content zone table verification passed
+- source: zones_h_reconstruction.json GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- C2500 object/item anchors: 68 records match layout-696 C2500..C2567 at m11_game_view.c:10026
+- C2500 renderer subset: 20 records match the first source rows at m11_game_view.c:9997
+- C2900 projectile anchors: 48 records match layout-696 C2900..C2947 at m11_game_view.c:5847
+- C2900 renderer subset: 20 records match the first source rows at m11_game_view.c:5817
+- C3200 center creature anchors: 45 code points are source C3200-family records at m11_game_view.c:1556
+- C3200 side creature anchors: 90 code points are source C3200-family records at m11_game_view.c:1593

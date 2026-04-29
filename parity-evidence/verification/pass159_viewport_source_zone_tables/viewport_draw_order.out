@@ -1,0 +1,3 @@
+V1 viewport draw-order source-shape verification passed
+- wall/door ornaments before open-cell contents: m11_game_view.c:7591
+- open-cell layer order: layer 0 floor ornaments -> floor ornament draw -> layer 1 floor items -> item sprite draw -> layer 2 creatures -> creature sprite draw -> layer 3 projectiles/effects -> effect/projectile draw at m11_game_view.c:7714
