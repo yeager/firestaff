@@ -59,6 +59,8 @@ set(M11_SOURCES
     graphics_dat_snd3_loader_v1.c
     song_dat_loader_v1.c
     sound_event_snd3_map_v1.c
+    title_dat_loader_v1.c
+    title_frontend_v1.c
     asset_loader_m11.c
     font_m11.c
     fs_portable_compat.c

@@ -13,6 +13,9 @@
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
+#include "title_frontend_v1.h"
+#include "asset_status_m12.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,6 +128,142 @@ void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
     M11_Render_SetIntegerScaling(menuState->settings.integerScaling);
     M11_Render_SetScaleFilter(menuState->settings.scalingFilterIndex);
     M11_Render_SetVSync(menuState->settings.vsyncIndex);
+}
+
+
+static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
+                                        char* outPath,
+                                        size_t outPathBytes) {
+    const char* envPath;
+    const char* dataDir;
+    char candidate[FSP_PATH_MAX];
+    char parent[FSP_PATH_MAX];
+    const M12_AssetVersionStatus* dm1v;
+    size_t i;
+    static const char* suffixes[] = {
+        "TITLE",
+        "DungeonMasterPC34/TITLE",
+        "DungeonMasterPC34Multilingual/TITLE",
+        "dm-pc34/DungeonMasterPC34/TITLE",
+        "dm-pc34/DungeonMasterPC34Multilingual/TITLE"
+    };
+
+    if (!outPath || outPathBytes == 0U) {
+        return 0;
+    }
+    outPath[0] = '\0';
+
+    envPath = getenv("FIRESTAFF_TITLE_DAT");
+    if (envPath && envPath[0] != '\0' && FSP_FileExists(envPath)) {
+        snprintf(outPath, outPathBytes, "%s", envPath);
+        return 1;
+    }
+
+    if (menuState) {
+        for (i = 0U; i < M12_AssetStatus_GetVersionCount("dm1"); ++i) {
+            dm1v = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1", i);
+            if (dm1v && dm1v->matched && FSP_ParentDir(parent, sizeof(parent), dm1v->matchedPath)) {
+                if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE") &&
+                    FSP_FileExists(candidate)) {
+                    snprintf(outPath, outPathBytes, "%s", candidate);
+                    return 1;
+                }
+            }
+        }
+    }
+
+    dataDir = menuState ? M12_AssetStatus_GetDataDir(&menuState->assetStatus) : NULL;
+    if (!dataDir || dataDir[0] == '\0') {
+        dataDir = ".";
+    }
+    for (i = 0U; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+        if (FSP_JoinPath(candidate, sizeof(candidate), dataDir, suffixes[i]) &&
+            FSP_FileExists(candidate)) {
+            snprintf(outPath, outPathBytes, "%s", candidate);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m11_unpack_title_4bpp_to_indexed(const unsigned char* packed4bpp,
+                                             unsigned char* indexed) {
+    unsigned int y;
+    unsigned int x;
+    for (y = 0U; y < (unsigned int)M11_FB_HEIGHT; ++y) {
+        const unsigned char* src = packed4bpp + y * 160U;
+        unsigned char* dst = indexed + y * (unsigned int)M11_FB_WIDTH;
+        for (x = 0U; x < (unsigned int)M11_FB_WIDTH; x += 2U) {
+            unsigned char b = src[x >> 1];
+            dst[x] = (unsigned char)((b >> 4) & 0x0fU);
+            dst[x + 1U] = (unsigned char)(b & 0x0fU);
+        }
+    }
+}
+
+static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
+                                                      int* outPlayedAnyFrame) {
+    char titlePath[FSP_PATH_MAX];
+    unsigned char* packedStorage;
+    unsigned char* packedScreen;
+    unsigned char* indexedScreen;
+    char err[160];
+    unsigned int step;
+    V1_TitleFrontendSourceTiming timing;
+
+    if (outPlayedAnyFrame) {
+        *outPlayedAnyFrame = 0;
+    }
+    if (!m11_find_title_dat_for_intro(menuState, titlePath, sizeof(titlePath))) {
+        return;
+    }
+    packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
+    indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES);
+    if (!packedStorage || !indexedScreen) {
+        free(packedStorage);
+        free(indexedScreen);
+        return;
+    }
+    packedScreen = packedStorage + 4U;
+    timing = V1_TitleFrontend_GetSourceTimingEvidence();
+    (void)timing;
+
+    /* ReDMCSB TITLE.C source-lock:
+     *   TITLE.C:430 draws PRESENTS.
+     *   TITLE.C:456 waits M526_WaitVerticalBlank() before each reverse-order
+     *               zoom blit to C425_ZONE_TITLE_CHAOS.
+     *   TITLE.C:460 delays 20 ticks.
+     *   TITLE.C:461 draws STRIKES BACK.
+     *   TITLE.C:463 final delay/guard before the next screen.
+     * Runtime uses the already decoded original 53-frame TITLE bank as the
+     * visible source and presents it before the launcher, instead of skipping
+     * straight to the menu. */
+    for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
+        V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
+        memset(packedStorage, 0, 4U + 32000U);
+        memset(indexedScreen, 0, (size_t)M11_FB_BYTES);
+        err[0] = '\0';
+        if (!V1_TitleFrontend_RenderFrameToScreen(titlePath,
+                                                  d.renderFrameOrdinal,
+                                                  packedScreen,
+                                                  NULL,
+                                                  err,
+                                                  sizeof(err))) {
+            break;
+        }
+        m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
+        if (outPlayedAnyFrame) {
+            *outPlayedAnyFrame = 1;
+        }
+        M11_Render_PresentIndexed(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT);
+        SDL_Delay(33);
+        if (M11_Render_PumpEvents()) {
+            break;
+        }
+    }
+    SDL_Delay(330);
+    free(packedStorage);
+    free(indexedScreen);
 }
 
 static int m11_open_requested_launch(M11_GameViewState* gameView,
@@ -818,6 +957,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     M11_GameView_Init(&gameView);
     M11_ApplyStartupMenuRuntime(&menuState);
+    {
+        int titleIntroPlayed = 0;
+        if (M12_StartupMenu_GetPresentationMode(&menuState) == M12_PRESENTATION_V1_ORIGINAL) {
+            m11_play_redmcsb_title_intro_if_available(&menuState, &titleIntroPlayed);
+        }
+        (void)titleIntroPlayed;
+    }
     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
 
     /* Compute deadlines using millisecond ticks. SDL_GetTicks returns
