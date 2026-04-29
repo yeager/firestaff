@@ -1,6 +1,6 @@
 # Pass 166 — source portrait click route probe
 
-- run base: `<N2_RUNS>/20260429-045405-pass166-source-portrait-click-route-probe`
+- run base: `<N2_RUNS>/20260429-074347-pass166-source-portrait-click-route-probe`
 - evidence root: `parity-evidence/verification/pass166_source_portrait_click_route_probe`
 - completed: 2
 - errors: 0
@@ -16,8 +16,8 @@
 
 ## Result matrix
 
-- `enter_portrait11182_then_resurrect` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 1339aaf0473c, 17bd7e878157, 307323fbc1f7, 342d4e7bdac2, 48ed3743ab6a, 84171db7b6d4, ab7acc8ca298 — `parity-evidence/verification/pass166_source_portrait_click_route_probe/enter_portrait11182_then_resurrect`
-- `enter_portrait11182_then_reincarnate` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 125549ae51c3, 17bd7e878157, 307323fbc1f7, 48ed3743ab6a, a914971a8a47, ceb0c2eec633, d16f5430cfd0 — `parity-evidence/verification/pass166_source_portrait_click_route_probe/enter_portrait11182_then_reincarnate`
+- `enter_portrait11182_then_resurrect` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 1339aaf0473c, 17bd7e878157, 307323fbc1f7, 48ed3743ab6a, 84171db7b6d4, a914971a8a47, c6f457763e2e — `parity-evidence/verification/pass166_source_portrait_click_route_probe/enter_portrait11182_then_resurrect`
+- `enter_portrait11182_then_reincarnate` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 125549ae51c3, 17bd7e878157, 307323fbc1f7, 48ed3743ab6a, 4c74e1f91f3c, a914971a8a47, ceb0c2eec633 — `parity-evidence/verification/pass166_source_portrait_click_route_probe/enter_portrait11182_then_reincarnate`
 
 ## Interpretation
 
