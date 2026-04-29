@@ -1,21 +1,3 @@
-# Pass 192 — ReDMCSB save/rest/toggle consequences
-
-Source-first audit (DM1 PC 3.4 / I34E-relevant ReDMCSB source):
-- `DEFS.H:332-335` defines `C140_COMMAND_SAVE_GAME=140`, `C145_COMMAND_REST=145`, and `C146_COMMAND_WAKE_UP=146`.
-- `COMMAND.C:412-415` keeps close-inventory/save/rest reachable from the champion-inventory secondary mouse table.
-- `COMMAND.C:578-625` defines the primary interface keyboard table for inventory toggles, save-game, and freeze.
-- `COMMAND.C:2180-2184` dispatches inventory toggle/close only when the target champion exists (or close-inventory) and no candidate champion inventory is open.
-- `COMMAND.C:2336-2359` handles rest only when no candidate champion is open; if a normal inventory is open it closes it, draws disabled menus/rest screen, sets `G0300_B_PartyIsResting`, redraws the viewport with `C2_VIEWPORT_AS_BEFORE_REST_OR_FREEZE_GAME`, switches to party-resting primary mouse/keyboard tables, clears secondary input, and discards queued input.
-- `COMMAND.C:2361-2363` dispatches wake-up via `F0314_CHAMPION_WakeUp()`.
-- `COMMAND.C:2366-2370` invokes save-game only when the party has at least one champion and no candidate champion is open.
-
-Implementation update:
-- Replaced the previous always-true evidence stub with a small source-locked evaluator for save/rest/wake/toggle command consequences.
-- The probe now records concrete branch cases for rest with inventory, rest blocked by candidate inventory, save allowed, save blocked with no party, and wake-up dispatch.
-
-Probe output (`verification-m11/n2-dm1-save-rest-source-lock-20260429/probe_output.txt`):
-
-```text
 probe=firestaff_save_rest_toggle_consequences
 sourceEvidence=DEFS.H:332-335 defines save/rest/wake command ordinals; COMMAND.C:412-415 keeps save/rest/close-inventory active in inventory secondary mouse input; COMMAND.C:578-625 defines interface keyboard routes for inventory toggles/save/freeze; COMMAND.C:2180-2184 dispatches toggle/close inventory only when no candidate champion is open; COMMAND.C:2336-2359 handles rest only when no candidate champion is open, closes inventory first, draws disabled menus/rest screen, sets G0300_B_PartyIsResting, redraws viewport, switches primary input to party-resting tables, clears secondary input, and discards queued input; COMMAND.C:2361-2363 dispatches wake-up; COMMAND.C:2366-2370 saves only when party count > 0 and no candidate champion is open.
 case=rest_with_inventory handled=1 toggleInventoryChampionIndex=0 closeInventory=1 processSaveGame=0 partyIsResting=1 drawDisabledMenus=1 drawRestScreen=1 primaryMouseInputPartyResting=1 primaryKeyboardInputPartyResting=1 discardAllInput=1 wakeUp=0
@@ -24,4 +6,3 @@ case=save_allowed handled=1 toggleInventoryChampionIndex=0 closeInventory=0 proc
 case=save_no_party handled=1 toggleInventoryChampionIndex=0 closeInventory=0 processSaveGame=0 partyIsResting=0 drawDisabledMenus=0 drawRestScreen=0 primaryMouseInputPartyResting=0 primaryKeyboardInputPartyResting=0 discardAllInput=0 wakeUp=0
 case=wake_up handled=1 toggleInventoryChampionIndex=0 closeInventory=0 processSaveGame=0 partyIsResting=0 drawDisabledMenus=0 drawRestScreen=0 primaryMouseInputPartyResting=0 primaryKeyboardInputPartyResting=0 discardAllInput=0 wakeUp=1
 saveRestToggleConsequencesInvariantOk=1
-```
