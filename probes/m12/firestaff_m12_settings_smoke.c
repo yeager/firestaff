@@ -1,4 +1,9 @@
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE 1
+#endif
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
+#endif
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
