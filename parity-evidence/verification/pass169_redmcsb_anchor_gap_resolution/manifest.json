@@ -1,0 +1,2407 @@
+{
+  "schema": "pass169_redmcsb_anchor_gap_resolution.v1",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "resolved": 11,
+  "total": 11,
+  "records": [
+    {
+      "pass": "17",
+      "topic": "VGA screenshot/palette export correctness",
+      "claim": "Firestaff probe screenshots must decode PC/VGA indexed graphics through the VGA display path rather than treating packed framebuffer bytes as grayscale.",
+      "files": [
+        "DM.C",
+        "IMAGE5.C",
+        "PC.H"
+      ],
+      "tokens": [
+        "C1_VGA_GRAPHICS",
+        "F8076_IsVGAGraphicsDetected",
+        "F0680_CopyPixelsToScreenWithoutTransparency",
+        "C25_VGA"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "DM.C",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "IMAGE5.C",
+          "hits": [
+            {
+              "file": "IMAGE5.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "PC.H",
+          "hits": [
+            {
+              "file": "PC.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C1_VGA_GRAPHICS",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 16,
+              "text": "#define C1_VGA_GRAPHICS   1"
+            },
+            {
+              "file": "DM.C",
+              "line": 626,
+              "text": "{ \"VGA Graphics\",   C0_FALSE, C1_VGA_GRAPHICS   },"
+            },
+            {
+              "file": "DM.C",
+              "line": 763,
+              "text": "G8023_Video[C1_VGA_GRAPHICS - 1].Allowed = L2397_B_VGAGraphicsDetected = F8076_IsVGAGraphicsDetected();"
+            },
+            {
+              "file": "DM.C",
+              "line": 798,
+              "text": "G8016_VideoChoice = C1_VGA_GRAPHICS;"
+            },
+            {
+              "file": "DM.C",
+              "line": 1031,
+              "text": "G8016_VideoChoice = C1_VGA_GRAPHICS;"
+            },
+            {
+              "file": "DM.C",
+              "line": 1043,
+              "text": "case C1_VGA_GRAPHICS:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F8076_IsVGAGraphicsDetected",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 462,
+              "text": "BOOLEAN F8076_IsVGAGraphicsDetected("
+            },
+            {
+              "file": "DM.C",
+              "line": 763,
+              "text": "G8023_Video[C1_VGA_GRAPHICS - 1].Allowed = L2397_B_VGAGraphicsDetected = F8076_IsVGAGraphicsDetected();"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0680_CopyPixelsToScreenWithoutTransparency",
+          "hits": [
+            {
+              "file": "ANIMIMG.C",
+              "line": 269,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(0, L2112_ui_, L2111_ui_);"
+            },
+            {
+              "file": "IMAGE2.C",
+              "line": 234,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2719_ui_, L2720_ui_, L2726_ui_);"
+            },
+            {
+              "file": "IMAGE2.C",
+              "line": 251,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2719_ui_, L2720_ui_, L2725_ui_);"
+            },
+            {
+              "file": "IMAGE2.C",
+              "line": 325,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(0, L2720_ui_, L2725_ui_);"
+            },
+            {
+              "file": "IMAGE3.C",
+              "line": 884,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2511_i_SourcePixelIndex, L2512_i_DestinationPixelIndex, L2509_ui_Width);"
+            },
+            {
+              "file": "IMAGE3.C",
+              "line": 896,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2511_i_SourcePixelIndex, L2512_i_DestinationPixelIndex, L2509_ui_Width);"
+            },
+            {
+              "file": "IMAGE3.C",
+              "line": 1027,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2744_i_, L2743_ui_ % 320, L2751_ui_);"
+            },
+            {
+              "file": "IMAGE3.C",
+              "line": 1041,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2744_i_, L2743_ui_ % 320, L2752_ui_);"
+            },
+            {
+              "file": "IMAGE5.C",
+              "line": 5,
+              "text": "FUNC_DEF static void F0680_CopyPixelsToScreenWithoutTransparency( /* For VGA: writes a byte (8 bit) to video memory for each source pixel (4 bit) from G2159_puc_Bitmap_Source */"
+            },
+            {
+              "file": "NEC816.C",
+              "line": 1607,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2511_i_SourcePixelIndex, L2512_i_DestinationPixelIndex, L2509_ui_Width);"
+            },
+            {
+              "file": "NEC816.C",
+              "line": 1633,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(L2511_i_SourcePixelIndex, L2512_i_DestinationPixelIndex, L2509_ui_Width);"
+            },
+            {
+              "file": "NEC816.C",
+              "line": 1899,
+              "text": "F0680_CopyPixelsToScreenWithoutTransparency(0, L2519_i_DestinationOffset, L2518_ui_Width);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C25_VGA",
+          "hits": [
+            {
+              "file": "COMPILE.H",
+              "line": 129,
+              "text": "#define C25_VGA       25"
+            },
+            {
+              "file": "COMPILE.H",
+              "line": 450,
+              "text": "#define EXETYPE C25_VGA"
+            },
+            {
+              "file": "IMAGE5.C",
+              "line": 936,
+              "text": "#if (EXETYPE == C25_VGA)"
+            },
+            {
+              "file": "PC.H",
+              "line": 17,
+              "text": "#if EXETYPE == C25_VGA"
+            },
+            {
+              "file": "PCGLB.H",
+              "line": 34,
+              "text": "#if EXETYPE == C25_VGA"
+            },
+            {
+              "file": "VIDEODRV.C",
+              "line": 11,
+              "text": "#if (EXETYPE == C25_VGA)"
+            },
+            {
+              "file": "VIDEODRV.C",
+              "line": 18,
+              "text": "#if (EXETYPE == C25_VGA)"
+            },
+            {
+              "file": "VIDEODRV.C",
+              "line": 61,
+              "text": "#if (EXETYPE == C25_VGA)"
+            },
+            {
+              "file": "VIDEODRV.C",
+              "line": 100,
+              "text": "#if (EXETYPE == C25_VGA)"
+            },
+            {
+              "file": "VIDEODRV.C",
+              "line": 139,
+              "text": "#if (EXETYPE == C25_VGA)"
+            },
+            {
+              "file": "VIDEODRV.C",
+              "line": 178,
+              "text": "#if (EXETYPE == C25_VGA)"
+            },
+            {
+              "file": "VIDEODRV.C",
+              "line": 217,
+              "text": "#if (EXETYPE == C25_VGA)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "64",
+      "topic": "clean original TITLE window capture path",
+      "claim": "The selector route is source-backed by DM.C video/sound/controller choices and the resulting executable program name VGA before TITLE.C owns the title runtime.",
+      "files": [
+        "DM.C",
+        "TITLE.C"
+      ],
+      "tokens": [
+        "G8023_Video",
+        "\"VGA Graphics\"",
+        "F8078_strcpy(L2384_ac_VideoProgramName, \"VGA\")",
+        "F0437_STARTEND_DrawTitle"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "DM.C",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "TITLE.C",
+          "hits": [
+            {
+              "file": "TITLE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G8023_Video",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 625,
+              "text": "MENU_CHOICE G8023_Video[C3_VIDEO_CHOICE_COUNT] = {"
+            },
+            {
+              "file": "DM.C",
+              "line": 763,
+              "text": "G8023_Video[C1_VGA_GRAPHICS - 1].Allowed = L2397_B_VGAGraphicsDetected = F8076_IsVGAGraphicsDetected();"
+            },
+            {
+              "file": "DM.C",
+              "line": 764,
+              "text": "G8023_Video[C2_EGA_GRAPHICS - 1].Allowed = L2398_B_EGAGraphicsDetected = F8077_IsEGAGraphicsDetected();"
+            },
+            {
+              "file": "DM.C",
+              "line": 765,
+              "text": "G8023_Video[C3_TANDY_GRAPHICS - 1].Allowed = L2399_B_TandyGraphicsDetected = F8073_IsTandy1000ComputerDetected();"
+            },
+            {
+              "file": "DM.C",
+              "line": 895,
+              "text": "G8016_VideoChoice = F8086_GetMenuChoice(G8023_Video, C3_VIDEO_CHOICE_COUNT);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "\"VGA Graphics\"",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 626,
+              "text": "{ \"VGA Graphics\",   C0_FALSE, C1_VGA_GRAPHICS   },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F8078_strcpy(L2384_ac_VideoProgramName, \"VGA\")",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 1045,
+              "text": "F8078_strcpy(L2384_ac_VideoProgramName, \"VGA\");"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0437_STARTEND_DrawTitle",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 8581,
+              "text": "extern void F0437_STARTEND_DrawTitle();"
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 142,
+              "text": "#define F0437_STARTEND_DrawTitle                                                  DO_TITLE_ANIMATION"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1611,
+              "text": "#define F0437_STARTEND_DrawTitle                                                  F0437_"
+            },
+            {
+              "file": "STARTUP1.C",
+              "line": 143,
+              "text": "F0437_STARTEND_DrawTitle();"
+            },
+            {
+              "file": "STARTUP2.C",
+              "line": 1392,
+              "text": "F0437_STARTEND_DrawTitle();"
+            },
+            {
+              "file": "TITLE.C",
+              "line": 12,
+              "text": "void F0437_STARTEND_DrawTitle("
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "71",
+      "topic": "deterministic in-game capture smoke gate",
+      "claim": "The six-capture smoke gate protects the source-derived viewport pipeline rooted in DRAWVIEW/DUNVIEW/PANEL screen blits.",
+      "files": [
+        "DRAWVIEW.C",
+        "DUNVIEW.C",
+        "PANEL.C"
+      ],
+      "tokens": [
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "F0127_DUNGEONVIEW_DrawSquare",
+        "C000_DERIVED_BITMAP_VIEWPORT",
+        "F0351_INVENTORY_DrawChampionSkillsAndStatistics"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "DRAWVIEW.C",
+          "hits": [
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "PANEL.C",
+          "hits": [
+            {
+              "file": "PANEL.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0097_DUNGEONVIEW_DrawViewport",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 60,
+              "text": "#define F0097_DUNGEONVIEW_DrawViewport                                            F097_lzzz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 1107,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C0_VIEWPORT_NOT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2346,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C2_VIEWPORT_AS_BEFORE_REST_OR_FREEZE_GAME);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2410,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C2_VIEWPORT_AS_BEFORE_REST_OR_FREEZE_GAME);"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 6956,
+              "text": "extern void F0097_DUNGEONVIEW_DrawViewport("
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 288,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C0_VIEWPORT_NOT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 862,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C0_VIEWPORT_NOT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 709,
+              "text": "void F0097_DUNGEONVIEW_DrawViewport("
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8606,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8610,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "ENTRANCE.C",
+              "line": 367,
+              "text": "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 373,
+              "text": "#define F0097_DUNGEONVIEW_DrawViewport                                            WIPE_DUNBUF"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0127_DUNGEONVIEW_DrawSquare",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 7003,
+              "text": "/*STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C();*/"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 1983,
+              "text": "STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C("
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8164,
+              "text": "STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C("
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 8542,
+              "text": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1293,
+              "text": "#define F0127_DUNGEONVIEW_DrawSquareD0C                                           F0127_"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C000_DERIVED_BITMAP_VIEWPORT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 2407,
+              "text": "#define C000_DERIVED_BITMAP_VIEWPORT                    0 /* Versions 1.x and 2.x: Used while drawing fields (graphics #73 to #74) and explosion patterns (graphics #351 to #359) over the viewport (224"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 901,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 902,
+              "text": "L1315_puc_Bitmap_DialogPatch = F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 970,
+              "text": "F0493_CACHE_AddDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DIALOG.C",
+              "line": 971,
+              "text": "F0480_CACHE_ReleaseBlock(C000_DERIVED_BITMAP_VIEWPORT | MASK0x8000_DERIVED_BITMAP);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4453,
+              "text": "F0491_CACHE_IsDerivedBitmapInCache(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4461,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_Box, M005_RANDOM(2) "
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4464,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), P0136_puc_Box, M005_RANDOM(2) "
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4467,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), L2472_ai_XYZ, M005_RANDOM(2) +"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4470,
+              "text": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport, L0118_puc_Bitmap_Mask, F0492_CACHE_GetDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT), L2472_ai_XYZ, M005_RANDOM(2) +"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4472,
+              "text": "F0493_CACHE_AddDerivedBitmap(C000_DERIVED_BITMAP_VIEWPORT);"
+            },
+            {
+              "file": "DUNVIEW.C",
+              "line": 4473,
+              "text": "F0480_CACHE_ReleaseBlock(C000_DERIVED_BITMAP_VIEWPORT | MASK0x8000_DERIVED_BITMAP);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0351_INVENTORY_DrawChampionSkillsAndStatistics",
+          "hits": [
+            {
+              "file": "CHAMDRAW.C",
+              "line": 1066,
+              "text": "F0351_INVENTORY_DrawChampionSkillsAndStatistics();"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 8174,
+              "text": "extern void F0351_INVENTORY_DrawChampionSkillsAndStatistics("
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 339,
+              "text": "#define F0351_INVENTORY_DrawChampionSkillsAndStatistics                           SHOW_EXPERIENCE"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1516,
+              "text": "#define F0351_INVENTORY_DrawChampionSkillsAndStatistics                           F0351_"
+            },
+            {
+              "file": "PANEL.C",
+              "line": 1965,
+              "text": "void F0351_INVENTORY_DrawChampionSkillsAndStatistics("
+            },
+            {
+              "file": "PANEL.C",
+              "line": 2154,
+              "text": "F0351_INVENTORY_DrawChampionSkillsAndStatistics();"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "78",
+      "topic": "original route lock attempt text-mode blocker",
+      "claim": "Text-mode selector captures are blockers until DM.C selects the VGA executable and COMMAND.C viewport/movement commands can operate on a 320x200 graphics frame.",
+      "files": [
+        "DM.C",
+        "COMMAND.C",
+        "TITLE.C"
+      ],
+      "tokens": [
+        "G8023_Video",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C001_COMMAND_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "F0437_STARTEND_DrawTitle"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "DM.C",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "TITLE.C",
+          "hits": [
+            {
+              "file": "TITLE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G8023_Video",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 625,
+              "text": "MENU_CHOICE G8023_Video[C3_VIDEO_CHOICE_COUNT] = {"
+            },
+            {
+              "file": "DM.C",
+              "line": 763,
+              "text": "G8023_Video[C1_VGA_GRAPHICS - 1].Allowed = L2397_B_VGAGraphicsDetected = F8076_IsVGAGraphicsDetected();"
+            },
+            {
+              "file": "DM.C",
+              "line": 764,
+              "text": "G8023_Video[C2_EGA_GRAPHICS - 1].Allowed = L2398_B_EGAGraphicsDetected = F8077_IsEGAGraphicsDetected();"
+            },
+            {
+              "file": "DM.C",
+              "line": 765,
+              "text": "G8023_Video[C3_TANDY_GRAPHICS - 1].Allowed = L2399_B_TandyGraphicsDetected = F8073_IsTandy1000ComputerDetected();"
+            },
+            {
+              "file": "DM.C",
+              "line": 895,
+              "text": "G8016_VideoChoice = F8086_GetMenuChoice(G8023_Video, C3_VIDEO_CHOICE_COUNT);"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 305,
+              "text": "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C001_COMMAND_TURN_LEFT",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 158,
+              "text": "if (P0734_i_Command == C001_COMMAND_TURN_LEFT) {"
+            },
+            {
+              "file": "CLIKMENU.C",
+              "line": 165,
+              "text": "F0362_COMMAND_HighlightBoxEnable((P0734_i_Command == C001_COMMAND_TURN_LEFT) ? C068_ZONE_TURN_LEFT : C069_ZONE_TURN_RIGHT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 108,
+              "text": "{ C001_COMMAND_TURN_LEFT,             234, 261, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 254,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x0088 }, /* Numeric pad 4 Atari ST: Code = 0x5200 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 274,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0xAB34 }, /* Numeric pad 4 Atari ST: Code = 0x5200 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 286,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x007F }, /* Del (0x7F) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 288,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x9B61 }, /* Shift Forward Arrow (<CSI> A) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 300,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x007F }, /* Del (0x7F) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 301,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x9BFF }, /* Shift Del (0x7F) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 397,
+              "text": "{ C001_COMMAND_TURN_LEFT,               CM1_SCREEN_RELATIVE, C068_ZONE_TURN_LEFT,     0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 638,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x004F },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 646,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x0046 },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C003_COMMAND_MOVE_FORWARD",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 256,
+              "text": "AL1118_ui_MovementArrowIndex = P0735_ui_Command - C003_COMMAND_MOVE_FORWARD;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 109,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 255,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x000B }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 275,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0xAB35 }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 280,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x9B41 }, /* Up Arrow (<CSI>A) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 281,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x9B54 }, /* Shift Up Arrow (<CSI>T) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 398,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,            CM1_SCREEN_RELATIVE, C070_ZONE_MOVE_FORWARD,  0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 639,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x004D },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 647,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x0047 },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 655,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x0132 },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 663,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x013C },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 671,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x4C00 },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0437_STARTEND_DrawTitle",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 8581,
+              "text": "extern void F0437_STARTEND_DrawTitle();"
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 142,
+              "text": "#define F0437_STARTEND_DrawTitle                                                  DO_TITLE_ANIMATION"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1611,
+              "text": "#define F0437_STARTEND_DrawTitle                                                  F0437_"
+            },
+            {
+              "file": "STARTUP1.C",
+              "line": 143,
+              "text": "F0437_STARTEND_DrawTitle();"
+            },
+            {
+              "file": "STARTUP2.C",
+              "line": 1392,
+              "text": "F0437_STARTEND_DrawTitle();"
+            },
+            {
+              "file": "TITLE.C",
+              "line": 12,
+              "text": "void F0437_STARTEND_DrawTitle("
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "137",
+      "topic": "F1/F2 high-density original route probe",
+      "claim": "F1/F2/number-key route frames are candidate-menu evidence only; source party creation still requires COMMAND.C/MOVESENS champion portrait sensor flow.",
+      "files": [
+        "COMMAND.C",
+        "MOVESENS.C",
+        "REVIVE.C"
+      ],
+      "tokens": [
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty",
+        "C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+        "C161_COMMAND_CLICK_IN_PANEL_REINCARNATE"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "REVIVE.C",
+          "hits": [
+            {
+              "file": "REVIVE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0280_CHAMPION_AddCandidateChampionToParty",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 150,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F280_agzz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 542,
+              "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J /* CHANG"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7845,
+              "text": "extern void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 225,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                PICK_CHARACTER"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1445,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F0280_"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1502,
+              "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 63,
+              "text": "void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 810,
+              "text": "for (AL0823_ui_StatisticIndex = C1_STATISTIC_STRENGTH; AL0823_ui_StatisticIndex <= C6_STATISTIC_ANTIFIRE; AL0823_ui_StatisticIndex++) { /* This loop does not affect Luck. When the loop starts, the min"
+            },
+            {
+              "file": "STARTUP2.C",
+              "line": 383,
+              "text": "F0067_MOUSE_SetPointerToNormal(C0_POINTER_ARROW); /* BUG0_60 On the Reincarnate/Resurrect screen, the 'Arrow' mouse pointer is replaced by the 'Hand' pointer after you grab an object and put it back. "
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 231,
+              "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   104, 158,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 158,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 236,
+              "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   108, 158,  90, 138, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 158,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 509,
+              "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   CM2_VIEWPORT_RELATIVE, M664_ZONE_RESURRECT,   0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 338,
+              "text": "#define C160_COMMAND_CLICK_IN_PANEL_RESURRECT                               160"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 849,
+              "text": "if (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) {"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 875,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" RESURRECTED.\" : \" REINCARNATED.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 878,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" ZUM LEBEN ERWECKT.\" : \" REINKARNIERT.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 881,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" VOM TODE ERWECKT.\" : \" REINKARNIERT.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 884,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" RESSUSCITE.\" : \" REINCARNE.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 888,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \"\u0082\u00cd\u0090\u00b6\u0082\u00ab\u0095\u00d4\u0082\u00c1\u0082\u00bd\" : \"\u0082\u00cd\u0090\u00b6\u0082\u00dc\u0082\u00ea\u0095\u00cf\u0082\u00ed\u0082\u00c1\u0082\u00bd\");"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 232,
+              "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, 163, 217,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 163, 217,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 237,
+              "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, 161, 211,  90, 138, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 163, 217,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 510,
+              "text": "{ C161_COMMAND_CLICK_IN_PANEL_REINCARNATE, CM2_VIEWPORT_RELATIVE, M665_ZONE_REINCARNATE, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 339,
+              "text": "#define C161_COMMAND_CLICK_IN_PANEL_REINCARNATE                             161"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 806,
+              "text": "if (P0598_i_Command == C161_COMMAND_CLICK_IN_PANEL_REINCARNATE) {"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "151",
+      "topic": "48ed static no-party bbox blocker",
+      "claim": "Repeated 48ed frames cover the source viewport rectangle but do not prove COMMAND.C movement/party input state; treat them as static no-party placeholders.",
+      "files": [
+        "COMMAND.C",
+        "COORD.C",
+        "DUNVIEW.C"
+      ],
+      "tokens": [
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "G2067_i_ViewportScreenX",
+        "G2068_i_ViewportScreenY",
+        "C007_ZONE_VIEWPORT"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COORD.C",
+          "hits": [
+            {
+              "file": "COORD.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DUNVIEW.C",
+          "hits": [
+            {
+              "file": "DUNVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 305,
+              "text": "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2067_i_ViewportScreenX",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 348,
+              "text": "P0752_i_X -= G2067_i_ViewportScreenX;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1122,
+              "text": "M704_ZONE_LEFT(L2283_ai_XYZ) += G2067_i_ViewportScreenX;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1409,
+              "text": "if (((P0722_i_X - G2067_i_ViewportScreenX) <= M705_ZONE_RIGHT(L2286_ai_XYZ)) && ((P0722_i_X - G2067_i_ViewportScreenX) >= M704_ZONE_LEFT(L2286_ai_XYZ)) && ((P0723_i_Y - G2068_i_ViewportScreenY) <= M70"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1412,
+              "text": "if (F0798_COMMAND_IsPointInZone(L2286_ai_XYZ, P0722_i_X - G2067_i_ViewportScreenX, P0723_i_Y - G2068_i_ViewportScreenY))"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1693,
+              "text": "int16_t G2067_i_ViewportScreenX = 0;"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 6365,
+              "text": "extern int16_t G2067_i_ViewportScreenX;"
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 623,
+              "text": "#define G2067_i_ViewportScreenX                                                   DUNVIEW_X"
+            },
+            {
+              "file": "STARTUP2.C",
+              "line": 1669,
+              "text": "G3118_ = G3090_X68000VideoMemoryAddress + (G3089_ * G2068_i_ViewportScreenY) + (G2067_i_ViewportScreenX * 2);"
+            },
+            {
+              "file": "TOWNSGLB.H",
+              "line": 1143,
+              "text": "extern int16_t G2067_i_ViewportScreenX;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2068_i_ViewportScreenY",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 349,
+              "text": "P0753_i_Y -= G2068_i_ViewportScreenY;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1123,
+              "text": "M706_ZONE_TOP(L2283_ai_XYZ) += G2068_i_ViewportScreenY;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1409,
+              "text": "if (((P0722_i_X - G2067_i_ViewportScreenX) <= M705_ZONE_RIGHT(L2286_ai_XYZ)) && ((P0722_i_X - G2067_i_ViewportScreenX) >= M704_ZONE_LEFT(L2286_ai_XYZ)) && ((P0723_i_Y - G2068_i_ViewportScreenY) <= M70"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1412,
+              "text": "if (F0798_COMMAND_IsPointInZone(L2286_ai_XYZ, P0722_i_X - G2067_i_ViewportScreenX, P0723_i_Y - G2068_i_ViewportScreenY))"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1695,
+              "text": "int16_t G2068_i_ViewportScreenY = 31;"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1698,
+              "text": "int16_t G2068_i_ViewportScreenY = 33;"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 6366,
+              "text": "extern int16_t G2068_i_ViewportScreenY;"
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 624,
+              "text": "#define G2068_i_ViewportScreenY                                                   DUNVIEW_Y"
+            },
+            {
+              "file": "STARTUP2.C",
+              "line": 1669,
+              "text": "G3118_ = G3090_X68000VideoMemoryAddress + (G3089_ * G2068_i_ViewportScreenY) + (G2067_i_ViewportScreenX * 2);"
+            },
+            {
+              "file": "TOWNSGLB.H",
+              "line": 1144,
+              "text": "extern int16_t G2068_i_ViewportScreenY;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007_ZONE_VIEWPORT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 454,
+              "text": "{ C146_COMMAND_WAKE_UP, CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 3752,
+              "text": "#define C007_ZONE_VIEWPORT                                        7"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 842,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 847,
+              "text": "F0638_GetZone(C007_ZONE_VIEWPORT, L2413_ai_Box);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 850,
+              "text": "F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1056,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DRAWVIEW.C",
+              "line": 1067,
+              "text": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport, C007_ZONE_VIEWPORT, CM1_COLOR_NO_TRANSPARENCY);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "153",
+      "topic": "Xvfb input delivery matrix for 48ed",
+      "claim": "Helper/xdotool delivery was tested against the source mouse/keyboard command map; unchanged 48ed means source command prerequisites are absent rather than host input delivery alone.",
+      "files": [
+        "COMMAND.C",
+        "CLIKVIEW.C",
+        "MOVESENS.C"
+      ],
+      "tokens": [
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C083_COMMAND_TOGGLE_INVENTORY_LEADER",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "CLIKVIEW.C",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+          "hits": [
+            {
+              "file": "CLIKVIEW.C",
+              "line": 311,
+              "text": "void F0377_COMMAND_ProcessType80_ClickInDungeonView("
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2323,
+              "text": "F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 8293,
+              "text": "extern void F0377_COMMAND_ProcessType80_ClickInDungeonView("
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 344,
+              "text": "#define F0377_COMMAND_ProcessType80_ClickInDungeonView                            DUNGEON_EVENT"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1547,
+              "text": "#define F0377_COMMAND_ProcessType80_ClickInDungeonView                            F0377_"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 305,
+              "text": "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C083_COMMAND_TOGGLE_INVENTORY_LEADER",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 116,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, 0, 319,   0, 199, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 119,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, 0, 319,  33, 199, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 404,
+              "text": "{ C083_COMMAND_TOGGLE_INVENTORY_LEADER, CM1_SCREEN_RELATIVE, C002_ZONE_SCREEN,        0, 0, MASK0x0001_MOUSE_RIGHT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2296,
+              "text": "if (L1160_i_Command == C083_COMMAND_TOGGLE_INVENTORY_LEADER) {"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 307,
+              "text": "#define C083_COMMAND_TOGGLE_INVENTORY_LEADER                                 83"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "154",
+      "topic": "static 48ed guard fix",
+      "claim": "The guard is source-consistent: C080/movement frames without C127/F0280 candidate creation must not count as party-control readiness.",
+      "files": [
+        "COMMAND.C",
+        "MOVESENS.C",
+        "REVIVE.C"
+      ],
+      "tokens": [
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty",
+        "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "REVIVE.C",
+          "hits": [
+            {
+              "file": "REVIVE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 305,
+              "text": "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0280_CHAMPION_AddCandidateChampionToParty",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 150,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F280_agzz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 542,
+              "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J /* CHANG"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7845,
+              "text": "extern void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 225,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                PICK_CHARACTER"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1445,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F0280_"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1502,
+              "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 63,
+              "text": "void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 810,
+              "text": "for (AL0823_ui_StatisticIndex = C1_STATISTIC_STRENGTH; AL0823_ui_StatisticIndex <= C6_STATISTIC_ANTIFIRE; AL0823_ui_StatisticIndex++) { /* This loop does not affect Luck. When the loop starts, the min"
+            },
+            {
+              "file": "STARTUP2.C",
+              "line": 383,
+              "text": "F0067_MOUSE_SetPointerToNormal(C0_POINTER_ARROW); /* BUG0_60 On the Reincarnate/Resurrect screen, the 'Arrow' mouse pointer is replaced by the 'Hand' pointer after you grab an object and put it back. "
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 151,
+              "text": "#define F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel   F282_xzzz_"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 1990,
+              "text": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command);"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7851,
+              "text": "extern void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel("
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 226,
+              "text": "#define F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel   ADD_CHARACTER"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1447,
+              "text": "#define F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel   F0282_"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 704,
+              "text": "void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel("
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "155",
+      "topic": "champion/control route seed finder",
+      "claim": "Non-48ed seeds are useful only when they approach the source Hall-of-Champions sequence: DM.C launch, COMMAND.C viewport click, MOVESENS C127, REVIVE C160/C161.",
+      "files": [
+        "DM.C",
+        "COMMAND.C",
+        "MOVESENS.C",
+        "REVIVE.C"
+      ],
+      "tokens": [
+        "\"VGA Graphics\"",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "C160_COMMAND_CLICK_IN_PANEL_RESURRECT"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "DM.C",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "REVIVE.C",
+          "hits": [
+            {
+              "file": "REVIVE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "\"VGA Graphics\"",
+          "hits": [
+            {
+              "file": "DM.C",
+              "line": 626,
+              "text": "{ \"VGA Graphics\",   C0_FALSE, C1_VGA_GRAPHICS   },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 114,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 403,
+              "text": "{ C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 2322,
+              "text": "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 305,
+              "text": "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 231,
+              "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   104, 158,  86, 142, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 158,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 236,
+              "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   108, 158,  90, 138, MASK0x0002_MOUSE_LEFT_BUTTON }, /* Atari ST: Box = 104, 158,  86, 142 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 509,
+              "text": "{ C160_COMMAND_CLICK_IN_PANEL_RESURRECT,   CM2_VIEWPORT_RELATIVE, M664_ZONE_RESURRECT,   0, 0, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 338,
+              "text": "#define C160_COMMAND_CLICK_IN_PANEL_RESURRECT                               160"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 849,
+              "text": "if (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) {"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 875,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" RESURRECTED.\" : \" REINCARNATED.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 878,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" ZUM LEBEN ERWECKT.\" : \" REINKARNIERT.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 881,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" VOM TODE ERWECKT.\" : \" REINKARNIERT.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 884,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \" RESSUSCITE.\" : \" REINCARNE.\");"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 888,
+              "text": "F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor, (P0598_i_Command == C160_COMMAND_CLICK_IN_PANEL_RESURRECT) ? \"\u0082\u00cd\u0090\u00b6\u0082\u00ab\u0095\u00d4\u0082\u00c1\u0082\u00bd\" : \"\u0082\u00cd\u0090\u00b6\u0082\u00dc\u0082\u00ea\u0095\u00cf\u0082\u00ed\u0082\u00c1\u0082\u00bd\");"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "157",
+      "topic": "082b dungeon control probe",
+      "claim": "082b/48ed no-op controls are source-blocked until the original candidate-champion sensor path runs; movement keys alone are not enough.",
+      "files": [
+        "COMMAND.C",
+        "MOVESENS.C",
+        "REVIVE.C"
+      ],
+      "tokens": [
+        "C001_COMMAND_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "COMMAND.C",
+          "hits": [
+            {
+              "file": "COMMAND.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "MOVESENS.C",
+          "hits": [
+            {
+              "file": "MOVESENS.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "REVIVE.C",
+          "hits": [
+            {
+              "file": "REVIVE.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C001_COMMAND_TURN_LEFT",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 158,
+              "text": "if (P0734_i_Command == C001_COMMAND_TURN_LEFT) {"
+            },
+            {
+              "file": "CLIKMENU.C",
+              "line": 165,
+              "text": "F0362_COMMAND_HighlightBoxEnable((P0734_i_Command == C001_COMMAND_TURN_LEFT) ? C068_ZONE_TURN_LEFT : C069_ZONE_TURN_RIGHT);"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 108,
+              "text": "{ C001_COMMAND_TURN_LEFT,             234, 261, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 254,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x0088 }, /* Numeric pad 4 Atari ST: Code = 0x5200 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 274,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0xAB34 }, /* Numeric pad 4 Atari ST: Code = 0x5200 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 286,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x007F }, /* Del (0x7F) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 288,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x9B61 }, /* Shift Forward Arrow (<CSI> A) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 300,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x007F }, /* Del (0x7F) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 301,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x9BFF }, /* Shift Del (0x7F) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 397,
+              "text": "{ C001_COMMAND_TURN_LEFT,               CM1_SCREEN_RELATIVE, C068_ZONE_TURN_LEFT,     0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 638,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x004F },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 646,
+              "text": "{ C001_COMMAND_TURN_LEFT,     0x0046 },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C003_COMMAND_MOVE_FORWARD",
+          "hits": [
+            {
+              "file": "CLIKMENU.C",
+              "line": 256,
+              "text": "AL1118_ui_MovementArrowIndex = P0735_ui_Command - C003_COMMAND_MOVE_FORWARD;"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 109,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 255,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x000B }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 275,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0xAB35 }, /* Numeric pad 5 Atari ST: Code = 0x4800 */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 280,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x9B41 }, /* Up Arrow (<CSI>A) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 281,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x9B54 }, /* Shift Up Arrow (<CSI>T) */"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 398,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,            CM1_SCREEN_RELATIVE, C070_ZONE_MOVE_FORWARD,  0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 639,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x004D },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 647,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x0047 },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 655,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x0132 },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 663,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x013C },"
+            },
+            {
+              "file": "COMMAND.C",
+              "line": 671,
+              "text": "{ C003_COMMAND_MOVE_FORWARD,  0x4C00 },"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1284,
+              "text": "#define C127_SENSOR_WALL_CHAMPION_PORTRAIT                                          127 /* Triggered by player click F0275_SENSOR_IsTriggeredByClickOnWall */"
+            },
+            {
+              "file": "DUNGEON.C",
+              "line": 2608,
+              "text": "if (M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT) {"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1392,
+              "text": "if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1501,
+              "text": "case C127_SENSOR_WALL_CHAMPION_PORTRAIT:"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0280_CHAMPION_AddCandidateChampionToParty",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 150,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F280_agzz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 542,
+              "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J /* CHANG"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7845,
+              "text": "extern void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 225,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                PICK_CHARACTER"
+            },
+            {
+              "file": "IIGS.H",
+              "line": 1445,
+              "text": "#define F0280_CHAMPION_AddCandidateChampionToParty                                F0280_"
+            },
+            {
+              "file": "MOVESENS.C",
+              "line": 1502,
+              "text": "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);"
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 63,
+              "text": "void F0280_CHAMPION_AddCandidateChampionToParty("
+            },
+            {
+              "file": "REVIVE.C",
+              "line": 810,
+              "text": "for (AL0823_ui_StatisticIndex = C1_STATISTIC_STRENGTH; AL0823_ui_StatisticIndex <= C6_STATISTIC_ANTIFIRE; AL0823_ui_StatisticIndex++) { /* This loop does not affect Luck. When the loop starts, the min"
+            },
+            {
+              "file": "STARTUP2.C",
+              "line": 383,
+              "text": "F0067_MOUSE_SetPointerToNormal(C0_POINTER_ARROW); /* BUG0_60 On the Reincarnate/Resurrect screen, the 'Arrow' mouse pointer is replaced by the 'Hand' pointer after you grab an object and put it back. "
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pass": "1757",
+      "topic": "V1 status-hand icon zones",
+      "claim": "Status-hand icon zones are source-backed by CHAMDRAW/PANEL/DEFS status box and object icon geometry, not an arbitrary Firestaff-only layout.",
+      "files": [
+        "CHAMDRAW.C",
+        "PANEL.C",
+        "DEFS.H"
+      ],
+      "tokens": [
+        "C007_GRAPHIC_STATUS_BOX",
+        "G2075_ObjectIconWidth",
+        "F0296_CHAMPION_DrawChangedObjectIcons",
+        "C010_GRAPHIC_MENU_ACTION_AREA"
+      ],
+      "status": "source-locked",
+      "missing": [],
+      "anchors": [
+        {
+          "kind": "file",
+          "token": "CHAMDRAW.C",
+          "hits": [
+            {
+              "file": "CHAMDRAW.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "PANEL.C",
+          "hits": [
+            {
+              "file": "PANEL.C",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "file",
+          "token": "DEFS.H",
+          "hits": [
+            {
+              "file": "DEFS.H",
+              "line": 1,
+              "text": "file exists"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C007_GRAPHIC_STATUS_BOX",
+          "hits": [
+            {
+              "file": "DATA.C",
+              "line": 138,
+              "text": "C007_GRAPHIC_STATUS_BOX,"
+            },
+            {
+              "file": "DATA.C",
+              "line": 616,
+              "text": "C007_GRAPHIC_STATUS_BOX,"
+            },
+            {
+              "file": "DATA.C",
+              "line": 691,
+              "text": "C007_GRAPHIC_STATUS_BOX,"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 2171,
+              "text": "#define C007_GRAPHIC_STATUS_BOX                         7 /* This graphic is never used */"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "G2075_ObjectIconWidth",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 246,
+              "text": "L1182_puc_Bitmap_Icon = F0606_AllocateMemForGraphic(G2075_ObjectIconWidth, G2076_ObjectIconHeight, C0_ALLOCATION_TEMPORARY_ON_TOP_OF_HEAP);"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 258,
+              "text": "F0134_VIDEO_FillBitmap(M772_CAST_PC(L1182_puc_Bitmap_Icon), C04_COLOR_CYAN, M100_PIXEL_WIDTH(L1182_puc_Bitmap_Icon) = G2075_ObjectIconWidth, M101_PIXEL_HEIGHT(L1182_puc_Bitmap_Icon) = G2076_ObjectIcon"
+            },
+            {
+              "file": "COORD.C",
+              "line": 1743,
+              "text": "int16_t G2075_ObjectIconWidth = 16;"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 6386,
+              "text": "extern int16_t G2075_ObjectIconWidth;"
+            },
+            {
+              "file": "FMTOWNS.H",
+              "line": 635,
+              "text": "#define G2075_ObjectIconWidth                                                     ICON_X_SIZE"
+            },
+            {
+              "file": "IO.C",
+              "line": 2198,
+              "text": "L2915_l_ = M103_BITMAP_BYTE_COUNT(G2075_ObjectIconWidth + G2185_Unreferenced, G2076_ObjectIconHeight + G2185_Unreferenced);"
+            },
+            {
+              "file": "IO.C",
+              "line": 2202,
+              "text": "L0051_puc_Bitmap = F0606_AllocateMemForGraphic(G2075_ObjectIconWidth + G2185_Unreferenced, G2076_ObjectIconHeight + G2185_Unreferenced, C0_ALLOCATION_TEMPORARY_ON_TOP_OF_HEAP);"
+            },
+            {
+              "file": "OBJECT.C",
+              "line": 48,
+              "text": "M705_ZONE_RIGHT(G2007_ai_XYZ) = G2075_ObjectIconWidth - 1;"
+            },
+            {
+              "file": "OBJECT.C",
+              "line": 53,
+              "text": "F0625_GetZoneInitializedFromDimensions(G2007_ai_XYZ, G2075_ObjectIconWidth, G2076_ObjectIconHeight);"
+            },
+            {
+              "file": "OBJECT.C",
+              "line": 54,
+              "text": "G4055_s_LeaderHandObject.BitmapIconForMousePointer = F0606_AllocateMemForGraphic(G2075_ObjectIconWidth, G2076_ObjectIconHeight, C1_ALLOCATION_PERMANENT);"
+            },
+            {
+              "file": "OBJECT.C",
+              "line": 307,
+              "text": "M100_PIXEL_WIDTH(L3358_pl_) = G2075_ObjectIconWidth;"
+            },
+            {
+              "file": "OBJECT.C",
+              "line": 311,
+              "text": "M100_PIXEL_WIDTH(P0043_pl_Bitmap) = G2075_ObjectIconWidth;"
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "F0296_CHAMPION_DrawChangedObjectIcons",
+          "hits": [
+            {
+              "file": "ATARIST.H",
+              "line": 159,
+              "text": "#define F0296_CHAMPION_DrawChangedObjectIcons                                     F296_aizz_"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 626,
+              "text": "|| (L0853_i_IconIndex == C030_ICON_SCROLL_SCROLL_OPEN) /* BUG2_00 The closed scroll icon is drawn when the scroll is open. If you open the inventory of a champion and place a scroll in the action hand"
+            },
+            {
+              "file": "CHAMDRAW.C",
+              "line": 1185,
+              "text": "void F0296_CHAMPION_DrawChangedObjectIcons("
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 130,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 151,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 173,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 549,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 555,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 628,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "CHAMPION.C",
+              "line": 634,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "CLIKVIEW.C",
+              "line": 492,
+              "text": "F0296_CHAMPION_DrawChangedObjectIcons();"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 7916,
+              "text": "extern void F0296_CHAMPION_DrawChangedObjectIcons("
+            }
+          ]
+        },
+        {
+          "kind": "token",
+          "token": "C010_GRAPHIC_MENU_ACTION_AREA",
+          "hits": [
+            {
+              "file": "ACTIDRAW.C",
+              "line": 352,
+              "text": "M520_F0021_MAIN_BlitToScreen(F0489_MEMORY_GetNativeBitmapOrGraphic(C010_GRAPHIC_MENU_ACTION_AREA), L1187_pi_Box, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 45);"
+            },
+            {
+              "file": "ACTIDRAW.C",
+              "line": 355,
+              "text": "F0660_(C010_GRAPHIC_MENU_ACTION_AREA, AL1186_ui_ZoneIndex, CM1_COLOR_NO_TRANSPARENCY);"
+            },
+            {
+              "file": "DATA.C",
+              "line": 141,
+              "text": "C010_GRAPHIC_MENU_ACTION_AREA,"
+            },
+            {
+              "file": "DATA.C",
+              "line": 619,
+              "text": "C010_GRAPHIC_MENU_ACTION_AREA,"
+            },
+            {
+              "file": "DATA.C",
+              "line": 694,
+              "text": "C010_GRAPHIC_MENU_ACTION_AREA,"
+            },
+            {
+              "file": "DEFS.H",
+              "line": 2173,
+              "text": "#define C010_GRAPHIC_MENU_ACTION_AREA                  10"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
