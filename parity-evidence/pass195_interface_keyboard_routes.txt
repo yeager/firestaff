@@ -1,0 +1,10 @@
+# Pass 195 — ReDMCSB interface keyboard routes
+
+Source-first audit:
+COMMAND.C:578-625 defines G0458_as_Graphic561_PrimaryKeyboardInput_Interface with F1-F4 inventory toggles, save-game command variants, and freeze command variants across PC/F20+/I34/X31 media.
+
+Probe output:
+
+probe=firestaff_interface_keyboard_routes
+sourceEvidence=COMMAND.C:578-625 defines G0458_as_Graphic561_PrimaryKeyboardInput_Interface with F1-F4 inventory toggles, save-game command variants, and freeze command variants across PC/F20+/I34/X31 media.
+interfaceKeyboardRoutesInvariantOk=1
