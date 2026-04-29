@@ -25,6 +25,9 @@ if(NOT SDL3_FOUND)
     endif()
 endif()
 
+# ── Python discovery for source-shape/evidence gates ───────────────
+find_package(Python3 COMPONENTS Interpreter QUIET)
+
 # ── M10 static library (frozen Turbo-C compat sources) ──────────────
 file(GLOB M10_SOURCES CONFIGURE_DEPENDS "*_pc34_compat.c")
 
@@ -208,6 +211,17 @@ if(BUILD_TESTING)
     set_tests_properties(m11_capture_route_state PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
+
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME v1_viewport_draw_order_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_draw_order_gate.py
+        )
+        add_test(
+            NAME v1_viewport_source_zone_tables
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_source_zone_tables.py
+        )
+    endif()
 
     # Launcher smoke (needs game data + built firestaff binary)
     add_test(
