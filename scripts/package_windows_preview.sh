@@ -44,7 +44,13 @@ cp "$SDL_DLL" "$STAGE_DIR/SDL3.dll"
   if command -v 7z >/dev/null 2>&1; then
     7z a -tzip "$ZIP_PATH" "$(basename "$STAGE_DIR")" >/dev/null
   else
-    powershell -NoProfile -Command "Compress-Archive -Path '$(basename "$STAGE_DIR")' -DestinationPath '$ZIP_PATH' -Force"
+    if ! command -v cygpath >/dev/null 2>&1; then
+      echo "Missing 7z and cygpath for Windows zip packaging" >&2
+      exit 1
+    fi
+    STAGE_WIN="$(cygpath -w "$STAGE_DIR")"
+    ZIP_WIN="$(cygpath -w "$ZIP_PATH")"
+    powershell -NoProfile -Command "Compress-Archive -Path '$STAGE_WIN' -DestinationPath '$ZIP_WIN' -Force"
   fi
 )
 
