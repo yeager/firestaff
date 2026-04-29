@@ -1,0 +1,10 @@
+# Pass 196 — ReDMCSB party resting input routes
+
+Source-first audit:
+COMMAND.C:453-456 defines G0450_as_Graphic561_PrimaryMouseInput_PartyResting: C146_COMMAND_WAKE_UP on viewport left-click and screen right-click; COMMAND.C rest path swaps input tables while G0300_B_PartyIsResting is true.
+
+Probe output:
+
+probe=firestaff_party_resting_input_routes
+sourceEvidence=COMMAND.C:453-456 defines G0450_as_Graphic561_PrimaryMouseInput_PartyResting: C146_COMMAND_WAKE_UP on viewport left-click and screen right-click; COMMAND.C rest path swaps input tables while G0300_B_PartyIsResting is true.
+partyRestingInputRoutesInvariantOk=1

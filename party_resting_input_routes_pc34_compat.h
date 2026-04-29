@@ -1,0 +1,5 @@
+#ifndef PARTY_RESTING_INPUT_ROUTES_PC34_COMPAT_H
+#define PARTY_RESTING_INPUT_ROUTES_PC34_COMPAT_H
+const char* party_resting_input_routes_GetEvidence(void);
+unsigned int party_resting_input_routes_GetInvariant(void);
+#endif
