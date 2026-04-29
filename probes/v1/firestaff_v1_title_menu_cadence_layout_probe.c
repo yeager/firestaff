@@ -6,6 +6,19 @@
 #include "title_dat_loader_v1.h"
 #include "title_frontend_v1.h"
 
+
+static const char* kind_name(V1_TitleFrontendSourceEventKind kind) {
+    switch (kind) {
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS: return "PRESENTS";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT: return "ZOOM_BLIT";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK: return "POST_ZOOM_VBLANK";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT: return "MASTER_STRIKES_BACK_BLIT";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK: return "FINAL_GUARD_VBLANK";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE: return "MENU_ELIGIBLE";
+    }
+    return "UNKNOWN";
+}
+
 struct IndexRange {
     const char* name;
     unsigned int first;
@@ -59,6 +72,63 @@ static int check_title_manifest(const char* titlePath) {
     return ok;
 }
 
+
+static int check_source_animation_schedule(void) {
+    V1_TitleFrontendSourceAnimationStep firstZoom;
+    V1_TitleFrontendSourceAnimationStep lastZoom;
+    V1_TitleFrontendSourceAnimationStep master;
+    V1_TitleFrontendSourceAnimationStep finalGuard;
+    unsigned int i;
+    unsigned int zoomCount = 0u;
+    unsigned int postWaitCount = 0u;
+    unsigned int vblankZoomCount = 0u;
+    int ok = 1;
+
+    memset(&firstZoom, 0, sizeof(firstZoom));
+    memset(&lastZoom, 0, sizeof(lastZoom));
+    memset(&master, 0, sizeof(master));
+    memset(&finalGuard, 0, sizeof(finalGuard));
+    printf("sourceAnimationStepCount=%u\n", V1_TitleFrontend_GetSourceAnimationStepCount());
+    for (i = 1u; i <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++i) {
+        V1_TitleFrontendSourceAnimationStep step;
+        if (!V1_TitleFrontend_GetSourceAnimationStep(i, &step)) {
+            ok = 0;
+            continue;
+        }
+        printf("sourceAnimationStep[%u]=kind:%s vblank:%u zoomIndex:%u box:%u,%u,%u,%u evidence:%s\n",
+               i,
+               kind_name(step.kind),
+               step.vblankBeforeEvent,
+               step.zoomSourceIndex,
+               step.x,
+               step.y,
+               step.width,
+               step.height,
+               step.sourceLineEvidence ? step.sourceLineEvidence : "");
+        if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
+            zoomCount++;
+            if (step.vblankBeforeEvent == 1u) vblankZoomCount++;
+            if (zoomCount == 1u) firstZoom = step;
+            lastZoom = step;
+        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK) {
+            postWaitCount++;
+        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT) {
+            master = step;
+        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK) {
+            finalGuard = step;
+        }
+    }
+    if (V1_TitleFrontend_GetSourceAnimationStepCount() != 23u) ok = 0;
+    if (zoomCount != 18u || vblankZoomCount != 18u) ok = 0;
+    if (postWaitCount != 2u) ok = 0;
+    if (firstZoom.zoomSourceIndex != 17u || firstZoom.width != 48u || firstZoom.height != 12u || firstZoom.x != 136u || firstZoom.y != 74u) ok = 0;
+    if (lastZoom.zoomSourceIndex != 0u || lastZoom.width != 320u || lastZoom.height != 80u || lastZoom.x != 0u || lastZoom.y != 40u) ok = 0;
+    if (master.kind != V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT || master.y != 118u || master.height != 57u) ok = 0;
+    if (finalGuard.kind != V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK || finalGuard.vblankBeforeEvent != 1u) ok = 0;
+    printf("titleSourceAnimationScheduleInvariantOk=%d\n", ok);
+    return ok;
+}
+
 static int check_title_handoff(void) {
     V1_TitleFrontendSourceTiming timing = V1_TitleFrontend_GetSourceTimingEvidence();
     unsigned int steps[] = {0u, 1u, 52u, 53u, 54u, 106u};
@@ -71,12 +141,14 @@ static int check_title_handoff(void) {
     printf("sourcePostZoomVblankCount=%u\n", timing.postZoomVblankCount);
     printf("sourceFinalFadeGuardVblankCount=%u\n", timing.finalFadeGuardVblankCount);
     printf("sourceFirstMenuEligibleStep=%u\n", timing.firstMenuEligibleStep);
+    printf("sourceTimingAnimationStepCount=%u\n", timing.sourceAnimationStepCount);
     printf("sourceTimingEvidence=%s\n", timing.evidenceNote);
     if (timing.zoomStepCount != 18u) ok = 0;
     if (timing.vblankBeforeEachZoomStep != 1u) ok = 0;
     if (timing.postZoomVblankCount != 2u) ok = 0;
     if (timing.finalFadeGuardVblankCount != 1u) ok = 0;
     if (timing.firstMenuEligibleStep != 54u) ok = 0;
+    if (timing.sourceAnimationStepCount != 23u) ok = 0;
     for (i = 0; i < sizeof(steps) / sizeof(steps[0]); ++i) {
         V1_TitleFrontendHandoffDecision hold = V1_TitleFrontend_DecideTitleMenuHandoffStep(steps[i], 0);
         V1_TitleFrontendHandoffDecision enter = V1_TitleFrontend_DecideTitleMenuHandoffStep(steps[i], 1);
@@ -179,6 +251,7 @@ int main(int argc, char** argv) {
     } else {
         printf("titleDatPath=(not provided)\n");
     }
+    ok = check_source_animation_schedule() && ok;
     ok = check_title_handoff() && ok;
     printf("originalCadenceClaim=source-locked-pc-st-title-c\n");
     printf("blocker=per-presented-frame emulator dump still needed for pixel/video capture comparison, but TITLE.C control-flow cadence is no longer blocked\n");

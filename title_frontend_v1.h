@@ -44,12 +44,34 @@ typedef struct V1_TitleFrontendRenderResult {
     int usedOriginalTitleData;
 } V1_TitleFrontendRenderResult;
 
+typedef enum V1_TitleFrontendSourceEventKind {
+    V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS = 0,
+    V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT = 1,
+    V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK = 2,
+    V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT = 3,
+    V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK = 4,
+    V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE = 5
+} V1_TitleFrontendSourceEventKind;
+
+typedef struct V1_TitleFrontendSourceAnimationStep {
+    unsigned int sourceStepOrdinal;
+    V1_TitleFrontendSourceEventKind kind;
+    unsigned int vblankBeforeEvent;
+    unsigned int zoomSourceIndex;
+    unsigned int x;
+    unsigned int y;
+    unsigned int width;
+    unsigned int height;
+    const char* sourceLineEvidence;
+} V1_TitleFrontendSourceAnimationStep;
+
 typedef struct V1_TitleFrontendSourceTiming {
     unsigned int zoomStepCount;
     unsigned int vblankBeforeEachZoomStep;
     unsigned int postZoomVblankCount;
     unsigned int finalFadeGuardVblankCount;
     unsigned int firstMenuEligibleStep;
+    unsigned int sourceAnimationStepCount;
     const char* sourceFile;
     const char* sourceFunction;
     const char* evidenceNote;
@@ -69,6 +91,19 @@ typedef struct V1_TitleFrontendSourceTiming {
 V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned int requestedStepOrdinal);
 
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void);
+
+/*
+ * ReDMCSB TITLE.C source animation event schedule for the PC/F20 path.
+ * This is separate from the decoded 53-frame TITLE.DAT bank: TITLE.C builds
+ * 18 shrinked title bitmaps from 320x80 down to 48x12, then presents them
+ * in reverse order (small -> full) with one M526_WaitVerticalBlank() before
+ * each blit. It then waits two more VBlanks, blits the Master/Strikes Back
+ * strip at y=118..174, fades, waits the BUG0_71 guard VBlank, and only then
+ * the caller may enter the next surface.
+ */
+unsigned int V1_TitleFrontend_GetSourceAnimationStepCount(void);
+int V1_TitleFrontend_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
+                                            V1_TitleFrontendSourceAnimationStep* outStep);
 
 /*
  * Deterministic implementation handoff for callers that want a finite

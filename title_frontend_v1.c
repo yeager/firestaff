@@ -122,6 +122,71 @@ V1_TitleFrontendHandoffDecision V1_TitleFrontend_DecideTitleMenuHandoffStep(unsi
     return decision;
 }
 
+
+static const char* title_frontend_source_event_line(V1_TitleFrontendSourceEventKind kind) {
+    switch (kind) {
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
+            return "TITLE.C:319-324 draws black screen then presents box 0..319,90..105 from source y=137";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
+            return "TITLE.C:340-360 builds 18 shrinked bitmaps; TITLE.C:385-387 waits VBlank then blits in reverse order";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
+            return "TITLE.C:395-396 waits two post-zoom vertical blanks";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
+            return "TITLE.C:397-402 blits Master/Strikes Back to destination box 0..319,118..174";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
+            return "TITLE.C:409 / TITLE.C:251 BUG0_71 final M526_WaitVerticalBlank guard before transition";
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE:
+            return "TITLE.C after final guard VBlank; Firestaff handoff may enter caller-owned menu surface";
+    }
+    return "TITLE.C source event";
+}
+
+unsigned int V1_TitleFrontend_GetSourceAnimationStepCount(void) {
+    return 23u;
+}
+
+int V1_TitleFrontend_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
+                                            V1_TitleFrontendSourceAnimationStep* outStep) {
+    V1_TitleFrontendSourceAnimationStep step;
+    unsigned int z;
+    if (!outStep || sourceStepOrdinal == 0u || sourceStepOrdinal > V1_TitleFrontend_GetSourceAnimationStepCount()) return 0;
+    memset(&step, 0, sizeof(step));
+    step.sourceStepOrdinal = sourceStepOrdinal;
+    if (sourceStepOrdinal == 1u) {
+        step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS;
+        step.x = 0u;
+        step.y = 90u;
+        step.width = 320u;
+        step.height = 16u;
+    } else if (sourceStepOrdinal >= 2u && sourceStepOrdinal <= 19u) {
+        /* ReDMCSB stores shrinked title index 0 as 320x80 and index 17 as 48x12,
+         * then renders from L3496_i_ActualBitmapCount down to 0. */
+        z = 19u - sourceStepOrdinal;
+        step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT;
+        step.vblankBeforeEvent = 1u;
+        step.zoomSourceIndex = z;
+        step.width = 320u - 16u * z;
+        step.height = 80u - 4u * z;
+        step.x = (320u - step.width) >> 1;
+        step.y = (160u - step.height) >> 1;
+    } else if (sourceStepOrdinal == 20u || sourceStepOrdinal == 21u) {
+        step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK;
+        step.vblankBeforeEvent = 1u;
+    } else if (sourceStepOrdinal == 22u) {
+        step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT;
+        step.x = 0u;
+        step.y = 118u;
+        step.width = 320u;
+        step.height = 57u;
+    } else {
+        step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK;
+        step.vblankBeforeEvent = 1u;
+    }
+    step.sourceLineEvidence = title_frontend_source_event_line(step.kind);
+    *outStep = step;
+    return 1;
+}
+
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     V1_TitleFrontendSourceTiming timing;
     memset(&timing, 0, sizeof(timing));
@@ -130,9 +195,10 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     timing.postZoomVblankCount = 2u;
     timing.finalFadeGuardVblankCount = 1u;
     timing.firstMenuEligibleStep = V1_TITLE_DAT_FRAME_MAX + 1u;
+    timing.sourceAnimationStepCount = V1_TitleFrontend_GetSourceAnimationStepCount();
     timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";
     timing.sourceFunction = "F0437_STARTEND_DrawTitle";
-    timing.evidenceNote = "PC/ST path: 18 zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then final BUG0_71 M526_WaitVerticalBlank() after fade.";
+    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition.";
     return timing;
 }
 
