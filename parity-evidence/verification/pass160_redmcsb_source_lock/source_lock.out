@@ -1,0 +1,21 @@
+PASS TITLE.C locks title timing to VBlank/BUG0_71
+PASS TITLE.C keeps the source 25 tick title delay
+PASS ENTRANCE.C has the source entrance-door animation routine
+PASS ENTRANCE.C locks entrance door timing to VBlank/BUG0_71
+PASS COMMAND.C maps C007 viewport left-click to C080
+PASS COMMAND.C dispatches C080 to CLIKVIEW F0377
+PASS CLIKVIEW.C defines C080 click-in-dungeon-view behavior
+PASS CLIKVIEW.C triggers wall sensors from viewport clicks
+PASS CLIKVIEW.C uses G4055 leader-hand object in viewport interactions
+PASS MOVESENS.C owns the source G4055 leader-hand object
+PASS MOVESENS.C source-locks object/party move result behavior
+PASS MOVESENS.C source-locks wall-click sensor trigger behavior
+PASS DRAWVIEW.C defines the viewport redraw/request path
+PASS DRAWVIEW.C blits the viewport to C007_ZONE_VIEWPORT
+PASS DRAWVIEW.C waits VBlank after requesting viewport draw
+PASS Firestaff exposes source C007 viewport zone id
+PASS Firestaff documents G4055-equivalent leader-hand bridge
+PASS Firestaff sets dedicated leader-hand object state
+PASS Firestaff clears dedicated leader-hand object state
+PASS Firestaff header preserves G4055 as separate from champion slots
+PASS Firestaff exposes bounded source-backed mouse command resolver
