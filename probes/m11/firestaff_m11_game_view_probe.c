@@ -643,6 +643,33 @@ int main(int argc, char** argv) {
                          space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7,
                      "DM1 secondary movement table maps left-click C007 viewport to command C080 click-in-dungeon-view");
         probe_record(&tally,
+                     "INV_GV_434A",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                         vx, vy,
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 80 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7,
+                     "DM1 C080 viewport route includes the source C007 top-left edge");
+        probe_record(&tally,
+                     "INV_GV_434B",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                         vx + vw - 1, vy + vh - 1,
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 80 &&
+                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7,
+                     "DM1 C080 viewport route includes the source C007 bottom-right edge");
+        probe_record(&tally,
+                     "INV_GV_434C",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                         vx + vw, vy + vh,
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 0 &&
+                         space == M11_DM1_MOUSE_SPACE_NONE && zoneId == 0,
+                     "DM1 C080 viewport route stops outside C007 and does not leak into adjacent screen space");
+        probe_record(&tally,
                      "INV_GV_435",
                      M11_GameView_GetV1MouseCommandForPoint(
                          M11_DM1_MOUSE_LIST_MOVEMENT,
