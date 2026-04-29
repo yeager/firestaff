@@ -1,0 +1,843 @@
+{
+  "schema": "pass172_redmcsb_patch_gap_inventory.v1",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206",
+  "priority_bug_count": 18,
+  "structural_gap_count": 5,
+  "priority_bugs": [
+    {
+      "id": "BUG0_71",
+      "lane": "timing",
+      "summary": "fast-computer timing too short; title/entrance/endgame need enforced VBlank/delay parity",
+      "hit_count": 4,
+      "files": [
+        "ENDGAME.C",
+        "ENTRANCE.C",
+        "MOVESENS.C",
+        "TITLE.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "ENDGAME.C",
+          "line": 758,
+          "text": "G0313_ul_GameTime++; /* BUG0_71 Some timings are too short on fast computers. The ending animation when Lord Chaos is fused plays too quickly because the execution speed is not limited */"
+        },
+        {
+          "file": "ENTRANCE.C",
+          "line": 239,
+          "text": "M526_WaitVerticalBlank(); /* BUG0_71 Some timings are too short on fast computers. When the player clicks on 'Enter' on the entrance screen, the doors open to quickly on a fast computer because the execution speed is not limited */"
+        },
+        {
+          "file": "MOVESENS.C",
+          "line": 557,
+          "text": "/* BUG0_71 Some timings are too short on fast computers. When the party falls in a series of pits, the dungeon view is refreshed too quickly because the execution speed is not limited */"
+        },
+        {
+          "file": "TITLE.C",
+          "line": 251,
+          "text": "M526_WaitVerticalBlank(); /* BUG0_71 Some timings are too short on fast computers. After the zoom effect, the title screen is quickly replaced by the entrance screen on a fast computer because the execution speed is not limited */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_73",
+      "lane": "input",
+      "summary": "mouse click command queue race with keyboard command can drop click",
+      "hit_count": 3,
+      "files": [
+        "COMMAND.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "COMMAND.C",
+          "line": 1478,
+          "text": "BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */"
+        },
+        {
+          "file": "COMMAND.C",
+          "line": 1485,
+          "text": "BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */"
+        },
+        {
+          "file": "COMMAND.C",
+          "line": 1753,
+          "text": "/* BUG0_73 A mouse click may be ignored. At this point, the command index where the keyboard command will be stored in the command queue is determined by L1110_i_CommandQueueIndex. If a mouse click interrupt occurs before the command is actually written into the command queue below then the mouse command will be stored at the same location in the queue and then be overwritten by the keyboard command */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_75",
+      "lane": "viewport",
+      "summary": "champion portrait ordinal not reset when no wall square in view",
+      "hit_count": 1,
+      "files": [
+        "DUNGEON.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "DUNGEON.C",
+          "line": 2558,
+          "text": "G0289_i_DungeonView_ChampionPortraitOrdinal = 0; /* BUG0_75 Multiple champion portraits are drawn (one at a time) then the game crashes. This variable is only reset to 0 when at least one square in the dungeon view is a wall. If the party is in front of a wall with a champion portrait and the next time the dungeon view is drawn there is no wall square in the view and the square in front of the party is a fake wall with a random ornament then the same champion portrait will be drawn again because the variable was not reset to 0. Each time F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF draws the portrait, G0289_i_DungeonView_ChampionPortraitOrdinal is decremented so that the portait is different each time the dungeon view is drawn until the game crashes */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_76",
+      "lane": "viewport",
+      "summary": "single global inscription thing makes same text draw on multiple wall sides",
+      "hit_count": 1,
+      "files": [
+        "DUNGEON.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "DUNGEON.C",
+          "line": 2593,
+          "text": "G0290_T_DungeonView_InscriptionThing = L0314_T_Thing; /* BUG0_76 The same text is drawn on multiple sides of a wall square. The engine stores only a single text to draw on a wall in a global variable. Even if different texts are placed on different sides of the wall, the same text is drawn on each affected side */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_86",
+      "lane": "assets",
+      "summary": "champion portrait/resurrect/reincarnate graphics missing/garbage on constrained-memory PC/custom mirror maps",
+      "hit_count": 1,
+      "files": [
+        "DUNVIEW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "DUNVIEW.C",
+          "line": 2464,
+          "text": "/* BUG0_86 Champion portraits, resurrect/reincarnate and rename panel graphics are missing/garbage and the game may crash. If any creature type is allowed on a map containing champion mirrors then these graphics are loaded only if the engine determines that there is no memory limitation to load all graphics (this depends on the amount of memory available at startup). Memory is always considered limited in Dungeon Master for PC and Chaos Strikes Back for PC-9801 so the graphics are never loaded in these versions. This issue only affects custom dungeons. It does not exist in the original dungeons because there are no creature types allowed on the maps containing champion mirrors. This issue also does not affect the demo versions of Dungeon Master for Amiga and Apple IIGS which always load these graphics. The demo dungeons do contain a Skeleton creature on the same map as the champion mirrors */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_35",
+      "lane": "inventory",
+      "summary": "open chest icon not updated in action hand while inventory open",
+      "hit_count": 2,
+      "files": [
+        "CHAMDRAW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CHAMDRAW.C",
+          "line": 622,
+          "text": "L0853_i_IconIndex = F0033_OBJECT_GetIconIndex(L0851_T_Thing); /* BUG0_35 The closed chest icon is drawn when the chest is opened. If you open the inventory of a champion and place a chest in the action hand, the closed chest icon is drawn instead of the open chest icon. If you place a Chest in the action hand before opening the inventory (in the champion status box on top of the screen) then when you open the inventory the open chest icon is drawn correctly in the action hand (by F0333_INVENTORY_OpenAndDrawChest). Code is missing to change the icon when a chest is drawn in the action hand while in the inventory */"
+        },
+        {
+          "file": "CHAMDRAW.C",
+          "line": 626,
+          "text": "|| (L0853_i_IconIndex == C030_ICON_SCROLL_SCROLL_OPEN) /* BUG2_00 The closed scroll icon is drawn when the scroll is open. If you open the inventory of a champion and place a scroll in the action hand, the closed scroll icon is drawn instead of the open scroll icon. If you put another scroll in the action hand of another champion (in the status box on top of the screen) the icon is changed to the open scroll icon. If a champion in the party has a lit torch in hand then if you wait long enough without doing anything until the torch light decreases then the scroll icon changes automatically to the open scroll icon (caused by F0338_INVENTORY_DecreaseTorchesLightPower_CPSE which calls F0296_CHAMPION_DrawChangedObjectIcons if the charge count of a torch has changed). The code added to fix BUG0_35 about chest icons also affects scrolls while it should not */"
+        }
+      ]
+    },
+    {
+      "id": "BUG2_00",
+      "lane": "inventory",
+      "summary": "scroll open/closed icon regression caused by chest fix",
+      "hit_count": 2,
+      "files": [
+        "CHAMDRAW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CHAMDRAW.C",
+          "line": 623,
+          "text": "#ifdef MEDIA227_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J /* CHANGE2_10_FIX Code added to change the icon of the Chest and Scroll when in the action hand and in the inventory. This fix causes BUG2_00 for scrolls */"
+        },
+        {
+          "file": "CHAMDRAW.C",
+          "line": 626,
+          "text": "|| (L0853_i_IconIndex == C030_ICON_SCROLL_SCROLL_OPEN) /* BUG2_00 The closed scroll icon is drawn when the scroll is open. If you open the inventory of a champion and place a scroll in the action hand, the closed scroll icon is drawn instead of the open scroll icon. If you put another scroll in the action hand of another champion (in the status box on top of the screen) the icon is changed to the open scroll icon. If a champion in the party has a lit torch in hand then if you wait long enough without doing anything until the torch light decreases then the scroll icon changes automatically to the open scroll icon (caused by F0338_INVENTORY_DecreaseTorchesLightPower_CPSE which calls F0296_CHAMPION_DrawChangedObjectIcons if the charge count of a torch has changed). The code added to fix BUG0_35 about chest icons also affects scrolls while it should not */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_36",
+      "lane": "hud",
+      "summary": "dead champion cell can erase another champion icon after load/rebirth",
+      "hit_count": 1,
+      "files": [
+        "CHAMDRAW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CHAMDRAW.C",
+          "line": 830,
+          "text": "M524_FillScreenBox(&G0054_ai_Graphic562_Box_ChampionIcons[M026_CHAMPION_ICON_INDEX(L0865_ps_Champion->Cell, G0308_i_PartyDirection) << 2], C00_COLOR_BLACK); /* BUG0_36 A champion icon may be missing in the upper right corner of the screen after loading a saved game where at least one champion is dead. When a dead champion is reborn at a Vi Altar, the champion cell is set to the first available cell where there is no champion alive. It is then possible that the cell of the reborn champion is the same as the cell of another dead champion in the party. If the index of the dead champion is higher than the index of the reborn champion and the game is saved then when restarting the game from the saved game the icon of the reborn champion will not appear on screen. This is only a graphic glitch and you only need to click on the black area where the missing icon should be to make it appear again. When the game is loaded, the state of each champion is drawn. For a dead champion, this erases the champion icon according to the cell of the dead champion, even if another champion is at the same cell */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_39",
+      "lane": "inventory",
+      "summary": "leader Food/Water/Poisoned panel flashes while swapping scroll/chest",
+      "hit_count": 1,
+      "files": [
+        "CHAMPION.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CHAMPION.C",
+          "line": 706,
+          "text": "F0297_CHAMPION_PutObjectInLeaderHand(L0906_T_SlotThing, C0_FALSE); /* BUG0_39 In the leader inventory, the Food/Water/Poisoned panel is briefly drawn when replacing a scroll or chest by another scroll or chest in the action hand. This does not occur for champions other than the leader. When swapping the objects between the action hand and the leader hand, the program first removes the object in the action hand with a call to F0300_CHAMPION_GetObjectRemovedFromSlot. If the removed object is a chest or a scroll then this sets the MASK0x0800_PANEL flag in the champion data to refresh the panel. Then the object in the leader hand is removed with a call to F0297_CHAMPION_PutObjectInLeaderHand. The weight of the object in the leader hand is part of the load of the leader, so this sets another flag MASK0x0200_LOAD in the champion data of the leader to refresh the Load value and then calls the function F0292_CHAMPION_DrawState to draw the leader champion state. If the champion is not the leader, nothing is drawn. If the champion is the leader, the Food/Water/Poisoned panel is drawn because at this point the action hand is empty. Then the object that was removed from the leader hand is put in the action hand with a call to F0301_CHAMPION_AddObjectInSlot and this draws the panel again, this time showing the chest contents or scroll text. The fix would be to swap the calls to F0300_CHAMPION_GetObjectRemovedFromSlot and F0297_CHAMPION_PutObjectInLeaderHand (note this would not fix the double refresh of the Load value after removing the first object and after putting the second object) */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_42",
+      "lane": "hud",
+      "summary": "action icons not redrawn after unfreeze",
+      "hit_count": 1,
+      "files": [
+        "CHAMPION.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CHAMPION.C",
+          "line": 1403,
+          "text": "if (!G0509_B_ActionAreaContainsIcons && !G0506_ui_ActingChampionOrdinal) { /* BUG0_42 The action icons are not drawn in the action area after you unfreeze the game. The variable G0509_B_ActionAreaContainsIcons defining what to draw in the action area is not set in the right function in the code."
+        }
+      ]
+    },
+    {
+      "id": "BUG0_43",
+      "lane": "candidate",
+      "summary": "game may not end when last living champion killed while viewing candidate portrait",
+      "hit_count": 4,
+      "files": [
+        "CHAMPION.C",
+        "CLIKMENU.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CHAMPION.C",
+          "line": 1666,
+          "text": "if (L0963_ui_AliveChampionIndex == G0305_ui_PartyChampionCount) { /* BUG0_43 The game does not end if the last living champion in the party is killed while looking at a candidate champion in a portrait. The condition to end the game when the whole party is killed is not true because the code considers the candidate champion as alive (in the loop above) */"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 1824,
+          "text": "if ((P0662_i_ChampionIndex == CM1_CHAMPION_NONE) || (M000_INDEX_TO_ORDINAL(P0662_i_ChampionIndex) == G0299_ui_CandidateChampionOrdinal || G0302_B_GameWon)) { /* BUG0_00 Useless code. This condition is never true (except in the context of BUG0_43) */"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 1826,
+          "text": "return; /* BUG0_01 Coding error without consequence. Undefined return value. No consequence because this code is never executed (except in the context of BUG0_43) */"
+        },
+        {
+          "file": "CLIKMENU.C",
+          "line": 294,
+          "text": "L1117_B_MovementBlocked = F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage(L1124_i_FirstDamagedChampionIndex = F0286_CHAMPION_GetTargetChampionIndex(L1121_i_MapX, L1122_i_MapY, M021_NORMALIZE(AL1118_ui_MovementArrowIndex += (G0308_i_PartyDirection + 2))), 1, MASK0x0008_WOUND_TORSO | MASK0x0010_WOUND_LEGS, C2_ATTACK_SELF); /* BUG0_43 If the game did not end because the last living champion in the party was killed while looking at a candidate champion in a portrait then in versions Amiga 3.x, PC, PC-9801, X68000 and Chaos Strikes Back for FM-Towns F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage returns 0 (because F0286_CHAMPION_GetTargetChampionIndex returned CM1_CHAMPION_NONE) and then movement is not blocked anymore. This does not occurs in versions Atari ST, Apple IIGS, Amiga 2.x and Dungeon Master for FM-Towns because F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage incorrectly returns a non zero value */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_52",
+      "lane": "input",
+      "summary": "keyboard commands while pressing eye/mouth can leave pointer/input/menu state broken",
+      "hit_count": 1,
+      "files": [
+        "COMMAND.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "COMMAND.C",
+          "line": 2330,
+          "text": "/* BUG0_52 The remaining commands should be ignored while pressing the eye or mouth (pressing the mouth is only possible when the panel does not contain the Food and Water bars but a scroll, a chest or the resurrect/reincarnate panel). If you press CTRL-S on the keyboard while pressing the eye or mouth with the mouse, the save game menu appears but the mouse pointer is missing on screen. If you press ESC on the keyboard while pressing the eye or the mouth, the game is frozen but the panel is drawn on screen when you release the mouse button (Food and Water bars, scroll in hand, open chest or resurrect/reincarnate). If you press ESC again to unfreeze before releasing the mouse button, the panel is drawn over the dungeon view, and the game may crash because mouse input is not configured correctly (you can still click on the eye or mouth while the dungeon view is displayed) */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_53",
+      "lane": "candidate",
+      "summary": "rest possible with candidate inventory open, can duplicate champion/items",
+      "hit_count": 1,
+      "files": [
+        "COMMAND.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "COMMAND.C",
+          "line": 2336,
+          "text": "if (L1160_i_Command == C145_COMMAND_REST) { /* BUG0_53 It is possible to rest while the inventory of a candidate champion is open. When the party wakes up, it is possible to add a duplicate copy of the same champion to the party. All the champion possessions are then cloned objects. It is also possible to grab an object from the candidate champion before resting and this will clone that object. The rest icon is erased when the inventory of a candidate champion is opened but it is still possible to click on the rest icon location on the top right of the viewport */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_64",
+      "lane": "viewport",
+      "summary": "floor ornaments drawn over open pits",
+      "hit_count": 11,
+      "files": [
+        "DUNVIEW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "DUNVIEW.C",
+          "line": 6284,
+          "text": "F0108_DUNGEONVIEW_DrawFloorOrnament(L2484_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], C00_VIEW_FLOOR_D3L2); /* BUG0_64 Floor ornaments are drawn over open pits. There is no check to prevent drawing floor ornaments over open pits */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 6351,
+          "text": "F0108_DUNGEONVIEW_DrawFloorOrnament(L2486_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], C01_VIEW_FLOOR_D3R2); /* BUG0_64 Floor ornaments are drawn over open pits. There is no check to prevent drawing floor ornaments over open pits */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 6478,
+          "text": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0201_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M588_VIEW_FLOOR_D3L); /* BUG0_64 Floor ornaments are drawn over open pits. There is no check to prevent drawing floor ornaments over open pits */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 6620,
+          "text": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0203_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M590_VIEW_FLOOR_D3R); /* BUG0_64 Floor ornaments are drawn over open pits. There is no check to prevent drawing floor ornaments over open pits */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 6814,
+          "text": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0206_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M589_VIEW_FLOOR_D3C); /* BUG0_64 Floor ornaments are drawn over open pits. There is no check to prevent drawing floor ornaments over open pits */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 7020,
+          "text": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0208_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M591_VIEW_FLOOR_D2L); /* BUG0_64 Floor ornaments are drawn over open pits. There is no check to prevent drawing floor ornaments over open pits */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_74",
+      "lane": "viewport",
+      "summary": "creatures drawn with wrong colors through Thieves Eye wall hole",
+      "hit_count": 4,
+      "files": [
+        "DUNVIEW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "DUNVIEW.C",
+          "line": 7799,
+          "text": "F0132_VIDEO_Blit(L0219_puc_Bitmap, F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0107_auc_Graphic558_Box_ThievesEye_VisibleArea, 0, 0, C048_BYTE_WIDTH, C048_BYTE_WIDTH, C10_COLOR_FLESH); /* BUG0_74 Creatures are drawn with wrong colors when viewed through a wall with the 'Thieve's Eye' spell. The 'hole in wall' graphic is applied to the visible area with transparency on color 10. However the visible area may contain creature graphics that use color 9. When the bitmap is drawn below with transparency on color 9 then the creature graphic is alterated: pixels using color 9 are transparent and the background wall is visible through the creature graphic (grey/white pixels). To fix this bug, the 'hole in wall' graphic should be applied to the wall graphic first (in a temporary buffer) and then the wall with the hole should be drawn over the visible area */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 7802,
+          "text": "F0132_VIDEO_Blit(L0219_puc_Bitmap, F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0107_auc_Graphic558_Box_ThievesEye_VisibleArea, 0, 0, C048_BYTE_WIDTH, C048_BYTE_WIDTH, C10_COLOR_FLESH, 95, 95); /* BUG0_74 Creatures are drawn with wrong colors when viewed through a wall with the 'Thieve's Eye' spell. The 'hole in wall' graphic is applied to the visible area with transparency on color 10. However the visible area may contain creature graphics that use color 9. When the bitmap is drawn below with transparency on color 9 then the creature graphic is alterated: pixels using color 9 are transparent and the background wall is visible through the creature graphic (grey/white pixels). To fix this bug, the 'hole in wall' graphic should be applied to the wall graphic first (in a temporary buffer) and then the wall with the hole should be drawn over the visible area */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 7848,
+          "text": "F0132_VIDEO_Blit(F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0296_puc_Bitmap_Viewport, G0106_auc_Graphic558_Box_ThievesEye_ViewportVisibleArea, 0, 0, C048_BYTE_WIDTH, C112_BYTE_WIDTH_VIEWPORT, C09_COLOR_GOLD); /* BUG0_74 */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 7851,
+          "text": "F0132_VIDEO_Blit(F0492_CACHE_GetDerivedBitmap(C001_DERIVED_BITMAP_THIEVES_EYE_VISIBLE_AREA), G0296_puc_Bitmap_Viewport, G0106_auc_Graphic558_Box_ThievesEye_ViewportVisibleArea, 0, 0, C048_BYTE_WIDTH, C112_BYTE_WIDTH_VIEWPORT, C09_COLOR_GOLD, 95, C136_HEIGHT_VIEWPORT); /* BUG0_74 */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_83",
+      "lane": "viewport",
+      "summary": "Thieves Eye hole moves with opening doors",
+      "hit_count": 1,
+      "files": [
+        "DUNVIEW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "DUNVIEW.C",
+          "line": 4294,
+          "text": "F0109_DUNGEONVIEW_DrawDoorOrnament(M000_INDEX_TO_ORDINAL(C16_DOOR_ORNAMENT_THIEVES_EYE_MASK), C2_VIEW_DOOR_ORNAMENT_D1LCR); /* BUG0_83: The hole created by the Window action or the Thieve's Eye spell moves with opening doors. The hole mask is applied before the door is drawn on screen so that if you open the door, the 'hole' moves with the opening door instead of remaining in the center of the view */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_84",
+      "lane": "endgame",
+      "summary": "ending screen palette may be uninitialized",
+      "hit_count": 1,
+      "files": [
+        "ENDGAME.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "ENDGAME.C",
+          "line": 396,
+          "text": "F0436_STARTEND_FadeToPalette(L1420_aui_Palette_TopAndBottomScreen); /* BUG0_84 The ending screen with champion portraits is displayed with an incorrect color palette that may render skill levels unreadable. The color palette used to draw the ending screen in L1420_aui_Palette_TopAndBottomScreen is not initialized if the dungeon view was not visible on screen right before. This bug does not affect Dungeon Master because the end is triggered by the Fuse action (which cannot be performed while sleeping) and the inventory is automatically closed before the Fuse animation sequence so that the dungeon view is visible */"
+        }
+      ]
+    },
+    {
+      "id": "BUG0_85",
+      "lane": "movement",
+      "summary": "empty party can move over group in custom dungeon and kill it",
+      "hit_count": 1,
+      "files": [
+        "CLIKMENU.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CLIKMENU.C",
+          "line": 291,
+          "text": "if (G0305_ui_PartyChampionCount == 0) { /* BUG0_85 Movement over a group is not blocked if there are no champions in the party. The engine does not check for the presence of a group if the party is empty. Because the movement is allowed, the group on the target square is instantly killed. This issue only affects custom dungeons. It does not exist in the original dungeons because there are no creature types allowed on the maps containing champion mirrors */"
+        }
+      ]
+    }
+  ],
+  "structural_gaps": [
+    {
+      "pattern": "BUGX_XX",
+      "summary": "unresolved/unnumbered source bug markers",
+      "hit_count": 43,
+      "files": [
+        "BASE.C",
+        "CEDT013.C",
+        "CEDTINC4.C",
+        "CEDTINCI.C",
+        "CHAMPION.C",
+        "CLIKMENU.C",
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COPYPRO6.C",
+        "DUNVIEW.C",
+        "EXEC.C",
+        "FILENAME.C",
+        "FIO1.C",
+        "FLOPPY.C",
+        "FLOPPYAM.C",
+        "GRF1.C",
+        "HINT001.C",
+        "IBMIO.C",
+        "INPUT.C",
+        "IO.C",
+        "LOADSAVE.C",
+        "MUSIC.C",
+        "PANEL.C",
+        "REVIVE.C",
+        "SWITCH.C",
+        "TEXT.C",
+        "TITLE.C",
+        "USIO2.C",
+        "VBLANK.C",
+        "VDEO1.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "BASE.C",
+          "line": 1129,
+          "text": "F2165_PrintErrorMessage(\"Dungeon Master system error ->\", P0018_i_ErrorNumber); /* BUGX_XX: Wrong parameters order */"
+        },
+        {
+          "file": "CEDT013.C",
+          "line": 256,
+          "text": "if (P3857_i_ <= L4256_ps_->MaximumItemCount) { /* BUGX_XX: Should be < instead of <= */"
+        },
+        {
+          "file": "CEDTINC4.C",
+          "line": 170,
+          "text": "return; /* BUGX_XX No return value specified */"
+        },
+        {
+          "file": "CEDTINCI.C",
+          "line": 10,
+          "text": "void F7090_MakeNewAdventure( /* BUGX_XX: In the Atari ST version only, function is F7020_RemoveObjectModifiersFromStatistics is missing. When importing champions from a saved game, the temporary effects of champion possessions on skill and statistics become permanent. In other versions, these modifiers are removed before the champions are imported. */"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 1095,
+          "text": "return (P0641_i_Value >>= 1) + (int16_t)(((long)P0641_i_Value * (long)L0925_i_CurrentStamina) / L0926_i_HalfMaximumStamina); /* BUGX_XX: A champion may temporarily benefit from a larger than expected Strength or Maximum Load value. If the stamina of a champion drops below half of its maximum value, the Strength and Maximum Load values of the champion are decreased. However, while computing the decreased value, two sub expressions are not evaluated in the same order by all compilers. In order to compute the correct adjusted value, the first operand of the addition must be evaluated first so that its updated value is used in the second operand. However, there is no guarantee that the code produced by the compiler will evaluate the operands in this particular order. The following compilers produce code showing the expected behavior where the first operand of the addition is executed first: Megamax C (DM 1.x and CSB 2.x for Atari ST), High C (DM 2.0 and CSB 3.1 for FM-Towns), THINK C 4.0 (CSB 3.x for Amiga and X68000, DM 3.0 for X68000). The following compilers produce code showing the unexpected behavior where the second operand of the addition is executed first: Aztec C 3.6a (DM 2.x for Amiga), MPW IIGS C compiler (DM 2.x for Apple IIGS), Turbo C 2.0 (DM 2.0 and CSB 3.1 for PC-98), Turbo C++ 1.01 (DM 3.4 for PC), THINK C 5.0 (DM 3.6 Amiga). For example, on platforms where operands are evaluated in the expected order a champion with a maximum stamina of 100 and strong enough to carry 40 KG when his current stamina is more than half its maximum is able to carry only 29 KG if its current stamina drops to 45. On platforms where operands are not evaluated in the expected order the resulting maximum load is 38 KG instead which is higher than expected */"
+        },
+        {
+          "file": "CLIKMENU.C",
+          "line": 5,
+          "text": "#ifdef MEDIA349_G14ED /* BUGX_XX: Compiler fails if this define is set in IIGS.H */"
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "line": 35,
+          "text": "#ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M /* BUGX_XX FIX: In earlier versions, you can knock on the wall even if there is no champion in the party */"
+        },
+        {
+          "file": "COMMAND.C",
+          "line": 3200,
+          "text": "*P3656_ps_UDCommand = *((UD_COMMAND*)((char*)G2247_CommandQueue + 32)); /* ANOMALY_FMT BUGX_XX Offset of copied structure data is incorrect, increased by 2 bytes. Might be a compiler bug in the original. This expression gives the same result as in the original but is wrong */"
+        },
+        {
+          "file": "COPYPRO6.C",
+          "line": 197,
+          "text": "*((unsigned char**)G0293_ai_FuzzyBits_CPSE) = P0593_puc_SectorBuffer;           /* BUGX_XX: Stores the address of P0593_puc_SectorBuffer instead of actual bytes in the buffer */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 6754,
+          "text": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(M755_GRAPHIC_FLOOR_PIT_D3C, C801_ZONE_STAIRS_UP_FRONT_D3C); /* BUGX_XX */"
+        },
+        {
+          "file": "EXEC.C",
+          "line": 30,
+          "text": "struct Message* G0733_ps_Msg; /* BUGX_XX: allocated memory is never freed */"
+        },
+        {
+          "file": "FILENAME.C",
+          "line": 39,
+          "text": "char G0575_ac_SavedGameFileName[] = \"DF0:DMGAME~.DAT\"; /* BUGX_XX If French or German language was selected at the beginning of the game, the saved game file name is not the same as in Amiga versions 2.x and the Utility Disk will fail to load these files because of the name mismatch */"
+        }
+      ]
+    },
+    {
+      "pattern": "ANOMALY_",
+      "summary": "port/compiler/anomaly markers",
+      "hit_count": 222,
+      "files": [
+        "ANIM.C",
+        "ANIMSND.C",
+        "ANIMTOWN.C",
+        "BLITFILL.C",
+        "CASTER.C",
+        "CEDT001.C",
+        "CEDT007.C",
+        "CEDT012.C",
+        "CEDT013.C",
+        "CEDT017.C",
+        "CEDT023.C",
+        "CEDT026.C",
+        "CEDT027.C",
+        "CEDT030.C",
+        "CEDTINC1.C",
+        "CEDTINC8.C",
+        "CEDTINCD.C",
+        "CEDTINCR.C",
+        "CEDTTXT.C",
+        "CHAMDRAW.C",
+        "CHAMPION.C",
+        "CHEST.C",
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COORD.C",
+        "DEFS.H",
+        "DIALOG.C",
+        "DRAWVIEW.C",
+        "DUNGEON.C",
+        "DUNVIEW.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "ANIM.C",
+          "line": 2149,
+          "text": "int P2403_i_TrackNumber /* ANOMALY_FMT int required */"
+        },
+        {
+          "file": "ANIM.C",
+          "line": 2168,
+          "text": "#pragma Off(Optimize_FP); /* ANOMALY_FMT */"
+        },
+        {
+          "file": "ANIM.C",
+          "line": 2179,
+          "text": "#pragma On(Optimize_FP); /* ANOMALY_FMT */"
+        },
+        {
+          "file": "ANIMSND.C",
+          "line": 592,
+          "text": "/* G4126_ = (int16_t)(G4126_ + 1) % 8; ANOMALY_FMT with modulo. cx, dx registers used instead of ecx, edx, machine code 2 bytes too large */"
+        },
+        {
+          "file": "ANIMTOWN.C",
+          "line": 1,
+          "text": "#define ANOMALY_TOWNSIO"
+        },
+        {
+          "file": "BLITFILL.C",
+          "line": 19,
+          "text": "unsigned int      P2373_ui_Color /* ANOMALY_FMT */"
+        },
+        {
+          "file": "CASTER.C",
+          "line": 18,
+          "text": "if ((P0765_i_ChampionIndex == G0514_i_MagicCasterChampionIndex) || ((P0765_i_ChampionIndex != CM1_CHAMPION_NONE) && !M516_CHAMPIONS[P0765_i_ChampionIndex].CurrentHealth)) { /* ANOMALY_ASSEMBLY_COMPILATION_DIFFERENCE jmp */"
+        },
+        {
+          "file": "CEDT001.C",
+          "line": 65,
+          "text": "volatile int16_t L3814_i_; /* ANOMALY_FMT Unwanted optimization in F7051_ if not volatile */"
+        },
+        {
+          "file": "CEDT001.C",
+          "line": 246,
+          "text": "volatile short L3825_i_FileHandle; /* ANOMALY_FMT Unwanted optimization in F7051_ if not volatile */"
+        },
+        {
+          "file": "CEDT007.C",
+          "line": 61,
+          "text": "volatile int16_t G7004_SavedGameFileHandle = -1; /* Maybe static */ /* ANOMALY_FMT Unwanted optimization in F7051_ if not volatile */"
+        },
+        {
+          "file": "CEDT012.C",
+          "line": 71,
+          "text": "T7113001: /* ANOMALY_FMT Label required to disable optimization */"
+        },
+        {
+          "file": "CEDT012.C",
+          "line": 635,
+          "text": "#pragma Off(Optimize_FP); /* ANOMALY_FMT */"
+        }
+      ]
+    },
+    {
+      "pattern": "missing",
+      "summary": "explicit missing support/code/comment markers",
+      "hit_count": 24,
+      "files": [
+        "CEDTINCI.C",
+        "CHAMDRAW.C",
+        "CHAMPION.C",
+        "COMMAND.C",
+        "COMPILE.H",
+        "DEFS.H",
+        "DUNVIEW.C",
+        "FIO1.C",
+        "FLOPPY.C",
+        "GROUP.C",
+        "INSTALL.C",
+        "IO.C",
+        "MEMORY.C",
+        "MENU.C",
+        "MUSIC.C",
+        "OBJECT.C",
+        "PANEL.C",
+        "TEXT.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CEDTINCI.C",
+          "line": 10,
+          "text": "void F7090_MakeNewAdventure( /* BUGX_XX: In the Atari ST version only, function is F7020_RemoveObjectModifiersFromStatistics is missing. When importing champions from a saved game, the temporary effects of champion possessions on skill and statistics become permanent. In other versions, these modifiers are removed before the champions are imported. */"
+        },
+        {
+          "file": "CHAMDRAW.C",
+          "line": 622,
+          "text": "L0853_i_IconIndex = F0033_OBJECT_GetIconIndex(L0851_T_Thing); /* BUG0_35 The closed chest icon is drawn when the chest is opened. If you open the inventory of a champion and place a chest in the action hand, the closed chest icon is drawn instead of the open chest icon. If you place a Chest in the action hand before opening the inventory (in the champion status box on top of the screen) then when you open the inventory the open chest icon is drawn correctly in the action hand (by F0333_INVENTORY_OpenAndDrawChest). Code is missing to change the icon when a chest is drawn in the action hand while in the inventory */"
+        },
+        {
+          "file": "CHAMDRAW.C",
+          "line": 830,
+          "text": "M524_FillScreenBox(&G0054_ai_Graphic562_Box_ChampionIcons[M026_CHAMPION_ICON_INDEX(L0865_ps_Champion->Cell, G0308_i_PartyDirection) << 2], C00_COLOR_BLACK); /* BUG0_36 A champion icon may be missing in the upper right corner of the screen after loading a saved game where at least one champion is dead. When a dead champion is reborn at a Vi Altar, the champion cell is set to the first available cell where there is no champion alive. It is then possible that the cell of the reborn champion is the same as the cell of another dead champion in the party. If the index of the dead champion is higher than the index of the reborn champion and the game is saved then when restarting the game from the saved game the icon of the reborn champion will not appear on screen. This is only a graphic glitch and you only need to click on the black area where the missing icon should be to make it appear again. When the game is loaded, the state of each champion is drawn. For a dead champion, this erases the champion icon according to the cell of the dead champion, even if another champion is at the same cell */"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 2103,
+          "text": "/* BUG0_01 Coding error without consequence. Undefined return value. A 'return C1_TRUE;' statement is missing. No consequence because the actual value returned cannot be 0: it is the value of register D0 at the end of execution of F0326_CHAMPION_ShootProjectile, which is the return value of F0212_PROJECTILE_Create, which in turn is the return value of F0238_TIMELINE_AddEvent_GetEventIndex_CPSE, which is the index of the event added for the projectile. This index cannot be 0 because event 0 is always event C53_EVENT_WATCHDOG */"
+        },
+        {
+          "file": "COMMAND.C",
+          "line": 2330,
+          "text": "/* BUG0_52 The remaining commands should be ignored while pressing the eye or mouth (pressing the mouth is only possible when the panel does not contain the Food and Water bars but a scroll, a chest or the resurrect/reincarnate panel). If you press CTRL-S on the keyboard while pressing the eye or mouth with the mouse, the save game menu appears but the mouse pointer is missing on screen. If you press ESC on the keyboard while pressing the eye or the mouth, the game is frozen but the panel is drawn on screen when you release the mouse button (Food and Water bars, scroll in hand, open chest or resurrect/reincarnate). If you press ESC again to unfreeze before releasing the mouse button, the panel is drawn over the dungeon view, and the game may crash because mouse input is not configured correctly (you can still click on the eye or mouth while the dungeon view is displayed) */"
+        },
+        {
+          "file": "COMPILE.H",
+          "line": 797,
+          "text": "/* If PC_FIX_CODE_SIZE is defined, then functions have the correct size but the program is incorrect (additional or missing instructions). Code is added/removed so that the size of functions is the same as in the original, so that final code has the same size and offsets as in the original program (facilitates text comparisons of disassembled code)"
+        },
+        {
+          "file": "DEFS.H",
+          "line": 8709,
+          "text": "#ifdef MEDIA527_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_P31J /* SU1E missing */"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "line": 2464,
+          "text": "/* BUG0_86 Champion portraits, resurrect/reincarnate and rename panel graphics are missing/garbage and the game may crash. If any creature type is allowed on a map containing champion mirrors then these graphics are loaded only if the engine determines that there is no memory limitation to load all graphics (this depends on the amount of memory available at startup). Memory is always considered limited in Dungeon Master for PC and Chaos Strikes Back for PC-9801 so the graphics are never loaded in these versions. This issue only affects custom dungeons. It does not exist in the original dungeons because there are no creature types allowed on the maps containing champion mirrors. This issue also does not affect the demo versions of Dungeon Master for Amiga and Apple IIGS which always load these graphics. The demo dungeons do contain a Skeleton creature on the same map as the champion mirrors */"
+        },
+        {
+          "file": "FIO1.C",
+          "line": 980,
+          "text": "L4832_ps_FileLock = Lock(P4469_pc_FileName); /* BUGX_XX: second parameter missing in call. No consequence because the lock is not used */"
+        },
+        {
+          "file": "FLOPPY.C",
+          "line": 852,
+          "text": "L2580_ps_FileLock = Lock(L2579_pc_); /* BUGX_XX: second parameter missing in call */"
+        },
+        {
+          "file": "GROUP.C",
+          "line": 1065,
+          "text": "The following statement is missing: L0394_T_Thing->Next = C0xFFFE_THING_ENDOFLIST;"
+        },
+        {
+          "file": "GROUP.C",
+          "line": 2207,
+          "text": "((P0429_i_EventType == CM3_EVENT_CREATE_REACTION_EVENT_29_DANGER_ON_SQUARE) || !M004_RANDOM(4))) { /* BUG0_15 The game hangs when you close a door on Lord Chaos. A condition is missing in the code to manage creatures and this may create an infinite loop between two parts in the code */"
+        }
+      ]
+    },
+    {
+      "pattern": "PC_FIX_CODE_SIZE",
+      "summary": "PC code-size parity macro comments warn of additional/missing instructions",
+      "hit_count": 78,
+      "files": [
+        "CHAMDRAW.C",
+        "CHAMPION.C",
+        "CLIKMENU.C",
+        "CLIKVIEW.C",
+        "COMMAND.C",
+        "COMPILE.H",
+        "COORD.C",
+        "DUNGEON.C",
+        "DUNVIEW.C",
+        "GROUP.C",
+        "MEMORY.C",
+        "MENU.C",
+        "MOVESENS.C",
+        "OBJECT.C",
+        "PANEL.C",
+        "SPELFAIL.C",
+        "TIMELINE.C"
+      ],
+      "sample_hits": [
+        {
+          "file": "CHAMDRAW.C",
+          "line": 602,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 352,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 374,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 414,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 424,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 443,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 786,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 794,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 802,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CHAMPION.C",
+          "line": 1857,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CLIKMENU.C",
+          "line": 299,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "line": 425,
+          "text": "#ifdef PC_FIX_CODE_SIZE"
+        }
+      ]
+    },
+    {
+      "pattern": "SU1E missing",
+      "summary": "known missing media/version gate in declarations",
+      "hit_count": 1,
+      "files": [
+        "DEFS.H"
+      ],
+      "sample_hits": [
+        {
+          "file": "DEFS.H",
+          "line": 8709,
+          "text": "#ifdef MEDIA527_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_P31J /* SU1E missing */"
+        }
+      ]
+    }
+  ],
+  "firestaff_supported_patch_candidates": [
+    {
+      "area": "DM1/V1 title+entrance timing",
+      "redmcsb": [
+        "TITLE.C",
+        "ENTRANCE.C",
+        "ENDGAME.C"
+      ],
+      "firestaff_evidence": [
+        "pass160_redmcsb_source_lock",
+        "pass171_redmcsb_source_lock_closure"
+      ],
+      "patch_shape": "make BUG0_71 timing waits explicit/portable; document expected VBlank counts for PC-fast hosts"
+    },
+    {
+      "area": "C007 viewport \u2192 C080 click routing",
+      "redmcsb": [
+        "COMMAND.C",
+        "CLIKVIEW.C",
+        "MOVESENS.C"
+      ],
+      "firestaff_evidence": [
+        "pass161_c080_viewport_click_source",
+        "pass164_champion_portrait_click_source_path"
+      ],
+      "patch_shape": "add comments/tests or helper documenting C007/C080/front-wall sensor route into C127 portrait sensor"
+    },
+    {
+      "area": "champion portrait geometry",
+      "redmcsb": [
+        "DUNVIEW.C",
+        "COORD.C"
+      ],
+      "firestaff_evidence": [
+        "pass165_champion_portrait_click_geometry"
+      ],
+      "patch_shape": "document PC viewport origin + portrait bbox `{96,127,35,63}` \u2192 screen click center `(111,82)`"
+    },
+    {
+      "area": "candidate champion recruit path",
+      "redmcsb": [
+        "MOVESENS.C",
+        "REVIVE.C",
+        "COMMAND.C"
+      ],
+      "firestaff_evidence": [
+        "pass163_champion_recruit_source_path_lock"
+      ],
+      "patch_shape": "clarify that C160/C161 only works after C127/F0280 candidate state; avoid misleading panel-first route assumptions"
+    },
+    {
+      "area": "object/status/action icon geometry",
+      "redmcsb": [
+        "CHAMDRAW.C",
+        "ACTIDRAW.C",
+        "PANEL.C",
+        "COORD.C"
+      ],
+      "firestaff_evidence": [
+        "pass169_redmcsb_anchor_gap_resolution",
+        "pass170_source_mentioned_unresolved_batch"
+      ],
+      "patch_shape": "extract/label source constants for 16x16 object icons and status/action hand zones"
+    }
+  ]
+}
