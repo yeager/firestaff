@@ -1,6 +1,6 @@
 window-found 4194321 via search --class DOSBox
 window-found 4194330 via search --class DOSBox
-capture initial anim_000.png sha=ceb0c2eec633
+capture initial anim_000.png sha=ab7acc8ca298
 window-found 4194330 via search --class DOSBox
 click 270,52 mapped 541,105 window=640x400
 window-found 4194330 via search --class DOSBox
@@ -10,13 +10,13 @@ capture after_c407_enter_click selector_000.png sha=014ed52c71a0
 window-found 4194330 via search --class DOSBox
 click 111,82 mapped 223,165 window=640x400
 window-found 4194330 via search --class DOSBox
-capture click_111_82_4 selector_000.png sha=d16f5430cfd0
+capture click_111_82_4 selector_000.png sha=183f110f5d3b
 window-found 4194330 via search --class DOSBox
 capture after_source_portrait_111_82 selector_000.png sha=307323fbc1f7
 window-found 4194330 via search --class DOSBox
 click 186,115 mapped 373,231 window=640x400
 window-found 4194330 via search --class DOSBox
-capture click_186_115_6 selector_000.png sha=a914971a8a47
+capture click_186_115_6 selector_000.png sha=342d4e7bdac2
 window-found 4194330 via search --class DOSBox
 capture after_source_c161_reincarnate selector_000.png sha=125549ae51c3
 window-found 4194330 via search --class DOSBox
