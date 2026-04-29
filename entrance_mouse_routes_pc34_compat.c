@@ -1,0 +1,5 @@
+#include "entrance_mouse_routes_pc34_compat.h"
+static const EntranceMouseRouteCompat kRoutes[]={{1u,200u,407u,"ENTER_DUNGEON","COMMAND.C:347-352 maps C200 to C407_ZONE_ENTRANCE_ENTER left button"},{2u,201u,407u,"ENTER_BONUS_DUNGEON","COMMAND.C:347-352 maps C201 to C407 with bonus-dungeon mask"},{3u,214u,409u,"RESUME","COMMAND.C:347-352 maps resume macro command to C409_ZONE_ENTRANCE_RESUME"},{4u,216u,434u,"QUIT","COMMAND.C:347-352 maps C216 quit to C434_ZONE_ENTRANCE_QUIT"},{5u,214u,411u,"DRAW_CREDITS","COMMAND.C:347-352 maps draw-credits macro command to C411_ZONE_ENTRANCE_CREDITS"}};
+unsigned int ENTRANCE_Compat_GetMouseRouteCount(void){return 5u;}
+int ENTRANCE_Compat_GetMouseRoute(unsigned int ordinal, EntranceMouseRouteCompat* outRoute){ if(!outRoute||ordinal<1u||ordinal>5u)return 0; *outRoute=kRoutes[ordinal-1u]; return 1;}
+const char* ENTRANCE_Compat_GetMouseRouteEvidence(void){return "ReDMCSB source lock: COMMAND.C G0445_as_Graphic561_PrimaryMouseInput_Entrance routes enter, bonus-enter, resume, quit, and credits zones; ENTRANCE.C waits in entrance mode until command handling opens doors or leaves frontend.";}

@@ -1,0 +1,17 @@
+# Pass 183 — ReDMCSB entrance mouse routes
+
+Source-first audit:
+- `COMMAND.C:347-352` maps `G0445_as_Graphic561_PrimaryMouseInput_Entrance` to enter, bonus-enter, resume, quit, and credits zones.
+- `DEFS.H:3841-3845` defines entrance zone IDs `C407/C409/C411/C434`.
+- `ENTRANCE.C:850-883` draws entrance and waits for command-driven exit from entrance mode.
+
+Probe output:
+
+probe=firestaff_entrance_mouse_routes_source
+entranceMouseRouteEvidence=ReDMCSB source lock: COMMAND.C G0445_as_Graphic561_PrimaryMouseInput_Entrance routes enter, bonus-enter, resume, quit, and credits zones; ENTRANCE.C waits in entrance mode until command handling opens doors or leaves frontend.
+entranceMouseRoute[1]=command:200 zone:407 name:ENTER_DUNGEON evidence:COMMAND.C:347-352 maps C200 to C407_ZONE_ENTRANCE_ENTER left button
+entranceMouseRoute[2]=command:201 zone:407 name:ENTER_BONUS_DUNGEON evidence:COMMAND.C:347-352 maps C201 to C407 with bonus-dungeon mask
+entranceMouseRoute[3]=command:214 zone:409 name:RESUME evidence:COMMAND.C:347-352 maps resume macro command to C409_ZONE_ENTRANCE_RESUME
+entranceMouseRoute[4]=command:216 zone:434 name:QUIT evidence:COMMAND.C:347-352 maps C216 quit to C434_ZONE_ENTRANCE_QUIT
+entranceMouseRoute[5]=command:214 zone:411 name:DRAW_CREDITS evidence:COMMAND.C:347-352 maps draw-credits macro command to C411_ZONE_ENTRANCE_CREDITS
+entranceMouseRoutesInvariantOk=1

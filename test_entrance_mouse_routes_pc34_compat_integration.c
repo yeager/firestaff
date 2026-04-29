@@ -1,0 +1,3 @@
+#include <stdio.h>
+#include "entrance_mouse_routes_pc34_compat.h"
+int main(void){unsigned int i;int ok=1;EntranceMouseRouteCompat r;printf("probe=firestaff_entrance_mouse_routes_source\n");printf("entranceMouseRouteEvidence=%s\n",ENTRANCE_Compat_GetMouseRouteEvidence());if(ENTRANCE_Compat_GetMouseRouteCount()!=5u)ok=0;for(i=1;i<=5;i++){if(!ENTRANCE_Compat_GetMouseRoute(i,&r)){ok=0;continue;}printf("entranceMouseRoute[%u]=command:%u zone:%u name:%s evidence:%s\n",i,r.commandId,r.zoneIndex,r.name,r.evidence);}if(!ENTRANCE_Compat_GetMouseRoute(1,&r)||r.commandId!=200u||r.zoneIndex!=407u)ok=0;if(!ENTRANCE_Compat_GetMouseRoute(4,&r)||r.commandId!=216u||r.zoneIndex!=434u)ok=0;printf("entranceMouseRoutesInvariantOk=%d\n",ok);return ok?0:1;}
