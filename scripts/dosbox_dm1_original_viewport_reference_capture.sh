@@ -740,7 +740,11 @@ case "$mode" in
             exit 6
         fi
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${CROP_MANIFEST}" "${SIZE_LOG}"
-        rm -f "${OUT_DIR}"/image*.png "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png
+        # DOSBox 0.74 names screenshots after the active program/window
+        # (selector_NNN.png, fires_NNN.png) instead of imageNNNN.png.  Remove
+        # stale top-level captures before a run so normalize_existing can map
+        # exactly this run's six raw frames into stable image000N-raw.png names.
+        rm -f "${OUT_DIR}"/*.png "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png
         "$DOSBOX" -conf "$CONF" >"$LOG" 2>&1 &
         pid=$!
         echo "$pid" > "$PID_FILE"
