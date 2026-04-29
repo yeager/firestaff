@@ -9,6 +9,7 @@ int main(void) {
     InventoryCompatSlotRoute route;
     printf("probe=firestaff_inventory_slotbox_source_audit\n");
     printf("slotBoxSourceEvidence=%s\n", INVENTORY_Compat_GetSlotBoxSourceEvidence());
+    printf("carriedObjectIconEvidence=%s\n", INVENTORY_Compat_GetCarriedObjectIconEvidence());
     printf("inventorySlotBoxCount=%u\n", INVENTORY_Compat_GetInventorySlotBoxCount());
     printf("chestSlotBoxCount=%u\n", INVENTORY_Compat_GetChestSlotBoxCount());
     printf("totalSlotBoxCount=%u\n", INVENTORY_Compat_GetTotalSlotBoxCount());
@@ -40,6 +41,24 @@ int main(void) {
     }
     if (!INVENTORY_Compat_GetSlotRouteFromCommand(28u, &route) || route.slotBoxIndex != 8u || route.slotIndex != 0u || !route.usesInventoryChampion) ok = 0;
     if (!INVENTORY_Compat_GetSlotRouteFromCommand(65u, &route) || route.slotBoxIndex != 45u || route.slotIndex != 37u || !route.usesChestSlots) ok = 0;
+    if (!INVENTORY_Compat_IsMutableObjectIconIndex(0u)) ok = 0;
+    if (!INVENTORY_Compat_IsMutableObjectIconIndex(31u)) ok = 0;
+    if (INVENTORY_Compat_IsMutableObjectIconIndex(32u)) ok = 0;
+    if (!INVENTORY_Compat_IsMutableObjectIconIndex(148u)) ok = 0;
+    if (!INVENTORY_Compat_IsMutableObjectIconIndex(163u)) ok = 0;
+    if (INVENTORY_Compat_IsMutableObjectIconIndex(164u)) ok = 0;
+    if (!INVENTORY_Compat_IsMutableObjectIconIndex(195u)) ok = 0;
+    if (INVENTORY_Compat_IsMutableObjectIconIndex(204u)) ok = 0;
+    if (INVENTORY_Compat_IsMutableObjectIconIndex(212u)) ok = 0;
+    printf("mutableObjectIconRange[0,31]=%u,%u weapon32=%u potion148_163=%u,%u emptyFlask195=%u placeholder204=%u bodyPlaceholder212=%u\n",
+           INVENTORY_Compat_IsMutableObjectIconIndex(0u),
+           INVENTORY_Compat_IsMutableObjectIconIndex(31u),
+           INVENTORY_Compat_IsMutableObjectIconIndex(32u),
+           INVENTORY_Compat_IsMutableObjectIconIndex(148u),
+           INVENTORY_Compat_IsMutableObjectIconIndex(163u),
+           INVENTORY_Compat_IsMutableObjectIconIndex(195u),
+           INVENTORY_Compat_IsMutableObjectIconIndex(204u),
+           INVENTORY_Compat_IsMutableObjectIconIndex(212u));
     printf("inventorySlotBoxSourceAuditInvariantOk=%d\n", ok);
     return ok ? 0 : 1;
 }

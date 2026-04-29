@@ -101,6 +101,21 @@ int INVENTORY_Compat_GetSlotRouteFromCommand(unsigned int commandId, InventoryCo
     return 1;
 }
 
+int INVENTORY_Compat_IsMutableObjectIconIndex(unsigned int iconIndex) {
+    /* Mirrors F0295_CHAMPION_HasObjectIconInSlotBoxChanged: only icons
+     * that represent carried objects/potions are updated by the periodic
+     * changed-icon pass. Placeholder slot icons (empty box, body slots, etc.)
+     * are intentionally ignored. */
+    if (iconIndex < 32u) return 1;
+    if (iconIndex >= 148u && iconIndex <= 163u) return 1;
+    if (iconIndex == 195u) return 1;
+    return 0;
+}
+
 const char* INVENTORY_Compat_GetSlotBoxSourceEvidence(void) {
     return "ReDMCSB source lock: DEFS.H:778-817 defines slots 0..37 and C30 chest start; DEFS.H:1873-1878 defines C08 inventory first slot, C38 chest first slot, and M070 hand slot; DATA.C:977-1023 maps PC/F20+ G0030_as_Graphic562_SlotBoxes to zone indices; COMMAND.C:419-450 and 499-506 bind mouse commands to inventory/chest slot zones; COMMAND.C:2174-2177 dispatches C028..C065 via command-20 slotBox index; CHAMPION.C:677-692 resolves status/inventory/chest slot storage.";
+}
+
+const char* INVENTORY_Compat_GetCarriedObjectIconEvidence(void) {
+    return "ReDMCSB source lock: CHAMDRAW.C:595-673 F0291_CHAMPION_DrawSlot draws placeholder icons for empty body/neck/backpack slots, otherwise F0033 object icons and then F0038_OBJECT_DrawIconInSlotBox; CHAMDRAW.C:1153-1182 F0295_CHAMPION_HasObjectIconInSlotBoxChanged refreshes only current slotbox icon ranges C000..C031, C148..C163, or C195 before redrawing via F0038; CHAMDRAW.C:1226-1252 applies that changed-icon pass to status, inventory, and chest slot boxes.";
 }

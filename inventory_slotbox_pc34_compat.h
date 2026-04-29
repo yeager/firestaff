@@ -27,6 +27,8 @@ unsigned int INVENTORY_Compat_GetTotalSlotBoxCount(void);
 int INVENTORY_Compat_GetInventorySlotBox(unsigned int slotBoxIndex, InventoryCompatSlotBox* outSlotBox);
 int INVENTORY_Compat_GetChestSlotBox(unsigned int slotBoxIndex, InventoryCompatSlotBox* outSlotBox);
 int INVENTORY_Compat_GetSlotRouteFromCommand(unsigned int commandId, InventoryCompatSlotRoute* outRoute);
+int INVENTORY_Compat_IsMutableObjectIconIndex(unsigned int iconIndex);
 const char* INVENTORY_Compat_GetSlotBoxSourceEvidence(void);
+const char* INVENTORY_Compat_GetCarriedObjectIconEvidence(void);
 
 #endif
