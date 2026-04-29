@@ -152,3 +152,12 @@ __pycache__/
 
 # Failed/partial original-route scratch attempt with no raw gameplay captures
 /verification-screens/pass86-original-route-dm-vv-sn-pk/
+
+# Firestaff pass evidence under parity-evidence/verification is normally
+# scratch-heavy because `verification/` ignores every directory with this
+# name.  Pass175 is a small source-audit packet intentionally committed;
+# keep this narrow so old image-heavy verification trees stay ignored.
+!/parity-evidence/verification/
+/parity-evidence/verification/*
+!/parity-evidence/verification/pass175_redmcsb_c080_no_delta_blocker_audit/
+!/parity-evidence/verification/pass175_redmcsb_c080_no_delta_blocker_audit/**
