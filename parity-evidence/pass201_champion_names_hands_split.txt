@@ -1,0 +1,10 @@
+# Pass 201 — ReDMCSB champion names/hands split
+
+Source-first audit:
+COMMAND.C:484-497 splits G0455 champion top-row input into name leader selectors C016-C019 and ready/action hand slot commands C020-C027.
+
+Probe output:
+
+probe=firestaff_champion_names_hands_split
+sourceEvidence=COMMAND.C:484-497 splits G0455 champion top-row input into name leader selectors C016-C019 and ready/action hand slot commands C020-C027.
+championNamesHandsSplitInvariantOk=1

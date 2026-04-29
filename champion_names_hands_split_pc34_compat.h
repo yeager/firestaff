@@ -1,0 +1,5 @@
+#ifndef CHAMPION_NAMES_HANDS_SPLIT_PC34_COMPAT_H
+#define CHAMPION_NAMES_HANDS_SPLIT_PC34_COMPAT_H
+const char* champion_names_hands_split_GetEvidence(void);
+unsigned int champion_names_hands_split_GetInvariant(void);
+#endif
