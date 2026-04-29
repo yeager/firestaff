@@ -53,4 +53,10 @@ int DIALOG_Compat_GetChoiceLayout(unsigned int choiceCount, unsigned int slotOrd
 int DIALOG_Compat_GetLayoutRecord(unsigned int zoneIndex, DialogCompatLayoutRecord* outRecord);
 const char* DIALOG_Compat_GetSourceScheduleEvidence(void);
 
+struct GraphicWidthHeight_Compat;
+void F0427_DIALOG_DrawBackdrop_Compat(
+    const unsigned char* graphic,
+    unsigned char* viewportBitmap,
+    const struct GraphicWidthHeight_Compat* sizeInfo);
+
 #endif
