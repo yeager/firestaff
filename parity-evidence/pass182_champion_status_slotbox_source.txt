@@ -1,0 +1,21 @@
+# Pass 182 — ReDMCSB champion status slot boxes
+
+Source-first audit:
+- `DATA.C:977-985` maps status slot boxes `0..7` to zones `C211..C218`.
+- `COMMAND.C:489-496` maps top-row ready/action-hand commands `C020..C027` to those zones.
+- `CHAMPION.C:677-683` resolves `slotBox < C08_SLOT_BOX_INVENTORY_FIRST_SLOT` as `championIndex = slotBox >> 1` and `slotIndex = M070_HAND_SLOT_INDEX(slotBox)`.
+- `DEFS.H:1873-1878` defines the inventory boundary and hand-slot macro.
+
+Probe output:
+
+probe=firestaff_champion_status_slotbox_source
+statusSlotBoxEvidence=ReDMCSB source lock: PC/F20+ status slot boxes 0..7 are champion top-row ready/action hands only; slotBox>>1 selects champion 0..3 and slotBox&1 selects ready/action hand.
+statusSlotBox[0]=champion:0 handSlot:0 command:20 zone:211 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+statusSlotBox[1]=champion:0 handSlot:1 command:21 zone:212 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+statusSlotBox[2]=champion:1 handSlot:0 command:22 zone:213 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+statusSlotBox[3]=champion:1 handSlot:1 command:23 zone:214 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+statusSlotBox[4]=champion:2 handSlot:0 command:24 zone:215 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+statusSlotBox[5]=champion:2 handSlot:1 command:25 zone:216 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+statusSlotBox[6]=champion:3 handSlot:0 command:26 zone:217 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+statusSlotBox[7]=champion:3 handSlot:1 command:27 zone:218 evidence:DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070
+championStatusSlotBoxInvariantOk=1
