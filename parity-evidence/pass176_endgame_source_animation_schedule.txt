@@ -1,0 +1,40 @@
+# Pass 176 — ReDMCSB ENDGAME.C source animation schedule
+
+Source-first audit:
+
+- `ENDGAME.C:215-217` — optional non-winning scream then `F0022_MAIN_Delay(240)`.
+- `ENDGAME.C:241-286` — loads `C006_GRAPHIC_THE_END`, optional `C346_GRAPHIC_WALL_ORNAMENT_43_CHAMPION_MIRROR`, and `C005_GRAPHIC_CREDITS`.
+- `ENDGAME.C:307-318` — fade/curtain to black before the end screens.
+- `ENDGAME.C:327-394` — winning-game champion summary: mirrors, portraits, names, titles, skill lines.
+- `ENDGAME.C:396-424` — champion summary fade/show and keyboard/mouse wait.
+- `ENDGAME.C:440-456` — `T0444017`: clear screen, play THE END music, blit `C006_GRAPHIC_THE_END`.
+- `DATA.C:575` — `G0012_ai_Graphic562_Box_Endgame_TheEnd = {120,199,95,108}`, i.e. x=120 y=95 w=80 h=14.
+- `ENDGAME.C:458-467` — dark-blue palette + color 15 white + fade.
+- `ENDGAME.C:472-477` — `F0022_MAIN_Delay(300)` before restart controls.
+- `ENDGAME.C:484-543` — restart/quit controls when allowed.
+- `ENDGAME.C:564-568` — 900 VBlank/delay-tick restart-input wait.
+- `ENDGAME.C:639-680` — dark-blue/credits fade path.
+
+Firestaff implementation:
+
+- `endgame_frontend_pc34_compat.[ch]` exposes `ENDGAME_Compat_GetSourceAnimationStep()` and `ENDGAME_Compat_GetSourceAnimationEvidence()`.
+- This is a source schedule, not an emulator guess.
+
+Probe output:
+
+probe=firestaff_endgame_source_animation_schedule
+sourceAnimationEvidence=ReDMCSB ENDGAME.C:F0444_STARTEND_Endgame PC/F20 path: optional 240-tick loss delay, load THE_END/mirror/credits assets, fade black, optional champion summary and input wait when game won, blit THE END at DATA.C box {120,199,95,108}, fade dark-blue/white palette, delay 300, draw restart controls, wait 900 ticks/VBlanks, then credits fade/path.
+sourceAnimationStepCount=11
+sourceAnimationStep[1]=kind:OPTIONAL_LOSS_SCREAM_DELAY delay:240 vblankLoop:0 box:0,0,0,0 evidence:ENDGAME.C:215-217 optional non-winning scream plus F0022_MAIN_Delay(240)
+sourceAnimationStep[2]=kind:LOAD_END_ASSETS delay:0 vblankLoop:0 box:0,0,0,0 evidence:ENDGAME.C:241-286 loads C006_GRAPHIC_THE_END, optional C346 mirror, and C005 credits
+sourceAnimationStep[3]=kind:FADE_TO_BLACK delay:0 vblankLoop:0 box:0,0,0,0 evidence:ENDGAME.C:307-318 / 316-318 fade or curtain to black before end screens
+sourceAnimationStep[4]=kind:CHAMPION_SUMMARY_RENDER delay:0 vblankLoop:0 box:0,0,320,192 evidence:ENDGAME.C:327-394 draws champion mirrors, portraits, names, titles, skill lines
+sourceAnimationStep[5]=kind:CHAMPION_SUMMARY_WAIT_INPUT delay:0 vblankLoop:0 box:0,0,0,0 evidence:ENDGAME.C:396-424 fades champion summary then waits for keyboard/mouse input
+sourceAnimationStep[6]=kind:THE_END_BLIT delay:0 vblankLoop:0 box:120,95,80,14 evidence:ENDGAME.C:440-456 clears screen, starts music, blits C006 THE END; DATA.C:575 box {120,199,95,108}
+sourceAnimationStep[7]=kind:THE_END_PALETTE_FADE delay:0 vblankLoop:0 box:0,0,0,0 evidence:ENDGAME.C:458-467 prepares dark-blue palette, sets color 15 white, fades in
+sourceAnimationStep[8]=kind:RESTART_DELAY delay:300 vblankLoop:0 box:0,0,0,0 evidence:ENDGAME.C:472-477 CHANGE7_37 waits F0022_MAIN_Delay(300) before restart controls
+sourceAnimationStep[9]=kind:RESTART_BUTTONS_RENDER delay:0 vblankLoop:0 box:103,145,115,15 evidence:ENDGAME.C:484-543 draws restart/quit boxes and text when restart is allowed; DATA.C restart/quit boxes
+sourceAnimationStep[10]=kind:RESTART_WAIT delay:0 vblankLoop:900 box:0,0,0,0 evidence:ENDGAME.C:564-568 waits 900 VBlanks/delay ticks for restart input before credits
+sourceAnimationStep[11]=kind:CREDITS_FADE delay:0 vblankLoop:0 box:0,0,0,0 evidence:ENDGAME.C:639-680 fades to dark blue/credits palette and continues credits path
+endgameSourceAnimationScheduleInvariantOk=1
+ok
