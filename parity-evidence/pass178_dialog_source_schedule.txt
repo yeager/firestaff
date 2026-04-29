@@ -1,0 +1,71 @@
+# Pass 178 — ReDMCSB DIALOG.C event/layout schedule
+
+Source-first audit:
+
+- `DIALOG.C:680-688` expands `G0343_puc_Graphic_DialogBox` into the viewport and sets viewport dimensions.
+- `DIALOG.C:714-736` prints the engine version at `C450_ZONE_DIALOG_VERSION`.
+- `DIALOG.C:738-758` derives the dialog choice count from non-NULL choices.
+- `DIALOG.C:873-891` applies curtain/fade and clears the screen for the PC/F20+ path.
+- `DIALOG.C:906-959` selects the choice-layout path:
+  - 1 choice: `C469_ZONE_DIALOG`, patch `M621_NEGGRAPHIC_DIALOG_PATCH_1_CHOICE` to `C451`, text zone `C462`.
+  - 2 choices: `C471_ZONE_DIALOG`, patch `M622_NEGGRAPHIC_DIALOG_PATCH_2_CHOICES` to `C452`, text zones `C463/C462`.
+  - 3 choices: `C471_ZONE_DIALOG`, no patch, text zones `C463/C466/C467`.
+  - 4 choices: `C471_ZONE_DIALOG`, patch `M623_NEGGRAPHIC_DIALOG_PATCH_4_CHOICES` to `C453`, text zones `C464/C465/C466/C467`.
+- `DIALOG.C:974-1060` measures and vertically centers one/two-line messages in `C469/C471`.
+- `DIALOG.C:1063-1076` restores curtain/fade after drawing.
+- `DIALOG.C:331-388` in `F0424_DIALOG_GetChoice` swaps input tables, discards input, shows pointer, then loops `F0380_COMMAND_ProcessQueue_CPSC()` + `M526_WaitVerticalBlank()` until selected choice != `99`.
+- `DIALOG.C:409-526` expands selected zone and draws click feedback, including `F0022_MAIN_Delay(5)`.
+- `DIALOG.C:534-542` restores input tables, discards input, returns selected choice.
+- `COORD.C:740-765` locks the raw layout records for zones `450..471`.
+
+Firestaff implementation:
+
+- `dialog_frontend_pc34_compat.[ch]` exposes the source event schedule, choice layouts, and relevant raw layout records.
+- This is source-locked to ReDMCSB, not inferred from emulator output.
+
+Probe output:
+
+probe=firestaff_dialog_source_schedule
+sourceScheduleEvidence=ReDMCSB DIALOG.C source schedule: F0427 expands dialog graphic, prints version, counts choices, patches 1/2/4-choice layouts (3-choice unpatched), prints choice zones, centers messages in C469/C471, blits/draws viewport and fades; F0424 swaps input tables, loops processQueue+VBlank until selected choice, draws click feedback with two VBlank-related refreshes and F0022_MAIN_Delay(5), then restores input tables.
+dialogSourceEventCount=14
+dialogSourceEvent[1]=kind:EXPAND_DIALOG_GRAPHIC choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:680-688 expands G0343 dialog graphic into viewport and locks viewport pixel dimensions
+dialogSourceEvent[2]=kind:PRINT_VERSION choiceCount:0 zone:450 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:714-736 prints engine version at C450_ZONE_DIALOG_VERSION
+dialogSourceEvent[3]=kind:COUNT_CHOICES choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:738-758 derives choice count from non-NULL Choice2/Choice3/Choice4
+dialogSourceEvent[4]=kind:FADE_OR_CLEAR choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:873-891 applies curtain/fade and M518_FillScreenBlack on clear
+dialogSourceEvent[5]=kind:PATCH_CHOICE_GRAPHIC choiceCount:1 zone:469 patchZone:451 negGraphic:621 delay:0 vblank:0 evidence:DIALOG.C:906-917 one-choice path: zone C469, M621 patch to C451, bottom choice C462
+dialogSourceEvent[6]=kind:PATCH_CHOICE_GRAPHIC choiceCount:2 zone:471 patchZone:452 negGraphic:622 delay:0 vblank:0 evidence:DIALOG.C:918-930 two-choice path: zone C471, M622 patch to C452, top C463 and bottom C462
+dialogSourceEvent[7]=kind:PATCH_CHOICE_GRAPHIC choiceCount:3 zone:471 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:931-943 three-choice path uses unpatched C471 dialog area and zones C463/C466/C467
+dialogSourceEvent[8]=kind:PATCH_CHOICE_GRAPHIC choiceCount:4 zone:471 patchZone:453 negGraphic:623 delay:0 vblank:0 evidence:DIALOG.C:944-959 four-choice path: zone C471, M623 patch to C453, zones C464-C467
+dialogSourceEvent[9]=kind:LAYOUT_MESSAGES choiceCount:0 zone:469 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:974-1060 measures message widths, chooses one/two lines, vertically centers in C469/C471
+dialogSourceEvent[10]=kind:BLIT_OR_DRAW_VIEWPORT choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:0 vblank:1 evidence:DIALOG.C:853-864 screen dialogs blit viewport to screen box; non-screen draws viewport then waits one VBlank
+dialogSourceEvent[11]=kind:FADE_IN choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:1063-1076 restores curtain/fade after draw
+dialogSourceEvent[12]=kind:GET_CHOICE_LOOP choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:0 vblank:1 evidence:DIALOG.C:331-388 swaps dialog inputs, discards input, show pointer, process queue + one VBlank loop until choice != 99
+dialogSourceEvent[13]=kind:CHOICE_FEEDBACK choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:5 vblank:2 evidence:DIALOG.C:409-526 expands selected zone by 2/3 px, draws pressed/unpressed feedback, two F0600 refreshes, F0022_MAIN_Delay(5)
+dialogSourceEvent[14]=kind:RESTORE_INPUT choiceCount:0 zone:0 patchZone:0 negGraphic:0 delay:0 vblank:0 evidence:DIALOG.C:534-542 restores previous input tables, discards input, returns selected choice
+choiceLayoutCount[1]=1
+choiceLayout[1,1]=zone:462 center:112,114 evidence:DIALOG.C:785 / DIALOG.C:912-915 one choice centered bottom at C462
+choiceLayoutCount[2]=2
+choiceLayout[2,1]=zone:463 center:112,77 evidence:DIALOG.C:794-795 / DIALOG.C:923-928 two choices top C463 and bottom C462
+choiceLayout[2,2]=zone:462 center:112,114 evidence:DIALOG.C:794-795 / DIALOG.C:923-928 two choices top C463 and bottom C462
+choiceLayoutCount[3]=3
+choiceLayout[3,1]=zone:463 center:112,77 evidence:DIALOG.C:797-800 / DIALOG.C:931-941 three choices top C463, bottom-left C466, bottom-right C467
+choiceLayout[3,2]=zone:466 center:59,114 evidence:DIALOG.C:797-800 / DIALOG.C:931-941 three choices top C463, bottom-left C466, bottom-right C467
+choiceLayout[3,3]=zone:467 center:166,114 evidence:DIALOG.C:797-800 / DIALOG.C:931-941 three choices top C463, bottom-left C466, bottom-right C467
+choiceLayoutCount[4]=4
+choiceLayout[4,1]=zone:464 center:59,77 evidence:DIALOG.C:802-812 / DIALOG.C:944-958 four choices top-left C464, top-right C465, bottom-left C466, bottom-right C467
+choiceLayout[4,2]=zone:465 center:166,77 evidence:DIALOG.C:802-812 / DIALOG.C:944-958 four choices top-left C464, top-right C465, bottom-left C466, bottom-right C467
+choiceLayout[4,3]=zone:466 center:59,114 evidence:DIALOG.C:802-812 / DIALOG.C:944-958 four choices top-left C464, top-right C465, bottom-left C466, bottom-right C467
+choiceLayout[4,4]=zone:467 center:166,114 evidence:DIALOG.C:802-812 / DIALOG.C:944-958 four choices top-left C464, top-right C465, bottom-left C466, bottom-right C467
+dialogLayoutRecord[450]=kind:4 base:4 xy:192,7 evidence:COORD.C:740-765 G3031 LayoutData16 record for C450_ZONE_DIALOG_VERSION
+dialogLayoutRecord[451]=kind:1 base:4 xy:0,51 evidence:COORD.C:740-765 G3031 LayoutData16 record for C451_ZONE_DIALOG_PATCH_1_CHOICE
+dialogLayoutRecord[452]=kind:1 base:4 xy:102,89 evidence:COORD.C:740-765 G3031 LayoutData16 record for C452_ZONE_DIALOG_PATCH_2_CHOICES
+dialogLayoutRecord[453]=kind:1 base:4 xy:102,62 evidence:COORD.C:740-765 G3031 LayoutData16 record for C453_ZONE_DIALOG_PATCH_4_CHOICES
+dialogLayoutRecord[462]=kind:10 base:456 xy:0,0 evidence:COORD.C:740-765 G3031 LayoutData16 record for C462_ZONE_DIALOG_BOTTOM_CHOICE
+dialogLayoutRecord[463]=kind:10 base:457 xy:0,0 evidence:COORD.C:740-765 G3031 LayoutData16 record for C463_ZONE_DIALOG_TOP_CHOICE
+dialogLayoutRecord[464]=kind:10 base:458 xy:0,0 evidence:COORD.C:740-765 G3031 LayoutData16 record for C464_ZONE_DIALOG_TOP_LEFT_CHOICE
+dialogLayoutRecord[465]=kind:10 base:459 xy:0,0 evidence:COORD.C:740-765 G3031 LayoutData16 record for C465_ZONE_DIALOG_TOP_RIGHT_CHOICE
+dialogLayoutRecord[466]=kind:10 base:460 xy:0,0 evidence:COORD.C:740-765 G3031 LayoutData16 record for C466_ZONE_DIALOG_BOTTOM_LEFT_CHOICE
+dialogLayoutRecord[467]=kind:10 base:461 xy:0,0 evidence:COORD.C:740-765 G3031 LayoutData16 record for C467_ZONE_DIALOG_BOTTOM_RIGHT_CHOICE
+dialogLayoutRecord[469]=kind:0 base:468 xy:112,49 evidence:COORD.C:740-765 G3031 LayoutData16 record for C469_ZONE_DIALOG
+dialogLayoutRecord[471]=kind:0 base:470 xy:112,32 evidence:COORD.C:740-765 G3031 LayoutData16 record for C471_ZONE_DIALOG
+dialogSourceScheduleInvariantOk=1
