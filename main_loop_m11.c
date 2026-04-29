@@ -16,6 +16,7 @@
 #include "title_frontend_v1.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
+#include "entrance_frontend_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -201,6 +202,113 @@ static void m11_unpack_title_4bpp_to_indexed(const unsigned char* packed4bpp,
     }
 }
 
+static void m11_fill_rect_indexed(unsigned char* framebuffer,
+                                  int framebufferWidth,
+                                  int framebufferHeight,
+                                  int x,
+                                  int y,
+                                  int w,
+                                  int h,
+                                  unsigned char color) {
+    int yy;
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 || w <= 0 || h <= 0) return;
+    if (x < 0) { w += x; x = 0; }
+    if (y < 0) { h += y; y = 0; }
+    if (x + w > framebufferWidth) w = framebufferWidth - x;
+    if (y + h > framebufferHeight) h = framebufferHeight - y;
+    if (w <= 0 || h <= 0) return;
+    for (yy = 0; yy < h; ++yy) {
+        memset(framebuffer + (size_t)(y + yy) * (size_t)framebufferWidth + (size_t)x, color, (size_t)w);
+    }
+}
+
+static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
+                                         int x,
+                                         int y,
+                                         int w,
+                                         int h,
+                                         unsigned char fill) {
+    if (!framebuffer || w <= 0 || h <= 0) return;
+    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y, w, h, fill);
+    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y, w, 1, 13);
+    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y + h - 1, w, 1, 0);
+    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y, 1, h, 13);
+    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x + w - 1, y, 1, h, 0);
+}
+
+static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
+    unsigned char* framebuffer;
+    unsigned char* dungeonFrame;
+    unsigned int sourceStep;
+    if (!gameView || !gameView->active) return;
+    framebuffer = M11_Render_GetFramebuffer();
+    if (!framebuffer) return;
+    dungeonFrame = (unsigned char*)malloc((size_t)M11_FB_BYTES);
+    if (!dungeonFrame) return;
+
+    M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
+
+    /* ReDMCSB ENTRANCE.C source-lock:
+     * - F0441_STARTEND_ProcessEntrance() waits in entrance mode until C200.
+     * - ENTRANCE.C:935 delays 20 ticks before opening.
+     * - F0438_STARTEND_OpenEntranceDoors() runs 31 one-VBlank steps.
+     * - ENTRANCE.C:149-231 moves the left/right door boxes by 4px/step
+     *   from DATA.C source boxes left {0,100,0,160}, right {109,231,0,160}.
+     * This runtime transition uses the source schedule/boxes here; decoded
+     * C002/C003/C004 entrance graphics can replace the temporary palette
+     * fills without changing timing or geometry. */
+    for (sourceStep = 1U; sourceStep <= ENTRANCE_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
+        EntranceCompatSourceAnimationStep step;
+        if (!ENTRANCE_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
+
+        if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_FADE_TO_BLACK) {
+            memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+        } else if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN ||
+                   step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT ||
+                   step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND ||
+                   step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
+            memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
+            m11_draw_entrance_door_panel(framebuffer, 0, 28, 101, 161, 5);
+            m11_draw_entrance_door_panel(framebuffer, 109, 28, 123, 161, 5);
+        } else if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP) {
+            EntranceCompatDoorStep door;
+            memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
+            if (ENTRANCE_Compat_GetDoorAnimationStep(sourceStep - 6U, &door)) {
+                if (door.leftBoxW > 0U) {
+                    m11_draw_entrance_door_panel(framebuffer,
+                                                 (int)door.leftBoxX,
+                                                 28 + (int)door.leftBoxY,
+                                                 (int)door.leftBoxW,
+                                                 (int)door.leftBoxH,
+                                                 5);
+                }
+                if (door.rightBoxW > 0U) {
+                    m11_draw_entrance_door_panel(framebuffer,
+                                                 (int)door.rightBoxX,
+                                                 28 + (int)door.rightBoxY,
+                                                 (int)door.rightBoxW,
+                                                 (int)door.rightBoxH,
+                                                 5);
+                }
+            }
+        } else {
+            memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
+        }
+
+        M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        if (step.delayTicks >= 20U) {
+            SDL_Delay(330);
+        } else {
+            SDL_Delay(step.vblankLoopCount ? 16 : 33);
+        }
+        if (M11_Render_PumpEvents()) break;
+    }
+    memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
+    M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    free(dungeonFrame);
+}
+
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
                                                       int* outPlayedAnyFrame) {
     char titlePath[FSP_PATH_MAX];
@@ -277,6 +385,9 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         (void)M11_Render_SetPaletteLevel(0);
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
+        }
+        if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
+            m11_play_redmcsb_entrance_transition(gameView);
         }
         M11_GameView_Draw(gameView,
                           M11_Render_GetFramebuffer(),
