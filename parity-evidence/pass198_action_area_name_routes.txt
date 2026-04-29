@@ -1,0 +1,10 @@
+# Pass 198 — ReDMCSB action area name routes
+
+Source-first audit:
+COMMAND.C:461-466 defines G0452_as_Graphic561_MouseInput_ActionAreaNames with C112 pass and C113-C115 action name hit zones C098/C082/C083/C084.
+
+Probe output:
+
+probe=firestaff_action_area_name_routes
+sourceEvidence=COMMAND.C:461-466 defines G0452_as_Graphic561_MouseInput_ActionAreaNames with C112 pass and C113-C115 action name hit zones C098/C082/C083/C084.
+actionAreaNameRoutesInvariantOk=1
