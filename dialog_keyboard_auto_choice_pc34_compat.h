@@ -1,0 +1,5 @@
+#ifndef DIALOG_KEYBOARD_AUTO_CHOICE_PC34_COMPAT_H
+#define DIALOG_KEYBOARD_AUTO_CHOICE_PC34_COMPAT_H
+const char* dialog_keyboard_auto_choice_GetEvidence(void);
+unsigned int dialog_keyboard_auto_choice_GetInvariant(void);
+#endif

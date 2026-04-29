@@ -1,0 +1,10 @@
+# Pass 187 — ReDMCSB dialog keyboard auto-choice
+
+Source-first audit:
+DIALOG.C:360-388 initializes selected choice to 99, loops processQueue plus M526_WaitVerticalBlank, accepts keyboard return/enter only when choiceCount == 1, and otherwise keeps waiting; DIALOG.C:381-386 contains the floppy auto-choice dead/legacy branch.
+
+Probe output:
+
+probe=firestaff_dialog_keyboard_auto_choice
+sourceEvidence=DIALOG.C:360-388 initializes selected choice to 99, loops processQueue plus M526_WaitVerticalBlank, accepts keyboard return/enter only when choiceCount == 1, and otherwise keeps waiting; DIALOG.C:381-386 contains the floppy auto-choice dead/legacy branch.
+dialogKeyboardAutoChoiceInvariantOk=1
