@@ -1,5 +1,13 @@
 #include "dialog_frontend_pc34_compat.h"
+#include "memory_frontend_pc34_compat.h"
 #include <string.h>
+
+void F0427_DIALOG_DrawBackdrop_Compat(
+    const unsigned char* graphic,
+    unsigned char* viewportBitmap,
+    const struct GraphicWidthHeight_Compat* sizeInfo) {
+    F0488_MEMORY_ExpandGraphicToBitmap_Compat(graphic, viewportBitmap, sizeInfo);
+}
 
 typedef struct DialogCompatEventSpec {
     DialogCompatSourceEventKind kind;
