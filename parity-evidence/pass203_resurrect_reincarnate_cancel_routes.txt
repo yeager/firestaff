@@ -1,0 +1,10 @@
+# Pass 203 — ReDMCSB resurrect/reincarnate/cancel routes
+
+Source-first audit:
+COMMAND.C:508 onward defines G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel for candidate champion panel choices; related dispatch gates candidate champion state before inventory/rest actions.
+
+Probe output:
+
+probe=firestaff_resurrect_reincarnate_cancel_routes
+sourceEvidence=COMMAND.C:508 onward defines G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel for candidate champion panel choices; related dispatch gates candidate champion state before inventory/rest actions.
+resurrectReincarnateCancelRoutesInvariantOk=1

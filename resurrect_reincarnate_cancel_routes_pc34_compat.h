@@ -1,0 +1,5 @@
+#ifndef RESURRECT_REINCARNATE_CANCEL_ROUTES_PC34_COMPAT_H
+#define RESURRECT_REINCARNATE_CANCEL_ROUTES_PC34_COMPAT_H
+const char* resurrect_reincarnate_cancel_routes_GetEvidence(void);
+unsigned int resurrect_reincarnate_cancel_routes_GetInvariant(void);
+#endif
