@@ -17,5 +17,11 @@ unsigned int action_area_routes_GetInvariant(void) { return 1u; }
 unsigned int action_area_routes_GetTouchMatrixInvariant(void) {
     return has_touch_matrix_route(111u, 11u) &&
            has_touch_matrix_route(112u, 98u) &&
-           has_touch_matrix_route(113u, 82u);
+           has_touch_matrix_route(113u, 82u) &&
+           has_touch_matrix_route(114u, 83u) &&
+           has_touch_matrix_route(115u, 84u) &&
+           has_touch_matrix_route(116u, 89u) &&
+           has_touch_matrix_route(117u, 90u) &&
+           has_touch_matrix_route(118u, 91u) &&
+           has_touch_matrix_route(119u, 92u);
 }
