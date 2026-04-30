@@ -72,6 +72,26 @@ SOURCE_LOCKS = [
     },
     {
         "file": "COMMAND.C",
+        "lines": "397-403, 2322-2323",
+        "point": "A left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW, then calls F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+    },
+    {
+        "file": "CLIKVIEW.C",
+        "lines": "348-349, 407-431",
+        "point": "PC click handling subtracts the viewport origin; an empty-hand hit in the C05 front-wall ornament zone calls F0372 to touch the front wall sensor.",
+    },
+    {
+        "file": "MOVESENS.C",
+        "lines": "1392, 1501-1502",
+        "point": "C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty.",
+    },
+    {
+        "file": "DUNVIEW.C / COORD.C",
+        "lines": "DUNVIEW.C 525,3913-3928; COORD.C 1693-1698",
+        "point": "The portrait box is viewport x=96..127/y=35..63; PC viewport origin y=33 gives source screen click center x=111/y=82.",
+    },
+    {
+        "file": "COMMAND.C",
         "lines": "231-238, 509-511",
         "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115.",
     },
@@ -79,30 +99,15 @@ SOURCE_LOCKS = [
 
 SCENARIOS: list[dict[str, Any]] = [
     {
-        "name": "pm_f1_panel_clicks_route_recheck",
-        "program": "DM -vv -sn -pm",
-        "purpose": "Recheck pass141's strongest candidate: Return -> F1 candidate -> panel clicks -> movement. This produced dynamic dungeon hash 1ee706538fb3 once, then 48ed; classify strictly.",
-        "actions": [
-            ("key", "Return"), ("wait", 1.3), ("shot", "after_enter"),
-            ("key", "F1"), ("wait", 1.3), ("shot", "after_f1_candidate"),
-            ("click", 235, 52), ("wait", 0.9), ("shot", "after_panel_click_235_52"),
-            ("click", 276, 158), ("wait", 0.9), ("shot", "after_panel_click_276_158"),
-            ("key", "Up"), ("wait", 1.0), ("shot", "after_move_up"),
-            ("key", "Right"), ("wait", 1.0), ("shot", "after_turn_right"),
-            ("key", "Left"), ("wait", 1.0), ("shot", "after_turn_left"),
-            ("key", "F1"), ("wait", 1.0), ("shot", "after_f1_readiness"),
-            ("key", "F4"), ("wait", 1.0), ("shot", "after_f4_readiness"),
-        ],
-    },
-    {
-        "name": "source_enter_zone_then_candidate_buttons",
+        "name": "source_gated_portrait_then_resurrect",
         "program": "DM -vv -sn",
-        "purpose": "Use source C407 enter zone, then ReDMCSB C160/C161 panel boxes. Earlier probes clicked y=165, below the source Resurrect/Reincarnate boxes (COMMAND.C lines 231-238 / 509-511).",
+        "purpose": "Gate into actual dungeon gameplay, then click the source-locked front-wall champion portrait at screen x=111/y=82 before C160 resurrect at x=130/y=115.",
         "actions": [
-            ("click", 270, 52), ("wait", 1.5), ("shot", "after_c407_enter_click"),
-            ("click", 112, 60), ("wait", 1.1), ("shot", "after_portrait_center"),
-            ("click", 130, 115), ("wait", 1.1), ("shot", "after_source_c160_resurrect"),
-            ("key", "Return"), ("wait", 1.1), ("shot", "after_confirm"),
+            ("gate", "dungeon_gameplay"),
+            ("shot", "after_gameplay_gate"),
+            ("click", 111, 82), ("wait", 1.0), ("shot", "after_source_portrait_111_82"),
+            ("click", 130, 115), ("wait", 1.0), ("shot", "after_source_c160_resurrect"),
+            ("key", "Return"), ("wait", 1.0), ("shot", "after_confirm"),
             ("key", "Up"), ("wait", 1.0), ("shot", "after_move_up"),
             ("key", "Right"), ("wait", 1.0), ("shot", "after_turn_right"),
             ("key", "F1"), ("wait", 1.0), ("shot", "after_f1_readiness"),
@@ -110,14 +115,15 @@ SCENARIOS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "source_enter_zone_then_reincarnate_box",
+        "name": "source_gated_portrait_then_reincarnate",
         "program": "DM -vv -sn",
-        "purpose": "Same source-driven route, but click Reincarnate inside COMMAND.C C161 box at x≈186/y≈115 instead of old y=165 candidate coordinate.",
+        "purpose": "Same source-gated portrait route, but use C161 reincarnate at x=186/y=115.",
         "actions": [
-            ("click", 270, 52), ("wait", 1.5), ("shot", "after_c407_enter_click"),
-            ("click", 112, 60), ("wait", 1.1), ("shot", "after_portrait_center"),
-            ("click", 186, 115), ("wait", 1.1), ("shot", "after_source_c161_reincarnate"),
-            ("key", "Return"), ("wait", 1.1), ("shot", "after_confirm"),
+            ("gate", "dungeon_gameplay"),
+            ("shot", "after_gameplay_gate"),
+            ("click", 111, 82), ("wait", 1.0), ("shot", "after_source_portrait_111_82"),
+            ("click", 186, 115), ("wait", 1.0), ("shot", "after_source_c161_reincarnate"),
+            ("key", "Return"), ("wait", 1.0), ("shot", "after_confirm"),
             ("key", "Up"), ("wait", 1.0), ("shot", "after_move_up"),
             ("key", "Right"), ("wait", 1.0), ("shot", "after_turn_right"),
             ("key", "F1"), ("wait", 1.0), ("shot", "after_f1_readiness"),
@@ -153,6 +159,22 @@ def do_action(out: Path, log: list[str], action: tuple[Any, ...], idx: int) -> d
         time.sleep(float(action[1])); return None
     if kind == "shot":
         return {"phase": "shot", **shot(out, log, str(action[1]), idx)}
+    if kind == "gate":
+        target = str(action[1])
+        wid = wait_window(log, timeout=5.0)
+        deadline = time.time() + 22.0
+        attempt = 0
+        last: dict[str, Any] | None = None
+        while time.time() < deadline:
+            attempt += 1
+            last = {"phase": "gate", **shot(out, log, f"gate_{target}_{attempt:02d}", idx)}
+            if last["class"] == target:
+                return last
+            if last["class"] == "entrance_menu":
+                tap(wid, "Return", log, delay=1.0)
+            else:
+                time.sleep(0.8)
+        raise RuntimeError(f"state gate never observed {target}; last={last}")
     if kind == "key":
         key = str(action[1])
         tap(wait_window(log, timeout=5.0), key, log, delay=0.6)
@@ -199,6 +221,8 @@ def classify_route(rows: list[dict[str, Any]]) -> tuple[str, str, dict[str, Any]
     diffs = []
     for prev, cur in zip(shots, shots[1:]):
         diffs.append({"from": prev["label"], "to": cur["label"], **diff_stats(Path(prev["path"]), Path(cur["path"]))})
+    portrait_delta = [d for d in diffs if "source_portrait_111_82" in d["to"] or d["to"].startswith("click_111_82")]
+    choice_delta = [d for d in diffs if "source_c160_resurrect" in d["to"] or "source_c161_reincarnate" in d["to"] or d["to"].startswith("click_130_115") or d["to"].startswith("click_186_115")]
     dynamic_dungeon = [d for d in diffs if d["changed_ratio"] > 0.01 and any(tok in d["to"] for tok in ("move", "turn", "key_Up", "key_Right", "key_Left"))]
     evidence = {
         "hashes": hashes,
@@ -208,14 +232,22 @@ def classify_route(rows: list[dict[str, Any]]) -> tuple[str, str, dict[str, Any]
         "dungeon_count": len(dungeon),
         "control_count": len(control),
         "unsafe_tail_count": len(unsafe_after_route),
+        "portrait_click_delta": portrait_delta,
+        "choice_delta": choice_delta,
         "dynamic_dungeon_inputs": dynamic_dungeon,
+        "next_exact_input_candidate": "after a gated dungeon_gameplay frame, deliver a C007/C080 viewport click to source portrait center screen x=111,y=82; if still no delta, verify DOSBox mouse delivery/window coordinate capture before trying adjacent x=111,y=80 or x=112,y=83",
     }
-    if static_hits:
-        return "blocked/static-no-party", f"known static no-party hash present: {', '.join(static_hits)}", evidence
     if not dungeon:
         return "blocked/no-dungeon", "route never produced a dungeon gameplay frame", evidence
+    if not portrait_delta or max(d["changed_ratio"] for d in portrait_delta) < 0.001:
+        return "blocked/portrait-c080-no-visible-delta", "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280", evidence
+    if not choice_delta or max(d["changed_ratio"] for d in choice_delta) < 0.001:
+        return "blocked/choice-no-visible-delta", "portrait click changed state, but C160/C161 choice did not visibly confirm", evidence
     if unsafe_after_route:
         return "blocked/unsafe-tail", "tail still contains title/entrance/menu frames, not stable gameplay", evidence
+    tail_hashes = {r["sha12"] for r in shots[-6:]}
+    if tail_hashes & STATIC_NO_PARTY_HASHES:
+        return "blocked/static-no-party-after-source-route", f"source route returned to known static no-party hash: {', '.join(sorted(tail_hashes & STATIC_NO_PARTY_HASHES))}", evidence
     if not dynamic_dungeon:
         return "blocked/no-input-delta", "movement/control inputs did not produce non-trivial dungeon deltas", evidence
     if not control:
@@ -278,7 +310,7 @@ def main() -> int:
     if errors:
         lines += ["", "## Errors", ""]
         lines += [f"- `{e['scenario']}` `{e['program']}`: {e['error']}" for e in errors]
-    lines += ["", "## Interpretation", "", "A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass rejects any route containing known static no-party hash `48ed3743ab6a`/`082b4d249740`, then requires both dynamic input deltas and a party/control marker."]
+    lines += ["", "## Interpretation", "", "A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is reported as the exact remaining blocker rather than being collapsed into the older static-no-party bucket."]
     (OUT_ROOT / "README.md").write_text("\n".join(lines) + "\n")
     print(f"wrote {OUT_ROOT}/README.md")
     print(f"run_base={run_base}")
