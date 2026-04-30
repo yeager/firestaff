@@ -1,0 +1,385 @@
+{
+  "schema": "firestaff.csb_sample_save_search_blocker.v1",
+  "pass": true,
+  "verifier_semantics": "Inventory only; exits 0 whether a curated sample is present or absent.",
+  "roots": [
+    "~/.openclaw/data/firestaff-original-games/DM",
+    "~/.openclaw/data/firestaff-original-games/DM/_extracted"
+  ],
+  "curated_csbgame_dat_sample_present": false,
+  "exact_extracted_csbgame_samples": [],
+  "save_named_filesystem_entries": [
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa",
+      "size": 730035
+    }
+  ],
+  "archive_save_name_hits": [
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+      "hits": [
+        "51571  1996-12-24 23:32   data/sksave0.bak",
+        "51553  1996-12-24 23:32   data/sksave0.dat",
+        "51557  1996-12-24 23:32   data/sksave1.bak",
+        "51557  1996-12-24 23:32   data/sksave1.dat",
+        "51551  1996-12-24 23:32   data/sksave2.bak",
+        "51574  1996-12-24 23:32   data/sksave2.dat",
+        "51521  1996-12-24 23:32   data/sksave3.bak",
+        "51531  1996-12-24 23:32   data/sksave3.dat"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/Dungeon Master 2.zip",
+      "hits": [
+        "51571  2026-03-23 16:18   GAME/DATA/SKSAVE0.BAK",
+        "51553  2026-03-23 16:18   GAME/DATA/SKSAVE0.DAT",
+        "51557  2026-03-23 16:18   GAME/DATA/SKSAVE1.BAK",
+        "51557  2026-03-23 16:18   GAME/DATA/SKSAVE1.DAT",
+        "51551  2026-03-23 16:18   GAME/DATA/SKSAVE2.BAK",
+        "51574  2026-03-23 16:18   GAME/DATA/SKSAVE2.DAT",
+        "51521  2026-03-23 16:18   GAME/DATA/SKSAVE3.BAK",
+        "51531  2026-03-23 16:18   GAME/DATA/SKSAVE3.DAT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+      "hits": [
+        "51571  1996-12-24 23:32   data/sksave0.bak",
+        "51553  1996-12-24 23:32   data/sksave0.dat",
+        "51557  1996-12-24 23:32   data/sksave1.bak",
+        "51557  1996-12-24 23:32   data/sksave1.dat",
+        "51551  1996-12-24 23:32   data/sksave2.bak",
+        "51574  1996-12-24 23:32   data/sksave2.dat",
+        "51521  1996-12-24 23:32   data/sksave3.bak",
+        "51531  1996-12-24 23:32   data/sksave3.dat"
+      ]
+    }
+  ],
+  "disk_image_save_string_hits": [
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Game Disk v3.1 (English) Cracked.adf",
+      "string_hits": [
+        "CAN'T FIND SAVED GAME!",
+        "UNABLE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVED GAME",
+        "SAVE AND PLAY",
+        "SAVE AND QUIT",
+        "DungeonSave:",
+        "DF0:CSBGame.dat",
+        "DF0:CSBGame.bak"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Game Disk v3.1 (French, English, German) Cracked.adf",
+      "string_hits": [
+        "DF0:CSBGAME~.DAT",
+        "DF0:CSBGAME~.BAK",
+        "DungeonSave:",
+        "CAN'T FIND SAVED GAME!",
+        "LE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "THE GAME IS NOT SAVED, IS IT OK TO QUIT?",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVE",
+        "SAVE AND PLAY",
+        "SAVE AND QUIT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Game Disk v3.1 (French, English, German) Original (Not working).adf",
+      "string_hits": [
+        "DF0:CSBGAME~.DAT",
+        "DF0:CSBGAME~.BAK",
+        "DungeonSave:",
+        "CAN'T FIND SAVED GAME!",
+        "LE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "THE GAME IS NOT SAVED, IS IT OK TO QUIT?",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVE",
+        "SAVE AND PLAY",
+        "SAVE AND QUIT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Game Disk v3.3 (French, English, German) Original (Not working).adf",
+      "string_hits": [
+        "DF0:CSBGAME~.DAT",
+        "DF0:CSBGAME~.BAK",
+        "DungeonSave:",
+        "DF0:CSBGAME~.DAT",
+        "DF0:CSBGAME~.BAK",
+        "DungeonSave:",
+        "CAN'T FIND SAVED GAME!",
+        "N(0@CLE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "THE GAME IS NOT SAVED, IS IT OK TO QUIT?",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVE",
+        "SAVE AND PLAY",
+        "SAVE AND QUIT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Game Disk v3.5 (English) Original (Not working).adf",
+      "string_hits": [
+        "CAN'T FIND SAVED GAME!",
+        "UNABLE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVED GAME",
+        "SAVE AND PLAY",
+        "SAVE AND QUIT",
+        "DF0:CSBGAME.DAT",
+        "DF0:CSBGAME.BAK",
+        "CAN'T FIND SAVED GAME!",
+        "UNABLE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "THE GAME IS NOT SAVED, IS IT OK TO QUIT?",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVED GAME",
+        "SAVE AND PLAY",
+        "SAVE AND QUIT",
+        "DungeonSave:"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Game Disk v3.5 (French, English, German) Original (Not working).adf",
+      "string_hits": [
+        "0:CSBGAME~.DAT",
+        "DF0:CSBGAME~.BAK",
+        "DungeonSave:",
+        "CAN'T FIND SAVED GAME!",
+        "UNABLE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "THE GAME IS NOT SAVED, IS IT OK TO QUIT?",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVED GAME",
+        "SAVE",
+        "CAN'T FIND SAVED GAME!",
+        "UNABLE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "THE GAME IS NOT SAVED, IS IT OK TO QUIT?",
+        "PUT THE GAME SAVE DISK IN ~",
+        "LOAD SAVED GAME",
+        "SAVE",
+        "CSBGAMEF.DAT",
+        "CSBGAME.DAT",
+        "CSBGAMEG.DAT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Utility Disk (English Release 1) Original.adf",
+      "string_hits": [
+        "Chaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive DF0://Then press LOAD",
+        "Oracle//Please insert a Chaos Strikes Back saved game disk in drive DFX://Then press LOAD",
+        "Please insert a saved game disk in drive DF0:",
+        "Please insert a saved game disk in drive DFX:",
+        "Incorrect/or damaged saved game./Retry with a new saved game.",
+        "SAVE",
+        "1CSBGAME.DAT",
+        "1CSBGAME.BAK",
+        "DF0:DMGAME.DAT",
+        "DF0:DMGAME.BAK",
+        "DF0:CSBGAME.DAT",
+        "DF0:CSBGAME.BAK",
+        "SAVE CHAMPIONS",
+        "DungeonSave",
+        "DungeonSave",
+        "DF0:DMGAME.DAT",
+        "DF0:DMGAME.BAK",
+        "DF0:CSBGAME.DAT",
+        "DF0:CSBGAME.BAK",
+        "SAVE GAME DISK IN @"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Utility Disk (English Release 2) Original.adf",
+      "string_hits": [
+        "FROM THIS SAVED GAME.",
+        "LOAD WHICH SAVED GAME?",
+        "STRIKES BACK SAVED GAME?",
+        "MASTER SAVED GAME?",
+        "PLEASE PUT THE GAME SAVE",
+        "GAME SAVE DISK",
+        "DUNGEON MASTER SAVED",
+        "CHAOS STRIKES BACK SAVED",
+        "2:DMGAME.DAT",
+        "2:CSBGAME.DAT",
+        "2:DMGAME.DAT",
+        "2:CSBGAME.DAT",
+        "DungeonSave",
+        "SAVE CHAMPIONS",
+        "A SAVED GAME OR",
+        "YOU MAY SAVE EITHER",
+        "LOADING SAVED GAME",
+        "OR DAMAGED SAVED GAME",
+        "A SAVED GAME IS LOADED.",
+        "UChaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive DF0://Then press LOAD"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Utility Disk (English Release 3) Original.adf",
+      "string_hits": [
+        "FROM THIS SAVED GAME.",
+        "LOAD WHICH SAVED GAME?",
+        "STRIKES BACK SAVED GAME?",
+        "MASTER SAVED GAME?",
+        "PLEASE PUT THE GAME SAVE",
+        "GAME SAVE DISK",
+        "DUNGEON MASTER SAVED",
+        "CHAOS STRIKES BACK SAVED",
+        "2:DMGAME.DAT",
+        "2:CSBGAME.DAT",
+        "2:DMGAME.DAT",
+        "2:CSBGAME.DAT",
+        "DungeonSave",
+        "SAVE CHAMPIONS",
+        "A SAVED GAME OR",
+        "YOU MAY SAVE EITHER",
+        "LOADING SAVED GAME",
+        "OR DAMAGED SAVED GAME",
+        "A SAVED GAME IS LOADED.",
+        "UChaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive DF0://Then press LOAD"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Utility Disk (French) Original.adf",
+      "string_hits": [
+        "1CSBGAMEF.DAT",
+        "1CSBGAMEF.BAK",
+        "DungeonSave",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEF.DAT",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEF.DAT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Utility Disk (German Release 1) Original.adf",
+      "string_hits": [
+        "1CSBGAMEG.DAT",
+        "1CSBGAMEG.BAK",
+        "DungeonSave",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEG.DAT",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEG.DAT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/Floppy Disks ADF/Chaos Strikes Back for Amiga Utility Disk (German Release 2) Original.adf",
+      "string_hits": [
+        "1CSBGAMEG.DAT",
+        "1CSBGAMEG.BAK",
+        "1CSBGAMEG.DAT",
+        "1CSBGAMEG.BAK",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEG.DAT",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEG.DAT",
+        "DungeonSave",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEG.DAT",
+        "2:DMGAME.DAT",
+        "2:CSBGAMEG.DAT"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Utility Disk v2.0 (English).msa",
+      "string_hits": [
+        "SAVE CHAMPIONS",
+        "SAVE GAME DISK IN @",
+        "A SAVED GAME OR",
+        "YOU MAY SAVE EITHER",
+        "REPLACE EXISTING SAVED GAME?",
+        "LOADING SAVED GAME",
+        "CAN'T FIND SAVED GAME!",
+        "SAVED GAME ERROR",
+        "A SAVED GAME IS LOADED.",
+        "FROM THIS SAVED GAME.",
+        "LOAD WHICH SAVED GAME?",
+        "SAVE",
+        "B:\\DMGAME.DAT",
+        "B:\\DMGAME.BAK",
+        "B:\\CSBGAME.DAT",
+        "B:\\CSBGAME.BAK",
+        "SAVE_GAME(): CHECKSUM %d != %d (KEY=%d)",
+        "SAVE CHAMPIONS",
+        "Chaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive A://Then press LOAD",
+        "Chaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive B://Then press LOAD"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks ST/Chaos Strikes Back for Atari ST v2.0 (English) Cracked (Automation Disk 192).st",
+      "string_hits": [
+        "CSBGAME DAT",
+        "CSBGAME BAK",
+        "b11CSBGAME.BAK",
+        "LSD!A:\\ANIMATE.SCRA:\\ANIMATE.DATA:\\CSBGAME.DATA:\\CSBGAME.BAKCSBGAME.BAK   CSBGAME.DAT   DMGAME.DAT    DMGAME.BAK    A:\\DMGAME.DAT A:\\DMGAME.BAK A:\\MINI.DAT   MINI.DAT      A:\\F          F",
+        "NuA:\\ANIMATE.SCRA:\\ANIMATE.DATCSBGAME.BAK   CSBGAME.DAT   A:\\F          F",
+        "NuA:\\ANIMATE.SCRA:\\ANIMATE.DATCSBGAME.BAK   CSBGAME.DAT   A:\\F          F"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2000-02-07 ELiTE/ChaosStrikesBackAtariST20HDDisk1.st",
+      "string_hits": [
+        "Saved games will be stored in the folder CSB_GAME, and they will be named",
+        "CSBGAME.DAT, CSBGAME2.DAT, CSBGAME3.DAT, or CSBGAME4.DAT (as chosen by you).",
+        "Each time you save a new file, any old file with the same name will be",
+        "main files and a couple of saved games, but you should not use more than",
+        "the older versions of CSB did not allow more than one saved game, either",
+        "in load commands or in save commands. This new version implements a new",
+        "loaded or saved.  These files also have independently handled BAK files",
+        "same medium for storage of saved games and of the program files.  For that",
+        "the game asks for one.  Normally this is not a problem, as saved games are",
+        "for more saved games.  The responsibility for using these properly is your",
+        "all the unpacked contents of this archive into it, or if you need to save",
+        "+CSBGAME.DAT",
+        "CSBGAME2.DAT",
+        "CSBGAME3.DAT",
+        "CSBGAME4.DAT",
+        "CSBGAMEx.BAK",
+        "CAN'T FIND SAVED GAME!",
+        "UNABLE TO SAVE GAME!",
+        "THAT'S A GAME SAVE DISK!",
+        "SAVED GAME DAMAGED!"
+      ]
+    },
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2000-02-07 ELiTE/ChaosStrikesBackAtariST20HDDisk2.st",
+      "string_hits": [
+        "SAVE GAME DISK IN @",
+        "A SAVED GAME OR",
+        "YOU MAY SAVE EITHER",
+        "REPLACE EXISTING SAVED GAME?",
+        "LOADING SAVED GAME",
+        "CAN'T FIND SAVED GAME!",
+        "SAVED GAME ERROR",
+        "A SAVED GAME IS LOADED.",
+        "FROM THIS SAVED GAME.",
+        "LOAD WHICH SAVED GAME?",
+        "SAVE",
+        "DMGAME.DAT",
+        "DMGAME.BAK",
+        "CSBGAME.DAT",
+        "CSBGAME.BAK",
+        "SAVE_GAME(): CHECKSUM %d != %d (KEY=%d)",
+        "SAVE CHAMPIONS",
+        "Chaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive A://Then press LOAD",
+        "Chaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive B://Then press LOAD",
+        "Please insert a saved game disk in drive A:"
+      ]
+    }
+  ],
+  "source_lock_compatibility_criteria": [
+    "Use a real extracted CSBGAME*.DAT/BAK saved-game sample, not a game/utility executable disk string reference.",
+    "Decoded save header must use C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK (DEFS.H:496-498; CEDTINCU.C:27-32).",
+    "CSB_SAVE_HEADER.DungeonID must be C13_DUNGEON_CSB_GAME for CSB game saves (DEFS.H:482-494, 519-523; CEDTINCU.C:49-58; CEDTINCH.C:55-58).",
+    "Platform/FormatID must pass the source gates for the targeted media (CEDTINCU.C:49-58; CEDTINCH.C:55-58).",
+    "Save routing must map C13_DUNGEON_CSB_GAME or C12_DUNGEON_CSB_PRISON to M746_FILE_ID_SAVE_CSBGAME_DAT, not DMSAVE.DAT (CEDTINC8.C:101-118)."
+  ],
+  "blocker": "No extracted curated CSBGAME*.DAT/BAK saved-game sample is present under the approved N2 original-game roots."
+}
