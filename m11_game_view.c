@@ -19953,7 +19953,7 @@ void M11_GameView_NotifyChampionDamage(M11_GameViewState* state,
                                        int championSlot,
                                        int damageAmount) {
     if (!state || championSlot < 0 || championSlot >= 4) return;
-    state->championDamageTimer[championSlot] = M11_DAMAGE_FLASH_DURATION;
+    state->championDamageTimer[championSlot] = M11_CHAMPION_DAMAGE_OVERLAY_DURATION;
     state->championDamageAmount[championSlot] = damageAmount;
 }
 

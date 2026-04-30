@@ -320,6 +320,10 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state);
 
 /* Durations in game ticks. */
 #define M11_DAMAGE_FLASH_DURATION   4
+/* ReDMCSB schedules C12_EVENT_HIDE_DAMAGE_RECEIVED for gameTime+5.
+ * Keep champion HUD damage overlays source-locked separately from
+ * the red viewport damage flash duration. */
+#define M11_CHAMPION_DAMAGE_OVERLAY_DURATION 5
 #define M11_ATTACK_CUE_DURATION     3
 #define M11_CREATURE_HIT_OVERLAY_DURATION 5  /* ticks to show graphic-14 overlay */
 #define M11_CREATURE_ANIM_PERIOD    6  /* ticks per idle-frame cycle */
@@ -339,7 +343,7 @@ int M11_GameView_GetDamageFlashTimer(const M11_GameViewState* state);
 int M11_GameView_GetAttackCueTimer(const M11_GameViewState* state);
 
 /* Trigger a per-champion damage indicator overlay (GRAPHICS.DAT graphic 15).
- * The indicator displays for M11_DAMAGE_FLASH_DURATION ticks. */
+ * The indicator displays for M11_CHAMPION_DAMAGE_OVERLAY_DURATION ticks. */
 void M11_GameView_NotifyChampionDamage(M11_GameViewState* state,
                                        int championSlot,
                                        int damageAmount);
