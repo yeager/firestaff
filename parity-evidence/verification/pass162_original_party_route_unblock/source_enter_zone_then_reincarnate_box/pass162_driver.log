@@ -10,7 +10,7 @@ capture after_c407_enter_click selector_000.png sha=014ed52c71a0
 window-found 4194330 via search --class DOSBox
 click 112,60 mapped 225,121 window=640x400
 window-found 4194330 via search --class DOSBox
-capture click_112_60_4 selector_000.png sha=5f1fc0a1c08c
+capture click_112_60_4 selector_000.png sha=d16f5430cfd0
 window-found 4194330 via search --class DOSBox
 capture after_portrait_center selector_000.png sha=307323fbc1f7
 window-found 4194330 via search --class DOSBox

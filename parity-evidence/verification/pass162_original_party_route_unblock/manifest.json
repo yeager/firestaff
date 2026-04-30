@@ -1,6 +1,6 @@
 {
   "schema": "pass162_original_party_route_unblock.v1",
-  "run_base": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock",
+  "run_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock",
   "evidence_root": "parity-evidence/verification/pass162_original_party_route_unblock",
   "source_locks": [
     {
@@ -51,6 +51,11 @@
           "file": "REVIVE.C",
           "lines": "63-150",
           "point": "F0280_CHAMPION_AddCandidateChampionToParty is the source transition that increments/uses G0305_ui_PartyChampionCount; inventory-looking candidate frames are not enough without this semantic transition."
+        },
+        {
+          "file": "COMMAND.C",
+          "lines": "231-238, 509-511",
+          "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
         }
       ],
       "route_evidence": {
@@ -59,7 +64,7 @@
           "014ed52c71a0",
           "014ed52c71a0",
           "e8a02e3f9758",
-          "2edc8130117c",
+          "7addedda4327",
           "2456e272bbda",
           "17bd7e878157",
           "17bd7e878157",
@@ -100,8 +105,8 @@
           "014ed52c71a0",
           "17bd7e878157",
           "2456e272bbda",
-          "2edc8130117c",
           "48ed3743ab6a",
+          "7addedda4327",
           "ceb0c2eec633",
           "e8a02e3f9758"
         ],
@@ -132,7 +137,7 @@
           "index": 1,
           "label": "initial",
           "file": "image0001-initial.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0001-initial.png",
           "sha12": "ceb0c2eec633",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -143,7 +148,7 @@
           "index": 2,
           "label": "key_Return_2",
           "file": "image0002-key_return_2.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0002-key_return_2.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0002-key_return_2.png",
           "sha12": "014ed52c71a0",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -200,7 +205,7 @@
           "index": 3,
           "label": "after_enter",
           "file": "image0003-after_enter.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0003-after_enter.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0003-after_enter.png",
           "sha12": "014ed52c71a0",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -258,7 +263,7 @@
           "index": 4,
           "label": "key_F1_4",
           "file": "image0004-key_f1_4.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0004-key_f1_4.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0004-key_f1_4.png",
           "sha12": "e8a02e3f9758",
           "class": "graphics_320x200_unclassified",
           "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
@@ -315,27 +320,27 @@
           "index": 5,
           "label": "after_f1_candidate",
           "file": "image0005-after_f1_candidate.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0005-after_f1_candidate.png",
-          "sha12": "2edc8130117c",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0005-after_f1_candidate.png",
+          "sha12": "7addedda4327",
           "class": "title_or_menu",
           "reason": "sparse viewport plus colorful/right-column title-menu art",
           "crop_stats": {
             "viewport": {
               "mean_rgb": [
-                46.86,
-                37.82,
-                30.94
+                45.98,
+                36.9,
+                29.99
               ],
-              "nonblack_ratio": 0.392201,
+              "nonblack_ratio": 0.386653,
               "palette64_colors": 13
             },
             "right_panel": {
               "mean_rgb": [
-                139.24,
-                133.95,
-                81.13
+                139.25,
+                133.96,
+                81.15
               ],
-              "nonblack_ratio": 0.936351,
+              "nonblack_ratio": 0.936581,
               "palette64_colors": 13
             },
             "lower_panel": {
@@ -349,11 +354,11 @@
             },
             "top_party_strip": {
               "mean_rgb": [
-                94.67,
-                78.14,
-                55.2
+                93.44,
+                76.88,
+                53.9
               ],
-              "nonblack_ratio": 0.634766,
+              "nonblack_ratio": 0.628516,
               "palette64_colors": 15
             },
             "movement_panel": {
@@ -374,7 +379,7 @@
           "index": 6,
           "label": "click_235_52_6",
           "file": "image0006-click_235_52_6.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0006-click_235_52_6.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0006-click_235_52_6.png",
           "sha12": "2456e272bbda",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -431,7 +436,7 @@
           "index": 7,
           "label": "after_panel_click_235_52",
           "file": "image0007-after_panel_click_235_52.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0007-after_panel_click_235_52.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0007-after_panel_click_235_52.png",
           "sha12": "17bd7e878157",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -490,7 +495,7 @@
           "index": 8,
           "label": "click_276_158_8",
           "file": "image0008-click_276_158_8.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0008-click_276_158_8.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0008-click_276_158_8.png",
           "sha12": "17bd7e878157",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -547,7 +552,7 @@
           "index": 9,
           "label": "after_panel_click_276_158",
           "file": "image0009-after_panel_click_276_158.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0009-after_panel_click_276_158.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0009-after_panel_click_276_158.png",
           "sha12": "17bd7e878157",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -605,7 +610,7 @@
           "index": 10,
           "label": "key_Up_10",
           "file": "image0010-key_up_10.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0010-key_up_10.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0010-key_up_10.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -662,7 +667,7 @@
           "index": 11,
           "label": "after_move_up",
           "file": "image0011-after_move_up.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0011-after_move_up.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0011-after_move_up.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -720,7 +725,7 @@
           "index": 12,
           "label": "key_Right_12",
           "file": "image0012-key_right_12.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0012-key_right_12.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0012-key_right_12.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -777,7 +782,7 @@
           "index": 13,
           "label": "after_turn_right",
           "file": "image0013-after_turn_right.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0013-after_turn_right.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0013-after_turn_right.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -835,7 +840,7 @@
           "index": 14,
           "label": "key_Left_14",
           "file": "image0014-key_left_14.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0014-key_left_14.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0014-key_left_14.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -892,7 +897,7 @@
           "index": 15,
           "label": "after_turn_left",
           "file": "image0015-after_turn_left.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0015-after_turn_left.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0015-after_turn_left.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -950,7 +955,7 @@
           "index": 16,
           "label": "key_F1_16",
           "file": "image0016-key_f1_16.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0016-key_f1_16.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0016-key_f1_16.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1007,7 +1012,7 @@
           "index": 17,
           "label": "after_f1_readiness",
           "file": "image0017-after_f1_readiness.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0017-after_f1_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0017-after_f1_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1065,7 +1070,7 @@
           "index": 18,
           "label": "key_F4_18",
           "file": "image0018-key_f4_18.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0018-key_f4_18.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0018-key_f4_18.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1122,7 +1127,7 @@
           "index": 19,
           "label": "after_f4_readiness",
           "file": "image0019-after_f4_readiness.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0019-after_f4_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/pm_f1_panel_clicks_route_recheck/image0019-after_f4_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1198,6 +1203,11 @@
           "file": "REVIVE.C",
           "lines": "63-150",
           "point": "F0280_CHAMPION_AddCandidateChampionToParty is the source transition that increments/uses G0305_ui_PartyChampionCount; inventory-looking candidate frames are not enough without this semantic transition."
+        },
+        {
+          "file": "COMMAND.C",
+          "lines": "231-238, 509-511",
+          "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
         }
       ],
       "route_evidence": {
@@ -1205,10 +1215,10 @@
           "ceb0c2eec633",
           "014ed52c71a0",
           "014ed52c71a0",
-          "28ac2881600f",
+          "5f1fc0a1c08c",
           "307323fbc1f7",
-          "a914971a8a47",
-          "f3aae170c687",
+          "342d4e7bdac2",
+          "f938fdba63a1",
           "17bd7e878157",
           "17bd7e878157",
           "48ed3743ab6a",
@@ -1242,12 +1252,12 @@
         "unique_hashes": [
           "014ed52c71a0",
           "17bd7e878157",
-          "28ac2881600f",
           "307323fbc1f7",
+          "342d4e7bdac2",
           "48ed3743ab6a",
-          "a914971a8a47",
+          "5f1fc0a1c08c",
           "ceb0c2eec633",
-          "f3aae170c687"
+          "f938fdba63a1"
         ],
         "static_hits": [
           "48ed3743ab6a"
@@ -1260,13 +1270,13 @@
             "from": "after_source_c160_resurrect",
             "to": "key_Return_8",
             "bbox": [
-              0,
+              213,
               33,
               233,
               194
             ],
-            "changed_pixels": 2885,
-            "changed_ratio": 0.045078
+            "changed_pixels": 2801,
+            "changed_ratio": 0.043766
           },
           {
             "from": "after_confirm",
@@ -1288,7 +1298,7 @@
           "index": 1,
           "label": "initial",
           "file": "image0001-initial.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0001-initial.png",
           "sha12": "ceb0c2eec633",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -1300,7 +1310,7 @@
           "index": 2,
           "label": "click_270_52_2",
           "file": "image0002-click_270_52_2.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0002-click_270_52_2.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0002-click_270_52_2.png",
           "sha12": "014ed52c71a0",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -1357,7 +1367,7 @@
           "index": 3,
           "label": "after_c407_enter_click",
           "file": "image0003-after_c407_enter_click.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0003-after_c407_enter_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0003-after_c407_enter_click.png",
           "sha12": "014ed52c71a0",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -1416,32 +1426,32 @@
           "index": 4,
           "label": "click_112_60_4",
           "file": "image0004-click_112_60_4.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0004-click_112_60_4.png",
-          "sha12": "28ac2881600f",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0004-click_112_60_4.png",
+          "sha12": "5f1fc0a1c08c",
           "class": "graphics_320x200_unclassified",
           "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
           "crop_stats": {
             "viewport": {
               "mean_rgb": [
-                57.27,
-                39.23,
-                12.92
+                44.52,
+                31.73,
+                12.64
               ],
               "nonblack_ratio": 1.0,
               "palette64_colors": 15
             },
             "right_panel": {
               "mean_rgb": [
-                39.68,
-                28.5,
-                12.65
+                31.34,
+                23.55,
+                12.48
               ],
               "nonblack_ratio": 1.0,
               "palette64_colors": 14
             },
             "lower_panel": {
               "mean_rgb": [
-                12.42,
+                12.33,
                 12.0,
                 12.0
               ],
@@ -1450,16 +1460,16 @@
             },
             "top_party_strip": {
               "mean_rgb": [
-                28.63,
-                27.14,
-                12.29
+                24.32,
+                23.22,
+                12.22
               ],
               "nonblack_ratio": 1.0,
               "palette64_colors": 13
             },
             "movement_panel": {
               "mean_rgb": [
-                18.22,
+                16.09,
                 12.0,
                 12.0
               ],
@@ -1473,7 +1483,7 @@
           "index": 5,
           "label": "after_portrait_center",
           "file": "image0005-after_portrait_center.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0005-after_portrait_center.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0005-after_portrait_center.png",
           "sha12": "307323fbc1f7",
           "class": "title_or_menu",
           "reason": "sparse viewport plus colorful/right-column title-menu art",
@@ -1532,36 +1542,36 @@
           "index": 6,
           "label": "click_130_115_6",
           "file": "image0006-click_130_115_6.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0006-click_130_115_6.png",
-          "sha12": "a914971a8a47",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0006-click_130_115_6.png",
+          "sha12": "342d4e7bdac2",
           "class": "title_or_menu",
           "reason": "sparse viewport plus colorful/right-column title-menu art",
           "crop_stats": {
             "viewport": {
               "mean_rgb": [
-                49.82,
-                40.92,
-                34.19
+                50.32,
+                41.45,
+                34.73
               ],
-              "nonblack_ratio": 0.413636,
+              "nonblack_ratio": 0.416557,
               "palette64_colors": 13
             },
             "right_panel": {
               "mean_rgb": [
-                139.28,
-                133.99,
-                81.17
+                139.36,
+                134.07,
+                81.25
               ],
-              "nonblack_ratio": 0.936887,
+              "nonblack_ratio": 0.938036,
               "palette64_colors": 13
             },
             "lower_panel": {
               "mean_rgb": [
-                72.63,
-                92.91,
-                59.85
+                75.38,
+                95.69,
+                62.67
               ],
-              "nonblack_ratio": 0.619238,
+              "nonblack_ratio": 0.63291,
               "palette64_colors": 15
             },
             "top_party_strip": {
@@ -1575,11 +1585,11 @@
             },
             "movement_panel": {
               "mean_rgb": [
-                63.05,
-                145.04,
-                39.54
+                63.22,
+                145.21,
+                39.71
               ],
-              "nonblack_ratio": 0.91008,
+              "nonblack_ratio": 0.912377,
               "palette64_colors": 14
             }
           }
@@ -1589,8 +1599,8 @@
           "index": 7,
           "label": "after_source_c160_resurrect",
           "file": "image0007-after_source_c160_resurrect.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0007-after_source_c160_resurrect.png",
-          "sha12": "f3aae170c687",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0007-after_source_c160_resurrect.png",
+          "sha12": "f938fdba63a1",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
           "crop_stats": {
@@ -1614,11 +1624,11 @@
             },
             "lower_panel": {
               "mean_rgb": [
-                140.77,
-                164.1,
-                133.64
+                141.38,
+                164.74,
+                134.31
               ],
-              "nonblack_ratio": 0.953857,
+              "nonblack_ratio": 0.956982,
               "palette64_colors": 15
             },
             "top_party_strip": {
@@ -1632,11 +1642,11 @@
             },
             "movement_panel": {
               "mean_rgb": [
-                65.08,
-                146.18,
+                65.13,
+                146.2,
                 39.98
               ],
-              "nonblack_ratio": 0.928309,
+              "nonblack_ratio": 0.928768,
               "palette64_colors": 14
             }
           }
@@ -1647,7 +1657,7 @@
           "index": 8,
           "label": "key_Return_8",
           "file": "image0008-key_return_8.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0008-key_return_8.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0008-key_return_8.png",
           "sha12": "17bd7e878157",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -1704,7 +1714,7 @@
           "index": 9,
           "label": "after_confirm",
           "file": "image0009-after_confirm.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0009-after_confirm.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0009-after_confirm.png",
           "sha12": "17bd7e878157",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -1762,7 +1772,7 @@
           "index": 10,
           "label": "key_Up_10",
           "file": "image0010-key_up_10.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0010-key_up_10.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0010-key_up_10.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1819,7 +1829,7 @@
           "index": 11,
           "label": "after_move_up",
           "file": "image0011-after_move_up.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0011-after_move_up.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0011-after_move_up.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1877,7 +1887,7 @@
           "index": 12,
           "label": "key_Right_12",
           "file": "image0012-key_right_12.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0012-key_right_12.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0012-key_right_12.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1934,7 +1944,7 @@
           "index": 13,
           "label": "after_turn_right",
           "file": "image0013-after_turn_right.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0013-after_turn_right.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0013-after_turn_right.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1992,7 +2002,7 @@
           "index": 14,
           "label": "key_F1_14",
           "file": "image0014-key_f1_14.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0014-key_f1_14.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0014-key_f1_14.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2049,7 +2059,7 @@
           "index": 15,
           "label": "after_f1_readiness",
           "file": "image0015-after_f1_readiness.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0015-after_f1_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0015-after_f1_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2107,7 +2117,7 @@
           "index": 16,
           "label": "key_F4_16",
           "file": "image0016-key_f4_16.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0016-key_f4_16.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0016-key_f4_16.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2164,7 +2174,7 @@
           "index": 17,
           "label": "after_f4_readiness",
           "file": "image0017-after_f4_readiness.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0017-after_f4_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_candidate_buttons/image0017-after_f4_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2240,6 +2250,11 @@
           "file": "REVIVE.C",
           "lines": "63-150",
           "point": "F0280_CHAMPION_AddCandidateChampionToParty is the source transition that increments/uses G0305_ui_PartyChampionCount; inventory-looking candidate frames are not enough without this semantic transition."
+        },
+        {
+          "file": "COMMAND.C",
+          "lines": "231-238, 509-511",
+          "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
         }
       ],
       "route_evidence": {
@@ -2247,7 +2262,7 @@
           "ceb0c2eec633",
           "014ed52c71a0",
           "014ed52c71a0",
-          "5f1fc0a1c08c",
+          "d16f5430cfd0",
           "307323fbc1f7",
           "342d4e7bdac2",
           "f938fdba63a1",
@@ -2287,8 +2302,8 @@
           "307323fbc1f7",
           "342d4e7bdac2",
           "48ed3743ab6a",
-          "5f1fc0a1c08c",
           "ceb0c2eec633",
+          "d16f5430cfd0",
           "f938fdba63a1"
         ],
         "static_hits": [
@@ -2330,7 +2345,7 @@
           "index": 1,
           "label": "initial",
           "file": "image0001-initial.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0001-initial.png",
           "sha12": "ceb0c2eec633",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -2342,7 +2357,7 @@
           "index": 2,
           "label": "click_270_52_2",
           "file": "image0002-click_270_52_2.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0002-click_270_52_2.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0002-click_270_52_2.png",
           "sha12": "014ed52c71a0",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -2399,7 +2414,7 @@
           "index": 3,
           "label": "after_c407_enter_click",
           "file": "image0003-after_c407_enter_click.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0003-after_c407_enter_click.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0003-after_c407_enter_click.png",
           "sha12": "014ed52c71a0",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -2458,32 +2473,32 @@
           "index": 4,
           "label": "click_112_60_4",
           "file": "image0004-click_112_60_4.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0004-click_112_60_4.png",
-          "sha12": "5f1fc0a1c08c",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0004-click_112_60_4.png",
+          "sha12": "d16f5430cfd0",
           "class": "graphics_320x200_unclassified",
           "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
           "crop_stats": {
             "viewport": {
               "mean_rgb": [
-                44.52,
-                31.73,
-                12.64
+                42.78,
+                30.76,
+                12.6
               ],
               "nonblack_ratio": 1.0,
               "palette64_colors": 15
             },
             "right_panel": {
               "mean_rgb": [
-                31.34,
-                23.55,
-                12.48
+                30.29,
+                22.89,
+                12.47
               ],
               "nonblack_ratio": 1.0,
               "palette64_colors": 14
             },
             "lower_panel": {
               "mean_rgb": [
-                12.33,
+                12.32,
                 12.0,
                 12.0
               ],
@@ -2492,16 +2507,16 @@
             },
             "top_party_strip": {
               "mean_rgb": [
-                24.32,
-                23.22,
-                12.22
+                23.75,
+                22.68,
+                12.19
               ],
               "nonblack_ratio": 1.0,
               "palette64_colors": 13
             },
             "movement_panel": {
               "mean_rgb": [
-                16.09,
+                15.87,
                 12.0,
                 12.0
               ],
@@ -2515,7 +2530,7 @@
           "index": 5,
           "label": "after_portrait_center",
           "file": "image0005-after_portrait_center.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0005-after_portrait_center.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0005-after_portrait_center.png",
           "sha12": "307323fbc1f7",
           "class": "title_or_menu",
           "reason": "sparse viewport plus colorful/right-column title-menu art",
@@ -2574,7 +2589,7 @@
           "index": 6,
           "label": "click_186_115_6",
           "file": "image0006-click_186_115_6.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0006-click_186_115_6.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0006-click_186_115_6.png",
           "sha12": "342d4e7bdac2",
           "class": "title_or_menu",
           "reason": "sparse viewport plus colorful/right-column title-menu art",
@@ -2631,7 +2646,7 @@
           "index": 7,
           "label": "after_source_c161_reincarnate",
           "file": "image0007-after_source_c161_reincarnate.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0007-after_source_c161_reincarnate.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0007-after_source_c161_reincarnate.png",
           "sha12": "f938fdba63a1",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -2689,7 +2704,7 @@
           "index": 8,
           "label": "key_Return_8",
           "file": "image0008-key_return_8.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0008-key_return_8.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0008-key_return_8.png",
           "sha12": "17bd7e878157",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -2746,7 +2761,7 @@
           "index": 9,
           "label": "after_confirm",
           "file": "image0009-after_confirm.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0009-after_confirm.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0009-after_confirm.png",
           "sha12": "17bd7e878157",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column",
@@ -2804,7 +2819,7 @@
           "index": 10,
           "label": "key_Up_10",
           "file": "image0010-key_up_10.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0010-key_up_10.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0010-key_up_10.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2861,7 +2876,7 @@
           "index": 11,
           "label": "after_move_up",
           "file": "image0011-after_move_up.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0011-after_move_up.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0011-after_move_up.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2919,7 +2934,7 @@
           "index": 12,
           "label": "key_Right_12",
           "file": "image0012-key_right_12.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0012-key_right_12.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0012-key_right_12.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2976,7 +2991,7 @@
           "index": 13,
           "label": "after_turn_right",
           "file": "image0013-after_turn_right.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0013-after_turn_right.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0013-after_turn_right.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -3034,7 +3049,7 @@
           "index": 14,
           "label": "key_F1_14",
           "file": "image0014-key_f1_14.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0014-key_f1_14.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0014-key_f1_14.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -3091,7 +3106,7 @@
           "index": 15,
           "label": "after_f1_readiness",
           "file": "image0015-after_f1_readiness.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0015-after_f1_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0015-after_f1_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -3149,7 +3164,7 @@
           "index": 16,
           "label": "key_F4_16",
           "file": "image0016-key_f4_16.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0016-key_f4_16.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0016-key_f4_16.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -3206,7 +3221,7 @@
           "index": 17,
           "label": "after_f4_readiness",
           "file": "image0017-after_f4_readiness.png",
-          "path": "<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0017-after_f4_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock/source_enter_zone_then_reincarnate_box/image0017-after_f4_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
