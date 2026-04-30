@@ -1,0 +1,92 @@
+{
+  "gate": "dm1-language-version-source-contract",
+  "status": "PASS",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
+  "redmcsb_citations": [
+    {
+      "file": "DM.C",
+      "lines": "11-18",
+      "function_or_symbol": "C3_LANGUAGE_CHOICE_COUNT / C1_VGA_GRAPHICS..C3_TANDY_GRAPHICS",
+      "claim": "PC media branch defines exactly 3 language choices and 3 video choices."
+    },
+    {
+      "file": "DM.C",
+      "lines": "643-646",
+      "function_or_symbol": "G8026_Language",
+      "claim": "Language menu entries are English, German, French with source indices C1/C2/C3."
+    },
+    {
+      "file": "DM.C",
+      "lines": "650-687",
+      "function_or_symbol": "F8086_GetMenuChoice",
+      "claim": "Menu input returns the selected entry Index after Allowed validation."
+    },
+    {
+      "file": "DM.C",
+      "lines": "891-897",
+      "function_or_symbol": "main",
+      "claim": "When menu choices are requested, language is selected before video/audio/input."
+    },
+    {
+      "file": "DM.C",
+      "lines": "1018-1027",
+      "function_or_symbol": "main",
+      "claim": "The selected language maps only to -*e, -*g, or -*f command-line parameters."
+    }
+  ],
+  "redmcsb_language_choices": [
+    {
+      "label": "English",
+      "allowed": "C1_TRUE",
+      "index": "C1_ENGLISH",
+      "parameter": "-*e"
+    },
+    {
+      "label": "German",
+      "allowed": "C1_TRUE",
+      "index": "C2_GERMAN",
+      "parameter": "-*g"
+    },
+    {
+      "label": "French",
+      "allowed": "C1_TRUE",
+      "index": "C3_FRENCH",
+      "parameter": "-*f"
+    }
+  ],
+  "firestaff_launcher_language_codes": [
+    "EN",
+    "SV",
+    "FR",
+    "DE"
+  ],
+  "firestaff_launcher_language_names": [
+    "ENGLISH",
+    "SVENSKA",
+    "FRANCAIS",
+    "DEUTSCH"
+  ],
+  "firestaff_per_game_fields_present": [
+    "gameVersionIndex",
+    "gameLanguageIndex"
+  ],
+  "boundary": {
+    "source_contract": "DM1 PC I34M language source path is exactly English/German/French and emits -*e/-*g/-*f.",
+    "firestaff_current_ui": "Firestaff persists per-game version/language options and exposes EN/SV/FR/DE launcher labels.",
+    "original_label_overlap": [
+      "ENGLISH"
+    ],
+    "firestaff_extra_language_labels": [
+      "SVENSKA",
+      "FRANCAIS",
+      "DEUTSCH"
+    ],
+    "redmcsb_labels_not_exactly_named_in_firestaff": [
+      "GERMAN",
+      "FRENCH"
+    ],
+    "parity_claimed": false,
+    "non_claim": "This gate documents a source/version boundary only; it does not claim Firestaff language selection is original-faithful DM1 V1 parity."
+  }
+}
