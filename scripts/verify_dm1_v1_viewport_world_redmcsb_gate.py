@@ -132,7 +132,7 @@ def require_n2_local(path: Path) -> None:
         "/home/trv2/.openclaw/data/firestaff-redmcsb-source/",
         "/home/trv2/.openclaw/data/firestaff-original-games/DM/",
     )
-    if "dannesburk" in raw.lower() or "dannesburk" in resolved.lower() or "192.168.2.126" in raw:
+    if "deprecated-remote-source" in raw.lower() or "deprecated-remote-source" in resolved.lower() or "<deprecated-remote-host>" in raw:
         raise SystemExit(f"refusing non-N2 path: {path}")
     if not (raw.startswith(allowed) or resolved.startswith(allowed)):
         raise SystemExit(f"refusing path outside N2-local evidence roots: {path}")

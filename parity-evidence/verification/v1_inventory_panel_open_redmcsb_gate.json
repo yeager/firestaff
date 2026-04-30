@@ -34,6 +34,6 @@
   "nonClaims": [
     "Does not validate V2 inventory art quality or V2 asset manifests.",
     "Does not prove chest contents mutation semantics or runtime click behavior.",
-    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2 only."
+    "Does not use deprecated remote source; source paths are ReDMCSB and Firestaff N2 only."
   ]
 }

@@ -102,7 +102,7 @@ def verify_json():
     miss=set(RANGES)-got
     if miss: raise AssertionError(f"evidence JSON missing ranges: {sorted(miss)}")
     nc="\n".join(data.get("nonClaims",[]))
-    if "HUD" not in nc or "DANNESBURK" not in nc: raise AssertionError("evidence JSON must state HUD/DANNESBURK non-claims")
+    if "HUD" not in nc or "deprecated remote source" not in nc: raise AssertionError("evidence JSON must state HUD/deprecated-remote-source non-claims")
     print(f"evidence={EVIDENCE_JSON.relative_to(ROOT)} status=ok")
 
 def main():

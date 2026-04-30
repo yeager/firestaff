@@ -189,7 +189,7 @@ def run_checks(redmcsb_source: Path) -> dict[str, object]:
             "No Firestaff runtime code was changed or validated by this gate.",
             "No CSBGAME.DAT sample save is required or claimed present on N2.",
             "No renderer, gameplay, or binary save compatibility parity is claimed.",
-            "No DANNESBURK, external capture, or non-N2 reference is used.",
+            "No deprecated remote source, external capture, or non-N2 reference is used.",
         ],
         "failures": failures,
     }
