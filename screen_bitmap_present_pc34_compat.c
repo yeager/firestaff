@@ -7,6 +7,10 @@
 
 #define SCREEN_PRESENT_COMPAT_WIDTH 320
 #define SCREEN_PRESENT_COMPAT_HEIGHT 200
+#define SCREEN_PRESENT_DM1_VIEWPORT_X 0
+#define SCREEN_PRESENT_DM1_VIEWPORT_Y 33
+#define SCREEN_PRESENT_DM1_VIEWPORT_WIDTH 224
+#define SCREEN_PRESENT_DM1_VIEWPORT_HEIGHT 136
 
 static unsigned short screen_present_read_u16_le(const unsigned char* p) {
         return (unsigned short)(p[0] | ((unsigned short)p[1] << 8));
@@ -77,17 +81,17 @@ static void screen_present_init_blank_screen(unsigned char* screenBitmap) {
         memset(screenBitmap, 0, (size_t)totalBytes);
 }
 
-static int screen_present_overlay_bitmap(
+static int screen_present_overlay_bitmap_at(
 const unsigned char*                      sourceBitmap     SEPARATOR
 unsigned char*                            screenBitmap     SEPARATOR
 unsigned char                             transparentColor SEPARATOR
 struct ScreenBitmapPresentResult_Compat*  outResult        SEPARATOR
-int                                       clearScreenFirst FINAL_SEPARATOR
+int                                       clearScreenFirst SEPARATOR
+unsigned short                            composeX         SEPARATOR
+unsigned short                            composeY         FINAL_SEPARATOR
 {
         unsigned short sourceWidth;
         unsigned short sourceHeight;
-        unsigned short composeX;
-        unsigned short composeY;
         unsigned short x;
         unsigned short y;
         unsigned long composedPixelCount;
@@ -98,14 +102,13 @@ int                                       clearScreenFirst FINAL_SEPARATOR
         }
         sourceWidth = screen_present_read_u16_le(sourceBitmap - 4);
         sourceHeight = screen_present_read_u16_le(sourceBitmap - 2);
-        if ((sourceWidth > SCREEN_PRESENT_COMPAT_WIDTH) || (sourceHeight > SCREEN_PRESENT_COMPAT_HEIGHT)) {
+        if (((unsigned long)composeX + (unsigned long)sourceWidth > SCREEN_PRESENT_COMPAT_WIDTH) ||
+            ((unsigned long)composeY + (unsigned long)sourceHeight > SCREEN_PRESENT_COMPAT_HEIGHT)) {
                 return 0;
         }
         if (clearScreenFirst) {
                 screen_present_init_blank_screen(screenBitmap);
         }
-        composeX = (unsigned short)((SCREEN_PRESENT_COMPAT_WIDTH - sourceWidth) / 2);
-        composeY = (unsigned short)((SCREEN_PRESENT_COMPAT_HEIGHT - sourceHeight) / 2);
         composedPixelCount = 0;
         for (y = 0; y < sourceHeight; ++y) {
                 for (x = 0; x < sourceWidth; ++x) {
@@ -165,7 +168,23 @@ unsigned char*                            screenBitmap      SEPARATOR
 unsigned char                             transparentColor  SEPARATOR
 struct ScreenBitmapPresentResult_Compat*  outResult         FINAL_SEPARATOR
 {
-        return screen_present_overlay_bitmap(sourceBitmap, screenBitmap, transparentColor, outResult, 1);
+        unsigned short sourceWidth;
+        unsigned short sourceHeight;
+
+
+        if (sourceBitmap == 0) {
+                return 0;
+        }
+        sourceWidth = screen_present_read_u16_le(sourceBitmap - 4);
+        sourceHeight = screen_present_read_u16_le(sourceBitmap - 2);
+        return screen_present_overlay_bitmap_at(
+            sourceBitmap,
+            screenBitmap,
+            transparentColor,
+            outResult,
+            1,
+            (unsigned short)((SCREEN_PRESENT_COMPAT_WIDTH - sourceWidth) / 2),
+            (unsigned short)((SCREEN_PRESENT_COMPAT_HEIGHT - sourceHeight) / 2));
 }
 
 int F9005_SCREEN_OverlayBitmapOnScreen_Compat(
@@ -174,5 +193,50 @@ unsigned char*                            screenBitmap      SEPARATOR
 unsigned char                             transparentColor  SEPARATOR
 struct ScreenBitmapPresentResult_Compat*  outResult         FINAL_SEPARATOR
 {
-        return screen_present_overlay_bitmap(sourceBitmap, screenBitmap, transparentColor, outResult, 0);
+        unsigned short sourceWidth;
+        unsigned short sourceHeight;
+
+
+        if (sourceBitmap == 0) {
+                return 0;
+        }
+        sourceWidth = screen_present_read_u16_le(sourceBitmap - 4);
+        sourceHeight = screen_present_read_u16_le(sourceBitmap - 2);
+        return screen_present_overlay_bitmap_at(
+            sourceBitmap,
+            screenBitmap,
+            transparentColor,
+            outResult,
+            0,
+            (unsigned short)((SCREEN_PRESENT_COMPAT_WIDTH - sourceWidth) / 2),
+            (unsigned short)((SCREEN_PRESENT_COMPAT_HEIGHT - sourceHeight) / 2));
+}
+
+int F9006_SCREEN_OverlayViewportBitmapOnScreen_Compat(
+const unsigned char*                      sourceBitmap      SEPARATOR
+unsigned char*                            screenBitmap      SEPARATOR
+unsigned char                             transparentColor  SEPARATOR
+struct ScreenBitmapPresentResult_Compat*  outResult         FINAL_SEPARATOR
+{
+        unsigned short sourceWidth;
+        unsigned short sourceHeight;
+
+
+        if (sourceBitmap == 0) {
+                return 0;
+        }
+        sourceWidth = screen_present_read_u16_le(sourceBitmap - 4);
+        sourceHeight = screen_present_read_u16_le(sourceBitmap - 2);
+        if ((sourceWidth != SCREEN_PRESENT_DM1_VIEWPORT_WIDTH) ||
+            (sourceHeight != SCREEN_PRESENT_DM1_VIEWPORT_HEIGHT)) {
+                return 0;
+        }
+        return screen_present_overlay_bitmap_at(
+            sourceBitmap,
+            screenBitmap,
+            transparentColor,
+            outResult,
+            0,
+            SCREEN_PRESENT_DM1_VIEWPORT_X,
+            SCREEN_PRESENT_DM1_VIEWPORT_Y);
 }

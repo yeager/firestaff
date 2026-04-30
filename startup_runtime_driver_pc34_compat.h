@@ -3,12 +3,14 @@
 
 #include "memory_graphics_dat_startup_tick_pc34_compat.h"
 #include "host_video_pgm_backend_pc34_compat.h"
+#include "screen_bitmap_present_pc34_compat.h"
 #include "graphics_dat_entry_classify_pc34_compat.h"
 
 struct StartupRuntimeDriverResult_Compat {
     struct MemoryGraphicsDatStartupTickResult_Compat startupTick;
     struct HostVideoPgmBackendResult_Compat hostFrame;
     struct GraphicsDatEntryClassificationResult_Compat entryClassification;
+    struct ScreenBitmapPresentResult_Compat present;
     int framePrepared;
     int framePublished;
     int frameSkippedByDispatcher;

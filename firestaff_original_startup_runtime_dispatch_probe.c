@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     const char* graphicsDatPath;
     const char* outputPath;
     unsigned int dialogGraphicIndex = 1;
-    unsigned int viewportGraphicIndex = 693;
+    unsigned int viewportGraphicIndex = 0;
     unsigned int frameNumber = 1;
     struct StartupRuntimeDriverResult_Compat result;
 
@@ -65,6 +65,12 @@ int main(int argc, char** argv) {
     printf("framePrepared=%d\n", result.framePrepared);
     printf("framePublished=%d\n", result.framePublished);
     printf("frameSkippedByDispatcher=%d\n", result.frameSkippedByDispatcher);
+    if (!result.frameSkippedByDispatcher) {
+        printf("viewportComposedX=%u\n", (unsigned int)result.present.composedX);
+        printf("viewportComposedY=%u\n", (unsigned int)result.present.composedY);
+        printf("viewportSourceWidth=%u\n", (unsigned int)result.present.sourceWidth);
+        printf("viewportSourceHeight=%u\n", (unsigned int)result.present.sourceHeight);
+    }
 
     F9003_RUNTIME_FreeStartupFrameDriver_Compat(&result);
     return 0;

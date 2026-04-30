@@ -31,4 +31,10 @@ int F9005_SCREEN_OverlayBitmapOnScreen_Compat(
     unsigned char transparentColor,
     struct ScreenBitmapPresentResult_Compat* outResult);
 
+int F9006_SCREEN_OverlayViewportBitmapOnScreen_Compat(
+    const unsigned char* sourceBitmap,
+    unsigned char* screenBitmap,
+    unsigned char transparentColor,
+    struct ScreenBitmapPresentResult_Compat* outResult);
+
 #endif

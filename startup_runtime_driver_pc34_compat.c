@@ -98,13 +98,16 @@ struct StartupRuntimeDriverResult_Compat* outResult           FINAL_SEPARATOR
                 startup->specials.dialogBoxGraphic,
                 screenBitmap,
                 &startup->runtimeState.widthHeight[dialogGraphicIndex]);
-        if (!F9005_SCREEN_OverlayBitmapOnScreen_Compat(viewportBitmap, screenBitmap, 0, &presentResult)) {
+        if (!F9006_SCREEN_OverlayViewportBitmapOnScreen_Compat(viewportBitmap, screenBitmap, 0, &presentResult)) {
                 free(viewportGraphicBuffer);
                 free(viewportStorage);
                 free(screenStorage);
                 F9003_RUNTIME_FreeStartupFrameDriver_Compat(outResult);
                 return 0;
         }
+        presentResult.sourceBitmap = 0;
+        presentResult.screenBitmap = 0;
+        outResult->present = presentResult;
         outResult->framePrepared = 1;
         if (!F9002_HOSTVIDEO_PublishFrameToPgm_Compat(screenBitmap, frameNumber, outputPath, &outResult->hostFrame)) {
                 free(viewportGraphicBuffer);
