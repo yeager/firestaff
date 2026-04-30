@@ -1,6 +1,6 @@
 {
   "schema": "pass162_original_party_route_unblock.v1",
-  "run_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock",
+  "run_base": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock",
   "evidence_root": "parity-evidence/verification/pass162_original_party_route_unblock",
   "source_locks": [
     {
@@ -25,8 +25,13 @@
     },
     {
       "file": "COMMAND.C",
-      "lines": "397-403, 2322-2323",
-      "point": "A left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW, then calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+      "lines": "231-238, 509-511",
+      "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1-14, 108-114, 397-403, 1465-1662, 2045-2126, 2322-2323",
+      "point": "The original command queue stores mouse-derived commands in G0432_as_CommandQueue; C007 viewport left-click maps to C080, F0365 enqueues nonzero mouse commands with X/Y, and F0380 dequeues them before dispatching C080 to F0377."
     },
     {
       "file": "CLIKVIEW.C",
@@ -42,11 +47,6 @@
       "file": "DUNVIEW.C / COORD.C",
       "lines": "DUNVIEW.C 525,3913-3928; COORD.C 1693-1698",
       "point": "The portrait box is viewport x=96..127/y=35..63; PC viewport origin y=33 gives source screen click center x=111/y=82."
-    },
-    {
-      "file": "COMMAND.C",
-      "lines": "231-238, 509-511",
-      "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
     }
   ],
   "route_precondition": {
@@ -102,8 +102,13 @@
         },
         {
           "file": "COMMAND.C",
-          "lines": "397-403, 2322-2323",
-          "point": "A left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW, then calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+          "lines": "231-238, 509-511",
+          "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
+        },
+        {
+          "file": "COMMAND.C",
+          "lines": "1-14, 108-114, 397-403, 1465-1662, 2045-2126, 2322-2323",
+          "point": "The original command queue stores mouse-derived commands in G0432_as_CommandQueue; C007 viewport left-click maps to C080, F0365 enqueues nonzero mouse commands with X/Y, and F0380 dequeues them before dispatching C080 to F0377."
         },
         {
           "file": "CLIKVIEW.C",
@@ -119,11 +124,6 @@
           "file": "DUNVIEW.C / COORD.C",
           "lines": "DUNVIEW.C 525,3913-3928; COORD.C 1693-1698",
           "point": "The portrait box is viewport x=96..127/y=35..63; PC viewport origin y=33 gives source screen click center x=111/y=82."
-        },
-        {
-          "file": "COMMAND.C",
-          "lines": "231-238, 509-511",
-          "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
         }
       ],
       "route_precondition": {
@@ -297,9 +297,67 @@
             "window-found 4194330 via search --class DOSBox",
             "window-found 4194330 via search --class DOSBox",
             "window-found 4194330 via search --class DOSBox"
-          ]
+          ],
+          "xdotool_probes": [
+            "xdotool-probe before-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-111-82 getmouselocation --shell rc=0 X=640;Y=512;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-111-82 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-click-130-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-130-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-130-115 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-130-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-130-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-130-115 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Return getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Return getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Up getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Up getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Right getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Right getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F1 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F1 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F4 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F4 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330"
+          ],
+          "source_queue_path": {
+            "queue_storage": "COMMAND.C:1-14 defines G0432_as_CommandQueue plus first/last indices and pending click fields.",
+            "viewport_to_c080": "COMMAND.C:108-114 and 397-403 map screen/zone C007 viewport left-clicks to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+            "mouse_enqueue": "COMMAND.C:1465-1662 has F0365 derive L1109_i_Command from mouse input and enqueue nonzero commands with X/Y into G0432_as_CommandQueue.",
+            "dequeue_dispatch": "COMMAND.C:2045-2126 dequeues L1160/L1161/L1162; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+            "front_wall_to_f0280": "CLIKVIEW.C:348-349 subtracts viewport origin; CLIKVIEW.C:407-431 touches the front wall sensor; MOVESENS.C:1392 and 1501-1502 permit C127 with no leader and call F0280."
+          }
         },
-        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. Current xdotool delivery logs prove clicks/keys were sent to the active DOSBox window, but all post-gate captures remain hash 48ed3743ab6a with zero-pixel deltas; the next useful candidate is an original-runtime/input-queue diagnostic proving whether C080/F0377 is queued at all, not more portrait coordinate guessing."
+        "input_queue_source_probe": {
+          "queue_storage": "COMMAND.C:1-14 defines G0432_as_CommandQueue plus first/last indices and pending click fields.",
+          "viewport_to_c080": "COMMAND.C:108-114 and 397-403 map screen/zone C007 viewport left-clicks to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+          "mouse_enqueue": "COMMAND.C:1465-1662 has F0365 derive L1109_i_Command from mouse input and enqueue nonzero commands with X/Y into G0432_as_CommandQueue.",
+          "dequeue_dispatch": "COMMAND.C:2045-2126 dequeues L1160/L1161/L1162; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+          "front_wall_to_f0280": "CLIKVIEW.C:348-349 subtracts viewport origin; CLIKVIEW.C:407-431 touches the front wall sensor; MOVESENS.C:1392 and 1501-1502 permit C127 with no leader and call F0280."
+        },
+        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. This pass now records xdotool focus/geometry/mouse state and the source command-queue C007->C080->F0377 path; clicks/keys reach the active DOSBox window, but all post-gate captures remain hash 48ed3743ab6a with zero-pixel deltas, so the next exact blocker is an in-process original queue trace/breakpoint proving whether C080 enters F0380 or dies before F0377."
       },
       "rows": [
         {
@@ -307,7 +365,7 @@
           "index": 1,
           "label": "initial",
           "file": "image0001-initial.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0001-initial.png",
           "sha12": "ceb0c2eec633",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -317,7 +375,7 @@
           "index": 2,
           "label": "gate_dungeon_gameplay_09",
           "file": "image0002-gate_dungeon_gameplay_09.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0002-gate_dungeon_gameplay_09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0002-gate_dungeon_gameplay_09.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -374,7 +432,7 @@
           "index": 3,
           "label": "after_gameplay_gate",
           "file": "image0003-after_gameplay_gate.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0003-after_gameplay_gate.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0003-after_gameplay_gate.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -433,7 +491,7 @@
           "index": 4,
           "label": "click_111_82_4",
           "file": "image0004-click_111_82_4.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0004-click_111_82_4.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0004-click_111_82_4.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -490,7 +548,7 @@
           "index": 5,
           "label": "after_source_portrait_111_82",
           "file": "image0005-after_source_portrait_111_82.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0005-after_source_portrait_111_82.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0005-after_source_portrait_111_82.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -549,7 +607,7 @@
           "index": 6,
           "label": "click_130_115_6",
           "file": "image0006-click_130_115_6.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0006-click_130_115_6.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0006-click_130_115_6.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -606,7 +664,7 @@
           "index": 7,
           "label": "after_source_c160_resurrect",
           "file": "image0007-after_source_c160_resurrect.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0007-after_source_c160_resurrect.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0007-after_source_c160_resurrect.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -664,7 +722,7 @@
           "index": 8,
           "label": "key_Return_8",
           "file": "image0008-key_return_8.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0008-key_return_8.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0008-key_return_8.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -721,7 +779,7 @@
           "index": 9,
           "label": "after_confirm",
           "file": "image0009-after_confirm.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0009-after_confirm.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0009-after_confirm.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -779,7 +837,7 @@
           "index": 10,
           "label": "key_Up_10",
           "file": "image0010-key_up_10.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0010-key_up_10.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0010-key_up_10.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -836,7 +894,7 @@
           "index": 11,
           "label": "after_move_up",
           "file": "image0011-after_move_up.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0011-after_move_up.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0011-after_move_up.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -894,7 +952,7 @@
           "index": 12,
           "label": "key_Right_12",
           "file": "image0012-key_right_12.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0012-key_right_12.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0012-key_right_12.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -951,7 +1009,7 @@
           "index": 13,
           "label": "after_turn_right",
           "file": "image0013-after_turn_right.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0013-after_turn_right.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0013-after_turn_right.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1009,7 +1067,7 @@
           "index": 14,
           "label": "key_F1_14",
           "file": "image0014-key_f1_14.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0014-key_f1_14.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0014-key_f1_14.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1066,7 +1124,7 @@
           "index": 15,
           "label": "after_f1_readiness",
           "file": "image0015-after_f1_readiness.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0015-after_f1_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0015-after_f1_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1124,7 +1182,7 @@
           "index": 16,
           "label": "key_F4_16",
           "file": "image0016-key_f4_16.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0016-key_f4_16.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0016-key_f4_16.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1181,7 +1239,7 @@
           "index": 17,
           "label": "after_f4_readiness",
           "file": "image0017-after_f4_readiness.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0017-after_f4_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_resurrect/image0017-after_f4_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1265,8 +1323,13 @@
         },
         {
           "file": "COMMAND.C",
-          "lines": "397-403, 2322-2323",
-          "point": "A left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW, then calls F0377_COMMAND_ProcessType80_ClickInDungeonView."
+          "lines": "231-238, 509-511",
+          "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
+        },
+        {
+          "file": "COMMAND.C",
+          "lines": "1-14, 108-114, 397-403, 1465-1662, 2045-2126, 2322-2323",
+          "point": "The original command queue stores mouse-derived commands in G0432_as_CommandQueue; C007 viewport left-click maps to C080, F0365 enqueues nonzero mouse commands with X/Y, and F0380 dequeues them before dispatching C080 to F0377."
         },
         {
           "file": "CLIKVIEW.C",
@@ -1282,11 +1345,6 @@
           "file": "DUNVIEW.C / COORD.C",
           "lines": "DUNVIEW.C 525,3913-3928; COORD.C 1693-1698",
           "point": "The portrait box is viewport x=96..127/y=35..63; PC viewport origin y=33 gives source screen click center x=111/y=82."
-        },
-        {
-          "file": "COMMAND.C",
-          "lines": "231-238, 509-511",
-          "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115."
         }
       ],
       "route_precondition": {
@@ -1460,9 +1518,67 @@
             "window-found 4194330 via search --class DOSBox",
             "window-found 4194330 via search --class DOSBox",
             "window-found 4194330 via search --class DOSBox"
-          ]
+          ],
+          "xdotool_probes": [
+            "xdotool-probe before-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-111-82 getmouselocation --shell rc=0 X=640;Y=512;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-111-82 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-click-186-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-186-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-186-115 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-186-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-186-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-186-115 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Return getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Return getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Up getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Up getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Right getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Right getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F1 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F1 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F4 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F4 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330"
+          ],
+          "source_queue_path": {
+            "queue_storage": "COMMAND.C:1-14 defines G0432_as_CommandQueue plus first/last indices and pending click fields.",
+            "viewport_to_c080": "COMMAND.C:108-114 and 397-403 map screen/zone C007 viewport left-clicks to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+            "mouse_enqueue": "COMMAND.C:1465-1662 has F0365 derive L1109_i_Command from mouse input and enqueue nonzero commands with X/Y into G0432_as_CommandQueue.",
+            "dequeue_dispatch": "COMMAND.C:2045-2126 dequeues L1160/L1161/L1162; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+            "front_wall_to_f0280": "CLIKVIEW.C:348-349 subtracts viewport origin; CLIKVIEW.C:407-431 touches the front wall sensor; MOVESENS.C:1392 and 1501-1502 permit C127 with no leader and call F0280."
+          }
         },
-        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. Current xdotool delivery logs prove clicks/keys were sent to the active DOSBox window, but all post-gate captures remain hash 48ed3743ab6a with zero-pixel deltas; the next useful candidate is an original-runtime/input-queue diagnostic proving whether C080/F0377 is queued at all, not more portrait coordinate guessing."
+        "input_queue_source_probe": {
+          "queue_storage": "COMMAND.C:1-14 defines G0432_as_CommandQueue plus first/last indices and pending click fields.",
+          "viewport_to_c080": "COMMAND.C:108-114 and 397-403 map screen/zone C007 viewport left-clicks to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+          "mouse_enqueue": "COMMAND.C:1465-1662 has F0365 derive L1109_i_Command from mouse input and enqueue nonzero commands with X/Y into G0432_as_CommandQueue.",
+          "dequeue_dispatch": "COMMAND.C:2045-2126 dequeues L1160/L1161/L1162; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+          "front_wall_to_f0280": "CLIKVIEW.C:348-349 subtracts viewport origin; CLIKVIEW.C:407-431 touches the front wall sensor; MOVESENS.C:1392 and 1501-1502 permit C127 with no leader and call F0280."
+        },
+        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. This pass now records xdotool focus/geometry/mouse state and the source command-queue C007->C080->F0377 path; clicks/keys reach the active DOSBox window, but all post-gate captures remain hash 48ed3743ab6a with zero-pixel deltas, so the next exact blocker is an in-process original queue trace/breakpoint proving whether C080 enters F0380 or dies before F0377."
       },
       "rows": [
         {
@@ -1470,7 +1586,7 @@
           "index": 1,
           "label": "initial",
           "file": "image0001-initial.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0001-initial.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0001-initial.png",
           "sha12": "ceb0c2eec633",
           "class": "entrance_menu",
           "reason": "dungeon entrance/menu controls still occupy the right column"
@@ -1480,7 +1596,7 @@
           "index": 2,
           "label": "gate_dungeon_gameplay_09",
           "file": "image0002-gate_dungeon_gameplay_09.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0002-gate_dungeon_gameplay_09.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0002-gate_dungeon_gameplay_09.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1537,7 +1653,7 @@
           "index": 3,
           "label": "after_gameplay_gate",
           "file": "image0003-after_gameplay_gate.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0003-after_gameplay_gate.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0003-after_gameplay_gate.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1596,7 +1712,7 @@
           "index": 4,
           "label": "click_111_82_4",
           "file": "image0004-click_111_82_4.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0004-click_111_82_4.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0004-click_111_82_4.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1653,7 +1769,7 @@
           "index": 5,
           "label": "after_source_portrait_111_82",
           "file": "image0005-after_source_portrait_111_82.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0005-after_source_portrait_111_82.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0005-after_source_portrait_111_82.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1712,7 +1828,7 @@
           "index": 6,
           "label": "click_186_115_6",
           "file": "image0006-click_186_115_6.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0006-click_186_115_6.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0006-click_186_115_6.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1769,7 +1885,7 @@
           "index": 7,
           "label": "after_source_c161_reincarnate",
           "file": "image0007-after_source_c161_reincarnate.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0007-after_source_c161_reincarnate.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0007-after_source_c161_reincarnate.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1827,7 +1943,7 @@
           "index": 8,
           "label": "key_Return_8",
           "file": "image0008-key_return_8.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0008-key_return_8.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0008-key_return_8.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1884,7 +2000,7 @@
           "index": 9,
           "label": "after_confirm",
           "file": "image0009-after_confirm.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0009-after_confirm.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0009-after_confirm.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1942,7 +2058,7 @@
           "index": 10,
           "label": "key_Up_10",
           "file": "image0010-key_up_10.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0010-key_up_10.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0010-key_up_10.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -1999,7 +2115,7 @@
           "index": 11,
           "label": "after_move_up",
           "file": "image0011-after_move_up.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0011-after_move_up.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0011-after_move_up.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2057,7 +2173,7 @@
           "index": 12,
           "label": "key_Right_12",
           "file": "image0012-key_right_12.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0012-key_right_12.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0012-key_right_12.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2114,7 +2230,7 @@
           "index": 13,
           "label": "after_turn_right",
           "file": "image0013-after_turn_right.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0013-after_turn_right.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0013-after_turn_right.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2172,7 +2288,7 @@
           "index": 14,
           "label": "key_F1_14",
           "file": "image0014-key_f1_14.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0014-key_f1_14.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0014-key_f1_14.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2229,7 +2345,7 @@
           "index": 15,
           "label": "after_f1_readiness",
           "file": "image0015-after_f1_readiness.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0015-after_f1_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0015-after_f1_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2287,7 +2403,7 @@
           "index": 16,
           "label": "key_F4_16",
           "file": "image0016-key_f4_16.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0016-key_f4_16.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0016-key_f4_16.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
@@ -2344,7 +2460,7 @@
           "index": 17,
           "label": "after_f4_readiness",
           "file": "image0017-after_f4_readiness.png",
-          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0017-after_f4_readiness.png",
+          "path": "/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock/source_gated_portrait_then_reincarnate/image0017-after_f4_readiness.png",
           "sha12": "48ed3743ab6a",
           "class": "dungeon_gameplay",
           "reason": "viewport content with mostly dark in-game right column",
