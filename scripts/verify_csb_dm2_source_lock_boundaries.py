@@ -137,6 +137,10 @@ def inventory_refs(original_dm: Path) -> list[str]:
     candidates = [
         "Game,Chaos_Strikes_Back,Amiga,Software.7z",
         "Game,Chaos_Strikes_Back,Atari_ST,Software.7z",
+        "_canonical/csb/amiga-Dungeon.DAT",
+        "_canonical/csb/atari-DUNGEON.DAT",
+        "_canonical/csb/amiga-Graphics.DAT",
+        "_canonical/csb/atari-GRAPHICS.DAT",
         "Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z",
         "_extracted/dm2-dos-asm/SKULL.ASM",
     ]
@@ -146,6 +150,47 @@ def inventory_refs(original_dm: Path) -> list[str]:
             rows.append(f"FOUND {rel} bytes={path.stat().st_size} sha256={sha256(path)}")
         else:
             rows.append(f"MISSING {rel}")
+    return rows
+
+
+def csb_target_curation(original_dm: Path) -> list[str]:
+    rows: list[str] = []
+    atari_archive = original_dm / "Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
+    amiga_archive = original_dm / "Game,Chaos_Strikes_Back,Amiga,Software.7z"
+    atari_dungeon = original_dm / "_canonical/csb/atari-DUNGEON.DAT"
+    amiga_dungeon = original_dm / "_canonical/csb/amiga-Dungeon.DAT"
+    atari_graphics = original_dm / "_canonical/csb/atari-GRAPHICS.DAT"
+    amiga_graphics = original_dm / "_canonical/csb/amiga-Graphics.DAT"
+    atari_stx_v21 = original_dm / "_extracted/csb-atari/Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx"
+    amiga_harddisk = original_dm / "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT"
+
+    for label, path in [
+        ("atari_archive", atari_archive),
+        ("amiga_archive", amiga_archive),
+        ("atari_dungeon", atari_dungeon),
+        ("amiga_dungeon", amiga_dungeon),
+        ("atari_graphics", atari_graphics),
+        ("amiga_graphics", amiga_graphics),
+        ("atari_official_english_v2_1_game_stx", atari_stx_v21),
+        ("amiga_extracted_graphics_anchor", amiga_harddisk),
+    ]:
+        if path.exists():
+            rows.append(f"TARGET_REF {label}: {path} bytes={path.stat().st_size} sha256={sha256(path)}")
+        else:
+            rows.append(f"TARGET_REF_MISSING {label}: {path}")
+
+    if atari_dungeon.exists() and amiga_dungeon.exists():
+        if sha256(atari_dungeon) == sha256(amiga_dungeon):
+            rows.append("TARGET_CURATION dungeon: Atari and Amiga canonical dungeon payloads match; dungeon identity is not the blocker.")
+        else:
+            rows.append("TARGET_CURATION dungeon: BLOCKED; Atari and Amiga canonical dungeon payloads differ.")
+    if atari_graphics.exists() and amiga_graphics.exists():
+        same = sha256(atari_graphics) == sha256(amiga_graphics) and atari_graphics.stat().st_size == amiga_graphics.stat().st_size
+        if same:
+            rows.append("TARGET_CURATION graphics: Atari and Amiga canonical graphics payloads match.")
+        else:
+            rows.append("TARGET_CURATION graphics: BLOCKER; Atari GRAPHICS.DAT and Amiga Graphics.DAT differ in size/hash, so graphics/render parity must choose exactly one platform asset lineage.")
+    rows.append("TARGET_CURATION choice: use Atari ST English v2.x as the next CSB target lane unless a later pass proves an official Amiga English graphics anchor; keep Amiga v3.x as a separate, non-interchangeable graphics lineage.")
     return rows
 
 
@@ -184,6 +229,9 @@ def main() -> int:
         print(row)
     print("\n[reference inventory]")
     for row in inventory_refs(args.original_dm):
+        print(row)
+    print("\n[csb target curation]")
+    for row in csb_target_curation(args.original_dm):
         print(row)
     print("\n[repo boundary scan]")
     for row in repo_boundary_scan(args.repo):
