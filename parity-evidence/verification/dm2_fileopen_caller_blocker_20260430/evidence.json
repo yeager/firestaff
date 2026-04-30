@@ -1,0 +1,97 @@
+{
+  "dm2_binary_evidence": {
+    "anchors": {
+      "dungeon-string": {
+        "bytes": "44 55 4E 47 45 4F 4E 2E 44 41 54",
+        "offset": "0x70c65"
+      },
+      "generic-open-int21": {
+        "bytes": "B4 3D CD 21",
+        "offset": "0x1a3a"
+      },
+      "graphics-string": {
+        "bytes": "47 52 41 50 48 49 43 53 2E 44 41 54",
+        "offset": "0x70c98"
+      }
+    },
+    "archive": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+    "header_paragraphs": 6,
+    "image_offsets": {
+      "direct_inner_calls": [
+        "0x19a6"
+      ],
+      "direct_wrapper_calls": [
+        "0x1439",
+        "0x1464"
+      ],
+      "open_inner": "0x19af",
+      "open_wrapper": "0x198f"
+    },
+    "member": "skull.exe",
+    "sha256": "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35"
+  },
+  "dm2_disassembly_evidence": [
+    {
+      "decoded": "mov si,[bp+0Eh]; trim leading spaces; mov dx,si; mov ah,3Dh; int 21h",
+      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "id": "dm2-generic-open-inner",
+      "range": "6154-6200"
+    },
+    {
+      "decoded": "wrapper pushes its filename/flags args then calls the generic inner open routine",
+      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "id": "dm2-open-wrapper-calls-inner",
+      "range": "6139-6153"
+    },
+    {
+      "decoded": "push 0; push 0200h; lea ax,[bp+0Ah]; push ax; call open wrapper",
+      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "id": "dm2-direct-caller-first-path-buffer",
+      "range": "4761-4783"
+    },
+    {
+      "decoded": "push 0; push 0200h; lea ax,[bp+0Ah]; push ax; call open wrapper",
+      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "id": "dm2-direct-caller-second-path-buffer",
+      "range": "4813-4826"
+    },
+    {
+      "decoded": "canonical startup member string bytes are present, but this range has no labels/xrefs in SKULL.ASM",
+      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "id": "dm2-startup-member-strings-only",
+      "range": "461403-461472"
+    }
+  ],
+  "failures": [],
+  "finding": {
+    "direct_caller_gate": "The only direct near calls to the open wrapper are at image offsets 0x1439 and 0x1464, corresponding to SKULL.ASM:4761-4783 and SKULL.ASM:4813-4826; both prepare a BP+0Ah path buffer, not a DUNGEON.DAT or GRAPHICS.DAT string pointer.",
+    "member_string_gate": "The member strings are present at SKULL.ASM:461403-461472 / SKULL.EXE+0x70c65 and +0x70c98, but labels/xrefs are absent from the db-only disassembly, so a caller path would require deeper decompilation or dynamic tracing beyond this narrow evidence gate.",
+    "status": "blocked_precisely",
+    "summary": "The generic DOS open routine and the DUNGEON.DAT/GRAPHICS.DAT strings are verified, but this SKULL.ASM dump does not expose a statically verifiable higher-level caller/string-xref from either canonical startup member to the generic open routine."
+  },
+  "policy": {
+    "dm2": "SKULL.ASM disassembly plus canonical SKULL.EXE bytes only; SKULL.ASM is not C source",
+    "redmcsb": "boundary comparison only; not DM2 C source"
+  },
+  "redmcsb_source_audit": [
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
+      "function": "global filename definitions",
+      "id": "redmcsb-filename-dm-pc-data-members",
+      "range": "4-10"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "function": "F0477_MEMORY_OpenGraphicsDat_CPSDF",
+      "id": "redmcsb-graphics-open-boundary",
+      "range": "1212-1285"
+    },
+    {
+      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "function": "dungeon load open block in F0436_LOADSAVE_LoadGameFile",
+      "id": "redmcsb-dungeon-open-boundary",
+      "range": "2333-2377"
+    }
+  ],
+  "schema": "firestaff.dm2_fileopen_higher_caller_blocker.v1"
+}
