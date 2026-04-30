@@ -1,0 +1,7 @@
+[ 84%] Built target firestaff_m10
+[ 84%] Building C object CMakeFiles/firestaff_m11.dir/m11_game_view.c.o
+[ 85%] Linking C static library libfirestaff_m11.a
+[ 92%] Built target firestaff_m11
+[ 98%] Built target firestaff_m12
+[ 98%] Linking C executable firestaff_m11_game_view_probe
+[100%] Built target firestaff_m11_game_view_probe

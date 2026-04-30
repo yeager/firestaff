@@ -1,0 +1,4 @@
+[OK] V1 pit floor-ornament BUG0_64 source gate matches ReDMCSB
+- ReDMCSB DUNGEON.C:2628-2682 pit/teleporter path scans floor sensors and routes to T0172049_Footprints
+- ReDMCSB DUNGEON.C:2693-2718 stairs route through T0172046_Stairs without assigning M558
+- ReDMCSB DUNVIEW.C:6284-6286, 6351-6353, 7020-7031, 7213-7224, 7655-7704 draw F0108 before/with pit handling; BUG0_64 says ornaments draw over open pits
