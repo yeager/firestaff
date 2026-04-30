@@ -1349,6 +1349,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                 }
             } else {
+int launchHandled = 0;
                 if (input == M12_MENU_INPUT_CYCLE_CHAMPION ||
                     input == M12_MENU_INPUT_STRAFE_LEFT ||
                     input == M12_MENU_INPUT_STRAFE_RIGHT ||
@@ -1356,7 +1357,24 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     input == M12_MENU_INPUT_DROP_ITEM) {
                     input = M12_MENU_INPUT_NONE;
                 }
+                if ((input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_RIGHT) &&
+                    menuState.view == M12_MENU_VIEW_MAIN) {
+                    const M12_MenuEntry* selected = M12_StartupMenu_GetEntry(&menuState,
+                                                                             menuState.selectedIndex);
+                    if (selected && selected->kind == M12_MENU_ENTRY_GAME && selected->available) {
+                        launchHandled = 1;
+                        menuState.activatedIndex = menuState.selectedIndex;
+                        menuState.launchRequested = 1;
+                        if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+                            continue;
+                        }
+                        m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+                    }
+                }
+                if (!launchHandled) {
+                }
                 M12_StartupMenu_HandleInput(&menuState, input);
+                }
                 if (menuState.shouldExit) {
                     break;
                 }
