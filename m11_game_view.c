@@ -7870,11 +7870,14 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     }
 
     /* ── DM1-faithful Z-order: floor ornaments → floor items → creatures → projectiles ──
-     * In the original, floor ornaments are drawn first (painted on the
-     * floor texture), then floor items (lying on the ground), then
-     * creatures (standing above the items), then projectiles and
-     * explosions (in flight, topmost layer).
-     * Ref: ReDMCSB DUNVIEW.C F115 — per-cell draw loop. */
+     * ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF
+     * documents the original per-cell pass as: scan square things while
+     * deferring group/projectile/explosion draw, draw objects, then draw one
+     * creature for the processed cell, then restart the thing list to draw
+     * projectiles, followed later by explosions (DUNVIEW.C:4567-4582).
+     * The concrete code sections are marked Draw objects at DUNVIEW.C:4820,
+     * Draw creatures at DUNVIEW.C:5201, and Draw projectiles at
+     * DUNVIEW.C:5645. Keep this local V1 stack in that order. */
 
     /* Layer 0: Floor ornaments (painted on the floor, below everything) */
     if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
@@ -15567,6 +15570,15 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         return M11_GameView_GetV1InventorySourceSlotBoxZone(route->zoneId - 499,
                                                             outX, outY, outW, outH);
     }
+    if (route->zoneId == 545 || route->zoneId == 546) {
+        /* ReDMCSB COMMAND.C G0449 routes inventory mouth/eye clicks through
+         * viewport-relative C545/C546 zones; COMMAND.C absolute y=46 becomes y=13 inside the DM1 viewport at screen y=33. */
+        if (outX) *outX = (route->zoneId == 545) ? 56 : 12;
+        if (outY) *outY = 13;
+        if (outW) *outW = 16;
+        if (outH) *outH = 16;
+        return 1;
+    }
     return 0;
 }
 
@@ -15641,6 +15653,8 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
         { 32, M11_DM1_MOUSE_SPACE_VIEWPORT, 511, M11_DM1_MOUSE_MASK_LEFT },
         { 33, M11_DM1_MOUSE_SPACE_VIEWPORT, 512, M11_DM1_MOUSE_MASK_LEFT },
         { 34, M11_DM1_MOUSE_SPACE_VIEWPORT, 513, M11_DM1_MOUSE_MASK_LEFT },
+        { 70, M11_DM1_MOUSE_SPACE_VIEWPORT, 545, M11_DM1_MOUSE_MASK_LEFT },
+        { 71, M11_DM1_MOUSE_SPACE_VIEWPORT, 546, M11_DM1_MOUSE_MASK_LEFT },
         { 35, M11_DM1_MOUSE_SPACE_VIEWPORT, 514, M11_DM1_MOUSE_MASK_LEFT },
         { 36, M11_DM1_MOUSE_SPACE_VIEWPORT, 515, M11_DM1_MOUSE_MASK_LEFT },
         { 37, M11_DM1_MOUSE_SPACE_VIEWPORT, 516, M11_DM1_MOUSE_MASK_LEFT },

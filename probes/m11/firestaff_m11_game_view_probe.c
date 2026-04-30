@@ -736,6 +736,24 @@ int main(int argc, char** argv) {
                          space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 2,
                      "DM1 inventory table gives right-click screen-zone close inventory precedence over viewport-relative slot hits");
         probe_record(&tally,
+                     "INV_GV_437A",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_INVENTORY,
+                         vx + 56 + 8, vy + 13 + 8,
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 70 &&
+                         space == M11_DM1_MOUSE_SPACE_VIEWPORT && zoneId == 545,
+                     "DM1 inventory table routes C545 mouth zone to command C070");
+        probe_record(&tally,
+                     "INV_GV_437B",
+                     M11_GameView_GetV1MouseCommandForPoint(
+                         M11_DM1_MOUSE_LIST_INVENTORY,
+                         vx + 12 + 8, vy + 13 + 8,
+                         M11_DM1_MOUSE_MASK_LEFT,
+                         &space, &zoneId) == 71 &&
+                         space == M11_DM1_MOUSE_SPACE_VIEWPORT && zoneId == 546,
+                     "DM1 inventory table routes C546 eye zone to command C071");
+        probe_record(&tally,
                      "INV_GV_438",
                      M11_GameView_GetV1InventorySourceSlotBoxGraphicId(7) == 0 &&
                          M11_GameView_GetV1InventorySourceSlotBoxGraphicId(8) ==

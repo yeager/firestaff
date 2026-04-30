@@ -1,0 +1,20 @@
+{
+  "gate": "v1_inventory_mouth_eye_routing_redmcsb",
+  "purpose": "Source-lock DM1/V1 champion inventory mouth and eye click routing to ReDMCSB COMMAND.C/PANEL.C, then verify Firestaff routes viewport-relative C545/C546 zones to C070/C071 without disturbing slot-box/action-hand routing.",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRanges": [
+    {"file": "COMMAND.C", "start": 128, "end": 138, "why": "absolute S10 inventory mouse rows show action hand C029, mouth C070 at 56..71/46..61, and eye C071 at 12..27/46..61"},
+    {"file": "COMMAND.C", "start": 420, "end": 428, "why": "G0449 source routes action hand C508 then mouth C545 and eye C546 as viewport-relative rows before quiver C514"},
+    {"file": "COMMAND.C", "start": 2314, "end": 2320, "why": "command dispatcher sends C070 to F0349 and C071 to F0352"},
+    {"file": "PANEL.C", "start": 1743, "end": 1825, "why": "F0349 mouth handler opens pressing state and validates G4055 leader-hand object against MASK0x0001_MOUTH"},
+    {"file": "PANEL.C", "start": 1928, "end": 1950, "why": "F0349 removes/animates mouth icon via C545 and refreshes champion state"},
+    {"file": "PANEL.C", "start": 2111, "end": 2180, "why": "F0352 eye handler draws C203/C546 and either stats or leader-hand object description"},
+    {"file": "m11_game_view.c", "start": 15569, "end": 15580, "why": "Firestaff mouse route bridge gives C545/C546 the ReDMCSB 16x16 viewport-relative mouth/eye rectangles (COMMAND.C y=46 minus viewport y=33) (COMMAND.C y=46 minus viewport y=33)"},
+    {"file": "m11_game_view.c", "start": 15646, "end": 15658, "why": "Firestaff inventory route table inserts C070/C071 after pouch_2 and before quiver, matching COMMAND.C order"},
+    {"file": "probes/m11/firestaff_m11_game_view_probe.c", "start": 738, "end": 755, "why": "focused probe assertions for mouth/eye command and zone ids"}
+  ],
+  "nonClaims": [
+    "This gate is a source-lock and route/probe assertion, not a runtime validation of drinking/eating/examining side effects.",
+    "This gate does not claim complete implementation of F0349/F0352 panel mutations beyond preserving their routed entry points and source citations."
+  ]
+}

@@ -13,6 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "m11_game_view.c"
+REDMCSB_DUNVIEW = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
 
 
 def line_no(text: str, offset: int) -> int:
@@ -53,9 +54,40 @@ def require_in_order(body: str, markers: list[tuple[str, str]], label: str) -> l
     return [name for name, _pos in positions]
 
 
+
+def find_redmcsb_function_region(text: str, name: str) -> tuple[int, int, str]:
+    start = text.find(name)
+    if start < 0:
+        raise AssertionError(f"missing ReDMCSB function region for {name}")
+    line_start = text.rfind("\n", 0, start) + 1
+    end = text.find("\nSTATICFUNCTION ", start + len(name))
+    if end < 0:
+        end = text.find("\nvoid F", start + len(name))
+    if end < 0:
+        end = len(text)
+    return line_start, end, text[line_start:end]
+
 def main() -> int:
     text = SRC.read_text(encoding="utf-8")
+    redmcsb_text = REDMCSB_DUNVIEW.read_text(encoding="utf-8")
     ok: list[str] = []
+
+    f0115_start, _f0115_end, f0115_body = find_redmcsb_function_region(
+        redmcsb_text, "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF")
+    require_in_order(
+        f0115_body,
+        [
+            ("source summary defers then draws objects", "draw each object found"),
+            ("source summary draws creatures after objects", "Draw one creature at the cell being processed"),
+            ("source summary restarts for projectiles", "Draw only projectiles at specified cell"),
+            ("source summary handles explosions last", "Draw only explosions at specified cell"),
+            ("code object section", "/* Draw objects */"),
+            ("code creature section", "/* Draw creatures */"),
+            ("code projectile section", "/* Draw projectiles */"),
+        ],
+        "ReDMCSB F0115 source draw-order evidence",
+    )
+    ok.append(f"ReDMCSB F0115 evidence: {REDMCSB_DUNVIEW.name}:{line_no(redmcsb_text, f0115_start)}")
 
     wall_start, _wall_end, wall_body = find_function(text, "m11_draw_wall_face")
     require_in_order(
@@ -73,6 +105,15 @@ def main() -> int:
     ok.append(f"wall/door ornaments before open-cell contents: m11_game_view.c:{line_no(text, wall_start)}")
 
     contents_start, _contents_end, contents_body = find_function(text, "m11_draw_wall_contents")
+    for citation in [
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "DUNVIEW.C:4567-4582",
+        "DUNVIEW.C:4820",
+        "DUNVIEW.C:5201",
+        "DUNVIEW.C:5645",
+    ]:
+        if citation not in contents_body:
+            raise AssertionError(f"open-cell content stack missing ReDMCSB citation {citation}")
     layer_names = require_in_order(
         contents_body,
         [
