@@ -1,0 +1,97 @@
+{
+  "schema": "firestaff.csb_utility_member_source_lock.v1",
+  "pass": true,
+  "scope": "CSB utility file-name/source member identity only; no gameplay/render/save parity claim.",
+  "redmcsb_source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "extracted_dm_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted",
+  "source_checks": [
+    {
+      "id": "hint-file-index-namespace",
+      "ok": true,
+      "file": "DEFS.H",
+      "function": "hint-file index constants",
+      "lines": "4575-4577",
+      "missing": []
+    },
+    {
+      "id": "su1e-file-name-table",
+      "ok": true,
+      "file": "HINTLOAD.C",
+      "function": "G3637_apc_FileNames MEDIA772_SU1E",
+      "lines": "11-18",
+      "missing": []
+    },
+    {
+      "id": "au1e-file-name-table",
+      "ok": true,
+      "file": "HINTLOAD.C",
+      "function": "G3637_apc_FileNames MEDIA762_AU1E",
+      "lines": "49-56",
+      "missing": []
+    },
+    {
+      "id": "hcsb-dat-startup-load",
+      "ok": true,
+      "file": "HINTSCR.C",
+      "function": "hint startup disk/member probe and graphics load",
+      "lines": "91-100",
+      "missing": []
+    },
+    {
+      "id": "csbgame-open-routing",
+      "ok": true,
+      "file": "HINTLOAD.C",
+      "function": "F1916_LoadGame",
+      "lines": "300-306",
+      "missing": []
+    }
+  ],
+  "member_checks": [
+    {
+      "id": "atari-harddisk-hcsb-htc",
+      "ok": true,
+      "relpath": "csb-atari/HardDisk/2009-02-22 PP/HCSB.HTC",
+      "size": 66172,
+      "expected_size": 66172,
+      "sha256": "1b2fbff81a11928afd153f46c117355cce1f9a93f482d14d58e35a115d9cde38",
+      "expected_sha256": "1b2fbff81a11928afd153f46c117355cce1f9a93f482d14d58e35a115d9cde38",
+      "note": "Atari CSB utility hint-content member referenced by ReDMCSB as 0HCSB.HTC."
+    },
+    {
+      "id": "atari-harddisk-hcsb-dat",
+      "ok": true,
+      "relpath": "csb-atari/HardDisk/2009-02-22 PP/HCSB.DAT",
+      "size": 30793,
+      "expected_size": 30793,
+      "sha256": "5268b36a108f582e043a0e698052ce6fe67d33132737a3dc2271caa3031e6fcc",
+      "expected_sha256": "5268b36a108f582e043a0e698052ce6fe67d33132737a3dc2271caa3031e6fcc",
+      "note": "Atari CSB utility graphics/data member referenced by ReDMCSB as 0HCSB.DAT."
+    },
+    {
+      "id": "amiga-harddisk-hcsb-dat-reference-only",
+      "ok": true,
+      "relpath": "csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/HCSB.DAT",
+      "size": 11360,
+      "expected_size": 11360,
+      "sha256": "df22f19ab122dc8b0628db933061262a00f71297d36a356d41385a60f3347b1c",
+      "expected_sha256": "df22f19ab122dc8b0628db933061262a00f71297d36a356d41385a60f3347b1c",
+      "note": "Amiga utility HCSB.DAT is a different locked lineage; reference only, not interchangeable with Atari lane."
+    },
+    {
+      "id": "amiga-harddisk-hcsbf-htc-reference-only",
+      "ok": true,
+      "relpath": "csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/HCSBF.HTC",
+      "size": 75424,
+      "expected_size": 75424,
+      "sha256": "79fd268631d3518462058c9e855b7b8a89c0ef8a0938adf9ed8ea17a55719ea7",
+      "expected_sha256": "79fd268631d3518462058c9e855b7b8a89c0ef8a0938adf9ed8ea17a55719ea7",
+      "note": "Amiga French hint-content member is locked separately; it must not satisfy the Atari HCSB.HTC gate."
+    }
+  ],
+  "non_claims": [
+    "Does not choose a CSB gameplay/rendering target beyond keeping Atari and Amiga utility members separate.",
+    "Does not validate CSBGAME.DAT save contents or compatibility.",
+    "Does not use DANNESBURK or any UI/gameplay capture."
+  ],
+  "failures": []
+}
