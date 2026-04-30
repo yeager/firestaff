@@ -24,10 +24,13 @@ int main(void) {
     if (CHAMPION_Compat_GetStatusSlotBoxCount() != 8u) ok = 0;
     for (i = 0; i < 8; i++) {
         if (!CHAMPION_Compat_GetStatusSlotBox(i, &b)) { ok = 0; continue; }
-        printf("statusSlotBox[%u]=champion:%u handSlot:%u command:%u zone:%u evidence:%s\n",
-               i, b.championIndex, b.handSlot, b.commandId, b.zoneIndex, b.evidence);
+        printf("statusSlotBox[%u]=champion:%u handSlot:%u command:%u zone:%u box:%u..%u,%u..%u evidence:%s\n",
+               i, b.championIndex, b.handSlot, b.commandId, b.zoneIndex,
+               b.left, b.right, b.top, b.bottom, b.evidence);
         if (b.championIndex != i / 2u || b.handSlot != i % 2u ||
-            b.commandId != 20u + i || b.zoneIndex != 211u + i) ok = 0;
+            b.commandId != 20u + i || b.zoneIndex != 211u + i ||
+            b.left != (i / 2u) * 69u + ((i % 2u) ? 24u : 4u) ||
+            b.right != b.left + 15u || b.top != 10u || b.bottom != 25u) ok = 0;
     }
 
     if (CHAMPION_Compat_GetStatusNameBoxCount() != 4u) ok = 0;

@@ -7,6 +7,10 @@ typedef struct ChampionStatusSlotBoxCompat {
     unsigned int handSlot;
     unsigned int commandId;
     unsigned int zoneIndex;
+    unsigned int left;
+    unsigned int right;
+    unsigned int top;
+    unsigned int bottom;
     const char* evidence;
 } ChampionStatusSlotBoxCompat;
 

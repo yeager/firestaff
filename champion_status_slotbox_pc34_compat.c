@@ -11,12 +11,16 @@ int CHAMPION_Compat_GetStatusSlotBox(unsigned int slotBoxIndex, ChampionStatusSl
     outBox->handSlot = slotBoxIndex & 1u;
     outBox->commandId = 20u + slotBoxIndex;
     outBox->zoneIndex = 211u + slotBoxIndex;
-    outBox->evidence = "DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; COMMAND.C:489-496 maps C020..C027; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070";
+    outBox->left = outBox->championIndex * 69u + (outBox->handSlot ? 24u : 4u);
+    outBox->right = outBox->left + 15u;
+    outBox->top = 10u;
+    outBox->bottom = 25u;
+    outBox->evidence = "COMMAND.C:208-215 maps status hand hit boxes to x=4/24 + 69*champion, y=10..25; DATA.C:977-985 maps status slot boxes 0..7 to C211..C218; CHAMPION.C:677-683 routes slotBox<8 to championIndex=slotBox>>1 and hand slot M070";
     return 1;
 }
 
 const char* CHAMPION_Compat_GetStatusSlotBoxEvidence(void) {
-    return "ReDMCSB source lock: PC/F20+ status slot boxes 0..7 are champion top-row ready/action hands only; slotBox>>1 selects champion 0..3 and slotBox&1 selects ready/action hand.";
+    return "ReDMCSB source lock: PC/F20+ status slot boxes 0..7 are champion top-row ready/action hands only; COMMAND.C fixes their inclusive 16x16 hit boxes at x=4/24 + 69*champion, y=10..25; slotBox>>1 selects champion 0..3 and slotBox&1 selects ready/action hand.";
 }
 
 unsigned int CHAMPION_Compat_GetStatusNameBoxCount(void) { return 4u; }
