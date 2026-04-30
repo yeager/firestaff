@@ -1,0 +1,26 @@
+#ifndef REDMCSB_TOUCH_CLICK_ZONE_MATRIX_PC34_COMPAT_H
+#define REDMCSB_TOUCH_CLICK_ZONE_MATRIX_PC34_COMPAT_H
+
+typedef enum TouchClickCoordModePc34Compat {
+    TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT = 1,
+    TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT = 2
+} TouchClickCoordModePc34Compat;
+
+typedef struct TouchClickZonePc34Compat {
+    unsigned int commandId;
+    unsigned int zoneIndex;
+    TouchClickCoordModePc34Compat coordMode;
+    int x;
+    int y;
+    int w;
+    int h;
+    const char* groupName;
+    const char* sourceEvidence;
+} TouchClickZonePc34Compat;
+
+unsigned int TOUCHCLICK_Compat_GetZoneCount(void);
+int TOUCHCLICK_Compat_GetZone(unsigned int ordinal, TouchClickZonePc34Compat* outZone);
+int TOUCHCLICK_Compat_HitTest(int screenX, int screenY, TouchClickZonePc34Compat* outZone);
+const char* TOUCHCLICK_Compat_GetSourceEvidence(void);
+
+#endif
