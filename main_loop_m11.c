@@ -322,15 +322,17 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
     m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x + w - 1, y, 1, h, 0);
 }
 
-static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
+static int m11_wait_for_redmcsb_entrance_command(void);
+
+static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
-    if (!gameView || !gameView->active) return;
+    if (!gameView || !gameView->active) return 0;
     framebuffer = M11_Render_GetFramebuffer();
-    if (!framebuffer) return;
+    if (!framebuffer) return 0;
     dungeonFrame = (unsigned char*)malloc((size_t)M11_FB_BYTES);
-    if (!dungeonFrame) return;
+    if (!dungeonFrame) return 0;
 
     M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
@@ -389,6 +391,12 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
         }
 
         M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
+            if (!m11_wait_for_redmcsb_entrance_command()) {
+                free(dungeonFrame);
+                return 0;
+            }
+        }
         if (step.delayTicks >= 20U) {
             SDL_Delay(330);
         } else {
@@ -399,6 +407,67 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
     M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     free(dungeonFrame);
+    return 1;
+}
+
+static int m11_wait_for_redmcsb_entrance_command(void) {
+    /* ReDMCSB ENTRANCE.C:850-883 redraws the entrance, discards previous
+     * input, then waits in the entrance command loop until a fresh command
+     * changes G0298_B_NewGame away from C099_MODE_WAITING_ON_ENTRANCE.
+     * Do the same at the SDL boundary: drain the launch key/button that got
+     * us here, then require a new Enter/Space/click before the doors open. */
+    Uint64 started;
+    int allowHeadlessTimeout = 0;
+    int drained = 0;
+    SDL_Event ev;
+    const char* videoDriver = getenv("SDL_VIDEODRIVER");
+    if ((videoDriver && strcmp(videoDriver, "dummy") == 0) || getenv("FIRESTAFF_AUTOTEST")) {
+        allowHeadlessTimeout = 1;
+    }
+
+    while (SDL_PollEvent(&ev)) {
+        drained += 1;
+    }
+    (void)drained;
+    started = SDL_GetTicks();
+
+    for (;;) {
+        while (SDL_PollEvent(&ev)) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            if (ev.type == SDL_EVENT_QUIT) return 0;
+            if (ev.type == SDL_EVENT_KEY_DOWN) {
+                if (ev.key.key == SDLK_ESCAPE || ev.key.key == SDLK_Q) return 0;
+                if (ev.key.key == SDLK_RETURN || ev.key.key == SDLK_KP_ENTER ||
+                    ev.key.key == SDLK_SPACE) return 1;
+            }
+            if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) return 1;
+            if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
+                ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
+#else
+            if (ev.type == SDL_QUIT) return 0;
+            if (ev.type == SDL_KEYDOWN) {
+                if (ev.key.keysym.sym == SDLK_ESCAPE || ev.key.keysym.sym == SDLK_Q) return 0;
+                if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER ||
+                    ev.key.keysym.sym == SDLK_SPACE) return 1;
+            }
+            if (ev.type == SDL_MOUSEBUTTONDOWN) return 1;
+            if (ev.type == SDL_WINDOWEVENT &&
+                ev.window.event == SDL_WINDOWEVENT_RESIZED) {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
+#endif
+        }
+
+        /* Scripted/headless probes cannot send a second physical command.
+         * Keep the real app faithful by waiting indefinitely, but avoid
+         * deadlocks under the SDL dummy driver / explicit autotest mode. */
+        if (allowHeadlessTimeout && SDL_GetTicks() - started > 5000U) {
+            return 1;
+        }
+        SDL_Delay(16);
+    }
 }
 
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
@@ -456,12 +525,18 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
             *outPlayedAnyFrame = 1;
         }
         M11_Render_PresentIndexed(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT);
-        SDL_Delay(33);
+        /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
+         * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
+         * smash straight into the entrance screen.  The decoded TITLE.DAT
+         * bank has more visible frames than the source zoom loop, so use a
+         * deliberate 50 ms presentation cadence here instead of racing the
+         * launcher at full frame speed. */
+        SDL_Delay(50);
         if (M11_Render_PumpEvents()) {
             break;
         }
     }
-    SDL_Delay(330);
+    SDL_Delay(500);
     free(packedStorage);
     free(indexedScreen);
 }
@@ -479,7 +554,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             *idleAccumulatorMs = 0;
         }
         if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
-            m11_play_redmcsb_entrance_transition(gameView);
+            if (!m11_play_redmcsb_entrance_transition(gameView)) {
+                M11_GameView_Shutdown(gameView);
+                M11_GameView_Init(gameView);
+                return 1;
+            }
         }
         M11_GameView_Draw(gameView,
                           M11_Render_GetFramebuffer(),

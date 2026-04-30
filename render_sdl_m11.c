@@ -321,7 +321,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         "Firestaff",
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE);
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
 #else
     g_state.window = SDL_CreateWindow(
         "Firestaff",
@@ -329,7 +329,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         SDL_WINDOWPOS_CENTERED,
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE);
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
 #endif
 
     if (!g_state.window) {

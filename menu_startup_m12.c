@@ -1377,8 +1377,13 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             m12_activate_selected(state);
             break;
         case M12_MENU_INPUT_BACK:
-        case M12_MENU_INPUT_LEFT:
             state->shouldExit = 1;
+            break;
+        case M12_MENU_INPUT_LEFT:
+            /* ReDMCSB entrance/menu input routes do not use a naked left
+             * arrow as a quit command.  Treat it as a no-op on the top-level
+             * launcher so an accidental left key cannot tear down the
+             * startup flow or drop into an invalid runtime state. */
             break;
         case M12_MENU_INPUT_NONE:
         default:

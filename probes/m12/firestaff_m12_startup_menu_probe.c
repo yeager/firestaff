@@ -920,6 +920,12 @@ int main(void) {
                      "Vulkan selection is carried in launch intent but blocks runtime handoff until a real backend exists");
     }
 
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_LEFT);
+    probe_record(&tally,
+                 "INV_M12_13A",
+                 state.shouldExit == 0,
+                 "left arrow on top-level launcher is a no-op, not an exit/crash path");
+
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     probe_record(&tally,
                  "INV_M12_13",
