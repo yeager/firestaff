@@ -7,12 +7,20 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version, e.g. 0.2.5-preview'
+        description: 'Release version, e.g. 0.2.9-preview'
         required: true
-        default: '0.2.5-preview'
+        default: '0.2.9-preview'
+      release_notes:
+        description: 'Release notes file'
+        required: true
+        default: 'RELEASE_0_2_9_MAC_PREVIEW.md'
+
+permissions:
+  contents: read
 
 jobs:
-  macos-artifact:
+  macos-dmg:
+    name: macOS DMG + app zip
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -20,8 +28,14 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "FIRESTAFF_VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+            echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
           else
             echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+            if [ -f "RELEASE_${GITHUB_REF_NAME#v}.md" ]; then
+              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_${GITHUB_REF_NAME#v}.md" >> "$GITHUB_ENV"
+            else
+              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+            fi
           fi
       - name: Install SDL3
         run: brew install sdl3 || true
@@ -35,7 +49,11 @@ jobs:
           ./build/firestaff_m11_audio_probe
       - name: Package macOS preview
         run: |
-          VERSION="$FIRESTAFF_VERSION" SHORT_VERSION="${FIRESTAFF_VERSION%%-*}" RELEASE_NOTES_SRC="$PWD/RELEASE_0_2_5_PREVIEW.md" ./scripts/package_macos_preview.sh
+          VERSION="$FIRESTAFF_VERSION" \
+          SHORT_VERSION="${FIRESTAFF_VERSION%%-*}" \
+          RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
+          ./scripts/package_macos_preview.sh
+          shasum -a 256 "release/Firestaff-${FIRESTAFF_VERSION}.dmg" "release/Firestaff-${FIRESTAFF_VERSION}.zip" > "release/Firestaff-${FIRESTAFF_VERSION}-macos.sha256"
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -43,8 +61,10 @@ jobs:
           path: |
             release/Firestaff-${{ env.FIRESTAFF_VERSION }}.dmg
             release/Firestaff-${{ env.FIRESTAFF_VERSION }}.zip
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-macos.sha256
 
-  windows-artifact:
+  windows-installer:
+    name: Windows zip + installer exe
     runs-on: windows-2022
     defaults:
       run:
@@ -56,8 +76,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "FIRESTAFF_VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+            echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
           else
             echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+            echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
           fi
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -69,6 +91,7 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-sdl3
+            mingw-w64-ucrt-x86_64-nsis
       - name: Configure
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -77,10 +100,55 @@ jobs:
         run: |
           SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe
           ./build/firestaff_m11_audio_probe
-      - name: Package Windows preview
-        run: VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/RELEASE_0_2_5_PREVIEW.md" ./scripts/package_windows_preview.sh
-      - name: Upload Windows artifact
+      - name: Package Windows preview zip and installer
+        run: |
+          VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" ./scripts/package_windows_preview.sh
+          VERSION="$FIRESTAFF_VERSION" ./scripts/package_windows_installer_preview.sh
+          sha256sum "release/Firestaff-${FIRESTAFF_VERSION}-windows.zip" "release/Firestaff-${FIRESTAFF_VERSION}-windows-installer.exe" > "release/Firestaff-${FIRESTAFF_VERSION}-windows.sha256"
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: firestaff-${{ env.FIRESTAFF_VERSION }}-windows
-          path: release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows.zip
+          path: |
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows.zip
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows-installer.exe
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-windows.sha256
+
+  linux-packages:
+    name: Linux DEB + RPM
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "FIRESTAFF_VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+            echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
+          else
+            echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+            echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+          fi
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build libsdl3-dev rpm dpkg-dev
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Smoke test
+        run: |
+          SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe
+          ./build/firestaff_m11_audio_probe
+      - name: Package Linux preview
+        run: |
+          VERSION="$FIRESTAFF_VERSION" RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" ./scripts/package_linux_preview.sh
+          sha256sum release/firestaff_${FIRESTAFF_VERSION}_*.deb release/firestaff-${FIRESTAFF_VERSION}.*.rpm > "release/Firestaff-${FIRESTAFF_VERSION}-linux.sha256"
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-linux
+          path: |
+            release/*.deb
+            release/*.rpm
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-linux.sha256
