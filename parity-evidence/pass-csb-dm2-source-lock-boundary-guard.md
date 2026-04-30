@@ -6,10 +6,11 @@ Primary source audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDM
 
 Audited ReDMCSB source line ranges:
 
-- `DEFS.H:470-498` — `DM_SAVE_HEADER` and `CSB_SAVE_HEADER`, plus `C0x01_SAVE_HEADER_FORMAT_DUNGEON_MASTER` and `C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK`.
+- `DEFS.H:468-498` — `DM_SAVE_HEADER` and `CSB_SAVE_HEADER`, plus `C0x01_SAVE_HEADER_FORMAT_DUNGEON_MASTER` and `C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK`.
 - `DEFS.H:519-523` — dungeon ID namespace: `C10_DUNGEON_DM`, `C12_DUNGEON_CSB_PRISON`, `C13_DUNGEON_CSB_GAME`.
 - `CEDTINCU.C:5-77` — `F7272_IsDungeonValid(...)`; criteria 1 accepts DM/CSB/prison, criteria 2 accepts CSB game only, criteria 3 accepts DM/prison and excludes CSB game.
-- `CEDTINCH.C:19-44` — `F7086_IsReadyToMakeNewAdventure(...)` uses validation criteria 3 after loaded-game/champion checks.
+- `CEDTINCH.C:5-47` — `F7086_IsReadyToMakeNewAdventure(...)` uses validation criteria 3 after loaded-game/champion checks.
+- `CEDTINCH.C:49-64` — `F1996_(GAME*)` accepts only CSB-format headers with `DungeonID == C13_DUNGEON_CSB_GAME` for the SU1E path.
 - `CEDTINC8.C:101-118` — save routing sends `C10_DUNGEON_DM` to `M745_FILE_ID_SAVE_DMSAVE_DAT`; CSB game/prison (`C13`/`C12`) to `M746_FILE_ID_SAVE_CSBGAME_DAT`.
 
 Boundary conclusion:
@@ -25,16 +26,17 @@ Verifier:
 Latest output:
 
 ```text
-CSB/DM2 source-lock boundary guard
+CSB save-header / dungeon-ID / save-routing source-lock boundary guard
 redmcsb_source=/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
 original_dm=/home/trv2/.openclaw/data/firestaff-original-games/DM
 repo=/home/trv2/work/firestaff
 
 [source checks]
-PASS redmcsb-save-header-formats: DEFS.H:470-498 - DM and CSB save headers are structurally separate; do not infer one from the other.
+PASS redmcsb-save-header-formats: DEFS.H:468-498 - DM and CSB save headers are structurally separate; do not infer one from the other.
 PASS redmcsb-dungeon-id-namespace: DEFS.H:519-523 - CSB/prison are source IDs 13/12, distinct from DM source ID 10.
 PASS redmcsb-csb-validation-criteria: CEDTINCU.C:5-77 - CSB utility validation has explicit criteria; criteria 2 is CSB-game only, criteria 3 excludes CSB-game.
-PASS redmcsb-new-adventure-boundary: CEDTINCH.C:19-44 - New Adventure is source-gated through validation criteria 3, not a generic CSB acceptance path.
+PASS redmcsb-new-adventure-boundary: CEDTINCH.C:5-47 - New Adventure is source-gated through validation criteria 3, not a generic CSB acceptance path.
+PASS redmcsb-su1e-csb-game-only-boundary: CEDTINCH.C:49-64 - The SU1E-specific gate accepts only CSB-format headers for the CSB game dungeon ID.
 PASS redmcsb-save-file-routing-boundary: CEDTINC8.C:101-118 - Save routing source-lock keeps DM saves and CSB saves on separate file IDs.
 
 [reference inventory]

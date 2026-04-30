@@ -18,9 +18,11 @@ CHECKS = [
     {
         "id": "redmcsb-save-header-formats",
         "file": "DEFS.H",
-        "range": "470-498",
+        "range": "468-498",
         "needles": [
             "typedef struct {",
+            "unsigned int16_t Noise[149];",
+            "unsigned int16_t Noise[150];",
             "} DM_SAVE_HEADER;",
             "} CSB_SAVE_HEADER;",
             "#define C0x01_SAVE_HEADER_FORMAT_DUNGEON_MASTER     0x01",
@@ -59,13 +61,26 @@ CHECKS = [
     {
         "id": "redmcsb-new-adventure-boundary",
         "file": "CEDTINCH.C",
-        "range": "19-44",
+        "range": "5-47",
         "needles": [
+            "BOOLEAN F7086_IsReadyToMakeNewAdventure",
             "if (!G7111_Games[C0_GAME_SOURCE].GameLoaded || !G7114_LoadedChampionCount)",
             "F7272_IsDungeonValid(&G7111_Games[C0_GAME_SOURCE], 3)",
             "return F7076_AreAllChampionNamesUnique();",
         ],
         "why": "New Adventure is source-gated through validation criteria 3, not a generic CSB acceptance path.",
+    },
+    {
+        "id": "redmcsb-su1e-csb-game-only-boundary",
+        "file": "CEDTINCH.C",
+        "range": "49-64",
+        "needles": [
+            "BOOLEAN F1996_(GAME* P5909_)",
+            "P5909_->SaveHeaderFormat == C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK",
+            "L5768_->DungeonID == C13_DUNGEON_CSB_GAME",
+            "return C1_TRUE;",
+        ],
+        "why": "The SU1E-specific gate accepts only CSB-format headers for the CSB game dungeon ID.",
     },
     {
         "id": "redmcsb-save-file-routing-boundary",
@@ -159,7 +174,7 @@ def main() -> int:
     parser.add_argument("--repo", type=Path, default=DEFAULT_REPO)
     args = parser.parse_args()
 
-    print("CSB/DM2 source-lock boundary guard")
+    print("CSB save-header / dungeon-ID / save-routing source-lock boundary guard")
     print(f"redmcsb_source={args.redmcsb_source}")
     print(f"original_dm={args.original_dm}")
     print(f"repo={args.repo}")
