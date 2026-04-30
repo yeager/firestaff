@@ -1,0 +1,46 @@
+{
+  "gate": "v1_inventory_chest_actionhand_redmcsb",
+  "scope": "DM1/V1 ReDMCSB source contract for open-chest action-hand icon refresh while the inventory panel is open; worker-only evidence gate, not a V2 art lane.",
+  "sourceRanges": [
+    {
+      "file": "CHAMDRAW.C",
+      "start": 498,
+      "end": 631,
+      "function": "F0291_CHAMPION_DrawSlot",
+      "assertion": "Inventory champion action-hand object icons are adjusted after F0033_OBJECT_GetIconIndex; closed chest icon C144 is incremented to open chest C145 for BUG0_35."
+    },
+    {
+      "file": "CHEST.C",
+      "start": 2,
+      "end": 46,
+      "function": "F0333_INVENTORY_OpenAndDrawChest",
+      "assertion": "Opening a chest records G0426_T_OpenChest and, unless opened via eye press, draws C145_ICON_CONTAINER_CHEST_OPEN into C09_SLOT_BOX_INVENTORY_ACTION_HAND."
+    },
+    {
+      "file": "CHAMPION.C",
+      "start": 587,
+      "end": 640,
+      "function": "F0301_CHAMPION_AddObjectInSlot",
+      "assertion": "Adding a container chest to the inventory champion action hand marks MASK0x0800_PANEL for panel/action-hand refresh semantics."
+    },
+    {
+      "file": "m11_game_view.c",
+      "start": 18458,
+      "end": 18469,
+      "function": "m11_draw_inv_slot",
+      "assertion": "Firestaff's current occupied inventory slot helper resolves a DM object icon index before drawing; this gate does not claim open-chest state mutation is implemented."
+    },
+    {
+      "file": "m11_game_view.c",
+      "start": 18627,
+      "end": 18645,
+      "function": "m11_draw_inventory_panel",
+      "assertion": "Firestaff's normal V1 inventory overlay draws source-slot object icons, providing the narrow implementation seam for the ReDMCSB action-hand open-chest refresh rule."
+    }
+  ],
+  "nonClaims": [
+    "Does not implement or prove Firestaff runtime open-chest state mutation or click behavior.",
+    "Does not validate V2 inventory art, V2 asset manifests, CSB utility member locks, or pass162/C080 delivery.",
+    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2 only."
+  ]
+}
