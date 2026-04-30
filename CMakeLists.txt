@@ -260,6 +260,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_inventory_chest_actionhand_redmcsb_gate.py
         )
         add_test(
+            NAME v1_status_refresh_order_redmcsb_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_status_refresh_order_redmcsb_gate.py
+        )
+        add_test(
             NAME touch_movement_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_touch_movement_viewport_source_lock.py
         )
