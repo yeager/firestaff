@@ -42,6 +42,22 @@ SOURCE_CHECKS = [
         "claim": "The composed viewport buffer is flushed to the screen viewport zone; platform paths are explicit.",
     },
     {
+        "id": "pc34-vblank-viewport-screen-copy",
+        "file": "BASE.C",
+        "start": 961,
+        "end": 987,
+        "needles": [
+            "G0324_B_DrawViewportRequested",
+            "G0296_puc_Bitmap_Viewport",
+            "G0348_Bitmap_Screen",
+            "#5280",
+            "#135",
+            "40 + 40 + 32 = 112 bytes = 224 pixels",
+            "C160_BYTE_WIDTH_SCREEN",
+        ],
+        "claim": "On the Atari/PC34-era vertical blank path, a viewport draw request copies 136 lines from G0296_puc_Bitmap_Viewport into G0348_Bitmap_Screen at offset 5280 (y=33).",
+    },
+    {
         "id": "generic-viewport-blit-helper",
         "file": "BASE.C",
         "start": 1246,
