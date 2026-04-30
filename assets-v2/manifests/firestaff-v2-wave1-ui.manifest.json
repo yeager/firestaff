@@ -48,14 +48,49 @@
       "role": "world viewport frame and composition anchor",
       "productionClass": "preserve-scale-repaint",
       "sourceReference": {
-        "origin": "GRAPHICS.DAT graphic 0000",
-        "graphicsDatIndices": [
-          0
-        ],
+        "origin": "ReDMCSB C000_DERIVED_BITMAP_VIEWPORT / dungeon-view D0C viewport draw target",
         "originalSize": {
           "width": 224,
           "height": 136
-        }
+        },
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "derived bitmap and viewport dimension constants",
+            "lines": {
+              "start": 2405,
+              "end": 2408
+            },
+            "assertion": "C000_DERIVED_BITMAP_VIEWPORT is the viewport-derived bitmap used by version 1.x/2.x field and explosion drawing, documented as 224x136 pixels."
+          },
+          {
+            "file": "DEFS.H",
+            "function": "C112_BYTE_WIDTH_VIEWPORT / C136_HEIGHT_VIEWPORT",
+            "lines": {
+              "start": 2469,
+              "end": 2484
+            },
+            "assertion": "Viewport draw stride is C112_BYTE_WIDTH_VIEWPORT and viewport height is C136_HEIGHT_VIEWPORT; the 4bpp planar byte width corresponds to 224 pixels."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "G0188_aauc_Graphic558_FieldAspects (D0C field aspect)",
+            "lines": {
+              "start": 748,
+              "end": 753
+            },
+            "assertion": "The center D0C dungeon-view field aspect records a 224x136 viewport draw target."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0097_DUNGEONVIEW_DrawViewport setup",
+            "lines": {
+              "start": 2968,
+              "end": 2971
+            },
+            "assertion": "Viewport setup copies ceiling/floor bands using 224-pixel widths into the viewport buffers, supporting the 224-pixel source contract."
+          }
+        ]
       },
       "sizes": {
         "master4k": {
