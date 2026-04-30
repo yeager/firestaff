@@ -1,0 +1,21 @@
+{
+  "gate": "v1_inventory_toggle_redmcsb",
+  "scope": "DM1/V1 inventory toggle input route, command dispatch guards, open/close side effects, and Firestaff route isolation from HUD chrome",
+  "sourceRanges": [
+    { "file": "COMMAND.C", "start": 396, "end": 405, "function": "G0448_as_Graphic561_SecondaryMouseInput_Movement", "assertion": "Movement-mode right-click on C002_ZONE_SCREEN dispatches C083_COMMAND_TOGGLE_INVENTORY_LEADER." },
+    { "file": "COMMAND.C", "start": 412, "end": 415, "function": "G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory", "assertion": "Inventory-mode right-click on C002_ZONE_SCREEN and close icon C566 both dispatch C011_COMMAND_CLOSE_INVENTORY." },
+    { "file": "COMMAND.C", "start": 602, "end": 609, "function": "G0458_as_Graphic561_PrimaryKeyboardInput_Interface", "assertion": "DM1 PC/I34E interface keyboard table maps F1-F4 scan codes to C007..C010 inventory toggles." },
+    { "file": "COMMAND.C", "start": 2180, "end": 2184, "function": "F0381_COMMAND_ProcessCommandQueue", "assertion": "C007..C011 toggle/close commands are candidate-champion-gated before F0355_INVENTORY_Toggle_CPSE." },
+    { "file": "COMMAND.C", "start": 2296, "end": 2300, "function": "F0381_COMMAND_ProcessCommandQueue", "assertion": "C083 leader right-click toggles the current leader inventory only when a leader exists." },
+    { "file": "PANEL.C", "start": 2244, "end": 2305, "function": "F0355_INVENTORY_Toggle_CPSE", "assertion": "Inventory toggle rejects invalid/dead targets and eye/mouth presses, sets inventory panel content, and converts a same-champion open request into close." },
+    { "file": "PANEL.C", "start": 2314, "end": 2352, "function": "F0355_INVENTORY_Toggle_CPSE", "assertion": "Closing an already-open inventory clears G0423 inventory ordinal, restores movement inputs/arrows, redraws dungeon floor/ceiling, and returns." },
+    { "file": "PANEL.C", "start": 2358, "end": 2429, "function": "F0355_INVENTORY_Toggle_CPSE", "assertion": "Opening sets the inventory champion ordinal, hatches movement arrows on first open, expands C017_GRAPHIC_INVENTORY, draws slots, and marks viewport/status/panel/icons dirty." },
+    { "file": "m11_game_view.c", "start": 5188, "end": 5191, "function": "M11_GameView_HandleMenuInput", "assertion": "Firestaff inventory-toggle input clears the map overlay, calls the inventory panel toggle, and requests redraw without touching debug HUD state." },
+    { "file": "m11_game_view.c", "start": 19989, "end": 19995, "function": "M11_GameView_ToggleInventoryPanel", "assertion": "Firestaff toggle flips inventoryPanelActive and resets selected slot only when the panel opens." }
+  ],
+  "nonClaims": [
+    "Does not validate V2 inventory art quality, HUD styling, or debug HUD behavior.",
+    "Does not prove all runtime click delivery semantics; this is a source/evidence gate for the toggle route and side effects.",
+    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2 only."
+  ]
+}
