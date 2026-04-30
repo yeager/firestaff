@@ -2,7 +2,7 @@
 
 Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-043559-pass162-original-party-route-unblock`
+- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-044203-pass162-original-party-route-unblock`
 - evidence root: `parity-evidence/verification/pass162_original_party_route_unblock`
 - completed: 2
 - errors: 0
@@ -10,6 +10,7 @@ Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
 ## Source locks
 
+- `DUNGEON.DAT via pass173 helper` n/a: Initial DM1 V1 party pose decodes to map0 x=1 y=3 dir=South (raw 0x0861), directly facing wall square x=1 y=4 with sensor 16 type C127 and sensorData=10; the deterministic route precondition is therefore an entrance gate only, not coordinate navigation.
 - `ENTRANCE.C` 857-883: F0441_STARTEND_ProcessEntrance sets G0298_B_NewGame=C099_MODE_WAITING_ON_ENTRANCE and only exits after command/key changes it; keyboard/mouse input is processed before dungeon load.
 - `COMMAND.C` 346-352, 557, 2438-2455: C200_COMMAND_ENTRANCE_ENTER_DUNGEON maps to C407_ZONE_ENTRANCE_ENTER / Return and sets G0298_B_NewGame=C001_MODE_LOAD_DUNGEON; resume maps to saved game, credits loops.
 - `REVIVE.C` 63-150: F0280_CHAMPION_AddCandidateChampionToParty is the source transition that increments/uses G0305_ui_PartyChampionCount; inventory-looking candidate frames are not enough without this semantic transition.
@@ -19,11 +20,17 @@ Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 - `DUNVIEW.C / COORD.C` DUNVIEW.C 525,3913-3928; COORD.C 1693-1698: The portrait box is viewport x=96..127/y=35..63; PC viewport origin y=33 gives source screen click center x=111/y=82.
 - `COMMAND.C` 231-238, 509-511: C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115.
 
+## Route precondition
+
+- Initial party: map0 x=1 y=3 dir=South raw=0x0861.
+- Front wall: x=1 y=4 sensor=16 type=C127_SENSOR_WALL_CHAMPION_PORTRAIT sensorData=10.
+- No movement is required after the entrance gate; the runtime mismatch is now whether the original C080/F0377 click reaches F0280, not map navigation.
+
 ## Result matrix
 
 - `source_gated_portrait_then_resurrect` `DM -vv -sn`: **blocked/portrait-c080-no-visible-delta** — gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280 — unique hashes: 48ed3743ab6a, ceb0c2eec633 — `parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_resurrect`
-- `source_gated_portrait_then_reincarnate` `DM -vv -sn`: **blocked/portrait-c080-no-visible-delta** — gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280 — unique hashes: 48ed3743ab6a, ab7acc8ca298 — `parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_reincarnate`
+- `source_gated_portrait_then_reincarnate` `DM -vv -sn`: **blocked/portrait-c080-no-visible-delta** — gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280 — unique hashes: 48ed3743ab6a, c6f457763e2e — `parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_reincarnate`
 
 ## Interpretation
 
-A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is reported as the exact remaining blocker rather than being collapsed into the older static-no-party bucket.
+A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, records the source-proven initial C127 pose, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is reported as an original C080/F0377/F0280 delivery/state mismatch, not a request for more map or panel coordinate guessing.
