@@ -1,0 +1,19 @@
+{
+  "gate": "v1_entrance_input_wait_redmcsb",
+  "scope": "DM1/V1 entrance frontend waits for input before switch sound, fixed 20-tick pre-open delay, and door-open handoff evidence.",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRanges": [
+    { "file": "ENTRANCE.C", "start": 850, "end": 883, "function": "F0438/F0439 entrance frontend loop", "assertion": "Draw entrance, show pointer, discard all stale input, set C099_MODE_WAITING_ON_ENTRANCE, wait at least one VBlank per poll, process queued commands, and redraw credits until a non-credits command exits the loop." },
+    { "file": "ENTRANCE.C", "start": 906, "end": 943, "function": "F0438/F0439 entrance post-command path", "assertion": "After a command exits the wait loop, source plays switch sound, delays F0022_MAIN_Delay(20), hides pointer, then opens doors when G0298_B_NewGame is nonzero." },
+    { "file": "COMMAND.C", "start": 551, "end": 577, "function": "G2195_as_PrimaryKeyboardInput_Entrance", "assertion": "Entrance keyboard table maps Enter to C200_COMMAND_ENTRANCE_ENTER_DUNGEON and keeps the quit sibling route; I34E/I34M/P31J Enter scancode is 0x001C." },
+    { "file": "entrance_frontend_pc34_compat.c", "start": 39, "end": 58, "function": "entrance_event_line", "assertion": "Firestaff source-event evidence explicitly cites the ReDMCSB wait, switch-sound, delay, and door-open ranges." },
+    { "file": "entrance_frontend_pc34_compat.c", "start": 61, "end": 99, "function": "ENTRANCE_Compat_GetSourceAnimationStep", "assertion": "Firestaff sequence preserves wait as step 4, switch sound as step 5, 20-tick delay as step 6, and door steps as 7..37." },
+    { "file": "entrance_frontend_pc34_compat.c", "start": 102, "end": 103, "function": "ENTRANCE_Compat_GetSourceAnimationEvidence", "assertion": "Summary evidence names the VBlank/input wait, F0022_MAIN_Delay(20), and F0438 door-open handoff." },
+    { "file": "entrance_keyboard_routes_pc34_compat.c", "start": 2, "end": 3, "function": "entrance_keyboard_routes_GetEvidence", "assertion": "Firestaff keyboard evidence names COMMAND.C:551-577, C200 enter-dungeon, and C216 quit routes." }
+  ],
+  "nonClaims": [
+    "Does not claim runtime pixel parity for entrance art, palettes, or screenshots; this is a source/evidence gate only.",
+    "Does not replace a future live input queue timing probe; it locks the source ordering and Firestaff evidence contract for the entrance handoff.",
+    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2-local only."
+  ]
+}
