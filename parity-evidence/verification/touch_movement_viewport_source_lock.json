@@ -1,0 +1,217 @@
+{
+  "dispatch_citations_verified": [
+    "COMMAND.C:1403-1431",
+    "COMMAND.C:1641-1644",
+    "COORD.C:1915-1920"
+  ],
+  "firestaff_matrix": [
+    {
+      "matrix_entry_found": true,
+      "name": "movement.turn_left"
+    },
+    {
+      "matrix_entry_found": true,
+      "name": "movement.forward"
+    },
+    {
+      "matrix_entry_found": true,
+      "name": "movement.turn_right"
+    },
+    {
+      "matrix_entry_found": true,
+      "name": "movement.left"
+    },
+    {
+      "matrix_entry_found": true,
+      "name": "movement.backward"
+    },
+    {
+      "matrix_entry_found": true,
+      "name": "movement.right"
+    },
+    {
+      "matrix_entry_found": true,
+      "name": "viewport.dungeon"
+    },
+    {
+      "matrix_entry_found": true,
+      "name": "inventory.toggle_leader"
+    }
+  ],
+  "non_claims": [
+    "No input behavior is changed by this verifier.",
+    "This does not source-lock V2 inventory art, inventory slot gates, or HUD rendering behavior.",
+    "This does not prove original runtime delivery of queued C080 side effects; it only locks route geometry/provenance."
+  ],
+  "routes": [
+    {
+      "button": "left",
+      "command": 1,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "movement.turn_left",
+      "route_found": true,
+      "zone": 68
+    },
+    {
+      "button": "left",
+      "command": 3,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "movement.forward",
+      "route_found": true,
+      "zone": 70
+    },
+    {
+      "button": "left",
+      "command": 2,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "movement.turn_right",
+      "route_found": true,
+      "zone": 69
+    },
+    {
+      "button": "left",
+      "command": 6,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "movement.left",
+      "route_found": true,
+      "zone": 73
+    },
+    {
+      "button": "left",
+      "command": 5,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "movement.backward",
+      "route_found": true,
+      "zone": 72
+    },
+    {
+      "button": "left",
+      "command": 4,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "movement.right",
+      "route_found": true,
+      "zone": 71
+    },
+    {
+      "button": "left",
+      "command": 80,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "viewport.dungeon",
+      "route_found": true,
+      "zone": 7
+    },
+    {
+      "button": "right",
+      "command": 83,
+      "command_c_line_range": "COMMAND.C:396-405",
+      "name": "inventory.toggle_leader",
+      "route_found": true,
+      "zone": 2
+    }
+  ],
+  "scope": "narrow movement/viewport UI hit-zone source lock for future touch/click abstraction",
+  "source_citations": [
+    "COMMAND.C:396-405 G0448_as_Graphic561_SecondaryMouseInput_Movement routes left/right movement and viewport/toggle commands to zones/buttons",
+    "COMMAND.C:1403-1431 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans mouse-input entries and tests button/zone matches",
+    "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",
+    "COORD.C:1915-1920 F0798_COMMAND_IsPointInZone inclusive zone hit-test"
+  ],
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "pass",
+  "verified_files": [
+    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+    "/home/trv2/work/firestaff/zones_h_reconstruction.json",
+    "/home/trv2/work/firestaff/touch_click_zone_matrix_pc34_compat.c"
+  ],
+  "zones": [
+    {
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 234,
+        "y": 125
+      },
+      "layout_citation": "zones_h_reconstruction.json records[68] + parent size record",
+      "name": "movement.turn_left",
+      "zone": 68
+    },
+    {
+      "layout_696_rect": {
+        "h": 21,
+        "w": 27,
+        "x": 263,
+        "y": 125
+      },
+      "layout_citation": "zones_h_reconstruction.json records[70] + parent size record",
+      "name": "movement.forward",
+      "zone": 70
+    },
+    {
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 291,
+        "y": 125
+      },
+      "layout_citation": "zones_h_reconstruction.json records[69] + parent size record",
+      "name": "movement.turn_right",
+      "zone": 69
+    },
+    {
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 234,
+        "y": 147
+      },
+      "layout_citation": "zones_h_reconstruction.json records[73] + parent size record",
+      "name": "movement.left",
+      "zone": 73
+    },
+    {
+      "layout_696_rect": {
+        "h": 21,
+        "w": 27,
+        "x": 263,
+        "y": 147
+      },
+      "layout_citation": "zones_h_reconstruction.json records[72] + parent size record",
+      "name": "movement.backward",
+      "zone": 72
+    },
+    {
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 291,
+        "y": 147
+      },
+      "layout_citation": "zones_h_reconstruction.json records[71] + parent size record",
+      "name": "movement.right",
+      "zone": 71
+    },
+    {
+      "layout_696_rect": {
+        "h": 136,
+        "w": 224,
+        "x": 0,
+        "y": 33
+      },
+      "layout_citation": "zones_h_reconstruction.json records[7] + parent size record",
+      "name": "viewport.dungeon",
+      "zone": 7
+    },
+    {
+      "layout_696_rect": {
+        "h": 200,
+        "w": 320,
+        "x": 0,
+        "y": 0
+      },
+      "layout_citation": "zones_h_reconstruction.json records[2] + parent size record",
+      "name": "inventory.toggle_leader",
+      "zone": 2
+    }
+  ]
+}
