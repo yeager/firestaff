@@ -256,6 +256,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_draw_order_gate.py
         )
         add_test(
+            NAME v1_viewport_redmcsb_draw_stack_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_redmcsb_draw_stack_gate.py
+        )
+        add_test(
             NAME v1_viewport_source_zone_tables
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_source_zone_tables.py
         )
