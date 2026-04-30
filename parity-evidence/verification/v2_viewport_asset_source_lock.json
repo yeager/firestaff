@@ -1,0 +1,11 @@
+{
+  "assetId": "fs.v2.ui.viewport-base.frame",
+  "manifest": "/home/trv2/work/firestaff/assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json",
+  "source": "ReDMCSB C000_DERIVED_BITMAP_VIEWPORT",
+  "sourceDimensions": {
+    "byteWidth": 112,
+    "height": 136,
+    "width": 224
+  },
+  "status": "passed"
+}
