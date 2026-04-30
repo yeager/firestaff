@@ -1,0 +1,317 @@
+{
+  "allowed_original_roots": [
+    "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+    "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted"
+  ],
+  "classification": "ready/probe-plan-emitted",
+  "dry_run": false,
+  "forbidden_roots_note": "DANNESBURK not used by this script.",
+  "next_step": "Run the emitted gate list in DOSBox-X/debugger against the source-locked pass162 pose; classify first missing gate instead of trying more coordinates.",
+  "non_claims": [
+    "does not prove the stock original binary reached C080/F0377/F0280",
+    "does not use DANNESBURK",
+    "does not claim x=111,y=82 is wrong; it narrows where to instrument before changing coordinates"
+  ],
+  "pass162_context": {
+    "classification": "blocked/portrait-c080-no-visible-delta",
+    "loaded": true,
+    "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280",
+    "summary_path": "/home/trv2/work/firestaff/parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_resurrect/summary.json"
+  },
+  "probe_gates": [
+    {
+      "expect": "after x=111,y=82 left click, P0725/P0726 are 111/82, L1109_i_Command == 80, G0432_as_CommandQueue[last].Command == 80 with X=111,Y=82",
+      "gate": "mouse translation / queue write",
+      "if_missing": "host/DOSBox mouse translation or active mouse-input table is blocking before the original queue",
+      "probe": "break on F0359 entry and after L1109_i_Command is assigned/written",
+      "source": "COMMAND.C:1452-1662 F0359_COMMAND_ProcessClick_CPSC (not F0365 in this tree)"
+    },
+    {
+      "expect": "L1160_i_Command == 80 and L1161/L1162 == 111/82",
+      "gate": "queue dequeue",
+      "if_missing": "queue overwrite/drop/BUG0_73 collision or wrong timing before dispatch",
+      "probe": "break when L1160/L1161/L1162 are loaded from G0432_as_CommandQueue",
+      "source": "COMMAND.C:2045-2127 F0380_COMMAND_ProcessQueue_CPSC"
+    },
+    {
+      "expect": "F0377 is entered; normalized point remains inside C05 wall ornament/portrait hit zone for the source-locked front wall",
+      "gate": "C080 dispatch / viewport normalization",
+      "if_missing": "C080 is not dispatched or screen-to-viewport translation is different than the visual click assumption",
+      "probe": "break on F0377 entry and after PC coordinate normalization",
+      "source": "COMMAND.C:2322-2324 + CLIKVIEW.C:311-350"
+    },
+    {
+      "expect": "pose map0 x=1 y=3 dir=South touches front square x=1 y=4 opposite face and reaches F0280(sensorData=10)",
+      "gate": "front-wall sensor hit-state",
+      "if_missing": "front-wall hit zone/state/sensor face is blocking after F0377 but before F0280",
+      "probe": "break on F0372 and F0280; log G0306/G0307/G0308, forward square, wall face, sensor type/data",
+      "source": "CLIKVIEW.C:406-439, CLIKVIEW.C:5-27, MOVESENS.C:1501-1503, REVIVE.C:63-88"
+    }
+  ],
+  "schema": "pass162_c080_queue_trace.v1",
+  "source_audit": [
+    {
+      "excerpt": "305: #define C080_COMMAND_CLICK_IN_DUNGEON_VIEW                                   80",
+      "file": "DEFS.H",
+      "lines": "305",
+      "missing": [],
+      "must_contain": [
+        "#define C080_COMMAND_CLICK_IN_DUNGEON_VIEW"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "point": "C080 is command ordinal 80.",
+      "symbol": "C080_COMMAND_CLICK_IN_DUNGEON_VIEW"
+    },
+    {
+      "excerpt": "3752: #define C007_ZONE_VIEWPORT                                        7",
+      "file": "DEFS.H",
+      "lines": "3752",
+      "missing": [],
+      "must_contain": [
+        "#define C007_ZONE_VIEWPORT"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "point": "C007 is the viewport zone used by the PC movement secondary mouse table.",
+      "symbol": "C007_ZONE_VIEWPORT"
+    },
+    {
+      "excerpt": "1: #ifndef COMPILE_H\n2: #include \"COMPILE.H\"\n3: #endif\n4: #ifdef MEDIA042_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n5: #if (EXETYPE == C03_GAME)\n6: COMMAND G0432_as_CommandQueue[M529_COMMAND_QUEUE_SIZE + 1]; /* Circular queue. Can only contain up to 4 actual commands at a time */\n7: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n8: int16_t G2153_i_QueuedCommandsCount;\n9: #endif\n10: int16_t G0433_i_CommandQueueFirstIndex; /* The queue contains a single command if G0434_i_CommandQueueLastIndex = G0433_i_CommandQueueFirstIndex */\n11: int16_t G0434_i_CommandQueueLastIndex = M529_COMMAND_QUEUE_SIZE; /* The queue is empty if (G0434_i_CommandQueueLastIndex + 1) % 4 = G0433_i_CommandQueueFirstIndex */\n12: BOOLEAN G0435_B_CommandQueueLocked = C1_TRUE;\n13: BOOLEAN G0436_B_PendingClickPresent;\n14: int16_t G0437_i_PendingClickX;\n15: int16_t G0438_i_PendingClickY;\n16: int16_t G0439_i_PendingClickButtonsStatus;",
+      "file": "COMMAND.C",
+      "lines": "1-16",
+      "missing": [],
+      "must_contain": [
+        "G0432_as_CommandQueue",
+        "G0433_i_CommandQueueFirstIndex",
+        "G0434_i_CommandQueueLastIndex",
+        "G0435_B_CommandQueueLocked",
+        "G0436_B_PendingClickPresent"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "Original command queue storage, first/last indices, queue lock, and pending-click fields.",
+      "symbol": "G0432_as_CommandQueue"
+    },
+    {
+      "excerpt": "106: MOUSE_INPUT G0448_as_Graphic561_SecondaryMouseInput_Movement[9] = {\n107:         /* { Command, Box.Left, Box.Right, Box.Top, Box.Bottom, Button } */\n108:         { C001_COMMAND_TURN_LEFT,             234, 261, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },\n109:         { C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },\n110:         { C002_COMMAND_TURN_RIGHT,            291, 318, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },\n111:         { C006_COMMAND_MOVE_LEFT,             234, 261, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\n112:         { C005_COMMAND_MOVE_BACKWARD,         263, 289, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\n113:         { C004_COMMAND_MOVE_RIGHT,            291, 318, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\n114:         { C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },",
+      "file": "COMMAND.C",
+      "lines": "106-114",
+      "missing": [],
+      "must_contain": [
+        "G0448_as_Graphic561_SecondaryMouseInput_Movement",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "0, 223,  33, 168"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "PC secondary movement mouse input maps viewport left-click box 0..223,33..168 to C080.",
+      "symbol": "C007 -> C080 mouse route"
+    },
+    {
+      "excerpt": "397:         { C001_COMMAND_TURN_LEFT,               CM1_SCREEN_RELATIVE, C068_ZONE_TURN_LEFT,     0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n398:         { C003_COMMAND_MOVE_FORWARD,            CM1_SCREEN_RELATIVE, C070_ZONE_MOVE_FORWARD,  0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n399:         { C002_COMMAND_TURN_RIGHT,              CM1_SCREEN_RELATIVE, C069_ZONE_TURN_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n400:         { C006_COMMAND_MOVE_LEFT,               CM1_SCREEN_RELATIVE, C073_ZONE_MOVE_LEFT,     0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n401:         { C005_COMMAND_MOVE_BACKWARD,           CM1_SCREEN_RELATIVE, C072_ZONE_MOVE_BACKWARD, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n402:         { C004_COMMAND_MOVE_RIGHT,              CM1_SCREEN_RELATIVE, C071_ZONE_MOVE_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\n403:         { C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },",
+      "file": "COMMAND.C",
+      "lines": "397-403",
+      "missing": [],
+      "must_contain": [
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C007_ZONE_VIEWPORT"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "Zone-based movement table maps C007_ZONE_VIEWPORT left-click to C080.",
+      "symbol": "C007 -> C080 zone route"
+    },
+    {
+      "excerpt": "1452: void F0359_COMMAND_ProcessClick_CPSC(\n1453: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1454: P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus)\n1455: #endif\n1456: REGISTER int16_t P0725_i_X             SEPARATOR\n1457: REGISTER int16_t P0726_i_Y             SEPARATOR\n1458: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1459: int16_t          P0727_i_ButtonsStatus FINAL_SEPARATOR\n1460: #endif\n1461: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1462: REGISTER int16_t P0727_i_ButtonsStatus FINAL_SEPARATOR\n1463: #endif\n1464: {\n1465:         REGISTER int16_t L1108_i_CommandQueueIndex;\n1466:         REGISTER int16_t L1109_i_Command;\n1467: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1468:         int16_t L2287_i_MaximumRegularCommandsInQueue;\n1469: #endif\n1470: #ifdef MEDIA626_A31E_A31M_A33M_A35E_A35M\n1471:         int16_t L2288_i_;\n1472: #endif\n1473: \n1474: \n1475: #ifdef MEDIA007_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E\n1476:         asm {\n1477:                         tas     G0435_B_CommandQueueLocked(A4)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\n1478:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\n1479:                         beq.s   T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\n1480:         }\n1481: #endif\n1482: #ifdef MEDIA607_X30J_X31J\n1483:         asm {\n1484:                         tas     G0435_B_CommandQueueLocked(A5)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\n1485:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\n1486:                         beq.s   @T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\n1487:         }\n1488: #endif\n1489: #ifdef MEDIA169_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_X30J_X31J\n1490:         G0436_B_PendingClickPresent = C1_TRUE;\n1491:         G0437_i_PendingClickX = P0725_i_X;\n1492:         G0438_i_PendingClickY = P0726_i_Y;\n1493:         G0439_i_PendingClickButtonsStatus = P0727_i_ButtonsStatus;\n1494: #endif\n1495: #ifdef MEDIA007_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E\n1496: #ifndef NOCOPYPROTECTION\n1497:         if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && (F0464_CPSC_GetChecksumSub(F0380_COMMAND_ProcessQueue_CPSC) != CHECKSUM_B)) {\n1498:                 G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\n1499:         }\n1500: #endif\n1501: #endif\n1502: #ifdef MEDIA169_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_X30J_X31J\n1503:         return;\n1504:         T0359002:\n1505: #endif\n1506: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1507:         if ((P0727_i_ButtonsStatus == C04_MOUSE_EVENT_LEFT_BUTTON_UP) || (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION)) {\n1508:                 L2287_i_MaximumRegularCommandsInQueue = C7_UNKNOWN; /* Allow usage of all commands in queue */\n1509:         } else {\n1510:                 L2287_i_MaximumRegularCommandsInQueue = C5_UNKNOWN; /* Restrict usage to reserve two commands in queue */\n1511:         }\n1512: #endif\n1513:         if ((L1108_i_CommandQueueIndex = G0434_i_CommandQueueLastIndex + 2) > M529_COMMAND_QUEUE_SIZE) {\n1514:                 L1108_i_CommandQueueIndex -= M529_COMMAND_QUEUE_SIZE + 1;\n1515:         }\n1516: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1517:         if (L1108_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is full */\n1518: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1519: #ifndef NOCOPYPROTECTION\n1520:                 if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && (F0464_CPSC_GetChecksumSub(F0380_COMMAND_ProcessQueue_CPSC) != CHECKSUM_B)) {\n1521:                         G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\n1522:                 }\n1523: #endif\n1524: #endif\n1525:                 return;\n1526:         }\n1527: #endif\n1528: #ifdef MEDIA741_A35E_A35M\n1529:         if (G2153_i_QueuedCommandsCount >= L2287_i_MaximumRegularCommandsInQueue) {\n1530: #endif\n1531: #ifdef MEDIA510_F20E_F20J_X30J_P20JA_P20JB_A31E_A31M_A33M_F31E_F31J_X31J_P31J\n1532:         if (L1108_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is full */\n1533:                 if (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION) {\n1534:                         G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex].Command = C129_COMMAND_RELEASE_CHAMPION_ICON;\n1535:                 }\n1536: #endif\n1537: #ifdef MEDIA626_A31E_A31M_A33M_A35E_A35M\n1538: #ifndef NOCOPYPROTECTION\n1539:                 if ((!(G0317_i_WaitForInputVerticalBlankCount & 7)) && !(G0313_ul_GameTime & 3)) {\n1540:                     L2288_i_ = L1109_i_Command;\n1541:                     L1109_i_Command = F1063_ChecksumEor_CPSX(*((long*)((char*)F1053_Pre_F0380_COMMAND_ProcessQueue_CPSC + 2)), *((long*)((char*)F1055_Post_F0380_COMMAND_ProcessQueue_CPSC + 2)));\n1542:                     asm {\n1543:                         @Tloc_1EA3E:\n1544: #ifdef MEDIA619_A31E_A31M\n1545:                                 move.w  -4(a6),d1       /* Fake useless code start */\n1546:                                 cmpi.w  #CHECKSUM_B,d1      /* Actual expected checksum value */\n1547:                                 bcc.s   @Tloc_1EA4C\n1548:                                 moveq   #1,d0\n1549:                                 bra.s   @Tloc_1EA4E\n1550:                         @Tloc_1EA4C:\n1551:                                 moveq   #0,d0\n1552:                         @Tloc_1EA4E:\n1553:                                 move.w  -10(a6),d1\n1554:                                 cmp.w   d0,d1\n1555:                                 bcc.s   @Tloc_1EA5A\n1556:                                 moveq   #1,d0\n1557:                                 bra.s   @Tloc_1EA5C\n1558:                         @Tloc_1EA5A:\n1559:                                 moveq   #0,d0\n1560: #endif\n1561: #ifdef MEDIA665_A33M\n1562:                                 move.w  10(a6),d0\n1563:                                 move.w  #CHECKSUM_B,d1\n1564:                                 bra.s   @Tloc_1EA4C\n1565:                                 asl.w   #1,d0\n1566:                                 add.w   d0,d1\n1567:                                 bra.s   @Tloc_1EA4E\n1568:                         @Tloc_1EA4C:\n1569:                                 moveq   #0,d0\n1570:                         @Tloc_1EA4E:\n1571:                                 cmp.w   d0,d1\n1572:                                 bcc.s   @Tloc_1EA5C\n1573:                                 move.w  -2(a6),d1\n1574:                                 add.w   d0,d1\n1575:                                 asl.w   #1,d1\n1576: #endif\n1577: #ifdef MEDIA739_A35E\n1578:                                 move.w  #200,d1\n1579:                                 move.w  #CHECKSUM_B,d1\n1580:                                 add.w   -4(a6),d1\n1581:                                 beq.s   @Tloc_1F59C\n1582:                                 move.w  -10(a6),d1\n1583:                                 cmp.w   d0,d1\n1584:                                 beq.s   @Tloc_1F59C\n1585:                                 move.w  #0xFFFF,d0\n1586:                                 bra.s   @Tloc_1EA5C\n1587:                         @Tloc_1F59C:\n1588:                                 asl.w   #1,d0\n1589: #endif\n1590: #ifdef MEDIA742_A35M\n1591:                                 tst.w   d0\n1592:                                 bne.s   @Tloc_1F98E\n1593:                                 move.w  #CHECKSUM_B,d0\n1594:                                 bra.s   @Tloc_1F994\n1595:                         @Tloc_1F98E:\n1596:                                 move.w  #0x13F,d0\n1597:                                 bra.s   @Tloc_1F996\n1598:                         @Tloc_1F994:\n1599:                                 moveq   #0,d0\n1600:                         @Tloc_1F996:\n1601:                                 move.w  #0x96,d1\n1602:                                 cmp.w   d0,d1\n1603:                                 bcc.s   @Tloc_1EA5C\n1604:                                 move.w  d0,d1\n1605:                                 asl.w   #1,d1\n1606: #endif\n1607:                         @Tloc_1EA5C:                     /* Fake useless code end */\n1608:                                 lea     @Tloc_1EA3E,a0   /* Actual checksum value test */\n1609:                                 move.w  d3,d0\n1610:                                 cmp.w   6(a0),d0\n1611:                                 beq.s   @Tloc_1EA6E\n1612:                                 move.w  #1,d3\n1613:                                 bra.s   @Tloc_1EA72\n1614:                         @Tloc_1EA6E:\n1615:                                 move.w  #0,d3\n1616:                         @Tloc_1EA72:\n1617:                     }\n1618:                     if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && L1109_i_Command) {\n1619:                             G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\n1620:                     }\n1621:                     L1109_i_Command = L2288_i_;\n1622:                 }\n1623: #endif\n1624: #endif\n1625: #ifdef MEDIA512_F20E_F20J_X30J_P20JA_P20JB_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1626:         } else {\n1627: #endif\n1628: #ifdef MEDIA716_I34E_I34M_A36M\n1629:         if (G2153_i_QueuedCommandsCount < L2287_i_MaximumRegularCommandsInQueue) {\n1630: #endif\n1631: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1632:                 if (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION) {\n1633:                         L1109_i_Command = C129_COMMAND_RELEASE_CHAMPION_ICON;\n1634:                 } else {\n1635: #endif\n1636: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1637:                         if (P0727_i_ButtonsStatus == C04_MOUSE_EVENT_LEFT_BUTTON_UP) {\n1638:                                 L1109_i_Command = C254_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL;\n1639:                         } else {\n1640: #endif\n1641:                                 L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0441_ps_PrimaryMouseInput, P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus);\n1642:                                 if (L1109_i_Command == C000_COMMAND_NONE) {\n1643:                                         L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0442_ps_SecondaryMouseInput, P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus);\n1644:                                 }\n1645: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1646:                         }\n1647: #endif\n1648: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1649:                 }\n1650: #endif\n1651:                 if (L1109_i_Command != C000_COMMAND_NONE) {\n1652: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1653:                         G2153_i_QueuedCommandsCount++;\n1654: #endif\n1655:                         if (!L1108_i_CommandQueueIndex--) {\n1656:                                 L1108_i_CommandQueueIndex = M529_COMMAND_QUEUE_SIZE;\n1657:                         }\n1658:                         G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command;\n1659:                         G0432_as_CommandQueue[L1108_i_CommandQueueIndex].X = P0725_i_X;\n1660:                         G0432_as_CommandQueue[L1108_i_CommandQueueIndex].Y = P0726_i_Y;\n1661:                 }\n1662:                 G0435_B_CommandQueueLocked = C0_FALSE;",
+      "file": "COMMAND.C",
+      "lines": "1452-1662",
+      "missing": [],
+      "must_contain": [
+        "void F0359_COMMAND_ProcessClick_CPSC",
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
+        "G0432_as_CommandQueue",
+        ".Command = L1109_i_Command",
+        ".X = P0725_i_X",
+        ".Y = P0726_i_Y"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "Actual mouse-click queue writer: derives command from primary/secondary mouse tables and writes nonzero command plus X/Y into G0432_as_CommandQueue.",
+      "symbol": "F0359_COMMAND_ProcessClick_CPSC"
+    },
+    {
+      "excerpt": "142: void F0365_COMMAND_ProcessTypes1To2_TurnParty(\n143: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n144: P0734_i_Command)\n145: #endif\n146: int16_t P0734_i_Command FINAL_SEPARATOR\n147: {\n148: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n149:         register unsigned int16_t L1114_ui_Square;\n150: #endif\n151: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n152:         unsigned int16_t L1114_ui_Square;\n153: #endif\n154: \n155: \n156:         G0321_B_StopWaitingForPlayerInput = C1_TRUE;\n157: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n158:         if (P0734_i_Command == C001_COMMAND_TURN_LEFT) {\n159:                 F0362_COMMAND_HighlightBoxEnable(234, 261, 125, 145);\n160:         } else {\n161:                 F0362_COMMAND_HighlightBoxEnable(291, 318, 125, 145);\n162:         }\n163: #endif\n164: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n165:         F0362_COMMAND_HighlightBoxEnable((P0734_i_Command == C001_COMMAND_TURN_LEFT) ? C068_ZONE_TURN_LEFT : C069_ZONE_TURN_RIGHT);\n166: #endif\n167:         if (M034_SQUARE_TYPE(L1114_ui_Square = F0151_DUNGEON_GetSquare(G0306_i_PartyMapX, G0307_i_PartyMapY)) == C03_ELEMENT_STAIRS) {\n168:                 F0364_COMMAND_TakeStairs(M007_GET(L1114_ui_Square, MASK0x0004_STAIRS_UP));\n169:                 return;\n170:         }\n171:         F0276_SENSOR_ProcessThingAdditionOrRemoval(G0306_i_PartyMapX, G0307_i_PartyMapY, C0xFFFF_THING_PARTY, C1_TRUE, C0_FALSE);\n172:         F0284_CHAMPION_SetPartyDirection(M021_NORMALIZE(G0308_i_PartyDirection + ((P0734_i_Command == C002_COMMAND_TURN_RIGHT) ? 1 : 3)));\n173:         F0276_SENSOR_ProcessThingAdditionOrRemoval(G0306_i_PartyMapX, G0307_i_PartyMapY, C0xFFFF_THING_PARTY, C1_TRUE, C1_TRUE);\n174: }",
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "missing": [],
+      "must_contain": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "point": "Required audit symbol: in this ReDMCSB tree F0365 is turn-party handling, not the C080 mouse queue writer; it is dispatched only for C001/C002 in F0380.",
+      "symbol": "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+    },
+    {
+      "excerpt": "2045: void F0380_COMMAND_ProcessQueue_CPSC(\n2046: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n2047: void\n2048: #endif\n2049: )\n2050: {\n2051: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n2052:         REGISTER int16_t L1160_i_Command;\n2053: #endif\n2054: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n2055:         REGISTER char* L1163_pc_Unreferenced; /* BUG0_00 Useless code */\n2056: #endif\n2057:         REGISTER int16_t L1159_i_Multiple;\n2058: #define AL1159_i_CommandQueueIndex L1159_i_Multiple\n2059: #define AL1159_i_ChampionIndex     L1159_i_Multiple\n2060: #define AL1159_i_Checksum          L1159_i_Multiple\n2061: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n2062:         REGISTER int16_t L1160_i_Command;\n2063: #endif\n2064:         REGISTER int16_t L1161_i_CommandX;\n2065:         REGISTER int16_t L1162_i_CommandY;\n2066:         static KEYBOARD_INPUT* G0481_ps_PrimaryKeyboardInputBackup;\n2067:         static KEYBOARD_INPUT* G0482_ps_SecondaryKeyboardInputBackup;\n2068:         static MOUSE_INPUT* G0483_ps_PrimaryMouseInputBackup;\n2069:         static MOUSE_INPUT* G0484_ps_SecondaryMouseInputBackup;\n2070: \n2071: \n2072: #ifdef MEDIA351_G14ED_G20E_G21E\n2073:         F2155_();\n2074: #endif\n2075:         G0435_B_CommandQueueLocked = C1_TRUE;\n2076:         if ((AL1159_i_CommandQueueIndex = G0434_i_CommandQueueLastIndex + 1) > M529_COMMAND_QUEUE_SIZE) {\n2077:                 AL1159_i_CommandQueueIndex = 0;\n2078:         }\n2079: #ifdef MEDIA070_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_X31J_P31J\n2080: #ifdef MEDIA066_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_X30J_P20JA_P20JB_A31E_A31M_A33M_X31J_P31J\n2081:         if (AL1159_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is empty */\n2082: #endif\n2083: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n2084:         if (G2153_i_QueuedCommandsCount == 0) {\n2085: #endif\n2086: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n2087:                 G0435_B_CommandQueueLocked = C0_FALSE;\n2088:                 F0360_COMMAND_ProcessPendingClick();\n2089:                 goto T0380042;\n2090: #endif\n2091: #ifdef MEDIA595_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_X31J_P31J\n2092:                 goto T0380xxx; /* This is possibly a compiler optimization */\n2093: #endif\n2094:         }\n2095:         L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;\n2096:         if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && (G0312_i_LastProjectileDisabledMovementDirection == (M021_NORMALIZE(G0308_i_PartyDirection + L1160_i_Command - C003_COMMAND_MOVE_FORWARD)))))) { /* If movement is disabled */\n2097:                 T0380xxx:\n2098:                 G0435_B_CommandQueueLocked = C0_FALSE;\n2099:                 F0360_COMMAND_ProcessPendingClick();\n2100:                 goto T0380042;\n2101:         }\n2102: #endif\n2103: #ifdef MEDIA551_F20E_F20J_F31E_F31J\n2104:         if (AL1159_i_CommandQueueIndex != G0433_i_CommandQueueFirstIndex) { /* If the command queue is empty */\n2105:                 L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;\n2106:                 if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && (G0312_i_LastProjectileDisabledMovementDirection == (M021_NORMALIZE(G0308_i_PartyDirection + L1160_i_Command - C003_COMMAND_MOVE_FORWARD)))))) { /* If movement is disabled */\n2107:                         G0435_B_CommandQueueLocked = C0_FALSE;\n2108:                         F0360_COMMAND_ProcessPendingClick();\n2109:                         goto T0380042;\n2110:                 }\n2111:         } else {\n2112:                 T0380xxx:\n2113:                 G0435_B_CommandQueueLocked = C0_FALSE;\n2114:                 F0360_COMMAND_ProcessPendingClick();\n2115:                 goto T0380042;\n2116:         }\n2117: #endif\n2118:         L1161_i_CommandX = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].X;\n2119:         L1162_i_CommandY = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Y;\n2120: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n2121:         G2153_i_QueuedCommandsCount--;\n2122: #endif\n2123:         if (++G0433_i_CommandQueueFirstIndex > M529_COMMAND_QUEUE_SIZE) {\n2124:                 G0433_i_CommandQueueFirstIndex = 0;\n2125:         }\n2126:         G0435_B_CommandQueueLocked = C0_FALSE;\n2127:         F0360_COMMAND_ProcessPendingClick();",
+      "file": "COMMAND.C",
+      "lines": "2045-2127",
+      "missing": [],
+      "must_contain": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "L1160_i_Command = G0432_as_CommandQueue",
+        "L1161_i_CommandX",
+        "L1162_i_CommandY",
+        "G0435_B_CommandQueueLocked = C0_FALSE"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "F0380 locks/dequeues command, X, Y from G0432_as_CommandQueue and unlocks before dispatch.",
+      "symbol": "F0380_COMMAND_ProcessQueue_CPSC dequeue"
+    },
+    {
+      "excerpt": "2150:         if ((L1160_i_Command == C002_COMMAND_TURN_RIGHT) || (L1160_i_Command == C001_COMMAND_TURN_LEFT)) {\n2151:                 F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);\n2152:                 goto T0380042;",
+      "file": "COMMAND.C",
+      "lines": "2150-2152",
+      "missing": [],
+      "must_contain": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "F0380 dispatches only C001/C002 turn commands to F0365.",
+      "symbol": "F0380 -> F0365 dispatch"
+    },
+    {
+      "excerpt": "2322:         if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {\n2323:                 F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);\n2324:                 goto T0380042;",
+      "file": "COMMAND.C",
+      "lines": "2322-2324",
+      "missing": [],
+      "must_contain": [
+        "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW)",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "F0380 dispatches C080 to F0377 with dequeued X/Y.",
+      "symbol": "F0380 -> F0377 dispatch"
+    },
+    {
+      "excerpt": "311: void F0377_COMMAND_ProcessType80_ClickInDungeonView(\n312: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n313: P0752_i_X, P0753_i_Y)\n314: #endif\n315: REGISTER int16_t P0752_i_X SEPARATOR\n316: REGISTER int16_t P0753_i_Y FINAL_SEPARATOR\n317: {\n318: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n319:         REGISTER JUNK* L1151_ps_Junk;\n320: #endif\n321:         REGISTER unsigned int16_t L1150_ui_Multiple;\n322: #define AL1150_ui_ViewCell L1150_ui_Multiple\n323: #define AL1150_ui_Square   L1150_ui_Multiple\n324: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n325:         THING L1152_T_Thing;\n326:         unsigned int16_t L1153_ui_IconIndex;\n327:         unsigned int16_t L1154_ui_Weight;\n328:         int16_t L1155_i_MapX;\n329: #endif\n330: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n331:         REGISTER THING L1152_T_Thing;\n332:         REGISTER int16_t L1155_i_MapX;\n333: #endif\n334:         int16_t L1156_i_MapY;\n335: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n336:         REGISTER JUNK* L1151_ps_Junk;\n337: #endif\n338: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n339:         unsigned int16_t L1153_ui_IconIndex;\n340:         unsigned int16_t L1154_ui_Weight;\n341: #endif\n342: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n343:         BOOLEAN L2279_B_ClosedImaginaryFakeWall;\n344: #endif\n345: \n346: \n347: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n348:         P0752_i_X -= G2067_i_ViewportScreenX;\n349:         P0753_i_Y -= G2068_i_ViewportScreenY;\n350: #endif",
+      "file": "CLIKVIEW.C",
+      "lines": "311-350",
+      "missing": [],
+      "must_contain": [
+        "void F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "P0752_i_X -= G2067_i_ViewportScreenX",
+        "P0753_i_Y -= G2068_i_ViewportScreenY"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "point": "C080 handler; PC builds normalize screen coordinates by subtracting viewport origin before hit testing.",
+      "symbol": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+    },
+    {
+      "excerpt": "406:         if (G0415_ui_LeaderEmptyHanded) {\n407:                 for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++) {\n408: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n409:                         if (F0376_COMMAND_IsPointInBox(G0291_aauc_DungeonViewClickableBoxes[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y - 33)) {\n410: #endif\n411: #ifdef MEDIA508_F20E_F20J_X30J_P20JA_P20JB\n412:                         if (F0376_COMMAND_IsPointInBox(G2210_aai_XYZ_DungeonViewClickable[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y)) {\n413: #endif\n414: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n415:                         if (F0798_COMMAND_IsPointInZone(G2210_aai_XYZ_DungeonViewClickable[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y)) {\n416: #endif\n417:                                 if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT) {\n418: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n419:                                         if (G0288_B_FacingFountain && (G0411_i_LeaderIndex != CM1_CHAMPION_NONE)) {\n420:                                                 M516_CHAMPIONS[G0411_i_LeaderIndex].Water = 2048;\n421:                                                 F0064_SOUND_RequestPlay_CPSD(C08_SOUND_SWALLOW, G0306_i_PartyMapX, G0307_i_PartyMapY, C00_MODE_PLAY_IMMEDIATELY);\n422:                                         }\n423: #endif\n424:                                         if (!G0286_B_FacingAlcove) {\n425: #ifdef PC_FIX_CODE_SIZE\n426:         L1150_ui_Multiple++;\n427:         L1150_ui_Multiple++;\n428:         L1150_ui_Multiple++;\n429:         L1150_ui_Multiple++;\n430: #endif\n431:                                                 F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();\n432:                                         }\n433:                                 } else {\n434: #ifdef PC_FIX_CODE_SIZE\n435:         L1150_ui_Multiple++;\n436: #endif\n437:                                         F0373_COMMAND_ProcessType80_ClickInDungeonView_GrabLeaderHandObject(AL1150_ui_ViewCell);\n438:                                 }\n439:                                 return;",
+      "file": "CLIKVIEW.C",
+      "lines": "406-439",
+      "missing": [],
+      "must_contain": [
+        "G0415_ui_LeaderEmptyHanded",
+        "C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "point": "Empty-hand C05 door-button/wall-ornament hit calls F0372, otherwise object cells call grab/drop paths.",
+      "symbol": "F0377 empty-hand front-wall hit"
+    },
+    {
+      "excerpt": "5: STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor(\n6: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n7: void\n8: #endif\n9: )\n10: {\n11: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n12:         unsigned int16_t L1135_ui_MapX;\n13:         unsigned int16_t L1136_ui_MapY;\n14: #endif\n15: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n16:         REGISTER unsigned int16_t L1135_ui_MapX;\n17:         REGISTER unsigned int16_t L1136_ui_MapY;\n18: #endif\n19: \n20: \n21:         L1135_ui_MapX = G0306_i_PartyMapX;\n22:         L1136_ui_MapY = G0307_i_PartyMapY;\n23:         L1135_ui_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[G0308_i_PartyDirection], L1136_ui_MapY += G0234_ai_Graphic559_DirectionToStepNorthCount[G0308_i_PartyDirection];\n24:         if ((L1135_ui_MapX >= 0) && (L1135_ui_MapX < G0273_i_CurrentMapWidth) && (L1136_ui_MapY >= 0) && (L1136_ui_MapY < G0274_i_CurrentMapHeight)) {\n25:                 G0321_B_StopWaitingForPlayerInput = F0275_SENSOR_IsTriggeredByClickOnWall(L1135_ui_MapX, L1136_ui_MapY, M018_OPPOSITE(G0308_i_PartyDirection));\n26:         }\n27: }",
+      "file": "CLIKVIEW.C",
+      "lines": "5-27",
+      "missing": [],
+      "must_contain": [
+        "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+        "F0275_SENSOR_IsTriggeredByClickOnWall",
+        "M018_OPPOSITE(G0308_i_PartyDirection)"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "point": "F0372 computes the square in front of the party and invokes F0275 on the wall face opposite party direction.",
+      "symbol": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
+    },
+    {
+      "excerpt": "1501:                                 case C127_SENSOR_WALL_CHAMPION_PORTRAIT:\n1502:                                         F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);\n1503:                                         goto T0275058_ProceedToNextThing;",
+      "file": "MOVESENS.C",
+      "lines": "1501-1503",
+      "missing": [],
+      "must_contain": [
+        "case C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "point": "A clicked champion portrait wall sensor calls F0280 with sensorData/portrait index.",
+      "symbol": "C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280"
+    },
+    {
+      "excerpt": "63: void F0280_CHAMPION_AddCandidateChampionToParty(\n64: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n65: P0596_ui_ChampionPortraitIndex)\n66: #endif\n67: unsigned int16_t P0596_ui_ChampionPortraitIndex FINAL_SEPARATOR\n68: {\n69:         REGISTER CHAMPION* L0797_ps_Champion;\n70:         REGISTER char* L0798_pc_Character;\n71: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n72:         REGISTER THING L0793_T_Thing;\n73: #endif\n74:         REGISTER unsigned int16_t L0794_ui_Multiple;\n75: #define AL0794_ui_ViewCell       L0794_ui_Multiple\n76: #define AL0794_ui_SlotIndex      L0794_ui_Multiple\n77: #define AL0794_ui_CharacterIndex L0794_ui_Multiple\n78: #define AL0794_ui_StatisticIndex L0794_ui_Multiple\n79: #define AL0794_ui_SkillIndex     L0794_ui_Multiple\n80: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n81:         REGISTER int16_t L0795_i_HiddenSkillIndex;\n82: #define AL0796_i_HiddenSkillIndex L0795_i_HiddenSkillIndex\n83: #endif\n84:         REGISTER unsigned int16_t L0796_ui_Multiple;\n85: #define AL0796_ui_Character       L0796_ui_Multiple\n86: #define AL0796_ui_SkillValue      L0796_ui_Multiple\n87: #define AL0796_ui_ThingType       L0796_ui_Multiple\n88: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G",
+      "file": "REVIVE.C",
+      "lines": "63-88",
+      "missing": [],
+      "must_contain": [
+        "void F0280_CHAMPION_AddCandidateChampionToParty",
+        "P0596_ui_ChampionPortraitIndex"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "point": "Candidate champion entry point reached after C127 portrait sensor processing.",
+      "symbol": "F0280_CHAMPION_AddCandidateChampionToParty"
+    }
+  ],
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "symbol_note": "Hard-rule symbol F0365 is audited, but in this ReDMCSB tree F0365 is turn-party; the actual mouse queue writer for C080 is F0359_COMMAND_ProcessClick_CPSC at COMMAND.C:1452-1662.",
+  "tool_probe": {
+    "bins": {
+      "dosbox": "/usr/bin/dosbox",
+      "dosbox-x": "/usr/bin/dosbox-x",
+      "gdb": null,
+      "python3": "/usr/bin/python3",
+      "xdotool": "/usr/bin/xdotool",
+      "xwd": null
+    },
+    "dosbox_version": {
+      "args": [
+        "/usr/bin/dosbox",
+        "-version"
+      ],
+      "output": [
+        "DOSBox version 0.74-3, copyright 2002-2019 DOSBox Team.",
+        "",
+        "DOSBox is written by the DOSBox Team (See AUTHORS file))",
+        "DOSBox comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so."
+      ],
+      "returncode": 0
+    },
+    "dosbox_x_version": {
+      "args": [
+        "/usr/bin/dosbox-x",
+        "-version"
+      ],
+      "output": [
+        "DOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.",
+        "DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)",
+        "",
+        "DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so."
+      ],
+      "returncode": 1
+    }
+  }
+}
