@@ -25,3 +25,23 @@ Do not put source graphic indices, checksums, resolution names, or dates in logi
 - Planning/catalog layer only.
 - DM1/CSB/DM2 shared semantics only; game-specific exceptions should become overlays later.
 - No V1 parity, M10, renderer, or asset-byte changes are implied by this catalog.
+
+## Validation
+
+Run the repository-local catalog gate after editing shared logical IDs:
+
+```sh
+python3 scripts/validate_v2_logical_catalog.py
+```
+
+For the source-backed Wave 1 UI acceptance slice, require the action/spell panel bindings too:
+
+```sh
+python3 scripts/validate_v2_logical_catalog.py \
+  --require-existing-manifest-binding fs.v2.shared.ui.action-panel.base \
+  --require-existing-manifest-binding fs.v2.shared.ui.spell-panel.base \
+  --require-bound-manifest-source-evidence fs.v2.shared.ui.action-panel.base \
+  --require-bound-manifest-source-evidence fs.v2.shared.ui.spell-panel.base
+```
+
+See `docs/v2/v2-shared-logical-catalog-source-gate.md` for the ReDMCSB source citations behind this gate.

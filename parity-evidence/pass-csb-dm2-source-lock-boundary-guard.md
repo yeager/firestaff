@@ -42,8 +42,29 @@ PASS redmcsb-save-file-routing-boundary: CEDTINC8.C:101-118 - Save routing sourc
 [reference inventory]
 FOUND Game,Chaos_Strikes_Back,Amiga,Software.7z bytes=3327297 sha256=77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58
 FOUND Game,Chaos_Strikes_Back,Atari_ST,Software.7z bytes=1669479 sha256=ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5
+FOUND _extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).msa bytes=404254 sha256=e3d8dc75956ade33658b700e9ae2512dcef7a8dfa538116b8a717f4efaefe0b4
+FOUND _canonical/csb/amiga-Dungeon.DAT bytes=2098 sha256=3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba
+FOUND _canonical/csb/atari-DUNGEON.DAT bytes=2098 sha256=3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba
+FOUND _canonical/csb/amiga-Graphics.DAT bytes=435076 sha256=3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942
+FOUND _canonical/csb/atari-GRAPHICS.DAT bytes=319080 sha256=33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af
 FOUND Game,Dungeon_Master_II,DOS,Source,Disassembly,Software.7z bytes=379848 sha256=beb703174fe2e263d47e80f56d90b61fad30d2ce04a39e896e5205d6d698265a
 FOUND _extracted/dm2-dos-asm/SKULL.ASM bytes=7841116 sha256=a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099
+
+[csb target curation]
+TARGET_REF atari_archive: /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Atari_ST,Software.7z bytes=1669479 sha256=ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5
+TARGET_REF amiga_archive: /home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Chaos_Strikes_Back,Amiga,Software.7z bytes=3327297 sha256=77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58
+TARGET_REF atari_dungeon: /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-DUNGEON.DAT bytes=2098 sha256=3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba
+TARGET_REF amiga_dungeon: /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/amiga-Dungeon.DAT bytes=2098 sha256=3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba
+TARGET_REF atari_graphics: /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT bytes=319080 sha256=33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af
+TARGET_REF amiga_graphics: /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/amiga-Graphics.DAT bytes=435076 sha256=3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942
+TARGET_REF atari_official_english_v2_0_game_msa: /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).msa bytes=404254 sha256=e3d8dc75956ade33658b700e9ae2512dcef7a8dfa538116b8a717f4efaefe0b4
+TARGET_REF atari_official_english_v2_1_game_stx: /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx bytes=941828 sha256=aea724d663554e84393a77c45c010753c5bfb1a3a5a83d1264b5ef2af9aa5c6f
+TARGET_REF amiga_extracted_graphics_anchor: /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT bytes=435076 sha256=3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942
+TARGET_CURATION canonical_atari_st_english_v2_0 GRAPHICS.DAT: bytes=272069 sha256=cff31dbdc071af2c6de8a0b9e1110b189e067706868d42fc8b2267e18422f687
+TARGET_CURATION canonical_atari_st_english_v2_0 DUNGEON.DAT: bytes=2098 sha256=59a72978879f3a3e9de3a6767ee069266d369244b1091314ddc16c03d8d41530
+TARGET_CURATION dungeon: Atari and Amiga canonical dungeon payloads match; dungeon identity is not the blocker.
+TARGET_CURATION graphics: BLOCKER; Atari GRAPHICS.DAT and Amiga Graphics.DAT differ in size/hash, so graphics/render parity must choose exactly one platform asset lineage.
+TARGET_CURATION choice: use Atari ST English v2.x as the CSB graphics/render parity lane; reject Amiga Graphics.DAT for that lane because it is a separate size/hash lineage, not an interchangeable renderer input.
 
 [repo boundary scan]
 MATRIX ## 10. CSB and DM2 readiness (W10)

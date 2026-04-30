@@ -19,7 +19,7 @@
     {
       "file": "m11_game_view.c",
       "start": 18409,
-      "end": 18469,
+      "end": 18474,
       "function": "m11_draw_inv_slot",
       "assertion": "Firestaff slot helper draws original 18x18 slot boxes and occupied 16x16 DM object icons."
     },

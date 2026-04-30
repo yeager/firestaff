@@ -1,0 +1,96 @@
+{
+  "schema": "firestaff.csb_save_header_routing_source_lock.v1",
+  "pass": true,
+  "scope": "CSB save-header identity and DM-vs-CSB save routing source-lineage only.",
+  "redmcsb_source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_checks": [
+    {
+      "id": "save-header-format-identity",
+      "ok": true,
+      "file": "DEFS.H",
+      "function": "DM_SAVE_HEADER / CSB_SAVE_HEADER definitions",
+      "lines": "468-498",
+      "claim": "DM and CSB save headers are distinct source structures with explicit format IDs.",
+      "missing": []
+    },
+    {
+      "id": "dungeon-id-namespace",
+      "ok": true,
+      "file": "DEFS.H",
+      "function": "Dungeon ID constants",
+      "lines": "519-523",
+      "claim": "DM, CSB prison, and CSB game dungeons have separate source constants.",
+      "missing": []
+    },
+    {
+      "id": "save-file-id-routing-namespace",
+      "ok": true,
+      "file": "DEFS.H",
+      "function": "file IDs for load/save members",
+      "lines": "5001-5019",
+      "claim": "DM and CSB save-file IDs are separate in the source namespace.",
+      "missing": []
+    },
+    {
+      "id": "is-dungeon-valid-csb-save-header-read",
+      "ok": true,
+      "file": "CEDTINCU.C",
+      "function": "F7272_IsDungeonValid",
+      "lines": "18-33",
+      "claim": "Dungeon validation reads DungeonID through the CSB header layout when the save format is CSB.",
+      "missing": []
+    },
+    {
+      "id": "is-dungeon-valid-criteria",
+      "ok": true,
+      "file": "CEDTINCU.C",
+      "function": "F7272_IsDungeonValid",
+      "lines": "36-72",
+      "claim": "Criteria 2 accepts CSB game only; criteria 3 accepts CSB prison or DM, not CSB game.",
+      "missing": []
+    },
+    {
+      "id": "new-adventure-source-gate",
+      "ok": true,
+      "file": "CEDTINCH.C",
+      "function": "F7086_IsReadyToMakeNewAdventure",
+      "lines": "38-45",
+      "claim": "New Adventure creation is gated through F7272 criteria 3.",
+      "missing": []
+    },
+    {
+      "id": "su1e-csb-game-only-gate",
+      "ok": true,
+      "file": "CEDTINCH.C",
+      "function": "F1996_",
+      "lines": "49-64",
+      "claim": "The SU1E-specific gate accepts only CSB-format saves whose DungeonID is CSB game.",
+      "missing": []
+    },
+    {
+      "id": "save-routing-by-dungeon-id",
+      "ok": true,
+      "file": "CEDTINC8.C",
+      "function": "save-file selection block",
+      "lines": "101-118",
+      "claim": "Save output routes DM to DMSAVE.DAT and CSB game/prison to CSBGAME.DAT by DungeonID.",
+      "missing": []
+    },
+    {
+      "id": "load-game-save-header-dungeon-recovery",
+      "ok": true,
+      "file": "LOADSAVE.C",
+      "function": "F0435_STARTEND_LoadGame saved-game block",
+      "lines": "2873-2920",
+      "claim": "Saved-game load recovers DungeonID from the save header and documents the old fallback mismatch for actual CSB.",
+      "missing": []
+    }
+  ],
+  "non_claims": [
+    "No Firestaff runtime code was changed or validated by this gate.",
+    "No CSBGAME.DAT sample save is required or claimed present on N2.",
+    "No renderer, gameplay, or binary save compatibility parity is claimed.",
+    "No DANNESBURK, external capture, or non-N2 reference is used."
+  ],
+  "failures": []
+}

@@ -7204,9 +7204,11 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     }
 
     /* Extract floor ornament ordinal from random generation or sensor things.
-     * In DM1, corridor/pit/stairs/teleporter squares can have floor ornaments
-     * assigned via the deterministic random algorithm or sensor-placed overrides.
-     * Ref: ReDMCSB DUNGEON.C F0172_DUNGEON_SetSquareAspect. */
+     * ReDMCSB F0172 assigns random floor ornaments only on the
+     * corridor/fakewall path, but the pit/teleporter path still scans
+     * floor sensors.  Stairs route through T0172046_Stairs without
+     * assigning M558_FLOOR_ORNAMENT_ORDINAL; their 0x08 bit is
+     * orientation, not random-ornament permission. */
     if (cell.valid && m11_viewport_cell_is_wall_free(cell.elementType)) {
         cell.floorOrnamentOrdinal = m11_compute_floor_ornament_ordinal(
             state, state->world.party.mapIndex, mapX, mapY, square);
@@ -10577,8 +10579,10 @@ static int m11_draw_door_ornament(const M11_GameViewState* state,
 }
 
 /* Draw a floor ornament from GRAPHICS.DAT at the given viewport position.
- * In DM1, floor ornaments are drawn on the floor area of open cells
- * (corridor, pit, stairs, teleporter).  Each ornament graphic set has
+ * In DM1, floor ornaments are drawn on the floor area of open
+ * corridor/pit/teleporter cells.  ReDMCSB BUG0_64 deliberately keeps
+ * floor ornaments visible over open pits; stairs are excluded by F0172.
+ * Each ornament graphic set has
  * 6 perspective variants indexed by the visible floor position:
  *   0=D3L, 1=D3C, 2=D3R, 3=D2L, 4=D2C, 5=D2R
  * For D1 (depth 0) cells, DM1 uses variant 4 (D2C) scaled up.
