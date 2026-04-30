@@ -65,12 +65,12 @@ static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState)
     if (m11_legacy_menu_requested()) {
         return 0;
     }
-    /* V1 original mode deliberately uses the sparse, palette-indexed
-     * ReDMCSB-style startup path. The high-resolution true-colour launcher
-     * belongs to the enhanced/modern presentation tracks, not the default
-     * original-faithful DM1 path. */
-    return menuState &&
-           M12_StartupMenu_GetPresentationMode(menuState) != M12_PRESENTATION_V1_ORIGINAL;
+    /* The startup menu is Firestaff's shared product front door for every
+     * presentation mode, including V1 original.  V1 parity begins after the
+     * user launches a game: TITLE/entrance/Hall-of-Champions sequencing must
+     * not force the launcher itself back to the old sparse indexed renderer.
+     * FIRESTAFF_LEGACY_MENU remains the explicit escape hatch. */
+    return menuState != NULL;
 }
 
 static void m11_draw_launcher_legacy(const M12_StartupMenuState* menuState,
@@ -1270,52 +1270,22 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                 }
             } else {
-                int launchHandled = 0;
-                if ((input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_RIGHT) &&
-                    menuState.view == M12_MENU_VIEW_MAIN) {
-                    launchHandled = 1;
-                    if (M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState)) {
-                        /* Keep V1 in-game colors at the original bright base
-                         * palette so launcher palette settings do not leak
-                         * into gameplay rendering. */
-                        (void)M11_Render_SetPaletteLevel(0);
-                        idleAccumulatorMs = 0;
-                        M11_GameView_Draw(&gameView,
-                                          M11_Render_GetFramebuffer(),
-                                          M11_FB_WIDTH,
-                                          M11_FB_HEIGHT);
-                    } else {
-                        const M12_MenuEntry* selected = M12_StartupMenu_GetEntry(&menuState,
-                                                                                 menuState.selectedIndex);
-                        if (!selected || selected->kind != M12_MENU_ENTRY_GAME || !selected->available) {
-                            launchHandled = 0;
-                        } else {
-                            menuState.view = M12_MENU_VIEW_MESSAGE;
-                            menuState.messageLine1 = "DUNGEON LOAD FAILED";
-                            menuState.messageLine2 = "CHECK DUNGEON.DAT";
-                            menuState.messageLine3 = "ESC RETURNS TO MENU";
-                            m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
-                        }
-                    }
+                if (input == M12_MENU_INPUT_CYCLE_CHAMPION ||
+                    input == M12_MENU_INPUT_STRAFE_LEFT ||
+                    input == M12_MENU_INPUT_STRAFE_RIGHT ||
+                    input == M12_MENU_INPUT_PICKUP_ITEM ||
+                    input == M12_MENU_INPUT_DROP_ITEM) {
+                    input = M12_MENU_INPUT_NONE;
                 }
-                if (!launchHandled) {
-                    if (input == M12_MENU_INPUT_CYCLE_CHAMPION ||
-                        input == M12_MENU_INPUT_STRAFE_LEFT ||
-                        input == M12_MENU_INPUT_STRAFE_RIGHT ||
-                        input == M12_MENU_INPUT_PICKUP_ITEM ||
-                        input == M12_MENU_INPUT_DROP_ITEM) {
-                        input = M12_MENU_INPUT_NONE;
-                    }
-                    M12_StartupMenu_HandleInput(&menuState, input);
-                    if (menuState.shouldExit) {
-                        break;
-                    }
-                    if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
-                        continue;
-                    }
-                    M11_ApplyStartupMenuRuntime(&menuState);
-                    m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+                M12_StartupMenu_HandleInput(&menuState, input);
+                if (menuState.shouldExit) {
+                    break;
                 }
+                if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+                    continue;
+                }
+                M11_ApplyStartupMenuRuntime(&menuState);
+                m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             }
         }
         while (gameView.active && idleAccumulatorMs >= (uint32_t)gameTickInterval) {

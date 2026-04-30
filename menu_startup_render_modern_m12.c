@@ -1345,7 +1345,15 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
 /* -------------------------------------------------------------------------- */
 
 static int modern_is_original_sparse_path(const M12_StartupMenuState* state) {
-    return M12_StartupMenu_GetPresentationMode(state) == M12_PRESENTATION_V1_ORIGINAL;
+    (void)state;
+    /* V1 original constrains the game presentation, not Firestaff's
+     * front-door launcher.  The sparse renderer made default V1 startup
+     * look like the old placeholder menu and hid the branded logo/card art
+     * Daniel explicitly added.  Keep the sparse code below as a legacy
+     * fallback implementation, but never select it from the modern renderer;
+     * main_loop_m11.c already provides FIRESTAFF_LEGACY_MENU for the
+     * deliberate old-menu escape hatch. */
+    return 0;
 }
 
 static void draw_sparse_background(M12_ModernCanvas* c) {
