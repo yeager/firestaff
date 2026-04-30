@@ -38,9 +38,950 @@
       "name": "inventory.toggle_leader"
     }
   ],
+  "full_matrix_routes": [
+    {
+      "button": "left",
+      "command": 1,
+      "name": "movement.turn_left",
+      "route_found": true,
+      "zone": 68
+    },
+    {
+      "button": "left",
+      "command": 3,
+      "name": "movement.forward",
+      "route_found": true,
+      "zone": 70
+    },
+    {
+      "button": "left",
+      "command": 2,
+      "name": "movement.turn_right",
+      "route_found": true,
+      "zone": 69
+    },
+    {
+      "button": "left",
+      "command": 6,
+      "name": "movement.left",
+      "route_found": true,
+      "zone": 73
+    },
+    {
+      "button": "left",
+      "command": 5,
+      "name": "movement.backward",
+      "route_found": true,
+      "zone": 72
+    },
+    {
+      "button": "left",
+      "command": 4,
+      "name": "movement.right",
+      "route_found": true,
+      "zone": 71
+    },
+    {
+      "button": "left",
+      "command": 80,
+      "name": "viewport.dungeon",
+      "route_found": true,
+      "zone": 7
+    },
+    {
+      "button": "right",
+      "command": 83,
+      "name": "inventory.toggle_leader",
+      "route_found": true,
+      "zone": 2
+    },
+    {
+      "button": "right",
+      "command": 7,
+      "name": "champion0.toggle_box",
+      "route_found": true,
+      "zone": 151
+    },
+    {
+      "button": "right",
+      "command": 8,
+      "name": "champion1.toggle_box",
+      "route_found": true,
+      "zone": 152
+    },
+    {
+      "button": "right",
+      "command": 9,
+      "name": "champion2.toggle_box",
+      "route_found": true,
+      "zone": 153
+    },
+    {
+      "button": "right",
+      "command": 10,
+      "name": "champion3.toggle_box",
+      "route_found": true,
+      "zone": 154
+    },
+    {
+      "button": "left",
+      "command": 100,
+      "name": "spell.parent",
+      "route_found": true,
+      "zone": 13
+    },
+    {
+      "button": "left",
+      "command": 111,
+      "name": "action.parent",
+      "route_found": true,
+      "zone": 11
+    },
+    {
+      "button": "left",
+      "command": 112,
+      "name": "action.pass",
+      "route_found": true,
+      "zone": 98
+    },
+    {
+      "button": "left",
+      "command": 113,
+      "name": "action.row0",
+      "route_found": true,
+      "zone": 82
+    },
+    {
+      "button": "left",
+      "command": 114,
+      "name": "action.row1",
+      "route_found": true,
+      "zone": 83
+    },
+    {
+      "button": "left",
+      "command": 115,
+      "name": "action.row2",
+      "route_found": true,
+      "zone": 84
+    },
+    {
+      "button": "left",
+      "command": 116,
+      "name": "action.icon0",
+      "route_found": true,
+      "zone": 89
+    },
+    {
+      "button": "left",
+      "command": 117,
+      "name": "action.icon1",
+      "route_found": true,
+      "zone": 90
+    },
+    {
+      "button": "left",
+      "command": 118,
+      "name": "action.icon2",
+      "route_found": true,
+      "zone": 91
+    },
+    {
+      "button": "left",
+      "command": 119,
+      "name": "action.icon3",
+      "route_found": true,
+      "zone": 92
+    },
+    {
+      "button": "left",
+      "command": 109,
+      "name": "spell.caster",
+      "route_found": true,
+      "zone": 221
+    },
+    {
+      "button": "left",
+      "command": 101,
+      "name": "spell.symbol1",
+      "route_found": true,
+      "zone": 245
+    },
+    {
+      "button": "left",
+      "command": 102,
+      "name": "spell.symbol2",
+      "route_found": true,
+      "zone": 246
+    },
+    {
+      "button": "left",
+      "command": 103,
+      "name": "spell.symbol3",
+      "route_found": true,
+      "zone": 247
+    },
+    {
+      "button": "left",
+      "command": 104,
+      "name": "spell.symbol4",
+      "route_found": true,
+      "zone": 248
+    },
+    {
+      "button": "left",
+      "command": 105,
+      "name": "spell.symbol5",
+      "route_found": true,
+      "zone": 249
+    },
+    {
+      "button": "left",
+      "command": 106,
+      "name": "spell.symbol6",
+      "route_found": true,
+      "zone": 250
+    },
+    {
+      "button": "left",
+      "command": 108,
+      "name": "spell.cast",
+      "route_found": true,
+      "zone": 252
+    },
+    {
+      "button": "left",
+      "command": 107,
+      "name": "spell.recant",
+      "route_found": true,
+      "zone": 254
+    },
+    {
+      "button": "left",
+      "command": 16,
+      "name": "champion0.name",
+      "route_found": true,
+      "zone": 159
+    },
+    {
+      "button": "left",
+      "command": 17,
+      "name": "champion1.name",
+      "route_found": true,
+      "zone": 160
+    },
+    {
+      "button": "left",
+      "command": 18,
+      "name": "champion2.name",
+      "route_found": true,
+      "zone": 161
+    },
+    {
+      "button": "left",
+      "command": 19,
+      "name": "champion3.name",
+      "route_found": true,
+      "zone": 162
+    },
+    {
+      "button": "left",
+      "command": 20,
+      "name": "champion0.ready_hand",
+      "route_found": true,
+      "zone": 211
+    },
+    {
+      "button": "left",
+      "command": 21,
+      "name": "champion0.action_hand",
+      "route_found": true,
+      "zone": 212
+    },
+    {
+      "button": "left",
+      "command": 22,
+      "name": "champion1.ready_hand",
+      "route_found": true,
+      "zone": 213
+    },
+    {
+      "button": "left",
+      "command": 23,
+      "name": "champion1.action_hand",
+      "route_found": true,
+      "zone": 214
+    },
+    {
+      "button": "left",
+      "command": 24,
+      "name": "champion2.ready_hand",
+      "route_found": true,
+      "zone": 215
+    },
+    {
+      "button": "left",
+      "command": 25,
+      "name": "champion2.action_hand",
+      "route_found": true,
+      "zone": 216
+    },
+    {
+      "button": "left",
+      "command": 26,
+      "name": "champion3.ready_hand",
+      "route_found": true,
+      "zone": 217
+    },
+    {
+      "button": "left",
+      "command": 27,
+      "name": "champion3.action_hand",
+      "route_found": true,
+      "zone": 218
+    },
+    {
+      "button": "right",
+      "command": 11,
+      "name": "inventory.close_right",
+      "route_found": true,
+      "zone": 2
+    },
+    {
+      "button": "left",
+      "command": 140,
+      "name": "inventory.save",
+      "route_found": true,
+      "zone": 562
+    },
+    {
+      "button": "left",
+      "command": 145,
+      "name": "inventory.rest",
+      "route_found": true,
+      "zone": 564
+    },
+    {
+      "button": "left",
+      "command": 11,
+      "name": "inventory.close_icon",
+      "route_found": true,
+      "zone": 566
+    },
+    {
+      "button": "left",
+      "command": 141,
+      "name": "inventory.music",
+      "route_found": true,
+      "zone": 568
+    },
+    {
+      "button": "left",
+      "command": 28,
+      "name": "inventory.ready_hand",
+      "route_found": true,
+      "zone": 507
+    },
+    {
+      "button": "left",
+      "command": 29,
+      "name": "inventory.action_hand",
+      "route_found": true,
+      "zone": 508
+    },
+    {
+      "button": "left",
+      "command": 70,
+      "name": "inventory.mouth",
+      "route_found": true,
+      "zone": 545
+    },
+    {
+      "button": "left",
+      "command": 71,
+      "name": "inventory.eye",
+      "route_found": true,
+      "zone": 546
+    }
+  ],
+  "full_matrix_zones": [
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 234,
+        "y": 125
+      },
+      "name": "movement.turn_left",
+      "zone": 68
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 21,
+        "w": 27,
+        "x": 263,
+        "y": 125
+      },
+      "name": "movement.forward",
+      "zone": 70
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 291,
+        "y": 125
+      },
+      "name": "movement.turn_right",
+      "zone": 69
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 234,
+        "y": 147
+      },
+      "name": "movement.left",
+      "zone": 73
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 21,
+        "w": 27,
+        "x": 263,
+        "y": 147
+      },
+      "name": "movement.backward",
+      "zone": 72
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 21,
+        "w": 28,
+        "x": 291,
+        "y": 147
+      },
+      "name": "movement.right",
+      "zone": 71
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 136,
+        "w": 224,
+        "x": 0,
+        "y": 33
+      },
+      "name": "viewport.dungeon",
+      "zone": 7
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 200,
+        "w": 320,
+        "x": 0,
+        "y": 0
+      },
+      "name": "inventory.toggle_leader",
+      "zone": 2
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 0,
+        "y": 0
+      },
+      "name": "champion0.toggle_box",
+      "zone": 151
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 69,
+        "y": 0
+      },
+      "name": "champion1.toggle_box",
+      "zone": 152
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 138,
+        "y": 0
+      },
+      "name": "champion2.toggle_box",
+      "zone": 153
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 207,
+        "y": 0
+      },
+      "name": "champion3.toggle_box",
+      "zone": 154
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 33,
+        "w": 87,
+        "x": 233,
+        "y": 42
+      },
+      "name": "spell.parent",
+      "zone": 13
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 45,
+        "w": 87,
+        "x": 233,
+        "y": 77
+      },
+      "name": "action.parent",
+      "zone": 11
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 7,
+        "w": 35,
+        "x": 285,
+        "y": 77
+      },
+      "name": "action.pass",
+      "zone": 98
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 85,
+        "x": 234,
+        "y": 86
+      },
+      "name": "action.row0",
+      "zone": 82
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 85,
+        "x": 234,
+        "y": 98
+      },
+      "name": "action.row1",
+      "zone": 83
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 85,
+        "x": 234,
+        "y": 110
+      },
+      "name": "action.row2",
+      "zone": 84
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 35,
+        "w": 20,
+        "x": 233,
+        "y": 86
+      },
+      "name": "action.icon0",
+      "zone": 89
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 35,
+        "w": 20,
+        "x": 255,
+        "y": 86
+      },
+      "name": "action.icon1",
+      "zone": 90
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 35,
+        "w": 20,
+        "x": 277,
+        "y": 86
+      },
+      "name": "action.icon2",
+      "zone": 91
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 35,
+        "w": 20,
+        "x": 299,
+        "y": 86
+      },
+      "name": "action.icon3",
+      "zone": 92
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 8,
+        "w": 87,
+        "x": 233,
+        "y": 42
+      },
+      "name": "spell.caster",
+      "zone": 221
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 13,
+        "x": 235,
+        "y": 51
+      },
+      "name": "spell.symbol1",
+      "zone": 245
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 13,
+        "x": 249,
+        "y": 51
+      },
+      "name": "spell.symbol2",
+      "zone": 246
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 13,
+        "x": 263,
+        "y": 51
+      },
+      "name": "spell.symbol3",
+      "zone": 247
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 13,
+        "x": 277,
+        "y": 51
+      },
+      "name": "spell.symbol4",
+      "zone": 248
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 13,
+        "x": 291,
+        "y": 51
+      },
+      "name": "spell.symbol5",
+      "zone": 249
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 13,
+        "x": 305,
+        "y": 51
+      },
+      "name": "spell.symbol6",
+      "zone": 250
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 70,
+        "x": 234,
+        "y": 63
+      },
+      "name": "spell.cast",
+      "zone": 252
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 14,
+        "x": 305,
+        "y": 63
+      },
+      "name": "spell.recant",
+      "zone": 254
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 7,
+        "w": 43,
+        "x": 0,
+        "y": 0
+      },
+      "name": "champion0.name",
+      "zone": 159
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 7,
+        "w": 43,
+        "x": 69,
+        "y": 0
+      },
+      "name": "champion1.name",
+      "zone": 160
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 7,
+        "w": 43,
+        "x": 138,
+        "y": 0
+      },
+      "name": "champion2.name",
+      "zone": 161
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 7,
+        "w": 43,
+        "x": 207,
+        "y": 0
+      },
+      "name": "champion3.name",
+      "zone": 162
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 4,
+        "y": 10
+      },
+      "name": "champion0.ready_hand",
+      "zone": 211
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 24,
+        "y": 10
+      },
+      "name": "champion0.action_hand",
+      "zone": 212
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 73,
+        "y": 10
+      },
+      "name": "champion1.ready_hand",
+      "zone": 213
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 93,
+        "y": 10
+      },
+      "name": "champion1.action_hand",
+      "zone": 214
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 142,
+        "y": 10
+      },
+      "name": "champion2.ready_hand",
+      "zone": 215
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 162,
+        "y": 10
+      },
+      "name": "champion2.action_hand",
+      "zone": 216
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 211,
+        "y": 10
+      },
+      "name": "champion3.ready_hand",
+      "zone": 217
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 231,
+        "y": 10
+      },
+      "name": "champion3.action_hand",
+      "zone": 218
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 200,
+        "w": 320,
+        "x": 0,
+        "y": 0
+      },
+      "name": "inventory.close_right",
+      "zone": 2
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 11,
+        "x": 179,
+        "y": 2
+      },
+      "name": "inventory.save",
+      "zone": 562
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 19,
+        "x": 190,
+        "y": 2
+      },
+      "name": "inventory.rest",
+      "zone": 564
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 11,
+        "x": 209,
+        "y": 2
+      },
+      "name": "inventory.close_icon",
+      "zone": 566
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 9,
+        "w": 9,
+        "x": 168,
+        "y": 3
+      },
+      "name": "inventory.music",
+      "zone": 568
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 6,
+        "y": 53
+      },
+      "name": "inventory.ready_hand",
+      "zone": 507
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 62,
+        "y": 53
+      },
+      "name": "inventory.action_hand",
+      "zone": 508
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 56,
+        "y": 13
+      },
+      "name": "inventory.mouth",
+      "zone": 545
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 12,
+        "y": 13
+      },
+      "name": "inventory.eye",
+      "zone": 546
+    }
+  ],
+  "matrix_zone_count": 52,
   "non_claims": [
     "No input behavior is changed by this verifier.",
-    "This does not source-lock V2 inventory art, inventory slot gates, or HUD rendering behavior.",
+    "This does not source-lock V2 inventory art or HUD rendering behavior.",
     "This does not prove original runtime delivery of queued C080 side effects; it only locks route geometry/provenance."
   ],
   "routes": [
@@ -109,8 +1050,10 @@
       "zone": 2
     }
   ],
-  "scope": "narrow movement/viewport UI hit-zone source lock for future touch/click abstraction",
+  "scope": "DM1 V1 source-locked in-game UI hit-zone matrix for future touch/click abstraction",
   "source_citations": [
+    "DEFS.H:197-211 defines MOUSE_INPUT command/box/button records",
+    "COMMAND.C:375-497 defines primary interface, movement, inventory, action, spell, and champion-name/hand mouse command-to-zone/button tables",
     "COMMAND.C:396-405 G0448_as_Graphic561_SecondaryMouseInput_Movement routes left/right movement and viewport/toggle commands to zones/buttons",
     "COMMAND.C:1403-1431 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans mouse-input entries and tests button/zone matches",
     "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Verify the narrow ReDMCSB source-lock for movement/viewport touch zones.
+"""Verify the narrow ReDMCSB source-lock for DM1 V1 touch/click zones.
 
 This is a provenance gate only. It does not drive input and does not claim any
 new runtime behavior; it checks that Firestaff's starter touch/click matrix keeps
-the eight original COMMAND.C movement/viewport routes source-locked to the I34E
-layout-696 zone coordinates.
+the original COMMAND.C in-game mouse routes source-locked to the I34E layout-696
+zone coordinates. The older eight-route movement/viewport gate is retained as a
+focused subset inside the broader matrix check.
 """
 from __future__ import annotations
 
@@ -157,7 +158,37 @@ def verify_zones() -> list[dict[str, Any]]:
     return rows
 
 
-def verify_firestaff_matrix() -> list[dict[str, Any]]:
+MATRIX_RE = re.compile(
+    r"\{\s*(\d+)u\s*,\s*(\d+)u\s*,\s*"
+    r"(TOUCH_CLICK_COORD_[A-Z_]+_PC34_COMPAT)\s*,\s*"
+    r"(TOUCH_CLICK_BUTTON_(?:LEFT|RIGHT)_PC34_COMPAT)\s*,\s*"
+    r"(-?\d+)\s*,\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*\"([^\"]+)\"",
+    re.MULTILINE,
+)
+
+
+def parse_firestaff_matrix() -> list[dict[str, Any]]:
+    text = MATRIX_C.read_text()
+    rows: list[dict[str, Any]] = []
+    for match in MATRIX_RE.finditer(text):
+        command, zone, mode, button, x, y, w, h, name = match.groups()
+        rows.append({
+            "command": int(command),
+            "zone": int(zone),
+            "coord_mode": mode,
+            "button": button,
+            "x": int(x),
+            "y": int(y),
+            "w": int(w),
+            "h": int(h),
+            "name": name,
+        })
+    if len(rows) != 52:
+        raise SystemExit(f"expected 52 Firestaff matrix entries, found {len(rows)}")
+    return rows
+
+
+def verify_firestaff_matrix_subset() -> list[dict[str, Any]]:
     text = MATRIX_C.read_text()
     rows: list[dict[str, Any]] = []
     for item in EXPECTED:
@@ -174,23 +205,84 @@ def verify_firestaff_matrix() -> list[dict[str, Any]]:
     return rows
 
 
+def command_route_pattern(row: dict[str, Any]) -> str:
+    button = RIGHT_BUTTON if "RIGHT" in row["button"] else LEFT_BUTTON
+    if row["zone"] == 568:
+        zone_symbol = r"(?:C568_ZONE_[A-Z0-9_]+|M701_ZONE_TOGGLE_MUSIC_ICON)"
+    else:
+        zone_symbol = rf"C{row['zone']:03d}_ZONE_[A-Z0-9_]+"
+    return (
+        rf"\{{\s*C{row['command']:03d}_COMMAND_[A-Z0-9_]+\s*,\s*"
+        rf"CM[12]_[A-Z_]+\s*,\s*{zone_symbol}\s*,\s*0\s*,\s*0\s*,\s*"
+        rf"{button}\s*\}}"
+    )
+
+
+def verify_full_matrix_routes(lines_command: list[str], matrix_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    text = "\n".join(lines_command)
+    rows: list[dict[str, Any]] = []
+    for row in matrix_rows:
+        pattern = command_route_pattern(row)
+        ok = re.search(pattern, text) is not None
+        if not ok:
+            raise SystemExit(
+                f"COMMAND.C missing route for matrix entry {row['name']} "
+                f"(command {row['command']} zone {row['zone']})"
+            )
+        rows.append({
+            "name": row["name"],
+            "command": row["command"],
+            "zone": row["zone"],
+            "button": "right" if "RIGHT" in row["button"] else "left",
+            "route_found": True,
+        })
+    return rows
+
+
+def verify_full_matrix_zones(matrix_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    data = json.loads(ZONES_JSON.read_text())
+    records = {int(k): v for k, v in data["records"].items()}
+    rows: list[dict[str, Any]] = []
+    for row in matrix_rows:
+        actual = resolve_zone(records, row["zone"])
+        expected = {k: row[k] for k in ("x", "y", "w", "h")}
+        if actual != expected:
+            raise SystemExit(
+                f"matrix entry {row['name']} zone {row['zone']} mismatch: "
+                f"expected {expected}, got {actual}"
+            )
+        rows.append({
+            "name": row["name"],
+            "zone": row["zone"],
+            "coord_mode": row["coord_mode"],
+            "layout_696_rect": actual,
+        })
+    return rows
+
+
 def build_report() -> dict[str, Any]:
     command_lines = read_lines(COMMAND_C)
     coord_lines = read_lines(COORD_C)
+    matrix_rows = parse_firestaff_matrix()
     routes = verify_command_table(command_lines)
     dispatch_citations = verify_dispatch_and_coord(command_lines, coord_lines)
     zones = verify_zones()
-    matrix = verify_firestaff_matrix()
+    matrix = verify_firestaff_matrix_subset()
+    full_routes = verify_full_matrix_routes(command_lines, matrix_rows)
+    full_zones = verify_full_matrix_zones(matrix_rows)
     return {
         "status": "pass",
-        "scope": "narrow movement/viewport UI hit-zone source lock for future touch/click abstraction",
+        "scope": "DM1 V1 source-locked in-game UI hit-zone matrix for future touch/click abstraction",
+        "matrix_zone_count": len(matrix_rows),
         "non_claims": [
             "No input behavior is changed by this verifier.",
-            "This does not source-lock V2 inventory art, inventory slot gates, or HUD rendering behavior.",
+            "This does not source-lock V2 inventory art or HUD rendering behavior.",
             "This does not prove original runtime delivery of queued C080 side effects; it only locks route geometry/provenance.",
         ],
         "source_root": str(REDMCSB_SOURCE),
         "source_citations": [
+            "DEFS.H:197-211 defines MOUSE_INPUT command/box/button records",
+            "COMMAND.C:375-497 defines primary interface, movement, inventory, action, spell, and champion-name/hand mouse command-to-zone/button tables",
             "COMMAND.C:396-405 G0448_as_Graphic561_SecondaryMouseInput_Movement routes left/right movement and viewport/toggle commands to zones/buttons",
             "COMMAND.C:1403-1431 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans mouse-input entries and tests button/zone matches",
             "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",
@@ -200,6 +292,8 @@ def build_report() -> dict[str, Any]:
         "routes": routes,
         "zones": zones,
         "firestaff_matrix": matrix,
+        "full_matrix_routes": full_routes,
+        "full_matrix_zones": full_zones,
         "verified_files": [
             str(COMMAND_C),
             str(COORD_C),
