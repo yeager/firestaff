@@ -229,7 +229,16 @@ def diff_stats(a: Path, b: Path) -> dict[str, Any]:
     return {"bbox": list(bbox) if bbox else None, "changed_pixels": nz, "changed_ratio": round(nz / (320 * 200), 6)}
 
 
-def classify_route(rows: list[dict[str, Any]]) -> tuple[str, str, dict[str, Any]]:
+def input_delivery_probe(log: list[str]) -> dict[str, Any]:
+    """Record exact xdotool delivery evidence for the final blocker report."""
+    return {
+        "clicks": [line for line in log if line.startswith("click ")],
+        "keys": [line for line in log if line.startswith("key ")],
+        "windows": [line for line in log if line.startswith("window-found ")],
+    }
+
+
+def classify_route(rows: list[dict[str, Any]], log: list[str]) -> tuple[str, str, dict[str, Any]]:
     shots = [r for r in rows if "sha12" in r]
     hashes = [r["sha12"] for r in shots]
     classes = [r["class"] for r in shots]
@@ -255,7 +264,8 @@ def classify_route(rows: list[dict[str, Any]]) -> tuple[str, str, dict[str, Any]
         "choice_delta": choice_delta,
         "dynamic_dungeon_inputs": dynamic_dungeon,
         "route_precondition": ROUTE_PRECONDITION,
-        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. Since pass174 exhausted 12 source-centered mouse delivery variants with zero delta, the next useful candidate is an original-runtime/input-queue diagnostic proving whether C080/F0377 is queued at all, not more portrait coordinate guessing.",
+        "input_delivery_probe": input_delivery_probe(log),
+        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. Current xdotool delivery logs prove clicks/keys were sent to the active DOSBox window, but all post-gate captures remain hash 48ed3743ab6a with zero-pixel deltas; the next useful candidate is an original-runtime/input-queue diagnostic proving whether C080/F0377 is queued at all, not more portrait coordinate guessing.",
     }
     if not dungeon:
         return "blocked/no-dungeon", "route never produced a dungeon gameplay frame", evidence
@@ -295,7 +305,7 @@ def run_scenario(run_base: Path, scenario: dict[str, Any]) -> dict[str, Any]:
         try: proc.terminate(); proc.wait(timeout=2)
         except Exception: proc.kill()
         (out / "pass162_driver.log").write_text("\n".join(log) + "\n")
-    classification, reason, evidence = classify_route(rows)
+    classification, reason, evidence = classify_route(rows, log)
     summary = {"name": scenario["name"], "program": scenario["program"], "purpose": scenario["purpose"], "classification": classification, "reason": reason, "source_locks": SOURCE_LOCKS, "route_precondition": ROUTE_PRECONDITION, "route_evidence": evidence, "rows": rows, "evidence_dir": str(out)}
     (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     return summary
