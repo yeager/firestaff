@@ -1,0 +1,39 @@
+{
+  "gate": "v1_inventory_panel_open_redmcsb",
+  "scope": "DM1/V1 inventory panel open/draw order and source slot-box namespace; not V2 art acceptance",
+  "sourceRanges": [
+    {
+      "file": "PANEL.C",
+      "start": 1639,
+      "end": 1692,
+      "function": "F0347_INVENTORY_DrawPanel",
+      "assertion": "Action-hand object type selects chest/scroll/food-water panel before drawing the corresponding panel."
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "start": 536,
+      "end": 673,
+      "function": "F0291_CHAMPION_DrawSlot",
+      "assertion": "Inventory champion slots use C08_SLOT_BOX_INVENTORY_FIRST_SLOT + slot, draw into the viewport, and call F0038_OBJECT_DrawIconInSlotBox."
+    },
+    {
+      "file": "m11_game_view.c",
+      "start": 18409,
+      "end": 18469,
+      "function": "m11_draw_inv_slot",
+      "assertion": "Firestaff slot helper draws original 18x18 slot boxes and occupied 16x16 DM object icons."
+    },
+    {
+      "file": "m11_game_view.c",
+      "start": 18510,
+      "end": 18645,
+      "function": "m11_draw_inventory_panel",
+      "assertion": "Firestaff normal V1 inventory branch draws source slot boxes 8..37 and returns before debug/freehand layout."
+    }
+  ],
+  "nonClaims": [
+    "Does not validate V2 inventory art quality or V2 asset manifests.",
+    "Does not prove chest contents mutation semantics or runtime click behavior.",
+    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2 only."
+  ]
+}
