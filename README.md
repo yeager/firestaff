@@ -12,48 +12,58 @@
 </p>
 
 <p align="center">
-  Firestaff is a long-haul reverse-engineering and parity project. If you want to help fund the verification runs, reference capture work, packaging, and token burn behind it, you can support it at <a href="https://github.com/sponsors/yeager">GitHub Sponsors</a>.
+  <strong>A modern, portable, source-faithful engine for Dungeon Master, Chaos Strikes Back, and Dungeon Master II.</strong>
 </p>
 
-An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Back** (1989), and later **Dungeon Master II**, with a clear three-track product plan:
+Firestaff is an open-source engine project for the classic FTL dungeon crawlers. It preserves the feel and mechanics of the originals while making the engine portable, inspectable, testable, and ready for future enhanced presentations.
 
-- **V1, Original**: original-faithful presentation and behaviour, with a shared startup menu above the games
-- **V2, Enhanced 2D**: higher-resolution 2D presentation, wider aspect ratios, richer assets, same game feel
-- **V3, Modern / 3D**: a later full reinterpretation
+The project has three product tracks:
 
-## Status
+- **V1 — Original**: faithful presentation and behaviour for the original games, with a clean shared launcher.
+- **V2 — Enhanced 2D**: higher-resolution 2D UI and art, wider aspect ratios, and richer presentation on top of the original rules.
+- **V3 — Modern / 3D**: a later reinterpretation track once the original engine baseline is trustworthy.
 
-**Firestaff 0.2.5 is an early macOS and Windows preview release.**
+Firestaff does **not** ship original game assets. You must own legal copies of the original games.
 
-It already has a real launcher, a real in-game DM1 slice, a modern high-resolution startup menu, bounded original-version detection, and a growing verified engine core. Recent work has also tightened V1 parity honestly: movement / door / sensor ownership is being pushed into source-backed compat/runtime paths, original-reference tooling is now in-tree, and `SONG.DAT` decoding groundwork has landed.
+## Why Firestaff exists
 
-**Working today:**
-- launcher with DM1 / CSB / DM2 entries
-- modern high-resolution true-color startup menu (1280x720 HD, 24-bit RGB) as the shared front door
-- persistent startup settings
-- selected-version status and per-game checksum indicators in the startup menu
-- MD5-based original-data detection for bounded DM1 / CSB / DM2 version sets
-- self-contained macOS app packaging with bundled SDL3 and Windows preview zip packaging
-- explicit launcher / game / settings flow
-- real dungeon loading from `DUNGEON.DAT`
-- real movement / facing / ticking backed by world state
-- melee attack, item, spell, stair, pit, teleporter, XP, save/load, and survival slices wired through the game core
-- source-backed ownership migration landed for post-move environment, movement legality, door actuation, sensor runtime wiring, animating door states, and creature walkability
-- increasingly asset-backed viewport rendering using real `GRAPHICS.DAT` data
-- original-reference capture / overlay tooling now exists for stricter V1 parity measurement
-- `SONG.DAT` format + loader/decoder groundwork is landed and probe-verified
-- deterministic verification suite still green
+Dungeon Master deserves more than a quick compatibility wrapper. Firestaff aims to make the original engine live again as a maintainable, portable codebase:
 
-**Not there yet:**
-- full V1 original-presentation parity
-- complete CSB / DM2 runtime support
-- runtime audio still uses placeholder playback paths even though `SONG.DAT` decoding groundwork exists
-- full endgame / dialog / launcher-product polish
-- final cross-platform packaging
+- real game data, not approximations
+- deterministic systems that can be verified pass by pass
+- original quirks preserved when they are part of the game
+- clean boundaries between launcher, engine, assets, rendering, and future enhanced modes
+- honest status reporting: supported means verified, not guessed
 
-## Creature Art
+The goal is museum-grade preservation with a practical path toward modern builds.
 
-Firestaff currently ships five finished launcher creature cards, with five more creatures tracked as the next art set.
+## Current status
+
+Firestaff is currently an early preview. The DM1 path is the priority and already includes a real in-game slice backed by original data. CSB and DM2 are being source-locked and integrated carefully rather than claimed early.
+
+Working today:
+
+- cross-platform launcher for DM1, CSB, and DM2 entries
+- modern startup menu with persistent settings
+- original-data detection with checksum-backed status indicators
+- real DM1 dungeon loading from `DUNGEON.DAT`
+- live movement, facing, ticking, melee, item handling, spells, stairs, pits, teleporters, survival systems, save/load, and champion state slices
+- increasingly source-faithful DM1 viewport, HUD, inventory, and interaction routing
+- asset-backed rendering from original `GRAPHICS.DAT` data
+- deterministic verification gates for engine behaviour and parity claims
+- opt-in V2 asset/catalog pipeline for enhanced 2D presentation
+
+Still in progress:
+
+- full DM1 V1 visual and timing parity
+- complete CSB runtime integration
+- complete DM2 runtime integration
+- final audio path and presentation polish
+- final release packaging across all supported platforms
+
+## Preview art
+
+Firestaff includes finished launcher creature cards for the current preview set.
 
 <p align="center">
   <img src="assets/cards/creatures/red-dragon.png" alt="Red Dragon" width="180">
@@ -63,140 +73,89 @@ Firestaff currently ships five finished launcher creature cards, with five more 
   <img src="assets/cards/creatures/mummy.png" alt="Mummy" width="180">
 </p>
 
-Finished card art currently shown in the launcher sidebar:
+Current finished launcher cards:
+
 - Red Dragon
 - Skeleton
 - Stone Golem
 - Giant Scorpion
 - Mummy
 
-Next creature set tracked for card-art follow-up:
-- Swamp Slime
-- Giggler
-- Screamer
-- Demon
-- Vexirk
-
-The finished creature cards in `assets/cards/creatures/` are used in the startup menu sidebar today, selected fresh each launch. The remaining five creatures are present in the repository as reference inputs and should be promoted to finished launcher cards before they are shown in the README gallery.
-
-## What Firestaff is
-
-Firestaff is a deterministic, modular re-implementation of the FTL Games engine, designed to run on **macOS, Linux, and Windows**.
-
-The project is built around portable C, explicit data structures, and aggressive verification. The goal is not just to "run the game somehow", but to preserve its behaviour in a form that is inspectable, testable, and maintainable.
-
-## Current feature snapshot
-
-### Launcher
-- DM1 / CSB / DM2 game list
-- startup settings screen
-- built-in and external-ready card-art path
-- persistent configuration
-- clean base for explicit **V1 / V2 / V3** mode selection
-
-### Engine-backed game view
-- boots from real `DUNGEON.DAT`
-- enters a real game-view state from the launcher
-- movement / turning / ticking mutate real world state
-- melee attack, inspect, and champion cycling work in the live view
-- item pickup/drop, spells, stairs, pits, teleporters, XP, quicksave/load, and survival systems are wired through the core
-- viewport rendering now includes real walls, floor sets, ornaments, item sprites, creature sprites, dynamic lighting, torch decay, and combat feedback slices
-
-### Validation
-- deterministic verification remains green
-- DM1 asset detection is MD5-based, not filename-based
-- M10 remains protected while M11/M12 advance in verified slices
-- CSB / DM2 support is planned honestly, without pretending the runtime is already complete
+More creature cards are planned as the enhanced presentation grows.
 
 ## Running Firestaff
 
-### Quick start for preview builds
+Put your legal original game files in the standard originals directory, then launch Firestaff and pick the game/version in the startup menu.
 
-1. Put your legal original game files under `~/.firestaff/originals/`
-2. Launch Firestaff
-3. Pick a game and version in the startup menu
-4. Look for a green checkmark before launch
+Default originals locations:
 
-Launcher / game view:
+- macOS / Linux: `~/.firestaff/originals/`
+- Windows: `<installation-directory>\originals`
+
+A green status indicator means the selected version was found and matched. Missing or mismatched originals stay visible, but launch is blocked until the required files are present.
+
+Typical local run:
 
 ```sh
 ./firestaff --data-dir "$HOME/.firestaff/data"
 ```
 
-Original-data search order:
-1. an explicit path, if provided
-2. `~/.firestaff/originals/` on macOS/Linux, or `<installation-directory>\originals` on Windows
-3. legacy Firestaff data-dir fallback such as `~/.firestaff/data/`
+Basic in-game controls:
 
-Version status in the startup menu:
-- green checkmark = matching original file(s) found for the selected version
-- red cross = selected version is missing or does not match the expected checksum
-- unmatched versions stay visible, but launch is blocked honestly until matching originals are found
-
-In the game view: `Enter` inspects, `Space` acts or waits, `Tab` cycles the active champion, `Esc` returns to the launcher. You can also click the viewport to inspect, click the control strip to move/act, and click a party card to arm a champion directly.
-
-Headless launcher smoke test:
-
-```sh
-./run_firestaff_m11_launcher_smoke.sh
-```
-
-Verification suite:
-
-```sh
-./run_firestaff_m10_verify.sh "$HOME/.firestaff/data/GRAPHICS.DAT"
-```
+- `Enter` — inspect / confirm
+- `Space` — act or wait
+- `Tab` — cycle active champion
+- `Esc` — return to launcher
+- mouse / touch-style clicks — interact with viewport, party cards, and UI zones where supported
 
 ## Roadmap
 
-### V1, Original
-This is the priority track.
+### V1 — Original
 
-Goal: make Firestaff feel like the original games first, with only a shared startup menu above them.
+The priority track. V1 is where Firestaff earns trust.
 
-Current focus:
-- original-facing presentation parity
-- original timing / animation / light behaviour
-- finishing the current V1 parity chain pass by pass, with source-backed blocker tracking instead of vague "close enough" claims
-- dialog and endgame runtime coverage
-- verified CSB and then DM2 runtime integration
-- bug/profile handling that preserves original behaviour where needed
+Focus areas:
 
-### V2, Enhanced 2D
-Built on top of a finished V1 baseline.
+- original-facing DM1 presentation and behaviour
+- source-faithful viewport, HUD, inventory, spell, dialog, and endgame coverage
+- precise handling of original bugs and platform/version differences
+- CSB runtime support after DM1 parity gates are stable
+- DM2 integration after its file/runtime boundaries are fully understood
 
-Planned direction:
-- higher resolution
-- wider aspect ratios including 16:9 and 4K presentation
-- richer 2D assets and UI polish
-- improved readability without losing the underlying game feel
+### V2 — Enhanced 2D
 
-Current bounded V2 UI slice status:
-- real Wave 1 assets exist for the viewport frame, action area, spell area, status-box family, party HUD cell family, and a first shared four-slot party HUD strip expansion
-- the current engine-side V2 slice remains opt-in behind `FIRESTAFF_V2_VERTICAL_SLICE=1`
-- a first bounded initial in-game 4K capture/composition path now exists; see `assets-v2/ui/wave1/vertical-slice/FIRST_4K_RENDER.md`
-- portraits and a full final HUD typography system are still pending future V2 passes
-
-### V3, Modern / 3D
-A later reinterpretation track.
+A richer 2D presentation built on the verified V1 foundation.
 
 Planned direction:
-- modern presentation
-- 3D rendering
-- freer redesign, built only after V1 has a trustworthy parity baseline
+
+- high-resolution UI and art
+- wide and 4K layouts
+- cleaner readability without changing the game rules underneath
+- shared logical asset catalog and manifest validation
+- modernized presentation while keeping the Dungeon Master feel
+
+### V3 — Modern / 3D
+
+A later, freer reinterpretation once preservation is solid.
+
+Planned direction:
+
+- modern rendering
+- 3D presentation experiments
+- redesigns that are allowed to differ from the original because V1 remains the faithful baseline
 
 ## Design principles
 
-- **V1 parity comes before V2/V3 polish**
-- **Use real game data whenever possible**
-- **Do not fake support we have not verified**
-- **Keep deterministic behaviour intact**
-- **Build additive slices that stay green**
-- **Prefer honest progress over flashy shortcuts**
+- **Preserve first, enhance second**
+- **Use real original data whenever possible**
+- **Verify behaviour before claiming support**
+- **Keep deterministic systems deterministic**
+- **Treat original quirks as evidence, not inconvenience**
+- **Build in small green slices**
 
 ## Credits
 
-Firestaff's development has been informed by **Christophe Fontanel's** reverse-engineering work on [ReDMCSB](http://dmweb.free.fr/community/redmcsb/). His documentation of the original engine's bugs, quirks, and mechanics has been invaluable as a reference, though no ReDMCSB source code is included in Firestaff.
+Firestaff's development has been informed by **Christophe Fontanel's** reverse-engineering work on [ReDMCSB](http://dmweb.free.fr/community/redmcsb/). His documentation of the original engine's bugs, quirks, and mechanics has been invaluable as a reference. No ReDMCSB source code is included in Firestaff.
 
 The original Dungeon Master and Chaos Strikes Back games were designed by **Doug Bell**, **Dennis Walker**, **Mike Newton**, **Andy Jaros**, and **Wayne Holder** at FTL Games.
 
@@ -204,22 +163,20 @@ The original Dungeon Master and Chaos Strikes Back games were designed by **Doug
 
 Firestaff is released under the **MIT Licence**. See [LICENSE](LICENSE).
 
-This licence covers **only the engine code**. Dungeon Master and Chaos Strikes Back are © FTL Games / Software Heaven, Inc. You must own a legal copy of the original games to use them with Firestaff. No original assets are distributed with this project.
+This licence covers only the Firestaff engine code. Dungeon Master and Chaos Strikes Back are © FTL Games / Software Heaven, Inc. No original assets are distributed with this project.
 
-## Sponsorship
+## Support development
 
-If you want to help fund the absurd amount of reverse-engineering, verification, packaging, captures, and token burn behind Firestaff, you can sponsor the project on GitHub Sponsors.
+If you want to help fund the preservation work, parity passes, packaging, and release effort behind Firestaff, you can sponsor the project here:
 
 - GitHub Sponsors: **https://github.com/sponsors/yeager**
 
-It helps pay for the unglamorous but essential work: long parity passes, capture tooling, verification runs, and keeping the project moving without pretending the hard parts are already solved.
-
 ## Contributing
 
-Issues and discussion are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for repository policy and current contribution guidance.
+Issues and discussion are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for repository policy and contribution guidance.
 
 ## Links
 
 - Dungeon Master Encyclopaedia: [dmweb.free.fr](http://dmweb.free.fr/)
 - ReDMCSB reference project: [dmweb.free.fr/community/redmcsb/](http://dmweb.free.fr/community/redmcsb/)
-- Project tagline: *An open Dungeon Master engine, deterministic, modular, museum-grade*
+- Project tagline: *An open Dungeon Master engine — deterministic, modular, museum-grade*
