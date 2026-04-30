@@ -313,7 +313,7 @@ static const char* g_presentationModes[] = {
     "V2 ENHANCED 2D",
     "V3 MODERN/3D"
 };
-static const char* g_windowModes[] = {"WINDOWED", "FULLSCREEN"};
+static const char* g_windowModes[] = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
 
 static const M12_TextStyle g_textSmall = {1, 1, M12_COLOR_WHITE, 0, 0, M12_COLOR_BLACK};
 static const M12_TextStyle g_textSmallMuted = {1, 1, M12_COLOR_LIGHT_GRAY, 0, 0, M12_COLOR_BLACK};
@@ -1380,10 +1380,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             state->shouldExit = 1;
             break;
         case M12_MENU_INPUT_LEFT:
-            /* ReDMCSB entrance/menu input routes do not use a naked left
-             * arrow as a quit command.  Treat it as a no-op on the top-level
-             * launcher so an accidental left key cannot tear down the
-             * startup flow or drop into an invalid runtime state. */
+            /* ReDMCSB entrance keyboard routing maps Enter/Quit only (COMMAND.C:551-576);
+             * left-arrow is not an exit command. Keep top-level LEFT a no-op so the
+             * launcher cannot disappear/crash from an unsupported arrow key. */
             break;
         case M12_MENU_INPUT_NONE:
         default:
