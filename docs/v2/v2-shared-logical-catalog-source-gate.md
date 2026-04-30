@@ -4,7 +4,7 @@ This gate keeps the V2 shared logical-ID catalog tied to source-backed manifest 
 
 ## ReDMCSB source audit used for this gate
 
-The immediate source dependency is the Wave 1 UI logical binding for the action/spell panels:
+The immediate source dependency is the Wave 1 UI logical binding for the action/spell panels and the manifest source evidence behind those bindings:
 
 - `DEFS.H` `graphic constants`, lines 2163-2174: defines the shared graphic index namespace and `C010_GRAPHIC_MENU_ACTION_AREA` as graphic 10.
 - `DATA.C` `G0000/G0001/G0002 Graphic562 boxes`, lines 119-121: defines spell, action, and movement panel screen boxes at x=224..319 with y=42..74, 77..121, and 124..168.
@@ -14,6 +14,8 @@ The immediate source dependency is the Wave 1 UI logical binding for the action/
 - `MENUDRAW.C` `F0396_MENUS_LoadSpellAreaLinesBitmap`, lines 30-40: loads and expands `C011_GRAPHIC_MENU_SPELL_AREA_LINES` into spell-area line buffers.
 - `MENUDRAW.C` `F0397_MENUS_DrawAvailableSymbols` / `F0398_MENUS_DrawChampionSymbols`, lines 64-80 and 100-121: draws available rune symbols and champion selected symbols into the spell-area coordinates/zones.
 
+The V2 manifest follow-up now records `sourceReference.sourceEvidence` for `fs.v2.ui.spell-area.base` and `fs.v2.ui.spell-area.rune-bed`, so the logical catalog can require that a shared ID is not only bound to an existing manifest asset, but bound to one with explicit ReDMCSB file/function/line evidence.
+
 ## Acceptance gate
 
 Run:
@@ -21,9 +23,11 @@ Run:
 ```sh
 python3 scripts/validate_v2_logical_catalog.py \
   --require-existing-manifest-binding fs.v2.shared.ui.action-panel.base \
-  --require-existing-manifest-binding fs.v2.shared.ui.spell-panel.base
+  --require-existing-manifest-binding fs.v2.shared.ui.spell-panel.base \
+  --require-bound-manifest-source-evidence fs.v2.shared.ui.action-panel.base \
+  --require-bound-manifest-source-evidence fs.v2.shared.ui.spell-panel.base
 ```
 
-The gate validates catalog shape, unique category/logical IDs, shared namespace/category alignment, status/binding enums, and verifies all `binding.existingManifestId` values against the V2 manifest asset IDs. The two required UI logical IDs above must remain bound to concrete manifest entries.
+The gate validates catalog shape, unique category/logical IDs, shared namespace/category alignment, status/binding enums, and verifies all `binding.existingManifestId` values against the V2 manifest asset IDs. The two required UI logical IDs above must remain bound to concrete manifest entries with `sourceReference.sourceEvidence`.
 
-Current result on N2: `validated V2 logical catalog: 8 categories / 45 logical IDs / 4 manifest bindings`.
+Current result on N2: `validated V2 logical catalog: 8 categories / 45 logical IDs / 4 manifest bindings / 3 source-evidence bindings`.

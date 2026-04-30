@@ -191,14 +191,52 @@
       "role": "spell interaction panel base container",
       "productionClass": "preserve-scale-repaint",
       "sourceReference": {
-        "origin": "GRAPHICS.DAT graphic 0009",
+        "origin": "ReDMCSB DEFS.H C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND / DATA.C spell-area box / CASTER.C F0394_MENUS_SetMagicCasterAndDrawSpellArea",
         "graphicsDatIndices": [
           9
         ],
         "originalSize": {
           "width": 87,
           "height": 25
-        }
+        },
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "version 1.x/2.x spell-area graphics",
+            "lines": {
+              "start": 2214,
+              "end": 2218
+            },
+            "assertion": "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND is GRAPHICS.DAT graphic 9 for the spell-area background, and C011_GRAPHIC_MENU_SPELL_AREA_LINES supplies the line art over that background."
+          },
+          {
+            "file": "DATA.C",
+            "function": "G0000_ai_Graphic562_Box_SpellArea",
+            "lines": {
+              "start": 119,
+              "end": 119
+            },
+            "assertion": "The DM spell-area screen box is x=224..319, y=42..74, defining the spell panel destination region."
+          },
+          {
+            "file": "MENU.C",
+            "function": "G0504/G0515/G0516 spell-area controls and line buffers",
+            "lines": {
+              "start": 500,
+              "end": 521
+            },
+            "assertion": "The spell-area controls box and 96x12 line buffers define the runtime spell/rune panel geometry used by V1/V2-era media."
+          },
+          {
+            "file": "CASTER.C",
+            "function": "F0394_MENUS_SetMagicCasterAndDrawSpellArea",
+            "lines": {
+              "start": 21,
+              "end": 36
+            },
+            "assertion": "When entering spell casting, the runtime blits C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND into G0000_ai_Graphic562_Box_SpellArea and then builds the available-symbol line."
+          }
+        ]
       },
       "sizes": {
         "master4k": {
@@ -226,14 +264,53 @@
       "role": "separate rune/text bed inside the spell panel shell",
       "productionClass": "system-rebuild",
       "sourceReference": {
-        "origin": "Derived from GRAPHICS.DAT graphic 0009 interior geometry",
+        "origin": "ReDMCSB C009 spell-area background interior plus C011_GRAPHIC_MENU_SPELL_AREA_LINES / MENU.C+MENUDRAW.C spell symbol line builders",
         "graphicsDatIndices": [
-          9
+          9,
+          11
         ],
         "originalSize": {
           "width": 87,
           "height": 25
-        }
+        },
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "version 1.x/2.x spell-area line graphic",
+            "lines": {
+              "start": 2216,
+              "end": 2217
+            },
+            "assertion": "C011_GRAPHIC_MENU_SPELL_AREA_LINES is the source for spell-area lines; its first line is never drawn and lines two/three provide symbols over graphic 9."
+          },
+          {
+            "file": "MENUDRAW.C",
+            "function": "F0396_MENUS_LoadSpellAreaLinesBitmap",
+            "lines": {
+              "start": 30,
+              "end": 39
+            },
+            "assertion": "The runtime loads and expands C011_GRAPHIC_MENU_SPELL_AREA_LINES into the spell-area line buffers."
+          },
+          {
+            "file": "MENU.C",
+            "function": "F0392_MENUS_BuildSpellAreaLine",
+            "lines": {
+              "start": 856,
+              "end": 897
+            },
+            "assertion": "The runtime copies line-buffer rows and prints available/champion spell symbols into the spell-area line surfaces."
+          },
+          {
+            "file": "MENUDRAW.C",
+            "function": "F0397_MENUS_DrawAvailableSymbols / F0398_MENUS_DrawChampionSymbols",
+            "lines": {
+              "start": 64,
+              "end": 121
+            },
+            "assertion": "Available and selected spell symbols are drawn at fixed spell-area coordinates, backing the rune-bed layout role."
+          }
+        ]
       },
       "sizes": {
         "master4k": {

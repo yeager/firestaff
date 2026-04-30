@@ -39,7 +39,9 @@ For the source-backed Wave 1 UI acceptance slice, require the action/spell panel
 ```sh
 python3 scripts/validate_v2_logical_catalog.py \
   --require-existing-manifest-binding fs.v2.shared.ui.action-panel.base \
-  --require-existing-manifest-binding fs.v2.shared.ui.spell-panel.base
+  --require-existing-manifest-binding fs.v2.shared.ui.spell-panel.base \
+  --require-bound-manifest-source-evidence fs.v2.shared.ui.action-panel.base \
+  --require-bound-manifest-source-evidence fs.v2.shared.ui.spell-panel.base
 ```
 
 See `docs/v2/v2-shared-logical-catalog-source-gate.md` for the ReDMCSB source citations behind this gate.

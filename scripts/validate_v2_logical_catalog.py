@@ -57,8 +57,8 @@ def require_string_list(value: Any, label: str, *, allowed: set[str] | None = No
     return out
 
 
-def load_manifest_asset_ids(manifests: list[Path]) -> set[str]:
-    asset_ids: set[str] = set()
+def load_manifest_assets(manifests: list[Path]) -> dict[str, dict[str, Any]]:
+    assets_by_id: dict[str, dict[str, Any]] = {}
     for manifest in manifests:
         data = json.loads(manifest.read_text(encoding="utf-8"))
         require(isinstance(data, dict), f"{manifest}: manifest must be an object")
@@ -70,12 +70,18 @@ def load_manifest_asset_ids(manifests: list[Path]) -> set[str]:
             require_string(asset_id, f"{manifest}: assets[{index}].id")
             # Existing V2 production manifests may intentionally re-list a shared
             # physical asset across family/rollup packs. The catalog gate only
-            # needs membership for binding checks, so duplicates collapse here.
-            asset_ids.add(asset_id)
-    return asset_ids
+            # needs membership and source-evidence checks, so duplicate IDs keep
+            # the first asset object observed by deterministic manifest order.
+            assets_by_id.setdefault(asset_id, asset)
+    return assets_by_id
 
 
-def validate_binding(binding: Any, label: str, manifest_asset_ids: set[str]) -> str | None:
+def manifest_asset_has_source_evidence(asset: dict[str, Any]) -> bool:
+    source = asset.get("sourceReference")
+    return isinstance(source, dict) and isinstance(source.get("sourceEvidence"), list) and bool(source["sourceEvidence"])
+
+
+def validate_binding(binding: Any, label: str, manifest_assets: dict[str, dict[str, Any]]) -> str | None:
     require(isinstance(binding, dict), f"{label}.binding must be an object")
     require(REQUIRED_BINDING <= set(binding), f"{label}.binding missing {sorted(REQUIRED_BINDING - set(binding))}")
     allowed_keys = {"kind", "expectedBinding", "existingManifestId"}
@@ -86,11 +92,11 @@ def validate_binding(binding: Any, label: str, manifest_asset_ids: set[str]) -> 
     existing = binding.get("existingManifestId")
     if existing is not None:
         require_string(existing, f"{label}.binding.existingManifestId")
-        require(existing in manifest_asset_ids, f"{label}.binding.existingManifestId not found in V2 manifests: {existing}")
+        require(existing in manifest_assets, f"{label}.binding.existingManifestId not found in V2 manifests: {existing}")
     return existing
 
 
-def validate_catalog(catalog_path: Path, manifest_asset_ids: set[str], required_existing_bindings: set[str]) -> tuple[int, int, int]:
+def validate_catalog(catalog_path: Path, manifest_assets: dict[str, dict[str, Any]], required_existing_bindings: set[str], required_bound_source_evidence: set[str]) -> tuple[int, int, int, int]:
     data = json.loads(catalog_path.read_text(encoding="utf-8"))
     require(isinstance(data, dict), f"{catalog_path}: catalog must be an object")
     require(REQUIRED_TOP_LEVEL <= set(data), f"{catalog_path}: missing {sorted(REQUIRED_TOP_LEVEL - set(data))}")
@@ -117,6 +123,7 @@ def validate_catalog(catalog_path: Path, manifest_asset_ids: set[str], required_
     seen_categories: set[str] = set()
     seen_logical_ids: set[str] = set()
     existing_binding_count = 0
+    source_evidence_binding_count = 0
     entry_count = 0
     for c_index, category in enumerate(categories):
         c_label = f"categories[{c_index}]"
@@ -151,18 +158,24 @@ def validate_catalog(catalog_path: Path, manifest_asset_ids: set[str], required_
             require_string_list(entry["sharedBy"], f"{e_label}.sharedBy", allowed=games)
             require_string(entry["assetClass"], f"{e_label}.assetClass")
             require(entry["status"] in ALLOWED_STATUS, f"{e_label}.status is not allowed: {entry['status']}")
-            existing = validate_binding(entry["binding"], e_label, manifest_asset_ids)
+            existing = validate_binding(entry["binding"], e_label, manifest_assets)
             if existing is not None:
                 existing_binding_count += 1
+                if manifest_asset_has_source_evidence(manifest_assets[existing]):
+                    source_evidence_binding_count += 1
             if logical_id in required_existing_bindings:
                 require(existing is not None, f"{logical_id} must declare binding.existingManifestId")
+            if logical_id in required_bound_source_evidence:
+                require(existing is not None, f"{logical_id} must declare binding.existingManifestId")
+                require(manifest_asset_has_source_evidence(manifest_assets[existing]), f"{logical_id} bound manifest asset lacks sourceReference.sourceEvidence: {existing}")
             if "notes" in entry:
                 require_string_list(entry["notes"], f"{e_label}.notes")
             entry_count += 1
 
-    missing_required = required_existing_bindings - seen_logical_ids
+    required_logical_ids = required_existing_bindings | required_bound_source_evidence
+    missing_required = required_logical_ids - seen_logical_ids
     require(not missing_required, f"required logical IDs not found in catalog: {sorted(missing_required)}")
-    return len(categories), entry_count, existing_binding_count
+    return len(categories), entry_count, existing_binding_count, source_evidence_binding_count
 
 
 def parse_args() -> argparse.Namespace:
@@ -170,6 +183,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--catalog", type=Path, default=CATALOG_PATH, help="catalog JSON to validate")
     parser.add_argument("--manifest", action="append", type=Path, default=[], help="manifest JSON to include; defaults to all V2 manifests")
     parser.add_argument("--require-existing-manifest-binding", action="append", default=[], metavar="LOGICAL_ID", help="require this logical ID to bind to an existing V2 manifest asset ID")
+    parser.add_argument("--require-bound-manifest-source-evidence", action="append", default=[], metavar="LOGICAL_ID", help="require this logical ID to bind to a manifest asset with sourceReference.sourceEvidence")
     return parser.parse_args()
 
 
@@ -177,9 +191,14 @@ def main() -> int:
     args = parse_args()
     manifests = args.manifest or sorted(MANIFEST_DIR.glob("firestaff-v2-*.manifest.json"))
     require(bool(manifests), "no V2 manifest files found")
-    manifest_asset_ids = load_manifest_asset_ids(manifests)
-    categories, entries, existing_bindings = validate_catalog(args.catalog, manifest_asset_ids, set(args.require_existing_manifest_binding))
-    print(f"validated V2 logical catalog: {categories} categories / {entries} logical IDs / {existing_bindings} manifest bindings")
+    manifest_assets = load_manifest_assets(manifests)
+    categories, entries, existing_bindings, source_evidence_bindings = validate_catalog(
+        args.catalog,
+        manifest_assets,
+        set(args.require_existing_manifest_binding),
+        set(args.require_bound_manifest_source_evidence),
+    )
+    print(f"validated V2 logical catalog: {categories} categories / {entries} logical IDs / {existing_bindings} manifest bindings / {source_evidence_bindings} source-evidence bindings")
     return 0
 
 
