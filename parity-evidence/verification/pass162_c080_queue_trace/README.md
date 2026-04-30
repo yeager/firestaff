@@ -30,7 +30,7 @@ Classification: `ready/probe-plan-emitted`
 ## Tool status
 - dosbox: `/usr/bin/dosbox`
 - dosbox-x: `/usr/bin/dosbox-x`
-- gdb: `None`
+- gdb: `/usr/bin/gdb`
 
 ## Non-claims
 - does not prove the stock original binary reached C080/F0377/F0280

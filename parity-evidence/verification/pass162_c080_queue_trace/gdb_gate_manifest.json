@@ -1,0 +1,201 @@
+{
+  "classification": "blocked/gdb-cannot-bind-stock-dos-exe-or-redmcsb-symbols",
+  "commands": {
+    "dm_exe_file": {
+      "args": [
+        "/usr/bin/file",
+        "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"
+      ],
+      "output": [
+        "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed"
+      ],
+      "returncode": 0
+    },
+    "dosbox_x_version": {
+      "args": [
+        "/usr/bin/dosbox-x",
+        "-version"
+      ],
+      "output": [
+        "",
+        "DOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.",
+        "DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)",
+        "",
+        "DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so.",
+        ""
+      ],
+      "returncode": 1
+    },
+    "gdb_stock_dm_symbol_gate": {
+      "args": [
+        "/usr/bin/gdb",
+        "--batch",
+        "-x",
+        "/home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb"
+      ],
+      "output": [
+        "/home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb:3: Error in sourced command file:",
+        "\"/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE\": not in executable format: file format not recognized"
+      ],
+      "returncode": 1
+    },
+    "gdb_version": {
+      "args": [
+        "/usr/bin/gdb",
+        "--version"
+      ],
+      "output": [
+        "GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1",
+        "Copyright (C) 2024 Free Software Foundation, Inc.",
+        "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>",
+        "This is free software: you are free to change and redistribute it.",
+        "There is NO WARRANTY, to the extent permitted by law."
+      ],
+      "returncode": 0
+    }
+  },
+  "dm_exe": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+  "first_missing_gate": "debugger/source-symbol binding prerequisite; C080 mouse/queue/front-wall gates were not reached",
+  "forbidden_roots_note": "DANNESBURK not used.",
+  "next_step": "Use DOSBox-X built with/started in its debugger, a DOS real-mode gdbstub, or an address map from ReDMCSB symbols to the loaded DM.EXE image, then apply the emitted breakpoint order.",
+  "non_claims": [
+    "does not prove stock original binary reached C080/F0377/F0280",
+    "does not classify mouse translation vs queue dequeue vs C080 dispatch vs F0280 because gdb could not bind symbols to the stock DOS executable",
+    "does not do coordinate guessing"
+  ],
+  "original_stage": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+  "redmcsb_audit": [
+    {
+      "file": "COMMAND.C",
+      "lines": "1452-1662",
+      "missing": [],
+      "must_contain": [
+        "void F0359_COMMAND_ProcessClick_CPSC",
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
+        "G0432_as_CommandQueue",
+        ".Command = L1109_i_Command",
+        ".X = P0725_i_X",
+        ".Y = P0726_i_Y"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "Actual mouse-click queue writer: derives command from primary/secondary mouse tables and writes nonzero command plus X/Y into G0432_as_CommandQueue.",
+      "symbol": "F0359_COMMAND_ProcessClick_CPSC"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2127",
+      "missing": [],
+      "must_contain": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "L1160_i_Command = G0432_as_CommandQueue",
+        "L1161_i_CommandX",
+        "L1162_i_CommandY",
+        "G0435_B_CommandQueueLocked = C0_FALSE"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "F0380 locks/dequeues command, X, Y from G0432_as_CommandQueue and unlocks before dispatch.",
+      "symbol": "F0380_COMMAND_ProcessQueue_CPSC dequeue"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2322-2324",
+      "missing": [],
+      "must_contain": [
+        "if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW)",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "point": "F0380 dispatches C080 to F0377 with dequeued X/Y.",
+      "symbol": "F0380 -> F0377 dispatch"
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "311-350",
+      "missing": [],
+      "must_contain": [
+        "void F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "P0752_i_X -= G2067_i_ViewportScreenX",
+        "P0753_i_Y -= G2068_i_ViewportScreenY"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "point": "C080 handler; PC builds normalize screen coordinates by subtracting viewport origin before hit testing.",
+      "symbol": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "406-439",
+      "missing": [],
+      "must_contain": [
+        "G0415_ui_LeaderEmptyHanded",
+        "C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "point": "Empty-hand C05 door-button/wall-ornament hit calls F0372, otherwise object cells call grab/drop paths.",
+      "symbol": "F0377 empty-hand front-wall hit"
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "5-27",
+      "missing": [],
+      "must_contain": [
+        "STATICFUNCTION void F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor",
+        "F0275_SENSOR_IsTriggeredByClickOnWall",
+        "M018_OPPOSITE(G0308_i_PartyDirection)"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "point": "F0372 computes the square in front of the party and invokes F0275 on the wall face opposite party direction.",
+      "symbol": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "1501-1503",
+      "missing": [],
+      "must_contain": [
+        "case C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "point": "A clicked champion portrait wall sensor calls F0280 with sensorData/portrait index.",
+      "symbol": "C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280"
+    },
+    {
+      "file": "REVIVE.C",
+      "lines": "63-88",
+      "missing": [],
+      "must_contain": [
+        "void F0280_CHAMPION_AddCandidateChampionToParty",
+        "P0596_ui_ChampionPortraitIndex"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "point": "Candidate champion entry point reached after C127 portrait sensor processing.",
+      "symbol": "F0280_CHAMPION_AddCandidateChampionToParty"
+    }
+  ],
+  "repo": "/home/trv2/work/firestaff",
+  "runners": {
+    "dosbox_x_command": "dosbox-x -conf /home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf",
+    "dosbox_x_conf": "/home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf",
+    "gdb_command": "gdb --batch -x /home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb",
+    "gdb_script": "/home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb"
+  },
+  "schema": "pass162_c080_gdb_gate.v1",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "tools": {
+    "dosbox": "/usr/bin/dosbox",
+    "dosbox-x": "/usr/bin/dosbox-x",
+    "file": "/usr/bin/file",
+    "gdb": "/usr/bin/gdb",
+    "python3": "/usr/bin/python3"
+  }
+}
