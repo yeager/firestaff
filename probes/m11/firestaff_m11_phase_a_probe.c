@@ -108,6 +108,10 @@ int main(int argc, char** argv) {
            fb != NULL && fbSize == 64000U,
            "framebuffer is 320*200 = 64000 bytes");
 
+    record(&t, "INV_A03B",
+           M11_Render_GetWindowMode() == M11_WINDOW_MODE_MAXIMIZED,
+           "default startup window mode is maximized");
+
     /* ---------- INV_A04: palette[0][0] == (0,0,0) ---------- */
     const unsigned char* c0 = F9010_VGA_GetColorRgb_Compat(0, 0);
     record(&t, "INV_A04",

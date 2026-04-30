@@ -142,6 +142,7 @@ int  M11_Render_MapWindowToFramebuffer(int windowX,
                                        int* outFbY);
 int  M11_Render_SetWindowMode(int windowModeIndex);
 int  M11_Render_GetWindowMode(void);
+int  M11_Render_SyncWindowModeFromWindow(void);
 int  M11_Render_SetIntegerScaling(int enabled);
 int  M11_Render_GetIntegerScaling(void);
 int  M11_Render_SetScaleFilter(int filterIndex);

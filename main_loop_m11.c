@@ -119,12 +119,29 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
                                      M11_LAUNCHER_FB_HEIGHT);
 }
 
-void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
+void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
+    int requestedWindowMode;
+    int actualWindowMode;
     if (!menuState) {
         return;
     }
+    requestedWindowMode = menuState->settings.windowModeIndex;
+    actualWindowMode = M11_Render_SyncWindowModeFromWindow();
+    /* If the user maximized the OS window directly while the saved setting
+     * still says WINDOWED, do not shrink the window just because the launcher
+     * is switching between menu/game/settings surfaces. Keep the observed
+     * maximized/fullscreen mode as the runtime setting outside the settings
+     * editor; inside settings, an explicit WINDOWED selection must still be
+     * able to restore the window. */
+    if (menuState->view != M12_MENU_VIEW_SETTINGS &&
+        requestedWindowMode == M11_WINDOW_MODE_WINDOWED &&
+        (actualWindowMode == M11_WINDOW_MODE_MAXIMIZED ||
+         actualWindowMode == M11_WINDOW_MODE_FULLSCREEN)) {
+        requestedWindowMode = actualWindowMode;
+        menuState->settings.windowModeIndex = actualWindowMode;
+    }
     M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
-    M11_Render_SetWindowMode(menuState->settings.windowModeIndex);
+    M11_Render_SetWindowMode(requestedWindowMode);
     M11_Render_SetScaleMode(menuState->settings.scaleModeIndex);
     M11_Render_SetIntegerScaling(menuState->settings.integerScaling);
     M11_Render_SetScaleFilter(menuState->settings.scalingFilterIndex);

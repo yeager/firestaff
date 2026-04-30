@@ -95,6 +95,27 @@ static int m11_validate_window_mode(int mode) {
            mode == M11_WINDOW_MODE_FULLSCREEN;
 }
 
+static int m11_window_mode_from_sdl_window(void) {
+    Uint32 flags;
+    if (!g_state.window) {
+        return g_state.windowMode;
+    }
+    flags = SDL_GetWindowFlags(g_state.window);
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    if ((flags & SDL_WINDOW_FULLSCREEN) != 0U) {
+        return M11_WINDOW_MODE_FULLSCREEN;
+    }
+#else
+    if ((flags & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP)) != 0U) {
+        return M11_WINDOW_MODE_FULLSCREEN;
+    }
+#endif
+    if ((flags & SDL_WINDOW_MAXIMIZED) != 0U) {
+        return M11_WINDOW_MODE_MAXIMIZED;
+    }
+    return M11_WINDOW_MODE_WINDOWED;
+}
+
 static int m11_validate_binary_setting(int mode) {
     return mode == 0 || mode == 1;
 }
@@ -406,7 +427,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.windowH = windowHeight;
     g_state.scaleMode = scaleMode;
     g_state.paletteLevel = 0;
-    g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
+    g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 1;
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
     g_state.vsync = M11_VSYNC_ON;
@@ -725,6 +746,7 @@ int M11_Render_HandleResize(int newWidth, int newHeight) {
     }
     g_state.windowW = newWidth;
     g_state.windowH = newHeight;
+    M11_Render_SyncWindowModeFromWindow();
     return M11_RENDER_OK;
 }
 
@@ -823,6 +845,14 @@ int M11_Render_SetWindowMode(int windowModeIndex) {
 }
 
 int M11_Render_GetWindowMode(void) {
+    return g_state.windowMode;
+}
+
+int M11_Render_SyncWindowModeFromWindow(void) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    g_state.windowMode = m11_window_mode_from_sdl_window();
     return g_state.windowMode;
 }
 

@@ -175,13 +175,13 @@ int main(void) {
 
     smoke_record(&tally,
                  "SMOKE_01",
-                 M11_Render_GetWindowMode() == M11_WINDOW_MODE_WINDOWED &&
+                 M11_Render_GetWindowMode() == M11_WINDOW_MODE_MAXIMIZED &&
                      M11_Render_GetPaletteLevel() == 0 &&
                      M11_Render_GetScaleMode() == M11_SCALE_FIT &&
                      M11_Render_GetIntegerScaling() == 1 &&
                      M11_Render_GetScaleFilter() == M11_SCALE_FILTER_NEAREST &&
                      M11_Render_GetVSync() == M11_VSYNC_ON,
-                 "default startup settings apply SDL3 render runtime preferences");
+                 "default startup settings apply SDL3 render runtime preferences with maximized window mode");
 
     M12_StartupMenu_Draw(&state, framebufferA, 320, 200);
 
