@@ -4,9 +4,9 @@ Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtim
 
 ## Verdict
 
-- probe classification: **blocked/debugger-required**
+- probe classification: **ready/debugger-available**
 - exact next blocker: Need an in-process debugger-capable DOSBox/DOSBox-X run to break at F0365/F0380/F0377/F0280 and classify whether C080 is absent before the queue, present but not dispatched, reaches F0377 but misses C05/front-wall sensor, or reaches F0280.
-- N2 debugger availability: `stock-dosbox-no-debugger`
+- N2 debugger availability: `debugger-binary-present`
 
 ## Source-audited command path
 

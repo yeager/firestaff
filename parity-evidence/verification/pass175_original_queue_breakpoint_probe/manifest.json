@@ -1,6 +1,6 @@
 {
   "schema": "pass175_original_queue_breakpoint_probe.v1",
-  "classification": "blocked/debugger-required",
+  "classification": "ready/debugger-available",
   "next_blocker": "Need an in-process debugger-capable DOSBox/DOSBox-X run to break at F0365/F0380/F0377/F0280 and classify whether C080 is absent before the queue, present but not dispatched, reaches F0377 but misses C05/front-wall sensor, or reaches F0280.",
   "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "source_citations": [
@@ -415,10 +415,10 @@
     ]
   },
   "debugger": {
-    "classification": "stock-dosbox-no-debugger",
+    "classification": "debugger-binary-present",
     "bins": {
-      "dosbox-debug": null,
-      "dosbox-x": null,
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "dosbox-x": "/usr/bin/dosbox-x",
       "dosbox-staging": null
     },
     "dosbox_version": {
