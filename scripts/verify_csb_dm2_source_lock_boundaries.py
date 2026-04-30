@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import re
+import struct
 from pathlib import Path
 
 DEFAULT_REDMCSB_SOURCE = Path(
@@ -137,6 +138,7 @@ def inventory_refs(original_dm: Path) -> list[str]:
     candidates = [
         "Game,Chaos_Strikes_Back,Amiga,Software.7z",
         "Game,Chaos_Strikes_Back,Atari_ST,Software.7z",
+        "_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).msa",
         "_canonical/csb/amiga-Dungeon.DAT",
         "_canonical/csb/atari-DUNGEON.DAT",
         "_canonical/csb/amiga-Graphics.DAT",
@@ -153,6 +155,90 @@ def inventory_refs(original_dm: Path) -> list[str]:
     return rows
 
 
+
+def msa_root_members(msa_path: Path) -> dict[str, tuple[int, str]]:
+    """Return root-file size/hash pairs from a simple Atari ST MSA disk image."""
+    data = msa_path.read_bytes()
+    if len(data) < 10:
+        raise ValueError("MSA image is too short")
+    magic, sectors_per_track, sides, start_track, end_track = struct.unpack(">5H", data[:10])
+    if magic != 0x0E0F:
+        raise ValueError(f"not an MSA image: magic=0x{magic:04x}")
+    pos = 10
+    track_bytes = sectors_per_track * 512
+    raw = bytearray()
+    for _track in range(start_track, end_track + 1):
+        for _side in range(sides):
+            if pos + 2 > len(data):
+                raise ValueError("truncated MSA track header")
+            compressed_len = struct.unpack(">H", data[pos : pos + 2])[0]
+            pos += 2
+            chunk = data[pos : pos + compressed_len]
+            pos += compressed_len
+            if compressed_len == track_bytes:
+                decoded = chunk
+            else:
+                decoded_out = bytearray()
+                i = 0
+                while i < len(chunk):
+                    value = chunk[i]
+                    i += 1
+                    if value == 0xE5:
+                        if i + 3 > len(chunk):
+                            raise ValueError("truncated MSA RLE run")
+                        repeated = chunk[i]
+                        count = struct.unpack(">H", chunk[i + 1 : i + 3])[0]
+                        i += 3
+                        decoded_out.extend([repeated] * count)
+                    else:
+                        decoded_out.append(value)
+                decoded = bytes(decoded_out)
+            if len(decoded) != track_bytes:
+                raise ValueError(f"decoded MSA track is {len(decoded)} bytes, expected {track_bytes}")
+            raw.extend(decoded)
+
+    disk = bytes(raw)
+    bytes_per_sector = struct.unpack_from("<H", disk, 11)[0]
+    sectors_per_cluster = disk[13]
+    reserved_sectors = struct.unpack_from("<H", disk, 14)[0]
+    fat_count = disk[16]
+    root_entries = struct.unpack_from("<H", disk, 17)[0]
+    sectors_per_fat = struct.unpack_from("<H", disk, 22)[0]
+    root_start = (reserved_sectors + fat_count * sectors_per_fat) * bytes_per_sector
+    root_size = root_entries * 32
+    data_start = root_start + root_size
+    fat = disk[reserved_sectors * bytes_per_sector : (reserved_sectors + sectors_per_fat) * bytes_per_sector]
+
+    def fat12(cluster: int) -> int:
+        offset = cluster + cluster // 2
+        value = fat[offset] | (fat[offset + 1] << 8)
+        return value >> 4 if cluster & 1 else value & 0x0FFF
+
+    def read_chain(cluster: int) -> bytes:
+        out = bytearray()
+        seen: set[int] = set()
+        while 2 <= cluster < 0xFF8 and cluster not in seen:
+            seen.add(cluster)
+            offset = data_start + (cluster - 2) * sectors_per_cluster * bytes_per_sector
+            out.extend(disk[offset : offset + sectors_per_cluster * bytes_per_sector])
+            cluster = fat12(cluster)
+        return bytes(out)
+
+    members: dict[str, tuple[int, str]] = {}
+    for idx in range(root_entries):
+        entry = disk[root_start + idx * 32 : root_start + (idx + 1) * 32]
+        if entry[0] in (0, 0xE5) or (entry[11] & 0x18):
+            continue
+        name = entry[:8].decode("ascii", errors="replace").rstrip()
+        ext = entry[8:11].decode("ascii", errors="replace").rstrip()
+        filename = name + (f".{ext}" if ext else "")
+        cluster = struct.unpack_from("<H", entry, 26)[0]
+        size = struct.unpack_from("<I", entry, 28)[0]
+        payload = read_chain(cluster)[:size] if cluster else b""
+        members[filename.upper()] = (size, hashlib.sha256(payload).hexdigest())
+    return members
+
+
 def csb_target_curation(original_dm: Path) -> list[str]:
     rows: list[str] = []
     atari_archive = original_dm / "Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
@@ -161,6 +247,7 @@ def csb_target_curation(original_dm: Path) -> list[str]:
     amiga_dungeon = original_dm / "_canonical/csb/amiga-Dungeon.DAT"
     atari_graphics = original_dm / "_canonical/csb/atari-GRAPHICS.DAT"
     amiga_graphics = original_dm / "_canonical/csb/amiga-Graphics.DAT"
+    atari_msa_v20 = original_dm / "_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).msa"
     atari_stx_v21 = original_dm / "_extracted/csb-atari/Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx"
     amiga_harddisk = original_dm / "_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT"
 
@@ -171,6 +258,7 @@ def csb_target_curation(original_dm: Path) -> list[str]:
         ("amiga_dungeon", amiga_dungeon),
         ("atari_graphics", atari_graphics),
         ("amiga_graphics", amiga_graphics),
+        ("atari_official_english_v2_0_game_msa", atari_msa_v20),
         ("atari_official_english_v2_1_game_stx", atari_stx_v21),
         ("amiga_extracted_graphics_anchor", amiga_harddisk),
     ]:
@@ -178,6 +266,25 @@ def csb_target_curation(original_dm: Path) -> list[str]:
             rows.append(f"TARGET_REF {label}: {path} bytes={path.stat().st_size} sha256={sha256(path)}")
         else:
             rows.append(f"TARGET_REF_MISSING {label}: {path}")
+
+    if atari_msa_v20.exists():
+        try:
+            members = msa_root_members(atari_msa_v20)
+        except Exception as exc:  # noqa: BLE001 - verifier should report exact evidence-read failure
+            rows.append(f"TARGET_CURATION canonical_atari_st_english_v2_0: BLOCKED; cannot read MSA root members: {exc}")
+        else:
+            expected = {
+                "GRAPHICS.DAT": (272069, "cff31dbdc071af2c6de8a0b9e1110b189e067706868d42fc8b2267e18422f687"),
+                "DUNGEON.DAT": (2098, "59a72978879f3a3e9de3a6767ee069266d369244b1091314ddc16c03d8d41530"),
+            }
+            for member, (size, digest) in expected.items():
+                actual = members.get(member)
+                if actual == (size, digest):
+                    rows.append(f"TARGET_CURATION canonical_atari_st_english_v2_0 {member}: bytes={size} sha256={digest}")
+                else:
+                    rows.append(f"TARGET_CURATION canonical_atari_st_english_v2_0 {member}: BLOCKED; expected bytes={size} sha256={digest}, got {actual}")
+    else:
+        rows.append(f"TARGET_CURATION canonical_atari_st_english_v2_0: BLOCKED; missing {atari_msa_v20}")
 
     if atari_dungeon.exists() and amiga_dungeon.exists():
         if sha256(atari_dungeon) == sha256(amiga_dungeon):
@@ -190,7 +297,7 @@ def csb_target_curation(original_dm: Path) -> list[str]:
             rows.append("TARGET_CURATION graphics: Atari and Amiga canonical graphics payloads match.")
         else:
             rows.append("TARGET_CURATION graphics: BLOCKER; Atari GRAPHICS.DAT and Amiga Graphics.DAT differ in size/hash, so graphics/render parity must choose exactly one platform asset lineage.")
-    rows.append("TARGET_CURATION choice: use Atari ST English v2.x as the next CSB target lane unless a later pass proves an official Amiga English graphics anchor; keep Amiga v3.x as a separate, non-interchangeable graphics lineage.")
+    rows.append("TARGET_CURATION choice: use Atari ST English v2.x as the CSB graphics/render parity lane; reject Amiga Graphics.DAT for that lane because it is a separate size/hash lineage, not an interchangeable renderer input.")
     return rows
 
 
@@ -231,8 +338,10 @@ def main() -> int:
     for row in inventory_refs(args.original_dm):
         print(row)
     print("\n[csb target curation]")
-    for row in csb_target_curation(args.original_dm):
+    curation_rows = csb_target_curation(args.original_dm)
+    for row in curation_rows:
         print(row)
+    failed.extend(row for row in curation_rows if "canonical_atari_st_english_v2_0" in row and "BLOCKED" in row)
     print("\n[repo boundary scan]")
     for row in repo_boundary_scan(args.repo):
         print(row)
