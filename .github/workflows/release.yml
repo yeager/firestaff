@@ -131,7 +131,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build rpm dpkg-dev git pkg-config libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libwayland-dev libxkbcommon-dev wayland-protocols
+          sudo apt-get install -y build-essential cmake ninja-build rpm dpkg-dev git pkg-config libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
           git clone --depth 1 https://github.com/libsdl-org/SDL.git /tmp/SDL3
           cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
           cmake --build /tmp/SDL3-build --parallel
