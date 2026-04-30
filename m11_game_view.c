@@ -5085,12 +5085,25 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* Dialog overlay: any input dismisses it, then return to gameplay. */
+    /* Dialog overlay: text plaques dismiss; return-to-menu confirm requires an explicit choice. */
     if (state->dialogOverlayActive) {
+        if (state->returnToMenuConfirmActive) {
+            if (input == M12_MENU_INPUT_BACK) {
+                M11_GameView_DismissDialogOverlay(state);
+                m11_set_status(state, "RETURN", "CANCELLED");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                state->dialogSelectedChoice = 1;
+                M11_GameView_DismissDialogOverlay(state);
+                m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (input == M12_MENU_INPUT_BACK) {
             M11_GameView_DismissDialogOverlay(state);
-            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-            return M11_GAME_INPUT_RETURN_TO_MENU;
+            return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_ACCEPT && state->dialogChoiceCount > 0) {
             state->dialogSelectedChoice = 1;
@@ -5306,8 +5319,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_BACK:
-            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-            return M11_GAME_INPUT_RETURN_TO_MENU;
+            M11_GameView_ShowDialogOverlayChoices(state,
+                                                  "RETURN TO START MENU?",
+                                                  "YES",
+                                                  "NO",
+                                                  NULL,
+                                                  NULL);
+            state->returnToMenuConfirmActive = 1;
+            m11_set_status(state, "RETURN", "CONFIRM");
+            return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_NONE:
         default:
             return M11_GAME_INPUT_IGNORED;
@@ -5331,9 +5351,23 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* Click dismisses dialog overlay. */
+    /* Click dismisses normal dialogs; return-to-menu confirm acts on YES/NO. */
     if (state->dialogOverlayActive) {
         int choice = m11_dialog_choice_at_point(state, x, y);
+        if (state->returnToMenuConfirmActive) {
+            if (choice == 1) {
+                state->dialogSelectedChoice = choice;
+                M11_GameView_DismissDialogOverlay(state);
+                m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
+            if (choice == 2 || choice == 0) {
+                if (choice == 2) state->dialogSelectedChoice = choice;
+                M11_GameView_DismissDialogOverlay(state);
+                m11_set_status(state, "RETURN", "CANCELLED");
+                return M11_GAME_INPUT_REDRAW;
+            }
+        }
         if (choice > 0) {
             state->dialogSelectedChoice = choice;
         }
@@ -19722,9 +19756,25 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             }
         }
         if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          dlgX + 50, dlgY + dlgH - 16,
-                          "PRESS ANY KEY TO DISMISS", &g_text_small);
+            if (state->dialogChoiceCount > 0) {
+                int i;
+                int choiceY = dlgY + dlgH - 18;
+                int choiceW = dlgW / state->dialogChoiceCount;
+                for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
+                    m11_draw_text_centered_in_rect(framebuffer,
+                                                   framebufferWidth,
+                                                   framebufferHeight,
+                                                   dlgX + i * choiceW,
+                                                   choiceY,
+                                                   choiceW,
+                                                   state->dialogChoices[i],
+                                                   &g_text_small);
+                }
+            } else {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              dlgX + 50, dlgY + dlgH - 16,
+                              "PRESS ANY KEY TO DISMISS", &g_text_small);
+            }
         }
         if (drewSourceBackdrop) {
             m11_draw_dialog_choices_source(state, framebuffer,
@@ -19995,6 +20045,7 @@ int M11_GameView_GetDialogSelectedChoice(const M11_GameViewState* state) {
 int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     if (!state || !state->dialogOverlayActive) return 0;
     state->dialogOverlayActive = 0;
+    state->returnToMenuConfirmActive = 0;
     state->dialogOverlayText[0] = '\0';
     state->dialogChoiceCount = 0;
     memset(state->dialogChoices, 0, sizeof(state->dialogChoices));
@@ -20016,6 +20067,7 @@ int M11_GameView_ShowDialogOverlayChoices(M11_GameViewState* state,
     int i;
     if (!state || !text) return 0;
     state->dialogOverlayActive = 1;
+    state->returnToMenuConfirmActive = 0;
     state->dialogSelectedChoice = 0;
     snprintf(state->dialogOverlayText, sizeof(state->dialogOverlayText),
              "%s", text);

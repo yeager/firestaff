@@ -192,6 +192,7 @@ typedef struct {
      * on top of the viewport showing dialogOverlayText.  The user
      * dismisses it with any key or click. */
     int dialogOverlayActive;
+    int returnToMenuConfirmActive; /* Esc confirmation modal before leaving gameplay */
     char dialogOverlayText[128];
     int dialogChoiceCount;
     int dialogSelectedChoice;
