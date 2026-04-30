@@ -6025,11 +6025,33 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                     break;
             }
         }
-        /* Clamp to face bounds */
-        if (drawX < x) drawX = x;
-        if (drawY < y) drawY = y;
-        if (drawX + drawW > x + w) drawX = x + w - drawW;
-        if (drawY + drawH > y + h) drawY = y + h - drawH;
+        /* Preserve source-row viewport placement when C2900 is available. */
+        if (sourceZoneRow >= 0) {
+            /* ReDMCSB F0115 restores the view square/cell before the
+             * projectile pass, then draws projectiles from the source
+             * coordinate set into G0296_puc_Bitmap_Viewport.  It does not
+             * clamp D1/D2/D3 side-lane projectiles back into Firestaff's
+             * synthetic pane rectangles.  Preserve C2900 row placement here
+             * and only keep a tiny visible overlap with the real viewport so
+             * off-edge source coordinates can clip naturally.
+             * Source audit: DUNVIEW.C:4828-4835 chooses the view cell,
+             * DUNVIEW.C:5635-5656 restores the projectile view cell, and
+             * DUNVIEW.C:5176-5193 is the same viewport blit path used after
+             * T0115015_DrawProjectileAsObject. */
+            int minX = M11_VIEWPORT_X - drawW + 1;
+            int minY = M11_VIEWPORT_Y - drawH + 1;
+            int maxX = M11_VIEWPORT_X + M11_VIEWPORT_W - 1;
+            int maxY = M11_VIEWPORT_Y + M11_VIEWPORT_H - 1;
+            if (drawX < minX) drawX = minX;
+            if (drawY < minY) drawY = minY;
+            if (drawX > maxX) drawX = maxX;
+            if (drawY > maxY) drawY = maxY;
+        } else {
+            if (drawX < x) drawX = x;
+            if (drawY < y) drawY = y;
+            if (drawX + drawW > x + w) drawX = x + w - drawW;
+            if (drawY + drawH > y + h) drawY = y + h - drawH;
+        }
     } else {
         drawX = x + (w - drawW) / 2;
         drawY = y + (h - drawH) / 2;
