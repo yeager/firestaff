@@ -26,4 +26,6 @@ Result: PASS — 6 archives, 17 selected members checked.
 
 - DM2 DOS EN and CD/layout candidate share core `DUNGEON.DAT`, `GRAPHICS.DAT`, `SONGLIST.DAT`, and `SKULL.EXE` hashes.
 - The `Dungeon Master 2.zip` repack shares core data with DM2 DOS EN but has a different `SKULL.EXE`; keep it as a locked alternate, not the canonical runtime source until curated.
-- CSB Amiga and Atari candidates share the same selected dungeon hash but have different graphics hashes; a curator still needs to choose the CSB target/version before runtime work.
+- CSB Amiga and Atari hard-disk candidates share the same selected dungeon hash but have different graphics hashes. The CSB graphics/render parity lane is now source-guarded to Atari ST English v2.x, not Amiga graphics.
+- Canonical Atari ST English v2.x member anchor: `_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).msa` root `GRAPHICS.DAT` bytes=272069 sha256=`cff31dbdc071af2c6de8a0b9e1110b189e067706868d42fc8b2267e18422f687`; root `DUNGEON.DAT` bytes=2098 sha256=`59a72978879f3a3e9de3a6767ee069266d369244b1091314ddc16c03d8d41530`.
+- Amiga `Graphics.DAT` remains a rejected separate lineage for that lane: `_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT` bytes=435076 sha256=`3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942`.
