@@ -278,7 +278,7 @@
     "bins": {
       "dosbox": "/usr/bin/dosbox",
       "dosbox-x": "/usr/bin/dosbox-x",
-      "gdb": null,
+      "gdb": "/usr/bin/gdb",
       "python3": "/usr/bin/python3",
       "xdotool": "/usr/bin/xdotool",
       "xwd": null
