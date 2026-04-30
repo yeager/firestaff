@@ -112,6 +112,10 @@ int  M11_Render_Present(void);
 int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);
+int  M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
+                                                 int logicalWidth,
+                                                 int logicalHeight,
+                                                 int specialPalette);
 
 /* Present a caller-owned 32-bit RGBA framebuffer directly, skipping the
  * VGA palette lookup. Used by the modern high-resolution true-color

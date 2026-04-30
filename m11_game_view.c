@@ -5321,6 +5321,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_BACK:
+            /* Return-to-launcher confirmation is a full-screen modal route,
+             * not a champion inventory interaction.  Clear invented/debug
+             * overlays before drawing it so ESC never leaves the champion
+             * inventory panel visible behind the quit prompt. */
+            state->inventoryPanelActive = 0;
+            state->mapOverlayActive = 0;
+            state->spellPanelOpen = 0;
             M11_GameView_ShowDialogOverlayChoices(state,
                                                   "RETURN TO START MENU?",
                                                   "YES",

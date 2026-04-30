@@ -17,6 +17,7 @@
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -160,10 +161,15 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
     size_t i;
     static const char* suffixes[] = {
         "TITLE",
+        "TITLE.DAT",
         "DungeonMasterPC34/TITLE",
+        "DungeonMasterPC34/TITLE.DAT",
         "DungeonMasterPC34Multilingual/TITLE",
+        "DungeonMasterPC34Multilingual/TITLE.DAT",
         "dm-pc34/DungeonMasterPC34/TITLE",
-        "dm-pc34/DungeonMasterPC34Multilingual/TITLE"
+        "dm-pc34/DungeonMasterPC34/TITLE.DAT",
+        "dm-pc34/DungeonMasterPC34Multilingual/TITLE",
+        "dm-pc34/DungeonMasterPC34Multilingual/TITLE.DAT"
     };
 
     if (!outPath || outPathBytes == 0U) {
@@ -182,6 +188,11 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
             dm1v = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1", i);
             if (dm1v && dm1v->matched && FSP_ParentDir(parent, sizeof(parent), dm1v->matchedPath)) {
                 if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE") &&
+                    FSP_FileExists(candidate)) {
+                    snprintf(outPath, outPathBytes, "%s", candidate);
+                    return 1;
+                }
+                if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE.DAT") &&
                     FSP_FileExists(candidate)) {
                     snprintf(outPath, outPathBytes, "%s", candidate);
                     return 1;
@@ -407,7 +418,7 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
             memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
         }
 
-        M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        M11_Render_PresentIndexedWithSpecialPalette(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
             if (!m11_wait_for_redmcsb_entrance_command()) {
                 free(dungeonFrame);
@@ -457,7 +468,20 @@ static int m11_wait_for_redmcsb_entrance_command(void) {
                 if (ev.key.key == SDLK_RETURN || ev.key.key == SDLK_KP_ENTER ||
                     ev.key.key == SDLK_SPACE) return 1;
             }
-            if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) return 1;
+            if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                int fbX = 0;
+                int fbY = 0;
+                if (ev.button.button != SDL_BUTTON_LEFT) continue;
+                if (!M11_Render_MapWindowToFramebuffer((int)ev.button.x, (int)ev.button.y, &fbX, &fbY)) continue;
+                /* ReDMCSB COMMAND.C:63-70 PC entrance button boxes:
+                 * ENTER 244..298,45..58; RESUME 244..298,76..93;
+                 * CREDITS 248..293,187..199.  COMMAND.C:346-350 adds
+                 * C434 quit for later media as a separate zone, not ENTER. */
+                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return 1;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return 0;
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return 0;
+                continue;
+            }
             if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
                 ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
                 M11_Render_HandleResize(ev.window.data1, ev.window.data2);
@@ -469,7 +493,16 @@ static int m11_wait_for_redmcsb_entrance_command(void) {
                 if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER ||
                     ev.key.keysym.sym == SDLK_SPACE) return 1;
             }
-            if (ev.type == SDL_MOUSEBUTTONDOWN) return 1;
+            if (ev.type == SDL_MOUSEBUTTONDOWN) {
+                int fbX = 0;
+                int fbY = 0;
+                if (ev.button.button != SDL_BUTTON_LEFT) continue;
+                if (!M11_Render_MapWindowToFramebuffer(ev.button.x, ev.button.y, &fbX, &fbY)) continue;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return 1;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return 0;
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return 0;
+                continue;
+            }
             if (ev.type == SDL_WINDOWEVENT &&
                 ev.window.event == SDL_WINDOWEVENT_RESIZED) {
                 M11_Render_HandleResize(ev.window.data1, ev.window.data2);

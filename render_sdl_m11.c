@@ -326,6 +326,29 @@ static void m11_framebuffer_to_rgba(const unsigned char* src,
     }
 }
 
+static void m11_framebuffer_to_rgba_special(const unsigned char* src,
+                                            int logicalWidth,
+                                            int logicalHeight,
+                                            int specialPalette) {
+    unsigned char* dst = g_state.presentBuffer;
+    int pixelCount;
+    if (!dst) {
+        return;
+    }
+    pixelCount = logicalWidth * logicalHeight;
+    for (int i = 0; i < pixelCount; ++i) {
+        unsigned char idx = src[i] & M11_FB_INDEX_MASK;
+        const unsigned char* rgb = F9011_VGA_GetSpecialColorRgb_Compat(idx, (unsigned int)specialPalette);
+        if (!rgb) {
+            rgb = G9010_auc_VgaPaletteAll_Compat[g_state.paletteLevel][idx];
+        }
+        dst[i * 4 + 0] = rgb[0];
+        dst[i * 4 + 1] = rgb[1];
+        dst[i * 4 + 2] = rgb[2];
+        dst[i * 4 + 3] = 0xFF;
+    }
+}
+
 /* ---------------- Public API ---------------- */
 
 int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
@@ -595,6 +618,89 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
             &sourceRect,
             g_state.presentBuffer,
             logicalWidth * 4) != 0) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    if (SDL_RenderClear(g_state.renderer) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = destX;
+    destRect.y = destY;
+    destRect.w = destW;
+    destRect.h = destH;
+    if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    SDL_RenderPresent(g_state.renderer);
+#endif
+    return M11_RENDER_OK;
+}
+
+
+int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
+                                                int logicalWidth,
+                                                int logicalHeight,
+                                                int specialPalette) {
+    int destX = 0;
+    int destY = 0;
+    int destW = 0;
+    int destH = 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_FRect sourceRect;
+    SDL_FRect destRect;
+#else
+    SDL_Rect sourceRect;
+    SDL_Rect destRect;
+#endif
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!framebuffer || logicalWidth <= 0 || logicalHeight <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (specialPalette < 0 || specialPalette >= VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (m11_recreate_texture_if_needed(logicalWidth, logicalHeight) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.contentW = logicalWidth;
+    g_state.contentH = logicalHeight;
+    m11_framebuffer_to_rgba_special(framebuffer, logicalWidth, logicalHeight, specialPalette);
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    sourceRect.x = 0.0f;
+    sourceRect.y = 0.0f;
+    sourceRect.w = (float)logicalWidth;
+    sourceRect.h = (float)logicalHeight;
+    {
+        SDL_Rect updateRect;
+        updateRect.x = 0;
+        updateRect.y = 0;
+        updateRect.w = logicalWidth;
+        updateRect.h = logicalHeight;
+        if (!SDL_UpdateTexture(g_state.texture, &updateRect, g_state.presentBuffer, logicalWidth * 4)) {
+            return M11_RENDER_ERR_TEXTURE;
+        }
+    }
+    if (!SDL_RenderClear(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = (float)destX;
+    destRect.y = (float)destY;
+    destRect.w = (float)destW;
+    destRect.h = (float)destH;
+    if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    if (!SDL_RenderPresent(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+#else
+    sourceRect.x = 0;
+    sourceRect.y = 0;
+    sourceRect.w = logicalWidth;
+    sourceRect.h = logicalHeight;
+    if (SDL_UpdateTexture(g_state.texture, &sourceRect, g_state.presentBuffer, logicalWidth * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
     if (SDL_RenderClear(g_state.renderer) != 0) {
