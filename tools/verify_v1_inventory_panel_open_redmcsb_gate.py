@@ -42,7 +42,7 @@ SOURCE_RANGES = [
     {
         "file": "m11_game_view.c",
         "start": 18409,
-        "end": 18469,
+        "end": 18474,
         "function": "m11_draw_inv_slot",
         "assertion": "Firestaff occupied slots draw 16x16 DM object icons inside original 18x18 slot boxes when assets are available.",
     },
@@ -234,7 +234,7 @@ def verify_firestaff() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot branch",
     )
-    require_excerpt("m11_game_view.c", 18409, 18469, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
+    require_excerpt("m11_game_view.c", 18409, 18474, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
     require_excerpt("m11_game_view.c", 18510, 18645, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
 
     return [
