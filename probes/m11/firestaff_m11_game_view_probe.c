@@ -1366,8 +1366,11 @@ int main(int argc, char** argv) {
 
     probe_record(&tally,
                  "INV_GV_13",
-                 M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_RETURN_TO_MENU,
-                 "escape from the game view returns control to the launcher");
+                 M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_REDRAW &&
+                     gameView.dialogOverlayActive == 1 &&
+                     gameView.returnToMenuConfirmActive == 1 &&
+                     M11_GameView_HandleInput(&gameView, M12_MENU_INPUT_ACCEPT) == M11_GAME_INPUT_RETURN_TO_MENU,
+                 "escape opens the source-style return confirmation and YES returns to the launcher");
 
     probe_record(&tally,
                  "INV_GV_13B",
@@ -1391,12 +1394,13 @@ int main(int argc, char** argv) {
                      strcmp(gameView.lastOutcome, "QUICKSAVE RESTORED") == 0,
                  "quickload restores the exact live world snapshot after local state drift");
 
+    gameView.showDebugHUD = 1;
     probe_record(&tally,
                  "INV_GV_13D",
                  M11_GameView_HandlePointer(&gameView, 252, 57, 1) == M11_GAME_INPUT_REDRAW &&
                      strcmp(gameView.lastAction, "SAVE") == 0 &&
                      strcmp(gameView.lastOutcome, "QUICKSAVE WRITTEN") == 0,
-                 "sidebar save button writes a live quicksave without leaving the viewport");
+                 "debug sidebar save button writes a live quicksave without leaving the viewport");
 
     initialTick = gameView.world.gameTick;
     initialHash = gameView.lastWorldHash;
@@ -1416,8 +1420,12 @@ int main(int argc, char** argv) {
 
     probe_record(&tally,
                  "INV_GV_13F",
-                 M11_GameView_HandlePointer(&gameView, 220, 30, 1) == M11_GAME_INPUT_RETURN_TO_MENU,
-                 "sidebar menu header returns control to the launcher");
+                 M11_GameView_HandlePointer(&gameView, 220, 30, 1) == M11_GAME_INPUT_REDRAW &&
+                     gameView.dialogOverlayActive == 1 &&
+                     gameView.returnToMenuConfirmActive == 1 &&
+                     M11_GameView_HandlePointer(&gameView, 112, 105, 1) == M11_GAME_INPUT_RETURN_TO_MENU,
+                 "debug sidebar menu header opens return confirmation and YES returns control to the launcher");
+    gameView.showDebugHUD = 0;
 
     (void)remove(quicksavePath);
 
