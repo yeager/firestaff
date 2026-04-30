@@ -1,0 +1,493 @@
+{
+  "schema": "pass175_original_queue_breakpoint_probe.v1",
+  "classification": "blocked/debugger-required",
+  "next_blocker": "Need an in-process debugger-capable DOSBox/DOSBox-X run to break at F0365/F0380/F0377/F0280 and classify whether C080 is absent before the queue, present but not dispatched, reaches F0377 but misses C05/front-wall sensor, or reaches F0280.",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_citations": [
+    {
+      "file": "COMMAND.C",
+      "lines": "1-16",
+      "point": "G0432_as_CommandQueue, first/last indices, queue lock, and pending-click globals are the original queue storage to watch.",
+      "must_contain": [
+        "G0432_as_CommandQueue",
+        "G0433_i_CommandQueueFirstIndex",
+        "G0434_i_CommandQueueLastIndex",
+        "G0435_B_CommandQueueLocked",
+        "G0436_B_PendingClickPresent"
+      ],
+      "excerpt": "COMMAND.C:1: #ifndef COMPILE_H\nCOMMAND.C:2: #include \"COMPILE.H\"\nCOMMAND.C:3: #endif\nCOMMAND.C:4: #ifdef MEDIA042_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCOMMAND.C:5: #if (EXETYPE == C03_GAME)\nCOMMAND.C:6: COMMAND G0432_as_CommandQueue[M529_COMMAND_QUEUE_SIZE + 1]; /* Circular queue. Can only contain up to 4 actual commands at a time */\nCOMMAND.C:7: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:8: int16_t G2153_i_QueuedCommandsCount;\nCOMMAND.C:9: #endif\nCOMMAND.C:10: int16_t G0433_i_CommandQueueFirstIndex; /* The queue contains a single command if G0434_i_CommandQueueLastIndex = G0433_i_CommandQueueFirstIndex */\nCOMMAND.C:11: int16_t G0434_i_CommandQueueLastIndex = M529_COMMAND_QUEUE_SIZE; /* The queue is empty if (G0434_i_CommandQueueLastIndex + 1) % 4 = G0433_i_CommandQueueFirstIndex */\nCOMMAND.C:12: BOOLEAN G0435_B_CommandQueueLocked = C1_TRUE;\nCOMMAND.C:13: BOOLEAN G0436_B_PendingClickPresent;\nCOMMAND.C:14: int16_t G0437_i_PendingClickX;\nCOMMAND.C:15: int16_t G0438_i_PendingClickY;\nCOMMAND.C:16: int16_t G0439_i_PendingClickButtonsStatus;",
+      "validated": true,
+      "missing": []
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "108-114, 397-403",
+      "point": "The movement secondary mouse table maps the viewport/zone C007 left-click to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+      "must_contain": [
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW",
+        "C007_ZONE_VIEWPORT"
+      ],
+      "excerpt": "COMMAND.C:108:         { C001_COMMAND_TURN_LEFT,             234, 261, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },\nCOMMAND.C:109:         { C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },\nCOMMAND.C:110:         { C002_COMMAND_TURN_RIGHT,            291, 318, 125, 145, MASK0x0002_MOUSE_LEFT_BUTTON },\nCOMMAND.C:111:         { C006_COMMAND_MOVE_LEFT,             234, 261, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\nCOMMAND.C:112:         { C005_COMMAND_MOVE_BACKWARD,         263, 289, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\nCOMMAND.C:113:         { C004_COMMAND_MOVE_RIGHT,            291, 318, 147, 167, MASK0x0002_MOUSE_LEFT_BUTTON },\nCOMMAND.C:114:         { C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168, MASK0x0002_MOUSE_LEFT_BUTTON },\nCOMMAND.C:397:         { C001_COMMAND_TURN_LEFT,               CM1_SCREEN_RELATIVE, C068_ZONE_TURN_LEFT,     0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\nCOMMAND.C:398:         { C003_COMMAND_MOVE_FORWARD,            CM1_SCREEN_RELATIVE, C070_ZONE_MOVE_FORWARD,  0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\nCOMMAND.C:399:         { C002_COMMAND_TURN_RIGHT,              CM1_SCREEN_RELATIVE, C069_ZONE_TURN_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\nCOMMAND.C:400:         { C006_COMMAND_MOVE_LEFT,               CM1_SCREEN_RELATIVE, C073_ZONE_MOVE_LEFT,     0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\nCOMMAND.C:401:         { C005_COMMAND_MOVE_BACKWARD,           CM1_SCREEN_RELATIVE, C072_ZONE_MOVE_BACKWARD, 0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\nCOMMAND.C:402:         { C004_COMMAND_MOVE_RIGHT,              CM1_SCREEN_RELATIVE, C071_ZONE_MOVE_RIGHT,    0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },\nCOMMAND.C:403:         { C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   CM1_SCREEN_RELATIVE, C007_ZONE_VIEWPORT,      0, 0, MASK0x0002_MOUSE_LEFT_BUTTON  },",
+      "validated": true,
+      "missing": []
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1458-1662",
+      "point": "F0365 records pending click fields, resolves primary/secondary mouse input into L1109_i_Command, and writes nonzero commands plus X/Y into G0432_as_CommandQueue.",
+      "must_contain": [
+        "G0436_B_PendingClickPresent",
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command",
+        "G0432_as_CommandQueue[L1108_i_CommandQueueIndex].X"
+      ],
+      "excerpt": "COMMAND.C:1458: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCOMMAND.C:1459: int16_t          P0727_i_ButtonsStatus FINAL_SEPARATOR\nCOMMAND.C:1460: #endif\nCOMMAND.C:1461: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCOMMAND.C:1462: REGISTER int16_t P0727_i_ButtonsStatus FINAL_SEPARATOR\nCOMMAND.C:1463: #endif\nCOMMAND.C:1464: {\nCOMMAND.C:1465:         REGISTER int16_t L1108_i_CommandQueueIndex;\nCOMMAND.C:1466:         REGISTER int16_t L1109_i_Command;\nCOMMAND.C:1467: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:1468:         int16_t L2287_i_MaximumRegularCommandsInQueue;\nCOMMAND.C:1469: #endif\nCOMMAND.C:1470: #ifdef MEDIA626_A31E_A31M_A33M_A35E_A35M\nCOMMAND.C:1471:         int16_t L2288_i_;\nCOMMAND.C:1472: #endif\nCOMMAND.C:1473: \nCOMMAND.C:1474: \nCOMMAND.C:1475: #ifdef MEDIA007_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E\nCOMMAND.C:1476:         asm {\nCOMMAND.C:1477:                         tas     G0435_B_CommandQueueLocked(A4)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\nCOMMAND.C:1478:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\nCOMMAND.C:1479:                         beq.s   T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\nCOMMAND.C:1480:         }\nCOMMAND.C:1481: #endif\nCOMMAND.C:1482: #ifdef MEDIA607_X30J_X31J\nCOMMAND.C:1483:         asm {\nCOMMAND.C:1484:                         tas     G0435_B_CommandQueueLocked(A5)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\nCOMMAND.C:1485:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\nCOMMAND.C:1486:                         beq.s   @T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\nCOMMAND.C:1487:         }\nCOMMAND.C:1488: #endif\nCOMMAND.C:1489: #ifdef MEDIA169_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_X30J_X31J\nCOMMAND.C:1490:         G0436_B_PendingClickPresent = C1_TRUE;\nCOMMAND.C:1491:         G0437_i_PendingClickX = P0725_i_X;\nCOMMAND.C:1492:         G0438_i_PendingClickY = P0726_i_Y;\nCOMMAND.C:1493:         G0439_i_PendingClickButtonsStatus = P0727_i_ButtonsStatus;\nCOMMAND.C:1494: #endif\nCOMMAND.C:1495: #ifdef MEDIA007_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E\nCOMMAND.C:1496: #ifndef NOCOPYPROTECTION\nCOMMAND.C:1497:         if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && (F0464_CPSC_GetChecksumSub(F0380_COMMAND_ProcessQueue_CPSC) != CHECKSUM_B)) {\nCOMMAND.C:1498:                 G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\nCOMMAND.C:1499:         }\nCOMMAND.C:1500: #endif\nCOMMAND.C:1501: #endif\nCOMMAND.C:1502: #ifdef MEDIA169_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_X30J_X31J\nCOMMAND.C:1503:         return;\nCOMMAND.C:1504:         T0359002:\nCOMMAND.C:1505: #endif\nCOMMAND.C:1506: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:1507:         if ((P0727_i_ButtonsStatus == C04_MOUSE_EVENT_LEFT_BUTTON_UP) || (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION)) {\nCOMMAND.C:1508:                 L2287_i_MaximumRegularCommandsInQueue = C7_UNKNOWN; /* Allow usage of all commands in queue */\nCOMMAND.C:1509:         } else {\nCOMMAND.C:1510:                 L2287_i_MaximumRegularCommandsInQueue = C5_UNKNOWN; /* Restrict usage to reserve two commands in queue */\nCOMMAND.C:1511:         }\nCOMMAND.C:1512: #endif\nCOMMAND.C:1513:         if ((L1108_i_CommandQueueIndex = G0434_i_CommandQueueLastIndex + 2) > M529_COMMAND_QUEUE_SIZE) {\nCOMMAND.C:1514:                 L1108_i_CommandQueueIndex -= M529_COMMAND_QUEUE_SIZE + 1;\nCOMMAND.C:1515:         }\nCOMMAND.C:1516: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCOMMAND.C:1517:         if (L1108_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is full */\nCOMMAND.C:1518: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCOMMAND.C:1519: #ifndef NOCOPYPROTECTION\nCOMMAND.C:1520:                 if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && (F0464_CPSC_GetChecksumSub(F0380_COMMAND_ProcessQueue_CPSC) != CHECKSUM_B)) {\nCOMMAND.C:1521:                         G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\nCOMMAND.C:1522:                 }\nCOMMAND.C:1523: #endif\nCOMMAND.C:1524: #endif\nCOMMAND.C:1525:                 return;\nCOMMAND.C:1526:         }\nCOMMAND.C:1527: #endif\nCOMMAND.C:1528: #ifdef MEDIA741_A35E_A35M\nCOMMAND.C:1529:         if (G2153_i_QueuedCommandsCount >= L2287_i_MaximumRegularCommandsInQueue) {\nCOMMAND.C:1530: #endif\nCOMMAND.C:1531: #ifdef MEDIA510_F20E_F20J_X30J_P20JA_P20JB_A31E_A31M_A33M_F31E_F31J_X31J_P31J\nCOMMAND.C:1532:         if (L1108_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is full */\nCOMMAND.C:1533:                 if (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION) {\nCOMMAND.C:1534:                         G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex].Command = C129_COMMAND_RELEASE_CHAMPION_ICON;\nCOMMAND.C:1535:                 }\nCOMMAND.C:1536: #endif\nCOMMAND.C:1537: #ifdef MEDIA626_A31E_A31M_A33M_A35E_A35M\nCOMMAND.C:1538: #ifndef NOCOPYPROTECTION\nCOMMAND.C:1539:                 if ((!(G0317_i_WaitForInputVerticalBlankCount & 7)) && !(G0313_ul_GameTime & 3)) {\nCOMMAND.C:1540:                     L2288_i_ = L1109_i_Command;\nCOMMAND.C:1541:                     L1109_i_Command = F1063_ChecksumEor_CPSX(*((long*)((char*)F1053_Pre_F0380_COMMAND_ProcessQueue_CPSC + 2)), *((long*)((char*)F1055_Post_F0380_COMMAND_ProcessQueue_CPSC + 2)));\nCOMMAND.C:1542:                     asm {\nCOMMAND.C:1543:                         @Tloc_1EA3E:\nCOMMAND.C:1544: #ifdef MEDIA619_A31E_A31M\nCOMMAND.C:1545:                                 move.w  -4(a6),d1       /* Fake useless code start */\nCOMMAND.C:1546:                                 cmpi.w  #CHECKSUM_B,d1      /* Actual expected checksum value */\nCOMMAND.C:1547:                                 bcc.s   @Tloc_1EA4C\nCOMMAND.C:1548:                                 moveq   #1,d0\nCOMMAND.C:1549:                                 bra.s   @Tloc_1EA4E\nCOMMAND.C:1550:                         @Tloc_1EA4C:\nCOMMAND.C:1551:                                 moveq   #0,d0\nCOMMAND.C:1552:                         @Tloc_1EA4E:\nCOMMAND.C:1553:                                 move.w  -10(a6),d1\nCOMMAND.C:1554:                                 cmp.w   d0,d1\nCOMMAND.C:1555:                                 bcc.s   @Tloc_1EA5A\nCOMMAND.C:1556:                                 moveq   #1,d0\nCOMMAND.C:1557:                                 bra.s   @Tloc_1EA5C\nCOMMAND.C:1558:                         @Tloc_1EA5A:\nCOMMAND.C:1559:                                 moveq   #0,d0\nCOMMAND.C:1560: #endif\nCOMMAND.C:1561: #ifdef MEDIA665_A33M\nCOMMAND.C:1562:                                 move.w  10(a6),d0\nCOMMAND.C:1563:                                 move.w  #CHECKSUM_B,d1\nCOMMAND.C:1564:                                 bra.s   @Tloc_1EA4C\nCOMMAND.C:1565:                                 asl.w   #1,d0\nCOMMAND.C:1566:                                 add.w   d0,d1\nCOMMAND.C:1567:                                 bra.s   @Tloc_1EA4E\nCOMMAND.C:1568:                         @Tloc_1EA4C:\nCOMMAND.C:1569:                                 moveq   #0,d0\nCOMMAND.C:1570:                         @Tloc_1EA4E:\nCOMMAND.C:1571:                                 cmp.w   d0,d1\nCOMMAND.C:1572:                                 bcc.s   @Tloc_1EA5C\nCOMMAND.C:1573:                                 move.w  -2(a6),d1\nCOMMAND.C:1574:                                 add.w   d0,d1\nCOMMAND.C:1575:                                 asl.w   #1,d1\nCOMMAND.C:1576: #endif\nCOMMAND.C:1577: #ifdef MEDIA739_A35E\nCOMMAND.C:1578:                                 move.w  #200,d1\nCOMMAND.C:1579:                                 move.w  #CHECKSUM_B,d1\nCOMMAND.C:1580:                                 add.w   -4(a6),d1\nCOMMAND.C:1581:                                 beq.s   @Tloc_1F59C\nCOMMAND.C:1582:                                 move.w  -10(a6),d1\nCOMMAND.C:1583:                                 cmp.w   d0,d1\nCOMMAND.C:1584:                                 beq.s   @Tloc_1F59C\nCOMMAND.C:1585:                                 move.w  #0xFFFF,d0\nCOMMAND.C:1586:                                 bra.s   @Tloc_1EA5C\nCOMMAND.C:1587:                         @Tloc_1F59C:\nCOMMAND.C:1588:                                 asl.w   #1,d0\nCOMMAND.C:1589: #endif\nCOMMAND.C:1590: #ifdef MEDIA742_A35M\nCOMMAND.C:1591:                                 tst.w   d0\nCOMMAND.C:1592:                                 bne.s   @Tloc_1F98E\nCOMMAND.C:1593:                                 move.w  #CHECKSUM_B,d0\nCOMMAND.C:1594:                                 bra.s   @Tloc_1F994\nCOMMAND.C:1595:                         @Tloc_1F98E:\nCOMMAND.C:1596:                                 move.w  #0x13F,d0\nCOMMAND.C:1597:                                 bra.s   @Tloc_1F996\nCOMMAND.C:1598:                         @Tloc_1F994:\nCOMMAND.C:1599:                                 moveq   #0,d0\nCOMMAND.C:1600:                         @Tloc_1F996:\nCOMMAND.C:1601:                                 move.w  #0x96,d1\nCOMMAND.C:1602:                                 cmp.w   d0,d1\nCOMMAND.C:1603:                                 bcc.s   @Tloc_1EA5C\nCOMMAND.C:1604:                                 move.w  d0,d1\nCOMMAND.C:1605:                                 asl.w   #1,d1\nCOMMAND.C:1606: #endif\nCOMMAND.C:1607:                         @Tloc_1EA5C:                     /* Fake useless code end */\nCOMMAND.C:1608:                                 lea     @Tloc_1EA3E,a0   /* Actual checksum value test */\nCOMMAND.C:1609:                                 move.w  d3,d0\nCOMMAND.C:1610:                                 cmp.w   6(a0),d0\nCOMMAND.C:1611:                                 beq.s   @Tloc_1EA6E\nCOMMAND.C:1612:                                 move.w  #1,d3\nCOMMAND.C:1613:                                 bra.s   @Tloc_1EA72\nCOMMAND.C:1614:                         @Tloc_1EA6E:\nCOMMAND.C:1615:                                 move.w  #0,d3\nCOMMAND.C:1616:                         @Tloc_1EA72:\nCOMMAND.C:1617:                     }\nCOMMAND.C:1618:                     if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && L1109_i_Command) {\nCOMMAND.C:1619:                             G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\nCOMMAND.C:1620:                     }\nCOMMAND.C:1621:                     L1109_i_Command = L2288_i_;\nCOMMAND.C:1622:                 }\nCOMMAND.C:1623: #endif\nCOMMAND.C:1624: #endif\nCOMMAND.C:1625: #ifdef MEDIA512_F20E_F20J_X30J_P20JA_P20JB_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCOMMAND.C:1626:         } else {\nCOMMAND.C:1627: #endif\nCOMMAND.C:1628: #ifdef MEDIA716_I34E_I34M_A36M\nCOMMAND.C:1629:         if (G2153_i_QueuedCommandsCount < L2287_i_MaximumRegularCommandsInQueue) {\nCOMMAND.C:1630: #endif\nCOMMAND.C:1631: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCOMMAND.C:1632:                 if (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION) {\nCOMMAND.C:1633:                         L1109_i_Command = C129_COMMAND_RELEASE_CHAMPION_ICON;\nCOMMAND.C:1634:                 } else {\nCOMMAND.C:1635: #endif\nCOMMAND.C:1636: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:1637:                         if (P0727_i_ButtonsStatus == C04_MOUSE_EVENT_LEFT_BUTTON_UP) {\nCOMMAND.C:1638:                                 L1109_i_Command = C254_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL;\nCOMMAND.C:1639:                         } else {\nCOMMAND.C:1640: #endif\nCOMMAND.C:1641:                                 L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0441_ps_PrimaryMouseInput, P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus);\nCOMMAND.C:1642:                                 if (L1109_i_Command == C000_COMMAND_NONE) {\nCOMMAND.C:1643:                                         L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0442_ps_SecondaryMouseInput, P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus);\nCOMMAND.C:1644:                                 }\nCOMMAND.C:1645: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:1646:                         }\nCOMMAND.C:1647: #endif\nCOMMAND.C:1648: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCOMMAND.C:1649:                 }\nCOMMAND.C:1650: #endif\nCOMMAND.C:1651:                 if (L1109_i_Command != C000_COMMAND_NONE) {\nCOMMAND.C:1652: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:1653:                         G2153_i_QueuedCommandsCount++;\nCOMMAND.C:1654: #endif\nCOMMAND.C:1655:                         if (!L1108_i_CommandQueueIndex--) {\nCOMMAND.C:1656:                                 L1108_i_CommandQueueIndex = M529_COMMAND_QUEUE_SIZE;\nCOMMAND.C:1657:                         }\nCOMMAND.C:1658:                         G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command;\nCOMMAND.C:1659:                         G0432_as_CommandQueue[L1108_i_CommandQueueIndex].X = P0725_i_X;\nCOMMAND.C:1660:                         G0432_as_CommandQueue[L1108_i_CommandQueueIndex].Y = P0726_i_Y;\nCOMMAND.C:1661:                 }\nCOMMAND.C:1662:                 G0435_B_CommandQueueLocked = C0_FALSE;",
+      "validated": true,
+      "missing": []
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2127, 2322-2324",
+      "point": "F0380 dequeues command/X/Y from G0432_as_CommandQueue, unlocks/processes pending clicks, then dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+      "must_contain": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "L1160_i_Command = G0432_as_CommandQueue",
+        "L1161_i_CommandX",
+        "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+      ],
+      "excerpt": "COMMAND.C:2045: void F0380_COMMAND_ProcessQueue_CPSC(\nCOMMAND.C:2046: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCOMMAND.C:2047: void\nCOMMAND.C:2048: #endif\nCOMMAND.C:2049: )\nCOMMAND.C:2050: {\nCOMMAND.C:2051: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCOMMAND.C:2052:         REGISTER int16_t L1160_i_Command;\nCOMMAND.C:2053: #endif\nCOMMAND.C:2054: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCOMMAND.C:2055:         REGISTER char* L1163_pc_Unreferenced; /* BUG0_00 Useless code */\nCOMMAND.C:2056: #endif\nCOMMAND.C:2057:         REGISTER int16_t L1159_i_Multiple;\nCOMMAND.C:2058: #define AL1159_i_CommandQueueIndex L1159_i_Multiple\nCOMMAND.C:2059: #define AL1159_i_ChampionIndex     L1159_i_Multiple\nCOMMAND.C:2060: #define AL1159_i_Checksum          L1159_i_Multiple\nCOMMAND.C:2061: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCOMMAND.C:2062:         REGISTER int16_t L1160_i_Command;\nCOMMAND.C:2063: #endif\nCOMMAND.C:2064:         REGISTER int16_t L1161_i_CommandX;\nCOMMAND.C:2065:         REGISTER int16_t L1162_i_CommandY;\nCOMMAND.C:2066:         static KEYBOARD_INPUT* G0481_ps_PrimaryKeyboardInputBackup;\nCOMMAND.C:2067:         static KEYBOARD_INPUT* G0482_ps_SecondaryKeyboardInputBackup;\nCOMMAND.C:2068:         static MOUSE_INPUT* G0483_ps_PrimaryMouseInputBackup;\nCOMMAND.C:2069:         static MOUSE_INPUT* G0484_ps_SecondaryMouseInputBackup;\nCOMMAND.C:2070: \nCOMMAND.C:2071: \nCOMMAND.C:2072: #ifdef MEDIA351_G14ED_G20E_G21E\nCOMMAND.C:2073:         F2155_();\nCOMMAND.C:2074: #endif\nCOMMAND.C:2075:         G0435_B_CommandQueueLocked = C1_TRUE;\nCOMMAND.C:2076:         if ((AL1159_i_CommandQueueIndex = G0434_i_CommandQueueLastIndex + 1) > M529_COMMAND_QUEUE_SIZE) {\nCOMMAND.C:2077:                 AL1159_i_CommandQueueIndex = 0;\nCOMMAND.C:2078:         }\nCOMMAND.C:2079: #ifdef MEDIA070_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_X31J_P31J\nCOMMAND.C:2080: #ifdef MEDIA066_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_X30J_P20JA_P20JB_A31E_A31M_A33M_X31J_P31J\nCOMMAND.C:2081:         if (AL1159_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is empty */\nCOMMAND.C:2082: #endif\nCOMMAND.C:2083: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:2084:         if (G2153_i_QueuedCommandsCount == 0) {\nCOMMAND.C:2085: #endif\nCOMMAND.C:2086: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCOMMAND.C:2087:                 G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2088:                 F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2089:                 goto T0380042;\nCOMMAND.C:2090: #endif\nCOMMAND.C:2091: #ifdef MEDIA595_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_X31J_P31J\nCOMMAND.C:2092:                 goto T0380xxx; /* This is possibly a compiler optimization */\nCOMMAND.C:2093: #endif\nCOMMAND.C:2094:         }\nCOMMAND.C:2095:         L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;\nCOMMAND.C:2096:         if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && (G0312_i_LastProjectileDisabledMovementDirection == (M021_NORMALIZE(G0308_i_PartyDirection + L1160_i_Command - C003_COMMAND_MOVE_FORWARD)))))) { /* If movement is disabled */\nCOMMAND.C:2097:                 T0380xxx:\nCOMMAND.C:2098:                 G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2099:                 F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2100:                 goto T0380042;\nCOMMAND.C:2101:         }\nCOMMAND.C:2102: #endif\nCOMMAND.C:2103: #ifdef MEDIA551_F20E_F20J_F31E_F31J\nCOMMAND.C:2104:         if (AL1159_i_CommandQueueIndex != G0433_i_CommandQueueFirstIndex) { /* If the command queue is empty */\nCOMMAND.C:2105:                 L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;\nCOMMAND.C:2106:                 if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && (G0312_i_LastProjectileDisabledMovementDirection == (M021_NORMALIZE(G0308_i_PartyDirection + L1160_i_Command - C003_COMMAND_MOVE_FORWARD)))))) { /* If movement is disabled */\nCOMMAND.C:2107:                         G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2108:                         F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2109:                         goto T0380042;\nCOMMAND.C:2110:                 }\nCOMMAND.C:2111:         } else {\nCOMMAND.C:2112:                 T0380xxx:\nCOMMAND.C:2113:                 G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2114:                 F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2115:                 goto T0380042;\nCOMMAND.C:2116:         }\nCOMMAND.C:2117: #endif\nCOMMAND.C:2118:         L1161_i_CommandX = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].X;\nCOMMAND.C:2119:         L1162_i_CommandY = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Y;\nCOMMAND.C:2120: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:2121:         G2153_i_QueuedCommandsCount--;\nCOMMAND.C:2122: #endif\nCOMMAND.C:2123:         if (++G0433_i_CommandQueueFirstIndex > M529_COMMAND_QUEUE_SIZE) {\nCOMMAND.C:2124:                 G0433_i_CommandQueueFirstIndex = 0;\nCOMMAND.C:2125:         }\nCOMMAND.C:2126:         G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2127:         F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2322:         if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {\nCOMMAND.C:2323:                 F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);\nCOMMAND.C:2324:                 goto T0380042;",
+      "validated": true,
+      "missing": []
+    },
+    {
+      "file": "ENTRANCE.C",
+      "lines": "850-883",
+      "point": "F0441_STARTEND_ProcessEntrance discards input, waits on C099_MODE_WAITING_ON_ENTRANCE, processes keys, and calls F0380 each loop before loading the dungeon.",
+      "must_contain": [
+        "F0357_COMMAND_DiscardAllInput",
+        "G0298_B_NewGame = C099_MODE_WAITING_ON_ENTRANCE",
+        "F0380_COMMAND_ProcessQueue_CPSC"
+      ],
+      "excerpt": "ENTRANCE.C:850:         do {\nENTRANCE.C:851:                 F0439_STARTEND_DrawEntrance();\nENTRANCE.C:852:                 M523_MOUSE_ShowPointer();\nENTRANCE.C:853: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nENTRANCE.C:854:                 F0078_MOUSE_DisableScreenUpdate();\nENTRANCE.C:855: #endif\nENTRANCE.C:856:                 F0357_COMMAND_DiscardAllInput();\nENTRANCE.C:857:                 G0298_B_NewGame = C099_MODE_WAITING_ON_ENTRANCE;\nENTRANCE.C:858:                 do {\nENTRANCE.C:859: #ifdef MEDIA020_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB\nENTRANCE.C:860:                         M526_WaitVerticalBlank();\nENTRANCE.C:861: #endif\nENTRANCE.C:862: #ifdef MEDIA489_F20E_F20J_P20JA_P20JB\nENTRANCE.C:863:                         if (F0539_INPUT_Cconis()) {\nENTRANCE.C:864: #endif\nENTRANCE.C:865: #ifdef MEDIA458_P20JA_P20JB\nENTRANCE.C:866:                                 if (F0540_INPUT_Crawcin() == 0x1C) { /* Carriage return key */\nENTRANCE.C:867: #endif\nENTRANCE.C:868: #ifdef MEDIA488_F20E_F20J\nENTRANCE.C:869:                                 if (F0540_INPUT_Crawcin() == 0x1D) { /* Carriage return key */\nENTRANCE.C:870: #endif\nENTRANCE.C:871: #ifdef MEDIA489_F20E_F20J_P20JA_P20JB\nENTRANCE.C:872:                                         G0298_B_NewGame = C001_MODE_LOAD_DUNGEON;\nENTRANCE.C:873:                                 }\nENTRANCE.C:874:                         }\nENTRANCE.C:875: #endif\nENTRANCE.C:876: #ifdef MEDIA755_A36M_A31M_A33M_A35E_A35M\nENTRANCE.C:877:                         while (F0539_INPUT_Cconis()) {\nENTRANCE.C:878:                                 F0361_COMMAND_ProcessKeyPress(F0540_INPUT_Crawcin());\nENTRANCE.C:879:                         }\nENTRANCE.C:880: #endif\nENTRANCE.C:881:                         F0380_COMMAND_ProcessQueue_CPSC();\nENTRANCE.C:882:                 } while (G0298_B_NewGame == C099_MODE_WAITING_ON_ENTRANCE);\nENTRANCE.C:883:         } while (G0298_B_NewGame == M567_COMMAND_ENTRANCE_DRAW_CREDITS);",
+      "validated": true,
+      "missing": []
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "lines": "311, 347-349, 405-431",
+      "point": "F0377 is the C080 handler; PC builds subtract the viewport origin, then empty-hand C05 wall-ornament hits call F0372 to touch the front-wall sensor.",
+      "must_contain": [
+        "void F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "P0752_i_X -= G2067_i_ViewportScreenX",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
+      ],
+      "excerpt": "CLIKVIEW.C:311: void F0377_COMMAND_ProcessType80_ClickInDungeonView(\nCLIKVIEW.C:347: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCLIKVIEW.C:348:         P0752_i_X -= G2067_i_ViewportScreenX;\nCLIKVIEW.C:349:         P0753_i_Y -= G2068_i_ViewportScreenY;\nCLIKVIEW.C:405: #endif\nCLIKVIEW.C:406:         if (G0415_ui_LeaderEmptyHanded) {\nCLIKVIEW.C:407:                 for (AL1150_ui_ViewCell = C00_VIEW_CELL_FRONT_LEFT; AL1150_ui_ViewCell < C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT + 1; AL1150_ui_ViewCell++) {\nCLIKVIEW.C:408: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCLIKVIEW.C:409:                         if (F0376_COMMAND_IsPointInBox(G0291_aauc_DungeonViewClickableBoxes[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y - 33)) {\nCLIKVIEW.C:410: #endif\nCLIKVIEW.C:411: #ifdef MEDIA508_F20E_F20J_X30J_P20JA_P20JB\nCLIKVIEW.C:412:                         if (F0376_COMMAND_IsPointInBox(G2210_aai_XYZ_DungeonViewClickable[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y)) {\nCLIKVIEW.C:413: #endif\nCLIKVIEW.C:414: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCLIKVIEW.C:415:                         if (F0798_COMMAND_IsPointInZone(G2210_aai_XYZ_DungeonViewClickable[AL1150_ui_ViewCell], P0752_i_X, P0753_i_Y)) {\nCLIKVIEW.C:416: #endif\nCLIKVIEW.C:417:                                 if (AL1150_ui_ViewCell == C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT) {\nCLIKVIEW.C:418: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCLIKVIEW.C:419:                                         if (G0288_B_FacingFountain && (G0411_i_LeaderIndex != CM1_CHAMPION_NONE)) {\nCLIKVIEW.C:420:                                                 M516_CHAMPIONS[G0411_i_LeaderIndex].Water = 2048;\nCLIKVIEW.C:421:                                                 F0064_SOUND_RequestPlay_CPSD(C08_SOUND_SWALLOW, G0306_i_PartyMapX, G0307_i_PartyMapY, C00_MODE_PLAY_IMMEDIATELY);\nCLIKVIEW.C:422:                                         }\nCLIKVIEW.C:423: #endif\nCLIKVIEW.C:424:                                         if (!G0286_B_FacingAlcove) {\nCLIKVIEW.C:425: #ifdef PC_FIX_CODE_SIZE\nCLIKVIEW.C:426:         L1150_ui_Multiple++;\nCLIKVIEW.C:427:         L1150_ui_Multiple++;\nCLIKVIEW.C:428:         L1150_ui_Multiple++;\nCLIKVIEW.C:429:         L1150_ui_Multiple++;\nCLIKVIEW.C:430: #endif\nCLIKVIEW.C:431:                                                 F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();",
+      "validated": true,
+      "missing": []
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "1392, 1501-1502",
+      "point": "A no-leader party may still trigger C127_SENSOR_WALL_CHAMPION_PORTRAIT; that case calls F0280_CHAMPION_AddCandidateChampionToParty.",
+      "must_contain": [
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty"
+      ],
+      "excerpt": "MOVESENS.C:1392:                         if ((G0411_i_LeaderIndex == CM1_CHAMPION_NONE) && (L0757_ui_SensorType != C127_SENSOR_WALL_CHAMPION_PORTRAIT))\nMOVESENS.C:1501:                                 case C127_SENSOR_WALL_CHAMPION_PORTRAIT:\nMOVESENS.C:1502:                                         F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);",
+      "validated": true,
+      "missing": []
+    },
+    {
+      "file": "REVIVE.C",
+      "lines": "63-150",
+      "point": "F0280_CHAMPION_AddCandidateChampionToParty is the semantic transition: it requires an empty hand and party count <4, then consumes G0305_ui_PartyChampionCount to build the candidate champion.",
+      "must_contain": [
+        "void F0280_CHAMPION_AddCandidateChampionToParty",
+        "if (!G0415_ui_LeaderEmptyHanded)",
+        "G0305_ui_PartyChampionCount"
+      ],
+      "excerpt": "REVIVE.C:63: void F0280_CHAMPION_AddCandidateChampionToParty(\nREVIVE.C:64: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nREVIVE.C:65: P0596_ui_ChampionPortraitIndex)\nREVIVE.C:66: #endif\nREVIVE.C:67: unsigned int16_t P0596_ui_ChampionPortraitIndex FINAL_SEPARATOR\nREVIVE.C:68: {\nREVIVE.C:69:         REGISTER CHAMPION* L0797_ps_Champion;\nREVIVE.C:70:         REGISTER char* L0798_pc_Character;\nREVIVE.C:71: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nREVIVE.C:72:         REGISTER THING L0793_T_Thing;\nREVIVE.C:73: #endif\nREVIVE.C:74:         REGISTER unsigned int16_t L0794_ui_Multiple;\nREVIVE.C:75: #define AL0794_ui_ViewCell       L0794_ui_Multiple\nREVIVE.C:76: #define AL0794_ui_SlotIndex      L0794_ui_Multiple\nREVIVE.C:77: #define AL0794_ui_CharacterIndex L0794_ui_Multiple\nREVIVE.C:78: #define AL0794_ui_StatisticIndex L0794_ui_Multiple\nREVIVE.C:79: #define AL0794_ui_SkillIndex     L0794_ui_Multiple\nREVIVE.C:80: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nREVIVE.C:81:         REGISTER int16_t L0795_i_HiddenSkillIndex;\nREVIVE.C:82: #define AL0796_i_HiddenSkillIndex L0795_i_HiddenSkillIndex\nREVIVE.C:83: #endif\nREVIVE.C:84:         REGISTER unsigned int16_t L0796_ui_Multiple;\nREVIVE.C:85: #define AL0796_ui_Character       L0796_ui_Multiple\nREVIVE.C:86: #define AL0796_ui_SkillValue      L0796_ui_Multiple\nREVIVE.C:87: #define AL0796_ui_ThingType       L0796_ui_Multiple\nREVIVE.C:88: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nREVIVE.C:89:         unsigned int16_t L0799_ui_PreviousPartyChampionCount;\nREVIVE.C:90:         unsigned int16_t L0800_ui_Multiple; /* Merged with L0801_ui_Multiple in later versions */\nREVIVE.C:91: #define AL9999_B_SecondPartOfChampionTitleCopied L0800_ui_Multiple\nREVIVE.C:92: #define AL9999_ui_HiddenSkillCounter             L0800_ui_Multiple\nREVIVE.C:93:         unsigned int16_t L0801_ui_Multiple;\nREVIVE.C:94: #endif\nREVIVE.C:95: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nREVIVE.C:96: #define AL0796_i_HiddenSkillIndex L0796_ui_Multiple\nREVIVE.C:97:         REGISTER THING L0793_T_Thing;\nREVIVE.C:98:         REGISTER unsigned int16_t L0801_ui_Multiple;\nREVIVE.C:99:         REGISTER unsigned int16_t L0799_ui_PreviousPartyChampionCount;\nREVIVE.C:100:         long L0806_l_BaseSkillExperience;\nREVIVE.C:101: #define AL9999_B_SecondPartOfChampionTitleCopied L0801_ui_Multiple\nREVIVE.C:102: #define AL9999_ui_HiddenSkillCounter             L0801_ui_Multiple\nREVIVE.C:103: #endif\nREVIVE.C:104: #define AL0801_ui_SlotIndex                      L0801_ui_Multiple\nREVIVE.C:105:         int16_t L0802_i_MapX;\nREVIVE.C:106:         int16_t L0803_i_MapY;\nREVIVE.C:107:         unsigned int16_t L0804_ui_ChampionObjectsCell;\nREVIVE.C:108:         int16_t L0805_i_ObjectAllowedSlots;\nREVIVE.C:109: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nREVIVE.C:110:         long L0806_l_BaseSkillExperience;\nREVIVE.C:111:         char L0807_ac_DecodedChampionText[77];\nREVIVE.C:112: #endif\nREVIVE.C:113: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nREVIVE.C:114:         char L0807_ac_DecodedChampionText[78];\nREVIVE.C:115: #endif\nREVIVE.C:116: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nREVIVE.C:117:         unsigned char* L1639_puc_Bitmap_Portrait_ChipMemory;\nREVIVE.C:118: #endif\nREVIVE.C:119: #ifdef MEDIA508_F20E_F20J_X30J_P20JA_P20JB\nREVIVE.C:120:         int16_t L2262_ai_XYZ[4];\nREVIVE.C:121: #endif\nREVIVE.C:122: \nREVIVE.C:123: \nREVIVE.C:124:         if (!G0415_ui_LeaderEmptyHanded)\nREVIVE.C:125:                 return;\nREVIVE.C:126: #ifdef MEDIA020_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB\nREVIVE.C:127:         if (G0305_ui_PartyChampionCount == 4)\nREVIVE.C:128: #endif\nREVIVE.C:129: #ifdef MEDIA720_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nREVIVE.C:130:         if (G0305_ui_PartyChampionCount >= 4)\nREVIVE.C:131: #endif\nREVIVE.C:132:                 return;\nREVIVE.C:133:         L0797_ps_Champion = &M516_CHAMPIONS[L0799_ui_PreviousPartyChampionCount = G0305_ui_PartyChampionCount];\nREVIVE.C:134: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nREVIVE.C:135:         L0798_pc_Character = M772_CAST_PC(L0797_ps_Champion->Portrait); /* Backup portrait address so it is not erased (versions where portrait is not part of the CHAMPION structure) */\nREVIVE.C:136: #endif\nREVIVE.C:137:         F0008_MAIN_ClearBytes(M772_CAST_PC(L0797_ps_Champion), M543_BYTE_COUNT_INT(sizeof(CHAMPION)));\nREVIVE.C:138: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nREVIVE.C:139:         L0797_ps_Champion->Portrait = M772_CAST_PC(L0798_pc_Character); /* Restore portrait address */\nREVIVE.C:140: #endif\nREVIVE.C:141: #ifdef MEDIA008_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E\nREVIVE.C:142:         G0578_B_UseByteBoxCoordinates = C1_TRUE, F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), L0797_ps_Champion->Portrait, G0047_auc_Graphic562_Box_ChampionPortrait, M027_PORTRAIT_X(P0596_ui_ChampionPortraitIndex), M028_PORTRAIT_Y(P0596_ui_ChampionPortraitIndex), C128_BYTE_WIDTH, C016_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY);\nREVIVE.C:143: #endif\nREVIVE.C:144: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nREVIVE.C:145:         L1639_puc_Bitmap_Portrait_ChipMemory = F0468_MEMORY_Allocate((long)M075_BITMAP_BYTE_COUNT(32, 29), C0_ALLOCATION_TEMPORARY_ON_TOP_OF_HEAP);\nREVIVE.C:146:         G0578_B_UseByteBoxCoordinates = C1_TRUE, F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), L1639_puc_Bitmap_Portrait_ChipMemory, G0047_auc_Graphic562_Box_ChampionPortrait, M027_PORTRAIT_X(P0596_ui_ChampionPortraitIndex), M028_PORTRAIT_Y(P0596_ui_ChampionPortraitIndex), 128, 16, CM1_COLOR_NO_TRANSPARENCY, 87, 29);\nREVIVE.C:147:         WaitBlit();\nREVIVE.C:148:         F0007_MAIN_CopyBytes(L1639_puc_Bitmap_Portrait_ChipMemory, L0797_ps_Champion->Portrait, sizeof(L0797_ps_Champion->Portrait));\nREVIVE.C:149:         F0469_MEMORY_FreeAtHeapTop((long)M075_BITMAP_BYTE_COUNT(32, 29));\nREVIVE.C:150: #endif",
+      "validated": true,
+      "missing": []
+    }
+  ],
+  "pass162": {
+    "available": true,
+    "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass162_original_party_route_unblock/manifest.json",
+    "buckets": {
+      "blocked/portrait-c080-no-visible-delta": 2
+    },
+    "focused_runs": [
+      {
+        "name": "source_gated_portrait_then_resurrect",
+        "classification": "blocked/portrait-c080-no-visible-delta",
+        "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280",
+        "portrait_click_delta": [
+          {
+            "from": "after_gameplay_gate",
+            "to": "click_111_82_4",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "click_111_82_4",
+            "to": "after_source_portrait_111_82",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "choice_delta": [
+          {
+            "from": "after_source_portrait_111_82",
+            "to": "click_130_115_6",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "click_130_115_6",
+            "to": "after_source_c160_resurrect",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "input_delivery_probe": {
+          "clicks": [
+            "click 111,82 mapped 223,165 window=640x400",
+            "click 130,115 mapped 261,231 window=640x400"
+          ],
+          "keys": [
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Up",
+            "key Right",
+            "key F1",
+            "key F4"
+          ],
+          "windows": [
+            "window-found 4194321 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox"
+          ],
+          "xdotool_probes": [
+            "xdotool-probe before-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-111-82 getmouselocation --shell rc=0 X=640;Y=512;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-111-82 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-click-130-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-130-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-130-115 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-130-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-130-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-130-115 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Return getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Return getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Up getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Up getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Right getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Right getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F1 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F1 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F4 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F4 getmouselocation --shell rc=0 X=581;Y=543;SCREEN=0;WINDOW=4194330"
+          ],
+          "source_queue_path": {
+            "queue_storage": "COMMAND.C:1-14 defines G0432_as_CommandQueue plus first/last indices and pending click fields.",
+            "viewport_to_c080": "COMMAND.C:108-114 and 397-403 map screen/zone C007 viewport left-clicks to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+            "mouse_enqueue": "COMMAND.C:1465-1662 has F0365 derive L1109_i_Command from mouse input and enqueue nonzero commands with X/Y into G0432_as_CommandQueue.",
+            "dequeue_dispatch": "COMMAND.C:2045-2126 dequeues L1160/L1161/L1162; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+            "front_wall_to_f0280": "CLIKVIEW.C:348-349 subtracts viewport origin; CLIKVIEW.C:407-431 touches the front wall sensor; MOVESENS.C:1392 and 1501-1502 permit C127 with no leader and call F0280."
+          }
+        },
+        "unique_hashes": [
+          "48ed3743ab6a",
+          "ceb0c2eec633"
+        ]
+      },
+      {
+        "name": "source_gated_portrait_then_reincarnate",
+        "classification": "blocked/portrait-c080-no-visible-delta",
+        "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280",
+        "portrait_click_delta": [
+          {
+            "from": "after_gameplay_gate",
+            "to": "click_111_82_4",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "click_111_82_4",
+            "to": "after_source_portrait_111_82",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "choice_delta": [
+          {
+            "from": "after_source_portrait_111_82",
+            "to": "click_186_115_6",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          },
+          {
+            "from": "click_186_115_6",
+            "to": "after_source_c161_reincarnate",
+            "bbox": null,
+            "changed_pixels": 0,
+            "changed_ratio": 0.0
+          }
+        ],
+        "input_delivery_probe": {
+          "clicks": [
+            "click 111,82 mapped 223,165 window=640x400",
+            "click 186,115 mapped 373,231 window=640x400"
+          ],
+          "keys": [
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Return",
+            "key Up",
+            "key Right",
+            "key F1",
+            "key F4"
+          ],
+          "windows": [
+            "window-found 4194321 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox",
+            "window-found 4194330 via search --class DOSBox"
+          ],
+          "xdotool_probes": [
+            "xdotool-probe before-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-111-82 getmouselocation --shell rc=0 X=640;Y=512;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-111-82 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-111-82 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-111-82 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-click-186-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-click-186-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-click-186-115 getmouselocation --shell rc=0 X=543;Y=477;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-click-186-115 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-click-186-115 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-click-186-115 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Return getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Return getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Return getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Return getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Up getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Up getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Up getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Up getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-Right getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-Right getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-Right getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-Right getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F1 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F1 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F1 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F1 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe before-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe before-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe before-key-F4 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330",
+            "xdotool-probe after-key-F4 getwindowgeometry --shell 4194330 rc=0 WINDOW=4194330;X=320;Y=312;WIDTH=640;HEIGHT=400;SCREEN=0",
+            "xdotool-probe after-key-F4 getwindowfocus rc=0 4194330",
+            "xdotool-probe after-key-F4 getmouselocation --shell rc=0 X=693;Y=543;SCREEN=0;WINDOW=4194330"
+          ],
+          "source_queue_path": {
+            "queue_storage": "COMMAND.C:1-14 defines G0432_as_CommandQueue plus first/last indices and pending click fields.",
+            "viewport_to_c080": "COMMAND.C:108-114 and 397-403 map screen/zone C007 viewport left-clicks to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+            "mouse_enqueue": "COMMAND.C:1465-1662 has F0365 derive L1109_i_Command from mouse input and enqueue nonzero commands with X/Y into G0432_as_CommandQueue.",
+            "dequeue_dispatch": "COMMAND.C:2045-2126 dequeues L1160/L1161/L1162; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+            "front_wall_to_f0280": "CLIKVIEW.C:348-349 subtracts viewport origin; CLIKVIEW.C:407-431 touches the front wall sensor; MOVESENS.C:1392 and 1501-1502 permit C127 with no leader and call F0280."
+          }
+        },
+        "unique_hashes": [
+          "48ed3743ab6a",
+          "ceb0c2eec633"
+        ]
+      }
+    ]
+  },
+  "debugger": {
+    "classification": "stock-dosbox-no-debugger",
+    "bins": {
+      "dosbox-debug": null,
+      "dosbox-x": null,
+      "dosbox-staging": null
+    },
+    "dosbox_version": {
+      "argv": [
+        "dosbox",
+        "-version"
+      ],
+      "returncode": 0,
+      "output": "DOSBox version 0.74-3, copyright 2002-2019 DOSBox Team.\n\nDOSBox is written by the DOSBox Team (See AUTHORS file))\nDOSBox comes with ABSOLUTELY NO WARRANTY.  This is free software,\nand you are welcome to redistribute it under certain conditions;\nplease read the COPYING file thoroughly before doing so."
+    }
+  },
+  "breakpoints": [
+    {
+      "name": "mouse interrupt / enqueue candidate",
+      "symbol": "F0365_COMMAND_ProcessClick_CPSC",
+      "source": "COMMAND.C:1458-1662",
+      "condition": "after click x=111,y=82, expect L1109_i_Command == C080 and queue write into G0432_as_CommandQueue with X=111,Y=82 (screen-relative PC coordinates).",
+      "logs": [
+        "P0725_i_X",
+        "P0726_i_Y",
+        "P0727_i_ButtonsStatus",
+        "L1109_i_Command",
+        "G0433_i_CommandQueueFirstIndex",
+        "G0434_i_CommandQueueLastIndex"
+      ]
+    },
+    {
+      "name": "queue dequeue",
+      "symbol": "F0380_COMMAND_ProcessQueue_CPSC",
+      "source": "COMMAND.C:2045-2127",
+      "condition": "break before/after L1160/L1161/L1162 are read; expect L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW and L1161/L1162 == 111/82.",
+      "logs": [
+        "G0432_as_CommandQueue",
+        "G0433_i_CommandQueueFirstIndex",
+        "G0434_i_CommandQueueLastIndex",
+        "L1160_i_Command",
+        "L1161_i_CommandX",
+        "L1162_i_CommandY"
+      ]
+    },
+    {
+      "name": "C080 dispatch",
+      "symbol": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+      "source": "COMMAND.C:2322-2324 + CLIKVIEW.C:311-431",
+      "condition": "break on function entry; PC-normalized viewport point should become x=111-G2067, y=82-G2068 and hit C05 front-wall ornament/portrait box.",
+      "logs": [
+        "P0752_i_X",
+        "P0753_i_Y",
+        "G2067_i_ViewportScreenX",
+        "G2068_i_ViewportScreenY",
+        "AL1150_ui_ViewCell"
+      ]
+    },
+    {
+      "name": "front-wall portrait sensor",
+      "symbol": "F0280_CHAMPION_AddCandidateChampionToParty",
+      "source": "MOVESENS.C:1501-1502 + REVIVE.C:63-150",
+      "condition": "break on F0280; expect P0596_ui_ChampionPortraitIndex/sensorData == 10 and G0305_ui_PartyChampionCount to advance after candidate setup.",
+      "logs": [
+        "P0596_ui_ChampionPortraitIndex",
+        "G0415_ui_LeaderEmptyHanded",
+        "G0305_ui_PartyChampionCount",
+        "G0299_ui_CandidateChampionOrdinal"
+      ]
+    }
+  ],
+  "non_goals": [
+    "do not try more portrait coordinates",
+    "do not push",
+    "do not treat visual dungeon_gameplay hash as party/control readiness"
+  ]
+}
