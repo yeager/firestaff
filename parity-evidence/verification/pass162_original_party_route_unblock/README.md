@@ -2,7 +2,7 @@
 
 Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
-- run base: `<N2_RUNS>/20260429-042959-pass162-original-party-route-unblock`
+- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-041703-pass162-original-party-route-unblock`
 - evidence root: `parity-evidence/verification/pass162_original_party_route_unblock`
 - completed: 3
 - errors: 0
@@ -17,9 +17,9 @@ Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
 ## Result matrix
 
-- `pm_f1_panel_clicks_route_recheck` `DM -vv -sn -pm`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 17bd7e878157, 2456e272bbda, 2edc8130117c, 48ed3743ab6a, ceb0c2eec633, e8a02e3f9758 — `parity-evidence/verification/pass162_original_party_route_unblock/pm_f1_panel_clicks_route_recheck`
-- `source_enter_zone_then_candidate_buttons` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 17bd7e878157, 28ac2881600f, 307323fbc1f7, 48ed3743ab6a, a914971a8a47, ceb0c2eec633, f3aae170c687 — `parity-evidence/verification/pass162_original_party_route_unblock/source_enter_zone_then_candidate_buttons`
-- `source_enter_zone_then_reincarnate_box` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 17bd7e878157, 307323fbc1f7, 342d4e7bdac2, 48ed3743ab6a, 5f1fc0a1c08c, ceb0c2eec633, f938fdba63a1 — `parity-evidence/verification/pass162_original_party_route_unblock/source_enter_zone_then_reincarnate_box`
+- `pm_f1_panel_clicks_route_recheck` `DM -vv -sn -pm`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 17bd7e878157, 2456e272bbda, 48ed3743ab6a, 7addedda4327, ceb0c2eec633, e8a02e3f9758 — `parity-evidence/verification/pass162_original_party_route_unblock/pm_f1_panel_clicks_route_recheck`
+- `source_enter_zone_then_candidate_buttons` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 17bd7e878157, 307323fbc1f7, 342d4e7bdac2, 48ed3743ab6a, 5f1fc0a1c08c, ceb0c2eec633, f938fdba63a1 — `parity-evidence/verification/pass162_original_party_route_unblock/source_enter_zone_then_candidate_buttons`
+- `source_enter_zone_then_reincarnate_box` `DM -vv -sn`: **blocked/static-no-party** — known static no-party hash present: 48ed3743ab6a — unique hashes: 014ed52c71a0, 17bd7e878157, 307323fbc1f7, 342d4e7bdac2, 48ed3743ab6a, ceb0c2eec633, d16f5430cfd0, f938fdba63a1 — `parity-evidence/verification/pass162_original_party_route_unblock/source_enter_zone_then_reincarnate_box`
 
 ## Interpretation
 
