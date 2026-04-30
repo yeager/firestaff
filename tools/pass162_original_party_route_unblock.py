@@ -91,8 +91,13 @@ SOURCE_LOCKS = [
     },
     {
         "file": "COMMAND.C",
-        "lines": "397-403, 2322-2323",
-        "point": "A left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW, then calls F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+        "lines": "231-238, 509-511",
+        "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115.",
+    },
+    {
+        "file": "COMMAND.C",
+        "lines": "1-14, 108-114, 397-403, 1465-1662, 2045-2126, 2322-2323",
+        "point": "The original command queue stores mouse-derived commands in G0432_as_CommandQueue; C007 viewport left-click maps to C080, F0365 enqueues nonzero mouse commands with X/Y, and F0380 dequeues them before dispatching C080 to F0377.",
     },
     {
         "file": "CLIKVIEW.C",
@@ -108,11 +113,6 @@ SOURCE_LOCKS = [
         "file": "DUNVIEW.C / COORD.C",
         "lines": "DUNVIEW.C 525,3913-3928; COORD.C 1693-1698",
         "point": "The portrait box is viewport x=96..127/y=35..63; PC viewport origin y=33 gives source screen click center x=111/y=82.",
-    },
-    {
-        "file": "COMMAND.C",
-        "lines": "231-238, 509-511",
-        "point": "C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115.",
     },
 ]
 
@@ -196,14 +196,39 @@ def do_action(out: Path, log: list[str], action: tuple[Any, ...], idx: int) -> d
         raise RuntimeError(f"state gate never observed {target}; last={last}")
     if kind == "key":
         key = str(action[1])
-        tap(wait_window(log, timeout=5.0), key, log, delay=0.6)
+        wid = wait_window(log, timeout=5.0)
+        xdotool_probe(log, wid, f"before-key-{key}")
+        tap(wid, key, log, delay=0.6)
+        xdotool_probe(log, wid, f"after-key-{key}")
         return {"phase": "key", "value": key, **shot(out, log, f"key_{key}_{idx}", idx)}
     if kind == "click":
         x, y = int(action[1]), int(action[2])
-        click_original(wait_window(log, timeout=5.0), x, y, log, delay=0.6)
+        wid = wait_window(log, timeout=5.0)
+        xdotool_probe(log, wid, f"before-click-{x}-{y}")
+        click_original(wid, x, y, log, delay=0.6)
+        xdotool_probe(log, wid, f"after-click-{x}-{y}")
         return {"phase": "click", "x": x, "y": y, **shot(out, log, f"click_{x}_{y}_{idx}", idx)}
     raise ValueError(action)
 
+
+
+def xdotool_probe(log: list[str], wid: str, label: str) -> None:
+    """Append low-level X window/focus/mouse state around delivered inputs."""
+    for args in (["getwindowgeometry", "--shell", wid], ["getwindowfocus"], ["getmouselocation", "--shell"]):
+        p = subprocess.run(["xdotool", *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        body = (p.stdout or p.stderr).strip().replace("\n", ";")
+        log.append(f"xdotool-probe {label} {' '.join(args)} rc={p.returncode} {body}")
+
+
+def queue_source_probe() -> dict[str, Any]:
+    """Source-centered queue path for deciding whether the original runtime should see C080/F0377."""
+    return {
+        "queue_storage": "COMMAND.C:1-14 defines G0432_as_CommandQueue plus first/last indices and pending click fields.",
+        "viewport_to_c080": "COMMAND.C:108-114 and 397-403 map screen/zone C007 viewport left-clicks to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.",
+        "mouse_enqueue": "COMMAND.C:1465-1662 has F0365 derive L1109_i_Command from mouse input and enqueue nonzero commands with X/Y into G0432_as_CommandQueue.",
+        "dequeue_dispatch": "COMMAND.C:2045-2126 dequeues L1160/L1161/L1162; COMMAND.C:2322-2323 dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.",
+        "front_wall_to_f0280": "CLIKVIEW.C:348-349 subtracts viewport origin; CLIKVIEW.C:407-431 touches the front wall sensor; MOVESENS.C:1392 and 1501-1502 permit C127 with no leader and call F0280.",
+    }
 
 def crop_stats(path: Path) -> dict[str, Any]:
     im = Image.open(path).convert("RGB")
@@ -235,6 +260,8 @@ def input_delivery_probe(log: list[str]) -> dict[str, Any]:
         "clicks": [line for line in log if line.startswith("click ")],
         "keys": [line for line in log if line.startswith("key ")],
         "windows": [line for line in log if line.startswith("window-found ")],
+        "xdotool_probes": [line for line in log if line.startswith("xdotool-probe ")],
+        "source_queue_path": queue_source_probe(),
     }
 
 
@@ -265,7 +292,8 @@ def classify_route(rows: list[dict[str, Any]], log: list[str]) -> tuple[str, str
         "dynamic_dungeon_inputs": dynamic_dungeon,
         "route_precondition": ROUTE_PRECONDITION,
         "input_delivery_probe": input_delivery_probe(log),
-        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. Current xdotool delivery logs prove clicks/keys were sent to the active DOSBox window, but all post-gate captures remain hash 48ed3743ab6a with zero-pixel deltas; the next useful candidate is an original-runtime/input-queue diagnostic proving whether C080/F0377 is queued at all, not more portrait coordinate guessing.",
+        "input_queue_source_probe": queue_source_probe(),
+        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. This pass now records xdotool focus/geometry/mouse state and the source command-queue C007->C080->F0377 path; clicks/keys reach the active DOSBox window, but all post-gate captures remain hash 48ed3743ab6a with zero-pixel deltas, so the next exact blocker is an in-process original queue trace/breakpoint proving whether C080 enters F0380 or dies before F0377.",
     }
     if not dungeon:
         return "blocked/no-dungeon", "route never produced a dungeon gameplay frame", evidence
@@ -350,7 +378,7 @@ def main() -> int:
     if errors:
         lines += ["", "## Errors", ""]
         lines += [f"- `{e['scenario']}` `{e['program']}`: {e['error']}" for e in errors]
-    lines += ["", "## Interpretation", "", "A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, records the source-proven initial C127 pose, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is reported as an original C080/F0377/F0280 delivery/state mismatch, not a request for more map or panel coordinate guessing."]
+    lines += ["", "## Interpretation", "", "A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, records the source-proven initial C127 pose, records xdotool focus/geometry/mouse delivery and the source C007->C080->F0380->F0377 queue path, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is now narrowed to an in-process original queue trace/breakpoint question: does C080 reach F0380/F0377 at all, or is DOSBox/PC mouse translation dying before the original queue? It is not a request for more map or panel coordinate guessing."]
     (OUT_ROOT / "README.md").write_text("\n".join(lines) + "\n")
     print(f"wrote {OUT_ROOT}/README.md")
     print(f"run_base={run_base}")

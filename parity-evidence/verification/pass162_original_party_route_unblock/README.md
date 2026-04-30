@@ -2,7 +2,7 @@
 
 Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock`
+- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-050108-pass162-original-party-route-unblock`
 - evidence root: `parity-evidence/verification/pass162_original_party_route_unblock`
 - completed: 2
 - errors: 0
@@ -14,11 +14,11 @@ Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 - `ENTRANCE.C` 857-883: F0441_STARTEND_ProcessEntrance sets G0298_B_NewGame=C099_MODE_WAITING_ON_ENTRANCE and only exits after command/key changes it; keyboard/mouse input is processed before dungeon load.
 - `COMMAND.C` 346-352, 557, 2438-2455: C200_COMMAND_ENTRANCE_ENTER_DUNGEON maps to C407_ZONE_ENTRANCE_ENTER / Return and sets G0298_B_NewGame=C001_MODE_LOAD_DUNGEON; resume maps to saved game, credits loops.
 - `REVIVE.C` 63-150: F0280_CHAMPION_AddCandidateChampionToParty is the source transition that increments/uses G0305_ui_PartyChampionCount; inventory-looking candidate frames are not enough without this semantic transition.
-- `COMMAND.C` 397-403, 2322-2323: A left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW, then calls F0377_COMMAND_ProcessType80_ClickInDungeonView.
+- `COMMAND.C` 231-238, 509-511: C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115.
+- `COMMAND.C` 1-14, 108-114, 397-403, 1465-1662, 2045-2126, 2322-2323: The original command queue stores mouse-derived commands in G0432_as_CommandQueue; C007 viewport left-click maps to C080, F0365 enqueues nonzero mouse commands with X/Y, and F0380 dequeues them before dispatching C080 to F0377.
 - `CLIKVIEW.C` 348-349, 407-431: PC click handling subtracts the viewport origin; an empty-hand hit in the C05 front-wall ornament zone calls F0372 to touch the front wall sensor.
 - `MOVESENS.C` 1392, 1501-1502: C127_SENSOR_WALL_CHAMPION_PORTRAIT is allowed with no leader and calls F0280_CHAMPION_AddCandidateChampionToParty.
 - `DUNVIEW.C / COORD.C` DUNVIEW.C 525,3913-3928; COORD.C 1693-1698: The portrait box is viewport x=96..127/y=35..63; PC viewport origin y=33 gives source screen click center x=111/y=82.
-- `COMMAND.C` 231-238, 509-511: C160/C161 Resurrect/Reincarnate boxes are around y=86-142 or y=90-138, not y=165; pass162 retests the corrected source-box centers x=130/y=115 and x=186/y=115.
 
 ## Route precondition
 
@@ -33,4 +33,4 @@ Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
 ## Interpretation
 
-A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, records the source-proven initial C127 pose, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is reported as an original C080/F0377/F0280 delivery/state mismatch, not a request for more map or panel coordinate guessing.
+A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, records the source-proven initial C127 pose, records xdotool focus/geometry/mouse delivery and the source C007->C080->F0380->F0377 queue path, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is now narrowed to an in-process original queue trace/breakpoint question: does C080 reach F0380/F0377 at all, or is DOSBox/PC mouse translation dying before the original queue? It is not a request for more map or panel coordinate guessing.
