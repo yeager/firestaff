@@ -1,0 +1,74 @@
+{
+  "schema": "pass194_v1_c2564_reachability_probe.v1",
+  "source_citations": [
+    "ReDMCSB DUNVIEW.C:371-374 defines G2028 normal-object rows and G2029 alcove slots; G2028 never maps any view square to row 16.",
+    "ReDMCSB DEFS.H:2600-2614 defines the media-720 view-square indices including D3C=11, D3L=12, D3R=13, D4C=16, D4L=17, D4R=18.",
+    "ReDMCSB DUNVIEW.C:4922-4927 gates object drawing on thing type, L2476_i_ >= 0, matching thing cell, and depth/cell visibility.",
+    "ReDMCSB DUNVIEW.C:5071-5078 selects C2548 + coordinateSet*7 + G2029[viewSquare] for alcove objects, otherwise C2500 + G2028[viewSquare]*4 + viewCell for normal floor/open-cell objects, then applies object pile shifts.",
+    "ReDMCSB DUNVIEW.C:8468-8477 still calls F0115 for D4L/D4R/D4C, but G2028 entries for view-square indices 16-18 are -1, so those calls cannot emit normal C2500 object zones."
+  ],
+  "target": {
+    "scene": "ingame_move_forward",
+    "zone": 2564,
+    "anchor": [
+      181,
+      62
+    ],
+    "layout_record": {
+      "type": 7,
+      "parent": 4,
+      "d1": 181,
+      "d2": 62
+    }
+  },
+  "classification": {
+    "normal_open_cell_floor_item_zone_reachable": false,
+    "alcove_object_zone_reachable": true,
+    "normal_hits": [],
+    "alcove_hits_for_coordinate_sets_0_to_3": [
+      {
+        "zone": 2564,
+        "coordinate_set": 2,
+        "alcove_slot": 2,
+        "view_square_index": 13
+      }
+    ],
+    "finding": "C2564 is not emitted by the normal C2500 open-cell/floor-item path; it is in the C2548 alcove-object subfamily (C2548 + coordinateSet*7 + G2029 slot)."
+  },
+  "pixel_window": {
+    "window": [
+      177,
+      58,
+      185,
+      66
+    ],
+    "pixels": 81,
+    "changed_pixels": 81,
+    "current_dark_pixels_luma_le_8": 81,
+    "original_bright_pixels_luma_ge_160": 38,
+    "mean_current_luma": 0.0,
+    "mean_original_luma": 163.765,
+    "mean_luma_abs": 163.765,
+    "max_delta": {
+      "x": 177,
+      "y": 59,
+      "current_rgb": [
+        0,
+        0,
+        0
+      ],
+      "original_rgb": [
+        255,
+        255,
+        255
+      ],
+      "luma_abs": 255
+    }
+  },
+  "interpretation": "The pass178 C2564 delta should not be treated as missing normal floor-item sprite placement. The 9x9 window is mostly/currently black while the original is bright textured wall/viewport content, so this evidence points to wall/open-cell/base-geometry or alcove-adjacent rendering, not a low-risk floor-item placement fix.",
+  "non_claims": [
+    "This does not prove which wall/open-cell geometry primitive is missing.",
+    "This does not modify rendering.",
+    "This only classifies the C2564 source-zone family and the local target pixels."
+  ]
+}
