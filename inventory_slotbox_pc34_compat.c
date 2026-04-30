@@ -101,6 +101,11 @@ int INVENTORY_Compat_GetSlotRouteFromCommand(unsigned int commandId, InventoryCo
     return 1;
 }
 
+#define DM1_SLOT_ACTION_HAND_PC34_COMPAT 1u
+#define DM1_ICON_CONTAINER_CHEST_CLOSED_PC34_COMPAT 144u
+#define DM1_ICON_CONTAINER_CHEST_OPEN_PC34_COMPAT 145u
+#define DM1_THING_NONE_PC34_COMPAT 0xFFFFu
+
 int INVENTORY_Compat_IsMutableObjectIconIndex(unsigned int iconIndex) {
     /* Mirrors F0295_CHAMPION_HasObjectIconInSlotBoxChanged: only icons
      * that represent carried objects/potions are updated by the periodic
@@ -110,6 +115,26 @@ int INVENTORY_Compat_IsMutableObjectIconIndex(unsigned int iconIndex) {
     if (iconIndex >= 148u && iconIndex <= 163u) return 1;
     if (iconIndex == 195u) return 1;
     return 0;
+}
+
+
+unsigned int INVENTORY_Compat_GetActionHandIconForOpenChest(unsigned int isInventoryChampion,
+                                                            unsigned int slotIndex,
+                                                            unsigned int thing,
+                                                            unsigned int openChestThing,
+                                                            unsigned int baseIconIndex) {
+    if (isInventoryChampion &&
+        slotIndex == DM1_SLOT_ACTION_HAND_PC34_COMPAT &&
+        baseIconIndex == DM1_ICON_CONTAINER_CHEST_CLOSED_PC34_COMPAT &&
+        thing != DM1_THING_NONE_PC34_COMPAT &&
+        thing == openChestThing) {
+        return DM1_ICON_CONTAINER_CHEST_OPEN_PC34_COMPAT;
+    }
+    return baseIconIndex;
+}
+
+const char* INVENTORY_Compat_GetActionHandOpenChestIconEvidence(void) {
+    return "ReDMCSB source lock: CHEST.C:43-46 sets G0426_T_OpenChest then draws C145_ICON_CONTAINER_CHEST_OPEN into C09_SLOT_BOX_INVENTORY_ACTION_HAND when opening from the action hand; CHAMDRAW.C:621-630 F0291_CHAMPION_DrawSlot maps inventory action-hand closed chest icon C144 to C145; PANEL.C:1651-1691 closes any prior chest, reads inventory champion C01_SLOT_ACTION_HAND, and routes containers through F0342/F0333; PANEL.C:1119-1133 F0342 closes chest for eye/mouth refresh and calls F0333 for containers; CHAMPION.C:557-575 closes/refreshes panel when the inventory action-hand chest is removed; CHAMPION.C:636-638 marks MASK0x0800_PANEL when a container is added to inventory action hand; DEFS.H:1875 and 1941-1942 define C09 action-hand slotbox plus C144/C145 closed/open chest icons.";
 }
 
 const char* INVENTORY_Compat_GetSlotBoxSourceEvidence(void) {

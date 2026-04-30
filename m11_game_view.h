@@ -216,6 +216,13 @@ typedef struct {
     unsigned short leaderHandThing;
     int leaderHandIconIndex;
 
+    /* Source inventory open-chest state.  Mirrors ReDMCSB
+     * G0426_T_OpenChest at the V1 presentation bridge: THING_NONE means
+     * no chest panel is currently open; otherwise the value is the
+     * container thing whose action-hand icon must render as C145 while
+     * the inventory panel is open. */
+    unsigned short v1OpenChestThing;
+
     /* Acting-champion ordinal.  Mirrors DM1
      * G0506_ui_ActingChampionOrdinal exactly: 0 = no champion is
      * acting (idle action area with four action-hand icon cells,
@@ -899,6 +906,9 @@ int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state);
 int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
                                            char* out,
                                            int outSize);
+int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state);
+void M11_GameView_CloseV1OpenChest(M11_GameViewState* state);
+unsigned short M11_GameView_GetV1OpenChestThing(const M11_GameViewState* state);
 int M11_GameView_GetV1ActionAreaZoneId(void);
 int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
