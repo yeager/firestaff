@@ -29,6 +29,8 @@ static int has_zone(unsigned int commandId, unsigned int zoneIndex) {
 
 int main(void) {
     TouchClickZonePc34Compat hit;
+    int normX = -1;
+    int normY = -1;
     int ok = 1;
     printf("probe=firestaff_touch_click_zone_matrix\n");
     printf("sourceEvidence=%s\n", TOUCHCLICK_Compat_GetSourceEvidence());
@@ -63,6 +65,13 @@ int main(void) {
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(56, 13, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 545u) ok = 0;
     if (TOUCHCLICK_Compat_HitTestInCoordMode(56, 13, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) && hit.zoneIndex == 545u) ok = 0;
 
+    if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(352, 180, 1280, 720, &normX, &normY) || normX != 80 || normY != 50) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestScaledScreenPoint(1056, 450, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 70u) ok = 0;
+    if (TOUCHCLICK_Compat_HitTestScaledScreenPoint(20, 20, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit)) ok = 0;
+    if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(526, 290, 640, 480, &normX, &normY) || normX != 263 || normY != 125) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestScaledScreenPoint(526, 290, 640, 480, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 70u) ok = 0;
+
+    printf("normalizedScaledPoint=%d,%d\n", normX, normY);
     printf("actionAreaTouchMatrixInvariantOk=%u\n", action_area_routes_GetTouchMatrixInvariant());
     printf("touchClickZoneMatrixInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
