@@ -54,7 +54,26 @@ CROPS = {
     "movement_panel": (224, 112, 320, 180),
 }
 
+ROUTE_PRECONDITION = {
+    "map": 0,
+    "party": {"x": 1, "y": 3, "dir": "South", "raw": "0x0861"},
+    "front_wall_sensor": {
+        "x": 1,
+        "y": 4,
+        "sensor": 16,
+        "thing": "0x0c10",
+        "type": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "sensorData": 10,
+    },
+    "route": "no movement required after entrance gate; click source portrait center x=111,y=82 before C160/C161",
+}
+
 SOURCE_LOCKS = [
+    {
+        "file": "DUNGEON.DAT via pass173 helper",
+        "lines": "n/a",
+        "point": "Initial DM1 V1 party pose decodes to map0 x=1 y=3 dir=South (raw 0x0861), directly facing wall square x=1 y=4 with sensor 16 type C127 and sensorData=10; the deterministic route precondition is therefore an entrance gate only, not coordinate navigation.",
+    },
     {
         "file": "ENTRANCE.C",
         "lines": "857-883",
@@ -235,7 +254,8 @@ def classify_route(rows: list[dict[str, Any]]) -> tuple[str, str, dict[str, Any]
         "portrait_click_delta": portrait_delta,
         "choice_delta": choice_delta,
         "dynamic_dungeon_inputs": dynamic_dungeon,
-        "next_exact_input_candidate": "after a gated dungeon_gameplay frame, deliver a C007/C080 viewport click to source portrait center screen x=111,y=82; if still no delta, verify DOSBox mouse delivery/window coordinate capture before trying adjacent x=111,y=80 or x=112,y=83",
+        "route_precondition": ROUTE_PRECONDITION,
+        "next_exact_input_candidate": "after the entrance gate, the source route has no movement step: the party is already at map0 (1,3,S) facing C127 sensor 16. Since pass174 exhausted 12 source-centered mouse delivery variants with zero delta, the next useful candidate is an original-runtime/input-queue diagnostic proving whether C080/F0377 is queued at all, not more portrait coordinate guessing.",
     }
     if not dungeon:
         return "blocked/no-dungeon", "route never produced a dungeon gameplay frame", evidence
@@ -276,7 +296,7 @@ def run_scenario(run_base: Path, scenario: dict[str, Any]) -> dict[str, Any]:
         except Exception: proc.kill()
         (out / "pass162_driver.log").write_text("\n".join(log) + "\n")
     classification, reason, evidence = classify_route(rows)
-    summary = {"name": scenario["name"], "program": scenario["program"], "purpose": scenario["purpose"], "classification": classification, "reason": reason, "source_locks": SOURCE_LOCKS, "route_evidence": evidence, "rows": rows, "evidence_dir": str(out)}
+    summary = {"name": scenario["name"], "program": scenario["program"], "purpose": scenario["purpose"], "classification": classification, "reason": reason, "source_locks": SOURCE_LOCKS, "route_precondition": ROUTE_PRECONDITION, "route_evidence": evidence, "rows": rows, "evidence_dir": str(out)}
     (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     return summary
 
@@ -299,18 +319,28 @@ def main() -> int:
             errors.append({"scenario": scenario["name"], "program": scenario["program"], "error": str(exc)})
     buckets: dict[str, int] = {}
     for r in results: buckets[r["classification"]] = buckets.get(r["classification"], 0) + 1
-    manifest = {"schema": "pass162_original_party_route_unblock.v1", "run_base": str(run_base), "evidence_root": str(OUT_ROOT), "source_locks": SOURCE_LOCKS, "completed": len(results), "errors": errors, "buckets": buckets, "results": results}
+    manifest = {"schema": "pass162_original_party_route_unblock.v1", "run_base": str(run_base), "evidence_root": str(OUT_ROOT), "source_locks": SOURCE_LOCKS, "route_precondition": ROUTE_PRECONDITION, "completed": len(results), "errors": errors, "buckets": buckets, "results": results}
     (OUT_ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     lines = ["# Pass 162 — original party/control route unblock", "", "Lane A gate from `DM1_V1_FINISH_PLAN.md`.", "", f"- run base: `{run_base}`", f"- evidence root: `{OUT_ROOT}`", f"- completed: {len(results)}", f"- errors: {len(errors)}", f"- buckets: {', '.join(f'{k}={v}' for k, v in sorted(buckets.items()))}", "", "## Source locks", ""]
     lines += [f"- `{s['file']}` {s['lines']}: {s['point']}" for s in SOURCE_LOCKS]
-    lines += ["", "## Result matrix", ""]
+    lines += [
+        "",
+        "## Route precondition",
+        "",
+        f"- Initial party: map{ROUTE_PRECONDITION['map']} x={ROUTE_PRECONDITION['party']['x']} y={ROUTE_PRECONDITION['party']['y']} dir={ROUTE_PRECONDITION['party']['dir']} raw={ROUTE_PRECONDITION['party']['raw']}.",
+        f"- Front wall: x={ROUTE_PRECONDITION['front_wall_sensor']['x']} y={ROUTE_PRECONDITION['front_wall_sensor']['y']} sensor={ROUTE_PRECONDITION['front_wall_sensor']['sensor']} type={ROUTE_PRECONDITION['front_wall_sensor']['type']} sensorData={ROUTE_PRECONDITION['front_wall_sensor']['sensorData']}.",
+        "- No movement is required after the entrance gate; the runtime mismatch is now whether the original C080/F0377 click reaches F0280, not map navigation.",
+        "",
+        "## Result matrix",
+        "",
+    ]
     for r in results:
         ev = r["route_evidence"]
         lines.append(f"- `{r['name']}` `{r['program']}`: **{r['classification']}** — {r['reason']} — unique hashes: {', '.join(ev['unique_hashes'])} — `{r['evidence_dir']}`")
     if errors:
         lines += ["", "## Errors", ""]
         lines += [f"- `{e['scenario']}` `{e['program']}`: {e['error']}" for e in errors]
-    lines += ["", "## Interpretation", "", "A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is reported as the exact remaining blocker rather than being collapsed into the older static-no-party bucket."]
+    lines += ["", "## Interpretation", "", "A route is not overlay-ready merely because `pass80_original_frame_classifier` says `dungeon_gameplay`. This pass now gates into real dungeon gameplay first, records the source-proven initial C127 pose, then requires a visible source portrait/C080 candidate transition before C160/C161 and party-control markers. A zero-delta x=111/y=82 portrait click is reported as an original C080/F0377/F0280 delivery/state mismatch, not a request for more map or panel coordinate guessing."]
     (OUT_ROOT / "README.md").write_text("\n".join(lines) + "\n")
     print(f"wrote {OUT_ROOT}/README.md")
     print(f"run_base={run_base}")
