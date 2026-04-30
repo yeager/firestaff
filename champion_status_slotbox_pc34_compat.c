@@ -40,3 +40,83 @@ int CHAMPION_Compat_GetStatusNameBox(unsigned int championIndex, ChampionStatusN
 const char* CHAMPION_Compat_GetStatusNameBoxEvidence(void) {
     return "ReDMCSB source lock: champion top-row name/leader lane uses four 43x7 inclusive boxes, spaced every 69 px, with commands C016..C019.";
 }
+
+
+#define CHAMPION_COMPAT_ATTR_NAME_TITLE  0x0080u
+#define CHAMPION_COMPAT_ATTR_STATISTICS  0x0100u
+#define CHAMPION_COMPAT_ATTR_LOAD        0x0200u
+#define CHAMPION_COMPAT_ATTR_ICON        0x0400u
+#define CHAMPION_COMPAT_ATTR_PANEL       0x0800u
+#define CHAMPION_COMPAT_ATTR_STATUS_BOX  0x1000u
+#define CHAMPION_COMPAT_ATTR_WOUNDS      0x2000u
+#define CHAMPION_COMPAT_ATTR_VIEWPORT    0x4000u
+#define CHAMPION_COMPAT_ATTR_ACTION_HAND 0x8000u
+
+#define CHAMPION_COMPAT_ATTR_ALL_DIRTY \
+    (CHAMPION_COMPAT_ATTR_NAME_TITLE | CHAMPION_COMPAT_ATTR_STATISTICS | \
+     CHAMPION_COMPAT_ATTR_LOAD | CHAMPION_COMPAT_ATTR_ICON | \
+     CHAMPION_COMPAT_ATTR_PANEL | CHAMPION_COMPAT_ATTR_STATUS_BOX | \
+     CHAMPION_COMPAT_ATTR_WOUNDS | CHAMPION_COMPAT_ATTR_VIEWPORT | \
+     CHAMPION_COMPAT_ATTR_ACTION_HAND)
+
+int CHAMPION_Compat_GetStatusRedrawPlan(unsigned int championIndex,
+                                        unsigned int attributes,
+                                        unsigned int isInventoryChampion,
+                                        unsigned int currentHealth,
+                                        ChampionStatusRedrawPlanCompat* outPlan) {
+    if (!outPlan || championIndex > 3u) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = championIndex;
+    outPlan->sourceAttributes = attributes;
+    outPlan->isInventoryChampion = isInventoryChampion ? 1u : 0u;
+    outPlan->currentHealth = currentHealth ? 1u : 0u;
+
+    if (!(attributes & CHAMPION_COMPAT_ATTR_ALL_DIRTY)) {
+        outPlan->evidence = "CHAMDRAW.C:755-758 returns immediately when no dirty champion attributes are set";
+        return 1;
+    }
+
+    if ((attributes & CHAMPION_COMPAT_ATTR_STATUS_BOX) != 0u) {
+        outPlan->statusBoxRedrawn = 1u;
+        if (currentHealth) {
+            outPlan->redrawStatistics = 1u;
+            if (isInventoryChampion) {
+                outPlan->evidence = "CHAMDRAW.C:771-815 redraws a live status box; inventory champion sets MASK0x0100_STATISTICS only after portrait redraw";
+            } else {
+                outPlan->redrawNameTitle = 1u;
+                outPlan->redrawWounds = 1u;
+                outPlan->redrawActionHand = 1u;
+                outPlan->evidence = "CHAMDRAW.C:771-815 redraws a live status box; non-inventory champions set NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND";
+            }
+        } else {
+            outPlan->drawDeadStatusBox = 1u;
+            outPlan->drawActionIconBeforeClear = 1u;
+            outPlan->clearAllDirtyFlagsAtEnd = 1u;
+            outPlan->evidence = "CHAMDRAW.C:816-842 draws the dead status box, draws the action icon, then jumps to final dirty-flag clear";
+            return 1;
+        }
+    }
+
+    if (!currentHealth) {
+        outPlan->clearAllDirtyFlagsAtEnd = 1u;
+        outPlan->evidence = "CHAMDRAW.C:841-842 skips the remaining live-only redraw lanes for dead champions before final dirty-flag clear";
+        return 1;
+    }
+
+    if ((attributes & CHAMPION_COMPAT_ATTR_NAME_TITLE) != 0u) {
+        outPlan->redrawNameTitle = 1u;
+        if (isInventoryChampion) outPlan->redrawViewport = 1u;
+    }
+    if ((attributes & CHAMPION_COMPAT_ATTR_STATISTICS) != 0u || outPlan->redrawStatistics) {
+        outPlan->redrawStatistics = 1u;
+    }
+    outPlan->clearAllDirtyFlagsAtEnd = 1u;
+    if (!outPlan->evidence) {
+        outPlan->evidence = "CHAMDRAW.C:843-907 processes live NAME_TITLE before STATISTICS/bar-graphs; CHAMDRAW.C:1110 clears all dirty flags at function end";
+    }
+    return 1;
+}
+
+const char* CHAMPION_Compat_GetStatusRedrawPlanEvidence(void) {
+    return "ReDMCSB source lock: F0292_CHAMPION_DrawState expands STATUS_BOX into dependent live redraw lanes before the STATISTICS/bar-graph pass, while dead champions draw dead box/action icon then clear dirty flags.";
+}
