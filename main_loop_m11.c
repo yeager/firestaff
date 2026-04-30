@@ -350,7 +350,12 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
     m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x + w - 1, y, 1, h, 0);
 }
 
-static int m11_wait_for_redmcsb_entrance_command(void);
+typedef enum {
+    M11_ENTRANCE_COMMAND_QUIT = 0,
+    M11_ENTRANCE_COMMAND_ENTER = 1
+} M11_EntranceCommand;
+
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void);
 
 static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     unsigned char* framebuffer;
@@ -420,9 +425,9 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
 
         M11_Render_PresentIndexedWithSpecialPalette(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
-            if (!m11_wait_for_redmcsb_entrance_command()) {
+            if (m11_wait_for_redmcsb_entrance_command() == M11_ENTRANCE_COMMAND_QUIT) {
                 free(dungeonFrame);
-                return 0;
+                return M11_ENTRANCE_COMMAND_QUIT;
             }
         }
         if (step.delayTicks >= 20U) {
@@ -438,7 +443,7 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     return 1;
 }
 
-static int m11_wait_for_redmcsb_entrance_command(void) {
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void) {
     /* ReDMCSB ENTRANCE.C:850-883 redraws the entrance, discards previous
      * input, then waits in the entrance command loop until a fresh command
      * changes G0298_B_NewGame away from C099_MODE_WAITING_ON_ENTRANCE.
@@ -462,11 +467,11 @@ static int m11_wait_for_redmcsb_entrance_command(void) {
     for (;;) {
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-            if (ev.type == SDL_EVENT_QUIT) return 0;
+            if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
             if (ev.type == SDL_EVENT_KEY_DOWN) {
-                if (ev.key.key == SDLK_ESCAPE || ev.key.key == SDLK_Q) return 0;
+                if (ev.key.key == SDLK_ESCAPE || ev.key.key == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
                 if (ev.key.key == SDLK_RETURN || ev.key.key == SDLK_KP_ENTER ||
-                    ev.key.key == SDLK_SPACE) return 1;
+                    ev.key.key == SDLK_SPACE) return M11_ENTRANCE_COMMAND_ENTER;
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 int fbX = 0;
@@ -477,9 +482,9 @@ static int m11_wait_for_redmcsb_entrance_command(void) {
                  * ENTER 244..298,45..58; RESUME 244..298,76..93;
                  * CREDITS 248..293,187..199.  COMMAND.C:346-350 adds
                  * C434 quit for later media as a separate zone, not ENTER. */
-                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return 1;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return 0;
-                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return 0;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
                 continue;
             }
             if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
@@ -487,20 +492,20 @@ static int m11_wait_for_redmcsb_entrance_command(void) {
                 M11_Render_HandleResize(ev.window.data1, ev.window.data2);
             }
 #else
-            if (ev.type == SDL_QUIT) return 0;
+            if (ev.type == SDL_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
             if (ev.type == SDL_KEYDOWN) {
-                if (ev.key.keysym.sym == SDLK_ESCAPE || ev.key.keysym.sym == SDLK_Q) return 0;
+                if (ev.key.keysym.sym == SDLK_ESCAPE || ev.key.keysym.sym == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
                 if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER ||
-                    ev.key.keysym.sym == SDLK_SPACE) return 1;
+                    ev.key.keysym.sym == SDLK_SPACE) return M11_ENTRANCE_COMMAND_ENTER;
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
                 int fbX = 0;
                 int fbY = 0;
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
                 if (!M11_Render_MapWindowToFramebuffer(ev.button.x, ev.button.y, &fbX, &fbY)) continue;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return 1;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return 0;
-                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return 0;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
                 continue;
             }
             if (ev.type == SDL_WINDOWEVENT &&
@@ -514,7 +519,7 @@ static int m11_wait_for_redmcsb_entrance_command(void) {
          * Keep the real app faithful by waiting indefinitely, but avoid
          * deadlocks under the SDL dummy driver / explicit autotest mode. */
         if (allowHeadlessTimeout && SDL_GetTicks() - started > 5000U) {
-            return 1;
+            return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);
     }
@@ -607,6 +612,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             if (!m11_play_redmcsb_entrance_transition(gameView)) {
                 M11_GameView_Shutdown(gameView);
                 M11_GameView_Init(gameView);
+                menuState->view = M12_MENU_VIEW_MAIN;
+                menuState->selectedIndex = 0;
+                menuState->activatedIndex = -1;
+                menuState->launchRequested = 0;
+                menuState->messageLine1 = "";
+                menuState->messageLine2 = "";
+                menuState->messageLine3 = "";
                 return 1;
             }
         }
