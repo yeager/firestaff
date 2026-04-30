@@ -780,6 +780,12 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+static void m12_save_config(const M12_StartupMenuState* state);
+
+void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state) {
+    m12_save_config(state);
+}
+
 static void m12_save_config(const M12_StartupMenuState* state) {
     M12_Config config;
     int gi;
@@ -797,6 +803,8 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.scalingFilterIndex = state->settings.scalingFilterIndex;
     config.vsyncIndex = state->settings.vsyncIndex;
     config.wasdMovementEnabled = state->settings.wasdMovementEnabled;
+    config.windowWidth = state->settings.windowWidth;
+    config.windowHeight = state->settings.windowHeight;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         M12_GameOptions opts = state->gameOptions[gi];
         m12_clamp_game_options(&opts);
@@ -837,6 +845,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.vsyncIndex = m12_clamp_index(config.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
     state->settings.wasdMovementEnabled = config.wasdMovementEnabled ? 1 : 0;
+    state->settings.windowWidth = config.windowWidth > 0 ? config.windowWidth : 960;
+    state->settings.windowHeight = config.windowHeight > 0 ? config.windowHeight : 540;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         state->gameOptions[gi].versionIndex = config.gameVersionIndex[gi];
         state->gameOptions[gi].usePatch = config.gameUsePatch[gi];

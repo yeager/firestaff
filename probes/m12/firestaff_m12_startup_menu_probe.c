@@ -504,6 +504,9 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* 320x200 -> 640x400 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);   /* back to main */
 
+    state.settings.windowWidth = 1234;
+    state.settings.windowHeight = 777;
+    M12_StartupMenu_SaveConfig(&state);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_Init(&reloaded);
     probe_record(&tally,
@@ -513,6 +516,8 @@ int main(void) {
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.rendererBackendIndex == M12_RENDERER_BACKEND_SOFTWARE &&
                      reloaded.settings.windowModeIndex == 2 &&
+                     reloaded.settings.windowWidth == 1234 &&
+                     reloaded.settings.windowHeight == 777 &&
                      reloaded.gameOptions[0].versionIndex == 1 &&
                      reloaded.gameOptions[0].usePatch == 1 &&
                      reloaded.gameOptions[0].languageIndex == 1 &&
@@ -537,6 +542,8 @@ int main(void) {
                      file_contains(configPath, "presentation_mode = \"v2-enhanced-2d\"") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
                      file_contains(configPath, "renderer_backend_index = 1") &&
+                     file_contains(configPath, "window_width = 1234") &&
+                     file_contains(configPath, "window_height = 777") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
                  "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, and per-game language");
 

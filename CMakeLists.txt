@@ -220,6 +220,13 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy"
     )
 
+    if(TARGET firestaff_m12_startup_menu_probe)
+        add_test(
+            NAME m12_startup_menu
+            COMMAND firestaff_m12_startup_menu_probe
+        )
+    endif()
+
     # Game View probe (needs GRAPHICS.DAT via FIRESTAFF_DATA)
     add_test(
         NAME m11_game_view

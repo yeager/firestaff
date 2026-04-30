@@ -202,11 +202,14 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
                     int factorW = g_state.windowW / contentW;
                     int factorH = g_state.windowH / contentH;
                     int factor = factorW < factorH ? factorW : factorH;
-                    if (factor < 1) {
-                        factor = 1;
+                    /* Integer snapping must not enlarge content beyond the
+                     * actual window.  A 1920x1080 launcher inside the default
+                     * 960x540 window has no integral >=1 scale, so keep the
+                     * fractional FIT result instead of forcing 1x and clipping. */
+                    if (factor >= 1) {
+                        fitW = contentW * factor;
+                        fitH = contentH * factor;
                     }
-                    fitW = contentW * factor;
-                    fitH = contentH * factor;
                 }
                 if (fitW < 1) fitW = 1;
                 if (fitH < 1) fitH = 1;

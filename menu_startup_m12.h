@@ -76,6 +76,8 @@ typedef struct {
     int scalingFilterIndex;
     int vsyncIndex;
     int wasdMovementEnabled;
+    int windowWidth;
+    int windowHeight;
 } M12_MenuSettingsState;
 
 typedef enum {
@@ -202,6 +204,7 @@ const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* 
 const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
 int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
+void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 
 #ifdef __cplusplus
 }

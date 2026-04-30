@@ -24,6 +24,8 @@ typedef struct {
     int scalingFilterIndex;
     int vsyncIndex;
     int wasdMovementEnabled;
+    int windowWidth;
+    int windowHeight;
     char dataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     char path[M12_CONFIG_PATH_CAPACITY];
 

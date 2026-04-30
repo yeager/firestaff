@@ -7,6 +7,7 @@
  */
 
 #include "main_loop_m11.h"
+#include "config_m12.h"
 
 #include "menu_startup_m12.h"
 #include "menu_startup_render_modern_m12.h"
@@ -123,12 +124,49 @@ void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
     if (!menuState) {
         return;
     }
-    M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
-    M11_Render_SetWindowMode(menuState->settings.windowModeIndex);
-    M11_Render_SetScaleMode(menuState->settings.scaleModeIndex);
-    M11_Render_SetIntegerScaling(menuState->settings.integerScaling);
-    M11_Render_SetScaleFilter(menuState->settings.scalingFilterIndex);
-    M11_Render_SetVSync(menuState->settings.vsyncIndex);
+    if (M11_Render_GetPaletteLevel() != M12_StartupMenu_GetRenderPaletteLevel(menuState)) {
+        M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
+    }
+    if (M11_Render_GetWindowMode() != menuState->settings.windowModeIndex) {
+        M11_Render_SetWindowMode(menuState->settings.windowModeIndex);
+    }
+    if (M11_Render_GetScaleMode() != menuState->settings.scaleModeIndex) {
+        M11_Render_SetScaleMode(menuState->settings.scaleModeIndex);
+    }
+    if (M11_Render_GetIntegerScaling() != menuState->settings.integerScaling) {
+        M11_Render_SetIntegerScaling(menuState->settings.integerScaling);
+    }
+    if (M11_Render_GetScaleFilter() != menuState->settings.scalingFilterIndex) {
+        M11_Render_SetScaleFilter(menuState->settings.scalingFilterIndex);
+    }
+    if (M11_Render_GetVSync() != menuState->settings.vsyncIndex) {
+        M11_Render_SetVSync(menuState->settings.vsyncIndex);
+    }
+}
+
+static int m11_is_default_window_size(int width, int height) {
+    return width == 960 && height == 540;
+}
+
+static void m11_apply_persisted_window_size(M11_PhaseA_Options* opts) {
+    M12_Config config;
+    if (!opts || !m11_is_default_window_size(opts->windowWidth, opts->windowHeight)) {
+        return;
+    }
+    M12_Config_Load(&config, opts->dataDir);
+    if (config.windowWidth > 0 && config.windowHeight > 0) {
+        opts->windowWidth = config.windowWidth;
+        opts->windowHeight = config.windowHeight;
+    }
+}
+
+static void m11_sync_and_save_window_size(M12_StartupMenuState* menuState) {
+    if (!menuState || !M11_Render_IsInitialized()) {
+        return;
+    }
+    menuState->settings.windowWidth = M11_Render_GetWindowWidth();
+    menuState->settings.windowHeight = M11_Render_GetWindowHeight();
+    M12_StartupMenu_SaveConfig(menuState);
 }
 
 
@@ -767,6 +805,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
             ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
             M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            if (menuState) {
+                menuState->settings.windowWidth = M11_Render_GetWindowWidth();
+                menuState->settings.windowHeight = M11_Render_GetWindowHeight();
+            }
             continue;
         }
         if (ev.type == SDL_EVENT_MOUSE_MOTION &&
@@ -951,6 +993,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         if (ev.type == SDL_WINDOWEVENT &&
             ev.window.event == SDL_WINDOWEVENT_RESIZED) {
             M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            if (menuState) {
+                menuState->settings.windowWidth = M11_Render_GetWindowWidth();
+                menuState->settings.windowHeight = M11_Render_GetWindowHeight();
+            }
             continue;
         }
         if (ev.type == SDL_MOUSEMOTION &&
@@ -1125,7 +1171,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
 int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_PhaseA_Options defaults;
     M11_PhaseA_SetDefaultOptions(&defaults);
-    const M11_PhaseA_Options* o = opts ? opts : &defaults;
+    M11_PhaseA_Options runtimeOptions;
+    const M11_PhaseA_Options* o;
+    runtimeOptions = opts ? *opts : defaults;
+    m11_apply_persisted_window_size(&runtimeOptions);
+    o = &runtimeOptions;
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
     const char* scriptCursor = o->script;
@@ -1147,6 +1197,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         return M11_RENDER_ERR_TEXTURE;
     }
     M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir);
+    menuState.settings.windowWidth = M11_Render_GetWindowWidth();
+    menuState.settings.windowHeight = M11_Render_GetWindowHeight();
     useModern = m11_should_use_modern_launcher(&menuState);
     if (useModern) {
         modernRgba = (unsigned char*)calloc((size_t)M11_LAUNCHER_MODERN_WIDTH *
@@ -1318,6 +1370,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         now = SDL_GetTicks();
     }
 
+    m11_sync_and_save_window_size(&menuState);
     M11_GameView_Shutdown(&gameView);
     free(launcherFramebuffer);
     if (modernRgba) {

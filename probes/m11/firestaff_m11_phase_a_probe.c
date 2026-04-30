@@ -36,6 +36,7 @@
  */
 
 #include "render_sdl_m11.h"
+#include "menu_startup_render_modern_m12.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -249,6 +250,35 @@ int main(int argc, char** argv) {
     record(&t, "INV_A17",
            centerHit,
            "window coordinates map back inside framebuffer bounds");
+
+    /* ---------- INV_A18: oversized modern launcher downscales ------- */
+    unsigned char* modern = (unsigned char*)calloc((size_t)M12_MODERN_MENU_NATIVE_WIDTH *
+                                                   (size_t)M12_MODERN_MENU_NATIVE_HEIGHT,
+                                                   4U);
+    int modernFitOk = 0;
+    if (modern) {
+        M11_Render_HandleResize(960, 540);
+        M11_Render_SetScaleMode(M11_SCALE_FIT);
+        M11_Render_SetIntegerScaling(1);
+        rc = M11_Render_PresentRGBA(modern,
+                                    M12_MODERN_MENU_NATIVE_WIDTH,
+                                    M12_MODERN_MENU_NATIVE_HEIGHT);
+        modernFitOk = rc == M11_RENDER_OK &&
+                      M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
+                      rectX == 0 && rectY == 0 && rectW == 960 && rectH == 540;
+        M11_Render_HandleResize(1280, 720);
+        rc = M11_Render_PresentRGBA(modern,
+                                    M12_MODERN_MENU_NATIVE_WIDTH,
+                                    M12_MODERN_MENU_NATIVE_HEIGHT);
+        modernFitOk = modernFitOk &&
+                      rc == M11_RENDER_OK &&
+                      M11_Render_GetPresentRect(&rectX, &rectY, &rectW, &rectH) == M11_RENDER_OK &&
+                      rectX == 0 && rectY == 0 && rectW == 1280 && rectH == 720;
+        free(modern);
+    }
+    record(&t, "INV_A18",
+           modernFitOk,
+           "integer FIT downscales the 1920x1080 launcher into 960x540 and 1280x720 windows without clipping");
 
     /* ---------- INV_A12 (part 2): double-shutdown is idempotent ------ */
     M11_Render_Shutdown();
