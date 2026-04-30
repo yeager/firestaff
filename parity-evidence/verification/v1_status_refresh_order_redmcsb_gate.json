@@ -1,0 +1,233 @@
+{
+  "schema": "v1_status_refresh_order_redmcsb_gate.v1",
+  "pass": true,
+  "scope": "DM1/V1 champion top-row HUD/status changed-status refresh source-order gate only.",
+  "sourceRanges": [
+    {
+      "file": "TIMELINE.C",
+      "function": "F0260_TIMELINE_RefreshAllChampionStatusBoxes",
+      "start": 1817,
+      "end": 1830
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "start": 771,
+      "end": 815
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "start": 843,
+      "end": 940
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "start": 1080,
+      "end": 1110
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0293_CHAMPION_DrawAllChampionStates",
+      "start": 1117,
+      "end": 1139
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "start": 17818,
+      "end": 18045
+    }
+  ],
+  "redmcsbMarkers": [
+    {
+      "file": "TIMELINE.C",
+      "function": "F0260_TIMELINE_RefreshAllChampionStatusBoxes",
+      "marker": "loop over party champions",
+      "line": 1826,
+      "needle": "L0679_ui_ChampionIndex < G0305_ui_PartyChampionCount"
+    },
+    {
+      "file": "TIMELINE.C",
+      "function": "F0260_TIMELINE_RefreshAllChampionStatusBoxes",
+      "marker": "set changed status-box bit",
+      "line": 1827,
+      "needle": "MASK0x1000_STATUS_BOX"
+    },
+    {
+      "file": "TIMELINE.C",
+      "function": "F0260_TIMELINE_RefreshAllChampionStatusBoxes",
+      "marker": "draw all champion states",
+      "line": 1829,
+      "needle": "F0293_CHAMPION_DrawAllChampionStates()"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "status-box dirty gate",
+      "line": 757,
+      "needle": "MASK0x1000_STATUS_BOX"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "alive background fill",
+      "line": 786,
+      "needle": "M524_FillScreenBox(L0871_ai_Box, C12_COLOR_DARKEST_GRAY)"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "fire shield queued",
+      "line": 794,
+      "needle": "C038_GRAPHIC_BORDER_PARTY_FIRESHIELD"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "spell shield queued",
+      "line": 797,
+      "needle": "C039_GRAPHIC_BORDER_PARTY_SPELLSHIELD"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "party/champion shield queued",
+      "line": 800,
+      "needle": "C037_GRAPHIC_BORDER_PARTY_SHIELD"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "shield border blit",
+      "line": 804,
+      "needle": "M520_F0021_MAIN_BlitToScreen"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "name/title bit scheduled",
+      "line": 814,
+      "needle": "MASK0x0080_NAME_TITLE | MASK0x0100_STATISTICS"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "name/title draw gate",
+      "line": 843,
+      "needle": "MASK0x0080_NAME_TITLE"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "statistics draw gate",
+      "line": 898,
+      "needle": "MASK0x0100_STATISTICS"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "wounds/hand draw gate",
+      "line": 937,
+      "needle": "MASK0x2000_WOUNDS"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "action-hand draw gate",
+      "line": 1080,
+      "needle": "MASK0x8000_ACTION_HAND"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0292_CHAMPION_DrawState",
+      "marker": "dirty bits cleared",
+      "line": 1110,
+      "needle": "M009_CLEAR(L0865_ps_Champion->Attributes"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0293_CHAMPION_DrawAllChampionStates",
+      "marker": "loop over party champions",
+      "line": 1134,
+      "needle": "L0873_ui_ChampionIndex < G0305_ui_PartyChampionCount"
+    },
+    {
+      "file": "CHAMDRAW.C",
+      "function": "F0293_CHAMPION_DrawAllChampionStates",
+      "marker": "draw one champion state",
+      "line": 1138,
+      "needle": "F0292_CHAMPION_DrawState(L0873_ui_ChampionIndex)"
+    }
+  ],
+  "firestaffMarkers": [
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "status-box background comment",
+      "line": 17818,
+      "needle": "V1 source status-box background"
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "alive status fill",
+      "line": 17840,
+      "needle": "M11_GameView_GetV1StatusBoxFillColor"
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "source-order shield border block",
+      "line": 17858,
+      "needle": "before top-row\n             * text, bars, and hand slots"
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "shield border blit",
+      "line": 17879,
+      "needle": "M11_GameView_GetV1StatusShieldBorderZone"
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "name clear/text block",
+      "line": 17895,
+      "needle": "V1 champion name/title status text"
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "bar graph block",
+      "line": 17936,
+      "needle": "Pass 43: champion HP/stamina/mana bar graphs"
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "status hand slots block",
+      "line": 18026,
+      "needle": "V1 status-box hand slots"
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_party_panel",
+      "marker": "poison/damage later overlays",
+      "line": 18045,
+      "needle": "GRAPHICS.DAT-backed POISONED label"
+    }
+  ],
+  "contract": [
+    "F0260 sets MASK0x1000_STATUS_BOX for each party champion, then calls F0293.",
+    "F0293 walks party champions and calls F0292 for each.",
+    "F0292 alive status-box refresh fills background, draws queued shield borders, schedules name/stat/wounds/action refresh bits, then draws name, stats, hand slots, and action hand before clearing dirty bits.",
+    "Firestaff V1 m11_draw_party_panel keeps shield border overdraw before name, bar, and hand slot drawing."
+  ],
+  "nonClaims": [
+    "No original-runtime screenshot/pixel parity claim.",
+    "No inventory chest/action-hand refresh claim.",
+    "No DM2 file-open, V2 scaffolding, or V2 asset claim."
+  ]
+}
