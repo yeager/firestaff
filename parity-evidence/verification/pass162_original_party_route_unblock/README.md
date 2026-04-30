@@ -2,7 +2,7 @@
 
 Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-044203-pass162-original-party-route-unblock`
+- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260430-045519-pass162-original-party-route-unblock`
 - evidence root: `parity-evidence/verification/pass162_original_party_route_unblock`
 - completed: 2
 - errors: 0
@@ -29,7 +29,7 @@ Lane A gate from `DM1_V1_FINISH_PLAN.md`.
 ## Result matrix
 
 - `source_gated_portrait_then_resurrect` `DM -vv -sn`: **blocked/portrait-c080-no-visible-delta** — gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280 — unique hashes: 48ed3743ab6a, ceb0c2eec633 — `parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_resurrect`
-- `source_gated_portrait_then_reincarnate` `DM -vv -sn`: **blocked/portrait-c080-no-visible-delta** — gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280 — unique hashes: 48ed3743ab6a, c6f457763e2e — `parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_reincarnate`
+- `source_gated_portrait_then_reincarnate` `DM -vv -sn`: **blocked/portrait-c080-no-visible-delta** — gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280 — unique hashes: 48ed3743ab6a, ceb0c2eec633 — `parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_reincarnate`
 
 ## Interpretation
 
