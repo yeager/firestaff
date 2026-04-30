@@ -216,7 +216,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->languageExplicit = 0;
     config->graphicsIndex = 0;
     config->rendererBackendIndex = 0;
-    config->windowModeIndex = 0;
+    config->windowModeIndex = 1;
     config->scaleModeIndex = 4;
     config->integerScaling = 1;
     config->scalingFilterIndex = 0;

@@ -6,10 +6,16 @@ typedef enum TouchClickCoordModePc34Compat {
     TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT = 2
 } TouchClickCoordModePc34Compat;
 
+typedef enum TouchClickButtonMaskPc34Compat {
+    TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT = 0x0001u,
+    TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT  = 0x0002u
+} TouchClickButtonMaskPc34Compat;
+
 typedef struct TouchClickZonePc34Compat {
     unsigned int commandId;
     unsigned int zoneIndex;
     TouchClickCoordModePc34Compat coordMode;
+    unsigned int buttonMask;
     int x;
     int y;
     int w;
@@ -21,6 +27,8 @@ typedef struct TouchClickZonePc34Compat {
 unsigned int TOUCHCLICK_Compat_GetZoneCount(void);
 int TOUCHCLICK_Compat_GetZone(unsigned int ordinal, TouchClickZonePc34Compat* outZone);
 int TOUCHCLICK_Compat_HitTest(int screenX, int screenY, TouchClickZonePc34Compat* outZone);
+int TOUCHCLICK_Compat_HitTestWithButton(int screenX, int screenY, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
+int TOUCHCLICK_Compat_HitTestInCoordMode(int x, int y, TouchClickCoordModePc34Compat coordMode, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void);
 
 #endif

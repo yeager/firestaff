@@ -90,7 +90,9 @@ static int m11_validate_scale(int mode) {
 }
 
 static int m11_validate_window_mode(int mode) {
-    return mode == M11_WINDOW_MODE_WINDOWED || mode == M11_WINDOW_MODE_FULLSCREEN;
+    return mode == M11_WINDOW_MODE_WINDOWED ||
+           mode == M11_WINDOW_MODE_MAXIMIZED ||
+           mode == M11_WINDOW_MODE_FULLSCREEN;
 }
 
 static int m11_validate_binary_setting(int mode) {
@@ -240,12 +242,22 @@ static int m11_apply_window_mode(int windowMode) {
                                  windowMode == M11_WINDOW_MODE_FULLSCREEN)) {
         return M11_RENDER_ERR_WINDOW;
     }
+    if (windowMode == M11_WINDOW_MODE_MAXIMIZED) {
+        SDL_MaximizeWindow(g_state.window);
+    } else if (windowMode == M11_WINDOW_MODE_WINDOWED) {
+        SDL_RestoreWindow(g_state.window);
+    }
 #else
     if (SDL_SetWindowFullscreen(g_state.window,
                                 windowMode == M11_WINDOW_MODE_FULLSCREEN
                                     ? SDL_WINDOW_FULLSCREEN_DESKTOP
                                     : 0) != 0) {
         return M11_RENDER_ERR_WINDOW;
+    }
+    if (windowMode == M11_WINDOW_MODE_MAXIMIZED) {
+        SDL_MaximizeWindow(g_state.window);
+    } else if (windowMode == M11_WINDOW_MODE_WINDOWED) {
+        SDL_RestoreWindow(g_state.window);
     }
 #endif
     g_state.windowMode = windowMode;

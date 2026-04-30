@@ -1210,10 +1210,12 @@ static int m11_compute_floor_ornament_ordinal(
     int idx;
     int ordinal = 0;
 
-    /* Floor ornaments only appear on corridor, pit, stairs, teleporter */
+    /* Floor ornaments only appear on corridor, pit, and teleporter squares.
+     * ReDMCSB DUNGEON.C F0172 routes stairs through T0172046_Stairs
+     * without assigning M558_FLOOR_ORNAMENT_ORDINAL; the stairs 0x08
+     * bit is orientation, not random-ornament permission. */
     if (elementType != DUNGEON_ELEMENT_CORRIDOR &&
         elementType != DUNGEON_ELEMENT_PIT &&
-        elementType != DUNGEON_ELEMENT_STAIRS &&
         elementType != DUNGEON_ELEMENT_TELEPORTER) {
         return 0;
     }
@@ -7220,7 +7222,6 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
 static int m11_viewport_cell_is_wall_free(int elementType) {
     return elementType == DUNGEON_ELEMENT_CORRIDOR ||
            elementType == DUNGEON_ELEMENT_PIT ||
-           elementType == DUNGEON_ELEMENT_STAIRS ||
            elementType == DUNGEON_ELEMENT_TELEPORTER;
 }
 

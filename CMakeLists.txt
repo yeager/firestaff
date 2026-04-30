@@ -247,6 +247,10 @@ if(BUILD_TESTING)
             NAME v1_viewport_source_zone_tables
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_source_zone_tables.py
         )
+        add_test(
+            NAME v1_viewport_floor_ornament_stair_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_floor_ornament_stair_gate.py
+        )
     endif()
 
     # Launcher smoke (needs game data + built firestaff binary)

@@ -1271,21 +1271,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             } else {
                 int launchHandled = 0;
-                if ((input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_RIGHT) &&
-                    menuState.view == M12_MENU_VIEW_MAIN) {
-                    const M12_MenuEntry* selected = M12_StartupMenu_GetEntry(&menuState,
-                                                                             menuState.selectedIndex);
-                    if (!selected || selected->kind != M12_MENU_ENTRY_GAME || !selected->available) {
-                        launchHandled = 0;
-                    } else {
-                        launchHandled = 1;
-                        menuState.activatedIndex = menuState.selectedIndex;
-                        menuState.launchRequested = 1;
-                        if (!m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
-                            m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
-                        }
-                    }
-                }
+                /* Do not short-circuit Enter/Right on the top-level launcher into
+                 * M11_GameView_OpenSelectedMenuEntry(). ReDMCSB waits at the entrance
+                 * command surface (ENTRANCE.C:739-747 installs entrance input;
+                 * COMMAND.C:2438-2451 handles Enter/Resume) and only the explicit
+                 * launch row in M12 should request runtime handoff. */
                 if (!launchHandled) {
                     if (input == M12_MENU_INPUT_CYCLE_CHAMPION ||
                         input == M12_MENU_INPUT_STRAFE_LEFT ||

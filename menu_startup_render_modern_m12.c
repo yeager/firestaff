@@ -871,14 +871,14 @@ static void draw_card(M12_ModernCanvas* c,
 
         static const char* langs[] = {"EN", "SV", "FR", "DE"};
         static const char* grf[]   = {"V1", "V2", "V3 SOON"};
-        static const char* win[]   = {"WINDOWED", "FULLSCREEN"};
+        static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
         int li = state->settings.languageIndex;
         int gi = state->settings.graphicsIndex;
         int wi = state->settings.windowModeIndex;
         if (li < 0) li = 0; if (li > 3) li = 3;
         if (gi < 0) gi = 0; if (gi > 2) gi = 2;
-        if (wi < 0) wi = 0; if (wi > 1) wi = 1;
+        if (wi < 0) wi = 0; if (wi > 2) wi = 2;
         draw_text(c, x + 200, y + 72,  langs[li], &v);
         draw_text(c, x + 200, y + 108, grf[gi], &v);
         draw_text(c, x + 200, y + 144, win[wi], &v);
@@ -1127,13 +1127,13 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
 
     static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH"};
     static const char* grf[]   = {"V1 ORIGINAL", "V2 ENHANCED 2D", "V3 MODERN/3D"};
-    static const char* win[]   = {"WINDOWED", "FULLSCREEN"};
+    static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
     int li = state->settings.languageIndex;
     int gi = state->settings.graphicsIndex;
     int wi = state->settings.windowModeIndex;
     if (li < 0) li = 0; if (li > 3) li = 3;
     if (gi < 0) gi = 0; if (gi > 2) gi = 2;
-    if (wi < 0) wi = 0; if (wi > 1) wi = 1;
+    if (wi < 0) wi = 0; if (wi > 2) wi = 2;
 
     int rowX = panelX + 36;
     int rowW = panelW - 72;

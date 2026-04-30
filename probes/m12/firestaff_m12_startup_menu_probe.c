@@ -283,6 +283,7 @@ int main(void) {
                      state.selectedIndex == 0 &&
                      state.view == M12_MENU_VIEW_MAIN &&
                      state.shouldExit == 0 &&
+                     state.settings.windowModeIndex == 1 &&
                      M12_CardArt_HasImage(&state.cardArt[0]) == 1 &&
                      M12_CardArt_HasExternalFile(&state.cardArt[0]) == 0 &&
                      strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataDir) == 0 &&
@@ -479,7 +480,7 @@ int main(void) {
                  state.settings.languageIndex == 1 &&
                      state.settings.graphicsIndex == 1 &&
                      state.settings.rendererBackendIndex == M12_RENDERER_BACKEND_SOFTWARE &&
-                     state.settings.windowModeIndex == 1,
+                     state.settings.windowModeIndex == 2,
                  "settings screen cycles persisted presentation, renderer backend, and window values from keyboard input");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK); /* to main */
@@ -511,7 +512,7 @@ int main(void) {
                      reloaded.languageExplicit == 1 &&
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.rendererBackendIndex == M12_RENDERER_BACKEND_SOFTWARE &&
-                     reloaded.settings.windowModeIndex == 1 &&
+                     reloaded.settings.windowModeIndex == 2 &&
                      reloaded.gameOptions[0].versionIndex == 1 &&
                      reloaded.gameOptions[0].usePatch == 1 &&
                      reloaded.gameOptions[0].languageIndex == 1 &&
@@ -873,6 +874,16 @@ int main(void) {
                          intent.valid == 0 &&
                          strcmp(modeState.messageLine1, "COMING SOON") == 0,
                      "CSB and DM2 remain disabled and non-launchable even if asset scanning reports matches");
+
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
+        force_dm1_version_ready(&modeState, 0U);
+        modeState.view = M12_MENU_VIEW_MAIN;
+        modeState.shouldExit = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_LEFT);
+        probe_record(&tally,
+                     "INV_M12_28C",
+                     modeState.view == M12_MENU_VIEW_MAIN && modeState.shouldExit == 0,
+                     "left arrow on the top-level launcher is a no-op, not an exit/crash path");
 
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
         force_dm1_version_ready(&modeState, 0U);
