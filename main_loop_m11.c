@@ -1273,27 +1273,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 int launchHandled = 0;
                 if ((input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_RIGHT) &&
                     menuState.view == M12_MENU_VIEW_MAIN) {
-                    launchHandled = 1;
-                    if (M11_GameView_OpenSelectedMenuEntry(&gameView, &menuState)) {
-                        /* Keep V1 in-game colors at the original bright base
-                         * palette so launcher palette settings do not leak
-                         * into gameplay rendering. */
-                        (void)M11_Render_SetPaletteLevel(0);
-                        idleAccumulatorMs = 0;
-                        M11_GameView_Draw(&gameView,
-                                          M11_Render_GetFramebuffer(),
-                                          M11_FB_WIDTH,
-                                          M11_FB_HEIGHT);
+                    const M12_MenuEntry* selected = M12_StartupMenu_GetEntry(&menuState,
+                                                                             menuState.selectedIndex);
+                    if (!selected || selected->kind != M12_MENU_ENTRY_GAME || !selected->available) {
+                        launchHandled = 0;
                     } else {
-                        const M12_MenuEntry* selected = M12_StartupMenu_GetEntry(&menuState,
-                                                                                 menuState.selectedIndex);
-                        if (!selected || selected->kind != M12_MENU_ENTRY_GAME || !selected->available) {
-                            launchHandled = 0;
-                        } else {
-                            menuState.view = M12_MENU_VIEW_MESSAGE;
-                            menuState.messageLine1 = "DUNGEON LOAD FAILED";
-                            menuState.messageLine2 = "CHECK DUNGEON.DAT";
-                            menuState.messageLine3 = "ESC RETURNS TO MENU";
+                        launchHandled = 1;
+                        menuState.activatedIndex = menuState.selectedIndex;
+                        menuState.launchRequested = 1;
+                        if (!m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
                             m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                         }
                     }
