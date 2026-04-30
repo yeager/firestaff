@@ -11,8 +11,11 @@ static int has_touch_matrix_route(unsigned int commandId, unsigned int zoneIndex
     return 0;
 }
 
-const char* action_area_routes_GetEvidence(void) { return "COMMAND.C:461-471 defines action-area name/icon routes: C112 pass, C113..C115 action slots, and C116..C119 champion action icons; COMMAND.C:2308-2312 dispatches C111 click-in-action-area to F0371 only when no candidate champion is active."; }
-unsigned int action_area_routes_GetInvariant(void) { return 1u; }
+const char* action_area_routes_GetEvidence(void) {
+    return "COMMAND.C:461-471 defines action-area name/icon routes: C112 pass, C113..C115 action slots, and C116..C119 champion action icons; COMMAND.C:2308-2312 dispatches C111 click-in-action-area to F0371 only when no candidate champion is active; CLIKMENU.C:529-573 dispatches pass/action rows through F0391; CLIKMENU.C:578-582 routes champion action icons to F0389; MENU.C:820-837 maps selected ActionIndices to champion action state.";
+}
+
+unsigned int action_area_routes_GetInvariant(void) { return action_area_routes_GetTouchMatrixInvariant(); }
 
 unsigned int action_area_routes_GetTouchMatrixInvariant(void) {
     return has_touch_matrix_route(111u, 11u) &&
