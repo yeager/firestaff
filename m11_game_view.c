@@ -17852,6 +17852,41 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                               x, y, slotW, fallbackH, M11_COLOR_LIGHT_CYAN);
             }
 
+            /* GRAPHICS.DAT-backed shield border overlays (67×29).
+             * ReDMCSB CHAMDRAW.C F0292 draws shield borders immediately after
+             * the alive status-box background and before setting the deferred
+             * name/stat/hand/action refresh bits.  Keep this before top-row
+             * text, bars, and hand slots so changed-status refreshes preserve
+             * the source overdraw order. */
+            if (!useV2PartyHud && state->assetsAvailable && !isDead) {
+                int borderCount =
+                    M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
+                        state, slot);
+                int borderOrdinal;
+                for (borderOrdinal = 0; borderOrdinal < borderCount; ++borderOrdinal) {
+                    unsigned int borderGfx = (unsigned int)
+                        M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
+                            state, slot, borderOrdinal);
+                    if (borderGfx) {
+                        const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
+                            (M11_AssetLoader*)&state->assetLoader, borderGfx);
+                        if (borderAsset && borderAsset->width == slotW &&
+                            borderAsset->height == slotH) {
+                            int borderX;
+                            int borderY;
+                            int borderW;
+                            int borderH;
+                            (void)M11_GameView_GetV1StatusShieldBorderZone(
+                                slot, &borderX, &borderY, &borderW, &borderH);
+                            M11_AssetLoader_BlitRegion(borderAsset,
+                                0, 0, borderW, borderH,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                borderX, borderY, 0); /* transparentColor=0 (black) */
+                        }
+                    }
+                }
+            }
+
             /* No invented active-champion frame in V1.  The source
              * indicates leader/active state through the champion-name
              * text color (yellow for leader, gold otherwise), not a
@@ -18006,44 +18041,6 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     slot, 1, actionX, actionY);
             }
 
-            /* GRAPHICS.DAT-backed shield border overlays (67×29).
-             * Drawn with transparency on top of the status box when party
-             * shield defenses are active. Ref: ReDMCSB CHAMDRAW.C F0292
-             * appends C038 fire, C039 spell, then C037 party/champion shield
-             * and draws the array in reverse, stacking party -> spell -> fire
-             * rather than selecting only one. Champion-local ShieldDefense is
-             * not yet present in M11 state, so this helper preserves the
-             * party-wide source-backed portion of that stack. */
-            if (state->assetsAvailable && !isDead) {
-                int borderCount =
-                    M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
-                        state, slot);
-                int borderOrdinal;
-                for (borderOrdinal = 0; borderOrdinal < borderCount; ++borderOrdinal) {
-                    unsigned int borderGfx = (unsigned int)
-                        M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
-                            state, slot, borderOrdinal);
-                    if (borderGfx) {
-                        const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
-                            (M11_AssetLoader*)&state->assetLoader, borderGfx);
-                        if (borderAsset && borderAsset->width == slotW &&
-                            borderAsset->height == slotH) {
-                            int borderX = x;
-                            int borderY = y;
-                            int borderW = slotW;
-                            int borderH = slotH;
-                            if (!useV2PartyHud) {
-                                (void)M11_GameView_GetV1StatusShieldBorderZone(
-                                    slot, &borderX, &borderY, &borderW, &borderH);
-                            }
-                            M11_AssetLoader_BlitRegion(borderAsset,
-                                0, 0, borderW, borderH,
-                                framebuffer, framebufferWidth, framebufferHeight,
-                                borderX, borderY, 0); /* transparentColor=0 (black) */
-                        }
-                    }
-                }
-            }
 
             /* GRAPHICS.DAT-backed POISONED label (96×15, graphic 32).
              * Drawn below the status box when champion is poisoned.
