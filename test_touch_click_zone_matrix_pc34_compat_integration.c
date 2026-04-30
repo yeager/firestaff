@@ -35,7 +35,7 @@ int main(void) {
     printf("probe=firestaff_touch_click_zone_matrix\n");
     printf("sourceEvidence=%s\n", TOUCHCLICK_Compat_GetSourceEvidence());
     printf("zoneCount=%u\n", TOUCHCLICK_Compat_GetZoneCount());
-    if (TOUCHCLICK_Compat_GetZoneCount() != 52u) ok = 0;
+    if (TOUCHCLICK_Compat_GetZoneCount() != 88u) ok = 0;
 
     if (!expect_zone(0u, 1u, 68u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 234, 125, 28, 21, "movement.turn_left")) ok = 0;
     if (!expect_zone(1u, 3u, 70u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 263, 125, 27, 21, "movement.forward")) ok = 0;
@@ -45,13 +45,18 @@ int main(void) {
     if (!expect_zone(23u, 101u, 245u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 235, 51, 13, 11, "spell.symbol1")) ok = 0;
     if (!expect_zone(29u, 108u, 252u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 234, 63, 70, 11, "spell.cast")) ok = 0;
     if (!expect_zone(36u, 21u, 212u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 24, 10, 16, 16, "champion0.action_hand")) ok = 0;
-    if (!expect_zone(50u, 70u, 545u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 56, 13, 16, 16, "inventory.mouth")) ok = 0;
+    if (!expect_zone(48u, 28u, 507u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 6, 53, 16, 16, "inventory.ready_hand")) ok = 0;
+    if (!expect_zone(49u, 29u, 508u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 62, 53, 16, 16, "inventory.action_hand")) ok = 0;
+    if (!expect_zone(50u, 30u, 509u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 34, 26, 16, 16, "inventory.head")) ok = 0;
+    if (!expect_zone(77u, 57u, 536u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 202, 33, 16, 16, "inventory.backpack_line1_9")) ok = 0;
+    if (!expect_zone(78u, 58u, 537u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 37, 7, 16, 16, "inventory.chest_1")) ok = 0;
+    if (!expect_zone(87u, 71u, 546u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 12, 13, 16, 16, "inventory.eye")) ok = 0;
 
     if (!action_area_routes_GetTouchMatrixInvariant()) ok = 0;
     if (!champion_name_hand_routes_GetInvariant()) ok = 0;
     if (!spell_area_routes_GetInvariant()) ok = 0;
     if (!spell_area_symbol_routes_GetInvariant()) ok = 0;
-    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u)) ok = 0;
+    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u)) ok = 0;
 
     if (!TOUCHCLICK_Compat_HitTest(264, 126, &hit) || hit.zoneIndex != 70u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTest(286, 78, &hit) || hit.zoneIndex != 98u) ok = 0;
@@ -63,6 +68,8 @@ int main(void) {
     if (TOUCHCLICK_Compat_HitTestWithButton(264, 126, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) && hit.zoneIndex == 70u) ok = 0;
     if (TOUCHCLICK_Compat_HitTest(56, 13, &hit) && hit.zoneIndex == 545u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(56, 13, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 545u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestInCoordMode(202, 33, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 536u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestInCoordMode(116, 53, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 544u) ok = 0;
     if (TOUCHCLICK_Compat_HitTestInCoordMode(56, 13, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) && hit.zoneIndex == 545u) ok = 0;
 
     if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(352, 180, 1280, 720, &normX, &normY) || normX != 80 || normY != 50) ok = 0;
