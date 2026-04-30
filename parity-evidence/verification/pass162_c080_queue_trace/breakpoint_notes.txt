@@ -1,0 +1,10 @@
+# pass162_c080_queue_trace breakpoint notes
+# Original PC DM is DOS real-mode code under DOSBox/DOSBox-X, so these are
+# source-symbol gates, not direct native gdb commands unless a symbolized/debug
+# build or emulator bridge maps ReDMCSB symbols to addresses.
+#
+# Stop at these gates in order:
+# 1. COMMAND.C:F0359_COMMAND_ProcessClick_CPSC entry and post L1109 assignment/write
+# 2. COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC after L1160/L1161/L1162 dequeue
+# 3. COMMAND.C:2322 C080 branch and CLIKVIEW.C:F0377 entry
+# 4. CLIKVIEW.C:F0372 entry and MOVESENS.C:1501/REVIVE.C:F0280
