@@ -228,6 +228,35 @@ int TOUCHCLICK_Compat_HitTestScaledScreenPoint(int physicalX,
     return TOUCHCLICK_Compat_HitTestWithButton(screenX, screenY, buttonMask, outZone);
 }
 
+
+int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX,
+                                                     int physicalY,
+                                                     int surfaceW,
+                                                     int surfaceH,
+                                                     unsigned int buttonMask,
+                                                     TouchClickDispatchPc34Compat* outDispatch) {
+    int screenX;
+    int screenY;
+    TouchClickZonePc34Compat zone;
+    if (!outDispatch) return 0;
+    memset(outDispatch, 0, sizeof(*outDispatch));
+    if (buttonMask == 0u) return 0;
+    if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(physicalX, physicalY, surfaceW, surfaceH, &screenX, &screenY)) {
+        return 0;
+    }
+    if (!TOUCHCLICK_Compat_HitTestWithButton(screenX, screenY, buttonMask, &zone)) {
+        return 0;
+    }
+    outDispatch->screenX = screenX;
+    outDispatch->screenY = screenY;
+    outDispatch->buttonStatus = buttonMask;
+    outDispatch->commandId = zone.commandId;
+    outDispatch->zoneIndex = zone.zoneIndex;
+    outDispatch->coordMode = zone.coordMode;
+    outDispatch->groupName = zone.groupName;
+    return 1;
+}
+
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void) {
-    return "COMMAND.C:375-497 defines active in-game mouse command-to-zone/button tables; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:412-451 defines source-backed inventory toggles/slots; COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
+    return "COMMAND.C:375-497 defines active in-game mouse command-to-zone/button tables; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 defines source-backed inventory toggles/slots; COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
 }

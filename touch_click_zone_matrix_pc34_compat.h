@@ -24,6 +24,16 @@ typedef struct TouchClickZonePc34Compat {
     const char* sourceEvidence;
 } TouchClickZonePc34Compat;
 
+typedef struct TouchClickDispatchPc34Compat {
+    int screenX;
+    int screenY;
+    unsigned int buttonStatus;
+    unsigned int commandId;
+    unsigned int zoneIndex;
+    TouchClickCoordModePc34Compat coordMode;
+    const char* groupName;
+} TouchClickDispatchPc34Compat;
+
 unsigned int TOUCHCLICK_Compat_GetZoneCount(void);
 int TOUCHCLICK_Compat_GetZone(unsigned int ordinal, TouchClickZonePc34Compat* outZone);
 int TOUCHCLICK_Compat_HitTest(int screenX, int screenY, TouchClickZonePc34Compat* outZone);
@@ -31,6 +41,7 @@ int TOUCHCLICK_Compat_HitTestWithButton(int screenX, int screenY, unsigned int b
 int TOUCHCLICK_Compat_HitTestInCoordMode(int x, int y, TouchClickCoordModePc34Compat coordMode, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
 int TOUCHCLICK_Compat_NormalizeScaledScreenPoint(int physicalX, int physicalY, int surfaceW, int surfaceH, int* outScreenX, int* outScreenY);
 int TOUCHCLICK_Compat_HitTestScaledScreenPoint(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickZonePc34Compat* outZone);
+int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX, int physicalY, int surfaceW, int surfaceH, unsigned int buttonMask, TouchClickDispatchPc34Compat* outDispatch);
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void);
 
 #endif

@@ -29,6 +29,7 @@ static int has_zone(unsigned int commandId, unsigned int zoneIndex) {
 
 int main(void) {
     TouchClickZonePc34Compat hit;
+    TouchClickDispatchPc34Compat dispatch;
     int normX = -1;
     int normY = -1;
     int ok = 1;
@@ -77,6 +78,20 @@ int main(void) {
     if (TOUCHCLICK_Compat_HitTestScaledScreenPoint(20, 20, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit)) ok = 0;
     if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(526, 290, 640, 480, &normX, &normY) || normX != 263 || normY != 125) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestScaledScreenPoint(526, 290, 640, 480, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 70u) ok = 0;
+
+
+    if (!TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(1056, 450, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 275 || dispatch.screenY != 125 ||
+        dispatch.buttonStatus != TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT ||
+        dispatch.commandId != 3u || dispatch.zoneIndex != 70u ||
+        strcmp(dispatch.groupName, "movement.forward") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(100, 39, 1280, 800, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 25 || dispatch.screenY != 9 ||
+        dispatch.buttonStatus != TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT ||
+        dispatch.commandId != 7u || dispatch.zoneIndex != 151u ||
+        strcmp(dispatch.groupName, "champion0.toggle_box") != 0) ok = 0;
+    if (TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(20, 20, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch)) ok = 0;
+    if (TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(1056, 450, 1280, 720, 0u, &dispatch)) ok = 0;
 
     printf("normalizedScaledPoint=%d,%d\n", normX, normY);
     printf("actionAreaTouchMatrixInvariantOk=%u\n", action_area_routes_GetTouchMatrixInvariant());
