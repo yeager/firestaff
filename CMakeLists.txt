@@ -187,6 +187,18 @@ if(BUILD_TESTING)
         COMMAND test_touch_click_zone_matrix_pc34_compat_integration
     )
 
+    add_executable(test_inventory_panel_slot_routes_pc34_compat_integration
+        test_inventory_panel_slot_routes_pc34_compat_integration.c
+    )
+    target_link_libraries(test_inventory_panel_slot_routes_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_inventory_panel_slot_routes_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME inventory_panel_slot_routes_pc34_compat
+        COMMAND test_inventory_panel_slot_routes_pc34_compat_integration
+    )
+
     # Phase A probe (headless, no game data needed)
     add_test(
         NAME m11_phase_a

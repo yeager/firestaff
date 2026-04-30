@@ -13,7 +13,8 @@ extern "C" {
 #endif
 
 enum {
-    M11_GAME_VIEW_PATH_CAPACITY = 512
+    M11_GAME_VIEW_PATH_CAPACITY = 512,
+    M11_TORCH_FUEL_CAPACITY = 256
 };
 
 typedef enum {
@@ -132,9 +133,8 @@ typedef struct {
      * tracked here.  Fuel decreases by 1 each game tick.  When it
      * reaches 0, the torch is extinguished.  A torch's light
      * contribution is scaled by its fuel fraction. */
-    enum { M11_TORCH_FUEL_CAPACITY = 256 };
-    int torchFuel[256];          /* remaining fuel per weapon index */
-    int torchFuelInitialized[256]; /* 1 if fuel has been set for this index */
+    int torchFuel[M11_TORCH_FUEL_CAPACITY];          /* remaining fuel per weapon index */
+    int torchFuelInitialized[M11_TORCH_FUEL_CAPACITY]; /* 1 if fuel has been set for this index */
 
     /* Spell casting UI state */
     int spellPanelOpen;          /* 1 when rune entry panel is visible */
