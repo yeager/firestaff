@@ -10,6 +10,7 @@ int main(void) {
     printf("probe=firestaff_inventory_slotbox_source_audit\n");
     printf("slotBoxSourceEvidence=%s\n", INVENTORY_Compat_GetSlotBoxSourceEvidence());
     printf("carriedObjectIconEvidence=%s\n", INVENTORY_Compat_GetCarriedObjectIconEvidence());
+    printf("actionHandOpenChestIconEvidence=%s\n", INVENTORY_Compat_GetActionHandOpenChestIconEvidence());
     printf("inventorySlotBoxCount=%u\n", INVENTORY_Compat_GetInventorySlotBoxCount());
     printf("chestSlotBoxCount=%u\n", INVENTORY_Compat_GetChestSlotBoxCount());
     printf("totalSlotBoxCount=%u\n", INVENTORY_Compat_GetTotalSlotBoxCount());
@@ -59,6 +60,20 @@ int main(void) {
            INVENTORY_Compat_IsMutableObjectIconIndex(195u),
            INVENTORY_Compat_IsMutableObjectIconIndex(204u),
            INVENTORY_Compat_IsMutableObjectIconIndex(212u));
+    if (INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0x1234u, 0x1234u, 144u) != 145u) ok = 0;
+    if (INVENTORY_Compat_GetActionHandIconForOpenChest(0u, 1u, 0x1234u, 0x1234u, 144u) != 144u) ok = 0;
+    if (INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 0u, 0x1234u, 0x1234u, 144u) != 144u) ok = 0;
+    if (INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0x1234u, 0x5678u, 144u) != 144u) ok = 0;
+    if (INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0xFFFFu, 0xFFFFu, 144u) != 144u) ok = 0;
+    if (INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0x1234u, 0x1234u, 143u) != 143u) ok = 0;
+    printf("actionHandOpenChestIcon closed=%u open=%u statusBoxClosed=%u readyHandClosed=%u differentChestClosed=%u noneClosed=%u nonChestPassThrough=%u\n",
+           144u,
+           INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0x1234u, 0x1234u, 144u),
+           INVENTORY_Compat_GetActionHandIconForOpenChest(0u, 1u, 0x1234u, 0x1234u, 144u),
+           INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 0u, 0x1234u, 0x1234u, 144u),
+           INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0x1234u, 0x5678u, 144u),
+           INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0xFFFFu, 0xFFFFu, 144u),
+           INVENTORY_Compat_GetActionHandIconForOpenChest(1u, 1u, 0x1234u, 0x1234u, 143u));
     printf("inventorySlotBoxSourceAuditInvariantOk=%d\n", ok);
     return ok ? 0 : 1;
 }

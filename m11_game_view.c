@@ -9422,12 +9422,16 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
             continue;
         }
         if (m11_viewport_cell_is_wall_like(&cell)) {
+            /* ReDMCSB wall primitives use F0104/F0105 wall blits into
+             * C702..C717 without C10 transparency; C10_COLOR_FLESH is a
+             * real tan wall texel.  Keying side-wall panels on palette 10
+             * cuts black holes into D1R/D0R right-side geometry. */
             (void)m11_draw_dm1_wall_blit_with_transparency(state,
                                                            framebuffer,
                                                            fbW,
                                                            fbH,
                                                            &kSideBlits[i],
-                                                           M11_COLOR_MAGENTA);
+                                                           -1);
         }
     }
 }
