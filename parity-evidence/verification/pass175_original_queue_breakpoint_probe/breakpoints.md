@@ -1,8 +1,8 @@
 # Pass175 breakpoint checklist
 
 ## mouse interrupt / enqueue candidate
-- symbol: `F0365_COMMAND_ProcessClick_CPSC`
-- source: `COMMAND.C:1458-1662`
+- symbol: `F0359_COMMAND_ProcessClick_CPSC`
+- source: `COMMAND.C:1452-1662`
 - condition: after click x=111,y=82, expect L1109_i_Command == C080 and queue write into G0432_as_CommandQueue with X=111,Y=82 (screen-relative PC coordinates).
 - log: `P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus, L1109_i_Command, G0433_i_CommandQueueFirstIndex, G0434_i_CommandQueueLastIndex`
 

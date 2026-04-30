@@ -1,7 +1,7 @@
 {
   "schema": "pass175_original_queue_breakpoint_probe.v1",
-  "classification": "ready/debugger-available",
-  "next_blocker": "Need an in-process debugger-capable DOSBox/DOSBox-X run to break at F0365/F0380/F0377/F0280 and classify whether C080 is absent before the queue, present but not dispatched, reaches F0377 but misses C05/front-wall sensor, or reaches F0280.",
+  "classification": "retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked",
+  "next_blocker": "Original binary in-process route classification still needs a DOS real-mode/source-symbol bridge or address map; the stale Firestaff pass175 no-delta implementation blocker is retired by the source-locked M11 C080 gate.",
   "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "source_citations": [
     {
@@ -33,8 +33,8 @@
     },
     {
       "file": "COMMAND.C",
-      "lines": "1458-1662",
-      "point": "F0365 records pending click fields, resolves primary/secondary mouse input into L1109_i_Command, and writes nonzero commands plus X/Y into G0432_as_CommandQueue.",
+      "lines": "1452-1662",
+      "point": "F0359 (the actual ReDMCSB mouse-click queue writer; requested F0365 is turn-party handling in this tree) records pending click fields, resolves primary/secondary mouse input into L1109_i_Command, and writes nonzero commands plus X/Y into G0432_as_CommandQueue.",
       "must_contain": [
         "G0436_B_PendingClickPresent",
         "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
@@ -432,9 +432,9 @@
   },
   "breakpoints": [
     {
-      "name": "mouse interrupt / enqueue candidate",
-      "symbol": "F0365_COMMAND_ProcessClick_CPSC",
-      "source": "COMMAND.C:1458-1662",
+      "name": "mouse interrupt / enqueue candidate (F0359; F0365 is turn-party in this tree)",
+      "symbol": "F0359_COMMAND_ProcessClick_CPSC",
+      "source": "COMMAND.C:1452-1662",
       "condition": "after click x=111,y=82, expect L1109_i_Command == C080 and queue write into G0432_as_CommandQueue with X=111,Y=82 (screen-relative PC coordinates).",
       "logs": [
         "P0725_i_X",
@@ -489,5 +489,30 @@
     "do not try more portrait coordinates",
     "do not push",
     "do not treat visual dungeon_gameplay hash as party/control readiness"
-  ]
+  ],
+  "blocker_state": {
+    "pass175_redmcsb_c080_no_delta_blocker_audit": "retired/historical-only; Firestaff V1 C080 implementation has source-locked probe coverage",
+    "pass175_original_queue_breakpoint_probe": "narrowed; debugger binaries are installed on N2, but stock DM.EXE cannot be bound to ReDMCSB source symbols by native gdb without an address map/DOS real-mode bridge"
+  },
+  "source_locked_gate": {
+    "command": "./run_firestaff_m11_game_view_probe.sh /tmp/pass175-c080-gate-1777564645 ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA",
+    "output_log": "/tmp/pass175-c080-gate.out",
+    "summary": "599/599 invariants passed",
+    "c080_assertions": [
+      "PASS INV_GV_07I0 V1 C080 front-door path ignores non-button viewport clicks instead of using procedural steering/toggle shortcuts",
+      "PASS INV_GV_07I1 V1 C080 source D1C door-button zone x167..174/y43..51 toggles the front door through the door animation path",
+      "PASS INV_GV_07I space toggles a closed front door into an animating step and updates the real dungeon square one state closer to OPEN"
+    ]
+  },
+  "debugger_symbol_gate": {
+    "command": "python3 tools/pass162_c080_gdb_gate.py",
+    "artifact": "parity-evidence/verification/pass162_c080_queue_trace/gdb_gate_manifest.json",
+    "classification": "blocked/gdb-cannot-bind-stock-dos-exe-or-redmcsb-symbols",
+    "first_missing_gate": "debugger/source-symbol binding prerequisite; C080 mouse/queue/front-wall gates were not reached",
+    "tools": {
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "dosbox-x": "/usr/bin/dosbox-x",
+      "gdb": "/usr/bin/gdb"
+    }
+  }
 }

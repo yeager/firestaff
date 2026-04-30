@@ -4,8 +4,8 @@ Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtim
 
 ## Verdict
 
-- probe classification: **ready/debugger-available**
-- exact next blocker: Need an in-process debugger-capable DOSBox/DOSBox-X run to break at F0365/F0380/F0377/F0280 and classify whether C080 is absent before the queue, present but not dispatched, reaches F0377 but misses C05/front-wall sensor, or reaches F0280.
+- probe classification: **retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked**
+- exact next blocker: Original binary in-process route classification still needs a DOS real-mode/source-symbol bridge or address map; the stale Firestaff pass175 no-delta implementation blocker is retired by the source-locked M11 C080 gate.
 - N2 debugger availability: `debugger-binary-present`
 
 ## Source-audited command path
@@ -33,7 +33,7 @@ Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtim
 
 ## Breakpoint plan
 
-- **mouse interrupt / enqueue candidate** — `F0365_COMMAND_ProcessClick_CPSC` (COMMAND.C:1458-1662)
+- **mouse interrupt / enqueue candidate** — `F0359_COMMAND_ProcessClick_CPSC` (COMMAND.C:1452-1662)
   - condition: after click x=111,y=82, expect L1109_i_Command == C080 and queue write into G0432_as_CommandQueue with X=111,Y=82 (screen-relative PC coordinates).
   - log: `P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus, L1109_i_Command, G0433_i_CommandQueueFirstIndex, G0434_i_CommandQueueLastIndex`
 - **queue dequeue** — `F0380_COMMAND_ProcessQueue_CPSC` (COMMAND.C:2045-2127)
@@ -48,4 +48,4 @@ Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtim
 
 ## Interpretation
 
-The source path is internally consistent: viewport `C007` left-click should become `C080`, be queued in `G0432_as_CommandQueue`, dequeued by `F0380`, dispatched to `F0377`, touch the front-wall sensor, and call `F0280` for `C127_SENSOR_WALL_CHAMPION_PORTRAIT`. The installed N2 runtime only has stock DOSBox 0.74-3, so this pass cannot set in-process breakpoints yet. The next useful action is to run the emitted breakpoint plan under a debugger-capable DOSBox/DOSBox-X build or equivalent PC emulator, not to try more portrait coordinates.
+The source path is internally consistent: viewport `C007` left-click should become `C080`, be queued in `G0432_as_CommandQueue`, dequeued by `F0380`, dispatched to `F0377`, touch the front-wall sensor, and call `F0280` for `C127_SENSOR_WALL_CHAMPION_PORTRAIT`. N2 now has `/usr/bin/dosbox-debug` and `/usr/bin/dosbox-x`, but the stock-original debugger route is still blocked at symbol/address binding (`blocked/gdb-cannot-bind-stock-dos-exe-or-redmcsb-symbols`). The stale Firestaff implementation blocker is retired by `run_firestaff_m11_game_view_probe.sh` passing 599/599 invariants, including `INV_GV_07I0` and `INV_GV_07I1` C080 front-door source-route coverage. See `retirement_addendum.md`.
