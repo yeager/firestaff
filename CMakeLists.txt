@@ -480,6 +480,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_hall_of_champions_full_source_lock.py
         )
         add_test(
+            NAME dm1_v1_hall_walkaround_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_hall_walkaround_source_lock.py
+        )
+        add_test(
             NAME dm1_v1_movement_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_movement_source_lock.py
         )
