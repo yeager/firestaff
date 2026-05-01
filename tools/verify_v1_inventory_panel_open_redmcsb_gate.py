@@ -49,7 +49,7 @@ SOURCE_RANGES = [
     {
         "file": "m11_game_view.c",
         "start": 19010,
-        "end": 19068,
+        "end": 19072,
         "function": "m11_draw_inventory_panel",
         "assertion": "Firestaff normal V1 inventory path draws source slot boxes 8..37, overlays champion objects by source slot-box zone, and returns before the debug/freehand layout.",
     },
@@ -235,7 +235,7 @@ def verify_firestaff() -> list[str]:
         "Firestaff normal V1 inventory source-slot branch",
     )
     require_excerpt("m11_game_view.c", 18832, 18931, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
-    require_excerpt("m11_game_view.c", 19010, 19068, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
+    require_excerpt("m11_game_view.c", 19010, 19072, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
 
     return [
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",

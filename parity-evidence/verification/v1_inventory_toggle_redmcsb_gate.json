@@ -67,8 +67,8 @@
     },
     {
       "file": "m11_game_view.c",
-      "start": 20407,
-      "end": 20413,
+      "start": 20411,
+      "end": 20417,
       "function": "M11_GameView_ToggleInventoryPanel",
       "assertion": "Firestaff toggle flips inventoryPanelActive and resets selected slot only when the panel opens."
     }

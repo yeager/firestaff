@@ -26,7 +26,7 @@
     {
       "file": "m11_game_view.c",
       "start": 19010,
-      "end": 19068,
+      "end": 19072,
       "function": "m11_draw_inventory_panel",
       "assertion": "Firestaff normal V1 inventory branch draws source slot boxes 8..37 and returns before debug/freehand layout."
     }
