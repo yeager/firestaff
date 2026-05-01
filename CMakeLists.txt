@@ -254,6 +254,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_movement_timing_pc34_compat
     )
 
+    add_executable(test_dm1_v1_command_movement_sensor_timing_pc34_compat
+        test_dm1_v1_command_movement_sensor_timing_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_command_movement_sensor_timing_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_command_movement_sensor_timing_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_command_movement_sensor_timing_pc34_compat
+        COMMAND test_dm1_v1_command_movement_sensor_timing_pc34_compat
+    )
+
     add_executable(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
         test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.c
     )
