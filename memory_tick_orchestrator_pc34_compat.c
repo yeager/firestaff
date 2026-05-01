@@ -1024,6 +1024,18 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         } else {
             struct MovementResult_Compat mr;
             memset(&mr, 0, sizeof(mr));
+            if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
+                    world->dungeon, world->things, &world->party, mv)) {
+                /* ReDMCSB source-lock: CLIKMENU.C:291-318 checks
+                 * F0175_GROUP_GetThing after wall/door/fake-wall legality
+                 * and before F0267_MOVE_GetMoveResult_CPSCE.  A group
+                 * collision discards queued input and returns without moving
+                 * or setting G0310_i_DisabledMovementTicks.  This tick
+                 * orchestrator has one command at a time, so the equivalent
+                 * observable is: reject the command, leave party/cooldowns
+                 * unchanged, and emit nothing. */
+                return 0;
+            }
             F0702_MOVEMENT_TryMove_Compat(world->dungeon, &world->party, mv, &mr);
             if (mr.resultCode == MOVE_TURN_ONLY) {
                 /* ReDMCSB source-lock: COMMAND.C:2150-2152 routes

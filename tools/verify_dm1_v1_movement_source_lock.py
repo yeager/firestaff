@@ -144,6 +144,9 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "world->projectileDisabledMovementTicks > 0",
         "lastProjectileDisabledMovementDirection",
         "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0",
+        "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat",
+        "CLIKMENU.C:291-318",
+        "leave party/cooldowns",
     ]))
     checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0888 successful movement cooldown", orch, [
         "redmcsb_party_move_cooldown_ticks_compat",
@@ -164,6 +167,8 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "projectileDisabledMovementTicks allows non-matching absolute movement direction",
         "periodic effects decrement projectileDisabledMovementTicks once per tick",
         "successful move sets disabledMovementTicks to max living champion movement ticks and clears projectile cooldown",
+        "passable destination group blocks movement before move result/cooldown/emissions",
+        "empty party preserves ReDMCSB BUG0_85 and skips group collision in orchestrator",
     ]))
     checks.append(require("firestaff_m11_pass44_party_group_collision_probe.c:party/group collision invariant", group_probe, [
         "P44_F0708_GROUP_BLOCKS_PASSABLE_TARGET",

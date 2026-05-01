@@ -194,6 +194,62 @@ static int build_post_move_env_world(struct GameWorld_Compat* w, uint32_t seed) 
     return 1;
 }
 
+static int build_group_collision_world(struct GameWorld_Compat* w, uint32_t seed) {
+    struct DungeonDatState_Compat* dungeon;
+    struct DungeonThings_Compat* things;
+    int i;
+
+    if (!build_unit_world(w, seed)) return 0;
+    dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));
+    things = (struct DungeonThings_Compat*)calloc(1, sizeof(*things));
+    if (!dungeon || !things) {
+        free(dungeon);
+        free(things);
+        return 0;
+    }
+
+    dungeon->loaded = 1;
+    dungeon->tilesLoaded = 1;
+    dungeon->header.mapCount = 1;
+    dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*dungeon->maps));
+    dungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(1, sizeof(*dungeon->tiles));
+    if (!dungeon->maps || !dungeon->tiles) {
+        free(dungeon->maps); free(dungeon->tiles); free(dungeon); free(things); return 0;
+    }
+    dungeon->maps[0].width = 3;
+    dungeon->maps[0].height = 3;
+    dungeon->tiles[0].squareCount = 9;
+    dungeon->tiles[0].squareData = (unsigned char*)calloc(9, sizeof(unsigned char));
+    if (!dungeon->tiles[0].squareData) {
+        free(dungeon->maps); free(dungeon->tiles); free(dungeon); free(things); return 0;
+    }
+    for (i = 0; i < 9; ++i) dungeon->tiles[0].squareData[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    /* East target (2,1), column-major, has a group thing list. */
+    dungeon->tiles[0].squareData[(2 * 3) + 1] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+
+    things->loaded = 1;
+    things->squareFirstThingCount = 1;
+    things->squareFirstThings = (unsigned short*)calloc(1, sizeof(unsigned short));
+    things->groupCount = 1;
+    things->thingCounts[THING_TYPE_GROUP] = 1;
+    things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*things->groups));
+    if (!things->squareFirstThings || !things->groups) {
+        free(dungeon->tiles[0].squareData); free(dungeon->maps); free(dungeon->tiles);
+        free(things->squareFirstThings); free(things->groups); free(dungeon); free(things); return 0;
+    }
+    things->squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+    things->groups[0].next = THING_ENDOFLIST;
+
+    w->dungeon = dungeon;
+    w->things = things;
+    w->ownsDungeon = 1;
+    w->party.mapIndex = 0;
+    w->party.mapX = 1;
+    w->party.mapY = 1;
+    w->party.direction = DIR_EAST;
+    return 1;
+}
+
 int main(int argc, char** argv) {
     const char* dungeonPath = (argc > 1) ? argv[1]
         : "./DUNGEON.DAT";
@@ -392,6 +448,32 @@ int main(int argc, char** argv) {
                   w.disabledMovementTicks == 3 &&
                   w.projectileDisabledMovementTicks == 0,
                   "17h: successful move sets disabledMovementTicks to max living champion movement ticks and clears projectile cooldown");
+            F0883_WORLD_Free_Compat(&w);
+        }
+    }
+    {
+        /* ReDMCSB source-lock: CLIKMENU.C:291-318 runs the group collision
+         * gate after square legality and before F0267_MOVE_GetMoveResult_CPSCE.
+         * A blocked group step must not update coordinates or movement
+         * cooldowns. */
+        struct GameWorld_Compat w;
+        struct TickInput_Compat in;
+        struct TickResult_Compat r;
+        int built = build_group_collision_world(&w, 4242u);
+        CHECK(built, "17i: synthetic group-collision movement world builds");
+        if (built) {
+            memset(&in, 0, sizeof(in));
+            memset(&r, 0, sizeof(r));
+            in.command = CMD_MOVE_EAST;
+            w.disabledMovementTicks = 0;
+            CHECK(F0888_ORCH_ApplyPlayerInput_Compat(&w, &in, &r) == 0 &&
+                  w.party.mapX == 1 && w.party.mapY == 1 &&
+                  w.disabledMovementTicks == 0 && r.emissionCount == 0,
+                  "17j: passable destination group blocks movement before move result/cooldown/emissions");
+            w.party.championCount = 0;
+            CHECK(F0888_ORCH_ApplyPlayerInput_Compat(&w, &in, &r) == 1 &&
+                  w.party.mapX == 2 && w.party.mapY == 1,
+                  "17k: empty party preserves ReDMCSB BUG0_85 and skips group collision in orchestrator");
             F0883_WORLD_Free_Compat(&w);
         }
     }
