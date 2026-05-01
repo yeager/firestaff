@@ -72,6 +72,15 @@ int main(void) {
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(202, 33, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 536u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(196, 105, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 544u) ok = 0;
     if (TOUCHCLICK_Compat_HitTestInCoordMode(56, 13, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) && hit.zoneIndex == 545u) ok = 0;
+    if (!TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(56, 13, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 56 || dispatch.screenY != 46 ||
+        dispatch.commandId != 70u || dispatch.zoneIndex != 545u ||
+        strcmp(dispatch.groupName, "inventory.mouth") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(196, 105, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 196 || dispatch.screenY != 138 ||
+        dispatch.commandId != 65u || dispatch.zoneIndex != 544u ||
+        strcmp(dispatch.groupName, "inventory.chest_8") != 0) ok = 0;
+    if (TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(56, 13, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &dispatch)) ok = 0;
 
     if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(352, 180, 1280, 720, &normX, &normY) || normX != 80 || normY != 50) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestScaledScreenPoint(1056, 450, 1280, 720, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 70u) ok = 0;

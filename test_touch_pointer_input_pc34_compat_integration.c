@@ -65,7 +65,7 @@ int main(void) {
     event.surfaceH = 0;
     event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
     if (!TOUCHPOINTER_Compat_TranslateEvent(&event, &dispatch) ||
-        !expect_dispatch(&dispatch, 12, 13, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+        !expect_dispatch(&dispatch, 12, 46, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
                          71u, 546u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT,
                          "inventory.eye")) ok = 0;
 
@@ -91,7 +91,7 @@ int main(void) {
     event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
     if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
     if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
-        queued.command != 71 || queued.x != 12 || queued.y != 13) ok = 0;
+        queued.command != 71 || queued.x != 12 || queued.y != 46) ok = 0;
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     queue.locked = 1;

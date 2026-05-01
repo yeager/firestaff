@@ -80,12 +80,21 @@ int TOUCHPOINTER_Compat_TranslateEvent(const TouchPointerEventPc34Compat* event,
         copy_zone_to_dispatch(screenX, screenY, event->buttonMask, &zone, outDispatch);
         return 1;
 
-    case TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT:
-        if (!TOUCHCLICK_Compat_HitTestInCoordMode(event->x, event->y,
-                                                  TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT,
-                                                  event->buttonMask, &zone)) return 0;
-        copy_zone_to_dispatch(event->x, event->y, event->buttonMask, &zone, outDispatch);
+    case TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT: {
+        TouchClickDispatchPc34Compat clickDispatch;
+        if (!TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(event->x, event->y,
+                                                               event->buttonMask,
+                                                               &clickDispatch)) return 0;
+        outDispatch->shouldDispatchClick = 1;
+        outDispatch->screenX = clickDispatch.screenX;
+        outDispatch->screenY = clickDispatch.screenY;
+        outDispatch->buttonStatus = clickDispatch.buttonStatus;
+        outDispatch->commandId = clickDispatch.commandId;
+        outDispatch->zoneIndex = clickDispatch.zoneIndex;
+        outDispatch->coordMode = clickDispatch.coordMode;
+        outDispatch->groupName = clickDispatch.groupName;
         return 1;
+    }
 
     default:
         return 0;
@@ -110,5 +119,5 @@ int TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(
 }
 
 const char* TOUCHPOINTER_Compat_GetSourceEvidence(void) {
-    return "ReDMCSB COMMAND.C:2831-2915 click queue, 2922-2928 pending click, 396-405 movement/viewport mouse inputs, 1709-1765 keyboard-separate; COORD.C:1918-1921 point-in-zone inclusive bounds; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:142-174/180-347 movement execution unchanged";
+    return "ReDMCSB COMMAND.C:2831-2915 click queue, 2922-2928 pending click, 396-405 movement/viewport mouse inputs, 1709-1765 keyboard-separate; COORD.C:1693-1722 source viewport origin/extent and 1918-1921 point-in-zone inclusive bounds; viewport-local touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:142-174/180-347 movement execution unchanged";
 }
