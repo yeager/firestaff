@@ -21,6 +21,11 @@ REDMCSB_SOURCE = Path(
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
 )
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_entry_movement_viewport_source_lock.json"
+DM1_DUNGEON_DAT = Path(
+    "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+)
+ROUTE_EVIDENCE = ROOT / "verification-m11/capture-route-state/pass76_capture_route_state_probe.json"
+
 
 
 def lines(path: Path) -> list[str]:
@@ -95,7 +100,8 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         block("CHAMPION.C", 93, 130),
         [
             "void F0284_CHAMPION_SetPartyDirection",
-            "L0834_i_Delta = P0600_i_Direction - G0308_i_PartyDirection",            "G0308_i_PartyDirection = P0600_i_Direction;",
+            "L0834_i_Delta = P0600_i_Direction - G0308_i_PartyDirection",
+            "G0308_i_PartyDirection = P0600_i_Direction;",
         ],
         "Turning updates champion cells/party things, then stores the new party direction.",
     ))
@@ -171,6 +177,19 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         "Walls/doors are blitted into the same viewport bitmap, including flipped door frames.",
     ))
     checks.append(require(
+        "DUNVIEW.C:4382-4474",
+        block("DUNVIEW.C", 4382, 4474),
+        [
+            "void F0113_DUNGEONVIEW_DrawField",
+            "F0635_(NULL, L2472_ai_XYZ, P2086_i_ZoneIndex",
+            "C076_GRAPHIC_FIRST_FIELD + M728_NATIVE_BITMAP_RELATIVE_INDEX(P0135_puc_FieldAspect)",
+            "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+            "G2073_C224_ViewportPixelWidth",
+            "G2074_C136_ViewportHeight",
+        ],
+        "Field rows/aspects resolve through source zones and masked blits into the 224x136 viewport bitmap.",
+    ))
+    checks.append(require(
         "DUNVIEW.C:4547-5113",
         block("DUNVIEW.C", 4547, 5113),
         [
@@ -188,12 +207,68 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         block("DRAWVIEW.C", 709, 724),
         [
             "void F0097_DUNGEONVIEW_DrawViewport",
-            "G0324_B_DrawViewportRequested = C1_TRUE",            "M526_WaitVerticalBlank();",
+            "G0324_B_DrawViewportRequested = C1_TRUE",
+            "M526_WaitVerticalBlank();",
         ],
         "Viewport presentation is a separate palette/vblank-gated presentation step.",
     ))
     return checks
 
+
+
+def verify_original_dm1_header() -> dict[str, Any]:
+    if not DM1_DUNGEON_DAT.is_file():
+        raise SystemExit(f"missing required DM1 DUNGEON.DAT: {DM1_DUNGEON_DAT}")
+    data = DM1_DUNGEON_DAT.read_bytes()
+    if len(data) < 10:
+        raise SystemExit(f"DM1 DUNGEON.DAT too short for header: {DM1_DUNGEON_DAT}")
+    initial = int.from_bytes(data[8:10], "little")
+    decoded = {
+        "mapIndex": 0,
+        "mapX": initial & 0x001F,
+        "mapY": (initial >> 5) & 0x001F,
+        "direction": (initial >> 10) & 0x0003,
+    }
+    expected = {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 2}
+    if decoded != expected:
+        raise SystemExit(f"DM1 header start mismatch: decoded {decoded}, expected {expected}")
+    return {
+        "citation": "DM1 PC34 DUNGEON.DAT header byte offset 8, interpreted via DEFS.H:989-998 and LOADSAVE.C:1940-1945",
+        "verified": True,
+        "path": str(DM1_DUNGEON_DAT),
+        "initialPartyLocationLE": f"0x{initial:04X}",
+        "decoded": decoded,
+        "why": "The canonical DM1 V1 asset starts the party at map 0, x=1, y=3, direction=2 (south).",
+    }
+
+
+def verify_route_evidence() -> list[dict[str, Any]]:
+    if not ROUTE_EVIDENCE.is_file():
+        raise SystemExit(f"missing required route evidence: {ROUTE_EVIDENCE}")
+    doc = json.loads(ROUTE_EVIDENCE.read_text(encoding="utf-8"))
+    snapshots = {row["capture"]: row for row in doc.get("snapshots", [])}
+    expected = [
+        ("01_ingame_start_latest", "start", {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 2, "tick": 0}),
+        ("02_ingame_turn_right_latest", "right", {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 3, "tick": 1}),
+        ("03_ingame_move_forward_latest", "up", {"mapIndex": 0, "mapX": 0, "mapY": 3, "direction": 3, "tick": 2}),
+    ]
+    checks: list[dict[str, Any]] = []
+    for capture, action, fields in expected:
+        row = snapshots.get(capture)
+        if row is None:
+            raise SystemExit(f"route evidence missing capture {capture}")
+        for key, value in fields.items():
+            if row.get(key) != value:
+                raise SystemExit(f"{capture} {key}={row.get(key)!r}, expected {value!r}")
+        if row.get("action") != action or row.get("result") != 1:
+            raise SystemExit(f"{capture} action/result mismatch: {row}")
+        checks.append({
+            "citation": f"verification-m11/capture-route-state/pass76_capture_route_state_probe.json:{capture}",
+            "verified": True,
+            "observed": {k: row[k] for k in ["action", "result", "tick", "mapIndex", "mapX", "mapY", "direction"]},
+            "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract.",
+        })
+    return checks
 
 def verify_firestaff() -> list[dict[str, Any]]:
     files = {
@@ -282,7 +357,9 @@ def main() -> int:
         "redmcsb_source_root": str(REDMCSB_SOURCE),
         "scope": "DM1 V1 entry + movement + viewport source-locked evidence",
         "redmcsb_checks": verify_redmcsb(),
+        "original_dm1_asset_check": verify_original_dm1_header(),
         "firestaff_checks": verify_firestaff(),
+        "route_evidence_checks": verify_route_evidence(),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")

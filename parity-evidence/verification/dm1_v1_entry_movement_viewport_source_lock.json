@@ -65,6 +65,19 @@
       "why": "Existing viewport source-lock gate remains wired for draw stack/world visual facts."
     }
   ],
+  "original_dm1_asset_check": {
+    "citation": "DM1 PC34 DUNGEON.DAT header byte offset 8, interpreted via DEFS.H:989-998 and LOADSAVE.C:1940-1945",
+    "decoded": {
+      "direction": 2,
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3
+    },
+    "initialPartyLocationLE": "0x0861",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "verified": true,
+    "why": "The canonical DM1 V1 asset starts the party at map 0, x=1, y=3, direction=2 (south)."
+  },
   "redmcsb_checks": [
     {
       "citation": "DEFS.H:989-998",
@@ -194,6 +207,19 @@
       "why": "Walls/doors are blitted into the same viewport bitmap, including flipped door frames."
     },
     {
+      "citation": "DUNVIEW.C:4382-4474",
+      "needles": [
+        "void F0113_DUNGEONVIEW_DrawField",
+        "F0635_(NULL, L2472_ai_XYZ, P2086_i_ZoneIndex",
+        "C076_GRAPHIC_FIRST_FIELD + M728_NATIVE_BITMAP_RELATIVE_INDEX(P0135_puc_FieldAspect)",
+        "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap(L0119_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+        "G2073_C224_ViewportPixelWidth",
+        "G2074_C136_ViewportHeight"
+      ],
+      "verified": true,
+      "why": "Field rows/aspects resolve through source zones and masked blits into the 224x136 viewport bitmap."
+    },
+    {
       "citation": "DUNVIEW.C:4547-5113",
       "needles": [
         "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
@@ -218,6 +244,50 @@
     }
   ],
   "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "route_evidence_checks": [
+    {
+      "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:01_ingame_start_latest",
+      "observed": {
+        "action": "start",
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3,
+        "result": 1,
+        "tick": 0
+      },
+      "verified": true,
+      "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract."
+    },
+    {
+      "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:02_ingame_turn_right_latest",
+      "observed": {
+        "action": "right",
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3,
+        "result": 1,
+        "tick": 1
+      },
+      "verified": true,
+      "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract."
+    },
+    {
+      "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:03_ingame_move_forward_latest",
+      "observed": {
+        "action": "up",
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3,
+        "result": 1,
+        "tick": 2
+      },
+      "verified": true,
+      "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract."
+    }
+  ],
   "scope": "DM1 V1 entry + movement + viewport source-locked evidence",
   "status": "PASS"
 }
