@@ -181,6 +181,13 @@ first, then visual parity, then typography / honesty.
     in DM1 PC 3.4 — creatures are blocked outright, which is the
     landed behavior).
 
+## Current original evidence/capture integration lane — **SOURCE-LOCKED / ORIGINAL-RUNTIME BLOCKED (pass 179, 2026-05-01)**
+- **Area:** `VISUAL` / original-runtime reference capture / debugger boundary
+- **Status:** Pass 179 consolidates the big original-faithful evidence lane without claiming pixel parity. `tools/pass179_dm1_v1_original_evidence_capture_integration_gate.py` verifies 10 ReDMCSB source contracts for new-game party state, relative movement, movement legality/cooldown, game-loop draw/command cadence, viewport state/draw request, floor/ceiling base, wall/door blits, object/creature/projectile draw stack, viewport presentation, and pass175 C080 queue boundaries.
+- **Evidence:** `parity-evidence/pass179_dm1_v1_original_evidence_capture_integration_gate.md` and `parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json`.
+- **Current truth:** capture-overlay tooling is recovered/source-locked but not semantically overlay-ready; pass175's stale Firestaff no-delta blocker is retired, while original runtime remains blocked on an address/symbol map for F0359 enqueue, F0380 dequeue, F0377 C080 dispatch, and F0280 candidate transition.
+- **Next unblocker:** build/obtain the original DM.EXE real-mode/source-symbol bridge, then prove a semantic-ready 320×200 original party/champion route before any original-vs-Firestaff pixel overlay claim.
+
 ## Current original-route blocker — **OPEN (pass 113, 2026-04-28)**
 - **Area:** `VISUAL` / original-runtime reference capture
 - **Status:** Still blocked on a usable original PC 3.4 party/champion state. Pass 113 checked N2 local original data and Greatstone DUNGEON XML: the source-plausible first champion route is start `(3,2)` facing east to Elija portrait at wall `(10,2)` west side. However, direct-start N2 DOSBox probes (`probe-forward-to-elija`, `probe-kp8-to-elija`) repeat dungeon frames with blank right-column/spell control regions instead of moving/recruiting/opening controls.

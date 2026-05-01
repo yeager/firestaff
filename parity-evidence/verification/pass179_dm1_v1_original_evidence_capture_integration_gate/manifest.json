@@ -1,0 +1,238 @@
+{
+  "canonical_dm1_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "existing_artifacts": {
+    "capture_overlay_recovery": {
+      "boundary": "source/tool route is present; semantic original capture must classify as expected route before pixel overlay parity claims",
+      "evidence": [
+        "tools/verify_original_overlay_capture_source_lock.py",
+        "scripts/dosbox_dm1_original_viewport_reference_capture.sh",
+        "tools/pass80_original_frame_classifier.py",
+        "tools/pass112_original_semantic_route_audit.py"
+      ],
+      "status": "tooling-recovered-source-locked-not-overlay-ready"
+    },
+    "debugger_address_map_boundary": {
+      "classification": "blocked/address-map-required",
+      "forbidden_claim": "do not infer original-runtime success from static no-delta frames or Firestaff-only C080 tests",
+      "required_boundary": "map original LZEXE/real-mode addresses for F0359 enqueue, F0380 dequeue, F0377 C080 handler, and F0280 candidate transition"
+    },
+    "files": {
+      "movement_viewport_wall_golden_json": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
+      },
+      "movement_viewport_wall_golden_tool": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/tools/verify_dm1_v1_movement_viewport_wall_golden.py"
+      },
+      "overlay_source_lock_tool": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/tools/verify_original_overlay_capture_source_lock.py"
+      },
+      "pass175_queue_manifest": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass175_original_queue_breakpoint_probe/manifest.json"
+      },
+      "pass175_queue_probe_tool": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/tools/pass175_original_queue_breakpoint_probe.py"
+      },
+      "pass175_runtime_debugger_gate_tool": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/tools/pass175_c080_runtime_debugger_gate.py"
+      },
+      "pass175_runtime_debugger_manifest": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/manifest.json"
+      },
+      "pass177_draw_stack_verify_out": {
+        "exists": true,
+        "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+      }
+    },
+    "movement_viewport_wall_golden": {
+      "assertions": [
+        "start_south front-center is blocking wall",
+        "start_south front-left is stairs entry side sample",
+        "start_south front-right is corridor side sample",
+        "turn_right_west front-center fakewall/teleporter sample",
+        "turn_right_west front-right wall with door thing sample",
+        "move_forward_west moves to x=0 and sees off-map D1C as invalid wall",
+        "turn_left_east has D1C front wall blocker",
+        "blocked_forward_south preserves party state after wall collision"
+      ],
+      "citation": "/home/trv2/work/firestaff/parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
+      "entry_state": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "representative_case_count": 5,
+      "status": "PASS"
+    },
+    "pass175_status": {
+      "breakpoint_gate_count": 4,
+      "breakpoint_gates": [
+        {
+          "blocker_if_missing": "host/emulator mouse translation or active mouse-input table blocks before original queue",
+          "expect": "for screen click (111,82), P0725/P0726=111/82, L1109_i_Command=80, queue write G0432_as_CommandQueue[last]={Command:80,X:111,Y:82}",
+          "gate": "enqueue",
+          "source": "COMMAND.C:1452-1662",
+          "symbol": "F0359_COMMAND_ProcessClick_CPSC"
+        },
+        {
+          "blocker_if_missing": "queued command is dropped/overwritten/timed differently before C080 dispatch",
+          "expect": "L1160_i_Command=80 and L1161/L1162=111/82 after reading G0432_as_CommandQueue[first]",
+          "gate": "dequeue",
+          "source": "COMMAND.C:2045-2127",
+          "symbol": "F0380_COMMAND_ProcessQueue_CPSC"
+        },
+        {
+          "blocker_if_missing": "C080 dispatch or screen-to-viewport coordinate binding differs from source-locked assumption",
+          "expect": "F0377 entered, PC viewport origin subtracted, normalized point hits C05 front-wall ornament/portrait clickable cell",
+          "gate": "C080 handler",
+          "source": "COMMAND.C:2322-2324 + CLIKVIEW.C:311-439",
+          "symbol": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+        },
+        {
+          "blocker_if_missing": "front-wall C05 hit-state/sensor face/data blocks after F0377 but before candidate transition",
+          "expect": "front-wall C127_SENSOR_WALL_CHAMPION_PORTRAIT reaches F0280 and sets G0299_ui_CandidateChampionOrdinal",
+          "gate": "candidate transition",
+          "source": "DUNVIEW.C:3913-3930 + MOVESENS.C:1501-1503 + REVIVE.C:63-150,260-275",
+          "symbol": "F0280_CHAMPION_AddCandidateChampionToParty"
+        }
+      ],
+      "queue_probe_classification": "retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked",
+      "remaining_blocker": "native gdb can open/probe only far enough to show the stock DOS DM.EXE has no ReDMCSB symbol binding; need a DOS real-mode/source-symbol bridge or address map before F0359/F0380/F0377/F0280 can be proven",
+      "retired_firestaff_blocker": true,
+      "runtime_debugger_gate_classification": "blocked/address-map-required"
+    },
+    "pass177_draw_stack": {
+      "missing": [],
+      "ok": true,
+      "verify_out": "/home/trv2/work/firestaff/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+    }
+  },
+  "forbidden_hosts": [
+    "DANNESBURK",
+    "192.168.2.126"
+  ],
+  "redmcsb_source_audit": [
+    {
+      "citations": [
+        "LOADSAVE.C:1940-1945"
+      ],
+      "claim": "Original new-game viewport state is decoded from DUNGEON_HEADER.InitialPartyLocation and starts on map 0.",
+      "id": "new-game-party-state",
+      "missing": [],
+      "needle_count": 5,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNGEON.C:35-44",
+        "DUNGEON.C:1371-1391"
+      ],
+      "claim": "Every relative party/viewport probe must rotate the facing direction first, then apply the original east/north vectors.",
+      "id": "movement-vectors-relative-step",
+      "missing": [],
+      "needle_count": 6,
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:156-173",
+        "CLIKMENU.C:237-347"
+      ],
+      "claim": "Party turn/step commands mutate state only through source movement legality and then stop the wait loop for redraw.",
+      "id": "movement-legality-and-cooldown",
+      "missing": [],
+      "needle_count": 9,
+      "ok": true
+    },
+    {
+      "citations": [
+        "GAMELOOP.C:90-90",
+        "GAMELOOP.C:150-155",
+        "GAMELOOP.C:215-219"
+      ],
+      "claim": "Capture timing must respect draw-from-current-party-state, command queue processing, and cooldown decrement cadence.",
+      "id": "main-loop-draw-command-cadence",
+      "missing": [],
+      "needle_count": 5,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:8318-8616"
+      ],
+      "claim": "Dungeon-view cells are derived from the updated party direction/map coordinates before presentation.",
+      "id": "viewport-state-draw-request",
+      "missing": [],
+      "needle_count": 6,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:2962-3003"
+      ],
+      "claim": "Viewport draw order starts from black/ceiling/floor source bitmaps, not from a captured previous frame.",
+      "id": "viewport-floor-ceiling-base",
+      "missing": [],
+      "needle_count": 5,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:3048-3110"
+      ],
+      "claim": "Wall/door assets share the same viewport bitmap target and must be compared as composited viewport content.",
+      "id": "wall-door-blits-into-viewport",
+      "missing": [],
+      "needle_count": 5,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:4547-5113",
+        "DUNVIEW.C:5311-5316",
+        "DUNVIEW.C:5693-5700"
+      ],
+      "claim": "Open-cell visual evidence must preserve the original object, creature, projectile/effect deferral order.",
+      "id": "object-creature-projectile-draw-stack",
+      "missing": [],
+      "needle_count": 11,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DRAWVIEW.C:709-724",
+        "DRAWVIEW.C:840-858"
+      ],
+      "claim": "The comparison seam is the presented 224x136 viewport zone after the viewport draw request/vblank path.",
+      "id": "viewport-present-seam",
+      "missing": [],
+      "needle_count": 5,
+      "ok": true
+    },
+    {
+      "citations": [
+        "COMMAND.C:1-16",
+        "COMMAND.C:1452-1662",
+        "COMMAND.C:2045-2127",
+        "COMMAND.C:2322-2324"
+      ],
+      "claim": "Pass175 original-runtime work must bind addresses at enqueue, dequeue, C080 dispatch, and candidate transition; visual no-delta alone is not evidence.",
+      "id": "click-queue-c080-boundary",
+      "missing": [],
+      "needle_count": 7,
+      "ok": true
+    }
+  ],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass179_dm1_v1_original_evidence_capture_integration_gate.v1",
+  "status": "PASS_SOURCE_LOCKED_ORIGINAL_RUNTIME_BLOCKED_ON_ADDRESS_MAP",
+  "worker": "N2 / firestaff-worker / trv2@192.168.3.121"
+}
