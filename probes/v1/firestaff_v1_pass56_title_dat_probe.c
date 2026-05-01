@@ -38,8 +38,17 @@ static const char* find_title_dat(char* buf, size_t cap) {
     if (file_exists("TITLE")) return "TITLE";
     home = getenv("HOME");
     if (home && buf && cap > 0) {
-        int n = snprintf(buf, cap, "%s/.firestaff/data/TITLE", home);
-        if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        static const char* suffixes[] = {
+            ".firestaff/data/TITLE",
+            ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+            ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+            ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
+        };
+        size_t i;
+        for (i = 0U; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+            int n = snprintf(buf, cap, "%s/%s", home, suffixes[i]);
+            if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
+        }
     }
     if (file_exists("/Users/bosse/.openclaw/data/redmcsb-original/TITLE")) {
         return "/Users/bosse/.openclaw/data/redmcsb-original/TITLE";
