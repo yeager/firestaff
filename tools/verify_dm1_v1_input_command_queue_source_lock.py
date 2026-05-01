@@ -121,6 +121,7 @@ def verify_firestaff() -> list[str]:
     for needle in [
         "locked mouse becomes pending", "movement gate set", "movement not dequeued",
         "pending replayed", "forward dequeued after gate clears", "turn dispatched",
+        "turn bypasses movement disabled gate", "turn dequeued despite movement disabled",
     ]:
         if needle not in t:
             raise AssertionError(f"test missing invariant label {needle!r}")
