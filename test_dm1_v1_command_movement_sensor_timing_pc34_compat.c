@@ -205,6 +205,25 @@ int main(void)
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("projectile forward key queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 0, 7, DIR_NORTH);
+    ok &= expect_int("projectile same-direction movement gate reported", queueResult.movementDisabledGate, 1);
+    ok &= expect_int("projectile same-direction movement not dequeued", queueResult.dequeued, 0);
+    ok &= expect_int("projectile same-direction movement leaves command queued", (int)queue.count, 1);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("projectile sidestep key queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB33, 0, 0, 0 }), 1);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 0, 7, DIR_NORTH);
+    ok &= expect_int("projectile different-direction movement bypasses gate", queueResult.movementDisabledGate, 0);
+    ok &= expect_int("projectile different-direction movement dequeued", queueResult.dequeued, 1);
+    ok &= expect_int("projectile different-direction movement dispatched", queueResult.dispatchedMove, 1);
+    ok &= expect_int("projectile different-direction command id", queueResult.command, DM1_V1_COMMAND_MOVE_RIGHT);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("turn key queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
     queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 9, 0, 0);
