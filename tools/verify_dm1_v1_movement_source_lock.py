@@ -140,7 +140,9 @@ def verify_firestaff() -> list[dict[str, Any]]:
     checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0888 disabled movement gate", orch, [
         "movement_command_disabled_redmcsb_compat",
         "COMMAND.C:2095-2100 / 2104-2110",
-        "return world->disabledMovementTicks > 0",
+        "world->disabledMovementTicks > 0",
+        "world->projectileDisabledMovementTicks > 0",
+        "lastProjectileDisabledMovementDirection",
         "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0",
     ]))
     checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0890 cooldown decrement", orch, [
@@ -151,6 +153,9 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "disabledMovementTicks blocks cardinal movement dispatch without consuming cooldown",
         "disabledMovementTicks does not block turn dispatch",
         "periodic effects decrement disabledMovementTicks once per tick",
+        "projectileDisabledMovementTicks blocks only matching absolute movement direction",
+        "projectileDisabledMovementTicks allows non-matching absolute movement direction",
+        "periodic effects decrement projectileDisabledMovementTicks once per tick",
     ]))
     checks.append(require("firestaff_m11_pass44_party_group_collision_probe.c:party/group collision invariant", group_probe, [
         "P44_F0708_GROUP_BLOCKS_PASSABLE_TARGET",

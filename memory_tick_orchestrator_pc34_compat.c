@@ -250,12 +250,13 @@ int F0897d_GameConfig_Deserialize_Compat(
 #define SEC_TAG_SENSOR_PENDING    0x20000019u
 #define SEC_TAG_SAVE_HEADER       0x2000001Au
 
-#define ORCH_SCALARS_PAYLOAD_SIZE 48  /* 12 × int32: gameTick, partyDead,
+#define ORCH_SCALARS_PAYLOAD_SIZE 52  /* 13 × int32: gameTick, partyDead,
                                          gameWon, partyMapIndex,
                                          newPartyMapIndex, masterRng.seed,
                                          partyIsResting, freezeLifeTicks,
                                          disabledMovementTicks,
                                          projectileDisabledMovementTicks,
+                                         lastProjectileDisabledMovementDirection,
                                          creatureAICount, reserved */
 
 /* Subsystem serialised sizes (predicted). */
@@ -383,8 +384,9 @@ int F0897_WORLD_Serialize_Compat(
     w_i32(scalars + 28, world->freezeLifeTicks);
     w_i32(scalars + 32, world->disabledMovementTicks);
     w_i32(scalars + 36, world->projectileDisabledMovementTicks);
-    w_i32(scalars + 40, ai_count);
-    w_i32(scalars + 44, 0);
+    w_i32(scalars + 40, world->lastProjectileDisabledMovementDirection);
+    w_i32(scalars + 44, ai_count);
+    w_i32(scalars + 48, 0);
 
     w_u32(outBuf + off, SEC_TAG_ORCH_SCALARS); off += 4;
     w_u32(outBuf + off, ORCH_SCALARS_PAYLOAD_SIZE); off += 4;
@@ -511,7 +513,8 @@ int F0898_WORLD_Deserialize_Compat(
     world->freezeLifeTicks = r_i32(buf + off + 28);
     world->disabledMovementTicks = r_i32(buf + off + 32);
     world->projectileDisabledMovementTicks = r_i32(buf + off + 36);
-    ai_count = r_i32(buf + off + 40);
+    world->lastProjectileDisabledMovementDirection = r_i32(buf + off + 40);
+    ai_count = r_i32(buf + off + 44);
     off += ORCH_SCALARS_PAYLOAD_SIZE;
 
     /* 2. Fingerprint */
@@ -789,6 +792,7 @@ int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed
     world->freezeLifeTicks = 0;
     world->disabledMovementTicks = 0;
     world->projectileDisabledMovementTicks = 0;
+    world->lastProjectileDisabledMovementDirection = 0;
 
     F0720_TIMELINE_Init_Compat(&world->timeline, 0);
     F0730_COMBAT_RngInit_Compat(&world->masterRng, seed ? seed : 1u);
@@ -953,16 +957,15 @@ static int movement_command_disabled_redmcsb_compat(
     /*
      * ReDMCSB source-lock: COMMAND.C:2095-2100 / 2104-2110 checks only
      * C003..C006 movement commands before dispatch.  A non-zero
-     * G0310_i_DisabledMovementTicks suppresses all movement commands and
-     * GAMELOOP.C:150-155 decrements the cooldown once per game tick.  The
-     * projectile directional sub-gate also depends on
-     * G0312_i_LastProjectileDisabledMovementDirection; GameWorld_Compat does
-     * not persist that source global yet, so this seam implements the exact
-     * general movement-cooldown gate and leaves projectile direction parity to
-     * the future field-addition pass.
+     * G0310_i_DisabledMovementTicks suppresses all movement commands; a
+     * non-zero G0311_i_ProjectileDisabledMovementTicks suppresses only the
+     * movement whose absolute direction equals
+     * G0312_i_LastProjectileDisabledMovementDirection.  GAMELOOP.C:150-155
+     * decrements both cooldowns once per game tick.
      */
-    (void)absoluteDirection;
-    return world->disabledMovementTicks > 0;
+    if (world->disabledMovementTicks > 0) return 1;
+    return world->projectileDisabledMovementTicks > 0 &&
+           ((world->lastProjectileDisabledMovementDirection & 3) == absoluteDirection);
 }
 
 int F0888_ORCH_ApplyPlayerInput_Compat(

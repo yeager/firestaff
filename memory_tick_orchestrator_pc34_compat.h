@@ -192,6 +192,7 @@ struct GameWorld_Compat {
     int32_t  freezeLifeTicks;
     int32_t  disabledMovementTicks;
     int32_t  projectileDisabledMovementTicks;
+    int32_t  lastProjectileDisabledMovementDirection;
 
     /* ---- Dungeon static layer (pointer, see D1) ---- */
     struct DungeonDatState_Compat* dungeon;

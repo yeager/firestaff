@@ -353,6 +353,19 @@ int main(int argc, char** argv) {
         F0890_ORCH_ApplyPeriodicEffects_Compat(&w, &r);
         CHECK(w.disabledMovementTicks == 2,
               "17c: periodic effects decrement disabledMovementTicks once per tick");
+        w.disabledMovementTicks = 0;
+        w.projectileDisabledMovementTicks = 2;
+        w.lastProjectileDisabledMovementDirection = DIR_NORTH;
+        w.party.direction = DIR_NORTH;
+        in.command = CMD_MOVE_NORTH;
+        CHECK(F0888_ORCH_ApplyPlayerInput_Compat(&w, &in, &r) == 0,
+              "17d: projectileDisabledMovementTicks blocks only matching absolute movement direction");
+        in.command = CMD_MOVE_EAST;
+        CHECK(F0888_ORCH_ApplyPlayerInput_Compat(&w, &in, &r) == 1,
+              "17e: projectileDisabledMovementTicks allows non-matching absolute movement direction");
+        F0890_ORCH_ApplyPeriodicEffects_Compat(&w, &r);
+        CHECK(w.projectileDisabledMovementTicks == 1,
+              "17f: periodic effects decrement projectileDisabledMovementTicks once per tick");
         F0883_WORLD_Free_Compat(&w);
     }
     {

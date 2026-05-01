@@ -70,7 +70,9 @@
       "needles": [
         "movement_command_disabled_redmcsb_compat",
         "COMMAND.C:2095-2100 / 2104-2110",
-        "return world->disabledMovementTicks > 0",
+        "world->disabledMovementTicks > 0",
+        "world->projectileDisabledMovementTicks > 0",
+        "lastProjectileDisabledMovementDirection",
         "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0"
       ],
       "verified": true
@@ -88,7 +90,10 @@
       "needles": [
         "disabledMovementTicks blocks cardinal movement dispatch without consuming cooldown",
         "disabledMovementTicks does not block turn dispatch",
-        "periodic effects decrement disabledMovementTicks once per tick"
+        "periodic effects decrement disabledMovementTicks once per tick",
+        "projectileDisabledMovementTicks blocks only matching absolute movement direction",
+        "projectileDisabledMovementTicks allows non-matching absolute movement direction",
+        "periodic effects decrement projectileDisabledMovementTicks once per tick"
       ],
       "verified": true
     },
