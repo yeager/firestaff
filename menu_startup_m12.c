@@ -185,6 +185,7 @@ static const M12_MenuEntry g_entryTemplate[] = {
     {.title = "DUNGEON MASTER", .gameId = "dm1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "CHAOS STRIKES BACK", .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "DUNGEON MASTER II", .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = "DUNGEON MASTER NEXUS", .gameId = "nexus1", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = "MUSEUM OF LORE", .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
     {.title = "SETTINGS", .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
 };
@@ -959,6 +960,9 @@ static int m12_game_slot_from_id(const char* gameId) {
     if (strcmp(gameId, "dm2") == 0) {
         return 2;
     }
+    if (strcmp(gameId, "nexus1") == 0) {
+        return 3;
+    }
     return -1;
 }
 
@@ -966,12 +970,13 @@ static int m12_game_supported(const char* gameId) {
     /* Only DM1 is launch-supported in the current runtime. CSB and DM2
      * stay visible in the catalog but are disabled even when their data
      * files hash-match, so the UI cannot promise a runtime that does not
-     * exist yet. */
+     * exist yet. Nexus is visible as the future post-DM2 target but
+     * intentionally cannot launch yet. */
     return gameId && strcmp(gameId, "dm1") == 0;
 }
 
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex) {
-    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2"};
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1"};
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return 1;
     }
@@ -993,7 +998,7 @@ static void m12_normalize_game_version_index(M12_StartupMenuState* state, int ga
 
 static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
                                                                  int gameIndex) {
-    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2"};
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus1"};
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return NULL;
     }
@@ -1877,6 +1882,9 @@ static unsigned char m12_game_card_fill(const char* gameId) {
     if (gameId && strcmp(gameId, "dm2") == 0) {
         return M12_COLOR_GREEN;
     }
+    if (gameId && strcmp(gameId, "nexus1") == 0) {
+        return M12_COLOR_MAGENTA;
+    }
     return M12_COLOR_DARK_GRAY;
 }
 
@@ -1895,6 +1903,9 @@ static const char* m12_game_card_line1(const M12_MenuEntry* entry) {
     }
     if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
         return "DM2";
+    }
+    if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
+        return "NEXUS";
     }
     return "GAME";
 }
@@ -1922,6 +1933,9 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
         return "SETTINGS";
     }
     version = m12_selected_version_status(state, gameIndex);
+    if (entry->gameId && strcmp(entry->gameId, "nexus1") == 0) {
+        return "PLANNED AFTER DM2";
+    }
     if (version && version->matched) {
         return "READY TO LAUNCH";
     }
@@ -3606,12 +3620,12 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
     cardsX = margin + sidebarW + 10;
     cardsW = framebufferWidth - margin - cardsX;
     cardGap = 8;
-    cardW = (cardsW - (cardGap * 2)) / 3;
+    cardW = (cardsW - (cardGap * 3)) / 4;
     cardH = framebufferHeight - (margin * 2) - 18;
     if (cardH < 100) {
         cardH = 100;
     }
-    settingsSelected = (state->selectedIndex == 4);
+    settingsSelected = (state->selectedIndex == 5);
 
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
 
@@ -3626,8 +3640,8 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
                           cardH,
                           settingsSelected);
 
-    /* Three game cards: DM1, CSB, DM2 */
-    for (i = 0; i < 3; ++i) {
+    /* Four game cards: DM1, CSB, DM2, Nexus. */
+    for (i = 0; i < 4; ++i) {
         m12_draw_game_card(state,
                            framebuffer,
                            framebufferWidth,

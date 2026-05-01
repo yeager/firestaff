@@ -15,7 +15,7 @@
   Firestaff is a long-haul reverse-engineering and parity project. If you want to help fund the verification runs, reference capture work, packaging, and token burn behind it, you can support it at <a href="https://github.com/sponsors/yeager">GitHub Sponsors</a>.
 </p>
 
-An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Back** (1989), and later **Dungeon Master II**, with a clear three-track product plan:
+An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Back** (1989), later **Dungeon Master II**, and planned **Dungeon Master Nexus** support after DM2, with a clear three-track product plan:
 
 - **V1, Original**: original-faithful presentation and behaviour, with a shared startup menu above the games
 - **V2, Enhanced 2D**: higher-resolution 2D presentation, wider aspect ratios, richer assets, same game feel
@@ -28,7 +28,7 @@ An open-source engine project for **Dungeon Master** (1987), **Chaos Strikes Bac
 It already has a real launcher, a real in-game DM1 slice, a modern high-resolution startup menu, bounded original-version detection, and a growing verified engine core. Recent work has also tightened V1 parity honestly: movement / door / sensor ownership is being pushed into source-backed compat/runtime paths, original-reference tooling is now in-tree, and `SONG.DAT` decoding groundwork has landed.
 
 **Working today:**
-- launcher with DM1 / CSB / DM2 entries
+- launcher with DM1 / CSB / DM2 / Nexus entries, with Nexus visible as planned but intentionally disabled
 - modern high-resolution true-color startup menu (1280x720 HD, 24-bit RGB) as the shared front door
 - persistent startup settings
 - selected-version status and per-game checksum indicators in the startup menu
@@ -47,6 +47,7 @@ It already has a real launcher, a real in-game DM1 slice, a modern high-resoluti
 **Not there yet:**
 - full V1 original-presentation parity
 - complete CSB / DM2 runtime support
+- Nexus runtime support; Nexus is currently a visible post-DM2 plan entry only
 - runtime audio still uses placeholder playback paths even though `SONG.DAT` decoding groundwork exists
 - full endgame / dialog / launcher-product polish
 - final cross-platform packaging

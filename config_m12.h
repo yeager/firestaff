@@ -10,7 +10,7 @@ extern "C" {
 enum {
     M12_CONFIG_PATH_CAPACITY = 512,
     M12_CONFIG_DATA_DIR_CAPACITY = 512,
-    M12_CONFIG_GAME_COUNT = 3  /* DM1, CSB, DM2 */
+    M12_CONFIG_GAME_COUNT = 4  /* DM1, CSB, DM2, Nexus */
 };
 
 typedef struct {

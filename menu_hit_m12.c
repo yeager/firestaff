@@ -18,7 +18,7 @@
 #define M12_HIT_MAIN_GRID_BOTTOM    (M12_HIT_CANVAS_H - 130)
 #define M12_HIT_MAIN_SIDE_MARGIN    48
 #define M12_HIT_MAIN_CARD_GAP       22
-#define M12_HIT_MAIN_CARD_COUNT     4
+#define M12_HIT_MAIN_CARD_COUNT     5
 
 /* --- Sub-view panel layout (shared by settings + game options) --- */
 #define M12_HIT_PANEL_X        96
@@ -143,8 +143,8 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
     switch (state->view) {
         case M12_MENU_VIEW_MAIN:
             /* Modern front-door view has one brand card followed by
-             * three game cards.  The brand card is decorative; visible
-             * game card slots 1..3 map to menu entry indices 0..2. */
+             * four game cards.  The brand card is decorative; visible
+             * game card slots 1..4 map to menu entry indices 0..3. */
             for (i = 1; i < M12_HIT_MAIN_CARD_COUNT; ++i) {
                 if (m12_hit_main_card_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {

@@ -187,7 +187,7 @@ int main(void) {
     {
         int side = 48;
         int gap = 22;
-        int cardCount = 4;
+        int cardCount = 5;
         int cardW = (W - 2 * side - gap * (cardCount - 1)) / cardCount;
         int cardH = H - 170 - 130;
         int artY = 170 + 84;
@@ -196,22 +196,27 @@ int main(void) {
         int dm1X = side + 1 * (cardW + gap) + 22;
         int csbX = side + 2 * (cardW + gap) + 22;
         int dm2X = side + 3 * (cardW + gap) + 22;
+        int nexusX = side + 4 * (cardW + gap) + 22;
         unsigned long dm1Sig = region_checksum(buf, W, H, dm1X, artY, artW, artH);
         unsigned long csbSig = region_checksum(buf, W, H, csbX, artY, artW, artH);
         unsigned long dm2Sig = region_checksum(buf, W, H, dm2X, artY, artW, artH);
+        unsigned long nexusSig = region_checksum(buf, W, H, nexusX, artY, artW, artH);
         int area = artW * artH;
         record(&t, "INV_MODERN_09",
                region_nonblack(buf, W, H, dm1X, artY, artW, artH) > area / 2 &&
                    region_nonblack(buf, W, H, csbX, artY, artW, artH) > area / 2 &&
                    region_nonblack(buf, W, H, dm2X, artY, artW, artH) > area / 2 &&
-                   dm1Sig != csbSig && dm1Sig != dm2Sig && csbSig != dm2Sig,
-               "three distinct built-in box-art regions render for DM1, CSB, and DM2");
+                   region_nonblack(buf, W, H, nexusX, artY, artW, artH) > area / 2 &&
+                   dm1Sig != csbSig && dm1Sig != dm2Sig && dm1Sig != nexusSig &&
+                   csbSig != dm2Sig && csbSig != nexusSig && dm2Sig != nexusSig,
+               "four distinct built-in box-art regions render for DM1, CSB, DM2, and Nexus");
         long dm1Sat = region_saturation_sum(buf, W, H, dm1X, artY, artW, artH);
         long csbSat = region_saturation_sum(buf, W, H, csbX, artY, artW, artH);
         long dm2Sat = region_saturation_sum(buf, W, H, dm2X, artY, artW, artH);
+        long nexusSat = region_saturation_sum(buf, W, H, nexusX, artY, artW, artH);
         record(&t, "INV_MODERN_10",
-               csbSat < dm1Sat && dm2Sat < dm1Sat,
-               "CSB and DM2 box-art panels are visibly greyed compared with DM1");
+               csbSat < dm1Sat && dm2Sat < dm1Sat && nexusSat < dm1Sat,
+               "CSB, DM2, and Nexus box-art panels are visibly greyed compared with DM1");
         record(&t, "INV_MODERN_11",
                region_nonblack(buf, W, H, 32, 18, 280, 142) > 5000,
                "Firestaff logo region renders non-empty in the startup header");

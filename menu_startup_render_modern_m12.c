@@ -563,6 +563,7 @@ static int slot_for_game_id(const char* id) {
     if (strcmp(id, "dm1") == 0) return 0;
     if (strcmp(id, "csb") == 0) return 1;
     if (strcmp(id, "dm2") == 0) return 2;
+    if (strcmp(id, "nexus1") == 0) return 3;
     return -1;
 }
 
@@ -659,6 +660,10 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         top = rgb(24, 58, 86);
         bot = rgb(8, 18, 32);
         accent = rgb(118, 190, 230);
+    } else if (slotIdx == 3) {
+        top = rgb(42, 26, 86);
+        bot = rgb(8, 10, 30);
+        accent = rgb(188, 120, 255);
     }
     if (disabled) {
         top = muted_rgb(top);
@@ -691,18 +696,29 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         fill_rect(c, x + 34, y + 56, w - 68, 36, accent);
         fill_rect(c, x + w/2 - 16, y + 60, 32, 28, ink);
         fill_rect(c, x + 20, y + 68, w - 40, 10, top);
-    } else {
+    } else if (slotIdx == 2) {
         /* Skullkeep towers. */
         fill_rect(c, x + 24, y + 50, w - 48, h - 78, rgb(88, 92, 104));
         fill_rect(c, x + 34, y + 34, 28, h - 62, rgb(104, 110, 124));
         fill_rect(c, x + w - 62, y + 34, 28, h - 62, rgb(104, 110, 124));
         fill_rect(c, x + w/2 - 16, y + h - 54, 32, 42, ink);
         fill_rect(c, x + w - 44, y + 22, 18, 18, accent);
+    } else {
+        /* Saturn/Nexus portal: black monolith, purple scanlines, orbit rings. */
+        fill_rect(c, x + w/2 - 38, y + 34, 76, h - 68, rgb(10, 8, 24));
+        stroke_rounded_rect(c, x + w/2 - 42, y + 30, 84, h - 60, 12, accent);
+        for (int yy = y + 52; yy < y + h - 52; yy += 12) {
+            fill_rect(c, x + w/2 - 30, yy, 60, 2, disabled ? muted_rgb(accent) : accent);
+        }
+        fill_rect(c, x + 26, y + h/2 - 3, w - 52, 6, rgb(34, 28, 74));
+        fill_rect(c, x + 42, y + h/2 - 20, w - 84, 4, accent);
+        fill_rect(c, x + 42, y + h/2 + 18, w - 84, 4, accent);
+        fill_rect(c, x + w/2 - 8, y + 22, 16, 16, COLOR_ACCENT_HI());
     }
 
     if (!generated) {
         ModernTextStyle lbl = text_style_make(2, disabled ? rgb(176,176,180) : COLOR_TEXT(), 1);
-        const char* text = slotIdx == 0 ? "BOX ART" : (slotIdx == 1 ? "CSB BOX ART" : "DM2 BOX ART");
+        const char* text = slotIdx == 0 ? "BOX ART" : (slotIdx == 1 ? "CSB BOX ART" : (slotIdx == 2 ? "DM2 BOX ART" : "NEXUS ART"));
         draw_text_centered(c, x + w / 2, y + h - 28, text, &lbl);
     }
 
@@ -914,7 +930,7 @@ static void draw_card(M12_ModernCanvas* c,
     const char* statusLabel;
     if (!game_supported(entry->gameId)) {
         statusColor = rgb(168, 168, 176);
-        statusLabel = "UNSUPPORTED";
+        statusLabel = slotIdx == 3 ? "PLANNED" : "UNSUPPORTED";
     } else if (entry->available && status && status->matched) {
         statusColor = COLOR_OK();
         statusLabel = "VERIFIED";
@@ -1058,13 +1074,13 @@ static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state
 
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     /* Four tall front-door cards per product direction:
-     * Firestaff brand, DM1, CSB, DM2. Settings remain available
+     * Firestaff brand, DM1, CSB, DM2, Nexus. Settings remain available
      * through the settings view/input path, but are no longer a main
      * destination card in the modern front-door layout. */
     int gridTop = 170;
     int gridBottom = c->h - 130;
     int gridH = gridBottom - gridTop;
-    int cardCount = 4;
+    int cardCount = 5;
     int gap = 22;
     int sideMargin = 48;
     int cardW = (c->w - 2 * sideMargin - gap * (cardCount - 1)) / cardCount;

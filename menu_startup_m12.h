@@ -154,8 +154,8 @@ typedef struct {
 } M12_LaunchIntent;
 
 typedef struct M12_StartupMenuState {
-    M12_MenuEntry entries[5];
-    M12_GameCardArt cardArt[5];
+    M12_MenuEntry entries[6];
+    M12_GameCardArt cardArt[6];
     int selectedIndex;
     int settingsSelectedIndex;
     int shouldExit;
@@ -168,7 +168,7 @@ typedef struct M12_StartupMenuState {
     M12_MenuSettingsState settings;
     int languageExplicit;
     M12_AssetStatus assetStatus;
-    M12_GameOptions gameOptions[3];
+    M12_GameOptions gameOptions[4];
     int gameOptSelectedRow;
     int museumSelectedIndex;
     int museumPageIndex;

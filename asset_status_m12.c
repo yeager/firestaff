@@ -33,6 +33,7 @@ typedef struct {
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
 static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
 static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
+static const char* const g_nexusGraphicsNames[] = {"NEXUS.DAT", "NEXUS.CPK", "NEXUS.BIN", NULL};
 
 static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e"},
@@ -52,10 +53,16 @@ static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d"}
 };
 
+static const M12_VersionSpec g_nexusVersions[] = {
+    {"nexus1", "nexus1", "Nexus original", "nexus1", g_nexusGraphicsNames, ""},
+    {"nexus1", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusGraphicsNames, ""}
+};
+
 static const M12_GameVersionSpec g_games[] = {
     {"dm1", g_dm1Versions, sizeof(g_dm1Versions) / sizeof(g_dm1Versions[0])},
     {"csb", g_csbVersions, sizeof(g_csbVersions) / sizeof(g_csbVersions[0])},
-    {"dm2", g_dm2Versions, sizeof(g_dm2Versions) / sizeof(g_dm2Versions[0])}
+    {"dm2", g_dm2Versions, sizeof(g_dm2Versions) / sizeof(g_dm2Versions[0])},
+    {"nexus1", g_nexusVersions, sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0])}
 };
 
 static int m12_game_index_from_id(const char* gameId) {
@@ -298,7 +305,7 @@ static int m12_try_match_version(const char* root,
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
     char md5Hex[M12_ASSET_MD5_CAPACITY];
     size_t i;
-    if (!root || !spec || !spec->names || !spec->md5) {
+    if (!root || !spec || !spec->names || !spec->md5 || spec->md5[0] == 0) {
         return 0;
     }
     for (i = 0U; spec->names[i] != NULL; ++i) {
@@ -366,6 +373,8 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         status->csbAvailable = matchedAny;
     } else if (strcmp(gameSpec->gameId, "dm2") == 0) {
         status->dm2Available = matchedAny;
+    } else if (strcmp(gameSpec->gameId, "nexus1") == 0) {
+        status->nexusAvailable = matchedAny;
     }
 }
 
@@ -403,12 +412,15 @@ int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
     if (strcmp(gameId, "dm2") == 0) {
         return status->dm2Available;
     }
+    if (strcmp(gameId, "nexus1") == 0) {
+        return status->nexusAvailable;
+    }
     return 0;
 }
 
 int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId) {
     const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
-    return spec && spec->versionCount > 0U ? 1 : 0;
+    return spec && spec->versionCount > 0U && spec->versions[0].md5 && spec->versions[0].md5[0] != 0 ? 1 : 0;
 }
 
 size_t M12_AssetStatus_GameKnownHashCount(const char* gameId) {

@@ -275,8 +275,8 @@ int main(void) {
 
     probe_record(&tally,
                  "INV_M12_01",
-                 M12_StartupMenu_GetEntryCount() == 5,
-                 "startup menu exposes three games, museum, and settings");
+                 M12_StartupMenu_GetEntryCount() == 6,
+                 "startup menu exposes four games, museum, and settings");
     probe_record(&tally,
                  "INV_M12_02",
                  file_exists(configPath) &&
@@ -288,7 +288,8 @@ int main(void) {
                      M12_CardArt_HasExternalFile(&state.cardArt[0]) == 0 &&
                      strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataDir) == 0 &&
                      state.entries[1].available == 0 &&
-                     state.entries[2].available == 0,
+                     state.entries[2].available == 0 &&
+                     state.entries[3].available == 0,
                  "startup state loads defaults, writes config, seeds built-in card art, and points the validator at the requested originals directory");
 
     make_file_with_text(cardPath, "future art slot");
@@ -420,6 +421,7 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     probe_record(&tally,
                  "INV_M12_MUSEUM_01",
@@ -485,6 +487,7 @@ int main(void) {
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK); /* to main */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* museum */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* nexus */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm2 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* csb */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm1 */
