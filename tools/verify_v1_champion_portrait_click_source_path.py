@@ -12,6 +12,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_LABEL = "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT = REPO / "parity-evidence/verification/pass164_champion_portrait_click_source_path"
 
 CHECKS = [
@@ -98,7 +99,7 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     rows = []
     for c in CHECKS:
-        rows.append({**c, "source": str(SRC / c["file"]), "hits": hits(SRC / c["file"], c["needles"]), "status": "PASS"})
+        rows.append({**c, "source": SOURCE_LABEL + "/" + c["file"], "hits": hits(SRC / c["file"], c["needles"]), "status": "PASS"})
     result = {"schema": "pass164_champion_portrait_click_source_path.v1", "checks": rows}
     (OUT / "source_path.json").write_text(json.dumps(result, indent=2) + "\n")
     md = [

@@ -12,6 +12,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_LABEL = "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT = REPO / "parity-evidence/verification/pass165_champion_portrait_click_geometry"
 
 CHECKS = [
@@ -88,7 +89,7 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     rows = []
     for check in CHECKS:
-        rows.append({**check, "source": str(SRC / check["file"]), "hits": find(SRC / check["file"], check["needles"]), "status": "PASS"})
+        rows.append({**check, "source": SOURCE_LABEL + "/" + check["file"], "hits": find(SRC / check["file"], check["needles"]), "status": "PASS"})
     box = extract_box()
     # Source constants: viewport screen origin x=0, y=33 for PC; F0377 subtracts it.
     click = {**box, "screen_center_x": box["viewport_center_x"], "screen_center_y": box["viewport_center_y"] + 33, "viewport_origin_x": 0, "viewport_origin_y": 33}
