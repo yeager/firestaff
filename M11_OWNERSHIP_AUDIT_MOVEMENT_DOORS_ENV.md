@@ -187,16 +187,16 @@ Sensor/environment interaction ownership is broad and event-driven, not a single
 
 ---
 
-## 5) Fake-wall / door-state / square-semantics ownership remains incomplete
+## 5) Fake-wall / door-state / square-semantics ownership source-lock
 
 ### Firestaff
-Movement compat still treats all non-wall squares as passable. Creature walkability in `m11_game_view.c` separately hardcodes corridor/pit/teleporter/fakewall as walkable and doors as open when low bits are zero.
+Movement compat owns shared square passability through `F0706` / `F0707` and now matches the ReDMCSB edge cases: door states `0`, `1` (closed one-fourth), and `5` are passable; door states `2..4` block; fake walls are passable only with OPEN (`0x04`) or IMAGINARY (`0x01`) set.
 
 ### ReDMCSB baseline
-Square semantics are source-owned and shared runtime rules, including fake-wall handling and door-state consequences.
+Square semantics are source-owned in `CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty`, including fake-wall handling and door-state consequences.
 
 ### Audit verdict
-**Mixed ownership with semantic drift risk.** Party and creature movement are already in danger of diverging because they do not share one source-faithful owner.
+**Compat-owned for the square-semantics subset.** Remaining movement gaps are sensor/group side effects and runtime integration breadth, not the basic door/fake-wall square decoder.
 
 ---
 

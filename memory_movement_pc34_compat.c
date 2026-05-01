@@ -151,11 +151,12 @@ void F0701_MOVEMENT_GetStepDelta_Compat(
  * whether a party or creature step may enter a target square.
  *
  * Passable:
- *   CORRIDOR, PIT, TELEPORTER, FAKEWALL, STAIRS (stairs act as a
- *   consequence square, entering them triggers a map transition).
- *   DOOR: only when the low 3 door-state bits are 0 (fully open) or the
- *   door is destroyed (state 5).  Closed/opening/closing/animating doors
- *   block movement.
+ *   CORRIDOR, PIT, TELEPORTER, STAIRS (stairs act as a consequence
+ *   square, entering them triggers a map transition).
+ *   FAKEWALL: only when the OPEN (0x04) or IMAGINARY (0x01) bit is set.
+ *   DOOR: when the low 3 door-state bits are 0 (fully open), 1
+ *   (closed one-fourth, source allows entry), or 5 (destroyed).
+ *   Closed/opening/closing states 2..4 block movement.
  * Blocked:
  *   WALL, out-of-bounds, any unknown element type.
  */
@@ -183,13 +184,14 @@ int F0706_MOVEMENT_IsSquarePassable_Compat(
         case DUNGEON_ELEMENT_CORRIDOR:
         case DUNGEON_ELEMENT_PIT:
         case DUNGEON_ELEMENT_TELEPORTER:
-        case DUNGEON_ELEMENT_FAKEWALL:
         case DUNGEON_ELEMENT_STAIRS:
             return 1;
+        case DUNGEON_ELEMENT_FAKEWALL:
+            return ((squareByte & 0x04) || (squareByte & 0x01)) ? 1 : 0;
         case DUNGEON_ELEMENT_DOOR:
             doorState = squareByte & 0x07;
-            /* 0 = fully open, 5 = destroyed; other states block. */
-            return (doorState == 0 || doorState == 5) ? 1 : 0;
+            /* 0 = open, 1 = closed one-fourth, 5 = destroyed; other states block. */
+            return (doorState == 0 || doorState == 1 || doorState == 5) ? 1 : 0;
         case DUNGEON_ELEMENT_WALL:
         default:
             return 0;
@@ -236,16 +238,17 @@ int F0707_MOVEMENT_IsSquarePassableForContext_Compat(
         case DUNGEON_ELEMENT_CORRIDOR:
         case DUNGEON_ELEMENT_PIT:
         case DUNGEON_ELEMENT_TELEPORTER:
-        case DUNGEON_ELEMENT_FAKEWALL:
             return 1;
+        case DUNGEON_ELEMENT_FAKEWALL:
+            return ((squareByte & 0x04) || (squareByte & 0x01)) ? 1 : 0;
         case DUNGEON_ELEMENT_STAIRS:
             /* Party: stairs are a legal consequence square.
              * Creature: stairs are blocked. */
             return (passContext == MOVEMENT_PASS_CTX_CREATURE) ? 0 : 1;
         case DUNGEON_ELEMENT_DOOR:
             doorState = squareByte & 0x07;
-            /* 0 = fully open, 5 = destroyed; other states block. */
-            return (doorState == 0 || doorState == 5) ? 1 : 0;
+            /* 0 = open, 1 = closed one-fourth, 5 = destroyed; other states block. */
+            return (doorState == 0 || doorState == 1 || doorState == 5) ? 1 : 0;
         case DUNGEON_ELEMENT_WALL:
         default:
             return 0;
@@ -315,17 +318,22 @@ int F0702_MOVEMENT_TryMove_Compat(
         return 0;
     }
 
-    /* Source-semantic door passability check (MOVESENS.C / DUNGEON.C).
-     * A closed or animating door blocks the step. */
+    /* Source-semantic door/fake-wall passability check
+     * (CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty). */
     if (elementType == DUNGEON_ELEMENT_DOOR) {
         doorState = squareByte & 0x07;
-        if (doorState != 0 && doorState != 5) {
+        if (doorState != 0 && doorState != 1 && doorState != 5) {
             outResult->resultCode = MOVE_BLOCKED_DOOR;
+            return 0;
+        }
+    } else if (elementType == DUNGEON_ELEMENT_FAKEWALL) {
+        if (!(squareByte & 0x04) && !(squareByte & 0x01)) {
+            outResult->resultCode = MOVE_BLOCKED_WALL;
             return 0;
         }
     }
 
-    /* Corridor / pit / teleporter / fake-wall / stairs / open door: pass.
+    /* Corridor / pit / teleporter / open-or-imaginary fake-wall / stairs / open door: pass.
      * Stairs traversal consequence itself is resolved by F0705 after the
      * step has been committed. */
     outResult->newMapX = nx;

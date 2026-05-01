@@ -16,11 +16,11 @@
  *   1. F0707(PARTY, s)    == F0706(s)                  for every s.
  *   2. F0707(CREATURE, s) == F0706(s) && elem != STAIRS for every s.
  *   3. Creature context rejects STAIRS explicitly (no regression guard).
- *   4. Creature context accepts corridor/pit/teleporter/fakewall/open
- *      door/destroyed door — i.e. same rules as party for every
+ *   4. Creature context accepts corridor/pit/teleporter/open fakewall/open
+ *      door/one-fourth door/destroyed door — i.e. same rules as party for every
  *      non-stairs element.
- *   5. Creature context rejects walls, closed doors, and opening/
- *      closing intermediate door states (1..4).
+ *   5. Creature context rejects walls, closed real fakewalls, closed doors, and
+ *      door states 2..4.
  *   6. Bounds and NULL safety match F0706.
  *   7. F0706 itself is unchanged (stairs still passable for party).
  *
@@ -78,8 +78,8 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon,
     /*
      * Element map (col,row):
      *   (0,0) WALL          (1,0) CORRIDOR    (2,0) DOOR closed(4) (3,0) DOOR open(0)
-     *   (0,1) STAIRS down   (1,1) STAIRS up   (2,1) FAKEWALL       (3,1) PIT
-     *   (0,2) TELEPORTER    (1,2) DOOR dest(5)(2,2) DOOR anim(2)   (3,2) DOOR anim(1)
+     *   (0,1) STAIRS down   (1,1) STAIRS up   (2,1) FAKEWALL open  (3,1) PIT
+     *   (0,2) TELEPORTER    (1,2) DOOR dest(5)(2,2) DOOR anim(2)   (3,2) DOOR one-fourth(1)
      *   (0,3) WALL          (1,3) CORRIDOR    (2,3) DOOR anim(3)   (3,3) WALL
      */
     squareData[0 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_WALL, 0);
@@ -89,7 +89,7 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon,
 
     squareData[0 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_STAIRS, 0);
     squareData[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_STAIRS, 1);
-    squareData[2 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_FAKEWALL, 0);
+    squareData[2 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_FAKEWALL, 4);
     squareData[3 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_PIT, 0);
 
     squareData[0 * MAP_H + 2] = sqb(DUNGEON_ELEMENT_TELEPORTER, 0);
@@ -100,7 +100,7 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon,
     squareData[0 * MAP_H + 3] = sqb(DUNGEON_ELEMENT_WALL, 0);
     squareData[1 * MAP_H + 3] = sqb(DUNGEON_ELEMENT_CORRIDOR, 0);
     squareData[2 * MAP_H + 3] = sqb(DUNGEON_ELEMENT_DOOR, 3);
-    squareData[3 * MAP_H + 3] = sqb(DUNGEON_ELEMENT_WALL, 0);
+    squareData[3 * MAP_H + 3] = sqb(DUNGEON_ELEMENT_FAKEWALL, 0);
 }
 
 static void free_fixture(struct DungeonDatState_Compat* dungeon) {
@@ -174,8 +174,8 @@ int main(void) {
                "creature context blocks up-stairs square");
     }
 
-    /* --- Invariant 4: creature context accepts corridor/pit/teleporter/fakewall/
-     *                  open door/destroyed door (element parity with party). --- */
+    /* --- Invariant 4: creature context accepts corridor/pit/teleporter/open fakewall/
+     *                  open door/one-fourth door/destroyed door (element parity with party). --- */
     {
         int corridor = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
             &dungeon, 0, 1, 0, MOVEMENT_PASS_CTX_CREATURE);
@@ -189,6 +189,8 @@ int main(void) {
             &dungeon, 0, 3, 0, MOVEMENT_PASS_CTX_CREATURE);
         int door_destroyed = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
             &dungeon, 0, 1, 2, MOVEMENT_PASS_CTX_CREATURE);
+        int door_one_fourth = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+            &dungeon, 0, 3, 2, MOVEMENT_PASS_CTX_CREATURE);
         record("P39_F0707_CREATURE_ACCEPTS_CORRIDOR",
                corridor == 1, "creature context accepts corridor");
         record("P39_F0707_CREATURE_ACCEPTS_PIT",
@@ -201,10 +203,12 @@ int main(void) {
                door_open == 1, "creature context accepts fully-open door");
         record("P39_F0707_CREATURE_ACCEPTS_DOOR_DESTROYED",
                door_destroyed == 1, "creature context accepts destroyed door");
+        record("P39_F0707_CREATURE_ACCEPTS_DOOR_STATE1",
+               door_one_fourth == 1, "creature context accepts one-fourth door (state 1)");
     }
 
-    /* --- Invariant 5: creature context rejects walls, closed doors, and every
-     *                  animating door intermediate state (1..4). --- */
+    /* --- Invariant 5: creature context rejects walls, closed real fakewalls,
+     *                  closed doors, and door states 2..4. --- */
     {
         int wall = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
             &dungeon, 0, 0, 0, MOVEMENT_PASS_CTX_CREATURE);
@@ -214,8 +218,8 @@ int main(void) {
             &dungeon, 0, 2, 3, MOVEMENT_PASS_CTX_CREATURE); /* state 3 */
         int door2 = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
             &dungeon, 0, 2, 2, MOVEMENT_PASS_CTX_CREATURE); /* state 2 */
-        int door1 = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
-            &dungeon, 0, 3, 2, MOVEMENT_PASS_CTX_CREATURE); /* state 1 */
+        int fakewall_closed = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+            &dungeon, 0, 3, 3, MOVEMENT_PASS_CTX_CREATURE); /* closed real fakewall */
         record("P39_F0707_CREATURE_REJECTS_WALL",
                wall == 0, "creature context blocks wall");
         record("P39_F0707_CREATURE_REJECTS_DOOR_CLOSED",
@@ -224,8 +228,8 @@ int main(void) {
                door3 == 0, "creature context blocks animating door (state 3)");
         record("P39_F0707_CREATURE_REJECTS_DOOR_STATE2",
                door2 == 0, "creature context blocks animating door (state 2)");
-        record("P39_F0707_CREATURE_REJECTS_DOOR_STATE1",
-               door1 == 0, "creature context blocks animating door (state 1)");
+        record("P39_F0707_CREATURE_REJECTS_FAKEWALL_CLOSED",
+               fakewall_closed == 0, "creature context blocks closed real fake wall");
     }
 
     /* --- Invariant 6: bounds / NULL safety. --- */

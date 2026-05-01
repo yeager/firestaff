@@ -3,7 +3,7 @@
  *
  * Verifies the new source-faithful owners introduced in Pass 30:
  *   - F0702_MOVEMENT_TryMove_Compat now blocks closed doors (MOVE_BLOCKED_DOOR).
- *   - F0702 still passes through corridor/open-door/fake-wall/stairs.
+ *   - F0702 still passes through corridor/open-door/source-open fake-wall/stairs.
  *   - F0705_MOVEMENT_ResolveStairsTransition_Compat detects stairs squares,
  *     selects ascend vs descend per the attribute bit, clamps destination
  *     into the target map bounds, and refuses to transition off the end
@@ -89,13 +89,14 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon,
     /* row-1 */
     squareData[0 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_STAIRS, 0);   /* down */
     squareData[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_STAIRS, 1);   /* up */
-    squareData[2 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_FAKEWALL, 0);
+    squareData[2 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_FAKEWALL, 4);     /* open fake wall */
     squareData[3 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_PIT, 0);
     /* row-2 */
     squareData[0 * MAP_H + 2] = sqb(DUNGEON_ELEMENT_TELEPORTER, 0);
     squareData[1 * MAP_H + 2] = sqb(DUNGEON_ELEMENT_CORRIDOR, 0);
     squareData[2 * MAP_H + 2] = sqb(DUNGEON_ELEMENT_DOOR, 5);     /* destroyed */
-    squareData[3 * MAP_H + 2] = sqb(DUNGEON_ELEMENT_WALL, 0);
+    squareData[3 * MAP_H + 2] = sqb(DUNGEON_ELEMENT_FAKEWALL, 0);  /* closed real fake wall */
+    squareData[3 * MAP_H + 3] = sqb(DUNGEON_ELEMENT_DOOR, 1);      /* one-fourth door */
 }
 
 static void free_fixture(struct DungeonDatState_Compat* dungeon) {
@@ -157,11 +158,23 @@ int main(void) {
            rc == MOVE_OK && mr.newMapX == 2 && mr.newMapY == 2,
            "stepping onto a destroyed door square returns MOVE_OK");
 
-    /* Fake wall at (2,1): (1,1) east. */
+    /* One-fourth door (state 1): source allows entry. */
+    rc = step_forward(&dungeon, 3, 2, 2 /* south */, &mr);
+    record("P30_F0702_DOOR_ONE_FOURTH",
+           rc == MOVE_OK && mr.newMapX == 3 && mr.newMapY == 3,
+           "stepping onto a one-fourth door square returns MOVE_OK");
+
+    /* Open fake wall at (2,1): (1,1) east. */
     rc = step_forward(&dungeon, 1, 1, 1 /* east */, &mr);
-    record("P30_F0702_FAKEWALL",
+    record("P30_F0702_FAKEWALL_OPEN",
            rc == MOVE_OK && mr.newMapX == 2 && mr.newMapY == 1,
-           "stepping onto a fake wall square returns MOVE_OK");
+           "stepping onto an open fake wall square returns MOVE_OK");
+
+    /* Closed non-imaginary fake wall at (3,2): (2,2) east. */
+    rc = step_forward(&dungeon, 2, 2, 1 /* east */, &mr);
+    record("P30_F0702_FAKEWALL_CLOSED_BLOCKS",
+           rc == MOVE_BLOCKED_WALL,
+           "stepping onto a closed real fake wall square blocks like a wall");
 
     /* Stairs-down at (0,1): (1,1) west. */
     rc = step_forward(&dungeon, 1, 1, 3 /* west */, &mr);
@@ -229,17 +242,20 @@ int main(void) {
                 unsigned char b = squareData[c * MAP_H + r];
                 int elem = (b & DUNGEON_SQUARE_MASK_TYPE) >> 5;
                 int door = b & 0x07;
+                int fakewall_open_or_imaginary = b & 0x05;
                 int expected = 0;
                 int actual = F0706_MOVEMENT_IsSquarePassable_Compat(&dungeon, 0, c, r);
                 switch (elem) {
                     case DUNGEON_ELEMENT_CORRIDOR:
                     case DUNGEON_ELEMENT_PIT:
                     case DUNGEON_ELEMENT_TELEPORTER:
+                        expected = 1; break;
                     case DUNGEON_ELEMENT_FAKEWALL:
+                        expected = fakewall_open_or_imaginary ? 1 : 0; break;
                     case DUNGEON_ELEMENT_STAIRS:
                         expected = 1; break;
                     case DUNGEON_ELEMENT_DOOR:
-                        expected = (door == 0 || door == 5) ? 1 : 0; break;
+                        expected = (door == 0 || door == 1 || door == 5) ? 1 : 0; break;
                     default:
                         expected = 0; break;
                 }

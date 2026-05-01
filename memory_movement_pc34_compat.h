@@ -91,9 +91,9 @@ void F0701_MOVEMENT_GetStepDelta_Compat(
  * For turns (MOVE_TURN_LEFT, MOVE_TURN_RIGHT): always succeeds,
  * sets resultCode = MOVE_TURN_ONLY.
  *
- * For steps (MOVE_FORWARD/BACKWARD/LEFT/RIGHT): checks bounds,
- * checks tile type (wall = blocked, everything else = ok for now).
- * Does NOT check door open/closed state (future phase).
+ * For steps (MOVE_FORWARD/BACKWARD/LEFT/RIGHT): checks bounds and
+ * source-semantic square passability (wall, door state, fake-wall bits,
+ * stairs consequence square).
  *
  * Returns 1 if result is MOVE_OK or MOVE_TURN_ONLY, 0 if blocked.
  */
@@ -181,12 +181,12 @@ int F0705_MOVEMENT_ResolveStairsTransition_Compat(
 /*
  * Shared source-faithful square passability helper used by both party
  * movement legality and creature walkability decisions.  Corresponds to
- * the square-element checks inside F0267_MOVE_GetMoveResult_CPSCE /
- * DUNGEON.C: walls block, corridor/pit/teleporter/fake-wall are open,
- * stairs are passable as a consequence square, doors are passable only
- * when the door-state low nibble is fully open (0) or the door is
- * destroyed (state 5).  No thing-list checks — those are for sensor
- * processing in a later pass.
+ * the square-element checks inside F0366_COMMAND_ProcessTypes3To6_MoveParty /
+ * DUNGEON.C: walls block, corridor/pit/teleporter are open, fake-walls
+ * are passable only when OPEN (0x04) or IMAGINARY (0x01), stairs are
+ * passable as a consequence square, doors are passable when the
+ * door-state low bits are open (0), closed one-fourth (1), or destroyed
+ * (5).  No thing-list checks — those are for sensor/group processing.
  *
  * Returns 1 if the square is passable, 0 otherwise.  Out-of-bounds or
  * missing tile data returns 0.
@@ -211,7 +211,7 @@ int F0706_MOVEMENT_IsSquarePassable_Compat(
  * MOVEMENT_PASS_CTX_CREATURE rejects stairs and otherwise shares the
  * same element/door decoding as F0706 so party and creature
  * walkability stay in sync for walls, corridors, pits, teleporters,
- * fake walls, and door-state bits.
+ * fake-wall bits, and door-state bits.
  */
 #define MOVEMENT_PASS_CTX_PARTY    0
 #define MOVEMENT_PASS_CTX_CREATURE 1

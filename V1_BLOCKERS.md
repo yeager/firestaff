@@ -147,20 +147,24 @@ first, then visual parity, then typography / honesty.
     (state 5) are now walkable for creatures, matching the shared
     decoder (previously the custom M11 path rejected them, a
     divergence from F0706 — now removed).
-  - `F0706_MOVEMENT_IsSquarePassable_Compat` itself is unchanged:
-    party-side passability (including stairs) is preserved, so the
-    pass-30 stairs behavior is intact.
+  - `F0706_MOVEMENT_IsSquarePassable_Compat` itself remains the
+    party-side passability owner (including stairs), with the pass-30
+    stairs behavior intact. Pass 177 source-locked the door/fake-wall
+    edge cases to ReDMCSB: door state 1 (closed one-fourth) is passable,
+    and fake walls are passable only when OPEN (`0x04`) or IMAGINARY
+    (`0x01`).
   - Pass-39 probe
     `run_firestaff_m11_pass39_creature_walkability_probe.sh` drives
     F0707 directly across a 4x4 fixture covering every element type
-    and door state 0..5; verifies 22/22 invariants including: party
+    and door state 0..5; verifies 23/23 invariants including: party
     context equals F0706 for every square, creature context equals
     F0706 except stairs are blocked, creature context rejects both
     stairs-up and stairs-down, creature context accepts corridor /
-    pit / teleporter / fakewall / open door / destroyed door,
-    creature context rejects walls / closed door / animating door
-    states 1..4, bounds and NULL safety match F0706, and F0706 itself
-    still treats both stairs squares as passable for the party.
+    pit / teleporter / open fakewall / open door / one-fourth door /
+    destroyed door, creature context rejects walls / closed real
+    fakewalls / closed door / door states 2..4, bounds and NULL safety
+    match F0706, and F0706 itself still treats both stairs squares as
+    passable for the party.
   - All baseline gates stay green: Phase A 18/18, M11 game view
     361/361, M11 launcher smoke PASS, M10 verify 20/20 phases,
     M11 verify end-to-end.  Previously-green pass-30 (15/15),
