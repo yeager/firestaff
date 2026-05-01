@@ -129,6 +129,27 @@
       "verified": true
     },
     {
+      "citation": "MOVESENS.C:315-385",
+      "needles": [
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE",
+        "P0558_i_SourceMapX",
+        "P0560_i_DestinationMapX",
+        "L0713_B_ThingLevitates",
+        "L0724_B_DestinationIsTeleporterTarget"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "MOVESENS.C:752-775",
+      "needles": [
+        "L0725_B_PartySquare",
+        "P0557_T_Thing == C0xFFFF_THING_PARTY",
+        "G0308_i_PartyDirection == L0716_ui_Direction",
+        "G0362_l_LastPartyMovementTime = G0313_ul_GameTime"
+      ],
+      "verified": true
+    },
+    {
       "citation": "GAMELOOP.C:150-155",
       "needles": [
         "G0310_i_DisabledMovementTicks--",

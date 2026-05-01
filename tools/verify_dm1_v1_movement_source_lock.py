@@ -23,6 +23,7 @@ SRC = {
     "COMMAND.C": REDMCSB_SOURCE / "COMMAND.C",
     "CLIKMENU.C": REDMCSB_SOURCE / "CLIKMENU.C",
     "DUNGEON.C": REDMCSB_SOURCE / "DUNGEON.C",
+    "MOVESENS.C": REDMCSB_SOURCE / "MOVESENS.C",
     "GAMELOOP.C": REDMCSB_SOURCE / "GAMELOOP.C",
     "CHAMPION.C": REDMCSB_SOURCE / "CHAMPION.C",
 }
@@ -87,6 +88,19 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         "MASK0x0004_FAKEWALL_OPEN", "MASK0x0001_FAKEWALL_IMAGINARY",
         "F0357_COMMAND_DiscardAllInput", "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks",
         "G0311_i_ProjectileDisabledMovementTicks = 0",
+    ]))
+    checks.append(require("MOVESENS.C:315-385", block(SRC["MOVESENS.C"], 315, 385), [
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE",
+        "P0558_i_SourceMapX",
+        "P0560_i_DestinationMapX",
+        "L0713_B_ThingLevitates",
+        "L0724_B_DestinationIsTeleporterTarget",
+    ]))
+    checks.append(require("MOVESENS.C:752-775", block(SRC["MOVESENS.C"], 752, 775), [
+        "L0725_B_PartySquare",
+        "P0557_T_Thing == C0xFFFF_THING_PARTY",
+        "G0308_i_PartyDirection == L0716_ui_Direction",
+        "G0362_l_LastPartyMovementTime = G0313_ul_GameTime",
     ]))
     checks.append(require("GAMELOOP.C:150-155", block(SRC["GAMELOOP.C"], 150, 155), [
         "G0310_i_DisabledMovementTicks--", "G0311_i_ProjectileDisabledMovementTicks--",
