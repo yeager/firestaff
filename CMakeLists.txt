@@ -206,6 +206,19 @@ if(BUILD_TESTING)
         COMMAND test_touch_pointer_input_pc34_compat_integration
     )
 
+    add_executable(firestaff_m11_touch_pointer_dispatch_probe
+        probes/m11/firestaff_m11_touch_pointer_dispatch_probe.c
+    )
+    target_include_directories(firestaff_m11_touch_pointer_dispatch_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(firestaff_m11_touch_pointer_dispatch_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m11_touch_pointer_dispatch_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_touch_pointer_dispatch_probe
+        COMMAND firestaff_m11_touch_pointer_dispatch_probe
+    )
+
     add_executable(test_inventory_panel_slot_routes_pc34_compat_integration
         test_inventory_panel_slot_routes_pc34_compat_integration.c
     )
