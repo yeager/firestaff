@@ -4,8 +4,8 @@
  * Validates the pure projectile/explosion tick-transform data layer
  * against PHASE17_PLAN.md §5 invariants.
  *
- * Shipped: 52 invariants (≥30 gate, 48 target). Two sub-checks are
- * folded under invariant #48 and counted as one.
+ * Shipped: 53 invariants (≥30 gate, 48 target). Two sub-checks are
+ * folded under invariant #49 and counted as one.
  */
 
 #include <stdio.h>
@@ -173,6 +173,8 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- F0827-F0829 serialisation (instance + list round-trips)\n");
     fprintf(report, "- Integration with Phases 12/13/14/15/16\n");
     fprintf(report, "- Loop-guard (100 configs × 200 ticks) and real DUNGEON.DAT spot-check\n\n");
+    fprintf(report, "## Source-locked wall/fakewall blocker evidence\n\n");
+    fprintf(report, "- ReDMCSB PROJEXPL.C:721-724: wall blocks; fakewall blocks only when neither imaginary nor open; stairs block only stairs→stairs before F0217 impact dispatch.\n\n");
     fprintf(report, "## Known NEEDS DISASSEMBLY REVIEW\n\n");
     fprintf(report, "- Teleporter direction rotation (memory_projectile_pc34_compat.c F0811 step 7) — v1 honours `destTeleporterNewDirection` when caller pre-rotates; no in-module rotation.\n");
     fprintf(report, "- Kinetic pass-through door random roll (PROJEXPL.C:490-500, pouch/thrown) — v1 deterministic non-pass for kinetic projectiles.\n");
@@ -497,6 +499,50 @@ int main(int argc, char* argv[]) {
                && r.emittedExplosion == 1);
         CHECK(okK && okM,
               "Wall hit: kinetic -> no emission; magical FIREBALL -> explosion emitted");
+    }
+    /* 18b: Source-locked fakewall blockers. ReDMCSB PROJEXPL.C:721-724
+     * blocks fakewalls only when neither IMAGINARY nor OPEN is set; open or
+     * imaginary fakewalls remain passable and reschedule PROJECTILE_MOVE. */
+    {
+        struct ProjectileInstance_Compat p, pOut;
+        struct CellContentDigest_Compat d;
+        struct ProjectileTickResult_Compat r;
+        struct RngState_Compat rng;
+        int okClosed;
+        int okOpen;
+        int okImaginary;
+
+        zero_digest(&d);
+        set_source_and_dest(&d, 0, 5, 5, 6, 5);
+        d.destSquareType = PROJECTILE_ELEMENT_FAKEWALL;
+        d.destFakeWallIsImaginaryOrOpen = 0;
+        make_projectile_kinetic(&p, 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 1);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        okClosed = (r.resultKind == PROJECTILE_RESULT_HIT_WALL
+                    && r.despawn == 1
+                    && r.emittedExplosion == 0);
+
+        d.destFakeWallIsImaginaryOrOpen = 1;
+        make_projectile_kinetic(&p, 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 1);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        okOpen = (r.resultKind == PROJECTILE_RESULT_FLEW
+                  && r.despawn == 0
+                  && r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE);
+
+        /* Same digest bit covers ReDMCSB's IMAGINARY|OPEN mask; repeat the
+         * pass-through expectation so both source cases are visibly gated. */
+        d.destFakeWallIsImaginaryOrOpen = 1;
+        make_projectile_kinetic(&p, 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 2);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        okImaginary = (r.resultKind == PROJECTILE_RESULT_FLEW
+                       && r.despawn == 0
+                       && r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE);
+
+        CHECK(okClosed && okOpen && okImaginary,
+              "Fakewall projectile gate: closed fakewall hits wall; open/imaginary fakewalls pass (PROJEXPL.C:721-724)");
     }
     /* 19: Closed door -> HIT_DOOR + DOOR_DESTRUCTION event */
     {
