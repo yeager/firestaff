@@ -228,12 +228,12 @@ int main(void)
     ok &= expect_int("movement target x", moveResult.newMapX, 1);
     ok &= expect_int("movement target y", moveResult.newMapY, 0);
 
-    ok &= expect_int("source leave sensors empty", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+    party.mapX = moveResult.newMapX;
+    party.mapY = moveResult.newMapY;
+    ok &= expect_int("source leave sensors empty after party coord update", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         &dungeon, &things, party.mapIndex, sourceX, sourceY, SENSOR_EVENT_WALK_OFF, &leaveEffects), 1);
     ok &= expect_int("source leave effect count", leaveEffects.count, 0);
 
-    party.mapX = moveResult.newMapX;
-    party.mapY = moveResult.newMapY;
     ok &= expect_int("destination enter sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, &enterEffects), 1);
     ok &= expect_int("destination enter effect count", enterEffects.count, 2);
