@@ -326,6 +326,31 @@ int main(void)
     ok &= expect_int("turn new direction", F0700_MOVEMENT_TurnDirection_Compat(party.direction, 1), DIR_EAST);
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squares[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[1] = thing_ref(THING_TYPE_SENSOR, 1);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("turn current-square sensor key queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 6, 3, DIR_NORTH);
+    ok &= expect_int("turn current-square sensor bypasses movement gates", queueResult.movementDisabledGate, 0);
+    ok &= expect_int("turn current-square sensor dequeued", queueResult.dequeued, 1);
+    ok &= expect_int("turn current-square sensor dispatched", queueResult.dispatchedTurn, 1);
+    sourceX = party.mapX;
+    sourceY = party.mapY;
+    ok &= expect_int("turn current-square leave sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_OFF, &leaveEffects), 1);
+    ok &= expect_int("turn current-square leave has no v1 effects", leaveEffects.count, 0);
+    party.direction = F0700_MOVEMENT_TurnDirection_Compat(party.direction, 1);
+    ok &= expect_int("turn current-square enter sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, &enterEffects), 1);
+    ok &= expect_int("turn current-square enter effect count", enterEffects.count, 1);
+    ok &= expect_int("turn current-square enter text effect", enterEffects.effects[0].kind, SENSOR_EFFECT_SHOW_TEXT);
+    ok &= expect_int("turn current-square enter text id", enterEffects.effects[0].textIndex, 77);
+    ok &= expect_int("turn current-square leaves party x", party.mapX, sourceX);
+    ok &= expect_int("turn current-square leaves party y", party.mapY, sourceY);
+    ok &= expect_int("turn current-square updates direction only", party.direction, DIR_EAST);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     queue.locked = 1;
     ok &= expect_int("locked mouse forward stored as pending", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,

@@ -212,6 +212,10 @@ def main() -> int:
         'disabled movement leaves command queued',
         'projectile same-direction movement leaves command queued',
         'projectile different-direction movement dispatched',
+        'turn current-square sensor bypasses movement gates',
+        'turn current-square enter sensors processed',
+        'turn current-square leaves party x',
+        'turn current-square updates direction only',
     ]:
         if needle not in probe:
             raise AssertionError(f'probe coverage missing {needle!r}')
