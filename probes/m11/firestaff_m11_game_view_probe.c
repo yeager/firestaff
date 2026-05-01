@@ -1282,19 +1282,26 @@ int main(int argc, char** argv) {
                      strcmp(syntheticView.lastOutcome, "PARTY MOVED") == 0,
                  "A strafes relative to facing and moves into the left lane through the real tick path");
 
-    syntheticView.world.party.direction = DIR_NORTH;
-    syntheticView.world.party.mapX = 2;
-    syntheticView.world.party.mapY = 3;
-    initialTick = syntheticView.world.gameTick;
-    probe_record(&tally,
-                 "INV_GV_07L",
-                 M11_GameView_HandlePointer(&syntheticView, 182, 126, 1) == M11_GAME_INPUT_REDRAW &&
-                     syntheticView.world.gameTick == initialTick + 1 &&
-                     syntheticView.world.party.mapX == 3 &&
-                     syntheticView.world.party.mapY == 3 &&
-                     strcmp(syntheticView.lastAction, "STRAFE RIGHT") == 0 &&
-                     strcmp(syntheticView.lastOutcome, "PARTY MOVED") == 0,
-                 "clicking the lower-right viewport lane performs a relative strafe instead of another turn");
+    {
+        M11_GameViewState arrowView;
+        memset(&arrowView, 0, sizeof(arrowView));
+        (void)probe_init_synthetic_view(&arrowView);
+        arrowView.showDebugHUD = 0;
+        arrowView.world.party.direction = DIR_NORTH;
+        arrowView.world.party.mapX = 2;
+        arrowView.world.party.mapY = 3;
+        initialTick = arrowView.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_07L",
+                     M11_GameView_HandlePointer(&arrowView, 300, 156, 1) == M11_GAME_INPUT_REDRAW &&
+                         arrowView.world.gameTick == initialTick + 1 &&
+                         arrowView.world.party.mapX == 3 &&
+                         arrowView.world.party.mapY == 3 &&
+                         strcmp(arrowView.lastAction, "STRAFE RIGHT") == 0 &&
+                         strcmp(arrowView.lastOutcome, "PARTY MOVED") == 0,
+                     "clicking the lower-right DM1 V1 movement arrow performs a relative strafe instead of another turn");
+        probe_free_synthetic_view(&arrowView);
+    }
 
     syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] =
         (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B);

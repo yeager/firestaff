@@ -5534,6 +5534,37 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
     }
 
+    /* ReDMCSB COMMAND.C G0448 maps the source movement-arrow zones
+     * (C068/C070/C069/C073/C072/C071) to commands 1/3/2/6/5/4;
+     * CLIKMENU.C F0366 then treats C004 as relative right movement. */
+    if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+        int space = M11_DM1_MOUSE_SPACE_NONE;
+        int zoneId = 0;
+        int command = M11_GameView_GetV1MouseCommandForPoint(
+            M11_DM1_MOUSE_LIST_MOVEMENT,
+            x, y,
+            M11_DM1_MOUSE_MASK_LEFT,
+            &space,
+            &zoneId);
+        (void)space;
+        switch (command) {
+            case 1:
+                return M11_GameView_HandleInput(state, M12_MENU_INPUT_LEFT);
+            case 2:
+                return M11_GameView_HandleInput(state, M12_MENU_INPUT_RIGHT);
+            case 3:
+                return M11_GameView_HandleInput(state, M12_MENU_INPUT_UP);
+            case 4:
+                return M11_GameView_HandleInput(state, M12_MENU_INPUT_STRAFE_RIGHT);
+            case 5:
+                return M11_GameView_HandleInput(state, M12_MENU_INPUT_DOWN);
+            case 6:
+                return M11_GameView_HandleInput(state, M12_MENU_INPUT_STRAFE_LEFT);
+            default:
+                break;
+        }
+    }
+
     if (m11_point_in_rect(x, y,
                           M11_VIEWPORT_X,
                           M11_VIEWPORT_Y,
