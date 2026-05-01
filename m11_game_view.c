@@ -9406,8 +9406,13 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                        kWallOrnaments[i].viewWallIndex,
                                        &blit)) {
             const M11_AssetSlot* slot;
+            /* ReDMCSB DUNVIEW.C F0107 increments the native wall-ornament
+             * bitmap for front-facing projections (and D1 side views), but not
+             * for D2L_RIGHT/D2R_LEFT side projections: D2R_LEFT reuses the base
+             * side bitmap and flips it horizontally. */
             int nativeOffset = (kWallOrnaments[i].viewWallIndex >= 2 &&
-                                kWallOrnaments[i].viewWallIndex != 5) ? 1 : 0;
+                                kWallOrnaments[i].viewWallIndex != 5 &&
+                                kWallOrnaments[i].viewWallIndex != 6) ? 1 : 0;
             blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + nativeOffset;
             slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                         (unsigned int)blit.graphicIndex);
