@@ -31,6 +31,7 @@ COMPAT_C = ROOT / "memory_movement_pc34_compat.c"
 COMPAT_H = ROOT / "memory_movement_pc34_compat.h"
 ORCH_C = ROOT / "memory_tick_orchestrator_pc34_compat.c"
 PROBE_C = ROOT / "firestaff_m10_tick_orchestrator_probe.c"
+GROUP_PROBE_C = ROOT / "firestaff_m11_pass44_party_group_collision_probe.c"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_movement_source_lock.json"
 
 
@@ -88,6 +89,7 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         "L1117_B_MovementBlocked = M036_DOOR_STATE(AL1115_ui_Square)",
         "L1117_B_MovementBlocked != C1_DOOR_STATE_CLOSED_ONE_FOURTH",
         "MASK0x0004_FAKEWALL_OPEN", "MASK0x0001_FAKEWALL_IMAGINARY",
+        "F0175_GROUP_GetThing", "G0305_ui_PartyChampionCount == 0",
         "F0357_COMMAND_DiscardAllInput", "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks",
         "G0311_i_ProjectileDisabledMovementTicks = 0",
     ]))
@@ -122,13 +124,16 @@ def verify_firestaff() -> list[dict[str, Any]]:
     h = COMPAT_H.read_text()
     orch = ORCH_C.read_text()
     probe = PROBE_C.read_text()
+    group_probe = GROUP_PROBE_C.read_text()
     checks: list[dict[str, Any]] = []
     impl_checks = [
         ("memory_movement_pc34_compat.c:F0700", c, ["return (currentDir + 1) & 3", "return (currentDir + 3) & 3"]),
         ("memory_movement_pc34_compat.c:F0701", c, ["case MOVE_FORWARD:  stepDir = direction", "case MOVE_RIGHT:    stepDir = (direction + 1) & 3", "case MOVE_BACKWARD: stepDir = (direction + 2) & 3", "case MOVE_LEFT:     stepDir = (direction + 3) & 3"]),
         ("memory_movement_pc34_compat.c:F0706 door/fakewall", c, ["case DUNGEON_ELEMENT_FAKEWALL", "squareByte & 0x04", "squareByte & 0x01", "doorState == 0 || doorState == 1 || doorState == 5"]),
         ("memory_movement_pc34_compat.c:F0702 door/fakewall", c, ["doorState != 0 && doorState != 1 && doorState != 5", "MOVE_BLOCKED_DOOR", "!(squareByte & 0x04) && !(squareByte & 0x01)", "MOVE_BLOCKED_WALL"]),
-        ("memory_movement_pc34_compat.h documentation", h, ["closed one-fourth (1)", "OPEN (0x04) or IMAGINARY (0x01)"])
+        ("memory_movement_pc34_compat.h documentation", h, ["closed one-fourth (1)", "OPEN (0x04) or IMAGINARY (0x01)"]),
+        ("memory_movement_pc34_compat.c:F0708 party/group collision", c, ["F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat", "party->championCount <= 0", "THING_GET_TYPE(thing) == THING_TYPE_GROUP", "F0702_MOVEMENT_TryMove_Compat"]),
+        ("memory_movement_pc34_compat.h:F0708 documentation", h, ["F0175_GROUP_GetThing", "championCount == 0 skips", "Turn-only commands never report group blocking"]),
     ]
     for cite, text, needles in impl_checks:
         checks.append(require(cite, text, needles))
@@ -146,6 +151,12 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "disabledMovementTicks blocks cardinal movement dispatch without consuming cooldown",
         "disabledMovementTicks does not block turn dispatch",
         "periodic effects decrement disabledMovementTicks once per tick",
+    ]))
+    checks.append(require("firestaff_m11_pass44_party_group_collision_probe.c:party/group collision invariant", group_probe, [
+        "P44_F0708_GROUP_BLOCKS_PASSABLE_TARGET",
+        "P44_F0708_EMPTY_PARTY_SKIPS_GROUP",
+        "P44_F0708_TURNS_IGNORE_GROUPS",
+        "P44_F0708_WALL_LEGALITY_WINS",
     ]))
     return checks
 

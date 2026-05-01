@@ -678,3 +678,75 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
     outResolution->finalMapIndex = cursor.mapIndex;
     return 1;
 }
+
+int F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    const struct PartyState_Compat* party,
+    int moveAction)
+{
+    struct MovementResult_Compat moveResult;
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char squareByte;
+    int squareIndex;
+    int sftIndex;
+    int m;
+    unsigned short thing;
+    int safety = 0;
+
+    if (!dungeon || !things || !party || !things->squareFirstThings) return 0;
+    if (party->championCount <= 0) return 0;
+    if (moveAction == MOVE_TURN_LEFT || moveAction == MOVE_TURN_RIGHT) return 0;
+
+    if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, moveAction, &moveResult) ||
+        moveResult.resultCode != MOVE_OK) {
+        return 0;
+    }
+    if (moveResult.newMapIndex < 0 ||
+        moveResult.newMapIndex >= (int)dungeon->header.mapCount ||
+        !dungeon->tilesLoaded || !dungeon->tiles ||
+        !dungeon->tiles[moveResult.newMapIndex].squareData) {
+        return 0;
+    }
+
+    map = &dungeon->maps[moveResult.newMapIndex];
+    if (moveResult.newMapX < 0 || moveResult.newMapX >= map->width ||
+        moveResult.newMapY < 0 || moveResult.newMapY >= map->height) {
+        return 0;
+    }
+
+    squareIndex = moveResult.newMapX * map->height + moveResult.newMapY;
+    squareByte = dungeon->tiles[moveResult.newMapIndex].squareData[squareIndex];
+    if (!(squareByte & DUNGEON_SQUARE_MASK_THING_LIST)) return 0;
+
+    sftIndex = 0;
+    for (m = 0; m < moveResult.newMapIndex; ++m) {
+        int i;
+        int count;
+        if (!dungeon->tiles[m].squareData) return 0;
+        count = dungeon->maps[m].width * dungeon->maps[m].height;
+        for (i = 0; i < count; ++i) {
+            if (dungeon->tiles[m].squareData[i] & DUNGEON_SQUARE_MASK_THING_LIST) {
+                ++sftIndex;
+            }
+        }
+    }
+    {
+        int i;
+        int count = map->width * map->height;
+        for (i = 0; i < count && i < squareIndex; ++i) {
+            if (dungeon->tiles[moveResult.newMapIndex].squareData[i] &
+                DUNGEON_SQUARE_MASK_THING_LIST) {
+                ++sftIndex;
+            }
+        }
+    }
+    if (sftIndex < 0 || sftIndex >= things->squareFirstThingCount) return 0;
+
+    thing = things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) return 1;
+        thing = movement_next_thing(things, thing);
+    }
+    return 0;
+}

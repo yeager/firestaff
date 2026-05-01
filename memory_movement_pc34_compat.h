@@ -235,4 +235,24 @@ int F0707_MOVEMENT_IsSquarePassableForContext_Compat(
     int mapY,
     int passContext);
 
+/*
+ * Source-locked party/group collision gate.
+ *
+ * ReDMCSB CLIKMENU.C / F0366_COMMAND_ProcessTypes3To6_MoveParty first
+ * rejects impassable destination squares (wall, closed door, closed real
+ * fake-wall).  Only if that square is otherwise passable, and only when the
+ * party has at least one champion, it checks F0175_GROUP_GetThing on the
+ * destination square and blocks the step when a creature group is present.
+ * The original empty-party bug is preserved here: championCount == 0 skips
+ * the group collision check.
+ *
+ * Returns 1 when the requested cardinal step is blocked by a group, 0
+ * otherwise.  Turn-only commands never report group blocking.
+ */
+int F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    const struct PartyState_Compat* party,
+    int moveAction);
+
 #endif
