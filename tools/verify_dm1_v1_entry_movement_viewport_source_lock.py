@@ -121,6 +121,51 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         "Party movement applies wall/door/fake-wall legality and movement cooldowns.",
     ))
     checks.append(require(
+        "COMMAND.C:2150-2156",
+        block("COMMAND.C", 2150, 2156),
+        [
+            "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+            "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);",
+            "goto T0380042;",
+        ],
+        "Command queue dispatch sends turn/step commands through the movement handlers before returning to the input wait loop.",
+    ))
+    checks.append(require(
+        "CLIKMENU.C:156-173 and CLIKMENU.C:237-347",
+        block("CLIKMENU.C", 156, 173) + "\n" + block("CLIKMENU.C", 237, 347),
+        [
+            "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+            "F0284_CHAMPION_SetPartyDirection",
+            "F0267_MOVE_GetMoveResult_CPSCE",
+            "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;",
+        ],
+        "Successful turns/steps set the stop-wait flag and mutate party direction/position before the next viewport draw.",
+    ))
+    checks.append(require(
+        "GAMELOOP.C:90 and GAMELOOP.C:215-219",
+        block("GAMELOOP.C", 90, 90) + "\n" + block("GAMELOOP.C", 215, 219),
+        [
+            "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+            "F0380_COMMAND_ProcessQueue_CPSC();",
+            "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);",
+        ],
+        "The main loop redraws the dungeon view from current party state, then processes input until a command sets StopWaitingForPlayerInput.",
+    ))
+    checks.append(require(
+        "DUNVIEW.C:8318-8616 and DRAWVIEW.C:709-724",
+        block("DUNVIEW.C", 8318, 8616) + "\n" + block("DRAWVIEW.C", 709, 724),
+        [
+            "void F0128_DUNGEONVIEW_Draw_CPSF",
+            "P0183_i_Direction",
+            "P0184_i_MapX",
+            "P0185_i_MapY",
+            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+            "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);",
+            "G0324_B_DrawViewportRequested = C1_TRUE",
+        ],
+        "Viewport redraw derives visible cells from updated direction/map coordinates and explicitly requests presentation.",
+    ))
+    checks.append(require(
         "MOVESENS.C:315-385",
         block("MOVESENS.C", 315, 385),
         [
@@ -212,6 +257,32 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         ],
         "Viewport presentation is a separate palette/vblank-gated presentation step.",
     ))
+    checks.append(require(
+        "DEFS.H:2575-2614 and DEFS.H:4215-4230",
+        block("DEFS.H", 2575, 2614) + "\n" + block("DEFS.H", 4215, 4230),
+        [
+            "#define M597_VIEW_SQUARE_D4C",
+            "#define C14_VIEW_SQUARE_D3L2",
+            "#define C15_VIEW_SQUARE_D3R2",
+            "#define C2500_ZONE_",
+            "#define C2540_ZONE_ALCOVE_OBJECT",
+            "#define C2900_ZONE_",
+        ],
+        "Viewport view-square ids and object/projectile zone families are stable source constants.",
+    ))
+    checks.append(require(
+        "DUNVIEW.C:8446-8542",
+        block("DUNVIEW.C", 8446, 8542),
+        [
+            "F0153_DUNGEON_GetRelativeSquareType(P0183_i_Direction, 3, -2",
+            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 4, -1",
+            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 0",
+            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, 0",
+            "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 0",
+            "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);",
+        ],
+        "Viewport rows are traversed source-order far-to-near using relative coordinates from current party state.",
+    ))
     return checks
 
 
@@ -270,6 +341,76 @@ def verify_route_evidence() -> list[dict[str, Any]]:
         })
     return checks
 
+def source_derived_golden_metadata() -> dict[str, Any]:
+    """Reusable source/asset-derived facts for implementation lanes.
+
+    This is not a runtime capture. Every value is either decoded from canonical
+    DM1 DUNGEON.DAT or transcribed from the cited ReDMCSB source ranges checked
+    by this verifier.
+    """
+    return {
+        "label": "source_asset_derived_golden_metadata_not_runtime_capture",
+        "citations": [
+            "DEFS.H:2575-2614 view-square indexes",
+            "DEFS.H:4215-4230 viewport/thing zone constants",
+            "DUNGEON.C:35-44 direction step vectors",
+            "DUNGEON.C:1371-1391 relative movement rotation",
+            "CLIKMENU.C:256-347 movement blockers/cooldowns",
+            "DUNVIEW.C:8318-8542 viewport far-to-near row traversal",
+            "DUNVIEW.C:4929-5075 object zone derivation from C2500/C2548",
+            "DUNVIEW.C:5683-5889 projectile zone derivation from C2900",
+        ],
+        "directions": [
+            {"id": 0, "name": "NORTH", "stepEast": 0, "stepNorth": -1},
+            {"id": 1, "name": "EAST", "stepEast": 1, "stepNorth": 0},
+            {"id": 2, "name": "SOUTH", "stepEast": 0, "stepNorth": 1},
+            {"id": 3, "name": "WEST", "stepEast": -1, "stepNorth": 0},
+        ],
+        "entry_state": {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 2, "directionName": "SOUTH"},
+        "turn_step_front_samples": [
+            {"snapshot": "start_south", "party": [0, 1, 3, 2], "left": [2, 4], "center": [1, 4], "right": [0, 4]},
+            {"snapshot": "turn_right_west", "party": [0, 1, 3, 3], "left": [0, 4], "center": [0, 3], "right": [0, 2]},
+            {"snapshot": "turn_left_east", "party": [0, 1, 3, 1], "left": [2, 2], "center": [2, 3], "right": [2, 4]},
+            {"snapshot": "move_forward_west", "party": [0, 0, 3, 3], "left": [-1, 4], "center": [-1, 3], "right": [-1, 2]},
+            {"snapshot": "blocked_forward_south_wall", "party": [0, 1, 3, 2], "left": [2, 4], "center": [1, 4], "right": [0, 4]},
+        ],
+        "movement_blockers": {
+            "wall": "blocked when M034_SQUARE_TYPE(square) == C00_ELEMENT_WALL",
+            "door": "blocked unless door state is open, one-fourth closed, or destroyed (states 0, 1, 5 pass)",
+            "fakewall": "blocked unless MASK0x0004_FAKEWALL_OPEN or MASK0x0001_FAKEWALL_IMAGINARY is set",
+            "group": "living party checks target group and blocks/reactions before state mutation",
+            "successfulMoveCooldown": "G0310_i_DisabledMovementTicks = max champion movement ticks; projectile movement cooldown reset to 0",
+        },
+        "viewport_rows_far_to_near": [
+            {"viewSquare": "M598_VIEW_SQUARE_D4L", "relativeForward": 4, "relativeRight": -1, "role": "far object lane"},
+            {"viewSquare": "M599_VIEW_SQUARE_D4R", "relativeForward": 4, "relativeRight": 1, "role": "far object lane"},
+            {"viewSquare": "M597_VIEW_SQUARE_D4C", "relativeForward": 4, "relativeRight": 0, "role": "far object lane"},
+            {"viewSquare": "C14_VIEW_SQUARE_D3L2", "relativeForward": 3, "relativeRight": -2, "role": "far side wall"},
+            {"viewSquare": "C15_VIEW_SQUARE_D3R2", "relativeForward": 3, "relativeRight": 2, "role": "far side wall"},
+            {"viewSquare": "M601_VIEW_SQUARE_D3L", "relativeForward": 3, "relativeRight": -1, "role": "D3 left square"},
+            {"viewSquare": "M602_VIEW_SQUARE_D3R", "relativeForward": 3, "relativeRight": 1, "role": "D3 right square"},
+            {"viewSquare": "M600_VIEW_SQUARE_D3C", "relativeForward": 3, "relativeRight": 0, "role": "D3 center square"},
+            {"viewSquare": "C09_VIEW_SQUARE_D2L2", "relativeForward": 2, "relativeRight": -2, "role": "D2 side wall"},
+            {"viewSquare": "C10_VIEW_SQUARE_D2R2", "relativeForward": 2, "relativeRight": 2, "role": "D2 side wall"},
+            {"viewSquare": "M604_VIEW_SQUARE_D2L", "relativeForward": 2, "relativeRight": -1, "role": "D2 left square"},
+            {"viewSquare": "M605_VIEW_SQUARE_D2R", "relativeForward": 2, "relativeRight": 1, "role": "D2 right square"},
+            {"viewSquare": "M603_VIEW_SQUARE_D2C", "relativeForward": 2, "relativeRight": 0, "role": "D2 center square"},
+            {"viewSquare": "M607_VIEW_SQUARE_D1L", "relativeForward": 1, "relativeRight": -1, "role": "D1 left square"},
+            {"viewSquare": "M608_VIEW_SQUARE_D1R", "relativeForward": 1, "relativeRight": 1, "role": "D1 right square"},
+            {"viewSquare": "M606_VIEW_SQUARE_D1C", "relativeForward": 1, "relativeRight": 0, "role": "D1 center square"},
+            {"viewSquare": "M610_VIEW_SQUARE_D0L", "relativeForward": 0, "relativeRight": -1, "role": "current-row left"},
+            {"viewSquare": "M611_VIEW_SQUARE_D0R", "relativeForward": 0, "relativeRight": 1, "role": "current-row right"},
+            {"viewSquare": "M609_VIEW_SQUARE_D0C", "relativeForward": 0, "relativeRight": 0, "role": "current square"},
+        ],
+        "zone_families": {
+            "fieldWallBase": "C700/C701 floor+ceiling and C702+ wall field zones feed F0113/F0791 clipping",
+            "objectBase": "C2500_ZONE_ + viewSquare*4 + viewCell, with MASK0x8000_SHIFT_OBJECTS_AND_CREATURES for floor objects/creatures",
+            "alcoveObjectBase": "C2540/C2548 zone families for alcove objects",
+            "projectileBase": "C2900_ZONE_ + viewSquare*4 + viewCell",
+        },
+    }
+
+
 def verify_firestaff() -> list[dict[str, Any]]:
     files = {
         "memory_dungeon_dat_pc34_compat.c": ROOT / "memory_dungeon_dat_pc34_compat.c",
@@ -278,6 +419,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "m11_game_view.c": ROOT / "m11_game_view.c",
         "tools/verify_dm1_v1_movement_source_lock.py": ROOT / "tools/verify_dm1_v1_movement_source_lock.py",
         "scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py": ROOT / "scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py",
+        "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c": ROOT / "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c",
     }
     text = {name: path.read_text(encoding="utf-8", errors="replace") for name, path in files.items()}
     checks: list[dict[str, Any]] = []
@@ -345,6 +487,21 @@ def verify_firestaff() -> list[dict[str, Any]]:
         ],
         "Existing viewport source-lock gate remains wired for draw stack/world visual facts.",
     ))
+    checks.append(require(
+        "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c:post-command redraw gate",
+        text["probes/m11/firestaff_m11_turn_viewport_orientation_probe.c"],
+        [
+            "COMMAND.C:2150-2156 dispatches turn/step commands",
+            "CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput",
+            "rows[0].result != M11_GAME_INPUT_REDRAW",
+            "rows[3].result != M11_GAME_INPUT_REDRAW",
+            "move_forward_west",
+            "blocked_forward_south_wall",
+            "rows[2].mapX != 0 || rows[2].mapY != 3",
+            "rows[4].mapX != 1 || rows[4].mapY != 3",
+        ],
+        "Firestaff gates that successful turn and step inputs request redraw and resample viewport cells from post-command party state.",
+    ))
     return checks
 
 
@@ -360,6 +517,7 @@ def main() -> int:
         "original_dm1_asset_check": verify_original_dm1_header(),
         "firestaff_checks": verify_firestaff(),
         "route_evidence_checks": verify_route_evidence(),
+        "golden_metadata": source_derived_golden_metadata(),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")

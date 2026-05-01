@@ -153,7 +153,7 @@ static void snapshot(M11_GameViewState* game, const char* name, int result, Turn
     out->right = sample_cell(&game->world, 1);
 }
 
-static int write_outputs(const char* outDir, const TurnViewportSnapshotProbe rows[3]) {
+static int write_outputs(const char* outDir, const TurnViewportSnapshotProbe* rows, int rowCount) {
     char mdPath[1024];
     char jsonPath[1024];
     FILE* md;
@@ -170,11 +170,11 @@ static int write_outputs(const char* outDir, const TurnViewportSnapshotProbe row
         return 0;
     }
     fprintf(md, "# Pass 127 turn viewport orientation probe\n\n");
-    fprintf(md, "Source lock: ReDMCSB CLIKMENU.C F0365 turns update direction only; DUNVIEW.C F0128 samples relative viewport cells through F0150 after the turn direction.\n\n");
+    fprintf(md, "Source lock: ReDMCSB COMMAND.C:2150-2156 dispatches turn/step commands; CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput after successful turn/step; GAMELOOP.C:90 and DUNVIEW.C:8318-8616 redraw/present from current party direction/map coordinates.\n\n");
     fprintf(md, "| snapshot | tick | pos | dir | lane | map | square | element | firstThing | door | pit | teleporter |\n");
     fprintf(md, "| --- | ---: | --- | --- | ---: | --- | --- | --- | --- | ---: | ---: | ---: |\n");
-    fprintf(js, "{\n  \"schema\": \"pass127_turn_viewport_orientation_probe.v1\",\n  \"snapshots\": [\n");
-    for (i = 0; i < 3; ++i) {
+    fprintf(js, "{\n  \"schema\": \"pass127_turn_viewport_orientation_probe.v3\",\n  \"sourceLock\": \"COMMAND.C:2150-2156 dispatches turn/step commands; CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput after successful turn/step; GAMELOOP.C:90 and DUNVIEW.C:8318-8616 redraw/present from current party direction/map coordinates.\",\n  \"snapshots\": [\n");
+    for (i = 0; i < rowCount; ++i) {
         const TurnViewportSnapshotProbe* r = &rows[i];
         const TurnViewportCellProbe* cells[3] = { &r->left, &r->center, &r->right };
         int c;
@@ -192,7 +192,7 @@ static int write_outputs(const char* outDir, const TurnViewportSnapshotProbe row
                 r->left.mapX, r->left.mapY, (unsigned int)r->left.square, r->left.elementType, (unsigned int)r->left.firstThing, r->left.doorObserved, r->left.pitObserved, r->left.teleporterObserved,
                 r->center.mapX, r->center.mapY, (unsigned int)r->center.square, r->center.elementType, (unsigned int)r->center.firstThing, r->center.doorObserved, r->center.pitObserved, r->center.teleporterObserved,
                 r->right.mapX, r->right.mapY, (unsigned int)r->right.square, r->right.elementType, (unsigned int)r->right.firstThing, r->right.doorObserved, r->right.pitObserved, r->right.teleporterObserved,
-                i == 2 ? "" : ",");
+                i == rowCount - 1 ? "" : ",");
     }
     fprintf(js, "  ]\n}\n");
     fclose(md);
@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
     const char* outDir;
     M12_StartupMenuState menu;
     M11_GameViewState game;
-    TurnViewportSnapshotProbe rows[3];
+    TurnViewportSnapshotProbe rows[5];
     int ok = 1;
     int result;
 
@@ -230,6 +230,8 @@ int main(int argc, char** argv) {
     snapshot(&game, "start_south", M11_GAME_INPUT_REDRAW, &rows[0]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
     snapshot(&game, "turn_right_west", result, &rows[1]);
+    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
+    snapshot(&game, "move_forward_west", result, &rows[2]);
     M11_GameView_Shutdown(&game);
 
     if (!open_game(dataDir, &menu, &game)) {
@@ -237,11 +239,27 @@ int main(int argc, char** argv) {
         return 1;
     }
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
-    snapshot(&game, "turn_left_east", result, &rows[2]);
+    snapshot(&game, "turn_left_east", result, &rows[3]);
+    M11_GameView_Shutdown(&game);
+
+    if (!open_game(dataDir, &menu, &game)) {
+        fprintf(stderr, "failed to reopen DM1 game view for blocked move probe\n");
+        return 1;
+    }
+    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
+    snapshot(&game, "blocked_forward_south_wall", result, &rows[4]);
+
+    if (rows[0].result != M11_GAME_INPUT_REDRAW ||
+        rows[1].result != M11_GAME_INPUT_REDRAW ||
+        rows[2].result != M11_GAME_INPUT_REDRAW ||
+        rows[3].result != M11_GAME_INPUT_REDRAW ||
+        rows[4].result != M11_GAME_INPUT_REDRAW) ok = 0;
 
     if (rows[0].mapIndex != 0 || rows[0].mapX != 1 || rows[0].mapY != 3 || rows[0].direction != DIR_SOUTH) ok = 0;
     if (rows[1].mapIndex != 0 || rows[1].mapX != 1 || rows[1].mapY != 3 || rows[1].direction != DIR_WEST) ok = 0;
-    if (rows[2].mapIndex != 0 || rows[2].mapX != 1 || rows[2].mapY != 3 || rows[2].direction != DIR_EAST) ok = 0;
+    if (rows[2].mapIndex != 0 || rows[2].mapX != 0 || rows[2].mapY != 3 || rows[2].direction != DIR_WEST) ok = 0;
+    if (rows[3].mapIndex != 0 || rows[3].mapX != 1 || rows[3].mapY != 3 || rows[3].direction != DIR_EAST) ok = 0;
+    if (rows[4].mapIndex != 0 || rows[4].mapX != 1 || rows[4].mapY != 3 || rows[4].direction != DIR_SOUTH) ok = 0;
 
     if (rows[0].center.mapX != 1 || rows[0].center.mapY != 4) ok = 0;
     if (rows[0].left.mapX != 2 || rows[0].left.mapY != 4) ok = 0;
@@ -249,15 +267,23 @@ int main(int argc, char** argv) {
     if (rows[1].center.mapX != 0 || rows[1].center.mapY != 3) ok = 0;
     if (rows[1].left.mapX != 0 || rows[1].left.mapY != 4) ok = 0;
     if (rows[1].right.mapX != 0 || rows[1].right.mapY != 2) ok = 0;
-    if (rows[2].center.mapX != 2 || rows[2].center.mapY != 3) ok = 0;
-    if (rows[2].left.mapX != 2 || rows[2].left.mapY != 2) ok = 0;
-    if (rows[2].right.mapX != 2 || rows[2].right.mapY != 4) ok = 0;
+    if (rows[2].center.mapX != -1 || rows[2].center.mapY != 3) ok = 0;
+    if (rows[2].left.mapX != -1 || rows[2].left.mapY != 4) ok = 0;
+    if (rows[2].right.mapX != -1 || rows[2].right.mapY != 2) ok = 0;
+    if (rows[3].center.mapX != 2 || rows[3].center.mapY != 3) ok = 0;
+    if (rows[3].left.mapX != 2 || rows[3].left.mapY != 2) ok = 0;
+    if (rows[3].right.mapX != 2 || rows[3].right.mapY != 4) ok = 0;
+    if (rows[4].center.mapX != 1 || rows[4].center.mapY != 4) ok = 0;
+    if (rows[4].left.mapX != 2 || rows[4].left.mapY != 4) ok = 0;
+    if (rows[4].right.mapX != 0 || rows[4].right.mapY != 4) ok = 0;
 
     if (!rows[0].left.valid || !rows[0].center.valid || !rows[0].right.valid ||
         !rows[1].left.valid || !rows[1].center.valid || !rows[1].right.valid ||
-        !rows[2].left.valid || !rows[2].center.valid || !rows[2].right.valid) ok = 0;
+        rows[2].left.valid || rows[2].center.valid || rows[2].right.valid ||
+        !rows[3].left.valid || !rows[3].center.valid || !rows[3].right.valid ||
+        !rows[4].left.valid || !rows[4].center.valid || !rows[4].right.valid) ok = 0;
 
-    if (!write_outputs(outDir, rows)) ok = 0;
+    if (!write_outputs(outDir, rows, 5)) ok = 0;
     M11_GameView_Shutdown(&game);
     printf("%s turn viewport orientation probe\n", ok ? "PASS" : "FAIL");
     return ok ? 0 : 1;

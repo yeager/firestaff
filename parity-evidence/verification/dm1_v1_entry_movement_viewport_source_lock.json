@@ -63,8 +63,305 @@
       ],
       "verified": true,
       "why": "Existing viewport source-lock gate remains wired for draw stack/world visual facts."
+    },
+    {
+      "citation": "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c:post-command redraw gate",
+      "needles": [
+        "COMMAND.C:2150-2156 dispatches turn/step commands",
+        "CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput",
+        "rows[0].result != M11_GAME_INPUT_REDRAW",
+        "rows[3].result != M11_GAME_INPUT_REDRAW",
+        "move_forward_west",
+        "blocked_forward_south_wall",
+        "rows[2].mapX != 0 || rows[2].mapY != 3",
+        "rows[4].mapX != 1 || rows[4].mapY != 3"
+      ],
+      "verified": true,
+      "why": "Firestaff gates that successful turn and step inputs request redraw and resample viewport cells from post-command party state."
     }
   ],
+  "golden_metadata": {
+    "citations": [
+      "DEFS.H:2575-2614 view-square indexes",
+      "DEFS.H:4215-4230 viewport/thing zone constants",
+      "DUNGEON.C:35-44 direction step vectors",
+      "DUNGEON.C:1371-1391 relative movement rotation",
+      "CLIKMENU.C:256-347 movement blockers/cooldowns",
+      "DUNVIEW.C:8318-8542 viewport far-to-near row traversal",
+      "DUNVIEW.C:4929-5075 object zone derivation from C2500/C2548",
+      "DUNVIEW.C:5683-5889 projectile zone derivation from C2900"
+    ],
+    "directions": [
+      {
+        "id": 0,
+        "name": "NORTH",
+        "stepEast": 0,
+        "stepNorth": -1
+      },
+      {
+        "id": 1,
+        "name": "EAST",
+        "stepEast": 1,
+        "stepNorth": 0
+      },
+      {
+        "id": 2,
+        "name": "SOUTH",
+        "stepEast": 0,
+        "stepNorth": 1
+      },
+      {
+        "id": 3,
+        "name": "WEST",
+        "stepEast": -1,
+        "stepNorth": 0
+      }
+    ],
+    "entry_state": {
+      "direction": 2,
+      "directionName": "SOUTH",
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3
+    },
+    "label": "source_asset_derived_golden_metadata_not_runtime_capture",
+    "movement_blockers": {
+      "door": "blocked unless door state is open, one-fourth closed, or destroyed (states 0, 1, 5 pass)",
+      "fakewall": "blocked unless MASK0x0004_FAKEWALL_OPEN or MASK0x0001_FAKEWALL_IMAGINARY is set",
+      "group": "living party checks target group and blocks/reactions before state mutation",
+      "successfulMoveCooldown": "G0310_i_DisabledMovementTicks = max champion movement ticks; projectile movement cooldown reset to 0",
+      "wall": "blocked when M034_SQUARE_TYPE(square) == C00_ELEMENT_WALL"
+    },
+    "turn_step_front_samples": [
+      {
+        "center": [
+          1,
+          4
+        ],
+        "left": [
+          2,
+          4
+        ],
+        "party": [
+          0,
+          1,
+          3,
+          2
+        ],
+        "right": [
+          0,
+          4
+        ],
+        "snapshot": "start_south"
+      },
+      {
+        "center": [
+          0,
+          3
+        ],
+        "left": [
+          0,
+          4
+        ],
+        "party": [
+          0,
+          1,
+          3,
+          3
+        ],
+        "right": [
+          0,
+          2
+        ],
+        "snapshot": "turn_right_west"
+      },
+      {
+        "center": [
+          2,
+          3
+        ],
+        "left": [
+          2,
+          2
+        ],
+        "party": [
+          0,
+          1,
+          3,
+          1
+        ],
+        "right": [
+          2,
+          4
+        ],
+        "snapshot": "turn_left_east"
+      },
+      {
+        "center": [
+          -1,
+          3
+        ],
+        "left": [
+          -1,
+          4
+        ],
+        "party": [
+          0,
+          0,
+          3,
+          3
+        ],
+        "right": [
+          -1,
+          2
+        ],
+        "snapshot": "move_forward_west"
+      },
+      {
+        "center": [
+          1,
+          4
+        ],
+        "left": [
+          2,
+          4
+        ],
+        "party": [
+          0,
+          1,
+          3,
+          2
+        ],
+        "right": [
+          0,
+          4
+        ],
+        "snapshot": "blocked_forward_south_wall"
+      }
+    ],
+    "viewport_rows_far_to_near": [
+      {
+        "relativeForward": 4,
+        "relativeRight": -1,
+        "role": "far object lane",
+        "viewSquare": "M598_VIEW_SQUARE_D4L"
+      },
+      {
+        "relativeForward": 4,
+        "relativeRight": 1,
+        "role": "far object lane",
+        "viewSquare": "M599_VIEW_SQUARE_D4R"
+      },
+      {
+        "relativeForward": 4,
+        "relativeRight": 0,
+        "role": "far object lane",
+        "viewSquare": "M597_VIEW_SQUARE_D4C"
+      },
+      {
+        "relativeForward": 3,
+        "relativeRight": -2,
+        "role": "far side wall",
+        "viewSquare": "C14_VIEW_SQUARE_D3L2"
+      },
+      {
+        "relativeForward": 3,
+        "relativeRight": 2,
+        "role": "far side wall",
+        "viewSquare": "C15_VIEW_SQUARE_D3R2"
+      },
+      {
+        "relativeForward": 3,
+        "relativeRight": -1,
+        "role": "D3 left square",
+        "viewSquare": "M601_VIEW_SQUARE_D3L"
+      },
+      {
+        "relativeForward": 3,
+        "relativeRight": 1,
+        "role": "D3 right square",
+        "viewSquare": "M602_VIEW_SQUARE_D3R"
+      },
+      {
+        "relativeForward": 3,
+        "relativeRight": 0,
+        "role": "D3 center square",
+        "viewSquare": "M600_VIEW_SQUARE_D3C"
+      },
+      {
+        "relativeForward": 2,
+        "relativeRight": -2,
+        "role": "D2 side wall",
+        "viewSquare": "C09_VIEW_SQUARE_D2L2"
+      },
+      {
+        "relativeForward": 2,
+        "relativeRight": 2,
+        "role": "D2 side wall",
+        "viewSquare": "C10_VIEW_SQUARE_D2R2"
+      },
+      {
+        "relativeForward": 2,
+        "relativeRight": -1,
+        "role": "D2 left square",
+        "viewSquare": "M604_VIEW_SQUARE_D2L"
+      },
+      {
+        "relativeForward": 2,
+        "relativeRight": 1,
+        "role": "D2 right square",
+        "viewSquare": "M605_VIEW_SQUARE_D2R"
+      },
+      {
+        "relativeForward": 2,
+        "relativeRight": 0,
+        "role": "D2 center square",
+        "viewSquare": "M603_VIEW_SQUARE_D2C"
+      },
+      {
+        "relativeForward": 1,
+        "relativeRight": -1,
+        "role": "D1 left square",
+        "viewSquare": "M607_VIEW_SQUARE_D1L"
+      },
+      {
+        "relativeForward": 1,
+        "relativeRight": 1,
+        "role": "D1 right square",
+        "viewSquare": "M608_VIEW_SQUARE_D1R"
+      },
+      {
+        "relativeForward": 1,
+        "relativeRight": 0,
+        "role": "D1 center square",
+        "viewSquare": "M606_VIEW_SQUARE_D1C"
+      },
+      {
+        "relativeForward": 0,
+        "relativeRight": -1,
+        "role": "current-row left",
+        "viewSquare": "M610_VIEW_SQUARE_D0L"
+      },
+      {
+        "relativeForward": 0,
+        "relativeRight": 1,
+        "role": "current-row right",
+        "viewSquare": "M611_VIEW_SQUARE_D0R"
+      },
+      {
+        "relativeForward": 0,
+        "relativeRight": 0,
+        "role": "current square",
+        "viewSquare": "M609_VIEW_SQUARE_D0C"
+      }
+    ],
+    "zone_families": {
+      "alcoveObjectBase": "C2540/C2548 zone families for alcove objects",
+      "fieldWallBase": "C700/C701 floor+ceiling and C702+ wall field zones feed F0113/F0791 clipping",
+      "objectBase": "C2500_ZONE_ + viewSquare*4 + viewCell, with MASK0x8000_SHIFT_OBJECTS_AND_CREATURES for floor objects/creatures",
+      "projectileBase": "C2900_ZONE_ + viewSquare*4 + viewCell"
+    }
+  },
   "original_dm1_asset_check": {
     "citation": "DM1 PC34 DUNGEON.DAT header byte offset 8, interpreted via DEFS.H:989-998 and LOADSAVE.C:1940-1945",
     "decoded": {
@@ -149,6 +446,51 @@
       ],
       "verified": true,
       "why": "Party movement applies wall/door/fake-wall legality and movement cooldowns."
+    },
+    {
+      "citation": "COMMAND.C:2150-2156",
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);",
+        "goto T0380042;"
+      ],
+      "verified": true,
+      "why": "Command queue dispatch sends turn/step commands through the movement handlers before returning to the input wait loop."
+    },
+    {
+      "citation": "CLIKMENU.C:156-173 and CLIKMENU.C:237-347",
+      "needles": [
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;",
+        "F0284_CHAMPION_SetPartyDirection",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;"
+      ],
+      "verified": true,
+      "why": "Successful turns/steps set the stop-wait flag and mutate party direction/position before the next viewport draw."
+    },
+    {
+      "citation": "GAMELOOP.C:90 and GAMELOOP.C:215-219",
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+      ],
+      "verified": true,
+      "why": "The main loop redraws the dungeon view from current party state, then processes input until a command sets StopWaitingForPlayerInput."
+    },
+    {
+      "citation": "DUNVIEW.C:8318-8616 and DRAWVIEW.C:709-724",
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);",
+        "G0324_B_DrawViewportRequested = C1_TRUE"
+      ],
+      "verified": true,
+      "why": "Viewport redraw derives visible cells from updated direction/map coordinates and explicitly requests presentation."
     },
     {
       "citation": "MOVESENS.C:315-385",
@@ -241,6 +583,32 @@
       ],
       "verified": true,
       "why": "Viewport presentation is a separate palette/vblank-gated presentation step."
+    },
+    {
+      "citation": "DEFS.H:2575-2614 and DEFS.H:4215-4230",
+      "needles": [
+        "#define M597_VIEW_SQUARE_D4C",
+        "#define C14_VIEW_SQUARE_D3L2",
+        "#define C15_VIEW_SQUARE_D3R2",
+        "#define C2500_ZONE_",
+        "#define C2540_ZONE_ALCOVE_OBJECT",
+        "#define C2900_ZONE_"
+      ],
+      "verified": true,
+      "why": "Viewport view-square ids and object/projectile zone families are stable source constants."
+    },
+    {
+      "citation": "DUNVIEW.C:8446-8542",
+      "needles": [
+        "F0153_DUNGEON_GetRelativeSquareType(P0183_i_Direction, 3, -2",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 4, -1",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 0",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, 0",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 0",
+        "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
+      ],
+      "verified": true,
+      "why": "Viewport rows are traversed source-order far-to-near using relative coordinates from current party state."
     }
   ],
   "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
