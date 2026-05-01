@@ -1,0 +1,100 @@
+{
+  "status": "pass",
+  "schema": "firestaff.dm1_v1_movement_command_gate_source_lock.v1",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "source-lock command queue -> movement dispatch -> blocked/success side effects",
+  "citations": [
+    {
+      "file": "COMMAND.C",
+      "lines": "6-16",
+      "claim": "command queue storage, first/last indexes, lock, and pending-click fields"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "106-121",
+      "claim": "secondary mouse movement rows map visible arrows/viewport to C001..C006/C080/C083"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1452-1662",
+      "claim": "mouse click path stores pending clicks when locked and enqueues resolved commands otherwise"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1692-1707",
+      "claim": "pending click replay occurs after the queue is unlocked"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "F0380 locks the queue, leaves gated movement queued, dequeues commands, replays pending clicks, then dispatches turns/moves"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "claim": "turn dispatch changes direction and processes stairs/current-square sensor boundary"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "movement dispatch maps command to relative delta, blocks before F0267, discards input on block, and applies timing only after success"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "738-783",
+      "claim": "successful move records destination result and party movement timing/scent state"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "799-818",
+      "claim": "successful party move processes source leave then destination enter sensors"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "1553-1794",
+      "claim": "sensor walker traverses square thing-list and triggers matching sensor effects in source order"
+    },
+    {
+      "file": "DUNGEON.C",
+      "lines": "1371-1440",
+      "claim": "relative movement math updates map coordinates and square lookup returns current map data"
+    },
+    {
+      "file": "CHAMPION.C",
+      "lines": "1180-1214",
+      "claim": "champion load/wound/boots movement tick calculation feeds post-success disabled movement ticks"
+    }
+  ],
+  "orderChecks": [
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "queue gate before dequeue/replay/dispatch"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "blocked path returns before successful F0267/timing path"
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "738-818",
+      "claim": "successful move result/timing before leave/enter sensor side effects"
+    }
+  ],
+  "firestaffEvidence": [
+    {
+      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "claim": "compat queue models lock, pending replay, movement-disabled gate, and dispatch fields"
+    },
+    {
+      "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
+      "claim": "integration probe covers successful movement side effects, blocked movement side-effect absence, and command gating"
+    },
+    {
+      "file": "tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py",
+      "claim": "broader source-lock gate already ties command queue, movement legality, sensor order, and timing to Firestaff files"
+    }
+  ],
+  "ctest": "dm1_v1_movement_command_gate_source_lock"
+}
