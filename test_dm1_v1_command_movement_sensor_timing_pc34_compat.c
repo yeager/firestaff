@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "dm1_v1_movement_command_core_pc34_compat.h"
 #include "dm1_v1_movement_timing_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
@@ -213,7 +214,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_command_movement_sensor_timing_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-174,256-347; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215; MOVESENS.C:738-783,799-818,1553-1794\n");
+    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-179,180-347; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215; MOVESENS.C:738-783,799-818,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724\n");
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
@@ -372,6 +373,91 @@ int main(void)
     ok &= expect_int("mouse movement destination sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, &enterEffects), 1);
     ok &= expect_int("mouse movement destination effect count", enterEffects.count, 2);
+
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    {
+        struct Dm1V1MovementCommandCoreResultPc34Compat core;
+        int redraws = 0;
+        int stops = 0;
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("core forward1 queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core forward1 processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
+        redraws += core.viewportRedrawRequested;
+        stops += core.stopWaitingForPlayerInput;
+        ok &= expect_int("core forward1 step applied", core.stepApplied, 1);
+        ok &= expect_int("core forward1 party x", party.mapX, 1);
+        ok &= expect_int("core forward1 party y", party.mapY, 0);
+        ok &= expect_int("core forward1 destination sensors", core.enterEffects.count, 2);
+        ok &= expect_int("core forward1 teleport sensor first", core.enterEffects.effects[0].kind, SENSOR_EFFECT_TELEPORT);
+        ok &= expect_int("core forward1 text sensor second", core.enterEffects.effects[1].kind, SENSOR_EFFECT_SHOW_TEXT);
+        ok &= expect_int("core forward1 timing records scent", core.timing.scentRecorded, 1);
+        ok &= expect_int("core forward1 requests viewport", core.viewportRedrawRequested, 1);
+        ok &= expect_int("core forward1 releases input wait", core.stopWaitingForPlayerInput, 1);
+
+        ok &= expect_int("core turn-right queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
+        ok &= expect_int("core turn-right processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 9, 5, DIR_NORTH, 1001ul, core.timing.lastPartyMovementTime, footwear, &core), 1);
+        redraws += core.viewportRedrawRequested;
+        stops += core.stopWaitingForPlayerInput;
+        ok &= expect_int("core turn bypasses movement gates", core.queue.movementDisabledGate, 0);
+        ok &= expect_int("core turn applied", core.turnApplied, 1);
+        ok &= expect_int("core turn keeps x", party.mapX, 1);
+        ok &= expect_int("core turn keeps y", party.mapY, 0);
+        ok &= expect_int("core turn updates direction", party.direction, DIR_EAST);
+        ok &= expect_int("core turn current-square enter sensors", core.enterEffects.count, 2);
+        ok &= expect_int("core turn requests viewport", core.viewportRedrawRequested, 1);
+
+        ok &= expect_int("core right queued from east", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB33, 0, 0, 0 }), 1);
+        ok &= expect_int("core relative strafe/back seam processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 1002ul, 1000ul, footwear, &core), 1);
+        redraws += core.viewportRedrawRequested;
+        stops += core.stopWaitingForPlayerInput;
+        ok &= expect_int("core east-facing right strafe x unchanged", party.mapX, 1);
+        ok &= expect_int("core east-facing right strafe moves south", party.mapY, 1);
+        ok &= expect_int("core east-facing right strafe direction unchanged", party.direction, DIR_EAST);
+        ok &= expect_int("core multi-command viewport redraw count", redraws, 3);
+        ok &= expect_int("core multi-command stop-wait count", stops, 3);
+    }
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squares[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_WALL, 0);
+    {
+        struct Dm1V1MovementCommandCoreResultPc34Compat core;
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("core blocked wall queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core blocked wall processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
+        ok &= expect_int("core blocked wall dequeued", core.queue.dequeued, 1);
+        ok &= expect_int("core blocked wall marked", core.movementBlocked, 1);
+        ok &= expect_int("core blocked wall code", core.movement.resultCode, MOVE_BLOCKED_WALL);
+        ok &= expect_int("core blocked wall skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
+        ok &= expect_int("core blocked wall skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core blocked wall discards input", core.inputDiscardRequested, 1);
+        ok &= expect_int("core blocked wall keeps x", party.mapX, 1);
+        ok &= expect_int("core blocked wall keeps y", party.mapY, 1);
+    }
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
+    things.groupCount = 1;
+    {
+        struct Dm1V1MovementCommandCoreResultPc34Compat core;
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("core group block queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core group block processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
+        ok &= expect_int("core group block detected", core.blockedByGroup, 1);
+        ok &= expect_int("core group block skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
+        ok &= expect_int("core group block skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core group block keeps source", party.mapX + party.mapY, 2);
+    }
 
     printf("dm1V1CommandMovementSensorTimingIntegrationOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
