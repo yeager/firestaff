@@ -14,6 +14,8 @@
  *   Speed tick formula, including BUG0_72 load==maxLoad overloaded cadence.
  * - MOVESENS.C:752-775 updates G0362_l_LastPartyMovementTime and scent timing
  *   only when the party really changes square and has at least one champion.
+ * - GAMELOOP.C:150-155 decrements G0310_i_DisabledMovementTicks and
+ *   G0311_i_ProjectileDisabledMovementTicks independently once per game loop.
  */
 
 uint16_t DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat(
@@ -80,7 +82,19 @@ struct Dm1V1MovementTimingResultPc34Compat DM1_V1_MovementTiming_ApplySuccessful
     return result;
 }
 
+void DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(
+    int* disabledMovementTicks,
+    int* projectileDisabledMovementTicks)
+{
+    if (disabledMovementTicks && *disabledMovementTicks > 0) {
+        --*disabledMovementTicks;
+    }
+    if (projectileDisabledMovementTicks && *projectileDisabledMovementTicks > 0) {
+        --*projectileDisabledMovementTicks;
+    }
+}
+
 const char* DM1_V1_MovementTiming_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:2095-2100,2118-2127; CLIKMENU.C:256-269,330-346; CHAMPION.C:1180-1215; MOVESENS.C:752-775";
+    return "COMMAND.C:2095-2100,2118-2127; CLIKMENU.C:256-269,330-346; CHAMPION.C:1180-1215,2065-2191; MOVESENS.C:752-775; GAMELOOP.C:150-155";
 }

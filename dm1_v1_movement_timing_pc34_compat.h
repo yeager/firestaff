@@ -36,6 +36,10 @@ struct Dm1V1MovementTimingResultPc34Compat DM1_V1_MovementTiming_ApplySuccessful
     unsigned long previousLastPartyMovementTime,
     const int footwearIcons[CHAMPION_MAX_PARTY]);
 
+void DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(
+    int* disabledMovementTicks,
+    int* projectileDisabledMovementTicks);
+
 const char* DM1_V1_MovementTiming_SourceEvidencePc34Compat(void);
 
 #ifdef __cplusplus

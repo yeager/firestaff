@@ -47,6 +47,8 @@ int main(void)
     int footwear[CHAMPION_MAX_PARTY] = { 0, 0, LIFECYCLE_ICON_BOOT_OF_SPEED, 0 };
     int dx;
     int dy;
+    int disabledTicks;
+    int projectileTicks;
     int ok = 1;
 
     printf("probe=dm1_v1_movement_timing_pc34_compat\n");
@@ -84,6 +86,28 @@ int main(void)
     ok &= expect_int("turn bypasses step cadence disabled gate", queueResult.movementDisabledGate, 0);
     ok &= expect_int("turn dispatches without movement cadence update", queueResult.dispatchedTurn, 1);
     ok &= expect_int("turn is not a step dispatch", queueResult.dispatchedMove, 0);
+
+    disabledTicks = 2;
+    projectileTicks = 4;
+    DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(&disabledTicks, &projectileTicks);
+    ok &= expect_int("game loop decrements movement cooldown independently", disabledTicks, 1);
+    ok &= expect_int("game loop decrements projectile movement cooldown independently", projectileTicks, 3);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("forward key enqueues during projectile cooldown", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 0, projectileTicks, DIR_NORTH);
+    ok &= expect_int("projectile cooldown still blocks matching movement after one tick", queueResult.movementDisabledGate, 1);
+    ok &= expect_int("projectile cooldown leaves matching movement queued", (int)queue.count, 1);
+
+    DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(&disabledTicks, &projectileTicks);
+    DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(&disabledTicks, &projectileTicks);
+    DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(&disabledTicks, &projectileTicks);
+    ok &= expect_int("movement cooldown saturates at zero", disabledTicks, 0);
+    ok &= expect_int("projectile movement cooldown reaches zero after four ticks", projectileTicks, 0);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, disabledTicks, projectileTicks, DIR_NORTH);
+    ok &= expect_int("expired projectile cooldown releases queued movement", queueResult.dispatchedMove, 1);
+    ok &= expect_int("released queued movement dequeued", queueResult.dequeued, 1);
 
     party.championCount = 0;
     timing = DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat(&party, 0, 3, 2, 100500ul, 100476ul, footwear);
