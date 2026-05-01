@@ -38,6 +38,8 @@ typedef struct TurnViewportSnapshotProbe {
     TurnViewportCellProbe left;
     TurnViewportCellProbe center;
     TurnViewportCellProbe right;
+    TurnViewportCellProbe viewportRows[19];
+    int viewportRowCount;
 } TurnViewportSnapshotProbe;
 
 static void ensure_output_dir(const char* outDir) {
@@ -115,7 +117,7 @@ static unsigned short first_square_thing(const struct GameWorld_Compat* world, i
     return world->things->squareFirstThings[squareIndex];
 }
 
-static TurnViewportCellProbe sample_cell(const struct GameWorld_Compat* world, int relSide) {
+static TurnViewportCellProbe sample_relative_cell(const struct GameWorld_Compat* world, int relForward, int relSide) {
     TurnViewportCellProbe cell;
     int fx = 0, fy = 0, rx = 0, ry = 0;
     memset(&cell, 0, sizeof(cell));
@@ -124,8 +126,8 @@ static TurnViewportCellProbe sample_cell(const struct GameWorld_Compat* world, i
     cell.firstThingType = -1;
     if (!world || !world->dungeon) return cell;
     direction_vectors(world->party.direction, &fx, &fy, &rx, &ry);
-    cell.mapX = world->party.mapX + fx + relSide * rx;
-    cell.mapY = world->party.mapY + fy + relSide * ry;
+    cell.mapX = world->party.mapX + relForward * fx + relSide * rx;
+    cell.mapY = world->party.mapY + relForward * fy + relSide * ry;
     if (!get_square_byte(world, world->party.mapIndex, cell.mapX, cell.mapY, &cell.square)) return cell;
     cell.valid = 1;
     cell.elementType = (cell.square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
@@ -137,6 +139,27 @@ static TurnViewportCellProbe sample_cell(const struct GameWorld_Compat* world, i
     cell.pitObserved = (cell.elementType == DUNGEON_ELEMENT_PIT) ? 1 : 0;
     cell.teleporterObserved = (cell.elementType == DUNGEON_ELEMENT_TELEPORTER || cell.firstThingType == THING_TYPE_TELEPORTER) ? 1 : 0;
     return cell;
+}
+
+static TurnViewportCellProbe sample_cell(const struct GameWorld_Compat* world, int relSide) {
+    return sample_relative_cell(world, 1, relSide);
+}
+
+static int viewport_relative_rows(TurnViewportCellProbe* outRows, int maxRows, const struct GameWorld_Compat* world) {
+    static const int coords[][2] = {
+        {4, -1}, {4, 1}, {4, 0},
+        {3, -2}, {3, 2}, {3, -1}, {3, 1}, {3, 0},
+        {2, -2}, {2, 2}, {2, -1}, {2, 1}, {2, 0},
+        {1, -1}, {1, 1}, {1, 0},
+        {0, -1}, {0, 1}, {0, 0}
+    };
+    int i;
+    int count = (int)(sizeof(coords) / sizeof(coords[0]));
+    if (!outRows || maxRows < count) return 0;
+    for (i = 0; i < count; ++i) {
+        outRows[i] = sample_relative_cell(world, coords[i][0], coords[i][1]);
+    }
+    return count;
 }
 
 static void snapshot(M11_GameViewState* game, const char* name, int result, TurnViewportSnapshotProbe* out) {
@@ -151,6 +174,7 @@ static void snapshot(M11_GameViewState* game, const char* name, int result, Turn
     out->left = sample_cell(&game->world, -1);
     out->center = sample_cell(&game->world, 0);
     out->right = sample_cell(&game->world, 1);
+    out->viewportRowCount = viewport_relative_rows(out->viewportRows, 19, &game->world);
 }
 
 static int write_outputs(const char* outDir, const TurnViewportSnapshotProbe* rows, int rowCount) {
@@ -173,7 +197,7 @@ static int write_outputs(const char* outDir, const TurnViewportSnapshotProbe* ro
     fprintf(md, "Source lock: ReDMCSB COMMAND.C:2150-2156 dispatches turn/step commands; CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput after successful turn/step; GAMELOOP.C:90 and DUNVIEW.C:8318-8616 redraw/present from current party direction/map coordinates.\n\n");
     fprintf(md, "| snapshot | tick | pos | dir | lane | map | square | element | firstThing | door | pit | teleporter |\n");
     fprintf(md, "| --- | ---: | --- | --- | ---: | --- | --- | --- | --- | ---: | ---: | ---: |\n");
-    fprintf(js, "{\n  \"schema\": \"pass127_turn_viewport_orientation_probe.v3\",\n  \"sourceLock\": \"COMMAND.C:2150-2156 dispatches turn/step commands; CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput after successful turn/step; GAMELOOP.C:90 and DUNVIEW.C:8318-8616 redraw/present from current party direction/map coordinates.\",\n  \"snapshots\": [\n");
+    fprintf(js, "{\n  \"schema\": \"pass127_turn_viewport_orientation_probe.v4\",\n  \"sourceLock\": \"COMMAND.C:2150-2156 dispatches turn/step commands; CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput after successful turn/step; GAMELOOP.C:90 and DUNVIEW.C:8318-8616 redraw/present from current party direction/map coordinates; DUNVIEW.C:8318-8618 traverses viewport rows D4/D3/D2/D1/D0 far-to-near.\",\n  \"viewportRowOrder\": \"D4L,D4R,D4C,D3L2,D3R2,D3L,D3R,D3C,D2L2,D2R2,D2L,D2R,D2C,D1L,D1R,D1C,D0L,D0R,D0C\",\n  \"snapshots\": [\n");
     for (i = 0; i < rowCount; ++i) {
         const TurnViewportSnapshotProbe* r = &rows[i];
         const TurnViewportCellProbe* cells[3] = { &r->left, &r->center, &r->right };
@@ -187,12 +211,18 @@ static int write_outputs(const char* outDir, const TurnViewportSnapshotProbe* ro
                     (unsigned int)cell->firstThing, cell->doorObserved, cell->pitObserved, cell->teleporterObserved);
         }
         fprintf(js,
-                "    {\"name\":\"%s\",\"tick\":%u,\"mapIndex\":%d,\"mapX\":%d,\"mapY\":%d,\"direction\":%d,\"front\":[{\"lane\":-1,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"door\":%d,\"pit\":%d,\"teleporter\":%d},{\"lane\":0,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"door\":%d,\"pit\":%d,\"teleporter\":%d},{\"lane\":1,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"door\":%d,\"pit\":%d,\"teleporter\":%d}]}%s\n",
+                "    {\"name\":\"%s\",\"tick\":%u,\"mapIndex\":%d,\"mapX\":%d,\"mapY\":%d,\"direction\":%d,\"front\":[{\"lane\":-1,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"door\":%d,\"pit\":%d,\"teleporter\":%d},{\"lane\":0,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"door\":%d,\"pit\":%d,\"teleporter\":%d},{\"lane\":1,\"mapX\":%d,\"mapY\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"door\":%d,\"pit\":%d,\"teleporter\":%d}],\"viewportRows\":[",
                 r->name, r->gameTick, r->mapIndex, r->mapX, r->mapY, r->direction,
                 r->left.mapX, r->left.mapY, (unsigned int)r->left.square, r->left.elementType, (unsigned int)r->left.firstThing, r->left.doorObserved, r->left.pitObserved, r->left.teleporterObserved,
                 r->center.mapX, r->center.mapY, (unsigned int)r->center.square, r->center.elementType, (unsigned int)r->center.firstThing, r->center.doorObserved, r->center.pitObserved, r->center.teleporterObserved,
-                r->right.mapX, r->right.mapY, (unsigned int)r->right.square, r->right.elementType, (unsigned int)r->right.firstThing, r->right.doorObserved, r->right.pitObserved, r->right.teleporterObserved,
-                i == rowCount - 1 ? "" : ",");
+                r->right.mapX, r->right.mapY, (unsigned int)r->right.square, r->right.elementType, (unsigned int)r->right.firstThing, r->right.doorObserved, r->right.pitObserved, r->right.teleporterObserved);
+        for (c = 0; c < r->viewportRowCount; ++c) {
+            const TurnViewportCellProbe* cell = &r->viewportRows[c];
+            static const char* names[19] = {"D4L","D4R","D4C","D3L2","D3R2","D3L","D3R","D3C","D2L2","D2R2","D2L","D2R","D2C","D1L","D1R","D1C","D0L","D0R","D0C"};
+            fprintf(js, "%s{\"row\":\"%s\",\"mapX\":%d,\"mapY\":%d,\"valid\":%d,\"square\":%u,\"elementType\":%d,\"firstThing\":%u,\"door\":%d,\"pit\":%d,\"teleporter\":%d}",
+                    c ? "," : "", names[c], cell->mapX, cell->mapY, cell->valid, (unsigned int)cell->square, cell->elementType, (unsigned int)cell->firstThing, cell->doorObserved, cell->pitObserved, cell->teleporterObserved);
+        }
+        fprintf(js, "]}%s\n", i == rowCount - 1 ? "" : ",");
     }
     fprintf(js, "  ]\n}\n");
     fclose(md);
@@ -282,6 +312,13 @@ int main(int argc, char** argv) {
         rows[2].left.valid || rows[2].center.valid || rows[2].right.valid ||
         !rows[3].left.valid || !rows[3].center.valid || !rows[3].right.valid ||
         !rows[4].left.valid || !rows[4].center.valid || !rows[4].right.valid) ok = 0;
+
+    if (rows[0].viewportRowCount != 19 || rows[1].viewportRowCount != 19 || rows[2].viewportRowCount != 19 ||
+        rows[3].viewportRowCount != 19 || rows[4].viewportRowCount != 19) ok = 0;
+    if (rows[0].viewportRows[15].mapX != 1 || rows[0].viewportRows[15].mapY != 4) ok = 0;
+    if (rows[1].viewportRows[15].mapX != 0 || rows[1].viewportRows[15].mapY != 3) ok = 0;
+    if (rows[2].viewportRows[15].mapX != -1 || rows[2].viewportRows[15].mapY != 3) ok = 0;
+    if (rows[4].viewportRows[15].mapX != 1 || rows[4].viewportRows[15].mapY != 4) ok = 0;
 
     if (!write_outputs(outDir, rows, 5)) ok = 0;
     M11_GameView_Shutdown(&game);

@@ -25,6 +25,7 @@ DM1_DUNGEON_DAT = Path(
     "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
 )
 ROUTE_EVIDENCE = ROOT / "verification-m11/capture-route-state/pass76_capture_route_state_probe.json"
+TURN_VIEWPORT_EVIDENCE = ROOT / "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json"
 
 
 
@@ -488,20 +489,75 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "Existing viewport source-lock gate remains wired for draw stack/world visual facts.",
     ))
     checks.append(require(
-        "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c:post-command redraw gate",
+        "probes/m11/firestaff_m11_turn_viewport_orientation_probe.c:post-command redraw/full-row gate",
         text["probes/m11/firestaff_m11_turn_viewport_orientation_probe.c"],
         [
             "COMMAND.C:2150-2156 dispatches turn/step commands",
             "CLIKMENU.C:156-173/237-347 sets StopWaitingForPlayerInput",
+            "DUNVIEW.C:8318-8618 traverses viewport rows D4/D3/D2/D1/D0 far-to-near",
+            "viewport_relative_rows",
+            "D4L",
+            "D3L2",
+            "D2C",
+            "D1C",
+            "D0C",
             "rows[0].result != M11_GAME_INPUT_REDRAW",
             "rows[3].result != M11_GAME_INPUT_REDRAW",
             "move_forward_west",
             "blocked_forward_south_wall",
             "rows[2].mapX != 0 || rows[2].mapY != 3",
             "rows[4].mapX != 1 || rows[4].mapY != 3",
+            "viewportRowCount != 19",
         ],
-        "Firestaff gates that successful turn and step inputs request redraw and resample viewport cells from post-command party state.",
+        "Firestaff gates that successful turn and step inputs request redraw and now samples all D4/D3/D2/D1/D0 viewport row coordinates from post-command party state.",
     ))
+    return checks
+
+
+def verify_turn_viewport_evidence() -> list[dict[str, Any]]:
+    if not TURN_VIEWPORT_EVIDENCE.is_file():
+        raise SystemExit(f"missing required turn viewport evidence: {TURN_VIEWPORT_EVIDENCE}")
+    doc = json.loads(TURN_VIEWPORT_EVIDENCE.read_text(encoding="utf-8"))
+    if doc.get("schema") != "pass127_turn_viewport_orientation_probe.v4":
+        raise SystemExit(f"unexpected turn viewport schema: {doc.get('schema')!r}")
+    if doc.get("viewportRowOrder") != "D4L,D4R,D4C,D3L2,D3R2,D3L,D3R,D3C,D2L2,D2R2,D2L,D2R,D2C,D1L,D1R,D1C,D0L,D0R,D0C":
+        raise SystemExit("turn viewport evidence row order mismatch")
+    snapshots = {row["name"]: row for row in doc.get("snapshots", [])}
+    expected = {
+        "start_south": (1, 3, 2, (1, 4)),
+        "turn_right_west": (1, 3, 3, (0, 3)),
+        "move_forward_west": (0, 3, 3, (-1, 3)),
+        "turn_left_east": (1, 3, 1, (2, 3)),
+        "blocked_forward_south_wall": (1, 3, 2, (1, 4)),
+    }
+    checks: list[dict[str, Any]] = []
+    for name, (map_x, map_y, direction, d1c) in expected.items():
+        row = snapshots.get(name)
+        if row is None:
+            raise SystemExit(f"turn viewport evidence missing snapshot {name}")
+        if (row.get("mapX"), row.get("mapY"), row.get("direction")) != (map_x, map_y, direction):
+            raise SystemExit(f"{name} party state mismatch: {row}")
+        rows = row.get("viewportRows", [])
+        if len(rows) != 19:
+            raise SystemExit(f"{name} expected 19 viewport rows, found {len(rows)}")
+        names = [r.get("row") for r in rows]
+        if names[:3] != ["D4L", "D4R", "D4C"] or names[-3:] != ["D0L", "D0R", "D0C"]:
+            raise SystemExit(f"{name} row names/order mismatch: {names}")
+        d1c_row = rows[15]
+        if (d1c_row.get("mapX"), d1c_row.get("mapY")) != d1c:
+            raise SystemExit(f"{name} D1C coordinate mismatch: {d1c_row}")
+        checks.append({
+            "citation": f"parity-evidence/verification/pass127_turn_viewport_orientation_probe.json:{name}",
+            "verified": True,
+            "observed": {
+                "party": [row["mapIndex"], row["mapX"], row["mapY"], row["direction"]],
+                "viewportRowCount": len(rows),
+                "D4": names[:3],
+                "D1C": d1c_row,
+                "D0": names[-3:],
+            },
+            "why": "Movement-after-turn/step evidence covers all source-ordered viewport distance rows and confirms D1C resampling from the post-command party state.",
+        })
     return checks
 
 
@@ -517,6 +573,7 @@ def main() -> int:
         "original_dm1_asset_check": verify_original_dm1_header(),
         "firestaff_checks": verify_firestaff(),
         "route_evidence_checks": verify_route_evidence(),
+        "turn_viewport_evidence_checks": verify_turn_viewport_evidence(),
         "golden_metadata": source_derived_golden_metadata(),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
