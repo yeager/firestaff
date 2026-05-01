@@ -20,6 +20,9 @@
  * - CLIKMENU.C:224-233 defines forward/right/back/left relative step counts.
  * - CLIKMENU.C:278-288 blocks wall, closed door states, and closed real
  *   fake-walls; pits/teleporters fall through as passable square types.
+ * - CLIKMENU.C:291-318 preserves the empty-party bug, then checks
+ *   F0175_GROUP_GetThing on otherwise-passable target squares and blocks
+ *   non-empty parties before F0267 side effects/cooldowns.
  * - DUNGEON.C:1371-1391 F0150 applies direction-relative forward/right deltas.
  */
 
@@ -116,14 +119,25 @@ int main(void)
     struct Dm1V1InputCommandQueuePc34Compat queue;
     struct Dm1V1InputQueueProcessResultPc34Compat queueResult;
     struct MovementResult_Compat moveResult;
+    struct DungeonThings_Compat things;
+    unsigned short squareFirstThings[1];
+    struct DungeonGroup_Compat groups[1];
     int dx;
     int dy;
     int ok = 1;
 
     printf("probe=dm1_v1_movement_core_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288; DUNGEON.C:1371-1391\n");
+    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318; DUNGEON.C:1371-1391\n");
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(groups, 0, sizeof(groups));
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
     memset(&party, 0, sizeof(party));
     party.mapIndex = 0;
     party.mapX = 2;
@@ -218,6 +232,19 @@ int main(void)
     ok &= expect_int("teleporter square passable by movement dispatch",
         process_key_and_try_move(&queue, &dungeon, &party, 0xAB35, 0, 0, 0, &queueResult, &moveResult), 1);
     ok &= expect_int("teleporter target result ok", moveResult.resultCode, MOVE_OK);
+
+    set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+    groups[0].next = THING_ENDOFLIST;
+    ok &= expect_int("group on passable target blocks non-empty party",
+        F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(&dungeon, &things, &party, MOVE_FORWARD), 1);
+    party.championCount = 0;
+    ok &= expect_int("empty party preserves source group-collision bug",
+        F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(&dungeon, &things, &party, MOVE_FORWARD), 0);
+    party.championCount = 1;
+    set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, DUNGEON_SQUARE_MASK_THING_LIST));
+    ok &= expect_int("impassable target skips group collision gate",
+        F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(&dungeon, &things, &party, MOVE_FORWARD), 0);
 
     printf("dm1V1MovementCoreInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;

@@ -139,6 +139,14 @@ int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
         command = command_for_key(event.keyCode);
         return enqueue_command(queue, command, event.x, event.y);
     }
+    if (event.kind == DM1_V1_INPUT_KIND_MOUSE && queue->locked) {
+        queue->pendingClickPresent = 1;
+        queue->pendingClickX = event.x;
+        queue->pendingClickY = event.y;
+        queue->pendingClickButtons = event.buttonMask;
+        queue->pendingClickCommand = command_for_mouse(event.x, event.y, event.buttonMask);
+        return 0;
+    }
     command = command_for_mouse(event.x, event.y, event.buttonMask);
     return DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
         queue, command, event.x, event.y, event.buttonMask);
