@@ -7739,6 +7739,7 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int relativeCell, int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
+static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
 static int m11_draw_wall_ornament(const M11_GameViewState* state,
                                   unsigned char* framebuffer,
                                   int fbW, int fbH,
@@ -9166,6 +9167,56 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
     }
 }
 
+static int m11_dm1_wall_ornament_is_alcove_global(int globalIndex) {
+    /* ReDMCSB DUNVIEW.C G0192_auc_Graphic558_AlcoveOrnamentIndices
+     * and DUNGEON.C F0149_DUNGEON_IsWallOrnamentAnAlcove: only the
+     * current map global wall ornament indices 1, 2, and 3 are
+     * treated as alcoves for wall-cell object visibility. */
+    return globalIndex == 1 || globalIndex == 2 || globalIndex == 3;
+}
+
+static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
+                                           unsigned char* framebuffer,
+                                           int fbW,
+                                           int fbH,
+                                           const M11_ViewportCell* cell,
+                                           const M11_DM1ZoneBlit* blit,
+                                           int sourceZoneRow) {
+    int ii;
+    if (!state || !cell || !blit || cell->floorItemCount <= 0) {
+        return;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0121/F0124 draw the wall ornament first; when
+     * F0107 reports an alcove, they immediately call F0115 with
+     * C0x0000_CELL_ORDER_ALCOVE.  F0115 then uses C04_VIEW_CELL_ALCOVE
+     * instead of requiring an open floor square, so wall-cell items are
+     * visible in square/Vi/arched alcoves. */
+    for (ii = 0; ii < cell->floorItemCount; ++ii) {
+        if (cell->floorItemTypes[ii] < 0) {
+            continue;
+        }
+        if (!m11_draw_item_sprite(state, framebuffer, fbW, fbH,
+                                  M11_VIEWPORT_X + blit->dstX,
+                                  M11_VIEWPORT_Y + blit->dstY,
+                                  blit->width,
+                                  blit->height,
+                                  cell->floorItemTypes[ii],
+                                  cell->floorItemSubtypes[ii],
+                                  cell->floorItemCells[ii],
+                                  ii,
+                                  cell->relForward,
+                                  sourceZoneRow)) {
+            if (ii == 0) {
+                m11_fill_rect(framebuffer, fbW, fbH,
+                              M11_VIEWPORT_X + blit->dstX + blit->width / 2 - 2,
+                              M11_VIEWPORT_Y + blit->dstY + blit->height - 4,
+                              5, 2, M11_COLOR_YELLOW);
+            }
+        }
+    }
+}
+
 static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
@@ -9265,6 +9316,13 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                        10,
                                                        kWallOrnaments[i].viewWallIndex <= 4 ? kOrnD3Palette : kOrnD2Palette,
                                                        kWallOrnaments[i].flipHorizontal);
+                if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx)) {
+                    m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,
+                                                   &cell, &blit,
+                                                   m11_dm1_f0115_c2500_c2900_row(
+                                                       kWallOrnaments[i].relForward,
+                                                       kWallOrnaments[i].relSide));
+                }
             }
         }
     }
