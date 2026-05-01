@@ -7287,18 +7287,22 @@ static int m11_viewport_cell_is_wall_free(int elementType) {
            elementType == DUNGEON_ELEMENT_TELEPORTER;
 }
 
+static int m11_viewport_element_state_is_open(int elementType, int doorState) {
+    if (elementType == DUNGEON_ELEMENT_WALL ||
+        elementType == DUNGEON_ELEMENT_FAKEWALL) {
+        return 0;
+    }
+    if (elementType == DUNGEON_ELEMENT_DOOR) {
+        return doorState == 0 || doorState == 5;
+    }
+    return 1;
+}
+
 static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;
     }
-    if (cell->elementType == DUNGEON_ELEMENT_WALL ||
-        cell->elementType == DUNGEON_ELEMENT_FAKEWALL) {
-        return 0;
-    }
-    if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
-        return cell->doorState == 0 || cell->doorState == 5;
-    }
-    return 1;
+    return m11_viewport_element_state_is_open(cell->elementType, cell->doorState);
 }
 
 static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
@@ -9116,11 +9120,19 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
     }
 }
 
+static int m11_dm1_side_lane_clear_before_depth(const M11_ViewportCell cells[3][3],
+                                                 int depthIndex,
+                                                 int sideIndex);
+static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
+                                           int relForward,
+                                           int relSide);
+
 static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
-                                    int maxVisibleForward) {
+                                    int maxVisibleForward,
+                                    const M11_ViewportCell cells[3][3]) {
     typedef struct M11_DM1PitSpec {
         int relForward;
         int relSide;
@@ -9153,6 +9165,11 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         if (kPits[i].relForward > maxVisibleForward) {
             continue;
         }
+        if (!m11_dm1_side_lane_clear_for_rel(cells,
+                                             kPits[i].relForward,
+                                             kPits[i].relSide)) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kPits[i].relForward, kPits[i].relSide, &cell)) {
             continue;
         }
@@ -9176,7 +9193,8 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
                                          int fbH,
-                                         int maxVisibleForward) {
+                                         int maxVisibleForward,
+                                         const M11_ViewportCell cells[3][3]) {
     const M11_DM1FloorOrnSpec* kOrnaments = kM11_DM1FloorOrnamentRenderSpecs;
     const size_t ornamentCount = sizeof(kM11_DM1FloorOrnamentRenderSpecs) /
         sizeof(kM11_DM1FloorOrnamentRenderSpecs[0]);
@@ -9191,6 +9209,11 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         int mapIdx;
         int ornGlobalIdx = -1;
         if (kOrnaments[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_clear_for_rel(cells,
+                                             kOrnaments[i].relForward,
+                                             kOrnaments[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state, kOrnaments[i].relForward, kOrnaments[i].relSide, &cell)) {
@@ -9453,7 +9476,8 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
                                 int fbH,
-                                int maxVisibleForward) {
+                                int maxVisibleForward,
+                                const M11_ViewportCell cells[3][3]) {
     typedef struct M11_DM1StairSpec {
         int relForward;
         int relSide;
@@ -9496,6 +9520,11 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         if (kStairs[i].relForward > maxVisibleForward) {
             continue;
         }
+        if (!m11_dm1_side_lane_clear_for_rel(cells,
+                                             kStairs[i].relForward,
+                                             kStairs[i].relSide)) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state, kStairs[i].relForward, kStairs[i].relSide, &cell)) {
             continue;
         }
@@ -9517,7 +9546,8 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int fbW,
                                            int fbH,
-                                           int maxVisibleForward) {
+                                           int maxVisibleForward,
+                                           const M11_ViewportCell cells[3][3]) {
     typedef struct M11_DM1FieldSpec {
         int relForward;
         int relSide;
@@ -9556,6 +9586,11 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
     for (i = 0; i < sizeof(kFields) / sizeof(kFields[0]); ++i) {
         M11_ViewportCell cell;
         if (kFields[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_clear_for_rel(cells,
+                                             kFields[i].relForward,
+                                             kFields[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state, kFields[i].relForward, kFields[i].relSide, &cell)) {
@@ -17630,18 +17665,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * zones.  This is still narrower than full DUNVIEW.C: ornaments,
      * doors, pits, stairs, fields, and exact object order remain next. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
-                             maxVisibleForward);
+                             maxVisibleForward, cells);
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward);
+                                  maxVisibleForward, cells);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
                             maxVisibleForward, cells);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        maxVisibleForward);
+                        maxVisibleForward, cells);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward);
+                                  maxVisibleForward, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
                              maxVisibleForward, cells);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
