@@ -931,6 +931,40 @@ static int cmd_to_move_action(uint8_t cmd, int partyDirection, int* outSetDir) {
     }
 }
 
+static int movement_action_absolute_direction(int partyDirection, int moveAction) {
+    partyDirection &= 3;
+    switch (moveAction) {
+        case MOVE_FORWARD:  return partyDirection;
+        case MOVE_RIGHT:    return (partyDirection + 1) & 3;
+        case MOVE_BACKWARD: return (partyDirection + 2) & 3;
+        case MOVE_LEFT:     return (partyDirection + 3) & 3;
+        default:            return -1;
+    }
+}
+
+static int movement_command_disabled_redmcsb_compat(
+    const struct GameWorld_Compat* world,
+    int moveAction)
+{
+    int absoluteDirection;
+    if (!world) return 0;
+    absoluteDirection = movement_action_absolute_direction(world->party.direction, moveAction);
+    if (absoluteDirection < 0) return 0;
+    /*
+     * ReDMCSB source-lock: COMMAND.C:2095-2100 / 2104-2110 checks only
+     * C003..C006 movement commands before dispatch.  A non-zero
+     * G0310_i_DisabledMovementTicks suppresses all movement commands and
+     * GAMELOOP.C:150-155 decrements the cooldown once per game tick.  The
+     * projectile directional sub-gate also depends on
+     * G0312_i_LastProjectileDisabledMovementDirection; GameWorld_Compat does
+     * not persist that source global yet, so this seam implements the exact
+     * general movement-cooldown gate and leaves projectile direction parity to
+     * the future field-addition pass.
+     */
+    (void)absoluteDirection;
+    return world->disabledMovementTicks > 0;
+}
+
 int F0888_ORCH_ApplyPlayerInput_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
@@ -949,6 +983,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         int ignore;
         int mv = cmd_to_move_action(input->command, world->party.direction, &ignore);
         if (mv < 0) return 0;
+        if (movement_command_disabled_redmcsb_compat(world, mv)) return 0;
         if (!world->dungeon) {
             /* no dungeon: succeed deterministically (unit-test path) */
             if (mv == MOVE_TURN_LEFT || mv == MOVE_TURN_RIGHT) {

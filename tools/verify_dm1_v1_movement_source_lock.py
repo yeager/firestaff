@@ -29,6 +29,8 @@ SRC = {
 }
 COMPAT_C = ROOT / "memory_movement_pc34_compat.c"
 COMPAT_H = ROOT / "memory_movement_pc34_compat.h"
+ORCH_C = ROOT / "memory_tick_orchestrator_pc34_compat.c"
+PROBE_C = ROOT / "firestaff_m10_tick_orchestrator_probe.c"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_movement_source_lock.json"
 
 
@@ -118,6 +120,8 @@ def verify_redmcsb() -> list[dict[str, Any]]:
 def verify_firestaff() -> list[dict[str, Any]]:
     c = COMPAT_C.read_text()
     h = COMPAT_H.read_text()
+    orch = ORCH_C.read_text()
+    probe = PROBE_C.read_text()
     checks: list[dict[str, Any]] = []
     impl_checks = [
         ("memory_movement_pc34_compat.c:F0700", c, ["return (currentDir + 1) & 3", "return (currentDir + 3) & 3"]),
@@ -128,6 +132,21 @@ def verify_firestaff() -> list[dict[str, Any]]:
     ]
     for cite, text, needles in impl_checks:
         checks.append(require(cite, text, needles))
+    checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0888 disabled movement gate", orch, [
+        "movement_command_disabled_redmcsb_compat",
+        "COMMAND.C:2095-2100 / 2104-2110",
+        "return world->disabledMovementTicks > 0",
+        "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0",
+    ]))
+    checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0890 cooldown decrement", orch, [
+        "if (world->disabledMovementTicks > 0) world->disabledMovementTicks--",
+        "if (world->projectileDisabledMovementTicks > 0) world->projectileDisabledMovementTicks--",
+    ]))
+    checks.append(require("firestaff_m10_tick_orchestrator_probe.c:disabled movement cooldown invariant", probe, [
+        "disabledMovementTicks blocks cardinal movement dispatch without consuming cooldown",
+        "disabledMovementTicks does not block turn dispatch",
+        "periodic effects decrement disabledMovementTicks once per tick",
+    ]))
     return checks
 
 

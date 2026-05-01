@@ -328,6 +328,34 @@ int main(int argc, char** argv) {
         F0883_WORLD_Free_Compat(&w);
     }
     {
+        /* ReDMCSB source-lock: COMMAND.C:2095-2100 gates only C003..C006
+         * movement commands while G0310_i_DisabledMovementTicks is non-zero;
+         * COMMAND.C:2150-2155 still dispatches C001/C002 turns separately,
+         * and GAMELOOP.C:150-155 decrements the cooldown once per tick. */
+        struct GameWorld_Compat w;
+        struct TickInput_Compat in;
+        struct TickResult_Compat r;
+        int beforeDir;
+        build_unit_world(&w, 42u);
+        beforeDir = w.party.direction;
+        memset(&in, 0, sizeof(in));
+        memset(&r, 0, sizeof(r));
+        w.disabledMovementTicks = 3;
+        in.command = CMD_MOVE_NORTH;
+        CHECK(F0888_ORCH_ApplyPlayerInput_Compat(&w, &in, &r) == 0 &&
+              w.disabledMovementTicks == 3 &&
+              w.party.direction == beforeDir,
+              "17a: disabledMovementTicks blocks cardinal movement dispatch without consuming cooldown");
+        in.command = CMD_TURN_RIGHT;
+        CHECK(F0888_ORCH_ApplyPlayerInput_Compat(&w, &in, &r) == 1 &&
+              w.party.direction == ((beforeDir + 1) & 3),
+              "17b: disabledMovementTicks does not block turn dispatch");
+        F0890_ORCH_ApplyPeriodicEffects_Compat(&w, &r);
+        CHECK(w.disabledMovementTicks == 2,
+              "17c: periodic effects decrement disabledMovementTicks once per tick");
+        F0883_WORLD_Free_Compat(&w);
+    }
+    {
         /* Invariant 17: CMD_MOVE_NORTH on a walkable dungeon tile emits
          * EMIT_PARTY_MOVED. Requires real dungeon; skip the tile-walk if
          * init fails (conservative: passes on absence). */

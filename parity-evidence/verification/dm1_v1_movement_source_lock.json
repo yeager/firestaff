@@ -45,6 +45,33 @@
         "OPEN (0x04) or IMAGINARY (0x01)"
       ],
       "verified": true
+    },
+    {
+      "citation": "memory_tick_orchestrator_pc34_compat.c:F0888 disabled movement gate",
+      "needles": [
+        "movement_command_disabled_redmcsb_compat",
+        "COMMAND.C:2095-2100 / 2104-2110",
+        "return world->disabledMovementTicks > 0",
+        "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "memory_tick_orchestrator_pc34_compat.c:F0890 cooldown decrement",
+      "needles": [
+        "if (world->disabledMovementTicks > 0) world->disabledMovementTicks--",
+        "if (world->projectileDisabledMovementTicks > 0) world->projectileDisabledMovementTicks--"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "firestaff_m10_tick_orchestrator_probe.c:disabled movement cooldown invariant",
+      "needles": [
+        "disabledMovementTicks blocks cardinal movement dispatch without consuming cooldown",
+        "disabledMovementTicks does not block turn dispatch",
+        "periodic effects decrement disabledMovementTicks once per tick"
+      ],
+      "verified": true
     }
   ],
   "redmcsb_checks": [
