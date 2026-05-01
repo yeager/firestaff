@@ -277,6 +277,10 @@ if(BUILD_TESTING)
         NAME dm1_v1_command_movement_sensor_timing_pc34_compat
         COMMAND test_dm1_v1_command_movement_sensor_timing_pc34_compat
     )
+    add_test(
+        NAME dm1_v1_command_movement_sensor_timing_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py
+    )
 
     add_executable(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
         test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.c

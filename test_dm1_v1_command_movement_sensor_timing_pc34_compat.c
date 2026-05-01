@@ -141,7 +141,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_command_movement_sensor_timing_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:142-174,256-347; MOVESENS.C:760-783,799-818,1553-1794\n");
+    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-174,256-347; MOVESENS.C:738-783,799-818,1553-1794\n");
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
@@ -212,6 +212,29 @@ int main(void)
     ok &= expect_int("turn dequeued", queueResult.dequeued, 1);
     ok &= expect_int("turn dispatched", queueResult.dispatchedTurn, 1);
     ok &= expect_int("turn new direction", F0700_MOVEMENT_TurnDirection_Compat(party.direction, 1), DIR_EAST);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    ok &= expect_int("locked mouse forward stored as pending", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 270, 130, DM1_V1_BUTTON_LEFT }), 0);
+    ok &= expect_int("pending click present while locked", queue.pendingClickPresent, 1);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 0, 0, 0);
+    ok &= expect_int("empty locked queue replays pending click", queueResult.pendingReplayCount, 1);
+    ok &= expect_int("pending click becomes queued command", (int)queue.count, 1);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, party.direction, 0, 0, 0);
+    ok &= expect_int("mouse forward command dequeued", queueResult.dequeued, 1);
+    ok &= expect_int("mouse forward dispatched as move", queueResult.dispatchedMove, 1);
+    ok &= expect_int("mouse forward command id", queueResult.command, DM1_V1_COMMAND_MOVE_FORWARD);
+    sourceX = party.mapX;
+    sourceY = party.mapY;
+    ok &= expect_int("mouse movement accepted", F0702_MOVEMENT_TryMove_Compat(&dungeon, &party,
+        command_to_move_action(queueResult.command), &moveResult), 1);
+    party.mapX = moveResult.newMapX;
+    party.mapY = moveResult.newMapY;
+    ok &= expect_int("mouse movement destination sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, &enterEffects), 1);
+    ok &= expect_int("mouse movement destination effect count", enterEffects.count, 2);
 
     printf("dm1V1CommandMovementSensorTimingIntegrationOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
