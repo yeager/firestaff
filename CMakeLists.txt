@@ -405,6 +405,10 @@ if(BUILD_TESTING)
             NAME dm1_v1_input_command_queue_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_input_command_queue_source_lock.py
         )
+        add_test(
+            NAME dm1_v1_projectile_movement_interlock_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_projectile_movement_interlock_source_lock.py
+        )
     endif()
 
     # Launcher smoke (needs game data + built firestaff binary)
