@@ -279,6 +279,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_distance_row_clip_gate.py
         )
         add_test(
+            NAME v1_viewport_field_zone_aspect_clip_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_field_zone_aspect_clip_gate.py
+        )
+        add_test(
             NAME v1_viewport_floor_ornament_stair_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_floor_ornament_stair_gate.py
         )
