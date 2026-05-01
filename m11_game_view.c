@@ -5354,9 +5354,20 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,
                                                int primaryButton) {
+    return M11_GameView_HandlePointerButton(
+        state,
+        x,
+        y,
+        primaryButton ? M11_DM1_MOUSE_MASK_LEFT : 0);
+}
+
+M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
+                                                     int x,
+                                                     int y,
+                                                     int buttonMask) {
     int slot;
 
-    if (!state || !state->active || !primaryButton) {
+    if (!state || !state->active || buttonMask == 0) {
         return M11_GAME_INPUT_IGNORED;
     }
 
@@ -5412,6 +5423,49 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;
         }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD &&
+        (buttonMask & M11_DM1_MOUSE_MASK_RIGHT)) {
+        int space = M11_DM1_MOUSE_SPACE_NONE;
+        int zoneId = 0;
+        int command;
+
+        command = M11_GameView_GetV1MouseCommandForPoint(
+            M11_DM1_MOUSE_LIST_INTERFACE,
+            x, y,
+            M11_DM1_MOUSE_MASK_RIGHT,
+            &space,
+            &zoneId);
+        if (command >= 7 && command <= 10 && zoneId >= 151 && zoneId <= 154) {
+            int championIndex = command - 7;
+            if (championIndex < state->world.party.championCount &&
+                state->world.party.champions[championIndex].present) {
+                state->world.party.activeChampionIndex = championIndex;
+                state->mapOverlayActive = 0;
+                M11_GameView_ToggleInventoryPanel(state);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        command = M11_GameView_GetV1MouseCommandForPoint(
+            state->inventoryPanelActive ? M11_DM1_MOUSE_LIST_INVENTORY
+                                        : M11_DM1_MOUSE_LIST_MOVEMENT,
+            x, y,
+            M11_DM1_MOUSE_MASK_RIGHT,
+            &space,
+            &zoneId);
+        if ((command == 83 && zoneId == 2) || (command == 11 && zoneId == 2)) {
+            state->mapOverlayActive = 0;
+            M11_GameView_ToggleInventoryPanel(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if ((buttonMask & M11_DM1_MOUSE_MASK_LEFT) == 0) {
         return M11_GAME_INPUT_IGNORED;
     }
 

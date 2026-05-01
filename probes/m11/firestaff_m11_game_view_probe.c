@@ -774,6 +774,50 @@ int main(int argc, char** argv) {
                          &space, &zoneId) == 71 &&
                          space == M11_DM1_MOUSE_SPACE_VIEWPORT && zoneId == 546,
                      "DM1 inventory table routes C546 eye zone to command C071");
+        {
+            M11_GameViewState rightToggle;
+            M11_GameViewState rightClose;
+            M11_GameViewState rightChampion;
+            int sx, sy, sw, sh;
+            memcpy(&rightToggle, &gameView, sizeof(rightToggle));
+            rightToggle.showDebugHUD = 0;
+            rightToggle.inventoryPanelActive = 0;
+            probe_record(&tally,
+                         "INV_GV_437C",
+                         M11_GameView_HandlePointerButton(
+                             &rightToggle,
+                             vx + (vw / 2), vy + (vh / 2),
+                             M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW &&
+                             rightToggle.inventoryPanelActive == 1,
+                         "M11 V1 pointer bridge dispatches right-click C083 screen route to toggle leader inventory");
+
+            memcpy(&rightClose, &rightToggle, sizeof(rightClose));
+            probe_record(&tally,
+                         "INV_GV_437D",
+                         M11_GameView_HandlePointerButton(
+                             &rightClose,
+                             vx + (vw / 2), vy + (vh / 2),
+                             M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW &&
+                             rightClose.inventoryPanelActive == 0,
+                         "M11 V1 pointer bridge dispatches inventory right-click C011 screen route to close inventory");
+
+            memcpy(&rightChampion, &gameView, sizeof(rightChampion));
+            rightChampion.showDebugHUD = 0;
+            rightChampion.inventoryPanelActive = 0;
+            rightChampion.world.party.activeChampionIndex = 0;
+            (void)M11_GameView_GetV1StatusBoxZone(0, &sx, &sy, &sw, &sh);
+            rightChampion.world.party.championCount = 1;
+            rightChampion.world.party.champions[0].present = 1;
+            probe_record(&tally,
+                         "INV_GV_437E",
+                         M11_GameView_HandlePointerButton(
+                             &rightChampion,
+                             sx + 1, sy + 1,
+                             M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW &&
+                             rightChampion.inventoryPanelActive == 1 &&
+                             rightChampion.world.party.activeChampionIndex == 0,
+                         "M11 V1 pointer bridge dispatches champion status-box right-click C007 to that champion inventory");
+        }
         probe_record(&tally,
                      "INV_GV_438",
                      M11_GameView_GetV1InventorySourceSlotBoxGraphicId(7) == 0 &&

@@ -963,17 +963,20 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
-            gameView && gameView->active && ev.button.button == SDL_BUTTON_LEFT) {
+            gameView && gameView->active &&
+            (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
             if (gameViewResult &&
                 M11_Render_MapWindowToFramebuffer((int)ev.button.x,
                                                   (int)ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
-                *gameViewResult = M11_GameView_HandlePointer(
+                *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
                     mappedY,
-                    1);
+                    ev.button.button == SDL_BUTTON_RIGHT
+                        ? M11_DM1_MOUSE_MASK_RIGHT
+                        : M11_DM1_MOUSE_MASK_LEFT);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
                 }
@@ -1151,17 +1154,20 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_MOUSEBUTTONDOWN &&
-            gameView && gameView->active && ev.button.button == SDL_BUTTON_LEFT) {
+            gameView && gameView->active &&
+            (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
             if (gameViewResult &&
                 M11_Render_MapWindowToFramebuffer(ev.button.x,
                                                   ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
-                *gameViewResult = M11_GameView_HandlePointer(
+                *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
                     mappedY,
-                    1);
+                    ev.button.button == SDL_BUTTON_RIGHT
+                        ? M11_DM1_MOUSE_MASK_RIGHT
+                        : M11_DM1_MOUSE_MASK_LEFT);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
                 }

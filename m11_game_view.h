@@ -269,6 +269,10 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,
                                                int primaryButton);
+M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
+                                                     int x,
+                                                     int y,
+                                                     int buttonMask);
 void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
