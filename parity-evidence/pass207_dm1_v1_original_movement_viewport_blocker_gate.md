@@ -6,6 +6,12 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 
 ## ReDMCSB source seam audit
 
+- PASS `title-launch-draws-original-front-door` — `F0437_STARTEND_DrawTitle` at TITLE.C:12-40: Original route capture starts at the ReDMCSB title/front-door path, before any dungeon movement evidence is promotable.
+- PASS `entrance-wait-processes-input-queue-before-load` — `F0441_STARTEND_ProcessEntrance` at ENTRANCE.C:850-883, ENTRANCE.C:906-943: A launch/capture route must cross the source entrance input-wait loop and post-enter delay before dungeon-entry frames are evidence.
+- PASS `entrance-door-animation-vblank-seam` — `F0579_ENTRANCE_InitializeBitPlanes / F0580_ENTRANCE_DrawDoorAnimationStep / F0581_ENTRANCE_BlitDoors` at ENTRANCE.C:1095-1147: Entrance animation capture boundaries are tied to the original bitplane/vblank door-blit seam, not arbitrary screenshots.
+- PASS `vblank-wait-is-explicit-capture-timing-seam` — `F0693_WaitVerticalBlank` at VBLANK.C:626-646: Original-faithful capture timing must respect the source vblank wait seam used by entrance, highlighting, and viewport presentation.
+- PASS `command-discard-keypress-queue-primes-route` — `F0357_COMMAND_DiscardAllInput / F0361_COMMAND_ProcessKeyPress` at COMMAND.C:1305-1325, COMMAND.C:1709-1812: Route keypress/click evidence must begin from the source discard/input queue path before movement dispatch is evaluated.
+- PASS `click-highlight-vblank-feedback-does-not-equal-movement` — `F0665_F0362_sub / F0363_COMMAND_HighlightBoxDisable` at CLIKMENU.C:8-35, CLIKMENU.C:83-95: Highlight/vblank feedback can appear in captures; it is not by itself proof that the movement handler or viewport redraw seam was reached.
 - PASS `command-dispatch-reaches-turn-step-handlers` — `F0380_COMMAND_ProcessQueue_CPSC` at COMMAND.C:2045-2156: Movement/turn shots are only original-faithful after the command queue reaches the source turn/step handlers.
 - PASS `turn-handler-mutates-direction-and-stops-wait` — `F0365_COMMAND_ProcessTypes1To2_TurnParty` at CLIKMENU.C:142-179: Turn evidence must be captured after source direction mutation and input-wait release.
 - PASS `step-handler-resolves-destination-and-cooldown` — `F0366_COMMAND_ProcessTypes3To6_MoveParty` at CLIKMENU.C:180-347: Forward/side movement evidence must pass source legality, move-result, cooldown, and wait-release logic.
