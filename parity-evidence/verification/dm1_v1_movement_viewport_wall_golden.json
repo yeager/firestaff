@@ -1,0 +1,1729 @@
+{
+  "dm1_entry_asset_check": {
+    "citation": "DM1 canonical DUNGEON.DAT offset 8 + DEFS.H:989-998 + LOADSAVE.C:1940-1945",
+    "decoded": {
+      "direction": 2,
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3
+    },
+    "initialPartyLocationLE": "0x0861",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "verified": true
+  },
+  "golden": {
+    "assertions": [
+      "start_south front-center is blocking wall",
+      "start_south front-left is stairs entry side sample",
+      "start_south front-right is corridor side sample",
+      "turn_right_west front-center fakewall/teleporter sample",
+      "turn_right_west front-right wall with door thing sample",
+      "move_forward_west moves to x=0 and sees off-map D1C as invalid wall",
+      "turn_left_east has D1C front wall blocker",
+      "blocked_forward_south preserves party state after wall collision"
+    ],
+    "citation": "/home/trv2/work/firestaff/parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
+    "representativeCases": [
+      {
+        "frontLeftCenterRight": [
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x68",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x37",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "name": "start_south",
+        "party": {
+          "direction": 2,
+          "directionName": "SOUTH",
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3,
+          "tick": 0
+        },
+        "viewportRows": [
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 7,
+            "pit": 0,
+            "row": "D4L",
+            "squareHex": "0x07",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 0,
+            "mapY": 7,
+            "pit": 0,
+            "row": "D4R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 7,
+            "pit": 0,
+            "row": "D4C",
+            "squareHex": "0x69",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 3,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3L2",
+            "squareHex": "0xFF",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3R",
+            "squareHex": "0x39",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 3,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2L2",
+            "squareHex": "0xFE",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 1,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 0,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2C",
+            "squareHex": "0x66",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1L",
+            "squareHex": "0x68",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1R",
+            "squareHex": "0x37",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "FakeWall",
+            "elementType": 6,
+            "mapX": 0,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0R",
+            "squareHex": "0xC6",
+            "teleporter": 1,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0C",
+            "squareHex": "0x64",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "wallVisibilityNotes": [
+          "Rows are sampled in ReDMCSB far-to-near order; near opaque wall/door blits overwrite farther bitmap content.",
+          "valid=0 rows are off-map and source-lock as wall via DUNGEON.C:1435-1499."
+        ]
+      },
+      {
+        "frontLeftCenterRight": [
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x37",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "FakeWall",
+            "elementType": 6,
+            "mapX": 0,
+            "mapY": 3,
+            "pit": 0,
+            "squareHex": "0xC6",
+            "teleporter": 1,
+            "valid": 1
+          },
+          {
+            "door": 1,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 0,
+            "mapY": 2,
+            "pit": 0,
+            "squareHex": "0x0A",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "name": "turn_right_west",
+        "party": {
+          "direction": 3,
+          "directionName": "WEST",
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3,
+          "tick": 1
+        },
+        "viewportRows": [
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D4L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D4R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D4C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D3L2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 1,
+            "pit": 0,
+            "row": "D3R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D3L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D3R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D3C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2L2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 1,
+            "pit": 0,
+            "row": "D2R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D2L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D2R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D2C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1L",
+            "squareHex": "0x37",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 1,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 0,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D1R",
+            "squareHex": "0x0A",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "FakeWall",
+            "elementType": 6,
+            "mapX": 0,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D1C",
+            "squareHex": "0xC6",
+            "teleporter": 1,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D0L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D0R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0C",
+            "squareHex": "0x64",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "wallVisibilityNotes": [
+          "Rows are sampled in ReDMCSB far-to-near order; near opaque wall/door blits overwrite farther bitmap content.",
+          "valid=0 rows are off-map and source-lock as wall via DUNGEON.C:1435-1499."
+        ]
+      },
+      {
+        "frontLeftCenterRight": [
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 3,
+            "pit": 0,
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 2,
+            "pit": 0,
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "name": "move_forward_west",
+        "party": {
+          "direction": 3,
+          "directionName": "WEST",
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3,
+          "tick": 2
+        },
+        "viewportRows": [
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -4,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D4L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -4,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D4R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -4,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D4C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D3L2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 1,
+            "pit": 0,
+            "row": "D3R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D3L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D3R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -3,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D3C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2L2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 1,
+            "pit": 0,
+            "row": "D2R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D2L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D2R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -2,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D2C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D1R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D1C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D0L",
+            "squareHex": "0x37",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 1,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 0,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D0R",
+            "squareHex": "0x0A",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "FakeWall",
+            "elementType": 6,
+            "mapX": 0,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0C",
+            "squareHex": "0xC6",
+            "teleporter": 1,
+            "valid": 1
+          }
+        ],
+        "wallVisibilityNotes": [
+          "Rows are sampled in ReDMCSB far-to-near order; near opaque wall/door blits overwrite farther bitmap content.",
+          "valid=0 rows are off-map and source-lock as wall via DUNGEON.C:1435-1499."
+        ]
+      },
+      {
+        "frontLeftCenterRight": [
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 2,
+            "pit": 0,
+            "squareHex": "0x65",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 3,
+            "pit": 0,
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x68",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "name": "turn_left_east",
+        "party": {
+          "direction": 1,
+          "directionName": "EAST",
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3,
+          "tick": 1
+        },
+        "viewportRows": [
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 5,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D4L",
+            "squareHex": "0xFF",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 1,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 5,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D4R",
+            "squareHex": "0x0C",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 5,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D4C",
+            "squareHex": "0x03",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 4,
+            "mapY": 1,
+            "pit": 0,
+            "row": "D3L2",
+            "squareHex": "0x04",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 4,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D3R2",
+            "squareHex": "0x14",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 4,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D3L",
+            "squareHex": "0xFE",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 1,
+            "elementName": "Pit",
+            "elementType": 2,
+            "mapX": 4,
+            "mapY": 4,
+            "pit": 1,
+            "row": "D3R",
+            "squareHex": "0x57",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 4,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D3C",
+            "squareHex": "0xFF",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Pit",
+            "elementType": 2,
+            "mapX": 3,
+            "mapY": 1,
+            "pit": 1,
+            "row": "D2L2",
+            "squareHex": "0x51",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 3,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2R2",
+            "squareHex": "0xFE",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 3,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D2L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 3,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D2R",
+            "squareHex": "0x04",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 3,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D2C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D1L",
+            "squareHex": "0x65",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1R",
+            "squareHex": "0x68",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D1C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 2,
+            "pit": 0,
+            "row": "D0L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D0R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0C",
+            "squareHex": "0x64",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "wallVisibilityNotes": [
+          "Rows are sampled in ReDMCSB far-to-near order; near opaque wall/door blits overwrite farther bitmap content.",
+          "valid=0 rows are off-map and source-lock as wall via DUNGEON.C:1435-1499."
+        ]
+      },
+      {
+        "frontLeftCenterRight": [
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x68",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 4,
+            "pit": 0,
+            "squareHex": "0x37",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "name": "blocked_forward_south_wall",
+        "party": {
+          "direction": 2,
+          "directionName": "SOUTH",
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3,
+          "tick": 1
+        },
+        "viewportRows": [
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 7,
+            "pit": 0,
+            "row": "D4L",
+            "squareHex": "0x07",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 0,
+            "mapY": 7,
+            "pit": 0,
+            "row": "D4R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 7,
+            "pit": 0,
+            "row": "D4C",
+            "squareHex": "0x69",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 3,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3L2",
+            "squareHex": "0xFF",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3R",
+            "squareHex": "0x39",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 6,
+            "pit": 0,
+            "row": "D3C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Invalid/asset-high-bit",
+            "elementType": 7,
+            "mapX": 3,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2L2",
+            "squareHex": "0xFE",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": -1,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2R2",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 0
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 1,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 0,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2R",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 5,
+            "pit": 0,
+            "row": "D2C",
+            "squareHex": "0x66",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 2,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1L",
+            "squareHex": "0x68",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Corridor",
+            "elementType": 1,
+            "mapX": 0,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1R",
+            "squareHex": "0x37",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 1,
+            "mapY": 4,
+            "pit": 0,
+            "row": "D1C",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Wall",
+            "elementType": 0,
+            "mapX": 2,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0L",
+            "squareHex": "0x00",
+            "teleporter": 0,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "FakeWall",
+            "elementType": 6,
+            "mapX": 0,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0R",
+            "squareHex": "0xC6",
+            "teleporter": 1,
+            "valid": 1
+          },
+          {
+            "door": 0,
+            "elementName": "Stairs",
+            "elementType": 3,
+            "mapX": 1,
+            "mapY": 3,
+            "pit": 0,
+            "row": "D0C",
+            "squareHex": "0x64",
+            "teleporter": 0,
+            "valid": 1
+          }
+        ],
+        "wallVisibilityNotes": [
+          "Rows are sampled in ReDMCSB far-to-near order; near opaque wall/door blits overwrite farther bitmap content.",
+          "valid=0 rows are off-map and source-lock as wall via DUNGEON.C:1435-1499."
+        ]
+      }
+    ],
+    "schema": "pass127_turn_viewport_orientation_probe.v4",
+    "verifiedGeometry": [
+      {
+        "name": "start_south",
+        "verifiedRowGeometry": true
+      },
+      {
+        "name": "turn_right_west",
+        "verifiedRowGeometry": true
+      },
+      {
+        "name": "move_forward_west",
+        "verifiedRowGeometry": true
+      },
+      {
+        "name": "turn_left_east",
+        "verifiedRowGeometry": true
+      },
+      {
+        "name": "blocked_forward_south_wall",
+        "verifiedRowGeometry": true
+      }
+    ]
+  },
+  "redmcsb_checks": [
+    {
+      "citation": "DEFS.H:989-1013",
+      "needles": [
+        "unsigned int16_t InitialPartyLocation;",
+        "Bits 11-10: Direction, Bits 9-5: Y, Bits 4-0: X",
+        "#define M034_SQUARE_TYPE(square)   ((square) >> 5)",
+        "#define C00_ELEMENT_WALL          0",
+        "#define C04_ELEMENT_DOOR          4",
+        "#define C06_ELEMENT_FAKEWALL      6"
+      ],
+      "verified": true,
+      "why": "Header start bits and square element decoding are the root asset contracts."
+    },
+    {
+      "citation": "LOADSAVE.C:1940-1945",
+      "needles": [
+        "G0306_i_PartyMapX = (AL1353_i_InitialPartyLocation = G0278_ps_DungeonHeader->InitialPartyLocation) & 0x001F;",
+        "G0307_i_PartyMapY = (AL1353_i_InitialPartyLocation >>= 5) & 0x001F;",
+        "G0308_i_PartyDirection = (AL1353_i_InitialPartyLocation >> 5) & 0x0003;",
+        "G0309_i_PartyMapIndex = 0;"
+      ],
+      "verified": true,
+      "why": "New-game entry state is decoded directly from DUNGEON_HEADER.InitialPartyLocation."
+    },
+    {
+      "citation": "DUNGEON.C:35-44 and DUNGEON.C:1371-1391",
+      "needles": [
+        "G0233_ai_Graphic559_DirectionToStepEastCount",
+        "G0234_ai_Graphic559_DirectionToStepNorthCount",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "P0253_i_Direction += 1, P0253_i_Direction &= 3; /* Simulate turning right */",
+        "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[P0253_i_Direction]"
+      ],
+      "verified": true,
+      "why": "Relative forward/right movement rotates facing, then applies source direction vectors."
+    },
+    {
+      "citation": "DUNGEON.C:1435-1499",
+      "needles": [
+        "If processing goes below this line then either P0258_i_MapX or P0259_i_MapY is out of the map bounds and the returned square type will be C00_ELEMENT_WALL",
+        "return M035_SQUARE(C00_ELEMENT_WALL, 0);",
+        "F0152_DUNGEON_GetRelativeSquare",
+        "F0153_DUNGEON_GetRelativeSquareType"
+      ],
+      "verified": true,
+      "why": "Viewport/off-map probes source-lock as wall squares, which matters at the DM1 entrance edge."
+    },
+    {
+      "citation": "CLIKMENU.C:256-347",
+      "needles": [
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "L1116_i_SquareType == C00_ELEMENT_WALL",
+        "L1117_B_MovementBlocked = M036_DOOR_STATE(AL1115_ui_Square);",
+        "L1117_B_MovementBlocked != C1_DOOR_STATE_CLOSED_ONE_FOURTH",
+        "MASK0x0004_FAKEWALL_OPEN",
+        "MASK0x0001_FAKEWALL_IMAGINARY",
+        "F0175_GROUP_GetThing",
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;"
+      ],
+      "verified": true,
+      "why": "Party step legality is wall/door/fakewall/group gated before cooldown/state changes."
+    },
+    {
+      "citation": "MOVESENS.C:315-385 and MOVESENS.C:752-775",
+      "needles": [
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE",
+        "P0558_i_SourceMapX",
+        "P0560_i_DestinationMapX",
+        "P0557_T_Thing == C0xFFFF_THING_PARTY",
+        "G0362_l_LastPartyMovementTime = G0313_ul_GameTime"
+      ],
+      "verified": true,
+      "why": "Movement result routing is centralized and party moves are timestamped on success."
+    },
+    {
+      "citation": "GAMELOOP.C:90 and GAMELOOP.C:150-155 and GAMELOOP.C:215-219",
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+        "G0310_i_DisabledMovementTicks--",
+        "G0311_i_ProjectileDisabledMovementTicks--",
+        "F0380_COMMAND_ProcessQueue_CPSC();"
+      ],
+      "verified": true,
+      "why": "Viewport redraw reads current party state; movement cooldowns tick in the game loop."
+    },
+    {
+      "citation": "DUNVIEW.C:2962-3110 and DRAWVIEW.C:709-724",
+      "needles": [
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+        "F0100_DUNGEONVIEW_DrawWallSetBitmap",
+        "F0102_DUNGEONVIEW_DrawDoorBitmap",
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "G0324_B_DrawViewportRequested = C1_TRUE"
+      ],
+      "verified": true,
+      "why": "The viewport is a 224x136 backing bitmap filled with floor/ceiling then walls/doors and presented separately."
+    },
+    {
+      "citation": "DUNVIEW.C:6253-8164",
+      "needles": [
+        "STATICFUNCTION void F0116_DUNGEONVIEW_DrawSquareD3L",
+        "STATICFUNCTION void F0121_DUNGEONVIEW_DrawSquareD2C",
+        "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C",
+        "STATICFUNCTION void F0127_DUNGEONVIEW_DrawSquareD0C",
+        "case C00_ELEMENT_WALL:",
+        "case C16_ELEMENT_DOOR_SIDE:",
+        "case C17_ELEMENT_DOOR_FRONT:"
+      ],
+      "verified": true,
+      "why": "Representative D3/D2/D1/D0 draw functions branch on wall/door/corridor square aspects."
+    },
+    {
+      "citation": "DUNVIEW.C:8318-8542",
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "F0153_DUNGEON_GetRelativeSquareType(P0183_i_Direction, 3, -2",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 4, -1",
+        "F0116_DUNGEONVIEW_DrawSquareD3L",
+        "F0121_DUNGEONVIEW_DrawSquareD2C",
+        "F0124_DUNGEONVIEW_DrawSquareD1C",
+        "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
+      ],
+      "verified": true,
+      "why": "Viewport traversal is source-ordered from far D4/D3 rows through near D0/current square."
+    }
+  ],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V1 movement/orientation/viewport/wall source+asset+runtime-golden evidence",
+  "source_asset_metadata": {
+    "directions": [
+      {
+        "id": 0,
+        "name": "NORTH",
+        "stepEast": 0,
+        "stepNorth": -1
+      },
+      {
+        "id": 1,
+        "name": "EAST",
+        "stepEast": 1,
+        "stepNorth": 0
+      },
+      {
+        "id": 2,
+        "name": "SOUTH",
+        "stepEast": 0,
+        "stepNorth": 1
+      },
+      {
+        "id": 3,
+        "name": "WEST",
+        "stepEast": -1,
+        "stepNorth": 0
+      }
+    ],
+    "limitations": [
+      "This gate reuses existing pass127 runtime probe output; it does not drive DOSBox/original capture itself.",
+      "Wall occlusion is represented as source draw-order + representative wall/door rows, not pixel-diffed original screenshots."
+    ],
+    "movementBlockers": {
+      "door": "C04 door blocks unless M036_DOOR_STATE is open, one-fourth closed, or destroyed",
+      "fakewall": "C06 fakewall blocks unless MASK0x0004_FAKEWALL_OPEN or MASK0x0001_FAKEWALL_IMAGINARY",
+      "group": "F0175_GROUP_GetThing target group blocks unless champion collision/damage path clears it",
+      "offMap": "F0151/F0152 return C00 wall for out-of-bounds viewport/movement probes",
+      "wall": "M034_SQUARE_TYPE(square)==C00_ELEMENT_WALL blocks party movement"
+    },
+    "movementCommands": {
+      "moveForward": "step along current direction after CLIKMENU legality checks",
+      "moveRight/moveLeft/moveBackward": "rotate relative step direction then apply DUNGEON.C vectors",
+      "turnLeft": "direction=(direction+3)&3; no coordinate change",
+      "turnRight": "direction=(direction+1)&3; no coordinate change"
+    },
+    "viewportRowOrder": [
+      {
+        "forward": 4,
+        "right": -1,
+        "row": "D4L"
+      },
+      {
+        "forward": 4,
+        "right": 1,
+        "row": "D4R"
+      },
+      {
+        "forward": 4,
+        "right": 0,
+        "row": "D4C"
+      },
+      {
+        "forward": 3,
+        "right": -2,
+        "row": "D3L2"
+      },
+      {
+        "forward": 3,
+        "right": 2,
+        "row": "D3R2"
+      },
+      {
+        "forward": 3,
+        "right": -1,
+        "row": "D3L"
+      },
+      {
+        "forward": 3,
+        "right": 1,
+        "row": "D3R"
+      },
+      {
+        "forward": 3,
+        "right": 0,
+        "row": "D3C"
+      },
+      {
+        "forward": 2,
+        "right": -2,
+        "row": "D2L2"
+      },
+      {
+        "forward": 2,
+        "right": 2,
+        "row": "D2R2"
+      },
+      {
+        "forward": 2,
+        "right": -1,
+        "row": "D2L"
+      },
+      {
+        "forward": 2,
+        "right": 1,
+        "row": "D2R"
+      },
+      {
+        "forward": 2,
+        "right": 0,
+        "row": "D2C"
+      },
+      {
+        "forward": 1,
+        "right": -1,
+        "row": "D1L"
+      },
+      {
+        "forward": 1,
+        "right": 1,
+        "row": "D1R"
+      },
+      {
+        "forward": 1,
+        "right": 0,
+        "row": "D1C"
+      },
+      {
+        "forward": 0,
+        "right": -1,
+        "row": "D0L"
+      },
+      {
+        "forward": 0,
+        "right": 1,
+        "row": "D0R"
+      },
+      {
+        "forward": 0,
+        "right": 0,
+        "row": "D0C"
+      }
+    ],
+    "viewportSurface": {
+      "height": 136,
+      "source": "DUNVIEW/DRAWVIEW source constants and pass127 probe scope",
+      "width": 224
+    }
+  },
+  "status": "PASS"
+}
