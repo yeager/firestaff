@@ -11607,6 +11607,24 @@ static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3
     return 1;
 }
 
+static int m11_dm1_side_lane_wall_clear_before_depth(const M11_ViewportCell cells[3][3],
+                                                     int depthIndex,
+                                                     int sideIndex) {
+    int d;
+    if (!cells || depthIndex <= 0) {
+        return 1;
+    }
+    if (sideIndex != 0 && sideIndex != 2) {
+        return 1;
+    }
+    for (d = 0; d < depthIndex && d < 3; ++d) {
+        if (m11_viewport_cell_is_wall_like(&cells[d][sideIndex])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                        unsigned char* framebuffer,
                                        int framebufferWidth,
@@ -11640,11 +11658,15 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
         }
         for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
             int side = sideSlot == 0 ? -1 : 1;
-            const M11_ViewportCell* cell = &cells[depth][side < 0 ? 0 : 2];
+            int sideIndex = side < 0 ? 0 : 2;
+            const M11_ViewportCell* cell = &cells[depth][sideIndex];
             int sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward, cell->relSide);
             int paneX;
             int paneW;
             if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
+                continue;
+            }
+            if (!m11_dm1_side_lane_wall_clear_before_depth(cells, depth, sideIndex)) {
                 continue;
             }
             if (side < 0) {
