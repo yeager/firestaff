@@ -1,5 +1,5 @@
 {
-  "schema": "pass163_champion_recruit_source_path.v1",
+  "schema": "pass163_champion_recruit_source_path.v2",
   "checks": [
     {
       "id": "SRC_RECRUIT_001",
@@ -108,7 +108,7 @@
         "104, 158,  86, 142",
         "163, 217,  86, 142"
       ],
-      "claim": "The old y=165 route was outside the original C160/C161 boxes; pass162 corrected this but still hit static-no-party, proving the missing step is earlier C127/F0280 candidate creation.",
+      "claim": "C160/C161 are panel-only choices; pass162/pass166/pass173 showed that panel clicks remain blocked unless an earlier C080 portrait click has visibly reached C127/F0280 candidate creation.",
       "source": "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "hits": [
         {
@@ -136,26 +136,21 @@
     }
   ],
   "pass162_summary": {
-    "completed": 3,
+    "completed": 2,
     "buckets": {
-      "blocked/static-no-party": 3
+      "blocked/portrait-c080-no-visible-delta": 2
     },
-    "all_static_blocked": true,
+    "expected_blocker_bucket": true,
     "scenarios": [
       {
-        "name": "pm_f1_panel_clicks_route_recheck",
-        "classification": "blocked/static-no-party",
-        "reason": "known static no-party hash present: 48ed3743ab6a"
+        "name": "source_gated_portrait_then_resurrect",
+        "classification": "blocked/portrait-c080-no-visible-delta",
+        "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280"
       },
       {
-        "name": "source_enter_zone_then_candidate_buttons",
-        "classification": "blocked/static-no-party",
-        "reason": "known static no-party hash present: 48ed3743ab6a"
-      },
-      {
-        "name": "source_enter_zone_then_reincarnate_box",
-        "classification": "blocked/static-no-party",
-        "reason": "known static no-party hash present: 48ed3743ab6a"
+        "name": "source_gated_portrait_then_reincarnate",
+        "classification": "blocked/portrait-c080-no-visible-delta",
+        "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280"
       }
     ]
   }

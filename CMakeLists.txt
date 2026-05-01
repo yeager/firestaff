@@ -230,6 +230,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_input_command_queue_pc34_compat
     )
 
+    add_executable(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
+        test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.c
+    )
+    target_link_libraries(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_resurrect_reincarnate_cancel_routes
+        COMMAND test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
+    )
+
     # Phase A probe (headless, no game data needed)
     add_test(
         NAME m11_phase_a
@@ -352,6 +364,18 @@ if(BUILD_TESTING)
         add_test(
             NAME v1_entrance_input_wait_redmcsb_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_entrance_input_wait_redmcsb_gate.py
+        )
+        add_test(
+            NAME v1_champion_recruit_source_path
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_champion_recruit_source_path.py
+        )
+        add_test(
+            NAME v1_champion_portrait_click_source_path
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_champion_portrait_click_source_path.py
+        )
+        add_test(
+            NAME v1_champion_portrait_click_geometry
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_champion_portrait_click_geometry.py
         )
         add_test(
             NAME dm1_v1_movement_source_lock
