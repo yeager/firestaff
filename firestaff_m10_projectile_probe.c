@@ -4,7 +4,7 @@
  * Validates the pure projectile/explosion tick-transform data layer
  * against PHASE17_PLAN.md §5 invariants.
  *
- * Shipped: 50 invariants (≥30 gate, 48 target). Two sub-checks are
+ * Shipped: 52 invariants (≥30 gate, 48 target). Two sub-checks are
  * folded under invariant #48 and counted as one.
  */
 
@@ -535,6 +535,59 @@ int main(int argc, char* argv[]) {
         CHECK(r.resultKind == PROJECTILE_RESULT_FLEW
               && r.despawn == 0,
               "Destroyed door -> projectile passes (FLEW, despawn=0)");
+    }
+    /* 20b: Source-locked portcullis occlusion: HARM_NON_MATERIAL passes, lightning strikes. */
+    {
+        struct ProjectileInstance_Compat p, pOut;
+        struct CellContentDigest_Compat d;
+        struct ProjectileTickResult_Compat r;
+        struct RngState_Compat rng;
+        int okHarm;
+        int okLightning;
+        zero_digest(&d);
+        set_source_and_dest(&d, 0, 5, 5, 6, 5);
+        d.destSquareType = PROJECTILE_ELEMENT_DOOR;
+        d.destDoorState  = PROJECTILE_DOOR_STATE_CLOSED_FULL;
+        d.destDoorAllowsProjectilePassThrough = 1;
+
+        make_projectile_magical(&p, PROJECTILE_SUBTYPE_HARM_NON_MATERIAL,
+                                 COMBAT_ATTACK_NORMAL,
+                                 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 1);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        okHarm = (r.resultKind == PROJECTILE_RESULT_FLEW && r.despawn == 0);
+
+        make_projectile_magical(&p, PROJECTILE_SUBTYPE_LIGHTNING_BOLT,
+                                 COMBAT_ATTACK_LIGHTNING,
+                                 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 1);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        okLightning = (r.resultKind == PROJECTILE_RESULT_HIT_DOOR
+                       && r.emittedDoorDestructionEvent == 1
+                       && r.despawn == 1);
+        CHECK(okHarm && okLightning,
+              "Portcullis projectile gate: HARM_NON_MATERIAL passes; LIGHTNING_BOLT hits door (PROJEXPL.C F0217 >= C0xFF83)");
+    }
+    /* 20c: Solid doors do not honor magical pass-through projectile subtypes. */
+    {
+        struct ProjectileInstance_Compat p, pOut;
+        struct CellContentDigest_Compat d;
+        struct ProjectileTickResult_Compat r;
+        struct RngState_Compat rng;
+        zero_digest(&d);
+        set_source_and_dest(&d, 0, 5, 5, 6, 5);
+        d.destSquareType = PROJECTILE_ELEMENT_DOOR;
+        d.destDoorState  = PROJECTILE_DOOR_STATE_CLOSED_FULL;
+        d.destDoorAllowsProjectilePassThrough = 0;
+        make_projectile_magical(&p, PROJECTILE_SUBTYPE_HARM_NON_MATERIAL,
+                                 COMBAT_ATTACK_NORMAL,
+                                 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 1);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        CHECK(r.resultKind == PROJECTILE_RESULT_HIT_DOOR
+              && r.emittedDoorDestructionEvent == 1
+              && r.despawn == 1,
+              "Solid door projectile gate: HARM_NON_MATERIAL hits when door info lacks PROJECTILES_CAN_PASS_THROUGH");
     }
     /* 21: Champion on dest cell -> HIT_CHAMPION + combat action */
     {

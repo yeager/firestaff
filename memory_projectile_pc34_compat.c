@@ -371,15 +371,15 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
     }
 
     /* Magical projectile vs a door flagged
-     * MASK0x0002_THING_LIST_... (pass-through) — lightning /
-     * harm-non-material style. v1: only honour for HARM_NON_MATERIAL
-     * and above (>= magical subtypes marked pass-through).
-     * NEEDS DISASSEMBLY REVIEW: Fontanel branch at PROJEXPL.C:
-     * F0217 has per-subtype overrides; v1 uses the flag only. */
+     * MASK0x0002_PROJECTILES_CAN_PASS_THROUGH. Source parity:
+     * ReDMCSB PROJEXPL.C:F0217 door branch lines 491-505 only lets
+     * explosion-backed projectiles pass when the associated thing is
+     * >= C0xFF83_THING_EXPLOSION_HARM_NON_MATERIAL. Lightning (0x82)
+     * must still strike the door; HARM_NON_MATERIAL/open-door/poison
+     * style projectiles pass through portcullis-type doors. */
     if (in->projectileCategory == PROJECTILE_CATEGORY_MAGICAL
         && digest->destDoorAllowsProjectilePassThrough
-        && (in->projectileSubtype == PROJECTILE_SUBTYPE_HARM_NON_MATERIAL
-            || in->projectileSubtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT)) {
+        && in->projectileSubtype >= PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) {
         *outPasses = 1;
         return 1;
     }
