@@ -92,6 +92,23 @@ int TOUCHPOINTER_Compat_TranslateEvent(const TouchPointerEventPc34Compat* event,
     }
 }
 
+
+int TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(
+    const TouchPointerEventPc34Compat* event,
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    TouchPointerDispatchPc34Compat* outDispatch) {
+    TouchPointerDispatchPc34Compat localDispatch;
+    TouchPointerDispatchPc34Compat* dispatch = outDispatch ? outDispatch : &localDispatch;
+    if (!queue) return 0;
+    if (!TOUCHPOINTER_Compat_TranslateEvent(event, dispatch)) return 0;
+    return DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+        queue,
+        (int)dispatch->commandId,
+        dispatch->screenX,
+        dispatch->screenY,
+        (int)dispatch->buttonStatus);
+}
+
 const char* TOUCHPOINTER_Compat_GetSourceEvidence(void) {
-    return "ReDMCSB COMMAND.C:2831-2915 click queue, 2922-2928 pending click, 396-405 movement/viewport mouse inputs, 1709-1765 keyboard-separate; CLIKMENU.C:142-174/180-347 movement execution unchanged";
+    return "ReDMCSB COMMAND.C:2831-2915 click queue, 2922-2928 pending click, 396-405 movement/viewport mouse inputs, 1709-1765 keyboard-separate; COORD.C:1918-1921 point-in-zone inclusive bounds; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:142-174/180-347 movement execution unchanged";
 }

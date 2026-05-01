@@ -2,6 +2,7 @@
 #define FIRESTAFF_TOUCH_POINTER_INPUT_PC34_COMPAT_H
 
 #include "touch_click_zone_matrix_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
 
 typedef enum TouchPointerActionPc34Compat {
     TOUCH_POINTER_ACTION_DOWN_PC34_COMPAT = 1,
@@ -45,6 +46,10 @@ int TOUCHPOINTER_Compat_EventFromScaledTap(int physicalX,
                                            int surfaceH,
                                            unsigned int buttonMask,
                                            TouchPointerEventPc34Compat* outEvent);
+int TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(
+    const TouchPointerEventPc34Compat* event,
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    TouchPointerDispatchPc34Compat* outDispatch);
 const char* TOUCHPOINTER_Compat_GetSourceEvidence(void);
 
 #endif

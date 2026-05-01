@@ -21,6 +21,9 @@ static int expect_dispatch(const TouchPointerDispatchPc34Compat* d,
 int main(void) {
     TouchPointerEventPc34Compat event;
     TouchPointerDispatchPc34Compat dispatch;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    struct Dm1V1QueuedCommandPc34Compat queued;
+    struct Dm1V1InputQueueProcessResultPc34Compat processResult;
     int ok = 1;
 
     printf("probe=firestaff_touch_pointer_input\n");
@@ -65,6 +68,39 @@ int main(void) {
         !expect_dispatch(&dispatch, 12, 13, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
                          71u, 546u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT,
                          "inventory.eye")) ok = 0;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_SCALED_SCREEN_PC34_COMPAT;
+    event.x = 1056;
+    event.y = 450;
+    event.surfaceW = 1280;
+    event.surfaceH = 720;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
+    if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
+        queued.command != DM1_V1_COMMAND_MOVE_FORWARD || queued.x != 275 || queued.y != 125) ok = 0;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;
+    event.space = TOUCH_POINTER_SPACE_VIEWPORT_LOCAL_PC34_COMPAT;
+    event.x = 12;
+    event.y = 13;
+    event.surfaceW = 0;
+    event.surfaceH = 0;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
+    if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
+        queued.command != 71 || queued.x != 12 || queued.y != 13) ok = 0;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    if (TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
+    if (!queue.pendingClickPresent || queue.pendingClickCommand != 71) ok = 0;
+    queue.locked = 0;
+    processResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    if (processResult.pendingReplayCount != 1 || queue.count != 1u ||
+        !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) || queued.command != 71) ok = 0;
 
     event.action = TOUCH_POINTER_ACTION_MOVE_PC34_COMPAT;
     if (TOUCHPOINTER_Compat_TranslateEvent(&event, &dispatch) || dispatch.shouldDispatchClick) ok = 0;

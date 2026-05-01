@@ -115,13 +115,14 @@ def verify_firestaff() -> list[str]:
     ]:
         if marker not in c:
             raise AssertionError(f"compat source evidence missing {marker}")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"queue->pendingClickPresent\s*=\s*1;.*queue->pendingClickButtons")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"queue->pendingClickPresent\s*=\s*1;.*queue->pendingClickButtons.*queue->pendingClickCommand")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"process_pending_click\(queue\).*result\.movementDisabledGate\s*=\s*1")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"result\.dispatchedTurn\s*=\s*1;.*result\.dispatchedMove\s*=\s*1;")
     for needle in [
         "locked mouse becomes pending", "movement gate set", "movement not dequeued",
         "pending replayed", "forward dequeued after gate clears", "turn dispatched",
         "turn bypasses movement disabled gate", "turn dequeued despite movement disabled",
+        "locked direct touch inventory pending", "direct touch command",
     ]:
         if needle not in t:
             raise AssertionError(f"test missing invariant label {needle!r}")

@@ -5,7 +5,7 @@
  * - COMMAND.C:106-121 G0448 movement mouse rows for C001/C003/C002/C006/C005/C004/C080/C083.
  * - COMMAND.C:252-260 and 272-305 G0459 movement keyboard rows for keypad/arrow movement commands.
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
- * - COMMAND.C:1452-1661 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
+ * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
  * - COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands, then replays pending click.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
@@ -90,15 +90,21 @@ static void process_pending_click(struct Dm1V1InputCommandQueuePc34Compat* queue
     int x;
     int y;
     int buttons;
+    int command;
     if (!queue->pendingClickPresent) {
         return;
     }
     x = queue->pendingClickX;
     y = queue->pendingClickY;
     buttons = queue->pendingClickButtons;
+    command = queue->pendingClickCommand;
     queue->pendingClickPresent = 0;
+    queue->pendingClickCommand = DM1_V1_COMMAND_NONE;
     queue->pendingReplayCount++;
-    (void)enqueue_command(queue, command_for_mouse(x, y, buttons), x, y);
+    if (command == DM1_V1_COMMAND_NONE) {
+        command = command_for_mouse(x, y, buttons);
+    }
+    (void)enqueue_command(queue, command, x, y);
 }
 
 void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue)
@@ -106,22 +112,36 @@ void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Co
     memset(queue, 0, sizeof(*queue));
 }
 
+int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    int command,
+    int x,
+    int y,
+    int buttonMask)
+{
+    if (queue->locked) {
+        queue->pendingClickPresent = 1;
+        queue->pendingClickX = x;
+        queue->pendingClickY = y;
+        queue->pendingClickButtons = buttonMask;
+        queue->pendingClickCommand = command;
+        return 0;
+    }
+    return enqueue_command(queue, command, x, y);
+}
+
 int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     struct Dm1V1InputEventPc34Compat event)
 {
     int command;
-    if (event.kind == DM1_V1_INPUT_KIND_MOUSE && queue->locked) {
-        queue->pendingClickPresent = 1;
-        queue->pendingClickX = event.x;
-        queue->pendingClickY = event.y;
-        queue->pendingClickButtons = event.buttonMask;
-        return 0;
+    if (event.kind == DM1_V1_INPUT_KIND_KEY) {
+        command = command_for_key(event.keyCode);
+        return enqueue_command(queue, command, event.x, event.y);
     }
-    command = event.kind == DM1_V1_INPUT_KIND_KEY
-        ? command_for_key(event.keyCode)
-        : command_for_mouse(event.x, event.y, event.buttonMask);
-    return enqueue_command(queue, command, event.x, event.y);
+    command = command_for_mouse(event.x, event.y, event.buttonMask);
+    return DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+        queue, command, event.x, event.y, event.buttonMask);
 }
 
 struct Dm1V1InputQueueProcessResultPc34Compat DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
@@ -183,5 +203,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:106-121,252-260,272-305,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
+    return "COMMAND.C:106-121,252-260,272-305,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
 }

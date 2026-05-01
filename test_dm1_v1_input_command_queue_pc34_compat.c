@@ -29,6 +29,7 @@ int main(void)
     ok &= expect_int("locked mouse becomes pending", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 240, 130, DM1_V1_BUTTON_LEFT }), 0);
     ok &= expect_int("pending present", queue.pendingClickPresent, 1);
+    ok &= expect_int("pending command locked mouse", queue.pendingClickCommand, DM1_V1_COMMAND_TURN_LEFT);
     queue.locked = 0;
 
     result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 1, 0, 0);
@@ -59,6 +60,18 @@ int main(void)
     ok &= expect_int("turn dequeued despite movement disabled", result.dequeued, 1);
     ok &= expect_int("turn dispatched despite movement disabled", result.dispatchedTurn, 1);
     ok &= expect_int("turn-disabled-gate queue empty", (int)queue.count, 0);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    ok &= expect_int("locked direct touch inventory pending",
+        DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(&queue, 71, 12, 13, DM1_V1_BUTTON_LEFT), 0);
+    ok &= expect_int("locked direct touch command stored", queue.pendingClickCommand, 71);
+    queue.locked = 0;
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("direct touch pending replayed", result.pendingReplayCount, 1);
+    ok &= expect_int("direct touch queued", (int)queue.count, 1);
+    ok &= expect_int("direct touch peek", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("direct touch command", peek.command, 71);
 
     printf("dm1V1InputCommandQueueInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;

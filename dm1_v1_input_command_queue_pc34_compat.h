@@ -49,6 +49,7 @@ struct Dm1V1InputCommandQueuePc34Compat {
     int pendingClickX;
     int pendingClickY;
     int pendingClickButtons;
+    int pendingClickCommand;
     unsigned int pendingReplayCount;
     unsigned int droppedFullCount;
 };
@@ -66,6 +67,12 @@ void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Co
 int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     struct Dm1V1InputEventPc34Compat event);
+int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    int command,
+    int x,
+    int y,
+    int buttonMask);
 struct Dm1V1InputQueueProcessResultPc34Compat DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     int partyDirection,
