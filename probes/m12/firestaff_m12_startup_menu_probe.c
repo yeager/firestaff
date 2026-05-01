@@ -315,9 +315,11 @@ int main(void) {
                      M12_AssetStatus_GameHasCompleteHashSet("dm1") == 1 &&
                      M12_AssetStatus_GameHasCompleteHashSet("csb") == 1 &&
                      M12_AssetStatus_GameHasCompleteHashSet("dm2") == 1 &&
+                     M12_AssetStatus_GameHasCompleteHashSet("nexus1") == 1 &&
                      M12_AssetStatus_GameKnownHashCount("dm1") == 3U &&
                      M12_AssetStatus_GameKnownHashCount("csb") == 3U &&
-                     M12_AssetStatus_GameKnownHashCount("dm2") == 3U,
+                     M12_AssetStatus_GameKnownHashCount("dm2") == 3U &&
+                     M12_AssetStatus_GameKnownHashCount("nexus1") == 1U,
                  "asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable");
 
     force_dm1_version_ready(&state, 0U);

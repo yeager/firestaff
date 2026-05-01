@@ -33,7 +33,7 @@ typedef struct {
 static const char* const g_dm1GraphicsNames[] = {"GRAPHICS.DAT", NULL};
 static const char* const g_csbGraphicsNames[] = {"GRAPHICS.DAT", "CSBGRAPH.DAT", NULL};
 static const char* const g_dm2GraphicsNames[] = {"GRAPHICS.DAT", "DM2GRAPHICS.DAT", "SKULLKEEP.GFX", NULL};
-static const char* const g_nexusGraphicsNames[] = {"NEXUS.DAT", "NEXUS.CPK", "NEXUS.BIN", NULL};
+static const char* const g_nexusArchiveNames[] = {"Dungeon-Master-Nexus_SEGA-Saturn_JA.zip", NULL};
 
 static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e"},
@@ -54,8 +54,8 @@ static const M12_VersionSpec g_dm2Versions[] = {
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
-    {"nexus1", "nexus1", "Nexus original", "nexus1", g_nexusGraphicsNames, ""},
-    {"nexus1", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusGraphicsNames, ""}
+    {"nexus1", "nexus1", "Nexus original Sega Saturn JP", "nexus1", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194"},
+    {"nexus1", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, ""}
 };
 
 static const M12_GameVersionSpec g_games[] = {
@@ -425,7 +425,17 @@ int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId) {
 
 size_t M12_AssetStatus_GameKnownHashCount(const char* gameId) {
     const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
-    return spec ? spec->versionCount : 0U;
+    size_t i;
+    size_t count = 0U;
+    if (!spec) {
+        return 0U;
+    }
+    for (i = 0U; i < spec->versionCount; ++i) {
+        if (spec->versions[i].md5 && spec->versions[i].md5[0] != 0) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 size_t M12_AssetStatus_GameVerifiedFileCount(const char* gameId) {
