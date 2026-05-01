@@ -9060,6 +9060,24 @@ static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell ce
     return -1;
 }
 
+static int m11_dm1_nearest_blocking_center_door_depth(const M11_ViewportCell cells[3][3]) {
+    int depth = m11_dm1_nearest_blocking_center_depth_index(cells);
+    if (depth < 0) {
+        return -1;
+    }
+    /* ReDMCSB DUNVIEW.C F0124/F0121/F0118 draw a complete center
+     * square and stop seeing deeper center squares once that square is
+     * wall-like/non-open.  Door ornaments, destroyed masks, and buttons are
+     * attributes of that same nearest blocking center door; do not let a
+     * farther D2/D3 door decorate over a nearer D1 wall/closed door. */
+    if (!cells[depth][1].valid ||
+        cells[depth][1].elementType != DUNGEON_ELEMENT_DOOR ||
+        m11_viewport_cell_is_open(&cells[depth][1])) {
+        return -1;
+    }
+    return depth;
+}
+
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int fbW,
@@ -9711,7 +9729,11 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (depth = 0; depth < 3; ++depth) {
+    depth = m11_dm1_nearest_blocking_center_door_depth(cells);
+    if (depth < 0) {
+        return;
+    }
+    {
         const M11_ViewportCell* cell = &cells[depth][1];
         const M11_AssetSlot* slot;
         int graphicIndex;
@@ -9723,16 +9745,16 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
         int ornW, ornH, relX, relY;
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
             m11_viewport_cell_is_open(cell) || cell->doorOrnamentOrdinal <= 0) {
-            continue;
+            return;
         }
         if (!m11_dm1_door_ornament_info(state, cell->doorOrnamentOrdinal,
                                         &graphicIndex, &coordSet)) {
-            continue;
+            return;
         }
         slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                     (unsigned int)graphicIndex);
         if (!slot || slot->width <= 0 || slot->height <= 0) {
-            continue;
+            return;
         }
         if (coordSet < 0 || coordSet > 2) {
             coordSet = 1;
@@ -9740,7 +9762,7 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
         ornW = m11_dm1_scaled_dimension(slot->width, scale);
         ornH = m11_dm1_scaled_dimension(slot->height, scale);
         if (ornW <= 0 || ornH <= 0) {
-            continue;
+            return;
         }
         panelState = (cell->doorState >= 1 && cell->doorState <= 3) ? cell->doorState : 0;
         panel = kDoorPanels[depth][panelState];
@@ -9760,7 +9782,6 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
                                    M11_VIEWPORT_Y + panel.dstY + relY,
                                    ornW, ornH,
                                    9);
-        break;
     }
 }
 
@@ -9775,19 +9796,20 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
         {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38}
     };
     int depth;
+    const M11_ViewportCell* cell;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (depth = 0; depth < 3; ++depth) {
-        const M11_ViewportCell* cell = &cells[depth][1];
-        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
-            cell->doorState != 5) {
-            continue;
-        }
-        m11_draw_dm1_destroyed_door_mask_on_panel(state, framebuffer, fbW, fbH,
-                                                  &kDoorPanels[depth]);
-        break;
+    depth = m11_dm1_nearest_blocking_center_door_depth(cells);
+    if (depth < 0) {
+        return;
     }
+    cell = &cells[depth][1];
+    if (cell->doorState != 5) {
+        return;
+    }
+    m11_draw_dm1_destroyed_door_mask_on_panel(state, framebuffer, fbW, fbH,
+                                              &kDoorPanels[depth]);
 }
 
 static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
@@ -9810,54 +9832,61 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
         {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 137, 41, 4, 4}
     };
     int depth;
+    const M11_ViewportCell* cell;
+    const M11_AssetSlot* slot;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (depth = 0; depth < 3; ++depth) {
-        const M11_ViewportCell* cell = &cells[depth][1];
-        const M11_AssetSlot* slot;
-        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
-            m11_viewport_cell_is_open(cell) || !cell->hasDoorThing) {
-            continue;
-        }
-        if (!state->world.things || !state->world.things->doors) {
-            continue;
-        }
-        {
-            int doorIdx = THING_GET_INDEX(cell->firstThing);
-            if (doorIdx < 0 || doorIdx >= state->world.things->doorCount ||
-                !state->world.things->doors[doorIdx].button) {
-                continue;
-            }
-        }
-        slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    M11_GFX_DOOR_BUTTON_BASE);
-        if (!slot || slot->width <= 0 || slot->height <= 0) {
-            continue;
-        }
-        m11_blit_scaled_palette_map(slot,
-                                    framebuffer, fbW, fbH,
-                                    M11_VIEWPORT_X + kButtons[depth].dstX,
-                                    M11_VIEWPORT_Y + kButtons[depth].dstY,
-                                    kButtons[depth].width,
-                                    kButtons[depth].height,
-                                    10,
-                                    depth == 2 ? kButtonD3Palette :
-                                        (depth == 1 ? kButtonD2Palette : NULL));
-        break;
+    depth = m11_dm1_nearest_blocking_center_door_depth(cells);
+    if (depth < 0) {
+        return;
     }
+    cell = &cells[depth][1];
+    if (!cell->hasDoorThing) {
+        return;
+    }
+    if (!state->world.things || !state->world.things->doors) {
+        return;
+    }
+    {
+        int doorIdx = THING_GET_INDEX(cell->firstThing);
+        if (doorIdx < 0 || doorIdx >= state->world.things->doorCount ||
+            !state->world.things->doors[doorIdx].button) {
+            return;
+        }
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                M11_GFX_DOOR_BUTTON_BASE);
+    if (!slot || slot->width <= 0 || slot->height <= 0) {
+        return;
+    }
+    m11_blit_scaled_palette_map(slot,
+                                framebuffer, fbW, fbH,
+                                M11_VIEWPORT_X + kButtons[depth].dstX,
+                                M11_VIEWPORT_Y + kButtons[depth].dstY,
+                                kButtons[depth].width,
+                                kButtons[depth].height,
+                                10,
+                                depth == 2 ? kButtonD3Palette :
+                                    (depth == 1 ? kButtonD2Palette : NULL));
 }
 
 static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
-                                         int fbH) {
+                                         int fbH,
+                                         int maxVisibleForward,
+                                         const M11_ViewportCell cells[3][3]) {
     static const unsigned char kButtonD3Palette[16] = {
         0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
     };
     M11_ViewportCell cell;
     const M11_AssetSlot* slot;
     if (!state || !state->assetsAvailable) {
+        return;
+    }
+    if (3 > maxVisibleForward ||
+        !m11_dm1_side_lane_wall_clear_for_rel(cells, 3, 1)) {
         return;
     }
     if (!m11_sample_viewport_cell(state, 3, 1, &cell)) {
@@ -17604,7 +17633,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight,
+                                  maxVisibleForward, cells);
 
     /* ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near
      * (D3 side/center, then D2 side/center, then D1 side/center).
