@@ -85,6 +85,12 @@ def main() -> int:
 
     for needle, label, fname, text in [
         ('F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(G0308_i_PartyDirection', 'relative movement coordinate update', 'CLIKMENU.C', clik),
+        ('L1117_B_MovementBlocked = C1_TRUE;', 'wall blocks before move core', 'CLIKMENU.C', clik),
+        ('L1117_B_MovementBlocked = (L1117_B_MovementBlocked != C0_DOOR_STATE_OPEN) &&', 'closed door blocks before move core', 'CLIKMENU.C', clik),
+        ('L1117_B_MovementBlocked = (!M007_GET(AL1115_ui_Square, MASK0x0004_FAKEWALL_OPEN)', 'closed real fakewall blocks before move core', 'CLIKMENU.C', clik),
+        ('L1117_B_MovementBlocked = (F0175_GROUP_GetThing(L1121_i_MapX, L1122_i_MapY) != C0xFFFE_THING_ENDOFLIST)', 'group blocks before move core', 'CLIKMENU.C', clik),
+        ('F0357_COMMAND_DiscardAllInput();', 'blocked movement discards input', 'CLIKMENU.C', clik),
+        ('G0321_B_StopWaitingForPlayerInput = C0_FALSE;', 'blocked movement returns before move core', 'CLIKMENU.C', clik),
         ('F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY, G0306_i_PartyMapX, G0307_i_PartyMapY, L1121_i_MapX, L1122_i_MapY);', 'successful move enters move/sensor core', 'CLIKMENU.C', clik),
         ('G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;', 'movement disabled ticks set after successful step', 'CLIKMENU.C', clik),
         ('G0311_i_ProjectileDisabledMovementTicks = 0;', 'projectile movement gate cleared after successful step', 'CLIKMENU.C', clik),
@@ -115,10 +121,12 @@ def main() -> int:
         'AL1118_ui_MovementArrowIndex = P0735_ui_Command - C003_COMMAND_MOVE_FORWARD;',
         'F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(G0308_i_PartyDirection',
         'if (L1117_B_MovementBlocked)',
+        'F0357_COMMAND_DiscardAllInput();',
+        'G0321_B_StopWaitingForPlayerInput = C0_FALSE;\n                return;',
         'F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY, G0306_i_PartyMapX, G0307_i_PartyMapY, L1121_i_MapX, L1122_i_MapY);',
         'G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;',
         'G0311_i_ProjectileDisabledMovementTicks = 0;',
-    ], 'CLIKMENU command move pipeline order')
+    ], 'CLIKMENU blocked-before-successful move pipeline order')
     require_order(moves, [
         'G0397_i_MoveResultMapX = P0560_i_DestinationMapX;',
         'G0362_l_LastPartyMovementTime = G0313_ul_GameTime;',
@@ -130,6 +138,7 @@ def main() -> int:
         (find_function(fire_queue, 'DM1_V1_InputCommandQueue_EnqueueEventPc34Compat'), ['event.kind == DM1_V1_INPUT_KIND_MOUSE && queue->locked', 'pendingClickPresent', 'return 0;'], 'Firestaff pending click capture'),
         (find_function(fire_queue, 'DM1_V1_InputCommandQueue_ProcessOnePc34Compat'), ['queue->locked = 1;', 'is_move_command(result.command)', 'projectileDisabledMovementTicks', 'lastProjectileDisabledMovementDirection == normalize_dir', 'movementDisabledGate = 1', 'process_pending_click(queue)', 'result.dequeued = 1', 'result.dispatchedMove = 1'], 'Firestaff queue gate/replay/dispatch'),
         (find_function(fire_move, 'F0702_MOVEMENT_TryMove_Compat'), ['F0701_MOVEMENT_GetStepDelta_Compat', 'MOVE_BLOCKED_DOOR', 'MOVE_BLOCKED_WALL', 'outResult->newMapX = nx', 'outResult->resultCode = MOVE_OK'], 'Firestaff movement legality core'),
+        (find_function(fire_move, 'F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat'), ['party->championCount <= 0', 'F0702_MOVEMENT_TryMove_Compat', 'DUNGEON_SQUARE_MASK_THING_LIST', 'THING_GET_TYPE(thing) == THING_TYPE_GROUP'], 'Firestaff party/group collision gate'),
         (find_function(fire_sensor, 'F0718_SENSOR_ProcessPartyEnterLeave_Compat'), ['F0717_SENSOR_EnumerateOnSquare_Compat', 'F0710_SENSOR_Execute_Compat', 'outList->effects[outList->count++]'], 'Firestaff sensor enter/leave walker'),
         (find_function(fire_timing, 'DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat'), ['DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat', 'projectileDisabledMovementTicks = 0', 'scentRecorded = 1', 'lastPartyMovementTime = currentGameTick'], 'Firestaff successful-step timing'),
     ]:
@@ -143,6 +152,12 @@ def main() -> int:
         'mouse forward dispatched as move',
         'mouse movement destination sensors processed',
         'successful step cadence from slowest living champion',
+        'wall blocked-side-effects key queued',
+        'door blocked-side-effects key queued',
+        'fakewall blocked-side-effects key queued',
+        'group blocked-side-effects key queued',
+        'blocked movement skips enter/leave sensors',
+        'blocked movement skips timing update',
         'disabled movement leaves command queued',
         'projectile same-direction movement leaves command queued',
         'projectile different-direction movement dispatched',

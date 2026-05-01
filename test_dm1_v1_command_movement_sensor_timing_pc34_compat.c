@@ -15,7 +15,8 @@
  *   to F0365 and moves to F0366.
  * - CLIKMENU.C:142-174 F0365 turns the party and runs leave/enter sensor
  *   processing on the current square; CLIKMENU.C:256-347 F0366 maps command
- *   arrows to relative steps, blocks walls/closed doors/fake-walls, calls
+ *   arrows to relative steps, blocks walls/closed doors/fake-walls/groups at
+ *   CLIKMENU.C:278-323 before any F0267 movement/sensor core call, calls
  *   F0267_MOVE_GetMoveResult_CPSCE for successful steps, then writes
  *   G0310_i_DisabledMovementTicks and clears G0311_i_ProjectileDisabledMovementTicks.
  * - MOVESENS.C:760-783 updates party scent and G0362_l_LastPartyMovementTime
@@ -119,6 +120,75 @@ static int command_to_move_action(int command)
     return command - DM1_V1_COMMAND_MOVE_FORWARD;
 }
 
+static int expect_blocked_step_without_side_effects(
+    const char* label,
+    struct DungeonDatState_Compat* dungeon,
+    struct DungeonThings_Compat* things,
+    struct PartyState_Compat* party,
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    int expectedBlockCode,
+    int expectGroupBlock)
+{
+    struct Dm1V1InputQueueProcessResultPc34Compat queueResult;
+    struct MovementResult_Compat moveResult;
+    struct Dm1V1MovementTimingResultPc34Compat timing;
+    int ok = 1;
+    int sensorSideEffectCalls = 0;
+    int timingSideEffectCalls = 0;
+    int sourceX = party->mapX;
+    int sourceY = party->mapY;
+    unsigned long previousLastMovementTime = 990ul;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(queue);
+    ok &= expect_int(label, DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(queue, party->direction, 0, 0, 0);
+    ok &= expect_int("blocked-side-effects command dequeued before legality", queueResult.dequeued, 1);
+    ok &= expect_int("blocked-side-effects command dispatched as move", queueResult.dispatchedMove, 1);
+
+    if (expectGroupBlock) {
+        ok &= expect_int("group target is tile-passable", F0702_MOVEMENT_TryMove_Compat(dungeon, party,
+            command_to_move_action(queueResult.command), &moveResult), 1);
+        ok &= expect_int("group target base movement ok", moveResult.resultCode, MOVE_OK);
+        ok &= expect_int("group blocks before move core", F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
+            dungeon, things, party, command_to_move_action(queueResult.command)), 1);
+    } else {
+        ok &= expect_int("wall/door/fakewall blocks before move core", F0702_MOVEMENT_TryMove_Compat(dungeon, party,
+            command_to_move_action(queueResult.command), &moveResult), 0);
+        ok &= expect_int("blocked result code", moveResult.resultCode, expectedBlockCode);
+    }
+
+    /* Source lock: CLIKMENU.C:317-323 returns on blocked movement before
+     * MOVESENS.C:F0267 can run leave/enter sensors (MOVESENS.C:799-818) or
+     * successful-step scent/timing (MOVESENS.C:764-783).  The probe models
+     * that orchestration gate explicitly: the success-only side-effect calls
+     * below must remain skipped for all blocked reasons. */
+    if ((!expectGroupBlock && moveResult.resultCode == MOVE_OK) ||
+        (expectGroupBlock && !F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
+            dungeon, things, party, command_to_move_action(queueResult.command)))) {
+        struct SensorEffectList_Compat effects;
+        ++sensorSideEffectCalls;
+        (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+            dungeon, things, party->mapIndex, party->mapX, party->mapY, SENSOR_EVENT_WALK_OFF, &effects);
+        party->mapX = moveResult.newMapX;
+        party->mapY = moveResult.newMapY;
+        ++timingSideEffectCalls;
+        timing = DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat(
+            party, 0, sourceX, sourceY, 1000ul, previousLastMovementTime, NULL);
+    } else {
+        memset(&timing, 0, sizeof(timing));
+        timing.lastPartyMovementTime = previousLastMovementTime;
+    }
+
+    ok &= expect_int("blocked side effects leave party x", party->mapX, sourceX);
+    ok &= expect_int("blocked side effects leave party y", party->mapY, sourceY);
+    ok &= expect_int("blocked movement skips enter/leave sensors", sensorSideEffectCalls, 0);
+    ok &= expect_int("blocked movement skips timing update", timingSideEffectCalls, 0);
+    ok &= expect_int("blocked movement preserves last movement time", (int)timing.lastPartyMovementTime, (int)previousLastMovementTime);
+    ok &= expect_int("blocked movement records no scent", timing.scentRecorded, 0);
+    return ok;
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -192,6 +262,27 @@ int main(void)
     ok &= expect_int("closed door block code", moveResult.resultCode, MOVE_BLOCKED_DOOR);
     ok &= expect_int("blocked movement leaves party x", party.mapX, 1);
     ok &= expect_int("blocked movement leaves party y", party.mapY, 1);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squares[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_WALL, 0);
+    ok &= expect_blocked_step_without_side_effects(
+        "wall blocked-side-effects key queued", &dungeon, &things, &party, &queue, MOVE_BLOCKED_WALL, 0);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squares[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_DOOR, 2);
+    ok &= expect_blocked_step_without_side_effects(
+        "door blocked-side-effects key queued", &dungeon, &things, &party, &queue, MOVE_BLOCKED_DOOR, 0);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squares[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_FAKEWALL, 0);
+    ok &= expect_blocked_step_without_side_effects(
+        "fakewall blocked-side-effects key queued", &dungeon, &things, &party, &queue, MOVE_BLOCKED_WALL, 0);
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
+    things.groupCount = 1;
+    ok &= expect_blocked_step_without_side_effects(
+        "group blocked-side-effects key queued", &dungeon, &things, &party, &queue, MOVE_OK, 1);
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
