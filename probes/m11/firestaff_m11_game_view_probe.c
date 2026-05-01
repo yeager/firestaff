@@ -2705,6 +2705,9 @@ int main(int argc, char** argv) {
         unsigned char creatureFb[320 * 200];
         unsigned char sideCreatureFb[320 * 200];
         unsigned char sideExplosionFb[320 * 200];
+        unsigned char d2lContentFb[320 * 200];
+        unsigned char d1lWallFb[320 * 200];
+        unsigned char d1lWallOccludedFb[320 * 200];
         unsigned char projectileFb[320 * 200];
         unsigned char lightningFb[320 * 200];
         unsigned char objectFb[320 * 200];
@@ -3293,6 +3296,44 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_38K",
                          changedWallOrnament == (int)(sizeof(kWallOrnamentPositions) / sizeof(kWallOrnamentPositions[0])),
                          "focused viewport: all source-bound wall ornament specs change their wall frames");
+
+
+            /* INV_GV_38AK: ReDMCSB DUNVIEW.C F0128 draws full view
+             * squares far-to-near (D3, then D2, then D1), while F0115
+             * places objects/creatures/projectiles from that square via
+             * the C2500/C2900/C3200 source-zone families.  A near D1 side
+             * wall must therefore occlude farther D2L lane contents. */
+            probe_reset_synthetic_view_to_corridor(&focusView);
+            memset(baseFb, 0, sizeof(baseFb));
+            M11_GameView_Draw(&focusView, baseFb, 320, 200);
+            focusView.world.things->groups[0].creatureType = 14; /* Trolin */
+            focusView.world.things->groups[0].count = 0;
+            focusView.world.things->groups[0].health[0] = 50;
+            focusView.world.things->groups[0].direction = DIR_SOUTH;
+            focusView.world.things->squareFirstThings[1 * (int)focusView.world.dungeon->maps[0].height + 1] =
+                (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+            memset(d2lContentFb, 0, sizeof(d2lContentFb));
+            M11_GameView_Draw(&focusView, d2lContentFb, 320, 200);
+
+            probe_reset_synthetic_view_to_corridor(&focusView);
+            probe_set_square(focusView.world.dungeon, 1, 2,
+                             (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+            memset(d1lWallFb, 0, sizeof(d1lWallFb));
+            M11_GameView_Draw(&focusView, d1lWallFb, 320, 200);
+
+            focusView.world.things->groups[0].creatureType = 14;
+            focusView.world.things->groups[0].count = 0;
+            focusView.world.things->groups[0].health[0] = 50;
+            focusView.world.things->groups[0].direction = DIR_SOUTH;
+            focusView.world.things->squareFirstThings[1 * (int)focusView.world.dungeon->maps[0].height + 1] =
+                (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+            memset(d1lWallOccludedFb, 0, sizeof(d1lWallOccludedFb));
+            M11_GameView_Draw(&focusView, d1lWallOccludedFb, 320, 200);
+            probe_record(&tally, "INV_GV_38AK",
+                         memcmp(baseFb, d2lContentFb, sizeof(baseFb)) != 0 &&
+                         memcmp(baseFb, d1lWallFb, sizeof(baseFb)) != 0 &&
+                         memcmp(d1lWallFb, d1lWallOccludedFb, sizeof(d1lWallFb)) == 0,
+                         "focused viewport: near D1L wall occludes farther D2L side creature contents");
         } else {
             probe_record(&tally, "INV_GV_38E", 0,
                          "focused viewport: normal pit zone matrix requires GRAPHICS.DAT assets");
@@ -3308,6 +3349,8 @@ int main(int argc, char** argv) {
                          "focused viewport: footprints floor ornament requires GRAPHICS.DAT assets");
             probe_record(&tally, "INV_GV_38K", 0,
                          "focused viewport: wall ornament matrix requires GRAPHICS.DAT assets");
+            probe_record(&tally, "INV_GV_38AK", 0,
+                         "focused viewport: D1L side occlusion requires GRAPHICS.DAT assets");
         }
 
         if (haveAssets) {
