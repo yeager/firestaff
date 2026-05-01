@@ -9047,6 +9047,19 @@ static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[
     return 3;
 }
 
+static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell cells[3][3]) {
+    int depth;
+    if (!cells) {
+        return -1;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        if (cells[depth][1].valid && !m11_viewport_cell_is_open(&cells[depth][1])) {
+            return depth;
+        }
+    }
+    return -1;
+}
+
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int fbW,
@@ -9237,10 +9250,40 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
     }
 }
 
+static int m11_dm1_side_lane_wall_clear_before_depth(const M11_ViewportCell cells[3][3],
+                                                     int depthIndex,
+                                                     int sideIndex) {
+    int d;
+    if (!cells || depthIndex <= 0) {
+        return 1;
+    }
+    if (sideIndex != 0 && sideIndex != 2) {
+        return 1;
+    }
+    for (d = 0; d < depthIndex && d < 3; ++d) {
+        if (m11_viewport_cell_is_wall_like(&cells[d][sideIndex])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int m11_dm1_side_lane_wall_clear_for_rel(const M11_ViewportCell cells[3][3],
+                                                int relForward,
+                                                int relSide) {
+    if (relSide == 0 || relForward <= 0) {
+        return 1;
+    }
+    return m11_dm1_side_lane_wall_clear_before_depth(cells,
+                                                     relForward - 1,
+                                                     relSide < 0 ? 0 : 2);
+}
+
 static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
                                         int fbH,
+                                        int maxVisibleForwardLimit,
                                         const M11_ViewportCell cells[3][3]) {
     typedef struct M11_DM1WallOrnSpec {
         int relForward;
@@ -9291,6 +9334,9 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             }
         }
     }
+    if (maxVisibleForwardLimit > 0 && maxVisibleForwardLimit < maxVisibleForward) {
+        maxVisibleForward = maxVisibleForwardLimit;
+    }
     for (i = 0; i < sizeof(kWallOrnaments) / sizeof(kWallOrnaments[0]); ++i) {
         M11_ViewportCell cell;
         M11_DM1ZoneBlit blit;
@@ -9298,6 +9344,11 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         int mapIdx;
         int ornGlobalIdx = -1;
         if (kWallOrnaments[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_wall_clear_for_rel(cells,
+                                                  kWallOrnaments[i].relForward,
+                                                  kWallOrnaments[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state, kWallOrnaments[i].relForward, kWallOrnaments[i].relSide, &cell)) {
@@ -9492,7 +9543,8 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
-                                    int maxVisibleForward) {
+                                    int maxVisibleForward,
+                                    const M11_ViewportCell cells[3][3]) {
     static const M11_DM1WallFrontBlit kSideBlits[] = {
         /* Far to near, matching the first source-bound subset of
          * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
@@ -9518,6 +9570,11 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
         M11_ViewportCell cell;
         if (kSideBlits[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_wall_clear_for_rel(cells,
+                                                  kSideBlits[i].relForward,
+                                                  kSideBlits[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state,
@@ -9847,7 +9904,8 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
-                                    int maxVisibleForward) {
+                                    int maxVisibleForward,
+                                    const M11_ViewportCell cells[3][3]) {
     static const M11_DM1SideDoorSpec kSpecs[] = {
         /* D3L2/R2 doors have only the clipped door panel in DUNVIEW.C. */
         {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
@@ -9889,6 +9947,11 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         M11_DM1ZoneBlit panel;
         int panelGraphic;
         if (kSpecs[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_wall_clear_for_rel(cells,
+                                                  kSpecs[i].relForward,
+                                                  kSpecs[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
@@ -9937,7 +10000,8 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
                                              int fbH,
-                                             int maxVisibleForward) {
+                                             int maxVisibleForward,
+                                             const M11_ViewportCell cells[3][3]) {
     static const M11_DM1SideDoorSpec kSpecs[] = {
         {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
         {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
@@ -9967,6 +10031,11 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
         M11_DM1ZoneBlit panel;
         int panelGraphic;
         if (kSpecs[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_wall_clear_for_rel(cells,
+                                                  kSpecs[i].relForward,
+                                                  kSpecs[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
@@ -10009,7 +10078,8 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
                                                    unsigned char* framebuffer,
                                                    int fbW,
                                                    int fbH,
-                                                   int maxVisibleForward) {
+                                                   int maxVisibleForward,
+                                                   const M11_ViewportCell cells[3][3]) {
     static const M11_DM1SideDoorSpec kSpecs[] = {
         {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
         {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
@@ -10029,6 +10099,11 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
         M11_DM1ZoneBlit panel;
         int panelGraphic;
         if (kSpecs[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_wall_clear_for_rel(cells,
+                                                  kSpecs[i].relForward,
+                                                  kSpecs[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
@@ -11601,24 +11676,6 @@ static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3
     }
     for (d = 0; d < depthIndex && d < 3; ++d) {
         if (!m11_viewport_cell_is_open(&cells[d][1])) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-static int m11_dm1_side_lane_wall_clear_before_depth(const M11_ViewportCell cells[3][3],
-                                                     int depthIndex,
-                                                     int sideIndex) {
-    int d;
-    if (!cells || depthIndex <= 0) {
-        return 1;
-    }
-    if (sideIndex != 0 && sideIndex != 2) {
-        return 1;
-    }
-    for (d = 0; d < depthIndex && d < 3; ++d) {
-        if (m11_viewport_cell_is_wall_like(&cells[d][sideIndex])) {
             return 0;
         }
     }
@@ -17529,24 +17586,49 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                            maxVisibleForward);
+                            maxVisibleForward, cells);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
+                                  maxVisibleForward, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
                         maxVisibleForward);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                             maxVisibleForward);
+                             maxVisibleForward, cells);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                       maxVisibleForward);
+                                       maxVisibleForward, cells);
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                          maxVisibleForward);
+                                          maxVisibleForward, cells);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight);
+
+    /* ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near
+     * (D3 side/center, then D2 side/center, then D1 side/center).
+     * Firestaff current V1 renderer still batches by primitive class.
+     * After drawing a blocking center door/wall at D2C or D3C, replay only
+     * the nearer side layers so farther center doors/buttons/items cannot
+     * bleed through near side-wall/door occluders. */
+    {
+        int blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
+        if (blockingCenterDepth > 0) {
+            int nearMaxVisibleForward = blockingCenterDepth;
+            m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
+                                    nearMaxVisibleForward, cells);
+            m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
+                                        nearMaxVisibleForward, cells);
+            m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
+                                    nearMaxVisibleForward, cells);
+            m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
+                                             nearMaxVisibleForward, cells);
+            m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
+                                                   nearMaxVisibleForward, cells);
+        }
+    }
+
     m11_draw_dm1_side_contents(state, framebuffer, framebufferWidth, framebufferHeight,
                                frames, cells);
 

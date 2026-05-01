@@ -119,7 +119,15 @@ def main() -> int:
     ]:
         if token not in helper:
             raise AssertionError(f'Firestaff side-lane wall helper missing {token!r}')
-    ok.append(f'Firestaff side-lane wall occlusion helper: m11_game_view.c:{line_no(text, helper_start)}')
+    rel_helper_start, _rel_helper_end, rel_helper = find_function(text, 'm11_dm1_side_lane_wall_clear_for_rel')
+    for token in [
+        'relSide == 0 || relForward <= 0',
+        'relForward - 1',
+        'relSide < 0 ? 0 : 2',
+    ]:
+        if token not in rel_helper:
+            raise AssertionError(f'Firestaff side-lane relative helper missing {token!r}')
+    ok.append(f'Firestaff side-lane wall occlusion helpers: m11_game_view.c:{line_no(text, helper_start)}, {line_no(text, rel_helper_start)}')
 
     contents_start, _contents_end, contents = find_function(text, 'm11_draw_dm1_side_contents')
     require_in_order(
@@ -150,7 +158,58 @@ def main() -> int:
     )
     if '-1);' not in side_walls:
         raise AssertionError('Firestaff side wall blit does not pass -1 no-transparency key')
-    ok.append(f'Firestaff side-wall opaque far-to-near blits: m11_game_view.c:{line_no(text, side_walls_start)}')
+    if 'm11_dm1_side_lane_wall_clear_for_rel(cells,' not in side_walls:
+        raise AssertionError('Firestaff side-wall panels are not guarded by same-lane near-wall occlusion')
+    ok.append(f'Firestaff side-wall opaque far-to-near blits guarded by same-lane occlusion: m11_game_view.c:{line_no(text, side_walls_start)}')
+
+    ornaments_start, _ornaments_end, ornaments = find_function(text, 'm11_draw_dm1_wall_ornaments')
+    require_in_order(
+        ornaments,
+        [
+            ('bounded replay limit', 'maxVisibleForwardLimit'),
+            ('same-lane guard', 'm11_dm1_side_lane_wall_clear_for_rel(cells,'),
+            ('sample side/front wall cell', 'm11_sample_viewport_cell(state, kWallOrnaments[i].relForward'),
+            ('ornament asset blit', 'm11_blit_scaled_palette_map_maybe_flip'),
+            ('alcove item draw', 'm11_draw_dm1_alcove_wall_items'),
+        ],
+        'Firestaff wall ornaments/alcove items same-lane near-wall guard',
+    )
+    ok.append(f'Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:{line_no(text, ornaments_start)}')
+
+    for fn in ['m11_draw_dm1_side_doors', 'm11_draw_dm1_side_door_ornaments', 'm11_draw_dm1_side_destroyed_door_masks']:
+        fn_start, _fn_end, body = find_function(text, fn)
+        require_in_order(
+            body,
+            [
+                ('same-lane guard', 'm11_dm1_side_lane_wall_clear_for_rel(cells,'),
+                ('sample side door cell', 'm11_sample_viewport_cell(state, kSpecs[i].relForward'),
+            ],
+            f'Firestaff {fn} same-lane near-wall guard',
+        )
+        ok.append(f'Firestaff side door/ornament/mask guard in {fn}: m11_game_view.c:{line_no(text, fn_start)}')
+
+    draw_start, _draw_end, draw = find_function(text, 'm11_draw_viewport')
+    for call, arg in [
+        ('m11_draw_dm1_side_walls', 'maxVisibleForward, cells'),
+        ('m11_draw_dm1_side_doors', 'maxVisibleForward, cells'),
+        ('m11_draw_dm1_side_door_ornaments', 'maxVisibleForward, cells'),
+        ('m11_draw_dm1_side_destroyed_door_masks', 'maxVisibleForward, cells'),
+    ]:
+        pos = draw.find(call + '(state, framebuffer, framebufferWidth, framebufferHeight,')
+        if pos < 0:
+            raise AssertionError(f'Firestaff draw viewport missing side feature call {call}')
+        snippet = draw[pos:pos + 220]
+        if arg not in snippet:
+            raise AssertionError(f'Firestaff draw viewport missing side occlusion cells argument for {call}')
+    normal_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,')
+    if normal_orn < 0 or 'maxVisibleForward, cells' not in draw[normal_orn:normal_orn + 180]:
+        raise AssertionError('Firestaff draw viewport missing normal wall ornament maxVisibleForward/cells arguments')
+    replay_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,', normal_orn + 1)
+    if replay_orn < 0 or 'nearMaxVisibleForward, cells' not in draw[replay_orn:replay_orn + 180]:
+        raise AssertionError('Firestaff center-occluder replay does not bound wall ornaments to nearer side layers')
+    if 'm11_dm1_nearest_blocking_center_depth_index(cells)' not in draw:
+        raise AssertionError('Firestaff draw viewport missing nearest blocking center replay trigger')
+    ok.append(f'Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:{line_no(text, draw_start)}')
 
     print('V1 viewport side-wall occlusion source-shape verification passed')
     for line in ok:
