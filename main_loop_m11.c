@@ -13,6 +13,7 @@
 #include "menu_startup_render_modern_m12.h"
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
+#include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
 #include "title_frontend_v1.h"
 #include "asset_status_m12.h"
@@ -593,6 +594,8 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     char err[160];
     unsigned int step;
     V1_TitleFrontendSourceTiming timing;
+    M11_AudioState titleAudio;
+    int titleAudioInitialized = 0;
 
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
@@ -614,6 +617,12 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     packedScreen = packedStorage + 4U;
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
     (void)timing;
+
+    memset(&titleAudio, 0, sizeof(titleAudio));
+    if (M11_Audio_Init(&titleAudio)) {
+        titleAudioInitialized = 1;
+        (void)M11_Audio_PlayTitleMusic(&titleAudio);
+    }
 
     /* ReDMCSB TITLE.C source-lock:
      *   TITLE.C:430 draws PRESENTS.
@@ -660,6 +669,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         }
     }
     SDL_Delay(500);
+    if (titleAudioInitialized) {
+        M11_Audio_Shutdown(&titleAudio);
+    }
     free(packedStorage);
     free(indexedScreen);
 }
@@ -669,6 +681,16 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      uint32_t* idleAccumulatorMs) {
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
+    }
+    if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
+        int titleIntroPlayed = 0;
+        /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle()
+         * before F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher
+         * front door, so the original TITLE animation and title-song/swoosh cue must
+         * run at the launcher->DM1 handoff, before the game view opens and before the
+         * entrance transition. */
+        m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
+        (void)titleIntroPlayed;
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
         menuState->launchRequested = 0;
@@ -1389,13 +1411,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     M11_GameView_Init(&gameView);
     M11_ApplyStartupMenuRuntime(&menuState);
-    {
-        int titleIntroPlayed = 0;
-        if (M12_StartupMenu_GetPresentationMode(&menuState) == M12_PRESENTATION_V1_ORIGINAL) {
-            m11_play_redmcsb_title_intro_if_available(&menuState, &titleIntroPlayed);
-        }
-        (void)titleIntroPlayed;
-    }
     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
 
     /* Compute deadlines using millisecond ticks. SDL_GetTicks returns
