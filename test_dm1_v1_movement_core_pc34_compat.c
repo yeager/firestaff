@@ -127,7 +127,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_movement_core_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318; DUNGEON.C:1371-1391\n");
+    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318; DUNGEON.C:1371-1391; MOVESENS.C:272-310; PROJEXPL.C:459\n");
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
@@ -245,6 +245,38 @@ int main(void)
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, DUNGEON_SQUARE_MASK_THING_LIST));
     ok &= expect_int("impassable target skips group collision gate",
         F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(&dungeon, &things, &party, MOVE_FORWARD), 0);
+
+    /* MOVESENS.C:272-310 / F0266 intermediary projectile-impact cell maps.
+     * Exact source comment case: adjacent east move with a champion in cell 2
+     * must populate intermediary cell 3 so a destination-square projectile in
+     * cell 3 can hit instead of being passed through. */
+    {
+        unsigned char sourceCells[4] = { 0, 0, 3, 0 };
+        unsigned char destinationCells[4] = { 0, 0, 0, 0 };
+        unsigned char intermediaryCells[4] = { 9, 9, 9, 9 };
+        unsigned char northSourceCells[4] = { 1, 2, 0, 0 };
+        int checkDestination;
+
+        checkDestination = F0709_MOVEMENT_BuildIntermediaryProjectileImpactCells_Compat(
+            5, 5, 6, 5, sourceCells, destinationCells, intermediaryCells);
+        ok &= expect_int("intermediary east move requests destination projectile impact check", checkDestination, 1);
+        ok &= expect_int("MOVESENS documented cell2 crosses through intermediary cell3", intermediaryCells[3], 3);
+        ok &= expect_int("other intermediary cells stay empty", intermediaryCells[0] + intermediaryCells[1] + intermediaryCells[2], 0);
+        ok &= expect_int("destination primary east cell remains empty", destinationCells[1], 0);
+        ok &= expect_int("destination secondary south cell keeps source occupant", destinationCells[2], 3);
+
+        checkDestination = F0709_MOVEMENT_BuildIntermediaryProjectileImpactCells_Compat(
+            5, 5, 5, 4, northSourceCells, destinationCells, intermediaryCells);
+        ok &= expect_int("intermediary north move requests destination projectile impact check", checkDestination, 1);
+        ok &= expect_int("north primary source cell0 maps to intermediary cell3", intermediaryCells[3], 1);
+        ok &= expect_int("north secondary source cell1 maps to intermediary cell2", intermediaryCells[2], 2);
+        ok &= expect_int("north destination front cells retain occupied source cells", destinationCells[0] + destinationCells[1], 3);
+
+        checkDestination = F0709_MOVEMENT_BuildIntermediaryProjectileImpactCells_Compat(
+            5, 5, 7, 5, sourceCells, destinationCells, intermediaryCells);
+        ok &= expect_int("non-adjacent movement skips intermediary projectile check", checkDestination, 0);
+        ok &= expect_int("non-adjacent intermediary cells clear", intermediaryCells[0] + intermediaryCells[1] + intermediaryCells[2] + intermediaryCells[3], 0);
+    }
 
     printf("dm1V1MovementCoreInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;

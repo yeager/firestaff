@@ -255,4 +255,32 @@ int F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
     const struct PartyState_Compat* party,
     int moveAction);
 
+/*
+ * Source-locked movement/projectile interlock cell resolver.
+ *
+ * ReDMCSB MOVESENS.C:F0266 builds two four-cell occupancy maps while
+ * a party or creature group moves one square: one for impacts on the
+ * source square and, only for adjacent moves where an edge occupant crosses
+ * between cells, an intermediary map used to test projectiles already on
+ * the destination square before the final move is linked.  This helper
+ * implements only that pure cell-map transformation; projectile deletion,
+ * damage, and event mutation remain outside the movement core.
+ *
+ * sourceOrdinalInCell values are ReDMCSB ordinals (0 empty, 1..4 occupied).
+ * Returns 1 when destination-square projectile impacts must be checked, 0
+ * otherwise.  Non-adjacent moves leave both output maps as the source map
+ * and return 0.
+ *
+ * Source: MOVESENS.C:272-310, including the documented cell-2 -> cell-3
+ * intermediary case; impact predicate downstream is PROJEXPL.C:F0217.
+ */
+int F0709_MOVEMENT_BuildIntermediaryProjectileImpactCells_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    const unsigned char sourceOrdinalInCell[4],
+    unsigned char destinationOrdinalInCell[4],
+    unsigned char intermediaryOrdinalInCell[4]);
+
 #endif

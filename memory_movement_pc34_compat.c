@@ -330,6 +330,78 @@ int F0707_MOVEMENT_IsSquarePassableForContext_Compat(
     }
 }
 
+
+int F0709_MOVEMENT_BuildIntermediaryProjectileImpactCells_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    const unsigned char sourceOrdinalInCell[4],
+    unsigned char destinationOrdinalInCell[4],
+    unsigned char intermediaryOrdinalInCell[4])
+{
+    int dx;
+    int dy;
+    int distance;
+    int primaryDirection;
+    int secondaryDirection;
+    int i;
+
+    if (!sourceOrdinalInCell || !destinationOrdinalInCell || !intermediaryOrdinalInCell) {
+        return 0;
+    }
+
+    for (i = 0; i < 4; ++i) {
+        destinationOrdinalInCell[i] = sourceOrdinalInCell[i];
+        intermediaryOrdinalInCell[i] = 0;
+    }
+
+    if (destinationMapX < 0) {
+        return 0;
+    }
+
+    dx = sourceMapX - destinationMapX;
+    dy = sourceMapY - destinationMapY;
+    distance = (dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy);
+    if (distance != 1) {
+        return 0;
+    }
+
+    if (destinationMapY < sourceMapY) {
+        primaryDirection = DIR_NORTH;
+    } else if (destinationMapX > sourceMapX) {
+        primaryDirection = DIR_EAST;
+    } else if (destinationMapY > sourceMapY) {
+        primaryDirection = DIR_SOUTH;
+    } else {
+        primaryDirection = DIR_WEST;
+    }
+
+    secondaryDirection = (primaryDirection + 1) & 3;
+
+    /* MOVESENS.C:276-280: edge occupants cross through the opposite
+     * intermediary cells, enabling destination-square projectile impacts
+     * that would otherwise be missed while moving between adjacent squares. */
+    intermediaryOrdinalInCell[(primaryDirection + 3) & 3] =
+        sourceOrdinalInCell[primaryDirection];
+    intermediaryOrdinalInCell[(secondaryDirection + 1) & 3] =
+        sourceOrdinalInCell[secondaryDirection];
+
+    /* MOVESENS.C:282-287: carry rear-edge occupants into the front-edge
+     * destination cells when those destination-edge cells are empty. */
+    if (!destinationOrdinalInCell[primaryDirection]) {
+        destinationOrdinalInCell[primaryDirection] =
+            destinationOrdinalInCell[(primaryDirection + 3) & 3];
+    }
+    if (!destinationOrdinalInCell[secondaryDirection]) {
+        destinationOrdinalInCell[secondaryDirection] =
+            destinationOrdinalInCell[(secondaryDirection + 1) & 3];
+    }
+
+    return (intermediaryOrdinalInCell[(primaryDirection + 3) & 3] ||
+            intermediaryOrdinalInCell[(secondaryDirection + 1) & 3]) ? 1 : 0;
+}
+
 int F0702_MOVEMENT_TryMove_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct PartyState_Compat* party,
