@@ -25,15 +25,15 @@
     },
     {
       "file": "m11_game_view.c",
-      "start": 18458,
-      "end": 18469,
+      "start": 18881,
+      "end": 18891,
       "function": "m11_draw_inv_slot",
       "assertion": "Firestaff's current occupied inventory slot helper resolves a DM object icon index before drawing; this gate does not claim open-chest state mutation is implemented."
     },
     {
       "file": "m11_game_view.c",
-      "start": 18627,
-      "end": 18645,
+      "start": 19050,
+      "end": 19068,
       "function": "m11_draw_inventory_panel",
       "assertion": "Firestaff's normal V1 inventory overlay draws source-slot object icons, providing the narrow implementation seam for the ReDMCSB action-hand open-chest refresh rule."
     }
