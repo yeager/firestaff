@@ -26,23 +26,23 @@ def line_no(text: str, offset: int) -> int:
 
 
 def find_function(text: str, name: str) -> tuple[int, str]:
-    m = re.search(r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(", text)
-    if not m:
-        raise AssertionError(f"missing function {name}")
-    brace = text.find("{", m.end())
-    if brace < 0:
-        raise AssertionError(f"missing body for {name}")
-    depth = 0
-    for pos in range(brace, len(text)):
-        ch = text[pos]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                return m.start(), text[m.start():pos + 1]
-    raise AssertionError(f"unterminated {name}")
-
+    pattern = re.compile(r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(")
+    for m in pattern.finditer(text):
+        brace = text.find("{", m.end())
+        semi = text.find(";", m.end(), brace if brace >= 0 else len(text))
+        if brace < 0 or semi >= 0:
+            continue
+        depth = 0
+        for pos in range(brace, len(text)):
+            ch = text[pos]
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return m.start(), text[m.start():pos + 1]
+        raise AssertionError(f"unterminated {name}")
+    raise AssertionError(f"missing function body {name}")
 
 def require(text: str, needle: str, label: str) -> int:
     pos = text.find(needle)
