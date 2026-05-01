@@ -18,6 +18,7 @@
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,12 +67,12 @@ static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState)
     if (m11_legacy_menu_requested()) {
         return 0;
     }
-    /* V1 original mode deliberately uses the sparse, palette-indexed
-     * ReDMCSB-style startup path. The high-resolution true-colour launcher
-     * belongs to the enhanced/modern presentation tracks, not the default
-     * original-faithful DM1 path. */
-    return menuState &&
-           M12_StartupMenu_GetPresentationMode(menuState) != M12_PRESENTATION_V1_ORIGINAL;
+    /* The startup menu is Firestaff's shared product front door for every
+     * presentation mode, including V1 original.  V1 parity begins after the
+     * user launches a game: TITLE/entrance/Hall-of-Champions sequencing must
+     * not force the launcher itself back to the old sparse indexed renderer.
+     * FIRESTAFF_LEGACY_MENU remains the explicit escape hatch. */
+    return menuState != NULL;
 }
 
 static void m11_draw_launcher_legacy(const M12_StartupMenuState* menuState,
@@ -120,15 +121,32 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
                                      M11_LAUNCHER_FB_HEIGHT);
 }
 
-void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState) {
+void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
+    int requestedWindowMode;
+    int actualWindowMode;
     if (!menuState) {
         return;
+    }
+    requestedWindowMode = menuState->settings.windowModeIndex;
+    actualWindowMode = M11_Render_SyncWindowModeFromWindow();
+    /* If the user maximized the OS window directly while the saved setting
+     * still says WINDOWED, do not shrink the window just because the launcher
+     * is switching between menu/game/settings surfaces. Keep the observed
+     * maximized/fullscreen mode as the runtime setting outside the settings
+     * editor; inside settings, an explicit WINDOWED selection must still be
+     * able to restore the window. */
+    if (menuState->view != M12_MENU_VIEW_SETTINGS &&
+        requestedWindowMode == M11_WINDOW_MODE_WINDOWED &&
+        (actualWindowMode == M11_WINDOW_MODE_MAXIMIZED ||
+         actualWindowMode == M11_WINDOW_MODE_FULLSCREEN)) {
+        requestedWindowMode = actualWindowMode;
+        menuState->settings.windowModeIndex = actualWindowMode;
     }
     if (M11_Render_GetPaletteLevel() != M12_StartupMenu_GetRenderPaletteLevel(menuState)) {
         M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
     }
-    if (M11_Render_GetWindowMode() != menuState->settings.windowModeIndex) {
-        M11_Render_SetWindowMode(menuState->settings.windowModeIndex);
+    if (M11_Render_GetWindowMode() != requestedWindowMode) {
+        M11_Render_SetWindowMode(requestedWindowMode);
     }
     if (M11_Render_GetScaleMode() != menuState->settings.scaleModeIndex) {
         M11_Render_SetScaleMode(menuState->settings.scaleModeIndex);
@@ -181,10 +199,15 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
     size_t i;
     static const char* suffixes[] = {
         "TITLE",
+        "TITLE.DAT",
         "DungeonMasterPC34/TITLE",
+        "DungeonMasterPC34/TITLE.DAT",
         "DungeonMasterPC34Multilingual/TITLE",
+        "DungeonMasterPC34Multilingual/TITLE.DAT",
         "dm-pc34/DungeonMasterPC34/TITLE",
-        "dm-pc34/DungeonMasterPC34Multilingual/TITLE"
+        "dm-pc34/DungeonMasterPC34/TITLE.DAT",
+        "dm-pc34/DungeonMasterPC34Multilingual/TITLE",
+        "dm-pc34/DungeonMasterPC34Multilingual/TITLE.DAT"
     };
 
     if (!outPath || outPathBytes == 0U) {
@@ -203,6 +226,11 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
             dm1v = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1", i);
             if (dm1v && dm1v->matched && FSP_ParentDir(parent, sizeof(parent), dm1v->matchedPath)) {
                 if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE") &&
+                    FSP_FileExists(candidate)) {
+                    snprintf(outPath, outPathBytes, "%s", candidate);
+                    return 1;
+                }
+                if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE.DAT") &&
                     FSP_FileExists(candidate)) {
                     snprintf(outPath, outPathBytes, "%s", candidate);
                     return 1;
@@ -360,15 +388,22 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
     m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x + w - 1, y, 1, h, 0);
 }
 
-static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
+typedef enum {
+    M11_ENTRANCE_COMMAND_QUIT = 0,
+    M11_ENTRANCE_COMMAND_ENTER = 1
+} M11_EntranceCommand;
+
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void);
+
+static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
-    if (!gameView || !gameView->active) return;
+    if (!gameView || !gameView->active) return 0;
     framebuffer = M11_Render_GetFramebuffer();
-    if (!framebuffer) return;
+    if (!framebuffer) return 0;
     dungeonFrame = (unsigned char*)malloc((size_t)M11_FB_BYTES);
-    if (!dungeonFrame) return;
+    if (!dungeonFrame) return 0;
 
     M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
@@ -426,7 +461,13 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
             memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
         }
 
-        M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        M11_Render_PresentIndexedWithSpecialPalette(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+        if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
+            if (m11_wait_for_redmcsb_entrance_command() == M11_ENTRANCE_COMMAND_QUIT) {
+                free(dungeonFrame);
+                return M11_ENTRANCE_COMMAND_QUIT;
+            }
+        }
         if (step.delayTicks >= 20U) {
             SDL_Delay(330);
         } else {
@@ -437,6 +478,89 @@ static void m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
     M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     free(dungeonFrame);
+    return 1;
+}
+
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void) {
+    /* ReDMCSB ENTRANCE.C:850-883 redraws the entrance, discards previous
+     * input, then waits in the entrance command loop until a fresh command
+     * changes G0298_B_NewGame away from C099_MODE_WAITING_ON_ENTRANCE.
+     * Do the same at the SDL boundary: drain the launch key/button that got
+     * us here, then require a new Enter/Space/click before the doors open. */
+    Uint64 started;
+    int allowHeadlessTimeout = 0;
+    int drained = 0;
+    SDL_Event ev;
+    const char* videoDriver = getenv("SDL_VIDEODRIVER");
+    if ((videoDriver && strcmp(videoDriver, "dummy") == 0) || getenv("FIRESTAFF_AUTOTEST")) {
+        allowHeadlessTimeout = 1;
+    }
+
+    while (SDL_PollEvent(&ev)) {
+        drained += 1;
+    }
+    (void)drained;
+    started = SDL_GetTicks();
+
+    for (;;) {
+        while (SDL_PollEvent(&ev)) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
+            if (ev.type == SDL_EVENT_KEY_DOWN) {
+                if (ev.key.key == SDLK_ESCAPE || ev.key.key == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
+                if (ev.key.key == SDLK_RETURN || ev.key.key == SDLK_KP_ENTER ||
+                    ev.key.key == SDLK_SPACE) return M11_ENTRANCE_COMMAND_ENTER;
+            }
+            if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                int fbX = 0;
+                int fbY = 0;
+                if (ev.button.button != SDL_BUTTON_LEFT) continue;
+                if (!M11_Render_MapWindowToFramebuffer((int)ev.button.x, (int)ev.button.y, &fbX, &fbY)) continue;
+                /* ReDMCSB COMMAND.C:63-70 PC entrance button boxes:
+                 * ENTER 244..298,45..58; RESUME 244..298,76..93;
+                 * CREDITS 248..293,187..199.  COMMAND.C:346-350 adds
+                 * C434 quit for later media as a separate zone, not ENTER. */
+                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
+                continue;
+            }
+            if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
+                ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
+#else
+            if (ev.type == SDL_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
+            if (ev.type == SDL_KEYDOWN) {
+                if (ev.key.keysym.sym == SDLK_ESCAPE || ev.key.keysym.sym == SDLK_Q) return M11_ENTRANCE_COMMAND_QUIT;
+                if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER ||
+                    ev.key.keysym.sym == SDLK_SPACE) return M11_ENTRANCE_COMMAND_ENTER;
+            }
+            if (ev.type == SDL_MOUSEBUTTONDOWN) {
+                int fbX = 0;
+                int fbY = 0;
+                if (ev.button.button != SDL_BUTTON_LEFT) continue;
+                if (!M11_Render_MapWindowToFramebuffer(ev.button.x, ev.button.y, &fbX, &fbY)) continue;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
+                continue;
+            }
+            if (ev.type == SDL_WINDOWEVENT &&
+                ev.window.event == SDL_WINDOWEVENT_RESIZED) {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
+#endif
+        }
+
+        /* Scripted/headless probes cannot send a second physical command.
+         * Keep the real app faithful by waiting indefinitely, but avoid
+         * deadlocks under the SDL dummy driver / explicit autotest mode. */
+        if (allowHeadlessTimeout && SDL_GetTicks() - started > 5000U) {
+            return M11_ENTRANCE_COMMAND_ENTER;
+        }
+        SDL_Delay(16);
+    }
 }
 
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
@@ -494,12 +618,18 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
             *outPlayedAnyFrame = 1;
         }
         M11_Render_PresentIndexed(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT);
-        SDL_Delay(33);
+        /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
+         * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
+         * smash straight into the entrance screen.  The decoded TITLE.DAT
+         * bank has more visible frames than the source zoom loop, so use a
+         * deliberate 50 ms presentation cadence here instead of racing the
+         * launcher at full frame speed. */
+        SDL_Delay(50);
         if (M11_Render_PumpEvents()) {
             break;
         }
     }
-    SDL_Delay(330);
+    SDL_Delay(500);
     free(packedStorage);
     free(indexedScreen);
 }
@@ -517,7 +647,18 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             *idleAccumulatorMs = 0;
         }
         if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
-            m11_play_redmcsb_entrance_transition(gameView);
+            if (!m11_play_redmcsb_entrance_transition(gameView)) {
+                M11_GameView_Shutdown(gameView);
+                M11_GameView_Init(gameView);
+                menuState->view = M12_MENU_VIEW_MAIN;
+                menuState->selectedIndex = 0;
+                menuState->activatedIndex = -1;
+                menuState->launchRequested = 0;
+                menuState->messageLine1 = "";
+                menuState->messageLine2 = "";
+                menuState->messageLine3 = "";
+                return 1;
+            }
         }
         M11_GameView_Draw(gameView,
                           M11_Render_GetFramebuffer(),

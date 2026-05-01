@@ -57,6 +57,6 @@ JSON output: `parity-evidence/verification/csb_sample_save_search_blocker.json`
 
 ## Non-claims / follow-up
 
-- No DANNESBURK, external capture, network reference, or non-N2 sample was used.
+- No deprecated remote source, external capture, network reference, or non-N2 sample was used.
 - No Firestaff runtime code was changed.
 - Runtime CSB save compatibility remains blocked until a curated extracted `CSBGAME*.DAT/BAK` sample is added under an approved N2-local reference path or an isolated generated-save harness produces one with recorded provenance.

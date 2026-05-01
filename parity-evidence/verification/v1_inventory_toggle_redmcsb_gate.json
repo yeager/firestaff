@@ -16,6 +16,6 @@
   "nonClaims": [
     "Does not validate V2 inventory art quality, HUD styling, or debug HUD behavior.",
     "Does not prove all runtime click delivery semantics; this is a source/evidence gate for the toggle route and side effects.",
-    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2 only."
+    "Does not use deprecated remote source; source paths are ReDMCSB and Firestaff N2 only."
   ]
 }

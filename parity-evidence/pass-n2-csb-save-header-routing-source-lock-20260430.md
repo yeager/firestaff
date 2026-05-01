@@ -39,4 +39,4 @@ JSON output: `parity-evidence/verification/csb_save_header_routing_source_lock.j
 - No Firestaff runtime code changed.
 - No local CSBGAME.DAT sample save was found or required for this source-lineage gate.
 - This is a source-lock gate only; runtime save compatibility remains a separate follow-up that needs curated CSB save samples or an isolated generated-save harness.
-- No DANNESBURK, external capture, or non-N2 reference was used.
+- No deprecated remote source, external capture, or non-N2 reference was used.

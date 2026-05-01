@@ -112,6 +112,10 @@ int  M11_Render_Present(void);
 int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);
+int  M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
+                                                 int logicalWidth,
+                                                 int logicalHeight,
+                                                 int specialPalette);
 
 /* Present a caller-owned 32-bit RGBA framebuffer directly, skipping the
  * VGA palette lookup. Used by the modern high-resolution true-color
@@ -142,6 +146,7 @@ int  M11_Render_MapWindowToFramebuffer(int windowX,
                                        int* outFbY);
 int  M11_Render_SetWindowMode(int windowModeIndex);
 int  M11_Render_GetWindowMode(void);
+int  M11_Render_SyncWindowModeFromWindow(void);
 int  M11_Render_SetIntegerScaling(int enabled);
 int  M11_Render_GetIntegerScaling(void);
 int  M11_Render_SetScaleFilter(int filterIndex);

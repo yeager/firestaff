@@ -37,7 +37,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
    zero on error. Safe to call multiple times (each call initialises +
    tears down the render module). */
 int  M11_PhaseA_Run(const M11_PhaseA_Options* opts);
-void M11_ApplyStartupMenuRuntime(const M12_StartupMenuState* menuState);
+void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState);
 
 #ifdef __cplusplus
 }
