@@ -64,6 +64,81 @@ static unsigned short movement_next_thing(
     return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
 }
 
+
+static int movement_get_location_after_level_change(
+    const struct DungeonDatState_Compat* dungeon,
+    int sourceMapIndex,
+    int levelDelta,
+    int* mapX,
+    int* mapY)
+{
+    const struct DungeonMapDesc_Compat* sourceMap;
+    int globalX;
+    int globalY;
+    int targetLevel;
+    int i;
+
+    if (!dungeon || !dungeon->maps || !mapX || !mapY ||
+        sourceMapIndex < 0 || sourceMapIndex >= (int)dungeon->header.mapCount) {
+        return -1;
+    }
+
+    sourceMap = &dungeon->maps[sourceMapIndex];
+    globalX = (int)sourceMap->offsetMapX + *mapX;
+    globalY = (int)sourceMap->offsetMapY + *mapY;
+    targetLevel = (int)sourceMap->level + levelDelta;
+
+    for (i = 0; i < (int)dungeon->header.mapCount; ++i) {
+        const struct DungeonMapDesc_Compat* targetMap = &dungeon->maps[i];
+        if ((int)targetMap->level == targetLevel &&
+            globalX >= (int)targetMap->offsetMapX &&
+            globalX < (int)targetMap->offsetMapX + (int)targetMap->width &&
+            globalY >= (int)targetMap->offsetMapY &&
+            globalY < (int)targetMap->offsetMapY + (int)targetMap->height) {
+            *mapX = globalX - (int)targetMap->offsetMapX;
+            *mapY = globalY - (int)targetMap->offsetMapY;
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int movement_get_stairs_exit_direction(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char squareByte;
+    int northSouth;
+    int checkX;
+    int checkY;
+    int blocked = 1;
+
+    if (!dungeon || !dungeon->maps || !dungeon->tiles || !dungeon->tilesLoaded ||
+        mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) {
+        return DIR_NORTH;
+    }
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width || mapY < 0 || mapY >= (int)map->height ||
+        !dungeon->tiles[mapIndex].squareData) {
+        return DIR_NORTH;
+    }
+
+    squareByte = dungeon->tiles[mapIndex].squareData[mapX * (int)map->height + mapY];
+    northSouth = (squareByte & 0x08) ? 0 : 1;
+    checkX = mapX + (northSouth ? 0 : 1);
+    checkY = mapY + (northSouth ? -1 : 0);
+    if (checkX >= 0 && checkX < (int)map->width && checkY >= 0 && checkY < (int)map->height) {
+        int checkType = (dungeon->tiles[mapIndex].squareData[checkX * (int)map->height + checkY] &
+                         DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        blocked = (checkType == DUNGEON_ELEMENT_WALL || checkType == DUNGEON_ELEMENT_STAIRS);
+    }
+    return (blocked << 1) + northSouth;
+}
+
 static int movement_find_teleporter_on_square(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -510,7 +585,6 @@ int F0705_MOVEMENT_ResolveStairsTransition_Compat(
     struct StairsTransitionResult_Compat* outResult)
 {
     const struct DungeonMapDesc_Compat* map;
-    const struct DungeonMapDesc_Compat* targetMap;
     unsigned char squareByte;
     int elementType;
     int targetLevel;
@@ -538,29 +612,22 @@ int F0705_MOVEMENT_ResolveStairsTransition_Compat(
     elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
     if (elementType != DUNGEON_ELEMENT_STAIRS) return 0;
 
-    /* Attribute bit 0 of the low nibble selects direction (Fontanel/ReDMCSB):
-     *   0 = stairs down (mapIndex + 1)
-     *   1 = stairs up   (mapIndex - 1)
+    /* MASK0x0004_STAIRS_UP selects the level delta used by
+     * F0364_COMMAND_TakeStairs: up => -1 level, otherwise +1 level.
+     * F0154_DUNGEON_GetLocationAfterLevelChange maps through global
+     * offsetMapX/offsetMapY coordinates, not raw map-index +/- 1.
      */
-    stairUp = (squareByte & 0x01);
-    targetLevel = stairUp ? party->mapIndex - 1 : party->mapIndex + 1;
+    stairUp = (squareByte & 0x04) ? 1 : 0;
+    targetLevel = movement_get_location_after_level_change(
+        dungeon, party->mapIndex, stairUp ? -1 : 1,
+        &outResult->newMapX, &outResult->newMapY);
     if (targetLevel < 0 || targetLevel >= (int)dungeon->header.mapCount) return 0;
 
-    targetMap = &dungeon->maps[targetLevel];
     outResult->transitioned = 1;
-    outResult->stairUp = stairUp ? 1 : 0;
+    outResult->stairUp = stairUp;
     outResult->toMapIndex = targetLevel;
-    outResult->newMapX = party->mapX;
-    outResult->newMapY = party->mapY;
-    outResult->newDirection = party->direction;
-    if (outResult->newMapX >= (int)targetMap->width) {
-        outResult->newMapX = (int)targetMap->width - 1;
-    }
-    if (outResult->newMapY >= (int)targetMap->height) {
-        outResult->newMapY = (int)targetMap->height - 1;
-    }
-    if (outResult->newMapX < 0) outResult->newMapX = 0;
-    if (outResult->newMapY < 0) outResult->newMapY = 0;
+    outResult->newDirection = movement_get_stairs_exit_direction(
+        dungeon, targetLevel, outResult->newMapX, outResult->newMapY);
     return 1;
 }
 
@@ -577,6 +644,7 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
     if (!dungeon || !party || !outResolution) {
         return 0;
     }
+    (void)gameTick;
 
     memset(outResolution, 0, sizeof(*outResolution));
     cursor = *party;
@@ -607,23 +675,20 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
         squareByte = dungeon->tiles[cursor.mapIndex].squareData[squareIndex];
         elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
 
-        if (elementType == DUNGEON_ELEMENT_PIT) {
-            int targetLevel = cursor.mapIndex + 1;
-            const struct DungeonMapDesc_Compat* targetMap;
+        if (elementType == DUNGEON_ELEMENT_PIT &&
+            (squareByte & 0x08) && !(squareByte & 0x01)) {
+            int targetLevel;
             int i;
 
+            targetLevel = movement_get_location_after_level_change(
+                dungeon, cursor.mapIndex, 1, &cursor.mapX, &cursor.mapY);
             if (targetLevel < 0 || targetLevel >= (int)dungeon->header.mapCount) {
                 break;
             }
-            targetMap = &dungeon->maps[targetLevel];
             cursor.mapIndex = targetLevel;
-            if (cursor.mapX >= targetMap->width) cursor.mapX = targetMap->width - 1;
-            if (cursor.mapY >= targetMap->height) cursor.mapY = targetMap->height - 1;
-            if (cursor.mapX < 0) cursor.mapX = 0;
-            if (cursor.mapY < 0) cursor.mapY = 0;
             for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
                 if (party->champions[i].present && party->champions[i].hp.current > 0) {
-                    outResolution->championFallDamage[i] += 5 + (int)(gameTick % 11u);
+                    outResolution->championFallDamage[i] += 20;
                 }
             }
             outResolution->transitioned = 1;

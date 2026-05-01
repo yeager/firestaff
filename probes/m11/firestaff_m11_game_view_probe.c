@@ -3278,12 +3278,14 @@ int main(int argc, char** argv) {
         /* Map 0: 3x3 */
         pDungeon->maps[0].width = 3;
         pDungeon->maps[0].height = 3;
+        pDungeon->maps[0].level = 0;
         pDungeon->tiles[0].squareCount = pSquareCount0;
         pDungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)pSquareCount0, 1);
 
         /* Map 1: 3x3 */
         pDungeon->maps[1].width = 3;
         pDungeon->maps[1].height = 3;
+        pDungeon->maps[1].level = 1;
         pDungeon->tiles[1].squareCount = pSquareCount1;
         pDungeon->tiles[1].squareData = (unsigned char*)calloc((size_t)pSquareCount1, 1);
 
@@ -3313,7 +3315,7 @@ int main(int argc, char** argv) {
         /* probe_set_square works for the first map: col*height+row */
         pDungeon->tiles[0].squareData[1 * 3 + 2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         pDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-        pDungeon->tiles[0].squareData[2 * 3 + 1] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
+        pDungeon->tiles[0].squareData[2 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08);
         pDungeon->tiles[0].squareData[1 * 3 + 0] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
 
         /* Map 1 layout: all corridor except border walls */
@@ -3765,11 +3767,13 @@ int main(int argc, char** argv) {
 
         sDungeon->maps[0].width = 3;
         sDungeon->maps[0].height = 3;
+        sDungeon->maps[0].level = 0;
         sDungeon->tiles[0].squareCount = sSquareCount0;
         sDungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)sSquareCount0, 1);
 
         sDungeon->maps[1].width = 3;
         sDungeon->maps[1].height = 3;
+        sDungeon->maps[1].level = 1;
         sDungeon->tiles[1].squareCount = sSquareCount1;
         sDungeon->tiles[1].squareData = (unsigned char*)calloc((size_t)sSquareCount1, 1);
 
@@ -3785,7 +3789,7 @@ int main(int argc, char** argv) {
          *   (0,0)=wall       (1,0)=corridor  (2,0)=wall
          *   (0,1)=wall       (1,1)=stairs-dn  (2,1)=wall
          *   (0,2)=wall       (1,2)=corridor  (2,2)=wall
-         * Stairs-down at (1,1): attribute bit 0 = 0 */
+         * Stairs-down at (1,1): MASK0x0004_STAIRS_UP clear */
         for (sI = 0; sI < sSquareCount0; ++sI) {
             sDungeon->tiles[0].squareData[sI] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
         }
@@ -3797,12 +3801,12 @@ int main(int argc, char** argv) {
          *   (0,0)=wall       (1,0)=corridor  (2,0)=wall
          *   (0,1)=wall       (1,1)=stairs-up  (2,1)=wall
          *   (0,2)=wall       (1,2)=corridor  (2,2)=wall
-         * Stairs-up at (1,1): attribute bit 0 = 1 */
+         * Stairs-up at (1,1): MASK0x0004_STAIRS_UP set */
         for (sI = 0; sI < sSquareCount1; ++sI) {
             sDungeon->tiles[1].squareData[sI] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
         }
         sDungeon->tiles[1].squareData[1 * 3 + 0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-        sDungeon->tiles[1].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x01); /* up */
+        sDungeon->tiles[1].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x04); /* up */
         sDungeon->tiles[1].squareData[1 * 3 + 2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
 
         stairView.world.dungeon = sDungeon;
@@ -3829,7 +3833,7 @@ int main(int argc, char** argv) {
                          "INV_GV_66",
                          r == M11_GAME_INPUT_REDRAW &&
                              stairView.world.party.mapIndex == 1,
-                         "stairs-down (bit 0 clear) descends from map 0 to map 1");
+                         "stairs-down (MASK0x0004_STAIRS_UP clear) descends from map 0 to map 1");
         }
 
         /* INV_GV_67: Stairs-up on map 1 moves party back to map 0 */
@@ -3842,7 +3846,7 @@ int main(int argc, char** argv) {
                          "INV_GV_67",
                          r == M11_GAME_INPUT_REDRAW &&
                              stairView.world.party.mapIndex == 0,
-                         "stairs-up (bit 0 set) ascends from map 1 back to map 0");
+                         "stairs-up (MASK0x0004_STAIRS_UP set) ascends from map 1 back to map 0");
         }
 
         /* INV_GV_68: Stairs-up on map 0 (index 0) leads nowhere */
@@ -3851,7 +3855,7 @@ int main(int argc, char** argv) {
             stairView.world.party.mapIndex = 0;
             stairView.world.party.mapX = 1;
             stairView.world.party.mapY = 1;
-            sDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x01); /* up */
+            sDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x04); /* up */
             {
                 M11_GameInputResult r = M11_GameView_HandleInput(&stairView, M12_MENU_INPUT_USE_STAIRS);
                 probe_record(&tally,

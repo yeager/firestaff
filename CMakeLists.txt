@@ -386,6 +386,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_entry_movement_viewport_source_lock.py
         )
         add_test(
+            NAME dm1_v1_stairs_pits_viewport_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_stairs_pits_viewport_source_lock.py
+        )
+        add_test(
             NAME touch_movement_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_touch_movement_viewport_source_lock.py
         )

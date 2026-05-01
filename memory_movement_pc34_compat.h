@@ -43,7 +43,7 @@ struct MovementResult_Compat {
     int newMapIndex;      /* New map index (same unless teleporter — future) */
 };
 
-#define MOVEMENT_POST_MOVE_CHAIN_LIMIT 4
+#define MOVEMENT_POST_MOVE_CHAIN_LIMIT 100
 
 struct PostMoveResolution_Compat {
     int transitioned;
@@ -156,20 +156,20 @@ struct StairsTransitionResult_Compat {
     int toMapIndex;     /* map index after the transition */
     int newMapX;        /* clamped destination X on the target map */
     int newMapY;        /* clamped destination Y on the target map */
-    int newDirection;   /* unchanged from party (stairs do not rotate) */
+    int newDirection;   /* F0155_DUNGEON_GetStairsExitDirection result */
 };
 
 /*
  * If the party currently stands on a stairs square, resolve the level
- * transition: decide ascend vs descend from the stairs attribute bit,
- * clamp the destination into the target map bounds, and populate the
- * result.  Pure function — does NOT mutate the party.  Returns 1 if a
- * stairs transition was resolved (transitioned=1), 0 otherwise.
+ * transition: decide ascend/descend from MASK0x0004_STAIRS_UP, map
+ * through F0154_DUNGEON_GetLocationAfterLevelChange semantics
+ * (offsetMapX/offsetMapY + Level delta, not map-index +/-), and set the
+ * exit facing via F0155_DUNGEON_GetStairsExitDirection.  Pure function —
+ * does NOT mutate the party.  Returns 1 if a stairs transition was
+ * resolved (transitioned=1), 0 otherwise.
  *
- * Source mapping: the stairs consequence branch of
- * F0267_MOVE_GetMoveResult_CPSCE in MOVESENS.C, plus the square-element
- * decode helpers in DUNGEON.C.  The attribute bit 0 = stairs-up follows
- * the Fontanel/ReDMCSB encoding already in use by m11_try_stairs_transition.
+ * Source mapping: CLIKMENU.C:F0364_COMMAND_TakeStairs and
+ * DUNGEON.C:F0154/F0155.
  */
 int F0705_MOVEMENT_ResolveStairsTransition_Compat(
     const struct DungeonDatState_Compat* dungeon,
