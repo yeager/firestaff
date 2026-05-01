@@ -279,6 +279,22 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_floor_ornament_stair_gate.py
         )
         add_test(
+            NAME v1_viewport_occlusion_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_occlusion_gate.py
+        )
+        add_test(
+            NAME v1_viewport_wall_blit_transparency_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_wall_blit_transparency_gate.py
+        )
+        add_test(
+            NAME v1_viewport_pit_floor_ornament_bug64_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_pit_floor_ornament_bug64_gate.py
+        )
+        add_test(
+            NAME dm1_v1_viewport_world_redmcsb_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py
+        )
+        add_test(
             NAME v1_inventory_panel_open_redmcsb_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_inventory_panel_open_redmcsb_gate.py
         )

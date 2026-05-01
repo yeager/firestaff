@@ -163,7 +163,7 @@ def verify(source: Path, dm1: Path) -> tuple[dict[str, Any], list[str]]:
         status = "passed" if not missing else "failed"
         if missing:
             failures.append(
-                f"{check[id]} {check[file]}:{check[range]} missing "
+                f"{check['id']} {check['file']}:{check['range']} missing "
                 + "; ".join(repr(x) for x in missing)
             )
         source_hashes.setdefault(check["file"], sha256(path))
