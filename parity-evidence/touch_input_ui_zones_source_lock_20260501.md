@@ -63,3 +63,17 @@ Touchscreen work must not modify these execution functions for input convenience
 3. Do not widen movement/dungeon-view boxes without an explicit parity probe; enlarged touch affordances would change command selection near boundaries.
 4. Do not touch movement collision, tick-orchestrator, projectile, front-wall, door-field, or viewport renderer files for touchscreen support.
 5. If scaling from modern viewport/window coordinates is needed, put it before hit matching and cover it with tests that assert the exact DM1 V1 boxes above map to the same commands.
+
+## 2026-05-01 pointer provider foundation
+
+Added `touch_pointer_input_pc34_compat.{c,h}` as the provider-neutral seam above the source-locked zone matrix. It accepts three coordinate spaces: original 320x200 screen, scaled/letterboxed physical screen, and viewport-local inventory coordinates. It emits `TouchPointerDispatchPc34Compat` with the exact normalized coordinates, ReDMCSB button mask, command id, zone index, coordinate mode, and group name that a future runtime bridge can pass into the existing click path equivalent to `F0359_COMMAND_ProcessClick_CPSC(x, y, buttonStatus)`.
+
+Source lock remains:
+
+- `COMMAND.C:2831-2915` (`F0359_COMMAND_ProcessClick_CPSC`) is the only command-queue target for pointer/touch clicks: it preserves pending-click behavior, scans active `INPUT_INFO` mouse tables, calls `F0358_COMMAND_GetCommandFromMouseInput_CPSC`, and writes command/x/y into the command queue.
+- `COMMAND.C:2922-2928` (`F0360_COMMAND_ProcessPendingClick`) replays deferred clicks through `F0359_COMMAND_ProcessClick_CPSC`.
+- `COMMAND.C:396-405` (`G0448_as_Graphic561_SecondaryMouseInput_Movement`) maps movement arrows, dungeon viewport clicks, and right-click inventory leader toggle to original commands/zones.
+- `COMMAND.C:1709-1765` (`F0361_COMMAND_ProcessKeyPress`) is separate keyboard queueing; the touch seam deliberately does not synthesize keyboard input.
+- `CLIKMENU.C:142-174` and `CLIKMENU.C:180-347` execute turn/move commands unchanged after dispatch.
+
+Probe coverage: `test_touch_pointer_input_pc34_compat_integration.c` asserts screen-space movement, right-button champion/status overlap resolution, scaled/letterboxed physical taps, viewport-local inventory eye, and rejects move/up/zero-button events so only click/down gestures become command-dispatch candidates.
