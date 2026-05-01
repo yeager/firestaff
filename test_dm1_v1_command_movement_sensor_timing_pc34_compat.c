@@ -15,10 +15,12 @@
  *   to F0365 and moves to F0366.
  * - CLIKMENU.C:142-174 F0365 turns the party and runs leave/enter sensor
  *   processing on the current square; CLIKMENU.C:256-347 F0366 maps command
- *   arrows to relative steps, blocks walls/closed doors/fake-walls/groups at
- *   CLIKMENU.C:278-323 before any F0267 movement/sensor core call, calls
- *   F0267_MOVE_GetMoveResult_CPSCE for successful steps, then writes
- *   G0310_i_DisabledMovementTicks and clears G0311_i_ProjectileDisabledMovementTicks.
+ *   arrows through DUNGEON.C:1371-1421 relative-coordinate math, blocks walls/
+ *   closed doors/fake-walls/groups at CLIKMENU.C:278-323 before any F0267
+ *   movement/sensor core call, calls F0267_MOVE_GetMoveResult_CPSCE for
+ *   successful steps, then writes G0310_i_DisabledMovementTicks from
+ *   CHAMPION.C:1180-1215 movement ticks and clears
+ *   G0311_i_ProjectileDisabledMovementTicks.
  * - MOVESENS.C:760-783 updates party scent and G0362_l_LastPartyMovementTime
  *   after a real square change; MOVESENS.C:799-818 calls
  *   F0276_SENSOR_ProcessThingAdditionOrRemoval on source leave and destination
@@ -211,7 +213,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_command_movement_sensor_timing_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-174,256-347; MOVESENS.C:738-783,799-818,1553-1794\n");
+    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-174,256-347; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215; MOVESENS.C:738-783,799-818,1553-1794\n");
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
