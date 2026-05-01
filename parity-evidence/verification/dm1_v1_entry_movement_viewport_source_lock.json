@@ -1,0 +1,223 @@
+{
+  "firestaff_checks": [
+    {
+      "citation": "memory_dungeon_dat_pc34_compat.c:header reader",
+      "needles": [
+        "read_u16_le(file, &state->header.rawMapDataByteCount)",
+        "read_u8(file, &state->header.mapCount)",
+        "read_u16_le(file, &state->header.initialPartyLocation)"
+      ],
+      "verified": true,
+      "why": "Firestaff reads the source-defined dungeon header fields, including InitialPartyLocation."
+    },
+    {
+      "citation": "memory_champion_state_pc34_compat.c:initial party decode",
+      "needles": [
+        "dungeon->header.initialPartyLocation",
+        "&dir, &py, &px"
+      ],
+      "verified": true,
+      "why": "Firestaff decodes initial party state from the same header field used by ReDMCSB."
+    },
+    {
+      "citation": "memory_movement_pc34_compat.c:relative movement and blocking",
+      "needles": [
+        "case MOVE_FORWARD:  stepDir = direction",
+        "case MOVE_RIGHT:    stepDir = (direction + 1) & 3",
+        "case MOVE_BACKWARD: stepDir = (direction + 2) & 3",
+        "case MOVE_LEFT:     stepDir = (direction + 3) & 3",
+        "doorState != 0 && doorState != 1 && doorState != 5",
+        "!(squareByte & 0x04) && !(squareByte & 0x01)"
+      ],
+      "verified": true,
+      "why": "Firestaff movement helper preserves ReDMCSB relative movement and door/fake-wall rules."
+    },
+    {
+      "citation": "m11_game_view.c:viewport render surface/world draw hooks",
+      "needles": [
+        "M11_VIEWPORT_W",
+        "M11_VIEWPORT_H",
+        "M11_GameView_Draw",
+        "M11_GameView_HandleInput"
+      ],
+      "verified": true,
+      "why": "The M11 renderer exposes the world/viewport path this source-lock is meant to guard."
+    },
+    {
+      "citation": "tools/verify_dm1_v1_movement_source_lock.py:existing movement gate",
+      "needles": [
+        "COMMAND.C:2045-2156",
+        "CLIKMENU.C:256-347",
+        "MOVESENS.C:315-385",
+        "CHAMPION.C:1180-1214"
+      ],
+      "verified": true,
+      "why": "Existing movement source-lock gate remains wired and covers command/cooldown details."
+    },
+    {
+      "citation": "scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py:existing viewport gate",
+      "needles": [
+        "redmcsb-floor-ceiling-base-copy-gate",
+        "redmcsb-wall-door-blit-zones-gate",
+        "redmcsb-f0115-thing-pass-order-gate"
+      ],
+      "verified": true,
+      "why": "Existing viewport source-lock gate remains wired for draw stack/world visual facts."
+    }
+  ],
+  "redmcsb_checks": [
+    {
+      "citation": "DEFS.H:989-998",
+      "needles": [
+        "unsigned char MapCount;",
+        "unsigned int16_t InitialPartyLocation;",
+        "Bits 11-10: Direction, Bits 9-5: Y, Bits 4-0: X"
+      ],
+      "verified": true,
+      "why": "DUNGEON_HEADER encodes the deterministic new-game party X/Y/direction field."
+    },
+    {
+      "citation": "LOADSAVE.C:1940-1945",
+      "needles": [
+        "if (G0298_B_NewGame)",
+        "G0306_i_PartyMapX = (AL1353_i_InitialPartyLocation = G0278_ps_DungeonHeader->InitialPartyLocation) & 0x001F;",
+        "G0307_i_PartyMapY = (AL1353_i_InitialPartyLocation >>= 5) & 0x001F;",
+        "G0308_i_PartyDirection = (AL1353_i_InitialPartyLocation >> 5) & 0x0003;",
+        "G0309_i_PartyMapIndex = 0;"
+      ],
+      "verified": true,
+      "why": "New games derive party start state from the header and force map index 0."
+    },
+    {
+      "citation": "DUNGEON.C:35-44",
+      "needles": [
+        "G0233_ai_Graphic559_DirectionToStepEastCount",
+        "0,    /* North */",
+        "1,    /* East */",
+        "G0234_ai_Graphic559_DirectionToStepNorthCount",
+        "-1,  /* North */",
+        "1,   /* West */"
+      ],
+      "verified": true,
+      "why": "Direction vectors define deterministic north/east/south/west coordinate deltas."
+    },
+    {
+      "citation": "DUNGEON.C:1371-1391",
+      "needles": [
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "P0253_i_Direction += 1, P0253_i_Direction &= 3; /* Simulate turning right */",
+        "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[P0253_i_Direction]",
+        "*P0257_pi_MapY += G0234_ai_Graphic559_DirectionToStepNorthCount[P0253_i_Direction]"
+      ],
+      "verified": true,
+      "why": "Relative movement is resolved by rotating the facing direction before adding source vectors."
+    },
+    {
+      "citation": "CHAMPION.C:93-130",
+      "needles": [
+        "void F0284_CHAMPION_SetPartyDirection",
+        "L0834_i_Delta = P0600_i_Direction - G0308_i_PartyDirection",
+        "G0308_i_PartyDirection = P0600_i_Direction;"
+      ],
+      "verified": true,
+      "why": "Turning updates champion cells/party things, then stores the new party direction."
+    },
+    {
+      "citation": "CLIKMENU.C:256-347",
+      "needles": [
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "L1116_i_SquareType == C00_ELEMENT_WALL",
+        "L1117_B_MovementBlocked = M036_DOOR_STATE(AL1115_ui_Square);",
+        "L1117_B_MovementBlocked != C1_DOOR_STATE_CLOSED_ONE_FOURTH",
+        "MASK0x0004_FAKEWALL_OPEN",
+        "MASK0x0001_FAKEWALL_IMAGINARY",
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;",
+        "G0311_i_ProjectileDisabledMovementTicks = 0;"
+      ],
+      "verified": true,
+      "why": "Party movement applies wall/door/fake-wall legality and movement cooldowns."
+    },
+    {
+      "citation": "MOVESENS.C:315-385",
+      "needles": [
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE",
+        "P0558_i_SourceMapX",
+        "P0560_i_DestinationMapX",
+        "L0713_B_ThingLevitates",
+        "L0724_B_DestinationIsTeleporterTarget"
+      ],
+      "verified": true,
+      "why": "Movement result calculation is centralized before state mutation and sensor routing."
+    },
+    {
+      "citation": "MOVESENS.C:752-775",
+      "needles": [
+        "L0725_B_PartySquare",
+        "P0557_T_Thing == C0xFFFF_THING_PARTY",
+        "G0308_i_PartyDirection == L0716_ui_Direction",
+        "G0362_l_LastPartyMovementTime = G0313_ul_GameTime"
+      ],
+      "verified": true,
+      "why": "Party moves are special-cased and timestamped on successful movement."
+    },
+    {
+      "citation": "GAMELOOP.C:150-155",
+      "needles": [
+        "G0310_i_DisabledMovementTicks--",
+        "G0311_i_ProjectileDisabledMovementTicks--"
+      ],
+      "verified": true,
+      "why": "Movement/projection input cooldowns are decremented once per game-loop tick."
+    },
+    {
+      "citation": "DUNVIEW.C:2962-3003",
+      "needles": [
+        "void F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+        "F0008_MAIN_ClearBytes(G0086_puc_Bitmap_ViewportBlackArea",
+        "F0007_MAIN_CopyBytes(G0085_puc_Bitmap_Ceiling, G0296_puc_Bitmap_Viewport",
+        "F0007_MAIN_CopyBytes(G0084_puc_Bitmap_Floor",
+        "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"
+      ],
+      "verified": true,
+      "why": "Viewport drawing starts from a cleared/filled floor+ceiling base."
+    },
+    {
+      "citation": "DUNVIEW.C:3048-3110",
+      "needles": [
+        "void F0100_DUNGEONVIEW_DrawWallSetBitmap",
+        "F0132_VIDEO_Blit(P0105_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+        "void F0102_DUNGEONVIEW_DrawDoorBitmap",
+        "F0132_VIDEO_Blit(G0074_puc_Bitmap_Temporary, G0296_puc_Bitmap_Viewport",
+        "void F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally"
+      ],
+      "verified": true,
+      "why": "Walls/doors are blitted into the same viewport bitmap, including flipped door frames."
+    },
+    {
+      "citation": "DUNVIEW.C:4547-5113",
+      "needles": [
+        "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "AL0127_i_ThingType >= C05_THING_TYPE_WEAPON",
+        "AL0127_i_ThingType <= C10_THING_TYPE_JUNK",
+        "M011_CELL(P0141_T_Thing) == L0139_i_Cell",
+        "F0791_DUNGEONVIEW_DrawBitmapXX(AL0128_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+        "if (L0144_B_DrawingGrabbableObject)"
+      ],
+      "verified": true,
+      "why": "Visible floor/alcove objects are filtered by view cell and drawn into the viewport bitmap."
+    },
+    {
+      "citation": "DRAWVIEW.C:709-724",
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0324_B_DrawViewportRequested = C1_TRUE",
+        "M526_WaitVerticalBlank();"
+      ],
+      "verified": true,
+      "why": "Viewport presentation is a separate palette/vblank-gated presentation step."
+    }
+  ],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V1 entry + movement + viewport source-locked evidence",
+  "status": "PASS"
+}
