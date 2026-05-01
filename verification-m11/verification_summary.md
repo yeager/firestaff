@@ -47,6 +47,8 @@ PASS INV_GV_435A DM1 secondary movement table maps left-click C068 turn-left arr
 PASS INV_GV_435B DM1 secondary movement table maps left-click C071 move-right arrow to command C004
 PASS INV_GV_436 DM1 inventory slot zones C507..C536 route screen clicks through viewport-relative coordinates to commands C028..C057
 PASS INV_GV_437 DM1 inventory table gives right-click screen-zone close inventory precedence over viewport-relative slot hits
+PASS INV_GV_437A DM1 inventory table routes C545 mouth zone to command C070
+PASS INV_GV_437B DM1 inventory table routes C546 eye zone to command C071
 PASS INV_GV_438 DM1 inventory source slot boxes C507..C536 use source C033 normal slot-box graphic
 PASS INV_GV_400 M11 game view builds champion mirror catalog from DUNGEON.DAT at start
 PASS INV_GV_401 M11 mirror catalog exposes display name by ordinal
@@ -227,8 +229,8 @@ PASS INV_GV_62 Light spell application increases magicalLightAmount
 PASS INV_GV_63 Fireball spell emits EMIT_SPELL_EFFECT with PROJECTILE kind
 PASS INV_GV_64 Party Shield spell increases partyShieldDefense
 PASS INV_GV_65 invalid spell table index produces no SPELL_EFFECT emission
-PASS INV_GV_66 stairs-down (bit 0 clear) descends from map 0 to map 1
-PASS INV_GV_67 stairs-up (bit 0 set) ascends from map 1 back to map 0
+PASS INV_GV_66 stairs-down (MASK0x0004_STAIRS_UP clear) descends from map 0 to map 1
+PASS INV_GV_67 stairs-up (MASK0x0004_STAIRS_UP set) ascends from map 1 back to map 0
 PASS INV_GV_68 stairs-up on top level (map 0) leads nowhere, party stays
 PASS INV_GV_69 stairs-up transition logs ASCENDED message
 PASS INV_GV_70 GetSkillLevel returns non-negative for a present champion
@@ -625,4 +627,4 @@ PASS INV_GV_346 projectile detonation: magical impact spawns an explosion into w
 PASS INV_GV_347 projectile detonation: explosion is fireball type and appears in viewport cell summary
 PASS INV_GV_348 explosion aftermath: F0822 advance ran (frame incremented or one-shot despawned)
 PASS INV_GV_349 persistent smoke: F0822 decays attack and increments currentFrame across ticks
-# summary: 597/597 invariants passed
+# summary: 599/599 invariants passed

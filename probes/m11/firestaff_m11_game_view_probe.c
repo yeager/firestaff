@@ -280,6 +280,27 @@ static void probe_capture_vga_frame(const M11_GameViewState* state,
     probe_dump_m11_vga_ppm(path, fb, 320, 200);
 }
 
+
+static int probe_find_nonzero_difficulty_map(const M11_GameViewState* state) {
+    unsigned int i;
+    if (!state || !state->world.dungeon || !state->world.dungeon->maps) {
+        return -1;
+    }
+    for (i = 0; i < state->world.dungeon->header.mapCount; ++i) {
+        if (state->world.dungeon->maps[i].difficulty != 0) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+static void probe_use_nonzero_difficulty_map_for_palette(M11_GameViewState* state) {
+    int mapIndex = probe_find_nonzero_difficulty_map(state);
+    if (mapIndex >= 0) {
+        state->world.party.mapIndex = mapIndex;
+    }
+}
+
 static void probe_reset_synthetic_view_to_corridor(M11_GameViewState* state) {
     int i;
     int squareCount;
@@ -5085,6 +5106,15 @@ int main(int argc, char** argv) {
             int differs = 0;
             int i;
 
+            int savedMapIndex = assetView.world.party.mapIndex;
+
+            /* ReDMCSB PANEL.C F0337 lines 365-368 force difficulty-0
+             * maps to palette index 0 (brightest) regardless of torch or
+             * magical light.  Move this light-response probe to the first
+             * nonzero-difficulty map so the source palette ladder at lines
+             * 417-428 is actually observable. */
+            probe_use_nonzero_difficulty_map_for_palette(&assetView);
+
             /* Dark render (light=0) */
             assetView.world.magic.magicalLightAmount = 0;
             memset(fb_dark, 0, sizeof(fb_dark));
@@ -5094,6 +5124,7 @@ int main(int argc, char** argv) {
             assetView.world.magic.magicalLightAmount = 255;
             memset(fb_bright, 0, sizeof(fb_bright));
             M11_GameView_Draw(&assetView, fb_bright, 320, 200);
+            assetView.world.party.mapIndex = savedMapIndex;
 
             for (i = 0; i < 320 * 200; ++i) {
                 if (fb_dark[i] != fb_bright[i]) { differs = 1; break; }
@@ -5132,6 +5163,14 @@ int main(int argc, char** argv) {
             int darkBlack = 0, brightBlack = 0;
             int y, x;
 
+            int savedMapIndex = assetView.world.party.mapIndex;
+
+            /* Same source lock as INV_GV_119: difficulty-0 maps are
+             * intentionally always brightest in PANEL.C F0337, so the
+             * dark-vs-bright viewport count must run on a nonzero-
+             * difficulty map. */
+            probe_use_nonzero_difficulty_map_for_palette(&assetView);
+
             assetView.world.magic.magicalLightAmount = 0;
             memset(fb_dark2, 0, sizeof(fb_dark2));
             M11_GameView_Draw(&assetView, fb_dark2, 320, 200);
@@ -5139,6 +5178,7 @@ int main(int argc, char** argv) {
             assetView.world.magic.magicalLightAmount = 255;
             memset(fb_bright2, 0, sizeof(fb_bright2));
             M11_GameView_Draw(&assetView, fb_bright2, 320, 200);
+            assetView.world.party.mapIndex = savedMapIndex;
 
             /* Count visually dark pixels in the viewport region.
              * With V1-faithful palette-level encoding, dimmed pixels
@@ -5647,7 +5687,11 @@ int main(int argc, char** argv) {
 
         M11_GameView_Init(&dimView);
         (void)M11_GameView_OpenSelectedMenuEntry(&dimView, &menuState);
-        /* Draw a dark scene — light level 0 triggers heavy dimming */
+        /* Draw a dark scene on a nonzero-difficulty map.  PANEL.C
+         * F0337 lines 365-368 source-lock difficulty-0 maps to the
+         * brightest palette; only nonzero-difficulty maps exercise the
+         * palette-index ladder at lines 417-428. */
+        probe_use_nonzero_difficulty_map_for_palette(&dimView);
         dimView.world.magic.magicalLightAmount = 0;
         memset(fb_dim, 0, sizeof(fb_dim));
         M11_GameView_Draw(&dimView, fb_dim, 320, 200);
