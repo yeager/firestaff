@@ -30,12 +30,16 @@ static int has_zone(unsigned int commandId, unsigned int zoneIndex) {
 int main(void) {
     TouchClickZonePc34Compat hit;
     TouchClickDispatchPc34Compat dispatch;
+    ChampionStatusDispatchPc34Compat championDispatch;
+    ChampionNameHandRoutePc34Compat championRoute;
     int normX = -1;
     int normY = -1;
     int ok = 1;
     printf("probe=firestaff_touch_click_zone_matrix\n");
     printf("sourceEvidence=%s\n", TOUCHCLICK_Compat_GetSourceEvidence());
     printf("zoneCount=%u\n", TOUCHCLICK_Compat_GetZoneCount());
+    printf("championNameHandEvidence=%s\n", champion_name_hand_routes_GetEvidence());
+    printf("championNameHandRouteCount=%u\n", champion_name_hand_routes_GetRouteCount());
     if (TOUCHCLICK_Compat_GetZoneCount() != 88u) ok = 0;
 
     if (!expect_zone(0u, 1u, 68u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 234, 125, 28, 21, "movement.turn_left")) ok = 0;
@@ -55,6 +59,27 @@ int main(void) {
 
     if (!action_area_routes_GetTouchMatrixInvariant()) ok = 0;
     if (!champion_name_hand_routes_GetInvariant()) ok = 0;
+    if (champion_name_hand_routes_GetRouteCount() != 12u) ok = 0;
+    if (!champion_name_hand_routes_GetRoute(6u, &championRoute) ||
+        championRoute.commandId != 21u || championRoute.zoneIndex != 212u || championRoute.slotIndex != 1u ||
+        strcmp(championRoute.name, "champion0.action_hand") != 0) ok = 0;
+    if (!champion_name_hand_routes_ResolveStatusBoxClick(0u, 25, 11, 0u, &championDispatch) ||
+        championDispatch.primaryCommandId != 12u || championDispatch.primaryZoneIndex != 151u ||
+        championDispatch.secondaryCommandId != 21u || championDispatch.secondaryZoneIndex != 212u ||
+        championDispatch.slotIndex != 1u || championDispatch.kind != CHAMPION_STATUS_DISPATCH_SLOT_BOX_PC34_COMPAT) ok = 0;
+    if (!champion_name_hand_routes_ResolveStatusBoxClick(3u, 232, 11, 0u, &championDispatch) ||
+        championDispatch.primaryCommandId != 15u || championDispatch.primaryZoneIndex != 154u ||
+        championDispatch.secondaryCommandId != 27u || championDispatch.secondaryZoneIndex != 218u ||
+        championDispatch.slotIndex != 7u || championDispatch.kind != CHAMPION_STATUS_DISPATCH_SLOT_BOX_PC34_COMPAT) ok = 0;
+    if (!champion_name_hand_routes_ResolveStatusBoxClick(1u, 70, 1, 0u, &championDispatch) ||
+        championDispatch.primaryCommandId != 13u || championDispatch.primaryZoneIndex != 152u ||
+        championDispatch.secondaryCommandId != 17u || championDispatch.secondaryZoneIndex != 160u ||
+        championDispatch.kind != CHAMPION_STATUS_DISPATCH_SET_LEADER_PC34_COMPAT) ok = 0;
+    if (!champion_name_hand_routes_ResolveStatusBoxClick(2u, 170, 20, 3u, &championDispatch) ||
+        championDispatch.primaryCommandId != 14u || championDispatch.primaryZoneIndex != 153u ||
+        championDispatch.secondaryCommandId != 14u || championDispatch.secondaryZoneIndex != 153u ||
+        championDispatch.kind != CHAMPION_STATUS_DISPATCH_SET_LEADER_PC34_COMPAT) ok = 0;
+    if (champion_name_hand_routes_ResolveStatusBoxClick(0u, 50, 20, 0u, &championDispatch)) ok = 0;
     if (!spell_area_routes_GetInvariant()) ok = 0;
     if (!spell_area_symbol_routes_GetInvariant()) ok = 0;
     if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u)) ok = 0;
@@ -104,6 +129,7 @@ int main(void) {
 
     printf("normalizedScaledPoint=%d,%d\n", normX, normY);
     printf("actionAreaTouchMatrixInvariantOk=%u\n", action_area_routes_GetTouchMatrixInvariant());
+    printf("championNameHandRoutesInvariantOk=%u\n", champion_name_hand_routes_GetInvariant());
     printf("touchClickZoneMatrixInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
