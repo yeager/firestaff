@@ -78,6 +78,17 @@
       "verified": true
     },
     {
+      "citation": "memory_tick_orchestrator_pc34_compat.c:F0888 successful movement cooldown",
+      "needles": [
+        "redmcsb_party_move_cooldown_ticks_compat",
+        "CLIKMENU.C:330-346",
+        "F0841_LIFECYCLE_ComputeMoveTicks_Compat",
+        "world->disabledMovementTicks = redmcsb_party_move_cooldown_ticks_compat(&world->party)",
+        "world->projectileDisabledMovementTicks = 0"
+      ],
+      "verified": true
+    },
+    {
       "citation": "memory_tick_orchestrator_pc34_compat.c:F0890 cooldown decrement",
       "needles": [
         "if (world->disabledMovementTicks > 0) world->disabledMovementTicks--",
@@ -93,7 +104,8 @@
         "periodic effects decrement disabledMovementTicks once per tick",
         "projectileDisabledMovementTicks blocks only matching absolute movement direction",
         "projectileDisabledMovementTicks allows non-matching absolute movement direction",
-        "periodic effects decrement projectileDisabledMovementTicks once per tick"
+        "periodic effects decrement projectileDisabledMovementTicks once per tick",
+        "successful move sets disabledMovementTicks to max living champion movement ticks and clears projectile cooldown"
       ],
       "verified": true
     },

@@ -369,6 +369,33 @@ int main(int argc, char** argv) {
         F0883_WORLD_Free_Compat(&w);
     }
     {
+        /* ReDMCSB source-lock: CLIKMENU.C:330-346 sets
+         * G0310_i_DisabledMovementTicks to max living champion
+         * F0310_CHAMPION_GetMovementTicks after a successful cardinal move,
+         * and clears G0311_i_ProjectileDisabledMovementTicks. */
+        struct GameWorld_Compat w;
+        struct TickInput_Compat in;
+        struct TickResult_Compat r;
+        int built = build_post_move_env_world(&w, 42u);
+        CHECK(built, "17g: synthetic cooldown movement world builds");
+        if (built) {
+            memset(&in, 0, sizeof(in));
+            memset(&r, 0, sizeof(r));
+            w.party.champions[0].load = 50;
+            w.party.champions[0].maxLoad = 100;
+            w.party.champions[1].load = 70;
+            w.party.champions[1].maxLoad = 100;
+            w.disabledMovementTicks = 0;
+            w.projectileDisabledMovementTicks = 9;
+            in.command = CMD_MOVE_EAST;
+            CHECK(F0888_ORCH_ApplyPlayerInput_Compat(&w, &in, &r) == 1 &&
+                  w.disabledMovementTicks == 3 &&
+                  w.projectileDisabledMovementTicks == 0,
+                  "17h: successful move sets disabledMovementTicks to max living champion movement ticks and clears projectile cooldown");
+            F0883_WORLD_Free_Compat(&w);
+        }
+    }
+    {
         /* Invariant 17: CMD_MOVE_NORTH on a walkable dungeon tile emits
          * EMIT_PARTY_MOVED. Requires real dungeon; skip the tile-walk if
          * init fails (conservative: passes on absence). */

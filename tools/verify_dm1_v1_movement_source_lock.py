@@ -145,6 +145,13 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "lastProjectileDisabledMovementDirection",
         "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0",
     ]))
+    checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0888 successful movement cooldown", orch, [
+        "redmcsb_party_move_cooldown_ticks_compat",
+        "CLIKMENU.C:330-346",
+        "F0841_LIFECYCLE_ComputeMoveTicks_Compat",
+        "world->disabledMovementTicks = redmcsb_party_move_cooldown_ticks_compat(&world->party)",
+        "world->projectileDisabledMovementTicks = 0",
+    ]))
     checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0890 cooldown decrement", orch, [
         "if (world->disabledMovementTicks > 0) world->disabledMovementTicks--",
         "if (world->projectileDisabledMovementTicks > 0) world->projectileDisabledMovementTicks--",
@@ -156,6 +163,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "projectileDisabledMovementTicks blocks only matching absolute movement direction",
         "projectileDisabledMovementTicks allows non-matching absolute movement direction",
         "periodic effects decrement projectileDisabledMovementTicks once per tick",
+        "successful move sets disabledMovementTicks to max living champion movement ticks and clears projectile cooldown",
     ]))
     checks.append(require("firestaff_m11_pass44_party_group_collision_probe.c:party/group collision invariant", group_probe, [
         "P44_F0708_GROUP_BLOCKS_PASSABLE_TARGET",

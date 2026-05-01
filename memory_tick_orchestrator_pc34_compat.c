@@ -946,6 +946,33 @@ static int movement_action_absolute_direction(int partyDirection, int moveAction
     }
 }
 
+static int redmcsb_party_move_cooldown_ticks_compat(
+    const struct PartyState_Compat* party)
+{
+    int i;
+    int ticks = 1;
+
+    if (!party) return ticks;
+
+    /*
+     * ReDMCSB source-lock: CLIKMENU.C:330-346 starts AL1115_ui_Ticks
+     * at 1, then for each living party champion takes the max of
+     * F0310_CHAMPION_GetMovementTicks before assigning
+     * G0310_i_DisabledMovementTicks and clearing
+     * G0311_i_ProjectileDisabledMovementTicks.  F0310 is ported as
+     * F0841_LIFECYCLE_ComputeMoveTicks_Compat (CHAMPION.C:1180-1215).
+     */
+    for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
+        const struct ChampionState_Compat* c = &party->champions[i];
+        uint16_t championTicks;
+        if (!c->present || c->hp.current == 0) continue;
+        championTicks = F0841_LIFECYCLE_ComputeMoveTicks_Compat(
+            c->load, c->maxLoad, c->wounds, LIFECYCLE_ICON_NONE);
+        if ((int)championTicks > ticks) ticks = (int)championTicks;
+    }
+    return ticks;
+}
+
 static int movement_command_disabled_redmcsb_compat(
     const struct GameWorld_Compat* world,
     int moveAction)
@@ -1053,6 +1080,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                          world->party.mapIndex, world->party.mapX,
                          world->party.mapY, postMove.teleporterCount);
                 }
+                world->disabledMovementTicks = redmcsb_party_move_cooldown_ticks_compat(&world->party);
+                world->projectileDisabledMovementTicks = 0;
                 emit(result, EMIT_PARTY_MOVED,
                      world->party.mapX, world->party.mapY,
                      world->party.direction, world->party.mapIndex);
