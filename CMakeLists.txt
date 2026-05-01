@@ -334,6 +334,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_wall_blit_transparency_gate.py
         )
         add_test(
+            NAME v1_viewport_palette_source_lock_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_palette_source_lock_gate.py
+        )
+        add_test(
             NAME v1_viewport_alcove_wall_item_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_alcove_wall_item_gate.py
         )

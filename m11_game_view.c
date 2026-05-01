@@ -8301,47 +8301,36 @@ enum {
  * rendering when assets are unavailable.
  * ================================================================ */
 
-/* Apply depth-based light dimming to a rectangular region.
- * depthIndex 0 = nearest (bright), 2 = far (dim).
- *
- * V1-faithful approach: instead of remapping palette indices through a
- * subjective dim_table, we set the per-pixel VGA palette brightness
- * level in the upper 4 bits of each framebuffer byte.  This matches
- * the original game, which achieves depth darkness by programming
- * different RGB values into the VGA DAC registers for the same colour
- * indices — same index, darker palette.  The RGBA conversion stage
- * in render_sdl_m11 reads the per-pixel level and looks up the
- * correct brightness from G9010_auc_VgaPaletteAll_Compat.
- *
- * Each depth pass adds 1 to the palette level, clamped to
- * M11_PALETTE_LEVELS-1 (the darkest).  Palette level 0 is brightest
- * (normal light), level 5 is the darkest. */
-static void m11_apply_depth_dimming(unsigned char* framebuffer,
-                                    int fbW,
-                                    int fbH,
-                                    int rx,
-                                    int ry,
-                                    int rw,
-                                    int rh,
-                                    int depthIndex) {
+/* Apply one original DM1 dungeon-view palette level to a rectangular
+ * region.  ReDMCSB does not darken individual distance bands in
+ * DUNVIEW.C: F0337_INVENTORY_SetDungeonViewPalette selects the single
+ * G0304_i_DungeonViewPaletteIndex level from total torch/magical light,
+ * DRAWVIEW.C then installs G0021_aaui_Graphic562_Palette_DungeonView for
+ * the whole dungeon view when G0342_B_RefreshDungeonViewPaletteRequested
+ * is set.  Distance darkness belongs to the source art/zones, not to a
+ * synthetic per-depth post-process. */
+static void m11_apply_dungeon_palette_level(unsigned char* framebuffer,
+                                           int fbW,
+                                           int fbH,
+                                           int rx,
+                                           int ry,
+                                           int rw,
+                                           int rh,
+                                           int paletteLevel) {
     int yy, xx;
-    if (depthIndex <= 0) return;
+    if (paletteLevel < 0) paletteLevel = 0;
+    if (paletteLevel >= M11_PALETTE_LEVELS) {
+        paletteLevel = M11_PALETTE_LEVELS - 1;
+    }
     for (yy = ry; yy < ry + rh && yy < fbH; ++yy) {
         if (yy < 0) continue;
         for (xx = rx; xx < rx + rw && xx < fbW; ++xx) {
             unsigned char raw;
             int idx;
-            int currentLevel;
-            int newLevel;
             if (xx < 0) continue;
             raw = framebuffer[yy * fbW + xx];
             idx = M11_FB_DECODE_INDEX(raw);
-            currentLevel = M11_FB_DECODE_LEVEL(raw);
-            newLevel = currentLevel + depthIndex;
-            if (newLevel >= M11_PALETTE_LEVELS) {
-                newLevel = M11_PALETTE_LEVELS - 1;
-            }
-            framebuffer[yy * fbW + xx] = M11_FB_ENCODE(idx, newLevel);
+            framebuffer[yy * fbW + xx] = M11_FB_ENCODE(idx, paletteLevel);
         }
     }
 }
@@ -10206,10 +10195,8 @@ static int m11_dm1_f0115_view_square_index(int relForward, int relSide) {
 static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide) {
     /* DUNVIEW.C G2028_ac_ViewSquareIndexTo.  F0115 indexes
      * C2500/C2900 as base + (G2028[viewSquare] * 4) + viewCell. */
-    static const signed char kG2028[23] = {
-        11, -1, -1,  8,  9, 10,  5,  6,  7, -1, -1,
-         0,  1,  2,  3,  4, -1, -1, -1, -1, -1, -1, -1
-    };
+    static const signed char kG2028[23] = { 11, -1, -1,  8,  9, 10,  5,  6,  7, -1, -1,
+                                             0,  1,  2,  3,  4, -1, -1, -1, -1, -1, -1, -1 };
     int viewSquare = m11_dm1_f0115_view_square_index(relForward, relSide);
     if (viewSquare < 0 || viewSquare >= 23) return -1;
     return (int)kG2028[viewSquare];
@@ -12276,6 +12263,95 @@ static void m11_draw_focus_card(unsigned char* framebuffer,
 #define M11_WEAPON_SUBTYPE_FLAMITT  3
 /* ILLUMULET junk sub-type index in s_junkTypeNames[] */
 #define M11_JUNK_SUBTYPE_ILLUMULET  4
+
+static int m11_torch_charge_to_light_power(int chargeCount, int fuel, int initialFuel) {
+    int power = chargeCount & 0x0F;
+    if (power <= 0 && fuel > 0 && initialFuel > 0) {
+        power = (fuel * 15 + initialFuel - 1) / initialFuel;
+    }
+    if (power < 0) power = 0;
+    if (power > 15) power = 15;
+    return power;
+}
+
+static int m11_compute_dungeon_palette_index(const M11_GameViewState* state) {
+    static const int kLightPowerToAmount[16] = {
+        0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100
+    };
+    static const int kPaletteIndexToLightAmount[6] = { 99, 75, 50, 25, 1, 0 };
+    int powers[8] = {0,0,0,0,0,0,0,0};
+    int powerCount = 0;
+    int totalLight;
+    int multiplier = 6;
+    int i, j;
+
+    if (!state) {
+        return 5;
+    }
+    if (state->world.dungeon &&
+        state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount &&
+        state->world.dungeon->maps[state->world.party.mapIndex].difficulty == 0) {
+        return 0;
+    }
+
+    for (i = 0; i < CHAMPION_MAX_PARTY && powerCount < 8; ++i) {
+        const struct ChampionState_Compat* champ = &state->world.party.champions[i];
+        int slot;
+        if (!champ->present) {
+            powerCount += 2;
+            continue;
+        }
+        for (slot = CHAMPION_SLOT_HAND_LEFT; slot <= CHAMPION_SLOT_HAND_RIGHT && powerCount < 8; ++slot) {
+            unsigned short thing = champ->inventory[slot];
+            int thingType, thingIndex;
+            if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+                ++powerCount;
+                continue;
+            }
+            thingType = THING_GET_TYPE(thing);
+            thingIndex = THING_GET_INDEX(thing);
+            if (thingType == THING_TYPE_WEAPON &&
+                state->world.things &&
+                thingIndex >= 0 && thingIndex < state->world.things->weaponCount) {
+                const struct DungeonWeapon_Compat* w = &state->world.things->weapons[thingIndex];
+                if (w->type == M11_WEAPON_SUBTYPE_TORCH && w->lit) {
+                    int fuel = (thingIndex >= 0 && thingIndex < M11_TORCH_FUEL_CAPACITY)
+                               ? state->torchFuel[thingIndex] : M11_TORCH_INITIAL_FUEL;
+                    powers[powerCount] = m11_torch_charge_to_light_power(w->chargeCount, fuel, M11_TORCH_INITIAL_FUEL);
+                }
+            }
+            ++powerCount;
+        }
+    }
+
+    for (i = 0; i < 4; ++i) {
+        for (j = i + 1; j < 8; ++j) {
+            if (powers[j] > powers[i]) {
+                int tmp = powers[i];
+                powers[i] = powers[j];
+                powers[j] = tmp;
+            }
+        }
+    }
+
+    totalLight = state->world.magic.magicalLightAmount;
+    for (i = 0; i < 5; ++i) {
+        int power = powers[i];
+        if (power > 0) {
+            totalLight += (kLightPowerToAmount[power] << multiplier) >> 6;
+            if (multiplier > 0) --multiplier;
+        }
+    }
+    if (totalLight > 0) {
+        int paletteIndex = 0;
+        while (paletteIndex < 5 && kPaletteIndexToLightAmount[paletteIndex] > totalLight) {
+            ++paletteIndex;
+        }
+        return paletteIndex;
+    }
+    return 5;
+}
 
 static int m11_compute_light_level(const M11_GameViewState* state) {
     int light;
@@ -17563,44 +17639,17 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
 
-    /* Apply dynamic depth dimming based on the party's current light
-     * level.  The original DM1 uses torches, FUL spell, ILLUMULET, and
-     * FLAMITT to illuminate the dungeon.  We map the computed 0..255
-     * light level to dimming passes per depth band:
-     *
-     *   light >= 200  (bright):  no dimming at any depth
-     *   light >= 120  (normal):  depth 2 dimmed once
-     *   light >= 50   (dim):     depth 1 once, depth 2 twice
-     *   light <  50   (dark):    depth 0 once, depth 1 twice, depth 2 three times
-     */
+    /* ReDMCSB source lock: F0337 selects one G0304 dungeon-view
+     * palette index, and DRAWVIEW applies that palette to the whole
+     * dungeon viewport.  Do not add Firestaff-only distance dimming
+     * passes over D0/D1/D2 rectangles; wall/floor/field distance
+     * appearance must come from the source graphics and zone order. */
     {
-        int lightLevel = m11_compute_light_level(state);
-        if (lightLevel < 50) {
-            /* Very dark: heavy dimming everywhere */
-            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
-                                    frames[0].x, frames[0].y,
-                                    frames[0].w, frames[0].h, 1);
-            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
-                                    frames[1].x, frames[1].y,
-                                    frames[1].w, frames[1].h, 2);
-            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
-                                    frames[2].x, frames[2].y,
-                                    frames[2].w, frames[2].h, 3);
-        } else if (lightLevel < 120) {
-            /* Dim: moderate dimming */
-            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
-                                    frames[1].x, frames[1].y,
-                                    frames[1].w, frames[1].h, 1);
-            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
-                                    frames[2].x, frames[2].y,
-                                    frames[2].w, frames[2].h, 2);
-        } else if (lightLevel < 200) {
-            /* Normal: only the far band dimmed once */
-            m11_apply_depth_dimming(framebuffer, framebufferWidth, framebufferHeight,
-                                    frames[2].x, frames[2].y,
-                                    frames[2].w, frames[2].h, 1);
-        }
-        /* lightLevel >= 200: bright, no dimming */
+        int paletteIndex = m11_compute_dungeon_palette_index(state);
+        m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,
+                                        M11_VIEWPORT_X, M11_VIEWPORT_Y,
+                                        M11_VIEWPORT_W, M11_VIEWPORT_H,
+                                        paletteIndex);
     }
 }
 
