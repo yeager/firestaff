@@ -142,6 +142,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_capture_route_state_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Source-locked turn-left/turn-right viewport orientation anchor.
+add_executable(firestaff_m11_turn_viewport_orientation_probe probes/m11/firestaff_m11_turn_viewport_orientation_probe.c)
+target_link_libraries(firestaff_m11_turn_viewport_orientation_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_turn_viewport_orientation_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Deterministic in-game screenshot series used by parity evidence.
 add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
 target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
@@ -254,6 +261,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_m11_capture_route_state_probe "$ENV{HOME}/.firestaff/data" ${CMAKE_CURRENT_BINARY_DIR}/capture-route-state
     )
     set_tests_properties(m11_capture_route_state PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME m11_turn_viewport_orientation
+        COMMAND firestaff_m11_turn_viewport_orientation_probe "$ENV{HOME}/.firestaff/data" ${CMAKE_CURRENT_BINARY_DIR}/turn-viewport-orientation
+    )
+    set_tests_properties(m11_turn_viewport_orientation PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
