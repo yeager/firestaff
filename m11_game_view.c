@@ -7996,7 +7996,9 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
      * projectiles, followed later by explosions (DUNVIEW.C:4567-4582).
      * The concrete code sections are marked Draw objects at DUNVIEW.C:4820,
      * Draw creatures at DUNVIEW.C:5201, and Draw projectiles at
-     * DUNVIEW.C:5645. Keep this local V1 stack in that order. */
+     * DUNVIEW.C:5645. DUNVIEW.C:5244-5247 also says a single centered
+     * creature waits for the full object-cell pass so it appears over
+     * all floor objects. Keep this local V1 stack in that order. */
 
     /* Layer 0: Floor ornaments (painted on the floor, below everything) */
     if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
@@ -8036,7 +8038,9 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         }
     }
 
-    /* Layer 2: Creatures (standing on the floor, above items) */
+    /* Layer 2: Creatures (standing on the floor, above items). ReDMCSB
+     * DUNVIEW.C:5244-5247: single centered creature waits until all
+     * object cells are drawn before rendering over the floor-object pass. */
     if (cell->creatureGroupCount > 0) {
         int gi;
         int groupCount = cell->creatureGroupCount;
