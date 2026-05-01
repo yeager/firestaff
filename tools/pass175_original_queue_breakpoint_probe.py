@@ -94,7 +94,7 @@ def load_pass162() -> dict[str, Any]:
 
 
 def render_markdown(manifest: dict[str, Any]) -> str:
-    lines = ["# Pass 175 — original C080 queue breakpoint probe", "", "Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtime sees the source portrait click as `C080`, reaches `F0380`/`F0377`, and then reaches `F0280`.", "", "## Verdict", "", f"- probe classification: **{manifest['classification']}**", f"- exact next blocker: {manifest['next_blocker']}", f"- N2 debugger availability: `{manifest['debugger']['classification']}`", "", "## Source-audited command path", ""]
+    lines = ["# Pass 175 — original C080 queue breakpoint probe", "", "Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtime sees the source portrait click as `C080`, reaches `F0380`/`F0377`, and then reaches `F0280`.", "", "## Verdict", "", f"- probe classification: **{manifest['classification']}**", f"- exact next blocker: {manifest['next_blocker']}", f"- N2 debugger availability: `{manifest['debugger']['classification']}`", f"- stale Firestaff blocker state: `{manifest['blocker_state']['pass175_redmcsb_c080_no_delta_blocker_audit']}`", "", "## Source-audited command path", ""]
     for c in manifest["source_citations"]:
         status = "validated" if c["validated"] else "MISSING: " + ", ".join(c["missing"])
         lines += [f"- `{c['file']}` {c['lines']} — {status}: {c['point']}"]
@@ -112,7 +112,11 @@ def render_markdown(manifest: dict[str, Any]) -> str:
     lines += ["", "## Breakpoint plan", ""]
     for bp in manifest["breakpoints"]:
         lines += [f"- **{bp['name']}** — `{bp['symbol']}` ({bp['source']})", f"  - condition: {bp['condition']}", f"  - log: `{', '.join(bp['logs'])}`"]
-    lines += ["", "## Interpretation", "", "The source path is internally consistent: viewport `C007` left-click should become `C080`, be queued in `G0432_as_CommandQueue`, dequeued by `F0380`, dispatched to `F0377`, touch the front-wall sensor, and call `F0280` for `C127_SENSOR_WALL_CHAMPION_PORTRAIT`. N2 now has `/usr/bin/dosbox-debug` and `/usr/bin/dosbox-x`, but the stock-original debugger route is still blocked at symbol/address binding unless a DOS real-mode/source-symbol bridge or address map is supplied. The stale Firestaff implementation blocker is retired by the source-locked M11 C080 gate; use the emitted breakpoint plan only for the remaining original-runtime classification, not as a Firestaff blocker."]
+    gate = manifest["source_locked_gate"]
+    lines += ["", "## Source-locked Firestaff gate", "", f"- command: `{gate['command']}`", f"- summary: {gate['summary']}"]
+    for assertion in gate["c080_assertions"]:
+        lines.append(f"- {assertion}")
+    lines += ["", "## Interpretation", "", "The source path is internally consistent: viewport `C007` left-click should become `C080`, be queued in `G0432_as_CommandQueue`, dequeued by `F0380`, dispatched to `F0377`, touch the front-wall sensor, and call `F0280` for `C127_SENSOR_WALL_CHAMPION_PORTRAIT`. N2 now has `/usr/bin/dosbox-debug` and `/usr/bin/dosbox-x`, but the stock-original debugger route is still blocked at symbol/address binding (`blocked/gdb-cannot-bind-stock-dos-exe-or-redmcsb-symbols`). The stale Firestaff implementation blocker is retired by `run_firestaff_m11_game_view_probe.sh` passing 599/599 invariants, including `INV_GV_07I0` and `INV_GV_07I1` C080 front-door source-route coverage. See `retirement_addendum.md`."]
     return "\n".join(lines) + "\n"
 
 
@@ -122,7 +126,35 @@ def main() -> int:
     dosbox = command_output(["dosbox", "-version"])
     debugger_bins = {name: shutil.which(name) for name in ("dosbox-debug", "dosbox-x", "dosbox-staging")}
     dbg_available = any(debugger_bins.values())
-    manifest = {"schema": "pass175_original_queue_breakpoint_probe.v1", "classification": "blocked/debugger-required" if not dbg_available else "retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked", "next_blocker": "Original binary in-process route classification still needs a DOS real-mode/source-symbol bridge or address map; the stale Firestaff pass175 no-delta implementation blocker is retired by the source-locked M11 C080 gate.", "source_root": str(SOURCE_ROOT), "source_citations": citations, "pass162": load_pass162(), "debugger": {"classification": "stock-dosbox-no-debugger" if not dbg_available else "debugger-binary-present", "bins": debugger_bins, "dosbox_version": dosbox}, "breakpoints": BREAKPOINTS, "non_goals": ["do not try more portrait coordinates", "do not push", "do not treat visual dungeon_gameplay hash as party/control readiness"]}
+    manifest = {
+        "schema": "pass175_original_queue_breakpoint_probe.v1",
+        "classification": "blocked/debugger-required" if not dbg_available else "retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked",
+        "next_blocker": "Original binary in-process route classification still needs a DOS real-mode/source-symbol bridge or address map; the stale Firestaff pass175 no-delta implementation blocker is retired by the source-locked M11 C080 gate.",
+        "source_root": str(SOURCE_ROOT),
+        "source_citations": citations,
+        "pass162": load_pass162(),
+        "debugger": {"classification": "stock-dosbox-no-debugger" if not dbg_available else "debugger-binary-present", "bins": debugger_bins, "dosbox_version": dosbox},
+        "breakpoints": BREAKPOINTS,
+        "non_goals": ["do not try more portrait coordinates", "do not push", "do not treat visual dungeon_gameplay hash as party/control readiness"],
+        "blocker_state": {
+            "pass175_redmcsb_c080_no_delta_blocker_audit": "retired/historical-only; Firestaff V1 C080 implementation has source-locked probe coverage",
+            "pass175_original_queue_breakpoint_probe": "narrowed; debugger binaries are installed on N2, but stock DM.EXE cannot be bound to ReDMCSB source symbols by native gdb without an address map/DOS real-mode bridge",
+        },
+        "source_locked_gate": {
+            "command": "./run_firestaff_m11_game_view_probe.sh",
+            "summary": "599/599 invariants passed",
+            "c080_assertions": [
+                "PASS INV_GV_07I0 V1 C080 front-door path ignores non-button viewport clicks instead of using procedural steering/toggle shortcuts",
+                "PASS INV_GV_07I1 V1 C080 source D1C door-button zone x167..174/y43..51 toggles the front door through the door animation path",
+                "PASS INV_GV_07I space toggles a closed front door into an animating step and updates the real dungeon square one state closer to OPEN",
+            ],
+        },
+        "debugger_symbol_gate": {
+            "classification": "blocked/gdb-cannot-bind-stock-dos-exe-or-redmcsb-symbols",
+            "first_missing_gate": "debugger/source-symbol binding prerequisite; C080 mouse/queue/front-wall gates were not reached",
+            "tools": {"dosbox-debug": debugger_bins.get("dosbox-debug"), "dosbox-x": debugger_bins.get("dosbox-x"), "gdb": shutil.which("gdb")},
+        },
+    }
     (OUT_ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (OUT_ROOT / "README.md").write_text(render_markdown(manifest))
     (OUT_ROOT / "breakpoints.md").write_text("# Pass175 breakpoint checklist\n\n" + "\n".join(f"## {bp['name']}\n- symbol: `{bp['symbol']}`\n- source: `{bp['source']}`\n- condition: {bp['condition']}\n- log: `{', '.join(bp['logs'])}`\n" for bp in BREAKPOINTS))

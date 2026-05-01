@@ -7,12 +7,13 @@ Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtim
 - probe classification: **retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked**
 - exact next blocker: Original binary in-process route classification still needs a DOS real-mode/source-symbol bridge or address map; the stale Firestaff pass175 no-delta implementation blocker is retired by the source-locked M11 C080 gate.
 - N2 debugger availability: `debugger-binary-present`
+- stale Firestaff blocker state: `retired/historical-only; Firestaff V1 C080 implementation has source-locked probe coverage`
 
 ## Source-audited command path
 
 - `COMMAND.C` 1-16 — validated: G0432_as_CommandQueue, first/last indices, queue lock, and pending-click globals are the original queue storage to watch.
 - `COMMAND.C` 108-114, 397-403 — validated: The movement secondary mouse table maps the viewport/zone C007 left-click to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.
-- `COMMAND.C` 1458-1662 — validated: F0365 records pending click fields, resolves primary/secondary mouse input into L1109_i_Command, and writes nonzero commands plus X/Y into G0432_as_CommandQueue.
+- `COMMAND.C` 1452-1662 — validated: F0359 (the actual ReDMCSB mouse-click queue writer; requested F0365 is turn-party handling in this tree) records pending click fields, resolves primary/secondary mouse input into L1109_i_Command, and writes nonzero commands plus X/Y into G0432_as_CommandQueue.
 - `COMMAND.C` 2045-2127, 2322-2324 — validated: F0380 dequeues command/X/Y from G0432_as_CommandQueue, unlocks/processes pending clicks, then dispatches C080 to F0377_COMMAND_ProcessType80_ClickInDungeonView.
 - `ENTRANCE.C` 850-883 — validated: F0441_STARTEND_ProcessEntrance discards input, waits on C099_MODE_WAITING_ON_ENTRANCE, processes keys, and calls F0380 each loop before loading the dungeon.
 - `CLIKVIEW.C` 311, 347-349, 405-431 — validated: F0377 is the C080 handler; PC builds subtract the viewport origin, then empty-hand C05 wall-ornament hits call F0372 to touch the front-wall sensor.
@@ -45,6 +46,14 @@ Purpose: stop coordinate guessing and isolate whether the original DM1 PC runtim
 - **front-wall portrait sensor** — `F0280_CHAMPION_AddCandidateChampionToParty` (MOVESENS.C:1501-1502 + REVIVE.C:63-150)
   - condition: break on F0280; expect P0596_ui_ChampionPortraitIndex/sensorData == 10 and G0305_ui_PartyChampionCount to advance after candidate setup.
   - log: `P0596_ui_ChampionPortraitIndex, G0415_ui_LeaderEmptyHanded, G0305_ui_PartyChampionCount, G0299_ui_CandidateChampionOrdinal`
+
+## Source-locked Firestaff gate
+
+- command: `./run_firestaff_m11_game_view_probe.sh`
+- summary: 599/599 invariants passed
+- PASS INV_GV_07I0 V1 C080 front-door path ignores non-button viewport clicks instead of using procedural steering/toggle shortcuts
+- PASS INV_GV_07I1 V1 C080 source D1C door-button zone x167..174/y43..51 toggles the front door through the door animation path
+- PASS INV_GV_07I space toggles a closed front door into an animating step and updates the real dungeon square one state closer to OPEN
 
 ## Interpretation
 
