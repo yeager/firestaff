@@ -11355,7 +11355,40 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                     &sideFloorRect, cell->floorOrnamentOrdinal,
                                     depthIndex, side);
         }
-        /* Multi-creature stacking with duplication in side cells.
+        /* Layer 1: Side-pane floor items.
+         * ReDMCSB F0115 draws objects before creatures for each processed
+         * view cell (DUNVIEW.C:4567-4577, 4820, 5201).  Side cells must
+         * keep the same object -> creature -> projectile stack as center
+         * cells; only the pane geometry differs. */
+        if (cell->floorItemCount > 0) {
+            int ii;
+            int itemArea = paneH / 3;
+            int itemBaseY = paneY + paneH - itemArea - 2;
+            for (ii = 0; ii < cell->floorItemCount; ++ii) {
+                if (cell->floorItemTypes[ii] < 0) continue;
+                if (!g_drawState ||
+                    !m11_draw_item_sprite(g_drawState, framebuffer,
+                                          framebufferWidth, framebufferHeight,
+                                          paneX + 1, itemBaseY,
+                                          paneW - 2, itemArea,
+                                          cell->floorItemTypes[ii],
+                                          cell->floorItemSubtypes[ii],
+                                          cell->floorItemCells[ii], ii,
+                                          depthIndex + 1,
+                                          -1)) {
+                    if (ii == 0) {
+                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      paneX + paneW / 2 - 2, paneY + paneH - 4,
+                                      5, 2, M11_COLOR_YELLOW);
+                    }
+                }
+            }
+        } else if (cell->summary.items > 0) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          paneX + paneW / 2 - 2, paneY + paneH - 4,
+                          5, 2, M11_COLOR_YELLOW);
+        }
+        /* Layer 2: Side-pane creatures.
          * Duplicate sprites with vertical offsets in narrow pane. */
         if (cell->creatureGroupCount > 0) {
             int gi;
@@ -11450,37 +11483,6 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                   badgeX, badgeY, countStr, &g_text_small);
                 }
             }
-        }
-        /* ── Side-pane item sprites ──
-         * DM1 draws item sprites in side cells similarly to front cells,
-         * just smaller to fit the narrower pane. */
-        if (cell->floorItemCount > 0) {
-            int ii;
-            int itemArea = paneH / 3;
-            int itemBaseY = paneY + paneH - itemArea - 2;
-            for (ii = 0; ii < cell->floorItemCount; ++ii) {
-                if (cell->floorItemTypes[ii] < 0) continue;
-                if (!g_drawState ||
-                    !m11_draw_item_sprite(g_drawState, framebuffer,
-                                          framebufferWidth, framebufferHeight,
-                                          paneX + 1, itemBaseY,
-                                          paneW - 2, itemArea,
-                                          cell->floorItemTypes[ii],
-                                          cell->floorItemSubtypes[ii],
-                                          cell->floorItemCells[ii], ii,
-                                          depthIndex + 1,
-                                          -1)) {
-                    if (ii == 0) {
-                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      paneX + paneW / 2 - 2, paneY + paneH - 4,
-                                      5, 2, M11_COLOR_YELLOW);
-                    }
-                }
-            }
-        } else if (cell->summary.items > 0) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          paneX + paneW / 2 - 2, paneY + paneH - 4,
-                          5, 2, M11_COLOR_YELLOW);
         }
         /* Side-pane projectile sprites: real GRAPHICS.DAT sprites */
         if (cell->summary.projectiles > 0) {

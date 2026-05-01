@@ -129,11 +129,30 @@ def verify_firestaff() -> list[str]:
         ],
         "Firestaff open-cell content stack",
     )
+    side_start, _side_end, side_body = find_function(text, "m11_draw_side_feature")
+    side = require_in_order(
+        side_body,
+        [
+            ("early open-cell guard", "if (m11_viewport_cell_is_open(cell))"),
+            ("side layer 0 floor ornaments", "/* Floor ornaments in side cells"),
+            ("side floor ornament draw", "m11_draw_floor_ornament"),
+            ("side layer 1 floor items", "/* Layer 1: Side-pane floor items"),
+            ("side item sprite draw", "m11_draw_item_sprite"),
+            ("side layer 2 creatures", "/* Layer 2: Side-pane creatures"),
+            ("side creature sprite draw", "m11_draw_creature_sprite_ex"),
+            ("side projectiles/effects", "/* Side-pane projectile sprites"),
+            ("side projectile draw", "m11_draw_projectile_sprite"),
+        ],
+        "Firestaff side-cell content stack",
+    )
+
     return [
         f"Firestaff m11_draw_wall_face starts at {FIRESTAFF_SRC}:{line_no(text, wall_start)}",
         *(f"Firestaff wall {name}: line {line_no(text, wall_start + pos)}" for name, pos in wall),
         f"Firestaff m11_draw_wall_contents starts at {FIRESTAFF_SRC}:{line_no(text, contents_start)}",
         *(f"Firestaff contents {name}: line {line_no(text, contents_start + pos)}" for name, pos in contents),
+        f"Firestaff m11_draw_side_feature starts at {FIRESTAFF_SRC}:{line_no(text, side_start)}",
+        *(f"Firestaff side {name}: line {line_no(text, side_start + pos)}" for name, pos in side),
     ]
 
 
