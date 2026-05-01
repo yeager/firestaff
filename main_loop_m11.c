@@ -209,6 +209,11 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
         "dm-pc34/DungeonMasterPC34Multilingual/TITLE",
         "dm-pc34/DungeonMasterPC34Multilingual/TITLE.DAT"
     };
+    static const char* homeSuffixes[] = {
+        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
+    };
 
     if (!outPath || outPathBytes == 0U) {
         return 0;
@@ -248,6 +253,22 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
             FSP_FileExists(candidate)) {
             snprintf(outPath, outPathBytes, "%s", candidate);
             return 1;
+        }
+    }
+
+    /* N2/Mac original-data fallback: V1 original mode must not silently skip
+     * the ReDMCSB TITLE path just because GRAPHICS.DAT/DUNGEON.DAT were found
+     * through the asset catalog while TITLE lives beside the canonical local
+     * DM1 anchors.  This mirrors the verified N2 layout and also works on a
+     * developer Mac if the same OpenClaw original-data tree is present. */
+    dataDir = getenv("HOME");
+    if (dataDir && dataDir[0] != '\0') {
+        for (i = 0U; i < sizeof(homeSuffixes) / sizeof(homeSuffixes[0]); ++i) {
+            if (FSP_JoinPath(candidate, sizeof(candidate), dataDir, homeSuffixes[i]) &&
+                FSP_FileExists(candidate)) {
+                snprintf(outPath, outPathBytes, "%s", candidate);
+                return 1;
+            }
         }
     }
     return 0;
@@ -577,6 +598,10 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         *outPlayedAnyFrame = 0;
     }
     if (!m11_find_title_dat_for_intro(menuState, titlePath, sizeof(titlePath))) {
+        fprintf(stderr,
+                "Firestaff V1 original TITLE intro skipped: no DM PC 3.4 TITLE file found; "
+                "set FIRESTAFF_TITLE_DAT or install the canonical original-data anchor at "
+                "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE.\n");
         return;
     }
     packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
@@ -611,6 +636,11 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                   NULL,
                                                   err,
                                                   sizeof(err))) {
+            fprintf(stderr,
+                    "Firestaff V1 original TITLE intro stopped: failed to render frame %u from %s: %s\n",
+                    d.renderFrameOrdinal,
+                    titlePath,
+                    err[0] ? err : "unknown TITLE decode error");
             break;
         }
         m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
