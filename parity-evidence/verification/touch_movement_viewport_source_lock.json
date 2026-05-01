@@ -391,6 +391,258 @@
     },
     {
       "button": "left",
+      "command": 30,
+      "name": "inventory.head",
+      "route_found": true,
+      "zone": 509
+    },
+    {
+      "button": "left",
+      "command": 31,
+      "name": "inventory.torso",
+      "route_found": true,
+      "zone": 510
+    },
+    {
+      "button": "left",
+      "command": 32,
+      "name": "inventory.legs",
+      "route_found": true,
+      "zone": 511
+    },
+    {
+      "button": "left",
+      "command": 33,
+      "name": "inventory.feet",
+      "route_found": true,
+      "zone": 512
+    },
+    {
+      "button": "left",
+      "command": 34,
+      "name": "inventory.pouch_2",
+      "route_found": true,
+      "zone": 513
+    },
+    {
+      "button": "left",
+      "command": 35,
+      "name": "inventory.quiver_line2_1",
+      "route_found": true,
+      "zone": 514
+    },
+    {
+      "button": "left",
+      "command": 36,
+      "name": "inventory.quiver_line1_2",
+      "route_found": true,
+      "zone": 515
+    },
+    {
+      "button": "left",
+      "command": 37,
+      "name": "inventory.quiver_line2_2",
+      "route_found": true,
+      "zone": 516
+    },
+    {
+      "button": "left",
+      "command": 38,
+      "name": "inventory.neck",
+      "route_found": true,
+      "zone": 517
+    },
+    {
+      "button": "left",
+      "command": 39,
+      "name": "inventory.pouch_1",
+      "route_found": true,
+      "zone": 518
+    },
+    {
+      "button": "left",
+      "command": 40,
+      "name": "inventory.quiver_line1_1",
+      "route_found": true,
+      "zone": 519
+    },
+    {
+      "button": "left",
+      "command": 41,
+      "name": "inventory.backpack_line1_1",
+      "route_found": true,
+      "zone": 520
+    },
+    {
+      "button": "left",
+      "command": 42,
+      "name": "inventory.backpack_line2_2",
+      "route_found": true,
+      "zone": 521
+    },
+    {
+      "button": "left",
+      "command": 43,
+      "name": "inventory.backpack_line2_3",
+      "route_found": true,
+      "zone": 522
+    },
+    {
+      "button": "left",
+      "command": 44,
+      "name": "inventory.backpack_line2_4",
+      "route_found": true,
+      "zone": 523
+    },
+    {
+      "button": "left",
+      "command": 45,
+      "name": "inventory.backpack_line2_5",
+      "route_found": true,
+      "zone": 524
+    },
+    {
+      "button": "left",
+      "command": 46,
+      "name": "inventory.backpack_line2_6",
+      "route_found": true,
+      "zone": 525
+    },
+    {
+      "button": "left",
+      "command": 47,
+      "name": "inventory.backpack_line2_7",
+      "route_found": true,
+      "zone": 526
+    },
+    {
+      "button": "left",
+      "command": 48,
+      "name": "inventory.backpack_line2_8",
+      "route_found": true,
+      "zone": 527
+    },
+    {
+      "button": "left",
+      "command": 49,
+      "name": "inventory.backpack_line2_9",
+      "route_found": true,
+      "zone": 528
+    },
+    {
+      "button": "left",
+      "command": 50,
+      "name": "inventory.backpack_line1_2",
+      "route_found": true,
+      "zone": 529
+    },
+    {
+      "button": "left",
+      "command": 51,
+      "name": "inventory.backpack_line1_3",
+      "route_found": true,
+      "zone": 530
+    },
+    {
+      "button": "left",
+      "command": 52,
+      "name": "inventory.backpack_line1_4",
+      "route_found": true,
+      "zone": 531
+    },
+    {
+      "button": "left",
+      "command": 53,
+      "name": "inventory.backpack_line1_5",
+      "route_found": true,
+      "zone": 532
+    },
+    {
+      "button": "left",
+      "command": 54,
+      "name": "inventory.backpack_line1_6",
+      "route_found": true,
+      "zone": 533
+    },
+    {
+      "button": "left",
+      "command": 55,
+      "name": "inventory.backpack_line1_7",
+      "route_found": true,
+      "zone": 534
+    },
+    {
+      "button": "left",
+      "command": 56,
+      "name": "inventory.backpack_line1_8",
+      "route_found": true,
+      "zone": 535
+    },
+    {
+      "button": "left",
+      "command": 57,
+      "name": "inventory.backpack_line1_9",
+      "route_found": true,
+      "zone": 536
+    },
+    {
+      "button": "left",
+      "command": 58,
+      "name": "inventory.chest_1",
+      "route_found": true,
+      "zone": 537
+    },
+    {
+      "button": "left",
+      "command": 59,
+      "name": "inventory.chest_2",
+      "route_found": true,
+      "zone": 538
+    },
+    {
+      "button": "left",
+      "command": 60,
+      "name": "inventory.chest_3",
+      "route_found": true,
+      "zone": 539
+    },
+    {
+      "button": "left",
+      "command": 61,
+      "name": "inventory.chest_4",
+      "route_found": true,
+      "zone": 540
+    },
+    {
+      "button": "left",
+      "command": 62,
+      "name": "inventory.chest_5",
+      "route_found": true,
+      "zone": 541
+    },
+    {
+      "button": "left",
+      "command": 63,
+      "name": "inventory.chest_6",
+      "route_found": true,
+      "zone": 542
+    },
+    {
+      "button": "left",
+      "command": 64,
+      "name": "inventory.chest_7",
+      "route_found": true,
+      "zone": 543
+    },
+    {
+      "button": "left",
+      "command": 65,
+      "name": "inventory.chest_8",
+      "route_found": true,
+      "zone": 544
+    },
+    {
+      "button": "left",
       "command": 70,
       "name": "inventory.mouth",
       "route_found": true,
@@ -960,6 +1212,402 @@
       "layout_696_rect": {
         "h": 16,
         "w": 16,
+        "x": 34,
+        "y": 26
+      },
+      "name": "inventory.head",
+      "zone": 509
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 34,
+        "y": 46
+      },
+      "name": "inventory.torso",
+      "zone": 510
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 34,
+        "y": 66
+      },
+      "name": "inventory.legs",
+      "zone": 511
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 34,
+        "y": 86
+      },
+      "name": "inventory.feet",
+      "zone": 512
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 6,
+        "y": 90
+      },
+      "name": "inventory.pouch_2",
+      "zone": 513
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 79,
+        "y": 73
+      },
+      "name": "inventory.quiver_line2_1",
+      "zone": 514
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 62,
+        "y": 90
+      },
+      "name": "inventory.quiver_line1_2",
+      "zone": 515
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 79,
+        "y": 90
+      },
+      "name": "inventory.quiver_line2_2",
+      "zone": 516
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 6,
+        "y": 33
+      },
+      "name": "inventory.neck",
+      "zone": 517
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 6,
+        "y": 73
+      },
+      "name": "inventory.pouch_1",
+      "zone": 518
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 62,
+        "y": 73
+      },
+      "name": "inventory.quiver_line1_1",
+      "zone": 519
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 66,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_1",
+      "zone": 520
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 83,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_2",
+      "zone": 521
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 100,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_3",
+      "zone": 522
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 117,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_4",
+      "zone": 523
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 134,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_5",
+      "zone": 524
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 151,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_6",
+      "zone": 525
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 168,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_7",
+      "zone": 526
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 185,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_8",
+      "zone": 527
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 202,
+        "y": 16
+      },
+      "name": "inventory.backpack_line2_9",
+      "zone": 528
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 83,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_2",
+      "zone": 529
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 100,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_3",
+      "zone": 530
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 117,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_4",
+      "zone": 531
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 134,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_5",
+      "zone": 532
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 151,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_6",
+      "zone": 533
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 168,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_7",
+      "zone": 534
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 185,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_8",
+      "zone": 535
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 202,
+        "y": 33
+      },
+      "name": "inventory.backpack_line1_9",
+      "zone": 536
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 117,
+        "y": 59
+      },
+      "name": "inventory.chest_1",
+      "zone": 537
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 106,
+        "y": 76
+      },
+      "name": "inventory.chest_2",
+      "zone": 538
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 111,
+        "y": 93
+      },
+      "name": "inventory.chest_3",
+      "zone": 539
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 128,
+        "y": 98
+      },
+      "name": "inventory.chest_4",
+      "zone": 540
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 145,
+        "y": 101
+      },
+      "name": "inventory.chest_5",
+      "zone": 541
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 162,
+        "y": 103
+      },
+      "name": "inventory.chest_6",
+      "zone": 542
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 179,
+        "y": 104
+      },
+      "name": "inventory.chest_7",
+      "zone": 543
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
+        "x": 196,
+        "y": 105
+      },
+      "name": "inventory.chest_8",
+      "zone": 544
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 16,
+        "w": 16,
         "x": 56,
         "y": 13
       },
@@ -978,7 +1626,7 @@
       "zone": 546
     }
   ],
-  "matrix_zone_count": 52,
+  "matrix_zone_count": 88,
   "non_claims": [
     "No input behavior is changed by this verifier.",
     "This does not source-lock V2 inventory art or HUD rendering behavior.",
@@ -1053,7 +1701,7 @@
   "scope": "DM1 V1 source-locked in-game UI hit-zone matrix for future touch/click abstraction",
   "source_citations": [
     "DEFS.H:197-211 defines MOUSE_INPUT command/box/button records",
-    "COMMAND.C:375-497 defines primary interface, movement, inventory, action, spell, and champion-name/hand mouse command-to-zone/button tables",
+    "COMMAND.C:375-506 defines primary interface, movement, inventory, action, spell, champion-name/hand, and chest mouse command-to-zone/button tables",
     "COMMAND.C:396-405 G0448_as_Graphic561_SecondaryMouseInput_Movement routes left/right movement and viewport/toggle commands to zones/buttons",
     "COMMAND.C:1403-1431 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans mouse-input entries and tests button/zone matches",
     "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",
