@@ -111,15 +111,15 @@ def main() -> int:
     )
     ok.append(f'ReDMCSB D1L/D1R wall-return evidence: {REDMCSB_DUNVIEW.name}:{line_no(red, d1l_start)}, {line_no(red, d1r_start)}')
 
-    helper_start, _helper_end, helper = find_function(text, 'm11_dm1_side_lane_wall_clear_before_depth')
+    helper_start, _helper_end, helper = find_function(text, 'm11_dm1_side_lane_clear_before_depth')
     for token in [
         'for (d = 0; d < depthIndex && d < 3; ++d)',
-        'm11_viewport_cell_is_wall_like(&cells[d][sideIndex])',
+        '!m11_viewport_cell_is_open(&cells[d][sideIndex])',
         'return 0;',
     ]:
         if token not in helper:
             raise AssertionError(f'Firestaff side-lane wall helper missing {token!r}')
-    rel_helper_start, _rel_helper_end, rel_helper = find_function(text, 'm11_dm1_side_lane_wall_clear_for_rel')
+    rel_helper_start, _rel_helper_end, rel_helper = find_function(text, 'm11_dm1_side_lane_clear_for_rel')
     for token in [
         'relSide == 0 || relForward <= 0',
         'relForward - 1',
@@ -127,7 +127,7 @@ def main() -> int:
     ]:
         if token not in rel_helper:
             raise AssertionError(f'Firestaff side-lane relative helper missing {token!r}')
-    ok.append(f'Firestaff side-lane wall occlusion helpers: m11_game_view.c:{line_no(text, helper_start)}, {line_no(text, rel_helper_start)}')
+    ok.append(f'Firestaff side-lane non-open occlusion helpers: m11_game_view.c:{line_no(text, helper_start)}, {line_no(text, rel_helper_start)}')
 
     contents_start, _contents_end, contents = find_function(text, 'm11_draw_dm1_side_contents')
     require_in_order(
@@ -135,7 +135,7 @@ def main() -> int:
         [
             ('side index selected', 'int sideIndex = side < 0 ? 0 : 2;'),
             ('open-cell guard', '!cell->valid || !m11_viewport_cell_is_open(cell)'),
-            ('near side-wall guard', '!m11_dm1_side_lane_wall_clear_before_depth(cells, depth, sideIndex)'),
+            ('near side-wall guard', '!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)'),
             ('item draw section', 'if (cell->floorItemCount > 0)'),
             ('creature draw section', 'if (cell->creatureGroupCount > 0)'),
             ('projectile draw section', 'if (cell->summary.projectiles > 0)'),
@@ -158,7 +158,7 @@ def main() -> int:
     )
     if '-1);' not in side_walls:
         raise AssertionError('Firestaff side wall blit does not pass -1 no-transparency key')
-    if 'm11_dm1_side_lane_wall_clear_for_rel(cells,' not in side_walls:
+    if 'm11_dm1_side_lane_clear_for_rel(cells,' not in side_walls:
         raise AssertionError('Firestaff side-wall panels are not guarded by same-lane near-wall occlusion')
     ok.append(f'Firestaff side-wall opaque far-to-near blits guarded by same-lane occlusion: m11_game_view.c:{line_no(text, side_walls_start)}')
 
@@ -167,7 +167,7 @@ def main() -> int:
         ornaments,
         [
             ('bounded replay limit', 'maxVisibleForwardLimit'),
-            ('same-lane guard', 'm11_dm1_side_lane_wall_clear_for_rel(cells,'),
+            ('same-lane guard', 'm11_dm1_side_lane_clear_for_rel(cells,'),
             ('sample side/front wall cell', 'm11_sample_viewport_cell(state, kWallOrnaments[i].relForward'),
             ('ornament asset blit', 'm11_blit_scaled_palette_map_maybe_flip'),
             ('alcove item draw', 'm11_draw_dm1_alcove_wall_items'),
@@ -181,7 +181,7 @@ def main() -> int:
         require_in_order(
             body,
             [
-                ('same-lane guard', 'm11_dm1_side_lane_wall_clear_for_rel(cells,'),
+                ('same-lane guard', 'm11_dm1_side_lane_clear_for_rel(cells,'),
                 ('sample side door cell', 'm11_sample_viewport_cell(state, kSpecs[i].relForward'),
             ],
             f'Firestaff {fn} same-lane near-wall guard',

@@ -114,7 +114,7 @@ def main() -> int:
         "int maxVisibleForward,",
         "const M11_ViewportCell cells[3][3]",
         "if (3 > maxVisibleForward ||",
-        "!m11_dm1_side_lane_wall_clear_for_rel(cells, 3, 1)",
+        "!m11_dm1_side_lane_clear_for_rel(cells, 3, 1)",
         "m11_sample_viewport_cell(state, 3, 1, &cell)",
     ], "Firestaff D3R door-button side-lane occlusion")
 
