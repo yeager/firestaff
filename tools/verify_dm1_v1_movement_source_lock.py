@@ -32,6 +32,7 @@ COMPAT_H = ROOT / "memory_movement_pc34_compat.h"
 ORCH_C = ROOT / "memory_tick_orchestrator_pc34_compat.c"
 PROBE_C = ROOT / "firestaff_m10_tick_orchestrator_probe.c"
 GROUP_PROBE_C = ROOT / "firestaff_m11_pass44_party_group_collision_probe.c"
+MOVEMENT_CORE_TEST_C = ROOT / "test_dm1_v1_movement_core_pc34_compat.c"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_movement_source_lock.json"
 
 
@@ -125,6 +126,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
     orch = ORCH_C.read_text()
     probe = PROBE_C.read_text()
     group_probe = GROUP_PROBE_C.read_text()
+    movement_core_test = MOVEMENT_CORE_TEST_C.read_text()
     checks: list[dict[str, Any]] = []
     impl_checks = [
         ("memory_movement_pc34_compat.c:F0700", c, ["return (currentDir + 1) & 3", "return (currentDir + 3) & 3"]),
@@ -175,6 +177,25 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "P44_F0708_EMPTY_PARTY_SKIPS_GROUP",
         "P44_F0708_TURNS_IGNORE_GROUPS",
         "P44_F0708_WALL_LEGALITY_WINS",
+    ]))
+    checks.append(require("test_dm1_v1_movement_core_pc34_compat.c:broad queue-to-move invariant", movement_core_test, [
+        "COMMAND.C:2045-2156",
+        "CLIKMENU.C:180-347",
+        "DUNGEON.C:1371-1391",
+        "forward key dispatches queued movement",
+        "movement gate keeps movement queued",
+        "projectile gate blocks matching absolute forward",
+        "projectile gate allows nonmatching right",
+        "turn dequeues while movement gate active",
+        "wall target blocks forward",
+        "closed door state blocks forward",
+        "one-fourth door passable",
+        "destroyed door passable",
+        "closed real fakewall blocks forward",
+        "open fakewall passable",
+        "imaginary fakewall passable",
+        "pit square passable by movement dispatch",
+        "teleporter square passable by movement dispatch",
     ]))
     return checks
 
