@@ -17845,38 +17845,17 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                       viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
     }
 
-    /* First source-bound wall passes: draw blocked side/front square
-     * panels using original wall-set bitmaps and original layout-696
-     * zones.  This is still narrower than full DUNVIEW.C: ornaments,
-     * doors, pits, stairs, fields, and exact object order remain next. */
-    /* one-shot map dump */
-    { static int mapDumped = 0;
-      if (!mapDumped && state && state->world.dungeon && state->world.dungeon->tilesLoaded) {
-          int mi = state->world.party.mapIndex;
-          int mw = (int)state->world.dungeon->maps[mi].width;
-          int mh = (int)state->world.dungeon->maps[mi].height;
-          int dy, dx;
-          for (dx = 0; dx < mw && dx < 20; dx++) fprintf(stderr, "%2d ", dx);
-          fprintf(stderr, "\n");
-          for (dy = 0; dy < mh && dy < 20; dy++) {
-              for (dx = 0; dx < mw && dx < 20; dx++) {
-                  unsigned char sq = 0;
-                  int ok = m11_get_square_byte(&state->world, mi, dx, dy, &sq);
-                  if (ok) {
-                      int et = (sq >> 5) & 7;
-                      char c = "WCPSDTF?"[et];
-                      if (dx == state->world.party.mapX && dy == state->world.party.mapY) c = '@';
-                      fprintf(stderr, " %c ", c);
-                  } else {
-                      fprintf(stderr, " . ");
-                  }
-              }
-              fprintf(stderr, "\n");
-          }
-          fflush(stderr);
-          mapDumped = 1;
-      }
-    }
+    /* ── Viewport draw order ──
+     * ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near:
+     *   D3L2/D3R2 → D3L/D3R/D3C → D2L2/D2R2 → D2L/D2R/D2C → D1L/D1R/D1C → D0L/D0R/D0C
+     * Each square draws walls + ornaments + doors, then objects/creatures
+     * before moving to the next nearer depth.
+     *
+     * Current Firestaff V1 still batches by primitive class (all side walls,
+     * then all front walls, etc) because each draw function has an internal
+     * depth loop.  The blocking-center-depth replay pass below compensates
+     * for the main known occlusion artefact (far center doors/items bleeding
+     * through nearer side walls). */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
                              maxVisibleForward, cells);
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -17903,12 +17882,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
 
-    /* ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near
-     * (D3 side/center, then D2 side/center, then D1 side/center).
-     * Firestaff current V1 renderer still batches by primitive class.
-     * After drawing a blocking center door/wall at D2C or D3C, replay only
-     * the nearer side layers so farther center doors/buttons/items cannot
-     * bleed through near side-wall/door occluders. */
+    /* Occlusion compensation: when a blocking center wall/door exists at
+     * depth N, redraw the nearer side layers (depth < N) so they correctly
+     * occlude any far-depth center doors/buttons/items that were drawn
+     * during the batched center pass above. */
     {
         int blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
         if (blockingCenterDepth > 0) {
