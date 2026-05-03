@@ -37,7 +37,7 @@ def main() -> int:
         "M11_GFX_WALLSET0_D1R",
         "M11_GFX_WALLSET0_D0R",
         "m11_draw_dm1_wall_blit_with_transparency",
-        "-1);",
+        "-1,",  # transparency key = -1 (opaque), may have trailing args
         "real tan wall texel",
     ]
     missing = [needle for needle in required if needle not in body]

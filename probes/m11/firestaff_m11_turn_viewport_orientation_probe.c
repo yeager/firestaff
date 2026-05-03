@@ -257,11 +257,13 @@ int main(int argc, char** argv) {
         fprintf(stderr, "failed to open DM1 game view\n");
         return 1;
     }
-    snapshot(&game, "start_south", M11_GAME_INPUT_REDRAW, &rows[0]);
+    /* Party starts on map 2 (level 2), (1,3) facing north (dir=0).
+     * ReDMCSB party-location 0x0861: dir=0(N), mapIdx=2, y=3, x=1. */
+    snapshot(&game, "start_north", M11_GAME_INPUT_REDRAW, &rows[0]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
-    snapshot(&game, "turn_right_west", result, &rows[1]);
+    snapshot(&game, "turn_right_east", result, &rows[1]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
-    snapshot(&game, "move_forward_west", result, &rows[2]);
+    snapshot(&game, "move_forward_east", result, &rows[2]);
     M11_GameView_Shutdown(&game);
 
     if (!open_game(dataDir, &menu, &game)) {
@@ -269,15 +271,15 @@ int main(int argc, char** argv) {
         return 1;
     }
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
-    snapshot(&game, "turn_left_east", result, &rows[3]);
+    snapshot(&game, "turn_left_west", result, &rows[3]);
     M11_GameView_Shutdown(&game);
 
     if (!open_game(dataDir, &menu, &game)) {
-        fprintf(stderr, "failed to reopen DM1 game view for blocked move probe\n");
+        fprintf(stderr, "failed to reopen DM1 game view for forward move probe\n");
         return 1;
     }
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
-    snapshot(&game, "blocked_forward_south_wall", result, &rows[4]);
+    snapshot(&game, "move_forward_north", result, &rows[4]);
 
     if (rows[0].result != M11_GAME_INPUT_REDRAW ||
         rows[1].result != M11_GAME_INPUT_REDRAW ||
@@ -285,40 +287,50 @@ int main(int argc, char** argv) {
         rows[3].result != M11_GAME_INPUT_REDRAW ||
         rows[4].result != M11_GAME_INPUT_REDRAW) ok = 0;
 
-    if (rows[0].mapIndex != 0 || rows[0].mapX != 1 || rows[0].mapY != 3 || rows[0].direction != DIR_SOUTH) ok = 0;
-    if (rows[1].mapIndex != 0 || rows[1].mapX != 1 || rows[1].mapY != 3 || rows[1].direction != DIR_WEST) ok = 0;
-    if (rows[2].mapIndex != 0 || rows[2].mapX != 0 || rows[2].mapY != 3 || rows[2].direction != DIR_WEST) ok = 0;
-    if (rows[3].mapIndex != 0 || rows[3].mapX != 1 || rows[3].mapY != 3 || rows[3].direction != DIR_EAST) ok = 0;
-    if (rows[4].mapIndex != 0 || rows[4].mapX != 1 || rows[4].mapY != 3 || rows[4].direction != DIR_SOUTH) ok = 0;
+    /* Party starts on map 2, (1,3), facing north (dir=0).
+     * After turn right: east (1). After move forward east: (2,3).
+     * Fresh game turn left: west (3). Fresh game move forward north: (1,2). */
+    if (rows[0].mapIndex != 2 || rows[0].mapX != 1 || rows[0].mapY != 3 || rows[0].direction != DIR_NORTH) ok = 0;
+    if (rows[1].mapIndex != 2 || rows[1].mapX != 1 || rows[1].mapY != 3 || rows[1].direction != DIR_EAST) ok = 0;
+    if (rows[2].mapIndex != 2 || rows[2].mapX != 2 || rows[2].mapY != 3 || rows[2].direction != DIR_EAST) ok = 0;
+    if (rows[3].mapIndex != 2 || rows[3].mapX != 1 || rows[3].mapY != 3 || rows[3].direction != DIR_WEST) ok = 0;
+    if (rows[4].mapIndex != 2 || rows[4].mapX != 1 || rows[4].mapY != 2 || rows[4].direction != DIR_NORTH) ok = 0;
 
-    if (rows[0].center.mapX != 1 || rows[0].center.mapY != 4) ok = 0;
-    if (rows[0].left.mapX != 2 || rows[0].left.mapY != 4) ok = 0;
-    if (rows[0].right.mapX != 0 || rows[0].right.mapY != 4) ok = 0;
-    if (rows[1].center.mapX != 0 || rows[1].center.mapY != 3) ok = 0;
-    if (rows[1].left.mapX != 0 || rows[1].left.mapY != 4) ok = 0;
-    if (rows[1].right.mapX != 0 || rows[1].right.mapY != 2) ok = 0;
-    if (rows[2].center.mapX != -1 || rows[2].center.mapY != 3) ok = 0;
-    if (rows[2].left.mapX != -1 || rows[2].left.mapY != 4) ok = 0;
-    if (rows[2].right.mapX != -1 || rows[2].right.mapY != 2) ok = 0;
-    if (rows[3].center.mapX != 2 || rows[3].center.mapY != 3) ok = 0;
-    if (rows[3].left.mapX != 2 || rows[3].left.mapY != 2) ok = 0;
-    if (rows[3].right.mapX != 2 || rows[3].right.mapY != 4) ok = 0;
-    if (rows[4].center.mapX != 1 || rows[4].center.mapY != 4) ok = 0;
-    if (rows[4].left.mapX != 2 || rows[4].left.mapY != 4) ok = 0;
-    if (rows[4].right.mapX != 0 || rows[4].right.mapY != 4) ok = 0;
+    /* Facing north: center=(1,2), left=(0,2), right=(2,2) */
+    if (rows[0].center.mapX != 1 || rows[0].center.mapY != 2) ok = 0;
+    if (rows[0].left.mapX != 0 || rows[0].left.mapY != 2) ok = 0;
+    if (rows[0].right.mapX != 2 || rows[0].right.mapY != 2) ok = 0;
+    /* Facing east: center=(2,3), left=(2,2), right=(2,4) */
+    if (rows[1].center.mapX != 2 || rows[1].center.mapY != 3) ok = 0;
+    if (rows[1].left.mapX != 2 || rows[1].left.mapY != 2) ok = 0;
+    if (rows[1].right.mapX != 2 || rows[1].right.mapY != 4) ok = 0;
+    /* After move east to (2,3): center=(3,3), left=(3,2), right=(3,4) */
+    if (rows[2].center.mapX != 3 || rows[2].center.mapY != 3) ok = 0;
+    if (rows[2].left.mapX != 3 || rows[2].left.mapY != 2) ok = 0;
+    if (rows[2].right.mapX != 3 || rows[2].right.mapY != 4) ok = 0;
+    /* Facing west: center=(0,3), left=(0,4), right=(0,2) */
+    if (rows[3].center.mapX != 0 || rows[3].center.mapY != 3) ok = 0;
+    if (rows[3].left.mapX != 0 || rows[3].left.mapY != 4) ok = 0;
+    if (rows[3].right.mapX != 0 || rows[3].right.mapY != 2) ok = 0;
+    /* Move forward north from (1,3): (1,2); center=(1,1), left=(0,1), right=(2,1) */
+    if (rows[4].center.mapX != 1 || rows[4].center.mapY != 1) ok = 0;
+    if (rows[4].left.mapX != 0 || rows[4].left.mapY != 1) ok = 0;
+    if (rows[4].right.mapX != 2 || rows[4].right.mapY != 1) ok = 0;
 
+    /* On map 2 (31x32) all D1 cells should be valid (inside map bounds). */
     if (!rows[0].left.valid || !rows[0].center.valid || !rows[0].right.valid ||
         !rows[1].left.valid || !rows[1].center.valid || !rows[1].right.valid ||
-        rows[2].left.valid || rows[2].center.valid || rows[2].right.valid ||
+        !rows[2].left.valid || !rows[2].center.valid || !rows[2].right.valid ||
         !rows[3].left.valid || !rows[3].center.valid || !rows[3].right.valid ||
         !rows[4].left.valid || !rows[4].center.valid || !rows[4].right.valid) ok = 0;
 
     if (rows[0].viewportRowCount != 19 || rows[1].viewportRowCount != 19 || rows[2].viewportRowCount != 19 ||
         rows[3].viewportRowCount != 19 || rows[4].viewportRowCount != 19) ok = 0;
-    if (rows[0].viewportRows[15].mapX != 1 || rows[0].viewportRows[15].mapY != 4) ok = 0;
-    if (rows[1].viewportRows[15].mapX != 0 || rows[1].viewportRows[15].mapY != 3) ok = 0;
-    if (rows[2].viewportRows[15].mapX != -1 || rows[2].viewportRows[15].mapY != 3) ok = 0;
-    if (rows[4].viewportRows[15].mapX != 1 || rows[4].viewportRows[15].mapY != 4) ok = 0;
+    /* D1C (row 15) = 1 step forward from party position. */
+    if (rows[0].viewportRows[15].mapX != 1 || rows[0].viewportRows[15].mapY != 2) ok = 0;  /* N from (1,3) */
+    if (rows[1].viewportRows[15].mapX != 2 || rows[1].viewportRows[15].mapY != 3) ok = 0;  /* E from (1,3) */
+    if (rows[2].viewportRows[15].mapX != 3 || rows[2].viewportRows[15].mapY != 3) ok = 0;  /* E from (2,3) */
+    if (rows[4].viewportRows[15].mapX != 1 || rows[4].viewportRows[15].mapY != 1) ok = 0;  /* N from (1,2) */
 
     if (!write_outputs(outDir, rows, 5)) ok = 0;
     M11_GameView_Shutdown(&game);

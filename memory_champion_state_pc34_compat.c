@@ -146,12 +146,13 @@ int F0601_CHAMPION_InitPartyFromDungeon_Compat(
     memset(party, 0, sizeof(*party));
 
     /* Decode initial party location from header */
+    { int mapIdx = 0;
     F0501_DUNGEON_DecodePartyLocation_Compat(
-        dungeon->header.initialPartyLocation, &dir, &py, &px);
+        dungeon->header.initialPartyLocation, &mapIdx, &dir, &py, &px);
 
-    party->mapIndex = 0;  /* Party starts on map 0 */
+    party->mapIndex = mapIdx;
     party->mapX = px;
-    party->mapY = py;
+    party->mapY = py; }
     party->direction = dir;
     party->activeChampionIndex = -1;  /* No champion active yet */
     party->championCount = 0;

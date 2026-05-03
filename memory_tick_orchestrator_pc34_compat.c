@@ -846,12 +846,13 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     if (!F0881_WORLD_InitDefault_Compat(outWorld, seed)) goto fail;
 
     /* Initial party location from dungeon header. */
+    { int mapIdx = 0;
     F0501_DUNGEON_DecodePartyLocation_Compat(
-        dungeon->header.initialPartyLocation, &direction, &py, &px);
-    outWorld->party.mapIndex = 0;
+        dungeon->header.initialPartyLocation, &mapIdx, &direction, &py, &px);
+    outWorld->party.mapIndex = mapIdx;
     outWorld->party.mapX = px;
     outWorld->party.mapY = py;
-    set_party_direction_redmcsb_compat(&outWorld->party, direction);
+    set_party_direction_redmcsb_compat(&outWorld->party, direction); }
     outWorld->partyMapIndex = 0;
 
     /* Schedule an initial watchdog / generator-placeholder event at tick 1

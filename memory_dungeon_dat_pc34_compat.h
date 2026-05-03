@@ -123,6 +123,7 @@ void F0500_DUNGEON_FreeDatHeader_Compat(
  */
 void F0501_DUNGEON_DecodePartyLocation_Compat(
     unsigned short partyLocation,
+    int* outMapIndex,
     int* outDirection,
     int* outY,
     int* outX);

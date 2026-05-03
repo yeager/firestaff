@@ -13,7 +13,6 @@
 #include "menu_startup_render_modern_m12.h"
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
-#include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
 #include "title_frontend_v1.h"
 #include "asset_status_m12.h"
@@ -143,6 +142,10 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
         requestedWindowMode = actualWindowMode;
         menuState->settings.windowModeIndex = actualWindowMode;
     }
+    /* Palette level sync: only apply during menu screens.  When a game
+     * view is active the game itself owns the palette level (e.g. full
+     * brightness after entrance transition).  The caller must skip this
+     * function or the game view must not be active. */
     if (M11_Render_GetPaletteLevel() != M12_StartupMenu_GetRenderPaletteLevel(menuState)) {
         M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
     }
@@ -427,8 +430,10 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     dungeonFrame = (unsigned char*)malloc((size_t)M11_FB_BYTES);
     if (!dungeonFrame) return 0;
 
-    M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
-    memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
+    /* Render dungeon viewport into the off-screen buffer, NOT the visible
+     * framebuffer.  The entrance screen must be shown first; the dungeon
+     * frame is only revealed when the doors open. */
+    M11_GameView_Draw(gameView, dungeonFrame, M11_FB_WIDTH, M11_FB_HEIGHT);
 
     /* ReDMCSB ENTRANCE.C source-lock:
      * - F0441_STARTEND_ProcessEntrance() waits in entrance mode until C200.
@@ -497,8 +502,28 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
         }
         if (M11_Render_PumpEvents()) break;
     }
+    /* ReDMCSB ENTRANCE.C:362-368 draws the final dungeon view after
+     * the door animation completes; then returns to STARTUP1.C which
+     * loads the real dungeon, sets the game palette, and starts.
+     * Replicate that transition: fade from entrance palette to the
+     * normal dungeon palette over several frames so there's no abrupt
+     * color flash. */
     memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-    M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    {
+        /* Smooth palette crossfade: entrance → dungeon over ~8 frames
+         * (~130 ms).  Each step blends the entrance palette with the
+         * normal game palette using linear interpolation. */
+        const int fadeSteps = 8;
+        int fadeI;
+        for (fadeI = 0; fadeI <= fadeSteps; fadeI++) {
+            M11_Render_PresentIndexedWithPaletteFade(
+                framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                VGA_PALETTE_PC34_SPECIAL_ENTRANCE,
+                fadeI, fadeSteps);
+            SDL_Delay(16);
+            if (M11_Render_PumpEvents()) break;
+        }
+    }
     free(dungeonFrame);
     return 1;
 }
@@ -543,8 +568,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void) {
                  * CREDITS 248..293,187..199.  COMMAND.C:346-350 adds
                  * C434 quit for later media as a separate zone, not ENTER. */
                 if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
-                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_ENTER; /* RESUME = enter/continue game */
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT; /* CREDITS */
                 continue;
             }
             if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
@@ -564,8 +589,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void) {
                 if (ev.button.button != SDL_BUTTON_LEFT) continue;
                 if (!M11_Render_MapWindowToFramebuffer(ev.button.x, ev.button.y, &fbX, &fbY)) continue;
                 if (fbX >= 244 && fbX <= 298 && fbY >= 45 && fbY <= 58) return M11_ENTRANCE_COMMAND_ENTER;
-                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_QUIT;
-                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT;
+                if (fbX >= 244 && fbX <= 298 && fbY >= 76 && fbY <= 93) return M11_ENTRANCE_COMMAND_ENTER; /* RESUME = enter/continue game */
+                if (fbX >= 248 && fbX <= 293 && fbY >= 187 && fbY <= 199) return M11_ENTRANCE_COMMAND_QUIT; /* CREDITS */
                 continue;
             }
             if (ev.type == SDL_WINDOWEVENT &&
@@ -585,17 +610,68 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void) {
     }
 }
 
+/* ── Swoosh transition removed ──────────────────────────────────────
+ * ReDMCSB PC 3.4: SWOOSH.EXE ran before GAME.EXE.  It displayed the
+ * FTL Games logo.  Placeholder removed; will be re-added when real
+ * FTL logo bitmap is extracted from SWOOSH.EXE (LZEXE 0.91). */
+
+
+
+
+
+/* Title intro callback: converts each TITLE.DAT frame to RGBA using
+ * the embedded per-frame palette and presents it directly. */
+typedef struct M11_TitleIntroState {
+    int played;
+    int aborted;
+} M11_TitleIntroState;
+
+static int m11_title_intro_callback(const V1_TitleRenderFrame* frame,
+                                    void* userData,
+                                    char* errMsg,
+                                    size_t errMsgBytes) {
+    M11_TitleIntroState* st = (M11_TitleIntroState*)userData;
+    unsigned char* rgba;
+    unsigned int i;
+    unsigned int pixelCount;
+    (void)errMsg;
+    (void)errMsgBytes;
+    if (!st || !frame || !frame->colorIndices || !frame->palette) return 1;
+    if (frame->width != 320u || frame->height != 200u) return 1;
+    if (st->aborted) return 0;
+
+    pixelCount = frame->width * frame->height;
+    rgba = (unsigned char*)malloc((size_t)pixelCount * 4u);
+    if (!rgba) return 1;
+
+    /* Convert indexed frame to RGBA using the embedded TITLE palette */
+    for (i = 0; i < pixelCount; ++i) {
+        unsigned char idx = frame->colorIndices[i] & 0x0fu;
+        rgba[i * 4 + 0] = frame->palette->rgba[idx][0];
+        rgba[i * 4 + 1] = frame->palette->rgba[idx][1];
+        rgba[i * 4 + 2] = frame->palette->rgba[idx][2];
+        rgba[i * 4 + 3] = 0xFFu;
+    }
+
+    M11_Render_PresentRGBA(rgba, (int)frame->width, (int)frame->height);
+    free(rgba);
+    st->played = 1;
+
+    /* Cadence: ~50 ms per frame matches ReDMCSB TITLE.C vertical-blank
+     * gating.  Skip delay on the very last frame for a clean handoff. */
+    SDL_Delay(50);
+    if (M11_Render_PumpEvents()) {
+        st->aborted = 1;
+        return 0;
+    }
+    return 1;
+}
+
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
                                                       int* outPlayedAnyFrame) {
     char titlePath[FSP_PATH_MAX];
-    unsigned char* packedStorage;
-    unsigned char* packedScreen;
-    unsigned char* indexedScreen;
     char err[160];
-    unsigned int step;
-    V1_TitleFrontendSourceTiming timing;
-    M11_AudioState titleAudio;
-    int titleAudioInitialized = 0;
+    M11_TitleIntroState state;
 
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
@@ -607,73 +683,23 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                 "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE.\n");
         return;
     }
-    packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
-    indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES);
-    if (!packedStorage || !indexedScreen) {
-        free(packedStorage);
-        free(indexedScreen);
-        return;
-    }
-    packedScreen = packedStorage + 4U;
-    timing = V1_TitleFrontend_GetSourceTimingEvidence();
-    (void)timing;
 
-    memset(&titleAudio, 0, sizeof(titleAudio));
-    if (M11_Audio_Init(&titleAudio)) {
-        titleAudioInitialized = 1;
-        (void)M11_Audio_PlayTitleMusic(&titleAudio);
-    }
+    memset(&state, 0, sizeof(state));
+    err[0] = '\0';
 
-    /* ReDMCSB TITLE.C source-lock:
-     *   TITLE.C:430 draws PRESENTS.
-     *   TITLE.C:456 waits M526_WaitVerticalBlank() before each reverse-order
-     *               zoom blit to C425_ZONE_TITLE_CHAOS.
-     *   TITLE.C:460 delays 20 ticks.
-     *   TITLE.C:461 draws STRIKES BACK.
-     *   TITLE.C:463 final delay/guard before the next screen.
-     * Runtime uses the already decoded original 53-frame TITLE bank as the
-     * visible source and presents it before the launcher, instead of skipping
-     * straight to the menu. */
-    for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
-        V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
-        memset(packedStorage, 0, 4U + 32000U);
-        memset(indexedScreen, 0, (size_t)M11_FB_BYTES);
-        err[0] = '\0';
-        if (!V1_TitleFrontend_RenderFrameToScreen(titlePath,
-                                                  d.renderFrameOrdinal,
-                                                  packedScreen,
-                                                  NULL,
-                                                  err,
-                                                  sizeof(err))) {
-            fprintf(stderr,
-                    "Firestaff V1 original TITLE intro stopped: failed to render frame %u from %s: %s\n",
-                    d.renderFrameOrdinal,
-                    titlePath,
-                    err[0] ? err : "unknown TITLE decode error");
-            break;
-        }
-        m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
-        if (outPlayedAnyFrame) {
-            *outPlayedAnyFrame = 1;
-        }
-        M11_Render_PresentIndexed(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT);
-        /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
-         * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
-         * smash straight into the entrance screen.  The decoded TITLE.DAT
-         * bank has more visible frames than the source zoom loop, so use a
-         * deliberate 50 ms presentation cadence here instead of racing the
-         * launcher at full frame speed. */
-        SDL_Delay(50);
-        if (M11_Render_PumpEvents()) {
-            break;
-        }
+    /* Render all TITLE.DAT frames directly via callback, using the
+     * embedded per-frame palette for correct colors. */
+    if (!V1_Title_RenderFrames(titlePath, m11_title_intro_callback, &state, err, sizeof(err))) {
+        fprintf(stderr,
+                "Firestaff V1 original TITLE intro failed: %s\n",
+                err[0] ? err : "unknown TITLE decode error");
     }
-    SDL_Delay(500);
-    if (titleAudioInitialized) {
-        M11_Audio_Shutdown(&titleAudio);
+    if (outPlayedAnyFrame) {
+        *outPlayedAnyFrame = state.played;
     }
-    free(packedStorage);
-    free(indexedScreen);
+    if (state.played && !state.aborted) {
+        SDL_Delay(500);
+    }
 }
 
 static int m11_open_requested_launch(M11_GameViewState* gameView,
@@ -682,16 +708,6 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
-    if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
-        int titleIntroPlayed = 0;
-        /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle()
-         * before F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher
-         * front door, so the original TITLE animation and title-song/swoosh cue must
-         * run at the launcher->DM1 handoff, before the game view opens and before the
-         * entrance transition. */
-        m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
-        (void)titleIntroPlayed;
-    }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
         menuState->launchRequested = 0;
         (void)M11_Render_SetPaletteLevel(0);
@@ -699,6 +715,16 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             *idleAccumulatorMs = 0;
         }
         if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
+            /* ReDMCSB PC 3.4 launch sequence: SWOOSH → TITLE → Entrance.
+             * STARTUP1.C:143 F0437_STARTEND_DrawTitle, then
+             * STARTUP1.C:157 F0441_STARTEND_ProcessEntrance. */
+            /* Swoosh (FTL logo) removed — will re-add when real
+             * bitmap is extracted from SWOOSH.EXE. */
+            {
+                int titlePlayed = 0;
+                m11_play_redmcsb_title_intro_if_available(menuState, &titlePlayed);
+                (void)titlePlayed;
+            }
             if (!m11_play_redmcsb_entrance_transition(gameView)) {
                 M11_GameView_Shutdown(gameView);
                 M11_GameView_Init(gameView);
@@ -712,6 +738,10 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                 return 1;
             }
         }
+        /* ReDMCSB STARTUP1.C: after F0441 entrance completes, the game
+         * palette is set to full brightness for dungeon rendering.
+         * Level 0 = LIGHT0 = brightest in the VGA palette table. */
+        (void)M11_Render_SetPaletteLevel(0);
         M11_GameView_Draw(gameView,
                           M11_Render_GetFramebuffer(),
                           M11_FB_WIDTH,
@@ -1411,6 +1441,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     M11_GameView_Init(&gameView);
     M11_ApplyStartupMenuRuntime(&menuState);
+    /* Title intro moved to m11_open_requested_launch: it plays AFTER the
+     * user selects a game from the launcher menu, not before.  ReDMCSB
+     * STARTUP1.C:143 calls F0437_STARTEND_DrawTitle() during startup init,
+     * but the PC 3.4 flow was SWOOSH.EXE → TITLE → Entrance, all triggered
+     * by launching the game, not by powering on the launcher. */
     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
 
     /* Compute deadlines using millisecond ticks. SDL_GetTicks returns

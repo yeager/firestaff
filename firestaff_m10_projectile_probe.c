@@ -1363,12 +1363,13 @@ int main(int argc, char* argv[]) {
         if (F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon)
             && F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon)) {
             int py, px, pd;
+            { int mapIdx = 0;
             F0501_DUNGEON_DecodePartyLocation_Compat(
                 dungeon.header.initialPartyLocation,
-                &pd, &py, &px);
+                &mapIdx, &pd, &py, &px);
             partyX   = px;
             partyY   = py;
-            partyDir = pd;
+            partyDir = pd; (void)mapIdx; }
 
             if (dungeon.header.mapCount > 0 && dungeon.tiles != NULL
                 && dungeon.tiles[0].squareData != NULL) {

@@ -78,11 +78,18 @@ static void decode_map_bitfield_d(unsigned short raw,
 
 void F0501_DUNGEON_DecodePartyLocation_Compat(
         unsigned short partyLocation,
+        int* outMapIndex,
         int* outDirection,
         int* outY,
         int* outX)
 {
-        *outDirection = (partyLocation >> 10) & 0x03;
+        /* ReDMCSB DUNGEON.C F0173/F0501 party-position word layout:
+         *   bits 14-15: direction (0=N,1=E,2=S,3=W)
+         *   bits 10-13: mapIndex  (4 bits)
+         *   bits  5-9:  mapY      (5 bits)
+         *   bits  0-4:  mapX      (5 bits) */
+        *outDirection = (partyLocation >> 14) & 0x03;
+        *outMapIndex  = (partyLocation >> 10) & 0x0F;
         *outY         = (partyLocation >> 5)  & 0x1F;
         *outX         =  partyLocation        & 0x1F;
 }

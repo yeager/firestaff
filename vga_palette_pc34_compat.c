@@ -133,6 +133,26 @@ const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_
                 {219, 182, 146}, {  0, 219,   0}, {  0, 146,   0}, {  0, 182,   0},
                 {146, 109,  73}, {255,   0,   0}, {182, 146, 109}, {109,  73,  36},
                 { 73,  73,  73}, {182, 182, 182}, {109,  36,   0}, {255, 255, 255}
+        },
+        /* VGA_PALETTE_PC34_SPECIAL_TITLE — ReDMCSB TITLE.C:191-198
+         * "DUNGEON MASTER" title screen palette.  Starts as all-dark-blue
+         * (TITLE.C:113), then sets gold/brown/red/yellow/white entries for
+         * the zooming title text.  Values from Amiga 4-bit 0xRGB constants
+         * in DEFS.H, converted to 8-bit: nibble * 17. */
+        {
+                {  0,   0,   0}, {  0,   0,  68}, {  0,   0,  68}, {170, 136,  34},
+                {136,  68,  34}, {204, 170,  34}, {170, 102,  34}, {  0,   0,  68},
+                {255, 255,  68}, {  0,   0,  68}, {  0,   0,  68}, {  0,   0,  68},
+                {  0,   0,  68}, {  0,   0,  68}, {  0,   0,  68}, {255,   0,   0}
+        },
+        /* VGA_PALETTE_PC34_SPECIAL_SWOOSH — FTL Games logo.
+         * Dark blue background with white/light-blue for the FTL text.
+         * ReDMCSB G1055_aui_Palette_Swoosh (STARTUP1.C:274). */
+        {
+                {  0,   0,   0}, {  0,   0,  68}, {  0,   0, 136}, {  0,   0, 204},
+                { 68,  68, 204}, {136, 136, 255}, {170, 170, 255}, {204, 204, 255},
+                {255, 255, 255}, {  0,   0,  68}, {  0,   0,  68}, {  0,   0,  68},
+                {  0,   0,  68}, {  0,   0,  68}, {  0,   0,  68}, {255, 255, 255}
         }
 };
 

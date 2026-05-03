@@ -117,6 +117,16 @@ int  M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffe
                                                  int logicalHeight,
                                                  int specialPalette);
 
+/* Present an indexed framebuffer with a crossfade from a special palette
+ * to the normal game palette.  fadeStep/fadeSteps controls the blend:
+ * fadeStep==0 is pure special palette, fadeStep==fadeSteps is pure game. */
+int  M11_Render_PresentIndexedWithPaletteFade(const unsigned char* framebuffer,
+                                              int logicalWidth,
+                                              int logicalHeight,
+                                              int specialPalette,
+                                              int fadeStep,
+                                              int fadeSteps);
+
 /* Present a caller-owned 32-bit RGBA framebuffer directly, skipping the
  * VGA palette lookup. Used by the modern high-resolution true-color
  * startup-menu renderer. Pixel format is R, G, B, A in memory order

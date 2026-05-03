@@ -50,8 +50,9 @@ int main(int argc, char* argv[]) {
                 return 1;
         }
 
+        { int mapIdx = 0;
         F0501_DUNGEON_DecodePartyLocation_Compat(
-                state.header.initialPartyLocation, &dir, &py, &px);
+                state.header.initialPartyLocation, &mapIdx, &dir, &py, &px); (void)mapIdx; }
 
         fprintf(report, "# DUNGEON.DAT Header Probe\n\n");
         fprintf(report, "File size: %ld bytes\n\n", state.fileSize);

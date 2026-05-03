@@ -156,7 +156,7 @@ def main() -> int:
         ],
         'Firestaff side wall far-to-near opaque blits',
     )
-    if '-1);' not in side_walls:
+    if '-1,' not in side_walls and '-1);' not in side_walls:
         raise AssertionError('Firestaff side wall blit does not pass -1 no-transparency key')
     if 'm11_dm1_side_lane_clear_for_rel(cells,' not in side_walls:
         raise AssertionError('Firestaff side-wall panels are not guarded by same-lane near-wall occlusion')

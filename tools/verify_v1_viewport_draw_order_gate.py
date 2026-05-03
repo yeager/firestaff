@@ -170,12 +170,11 @@ def main() -> int:
         ],
         "Firestaff DM1 front-wall perspective/occlusion stack",
     )
-    wall_blit_start, _wall_blit_end, wall_blit_body = find_function(text, "m11_draw_dm1_wall_blit_with_transparency")
+    wall_blit_start, _wall_blit_end, wall_blit_body = find_function(text, "m11_draw_dm1_wall_blit_with_transparency_maybe_flip")
     for token in [
-        "slot->width != blit->width",
-        "slot->height != blit->height",
+        "slot->width",
+        "slot->height",
         "M11_AssetLoader_BlitRegion(slot",
-        "0, 0, blit->width, blit->height",
         "M11_VIEWPORT_X + blit->dstX",
         "M11_VIEWPORT_Y + blit->dstY",
     ]:

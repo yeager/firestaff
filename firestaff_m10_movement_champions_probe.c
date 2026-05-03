@@ -67,8 +67,9 @@ int main(int argc, char* argv[]) {
     }
 
     /* Decode expected values */
+    { int mapIdx = 0;
     F0501_DUNGEON_DecodePartyLocation_Compat(
-        dungeon.header.initialPartyLocation, &dir, &py, &px);
+        dungeon.header.initialPartyLocation, &mapIdx, &dir, &py, &px); (void)mapIdx; }
 
     /* ---- Write report ---- */
     snprintf(path_buf, sizeof(path_buf), "%s/movement_champions_probe.md", argv[2]);

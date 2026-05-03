@@ -188,9 +188,12 @@ int main(int argc, char** argv) {
             if (result != steps[i].expectResult) ok = 0;
         }
     }
-    if (rows[0].mapIndex != 0 || rows[0].mapX != 1 || rows[0].mapY != 3 || rows[0].direction != 2) ok = 0;
-    if (rows[1].direction != 3) ok = 0;
-    if (rows[2].mapX != 0 || rows[2].mapY != 3 || rows[2].direction != 3) ok = 0;
+    /* Party starts on map 2 (level 2), x=1, y=3, facing north (dir=0).
+     * ReDMCSB party-location word 0x0861: bits 14-15=dir=0, bits 10-13=mapIdx=2,
+     * bits 5-9=y=3, bits 0-4=x=1. */
+    if (rows[0].mapIndex != 2 || rows[0].mapX != 1 || rows[0].mapY != 3 || rows[0].direction != 0) ok = 0;
+    if (rows[1].direction != 1) ok = 0;  /* turn right: north(0) → east(1) */
+    if (rows[2].mapX != 2 || rows[2].mapY != 3 || rows[2].direction != 1) ok = 0;  /* move forward east: x=1→2 */
     if (!rows[3].spellPanelOpen || rows[3].spellRuneCount != 1) ok = 0;
     if (rows[4].spellPanelOpen != 0 || rows[4].spellRuneCount != 0) ok = 0;
     if (!rows[5].inventoryPanelActive) ok = 0;
