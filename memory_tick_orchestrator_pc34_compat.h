@@ -96,6 +96,9 @@
 #define CMD_REST_TOGGLE       0x20
 #define CMD_THROW_ITEM        0x21
 
+/* Sound indices (ReDMCSB SOUND.C / DM1 PC 3.4) */
+#define C08_SOUND_SWALLOW_COMPAT  0x08  /* mouth eat/drink sound */
+
 /* ================================================================
  *  Emission kinds (TickEmission.kind)
  * ================================================================ */

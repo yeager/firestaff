@@ -1248,11 +1248,73 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
 
         return 1;
     }
-    case CMD_USE_ITEM:
-    case CMD_EAT:
-    case CMD_DRINK:
+    case CMD_EAT: {
+        /* ReDMCSB PANEL.C F0349: food items (icons C168..C175) add to
+         * champion Food counter (max 2048).  commandArg1 = champion index,
+         * commandArg2 = food amount index (0=apple..7=dragon steak).
+         * In the compat orchestrator we apply the stat change directly;
+         * the UI layer handles inventory removal and mouth animation. */
+        static const int16_t foodAmounts[8] = {
+            500, 600, 650, 820, 550, 350, 990, 1400
+        };
+        int champIdx = input->commandArg1;
+        int foodIdx  = input->commandArg2;
+        if (champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY &&
+            world->party.champions[champIdx].present) {
+            int16_t amount = (foodIdx >= 0 && foodIdx < 8)
+                           ? foodAmounts[foodIdx] : 500;
+            int16_t newFood = world->party.champions[champIdx].food + amount;
+            if (newFood > 2048) newFood = 2048;
+            world->party.champions[champIdx].food = newFood;
+            emit(result, EMIT_SOUND_REQUEST, C08_SOUND_SWALLOW_COMPAT,
+                 champIdx, foodIdx, amount);
+        }
+        return 1;
+    }
+    case CMD_DRINK: {
+        /* ReDMCSB PANEL.C F0349: water items add 800, water flask potions
+         * add 1600 to champion Water counter (max 2048).
+         * commandArg1 = champion index, commandArg2 = water amount (0=800,
+         * 1=1600 for water flask potion). */
+        int champIdx = input->commandArg1;
+        if (champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY &&
+            world->party.champions[champIdx].present) {
+            int16_t amount = (input->commandArg2 == 1) ? 1600 : 800;
+            int16_t newWater = world->party.champions[champIdx].water + amount;
+            if (newWater > 2048) newWater = 2048;
+            world->party.champions[champIdx].water = newWater;
+            emit(result, EMIT_SOUND_REQUEST, C08_SOUND_SWALLOW_COMPAT,
+                 champIdx, 0, amount);
+        }
+        return 1;
+    }
     case CMD_THROW_ITEM: {
-        /* Deterministic no-op emission (RNG unchanged). */
+        /* ReDMCSB CHAMPION.C F0328: throw creates a projectile.
+         * commandArg1 = champion index, commandArg2 = side (0=left, 1=right).
+         * The compat orchestrator emits the throw event; projectile creation
+         * and kinetic energy calculation is handled by the projectile compat
+         * layer. Stamina cost: F0305_CHAMPION_GetThrowingStaminaCost. */
+        int champIdx = input->commandArg1;
+        int side     = input->commandArg2;
+        if (champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY &&
+            world->party.champions[champIdx].present) {
+            /* Deduct stamina (simplified: base cost = 12) */
+            int16_t staminaCost = 12;
+            int16_t newStamina = world->party.champions[champIdx].stamina.current
+                               - staminaCost;
+            if (newStamina < 0) newStamina = 0;
+            world->party.champions[champIdx].stamina.current = (uint16_t)newStamina;
+            /* Award throw skill XP */
+            emit(result, EMIT_XP_AWARD, champIdx, 10 /* C10_SKILL_THROW */, 8, 0);
+            emit(result, EMIT_SOUND_REQUEST, input->command, champIdx, side, 0);
+        }
+        return 1;
+    }
+    case CMD_USE_ITEM: {
+        /* ReDMCSB: item use is context-dependent (keys open doors, scrolls
+         * display text, torches light up).  The compat orchestrator emits
+         * the use event; the UI layer handles the specific item interaction.
+         * commandArg1 = champion index, commandArg2 = slot index. */
         emit(result, EMIT_SOUND_REQUEST, input->command,
              input->commandArg1, input->commandArg2, 0);
         return 1;

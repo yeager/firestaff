@@ -842,10 +842,17 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         return M12_MENU_INPUT_SPELL_CAST;
     }
     if (len == 5U && strncmp(token, "clear", len) == 0) return M12_MENU_INPUT_SPELL_CLEAR;
-    if ((len == 3U && strncmp(token, "use", len) == 0) ||
-        (len == 5U && strncmp(token, "drink", len) == 0) ||
-        (len == 3U && strncmp(token, "eat", len) == 0)) {
+    if (len == 3U && strncmp(token, "use", len) == 0) {
         return M12_MENU_INPUT_USE_ITEM;
+    }
+    if (len == 3U && strncmp(token, "eat", len) == 0) {
+        return M12_MENU_INPUT_EAT_ITEM;
+    }
+    if (len == 5U && strncmp(token, "drink", len) == 0) {
+        return M12_MENU_INPUT_DRINK_ITEM;
+    }
+    if (len == 5U && strncmp(token, "throw", len) == 0) {
+        return M12_MENU_INPUT_THROW_ITEM;
     }
     return M12_MENU_INPUT_NONE;
 }

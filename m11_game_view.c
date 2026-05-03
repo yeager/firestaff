@@ -4848,6 +4848,70 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     return M11_GAME_INPUT_REDRAW;
 }
 
+/* Helper: apply a tick with explicit commandArg1/commandArg2 */
+static int m11_apply_tick_with_args(M11_GameViewState* state,
+                                    uint8_t command,
+                                    uint8_t arg1,
+                                    uint8_t arg2,
+                                    const char* actionLabel) {
+    struct TickInput_Compat input;
+    if (!state || !state->active) return 0;
+    memset(&input, 0, sizeof(input));
+    input.tick = state->world.gameTick;
+    input.command = command;
+    input.commandArg1 = arg1;
+    input.commandArg2 = arg2;
+    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    {
+        int orchResult = F0884_ORCH_AdvanceOneTick_Compat(
+            &state->world, &input, &state->lastTickResult);
+        if (orchResult == ORCH_FAIL) {
+            m11_set_status(state, actionLabel, "REJECTED");
+            return 0;
+        }
+    }
+    state->lastWorldHash = state->lastTickResult.worldHashPost;
+    M11_GameView_ProcessTickEmissions(state);
+    m11_apply_survival_drain(state);
+    m11_apply_rest_recovery(state);
+    M11_GameView_UpdateTorchFuel(state);
+    m11_process_creature_ticks(state);
+    M11_GameView_TickAnimation(state);
+    m11_check_party_death(state);
+    m11_mark_explored(state);
+    m11_set_status(state, actionLabel, "OK");
+    return 1;
+}
+
+/* CMD_EAT: apply food to champion via tick orchestrator */
+static int m11_apply_tick_eat(M11_GameViewState* state, uint8_t champIdx) {
+    if (!state || !state->active) return 0;
+    if (champIdx >= CHAMPION_MAX_PARTY) return 0;
+    if (!state->world.party.champions[champIdx].present) return 0;
+    /* foodIdx 0 = apple (500 food). Full item-search-and-remove
+     * comes with proper inventory interaction in a later pass. */
+    return m11_apply_tick_with_args(state, CMD_EAT, champIdx, 0, "EAT");
+}
+
+/* CMD_DRINK: apply water to champion via tick orchestrator */
+static int m11_apply_tick_drink(M11_GameViewState* state, uint8_t champIdx) {
+    if (!state || !state->active) return 0;
+    if (champIdx >= CHAMPION_MAX_PARTY) return 0;
+    if (!state->world.party.champions[champIdx].present) return 0;
+    /* waterArg 0 = waterskin (800 water), 1 = water flask potion (1600) */
+    return m11_apply_tick_with_args(state, CMD_DRINK, champIdx, 0, "DRINK");
+}
+
+/* CMD_THROW_ITEM: throw from champion via tick orchestrator */
+static int m11_apply_tick_throw(M11_GameViewState* state, uint8_t champIdx,
+                                uint8_t side) {
+    if (!state || !state->active) return 0;
+    if (champIdx >= CHAMPION_MAX_PARTY) return 0;
+    if (!state->world.party.champions[champIdx].present) return 0;
+    return m11_apply_tick_with_args(state, CMD_THROW_ITEM, champIdx,
+                                   side, "THROW");
+}
+
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel) {
@@ -5322,6 +5386,48 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_REDRAW;
+        case M12_MENU_INPUT_EAT_ITEM: {
+            /* Route EAT through tick orchestrator: CMD_EAT with
+             * commandArg1 = active champion, commandArg2 = food index.
+             * ReDMCSB PANEL.C F0349 handles mouth-click eating. */
+            int ci = state->world.party.activeChampionIndex;
+            if (ci < 0) ci = 0;
+            command = CMD_EAT;
+            label = "EAT";
+            /* commandArg1/2 set via m11_apply_tick_with_args below */
+            if (m11_apply_tick_eat(state, (uint8_t)ci)) {
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE,
+                              "T%u: CHAMPION %d ATE FOOD",
+                              (unsigned)state->world.gameTick, ci);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            m11_set_status(state, "EAT", "NO FOOD");
+            return M11_GAME_INPUT_IGNORED;
+        }
+        case M12_MENU_INPUT_DRINK_ITEM: {
+            int ci = state->world.party.activeChampionIndex;
+            if (ci < 0) ci = 0;
+            if (m11_apply_tick_drink(state, (uint8_t)ci)) {
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE,
+                              "T%u: CHAMPION %d DRANK WATER",
+                              (unsigned)state->world.gameTick, ci);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            m11_set_status(state, "DRINK", "NO WATER");
+            return M11_GAME_INPUT_IGNORED;
+        }
+        case M12_MENU_INPUT_THROW_ITEM: {
+            int ci = state->world.party.activeChampionIndex;
+            if (ci < 0) ci = 0;
+            if (m11_apply_tick_throw(state, (uint8_t)ci, 0)) {
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE,
+                              "T%u: CHAMPION %d THREW ITEM",
+                              (unsigned)state->world.gameTick, ci);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            m11_set_status(state, "THROW", "NOTHING TO THROW");
+            return M11_GAME_INPUT_IGNORED;
+        }
         case M12_MENU_INPUT_BACK:
             /* Return-to-launcher confirmation is a full-screen modal route,
              * not a champion inventory interaction.  Clear invented/debug
