@@ -5157,6 +5157,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (input == M12_MENU_INPUT_REST_TOGGLE ||
             input == M12_MENU_INPUT_ACCEPT) {
             state->resting = 0;
+            state->world.partyIsResting = 0;
             m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
                           (unsigned int)state->world.gameTick);
             m11_set_status(state, "REST", "PARTY AWAKE");
@@ -5264,6 +5265,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         case M12_MENU_INPUT_REST_TOGGLE:
             state->resting = 1;
+            state->world.partyIsResting = 1;
             m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: RESTING",
                           (unsigned int)state->world.gameTick);
             m11_set_status(state, "REST", "PARTY IS RESTING");
