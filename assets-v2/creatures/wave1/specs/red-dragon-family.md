@@ -1,7 +1,7 @@
-# Red Dragon V2 family spec
+# RED DRAGON V2 family spec
 
 ## Intent
-Create a bounded V2 creature family for **Red Dragon** that is cleaner and smoother than the original presentation without changing perceived gameplay timing.
+Create a bounded V2 creature family for **RED DRAGON** that is cleaner and smoother than the original presentation without changing perceived gameplay timing.
 
 ## Current deliverables
 - front-near

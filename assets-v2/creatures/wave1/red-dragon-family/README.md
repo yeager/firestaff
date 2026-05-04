@@ -1,6 +1,6 @@
 # Firestaff V2 red dragon family
 
-This directory holds a bounded Wave 1 creature-family prototype for **Red Dragon**.
+This directory holds a bounded Wave 1 creature-family prototype for **RED DRAGON**.
 
 ## What exists now
 

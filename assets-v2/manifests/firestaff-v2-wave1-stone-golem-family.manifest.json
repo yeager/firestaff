@@ -16,7 +16,7 @@
       "role": "first-pass front near stone golem sprite",
       "productionClass": "redraw-native",
       "sourceReference": {
-        "origin": "Existing project creature card art",
+        "origin": "Existing project creature reference sprite",
         "originalSize": {
           "width": 1536,
           "height": 1024
@@ -49,7 +49,7 @@
       "role": "first-pass front mid stone golem sprite",
       "productionClass": "redraw-native",
       "sourceReference": {
-        "origin": "Existing project creature card art",
+        "origin": "Existing project creature reference sprite",
         "originalSize": {
           "width": 1536,
           "height": 1024
@@ -82,7 +82,7 @@
       "role": "first-pass front far stone golem sprite",
       "productionClass": "redraw-native",
       "sourceReference": {
-        "origin": "Existing project creature card art",
+        "origin": "Existing project creature reference sprite",
         "originalSize": {
           "width": 1536,
           "height": 1024

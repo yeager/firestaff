@@ -1,6 +1,6 @@
 # Firestaff V2 stone golem family
 
-This directory holds a bounded Wave 1 creature-family prototype for **Stone Golem**.
+This directory holds a bounded Wave 1 creature-family prototype for **STONE GOLEM**.
 
 ## What exists now
 

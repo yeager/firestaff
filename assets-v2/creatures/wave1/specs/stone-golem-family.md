@@ -1,7 +1,7 @@
-# Stone Golem V2 family spec
+# STONE GOLEM V2 family spec
 
 ## Intent
-Create a bounded V2 creature family for **Stone Golem** that is cleaner and smoother than the original presentation without changing perceived gameplay timing.
+Create a bounded V2 creature family for **STONE GOLEM** that is cleaner and smoother than the original presentation without changing perceived gameplay timing.
 
 ## Current deliverables
 - front-near
