@@ -31,7 +31,7 @@ static void check(const char* tag, int cond) {
 static void rmdir_shallow(const char* path) {
     char cmd[FSP_PATH_MAX + 16];
     snprintf(cmd, sizeof(cmd), "rm -rf '%s'", path);
-    (void)system(cmd);
+    if(system(cmd)){;}
 }
 
 int main(void) {

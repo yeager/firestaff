@@ -197,7 +197,7 @@ void dm1_v2_vp_apply_light(DM1_V2_ViewportState* vp, int cx, int cy, int radius,
                 // Calculate distance factor: 1 - dist/radius
                 // Use integer math: factor = (radius*255 - dist*255/radius) / 255
                 // Simplified: factor = (r2 - dist2) / r2 * 255
-                int dist = 0;
+                int dist __attribute__((unused)) = 0;
                 // Approximate sqrt using integer math or just use dist2
                 // For simplicity, use dist2 based falloff
                 int factor = (r2 - dist2) * 255 / r2;

@@ -108,7 +108,7 @@ static void test_add_symbol(void) {
 
     /* Add power symbol "On" (step 0, index 2).
      * BaseCost = G0485[0][2] = 3 (MENU.C:45). Step 0, no multiplier. Cost = 3. */
-    int ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON);
+    int ok __attribute__((unused)) = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON);
     assert(ok == 1);
     assert(stats.currentMana == 97);
     assert(s.input[0].symbolStep == 1);
@@ -149,7 +149,7 @@ static void test_insufficient_mana(void) {
     dm1_spell_init(&s);
     DM1_ChampionSpellStats stats = makeStats(0, 100, 50, 40);
 
-    int ok = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO);
+    int ok __attribute__((unused)) = dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO);
     assert(ok == 0);
     assert(s.input[0].symbols[0] == '\0');
     assert(stats.currentMana == 0);
@@ -167,7 +167,7 @@ static void test_delete_symbol(void) {
 
     dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON);
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL);
-    int manaBefore = stats.currentMana;
+    int manaBefore __attribute__((unused)) = stats.currentMana;
 
     /* Recant: step 2→1, Symbols[1] = '\0' */
     dm1_spell_deleteSymbol(&s, 0);
@@ -203,7 +203,7 @@ static void test_spell_lookup_fireball(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL);
     dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR);
 
-    const DM1_Spell* spell = dm1_spell_lookup(&s, 0);
+    const DM1_Spell* spell __attribute__((unused)) = dm1_spell_lookup(&s, 0);
     assert(spell != NULL);
     assert(DM1_SPELL_KIND(spell) == DM1_SPELL_KIND_PROJECTILE);
     assert(spell->skillIndex == DM1_SKILL_FIRE);
@@ -226,7 +226,7 @@ static void test_spell_lookup_open_door(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_LO);
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_ZO);
 
-    const DM1_Spell* spell = dm1_spell_lookup(&s, 0);
+    const DM1_Spell* spell __attribute__((unused)) = dm1_spell_lookup(&s, 0);
     assert(spell != NULL);
     assert((int)(spell - dm1_spells) == 14);
     assert(DM1_SPELL_KIND(spell) == DM1_SPELL_KIND_PROJECTILE);
@@ -293,7 +293,7 @@ static void test_spell_cast_success(void) {
     const DM1_Spell* outSpell = NULL;
     int powerOrd = 0, failure = -1;
 
-    int result = dm1_spell_cast(&s, 0, &stats, 0x1234, &outSpell, &powerOrd, &failure);
+    int result __attribute__((unused)) = dm1_spell_cast(&s, 0, &stats, 0x1234, &outSpell, &powerOrd, &failure);
     assert(result == DM1_SPELL_CAST_SUCCESS);
     assert(outSpell != NULL);
     assert(powerOrd == 3);  /* On = char 98, ordinal = 98 - 95 = 3 */
@@ -337,7 +337,7 @@ static void test_spell_cast_meaningless(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_VEN);
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ALIGN_KU);
 
-    int failure = -1;
+    int failure __attribute__((unused)) = -1;
     assert(dm1_spell_cast(&s, 0, &stats, 0, NULL, NULL, &failure) == DM1_SPELL_CAST_FAILURE);
     assert(failure == DM1_FAILURE_MEANINGLESS_SPELL);
 
@@ -359,7 +359,7 @@ static void test_spell_cast_potion(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_VI);
 
     const DM1_Spell* outSpell = NULL;
-    int result = dm1_spell_cast(&s, 0, &stats, 0, &outSpell, NULL, NULL);
+    int result __attribute__((unused)) = dm1_spell_cast(&s, 0, &stats, 0, &outSpell, NULL, NULL);
     assert(result == DM1_SPELL_CAST_FAILURE_NEEDS_FLASK);
     assert(outSpell != NULL);
     assert(DM1_SPELL_KIND(outSpell) == DM1_SPELL_KIND_POTION);
@@ -436,7 +436,7 @@ static void test_spell_table(void) {
 
     /* All spells have valid kinds */
     for (int i = 0; i < DM1_SPELL_COUNT; i++) {
-        int kind = DM1_SPELL_KIND(&dm1_spells[i]);
+        int kind __attribute__((unused)) = DM1_SPELL_KIND(&dm1_spells[i]);
         assert(kind >= 1 && kind <= 3);
     }
 
@@ -482,7 +482,7 @@ static void test_zokathra(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_KATH);
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ALIGN_RA);
 
-    const DM1_Spell* spell = dm1_spell_lookup(&s, 0);
+    const DM1_Spell* spell __attribute__((unused)) = dm1_spell_lookup(&s, 0);
     assert(spell != NULL);
     assert((int)(spell - dm1_spells) == 24);
     assert(DM1_SPELL_KIND(spell) == DM1_SPELL_KIND_OTHER);
@@ -505,7 +505,7 @@ static void test_lightning_bolt(void) {
     dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_KATH);
     dm1_spell_addSymbol(&s, 0, &stats, DM1_ALIGN_RA);
 
-    const DM1_Spell* spell = dm1_spell_lookup(&s, 0);
+    const DM1_Spell* spell __attribute__((unused)) = dm1_spell_lookup(&s, 0);
     assert(spell != NULL);
     assert((int)(spell - dm1_spells) == 5);
     assert(strcmp(dm1_spell_name(5), "LIGHTNING BOLT") == 0);
