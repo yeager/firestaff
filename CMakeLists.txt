@@ -857,3 +857,18 @@ if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
         COMMAND test_dm1_v1_skill_experience_pc34_compat
     )
 endif()
+
+# ── DM1 V1 Endgame System source-lock gate ───────────────────────────
+if(NOT TARGET test_dm1_v1_endgame_system_pc34_compat)
+    add_executable(test_dm1_v1_endgame_system_pc34_compat
+        test_dm1_v1_endgame_system_pc34_compat.c
+        dm1_v1_endgame_system_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_system_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_system_source_lock
+        COMMAND test_dm1_v1_endgame_system_pc34_compat
+    )
+endif()
