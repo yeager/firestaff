@@ -1115,7 +1115,8 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->view != M12_MENU_VIEW_MESSAGE &&
         state->view != M12_MENU_VIEW_GAME_OPTIONS &&
         state->view != M12_MENU_VIEW_MUSEUM &&
-        state->view != M12_MENU_VIEW_CHANGELOG) {
+        state->view != M12_MENU_VIEW_CHANGELOG &&
+        state->view != M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
         state->view = M12_MENU_VIEW_MAIN;
     }
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0) {

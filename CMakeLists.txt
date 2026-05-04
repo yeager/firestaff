@@ -92,6 +92,7 @@ set(M12_SOURCES
     input_remap_m12.c
     save_browser_m12.c
     custom_dungeon_m12.c
+    item_encyclopedia_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
