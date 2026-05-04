@@ -328,6 +328,31 @@ if(BUILD_TESTING)
         NAME dm1_v1_movement_pipeline_pc34_compat
         COMMAND test_dm1_v1_movement_pipeline_pc34_compat
     )
+
+    add_executable(test_dm1_v1_creature_render_pc34_compat_integration
+        test_dm1_v1_creature_render_pc34_compat_integration.c
+        dm1_v1_creature_render_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_creature_render_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_creature_render_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_creature_render_source_lock
+        COMMAND test_dm1_v1_creature_render_pc34_compat_integration
+    )
+    add_executable(test_dm1_v1_projectile_explosion_render_pc34_compat
+        test_dm1_v1_projectile_explosion_render_pc34_compat.c
+        dm1_v1_projectile_explosion_render_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_explosion_render_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_explosion_render_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_explosion_render_source_lock
+        COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
+    )
     add_test(
         NAME dm1_v1_command_movement_sensor_timing_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py
@@ -432,6 +457,10 @@ if(BUILD_TESTING)
         add_test(
             NAME v1_viewport_projectile_source_clip_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_projectile_source_clip_gate.py
+        )
+        add_test(
+            NAME v1_viewport_projectile_explosion_render_source_lock_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_projectile_explosion_render_source_lock_gate.py
         )
         add_test(
             NAME v1_viewport_distance_row_clip_gate
@@ -552,6 +581,10 @@ if(BUILD_TESTING)
         add_test(
             NAME dm1_v1_stairs_pits_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_stairs_pits_viewport_source_lock.py
+        )
+        add_test(
+            NAME dm1_v1_creature_render_aspect_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_creature_render_source_lock.py
         )
         add_test(
             NAME touch_movement_viewport_source_lock
