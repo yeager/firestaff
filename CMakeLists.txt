@@ -84,6 +84,7 @@ set(M12_SOURCES
     card_art_generated_m12.c
     branding_logo_m12.c
     branding_logo_readme_m12.c
+    bestiary_m12.c
     creature_art_m12.c
     data_validator_m12.c
     changelog_m12.c

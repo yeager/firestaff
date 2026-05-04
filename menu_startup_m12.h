@@ -4,6 +4,7 @@
 #include "asset_status_m12.h"
 #include "card_art_m12.h"
 #include "creature_art_m12.h"
+#include "bestiary_m12.h"
 #include "changelog_m12.h"
 
 #ifdef __cplusplus
@@ -52,6 +53,7 @@ typedef enum {
     M12_MENU_VIEW_THEME,
     M12_MENU_VIEW_SAVE_BROWSER,
     M12_MENU_VIEW_INPUT_REMAP,
+    M12_MENU_VIEW_BESTIARY,
     M12_MENU_VIEW_CUSTOM_DUNGEON
 } M12_MenuView;
 
@@ -184,6 +186,7 @@ typedef struct M12_StartupMenuState {
     int museumPageIndex;
     M12_CreatureArtState creatureArt;
     M12_ChangelogState changelog;
+    M12_BestiaryState bestiary;
     /* Monotonically-increasing animation tick consumed by the modern
      * renderer. Incremented by the runtime once per present. Safe to
      * leave at zero in headless probes (no visible change). */
