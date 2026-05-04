@@ -320,6 +320,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
     dm1_v1_creature_render_pc34_compat.c
+    dm1_v2_viewport_renderer_pc34.c
+    csb_v1_dungeon_world_pc34_compat.c
     dm1_v2_movement_engine_pc34.c
     csb_v1_game_state_pc34_compat.c
     dm1_v1_champion_stats_pc34_compat.c
@@ -343,6 +345,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         test_dm1_v1_creature_render_pc34_compat_integration.c
         dm1_v1_creature_render_pc34_compat.c
+    dm1_v2_viewport_renderer_pc34.c
+    csb_v1_dungeon_world_pc34_compat.c
     dm1_v2_movement_engine_pc34.c
     csb_v1_game_state_pc34_compat.c
     dm1_v1_champion_stats_pc34_compat.c
@@ -767,5 +771,35 @@ if(NOT TARGET test_dm1_v1_object_interaction_pc34_compat)
     add_test(
         NAME dm1_v1_object_interaction_source_lock
         COMMAND test_dm1_v1_object_interaction_pc34_compat
+    )
+endif()
+
+    # DM1 V1 Creature AI Behavior System
+    add_executable(test_dm1_v1_creature_ai_behavior_pc34_compat
+        test_dm1_v1_creature_ai_behavior_pc34_compat.c
+        dm1_v1_creature_ai_behavior_pc34_compat.c
+        memory_creature_ai_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_creature_ai_behavior_source_lock
+        COMMAND test_dm1_v1_creature_ai_behavior_pc34_compat
+    )
+
+# ── DM1 V1 Light & Torch System source-lock gate ─────────────────────
+if(NOT TARGET test_dm1_v1_light_pc34_compat)
+    add_executable(test_dm1_v1_light_pc34_compat
+        test_dm1_v1_light_pc34_compat.c
+        dm1_v1_light_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_light_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_light_source_lock
+        COMMAND test_dm1_v1_light_pc34_compat
     )
 endif()
