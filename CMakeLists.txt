@@ -75,6 +75,10 @@ set(M11_SOURCES
     dm1_v1_fade_transition_pc34_compat.c
     dm1_v1_portrait_panel_pc34_compat.c
     dm1_v1_wall_ornament_pc34_compat.c
+    dm1_v1_dungeon_decompressor_pc34_compat.c
+    dm1_v1_field_teleporter_effect_pc34_compat.c
+    dm1_v1_game_loop_integration_pc34_compat.c
+    dm1_v1_creature_viewport_pc34_compat.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -741,6 +745,10 @@ if(BUILD_TESTING)
     dm1_v1_fade_transition_pc34_compat.c
     dm1_v1_portrait_panel_pc34_compat.c
     dm1_v1_wall_ornament_pc34_compat.c
+    dm1_v1_dungeon_decompressor_pc34_compat.c
+    dm1_v1_field_teleporter_effect_pc34_compat.c
+    dm1_v1_game_loop_integration_pc34_compat.c
+    dm1_v1_creature_viewport_pc34_compat.c
         dm1_v1_save_load.c
     dm1_v1_viewport_3d_pc34_compat.c
     dm1_v1_dungeon_loader_pc34_compat.c
@@ -751,6 +759,10 @@ if(BUILD_TESTING)
     dm1_v1_fade_transition_pc34_compat.c
     dm1_v1_portrait_panel_pc34_compat.c
     dm1_v1_wall_ornament_pc34_compat.c
+    dm1_v1_dungeon_decompressor_pc34_compat.c
+    dm1_v1_field_teleporter_effect_pc34_compat.c
+    dm1_v1_game_loop_integration_pc34_compat.c
+    dm1_v1_creature_viewport_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_save_load PRIVATE firestaff_m10)
     if(NOT MSVC)
