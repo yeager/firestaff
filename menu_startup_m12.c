@@ -891,6 +891,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->gameOptSelectedRow = 0;
     state->museumSelectedIndex = 0;
     state->museumPageIndex = 0;
+    M12_Changelog_Init(&state->changelog);
     state->launchRequested = 0;
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
@@ -1059,7 +1060,8 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->view != M12_MENU_VIEW_SETTINGS &&
         state->view != M12_MENU_VIEW_MESSAGE &&
         state->view != M12_MENU_VIEW_GAME_OPTIONS &&
-        state->view != M12_MENU_VIEW_MUSEUM) {
+        state->view != M12_MENU_VIEW_MUSEUM &&
+        state->view != M12_MENU_VIEW_CHANGELOG) {
         state->view = M12_MENU_VIEW_MAIN;
     }
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0) {
@@ -1307,6 +1309,30 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         return;
     }
 
+    if (state->view == M12_MENU_VIEW_CHANGELOG) {
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                M12_Changelog_Scroll(&state->changelog, -1);
+                break;
+            case M12_MENU_INPUT_DOWN:
+                M12_Changelog_Scroll(&state->changelog, 1);
+                break;
+            case M12_MENU_INPUT_LEFT:
+                M12_Changelog_Scroll(&state->changelog, -M12_CHANGELOG_VISIBLE_LINES);
+                break;
+            case M12_MENU_INPUT_RIGHT:
+                M12_Changelog_Scroll(&state->changelog, M12_CHANGELOG_VISIBLE_LINES);
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
+        }
+        return;
+    }
+
     if (state->view == M12_MENU_VIEW_MUSEUM) {
         const M12_MuseumCategory* category;
         switch (input) {
@@ -1315,12 +1341,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                                              -1,
                                                              M12_MUSEUM_CATEGORY_COUNT);
                 state->museumPageIndex = 0;
+    M12_Changelog_Init(&state->changelog);
                 break;
             case M12_MENU_INPUT_DOWN:
                 state->museumSelectedIndex = m12_cycle_index(state->museumSelectedIndex,
                                                              1,
                                                              M12_MUSEUM_CATEGORY_COUNT);
                 state->museumPageIndex = 0;
+    M12_Changelog_Init(&state->changelog);
                 break;
             case M12_MENU_INPUT_LEFT:
                 category = &g_museumCategories[m12_clamp_index(state->museumSelectedIndex,
@@ -1390,6 +1418,10 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         case M12_MENU_INPUT_ACTION:
         case M12_MENU_INPUT_RIGHT:
             m12_activate_selected(state);
+            break;
+        case M12_MENU_INPUT_MAP_TOGGLE:
+            M12_Changelog_Init(&state->changelog);
+            state->view = M12_MENU_VIEW_CHANGELOG;
             break;
         case M12_MENU_INPUT_BACK:
             state->shouldExit = 1;
@@ -2827,6 +2859,37 @@ static void m12_draw_sparse_game_options_view(const M12_StartupMenuState* state,
                                M12_COLOR_WHITE);
 }
 
+static void m12_draw_sparse_changelog_view(const M12_StartupMenuState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight) {
+    const char* versionLine = M12_Changelog_VersionString();
+    int scrollOff = state ? state->changelog.scrollOffset : 0;
+    int lineCount = M12_Changelog_LineCount();
+    int visible = M12_CHANGELOG_VISIBLE_LINES;
+    int i;
+    char titleBuf[48];
+    const char* line;
+    (void)framebufferWidth;
+    (void)framebufferHeight;
+    (void)framebuffer;
+    snprintf(titleBuf, sizeof(titleBuf), "FIRESTAFF V%s", versionLine);
+    if (visible > lineCount) {
+        visible = lineCount;
+    }
+    m12_draw_sparse_center_box(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               218,
+                               70,
+                               titleBuf,
+                               (scrollOff < lineCount) ? M12_Changelog_GetLine(scrollOff) : "",
+                               "UP/DOWN SCROLL   ESC BACK",
+                               M12_COLOR_WHITE);
+    (void)i;
+    (void)line;
+}
+
 static void m12_draw_sparse_museum_view(const M12_StartupMenuState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
@@ -3861,6 +3924,92 @@ static void m12_draw_museum_category_row(unsigned char* framebuffer,
                   selected ? &g_textSmallShadow : &g_textSmallMuted);
 }
 
+static void m12_draw_changelog_view_modern(const M12_StartupMenuState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight) {
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int scrollOff = state ? state->changelog.scrollOffset : 0;
+    int lineCount = M12_Changelog_LineCount();
+    int visible = M12_CHANGELOG_VISIBLE_LINES;
+    int i;
+    char titleBuf[48];
+    char scrollIndicator[32];
+
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 64) {
+        heroH = 64;
+    }
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    snprintf(titleBuf, sizeof(titleBuf), "VERSION %s", M12_Changelog_VersionString());
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         panelW,
+                         heroH,
+                         titleBuf);
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   margin,
+                   contentY,
+                   panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+
+    if (visible > lineCount - scrollOff) {
+        visible = lineCount - scrollOff;
+    }
+    if (visible < 0) {
+        visible = 0;
+    }
+
+    for (i = 0; i < visible; ++i) {
+        const char* line = M12_Changelog_GetLine(scrollOff + i);
+        if (!line) {
+            break;
+        }
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      margin + 14,
+                      contentY + 14 + i * 20,
+                      line,
+                      (i == 0 && scrollOff == 0) ? &g_textMediumShadow : &g_textSmall);
+    }
+
+    snprintf(scrollIndicator, sizeof(scrollIndicator), "LINE %d/%d", scrollOff + 1, lineCount);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin + panelW - 80,
+                  contentY + 14,
+                  scrollIndicator,
+                  &g_textSmallAccent);
+
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin + 14,
+                  framebufferHeight - 24,
+                  "UP/DOWN SCROLL  LEFT/RIGHT PAGE  ESC BACK",
+                  &g_textSmallAccent);
+}
+
 static void m12_draw_museum_view_modern(const M12_StartupMenuState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
@@ -4412,6 +4561,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_sparse_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
             m12_draw_sparse_game_options_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_CHANGELOG) {
+            m12_draw_sparse_changelog_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_sparse_museum_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
@@ -4426,6 +4577,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_settings_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
             m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_CHANGELOG) {
+            m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
@@ -4441,6 +4594,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
         m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_CHANGELOG) {
+        m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_MUSEUM) {
         m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else {

@@ -4,6 +4,7 @@
 #include "asset_status_m12.h"
 #include "card_art_m12.h"
 #include "creature_art_m12.h"
+#include "changelog_m12.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +45,9 @@ typedef enum {
     M12_MENU_VIEW_MESSAGE,
     M12_MENU_VIEW_GAME_OPTIONS,
     M12_MENU_VIEW_MUSEUM,
-    M12_MENU_VIEW_AUDIO_SETTINGS
+    M12_MENU_VIEW_DATA_VALIDATOR,
+    M12_MENU_VIEW_AUDIO_SETTINGS,
+    M12_MENU_VIEW_CHANGELOG
 } M12_MenuView;
 
 typedef enum {
@@ -174,6 +177,7 @@ typedef struct M12_StartupMenuState {
     int museumSelectedIndex;
     int museumPageIndex;
     M12_CreatureArtState creatureArt;
+    M12_ChangelogState changelog;
     /* Monotonically-increasing animation tick consumed by the modern
      * renderer. Incremented by the runtime once per present. Safe to
      * leave at zero in headless probes (no visible change). */

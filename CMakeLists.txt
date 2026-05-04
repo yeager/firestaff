@@ -85,6 +85,8 @@ set(M12_SOURCES
     branding_logo_m12.c
     branding_logo_readme_m12.c
     creature_art_m12.c
+    data_validator_m12.c
+    changelog_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
