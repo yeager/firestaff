@@ -314,6 +314,18 @@ if(BUILD_TESTING)
         NAME dm1_v1_command_movement_sensor_timing_pc34_compat
         COMMAND test_dm1_v1_command_movement_sensor_timing_pc34_compat
     )
+
+    add_executable(test_dm1_v1_movement_pipeline_pc34_compat
+        test_dm1_v1_movement_pipeline_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_movement_pipeline_pc34_compat
+        COMMAND test_dm1_v1_movement_pipeline_pc34_compat
+    )
     add_test(
         NAME dm1_v1_command_movement_sensor_timing_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py
@@ -461,7 +473,19 @@ if(BUILD_TESTING)
         )
         add_test(
             NAME v1_viewport_palette_source_lock_gate
+        add_test(
+            NAME v1_viewport_wall_parity_flip_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_wall_parity_flip_gate.py
+        )
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_palette_source_lock_gate.py
+        add_test(
+            NAME v1_viewport_wall_parity_flip_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_wall_parity_flip_gate.py
+        )
+        )
+        add_test(
+            NAME v1_viewport_wall_parity_flip_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_wall_parity_flip_gate.py
         )
         add_test(
             NAME v1_viewport_alcove_wall_item_gate
