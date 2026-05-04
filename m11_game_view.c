@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 
 #include "asset_status_m12.h"
+#include "config_m12.h"
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
 #include "render_sdl_m11.h"
@@ -4541,6 +4542,11 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->leaderHandIconIndex = -1;
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
+    DM1_V1_VBlankTiming_Init(&state->vblankTiming);
+    DM1_SaveMenu_Init(&state->saveMenu);
+    /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
+     * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
+    state->dm1GameID = (uint32_t)((unsigned)rand() * 65536u + (unsigned)rand());
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
@@ -4740,6 +4746,8 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
              "F9 RESTORES TICK %u FROM %s",
              (unsigned int)state->world.gameTick,
              path);
+    /* Update config with last save path for quick resume */
+    M12_Config_SetLastSavePath(path);
     return 1;
 }
 
@@ -4848,70 +4856,6 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     return M11_GAME_INPUT_REDRAW;
 }
 
-/* Helper: apply a tick with explicit commandArg1/commandArg2 */
-static int m11_apply_tick_with_args(M11_GameViewState* state,
-                                    uint8_t command,
-                                    uint8_t arg1,
-                                    uint8_t arg2,
-                                    const char* actionLabel) {
-    struct TickInput_Compat input;
-    if (!state || !state->active) return 0;
-    memset(&input, 0, sizeof(input));
-    input.tick = state->world.gameTick;
-    input.command = command;
-    input.commandArg1 = arg1;
-    input.commandArg2 = arg2;
-    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
-    {
-        int orchResult = F0884_ORCH_AdvanceOneTick_Compat(
-            &state->world, &input, &state->lastTickResult);
-        if (orchResult == ORCH_FAIL) {
-            m11_set_status(state, actionLabel, "REJECTED");
-            return 0;
-        }
-    }
-    state->lastWorldHash = state->lastTickResult.worldHashPost;
-    M11_GameView_ProcessTickEmissions(state);
-    m11_apply_survival_drain(state);
-    m11_apply_rest_recovery(state);
-    M11_GameView_UpdateTorchFuel(state);
-    m11_process_creature_ticks(state);
-    M11_GameView_TickAnimation(state);
-    m11_check_party_death(state);
-    m11_mark_explored(state);
-    m11_set_status(state, actionLabel, "OK");
-    return 1;
-}
-
-/* CMD_EAT: apply food to champion via tick orchestrator */
-static int m11_apply_tick_eat(M11_GameViewState* state, uint8_t champIdx) {
-    if (!state || !state->active) return 0;
-    if (champIdx >= CHAMPION_MAX_PARTY) return 0;
-    if (!state->world.party.champions[champIdx].present) return 0;
-    /* foodIdx 0 = apple (500 food). Full item-search-and-remove
-     * comes with proper inventory interaction in a later pass. */
-    return m11_apply_tick_with_args(state, CMD_EAT, champIdx, 0, "EAT");
-}
-
-/* CMD_DRINK: apply water to champion via tick orchestrator */
-static int m11_apply_tick_drink(M11_GameViewState* state, uint8_t champIdx) {
-    if (!state || !state->active) return 0;
-    if (champIdx >= CHAMPION_MAX_PARTY) return 0;
-    if (!state->world.party.champions[champIdx].present) return 0;
-    /* waterArg 0 = waterskin (800 water), 1 = water flask potion (1600) */
-    return m11_apply_tick_with_args(state, CMD_DRINK, champIdx, 0, "DRINK");
-}
-
-/* CMD_THROW_ITEM: throw from champion via tick orchestrator */
-static int m11_apply_tick_throw(M11_GameViewState* state, uint8_t champIdx,
-                                uint8_t side) {
-    if (!state || !state->active) return 0;
-    if (champIdx >= CHAMPION_MAX_PARTY) return 0;
-    if (!state->world.party.champions[champIdx].present) return 0;
-    return m11_apply_tick_with_args(state, CMD_THROW_ITEM, champIdx,
-                                   side, "THROW");
-}
-
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel) {
@@ -5010,6 +4954,10 @@ static int m11_apply_tick(M11_GameViewState* state,
     } else {
         m11_set_status(state, actionLabel, "MOVEMENT BLOCKED");
     }
+    /* DM1 V1: reset VBlank counter for next tick and decrement movement
+     * cooldowns, matching GAMELOOP.C top-of-loop (G0317=0, G0321=FALSE)
+     * and end-of-loop (G0310--, G0311--). */
+    DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
     return 1;
 }
 
@@ -5221,7 +5169,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (input == M12_MENU_INPUT_REST_TOGGLE ||
             input == M12_MENU_INPUT_ACCEPT) {
             state->resting = 0;
-            state->world.partyIsResting = 0;
             m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
                           (unsigned int)state->world.gameTick);
             m11_set_status(state, "REST", "PARTY AWAKE");
@@ -5329,7 +5276,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         case M12_MENU_INPUT_REST_TOGGLE:
             state->resting = 1;
-            state->world.partyIsResting = 1;
             m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: RESTING",
                           (unsigned int)state->world.gameTick);
             m11_set_status(state, "REST", "PARTY IS RESTING");
@@ -5386,47 +5332,30 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_REDRAW;
-        case M12_MENU_INPUT_EAT_ITEM: {
-            /* Route EAT through tick orchestrator: CMD_EAT with
-             * commandArg1 = active champion, commandArg2 = food index.
-             * ReDMCSB PANEL.C F0349 handles mouth-click eating. */
-            int ci = state->world.party.activeChampionIndex;
-            if (ci < 0) ci = 0;
-            command = CMD_EAT;
-            label = "EAT";
-            /* commandArg1/2 set via m11_apply_tick_with_args below */
-            if (m11_apply_tick_eat(state, (uint8_t)ci)) {
-                m11_log_event(state, M11_COLOR_LIGHT_BLUE,
-                              "T%u: CHAMPION %d ATE FOOD",
-                              (unsigned)state->world.gameTick, ci);
-                return M11_GAME_INPUT_REDRAW;
+        case M12_MENU_INPUT_SAVE_GAME: {
+            /* DM1 V1 save game — Ctrl-S trigger.
+             * ReDMCSB: C140_COMMAND dispatches to
+             * F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF
+             * (LOADSAVE.C, COMMAND.C line ~7617). */
+            char savePath[512];
+            const char* sid = (state->sourceId[0] != '\0')
+                              ? state->sourceId : "dm1";
+            int rc = snprintf(savePath, sizeof(savePath),
+                              "firestaff-%s-dm1save.sav", sid);
+            if (rc > 0 && rc < (int)sizeof(savePath)) {
+                int saveResult = DM1_SaveGame(&state->world, savePath,
+                                               state->dm1GameID, 1);
+                if (saveResult == DM1_SAVE_OK) {
+                    m11_set_status(state, "SAVE", "GAME SAVED");
+                    M12_Config_SetLastSavePath(savePath);
+                } else {
+                    m11_set_status(state, "SAVE",
+                                   DM1_SaveLoadErrorString(saveResult));
+                }
+            } else {
+                m11_set_status(state, "SAVE", "SAVE PATH ERROR");
             }
-            m11_set_status(state, "EAT", "NO FOOD");
-            return M11_GAME_INPUT_IGNORED;
-        }
-        case M12_MENU_INPUT_DRINK_ITEM: {
-            int ci = state->world.party.activeChampionIndex;
-            if (ci < 0) ci = 0;
-            if (m11_apply_tick_drink(state, (uint8_t)ci)) {
-                m11_log_event(state, M11_COLOR_LIGHT_BLUE,
-                              "T%u: CHAMPION %d DRANK WATER",
-                              (unsigned)state->world.gameTick, ci);
-                return M11_GAME_INPUT_REDRAW;
-            }
-            m11_set_status(state, "DRINK", "NO WATER");
-            return M11_GAME_INPUT_IGNORED;
-        }
-        case M12_MENU_INPUT_THROW_ITEM: {
-            int ci = state->world.party.activeChampionIndex;
-            if (ci < 0) ci = 0;
-            if (m11_apply_tick_throw(state, (uint8_t)ci, 0)) {
-                m11_log_event(state, M11_COLOR_LIGHT_BLUE,
-                              "T%u: CHAMPION %d THREW ITEM",
-                              (unsigned)state->world.gameTick, ci);
-                return M11_GAME_INPUT_REDRAW;
-            }
-            m11_set_status(state, "THROW", "NOTHING TO THROW");
-            return M11_GAME_INPUT_IGNORED;
+            return M11_GAME_INPUT_REDRAW;
         }
         case M12_MENU_INPUT_BACK:
             /* Return-to-launcher confirmation is a full-screen modal route,
@@ -6535,8 +6464,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
         m11_draw_teleporter_effect(framebuffer, framebufferWidth, framebufferHeight,
                                    x, y, w, h, depthIndex);
     }
-    /* Pit darkness effect */
-    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+    /* Pit darkness effect — only if PIT_OPEN (MASK0x0008, DEFS.H:1027) */
+    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
         m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
                             x, y, w, h, depthIndex);
     }
@@ -8002,7 +7931,7 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
         case DUNGEON_ELEMENT_STAIRS:
             /* Try real stair graphics first */
             if (g_drawState) {
-                int stairUp = (cell->square & 0x01);
+                int stairUp = (cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP */
                 if (m11_draw_stairs_asset(g_drawState, framebuffer,
                                           framebufferWidth, framebufferHeight,
                                           rect, depthIndex, stairUp)) {
@@ -8018,12 +7947,16 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
                            faceX + 12, faceX + faceW - 13, faceY + faceH - 15, M11_COLOR_YELLOW);
             break;
         case DUNGEON_ELEMENT_PIT:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          faceX + 5, faceY + faceH / 2,
-                          faceW - 10, faceH / 3, M11_COLOR_BLACK);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          faceX + 5, faceY + faceH / 2,
-                          faceW - 10, faceH / 3, M11_COLOR_BROWN);
+            /* ReDMCSB DUNGEON.C F0172: closed pit renders as corridor.
+             * Only open pits (MASK0x0008_PIT_OPEN) show the hole. */
+            if (cell->square & 0x08) { /* PIT_OPEN */
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              faceX + 5, faceY + faceH / 2,
+                              faceW - 10, faceH / 3, M11_COLOR_BLACK);
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              faceX + 5, faceY + faceH / 2,
+                              faceW - 10, faceH / 3, M11_COLOR_BROWN);
+            }
             break;
         case DUNGEON_ELEMENT_TELEPORTER:
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -8286,11 +8219,18 @@ enum {
 
     /* DM1 floor/ceiling panels.
      * ReDMCSB I34E DEFS.H:
+     *   M644_GRAPHIC_FIRST_FLOOR_SET     = 78
+     *   C002_FLOOR_SET_GRAPHIC_COUNT     = 2
      *   M650_GRAPHIC_FLOOR_SET_0_FLOOR   = 78 (224x97)
      *   M651_GRAPHIC_FLOOR_SET_0_CEILING = 79 (224x39)
+     * DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet computes:
+     *   floorGraphic   = floorSet * 2 + 78
+     *   ceilingGraphic = floorSet * 2 + 79
      * DUNVIEW.C F0128 draws ceiling into C700 and floor into C701. */
-    M11_GFX_FLOOR_PANEL   = 78,  /* 224x97 */
-    M11_GFX_CEILING_PANEL = 79,  /* 224x39 */
+    M11_GFX_FIRST_FLOOR_SET         = 78, /* M644_GRAPHIC_FIRST_FLOOR_SET (I34E) */
+    M11_GFX_FLOOR_SET_GRAPHIC_COUNT = 2,  /* C002_FLOOR_SET_GRAPHIC_COUNT */
+    M11_GFX_FLOOR_PANEL   = 78,  /* 224x97  — floor set 0 floor */
+    M11_GFX_CEILING_PANEL = 79,  /* 224x39  — floor set 0 ceiling */
 
     /* Door frame graphics at depth (perspective-scaled sizes) */
     M11_GFX_DOOR_FRAME_D3   = 70,  /*  36x49  — far depth */
@@ -8593,6 +8533,11 @@ static void m11_blit_viewport_region_maybe_flip(const M11_AssetSlot* slot,
     }
 }
 
+/* Forward declarations for floor-set-aware graphic index helpers.
+ * Definitions follow m11_current_map_floor_set below. */
+static unsigned int m11_floor_set_floor_graphic(const M11_GameViewState* state);
+static unsigned int m11_floor_set_ceiling_graphic(const M11_GameViewState* state);
+
 static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -8602,10 +8547,26 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          int vpW,
                                          int vpH) {
     if (state->assetsAvailable) {
+        /* ReDMCSB DUNVIEW.C F0094: select floor/ceiling bitmaps from the
+         * current map's floor set.  Floor set 0 = entries 78/79, floor
+         * set 1 = 80/81, etc.  Fall back to set 0 if the set-specific
+         * graphics are not available in GRAPHICS.DAT. */
+        unsigned int floorGfx = m11_floor_set_floor_graphic(state);
+        unsigned int ceilingGfx = m11_floor_set_ceiling_graphic(state);
         const M11_AssetSlot* ceilingSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, M11_GFX_CEILING_PANEL);
+            (M11_AssetLoader*)&state->assetLoader, ceilingGfx);
         const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
+            (M11_AssetLoader*)&state->assetLoader, floorGfx);
+        /* Fall back to floor set 0 if the map's floor set assets are
+         * missing (e.g. GRAPHICS.DAT only has sets 0-1 but map says 2). */
+        if ((!ceilingSlot || !ceilingSlot->loaded) && ceilingGfx != M11_GFX_CEILING_PANEL) {
+            ceilingSlot = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_CEILING_PANEL);
+        }
+        if ((!floorSlot || !floorSlot->loaded) && floorGfx != M11_GFX_FLOOR_PANEL) {
+            floorSlot = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
+        }
         if (ceilingSlot && floorSlot &&
             ceilingSlot->width == 224 && ceilingSlot->height == 39 &&
             floorSlot->width == 224 && floorSlot->height == 97 &&
@@ -8707,6 +8668,59 @@ static const M11_DM1FloorOrnSpec kM11_DM1FloorOrnamentRenderSpecs[] = {
     {1, 1,4,1,{0,0,0,195, 94,25,21}}  /* D1R in G0206 x192..223/y92..116 */
 };
 
+/* ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set
+ * when (mapX + mapY + direction) & 1.  When true, the wall-set swap tables
+ * (G3048_WallSetFlipped / G3071_WallSetNotFlipped) exchange the L/R bitmap
+ * indices so that left walls use the right-side bitmap drawn flipped
+ * horizontally, and vice versa.  This breaks repeated texture seams and
+ * matches the original DM1 viewport appearance. */
+static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
+                                                        unsigned int wallSet0GraphicIndex);
+static int m11_dm1_use_flipped_walls(const M11_GameViewState* state) {
+    if (!state) return 0;
+    return (state->world.party.mapX +
+            state->world.party.mapY +
+            state->world.party.direction) & 1;
+}
+
+/* Blit a wall-front graphic with horizontal flip (no transparency).
+ * Mirrors ReDMCSB F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally
+ * for the wall-set swap path. */
+static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int fbW,
+                                          int fbH,
+                                          const M11_DM1WallFrontBlit* blit) {
+    const M11_AssetSlot* slot;
+    unsigned int graphicIndex;
+    int y;
+    if (!state || !state->assetsAvailable || !blit || !framebuffer) {
+        return 0;
+    }
+    graphicIndex = m11_wallset_graphic_index_for_state(state,
+                                                       (unsigned int)blit->graphicIndex);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != blit->width || slot->height != blit->height) {
+        return 0;
+    }
+    for (y = 0; y < blit->height; ++y) {
+        int x;
+        int fbY = M11_VIEWPORT_Y + blit->dstY + y;
+        if (fbY < 0 || fbY >= fbH) continue;
+        for (x = 0; x < blit->width; ++x) {
+            int fbX = M11_VIEWPORT_X + blit->dstX + x;
+            int sx = blit->width - 1 - x;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) continue;
+            pixel = slot->pixels[y * (int)slot->width + sx];
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+    return 1;
+}
+
 static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
                                                         unsigned int wallSet0GraphicIndex) {
     int wallSet = 0;
@@ -8724,33 +8738,14 @@ static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState*
                           ((int)wallSet0GraphicIndex - M11_GFX_DOOR_SIDE_D0));
 }
 
-/* ReDMCSB DUNVIEW.C F0128 line 8357: G0076_B_UseFlippedWallAndFootprintsBitmaps =
- * (mapX + mapY + direction) & 1.  When this parity flag is set, DM1's PC 3.4
- * dungeon view (MEDIA709_I34E_I34M) swaps the L<->R wall graphic indices for
- * every side wall and draws each panel horizontally flipped.  Center walls
- * (D3C, D2C, D1C) keep the same graphic but are also drawn flipped.  This
- * adds visual variety so adjacent square wall textures don't seam visibly
- * across the corridor. */
-static int m11_dm1_use_flipped_wall_bitmaps(const M11_GameViewState* state) {
-    if (!state) {
-        return 0;
-    }
-    return ((state->world.party.mapX +
-             state->world.party.mapY +
-             state->world.party.direction) & 1) ? 1 : 0;
-}
-
-static int m11_draw_dm1_wall_blit_with_transparency_maybe_flip(const M11_GameViewState* state,
-                                                               unsigned char* framebuffer,
-                                                               int fbW,
-                                                               int fbH,
-                                                               const M11_DM1WallFrontBlit* blit,
-                                                               int transparentColor,
-                                                               int flipHorizontal) {
+static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* state,
+                                                    unsigned char* framebuffer,
+                                                    int fbW,
+                                                    int fbH,
+                                                    const M11_DM1WallFrontBlit* blit,
+                                                    int transparentColor) {
     const M11_AssetSlot* slot;
     unsigned int graphicIndex;
-    int blitW;
-    int blitH;
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
     }
@@ -8758,66 +8753,16 @@ static int m11_draw_dm1_wall_blit_with_transparency_maybe_flip(const M11_GameVie
                                                        (unsigned int)blit->graphicIndex);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
+    if (!slot || slot->width != blit->width || slot->height != blit->height) {
         return 0;
     }
-    /* ReDMCSB DUNVIEW.C F0104/F0105 wall blits copy the full graphic
-     * into the destination zone.  The decoded graphic size from
-     * GRAPHICS.DAT may differ from the blit rect when wall-set entries
-     * vary across maps.  Use the slot’s actual dimensions and blit the
-     * portion that fits the destination zone, clamped to the smaller of
-     * slot size vs blit rect. */
-    blitW = blit->width;
-    blitH = blit->height;
-    if (blitW > slot->width) blitW = slot->width;
-    if (blitH > slot->height) blitH = slot->height;
-    if (!flipHorizontal) {
-        M11_AssetLoader_BlitRegion(slot,
-                                   0, 0, blitW, blitH,
-                                   framebuffer, fbW, fbH,
-                                   M11_VIEWPORT_X + blit->dstX,
-                                   M11_VIEWPORT_Y + blit->dstY,
-                                   transparentColor);
-        return 1;
-    }
-    if (!slot->loaded || !slot->pixels) {
-        return 0;
-    }
-    {
-        int y;
-        for (y = 0; y < blitH; ++y) {
-            int fbY = M11_VIEWPORT_Y + blit->dstY + y;
-            int x;
-            if (fbY < 0 || fbY >= fbH) {
-                continue;
-            }
-            for (x = 0; x < blitW; ++x) {
-                int fbX = M11_VIEWPORT_X + blit->dstX + x;
-                int sx = (blitW - 1 - x);
-                unsigned char pixel;
-                if (fbX < 0 || fbX >= fbW) {
-                    continue;
-                }
-                pixel = slot->pixels[y * (int)slot->width + sx];
-                if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
-                    continue;
-                }
-                framebuffer[fbY * fbW + fbX] = pixel;
-            }
-        }
-    }
+    M11_AssetLoader_BlitRegion(slot,
+                               0, 0, blit->width, blit->height,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + blit->dstX,
+                               M11_VIEWPORT_Y + blit->dstY,
+                               transparentColor);
     return 1;
-}
-
-static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* state,
-                                                    unsigned char* framebuffer,
-                                                    int fbW,
-                                                    int fbH,
-                                                    const M11_DM1WallFrontBlit* blit,
-                                                    int transparentColor) {
-    return m11_draw_dm1_wall_blit_with_transparency_maybe_flip(state, framebuffer,
-                                                               fbW, fbH, blit,
-                                                               transparentColor, 0);
 }
 
 static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
@@ -8827,21 +8772,6 @@ static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
                                         const M11_DM1WallFrontBlit* blit) {
     return m11_draw_dm1_wall_blit_with_transparency(state, framebuffer,
                                                     fbW, fbH, blit, -1);
-}
-
-/* Front-wall variant that flips horizontally per the wall-flip parity
- * flag.  ReDMCSB DUNVIEW.C uses F0792_DUNGEONVIEW_DrawBitmapYYY with the
- * G0076 flag for D3C/D2C/D1C in the I34E_I34M media path; the source
- * graphic is unchanged but the blit mirrors. */
-static int m11_draw_dm1_front_wall_blit_maybe_flip(const M11_GameViewState* state,
-                                                   unsigned char* framebuffer,
-                                                   int fbW,
-                                                   int fbH,
-                                                   const M11_DM1WallFrontBlit* blit,
-                                                   int flipHorizontal) {
-    return m11_draw_dm1_wall_blit_with_transparency_maybe_flip(state, framebuffer,
-                                                               fbW, fbH, blit, -1,
-                                                               flipHorizontal);
 }
 
 static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
@@ -9206,20 +9136,18 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
     static const unsigned char kOrnD2Palette[16] = {
         0, 1, 2, 3, 4, 3, 6, 7, 5, 9, 10, 11, 12, 13, 14, 15
     };
-    static const int kAnchorX[3][3] = {
-        {28, 42, 63}, /* coordinate set 0: right-aligned anchors */
-        {15, 22, 33}, /* coordinate set 1: left/top-ish anchors */
-        {34, 50, 75}  /* coordinate set 2: right/bottom anchors */
-    };
-    static const int kAnchorY[3][3] = {
-        {13, 17, 22},
-        {23, 35, 53},
-        {37, 53, 80}
+    /* ReDMCSB DUNVIEW.C G0207_aaauc_Graphic558_DoorOrnamentCoordinateSets[4][3][6].
+     * Format: {X1, X2, Y1, Y2, ByteWidth, Height}.
+     * Index 0 = D3LCR, 1 = D2LCR, 2 = D1LCR (full native). */
+    static const unsigned char kDoorOrnCoordSets[4][3][6] = {
+        {{17,31, 8,17, 8,10}, {22,42,11,23,16,13}, {32,63,13,31,16,19}},
+        {{ 0,47, 0,40,24,41}, { 0,63, 0,60,32,61}, { 0,95, 0,87,48,88}},
+        {{17,31,15,24, 8,10}, {22,42,22,34,16,13}, {32,63,31,49,16,19}},
+        {{23,35,31,39, 8, 9}, {30,48,41,52,16,12}, {44,75,61,79,16,19}}
     };
     const M11_AssetSlot* slot;
     int graphicIndex;
     int coordSet;
-    int scale;
     int viewIndex;
     int ornW;
     int ornH;
@@ -9239,25 +9167,20 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return;
     }
-    if (coordSet < 0 || coordSet > 2) {
+    if (coordSet < 0 || coordSet > 3) {
         coordSet = 1;
     }
-    scale = (depthIndex == 0) ? 32 : ((depthIndex == 1) ? 21 : 14);
     viewIndex = (depthIndex == 0) ? 2 : ((depthIndex == 1) ? 1 : 0);
-    ornW = m11_dm1_scaled_dimension(slot->width, scale);
-    ornH = m11_dm1_scaled_dimension(slot->height, scale);
+    /* Use G0207 coordinate set directly for ornament position/size. */
+    {
+        const unsigned char* cs = kDoorOrnCoordSets[coordSet][viewIndex];
+        ornW = cs[1] - cs[0] + 1;
+        ornH = cs[3] - cs[2] + 1;
+        relX = cs[0];
+        relY = cs[2];
+    }
     if (ornW <= 0 || ornH <= 0) {
         return;
-    }
-    if (coordSet == 0) {
-        relX = kAnchorX[coordSet][viewIndex] - ornW;
-        relY = kAnchorY[coordSet][viewIndex];
-    } else if (coordSet == 1) {
-        relX = kAnchorX[coordSet][viewIndex];
-        relY = kAnchorY[coordSet][viewIndex] - ornH;
-    } else {
-        relX = kAnchorX[coordSet][viewIndex] - ornW;
-        relY = kAnchorY[coordSet][viewIndex] - ornH;
     }
     m11_blit_scaled_palette_map(slot,
                                 framebuffer, fbW, fbH,
@@ -9359,20 +9282,27 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable) {
         return;
     }
-    /* ReDMCSB DUNVIEW.C MEDIA709_I34E_I34M front-wall draws use
-     * F0792_DUNGEONVIEW_DrawBitmapYYY(G2107_WallSet[Cnn_WALL_DnC], zone,
-     * G0076_B_UseFlippedWallAndFootprintsBitmaps); on alternate squares
-     * the center wall texture is drawn horizontally flipped. */
-    flipWalls = m11_dm1_use_flipped_wall_bitmaps(state);
+    flipWalls = m11_dm1_use_flipped_walls(state);
     for (depth = 0; depth < 3; ++depth) {
         if (occluded) {
             break;
         }
         if (m11_viewport_cell_is_wall_like(&cells[depth][1])) {
-            (void)m11_draw_dm1_front_wall_blit_maybe_flip(state, framebuffer,
-                                                          fbW, fbH,
-                                                          &kFrontBlits[depth],
-                                                          flipWalls);
+            if (flipWalls) {
+                /* ReDMCSB DUNVIEW.C F0128: when G0076 is set, the center
+                 * wall-set indices are swapped to pre-flipped versions
+                 * (G3049..G3055 on MEDIA506, G3048_WallSetFlipped on
+                 * MEDIA747).  Since Firestaff loads only native bitmaps
+                 * from GRAPHICS.DAT, we achieve the same result by drawing
+                 * the native center-wall graphic flipped horizontally. */
+                (void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,
+                                                     fbW, fbH,
+                                                     &kFrontBlits[depth]);
+            } else {
+                (void)m11_draw_dm1_front_wall_blit(state, framebuffer,
+                                                   fbW, fbH,
+                                                   &kFrontBlits[depth]);
+            }
             occluded = 1;
         }
     }
@@ -9432,6 +9362,12 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
             continue;
         }
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_PIT) {
+            continue;
+        }
+        /* ReDMCSB DUNGEON.C F0172: closed pit renders as corridor.
+         * Only open pits (MASK0x0008_PIT_OPEN) show the hole graphic.
+         * Ref: DEFS.H line 1027, DUNGEON.C line 2629. */
+        if (!(cell.square & 0x08)) { /* not PIT_OPEN */
             continue;
         }
         if (cell.square & 0x04) { /* MASK0x0004_PIT_INVISIBLE */
@@ -9793,7 +9729,7 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         if ((kStairs[i].frontOnly && !frontFacing) || (kStairs[i].sideOnly && frontFacing)) {
             continue;
         }
-        stairUp = (cell.square & 0x01) ? 1 : 0;
+        stairUp = (cell.square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP */
         (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                      stairUp ? &kStairs[i].upBlit : &kStairs[i].downBlit,
                                      0);
@@ -9857,6 +9793,8 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_TELEPORTER) {
             continue;
         }
+        /* ReDMCSB DUNGEON.C F0172:2685 — teleporter visible iff OPEN&&VISIBLE.
+         * DEFS.H: MASK0x0004_TELEPORTER_VISIBLE, MASK0x0008_TELEPORTER_OPEN. */
         if ((cell.square & 0x04) == 0 || (cell.square & 0x08) == 0) {
             continue;
         }
@@ -9875,55 +9813,40 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     int fbH,
                                     int maxVisibleForward,
                                     const M11_ViewportCell cells[3][3]) {
-    /* Source graphic indices for each side-wall slot in NORMAL parity.
-     * On flipped parity the L<->R pair swaps.  See ReDMCSB DUNVIEW.C
-     * F0676/F0677 (D3L2/D3R2), F0116/F0117 (D3L/D3R), F0678/F0679
-     * (D2L2/D2R2), F0119/F0120 (D2L/D2R), F0122/F0123 (D1L/D1R), and
-     * F0125/F0126 (D0L/D0R) under the MEDIA709_I34E_I34M media path. */
+    /* Side wall blits are arranged in L/R pairs.  Even indices are left-side
+     * entries and odd indices are the corresponding right-side entries.
+     * ReDMCSB DUNVIEW.C F0128 swaps the wall-set L/R bitmap indices when
+     * G0076_B_UseFlippedWallAndFootprintsBitmaps is true: F0116 draws the
+     * D3R graphic flipped horizontally into the D3L zone, and F0117 draws
+     * the D3L graphic flipped into the D3R zone.  This alternating texture
+     * pattern breaks visible seams in the 4-bit palette wall textures. */
     static const M11_DM1WallFrontBlit kSideBlits[] = {
         /* Far to near, matching the first source-bound subset of
          * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
          * coordinates name the viewed square; dst rects are layout-696
-         * F0635_-resolved viewport zones. */
-        {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},
-        {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},
-        {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},
-        {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},
-        {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},
-        {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},
-        {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   19, 78, 74},
-        {2, 2,  1, M11_GFX_WALLSET0_D2R,  146, 19, 78, 74},
-        {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111},
-        {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111},
-        {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136},
-        {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}
+         * F0635_-resolved viewport zones.
+         * Entries are paired: [0]+[1], [2]+[3], ... = L+R at same depth. */
+        {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},  /* 0: D3L2 */
+        {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},  /* 1: D3R2 */
+        {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},  /* 2: D3L  */
+        {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},  /* 3: D3R  */
+        {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},  /* 4: D2L2 */
+        {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},  /* 5: D2R2 */
+        {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   19, 78, 74},  /* 6: D2L  */
+        {2, 2,  1, M11_GFX_WALLSET0_D2R,  146, 19, 78, 74},  /* 7: D2R  */
+        {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111}, /* 8: D1L  */
+        {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111}, /* 9: D1R  */
+        {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136}, /*10: D0L  */
+        {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}  /*11: D0R  */
     };
-    /* L<->R swap mapping for flipped parity.  Each entry holds the
-     * graphic index drawn into the same destination zone when the wall
-     * flip flag is set, and is then drawn horizontally flipped. */
-    static const int kSideBlitsFlippedGraphic[] = {
-        M11_GFX_WALLSET0_D3R2, /* slot 0: D3L2 zone <- D3R2 graphic flipped */
-        M11_GFX_WALLSET0_D3L2, /* slot 1: D3R2 zone <- D3L2 graphic flipped */
-        M11_GFX_WALLSET0_D3R,  /* slot 2: D3L  zone <- D3R  graphic flipped */
-        M11_GFX_WALLSET0_D3L,  /* slot 3: D3R  zone <- D3L  graphic flipped */
-        M11_GFX_WALLSET0_D2R2, /* slot 4: D2L2 zone <- D2R2 graphic flipped */
-        M11_GFX_WALLSET0_D2L2, /* slot 5: D2R2 zone <- D2L2 graphic flipped */
-        M11_GFX_WALLSET0_D2R,  /* slot 6: D2L  zone <- D2R  graphic flipped */
-        M11_GFX_WALLSET0_D2L,  /* slot 7: D2R  zone <- D2L  graphic flipped */
-        M11_GFX_WALLSET0_D1R,  /* slot 8: D1L  zone <- D1R  graphic flipped */
-        M11_GFX_WALLSET0_D1L,  /* slot 9: D1R  zone <- D1L  graphic flipped */
-        M11_GFX_WALLSET0_D0R,  /* slot 10: D0L zone <- D0R graphic flipped */
-        M11_GFX_WALLSET0_D0L   /* slot 11: D0R zone <- D0L graphic flipped */
-    };
-    int flipWalls;
     size_t i;
+    int flipWalls;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    flipWalls = m11_dm1_use_flipped_wall_bitmaps(state);
+    flipWalls = m11_dm1_use_flipped_walls(state);
     for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
         M11_ViewportCell cell;
-        M11_DM1WallFrontBlit blit;
         if (kSideBlits[i].relForward > maxVisibleForward) {
             continue;
         }
@@ -9942,23 +9865,28 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
             /* ReDMCSB wall primitives use F0104/F0105 wall blits into
              * C702..C717 without C10 transparency; C10_COLOR_FLESH is a
              * real tan wall texel.  Keying side-wall panels on palette 10
-             * cuts black holes into D1R/D0R right-side geometry.
-             *
-             * On flipped parity (G0076_B_UseFlippedWallAndFootprintsBitmaps
-             * set in F0128) DM1 PC 3.4 swaps the L<->R wall graphic for
-             * each side-wall slot and draws it horizontally flipped, so
-             * adjacent squares don't show the same texture seam. */
-            blit = kSideBlits[i];
+             * cuts black holes into D1R/D0R right-side geometry. */
             if (flipWalls) {
-                blit.graphicIndex = kSideBlitsFlippedGraphic[i];
+                /* ReDMCSB F0116/F0117 (MEDIA709/720 path): when flipped,
+                 * left zones use the right-side graphic flipped horizontally
+                 * and vice versa.  The paired entry is at i^1 (XOR toggles
+                 * the LSB to swap even/odd = L/R partner). */
+                size_t partner = i ^ 1;
+                M11_DM1WallFrontBlit swapped = kSideBlits[i];
+                swapped.graphicIndex = kSideBlits[partner].graphicIndex;
+                (void)m11_draw_dm1_wall_blit_flipped(state,
+                                                     framebuffer,
+                                                     fbW,
+                                                     fbH,
+                                                     &swapped);
+            } else {
+                (void)m11_draw_dm1_wall_blit_with_transparency(state,
+                                                               framebuffer,
+                                                               fbW,
+                                                               fbH,
+                                                               &kSideBlits[i],
+                                                               -1);
             }
-            (void)m11_draw_dm1_wall_blit_with_transparency_maybe_flip(state,
-                                                                      framebuffer,
-                                                                      fbW,
-                                                                      fbH,
-                                                                      &blit,
-                                                                      -1,
-                                                                      flipWalls);
         }
     }
 }
@@ -10062,15 +9990,14 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
             {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
         }
     };
-    static const int kAnchorX[3][3] = {
-        {28, 42, 63}, /* coordinate set 0: right-aligned anchors */
-        {15, 22, 33}, /* coordinate set 1: left/top-ish anchors */
-        {34, 50, 75}  /* coordinate set 2: right/bottom anchors */
-    };
-    static const int kAnchorY[3][3] = {
-        {13, 17, 22},
-        {23, 35, 53},
-        {37, 53, 80}
+    /* ReDMCSB DUNVIEW.C G0207_aaauc_Graphic558_DoorOrnamentCoordinateSets[4][3][6].
+     * Format: {X1, X2, Y1, Y2, ByteWidth, Height}.
+     * Index 0 = D3LCR, 1 = D2LCR, 2 = D1LCR (full native). */
+    static const unsigned char kDoorOrnCoordSets[4][3][6] = {
+        {{17,31, 8,17, 8,10}, {22,42,11,23,16,13}, {32,63,13,31,16,19}},
+        {{ 0,47, 0,40,24,41}, { 0,63, 0,60,32,61}, { 0,95, 0,87,48,88}},
+        {{17,31,15,24, 8,10}, {22,42,22,34,16,13}, {32,63,31,49,16,19}},
+        {{23,35,31,39, 8, 9}, {30,48,41,52,16,12}, {44,75,61,79,16,19}}
     };
     int depth;
     if (!state || !state->assetsAvailable) {
@@ -10087,7 +10014,6 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
         int coordSet;
         int panelState;
         M11_DM1ZoneBlit panel;
-        int scale = (depth == 0) ? 32 : ((depth == 1) ? 21 : 14);
         int viewIndex = (depth == 0) ? 2 : ((depth == 1) ? 1 : 0);
         int ornW, ornH, relX, relY;
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
@@ -10103,25 +10029,22 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
         if (!slot || slot->width <= 0 || slot->height <= 0) {
             return;
         }
-        if (coordSet < 0 || coordSet > 2) {
+        if (coordSet < 0 || coordSet > 3) {
             coordSet = 1;
-        }
-        ornW = m11_dm1_scaled_dimension(slot->width, scale);
-        ornH = m11_dm1_scaled_dimension(slot->height, scale);
-        if (ornW <= 0 || ornH <= 0) {
-            return;
         }
         panelState = (cell->doorState >= 1 && cell->doorState <= 3) ? cell->doorState : 0;
         panel = kDoorPanels[depth][panelState];
-        if (coordSet == 0) {
-            relX = kAnchorX[coordSet][viewIndex] - ornW;
-            relY = kAnchorY[coordSet][viewIndex];
-        } else if (coordSet == 1) {
-            relX = kAnchorX[coordSet][viewIndex];
-            relY = kAnchorY[coordSet][viewIndex] - ornH;
-        } else {
-            relX = kAnchorX[coordSet][viewIndex] - ornW;
-            relY = kAnchorY[coordSet][viewIndex] - ornH;
+        /* Use G0207 coordinate set directly for ornament position/size.
+         * viewIndex: 0=D3, 1=D2, 2=D1. */
+        {
+            const unsigned char* cs = kDoorOrnCoordSets[coordSet][viewIndex];
+            ornW = cs[1] - cs[0] + 1;
+            ornH = cs[3] - cs[2] + 1;
+            relX = cs[0];
+            relY = cs[2];
+        }
+        if (ornW <= 0 || ornH <= 0) {
+            return;
         }
         M11_AssetLoader_BlitScaled(slot,
                                    framebuffer, fbW, fbH,
@@ -10171,12 +10094,12 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
         0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
     };
     static const M11_DM1ZoneBlit kButtons[3] = {
-        /* C1950_ZONE_DOOR_BUTTON + C3_VIEW_DOOR_BUTTON_D1C */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 167, 43, 8, 9},
-        /* D2 uses 20/32 scaled derived bitmap. */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 150, 42, 5, 5},
-        /* D3 uses 16/32 scaled derived bitmap. */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 137, 41, 4, 4}
+        /* G0208[0][C3_VIEW_DOOR_BUTTON_D1C]: native bitmap at (160,44) 16x9 */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 160, 44, 16, 9},
+        /* G0208[0][C2_VIEW_DOOR_BUTTON_D2C]: scaled to (144,42) 12x6 */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 144, 42, 12, 6},
+        /* G0208[0][C1_VIEW_DOOR_BUTTON_D3C]: scaled to (136,41) 6x4 */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 136, 41, 6, 4}
     };
     int depth;
     const M11_ViewportCell* cell;
@@ -10256,12 +10179,12 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return;
     }
-    /* C1950_ZONE_DOOR_BUTTON + C0_VIEW_DOOR_BUTTON_D3R, scaled 16/32. */
+    /* G0208[0][C0_VIEW_DOOR_BUTTON_D3R]: scaled to (199,41) 6x4 */
     m11_blit_scaled_palette_map(slot,
                                 framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + 197,
-                                M11_VIEWPORT_Y + 39,
-                                4, 4,
+                                M11_VIEWPORT_X + 199,
+                                M11_VIEWPORT_Y + 41,
+                                6, 4,
                                 10,
                                 kButtonD3Palette);
 }
@@ -11264,6 +11187,21 @@ static int m11_current_map_floor_set(const M11_GameViewState* state) {
     return (int)state->world.dungeon->maps[state->world.party.mapIndex].floorSet;
 }
 
+/* Compute floor-set-aware GRAPHICS.DAT index for the floor panel bitmap.
+ * ReDMCSB DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet:
+ *   graphicIndex = floorSet * C002_FLOOR_SET_GRAPHIC_COUNT + M644_GRAPHIC_FIRST_FLOOR_SET
+ * Floor panel = graphicIndex, ceiling panel = graphicIndex + 1.
+ * DM1 PC 3.4 has floor sets 0..3 (maps vary by dungeon level). */
+static unsigned int m11_floor_set_floor_graphic(const M11_GameViewState* state) {
+    int floorSet = m11_current_map_floor_set(state);
+    return (unsigned int)(M11_GFX_FIRST_FLOOR_SET +
+                          floorSet * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
+}
+
+static unsigned int m11_floor_set_ceiling_graphic(const M11_GameViewState* state) {
+    return m11_floor_set_floor_graphic(state) + 1;
+}
+
 /* Draw stair graphics from GRAPHICS.DAT at the given depth. */
 static int m11_draw_stairs_asset(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
@@ -11815,7 +11753,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
         if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           paneX + 1, paneY + 1, paneW - 2, paneH - 2, M11_COLOR_LIGHT_CYAN);
-        } else if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+        } else if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           paneX + 1, paneY + paneH / 2, paneW - 2, paneH / 3, M11_COLOR_BROWN);
         }
@@ -12111,6 +12049,22 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
             }
             if (paneW <= 4) {
                 continue;
+            }
+
+            /* ReDMCSB DUNVIEW.C F0116-F0122 (DrawSquareD3L..D1L): for each
+             * open side square, floor ornaments are drawn first (F0108),
+             * then F0115 draws objects/creatures/projectiles.  Mirror
+             * that order here for side cells. */
+            if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
+                M11_ViewRect ornRect;
+                ornRect.x = paneX;
+                ornRect.y = paneY + paneH / 2;
+                ornRect.w = paneW;
+                ornRect.h = paneH / 2;
+                m11_draw_floor_ornament(g_drawState, framebuffer,
+                                        framebufferWidth, framebufferHeight,
+                                        &ornRect, cell->floorOrnamentOrdinal,
+                                        depth + 1, side);
             }
 
             if (cell->floorItemCount > 0) {
@@ -17953,17 +17907,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                       viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
     }
 
-    /* ── Viewport draw order ──
-     * ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near:
-     *   D3L2/D3R2 → D3L/D3R/D3C → D2L2/D2R2 → D2L/D2R/D2C → D1L/D1R/D1C → D0L/D0R/D0C
-     * Each square draws walls + ornaments + doors, then objects/creatures
-     * before moving to the next nearer depth.
-     *
-     * Current Firestaff V1 still batches by primitive class (all side walls,
-     * then all front walls, etc) because each draw function has an internal
-     * depth loop.  The blocking-center-depth replay pass below compensates
-     * for the main known occlusion artefact (far center doors/items bleeding
-     * through nearer side walls). */
+    /* First source-bound wall passes: draw blocked side/front square
+     * panels using original wall-set bitmaps and original layout-696
+     * zones.  This is still narrower than full DUNVIEW.C: ornaments,
+     * doors, pits, stairs, fields, and exact object order remain next. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
                              maxVisibleForward, cells);
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -17990,10 +17937,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
 
-    /* Occlusion compensation: when a blocking center wall/door exists at
-     * depth N, redraw the nearer side layers (depth < N) so they correctly
-     * occlude any far-depth center doors/buttons/items that were drawn
-     * during the batched center pass above. */
+    /* ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near
+     * (D3 side/center, then D2 side/center, then D1 side/center).
+     * Firestaff current V1 renderer still batches by primitive class.
+     * After drawing a blocking center door/wall at D2C or D3C, replay only
+     * the nearer side layers so farther center doors/buttons/items cannot
+     * bleed through near side-wall/door occluders. */
     {
         int blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
         if (blockingCenterDepth > 0) {
@@ -18887,7 +18836,7 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
         }
         return;
     }
-    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
         snprintf(outAction, outActionSize, "FOCUS PIT");
         snprintf(outHint, outHintSize, "UP RISKS A DROP, ENTER INSPECTS BEFORE COMMITTING");
         return;

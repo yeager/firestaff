@@ -224,6 +224,16 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->wasdMovementEnabled = 1;
     config->windowWidth = 960;
     config->windowHeight = 540;
+    config->audioMasterVolume = 128;
+    config->audioMusicVolume = 128;
+    config->audioSfxVolume = 128;
+    config->audioMuted = 0;
+    config->fontScale = 1;
+    config->highContrast = 0;
+    config->colorblindMode = 0;
+    config->autoPause = 0;
+    config->themeIndex = 0;
+    config->bgAnimationPreset = 0;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -303,6 +313,22 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->windowHeight = m12_parse_int(value, config->windowHeight);
         return;
     }
+    if (m12_string_equals(key, "audio_master_volume")) {
+        config->audioMasterVolume = m12_parse_int(value, config->audioMasterVolume);
+        return;
+    }
+    if (m12_string_equals(key, "audio_music_volume")) {
+        config->audioMusicVolume = m12_parse_int(value, config->audioMusicVolume);
+        return;
+    }
+    if (m12_string_equals(key, "audio_sfx_volume")) {
+        config->audioSfxVolume = m12_parse_int(value, config->audioSfxVolume);
+        return;
+    }
+    if (m12_string_equals(key, "audio_muted")) {
+        config->audioMuted = m12_parse_int(value, config->audioMuted);
+        return;
+    }
     if (strncmp(key, "game_", 5) == 0) {
         int gameIndex = -1;
         char field[64];
@@ -338,9 +364,50 @@ static void m12_parse_line(M12_Config* config, char* line) {
             }
         }
     }
+    if (m12_string_equals(key, "font_scale")) {
+        int val = m12_parse_int(value, config->fontScale);
+        if (val < 1) val = 1;
+        if (val > 3) val = 3;
+        config->fontScale = val;
+        return;
+    }
+    if (m12_string_equals(key, "high_contrast")) {
+        config->highContrast = m12_parse_int(value, config->highContrast) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "colorblind_mode")) {
+        int val = m12_parse_int(value, config->colorblindMode);
+        if (val < 0) val = 0;
+        if (val > 3) val = 3;
+        config->colorblindMode = val;
+        return;
+    }
+    if (m12_string_equals(key, "auto_pause")) {
+        config->autoPause = m12_parse_int(value, config->autoPause) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "theme_index")) {
+        int val = m12_parse_int(value, config->themeIndex);
+        if (val < 0) val = 0;
+        if (val >= 4) val = 3;
+        config->themeIndex = val;
+        return;
+    }
+    if (m12_string_equals(key, "bg_animation_preset")) {
+        int val = m12_parse_int(value, config->bgAnimationPreset);
+        if (val < 0) val = 0;
+        if (val >= 4) val = 3;
+        config->bgAnimationPreset = val;
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
+        return;
+    }
+    if (m12_string_equals(key, "last_save_path") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->lastSavePath, sizeof(config->lastSavePath), quoted);
     }
 }
 
@@ -378,6 +445,10 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "wasd_movement_enabled = %d\n", config->wasdMovementEnabled ? 1 : 0);
     fprintf(fp, "window_width = %d\n", config->windowWidth);
     fprintf(fp, "window_height = %d\n", config->windowHeight);
+    fprintf(fp, "audio_master_volume = %d\n", config->audioMasterVolume);
+    fprintf(fp, "audio_music_volume = %d\n", config->audioMusicVolume);
+    fprintf(fp, "audio_sfx_volume = %d\n", config->audioSfxVolume);
+    fprintf(fp, "audio_muted = %d\n", config->audioMuted ? 1 : 0);
     {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -390,8 +461,17 @@ int M12_Config_Save(const M12_Config* config) {
             fprintf(fp, "game_%d_resolution = %d\n", gi, config->gameResolution[gi]);
         }
     }
+    fprintf(fp, "font_scale = %d\n", config->fontScale);
+    fprintf(fp, "high_contrast = %d\n", config->highContrast ? 1 : 0);
+    fprintf(fp, "colorblind_mode = %d\n", config->colorblindMode);
+    fprintf(fp, "auto_pause = %d\n", config->autoPause ? 1 : 0);
+    fprintf(fp, "theme_index = %d\n", config->themeIndex);
+    fprintf(fp, "bg_animation_preset = %d\n", config->bgAnimationPreset);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
+    fputc('\n', fp);
+    fputs("last_save_path = ", fp);
+    m12_escape_and_write(fp, config->lastSavePath);
     fputc('\n', fp);
     if (fclose(fp) != 0) {
         remove(tmpPath);
@@ -452,4 +532,12 @@ const char* M12_Config_GetPath(const M12_Config* config) {
         return "startup-menu.toml";
     }
     return config->path;
+}
+
+void M12_Config_SetLastSavePath(const char* path) {
+    M12_Config config;
+    M12_Config_Load(&config, NULL);
+    m12_copy_string(config.lastSavePath, sizeof(config.lastSavePath),
+                    path ? path : "");
+    M12_Config_Save(&config);
 }

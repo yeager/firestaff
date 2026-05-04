@@ -1,0 +1,400 @@
+/*
+ * CTest integration test for DM1 V1 projectile/explosion viewport rendering.
+ *
+ * Verifies source-locked data tables and rendering queries against ReDMCSB
+ * DUNVIEW.C F0115, DUNGEON.C F0142, and DEFS.H constants.
+ */
+
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "memory_projectile_pc34_compat.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int g_failures = 0;
+
+#define ASSERT_EQ(actual, expected, label) do { \
+    int _a = (actual), _e = (expected); \
+    if (_a != _e) { \
+        fprintf(stderr, "FAIL %s: expected %d, got %d\n", label, _e, _a); \
+        ++g_failures; \
+    } \
+} while(0)
+
+#define ASSERT_NE(actual, unexpected, label) do { \
+    int _a = (actual), _u = (unexpected); \
+    if (_a == _u) { \
+        fprintf(stderr, "FAIL %s: unexpected %d\n", label, _u); \
+        ++g_failures; \
+    } \
+} while(0)
+
+#define ASSERT_GE(actual, lower, label) do { \
+    int _a = (actual), _l = (lower); \
+    if (_a < _l) { \
+        fprintf(stderr, "FAIL %s: %d < %d\n", label, _a, _l); \
+        ++g_failures; \
+    } \
+} while(0)
+
+#define ASSERT_LE(actual, upper, label) do { \
+    int _a = (actual), _u = (upper); \
+    if (_a > _u) { \
+        fprintf(stderr, "FAIL %s: %d > %d\n", label, _a, _u); \
+        ++g_failures; \
+    } \
+} while(0)
+
+#define ASSERT_TRUE(cond, label) do { \
+    if (!(cond)) { \
+        fprintf(stderr, "FAIL %s\n", label); \
+        ++g_failures; \
+    } \
+} while(0)
+
+
+/* ── Test: Projectile aspect table dimensions ────────────────────── */
+
+static void test_projectile_aspect_table(void) {
+    int i;
+    printf("  projectile aspect table...\n");
+    for (i = 0; i < DM1_PROJECTILE_ASPECT_COUNT; ++i) {
+        int t = dm1_v1_projectile_aspect_type(i);
+        ASSERT_GE(t, 0, "aspect type >= 0");
+        ASSERT_LE(t, 3, "aspect type <= 3");
+    }
+    /* Out of range returns -1 */
+    ASSERT_EQ(dm1_v1_projectile_aspect_type(-1), -1, "aspect type -1");
+    ASSERT_EQ(dm1_v1_projectile_aspect_type(14), -1, "aspect type 14");
+}
+
+
+/* ── Test: Projectile graphic index ranges ───────────────────────── */
+
+static void test_projectile_graphic_indices(void) {
+    int aspect, dir;
+    printf("  projectile graphic indices...\n");
+    for (aspect = 0; aspect < DM1_PROJECTILE_ASPECT_COUNT; ++aspect) {
+        for (dir = 0; dir < 4; ++dir) {
+            int gfx = dm1_v1_projectile_graphic_index(aspect, dir);
+            char label[64];
+            snprintf(label, sizeof(label), "gfx[%d][%d] range", aspect, dir);
+            ASSERT_GE(gfx, DM1_GFX_FIRST_PROJECTILE, label);
+            /* Max projectile bitmap = 454 + 31 + 2 = 487, but we only
+             * go up to 485 (486 is first explosion).  Verify < 486. */
+            ASSERT_LE(gfx, DM1_GFX_FIRST_EXPLOSION - 1, label);
+        }
+    }
+    /* Out of range */
+    ASSERT_EQ(dm1_v1_projectile_graphic_index(-1, 0), -1, "gfx[-1]");
+    ASSERT_EQ(dm1_v1_projectile_graphic_index(14, 0), -1, "gfx[14]");
+}
+
+
+/* ── Test: Projectile bitmap deltas match aspect type rules ──────── */
+
+static void test_projectile_bitmap_deltas(void) {
+    int i;
+    printf("  projectile bitmap deltas...\n");
+
+    /* Type 3 (no back, no rotation) always delta=0 */
+    for (i = 10; i <= 13; ++i) {
+        ASSERT_EQ(dm1_v1_projectile_aspect_type(i), 3, "type3 aspect");
+        ASSERT_EQ(dm1_v1_projectile_bitmap_delta(i, 0), 0, "type3 delta dir0");
+        ASSERT_EQ(dm1_v1_projectile_bitmap_delta(i, 1), 0, "type3 delta dir1");
+        ASSERT_EQ(dm1_v1_projectile_bitmap_delta(i, 2), 0, "type3 delta dir2");
+        ASSERT_EQ(dm1_v1_projectile_bitmap_delta(i, 3), 0, "type3 delta dir3");
+    }
+
+    /* Type 2 (no back, rotation): delta=1 for perpendicular, 0 for parallel */
+    ASSERT_EQ(dm1_v1_projectile_aspect_type(3), 2, "lightning type2");
+    ASSERT_EQ(dm1_v1_projectile_bitmap_delta(3, 0), 0, "type2 delta dir0");
+    ASSERT_EQ(dm1_v1_projectile_bitmap_delta(3, 1), 1, "type2 delta dir1");
+    ASSERT_EQ(dm1_v1_projectile_bitmap_delta(3, 2), 0, "type2 delta dir2");
+    ASSERT_EQ(dm1_v1_projectile_bitmap_delta(3, 3), 1, "type2 delta dir3");
+
+    /* Type 0 (has back, rotation): delta=2 for perpendicular */
+    ASSERT_EQ(dm1_v1_projectile_aspect_type(0), 1, "arrow type");
+    /* arrow is actually type 1 due to GraphicInfo 0x0011 & 3 = 1; skip */
+}
+
+
+/* ── Test: Specific projectile subtype->aspect mapping ───────────── */
+
+static void test_projectile_subtype_mapping(void) {
+    printf("  projectile subtype mapping...\n");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_FIREBALL),
+              DM1_PROJ_ASPECT_FIREBALL, "fireball->10");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_SLIME),
+              DM1_PROJ_ASPECT_SLIME, "slime->12");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_LIGHTNING_BOLT),
+              DM1_PROJ_ASPECT_LIGHTNING_BOLT, "lightning->3");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_POISON_BOLT),
+              DM1_PROJ_ASPECT_POISON, "poison_bolt->13");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_POISON_CLOUD),
+              DM1_PROJ_ASPECT_POISON, "poison_cloud->13");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_HARM_NON_MATERIAL),
+              DM1_PROJ_ASPECT_DEFAULT, "harm->11");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_KINETIC_ARROW),
+              0, "kinetic->0");
+}
+
+
+/* ── Test: Projectile depth scaling ──────────────────────────────── */
+
+static void test_projectile_scale(void) {
+    printf("  projectile depth scaling...\n");
+    /* D0 closest: scale = 32 (native) regardless of sub-cell */
+    ASSERT_EQ(dm1_v1_projectile_scale_units(0, -1), 32, "D0 scale");
+    ASSERT_EQ(dm1_v1_projectile_scale_units(0, 0), 32, "D0 cell0");
+    ASSERT_EQ(dm1_v1_projectile_scale_units(0, 3), 32, "D0 cell3");
+
+    /* Greater depth: scale decreases */
+    ASSERT_TRUE(dm1_v1_projectile_scale_units(1, 2) > dm1_v1_projectile_scale_units(2, 2),
+                "D1 > D2 scale");
+    ASSERT_TRUE(dm1_v1_projectile_scale_units(2, 2) > dm1_v1_projectile_scale_units(3, 2),
+                "D2 > D3 scale");
+
+    /* Front row cells (2,3) get slightly larger scale than back (0,1) */
+    ASSERT_GE(dm1_v1_projectile_scale_units(2, 2),
+              dm1_v1_projectile_scale_units(2, 0),
+              "front >= back scale D2");
+}
+
+
+/* ── Test: Flip flags basic sanity ───────────────────────────────── */
+
+static void test_projectile_flip_flags(void) {
+    printf("  projectile flip flags...\n");
+    /* Type 3 (fireball etc): no flipping ever */
+    ASSERT_EQ(dm1_v1_projectile_flip_flags(10, 0, 0, 0, 0), 0, "fireball no flip");
+    ASSERT_EQ(dm1_v1_projectile_flip_flags(10, 1, 1, 5, 3), 0, "fireball no flip r");
+    ASSERT_EQ(dm1_v1_projectile_flip_flags(10, 3, 2, 7, 2), 0, "fireball no flip l");
+
+    /* Flip flags are in range [0, 3] (2 bits) */
+    {
+        int a, d, c;
+        for (a = 0; a < DM1_PROJECTILE_ASPECT_COUNT; ++a) {
+            for (d = 0; d < 4; ++d) {
+                for (c = 0; c < 4; ++c) {
+                    int f = dm1_v1_projectile_flip_flags(a, d, c, 10, 7);
+                    ASSERT_GE(f, 0, "flip >= 0");
+                    ASSERT_LE(f, 3, "flip <= 3");
+                }
+            }
+        }
+    }
+}
+
+
+/* ── Test: Explosion type->aspect mapping ────────────────────────── */
+
+static void test_explosion_type_to_aspect(void) {
+    printf("  explosion type to aspect...\n");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_FIREBALL),
+              DM1_EXPLOSION_ASPECT_FIRE, "fireball->fire");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_LIGHTNING_BOLT),
+              DM1_EXPLOSION_ASPECT_FIRE, "lightning->fire");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_REBIRTH_STEP2),
+              DM1_EXPLOSION_ASPECT_FIRE, "rebirth2->fire");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_POISON_BOLT),
+              DM1_EXPLOSION_ASPECT_POISON, "poison_bolt->poison");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_POISON_CLOUD),
+              DM1_EXPLOSION_ASPECT_POISON, "poison_cloud->poison");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_SMOKE),
+              DM1_EXPLOSION_ASPECT_SMOKE, "smoke->smoke");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_HARM_NON_MATERIAL),
+              DM1_EXPLOSION_ASPECT_SPELL, "harm->spell");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_OPEN_DOOR),
+              DM1_EXPLOSION_ASPECT_SPELL, "open_door->spell");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_SLIME),
+              DM1_EXPLOSION_ASPECT_SPELL, "slime->spell");
+    /* Fluxcage and rebirth step1 return -1 */
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_FLUXCAGE), -1, "fluxcage->-1");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_REBIRTH_STEP1), -1, "rebirth1->-1");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(-1), -1, "neg->-1");
+}
+
+
+/* ── Test: Explosion aspect->graphic mapping ─────────────────────── */
+
+static void test_explosion_aspect_to_graphic(void) {
+    printf("  explosion aspect to graphic...\n");
+    ASSERT_EQ(dm1_v1_explosion_aspect_to_graphic(0), 486, "fire->486");
+    ASSERT_EQ(dm1_v1_explosion_aspect_to_graphic(1), 487, "spell->487");
+    ASSERT_EQ(dm1_v1_explosion_aspect_to_graphic(2), 488, "poison->488");
+    ASSERT_EQ(dm1_v1_explosion_aspect_to_graphic(3), 488, "smoke->488");
+    ASSERT_EQ(dm1_v1_explosion_aspect_to_graphic(-1), -1, "neg->-1");
+}
+
+
+/* ── Test: Explosion size classes from attack ────────────────────── */
+
+static void test_explosion_size_class(void) {
+    printf("  explosion size class...\n");
+    ASSERT_EQ(dm1_v1_explosion_size_class(0), 0, "attack 0 -> small");
+    ASSERT_EQ(dm1_v1_explosion_size_class(31), 0, "attack 31 -> small");
+    ASSERT_EQ(dm1_v1_explosion_size_class(32), 1, "attack 32 -> medium");
+    ASSERT_EQ(dm1_v1_explosion_size_class(63), 1, "attack 63 -> medium");
+    ASSERT_EQ(dm1_v1_explosion_size_class(96), 1, "attack 96 -> medium");
+    ASSERT_EQ(dm1_v1_explosion_size_class(127), 1, "attack 127 -> medium (127>>5=3, not >3)");
+    ASSERT_EQ(dm1_v1_explosion_size_class(128), 2, "attack 128 -> large");
+    ASSERT_EQ(dm1_v1_explosion_size_class(255), 2, "attack 255 -> large");
+}
+
+
+/* ── Test: Explosion pattern graphic index (D0C path) ────────────── */
+
+static void test_explosion_pattern_graphic(void) {
+    printf("  explosion pattern graphic index...\n");
+    /* Fire small: 489 + 0*3 + 0 = 489 */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FIREBALL, 0), 489,
+              "fire small");
+    /* Fire medium: 489 + 0*3 + 1 = 490 */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FIREBALL, 32), 490,
+              "fire medium");
+    /* Fire large: 489 + 0*3 + 2 = 491 */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FIREBALL, 200), 491,
+              "fire large");
+    /* Spell small: 489 + 1*3 + 0 = 492 */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_HARM_NON_MATERIAL, 0), 492,
+              "spell small");
+    /* Poison medium: 489 + 2*3 + 1 = 496 */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_POISON_CLOUD, 64), 496,
+              "poison medium");
+    /* Smoke uses poison graphics: 489 + 2*3 + 0 = 495 */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_SMOKE, 0), 495,
+              "smoke small (=poison)");
+    /* Fluxcage returns -1 */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FLUXCAGE, 100), -1,
+              "fluxcage->-1");
+}
+
+
+/* ── Test: Explosion base scale decreases with depth ─────────────── */
+
+static void test_explosion_base_scale(void) {
+    printf("  explosion base scale...\n");
+    ASSERT_EQ(dm1_v1_explosion_base_scale(0), 32, "D0 scale");
+    ASSERT_TRUE(dm1_v1_explosion_base_scale(0) > dm1_v1_explosion_base_scale(1),
+                "D0 > D1");
+    ASSERT_TRUE(dm1_v1_explosion_base_scale(1) > dm1_v1_explosion_base_scale(2),
+                "D1 > D2");
+    ASSERT_TRUE(dm1_v1_explosion_base_scale(2) > dm1_v1_explosion_base_scale(3),
+                "D2 > D3");
+}
+
+
+/* ── Test: Smoke detection ───────────────────────────────────────── */
+
+static void test_smoke_detection(void) {
+    printf("  smoke detection...\n");
+    ASSERT_EQ(dm1_v1_explosion_is_smoke(DM1_EXPLOSION_SMOKE), 1, "smoke=1");
+    ASSERT_EQ(dm1_v1_explosion_is_smoke(DM1_EXPLOSION_FIREBALL), 0, "fire=0");
+    ASSERT_EQ(dm1_v1_explosion_is_smoke(DM1_EXPLOSION_POISON_CLOUD), 0, "poison=0");
+}
+
+
+/* ── Test: F0115 draw order verification ─────────────────────────── */
+
+static void test_draw_order(void) {
+    printf("  F0115 draw order...\n");
+    {
+        int correct[] = {
+            DM1_F0115_LAYER_FLOOR_ORNAMENTS,
+            DM1_F0115_LAYER_FLOOR_ITEMS,
+            DM1_F0115_LAYER_CREATURES,
+            DM1_F0115_LAYER_PROJECTILES,
+            DM1_F0115_LAYER_EXPLOSIONS,
+            DM1_F0115_LAYER_FLUXCAGE_FIELD
+        };
+        ASSERT_EQ(dm1_v1_verify_f0115_draw_order(correct, 6), 1, "correct order");
+    }
+    {
+        /* Swap projectiles and explosions — should fail */
+        int wrong[] = {0, 1, 2, 4, 3, 5};
+        ASSERT_EQ(dm1_v1_verify_f0115_draw_order(wrong, 6), 0, "wrong order");
+    }
+    {
+        /* Partial ordering: items before creatures before projectiles */
+        int partial[] = {1, 2, 3};
+        ASSERT_EQ(dm1_v1_verify_f0115_draw_order(partial, 3), 1, "partial order");
+    }
+}
+
+
+/* ── Test: Projectile aspect data cross-check with m11_game_view ─── */
+
+static void test_aspect_data_cross_check(void) {
+    /* Cross-check FirstNativeBitmapRelativeIndex against the known
+     * kFirstNative array from m11_game_view.c. */
+    static const unsigned char kExpectedFirstNative[14] = {
+        0,3,6,9,11,14,17,20,23,26,28,29,30,31
+    };
+    static const unsigned short kExpectedGraphicInfo[14] = {
+        0x0011,0x0011,0x0010,0x0112,0x0011,0x0010,0x0010,
+        0x0011,0x0011,0x0012,0x0103,0x0103,0x0103,0x0103
+    };
+    int i;
+    printf("  aspect data cross-check...\n");
+    for (i = 0; i < DM1_PROJECTILE_ASPECT_COUNT; ++i) {
+        char label[64];
+        snprintf(label, sizeof(label), "firstNative[%d]", i);
+        ASSERT_EQ((int)DM1_ProjectileAspects[i].firstNativeBitmapRelativeIndex,
+                  (int)kExpectedFirstNative[i], label);
+        snprintf(label, sizeof(label), "graphicInfo[%d]", i);
+        ASSERT_EQ((int)DM1_ProjectileAspects[i].graphicInfo,
+                  (int)kExpectedGraphicInfo[i], label);
+    }
+}
+
+
+/* ── Test: Full projectile graphic index for known spell subtypes ── */
+
+static void test_spell_graphic_indices(void) {
+    int gfx;
+    printf("  spell graphic indices...\n");
+    /* Fireball (aspect 10, type 3) flying forward: delta=0 */
+    gfx = dm1_v1_projectile_graphic_index(10, 0);
+    ASSERT_EQ(gfx, 454 + 28, "fireball fwd");
+    /* Fireball flying right: type 3, still delta=0 */
+    gfx = dm1_v1_projectile_graphic_index(10, 1);
+    ASSERT_EQ(gfx, 454 + 28, "fireball right");
+    /* Lightning (aspect 3, type 2) flying forward: delta=0 */
+    gfx = dm1_v1_projectile_graphic_index(3, 0);
+    ASSERT_EQ(gfx, 454 + 9, "lightning fwd");
+    /* Lightning flying right: type 2, delta=1 */
+    gfx = dm1_v1_projectile_graphic_index(3, 1);
+    ASSERT_EQ(gfx, 454 + 10, "lightning right");
+}
+
+
+/* ── Main ────────────────────────────────────────────────────────── */
+
+int main(void) {
+    printf("DM1 V1 Projectile/Explosion Render Tests\n");
+
+    test_projectile_aspect_table();
+    test_projectile_graphic_indices();
+    test_projectile_bitmap_deltas();
+    test_projectile_subtype_mapping();
+    test_projectile_scale();
+    test_projectile_flip_flags();
+    test_explosion_type_to_aspect();
+    test_explosion_aspect_to_graphic();
+    test_explosion_size_class();
+    test_explosion_pattern_graphic();
+    test_explosion_base_scale();
+    test_smoke_detection();
+    test_draw_order();
+    test_aspect_data_cross_check();
+    test_spell_graphic_indices();
+
+    if (g_failures == 0) {
+        printf("All tests passed.\n");
+        return 0;
+    } else {
+        fprintf(stderr, "%d test failure(s).\n", g_failures);
+        return 1;
+    }
+}

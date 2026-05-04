@@ -64,6 +64,8 @@ set(M11_SOURCES
     asset_loader_m11.c
     font_m11.c
     fs_portable_compat.c
+    dm1_v1_vblank_timing.c
+    dm1_v1_save_load.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -84,7 +86,24 @@ set(M12_SOURCES
     card_art_generated_m12.c
     branding_logo_m12.c
     branding_logo_readme_m12.c
+    bestiary_m12.c
     creature_art_m12.c
+    data_validator_m12.c
+    changelog_m12.c
+    theme_m12.c
+    animated_bg_m12.c
+    input_remap_m12.c
+    save_browser_m12.c
+    custom_dungeon_m12.c
+    item_encyclopedia_m12.c
+    campaign_m12.c
+    spell_reference_m12.c
+    map_viewer_m12.c
+    music_jukebox_m12.c
+    gamepad_config_m12.c
+    touch_layout_m12.c
+    presentation_preview_m12.c
+    screenshot_gallery_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
@@ -297,6 +316,76 @@ if(BUILD_TESTING)
         NAME dm1_v1_command_movement_sensor_timing_pc34_compat
         COMMAND test_dm1_v1_command_movement_sensor_timing_pc34_compat
     )
+
+    add_executable(test_dm1_v1_movement_pipeline_pc34_compat
+        test_dm1_v1_movement_pipeline_pc34_compat.c
+    dm1_v1_creature_render_pc34_compat.c
+    dm1_v2_movement_engine_pc34.c
+    csb_v1_game_state_pc34_compat.c
+    dm1_v1_champion_stats_pc34_compat.c
+    dm1_v1_inventory_pc34_compat.c
+    dm1_v1_spell_casting_pc34_compat.c
+    dm1_v1_stairs_level_pc34_compat.c
+    dm1_v1_text_message_pc34_compat.c
+    dm1_v1_sound_pc34_compat.c
+    dm1_v1_teleporter_pit_pc34_compat.c
+    dm1_v1_light_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_movement_pipeline_pc34_compat
+        COMMAND test_dm1_v1_movement_pipeline_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_creature_render_pc34_compat_integration
+        test_dm1_v1_creature_render_pc34_compat_integration.c
+        dm1_v1_creature_render_pc34_compat.c
+    dm1_v2_movement_engine_pc34.c
+    csb_v1_game_state_pc34_compat.c
+    dm1_v1_champion_stats_pc34_compat.c
+    dm1_v1_inventory_pc34_compat.c
+    dm1_v1_spell_casting_pc34_compat.c
+    dm1_v1_stairs_level_pc34_compat.c
+    dm1_v1_text_message_pc34_compat.c
+    dm1_v1_sound_pc34_compat.c
+    dm1_v1_teleporter_pit_pc34_compat.c
+    dm1_v1_light_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_creature_render_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_creature_render_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_creature_render_source_lock
+        COMMAND test_dm1_v1_creature_render_pc34_compat_integration
+    )
+    add_executable(test_dm1_v1_projectile_explosion_render_pc34_compat
+        test_dm1_v1_projectile_explosion_render_pc34_compat.c
+        dm1_v1_projectile_explosion_render_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_explosion_render_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_explosion_render_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_explosion_render_source_lock
+        COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
+    )
+    add_executable(test_dm1_v1_champion_panel_hud_pc34_compat
+        test_dm1_v1_champion_panel_hud_pc34_compat.c
+        dm1_v1_champion_panel_hud_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_hud_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_hud_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_hud_source_lock
+        COMMAND test_dm1_v1_champion_panel_hud_pc34_compat
+    )
     add_test(
         NAME dm1_v1_command_movement_sensor_timing_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py
@@ -403,6 +492,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_projectile_source_clip_gate.py
         )
         add_test(
+            NAME v1_viewport_projectile_explosion_render_source_lock_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_projectile_explosion_render_source_lock_gate.py
+        )
+        add_test(
             NAME v1_viewport_distance_row_clip_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_distance_row_clip_gate.py
         )
@@ -427,6 +520,14 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_side_wall_ornament_source_gate.py
         )
         add_test(
+            NAME v1_door_button_ornament_coordinates_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_door_button_ornament_coordinates_gate.py
+        )
+        add_test(
+            NAME v1_wall_ornament_coordinates_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_wall_ornament_coordinates_gate.py
+        )
+        add_test(
             NAME v1_viewport_center_door_occlusion_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_center_door_occlusion_gate.py
         )
@@ -445,6 +546,10 @@ if(BUILD_TESTING)
         add_test(
             NAME v1_viewport_palette_source_lock_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_palette_source_lock_gate.py
+        )
+        add_test(
+            NAME v1_viewport_wall_parity_flip_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_wall_parity_flip_gate.py
         )
         add_test(
             NAME v1_viewport_alcove_wall_item_gate
@@ -519,6 +624,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_stairs_pits_viewport_source_lock.py
         )
         add_test(
+            NAME dm1_v1_creature_render_aspect_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_creature_render_source_lock.py
+        )
+        add_test(
             NAME touch_movement_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_touch_movement_viewport_source_lock.py
         )
@@ -534,6 +643,19 @@ if(BUILD_TESTING)
             NAME dm1_v1_projectile_movement_interlock_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_projectile_movement_interlock_source_lock.py
         )
+
+    add_executable(test_dm1_v1_spell_casting_pc34_compat
+        test_dm1_v1_spell_casting_pc34_compat.c
+        dm1_v1_spell_casting_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_spell_casting_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_spell_casting_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_spell_casting_source_lock
+        COMMAND test_dm1_v1_spell_casting_pc34_compat
+    )
     endif()
 
     # Launcher smoke (needs game data + built firestaff binary)
@@ -555,7 +677,50 @@ if(BUILD_TESTING)
     set_tests_properties(m11_ingame_capture_smoke PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
+
+    # DM1 V1 Sound & Music System source-lock gate
+    add_executable(test_dm1_v1_sound_pc34_compat_integration
+        test_dm1_v1_sound_pc34_compat_integration.c
+        dm1_v1_sound_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sound_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sound_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sound_music_source_lock
+        COMMAND test_dm1_v1_sound_pc34_compat_integration
+    )
+
+    # DM1 V1 Save/Load Game System source-lock gate
+    add_executable(test_dm1_v1_save_load
+        test_dm1_v1_save_load.c
+        dm1_v1_save_load.c
+    )
+    target_link_libraries(test_dm1_v1_save_load PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_save_load PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_save_load_source_lock
+        COMMAND test_dm1_v1_save_load
+    )
+
+    # DM1 V1 Combat & Damage System source-lock gate
+    add_executable(test_dm1_v1_combat_pc34_compat_integration
+        test_dm1_v1_combat_pc34_compat_integration.c
+        dm1_v1_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_combat_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_combat_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_combat_damage_source_lock
+        COMMAND test_dm1_v1_combat_pc34_compat_integration
+    )
 endif()
 
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
+

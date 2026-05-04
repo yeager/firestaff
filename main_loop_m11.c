@@ -17,6 +17,7 @@
 #include "title_frontend_v1.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
+#include "dm1_v1_vblank_timing.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -1115,6 +1116,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_S:
+                    if (ev.key.mod & SDL_KMOD_CTRL) {
+                        if (gameView && gameView->active)
+                            return M12_MENU_INPUT_SAVE_GAME;
+                        return M12_MENU_INPUT_NONE;
+                    }
                     if (menuState && menuState->settings.wasdMovementEnabled) {
                         return M12_MENU_INPUT_DOWN;
                     }
@@ -1306,6 +1312,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_S:
+                    if (ev.key.keysym.mod & KMOD_CTRL) {
+                        if (gameView && gameView->active)
+                            return M12_MENU_INPUT_SAVE_GAME;
+                        return M12_MENU_INPUT_NONE;
+                    }
                     if (menuState && menuState->settings.wasdMovementEnabled) {
                         return M12_MENU_INPUT_DOWN;
                     }
@@ -1465,7 +1476,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const Uint64 interval = (Uint64)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
-    const Uint64 gameTickInterval = 166;
+    const Uint64 gameTickInterval = 200; /* DM1 V1 authentic PAL: 10 VBlanks * 20ms = 200ms (VBLANK.C:F0577, GAMELOOP.C:F0002) */
 #else
     Uint32 start = SDL_GetTicks();
     Uint32 now = start;
@@ -1474,7 +1485,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const Uint32 interval = (Uint32)(o->presentEveryMs < 1
                                          ? 1
                                          : o->presentEveryMs);
-    const Uint32 gameTickInterval = 166;
+    const Uint32 gameTickInterval = 200; /* DM1 V1 authentic PAL: 10 VBlanks * 20ms = 200ms (VBLANK.C:F0577, GAMELOOP.C:F0002) */
 #endif
 
     /* Always present at least once so the window actually has content. */
@@ -1489,6 +1500,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         now = SDL_GetTicks();
         if (gameView.active) {
             idleAccumulatorMs += (uint32_t)(now - lastLoopTick);
+            /* DM1 V1: feed elapsed time to VBlank simulation */
+            DM1_V1_VBlankTiming_Update(&gameView.vblankTiming, (uint32_t)(now - lastLoopTick));
         } else {
             idleAccumulatorMs = 0;
         }

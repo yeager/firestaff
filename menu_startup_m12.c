@@ -781,6 +781,54 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+
+static void m12_probe_quick_resume(M12_StartupMenuState* state) {
+    M12_Config config;
+    FILE* fp;
+    if (!state) {
+        return;
+    }
+    state->quickResumeAvailable = 0;
+    state->quickResumeGameId[0] = '\0';
+    state->quickResumeSavePath[0] = '\0';
+
+    M12_Config_SetDefaults(&config);
+    M12_Config_Load(&config, NULL);
+
+    if (config.lastSavePath[0] == '\0') {
+        return;
+    }
+    fp = fopen(config.lastSavePath, "rb");
+    if (!fp) {
+        return;
+    }
+    fclose(fp);
+    state->quickResumeAvailable = 1;
+    snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
+             "%s", config.lastSavePath);
+    /* Extract game id from save path pattern: firestaff-{id}-quicksave.sav */
+    {
+        const char* base = strrchr(config.lastSavePath, '/');
+        const char* prefix = "firestaff-";
+        const char* suffix = "-quicksave.sav";
+        const char* start;
+        const char* end;
+        if (!base) {
+            base = config.lastSavePath;
+        } else {
+            ++base;
+        }
+        if (strncmp(base, prefix, strlen(prefix)) == 0) {
+            start = base + strlen(prefix);
+            end = strstr(start, suffix);
+            if (end && (size_t)(end - start) < sizeof(state->quickResumeGameId)) {
+                memcpy(state->quickResumeGameId, start, (size_t)(end - start));
+                state->quickResumeGameId[end - start] = '\0';
+            }
+        }
+    }
+}
+
 static void m12_save_config(const M12_StartupMenuState* state);
 
 void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state) {
@@ -818,6 +866,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
         config.gameResolution[gi] = opts.resolution;
     }
     snprintf(config.dataDir, sizeof(config.dataDir), "%s", M12_AssetStatus_GetDataDir(&state->assetStatus));
+    snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", state->quickResumeSavePath);
     M12_Config_Save(&config);
 }
 
@@ -886,11 +935,13 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     M12_CreatureArt_Init(&state->creatureArt,
                          M12_AssetStatus_GetDataDir(&state->assetStatus),
                          (unsigned int)time(NULL));
-    state->selectedIndex = 0;
+    m12_probe_quick_resume(state);
+    state->selectedIndex = state->quickResumeAvailable ? -1 : 0;
     state->settingsSelectedIndex = 0;
     state->gameOptSelectedRow = 0;
     state->museumSelectedIndex = 0;
     state->museumPageIndex = 0;
+    M12_Changelog_Init(&state->changelog);
     state->launchRequested = 0;
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
@@ -1024,7 +1075,11 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     }
     entryCount = m12_entry_count();
     if (entryCount > 0) {
-        state->selectedIndex = m12_clamp_index(state->selectedIndex, entryCount);
+        if (state->quickResumeAvailable && state->selectedIndex == -1) {
+            /* -1 is valid: it means the CONTINUE entry is selected */
+        } else {
+            state->selectedIndex = m12_clamp_index(state->selectedIndex, entryCount);
+        }
     } else {
         state->selectedIndex = 0;
     }
@@ -1059,7 +1114,9 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->view != M12_MENU_VIEW_SETTINGS &&
         state->view != M12_MENU_VIEW_MESSAGE &&
         state->view != M12_MENU_VIEW_GAME_OPTIONS &&
-        state->view != M12_MENU_VIEW_MUSEUM) {
+        state->view != M12_MENU_VIEW_MUSEUM &&
+        state->view != M12_MENU_VIEW_CHANGELOG &&
+        state->view != M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
         state->view = M12_MENU_VIEW_MAIN;
     }
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0) {
@@ -1307,6 +1364,30 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         return;
     }
 
+    if (state->view == M12_MENU_VIEW_CHANGELOG) {
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                M12_Changelog_Scroll(&state->changelog, -1);
+                break;
+            case M12_MENU_INPUT_DOWN:
+                M12_Changelog_Scroll(&state->changelog, 1);
+                break;
+            case M12_MENU_INPUT_LEFT:
+                M12_Changelog_Scroll(&state->changelog, -M12_CHANGELOG_VISIBLE_LINES);
+                break;
+            case M12_MENU_INPUT_RIGHT:
+                M12_Changelog_Scroll(&state->changelog, M12_CHANGELOG_VISIBLE_LINES);
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
+        }
+        return;
+    }
+
     if (state->view == M12_MENU_VIEW_MUSEUM) {
         const M12_MuseumCategory* category;
         switch (input) {
@@ -1315,12 +1396,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                                              -1,
                                                              M12_MUSEUM_CATEGORY_COUNT);
                 state->museumPageIndex = 0;
+    M12_Changelog_Init(&state->changelog);
                 break;
             case M12_MENU_INPUT_DOWN:
                 state->museumSelectedIndex = m12_cycle_index(state->museumSelectedIndex,
                                                              1,
                                                              M12_MUSEUM_CATEGORY_COUNT);
                 state->museumPageIndex = 0;
+    M12_Changelog_Init(&state->changelog);
                 break;
             case M12_MENU_INPUT_LEFT:
                 category = &g_museumCategories[m12_clamp_index(state->museumSelectedIndex,
@@ -1381,15 +1464,67 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
 
     switch (input) {
         case M12_MENU_INPUT_UP:
-            state->selectedIndex = m12_cycle_index(state->selectedIndex, -1, count);
+            if (state->quickResumeAvailable) {
+                if (state->selectedIndex <= 0) {
+                    state->selectedIndex = state->selectedIndex == -1 ? count - 1 : -1;
+                } else {
+                    state->selectedIndex -= 1;
+                }
+            } else {
+                state->selectedIndex = m12_cycle_index(state->selectedIndex, -1, count);
+            }
             break;
         case M12_MENU_INPUT_DOWN:
-            state->selectedIndex = m12_cycle_index(state->selectedIndex, 1, count);
+            if (state->quickResumeAvailable) {
+                if (state->selectedIndex == -1) {
+                    state->selectedIndex = 0;
+                } else if (state->selectedIndex >= count - 1) {
+                    state->selectedIndex = -1;
+                } else {
+                    state->selectedIndex += 1;
+                }
+            } else {
+                state->selectedIndex = m12_cycle_index(state->selectedIndex, 1, count);
+            }
             break;
         case M12_MENU_INPUT_ACCEPT:
         case M12_MENU_INPUT_ACTION:
         case M12_MENU_INPUT_RIGHT:
-            m12_activate_selected(state);
+            if (state->quickResumeAvailable && state->selectedIndex == -1) {
+                /* Quick resume: find the game slot and launch directly */
+                int qrSlot = m12_game_slot_from_id(state->quickResumeGameId);
+                if (qrSlot >= 0 && qrSlot < m12_entry_count() &&
+                    state->entries[qrSlot].available) {
+                    int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+                    state->activatedIndex = qrSlot;
+                    m12_normalize_game_version_index(state, qrSlot);
+                    m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
+                    if (pmode == M12_PRESENTATION_V3_MODERN_3D) {
+                        state->launchRequested = 0;
+                        state->view = M12_MENU_VIEW_MESSAGE;
+                        state->messageLine1 = "V3 MODERN/3D";
+                        state->messageLine2 = "COMING SOON";
+                        state->messageLine3 = "ESC RETURNS TO MENU";
+                    } else {
+                        state->launchRequested = 1;
+                        state->view = M12_MENU_VIEW_MESSAGE;
+                        state->messageLine1 = "RESUMING SAVE";
+                        state->messageLine2 = state->entries[qrSlot].title;
+                        state->messageLine3 = "ESC RETURNS TO MENU";
+                    }
+                } else {
+                    state->view = M12_MENU_VIEW_MESSAGE;
+                    state->messageLine1 = "SAVE FILE FOUND";
+                    state->messageLine2 = "BUT GAME NOT AVAILABLE";
+                    state->messageLine3 = "ESC RETURNS TO MENU";
+                }
+            } else {
+                m12_activate_selected(state);
+            }
+            break;
+        case M12_MENU_INPUT_MAP_TOGGLE:
+            M12_Changelog_Init(&state->changelog);
+            state->view = M12_MENU_VIEW_CHANGELOG;
             break;
         case M12_MENU_INPUT_BACK:
             state->shouldExit = 1;
@@ -2314,7 +2449,15 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                                int framebufferHeight) {
     int i;
     int rowY = 76;
-    const M12_MenuEntry* selectedEntry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
+    const M12_MenuEntry* selectedEntry;
+    int boxArtIndex;
+    if (state->quickResumeAvailable && state->selectedIndex == -1) {
+        boxArtIndex = m12_game_slot_from_id(state->quickResumeGameId);
+        selectedEntry = (boxArtIndex >= 0) ? M12_StartupMenu_GetEntry(state, boxArtIndex) : NULL;
+    } else {
+        boxArtIndex = state->selectedIndex;
+        selectedEntry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
+    }
 
     m12_draw_title(framebuffer,
                    framebufferWidth,
@@ -2327,8 +2470,8 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                      framebufferWidth,
                      framebufferHeight,
                      selectedEntry,
-                     (state->selectedIndex >= 0 && state->selectedIndex < m12_entry_count())
-                         ? &state->cardArt[state->selectedIndex]
+                     (boxArtIndex >= 0 && boxArtIndex < m12_entry_count())
+                         ? &state->cardArt[boxArtIndex]
                          : NULL);
     m12_draw_frame(framebuffer,
                    framebufferWidth,
@@ -2346,6 +2489,22 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
                   72,
                   m12_text(state, M12_TEXT_LAUNCHER_DESTINATIONS),
                   &g_textSmallAccent);
+    if (state->quickResumeAvailable) {
+        static const M12_MenuEntry continueEntry = {
+            .title = "\xbb CONTINUE",
+            .gameId = NULL,
+            .kind = M12_MENU_ENTRY_GAME,
+            .sourceKind = M12_MENU_SOURCE_SYSTEM,
+            .available = 1
+        };
+        m12_draw_main_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          rowY,
+                          &continueEntry,
+                          state->selectedIndex == -1);
+        rowY += 24;
+    }
     for (i = 0; i < m12_entry_count(); ++i) {
         m12_draw_main_row(framebuffer,
                           framebufferWidth,
@@ -2825,6 +2984,37 @@ static void m12_draw_sparse_game_options_view(const M12_StartupMenuState* state,
                                line2,
                                "ENTER LAUNCH   ESC BACK",
                                M12_COLOR_WHITE);
+}
+
+static void m12_draw_sparse_changelog_view(const M12_StartupMenuState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight) {
+    const char* versionLine = M12_Changelog_VersionString();
+    int scrollOff = state ? state->changelog.scrollOffset : 0;
+    int lineCount = M12_Changelog_LineCount();
+    int visible = M12_CHANGELOG_VISIBLE_LINES;
+    int i;
+    char titleBuf[48];
+    const char* line;
+    (void)framebufferWidth;
+    (void)framebufferHeight;
+    (void)framebuffer;
+    snprintf(titleBuf, sizeof(titleBuf), "FIRESTAFF V%s", versionLine);
+    if (visible > lineCount) {
+        visible = lineCount;
+    }
+    m12_draw_sparse_center_box(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               218,
+                               70,
+                               titleBuf,
+                               (scrollOff < lineCount) ? M12_Changelog_GetLine(scrollOff) : "",
+                               "UP/DOWN SCROLL   ESC BACK",
+                               M12_COLOR_WHITE);
+    (void)i;
+    (void)line;
 }
 
 static void m12_draw_sparse_museum_view(const M12_StartupMenuState* state,
@@ -3640,6 +3830,28 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
                           cardH,
                           settingsSelected);
 
+    /* Quick resume banner (modern view) */
+    if (state->quickResumeAvailable) {
+        const M12_TextStyle* qrStyle = (state->selectedIndex == -1)
+            ? &g_textSmallShadow : &g_textSmallMuted;
+        unsigned char qrBorder = (state->selectedIndex == -1)
+            ? M12_COLOR_LIGHT_GRAY : M12_COLOR_DARK_GRAY;
+        unsigned char qrFill = M12_COLOR_BLACK;
+        int qrW = cardsW;
+        int qrH = 20;
+        int qrX = cardsX;
+        int qrY = margin - qrH - 4;
+        if (qrY < 2) { qrY = 2; }
+        m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                       qrX, qrY, qrW, qrH, qrBorder, qrFill);
+        {
+            int tw = m12_measure_text("» CONTINUE", qrStyle->scale, qrStyle->tracking);
+            m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          qrX + (qrW - tw) / 2, qrY + 6,
+                          "» CONTINUE", qrStyle);
+        }
+    }
+
     /* Four game cards: DM1, CSB, DM2, Nexus. */
     for (i = 0; i < 4; ++i) {
         m12_draw_game_card(state,
@@ -3859,6 +4071,92 @@ static void m12_draw_museum_category_row(unsigned char* framebuffer,
                   y + 8,
                   title,
                   selected ? &g_textSmallShadow : &g_textSmallMuted);
+}
+
+static void m12_draw_changelog_view_modern(const M12_StartupMenuState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight) {
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int scrollOff = state ? state->changelog.scrollOffset : 0;
+    int lineCount = M12_Changelog_LineCount();
+    int visible = M12_CHANGELOG_VISIBLE_LINES;
+    int i;
+    char titleBuf[48];
+    char scrollIndicator[32];
+
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 64) {
+        heroH = 64;
+    }
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    snprintf(titleBuf, sizeof(titleBuf), "VERSION %s", M12_Changelog_VersionString());
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         panelW,
+                         heroH,
+                         titleBuf);
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   margin,
+                   contentY,
+                   panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+
+    if (visible > lineCount - scrollOff) {
+        visible = lineCount - scrollOff;
+    }
+    if (visible < 0) {
+        visible = 0;
+    }
+
+    for (i = 0; i < visible; ++i) {
+        const char* line = M12_Changelog_GetLine(scrollOff + i);
+        if (!line) {
+            break;
+        }
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      margin + 14,
+                      contentY + 14 + i * 20,
+                      line,
+                      (i == 0 && scrollOff == 0) ? &g_textMediumShadow : &g_textSmall);
+    }
+
+    snprintf(scrollIndicator, sizeof(scrollIndicator), "LINE %d/%d", scrollOff + 1, lineCount);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin + panelW - 80,
+                  contentY + 14,
+                  scrollIndicator,
+                  &g_textSmallAccent);
+
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin + 14,
+                  framebufferHeight - 24,
+                  "UP/DOWN SCROLL  LEFT/RIGHT PAGE  ESC BACK",
+                  &g_textSmallAccent);
 }
 
 static void m12_draw_museum_view_modern(const M12_StartupMenuState* state,
@@ -4412,6 +4710,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_sparse_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
             m12_draw_sparse_game_options_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_CHANGELOG) {
+            m12_draw_sparse_changelog_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_sparse_museum_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
@@ -4426,6 +4726,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_settings_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
             m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_CHANGELOG) {
+            m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
@@ -4441,6 +4743,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_settings_view(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
         m12_draw_game_options_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_CHANGELOG) {
+        m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_MUSEUM) {
         m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else {

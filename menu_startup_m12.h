@@ -4,6 +4,8 @@
 #include "asset_status_m12.h"
 #include "card_art_m12.h"
 #include "creature_art_m12.h"
+#include "bestiary_m12.h"
+#include "changelog_m12.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +40,8 @@ typedef enum {
     M12_MENU_INPUT_DRINK_ITEM,
     M12_MENU_INPUT_THROW_ITEM,
     M12_MENU_INPUT_MAP_TOGGLE,
-    M12_MENU_INPUT_INVENTORY_TOGGLE
+    M12_MENU_INPUT_INVENTORY_TOGGLE,
+    M12_MENU_INPUT_SAVE_GAME
 } M12_MenuInput;
 
 typedef enum {
@@ -46,7 +49,23 @@ typedef enum {
     M12_MENU_VIEW_SETTINGS,
     M12_MENU_VIEW_MESSAGE,
     M12_MENU_VIEW_GAME_OPTIONS,
-    M12_MENU_VIEW_MUSEUM
+    M12_MENU_VIEW_MUSEUM,
+    M12_MENU_VIEW_DATA_VALIDATOR,
+    M12_MENU_VIEW_AUDIO_SETTINGS,
+    M12_MENU_VIEW_CHANGELOG,
+    M12_MENU_VIEW_ACCESSIBILITY,
+    M12_MENU_VIEW_THEME,
+    M12_MENU_VIEW_SAVE_BROWSER,
+    M12_MENU_VIEW_INPUT_REMAP,
+    M12_MENU_VIEW_BESTIARY,
+    M12_MENU_VIEW_CUSTOM_DUNGEON,
+    M12_MENU_VIEW_ITEM_ENCYCLOPEDIA,
+    M12_MENU_VIEW_CAMPAIGN,
+    M12_MENU_VIEW_SPELL_REFERENCE,
+    M12_MENU_VIEW_MAP_VIEWER,
+    M12_MENU_VIEW_TOUCH_LAYOUT,
+    M12_MENU_VIEW_SCREENSHOT_GALLERY,
+    M12_MENU_VIEW_PRESENTATION_PREVIEW
 } M12_MenuView;
 
 typedef enum {
@@ -154,6 +173,7 @@ typedef struct {
     int rendererBackendAvailable;
     M12_GameOptions options;
     int valid;
+    const char* savePath;  /* Non-NULL when launching via quick resume */
 } M12_LaunchIntent;
 
 typedef struct M12_StartupMenuState {
@@ -176,6 +196,8 @@ typedef struct M12_StartupMenuState {
     int museumSelectedIndex;
     int museumPageIndex;
     M12_CreatureArtState creatureArt;
+    M12_ChangelogState changelog;
+    M12_BestiaryState bestiary;
     /* Monotonically-increasing animation tick consumed by the modern
      * renderer. Incremented by the runtime once per present. Safe to
      * leave at zero in headless probes (no visible change). */
@@ -184,6 +206,11 @@ typedef struct M12_StartupMenuState {
      * by the modern renderer to highlight the item under the mouse. */
     int hoverX;
     int hoverY;
+    /* Quick resume: if a quicksave exists for a game, allow direct
+     * continue from the main menu without navigating game options. */
+    int quickResumeAvailable;
+    char quickResumeGameId[32];
+    char quickResumeSavePath[256];
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);

@@ -7,6 +7,8 @@
 #include "asset_loader_m11.h"
 #include "audio_sdl_m11.h"
 #include "font_m11.h"
+#include "dm1_v1_vblank_timing.h"
+#include "dm1_v1_save_load.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -242,6 +244,18 @@ typedef struct {
      *      F0388_MENUS_ClearActingChampion,
      *      ACTIDRAW.C F0387_MENUS_DrawActionArea menu-mode branch. */
     unsigned int actingChampionOrdinal;
+
+    /* DM1 V1 VBlank-based timing state.
+     * Simulates the PAL 50Hz VBlank interrupt handler (VBLANK.C:F0577)
+     * and the game loop tick gate (GAMELOOP.C:F0002).
+     * Authentic interval: 10 VBlanks * 20ms = 200ms per game tick. */
+    DM1_V1_VBlankTimingState vblankTiming;
+
+    /* DM1 V1 Save/Load menu state.
+     * Tracks ESC-triggered save dialog matching ReDMCSB
+     * C140_COMMAND (LOADSAVE.C F0433). */
+    struct DM1SaveMenuContext saveMenu;
+    uint32_t dm1GameID;  /* Persistent game ID for save file matching */
 } M11_GameViewState;
 
 /* Spell casting API */
