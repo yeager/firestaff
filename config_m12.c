@@ -228,6 +228,10 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->audioMusicVolume = 128;
     config->audioSfxVolume = 128;
     config->audioMuted = 0;
+    config->fontScale = 1;
+    config->highContrast = 0;
+    config->colorblindMode = 0;
+    config->autoPause = 0;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -358,9 +362,36 @@ static void m12_parse_line(M12_Config* config, char* line) {
             }
         }
     }
+    if (m12_string_equals(key, "font_scale")) {
+        int val = m12_parse_int(value, config->fontScale);
+        if (val < 1) val = 1;
+        if (val > 3) val = 3;
+        config->fontScale = val;
+        return;
+    }
+    if (m12_string_equals(key, "high_contrast")) {
+        config->highContrast = m12_parse_int(value, config->highContrast) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "colorblind_mode")) {
+        int val = m12_parse_int(value, config->colorblindMode);
+        if (val < 0) val = 0;
+        if (val > 3) val = 3;
+        config->colorblindMode = val;
+        return;
+    }
+    if (m12_string_equals(key, "auto_pause")) {
+        config->autoPause = m12_parse_int(value, config->autoPause) ? 1 : 0;
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
+        return;
+    }
+    if (m12_string_equals(key, "last_save_path") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->lastSavePath, sizeof(config->lastSavePath), quoted);
     }
 }
 
@@ -414,8 +445,15 @@ int M12_Config_Save(const M12_Config* config) {
             fprintf(fp, "game_%d_resolution = %d\n", gi, config->gameResolution[gi]);
         }
     }
+    fprintf(fp, "font_scale = %d\n", config->fontScale);
+    fprintf(fp, "high_contrast = %d\n", config->highContrast ? 1 : 0);
+    fprintf(fp, "colorblind_mode = %d\n", config->colorblindMode);
+    fprintf(fp, "auto_pause = %d\n", config->autoPause ? 1 : 0);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
+    fputc('\n', fp);
+    fputs("last_save_path = ", fp);
+    m12_escape_and_write(fp, config->lastSavePath);
     fputc('\n', fp);
     if (fclose(fp) != 0) {
         remove(tmpPath);

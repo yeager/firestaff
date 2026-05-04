@@ -47,7 +47,8 @@ typedef enum {
     M12_MENU_VIEW_MUSEUM,
     M12_MENU_VIEW_DATA_VALIDATOR,
     M12_MENU_VIEW_AUDIO_SETTINGS,
-    M12_MENU_VIEW_CHANGELOG
+    M12_MENU_VIEW_CHANGELOG,
+    M12_MENU_VIEW_ACCESSIBILITY
 } M12_MenuView;
 
 typedef enum {
@@ -155,6 +156,7 @@ typedef struct {
     int rendererBackendAvailable;
     M12_GameOptions options;
     int valid;
+    const char* savePath;  /* Non-NULL when launching via quick resume */
 } M12_LaunchIntent;
 
 typedef struct M12_StartupMenuState {
@@ -186,6 +188,11 @@ typedef struct M12_StartupMenuState {
      * by the modern renderer to highlight the item under the mouse. */
     int hoverX;
     int hoverY;
+    /* Quick resume: if a quicksave exists for a game, allow direct
+     * continue from the main menu without navigating game options. */
+    int quickResumeAvailable;
+    char quickResumeGameId[32];
+    char quickResumeSavePath[256];
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
