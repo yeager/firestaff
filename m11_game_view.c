@@ -8602,6 +8602,59 @@ static const M11_DM1FloorOrnSpec kM11_DM1FloorOrnamentRenderSpecs[] = {
     {1, 1,4,1,{0,0,0,195, 94,25,21}}  /* D1R in G0206 x192..223/y92..116 */
 };
 
+/* ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set
+ * when (mapX + mapY + direction) & 1.  When true, the wall-set swap tables
+ * (G3048_WallSetFlipped / G3071_WallSetNotFlipped) exchange the L/R bitmap
+ * indices so that left walls use the right-side bitmap drawn flipped
+ * horizontally, and vice versa.  This breaks repeated texture seams and
+ * matches the original DM1 viewport appearance. */
+static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
+                                                        unsigned int wallSet0GraphicIndex);
+static int m11_dm1_use_flipped_walls(const M11_GameViewState* state) {
+    if (!state) return 0;
+    return (state->world.party.mapX +
+            state->world.party.mapY +
+            state->world.party.direction) & 1;
+}
+
+/* Blit a wall-front graphic with horizontal flip (no transparency).
+ * Mirrors ReDMCSB F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally
+ * for the wall-set swap path. */
+static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int fbW,
+                                          int fbH,
+                                          const M11_DM1WallFrontBlit* blit) {
+    const M11_AssetSlot* slot;
+    unsigned int graphicIndex;
+    int y;
+    if (!state || !state->assetsAvailable || !blit || !framebuffer) {
+        return 0;
+    }
+    graphicIndex = m11_wallset_graphic_index_for_state(state,
+                                                       (unsigned int)blit->graphicIndex);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != blit->width || slot->height != blit->height) {
+        return 0;
+    }
+    for (y = 0; y < blit->height; ++y) {
+        int x;
+        int fbY = M11_VIEWPORT_Y + blit->dstY + y;
+        if (fbY < 0 || fbY >= fbH) continue;
+        for (x = 0; x < blit->width; ++x) {
+            int fbX = M11_VIEWPORT_X + blit->dstX + x;
+            int sx = blit->width - 1 - x;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) continue;
+            pixel = slot->pixels[y * (int)slot->width + sx];
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+    return 1;
+}
+
 static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
                                                         unsigned int wallSet0GraphicIndex) {
     int wallSet = 0;
@@ -9166,16 +9219,31 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
     };
     int depth;
     int occluded = 0;
+    int flipWalls;
     if (!state || !state->assetsAvailable) {
         return;
     }
+    flipWalls = m11_dm1_use_flipped_walls(state);
     for (depth = 0; depth < 3; ++depth) {
         if (occluded) {
             break;
         }
         if (m11_viewport_cell_is_wall_like(&cells[depth][1])) {
-            (void)m11_draw_dm1_front_wall_blit(state, framebuffer, fbW, fbH,
-                                               &kFrontBlits[depth]);
+            if (flipWalls) {
+                /* ReDMCSB DUNVIEW.C F0128: when G0076 is set, the center
+                 * wall-set indices are swapped to pre-flipped versions
+                 * (G3049..G3055 on MEDIA506, G3048_WallSetFlipped on
+                 * MEDIA747).  Since Firestaff loads only native bitmaps
+                 * from GRAPHICS.DAT, we achieve the same result by drawing
+                 * the native center-wall graphic flipped horizontally. */
+                (void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,
+                                                     fbW, fbH,
+                                                     &kFrontBlits[depth]);
+            } else {
+                (void)m11_draw_dm1_front_wall_blit(state, framebuffer,
+                                                   fbW, fbH,
+                                                   &kFrontBlits[depth]);
+            }
             occluded = 1;
         }
     }
@@ -9678,28 +9746,38 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     int fbH,
                                     int maxVisibleForward,
                                     const M11_ViewportCell cells[3][3]) {
+    /* Side wall blits are arranged in L/R pairs.  Even indices are left-side
+     * entries and odd indices are the corresponding right-side entries.
+     * ReDMCSB DUNVIEW.C F0128 swaps the wall-set L/R bitmap indices when
+     * G0076_B_UseFlippedWallAndFootprintsBitmaps is true: F0116 draws the
+     * D3R graphic flipped horizontally into the D3L zone, and F0117 draws
+     * the D3L graphic flipped into the D3R zone.  This alternating texture
+     * pattern breaks visible seams in the 4-bit palette wall textures. */
     static const M11_DM1WallFrontBlit kSideBlits[] = {
         /* Far to near, matching the first source-bound subset of
          * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
          * coordinates name the viewed square; dst rects are layout-696
-         * F0635_-resolved viewport zones. */
-        {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},
-        {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},
-        {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},
-        {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},
-        {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},
-        {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},
-        {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   19, 78, 74},
-        {2, 2,  1, M11_GFX_WALLSET0_D2R,  146, 19, 78, 74},
-        {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111},
-        {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111},
-        {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136},
-        {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}
+         * F0635_-resolved viewport zones.
+         * Entries are paired: [0]+[1], [2]+[3], ... = L+R at same depth. */
+        {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},  /* 0: D3L2 */
+        {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},  /* 1: D3R2 */
+        {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},  /* 2: D3L  */
+        {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},  /* 3: D3R  */
+        {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},  /* 4: D2L2 */
+        {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},  /* 5: D2R2 */
+        {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   19, 78, 74},  /* 6: D2L  */
+        {2, 2,  1, M11_GFX_WALLSET0_D2R,  146, 19, 78, 74},  /* 7: D2R  */
+        {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111}, /* 8: D1L  */
+        {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111}, /* 9: D1R  */
+        {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136}, /*10: D0L  */
+        {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}  /*11: D0R  */
     };
     size_t i;
+    int flipWalls;
     if (!state || !state->assetsAvailable) {
         return;
     }
+    flipWalls = m11_dm1_use_flipped_walls(state);
     for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
         M11_ViewportCell cell;
         if (kSideBlits[i].relForward > maxVisibleForward) {
@@ -9721,12 +9799,27 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
              * C702..C717 without C10 transparency; C10_COLOR_FLESH is a
              * real tan wall texel.  Keying side-wall panels on palette 10
              * cuts black holes into D1R/D0R right-side geometry. */
-            (void)m11_draw_dm1_wall_blit_with_transparency(state,
-                                                           framebuffer,
-                                                           fbW,
-                                                           fbH,
-                                                           &kSideBlits[i],
-                                                           -1);
+            if (flipWalls) {
+                /* ReDMCSB F0116/F0117 (MEDIA709/720 path): when flipped,
+                 * left zones use the right-side graphic flipped horizontally
+                 * and vice versa.  The paired entry is at i^1 (XOR toggles
+                 * the LSB to swap even/odd = L/R partner). */
+                size_t partner = i ^ 1;
+                M11_DM1WallFrontBlit swapped = kSideBlits[i];
+                swapped.graphicIndex = kSideBlits[partner].graphicIndex;
+                (void)m11_draw_dm1_wall_blit_flipped(state,
+                                                     framebuffer,
+                                                     fbW,
+                                                     fbH,
+                                                     &swapped);
+            } else {
+                (void)m11_draw_dm1_wall_blit_with_transparency(state,
+                                                               framebuffer,
+                                                               fbW,
+                                                               fbH,
+                                                               &kSideBlits[i],
+                                                               -1);
+            }
         }
     }
 }
