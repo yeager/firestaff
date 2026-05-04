@@ -319,6 +319,11 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
     dm1_v1_creature_render_pc34_compat.c
+    dm1_v1_stairs_level_pc34_compat.c
+    dm1_v1_text_message_pc34_compat.c
+    dm1_v1_sound_pc34_compat.c
+    dm1_v1_teleporter_pit_pc34_compat.c
+    dm1_v1_light_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -332,6 +337,11 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         test_dm1_v1_creature_render_pc34_compat_integration.c
         dm1_v1_creature_render_pc34_compat.c
+    dm1_v1_stairs_level_pc34_compat.c
+    dm1_v1_text_message_pc34_compat.c
+    dm1_v1_sound_pc34_compat.c
+    dm1_v1_teleporter_pit_pc34_compat.c
+    dm1_v1_light_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_render_pc34_compat_integration PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -352,6 +362,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_projectile_explosion_render_source_lock
         COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
+    )
+    add_executable(test_dm1_v1_champion_panel_hud_pc34_compat
+        test_dm1_v1_champion_panel_hud_pc34_compat.c
+        dm1_v1_champion_panel_hud_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_hud_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_hud_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_hud_source_lock
+        COMMAND test_dm1_v1_champion_panel_hud_pc34_compat
     )
     add_test(
         NAME dm1_v1_command_movement_sensor_timing_source_lock

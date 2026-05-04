@@ -6435,8 +6435,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
         m11_draw_teleporter_effect(framebuffer, framebufferWidth, framebufferHeight,
                                    x, y, w, h, depthIndex);
     }
-    /* Pit darkness effect */
-    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+    /* Pit darkness effect — only if PIT_OPEN (MASK0x0008, DEFS.H:1027) */
+    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
         m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
                             x, y, w, h, depthIndex);
     }
@@ -7902,7 +7902,7 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
         case DUNGEON_ELEMENT_STAIRS:
             /* Try real stair graphics first */
             if (g_drawState) {
-                int stairUp = (cell->square & 0x01);
+                int stairUp = (cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP */
                 if (m11_draw_stairs_asset(g_drawState, framebuffer,
                                           framebufferWidth, framebufferHeight,
                                           rect, depthIndex, stairUp)) {
@@ -7918,12 +7918,16 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
                            faceX + 12, faceX + faceW - 13, faceY + faceH - 15, M11_COLOR_YELLOW);
             break;
         case DUNGEON_ELEMENT_PIT:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          faceX + 5, faceY + faceH / 2,
-                          faceW - 10, faceH / 3, M11_COLOR_BLACK);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          faceX + 5, faceY + faceH / 2,
-                          faceW - 10, faceH / 3, M11_COLOR_BROWN);
+            /* ReDMCSB DUNGEON.C F0172: closed pit renders as corridor.
+             * Only open pits (MASK0x0008_PIT_OPEN) show the hole. */
+            if (cell->square & 0x08) { /* PIT_OPEN */
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              faceX + 5, faceY + faceH / 2,
+                              faceW - 10, faceH / 3, M11_COLOR_BLACK);
+                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              faceX + 5, faceY + faceH / 2,
+                              faceW - 10, faceH / 3, M11_COLOR_BROWN);
+            }
             break;
         case DUNGEON_ELEMENT_TELEPORTER:
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -9331,6 +9335,12 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_PIT) {
             continue;
         }
+        /* ReDMCSB DUNGEON.C F0172: closed pit renders as corridor.
+         * Only open pits (MASK0x0008_PIT_OPEN) show the hole graphic.
+         * Ref: DEFS.H line 1027, DUNGEON.C line 2629. */
+        if (!(cell.square & 0x08)) { /* not PIT_OPEN */
+            continue;
+        }
         if (cell.square & 0x04) { /* MASK0x0004_PIT_INVISIBLE */
             if (!kPits[i].hasInvisibleBlit) {
                 continue;
@@ -9690,7 +9700,7 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         if ((kStairs[i].frontOnly && !frontFacing) || (kStairs[i].sideOnly && frontFacing)) {
             continue;
         }
-        stairUp = (cell.square & 0x01) ? 1 : 0;
+        stairUp = (cell.square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP */
         (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
                                      stairUp ? &kStairs[i].upBlit : &kStairs[i].downBlit,
                                      0);
@@ -11712,7 +11722,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
         if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           paneX + 1, paneY + 1, paneW - 2, paneH - 2, M11_COLOR_LIGHT_CYAN);
-        } else if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+        } else if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           paneX + 1, paneY + paneH / 2, paneW - 2, paneH / 3, M11_COLOR_BROWN);
         }
@@ -12210,7 +12220,7 @@ static void m11_format_lane_label(const M11_ViewportCell* cell,
         snprintf(out, outSize, "%s DOOR", prefix ? prefix : "?");
         return;
     }
-    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
         snprintf(out, outSize, "%s PIT", prefix ? prefix : "?");
         return;
     }
@@ -18795,7 +18805,7 @@ static void m11_format_front_cell_prompt(const M11_GameViewState* state,
         }
         return;
     }
-    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
         snprintf(outAction, outActionSize, "FOCUS PIT");
         snprintf(outHint, outHintSize, "UP RISKS A DROP, ENTER INSPECTS BEFORE COMMITTING");
         return;
