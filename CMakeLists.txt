@@ -66,6 +66,7 @@ set(M11_SOURCES
     fs_portable_compat.c
     dm1_v1_vblank_timing.c
     dm1_v1_save_load.c
+    dm1_v1_viewport_3d_pc34_compat.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -723,7 +724,9 @@ if(BUILD_TESTING)
     # DM1 V1 Save/Load Game System source-lock gate
     add_executable(test_dm1_v1_save_load
         test_dm1_v1_save_load.c
+    dm1_v1_viewport_3d_pc34_compat.c
         dm1_v1_save_load.c
+    dm1_v1_viewport_3d_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_save_load PRIVATE firestaff_m10)
     if(NOT MSVC)
