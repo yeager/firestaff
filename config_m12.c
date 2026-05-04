@@ -224,6 +224,10 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->wasdMovementEnabled = 1;
     config->windowWidth = 960;
     config->windowHeight = 540;
+    config->audioMasterVolume = 128;
+    config->audioMusicVolume = 128;
+    config->audioSfxVolume = 128;
+    config->audioMuted = 0;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -303,6 +307,22 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->windowHeight = m12_parse_int(value, config->windowHeight);
         return;
     }
+    if (m12_string_equals(key, "audio_master_volume")) {
+        config->audioMasterVolume = m12_parse_int(value, config->audioMasterVolume);
+        return;
+    }
+    if (m12_string_equals(key, "audio_music_volume")) {
+        config->audioMusicVolume = m12_parse_int(value, config->audioMusicVolume);
+        return;
+    }
+    if (m12_string_equals(key, "audio_sfx_volume")) {
+        config->audioSfxVolume = m12_parse_int(value, config->audioSfxVolume);
+        return;
+    }
+    if (m12_string_equals(key, "audio_muted")) {
+        config->audioMuted = m12_parse_int(value, config->audioMuted);
+        return;
+    }
     if (strncmp(key, "game_", 5) == 0) {
         int gameIndex = -1;
         char field[64];
@@ -378,6 +398,10 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "wasd_movement_enabled = %d\n", config->wasdMovementEnabled ? 1 : 0);
     fprintf(fp, "window_width = %d\n", config->windowWidth);
     fprintf(fp, "window_height = %d\n", config->windowHeight);
+    fprintf(fp, "audio_master_volume = %d\n", config->audioMasterVolume);
+    fprintf(fp, "audio_music_volume = %d\n", config->audioMusicVolume);
+    fprintf(fp, "audio_sfx_volume = %d\n", config->audioSfxVolume);
+    fprintf(fp, "audio_muted = %d\n", config->audioMuted ? 1 : 0);
     {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {

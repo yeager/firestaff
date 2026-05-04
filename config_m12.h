@@ -26,6 +26,10 @@ typedef struct {
     int wasdMovementEnabled;
     int windowWidth;
     int windowHeight;
+    int audioMasterVolume;
+    int audioMusicVolume;
+    int audioSfxVolume;
+    int audioMuted;
     char dataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     char path[M12_CONFIG_PATH_CAPACITY];
 
