@@ -1,4 +1,5 @@
 #include "dm1_v1_game_over_pc34_compat.h"
+#include <stdio.h>
 #include <string.h>
 
 /*
