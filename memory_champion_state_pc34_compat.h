@@ -15,6 +15,7 @@
  */
 
 #include "memory_dungeon_dat_pc34_compat.h"
+#include <stdint.h>
 
 /* ---- Direction constants (shared with movement) ---- */
 #define DIR_NORTH 0
@@ -122,8 +123,8 @@ struct ChampionState_Compat {
     /* Status flags [RUNTIME] */
     unsigned short wounds;      /* bitfield: which body parts wounded */
     unsigned short poisonDose;  /* accumulated poison */
-    unsigned char  food;        /* food level 0-255 */
-    unsigned char  water;       /* water level 0-255 */
+    int16_t        food;        /* food level: -1024..2048 (ReDMCSB CHAMPION.C) */
+    int16_t        water;       /* water level: -1024..2048 (ReDMCSB CHAMPION.C) */
 };
 
 /*
