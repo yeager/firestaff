@@ -100,7 +100,8 @@ set(M12_SOURCES
     music_jukebox_m12.c
     gamepad_config_m12.c
     touch_layout_m12.c
-    touch_layout_m12.c
+    presentation_preview_m12.c
+    screenshot_gallery_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
