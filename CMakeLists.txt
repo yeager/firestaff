@@ -97,6 +97,7 @@ set(M12_SOURCES
     spell_reference_m12.c
     map_viewer_m12.c
     music_jukebox_m12.c
+    gamepad_config_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
