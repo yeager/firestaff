@@ -9764,6 +9764,8 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_TELEPORTER) {
             continue;
         }
+        /* ReDMCSB DUNGEON.C F0172:2685 — teleporter visible iff OPEN&&VISIBLE.
+         * DEFS.H: MASK0x0004_TELEPORTER_VISIBLE, MASK0x0008_TELEPORTER_OPEN. */
         if ((cell.square & 0x04) == 0 || (cell.square & 0x08) == 0) {
             continue;
         }
@@ -12220,7 +12222,7 @@ static void m11_format_lane_label(const M11_ViewportCell* cell,
         snprintf(out, outSize, "%s DOOR", prefix ? prefix : "?");
         return;
     }
-    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
+    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
         snprintf(out, outSize, "%s PIT", prefix ? prefix : "?");
         return;
     }

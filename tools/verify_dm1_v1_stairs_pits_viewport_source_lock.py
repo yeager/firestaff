@@ -73,6 +73,24 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         "F0154_DUNGEON_GetLocationAfterLevelChange(L0715_ui_MapIndexDestination, 1",
         "F0324_CHAMPION_DamageAll_GetDamagedChampionCount(20, MASK0x0010_WOUND_LEGS | MASK0x0020_WOUND_FEET, C2_ATTACK_SELF)",
     ], "Open non-imaginary pits fall one level via F0154, draw the falling viewport, and apply 20 damage."))
+    checks.append(require("DEFS.H:1025-1032", block("DEFS.H", 1025, 1032), [
+        "MASK0x0001_PIT_IMAGINARY",
+        "MASK0x0008_PIT_OPEN",
+        "MASK0x0004_STAIRS_UP",
+        "MASK0x0004_TELEPORTER_VISIBLE",
+        "MASK0x0008_TELEPORTER_OPEN",
+    ], "DEFS.H defines the canonical bit positions for pit/stairs/teleporter state bits."))
+    checks.append(require("DUNGEON.C:2628-2695", block("DUNGEON.C", 2628, 2695), [
+        "C02_ELEMENT_PIT",
+        "MASK0x0008_PIT_OPEN",
+        "C01_ELEMENT_CORRIDOR",
+        "C05_ELEMENT_TELEPORTER",
+        "MASK0x0008_TELEPORTER_OPEN",
+        "MASK0x0004_TELEPORTER_VISIBLE",
+        "C03_ELEMENT_STAIRS",
+        "MASK0x0004_STAIRS_UP",
+        "MASK0x0008_STAIRS_NORTH_SOUTH_ORIENTATION",
+    ], "F0172 SetSquareAspect: closed pit->corridor, teleporter requires OPEN+VISIBLE, stairs extracts UP bit."))
     checks.append(require("DUNVIEW.C:8318-8354", block("DUNVIEW.C", 8318, 8354), [
         "void F0128_DUNGEONVIEW_Draw_CPSF",
         "G0297_B_DrawFloorAndCeilingRequested",
@@ -124,6 +142,18 @@ def verify_firestaff() -> list[dict[str, Any]]:
         "m11_apply_post_move_environment_from_compat",
         "m11_refresh_hash(state);",
     ], "M11 calls the compat transition layer and requests redraw/hash refresh after transitions."))
+    checks.append(require("m11_game_view.c:stairs_up_bit", m11, [
+        "cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP",
+        "cell.square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP",
+    ], "Stairs up/down rendering uses MASK0x0004_STAIRS_UP (not 0x01)."))
+    checks.append(require("m11_game_view.c:pit_open_check", m11, [
+        "!(cell.square & 0x08)) { /* not PIT_OPEN",
+        "cell->square & 0x08) { /* PIT_OPEN",
+    ], "Pit rendering checks MASK0x0008_PIT_OPEN before drawing the hole graphic."))
+    checks.append(require("m11_game_view.c:teleporter_visible_check", m11, [
+        "MASK0x0004_TELEPORTER_VISIBLE, MASK0x0008_TELEPORTER_OPEN",
+        "(cell.square & 0x04) == 0 || (cell.square & 0x08) == 0",
+    ], "Teleporter field rendering checks both VISIBLE and OPEN bits."))
     checks.append(require("CMakeLists.txt:dm1_v1_stairs_pits_viewport_source_lock", cmake, [
         "NAME dm1_v1_stairs_pits_viewport_source_lock",
         "verify_dm1_v1_stairs_pits_viewport_source_lock.py",

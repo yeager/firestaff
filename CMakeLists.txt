@@ -319,6 +319,9 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
     dm1_v1_creature_render_pc34_compat.c
+    dm1_v1_champion_stats_pc34_compat.c
+    dm1_v1_inventory_pc34_compat.c
+    dm1_v1_spell_casting_pc34_compat.c
     dm1_v1_stairs_level_pc34_compat.c
     dm1_v1_text_message_pc34_compat.c
     dm1_v1_sound_pc34_compat.c
@@ -337,6 +340,9 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         test_dm1_v1_creature_render_pc34_compat_integration.c
         dm1_v1_creature_render_pc34_compat.c
+    dm1_v1_champion_stats_pc34_compat.c
+    dm1_v1_inventory_pc34_compat.c
+    dm1_v1_spell_casting_pc34_compat.c
     dm1_v1_stairs_level_pc34_compat.c
     dm1_v1_text_message_pc34_compat.c
     dm1_v1_sound_pc34_compat.c
