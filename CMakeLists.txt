@@ -94,6 +94,7 @@ set(M12_SOURCES
     custom_dungeon_m12.c
     item_encyclopedia_m12.c
     campaign_m12.c
+    spell_reference_m12.c
     map_viewer_m12.c
 )
 
