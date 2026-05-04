@@ -320,6 +320,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
     dm1_v1_creature_render_pc34_compat.c
+    dm1_v2_viewport_renderer_pc34.c
+    csb_v1_dungeon_world_pc34_compat.c
     dm1_v2_movement_engine_pc34.c
     csb_v1_game_state_pc34_compat.c
     dm1_v1_champion_stats_pc34_compat.c
@@ -343,6 +345,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         test_dm1_v1_creature_render_pc34_compat_integration.c
         dm1_v1_creature_render_pc34_compat.c
+    dm1_v2_viewport_renderer_pc34.c
+    csb_v1_dungeon_world_pc34_compat.c
     dm1_v2_movement_engine_pc34.c
     csb_v1_game_state_pc34_compat.c
     dm1_v1_champion_stats_pc34_compat.c
@@ -400,6 +404,18 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_movement_command_gate_source_lock.py
     )
 
+    add_executable(test_dm1_v1_sensor_trigger_pc34_compat
+        test_dm1_v1_sensor_trigger_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sensor_trigger_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sensor_trigger_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sensor_trigger_pc34_compat
+        COMMAND test_dm1_v1_sensor_trigger_pc34_compat
+    )
+
     add_executable(test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
         test_resurrect_reincarnate_cancel_routes_pc34_compat_integration.c
     )
@@ -410,6 +426,18 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_resurrect_reincarnate_cancel_routes
         COMMAND test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
+    )
+
+    add_executable(test_dm1_v1_resurrection_pc34_compat
+        test_dm1_v1_resurrection_pc34_compat.c
+        dm1_v1_resurrection_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_resurrection_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_resurrection
+        COMMAND test_dm1_v1_resurrection_pc34_compat
     )
 
     # Phase A probe (headless, no game data needed)
@@ -724,3 +752,123 @@ endif()
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
 
+
+# ── DM1 V1 Champion Needs source-lock gate ───────────────────────────
+if(NOT TARGET test_dm1_v1_champion_needs_pc34_compat_integration)
+    add_executable(test_dm1_v1_champion_needs_pc34_compat_integration
+        test_dm1_v1_champion_needs_pc34_compat_integration.c
+        dm1_v1_champion_needs_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_needs_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_needs_source_lock
+        COMMAND test_dm1_v1_champion_needs_pc34_compat_integration
+    )
+endif()
+
+# ── DM1 V1 Event Timer source-lock gate ──────────────────────────────
+if(NOT TARGET test_dm1_v1_event_timer_pc34_compat)
+    add_executable(test_dm1_v1_event_timer_pc34_compat
+        test_dm1_v1_event_timer_pc34_compat.c
+        dm1_v1_event_timer_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_event_timer_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_event_timer_source_lock
+        COMMAND test_dm1_v1_event_timer_pc34_compat
+    )
+endif()
+
+# ── DM1 V1 Object/Item Interaction source-lock gate ──────────────────
+if(NOT TARGET test_dm1_v1_object_interaction_pc34_compat)
+    add_executable(test_dm1_v1_object_interaction_pc34_compat
+        test_dm1_v1_object_interaction_pc34_compat.c
+        dm1_v1_object_interaction_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_object_interaction_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_object_interaction_source_lock
+        COMMAND test_dm1_v1_object_interaction_pc34_compat
+    )
+endif()
+
+    # DM1 V1 Creature AI Behavior System
+    add_executable(test_dm1_v1_creature_ai_behavior_pc34_compat
+        test_dm1_v1_creature_ai_behavior_pc34_compat.c
+        dm1_v1_creature_ai_behavior_pc34_compat.c
+        memory_creature_ai_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_creature_ai_behavior_source_lock
+        COMMAND test_dm1_v1_creature_ai_behavior_pc34_compat
+    )
+
+# ── DM1 V1 Light & Torch System source-lock gate ─────────────────────
+if(NOT TARGET test_dm1_v1_light_pc34_compat)
+    add_executable(test_dm1_v1_light_pc34_compat
+        test_dm1_v1_light_pc34_compat.c
+        dm1_v1_light_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_light_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_light_source_lock
+        COMMAND test_dm1_v1_light_pc34_compat
+    )
+endif()
+
+# ── DM1 V1 Text/Message Display source-lock gate ─────────────────────
+if(NOT TARGET test_dm1_v1_text_message_pc34_compat)
+    add_executable(test_dm1_v1_text_message_pc34_compat
+        test_dm1_v1_text_message_pc34_compat.c
+        dm1_v1_text_message_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_text_message_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_text_message_source_lock
+        COMMAND test_dm1_v1_text_message_pc34_compat
+    )
+endif()
+
+# ── DM1 V1 Skill & Experience System source-lock gate ─────────────────
+if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
+    add_executable(test_dm1_v1_skill_experience_pc34_compat
+        test_dm1_v1_skill_experience_pc34_compat.c
+        dm1_v1_skill_experience_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_skill_experience_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_skill_experience_source_lock
+        COMMAND test_dm1_v1_skill_experience_pc34_compat
+    )
+endif()
+
+# ── DM1 V1 Endgame System source-lock gate ───────────────────────────
+if(NOT TARGET test_dm1_v1_endgame_system_pc34_compat)
+    add_executable(test_dm1_v1_endgame_system_pc34_compat
+        test_dm1_v1_endgame_system_pc34_compat.c
+        dm1_v1_endgame_system_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_system_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_system_source_lock
+        COMMAND test_dm1_v1_endgame_system_pc34_compat
+    )
+endif()
