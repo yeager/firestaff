@@ -487,6 +487,14 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_side_wall_ornament_source_gate.py
         )
         add_test(
+            NAME v1_door_button_ornament_coordinates_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_door_button_ornament_coordinates_gate.py
+        )
+        add_test(
+            NAME v1_wall_ornament_coordinates_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_wall_ornament_coordinates_gate.py
+        )
+        add_test(
             NAME v1_viewport_center_door_occlusion_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_center_door_occlusion_gate.py
         )

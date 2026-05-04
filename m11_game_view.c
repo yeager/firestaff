@@ -9103,20 +9103,18 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
     static const unsigned char kOrnD2Palette[16] = {
         0, 1, 2, 3, 4, 3, 6, 7, 5, 9, 10, 11, 12, 13, 14, 15
     };
-    static const int kAnchorX[3][3] = {
-        {28, 42, 63}, /* coordinate set 0: right-aligned anchors */
-        {15, 22, 33}, /* coordinate set 1: left/top-ish anchors */
-        {34, 50, 75}  /* coordinate set 2: right/bottom anchors */
-    };
-    static const int kAnchorY[3][3] = {
-        {13, 17, 22},
-        {23, 35, 53},
-        {37, 53, 80}
+    /* ReDMCSB DUNVIEW.C G0207_aaauc_Graphic558_DoorOrnamentCoordinateSets[4][3][6].
+     * Format: {X1, X2, Y1, Y2, ByteWidth, Height}.
+     * Index 0 = D3LCR, 1 = D2LCR, 2 = D1LCR (full native). */
+    static const unsigned char kDoorOrnCoordSets[4][3][6] = {
+        {{17,31, 8,17, 8,10}, {22,42,11,23,16,13}, {32,63,13,31,16,19}},
+        {{ 0,47, 0,40,24,41}, { 0,63, 0,60,32,61}, { 0,95, 0,87,48,88}},
+        {{17,31,15,24, 8,10}, {22,42,22,34,16,13}, {32,63,31,49,16,19}},
+        {{23,35,31,39, 8, 9}, {30,48,41,52,16,12}, {44,75,61,79,16,19}}
     };
     const M11_AssetSlot* slot;
     int graphicIndex;
     int coordSet;
-    int scale;
     int viewIndex;
     int ornW;
     int ornH;
@@ -9136,25 +9134,20 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return;
     }
-    if (coordSet < 0 || coordSet > 2) {
+    if (coordSet < 0 || coordSet > 3) {
         coordSet = 1;
     }
-    scale = (depthIndex == 0) ? 32 : ((depthIndex == 1) ? 21 : 14);
     viewIndex = (depthIndex == 0) ? 2 : ((depthIndex == 1) ? 1 : 0);
-    ornW = m11_dm1_scaled_dimension(slot->width, scale);
-    ornH = m11_dm1_scaled_dimension(slot->height, scale);
+    /* Use G0207 coordinate set directly for ornament position/size. */
+    {
+        const unsigned char* cs = kDoorOrnCoordSets[coordSet][viewIndex];
+        ornW = cs[1] - cs[0] + 1;
+        ornH = cs[3] - cs[2] + 1;
+        relX = cs[0];
+        relY = cs[2];
+    }
     if (ornW <= 0 || ornH <= 0) {
         return;
-    }
-    if (coordSet == 0) {
-        relX = kAnchorX[coordSet][viewIndex] - ornW;
-        relY = kAnchorY[coordSet][viewIndex];
-    } else if (coordSet == 1) {
-        relX = kAnchorX[coordSet][viewIndex];
-        relY = kAnchorY[coordSet][viewIndex] - ornH;
-    } else {
-        relX = kAnchorX[coordSet][viewIndex] - ornW;
-        relY = kAnchorY[coordSet][viewIndex] - ornH;
     }
     m11_blit_scaled_palette_map(slot,
                                 framebuffer, fbW, fbH,
@@ -9956,15 +9949,14 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
             {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
         }
     };
-    static const int kAnchorX[3][3] = {
-        {28, 42, 63}, /* coordinate set 0: right-aligned anchors */
-        {15, 22, 33}, /* coordinate set 1: left/top-ish anchors */
-        {34, 50, 75}  /* coordinate set 2: right/bottom anchors */
-    };
-    static const int kAnchorY[3][3] = {
-        {13, 17, 22},
-        {23, 35, 53},
-        {37, 53, 80}
+    /* ReDMCSB DUNVIEW.C G0207_aaauc_Graphic558_DoorOrnamentCoordinateSets[4][3][6].
+     * Format: {X1, X2, Y1, Y2, ByteWidth, Height}.
+     * Index 0 = D3LCR, 1 = D2LCR, 2 = D1LCR (full native). */
+    static const unsigned char kDoorOrnCoordSets[4][3][6] = {
+        {{17,31, 8,17, 8,10}, {22,42,11,23,16,13}, {32,63,13,31,16,19}},
+        {{ 0,47, 0,40,24,41}, { 0,63, 0,60,32,61}, { 0,95, 0,87,48,88}},
+        {{17,31,15,24, 8,10}, {22,42,22,34,16,13}, {32,63,31,49,16,19}},
+        {{23,35,31,39, 8, 9}, {30,48,41,52,16,12}, {44,75,61,79,16,19}}
     };
     int depth;
     if (!state || !state->assetsAvailable) {
@@ -9981,7 +9973,6 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
         int coordSet;
         int panelState;
         M11_DM1ZoneBlit panel;
-        int scale = (depth == 0) ? 32 : ((depth == 1) ? 21 : 14);
         int viewIndex = (depth == 0) ? 2 : ((depth == 1) ? 1 : 0);
         int ornW, ornH, relX, relY;
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
@@ -9997,25 +9988,22 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
         if (!slot || slot->width <= 0 || slot->height <= 0) {
             return;
         }
-        if (coordSet < 0 || coordSet > 2) {
+        if (coordSet < 0 || coordSet > 3) {
             coordSet = 1;
-        }
-        ornW = m11_dm1_scaled_dimension(slot->width, scale);
-        ornH = m11_dm1_scaled_dimension(slot->height, scale);
-        if (ornW <= 0 || ornH <= 0) {
-            return;
         }
         panelState = (cell->doorState >= 1 && cell->doorState <= 3) ? cell->doorState : 0;
         panel = kDoorPanels[depth][panelState];
-        if (coordSet == 0) {
-            relX = kAnchorX[coordSet][viewIndex] - ornW;
-            relY = kAnchorY[coordSet][viewIndex];
-        } else if (coordSet == 1) {
-            relX = kAnchorX[coordSet][viewIndex];
-            relY = kAnchorY[coordSet][viewIndex] - ornH;
-        } else {
-            relX = kAnchorX[coordSet][viewIndex] - ornW;
-            relY = kAnchorY[coordSet][viewIndex] - ornH;
+        /* Use G0207 coordinate set directly for ornament position/size.
+         * viewIndex: 0=D3, 1=D2, 2=D1. */
+        {
+            const unsigned char* cs = kDoorOrnCoordSets[coordSet][viewIndex];
+            ornW = cs[1] - cs[0] + 1;
+            ornH = cs[3] - cs[2] + 1;
+            relX = cs[0];
+            relY = cs[2];
+        }
+        if (ornW <= 0 || ornH <= 0) {
+            return;
         }
         M11_AssetLoader_BlitScaled(slot,
                                    framebuffer, fbW, fbH,
@@ -10065,12 +10053,12 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
         0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
     };
     static const M11_DM1ZoneBlit kButtons[3] = {
-        /* C1950_ZONE_DOOR_BUTTON + C3_VIEW_DOOR_BUTTON_D1C */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 167, 43, 8, 9},
-        /* D2 uses 20/32 scaled derived bitmap. */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 150, 42, 5, 5},
-        /* D3 uses 16/32 scaled derived bitmap. */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 137, 41, 4, 4}
+        /* G0208[0][C3_VIEW_DOOR_BUTTON_D1C]: native bitmap at (160,44) 16x9 */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 160, 44, 16, 9},
+        /* G0208[0][C2_VIEW_DOOR_BUTTON_D2C]: scaled to (144,42) 12x6 */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 144, 42, 12, 6},
+        /* G0208[0][C1_VIEW_DOOR_BUTTON_D3C]: scaled to (136,41) 6x4 */
+        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 136, 41, 6, 4}
     };
     int depth;
     const M11_ViewportCell* cell;
@@ -10150,12 +10138,12 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return;
     }
-    /* C1950_ZONE_DOOR_BUTTON + C0_VIEW_DOOR_BUTTON_D3R, scaled 16/32. */
+    /* G0208[0][C0_VIEW_DOOR_BUTTON_D3R]: scaled to (199,41) 6x4 */
     m11_blit_scaled_palette_map(slot,
                                 framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + 197,
-                                M11_VIEWPORT_Y + 39,
-                                4, 4,
+                                M11_VIEWPORT_X + 199,
+                                M11_VIEWPORT_Y + 41,
+                                6, 4,
                                 10,
                                 kButtonD3Palette);
 }
