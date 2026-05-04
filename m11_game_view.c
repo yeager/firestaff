@@ -4543,6 +4543,10 @@ void M11_GameView_Init(M11_GameViewState* state) {
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
     DM1_V1_VBlankTiming_Init(&state->vblankTiming);
+    DM1_SaveMenu_Init(&state->saveMenu);
+    /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
+     * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
+    state->dm1GameID = (uint32_t)((unsigned)rand() * 65536u + (unsigned)rand());
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
@@ -5328,6 +5332,31 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_REDRAW;
+        case M12_MENU_INPUT_SAVE_GAME: {
+            /* DM1 V1 save game — Ctrl-S trigger.
+             * ReDMCSB: C140_COMMAND dispatches to
+             * F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF
+             * (LOADSAVE.C, COMMAND.C line ~7617). */
+            char savePath[512];
+            const char* sid = (state->sourceId[0] != '\0')
+                              ? state->sourceId : "dm1";
+            int rc = snprintf(savePath, sizeof(savePath),
+                              "firestaff-%s-dm1save.sav", sid);
+            if (rc > 0 && rc < (int)sizeof(savePath)) {
+                int saveResult = DM1_SaveGame(&state->world, savePath,
+                                               state->dm1GameID, 1);
+                if (saveResult == DM1_SAVE_OK) {
+                    m11_set_status(state, "SAVE", "GAME SAVED");
+                    M12_Config_SetLastSavePath(savePath);
+                } else {
+                    m11_set_status(state, "SAVE",
+                                   DM1_SaveLoadErrorString(saveResult));
+                }
+            } else {
+                m11_set_status(state, "SAVE", "SAVE PATH ERROR");
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         case M12_MENU_INPUT_BACK:
             /* Return-to-launcher confirmation is a full-screen modal route,
              * not a champion inventory interaction.  Clear invented/debug

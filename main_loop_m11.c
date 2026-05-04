@@ -1079,6 +1079,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_S:
+                    if (ev.key.mod & SDL_KMOD_CTRL) {
+                        if (gameView && gameView->active)
+                            return M12_MENU_INPUT_SAVE_GAME;
+                        return M12_MENU_INPUT_NONE;
+                    }
                     if (menuState && menuState->settings.wasdMovementEnabled) {
                         return M12_MENU_INPUT_DOWN;
                     }
@@ -1270,6 +1275,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_S:
+                    if (ev.key.keysym.mod & KMOD_CTRL) {
+                        if (gameView && gameView->active)
+                            return M12_MENU_INPUT_SAVE_GAME;
+                        return M12_MENU_INPUT_NONE;
+                    }
                     if (menuState && menuState->settings.wasdMovementEnabled) {
                         return M12_MENU_INPUT_DOWN;
                     }
