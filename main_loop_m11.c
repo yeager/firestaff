@@ -701,16 +701,10 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         }
         if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
             if (!m11_play_redmcsb_entrance_transition(gameView)) {
-                M11_GameView_Shutdown(gameView);
-                M11_GameView_Init(gameView);
-                menuState->view = M12_MENU_VIEW_MAIN;
-                menuState->selectedIndex = 0;
-                menuState->activatedIndex = -1;
-                menuState->launchRequested = 0;
-                menuState->messageLine1 = "";
-                menuState->messageLine2 = "";
-                menuState->messageLine3 = "";
-                return 1;
+                /* Non-fatal: skip entrance animation but continue to game.
+                 * Previously this aborted back to menu, causing the black
+                 * viewport bug when TITLE.DAT decode failed. */
+                fprintf(stderr, "entrance transition skipped (non-fatal)\n");
             }
         }
         M11_GameView_Draw(gameView,
