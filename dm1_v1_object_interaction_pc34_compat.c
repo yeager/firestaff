@@ -102,7 +102,7 @@ int m11_obj_use(M11_ObjectState* s, int objIdx) {
     return 0;
 }
 
-int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir, int force) {
+int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir __attribute__((unused)), int force __attribute__((unused))) {
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
     if (!obj->throwable) return 0;
