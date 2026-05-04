@@ -65,6 +65,7 @@ set(M11_SOURCES
     font_m11.c
     fs_portable_compat.c
     dm1_v1_vblank_timing.c
+    dm1_v1_save_load.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -686,7 +687,36 @@ if(BUILD_TESTING)
         NAME dm1_v1_sound_music_source_lock
         COMMAND test_dm1_v1_sound_pc34_compat_integration
     )
+
+    # DM1 V1 Save/Load Game System source-lock gate
+    add_executable(test_dm1_v1_save_load
+        test_dm1_v1_save_load.c
+        dm1_v1_save_load.c
+    )
+    target_link_libraries(test_dm1_v1_save_load PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_save_load PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_save_load_source_lock
+        COMMAND test_dm1_v1_save_load
+    )
+
+    # DM1 V1 Combat & Damage System source-lock gate
+    add_executable(test_dm1_v1_combat_pc34_compat_integration
+        test_dm1_v1_combat_pc34_compat_integration.c
+        dm1_v1_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_combat_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_combat_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_combat_damage_source_lock
+        COMMAND test_dm1_v1_combat_pc34_compat_integration
+    )
 endif()
 
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
+
