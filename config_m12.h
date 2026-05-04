@@ -51,6 +51,9 @@ typedef struct {
     int highContrast;       /* 0 = off, 1 = on */
     int colorblindMode;     /* 0 = off, 1 = deuteranopia, 2 = protanopia, 3 = tritanopia */
     int autoPause;          /* 0 = off, 1 = pause on focus loss */
+
+    /* Theme selector */
+    int themeIndex;         /* 0 = classic, see M12_Theme enum in theme_m12.h */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);
@@ -58,6 +61,7 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride);
 int M12_Config_Save(const M12_Config* config);
 const char* M12_Config_GetPath(const M12_Config* config);
 int M12_Config_GetAutoLanguageIndex(void);
+void M12_Config_SetLastSavePath(const char* path);
 
 #ifdef __cplusplus
 }

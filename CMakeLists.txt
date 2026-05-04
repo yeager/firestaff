@@ -87,6 +87,7 @@ set(M12_SOURCES
     creature_art_m12.c
     data_validator_m12.c
     changelog_m12.c
+    theme_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})

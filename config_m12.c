@@ -232,6 +232,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->highContrast = 0;
     config->colorblindMode = 0;
     config->autoPause = 0;
+    config->themeIndex = 0;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -384,6 +385,13 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->autoPause = m12_parse_int(value, config->autoPause) ? 1 : 0;
         return;
     }
+    if (m12_string_equals(key, "theme_index")) {
+        int val = m12_parse_int(value, config->themeIndex);
+        if (val < 0) val = 0;
+        if (val >= 4) val = 3;
+        config->themeIndex = val;
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
@@ -449,6 +457,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "high_contrast = %d\n", config->highContrast ? 1 : 0);
     fprintf(fp, "colorblind_mode = %d\n", config->colorblindMode);
     fprintf(fp, "auto_pause = %d\n", config->autoPause ? 1 : 0);
+    fprintf(fp, "theme_index = %d\n", config->themeIndex);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);

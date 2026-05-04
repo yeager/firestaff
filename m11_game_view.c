@@ -4740,6 +4740,8 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
              "F9 RESTORES TICK %u FROM %s",
              (unsigned int)state->world.gameTick,
              path);
+    /* Update config with last save path for quick resume */
+    M12_Config_SetLastSavePath(path);
     return 1;
 }
 
