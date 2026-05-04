@@ -2,36 +2,67 @@
 #include <string.h>
 
 /*
- * DM1 V1 Game Loop Orchestrator — implementation
+ * DM1 V1 Main Game Loop + Frame Timing — implementation
  *
- * Source lock: ReDMCSB WIP20210206 GAMELOOP.C
- *   F0002_MAIN_GameLoop_CPSDF — the infinite for(;;) loop.
- *   F0003_MAIN_ProcessNewPartyMap_CPSE — map transition.
+ * Source lock: ReDMCSB WIP20210206
+ *   VBLANK.C:    F0577_VerticalBlank_Handler_CPSDF — VBlank ISR
+ *                F0575_VerticalBlank_Initialize — install handler
+ *                G0317_i_WaitForInputVerticalBlankCount
+ *                G0318_i_WaitForInputMaximumVerticalBlankCount = 10
+ *                G0321_B_StopWaitingForPlayerInput
+ *                G1086_VerticalBlankCount
+ *   GAMELOOP.C:  F0002_MAIN_GameLoop_CPSDF — main infinite loop
+ *                Tick order: newMap → timeline → dungeonView → pointer →
+ *                            highlight → sound → damage → deathCheck → inputWait
+ *   DOS/CLOCK.C: DOS timer interrupt for 50fps emulation on PC
  *
- * Tick order (from F0002):
- *   1. G0317 = 0 (reset vblank wait count)
- *   2. If G0327 != -1: F0003 + F0267 move result + G0327 = -1 + discard input
- *   3. F0261_TIMELINE_Process
- *   4. If G0327 != -1 again (timeline caused map change): goto step 2
- *   5. Music update (platform-specific)
- *   6. If !G0300 (not resting) and !G0423 (no inventory): F0128 dungeon view draw
- *   7. Mouse pointer updates (G0325, G0326)
- *   8. F0363 command highlight disable
- *   9. F0065 sound play pending
- *  10. F0320 apply damage/wounds
- *  11. If G0303 (party dead): break
- *  12. Input wait loop (vblank count < max, check G0321, process commands)
+ * The VBlank handler in the original increments G0317 every frame.
+ * When G0317 >= G0318, it sets G0321 = TRUE to release the input wait.
+ * On PC34, G0318 = 10 (200ms input timeout at 50fps).
  */
+
+/* ── Initialization ───────────────────────────────────────────────── */
 
 void m11_game_loop_init(M11_GameLoopState *state, int extendedVBlankWait)
 {
     memset(state, 0, sizeof(*state));
-    state->gameState = DM1_GAME_UNINIT;
+    state->loopStatus = DM1_LOOP_INIT;
+    state->timerActive = 1; /* G2586_TimerActive = true by default */
     state->waitForInputMaxVBlankCount = extendedVBlankWait
-        ? M11_WAIT_FOR_INPUT_MAX_VBLANK_COUNT_EXTENDED
-        : M11_WAIT_FOR_INPUT_MAX_VBLANK_COUNT_DEFAULT;
+        ? M11_VBLANK_WAIT_MAX_EXTENDED
+        : M11_VBLANK_WAIT_MAX_DEFAULT;
     state->newPartyMapIndex = -1;
+    state->targetFrameTimeUs = 1000000u / M11_FRAME_RATE_HZ; /* 20000us */
 }
+
+void m11_game_loop_set_tick_rate(M11_GameLoopState *state, int hz)
+{
+    if (hz < 1) hz = 1;
+    if (hz > 1000) hz = 1000;
+    state->targetFrameTimeUs = 1000000u / (uint32_t)hz;
+}
+
+/* ── VBlank interrupt simulation (F0577) ──────────────────────────── */
+
+void m11_game_loop_vblank_tick(M11_GameLoopState *state)
+{
+    /*
+     * F0577_VerticalBlank_Handler_CPSDF:
+     *   G0317_i_WaitForInputVerticalBlankCount++;
+     *   if (G0317 >= G0318) { G0321_B_StopWaitingForPlayerInput = TRUE; }
+     *   G1086_VerticalBlankCount++;
+     */
+    state->verticalBlankCount++;
+
+    if (!state->timerActive) return; /* Paused — don't advance input wait */
+
+    state->waitForInputVBlankCount++;
+    if (state->waitForInputVBlankCount >= state->waitForInputMaxVBlankCount) {
+        state->stopWaitingForInput = 1;
+    }
+}
+
+/* ── Core game loop tick (F0002) ──────────────────────────────────── */
 
 M11_GameLoopTickResult m11_game_loop_tick(M11_GameLoopState *state, uint32_t nowMs)
 {
@@ -39,49 +70,51 @@ M11_GameLoopTickResult m11_game_loop_tick(M11_GameLoopState *state, uint32_t now
     memset(&result, 0, sizeof(result));
     result.newMapIndex = -1;
 
+    /* If paused (G2586_TimerActive == false), return no-op */
+    if (!state->timerActive) {
+        result.lastPhaseCompleted = DM1_PHASE_INPUT_WAIT;
+        return result;
+    }
+
+    /* Mark running */
+    if (state->loopStatus == DM1_LOOP_INIT) {
+        state->loopStatus = DM1_LOOP_RUNNING;
+    }
+
     /* Step 1: Reset vblank wait count (G0317 = 0) */
     state->waitForInputVBlankCount = 0;
+    state->stopWaitingForInput = 0;
 
-    /* Step 2: Process new party map if pending (F0003 + F0267) */
+    /* Step 2: Process new party map if pending (G0327 != -1) */
     if (state->newPartyMapIndex != -1) {
         result.newMapProcessed = 1;
         result.newMapIndex = state->newPartyMapIndex;
-        /*
-         * Caller must: F0003(newMapIndex), F0267(PARTY, -1, 0, partyX, partyY),
-         * then discard all input (F0357).
-         */
+        /* Caller: F0003(mapIndex) + F0267(PARTY,-1,0,X,Y) + F0357 discard */
         state->newPartyMapIndex = -1;
-        state->stopWaitingForInput = 0;
     }
     result.lastPhaseCompleted = DM1_PHASE_NEW_MAP;
 
-    /* Step 3: Timeline processing (F0261) — caller invokes timeline */
-    result.timelineEventsProcessed = 1; /* flag: caller should call timeline */
+    /* Step 3: Timeline processing (F0261) */
+    result.timelineEventsProcessed = 1;
     result.lastPhaseCompleted = DM1_PHASE_TIMELINE;
 
-    /*
-     * Step 4: If timeline caused a new map (G0327 != -1), the caller
-     * should detect result.newMapProcessed==0 but state->newPartyMapIndex!=-1
-     * and re-call tick or handle inline. We set the flag for the caller.
-     */
+    /* Step 4: Check if timeline triggered another map change — caller
+     * should re-check state->newPartyMapIndex after calling timeline. */
+
+    /* Step 5: Music update (platform-specific, skipped in orchestrator) */
 
     /* Step 6: Dungeon view draw (F0128) */
-    if (!state->partyResting) {
-        if (!state->inventoryChampionOrdinal) {
-            result.dungeonViewDrawn = 1;
-        }
-        result.inventoryOpen = (state->inventoryChampionOrdinal != 0);
+    if (!state->partyResting && !state->inventoryChampionOrdinal) {
+        result.dungeonViewDrawn = 1;
     }
+    result.inventoryOpen = (state->inventoryChampionOrdinal != 0);
     result.partyResting = state->partyResting;
     result.lastPhaseCompleted = DM1_PHASE_DUNGEON_VIEW_DRAW;
 
     /* Step 7: Mouse pointer updates (G0325, G0326) */
-    if (state->setMousePointerToObject) {
+    if (state->setMousePointerToObject || state->refreshMousePointer) {
         result.mousePointerUpdated = 1;
         state->setMousePointerToObject = 0;
-    }
-    if (state->refreshMousePointer) {
-        result.mousePointerUpdated = 1;
         state->refreshMousePointer = 0;
     }
     result.lastPhaseCompleted = DM1_PHASE_MOUSE_POINTER_UPDATE;
@@ -102,20 +135,43 @@ M11_GameLoopTickResult m11_game_loop_tick(M11_GameLoopState *state, uint32_t now
     result.partyDead = state->partyDead;
     result.lastPhaseCompleted = DM1_PHASE_DEATH_CHECK;
 
-    /* Step 12: Input wait — set vblank count and stop flag */
+    /* Step 12: Input wait — report current state */
     result.stopWaitingForInput = state->stopWaitingForInput;
     result.vblankWaitCount = state->waitForInputVBlankCount;
     result.lastPhaseCompleted = DM1_PHASE_INPUT_WAIT;
 
-    /* Exit check */
     result.exitRequested = state->exitGameImmediately;
 
-    /* Update tick tracking */
+    /* Tick accounting */
     state->tickCount++;
     state->lastTickMs = nowMs;
+    state->frameStats.totalFrames++;
 
     return result;
 }
+
+/* ── Pause/resume (G2586_TimerActive) ─────────────────────────────── */
+
+void m11_game_loop_pause(M11_GameLoopState *state)
+{
+    state->timerActive = 0;
+    state->loopStatus = DM1_LOOP_PAUSED;
+}
+
+void m11_game_loop_resume(M11_GameLoopState *state)
+{
+    state->timerActive = 1;
+    if (state->loopStatus == DM1_LOOP_PAUSED) {
+        state->loopStatus = DM1_LOOP_RUNNING;
+    }
+}
+
+int m11_game_loop_is_paused(const M11_GameLoopState *state)
+{
+    return !state->timerActive;
+}
+
+/* ── State mutation ───────────────────────────────────────────────── */
 
 void m11_game_loop_request_new_map(M11_GameLoopState *state, int newMapIndex)
 {
@@ -125,17 +181,11 @@ void m11_game_loop_request_new_map(M11_GameLoopState *state, int newMapIndex)
 void m11_game_loop_set_party_dead(M11_GameLoopState *state)
 {
     state->partyDead = 1;
-    state->gameState = DM1_GAME_DEATH;
 }
 
 void m11_game_loop_set_inventory(M11_GameLoopState *state, int championOrdinal)
 {
     state->inventoryChampionOrdinal = championOrdinal;
-    if (championOrdinal) {
-        state->gameState = DM1_GAME_INVENTORY;
-    } else if (state->gameState == DM1_GAME_INVENTORY) {
-        state->gameState = DM1_GAME_PLAYING;
-    }
 }
 
 void m11_game_loop_set_resting(M11_GameLoopState *state, int resting)
@@ -146,6 +196,7 @@ void m11_game_loop_set_resting(M11_GameLoopState *state, int resting)
 void m11_game_loop_request_exit(M11_GameLoopState *state)
 {
     state->exitGameImmediately = 1;
+    state->loopStatus = DM1_LOOP_STOPPED;
 }
 
 int m11_game_loop_should_continue(const M11_GameLoopState *state)
@@ -153,16 +204,62 @@ int m11_game_loop_should_continue(const M11_GameLoopState *state)
     return !state->partyDead && !state->exitGameImmediately;
 }
 
+/* ── Frame budget monitoring ──────────────────────────────────────── */
+
+void m11_game_loop_record_phase_time(M11_GameLoopState *state,
+                                     M11_GameLoopPhase phase,
+                                     uint32_t elapsedUs)
+{
+    (void)phase; /* Individual phase tracking could be added later */
+
+    /* Track worst-case frame time */
+    if (elapsedUs > state->frameStats.longestFrameUs) {
+        state->frameStats.longestFrameUs = elapsedUs;
+    }
+
+    /* Check budget overrun */
+    if (elapsedUs > state->targetFrameTimeUs) {
+        state->frameStats.droppedFrames++;
+        state->frameStats.budgetOverrunCount++;
+    }
+
+    /* Running average (simple exponential) */
+    if (state->frameStats.avgFrameUs == 0) {
+        state->frameStats.avgFrameUs = elapsedUs;
+    } else {
+        state->frameStats.avgFrameUs =
+            (state->frameStats.avgFrameUs * 7 + elapsedUs) / 8;
+    }
+}
+
+M11_FrameTimingStats m11_game_loop_get_frame_stats(const M11_GameLoopState *state)
+{
+    return state->frameStats;
+}
+
+void m11_game_loop_reset_frame_stats(M11_GameLoopState *state)
+{
+    memset(&state->frameStats, 0, sizeof(state->frameStats));
+}
+
+/* ── Source evidence ──────────────────────────────────────────────── */
+
 const char *m11_game_loop_source_evidence(void)
 {
     return
-        "ReDMCSB WIP20210206 GAMELOOP.C\n"
-        "F0002_MAIN_GameLoop_CPSDF: infinite loop — reset G0317, "
-        "check G0327 (new map), F0261 timeline, F0128 dungeon view, "
-        "F0363 command highlight, F0065 sound, F0320 damage/wounds, "
-        "G0303 death check, input wait loop with G0318 max vblank.\n"
-        "F0003_MAIN_ProcessNewPartyMap_CPSE: map transition + F0267 move + discard input.\n"
-        "G0317=vblank wait count, G0318=max(10 or 12), G0321=stop waiting, "
-        "G0300=party resting, G0423=inventory champion ordinal, "
-        "G0303=party dead, G0327=new party map index, G2151=exit game.";
+        "ReDMCSB WIP20210206\n"
+        "VBLANK.C: F0577_VerticalBlank_Handler_CPSDF — VBlank ISR:\n"
+        "  G0317_i_WaitForInputVerticalBlankCount++ each frame\n"
+        "  if (G0317 >= G0318) G0321_B_StopWaitingForPlayerInput = TRUE\n"
+        "  G1086_VerticalBlankCount++ (global frame counter)\n"
+        "  Palette updates: G3199_B/G3121_B/G3127_B in VBlank\n"
+        "  Message area scroll: G0354_i/G0355_B/G0356_puc in VBlank\n"
+        "VBLANK.C: F0575_VerticalBlank_Initialize — install Amiga INTB_VERTB\n"
+        "VBLANK.C: F0576_VerticalBlank_Deinitialize — remove handler\n"
+        "GAMELOOP.C: F0002_MAIN_GameLoop_CPSDF — infinite loop:\n"
+        "  G0317=0, check G0327 newMap, F0261 timeline, F0128 dungeon view,\n"
+        "  G0325/G0326 mouse, F0363 highlight, F0065 sound, F0320 damage,\n"
+        "  G0303 death check, input wait with G0318=10 max vblank\n"
+        "PC34: G0318=10 (200ms), Amiga A3x: G0318=12 (240ms)\n"
+        "DOS/CLOCK.C: timer interrupt emulates 50fps VBlank on IBM PC";
 }
