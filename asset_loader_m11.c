@@ -261,14 +261,14 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     if (expandedCapacity < unpackedSize) {
         expandedCapacity = unpackedSize;
     }
-    packedBitmap = (unsigned char*)calloc(expandedCapacity + 64, 1);
+    packedBitmap = (unsigned char*)calloc(expandedCapacity + 4096, 1);
     if (!packedBitmap) {
         free(compressedBuf);
         return NULL;
     }
 
-    memset(packedBitmap + 4 + expandedCapacity, 0xCD, 60);
-    overrunFirst = 60;
+    memset(packedBitmap + 4 + expandedCapacity, 0xCD, 4092);
+    overrunFirst = 4092;
     overrunLast = 0;
 
     /* The M10 expand writes width/height at negative offsets from the
@@ -282,9 +282,9 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
         F0488_MEMORY_ExpandGraphicToBitmap_Compat(compressedBuf, bitmapBase, &sizeInfo);
         {
             unsigned long gi;
-            for (gi = 0; gi < 60; ++gi) {
+            for (gi = 0; gi < 4092; ++gi) {
                 if (packedBitmap[4 + expandedCapacity + gi] != 0xCD) {
-                    if (overrunFirst == 60) overrunFirst = gi;
+                    if (overrunFirst == 4092) overrunFirst = gi;
                     overrunLast = gi;
                 }
             }
