@@ -317,6 +317,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
+    dm1_v1_creature_render_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
