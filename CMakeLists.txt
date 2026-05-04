@@ -672,6 +672,20 @@ if(BUILD_TESTING)
     set_tests_properties(m11_ingame_capture_smoke PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
+
+    # DM1 V1 Sound & Music System source-lock gate
+    add_executable(test_dm1_v1_sound_pc34_compat_integration
+        test_dm1_v1_sound_pc34_compat_integration.c
+        dm1_v1_sound_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sound_pc34_compat_integration PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sound_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sound_music_source_lock
+        COMMAND test_dm1_v1_sound_pc34_compat_integration
+    )
 endif()
 
 # ── Install rules ────────────────────────────────────────────────────
