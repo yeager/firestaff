@@ -13,7 +13,7 @@ on:
       release_notes:
         description: 'Release notes file'
         required: true
-        default: 'RELEASE_0_2_9_MAC_PREVIEW.md'
+        default: 'docs/releases/RELEASE_0_3_2.md'
 
 permissions:
   contents: read
@@ -30,11 +30,13 @@ jobs:
             echo "FIRESTAFF_VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
             echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
           else
-            echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-            if [ -f "RELEASE_${GITHUB_REF_NAME#v}.md" ]; then
-              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_${GITHUB_REF_NAME#v}.md" >> "$GITHUB_ENV"
+            VER="${GITHUB_REF_NAME#v}"
+            echo "FIRESTAFF_VERSION=$VER" >> "$GITHUB_ENV"
+            VER_UNDER=$(echo "$VER" | tr '.' '_')
+            if [ -f "docs/releases/RELEASE_${VER_UNDER}.md" ]; then
+              echo "FIRESTAFF_RELEASE_NOTES=docs/releases/RELEASE_${VER_UNDER}.md" >> "$GITHUB_ENV"
             else
-              echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+              echo "FIRESTAFF_RELEASE_NOTES=docs/releases/RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
             fi
           fi
       - name: Install SDL3
@@ -79,7 +81,7 @@ jobs:
             echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
           else
             echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-            echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+            echo "FIRESTAFF_RELEASE_NOTES=docs/releases/RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
           fi
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -126,7 +128,7 @@ jobs:
             echo "FIRESTAFF_RELEASE_NOTES=${{ github.event.inputs.release_notes }}" >> "$GITHUB_ENV"
           else
             echo "FIRESTAFF_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-            echo "FIRESTAFF_RELEASE_NOTES=RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
+            echo "FIRESTAFF_RELEASE_NOTES=docs/releases/RELEASE_0_2_9_MAC_PREVIEW.md" >> "$GITHUB_ENV"
           fi
       - name: Install dependencies
         run: |

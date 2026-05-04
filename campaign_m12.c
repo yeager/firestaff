@@ -391,7 +391,11 @@ static int ensure_campaigns_dir(const char* dataDir) {
     if (stat(dirPath, &st) == 0 && S_ISDIR(st.st_mode))
         return 1;
 
+#ifdef _WIN32
+    if (mkdir(dirPath) == 0)
+#else
     if (mkdir(dirPath, 0755) == 0)
+#endif
         return 1;
 
     return 0;
