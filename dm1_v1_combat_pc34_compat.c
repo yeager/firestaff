@@ -39,9 +39,9 @@ static int dm1_clamp(int val, int lo, int hi) {
     return val;
 }
 
-static int dm1_abs(int v) { return v < 0 ? -v : v; }
+static int dm1_abs(int v) __attribute__((unused)); static int dm1_abs(int v) { return v < 0 ? -v : v; }
 static int dm1_max(int a, int b) { return a > b ? a : b; }
-static int dm1_min(int a, int b) { return a < b ? a : b; }
+static int dm1_min(int a, int b) __attribute__((unused)); static int dm1_min(int a, int b) { return a < b ? a : b; }
 
 /*
  * F0030_MAIN_GetScaledProduct
@@ -439,7 +439,7 @@ int dm1_poison_adjusted_attack(int poisonResistance, int poisonAttack) {
  * wound probabilities from the creature info.
  */
 int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* group,
-                                 int creatureIdx, int targetChampIdx) {
+                                 int creatureIdx __attribute__((unused)), int targetChampIdx) {
     if (!s || !group) return 0;
     if (targetChampIdx < 0 || targetChampIdx >= s->championCount) return 0;
 
