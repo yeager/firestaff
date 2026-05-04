@@ -4542,6 +4542,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->leaderHandIconIndex = -1;
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
+    DM1_V1_VBlankTiming_Init(&state->vblankTiming);
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {
@@ -4949,6 +4950,10 @@ static int m11_apply_tick(M11_GameViewState* state,
     } else {
         m11_set_status(state, actionLabel, "MOVEMENT BLOCKED");
     }
+    /* DM1 V1: reset VBlank counter for next tick and decrement movement
+     * cooldowns, matching GAMELOOP.C top-of-loop (G0317=0, G0321=FALSE)
+     * and end-of-loop (G0310--, G0311--). */
+    DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
     return 1;
 }
 

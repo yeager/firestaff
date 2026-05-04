@@ -64,6 +64,7 @@ set(M11_SOURCES
     asset_loader_m11.c
     font_m11.c
     fs_portable_compat.c
+    dm1_v1_vblank_timing.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
