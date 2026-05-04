@@ -428,6 +428,18 @@ if(BUILD_TESTING)
         COMMAND test_resurrect_reincarnate_cancel_routes_pc34_compat_integration
     )
 
+    add_executable(test_dm1_v1_resurrection_pc34_compat
+        test_dm1_v1_resurrection_pc34_compat.c
+        dm1_v1_resurrection_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_resurrection_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_resurrection
+        COMMAND test_dm1_v1_resurrection_pc34_compat
+    )
+
     # Phase A probe (headless, no game data needed)
     add_test(
         NAME m11_phase_a
