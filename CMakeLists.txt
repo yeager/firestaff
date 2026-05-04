@@ -724,3 +724,33 @@ endif()
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
 
+
+# ── DM1 V1 Champion Needs source-lock gate ───────────────────────────
+if(NOT TARGET test_dm1_v1_champion_needs_pc34_compat_integration)
+    add_executable(test_dm1_v1_champion_needs_pc34_compat_integration
+        test_dm1_v1_champion_needs_pc34_compat_integration.c
+        dm1_v1_champion_needs_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_needs_pc34_compat_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_needs_source_lock
+        COMMAND test_dm1_v1_champion_needs_pc34_compat_integration
+    )
+endif()
+
+# ── DM1 V1 Event Timer source-lock gate ──────────────────────────────
+if(NOT TARGET test_dm1_v1_event_timer_pc34_compat)
+    add_executable(test_dm1_v1_event_timer_pc34_compat
+        test_dm1_v1_event_timer_pc34_compat.c
+        dm1_v1_event_timer_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_event_timer_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_event_timer_source_lock
+        COMMAND test_dm1_v1_event_timer_pc34_compat
+    )
+endif()
