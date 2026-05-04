@@ -298,11 +298,11 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
     {
         const char* home = getenv("HOME");
         if (home && home[0] != '\0') {
-            rc = snprintf(out, outSize, "%s/.firestaff/originals", home);
+            rc = snprintf(out, outSize, "%s/.firestaff/data", home);
             return rc > 0 && (size_t)rc < outSize;
         }
     }
-    fsp_copy(out, outSize, "./originals");
+    fsp_copy(out, outSize, "./data");
     return 1;
 #endif
 }
