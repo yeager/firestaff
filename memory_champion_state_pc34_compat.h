@@ -15,6 +15,7 @@
  */
 
 #include "memory_dungeon_dat_pc34_compat.h"
+#include <stdint.h>
 
 /* ---- Direction constants (shared with movement) ---- */
 #define DIR_NORTH 0
