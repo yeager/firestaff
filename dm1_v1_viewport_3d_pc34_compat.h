@@ -166,7 +166,7 @@ typedef enum {
     DM1_VIEW_SQUARE_D0C,       /* M609 */
     DM1_VIEW_SQUARE_D0L,       /* M610 */
     DM1_VIEW_SQUARE_D0R,       /* M611 */
-    DM1_VIEW_SQUARE_COUNT
+    DM1_VP_VIEW_SQUARE_COUNT
 } DM1_ViewSquareIndex;
 
 /* Wall set bitmap indices — from DUNVIEW.C G2107_WallSet[15] (I34E) */
@@ -206,16 +206,17 @@ typedef enum {
     DM1_DOOR_FRAME_COUNT
 } DM1_DoorFrameIndex;
 
-/* Square element types — from DUNVIEW.C switch cases */
+/* Square element types — from DUNVIEW.C switch cases.
+ * Guarded: dm1_v1_dungeon_square_structs defines these as macros. */
 typedef enum {
-    DM1_ELEMENT_WALL        = 0,
-    DM1_ELEMENT_CORRIDOR    = 1,
-    DM1_ELEMENT_PIT         = 2,
-    DM1_ELEMENT_TELEPORTER  = 5,
-    DM1_ELEMENT_DOOR_SIDE   = 16,
-    DM1_ELEMENT_DOOR_FRONT  = 17,
-    DM1_ELEMENT_STAIRS_SIDE = 18,
-    DM1_ELEMENT_STAIRS_FRONT = 19
+    DM1_VP_ELEMENT_WALL        = 0,
+    DM1_VP_ELEMENT_CORRIDOR    = 1,
+    DM1_VP_ELEMENT_PIT         = 2,
+    DM1_VP_ELEMENT_TELEPORTER  = 5,
+    DM1_VP_ELEMENT_DOOR_SIDE   = 16,
+    DM1_VP_ELEMENT_DOOR_FRONT  = 17,
+    DM1_VP_ELEMENT_STAIRS_SIDE = 18,
+    DM1_VP_ELEMENT_STAIRS_FRONT = 19
 } DM1_SquareElement;
 
 /* ────────────────────────────────────────────────────────────────────────────

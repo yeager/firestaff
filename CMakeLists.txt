@@ -33,6 +33,7 @@ file(GLOB M10_SOURCES CONFIGURE_DEPENDS "*_pc34_compat.c")
 
 # Exclude test_* files from the library (they have their own main()).
 list(FILTER M10_SOURCES EXCLUDE REGEX "test_.*_pc34_compat\\.c$")
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES})
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -83,6 +84,7 @@ set(M11_SOURCES
     dm1_v1_blit_fill_pc34_compat.c
     dm1_v1_dialog_scroll_pc34_compat.c
     dm1_v1_click_routing_pc34_compat.c
+    dm1_v1_engine_pc34_compat.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -90,6 +92,10 @@ target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m11 PUBLIC firestaff_m10 SDL3::SDL3 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
+    # m11_game_view.c is a large legacy file — relax truncation/unused warnings.
+    set_source_files_properties(m11_game_view.c PROPERTIES
+        COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function;-Wno-maybe-uninitialized"
+    )
 endif()
 
 # ── M12 static library ──────────────────────────────────────────────
@@ -127,7 +133,8 @@ add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11)
 if(NOT MSVC)
-    target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2)
+    target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2
+        -Wno-format-truncation -Wno-array-bounds -Wno-restrict -Wno-unused-variable)
 endif()
 
 # ── Main executable ──────────────────────────────────────────────────
@@ -151,7 +158,7 @@ endif()
 add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
 target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10)
 if(NOT MSVC)
-    target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2)
+    target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
 endif()
 
 # V2 initial 4K capture scene (real M11 draw path for offline 4K composition)
@@ -218,7 +225,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_pro
     add_executable(firestaff_m12_startup_menu_probe probes/m12/firestaff_m12_startup_menu_probe.c)
     target_link_libraries(firestaff_m12_startup_menu_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
-        target_compile_options(firestaff_m12_startup_menu_probe PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_m12_startup_menu_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
     endif()
 endif()
 
