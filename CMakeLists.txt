@@ -89,6 +89,7 @@ set(M12_SOURCES
     data_validator_m12.c
     changelog_m12.c
     theme_m12.c
+    animated_bg_m12.c
     input_remap_m12.c
     save_browser_m12.c
     custom_dungeon_m12.c
@@ -98,6 +99,7 @@ set(M12_SOURCES
     map_viewer_m12.c
     music_jukebox_m12.c
     gamepad_config_m12.c
+    touch_layout_m12.c
 )
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})

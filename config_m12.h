@@ -54,6 +54,9 @@ typedef struct {
 
     /* Theme selector */
     int themeIndex;         /* 0 = classic, see M12_Theme enum in theme_m12.h */
+
+    /* Animated background preset */
+    int bgAnimationPreset;  /* 0 = static, see M12_BgPreset in animated_bg_m12.h */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);
