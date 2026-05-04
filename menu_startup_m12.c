@@ -89,7 +89,7 @@ int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
 
 int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
     if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-        /* V1 locks aspect ratio and resolution to original values */
+        /* V1 hides aspect ratio and resolution entirely */
         if (row == M12_GAME_OPT_ROW_ASPECT || row == M12_GAME_OPT_ROW_RESOLUTION) {
             return 1;
         }
@@ -101,6 +101,7 @@ static void m12_init_game_options(M12_GameOptions* opts) {
     if (!opts) {
         return;
     }
+    opts->presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     opts->versionIndex = 0;
     opts->usePatch = 0;
     opts->languageIndex = 0;
@@ -114,11 +115,20 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
     if (!opts) {
         return;
     }
-    /* Reject cycling on mode-locked rows */
+    /* Reject cycling on mode-locked rows (V1 hides aspect/resolution) */
     if (presentationMode >= 0 && M12_GameOptions_RowLockedByMode(row, presentationMode)) {
         return;
     }
     switch (row) {
+        case M12_GAME_OPT_ROW_PRESENTATION:
+            opts->presentationModeIndex = m12_cycle_index(
+                opts->presentationModeIndex, delta, M12_PRESENTATION_MODE_COUNT);
+            /* Enforce constraints when switching modes */
+            if (opts->presentationModeIndex == M12_PRESENTATION_V1_ORIGINAL) {
+                opts->aspectRatio = M12_ASPECT_ORIGINAL;
+                opts->resolution = M12_RES_320x200;
+            }
+            break;
         case M12_GAME_OPT_ROW_VERSION:
             break;
         case M12_GAME_OPT_ROW_PATCH:
@@ -165,6 +175,8 @@ static void m12_clamp_game_options(M12_GameOptions* opts) {
     if (!opts) {
         return;
     }
+    opts->presentationModeIndex = m12_clamp_index(
+        opts->presentationModeIndex, M12_PRESENTATION_MODE_COUNT);
     if (opts->versionIndex < 0) {
         opts->versionIndex = 0;
     }
@@ -1267,21 +1279,40 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
 
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
         int gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
-        int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+        int pmode = state->gameOptions[gi].presentationModeIndex;
+        if (pmode < 0) pmode = 0;
+        if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
         int versionCount = m12_game_version_count(state, gi);
+        /* Helper: determine navigable row count. In V1 mode, ASPECT and
+         * RESOLUTION rows are hidden, so skip them during navigation. */
+        int totalRows = M12_GAME_OPT_ROW_COUNT + 1; /* +1 for launch */
         switch (input) {
-            case M12_MENU_INPUT_UP:
-                state->gameOptSelectedRow = m12_cycle_index(
-                    state->gameOptSelectedRow,
-                    -1,
-                    M12_GAME_OPT_ROW_COUNT + 1);
+            case M12_MENU_INPUT_UP: {
+                int next = m12_cycle_index(
+                    state->gameOptSelectedRow, -1, totalRows);
+                /* Skip hidden rows in V1 mode */
+                if (pmode == M12_PRESENTATION_V1_ORIGINAL) {
+                    while (next < M12_GAME_OPT_ROW_COUNT &&
+                           M12_GameOptions_RowLockedByMode(next, pmode)) {
+                        next = m12_cycle_index(next, -1, totalRows);
+                    }
+                }
+                state->gameOptSelectedRow = next;
                 break;
-            case M12_MENU_INPUT_DOWN:
-                state->gameOptSelectedRow = m12_cycle_index(
-                    state->gameOptSelectedRow,
-                    1,
-                    M12_GAME_OPT_ROW_COUNT + 1);
+            }
+            case M12_MENU_INPUT_DOWN: {
+                int next = m12_cycle_index(
+                    state->gameOptSelectedRow, 1, totalRows);
+                /* Skip hidden rows in V1 mode */
+                if (pmode == M12_PRESENTATION_V1_ORIGINAL) {
+                    while (next < M12_GAME_OPT_ROW_COUNT &&
+                           M12_GameOptions_RowLockedByMode(next, pmode)) {
+                        next = m12_cycle_index(next, 1, totalRows);
+                    }
+                }
+                state->gameOptSelectedRow = next;
                 break;
+            }
             case M12_MENU_INPUT_LEFT:
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
@@ -1292,6 +1323,11 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, -1, pmode);
                     }
+                    /* Re-read pmode after potential presentation change */
+                    pmode = state->gameOptions[gi].presentationModeIndex;
+                    if (pmode < 0) pmode = 0;
+                    if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
+                    m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
                     m12_save_config(state);
                 }
                 break;
@@ -1305,6 +1341,11 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
                     }
+                    /* Re-read pmode after potential presentation change */
+                    pmode = state->gameOptions[gi].presentationModeIndex;
+                    if (pmode < 0) pmode = 0;
+                    if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
+                    m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
                     m12_save_config(state);
                 }
                 break;
@@ -1350,6 +1391,11 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
                     }
+                    /* Re-read pmode after potential presentation change */
+                    pmode = state->gameOptions[gi].presentationModeIndex;
+                    if (pmode < 0) pmode = 0;
+                    if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
+                    m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
                     m12_save_config(state);
                 }
                 break;

@@ -992,42 +992,8 @@ static void draw_back_button(M12_ModernCanvas* c, int highlight) {
     draw_text(c, x + 14, y + 14, "< BACK", &t);
 }
 
-/* Launch button, lower-right of the game-options panel. Coords must
- * match M12_HIT_LAUNCH_* in menu_hit_m12.c. */
-static void draw_launch_button(M12_ModernCanvas* c,
-                               int highlight,
-                               unsigned int frameTick) {
-    int panelX = 96;
-    int panelY = 260;
-    int panelW = c->w - 2 * panelX;
-    int panelH = 400;
-    int w = 240;
-    int h = 54;
-    int x = panelX + panelW - w - 36;
-    int y = panelY + panelH - h - 20;
-    int boost = highlight ? pulse_modulation(frameTick) : 0;
-    M12_RGB fill = highlight
-        ? rgb(clamp_u8(90 + boost), clamp_u8(60 + boost / 2), 24)
-        : rgb(60, 42, 20);
-    M12_RGB edge = COLOR_ACCENT_HI();
-    for (int i = 1; i <= 6; ++i) {
-        int alpha = 80 - i * 10 + boost;
-        if (alpha <= 0) continue;
-        for (int xx = x - i; xx < x + w + i; ++xx) {
-            blend_pixel(c, xx, y - i, COLOR_ACCENT(), alpha);
-            blend_pixel(c, xx, y + h + i - 1, COLOR_ACCENT(), alpha);
-        }
-        for (int yy = y - i; yy < y + h + i; ++yy) {
-            blend_pixel(c, x - i, yy, COLOR_ACCENT(), alpha);
-            blend_pixel(c, x + w + i - 1, yy, COLOR_ACCENT(), alpha);
-        }
-    }
-    fill_rounded_rect(c, x, y, w, h, 12, fill);
-    stroke_rounded_rect(c, x, y, w, h, 12, edge);
-    ModernTextStyle t = text_style_make(3, COLOR_ACCENT_HI(), 2);
-    int tw = text_width_px("LAUNCH >", &t);
-    draw_text(c, x + (w - tw) / 2, y + 12, "LAUNCH >", &t);
-}
+/* Launch button is now drawn inline by draw_game_options_view() for
+ * correct positioning relative to the dynamic panel height. */
 
 static void draw_footer(M12_ModernCanvas* c, const char* left, const char* right) {
     int h = 48;
@@ -1255,11 +1221,49 @@ static void draw_museum_view(M12_ModernCanvas* c, const M12_StartupMenuState* st
     }
 }
 
+static void draw_section_header(M12_ModernCanvas* c, int x, int y, int w, const char* label) {
+    /* Thin dim line + label for section grouping */
+    M12_RGB lineCol = rgb(60, 56, 80);
+    hline(c, x, y + 6, w, lineCol);
+    ModernTextStyle lbl = text_style_make(1, COLOR_TEXT_FAINT(), 0);
+    draw_text(c, x + 4, y + 14, label, &lbl);
+}
+
+static void draw_presentation_row(M12_ModernCanvas* c, int x, int y, int w,
+                                  int modeIndex, int selected) {
+    M12_RGB fill = selected ? rgb(36, 42, 84) : rgb(20, 22, 48);
+    M12_RGB edge = selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE();
+    fill_rounded_rect(c, x, y, w, 50, 10, fill);
+    stroke_rounded_rect(c, x, y, w, 50, 10, edge);
+    ModernTextStyle L = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_text(c, x + 20, y + 14, "PRESENTATION", &L);
+    /* Color-coded value */
+    const char* val;
+    M12_RGB valCol;
+    if (modeIndex == M12_PRESENTATION_V2_ENHANCED_2D) {
+        val = "V2 ENHANCED 2D";
+        valCol = COLOR_V2();
+    } else if (modeIndex == M12_PRESENTATION_V3_MODERN_3D) {
+        val = "V3 COMING SOON";
+        valCol = rgb(100, 96, 110); /* greyed out */
+    } else {
+        val = "V1 ORIGINAL";
+        valCol = COLOR_V1();
+    }
+    ModernTextStyle V = text_style_make(2, valCol, 1);
+    int vw = text_width_px(val, &V);
+    draw_text(c, x + w - 20 - vw, y + 14, val, &V);
+}
+
 static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     int slot = slot_for_game_id(state->entries[state->selectedIndex].gameId);
     if (slot < 0) slot = 0;
     const M12_GameOptions* opts = &state->gameOptions[slot];
     const M12_MenuEntry* entry = &state->entries[state->selectedIndex];
+    int mode = opts->presentationModeIndex;
+    if (mode < 0) mode = 0;
+    if (mode >= M12_PRESENTATION_MODE_COUNT) mode = M12_PRESENTATION_MODE_COUNT - 1;
+    int isV1 = (mode == M12_PRESENTATION_V1_ORIGINAL);
 
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
@@ -1270,7 +1274,8 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     int panelX = 96;
     int panelY = 260;
     int panelW = c->w - 2 * panelX;
-    int panelH = 400;
+    /* Taller panel to accommodate presentation row + section headers */
+    int panelH = isV1 ? 460 : 560;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
@@ -1307,37 +1312,92 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
-    int rowY = panelY + 28;
+    int curY = panelY + 24;
     int step = 52;
+    int sectionGap = 30; /* space for section header */
     int sel = state->gameOptSelectedRow;
 
-    draw_setting_row(c, rowX, rowY + 0 * step, rowW, "VERSION",     verLabel,          sel == 0);
-    draw_setting_row(c, rowX, rowY + 1 * step, rowW, "PATCH",       patchLabel,        sel == 1);
-    draw_setting_row(c, rowX, rowY + 2 * step, rowW, "LANGUAGE",    langLabel,         sel == 2);
-    draw_setting_row(c, rowX, rowY + 3 * step, rowW, "CHEATS",      cheatsLabel,       sel == 3);
-    draw_setting_row(c, rowX, rowY + 4 * step, rowW, "SPEED",       speeds[speedIdx],  sel == 4);
-    draw_setting_row(c, rowX, rowY + 5 * step, rowW, "ASPECT",      aspects[aspIdx],   sel == 5);
-    draw_setting_row(c, rowX, rowY + 6 * step, rowW, "RESOLUTION",  res[resIdx],       sel == 6);
+    /* --- PRESENTATION MODE row (always first) --- */
+    draw_presentation_row(c, rowX, curY, rowW, mode,
+                          sel == M12_GAME_OPT_ROW_PRESENTATION);
+    curY += step;
 
-    /* Mode constraint notice if V1 */
-    int mode = M12_StartupMenu_GetPresentationMode(state);
-    if (mode == M12_PRESENTATION_V1_ORIGINAL) {
+    /* --- GAME section header --- */
+    draw_section_header(c, rowX, curY, rowW, "GAME");
+    curY += sectionGap;
+
+    draw_setting_row(c, rowX, curY, rowW, "VERSION",     verLabel,
+                     sel == M12_GAME_OPT_ROW_VERSION);
+    curY += step;
+    draw_setting_row(c, rowX, curY, rowW, "PATCH",       patchLabel,
+                     sel == M12_GAME_OPT_ROW_PATCH);
+    curY += step;
+    draw_setting_row(c, rowX, curY, rowW, "LANGUAGE",    langLabel,
+                     sel == M12_GAME_OPT_ROW_LANGUAGE);
+    curY += step;
+    draw_setting_row(c, rowX, curY, rowW, "CHEATS",      cheatsLabel,
+                     sel == M12_GAME_OPT_ROW_CHEATS);
+    curY += step;
+    draw_setting_row(c, rowX, curY, rowW, "SPEED",       speeds[speedIdx],
+                     sel == M12_GAME_OPT_ROW_SPEED);
+    curY += step;
+
+    /* --- DISPLAY section (hidden in V1) --- */
+    if (!isV1) {
+        draw_section_header(c, rowX, curY, rowW, "DISPLAY");
+        curY += sectionGap;
+
+        draw_setting_row(c, rowX, curY, rowW, "ASPECT",      aspects[aspIdx],
+                         sel == M12_GAME_OPT_ROW_ASPECT);
+        curY += step;
+        draw_setting_row(c, rowX, curY, rowW, "RESOLUTION",  res[resIdx],
+                         sel == M12_GAME_OPT_ROW_RESOLUTION);
+        curY += step;
+    }
+
+    /* Mode constraint notice */
+    if (isV1) {
         ModernTextStyle note = text_style_make(1, COLOR_WARN(), 0);
-        draw_text(c, panelX + 36, panelY + panelH - 40,
+        draw_text(c, panelX + 36, curY + 8,
                   "V1 ORIGINAL LOCKS ASPECT AND RESOLUTION FOR AUTHENTICITY",
                   &note);
     } else if (mode == M12_PRESENTATION_V3_MODERN_3D) {
         ModernTextStyle note = text_style_make(1, COLOR_V3(), 0);
-        draw_text(c, panelX + 36, panelY + panelH - 40,
+        draw_text(c, panelX + 36, curY + 8,
                   "V3 MODERN 3D IS A LATER MILESTONE (COMING SOON)",
                   &note);
     }
 
-    /* Launch button: pulses when the cursor is on the synthetic launch
-     * row (gameOptSelectedRow == M12_GAME_OPT_ROW_COUNT). */
-    draw_launch_button(c,
-                       state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT,
-                       state->frameTick);
+    /* Launch button: centered horizontally, positioned below last visible row */
+    {
+        int btnW = 240;
+        int btnH = 54;
+        int btnX = panelX + (panelW - btnW) / 2;
+        int btnY = panelY + panelH - btnH - 24;
+        int highlight = state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT;
+        int boost = highlight ? pulse_modulation(state->frameTick) : 0;
+        M12_RGB btnFill = highlight
+            ? rgb(clamp_u8(90 + boost), clamp_u8(60 + boost / 2), 24)
+            : rgb(60, 42, 20);
+        M12_RGB btnEdge = COLOR_ACCENT_HI();
+        for (int i = 1; i <= 6; ++i) {
+            int alpha = 80 - i * 10 + boost;
+            if (alpha <= 0) continue;
+            for (int xx = btnX - i; xx < btnX + btnW + i; ++xx) {
+                blend_pixel(c, xx, btnY - i, COLOR_ACCENT(), alpha);
+                blend_pixel(c, xx, btnY + btnH + i - 1, COLOR_ACCENT(), alpha);
+            }
+            for (int yy = btnY - i; yy < btnY + btnH + i; ++yy) {
+                blend_pixel(c, btnX - i, yy, COLOR_ACCENT(), alpha);
+                blend_pixel(c, btnX + btnW + i - 1, yy, COLOR_ACCENT(), alpha);
+            }
+        }
+        fill_rounded_rect(c, btnX, btnY, btnW, btnH, 12, btnFill);
+        stroke_rounded_rect(c, btnX, btnY, btnW, btnH, 12, btnEdge);
+        ModernTextStyle t = text_style_make(3, COLOR_ACCENT_HI(), 2);
+        int tw = text_width_px("LAUNCH >", &t);
+        draw_text(c, btnX + (btnW - tw) / 2, btnY + 12, "LAUNCH >", &t);
+    }
 }
 
 static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {

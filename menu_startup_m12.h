@@ -139,7 +139,8 @@ typedef enum {
 } M12_GameSpeed;
 
 typedef enum {
-    M12_GAME_OPT_ROW_VERSION = 0,
+    M12_GAME_OPT_ROW_PRESENTATION = 0,
+    M12_GAME_OPT_ROW_VERSION,
     M12_GAME_OPT_ROW_PATCH,
     M12_GAME_OPT_ROW_LANGUAGE,
     M12_GAME_OPT_ROW_CHEATS,
@@ -150,6 +151,7 @@ typedef enum {
 } M12_GameOptRow;
 
 typedef struct {
+    int presentationModeIndex;
     int versionIndex;
     int usePatch;
     int languageIndex;
