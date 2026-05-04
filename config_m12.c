@@ -524,3 +524,11 @@ const char* M12_Config_GetPath(const M12_Config* config) {
     }
     return config->path;
 }
+
+void M12_Config_SetLastSavePath(const char* path) {
+    M12_Config config;
+    M12_Config_Load(&config, NULL);
+    m12_copy_string(config.lastSavePath, sizeof(config.lastSavePath),
+                    path ? path : "");
+    M12_Config_Save(&config);
+}

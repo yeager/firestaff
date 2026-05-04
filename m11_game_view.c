@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 
 #include "asset_status_m12.h"
+#include "config_m12.h"
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
 #include "render_sdl_m11.h"
