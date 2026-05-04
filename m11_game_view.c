@@ -8186,11 +8186,18 @@ enum {
 
     /* DM1 floor/ceiling panels.
      * ReDMCSB I34E DEFS.H:
+     *   M644_GRAPHIC_FIRST_FLOOR_SET     = 78
+     *   C002_FLOOR_SET_GRAPHIC_COUNT     = 2
      *   M650_GRAPHIC_FLOOR_SET_0_FLOOR   = 78 (224x97)
      *   M651_GRAPHIC_FLOOR_SET_0_CEILING = 79 (224x39)
+     * DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet computes:
+     *   floorGraphic   = floorSet * 2 + 78
+     *   ceilingGraphic = floorSet * 2 + 79
      * DUNVIEW.C F0128 draws ceiling into C700 and floor into C701. */
-    M11_GFX_FLOOR_PANEL   = 78,  /* 224x97 */
-    M11_GFX_CEILING_PANEL = 79,  /* 224x39 */
+    M11_GFX_FIRST_FLOOR_SET         = 78, /* M644_GRAPHIC_FIRST_FLOOR_SET (I34E) */
+    M11_GFX_FLOOR_SET_GRAPHIC_COUNT = 2,  /* C002_FLOOR_SET_GRAPHIC_COUNT */
+    M11_GFX_FLOOR_PANEL   = 78,  /* 224x97  — floor set 0 floor */
+    M11_GFX_CEILING_PANEL = 79,  /* 224x39  — floor set 0 ceiling */
 
     /* Door frame graphics at depth (perspective-scaled sizes) */
     M11_GFX_DOOR_FRAME_D3   = 70,  /*  36x49  — far depth */
@@ -8493,6 +8500,11 @@ static void m11_blit_viewport_region_maybe_flip(const M11_AssetSlot* slot,
     }
 }
 
+/* Forward declarations for floor-set-aware graphic index helpers.
+ * Definitions follow m11_current_map_floor_set below. */
+static unsigned int m11_floor_set_floor_graphic(const M11_GameViewState* state);
+static unsigned int m11_floor_set_ceiling_graphic(const M11_GameViewState* state);
+
 static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -8502,10 +8514,26 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          int vpW,
                                          int vpH) {
     if (state->assetsAvailable) {
+        /* ReDMCSB DUNVIEW.C F0094: select floor/ceiling bitmaps from the
+         * current map's floor set.  Floor set 0 = entries 78/79, floor
+         * set 1 = 80/81, etc.  Fall back to set 0 if the set-specific
+         * graphics are not available in GRAPHICS.DAT. */
+        unsigned int floorGfx = m11_floor_set_floor_graphic(state);
+        unsigned int ceilingGfx = m11_floor_set_ceiling_graphic(state);
         const M11_AssetSlot* ceilingSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, M11_GFX_CEILING_PANEL);
+            (M11_AssetLoader*)&state->assetLoader, ceilingGfx);
         const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
+            (M11_AssetLoader*)&state->assetLoader, floorGfx);
+        /* Fall back to floor set 0 if the map's floor set assets are
+         * missing (e.g. GRAPHICS.DAT only has sets 0-1 but map says 2). */
+        if ((!ceilingSlot || !ceilingSlot->loaded) && ceilingGfx != M11_GFX_CEILING_PANEL) {
+            ceilingSlot = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_CEILING_PANEL);
+        }
+        if ((!floorSlot || !floorSlot->loaded) && floorGfx != M11_GFX_FLOOR_PANEL) {
+            floorSlot = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
+        }
         if (ceilingSlot && floorSlot &&
             ceilingSlot->width == 224 && ceilingSlot->height == 39 &&
             floorSlot->width == 224 && floorSlot->height == 97 &&
@@ -11130,6 +11158,21 @@ static int m11_current_map_floor_set(const M11_GameViewState* state) {
     return (int)state->world.dungeon->maps[state->world.party.mapIndex].floorSet;
 }
 
+/* Compute floor-set-aware GRAPHICS.DAT index for the floor panel bitmap.
+ * ReDMCSB DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet:
+ *   graphicIndex = floorSet * C002_FLOOR_SET_GRAPHIC_COUNT + M644_GRAPHIC_FIRST_FLOOR_SET
+ * Floor panel = graphicIndex, ceiling panel = graphicIndex + 1.
+ * DM1 PC 3.4 has floor sets 0..3 (maps vary by dungeon level). */
+static unsigned int m11_floor_set_floor_graphic(const M11_GameViewState* state) {
+    int floorSet = m11_current_map_floor_set(state);
+    return (unsigned int)(M11_GFX_FIRST_FLOOR_SET +
+                          floorSet * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
+}
+
+static unsigned int m11_floor_set_ceiling_graphic(const M11_GameViewState* state) {
+    return m11_floor_set_floor_graphic(state) + 1;
+}
+
 /* Draw stair graphics from GRAPHICS.DAT at the given depth. */
 static int m11_draw_stairs_asset(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
@@ -11977,6 +12020,22 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
             }
             if (paneW <= 4) {
                 continue;
+            }
+
+            /* ReDMCSB DUNVIEW.C F0116-F0122 (DrawSquareD3L..D1L): for each
+             * open side square, floor ornaments are drawn first (F0108),
+             * then F0115 draws objects/creatures/projectiles.  Mirror
+             * that order here for side cells. */
+            if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
+                M11_ViewRect ornRect;
+                ornRect.x = paneX;
+                ornRect.y = paneY + paneH / 2;
+                ornRect.w = paneW;
+                ornRect.h = paneH / 2;
+                m11_draw_floor_ornament(g_drawState, framebuffer,
+                                        framebufferWidth, framebufferHeight,
+                                        &ornRect, cell->floorOrnamentOrdinal,
+                                        depth + 1, side);
             }
 
             if (cell->floorItemCount > 0) {
