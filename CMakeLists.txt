@@ -850,6 +850,14 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py
         )
         add_test(
+            NAME dm1_v1_viewport_wall_draw_order_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py
+        )
+        add_test(
+            NAME dm1_v1_viewport_square_collision_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_square_collision_source_lock.py
+        )
+        add_test(
             NAME v1_inventory_panel_open_redmcsb_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_inventory_panel_open_redmcsb_gate.py
         )
