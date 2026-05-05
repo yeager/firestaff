@@ -10,12 +10,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+PASS206_TOOL = ROOT / "tools/pass206_dm1_v1_original_runner_minimal_gate.py"
 PASS206_MANIFEST = ROOT / "parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json"
+ATTEMPT_DIR = ROOT / "verification-screens/pass112-n2-stable-hud-route"
+ROUTE_PROBE_DIR = ROOT / "verification-screens/pass112-n2-route-probe"
 OUT_DIR = ROOT / "parity-evidence/verification/pass207_dm1_v1_original_movement_viewport_blocker_gate"
 REPORT = ROOT / "parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
 
@@ -193,6 +198,34 @@ SOURCE_CHECKS: list[dict[str, Any]] = [
         ],
         "claim": "A promotable capture must observe the presented 224x136 viewport after the source draw-request/vblank seam.",
     },
+    {
+        "id": "viewport-floor-ceiling-clears-base-before-walls",
+        "file": "DUNVIEW.C",
+        "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+        "ranges": [(2962, 3003)],
+        "needles": [
+            "void F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+            "F0008_MAIN_ClearBytes(G0086_puc_Bitmap_ViewportBlackArea",
+            "F0007_MAIN_CopyBytes(G0085_puc_Bitmap_Ceiling, G0296_puc_Bitmap_Viewport",
+            "F0007_MAIN_CopyBytes(G0084_puc_Bitmap_Floor",
+            "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;",
+        ],
+        "claim": "Wall evidence must be compared after the original viewport base is cleared and floor/ceiling are copied into the viewport bitmap.",
+    },
+    {
+        "id": "wall-door-bitmaps-composite-into-same-viewport-target",
+        "file": "DUNVIEW.C",
+        "function": "F0100_DUNGEONVIEW_DrawWallSetBitmap / F0102_DUNGEONVIEW_DrawDoorBitmap / F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally",
+        "ranges": [(3048, 3110)],
+        "needles": [
+            "void F0100_DUNGEONVIEW_DrawWallSetBitmap",
+            "F0132_VIDEO_Blit(P0105_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+            "void F0102_DUNGEONVIEW_DrawDoorBitmap",
+            "F0132_VIDEO_Blit(G0074_puc_Bitmap_Temporary, G0296_puc_Bitmap_Viewport",
+            "void F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally",
+        ],
+        "claim": "Wall and door captures are viewport-composited wallset evidence, not separate asset screenshots or emulator guesses.",
+    },
 ]
 
 
@@ -230,9 +263,32 @@ def audit_source() -> list[dict[str, Any]]:
     return checks
 
 
+def ensure_pass206_manifest() -> dict[str, Any]:
+    if PASS206_MANIFEST.is_file():
+        return {"attempted": False, "ok": True, "stdout": "", "stderr": ""}
+    if not PASS206_TOOL.is_file():
+        return {"attempted": False, "ok": False, "stdout": "", "stderr": f"missing pass206 tool: {PASS206_TOOL}"}
+    proc = subprocess.run(
+        [sys.executable, str(PASS206_TOOL)],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=120,
+    )
+    return {
+        "attempted": True,
+        "ok": PASS206_MANIFEST.is_file() and proc.returncode == 0,
+        "returncode": proc.returncode,
+        "stdout": proc.stdout[-4000:],
+        "stderr": proc.stderr[-4000:],
+    }
+
+
 def load_pass206() -> dict[str, Any]:
+    ensure = ensure_pass206_manifest()
     if not PASS206_MANIFEST.is_file():
-        return {"exists": False, "path": str(PASS206_MANIFEST), "status": "BLOCKED_MISSING_PASS206_MANIFEST"}
+        return {"exists": False, "path": str(PASS206_MANIFEST), "status": "BLOCKED_MISSING_PASS206_MANIFEST", "ensure": ensure}
     doc = json.loads(PASS206_MANIFEST.read_text(encoding="utf-8"))
     attempt = doc.get("existing_attempt_audit", {})
     runner = doc.get("runner_prerequisites", {})
@@ -251,6 +307,62 @@ def load_pass206() -> dict[str, Any]:
         "missing_tools": runner.get("missing_tools") or [],
         "canonical_files_ok": {k: v.get("ok") for k, v in (runner.get("canonical_files") or {}).items()},
         "route_events": runner.get("route_events"),
+        "ensure": ensure,
+    }
+
+
+def read_tsv(path: Path) -> list[dict[str, str]]:
+    if not path.is_file():
+        return []
+    lines = [line for line in path.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
+    if not lines:
+        return []
+    header = lines[0].split("\t")
+    rows: list[dict[str, str]] = []
+    for line in lines[1:]:
+        fields = line.split("\t")
+        rows.append({header[i]: fields[i] if i < len(fields) else "" for i in range(len(header))})
+    return rows
+
+
+def materialized_missing_count(rows: list[dict[str, str]], field: str, base_dir: Path | None = None) -> int:
+    missing = 0
+    for row in rows:
+        value = row.get(field, "")
+        if not value:
+            continue
+        path = Path(value.replace("<repo>", str(ROOT)))
+        if not path.is_absolute() and base_dir is not None:
+            path = base_dir / path
+        if not path.is_file():
+            missing += 1
+    return missing
+
+
+def capture_asset_manifest_audit() -> dict[str, Any]:
+    stable_raw = read_tsv(ATTEMPT_DIR / "raw_manifest.tsv")
+    stable_labels = read_tsv(ATTEMPT_DIR / "original_viewport_shot_labels.tsv")
+    route_raw = read_tsv(ROUTE_PROBE_DIR / "raw_manifest.tsv")
+    route_viewports = read_tsv(ROUTE_PROBE_DIR / "original_viewport_224x136_manifest.tsv")
+    return {
+        "status": "MANIFESTS_SOURCE_LOCK_CAPTURE_ASSETS_WITHOUT_EMULATOR_GUESSING",
+        "stable_attempt": {
+            "dir": str(ATTEMPT_DIR),
+            "raw_manifest": str(ATTEMPT_DIR / "raw_manifest.tsv"),
+            "raw_count": len(stable_raw),
+            "labels_count": len(stable_labels),
+            "raw_missing_materialized_files": materialized_missing_count(stable_raw, "path"),
+        },
+        "route_probe": {
+            "dir": str(ROUTE_PROBE_DIR),
+            "raw_manifest": str(ROUTE_PROBE_DIR / "raw_manifest.tsv"),
+            "viewport_manifest": str(ROUTE_PROBE_DIR / "original_viewport_224x136_manifest.tsv"),
+            "raw_count": len(route_raw),
+            "viewport_224x136_count": len(route_viewports),
+            "viewport_sha256": [row.get("sha256") for row in route_viewports],
+            "viewport_missing_materialized_files": materialized_missing_count(route_viewports, "filename", ROUTE_PROBE_DIR),
+        },
+        "boundary": "Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean.",
     }
 
 
@@ -281,7 +393,15 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
     for item in manifest["redmcsb_source_audit"]:
         mark = "PASS" if item["ok"] else "FAIL"
         lines.append("- {} `{}` — `{}` at {}: {}".format(mark, item["id"], item["function"], ", ".join(item["citations"]), item["claim"]))
+    assets = manifest.get("capture_asset_manifest_audit", {})
     lines += [
+        "",
+        "## Capture asset manifest boundary",
+        "",
+        f"- status: `{assets.get('status')}`",
+        f"- stable raw frames: `{(assets.get('stable_attempt') or {}).get('raw_count')}`; labels: `{(assets.get('stable_attempt') or {}).get('labels_count')}`; missing materialized ignored PNGs: `{(assets.get('stable_attempt') or {}).get('raw_missing_materialized_files')}`",
+        f"- route-probe 224x136 viewport crops: `{(assets.get('route_probe') or {}).get('viewport_224x136_count')}`; missing materialized ignored PPMs: `{(assets.get('route_probe') or {}).get('viewport_missing_materialized_files')}`",
+        f"- boundary: {assets.get('boundary')}",
         "",
         "## Current N2 original-runner attempt",
         "",
@@ -338,6 +458,7 @@ def main() -> int:
         "forbidden_hosts": ["DANNESBURK", "192.168.2.126"],
         "redmcsb_source_audit": source,
         "pass206_attempt_audit": attempt,
+        "capture_asset_manifest_audit": capture_asset_manifest_audit(),
     }
     args.out_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = args.out_dir / "manifest.json"

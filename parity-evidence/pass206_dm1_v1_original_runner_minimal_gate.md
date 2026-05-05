@@ -42,7 +42,7 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 - Attempt: `/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route`
 - Classifier status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
 - Capture count/dimensions: `6` / `{'320x200': 6}`
-- Viewport crop PPM count: `6`
+- Viewport crop PPM count: `0`
 - Class counts: `{'dungeon_gameplay': 2, 'wall_closeup': 4}`
 - Duplicate SHA counts >1: `{'ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c': 4}`
 

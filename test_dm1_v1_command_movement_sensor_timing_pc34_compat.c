@@ -201,6 +201,7 @@ int main(void)
     unsigned char squares[MAP_W * MAP_H];
     unsigned short squareFirstThings[MAP_W * MAP_H];
     struct DungeonSensor_Compat sensors[2];
+    struct DungeonGroup_Compat groups[1];
     struct PartyState_Compat party;
     struct Dm1V1InputCommandQueuePc34Compat queue;
     struct Dm1V1InputQueueProcessResultPc34Compat queueResult;
@@ -282,6 +283,9 @@ int main(void)
         "fakewall blocked-side-effects key queued", &dungeon, &things, &party, &queue, MOVE_BLOCKED_WALL, 0);
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    memset(groups, 0, sizeof(groups));
+    groups[0].next = THING_ENDOFLIST;
+    things.groups = groups;
     squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
     things.groupCount = 1;
     ok &= expect_blocked_step_without_side_effects(
@@ -444,6 +448,9 @@ int main(void)
     }
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    memset(groups, 0, sizeof(groups));
+    groups[0].next = THING_ENDOFLIST;
+    things.groups = groups;
     squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
     things.groupCount = 1;
     {

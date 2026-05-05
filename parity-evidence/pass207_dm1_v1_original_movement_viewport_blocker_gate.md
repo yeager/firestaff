@@ -18,6 +18,15 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 - PASS `game-loop-redraws-before-next-input-wait` — `F0002_MAIN_GameLoop_CPSDF` at GAMELOOP.C:35-97, GAMELOOP.C:215-219: The next viewport reference must come from the game-loop redraw using the mutated party state.
 - PASS `viewport-draw-uses-direction-and-map-coordinates` — `F0128_DUNGEONVIEW_Draw_CPSF` at DUNVIEW.C:8318-8616: The comparable viewport is the source dungeon-view draw from current direction/X/Y, not a transient full-screen frame.
 - PASS `viewport-present-requests-vblank-blit` — `F0097_DUNGEONVIEW_DrawViewport` at DRAWVIEW.C:709-724, DRAWVIEW.C:840-858: A promotable capture must observe the presented 224x136 viewport after the source draw-request/vblank seam.
+- PASS `viewport-floor-ceiling-clears-base-before-walls` — `F0098_DUNGEONVIEW_DrawFloorAndCeiling` at DUNVIEW.C:2962-3003: Wall evidence must be compared after the original viewport base is cleared and floor/ceiling are copied into the viewport bitmap.
+- PASS `wall-door-bitmaps-composite-into-same-viewport-target` — `F0100_DUNGEONVIEW_DrawWallSetBitmap / F0102_DUNGEONVIEW_DrawDoorBitmap / F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally` at DUNVIEW.C:3048-3110: Wall and door captures are viewport-composited wallset evidence, not separate asset screenshots or emulator guesses.
+
+## Capture asset manifest boundary
+
+- status: `MANIFESTS_SOURCE_LOCK_CAPTURE_ASSETS_WITHOUT_EMULATOR_GUESSING`
+- stable raw frames: `6`; labels: `6`; missing materialized ignored PNGs: `6`
+- route-probe 224x136 viewport crops: `6`; missing materialized ignored PPMs: `6`
+- boundary: Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean.
 
 ## Current N2 original-runner attempt
 
@@ -26,7 +35,7 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 - attempt status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
 - attempt dir: `/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route`
 - capture count / dimensions: `6` / `{'320x200': 6}`
-- viewport crop PPM count: `6`
+- viewport crop PPM count: `0`
 - class counts: `{'dungeon_gameplay': 2, 'wall_closeup': 4}`
 - duplicate SHA counts >1: `{'ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c': 4}`
 - missing tools: `[]`
