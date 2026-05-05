@@ -65,9 +65,11 @@ Land the next pass as an evidence-only capture attempt, not a renderer change:
 ```sh
 python3 tools/pass80_original_frame_classifier.py \
   verification-screens/pass210-n2-original-movement-route \
-  --expected dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay \
+  --expected pass210-movement \
   --fail-on-duplicates
 ```
+
+`--expected pass210-movement` is a gameplay-only four-shot preset, and `--fail-on-duplicates` is mandatory for promotion. Together they make the pass210 path strict: stale/repeated raw screenshots, spell panels, inventory panels, entrance-menu frames, and wall-closeups all fail the movement gate instead of being mixed into the movement evidence.
 
 4. Only if classifier passes with non-duplicate movement frames, add a small follow-up gate/report that points pass206/pass207 at the new attempt directory and records the raw/crop manifests. If classifier fails, preserve the attempt as a blocker with the exact mismatched shot/log tail.
 
