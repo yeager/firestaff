@@ -117,6 +117,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -225,6 +226,22 @@ typedef enum {
  * given depth/lane position. Mirrors the 8-byte frame arrays from
  * ReDMCSB DUNVIEW.C (G0163_aauc_Graphic558_Frame_Walls[12][8]).
  * ──────────────────────────────────────────────────────────────────────── */
+
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int8_t rel_depth;
+    int8_t rel_lateral;
+    const char *redmcsb_function;
+    const char *source_lines;
+} DM1_ViewportDrawStep;
+
+/* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
+ * They are outside the original M597-M611 dense enum, so use stable negative
+ * identifiers for metadata/probe reporting only. */
+#define DM1_VIEW_SQUARE_D3L2 ((DM1_ViewSquareIndex)-101)
+#define DM1_VIEW_SQUARE_D3R2 ((DM1_ViewSquareIndex)-102)
+#define DM1_VIEW_SQUARE_D2L2 ((DM1_ViewSquareIndex)-103)
+#define DM1_VIEW_SQUARE_D2R2 ((DM1_ViewSquareIndex)-104)
 
 typedef struct {
     uint8_t left_x;     /* Viewport-relative left X (pixel) */
@@ -430,6 +447,10 @@ void dm1_viewport_3d_copy_and_flip_h(const uint8_t *src, uint8_t *dst,
  * Source: DUNVIEW.C G0163_aauc_Graphic558_Frame_Walls[12][8]
  */
 const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square);
+
+/* Source-locked F0128 visible-square draw order metadata. */
+size_t dm1_viewport_3d_draw_order_count(void);
+const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index);
 
 /*
  * Source evidence string for verification.

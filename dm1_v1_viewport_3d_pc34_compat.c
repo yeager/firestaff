@@ -30,29 +30,29 @@
  *   [0]=leftX, [1]=rightX, [2]=topY, [3]=bottomY,
  *   [4]=byteWidth, [5]=height, [6]=blitX, [7]=blitY
  *
- * These values are reconstructed from the Amiga A20E version of DM1.
+ * These values are copied directly from ReDMCSB DUNVIEW.C lines 581-594.
  * The frame array maps view squares D3L..D0R to wall bitmap positions.
  *
  * Index mapping (M600-M611 → array index):
  *   D3C=0, D3L=1, D3R=2, D2C=3, D2L=4, D2R=5,
  *   D1C=6, D1L=7, D1R=8, D0C=9, D0L=10, D0R=11
  *
- * Source: DUNVIEW.C line ~520 (G0163 frame data loaded from graphic 558)
+ * Source: DUNVIEW.C lines 581-594 (G0163_aauc_Graphic558_Frame_Walls)
  * ──────────────────────────────────────────────────────────────────────── */
 
 static const DM1_WallFrame s_wall_frames[12] = {
-    /* D3C */ {  72, 151,  18,  65,  80,  48,  72,  18 },
-    /* D3L */ {   0,  83,  18,  65,  84,  48,   0,  18 },
-    /* D3R */ { 140, 223,  18,  65,  84,  48, 140,  18 },
-    /* D2C */ {  48, 175,   6,  89, 128,  84,  48,   6 },
-    /* D2L */ {   0,  71,   6,  89,  72,  84,   0,   6 },
-    /* D2R */ { 152, 223,   6,  89,  72,  84, 152,   6 },
-    /* D1C */ {   0, 223,   0, 119, 224, 120,   0,   0 },
-    /* D1L */ {   0,  31,   0, 119,  32, 120,   0,   0 },
-    /* D1R */ { 192, 223,   0, 119,  32, 120, 192,   0 },
-    /* D0C — unused for walls */ { 0, 0, 0, 0, 0, 0, 0, 0 },
-    /* D0L */ {   0,  31,   0, 135,  32, 136,   0,   0 },
-    /* D0R */ { 192, 223,   0, 135,  32, 136, 192,   0 },
+    /* D3C */ {  74, 149, 25,  75,  64,  51,  18, 0 },
+    /* D3L */ {   0,  83, 25,  75,  64,  51,  32, 0 },
+    /* D3R */ { 139, 223, 25,  75,  64,  51,   0, 0 },
+    /* D2C */ {  60, 163, 20,  90,  72,  71,  16, 0 },
+    /* D2L */ {   0,  74, 20,  90,  72,  71,  61, 0 },
+    /* D2R */ { 149, 223, 20,  90,  72,  71,   0, 0 },
+    /* D1C */ {  32, 191,  9, 119, 128, 111,  48, 0 },
+    /* D1L */ {   0,  63,  9, 119, 128, 111, 192, 0 },
+    /* D1R */ { 160, 223,  9, 119, 128, 111,   0, 0 },
+    /* D0C — unused for walls */ { 0, 223, 0, 135, 0, 0, 0, 0 },
+    /* D0L */ {   0,  31,  0, 135,  16, 136,   0, 0 },
+    /* D0R */ { 192, 223,  0, 135,  16, 136,   0, 0 },
 };
 
 /* View square → wall frame table index mapping */
@@ -74,6 +74,32 @@ static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
         default: return -1;
     }
 }
+
+/* ReDMCSB DUNVIEW.C F0128 draw sequence, lines 8446-8542.
+ * rel_depth/rel_lateral are the F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement
+ * arguments immediately before each draw call; D0C is the party square and does not
+ * call F0150. */
+static const DM1_ViewportDrawStep s_draw_order[] = {
+    { DM1_VIEW_SQUARE_D4L, 4, -1, "F0115:D4L objects", "DUNVIEW.C:8466-8469" },
+    { DM1_VIEW_SQUARE_D4R, 4,  1, "F0115:D4R objects", "DUNVIEW.C:8470-8473" },
+    { DM1_VIEW_SQUARE_D4C, 4,  0, "F0115:D4C objects", "DUNVIEW.C:8474-8477" },
+    { DM1_VIEW_SQUARE_D3L2, 3, -2, "F0676_DrawD3L2", "DUNVIEW.C:8478-8482" },
+    { DM1_VIEW_SQUARE_D3R2, 3,  2, "F0677_DrawD3R2", "DUNVIEW.C:8483-8486" },
+    { DM1_VIEW_SQUARE_D3L, 3, -1, "F0116_DUNGEONVIEW_DrawSquareD3L", "DUNVIEW.C:8488-8491" },
+    { DM1_VIEW_SQUARE_D3R, 3,  1, "F0117_DUNGEONVIEW_DrawSquareD3R", "DUNVIEW.C:8492-8495" },
+    { DM1_VIEW_SQUARE_D3C, 3,  0, "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", "DUNVIEW.C:8496-8499" },
+    { DM1_VIEW_SQUARE_D2L2, 2, -2, "F0678_DrawD2L2", "DUNVIEW.C:8500-8504" },
+    { DM1_VIEW_SQUARE_D2R2, 2,  2, "F0679_DrawD2R2", "DUNVIEW.C:8505-8508" },
+    { DM1_VIEW_SQUARE_D2L, 2, -1, "F0119_DUNGEONVIEW_DrawSquareD2L", "DUNVIEW.C:8510-8513" },
+    { DM1_VIEW_SQUARE_D2R, 2,  1, "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", "DUNVIEW.C:8514-8517" },
+    { DM1_VIEW_SQUARE_D2C, 2,  0, "F0121_DUNGEONVIEW_DrawSquareD2C", "DUNVIEW.C:8518-8521" },
+    { DM1_VIEW_SQUARE_D1L, 1, -1, "F0122_DUNGEONVIEW_DrawSquareD1L", "DUNVIEW.C:8522-8525" },
+    { DM1_VIEW_SQUARE_D1R, 1,  1, "F0123_DUNGEONVIEW_DrawSquareD1R", "DUNVIEW.C:8526-8529" },
+    { DM1_VIEW_SQUARE_D1C, 1,  0, "F0124_DUNGEONVIEW_DrawSquareD1C", "DUNVIEW.C:8530-8533" },
+    { DM1_VIEW_SQUARE_D0L, 0, -1, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8534-8537" },
+    { DM1_VIEW_SQUARE_D0R, 0,  1, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8538-8541" },
+    { DM1_VIEW_SQUARE_D0C, 0,  0, "F0127_DUNGEONVIEW_DrawSquareD0C", "DUNVIEW.C:8542" },
+};
 
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_init
@@ -527,6 +553,17 @@ const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square)
     int idx = view_square_to_frame_index(square);
     if (idx < 0 || idx >= 12) return NULL;
     return &s_wall_frames[idx];
+}
+
+size_t dm1_viewport_3d_draw_order_count(void)
+{
+    return sizeof(s_draw_order) / sizeof(s_draw_order[0]);
+}
+
+const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index)
+{
+    if (index >= dm1_viewport_3d_draw_order_count()) return NULL;
+    return &s_draw_order[index];
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
