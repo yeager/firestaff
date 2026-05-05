@@ -1,0 +1,183 @@
+{
+  "attempt_audit": {
+    "attempt_dir": "/home/trv2/work/firestaff-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe",
+    "blockers": [
+      "shot 2 `move_up_after_gate` has no logged `Up` command before capture",
+      "shot 2 `move_up_after_gate` repeats the previous raw SHA; no post-command redraw/state observable",
+      "shot 3 `turn_right_after_gate` has no logged `Right` command before capture",
+      "shot 3 `turn_right_after_gate` repeats the previous raw SHA; no post-command redraw/state observable",
+      "shot 4 `move_left_after_gate` has no logged `Left` command before capture",
+      "shot 4 `move_left_after_gate` repeats the previous raw SHA; no post-command redraw/state observable",
+      "pass80 duplicate-frame gate failed; repeated raw SHA values cannot prove post-command redraw"
+    ],
+    "class_counts": {
+      "dungeon_gameplay": 6
+    },
+    "classifier_json": "/home/trv2/work/firestaff-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe/pass80_movement_six_class_gate.json",
+    "classifier_pass": false,
+    "driver_log_exists": false,
+    "duplicate_sha256_counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 6
+    },
+    "manifest_rows": 6,
+    "shots": [
+      {
+        "classification": "dungeon_gameplay",
+        "file": "image0001-raw.png",
+        "fresh_vs_previous": null,
+        "index": 1,
+        "key_logged_before_capture": null,
+        "party_control_gate_already_seen": true,
+        "required_key": null,
+        "route_label": "gate_confirmed_gameplay",
+        "sha12": "48ed3743ab6a"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "file": "image0002-raw.png",
+        "fresh_vs_previous": false,
+        "index": 2,
+        "key_logged_before_capture": false,
+        "party_control_gate_already_seen": true,
+        "required_key": "Up",
+        "route_label": "move_up_after_gate",
+        "sha12": "48ed3743ab6a"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "file": "image0003-raw.png",
+        "fresh_vs_previous": false,
+        "index": 3,
+        "key_logged_before_capture": false,
+        "party_control_gate_already_seen": true,
+        "required_key": "Right",
+        "route_label": "turn_right_after_gate",
+        "sha12": "48ed3743ab6a"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "file": "image0004-raw.png",
+        "fresh_vs_previous": false,
+        "index": 4,
+        "key_logged_before_capture": false,
+        "party_control_gate_already_seen": true,
+        "required_key": "Left",
+        "route_label": "move_left_after_gate",
+        "sha12": "48ed3743ab6a"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "file": "image0005-raw.png",
+        "fresh_vs_previous": false,
+        "index": 5,
+        "key_logged_before_capture": null,
+        "party_control_gate_already_seen": true,
+        "required_key": null,
+        "route_label": "spell_or_party_key_after_gate",
+        "sha12": "48ed3743ab6a"
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "file": "image0006-raw.png",
+        "fresh_vs_previous": false,
+        "index": 6,
+        "key_logged_before_capture": null,
+        "party_control_gate_already_seen": true,
+        "required_key": null,
+        "route_label": "inventory_or_party_key_after_gate",
+        "sha12": "48ed3743ab6a"
+      }
+    ],
+    "status": "BLOCKED_MISSING_POST_COMMAND_REDRAW_OBSERVABLE"
+  },
+  "forbidden_hosts": [
+    "DANNESBURK",
+    "192.168.2.126"
+  ],
+  "redmcsb_source_audit": [
+    {
+      "citations": [
+        "COMMAND.C:2045-2156"
+      ],
+      "claim": "Movement captures must be after queued input reaches source turn/step dispatch, not after xdotool delivery alone.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command-queue-dispatches-turn-step",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:142-179"
+      ],
+      "claim": "Turn shots need a post-turn state mutation and source wait-loop release observable.",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn-handler-mutates-direction-and-releases-wait",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:180-347"
+      ],
+      "claim": "Step shots need source destination resolution, move-result handling, cooldown, and wait-loop release.",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "step-handler-resolves-map-move-and-cooldown",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "MOVESENS.C:442-818",
+        "MOVESENS.C:1553-1793"
+      ],
+      "claim": "A move command is state-ready only once source movement can mutate party X/Y/time and process sensors.",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "move-result-updates-party-map-time-and-sensors",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "GAMELOOP.C:35-97",
+        "GAMELOOP.C:215-219"
+      ],
+      "claim": "Screenshot must be after the loop redraws from current direction/X/Y, not during pre-command wait/menu churn.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game-loop-redraws-mutated-party-state-before-wait",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:8318-8616"
+      ],
+      "claim": "Post-redraw means source dungeon view draw consumed direction/X/Y and requested viewport presentation.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "dungeon-view-draw-uses-direction-and-map-coordinates",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DRAWVIEW.C:709-724",
+        "DRAWVIEW.C:840-858"
+      ],
+      "claim": "A raw frame is promotable only after the viewport request/vblank blit seam can have presented it.",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport-present-vblank-blit-seam",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff-pass220-readiness",
+  "schema": "pass220_dm1_v1_original_readiness_oracle.v1",
+  "status": "BLOCKED_MISSING_POST_COMMAND_REDRAW_OBSERVABLE"
+}
