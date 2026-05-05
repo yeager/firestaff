@@ -16,9 +16,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REDMCSB = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 REDMCSB = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", DEFAULT_REDMCSB))
 
 CHECKS = [

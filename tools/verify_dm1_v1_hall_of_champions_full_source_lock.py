@@ -15,9 +15,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 OUT = ROOT / "parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json"
 
 SRC = {name: REDMCSB / name for name in [

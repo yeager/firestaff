@@ -17,7 +17,7 @@ from pathlib import Path
 from pass162_c080_queue_trace_probe import CITATIONS, SOURCE_ROOT, OUT_DIR, read_lines
 
 REPO = Path(__file__).resolve().parents[1]
-STAGE = Path('/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34')
+STAGE = Path('~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34').expanduser()
 DM_EXE = STAGE / 'DM.EXE'
 GDB_SCRIPT = OUT_DIR / 'pass162_dm_exe_symbol_gate.gdb'
 DOSBOX_CONF = OUT_DIR / 'dosbox-x-pass162-runtime-gate.conf'
@@ -35,7 +35,7 @@ def audit_required_redmcsb() -> list[dict[str, object]]:
     required = [
         c for c in CITATIONS
         if (c.file, c.symbol) in {
-            ('COMMAND.C', 'F0359_COMMAND_ProcessClick_CPSC'),
+            ('COMMAND.C', 'F0359_COMMAND_ProcessClick_CPSC').expanduser(),
             ('COMMAND.C', 'F0380_COMMAND_ProcessQueue_CPSC dequeue'),
             ('COMMAND.C', 'F0380 -> F0377 dispatch'),
             ('CLIKVIEW.C', 'F0377_COMMAND_ProcessType80_ClickInDungeonView'),

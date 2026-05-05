@@ -16,9 +16,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 SRC = {
     "COMMAND.C": REDMCSB_SOURCE / "COMMAND.C",
     "CLIKMENU.C": REDMCSB_SOURCE / "CLIKMENU.C",

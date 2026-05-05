@@ -14,9 +14,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 DEFAULT_JSON_OUT = Path("parity-evidence/verification/csb_save_header_routing_source_lock.json")
 
 

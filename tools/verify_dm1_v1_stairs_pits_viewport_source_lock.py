@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_SOURCE = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+REDMCSB_SOURCE = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_stairs_pits_viewport_source_lock.json"
 
 def read(path: Path) -> str:

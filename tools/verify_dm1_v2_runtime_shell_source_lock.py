@@ -14,10 +14,10 @@ def redmcsb_source_root() -> Path:
         candidates.append(Path(os.environ['FIRESTAFF_REDMCSB_SOURCE']).expanduser())
     candidates.extend([
         Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source',
-        Path('/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'),
+        Path('~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source').expanduser(),
     ])
     for candidate in candidates:
-        if (candidate / 'GAMELOOP.C').exists() and (candidate / 'DUNGEON.C').exists():
+        if (candidate / 'GAMELOOP.C').expanduser().exists() and (candidate / 'DUNGEON.C').exists():
             return candidate
     raise SystemExit('error: ReDMCSB source root not found; set FIRESTAFF_REDMCSB_SOURCE')
 

@@ -13,11 +13,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
-DEFAULT_ORIGINAL_DM = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM")
-DEFAULT_JSON_OUT = Path("parity-evidence/verification/csb_startup_dungeon_source_lock.json")
+).expanduser()
+DEFAULT_ORIGINAL_DM = Path("~/.openclaw/data/firestaff-original-games/DM").expanduser()
+DEFAULT_JSON_OUT = Path("parity-evidence/verification/csb_startup_dungeon_source_lock.json").expanduser()
 
 
 @dataclass(frozen=True)

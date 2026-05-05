@@ -9,10 +9,10 @@ import struct
 from pathlib import Path
 
 DEFAULT_REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
-DEFAULT_ORIGINAL_DM = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM")
+).expanduser()
+DEFAULT_ORIGINAL_DM = Path("~/.openclaw/data/firestaff-original-games/DM").expanduser()
 DEFAULT_REPO = Path(__file__).resolve().parents[1]
 
 CHECKS = [

@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parent.parent
-SOURCE_ROOT = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+SOURCE_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 PREV_ROOT = REPO / "parity-evidence/verification/pass162_original_party_route_unblock"
 OUT_ROOT = REPO / "parity-evidence/verification/pass175_original_queue_breakpoint_probe"
 

@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Iterable
 
 REPO = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-ORIGINAL_DM = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM")
+SOURCE_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+ORIGINAL_DM = Path("~/.openclaw/data/firestaff-original-games/DM").expanduser()
 EXTRACTED_DM = ORIGINAL_DM / "_extracted"
 PASS162_SUMMARY = REPO / "parity-evidence/verification/pass162_original_party_route_unblock/source_gated_portrait_then_resurrect/summary.json"
 OUT_DIR = REPO / "parity-evidence/verification/pass162_c080_queue_trace"

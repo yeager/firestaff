@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path('/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source')
+RED = Path('~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source').expanduser()
 OUT_JSON = ROOT / 'parity-evidence/verification/m11_v1_turning_source_lock.json'
 OUT_MD = ROOT / 'parity-evidence/verification/m11_v1_turning_source_lock.md'
 

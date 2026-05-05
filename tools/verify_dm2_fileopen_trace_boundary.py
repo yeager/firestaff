@@ -18,11 +18,11 @@ from pathlib import Path
 from typing import Any
 
 REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
-DM2_CANONICAL = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2")
-DM2_ASM = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM")
+).expanduser()
+DM2_CANONICAL = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2").expanduser()
+DM2_ASM = Path("~/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM").expanduser()
 ARCHIVE = "Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 MEMBER = "skull.exe"
 EXPECTED_SHA256 = "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35"

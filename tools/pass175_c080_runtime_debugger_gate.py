@@ -21,8 +21,8 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-ORIGINAL_ROOT = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM")
+SOURCE_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+ORIGINAL_ROOT = Path("~/.openclaw/data/firestaff-original-games/DM").expanduser()
 DM_STAGE = ORIGINAL_ROOT / "_extracted/dm-pc34/DungeonMasterPC34"
 DM_EXE = DM_STAGE / "DM.EXE"
 OUT = REPO / "parity-evidence/verification/pass175_c080_runtime_debugger_gate"

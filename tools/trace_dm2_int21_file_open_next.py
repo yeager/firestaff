@@ -120,7 +120,7 @@ def run_dosbox(timeout_s: int, keep_workdir: bool) -> tuple[dict, str]:
         "workdir_retained": str(workdir) if keep_workdir else None,
         "candidate_tools_on_n2": tools,
         "source_policy": {
-            "redmcsb": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ is DM/CSB comparison only; not DM2 C source.",
+            "redmcsb": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ is DM/CSB comparison only; not DM2 C source.",
             "dm2": "canonical DM2 SKULL.EXE and SKULL.ASM anchors only.",
         },
         "anchors_from_473d17c": load_boundary()["dm2_exe"]["anchors"],

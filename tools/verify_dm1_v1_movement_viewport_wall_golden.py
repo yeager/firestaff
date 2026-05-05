@@ -16,12 +16,12 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 DM1_DUNGEON_DAT = Path(
-    "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
-)
+    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+).expanduser()
 PASS127 = ROOT / "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
 
@@ -240,7 +240,7 @@ def summarize_cell(cell: dict[str, Any]) -> dict[str, Any]:
         "mapX": cell.get("mapX"),
         "mapY": cell.get("mapY"),
         "valid": cell.get("valid", 1),
-        "squareHex": f"0x{int(cell.get("square", 0)) & 0xFF:02X}",
+        "squareHex": f"0x{int(cell.get('square', 0)) & 0xFF:02X}",
         "elementType": typ,
         "elementName": ELEMENTS.get(typ, "Unknown"),
         "door": cell.get("door", 0),

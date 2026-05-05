@@ -20,9 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 COORD_C = REDMCSB_SOURCE / "COORD.C"
 ZONES_JSON = ROOT / "zones_h_reconstruction.json"

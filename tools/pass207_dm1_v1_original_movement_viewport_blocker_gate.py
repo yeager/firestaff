@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 PASS206_MANIFEST = ROOT / "parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json"
 OUT_DIR = ROOT / "parity-evidence/verification/pass207_dm1_v1_original_movement_viewport_blocker_gate"
 REPORT = ROOT / "parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
@@ -222,7 +222,7 @@ def audit_source() -> list[dict[str, Any]]:
         checks.append({
             "id": check["id"],
             "function": check["function"],
-            "citations": [f"{check["file"]}:{a}-{b}" for a, b in check["ranges"]],
+            "citations": [f"{check['file']}:{a}-{b}" for a, b in check["ranges"]],
             "claim": check["claim"],
             "ok": not missing,
             "missing": missing,
@@ -259,9 +259,9 @@ def decide_status(source: list[dict[str, Any]], audit: dict[str, Any]) -> str:
         return "FAIL_REDMCSB_SOURCE_AUDIT"
     if not audit.get("exists"):
         return "BLOCKED_MISSING_PASS206_MANIFEST"
-    if audit.get("missing_tools") or not all(audit.get("canonical_files_ok", {}).values()):
+    if audit.get('missing_tools') or not all(audit.get("canonical_files_ok", {}).values()):
         return "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"
-    if audit.get("attempt_status") != "PASS_SEMANTIC_ROUTE_READY":
+    if audit.get('attempt_status') != "PASS_SEMANTIC_ROUTE_READY":
         return "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE"
     return "PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE"
 
@@ -271,9 +271,9 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
     lines = [
         "# Pass207 — DM1 V1 original movement/viewport blocker gate",
         "",
-        f"Status: `{manifest["status"]}`",
+        f"Status: `{manifest['status']}`",
         "",
-        "Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox or salvage broad captures; it records the exact ReDMCSB movement→viewport seam and explains whether the current original-runner attempt can be promoted.",
+        "Scope: portable focused follow-up to pass206. This gate does **not** rerun DOSBox or salvage broad captures; it records the exact ReDMCSB movement→viewport seam and explains whether the current original-runner attempt can be promoted.",
         "",
         "## ReDMCSB source seam audit",
         "",
@@ -285,16 +285,16 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         "",
         "## Current N2 original-runner attempt",
         "",
-        f"- pass206 manifest: `{audit.get("path")}`",
-        f"- pass206 status: `{audit.get("pass206_status")}`",
-        f"- attempt status: `{audit.get("attempt_status")}`",
-        f"- attempt dir: `{audit.get("attempt_dir")}`",
-        f"- capture count / dimensions: `{audit.get("capture_count")}` / `{audit.get("dimensions_seen")}`",
-        f"- viewport crop PPM count: `{audit.get("viewport_crop_ppm_count")}`",
-        f"- class counts: `{audit.get("class_counts")}`",
-        f"- duplicate SHA counts >1: `{audit.get("duplicate_sha256_counts_gt1")}`",
-        f"- missing tools: `{audit.get("missing_tools")}`",
-        f"- canonical files ok: `{audit.get("canonical_files_ok")}`",
+        f"- pass206 manifest: `{audit.get('path')}`",
+        f"- pass206 status: `{audit.get('pass206_status')}`",
+        f"- attempt status: `{audit.get('attempt_status')}`",
+        f"- attempt dir: `{audit.get('attempt_dir')}`",
+        f"- capture count / dimensions: `{audit.get('capture_count')}` / `{audit.get('dimensions_seen')}`",
+        f"- viewport crop PPM count: `{audit.get('viewport_crop_ppm_count')}`",
+        f"- class counts: `{audit.get('class_counts')}`",
+        f"- duplicate SHA counts >1: `{audit.get('duplicate_sha256_counts_gt1')}`",
+        f"- missing tools: `{audit.get('missing_tools')}`",
+        f"- canonical files ok: `{audit.get('canonical_files_ok')}`",
         "",
         "## Blocker decision",
         "",
@@ -306,7 +306,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         if mismatches:
             lines.append("Mismatches:")
             for m in mismatches:
-                lines.append(f"- shot {m.get("index")}: `{m.get("classification")}` expected `{m.get("expected")}` (`{m.get("file")}`)")
+                lines.append(f"- shot {m.get('index')}: `{m.get('classification')}` expected `{m.get('expected')}` (`{m.get('file')}`)")
         else:
             lines.append("Mismatches: none recorded, but pass206 did not report `PASS_SEMANTIC_ROUTE_READY`.")
     elif manifest["status"].startswith("PASS"):
@@ -332,7 +332,7 @@ def main() -> int:
     manifest = {
         "schema": "pass207_dm1_v1_original_movement_viewport_blocker_gate.v1",
         "status": status,
-        "worker": "N2 / firestaff-worker / trv2@192.168.3.121",
+        "worker": "portable host",
         "repo": str(ROOT),
         "redmcsb_source_root": str(REDMCSB),
         "forbidden_hosts": ["DANNESBURK", "192.168.2.126"],

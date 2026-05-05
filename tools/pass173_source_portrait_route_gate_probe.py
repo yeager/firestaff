@@ -23,7 +23,7 @@ OUT_ROOT = Path("parity-evidence/verification/pass173_source_portrait_route_gate
 RUN_BASE_ROOT = Path.home()/".openclaw/data/firestaff-n2-runs"
 STATIC_NO_PARTY_HASHES={"48ed3743ab6a","082b4d249740"}
 CROPS={"viewport":(0,0,224,136),"right_panel":(224,0,320,136),"lower_panel":(0,136,320,200),"candidate_buttons":(70,80,225,148)}
-SOURCE_ROOT="/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT="~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 SOURCE_LOCKS=[
  {"file":"DUNGEON.DAT via pass4 helper","lines":"n/a","point":"initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."},
  {"file":"COMMAND.C","lines":"397-403,2322-2323","point":"left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW and calls F0377_COMMAND_ProcessType80_ClickInDungeonView."},

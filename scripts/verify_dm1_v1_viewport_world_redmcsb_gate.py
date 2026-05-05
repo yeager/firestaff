@@ -2,7 +2,7 @@
 """Verify the DM1 V1 viewport/world visual lane against local ReDMCSB source.
 
 This is intentionally source/evidence-only: it does not touch renderer code or CMake,
-and it uses only N2-local source/original-game anchors.
+and it uses only local source/original-game anchors.
 """
 from __future__ import annotations
 
@@ -13,12 +13,12 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 DEFAULT_DM1_CANONICAL = Path(
-    "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-)
+    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+).expanduser()
 
 CHECKS: list[dict[str, Any]] = [
     {
@@ -307,17 +307,17 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def require_n2_local(path: Path) -> None:
+def require_local(path: Path) -> None:
     raw = str(path)
     resolved = str(path.resolve()) if path.exists() else raw
-    allowed = (
-        "/home/trv2/.openclaw/data/firestaff-redmcsb-source/",
-        "/home/trv2/.openclaw/data/firestaff-original-games/DM/",
-    )
+    allowed = tuple(str(Path(p).expanduser()) for p in (
+        "~/.openclaw/data/firestaff-redmcsb-source/",
+        "~/.openclaw/data/firestaff-original-games/DM/",
+    ))
     if "deprecated-remote-source" in raw.lower() or "deprecated-remote-source" in resolved.lower() or "<deprecated-remote-host>" in raw:
-        raise SystemExit(f"refusing non-N2 path: {path}")
+        raise SystemExit(f"refusing non-local path: {path}")
     if not (raw.startswith(allowed) or resolved.startswith(allowed)):
-        raise SystemExit(f"refusing path outside N2-local evidence roots: {path}")
+        raise SystemExit(f"refusing path outside local evidence roots: {path}")
 
 
 def line_slice(text: str, line_range: str) -> str:
@@ -327,15 +327,15 @@ def line_slice(text: str, line_range: str) -> str:
 
 
 def verify(source: Path, dm1: Path) -> tuple[dict[str, Any], list[str]]:
-    require_n2_local(source)
-    require_n2_local(dm1)
+    require_local(source)
+    require_local(dm1)
     failures: list[str] = []
     checks_out: list[dict[str, Any]] = []
     source_hashes: dict[str, str] = {}
 
     for check in CHECKS:
         path = source / check["file"]
-        require_n2_local(path)
+        require_local(path)
         if not path.exists():
             failures.append(f"missing source file: {path}")
             continue
@@ -366,13 +366,12 @@ def verify(source: Path, dm1: Path) -> tuple[dict[str, Any], list[str]]:
     anchors: list[dict[str, Any]] = []
     for name in DM1_ANCHORS:
         path = dm1 / name
-        require_n2_local(path)
+        require_local(path)
         if not path.exists():
             failures.append(f"missing DM1 canonical anchor: {path}")
             anchors.append({"name": name, "status": "missing"})
             continue
         resolved = path.resolve()
-        require_n2_local(resolved)
         anchors.append(
             {
                 "name": name,

@@ -15,7 +15,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 FIRE = ROOT / "m11_game_view.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED_ROOT = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 DUNVIEW = RED_ROOT / "DUNVIEW.C"
 DUNGEON = RED_ROOT / "DUNGEON.C"
 
@@ -113,9 +113,9 @@ def main() -> int:
         src_text = dungeon if src_path == DUNGEON else red
         pos = src_text.find(needle)
         print(f"- ReDMCSB {src_path.name}:{line_no(src_text, pos)} {needle.splitlines()[0]}")
-    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find("m11_dm1_wall_ornament_is_alcove_global"))} alcove global-index guard")
-    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find("m11_draw_dm1_alcove_wall_items"))} alcove wall-item draw pass")
-    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find("m11_draw_dm1_wall_ornaments"))} ornament draw then alcove item pass")
+    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_dm1_wall_ornament_is_alcove_global'))} alcove global-index guard")
+    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_alcove_wall_items'))} alcove wall-item draw pass")
+    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_wall_ornaments'))} ornament draw then alcove item pass")
     return 0
 
 

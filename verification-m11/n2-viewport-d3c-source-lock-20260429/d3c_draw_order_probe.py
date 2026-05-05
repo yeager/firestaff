@@ -10,7 +10,7 @@ import hashlib
 import re
 from pathlib import Path
 
-SRC = Path('/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C')
+SRC = Path('~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C').expanduser()
 text = SRC.read_text(errors='replace')
 lines = text.splitlines()
 

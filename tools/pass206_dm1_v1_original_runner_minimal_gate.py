@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-DM1_STAGE = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34")
+REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+DM1_STAGE = Path("~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34").expanduser()
 CAPTURE_SCRIPT = ROOT / "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
 ATTEMPT_DIR = ROOT / "verification-screens/pass112-n2-stable-hud-route"
 CLASSIFIER_JSON = ATTEMPT_DIR / "pass80_original_frame_classifier.json"
@@ -21,7 +21,7 @@ OUT_DIR = ROOT / "parity-evidence/verification/pass206_dm1_v1_original_runner_mi
 REPORT = ROOT / "parity-evidence/pass206_dm1_v1_original_runner_minimal_gate.md"
 
 EXPECTED_FILES = {
-    "DM.EXE": (DM1_STAGE / "DM.EXE", "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"),
+    "DM.EXE": (DM1_STAGE / "DM.EXE", "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4").expanduser(),
     "DATA/DUNGEON.DAT": (DM1_STAGE / "DATA/DUNGEON.DAT", "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"),
     "DATA/GRAPHICS.DAT": (DM1_STAGE / "DATA/GRAPHICS.DAT", "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"),
 }
@@ -83,7 +83,7 @@ def audit_runner() -> dict[str, Any]:
         observed = sha256(path) if exists else None
         files[label] = {"path": str(path), "exists": exists, "sha256": observed, "expectedSha256": expected, "ok": exists and observed == expected}
     return {
-        "host_contract": "N2 only: firestaff-worker / trv2@192.168.3.121; DANNESBURK and 192.168.2.126 forbidden",
+        "host_contract": "portable host; DANNESBURK and 192.168.2.126 forbidden",
         "tools": tools,
         "missing_tools": [cmd for cmd, path in tools.items() if not path],
         "canonical_files": files,
@@ -131,7 +131,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
     for label, info in runner["canonical_files"].items():
         mark = "PASS" if info["ok"] else "FAIL"
         lines.append(f"- {mark} `{label}` `{info['sha256']}` at `{info['path']}`")
-    lines += ["", "## Reproducible dry-run command", "", "```sh", "DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \\", "DOSBOX=/usr/bin/dosbox \\", "DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\", "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\", f"DM1_ORIGINAL_ROUTE_EVENTS='{runner['route_events']}' \\", "scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run", "```", "", "## Existing N2 route attempt audit", "", f"- Attempt: `{attempt.get('attempt_dir', attempt.get('path'))}`", f"- Classifier status: `{attempt.get('status')}`", f"- Capture count/dimensions: `{attempt.get('capture_count')}` / `{attempt.get('dimensions_seen')}`", f"- Viewport crop PPM count: `{attempt.get('viewport_crop_ppm_count')}`", f"- Class counts: `{attempt.get('class_counts')}`", f"- Duplicate SHA counts >1: `{attempt.get('duplicate_sha256_counts_gt1')}`", "", "### Semantic mismatches blocking promotion", ""]
+    lines += ["", "## Reproducible dry-run command", "", "```sh", "DM1_ORIGINAL_STAGE_DIR=~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \\", "DOSBOX=/usr/bin/dosbox \\", "DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\", "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\", f"DM1_ORIGINAL_ROUTE_EVENTS='{runner['route_events']}' \\", "scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run", "```", "", "## Existing N2 route attempt audit", "", f"- Attempt: `{attempt.get('attempt_dir', attempt.get('path'))}`", f"- Classifier status: `{attempt.get('status')}`", f"- Capture count/dimensions: `{attempt.get('capture_count')}` / `{attempt.get('dimensions_seen')}`", f"- Viewport crop PPM count: `{attempt.get('viewport_crop_ppm_count')}`", f"- Class counts: `{attempt.get('class_counts')}`", f"- Duplicate SHA counts >1: `{attempt.get('duplicate_sha256_counts_gt1')}`", "", "### Semantic mismatches blocking promotion", ""]
     mismatches = attempt.get("mismatches") or []
     if mismatches:
         for m in mismatches:
@@ -151,7 +151,7 @@ def main() -> int:
     runner = audit_runner()
     attempt = audit_existing_attempt()
     status = decide_status(source, runner, attempt)
-    manifest = {"schema": "pass206_dm1_v1_original_runner_minimal_gate.v1", "status": status, "worker": "N2 / firestaff-worker / trv2@192.168.3.121", "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["DANNESBURK", "192.168.2.126"], "redmcsb_source_audit": source, "runner_prerequisites": runner, "existing_attempt_audit": attempt}
+    manifest = {"schema": "pass206_dm1_v1_original_runner_minimal_gate.v1", "status": status, "worker": "portable host", "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["DANNESBURK", "192.168.2.126"], "redmcsb_source_audit": source, "runner_prerequisites": runner, "existing_attempt_audit": attempt}
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_report(manifest, args.report)

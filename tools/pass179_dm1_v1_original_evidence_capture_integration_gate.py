@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-CANONICAL_DM1 = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
+REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+CANONICAL_DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
 OUT_DIR = ROOT / "parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate"
 REPORT = ROOT / "parity-evidence/pass179_dm1_v1_original_evidence_capture_integration_gate.md"
 
@@ -117,7 +117,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(); p.add_argument("--out-dir", type=Path, default=OUT_DIR); p.add_argument("--report", type=Path, default=REPORT); args = p.parse_args()
     source_results = source_audit(); artifacts = existing_artifact_audit(); status = overall_status(source_results, artifacts)
-    manifest = {"schema":"pass179_dm1_v1_original_evidence_capture_integration_gate.v1","status":status,"worker":"N2 / firestaff-worker / trv2@192.168.3.121","repo":str(ROOT),"redmcsb_source_root":str(REDMCSB),"canonical_dm1_root":str(CANONICAL_DM1),"forbidden_hosts":["DANNESBURK","192.168.2.126"],"redmcsb_source_audit":source_results,"existing_artifacts":artifacts}
+    manifest = {"schema":"pass179_dm1_v1_original_evidence_capture_integration_gate.v1","status":status,"worker":"portable host","repo":str(ROOT),"redmcsb_source_root":str(REDMCSB),"canonical_dm1_root":str(CANONICAL_DM1),"forbidden_hosts":["DANNESBURK","192.168.2.126"],"redmcsb_source_audit":source_results,"existing_artifacts":artifacts}
     args.out_dir.mkdir(parents=True, exist_ok=True); (args.out_dir/"manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True)+"\n", encoding="utf-8"); write_report(manifest, args.report)
     print(json.dumps({"status":status,"manifest":str(args.out_dir/"manifest.json"),"report":str(args.report),"source_checks":len(source_results),"source_failures":[x["id"] for x in source_results if not x["ok"]],"pass175_remaining_blocker":artifacts["pass175_status"]["remaining_blocker"]}, indent=2, sort_keys=True))
     return 0 if status.startswith("PASS") else 1

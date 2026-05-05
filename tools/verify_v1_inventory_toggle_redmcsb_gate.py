@@ -5,7 +5,7 @@ import json, os, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"))
+REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")).expanduser()
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/v1_inventory_toggle_redmcsb_gate.json"
 
 RANGES = [

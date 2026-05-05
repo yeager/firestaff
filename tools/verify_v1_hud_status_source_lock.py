@@ -168,13 +168,13 @@ def main() -> int:
     OUT.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(f"probe=v1_hud_status_source_lock")
     print(f"evidence={OUT.relative_to(ROOT)}")
-    print(f"v1HudStatusSourceLockOk={1 if result["pass"] else 0}")
+    print(f"v1HudStatusSourceLockOk={1 if result['pass'] else 0}")
     if problems:
         for problem in problems:
             print(f"FAIL {problem}", file=sys.stderr)
         return 1
     for spec in source_locks:
-        print(f"sourceRange={spec["file"]}:{spec["start"]}-{spec["end"]} lock={spec["locks"]}")
+        print(f"sourceRange={spec['file']}:{spec['start']}-{spec['end']} lock={spec['locks']}")
     print(f"zonesChecked={len(checked_zones)}")
     return 0
 

@@ -16,7 +16,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "m11_game_view.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED_ROOT = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
 RED_DEFS = RED_ROOT / "DEFS.H"
 
@@ -158,9 +158,9 @@ def main() -> int:
     require(cmake, "NAME v1_viewport_distance_row_clip_gate", "CMake test registration")
 
     print("V1 viewport distance row clip gate passed")
-    print(f"- Firestaff row map: {SRC}:{line_no(fire, fire.find("static int m11_dm1_f0115_c2500_c2900_row"))}")
-    print(f"- Firestaff C2500 raw rows: {SRC}:{line_no(fire, fire.find("static int m11_c2500_object_raw_zone_point"))}")
-    print(f"- Firestaff C2900 viewport clip: {SRC}:{line_no(fire, fire.find("static int m11_draw_projectile_sprite"))}")
+    print(f"- Firestaff row map: {SRC}:{line_no(fire, fire.find('static int m11_dm1_f0115_c2500_c2900_row'))}")
+    print(f"- Firestaff C2500 raw rows: {SRC}:{line_no(fire, fire.find('static int m11_c2500_object_raw_zone_point'))}")
+    print(f"- Firestaff C2900 viewport clip: {SRC}:{line_no(fire, fire.find('static int m11_draw_projectile_sprite'))}")
     for needle in [
         "char G2028_ac_ViewSquareIndexTo[23]",
         "L2474_i_ZoneIndex = (C2500_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES)",
@@ -170,7 +170,7 @@ def main() -> int:
     ]:
         pos = red.find(needle)
         print(f"- ReDMCSB {RED_DUNVIEW.name}:{line_no(red, pos)} {needle}")
-    print(f"- ReDMCSB DEFS zones: {RED_DEFS}:{line_no(defs, defs.find("#define C2500_ZONE_"))}-{line_no(defs, defs.find("#define M632_ZONE_DOOR_D1R"))}")
+    print(f"- ReDMCSB DEFS zones: {RED_DEFS}:{line_no(defs, defs.find('#define C2500_ZONE_'))}-{line_no(defs, defs.find('#define M632_ZONE_DOOR_D1R'))}")
     return 0
 
 

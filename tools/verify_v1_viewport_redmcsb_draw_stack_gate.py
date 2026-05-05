@@ -16,9 +16,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 FIRESTAFF_SRC = ROOT / "m11_game_view.c"
 DEFAULT_REDMCSB = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
-)
+).expanduser()
 REDMCSB_SRC = Path(os.environ.get("FIRESTAFF_REDMCSB_DUNVIEW", DEFAULT_REDMCSB))
 
 

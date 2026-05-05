@@ -13,9 +13,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_SOURCE = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 MENUDRAW_C = REDMCSB_SOURCE / "MENUDRAW.C"
