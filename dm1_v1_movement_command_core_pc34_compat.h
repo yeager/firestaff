@@ -5,6 +5,7 @@
 #include "dm1_v1_movement_timing_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
+#include "m11_v1_turning_presentation_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +32,7 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     struct Dm1V1InputQueueProcessResultPc34Compat queue;
     struct MovementResult_Compat movement;
     struct Dm1V1MovementTimingResultPc34Compat timing;
+    struct M11V1TurningPresentationResultPc34Compat turning;
     struct SensorEffectList_Compat leaveEffects;
     struct SensorEffectList_Compat enterEffects;
     int commandHandled;
@@ -45,6 +47,7 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     int sourceMapX;
     int sourceMapY;
     int sourceDirection;
+    int stairTransitionApplied;
 };
 
 int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(

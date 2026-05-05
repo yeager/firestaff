@@ -53,13 +53,37 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     }
 
     if (dm1_v1_is_turn_command(outResult->queue.command)) {
+        struct StairsTransitionResult_Compat stairs;
         outResult->commandHandled = 1;
+
+        /* Source lock: CLIKMENU.C:167-169 consumes a turn command on a stairs
+         * square via F0364_COMMAND_TakeStairs and returns before normal
+         * current-square sensor leave/enter and F0284 turn rotation.
+         */
+        if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+            party->mapIndex = stairs.toMapIndex;
+            party->mapX = stairs.newMapX;
+            party->mapY = stairs.newMapY;
+            party->direction = stairs.newDirection;
+            outResult->movement.resultCode = MOVE_TURN_ONLY;
+            outResult->movement.newMapX = party->mapX;
+            outResult->movement.newMapY = party->mapY;
+            outResult->movement.newDirection = party->direction;
+            outResult->movement.newMapIndex = party->mapIndex;
+            outResult->stairTransitionApplied = 1;
+            outResult->turnApplied = 1;
+            outResult->stopWaitingForPlayerInput = 1;
+            outResult->viewportRedrawRequested = 1;
+            return 1;
+        }
+
         (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
             SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);
-        party->direction = F0700_MOVEMENT_TurnDirection_Compat(
-            party->direction,
-            outResult->queue.command == DM1_V1_COMMAND_TURN_RIGHT);
+        outResult->turning = m11_v1_turning_apply_party_original_presentation_pc34_compat(
+            M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL,
+            outResult->queue.command,
+            party);
         (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
             SENSOR_EVENT_WALK_ON, &outResult->enterEffects);
@@ -121,5 +145,5 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
 const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:2045-2156; CLIKMENU.C:142-179,180-347; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724";
+    return "COMMAND.C:2045-2156; CLIKMENU.C:142-179,180-347; CHAMPION.C:117-130; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724";
 }
