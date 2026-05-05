@@ -232,6 +232,13 @@ endif()
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME dm1_v2_upscale_dry_run_validator
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_v2_upscale_dry_run.py
+        )
+    endif()
+
     add_executable(test_touch_click_zone_matrix_pc34_compat_integration
         test_touch_click_zone_matrix_pc34_compat_integration.c
     )
