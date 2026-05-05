@@ -1,0 +1,96 @@
+{
+  "artifact_policy": {
+    "forbidden_extensions": [
+      ".png",
+      ".ppm"
+    ],
+    "json_only": true
+  },
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff-pass223-post-redraw-observable",
+  "required_chain": [
+    "command_accepted_queue_dispatch",
+    "turn_handler_applies_direction_and_releases_wait OR step_handler_resolves_destination_and_releases_wait",
+    "move_result_mutates_party_coordinates for step commands",
+    "game_loop_draws_mutated_party_state",
+    "dungeon_view_consumes_state_before_viewport_request",
+    "viewport_requested_then_vertical_blank_returned",
+    "viewport_bitmap_blitted_to_screen"
+  ],
+  "schema": "pass223_dm1_v1_post_redraw_instrumentation_lock.v1",
+  "source_locks": [
+    {
+      "citation": "COMMAND.C:2045-2156",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command_accepted_queue_dispatch",
+      "missing": [],
+      "observable": "Record accepted command id and queue index immediately after L1160_i_Command is loaded and before the turn/step handler call returns.",
+      "verified": true
+    },
+    {
+      "citation": "CLIKMENU.C:142-173",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn_handler_applies_direction_and_releases_wait",
+      "missing": [],
+      "observable": "After the turn handler returns, record G0308_i_PartyDirection and G0321_B_StopWaitingForPlayerInput; this is command accepted -> turn state applied.",
+      "verified": true
+    },
+    {
+      "citation": "CLIKMENU.C:180-328",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "step_handler_resolves_destination_and_releases_wait",
+      "missing": [],
+      "observable": "After the move-result call returns, record accepted command plus G0306_i_PartyMapX/G0307_i_PartyMapY/G0310_i_DisabledMovementTicks; this is command accepted -> step state applied.",
+      "verified": true
+    },
+    {
+      "citation": "MOVESENS.C:442-443",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "move_result_mutates_party_coordinates",
+      "missing": [],
+      "observable": "Record destination map X/Y at the coordinate assignment seam for successful party moves.",
+      "verified": true
+    },
+    {
+      "citation": "GAMELOOP.C:88-91",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_draws_mutated_party_state",
+      "missing": [],
+      "observable": "Record draw-call arguments (direction, mapX, mapY) at the game loop call site after command processing has released the wait loop.",
+      "verified": true
+    },
+    {
+      "citation": "DUNVIEW.C:8318-8610",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "dungeon_view_consumes_state_before_viewport_request",
+      "missing": [],
+      "observable": "Record the consumed P0183/P0184/P0185 tuple just before F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW).",
+      "verified": true
+    },
+    {
+      "citation": "DRAWVIEW.C:709-722",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_requested_then_vertical_blank_returned",
+      "missing": [],
+      "observable": "Record viewport request timestamp/counter before M526_WaitVerticalBlank and a returned-from-vblank counter after it returns.",
+      "verified": true
+    },
+    {
+      "citation": "DRAWVIEW.C:840-842",
+      "file": "DRAWVIEW.C",
+      "function": "E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF",
+      "id": "viewport_bitmap_blitted_to_screen",
+      "missing": [],
+      "observable": "Record the vblank blit counter for C007_ZONE_VIEWPORT. This is the viewport-present half of the proof.",
+      "verified": true
+    }
+  ],
+  "status": "PASS_SOURCE_LOCKED_POST_REDRAW_INSTRUMENTATION_POINTS"
+}
