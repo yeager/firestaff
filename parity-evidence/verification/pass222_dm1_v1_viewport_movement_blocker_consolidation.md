@@ -1,0 +1,76 @@
+# Pass222 — DM1 V1 viewport/movement blocker consolidation
+
+Status: `BLOCKED_NEEDS_POST_COMMAND_ORIGINAL_ORACLE_AND_SOURCE_BOUND_VIEWPORT_DRAW`
+
+Scope: evidence-only consolidation on N2. This pass created no screenshots, PNGs, PPMs, runtime captures, renderer changes, or original-vs-Firestaff parity claims.
+
+Base: `c01a81ee9b5274195d84bb953af0763dc22ed327` (`origin/main` after rebase).
+
+## Blocker 1 — original route post-command readiness
+
+The visual post-command readiness oracle is now source-locked in pass220, but the audited attempt still has no logged movement keys before captures and no fresh raw SHA after commands; a promotable original movement/viewport capture remains blocked.
+
+Evidence already in-tree:
+
+- `parity-evidence/pass210_dm1_v1_original_movement_viewport_capture_unblock.md:41-55` records the missing promotable movement capture evidence and route metadata binding.
+- `parity-evidence/pass212_dm1_v1_original_state_aware_movement_probe.md:34-48` shows the state-aware gate eventually reached `dungeon_gameplay`.
+- `parity-evidence/pass212_dm1_v1_original_state_aware_movement_probe.md:63-70` shows the movement classifier still failed because all six final raw frames had the same SHA256.
+- `parity-evidence/pass220_dm1_v1_original_readiness_oracle.md:15-23` defines the landed visual oracle rule.
+- `parity-evidence/pass220_dm1_v1_original_readiness_oracle.md:51-65` shows the current attempt still lacks logged keys before captures and repeats the previous raw SHA after movement commands.
+
+ReDMCSB contract to observe:
+
+- `COMMAND.C:2045-2156` — `F0380_COMMAND_ProcessQueue_CPSC` dispatches queued commands to movement handlers.
+- `CLIKMENU.C:142-179` — `F0365_COMMAND_ProcessTypes1To2_TurnParty` mutates party direction and releases wait.
+- `CLIKMENU.C:180-347` — `F0366_COMMAND_ProcessTypes3To6_MoveParty` resolves relative destination, blockers, move result, cooldown, and wait release.
+- `MOVESENS.C:316-818` — `F0267_MOVE_GetMoveResult_CPSCE` owns move-result globals, party coordinate transitions, pit/teleporter chain side effects, and viewport redraw during falls.
+- `DUNVIEW.C:8318-8616` — `F0128_DUNGEONVIEW_Draw_CPSF` draws from current direction/map coordinates.
+- `DRAWVIEW.C:709-724`, `DRAWVIEW.C:840-858` — `F0097_DUNGEONVIEW_DrawViewport` requests/presents the viewport blit.
+
+Next probe: run a fresh original route through the pass220 oracle with driver logs present and strict raw-SHA freshness after each movement/turn command. If that still cannot prove command delivery, upgrade to an emulator/memory-backed watch for `G0308_i_PartyDirection`, `G0306_i_PartyMapX`, `G0307_i_PartyMapY`, `G0321_B_StopWaitingForPlayerInput`, and optionally `G0305_ui_PartyChampionCount`.
+
+## Blocker 2 — Firestaff viewport draw is still structural, not source-bound
+
+Firestaff now has real map-square helpers in M11, but `dm1_v1_viewport_3d_pc34_compat.c` still documents its draw frame as a structural framework whose square/aspect queries remain unintegrated.
+
+Evidence:
+
+- `dm1_v1_viewport_3d_pc34_compat.c:395-396` says actual square aspect queries depend on the dungeon data module.
+- `dm1_v1_viewport_3d_pc34_compat.c:427-445` says the framework calls wall drawing primitives but actual square type queries require integration.
+- `m11_game_view.c:1069-1107` has `m11_map_square_base` / `m11_get_square_byte` over parsed `DungeonDatState_Compat` tiles.
+- `m11_game_view.c:1126-1152` has `m11_get_first_square_thing` over `squareFirstThings`.
+
+ReDMCSB contract to implement/gate:
+
+- `DUNGEON.C:1371-1415` — `F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement` computes relative destination coordinates.
+- `DUNGEON.C:1423-1492` — `F0151_DUNGEON_GetSquare` returns the square byte used by movement and viewport.
+- `DUNGEON.C:2466-2719` — `F0172_DUNGEON_SetSquareAspect` derives square type, walls/doors/stairs/pits/ornaments/items/creatures for viewport draw.
+- `DUNVIEW.C:8318-8616` — `F0128_DUNGEONVIEW_Draw_CPSF` calls the draw-square stack in source order after parity/wallset setup.
+
+Next probe: land a tiny source-lock gate before renderer work: assert Firestaff viewport draw path queries real `DungeonDatState_Compat` square bytes for each visible cell using `F0150`-compatible offsets, then derives aspect via `F0172`-compatible rules instead of placeholder wall primitives.
+
+## Blocker 3 — movement/viewport/walls 1:1 evidence gap
+
+Existing gates source-lock pieces of movement, collision, wall draw order, and square access, but no single promotable artifact proves original command → movement/collision → viewport/walls present 1:1 with non-duplicate original frames.
+
+Evidence:
+
+- `parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md:7-20` lists the source seam and required viewport draw/present boundary.
+- `parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md:35-43` rejects the then-current attempt because mismatches/repeated wall-closeup frames cannot bind to post-command redraw.
+- `parity-evidence/pass212_dm1_v1_original_state_aware_movement_probe.md:85-87` rejects `dungeon_gameplay`-only classification as insufficient because it does not prove queued input, state mutation, wait release, and new viewport presentation.
+- `m11_game_view.c:18051-18055` records that old asset tiling caused noisy non-DM1 viewport output and normal V1 must wait for `DRAWVIEW`-style placement.
+
+ReDMCSB contract to bind:
+
+- `CLIKMENU.C:264-328` — `F0366` reads `F0151` target square, blocks wall/closed door/closed fakewall, then calls `F0267` for allowed movement.
+- `MOVESENS.C:474-606` — `F0267` consumes destination square bytes for teleporter/pit/fall handling and mutates party coordinates as side effects.
+- `DUNVIEW.C:6256-8270` — draw-square stack places walls, doors, stairs, pits, floor ornaments, and side/center occlusion in explicit depth order.
+- `DRAWVIEW.C:709-724`, `DRAWVIEW.C:840-858` — `F0097` is the comparable viewport present seam.
+
+## Recommended landing sequence
+
+1. Original route: rerun through the pass220 visual oracle with present driver logs and fresh raw SHA after every command; upgrade to memory-backed state watches if command delivery remains unobservable.
+2. Firestaff source gate: visible-cell viewport draw queries real dungeon square bytes/aspects using the `F0150`/`F0151`/`F0172` contract.
+3. Walls/movement proof: bind command dispatch, movement/collision result, and `F0128`/`F0097` viewport present to non-duplicate original shots.
+
+Non-claims: no screenshots captured; no PNG/PPM created; no renderer/runtime code changed; no original-vs-Firestaff pixel parity claim; no push.
