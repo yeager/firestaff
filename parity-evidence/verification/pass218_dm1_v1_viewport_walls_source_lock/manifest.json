@@ -1,0 +1,49 @@
+{
+  "artifacts": [
+    "README.md",
+    "manifest.json",
+    "source_gate.out",
+    "source_gate.exit",
+    "secret_scan.out",
+    "secret_scan.exit"
+  ],
+  "check_count": 6,
+  "checks": [
+    {
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "drawview-presents-after-dungeonview-buffer",
+      "source": "DRAWVIEW.C:709-900"
+    },
+    {
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "id": "floor-ceiling-base-before-wall-replay",
+      "source": "DUNVIEW.C:2962-3003"
+    },
+    {
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128-far-to-near-square-replay",
+      "source": "DUNVIEW.C:8318-8618"
+    },
+    {
+      "function": "F0116_DUNGEONVIEW_DrawSquareD3L / F0117_DUNGEONVIEW_DrawSquareD3R / F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+      "id": "d3-side-wall-occludes-by-early-return",
+      "source": "DUNVIEW.C:6400-6835"
+    },
+    {
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "id": "f0115-ordered-cell-pass-not-depth-sort",
+      "source": "DUNVIEW.C:4547-4910"
+    },
+    {
+      "function": "F0116/F0117/F0118 door-front branches",
+      "id": "door-front-two-pass-near-side-replay",
+      "source": "DUNVIEW.C:6428-6816"
+    }
+  ],
+  "exit": 0,
+  "gate": "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py --json",
+  "pass": "pass218_dm1_v1_viewport_walls_source_lock",
+  "passed": true,
+  "secret_scan_exit": 0,
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source"
+}
