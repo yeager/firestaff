@@ -90,6 +90,9 @@ cc $CFLAGS_COMMON \
     "$HERE/memory_door_action_pc34_compat.c" \
     "$HERE/memory_champion_state_pc34_compat.c" \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
+    "$HERE/dm1_v1_vblank_timing.c" \
+    "$HERE/dm1_v1_save_load.c" \
+    "$HERE/changelog_m12.c" \
     $GFX_OBJS \
     $SDL3_LIBS
 
