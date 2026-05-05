@@ -1,0 +1,116 @@
+{
+  "id": "m15_movement_source_lock",
+  "created_at": "2026-05-05T22:55:00+02:00",
+  "host": "firestaff-worker / N2",
+  "worktree": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228",
+  "source_base": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "requested_sources": [
+    "MOVESENS.C",
+    "MOVE.C",
+    "MOVEOBJ.C",
+    "MOVESEN2.C"
+  ],
+  "available_sources": [
+    "MOVESENS.C"
+  ],
+  "missing_sources": [
+    "MOVE.C",
+    "MOVEOBJ.C",
+    "MOVESEN2.C"
+  ],
+  "status": "partial_blocked_missing_requested_sources",
+  "scope_note": "Only MOVESENS.C exists at the requested ReDMCSB Source path; broader source tree contains no MOVE.C, MOVEOBJ.C, or MOVESEN2.C. Movement lock probe therefore uses MOVESENS.C plus call-site/draw-loop evidence from CLIKMENU.C, COMMAND.C, and GAMELOOP.C in the same source directory.",
+  "movement_command_to_state_collision_draw_sequence": [
+    {
+      "step": "command_gate",
+      "file": "COMMAND.C",
+      "function": "command queue processing around movement commands",
+      "lines": "2095-2100",
+      "quote": "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command; if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || ...)) { /* If movement is disabled */ ... F0360_COMMAND_ProcessPendingClick();",
+      "inference": "Queued movement commands C003..C006 are ignored/deferred while party movement cooldown or projectile movement cooldown blocks the current relative direction."
+    },
+    {
+      "step": "movement_command_mapping",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "lines": "224-233,256,269-270",
+      "quote": "static int16_t G0465_ai_Graphic561_MovementArrowToStepForwardCount[4] = { 1, 0, -1, 0 }; static int16_t G0466_ai_Graphic561_MovementArrowToStepRightCount[4] = { 0, 1, 0, -1 }; ... AL1118_ui_MovementArrowIndex = P0735_ui_Command - C003_COMMAND_MOVE_FORWARD; ... F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(...);",
+      "inference": "Commands map to forward/right/back/left relative step vectors, then convert party direction plus relative vector into target map coordinates."
+    },
+    {
+      "step": "destination_collision_static_geometry",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "lines": "278-289",
+      "quote": "L1117_B_MovementBlocked = C0_FALSE; if (L1116_i_SquareType == C00_ELEMENT_WALL) { L1117_B_MovementBlocked = C1_TRUE; } else { if (L1116_i_SquareType == C04_ELEMENT_DOOR) { ... } else { if (L1116_i_SquareType == C06_ELEMENT_FAKEWALL) { ... } } }",
+      "inference": "Party movement pre-check blocks walls, non-open/non-destroyed doors, and closed non-imaginary fake walls before calling the general move routine."
+    },
+    {
+      "step": "destination_collision_creature",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "lines": "291-323",
+      "quote": "if (L1117_B_MovementBlocked = (F0175_GROUP_GetThing(L1121_i_MapX, L1122_i_MapY) != C0xFFFE_THING_ENDOFLIST)) { F0209_GROUP_ProcessEvents29to41(...); } ... if (L1117_B_MovementBlocked) { F0357_COMMAND_DiscardAllInput(); ... return; }",
+      "inference": "If champions exist, a group on the target square blocks party movement and triggers a faster creature reaction; blocked moves discard queued input and return without moving."
+    },
+    {
+      "step": "state_transition_move_call",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "lines": "325-329,345-346",
+      "quote": "if (L1123_B_StairsSquare) { F0267_MOVE_GetMoveResult_CPSCE(..., L1121_i_MapX, L1122_i_MapY); } else { F0267_MOVE_GetMoveResult_CPSCE(..., G0306_i_PartyMapX, G0307_i_PartyMapY, L1121_i_MapX, L1122_i_MapY); } ... G0310_i_DisabledMovementTicks = AL1115_ui_Ticks; G0311_i_ProjectileDisabledMovementTicks = 0;",
+      "inference": "Allowed moves delegate actual source/destination sensor/list state transition to F0267, then set movement cooldown from living champions movement ticks."
+    },
+    {
+      "step": "move_result_state_mutation",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "lines": "438-451,738-741",
+      "quote": "if (P0560_i_DestinationMapX >= 0) { ... if (P0557_T_Thing == C0xFFFF_THING_PARTY) { G0306_i_PartyMapX = P0560_i_DestinationMapX; G0307_i_PartyMapY = P0561_i_DestinationMapY; ... L0716_ui_Direction = G0308_i_PartyDirection; } ... G0397_i_MoveResultMapX = P0560_i_DestinationMapX; ... G0401_ui_MoveResultCell = M011_CELL(P0557_T_Thing);",
+      "inference": "F0267 mutates party coordinates immediately for party moves and records final move-result map/cell outputs for projectiles/groups after chained effects."
+    },
+    {
+      "step": "source_sensors_departure",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "lines": "799-807",
+      "quote": "if (P0558_i_SourceMapX >= 0) { if (P0557_T_Thing == C0xFFFF_THING_PARTY) { F0276_SENSOR_ProcessThingAdditionOrRemoval(..., C0_FALSE); } else { ... F0276_SENSOR_ProcessThingAdditionOrRemoval(..., C0_FALSE); } }",
+      "inference": "Departure sensors/removal are processed after final destination resolution, but before destination addition."
+    },
+    {
+      "step": "destination_sensors_and_group_collision",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "lines": "810-822,830-844,869-873,892-897",
+      "quote": "if (P0557_T_Thing == C0xFFFF_THING_PARTY) { ... if ((P0557_T_Thing = F0175_GROUP_GetThing(...)) != C0xFFFE_THING_ENDOFLIST) { ... F0189_GROUP_Delete(...); } ... F0276_SENSOR_ProcessThingAdditionOrRemoval(..., C1_TRUE); } ... if ... party square or over another group ... F0265_MOVE_CreateEvent60To61_MoveGroup(...); return C1_TRUE; ... F0276_SENSOR_ProcessThingAdditionOrRemoval(..., C1_TRUE);",
+      "inference": "Arrival state processes destination additions/sensors; party entering a group square deletes/drops the group, while group moving into party/another group queues delayed move event instead."
+    },
+    {
+      "step": "chained_teleporter_pit_resolution",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "lines": "469-493,505-531,538-565,574-606",
+      "quote": "for (L0728_i_ChainedMoveCount = 1000; --L0728_i_ChainedMoveCount; ) ... if ... C05_ELEMENT_TELEPORTER ... P0560_i_DestinationMapX = L0712_ps_Teleporter->TargetMapX; ... if (L0712_ps_Teleporter->AbsoluteRotation) { F0284_CHAMPION_SetPartyDirection(...); } ... if ... C02_ELEMENT_PIT ... L0715_ui_MapIndexDestination = F0154_DUNGEON_GetLocationAfterLevelChange(...); ... G0306_i_PartyMapX = P0560_i_DestinationMapX;",
+      "inference": "F0267 resolves chained teleporters and open pits before writing final result/sensor transitions, including party direction changes and level changes."
+    },
+    {
+      "step": "draw_sequence_normal_loop",
+      "file": "GAMELOOP.C",
+      "function": "F0028_MAIN_GameLoop",
+      "lines": "80-90,150-151",
+      "quote": "if (!G0423_i_InventoryChampionOrdinal && !G0300_B_PartyIsResting) { ... F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY); ... if (G0310_i_DisabledMovementTicks) { G0310_i_DisabledMovementTicks--; }",
+      "inference": "Normal dungeon view draws in the main loop after timeline processing, using current party direction/coords, while movement cooldown ticks down once per loop."
+    },
+    {
+      "step": "draw_sequence_falling_special_case",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "lines": "445-450,539-556",
+      "quote": "L0723_B_DrawDungeonViewWhileFalling = !G0423_i_InventoryChampionOrdinal && !G0300_B_PartyIsResting; ... if (L0723_B_DrawDungeonViewWhileFalling) { ... F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, P0560_i_DestinationMapX, P0561_i_DestinationMapY); }",
+      "inference": "During pit falls, F0267 may draw intermediate dungeon views inline instead of waiting for the normal main-loop draw."
+    }
+  ],
+  "blockers": [
+    "Requested files MOVE.C, MOVEOBJ.C, MOVESEN2.C are absent from the specified ReDMCSB Source directory and absent under ReDMCSB_WIP20210206 by case-insensitive filename search."
+  ]
+}
