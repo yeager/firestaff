@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import json
+import os
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path('/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source')
+
+
+def redmcsb_source_root() -> Path:
+    candidates = []
+    if os.environ.get('FIRESTAFF_REDMCSB_SOURCE'):
+        candidates.append(Path(os.environ['FIRESTAFF_REDMCSB_SOURCE']).expanduser())
+    candidates.extend([
+        Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source',
+        Path('/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'),
+    ])
+    for candidate in candidates:
+        if (candidate / 'DUNGEON.C').exists() and (candidate / 'GAMELOOP.C').exists():
+            return candidate
+    raise SystemExit('error: ReDMCSB source root not found; set FIRESTAFF_REDMCSB_SOURCE')
+
+
+SOURCE = redmcsb_source_root()
 EVIDENCE = ROOT / 'parity-evidence/verification/dm1_v2_camera_controller_source_lock.json'
 REQUIRED = [
     (SOURCE / 'DUNGEON.C', 'G0233_ai_Graphic559_DirectionToStepEastCount', 35),
