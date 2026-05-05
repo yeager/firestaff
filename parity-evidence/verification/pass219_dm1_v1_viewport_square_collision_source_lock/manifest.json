@@ -1,0 +1,29 @@
+{
+  "command": "scripts/verify_dm1_v1_viewport_square_collision_source_lock.py --json",
+  "files": [
+    {
+      "bytes": 1803,
+      "path": "parity-evidence/verification/pass219_dm1_v1_viewport_square_collision_source_lock/README.md",
+      "sha256": "de748aed0b403fdd9ac6166152c4c789d07e180c346678e5c07a27e4e3d32039"
+    },
+    {
+      "bytes": 0,
+      "path": "parity-evidence/verification/pass219_dm1_v1_viewport_square_collision_source_lock/source_gate.err",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2,
+      "path": "parity-evidence/verification/pass219_dm1_v1_viewport_square_collision_source_lock/source_gate.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "bytes": 3062,
+      "path": "parity-evidence/verification/pass219_dm1_v1_viewport_square_collision_source_lock/source_gate.out",
+      "sha256": "c181e04e13f8772d99e53455d6cbca7fa3d43e7e5dd19775fe2f6e86aea0b7e3"
+    }
+  ],
+  "name": "dm1_v1_viewport_square_collision_source_lock",
+  "pass": 219,
+  "sourceGateExit": 0,
+  "status": "SOURCE_LOCKED_BLOCKER_RECORDED"
+}

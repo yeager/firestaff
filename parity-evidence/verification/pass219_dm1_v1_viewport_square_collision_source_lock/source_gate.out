@@ -1,0 +1,64 @@
+{
+  "checks": [
+    {
+      "function": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "id": "relative-cell-coordinates-shared-by-viewport-and-movement",
+      "missing": [],
+      "passed": true,
+      "source": "DUNGEON.C:1371-1418",
+      "why": "Viewport cells and movement targets share F0150 relative-coordinate math, so visual cells must be resolved in the same map coordinate frame as collision."
+    },
+    {
+      "function": "F0151_DUNGEON_GetSquare",
+      "id": "square-byte-query-is-real-map-data-with-bounds-wall",
+      "missing": [],
+      "passed": true,
+      "source": "DUNGEON.C:1423-1455",
+      "why": "The authoritative square byte comes from G0271_ppuc_CurrentMapData; out-of-bounds viewport/collision probes degrade to wall squares."
+    },
+    {
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport-visible-cells-use-relative-map-coordinates",
+      "missing": [],
+      "passed": true,
+      "source": "DUNVIEW.C:8464-8544",
+      "why": "F0128 enumerates visible cells from party coordinates through F0150, then passes concrete map X/Y into each square draw routine."
+    },
+    {
+      "function": "F0172_DUNGEON_SetSquareAspect",
+      "id": "square-aspect-promotes-square-byte-to-visible-element-state",
+      "missing": [],
+      "passed": true,
+      "source": "DUNGEON.C:2518-2720",
+      "why": "DUNVIEW draw routines consume square aspects that are built from the same square byte used for walls, pits, fakewalls, doors, and door state."
+    },
+    {
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "movement-collision-target-uses-same-relative-square-byte",
+      "missing": [],
+      "passed": true,
+      "source": "CLIKMENU.C:264-332",
+      "why": "Party movement blocks/passability are computed from the same F0150/F0151 target square used by viewport visible-cell coordinates."
+    },
+    {
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "move-result-chain-rechecks-destination-square-state",
+      "missing": [],
+      "passed": true,
+      "source": "MOVESENS.C:474-540",
+      "why": "After collision permits a move, MOVESENS follows teleporter/pit chains by rereading destination square bytes and mutating party X/Y from that state."
+    },
+    {
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport-present-happens-after-map-backed-draw",
+      "missing": [],
+      "passed": true,
+      "source": "DRAWVIEW.C:709-900",
+      "why": "The final viewport blit presents the buffer only after DUNVIEW has resolved and drawn map-backed visible cells."
+    }
+  ],
+  "gate": "dm1_v1_viewport_square_collision_source_lock",
+  "implication": "Firestaff viewport parity must route every visible square through real dungeon square data (or a probe equivalent to F0150/F0151/F0172) and must agree with movement collision checks for walls, doors, fakewalls, groups, pits, and teleporters.",
+  "passed": true,
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+}
