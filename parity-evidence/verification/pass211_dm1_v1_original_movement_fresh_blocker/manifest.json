@@ -1,0 +1,546 @@
+{
+  "artifacts": [
+    {
+      "name": "BLOCKER.md",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/BLOCKER.md",
+      "sha256": "4e5553c9556be1b3454d85314626076ba29b5a999a921e63d4b727f960e40c7e",
+      "sha256_prefix": "4e5553c9556b",
+      "size_bytes": 4937,
+      "tracked_payload": true
+    },
+    {
+      "name": "artifact-sizes.txt",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/artifact-sizes.txt",
+      "sha256": "e9e68d9f35925b9c8d94e2ca452c1e5e5c3d1569268580b63dc9b1ee98272ae4",
+      "sha256_prefix": "e9e68d9f3592",
+      "size_bytes": 3582,
+      "tracked_payload": true
+    },
+    {
+      "name": "dosbox-original-viewports.conf",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/dosbox-original-viewports.conf",
+      "sha256": "e16692e8552012ffaf7d052f49216c604448976b9b22ea2fec08b56ea9d3b78b",
+      "sha256_prefix": "e16692e85520",
+      "size_bytes": 701,
+      "tracked_payload": true
+    },
+    {
+      "name": "dosbox-original-viewports.log",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/dosbox-original-viewports.log",
+      "sha256": "29ead112373166fc54fae1a7380ac4c2794e72eb13d1419de2e46e14b726b2c6",
+      "sha256_prefix": "29ead1123731",
+      "size_bytes": 1653,
+      "tracked_payload": true
+    },
+    {
+      "name": "dosbox.pid",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/dosbox.pid",
+      "sha256": "381b2de3f60328bd24c2a070183842118f49431d1ec751aab734ebf0aeb1d1c8",
+      "sha256_prefix": "381b2de3f603",
+      "size_bytes": 8,
+      "tracked_payload": true
+    },
+    {
+      "name": "fires_000.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/fires_000.png",
+      "sha256": null,
+      "sha256_prefix": "17bd7e878157",
+      "size_bytes": 14920,
+      "tracked_payload": false
+    },
+    {
+      "name": "fires_001.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/fires_001.png",
+      "sha256": null,
+      "sha256_prefix": "fbeb1b82cd09",
+      "size_bytes": 5404,
+      "tracked_payload": false
+    },
+    {
+      "name": "fires_002.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/fires_002.png",
+      "sha256": null,
+      "sha256_prefix": "48ed3743ab6a",
+      "size_bytes": 8017,
+      "tracked_payload": false
+    },
+    {
+      "name": "fires_003.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/fires_003.png",
+      "sha256": null,
+      "sha256_prefix": "48ed3743ab6a",
+      "size_bytes": 8017,
+      "tracked_payload": false
+    },
+    {
+      "name": "fires_004.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/fires_004.png",
+      "sha256": null,
+      "sha256_prefix": "fbeb1b82cd09",
+      "size_bytes": 5404,
+      "tracked_payload": false
+    },
+    {
+      "name": "fires_005.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/fires_005.png",
+      "sha256": null,
+      "sha256_prefix": "48ed3743ab6a",
+      "size_bytes": 8017,
+      "tracked_payload": false
+    },
+    {
+      "name": "image0001-raw.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/image0001-raw.png",
+      "sha256": null,
+      "sha256_prefix": "17bd7e878157",
+      "size_bytes": 14920,
+      "tracked_payload": false
+    },
+    {
+      "name": "image0002-raw.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/image0002-raw.png",
+      "sha256": null,
+      "sha256_prefix": "fbeb1b82cd09",
+      "size_bytes": 5404,
+      "tracked_payload": false
+    },
+    {
+      "name": "image0003-raw.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/image0003-raw.png",
+      "sha256": null,
+      "sha256_prefix": "48ed3743ab6a",
+      "size_bytes": 8017,
+      "tracked_payload": false
+    },
+    {
+      "name": "image0004-raw.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/image0004-raw.png",
+      "sha256": null,
+      "sha256_prefix": "48ed3743ab6a",
+      "size_bytes": 8017,
+      "tracked_payload": false
+    },
+    {
+      "name": "image0005-raw.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/image0005-raw.png",
+      "sha256": null,
+      "sha256_prefix": "fbeb1b82cd09",
+      "size_bytes": 5404,
+      "tracked_payload": false
+    },
+    {
+      "name": "image0006-raw.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/image0006-raw.png",
+      "sha256": null,
+      "sha256_prefix": "48ed3743ab6a",
+      "size_bytes": 8017,
+      "tracked_payload": false
+    },
+    {
+      "name": "original-viewpoint-route-keys.log",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original-viewpoint-route-keys.log",
+      "sha256": "191e326d29f85a80fdaa68f3aa1f45eab5ca3ba909c30cc170c4f093d0e86961",
+      "sha256_prefix": "191e326d29f8",
+      "size_bytes": 615,
+      "tracked_payload": true
+    },
+    {
+      "name": "original_viewport_224x136_manifest.tsv",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_224x136_manifest.tsv",
+      "sha256": "07eb7a74aefe3b4530f7dfddff16323ff9342b6d99582d79100596f8a0231b28",
+      "sha256_prefix": "07eb7a74aefe",
+      "size_bytes": 979,
+      "tracked_payload": true
+    },
+    {
+      "name": "original_viewport_route_keys.swift",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_route_keys.swift",
+      "sha256": "d75290e9eaee033c1381d9586821a8a8c7db205615d3fd363d3bcf3b073dfdab",
+      "sha256_prefix": "d75290e9eaee",
+      "size_bytes": 5604,
+      "tracked_payload": true
+    },
+    {
+      "name": "original_viewport_route_keys_xdotool.sh",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_route_keys_xdotool.sh",
+      "sha256": "098a46e46392200143d98d26a1a8829be3a7f7e9917ec11502a5c4337be7391c",
+      "sha256_prefix": "098a46e46392",
+      "size_bytes": 3664,
+      "tracked_payload": true
+    },
+    {
+      "name": "original_viewport_shot_labels.tsv",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_shot_labels.tsv",
+      "sha256": "89b02911507bf31619dcb054122f94c08094071faf250ff302400875a7d5d3c0",
+      "sha256_prefix": "89b02911507b",
+      "size_bytes": 514,
+      "tracked_payload": true
+    },
+    {
+      "name": "pass80_original_frame_classifier.json",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/pass80_original_frame_classifier.json",
+      "sha256": "3aa30a62d07e8e559420439ea8c27a2bb27a155861e60894921c136706064cdc",
+      "sha256_prefix": "3aa30a62d07e",
+      "size_bytes": 13211,
+      "tracked_payload": true
+    },
+    {
+      "name": "pass80_original_frame_classifier.md",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/pass80_original_frame_classifier.md",
+      "sha256": "858525f040834b07a3660b7d5a7d1303cfcc16956d4d3f1d2738d6d23b4a237b",
+      "sha256_prefix": "858525f04083",
+      "size_bytes": 5181,
+      "tracked_payload": true
+    },
+    {
+      "name": "raw_manifest.tsv",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/raw_manifest.tsv",
+      "sha256": "30dc557be5943a2ff8313fdfd306ec1ac87f89b6549f8e045f22735db1d3b334",
+      "sha256_prefix": "30dc557be594",
+      "size_bytes": 1772,
+      "tracked_payload": true
+    },
+    {
+      "name": "01_ingame_start_original_viewport_224x136.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/01_ingame_start_original_viewport_224x136.png",
+      "sha256": null,
+      "sha256_prefix": "309e0026cd3e",
+      "size_bytes": 8327,
+      "tracked_payload": false
+    },
+    {
+      "name": "01_ingame_start_original_viewport_224x136.ppm",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm",
+      "sha256": null,
+      "sha256_prefix": "701689e73fc0",
+      "size_bytes": 91407,
+      "tracked_payload": false
+    },
+    {
+      "name": "02_ingame_turn_right_original_viewport_224x136.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
+      "sha256": null,
+      "sha256_prefix": "fa836712d73c",
+      "size_bytes": 5388,
+      "tracked_payload": false
+    },
+    {
+      "name": "02_ingame_turn_right_original_viewport_224x136.ppm",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm",
+      "sha256": null,
+      "sha256_prefix": "1e71ed879980",
+      "size_bytes": 91407,
+      "tracked_payload": false
+    },
+    {
+      "name": "03_ingame_move_forward_original_viewport_224x136.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
+      "sha256": null,
+      "sha256_prefix": "309e0026cd3e",
+      "size_bytes": 8327,
+      "tracked_payload": false
+    },
+    {
+      "name": "03_ingame_move_forward_original_viewport_224x136.ppm",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm",
+      "sha256": null,
+      "sha256_prefix": "701689e73fc0",
+      "size_bytes": 91407,
+      "tracked_payload": false
+    },
+    {
+      "name": "04_ingame_spell_panel_original_viewport_224x136.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png",
+      "sha256": null,
+      "sha256_prefix": "075f6739b8f4",
+      "size_bytes": 8327,
+      "tracked_payload": false
+    },
+    {
+      "name": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "sha256": null,
+      "sha256_prefix": "701689e73fc0",
+      "size_bytes": 91407,
+      "tracked_payload": false
+    },
+    {
+      "name": "05_ingame_after_cast_original_viewport_224x136.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png",
+      "sha256": null,
+      "sha256_prefix": "ffe4bff208b9",
+      "size_bytes": 5388,
+      "tracked_payload": false
+    },
+    {
+      "name": "05_ingame_after_cast_original_viewport_224x136.ppm",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm",
+      "sha256": null,
+      "sha256_prefix": "1e71ed879980",
+      "size_bytes": 91407,
+      "tracked_payload": false
+    },
+    {
+      "name": "06_ingame_inventory_panel_original_viewport_224x136.png",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png",
+      "sha256": null,
+      "sha256_prefix": "075f6739b8f4",
+      "size_bytes": 8327,
+      "tracked_payload": false
+    },
+    {
+      "name": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm",
+      "sha256": null,
+      "sha256_prefix": "701689e73fc0",
+      "size_bytes": 91407,
+      "tracked_payload": false
+    }
+  ],
+  "attempt_dir": "verification-screens/pass210-n2-original-movement-route-fresh",
+  "blocker": "Route synchronization/state readiness: screenshots are not yet provably aligned to party-control movement states; the sequence contains an entrance-menu frame and repeated raw/viewport hashes after movement commands.",
+  "classifier_gate": {
+    "capture_count": 6,
+    "class_counts": {
+      "dungeon_gameplay": 3,
+      "entrance_menu": 1,
+      "wall_closeup": 2
+    },
+    "command": "python3 tools/pass80_original_frame_classifier.py verification-screens/pass210-n2-original-movement-route-fresh --expected dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,dungeon_gameplay --fail-on-duplicates",
+    "dimensions_seen": {
+      "320x200": 6
+    },
+    "exit": 1,
+    "expected_sequence": [
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay"
+    ]
+  },
+  "duplicate_groups": {
+    "raw_frames": [
+      {
+        "count": 2,
+        "raw_frames": [
+          "image0002-raw.png",
+          "image0005-raw.png"
+        ],
+        "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+        "sha256_prefix": "fbeb1b82cd09",
+        "shots": [
+          2,
+          5
+        ]
+      },
+      {
+        "count": 3,
+        "raw_frames": [
+          "image0003-raw.png",
+          "image0004-raw.png",
+          "image0006-raw.png"
+        ],
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+        "sha256_prefix": "48ed3743ab6a",
+        "shots": [
+          3,
+          4,
+          6
+        ]
+      }
+    ],
+    "viewport_224x136_ppm": [
+      {
+        "count": 4,
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "sha256_prefix": "701689e73fc0",
+        "shots": [
+          1,
+          3,
+          4,
+          6
+        ],
+        "viewport_ppms": [
+          "01_ingame_start_original_viewport_224x136.ppm",
+          "03_ingame_move_forward_original_viewport_224x136.ppm",
+          "04_ingame_spell_panel_original_viewport_224x136.ppm",
+          "06_ingame_inventory_panel_original_viewport_224x136.ppm"
+        ]
+      },
+      {
+        "count": 2,
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "sha256_prefix": "1e71ed879980",
+        "shots": [
+          2,
+          5
+        ],
+        "viewport_ppms": [
+          "02_ingame_turn_right_original_viewport_224x136.ppm",
+          "05_ingame_after_cast_original_viewport_224x136.ppm"
+        ]
+      }
+    ]
+  },
+  "host_scope": "N2 / Firestaff-Worker-VM only",
+  "log_tail": {
+    "dosbox_original_viewports_log": [
+      "ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied",
+      "XIO:  fatal IO error 22 (Invalid argument) on X server \":102\"",
+      "      after 1715 requests (1715 known processed) with 1 events remaining.",
+      "DOSBox version 0.74-3",
+      "Copyright 2002-2019 DOSBox Team, published under GNU GPL.",
+      "---",
+      "CONFIG:Loading primary settings from config file /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/dosbox-original-viewports.conf",
+      "MIXER:No Sound Mode Selected.",
+      "ALSA:Can't open sequencer",
+      "MIDI:Opened device:none",
+      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_000.png",
+      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_001.png",
+      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_002.png",
+      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_003.png",
+      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_004.png",
+      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_005.png"
+    ],
+    "original_viewpoint_route_keys_log": [
+      "route-token wait:7000",
+      "route-token enter",
+      "route-token wait:1500",
+      "route-token one",
+      "route-token wait:1500",
+      "route-token click:276,140",
+      "click-mapped 276,140 -> window-relative 553,281 window=640x400 origin=320,312",
+      "route-token wait:1500",
+      "route-token one",
+      "route-token wait:2000",
+      "route-token shot:start",
+      "route-token kp4",
+      "route-token wait:1200",
+      "route-token shot:turn_left",
+      "route-token kp6",
+      "route-token wait:1200",
+      "route-token shot:turn_right",
+      "route-token kp8",
+      "route-token wait:1200",
+      "route-token shot:forward",
+      "route-token kp4",
+      "route-token wait:1200",
+      "route-token shot:turn_left_2",
+      "route-token kp6",
+      "route-token wait:1200",
+      "route-token shot:post_redraw"
+    ]
+  },
+  "non_claims": [
+    "No PNG/PPM payload is committed by this manifest.",
+    "No original-vs-Firestaff pixel parity claim.",
+    "No DANNESBURK use.",
+    "No push.",
+    "No OpenAI API key, Sonnet, q3.6, or qwen3.6 use."
+  ],
+  "repo": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228",
+  "route_events": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:2000 shot:start kp4 wait:1200 shot:turn_left kp6 wait:1200 shot:turn_right kp8 wait:1200 shot:forward kp4 wait:1200 shot:turn_left_2 kp6 wait:1200 shot:post_redraw",
+  "schema": "firestaff.parity_evidence.verification.pass211_dm1_v1_original_movement_fresh_blocker.v1",
+  "shots": [
+    {
+      "classification": "entrance_menu",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "raw_frame": "image0001-raw.png",
+      "raw_sha256": "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8",
+      "raw_sha256_prefix": "17bd7e878157",
+      "raw_size_bytes": 14920,
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "route_label": "start",
+      "route_token": "shot:start",
+      "shot": 1,
+      "viewport_ppm": "01_ingame_start_original_viewport_224x136.ppm",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "viewport_size_bytes": 91407
+    },
+    {
+      "classification": "wall_closeup",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "raw_frame": "image0002-raw.png",
+      "raw_sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+      "raw_sha256_prefix": "fbeb1b82cd09",
+      "raw_size_bytes": 5404,
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "route_label": "turn_left",
+      "route_token": "shot:turn_left",
+      "shot": 2,
+      "viewport_ppm": "02_ingame_turn_right_original_viewport_224x136.ppm",
+      "viewport_sha256_prefix": "1e71ed879980",
+      "viewport_size_bytes": 91407
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": true,
+      "raw_frame": "image0003-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "raw_sha256_prefix": "48ed3743ab6a",
+      "raw_size_bytes": 8017,
+      "reason": "viewport content with mostly dark in-game right column",
+      "route_label": "turn_right",
+      "route_token": "shot:turn_right",
+      "shot": 3,
+      "viewport_ppm": "03_ingame_move_forward_original_viewport_224x136.ppm",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "viewport_size_bytes": 91407
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": true,
+      "raw_frame": "image0004-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "raw_sha256_prefix": "48ed3743ab6a",
+      "raw_size_bytes": 8017,
+      "reason": "viewport content with mostly dark in-game right column",
+      "route_label": "forward",
+      "route_token": "shot:forward",
+      "shot": 4,
+      "viewport_ppm": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "viewport_size_bytes": 91407
+    },
+    {
+      "classification": "wall_closeup",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "raw_frame": "image0005-raw.png",
+      "raw_sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+      "raw_sha256_prefix": "fbeb1b82cd09",
+      "raw_size_bytes": 5404,
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "route_label": "turn_left_2",
+      "route_token": "shot:turn_left_2",
+      "shot": 5,
+      "viewport_ppm": "05_ingame_after_cast_original_viewport_224x136.ppm",
+      "viewport_sha256_prefix": "1e71ed879980",
+      "viewport_size_bytes": 91407
+    },
+    {
+      "classification": "dungeon_gameplay",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": true,
+      "raw_frame": "image0006-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "raw_sha256_prefix": "48ed3743ab6a",
+      "raw_size_bytes": 8017,
+      "reason": "viewport content with mostly dark in-game right column",
+      "route_label": "post_redraw",
+      "route_token": "shot:post_redraw",
+      "shot": 6,
+      "viewport_ppm": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "viewport_size_bytes": 91407
+    }
+  ],
+  "source_summary": "Fresh N2 movement-focused DM1 V1 original DOSBox run. Images/PPMs remain untracked; this manifest preserves names, sizes, sha256 prefixes/full hashes where useful, classifier labels, duplicate groups, and log tail.",
+  "status": "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE"
+}
