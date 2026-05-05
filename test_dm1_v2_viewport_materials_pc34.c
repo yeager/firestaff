@@ -32,6 +32,39 @@ static void test_source_locked_dimensions_and_bands(void) {
     CHECK(dm1_v2_vp_material_at(223, 135) == DM1_V2_VIEW_MATERIAL_FLOOR);
 }
 
+static void test_wall_zones_clipping_occlusion_and_draw_order(void) {
+    const DM1_V2_WallZone *d3l = dm1_v2_vp_wall_zone(DM1_V2_WALL_ZONE_D3L);
+    const DM1_V2_WallZone *d3c = dm1_v2_vp_wall_zone(DM1_V2_WALL_ZONE_D3C);
+    const DM1_V2_WallZone *d1c = dm1_v2_vp_wall_zone(DM1_V2_WALL_ZONE_D1C);
+    const DM1_V2_WallZone *d0c = dm1_v2_vp_wall_zone(DM1_V2_WALL_ZONE_D0C);
+    DM1_V2_Rect r;
+
+    CHECK(dm1_v2_vp_wall_zone((DM1_V2_WallZoneId)-1) == NULL);
+    CHECK(dm1_v2_vp_wall_zone((DM1_V2_WallZoneId)DM1_V2_WALL_ZONE_COUNT) == NULL);
+    CHECK(dm1_v2_vp_wall_zone_clip(DM1_V2_WALL_ZONE_D3C, NULL) == 0);
+
+    /* ReDMCSB DUNVIEW.C:581-593 G0163 wall frames, plus DEFS.H:4042-4057 zones. */
+    CHECK(d3c != NULL);
+    CHECK(d3c->x1 == 74 && d3c->x2 == 149 && d3c->y1 == 25 && d3c->y2 == 75);
+    CHECK(d3c->byteWidth == 64 && d3c->height == 51 && d3c->blitX == 18);
+    CHECK(d3c->sourceZone == 704);
+
+    CHECK(d3l != NULL);
+    CHECK(d3l->depth == 3 && d3l->lane == -1 && d3l->drawOrder == 0);
+    CHECK(d0c != NULL);
+    CHECK(d0c->sourceZone == 715 && d0c->drawOrder == 11);
+
+    CHECK(dm1_v2_vp_wall_zone_clip(DM1_V2_WALL_ZONE_D0C, &r) == 1);
+    CHECK(r.x1 == 0 && r.y1 == 0 && r.x2 == 223 && r.y2 == 135);
+
+    /* ReDMCSB F0128 draws D1C after D3C, so overlapping pixels are front-occluded. */
+    CHECK(d1c != NULL);
+    CHECK(d1c->drawOrder > d3c->drawOrder);
+    CHECK(dm1_v2_vp_wall_zone_occludes(DM1_V2_WALL_ZONE_D1C, DM1_V2_WALL_ZONE_D3C) == 1);
+    CHECK(dm1_v2_vp_wall_zone_occludes(DM1_V2_WALL_ZONE_D3C, DM1_V2_WALL_ZONE_D1C) == 0);
+    CHECK(dm1_v2_vp_wall_zone_occludes(DM1_V2_WALL_ZONE_D0L, DM1_V2_WALL_ZONE_D3R) == 0);
+}
+
 static void test_field_aspects_and_wall_defaults(void) {
     const DM1_V2_FieldAspect *d0c = dm1_v2_vp_field_aspect(DM1_V2_FIELD_D0C);
     const DM1_V2_FieldAspect *d0l = dm1_v2_vp_field_aspect(DM1_V2_FIELD_D0L);
@@ -72,6 +105,7 @@ static void test_field_aspects_and_wall_defaults(void) {
 
 int main(void) {
     test_source_locked_dimensions_and_bands();
+    test_wall_zones_clipping_occlusion_and_draw_order();
     test_field_aspects_and_wall_defaults();
 
     if (failures) {

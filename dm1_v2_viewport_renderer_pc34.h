@@ -18,6 +18,7 @@ extern "C" {
 #define DM1_V2_FOG_LEVELS 8
 #define DM1_V2_FIELD_ASPECT_COUNT 12
 #define DM1_V2_WALL_SET_COUNT 15
+#define DM1_V2_WALL_ZONE_COUNT 12
 
 typedef struct {
     uint8_t r;
@@ -60,6 +61,43 @@ typedef struct {
     uint8_t bitPlaneWordCount;
 } DM1_V2_FieldAspect;
 
+typedef enum {
+    DM1_V2_WALL_ZONE_D3C = 0,
+    DM1_V2_WALL_ZONE_D3L,
+    DM1_V2_WALL_ZONE_D3R,
+    DM1_V2_WALL_ZONE_D2C,
+    DM1_V2_WALL_ZONE_D2L,
+    DM1_V2_WALL_ZONE_D2R,
+    DM1_V2_WALL_ZONE_D1C,
+    DM1_V2_WALL_ZONE_D1L,
+    DM1_V2_WALL_ZONE_D1R,
+    DM1_V2_WALL_ZONE_D0C,
+    DM1_V2_WALL_ZONE_D0L,
+    DM1_V2_WALL_ZONE_D0R
+} DM1_V2_WallZoneId;
+
+typedef struct {
+    uint8_t x1;
+    uint8_t x2;
+    uint8_t y1;
+    uint8_t y2;
+    uint8_t byteWidth;
+    uint8_t height;
+    uint8_t blitX;
+    uint8_t blitY;
+    uint16_t sourceZone;
+    uint8_t depth;
+    int8_t lane;
+    uint8_t drawOrder;
+} DM1_V2_WallZone;
+
+typedef struct {
+    int x1;
+    int y1;
+    int x2;
+    int y2;
+} DM1_V2_Rect;
+
 typedef struct {
     int16_t scrollOffX;
     int16_t scrollOffY;
@@ -93,6 +131,9 @@ int dm1_v2_vp_source_byte_width(void);
 DM1_V2_ViewMaterial dm1_v2_vp_material_at(int x, int y);
 const DM1_V2_FieldAspect* dm1_v2_vp_field_aspect(DM1_V2_FieldAspectId id);
 int16_t dm1_v2_vp_wall_set_default(int idx);
+const DM1_V2_WallZone* dm1_v2_vp_wall_zone(DM1_V2_WallZoneId id);
+int dm1_v2_vp_wall_zone_clip(DM1_V2_WallZoneId id, DM1_V2_Rect* outRect);
+int dm1_v2_vp_wall_zone_occludes(DM1_V2_WallZoneId front, DM1_V2_WallZoneId back);
 
 void dm1_v2_vp_init(DM1_V2_ViewportState* vp);
 void dm1_v2_vp_begin_scroll(DM1_V2_ViewportState* vp, int dx, int dy, int speed);

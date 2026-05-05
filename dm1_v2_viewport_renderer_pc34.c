@@ -13,9 +13,14 @@ static uint8_t clamp_u8(int val) {
  * ReDMCSB WIP20210206 anchors:
  *   DEFS.H:2407 names C000_DERIVED_BITMAP_VIEWPORT as a 224x136 derived bitmap.
  *   DEFS.H:2478/2484 defines C112_BYTE_WIDTH_VIEWPORT and C136_HEIGHT_VIEWPORT.
+ *   DUNVIEW.C:581-593 defines G0163_aauc_Graphic558_Frame_Walls clip/blit zones
+ *     for D3C..D0R as {X1, X2, Y1, Y2, ByteWidth, Height, X, Y}.
  *   DUNVIEW.C:734-753 defines G0188_aauc_Graphic558_FieldAspects for D3C..D0R.
  *   DUNVIEW.C:2968-2971 clears 37 black lines, copies a 224x29 ceiling band,
  *     then copies a 224x70 floor band.
+ *   DUNVIEW.C:8318-8542 F0128 draws visible squares back-to-front; the wall-zone
+ *     drawOrder below follows its D3L/D3R/D3C, D2L/D2R/D2C, D1L/D1R/D1C,
+ *     D0L/D0R/D0C order for same-generation V2 clipping/occlusion checks.
  * Existing V1 parity module dm1_v1_viewport_3d_pc34_compat.c keeps the original
  * draw behavior; this table is V2-only metadata for the modern material pass.
  */
@@ -38,6 +43,22 @@ static const int16_t s_wall_set_default[DM1_V2_WALL_SET_COUNT] = {
     -17, -16, -15, -14, -13,
      -9,  -8, -12, -11, -10,
      -4,  -3,  -7,  -6,  -5
+};
+
+static const DM1_V2_WallZone s_wall_zones[DM1_V2_WALL_ZONE_COUNT] = {
+    /* x1, x2, y1, y2, byteWidth, height, blitX, blitY, sourceZone, depth, lane, drawOrder */
+    { 74, 149, 25,  75,  64,  51,  18, 0, 704, 3,  0,  2 }, /* D3C */
+    {  0,  83, 25,  75,  64,  51,  32, 0, 705, 3, -1,  0 }, /* D3L */
+    {139, 223, 25,  75,  64,  51,   0, 0, 706, 3,  1,  1 }, /* D3R */
+    { 60, 163, 20,  90,  72,  71,  16, 0, 709, 2,  0,  5 }, /* D2C */
+    {  0,  74, 20,  90,  72,  71,  61, 0, 710, 2, -1,  3 }, /* D2L */
+    {149, 223, 20,  90,  72,  71,   0, 0, 711, 2,  1,  4 }, /* D2R */
+    { 32, 191,  9, 119, 128, 111,  48, 0, 712, 1,  0,  8 }, /* D1C */
+    {  0,  63,  9, 119, 128, 111, 192, 0, 713, 1, -1,  6 }, /* D1L */
+    {160, 223,  9, 119, 128, 111,   0, 0, 714, 1,  1,  7 }, /* D1R */
+    {  0, 223,  0, 135,   0,   0,   0, 0, 715, 0,  0, 11 }, /* D0C */
+    {  0,  31,  0, 135,  16, 136,   0, 0, 716, 0, -1,  9 }, /* D0L */
+    {192, 223,  0, 135,  16, 136,   0, 0, 717, 0,  1, 10 }  /* D0R */
 };
 
 int dm1_v2_vp_source_width(void) {
@@ -76,6 +97,33 @@ const DM1_V2_FieldAspect* dm1_v2_vp_field_aspect(DM1_V2_FieldAspectId id) {
 int16_t dm1_v2_vp_wall_set_default(int idx) {
     if (idx < 0 || idx >= DM1_V2_WALL_SET_COUNT) return 0;
     return s_wall_set_default[idx];
+}
+
+const DM1_V2_WallZone* dm1_v2_vp_wall_zone(DM1_V2_WallZoneId id) {
+    if (id < 0 || id >= DM1_V2_WALL_ZONE_COUNT) return NULL;
+    return &s_wall_zones[id];
+}
+
+int dm1_v2_vp_wall_zone_clip(DM1_V2_WallZoneId id, DM1_V2_Rect* outRect) {
+    const DM1_V2_WallZone* zone = dm1_v2_vp_wall_zone(id);
+    if (!zone || !outRect) return 0;
+
+    outRect->x1 = zone->x1 < DM1_V2_VIEWPORT_W ? zone->x1 : DM1_V2_VIEWPORT_W - 1;
+    outRect->y1 = zone->y1 < DM1_V2_VIEWPORT_H ? zone->y1 : DM1_V2_VIEWPORT_H - 1;
+    outRect->x2 = zone->x2 < DM1_V2_VIEWPORT_W ? zone->x2 : DM1_V2_VIEWPORT_W - 1;
+    outRect->y2 = zone->y2 < DM1_V2_VIEWPORT_H ? zone->y2 : DM1_V2_VIEWPORT_H - 1;
+    return outRect->x1 <= outRect->x2 && outRect->y1 <= outRect->y2;
+}
+
+int dm1_v2_vp_wall_zone_occludes(DM1_V2_WallZoneId front, DM1_V2_WallZoneId back) {
+    DM1_V2_Rect a;
+    DM1_V2_Rect b;
+    const DM1_V2_WallZone* frontZone = dm1_v2_vp_wall_zone(front);
+    const DM1_V2_WallZone* backZone = dm1_v2_vp_wall_zone(back);
+    if (!frontZone || !backZone) return 0;
+    if (frontZone->drawOrder <= backZone->drawOrder) return 0;
+    if (!dm1_v2_vp_wall_zone_clip(front, &a) || !dm1_v2_vp_wall_zone_clip(back, &b)) return 0;
+    return a.x1 <= b.x2 && b.x1 <= a.x2 && a.y1 <= b.y2 && b.y1 <= a.y2;
 }
 
 void dm1_v2_vp_init(DM1_V2_ViewportState* vp) {
