@@ -34,7 +34,7 @@ SOURCE_RANGES = [
 
 FIRESTAFF_FILES = [
     {'path': ROOT / 'dm1_v1_input_command_queue_pc34_compat.c', 'claim': 'compat queue models lock, pending replay, movement-disabled gate, and dispatch fields', 'needles': ['queue->locked = 1;', 'is_move_command(result.command)', 'result.movementDisabledGate = 1;', 'process_pending_click(queue)', 'result.dispatchedMove = 1']},
-    {'path': ROOT / 'test_dm1_v1_command_movement_sensor_timing_pc34_compat.c', 'claim': 'integration probe covers successful movement side effects, blocked movement side-effect absence, and command gating', 'needles': ['mouse movement destination sensors processed', 'blocked movement skips enter/leave sensors', 'blocked movement skips timing update', 'disabled movement leaves command queued', 'projectile same-direction movement leaves command queued', 'turn bypasses movement gate']},
+    {'path': ROOT / 'test_dm1_v1_command_movement_sensor_timing_pc34_compat.c', 'claim': 'integration probe covers successful movement side effects, blocked movement side-effect absence, and command gating', 'needles': ['mouse movement destination sensors processed', 'blocked movement skips enter/leave sensors', 'blocked movement skips timing update', 'disabled movement leaves command queued', 'projectile same-direction movement leaves command queued', 'turn bypasses movement gate', 'empty-party group collision bug']},
     {'path': ROOT / 'tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py', 'claim': 'broader source-lock gate already ties command queue, movement legality, sensor order, and timing to Firestaff files', 'needles': ['COMMAND queue lock/gate order', 'CLIKMENU blocked-before-successful move pipeline order', 'MOVESENS result/timing/sensor order']},
 ]
 

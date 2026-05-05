@@ -459,6 +459,29 @@ int main(void)
         ok &= expect_int("core group block keeps source", party.mapX + party.mapY, 2);
     }
 
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
+    {
+        struct DungeonGroup_Compat group;
+        struct Dm1V1MovementCommandCoreResultPc34Compat core;
+        memset(&group, 0, sizeof(group));
+        group.next = THING_ENDOFLIST;
+        things.groups = &group;
+        things.groupCount = 1;
+        party.championCount = 0;
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("empty-party group collision bug queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("empty-party group collision bug processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
+        ok &= expect_int("empty-party group collision bug not blocked", core.movementBlocked, 0);
+        ok &= expect_int("empty-party group collision bug step applied", core.stepApplied, 1);
+        ok &= expect_int("empty-party group collision bug reaches group square x", party.mapX, 1);
+        ok &= expect_int("empty-party group collision bug reaches group square y", party.mapY, 0);
+        ok &= expect_int("empty-party group collision bug no scent", core.timing.scentRecorded, 0);
+        ok &= expect_int("empty-party group collision bug minimum cooldown", core.timing.disabledMovementTicks, 1);
+    }
+
     printf("dm1V1CommandMovementSensorTimingIntegrationOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
