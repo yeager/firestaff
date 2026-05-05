@@ -1,0 +1,62 @@
+Firestaff DM1 V1 viewport draw-order probe
+primary_source=ReDMCSB_WIP20210206/Toolchains/Common/Source
+locks=DUNVIEW.C:F0128/F0115/F0108,DRAWVIEW.C:F0097,VIEWPORT.C:F0564/F0566,VBLANK.C:F0577,CLIKVIEW.C:F0377,ACTIDRAW.C:F0385-F0387
+
+
+[dimensions]
+viewport_pixels=224x136 viewport_byte_width=112 screen=320x200 viewport_screen_y=33
+item native=16x14 D2=10x9 D3=8x7 via M078
+creature native=32x32 D2=20x20 D3=16x16 via M078
+
+[draw_sequence]
+000 frame=00 phase=vblank_wait        square=screen detail=F0097 waits next vertical blank before present         box=[  0,319,  0,199]
+001 frame=00 phase=background         square=viewport detail=F0098 floor+ceiling first, 224x136 base                box=[  0,223,  0,135]
+002 frame=00 phase=square_visit       square=D4L   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+003 frame=00 phase=square_visit       square=D4R   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+004 frame=00 phase=square_visit       square=D4C   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+005 frame=00 phase=square_visit       square=D3L2  detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+006 frame=00 phase=square_visit       square=D3R2  detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+007 frame=00 phase=square_visit       square=D3L   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+008 frame=00 phase=square_visit       square=D3R   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+009 frame=00 phase=square_visit       square=D3C   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+010 frame=00 phase=square_visit       square=D2L2  detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+011 frame=00 phase=square_visit       square=D2R2  detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+012 frame=00 phase=square_visit       square=D2L   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+013 frame=00 phase=square_visit       square=D2R   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+014 frame=00 phase=wall/door/field    square=D2C   detail=wall/door geometry before cell contents                box=[  0,223,  0,135]
+015 frame=00 phase=floor_ornament     square=D2C   detail=F0108 before F0115 objects                             box=[ 64,159, 85,119]
+016 frame=00 phase=item               square=D2C   detail=F0115 object pile item #1 shifted within same cell     box=[103,118,105,116]
+017 frame=00 phase=item               square=D2C   detail=F0115 object pile item #2 shifted within same cell     box=[110,125,102,113]
+018 frame=00 phase=creature           square=D2C   detail=F0115 one creature after all objects for processed cell box=[ 97,128, 90,121]
+019 frame=00 phase=projectiles        square=D2C   detail=F0115 restarts thing list after creature               box=[ 95,128, 70,100]
+020 frame=00 phase=explosions         square=D2C   detail=F0115 final square-level explosion pass                box=[ 80,143, 45,108]
+021 frame=00 phase=square_visit       square=D1L   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+022 frame=00 phase=square_visit       square=D1R   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+023 frame=00 phase=wall/door/field    square=D1C   detail=wall/door geometry before cell contents                box=[  0,223,  0,135]
+024 frame=00 phase=floor_ornament     square=D1C   detail=F0108 before F0115 objects                             box=[ 64,159, 85,119]
+025 frame=00 phase=item               square=D1C   detail=F0115 object pile item #1 shifted within same cell     box=[103,118,105,116]
+026 frame=00 phase=creature           square=D1C   detail=F0115 one creature after all objects for processed cell box=[ 97,128, 90,121]
+027 frame=00 phase=projectiles        square=D1C   detail=F0115 restarts thing list after creature               box=[ 95,128, 70,100]
+028 frame=00 phase=explosions         square=D1C   detail=F0115 final square-level explosion pass                box=[ 80,143, 45,108]
+029 frame=00 phase=square_visit       square=D0L   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+030 frame=00 phase=square_visit       square=D0R   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+031 frame=00 phase=square_visit       square=D0C   detail=F0128 back-to-front traversal slot                     box=[  0,223,  0,135]
+032 frame=00 phase=viewport_present   square=C007  detail=DRAWVIEW F0097 blits viewport zone; UI/action area separate box=[  0,223, 33,168]
+033 frame=00 phase=ui                 square=outside detail=ACTIDRAW/PANEL are outside viewport draw order         box=[224,319,  0,199]
+
+[boundaries]
+left_overflow clipped=[0,8,101,135] visible=1
+right_overflow clipped=[223,223,71,110] visible=0
+far_right_edge clipped=[223,223,71,110] visible=0
+
+[creature_animation]
+frame=0 anim_frame=0 path_blocked=0 movement_step=1 pose=front/side/back render=continues from ActiveGroup->Aspect/cell
+frame=1 anim_frame=1 path_blocked=0 movement_step=1 pose=front/side/back render=continues from ActiveGroup->Aspect/cell
+frame=2 anim_frame=2 path_blocked=0 movement_step=1 pose=front/side/back render=continues from ActiveGroup->Aspect/cell
+frame=3 anim_frame=3 path_blocked=1 movement_step=0 pose=front/side/back render=continues from ActiveGroup->Aspect/cell
+frame=4 anim_frame=0 path_blocked=1 movement_step=0 pose=front/side/back render=continues from ActiveGroup->Aspect/cell
+frame=5 anim_frame=1 path_blocked=0 movement_step=1 pose=attack render=continues from ActiveGroup->Aspect/cell
+frame=6 anim_frame=2 path_blocked=0 movement_step=1 pose=front/side/back render=continues from ActiveGroup->Aspect/cell
+frame=7 anim_frame=3 path_blocked=0 movement_step=1 pose=front/side/back render=continues from ActiveGroup->Aspect/cell
+
+[result] failures=0 events=34

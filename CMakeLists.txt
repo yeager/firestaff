@@ -230,6 +230,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_pro
     endif()
 endif()
 
+
+# DM1 V1 viewport draw-order evidence probe
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
+    add_executable(firestaff_dm1_v1_viewport_draw_order_probe probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_viewport_draw_order_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
