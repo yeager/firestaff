@@ -16,7 +16,10 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = REPO_ROOT / "assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json"
-DEFAULT_REDMCSB = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+DEFAULT_REDMCSB_CANDIDATES = (
+    Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+)
 ASSET_ID = "fs.v2.ui.viewport-base.frame"
 EXPECTED_WIDTH = 224
 EXPECTED_HEIGHT = 136
@@ -68,6 +71,13 @@ def load_asset(manifest_path: Path) -> dict[str, Any]:
     return matches[0]
 
 
+def default_redmcsb_source() -> Path:
+    for candidate in DEFAULT_REDMCSB_CANDIDATES:
+        if (candidate / "DEFS.H").is_file() and (candidate / "DUNVIEW.C").is_file():
+            return candidate
+    return DEFAULT_REDMCSB_CANDIDATES[0]
+
+
 def validate_source(redmcsb_source: Path) -> dict[str, int]:
     defs = read(redmcsb_source / "DEFS.H")
     dunview = read(redmcsb_source / "DUNVIEW.C")
@@ -84,6 +94,28 @@ def validate_source(redmcsb_source: Path) -> dict[str, int]:
     require(width == EXPECTED_WIDTH, f"computed viewport width changed: {byte_width} byte width -> {width} px")
     require(height == EXPECTED_HEIGHT, f"viewport height changed: {height}")
     return {"byteWidth": byte_width, "width": width, "height": height}
+
+
+def validate_v2_material_code(source_dims: dict[str, int]) -> None:
+    header = read(REPO_ROOT / "dm1_v2_viewport_renderer_pc34.h")
+    impl = read(REPO_ROOT / "dm1_v2_viewport_renderer_pc34.c")
+    require(f"#define DM1_V2_VIEWPORT_W {source_dims['width']}" in header, "V2 viewport width macro drifted")
+    require(f"#define DM1_V2_VIEWPORT_H {source_dims['height']}" in header, "V2 viewport height macro drifted")
+    require(f"#define DM1_V2_VIEWPORT_BYTE_W {source_dims['byteWidth']}" in header, "V2 viewport byte-width macro drifted")
+    for token in (
+        "DM1_V2_VIEW_MATERIAL_CEILING",
+        "DM1_V2_VIEW_MATERIAL_WALL",
+        "DM1_V2_VIEW_MATERIAL_FLOOR",
+        "dm1_v2_vp_material_at",
+        "dm1_v2_vp_field_aspect",
+        "dm1_v2_vp_wall_set_default",
+    ):
+        require(token in header, f"missing V2 viewport material API token {token}")
+    require("{0, 59, 0x8A, 0xFF, 224, 136,  0, 64}" in impl, "V2 D0C field aspect no longer matches DUNVIEW.C:751")
+    require("{0, 63, 0x0A, 0x83,  32, 136,  0, 64}" in impl, "V2 D0L field aspect no longer matches DUNVIEW.C:752")
+    require("{0, 63, 0x0A, 0x03,  32, 136,  0, 64}" in impl, "V2 D0R field aspect no longer matches DUNVIEW.C:753")
+    require("-17, -16, -15, -14, -13" in impl and "-4,  -3,  -7,  -6,  -5" in impl, "V2 wall-set defaults no longer match DUNVIEW.C G2107")
+    require("DM1_V2_VIEWPORT_FLOOR_Y" in impl and "DM1_V2_VIEWPORT_CEILING_H" in impl, "V2 material bands are no longer explicit")
 
 
 def validate_manifest_asset(asset: dict[str, Any], source_dims: dict[str, int]) -> None:
@@ -115,13 +147,14 @@ def validate_manifest_asset(asset: dict[str, Any], source_dims: dict[str, int]) 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    parser.add_argument("--redmcsb-source", type=Path, default=DEFAULT_REDMCSB)
+    parser.add_argument("--redmcsb-source", type=Path, default=default_redmcsb_source())
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
     source_dims = validate_source(args.redmcsb_source)
     asset = load_asset(args.manifest)
     validate_manifest_asset(asset, source_dims)
+    validate_v2_material_code(source_dims)
     result = {
         "assetId": ASSET_ID,
         "source": "ReDMCSB C000_DERIVED_BITMAP_VIEWPORT",

@@ -1,10 +1,81 @@
 #include "dm1_v2_viewport_renderer_pc34.h"
+#include <stddef.h>
 #include <string.h>
 
 static uint8_t clamp_u8(int val) {
     if (val < 0) return 0;
     if (val > 255) return 255;
     return (uint8_t)val;
+}
+
+/* Source-locked V2 viewport material metadata.
+ *
+ * ReDMCSB WIP20210206 anchors:
+ *   DEFS.H:2407 names C000_DERIVED_BITMAP_VIEWPORT as a 224x136 derived bitmap.
+ *   DEFS.H:2478/2484 defines C112_BYTE_WIDTH_VIEWPORT and C136_HEIGHT_VIEWPORT.
+ *   DUNVIEW.C:734-753 defines G0188_aauc_Graphic558_FieldAspects for D3C..D0R.
+ *   DUNVIEW.C:2968-2971 clears 37 black lines, copies a 224x29 ceiling band,
+ *     then copies a 224x70 floor band.
+ * Existing V1 parity module dm1_v1_viewport_3d_pc34_compat.c keeps the original
+ * draw behavior; this table is V2-only metadata for the modern material pass.
+ */
+static const DM1_V2_FieldAspect s_field_aspects[DM1_V2_FIELD_ASPECT_COUNT] = {
+    {0, 63, 0x8A, 0xFF,  76,  51,  0, 64}, /* D3C */
+    {0, 63, 0x0A, 0x80,  84,  51, 11, 64}, /* D3L */
+    {0, 63, 0x0A, 0x00,  85,  51,  0, 64}, /* D3R */
+    {0, 60, 0x8A, 0xFF, 104,  71,  0, 64}, /* D2C */
+    {0, 63, 0x0A, 0x81,  80,  71,  5, 64}, /* D2L, MEDIA488 PC */
+    {0, 63, 0x0A, 0x01,  80,  71,  0, 64}, /* D2R, MEDIA488 PC */
+    {0, 61, 0x8A, 0xFF, 160, 111,  0, 64}, /* D1C */
+    {0, 63, 0x0A, 0x82,  59, 111,  0, 64}, /* D1L */
+    {0, 63, 0x0A, 0x02,  59, 111,  0, 64}, /* D1R */
+    {0, 59, 0x8A, 0xFF, 224, 136,  0, 64}, /* D0C */
+    {0, 63, 0x0A, 0x83,  32, 136,  0, 64}, /* D0L */
+    {0, 63, 0x0A, 0x03,  32, 136,  0, 64}, /* D0R */
+};
+
+static const int16_t s_wall_set_default[DM1_V2_WALL_SET_COUNT] = {
+    -17, -16, -15, -14, -13,
+     -9,  -8, -12, -11, -10,
+     -4,  -3,  -7,  -6,  -5
+};
+
+int dm1_v2_vp_source_width(void) {
+    return DM1_V2_VIEWPORT_W;
+}
+
+int dm1_v2_vp_source_height(void) {
+    return DM1_V2_VIEWPORT_H;
+}
+
+int dm1_v2_vp_source_byte_width(void) {
+    return DM1_V2_VIEWPORT_BYTE_W;
+}
+
+DM1_V2_ViewMaterial dm1_v2_vp_material_at(int x, int y) {
+    if (x < 0 || x >= DM1_V2_VIEWPORT_W || y < 0 || y >= DM1_V2_VIEWPORT_H) {
+        return DM1_V2_VIEW_MATERIAL_OUT_OF_BOUNDS;
+    }
+    if (y < DM1_V2_VIEWPORT_CEILING_H) {
+        return DM1_V2_VIEW_MATERIAL_CEILING;
+    }
+    if (y < DM1_V2_VIEWPORT_BLACK_AREA_H) {
+        return DM1_V2_VIEW_MATERIAL_BLACK;
+    }
+    if (y >= DM1_V2_VIEWPORT_FLOOR_Y) {
+        return DM1_V2_VIEW_MATERIAL_FLOOR;
+    }
+    return DM1_V2_VIEW_MATERIAL_WALL;
+}
+
+const DM1_V2_FieldAspect* dm1_v2_vp_field_aspect(DM1_V2_FieldAspectId id) {
+    if (id < 0 || id >= DM1_V2_FIELD_ASPECT_COUNT) return NULL;
+    return &s_field_aspects[id];
+}
+
+int16_t dm1_v2_vp_wall_set_default(int idx) {
+    if (idx < 0 || idx >= DM1_V2_WALL_SET_COUNT) return 0;
+    return s_wall_set_default[idx];
 }
 
 void dm1_v2_vp_init(DM1_V2_ViewportState* vp) {

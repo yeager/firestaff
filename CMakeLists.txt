@@ -387,6 +387,10 @@ if(BUILD_TESTING)
         dm1_v2_movement_engine_pc34.c
         dm1_v2_viewport_renderer_pc34.c
     )
+    add_executable(test_dm1_v2_viewport_materials_pc34
+        test_dm1_v2_viewport_materials_pc34.c
+        dm1_v2_viewport_renderer_pc34.c
+    )
     add_executable(test_dm1_v2_camera_controller_pc34
         test_dm1_v2_camera_controller_pc34.c
         dm1_v2_camera_controller_pc34.c
@@ -403,6 +407,7 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(test_dm1_v2_movement_viewport_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_runtime_shell_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_camera_controller_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_movement_command_adapter_pc34 PRIVATE -Wall -Wextra -O2)
     endif()
@@ -418,6 +423,16 @@ if(BUILD_TESTING)
         NAME dm1_v2_runtime_shell_pc34
         COMMAND test_dm1_v2_runtime_shell_pc34
     )
+    add_test(
+        NAME dm1_v2_viewport_materials_pc34
+        COMMAND test_dm1_v2_viewport_materials_pc34
+    )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME dm1_v2_viewport_asset_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v2_viewport_asset_source_lock.py
+        )
+    endif()
     add_test(
         NAME dm1_v2_runtime_shell_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_runtime_shell_source_lock.py
