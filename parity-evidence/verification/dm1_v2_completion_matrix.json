@@ -29,7 +29,7 @@
     "dm1_v2_upscale_dry_run_validator"
   ],
   "errors": [],
-  "manifestCount": 14,
+  "manifestCount": 16,
   "matrix": [
     {
       "category": "support/achievements",
@@ -198,6 +198,6 @@
     "dm1_v2_upscale_dry_run_validator"
   ],
   "status": "passed",
-  "testCount": 7,
+  "testCount": 9,
   "toolCount": 17
 }
