@@ -1,0 +1,226 @@
+{
+  "schema": "firestaff.dm1_v1.movement_viewport_source_lock_suite_manifest.v1",
+  "status": "SOURCE_LOCK_SUITE_CONSOLIDATED_ORIGINAL_CAPTURE_STILL_BLOCKED",
+  "created_utc": "2026-05-05T22:00:00Z",
+  "repo_head": "origin/main@d8757e6",
+  "scope": {
+    "game": "Dungeon Master PC DM1 V1 / PC-34 compatibility lane",
+    "topics": [
+      "movement command queue and turn/step handlers",
+      "movement legality, collision, timing, sensor side effects",
+      "entry-to-dungeon movement/viewport handoff",
+      "viewport world draw, wall draw order, occlusion, square/collision state",
+      "post-command redraw instrumentation requirements"
+    ],
+    "artifact_policy": "JSON/Markdown evidence only; no PNG/PPM capture artifacts in this manifest pass."
+  },
+  "source_roots": {
+    "redmcsb_primary": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "dm1_canonical_data": "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+  },
+  "coverage": [
+    {
+      "area": "Movement command dispatch and legality",
+      "ctest_targets": [
+        "dm1_v1_movement_core_pc34_compat",
+        "dm1_v1_movement_timing_pc34_compat",
+        "dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "dm1_v1_movement_pipeline_pc34_compat",
+        "dm1_v1_movement_source_lock",
+        "dm1_v1_input_command_queue_source_lock",
+        "dm1_v1_movement_timing_source_lock",
+        "dm1_v1_command_movement_sensor_timing_source_lock",
+        "dm1_v1_party_movement_sensor_order_source_lock",
+        "dm1_v1_movement_command_gate_source_lock",
+        "dm1_v1_projectile_movement_interlock_source_lock"
+      ],
+      "source_locks": [
+        {
+          "file": "tools/verify_dm1_v1_movement_source_lock.py",
+          "redmcsb_citations": [
+            "COMMAND.C command ids C001/C002/C003/C004/C005/C006/C080/C083",
+            "CLIKMENU.C movement-arrow index and wall blocking checks",
+            "MOVESENS.C party move result mutation for C0xFFFF_THING_PARTY"
+          ],
+          "checks_firestaff_contracts": [
+            "movement_command_disabled_redmcsb_compat",
+            "redmcsb_party_move_cooldown_ticks_compat",
+            "empty-party BUG0_85 behavior is preserved"
+          ]
+        },
+        {
+          "file": "tools/verify_dm1_v1_entry_movement_viewport_source_lock.py",
+          "redmcsb_citations": [
+            "relative movement rotates facing before applying source vectors",
+            "walls block movement through C00_ELEMENT_WALL checks",
+            "viewport redraw clears floor/ceiling request after drawing"
+          ]
+        }
+      ],
+      "current_claim": "Firestaff movement command dispatch, relative movement, legality, cooldown, and movement/viewport handoff are source-locked at verifier level."
+    },
+    {
+      "area": "Viewport world, walls, draw order, occlusion, and square collision",
+      "ctest_targets": [
+        "m11_viewport_state",
+        "m11_turn_viewport_orientation",
+        "v1_viewport_draw_order_gate",
+        "v1_viewport_redmcsb_draw_stack_gate",
+        "v1_viewport_source_zone_tables",
+        "v1_viewport_projectile_source_clip_gate",
+        "v1_viewport_projectile_explosion_render_source_lock_gate",
+        "v1_viewport_distance_row_clip_gate",
+        "v1_viewport_field_zone_aspect_clip_gate",
+        "v1_viewport_floor_ornament_stair_gate",
+        "v1_viewport_occlusion_gate",
+        "v1_viewport_side_wall_occlusion_gate",
+        "v1_viewport_side_wall_ornament_source_gate",
+        "v1_viewport_center_door_occlusion_gate",
+        "v1_viewport_front_wall_depth_gate",
+        "v1_viewport_wall_depth_source_lock_gate",
+        "v1_viewport_wall_blit_transparency_gate",
+        "v1_viewport_palette_source_lock_gate",
+        "v1_viewport_wall_parity_flip_gate",
+        "v1_viewport_alcove_wall_item_gate",
+        "v1_viewport_pit_floor_ornament_bug64_gate",
+        "dm1_v1_viewport_world_redmcsb_source_lock",
+        "dm1_v1_viewport_wall_draw_order_source_lock",
+        "dm1_v1_viewport_square_collision_source_lock",
+        "dm1_v1_stairs_pits_viewport_source_lock",
+        "dm1_v1_creature_render_aspect_source_lock"
+      ],
+      "source_locks": [
+        {
+          "file": "scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py",
+          "redmcsb_citations": [
+            "DRAWVIEW.C viewport present blit/palette gate",
+            "DUNVIEW.C floor/ceiling base copy and near-to-far world draw order",
+            "DUNVIEW.C F0115 thing pass ordering and object/creature/projectile perspective rows",
+            "DUNVIEW.C teleporter/field aspect and derived viewport cache behavior"
+          ]
+        },
+        {
+          "file": "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py",
+          "redmcsb_citations": [
+            "F0128_DUNGEONVIEW_Draw_CPSF replays far D4 through near D0 before presentation",
+            "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions consumes cell-order nibbles",
+            "door pass cell-order constants preserve back/front row ordering"
+          ],
+          "prior_manifest": "parity-evidence/verification/pass218_dm1_v1_viewport_walls_source_lock/manifest.json"
+        },
+        {
+          "file": "scripts/verify_dm1_v1_viewport_square_collision_source_lock.py",
+          "redmcsb_citations": [
+            "DUNGEON.C out-of-bounds returns source wall square",
+            "DUNVIEW.C visible squares are resolved through source square aspect state",
+            "CLIKMENU.C and MOVESENS.C movement collision source checks cover walls, doors, fake walls, groups, pits"
+          ],
+          "prior_manifest": "parity-evidence/verification/pass219_dm1_v1_viewport_square_collision_source_lock/manifest.json"
+        }
+      ],
+      "current_claim": "Viewport/wall parity work is locked to source draw order, cell/square state, occlusion, collision semantics, and presentation seams; it is not a primitive-batching or static-wall shortcut."
+    },
+    {
+      "area": "Original runner movement/viewport capture readiness",
+      "ctest_targets": [
+        "dm1_v1_original_movement_viewport_blocker_gate",
+        "dm1_v1_original_route_sync_probe",
+        "dm1_v1_post_redraw_instrumentation_lock",
+        "dm1_v1_hall_walkaround_runtime",
+        "dm1_v1_hall_walkaround_source_lock",
+        "dm1_v1_hall_of_champions_full_source_lock",
+        "dm1_v1_entry_movement_viewport_source_lock"
+      ],
+      "source_locks": [
+        {
+          "file": "tools/pass207_dm1_v1_original_movement_viewport_blocker_gate.py",
+          "report": "parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md",
+          "decision": "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE",
+          "locked_chain": [
+            "title/front-door path",
+            "entrance input-wait loop and post-enter delay",
+            "vblank seam",
+            "command discard/input queue path",
+            "turn/step dispatch",
+            "mutated party state draw",
+            "viewport present blit"
+          ]
+        },
+        {
+          "file": "tools/pass212_dm1_v1_original_route_sync_probe.py",
+          "prior_manifest": "parity-evidence/verification/pass212_dm1_v1_original_route_sync_probe/manifest.json",
+          "decision": "BLOCKED_ROUTE_CAPTURE_SYNC"
+        },
+        {
+          "file": "tools/pass223_dm1_v1_post_redraw_instrumentation_lock.py",
+          "report": "parity-evidence/pass223_dm1_v1_post_redraw_instrumentation_lock.md",
+          "decision": "PASS_SOURCE_LOCKED_POST_REDRAW_INSTRUMENTATION_POINTS",
+          "required_chain": [
+            "command_accepted_queue_dispatch",
+            "turn_handler_applies_direction_and_releases_wait OR step_handler_resolves_destination_and_releases_wait",
+            "move_result_mutates_party_coordinates for step commands",
+            "game_loop_draws_mutated_party_state",
+            "dungeon_view_consumes_state_before_viewport_request",
+            "viewport_requested_then_vertical_blank_returned",
+            "viewport_bitmap_blitted_to_screen"
+          ]
+        }
+      ],
+      "current_claim": "The source seams for a promotable original movement/viewport capture are locked, but existing original-runner evidence remains blocked until a trace proves command acceptance, state mutation, draw, vblank return, and viewport blit in order."
+    }
+  ],
+  "remaining_blockers": [
+    {
+      "id": "original_route_not_promotable",
+      "evidence": [
+        "parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md",
+        "parity-evidence/verification/pass212_dm1_v1_original_route_sync_probe/manifest.json",
+        "parity-evidence/verification/pass220_dm1_v1_original_readiness_oracle/manifest.json"
+      ],
+      "why": "Prior N2 original-runner shots show classifier mismatch and repeated wall-closeup frames; they cannot be tied to the ReDMCSB post-command redraw seam."
+    },
+    {
+      "id": "missing_post_command_trace",
+      "evidence": [
+        "parity-evidence/pass223_dm1_v1_post_redraw_instrumentation_lock.md"
+      ],
+      "why": "No promoted JSON trace currently links one accepted movement/turn command to later state mutation, draw tuple, vblank return, and viewport blit."
+    },
+    {
+      "id": "no_pixel_parity_claim_yet",
+      "why": "The current suite is a source-lock/readiness suite. It intentionally does not claim original-vs-Firestaff 224x136 pixel parity for movement/viewport captures."
+    }
+  ],
+  "next_acceptance_criteria": [
+    "Run an original DM1 V1 movement/turn capture that emits JSON trace events only: accepted command id, queue index, party direction/map X/Y mutation, game-loop draw tuple, dungeon-view consumed tuple, viewport request/vblank return, and C007_ZONE_VIEWPORT blit counter.",
+    "For a turn command, prove command_accepted_queue_dispatch precedes direction mutation and viewport-present blit for the new direction.",
+    "For a step command, prove command_accepted_queue_dispatch precedes destination move-result/coordinate mutation and viewport-present blit for the new map X/Y.",
+    "Reject traces with menu churn only, duplicated raw-frame SHA as the sole evidence, wall-closeup classifier drift, or missing canonical DATA/DUNGEON.DAT, DATA/GRAPHICS.DAT, or DM.EXE anchors.",
+    "Only after the JSON trace passes should a later pass bind original 224x136 viewport crops to Firestaff output for pixel parity; that later pass may add images, this manifest pass must not."
+  ],
+  "recommended_ctest_regex": "dm1_v1_(movement_source_lock|entry_movement_viewport_source_lock|original_route_sync_probe|post_redraw_instrumentation_lock|viewport_world_redmcsb_source_lock|viewport_wall_draw_order_source_lock|viewport_square_collision_source_lock|stairs_pits_viewport_source_lock|creature_render_aspect_source_lock|input_command_queue_source_lock|movement_timing_source_lock|projectile_movement_interlock_source_lock)|v1_viewport_(draw_order_gate|redmcsb_draw_stack_gate|occlusion_gate|side_wall_occlusion_gate|center_door_occlusion_gate|front_wall_depth_gate|wall_depth_source_lock_gate|wall_blit_transparency_gate|palette_source_lock_gate|wall_parity_flip_gate|alcove_wall_item_gate|pit_floor_ornament_bug64_gate)",
+  "non_claims": [
+    "No push performed.",
+    "No DOSBox capture rerun.",
+    "No PNG/PPM artifact added.",
+    "No original-vs-Firestaff pixel parity claim."
+  ],
+  "ctest_notes": {
+    "fresh_worktree_verified_regex": "dm1_v1_(movement_source_lock|entry_movement_viewport_source_lock|original_route_sync_probe|post_redraw_instrumentation_lock|viewport_world_redmcsb_source_lock|viewport_wall_draw_order_source_lock|viewport_square_collision_source_lock|stairs_pits_viewport_source_lock|creature_render_aspect_source_lock|input_command_queue_source_lock|movement_timing_source_lock|projectile_movement_interlock_source_lock)|v1_viewport_(draw_order_gate|redmcsb_draw_stack_gate|occlusion_gate|side_wall_occlusion_gate|center_door_occlusion_gate|front_wall_depth_gate|wall_depth_source_lock_gate|wall_blit_transparency_gate|palette_source_lock_gate|wall_parity_flip_gate|alcove_wall_item_gate|pit_floor_ornament_bug64_gate)",
+    "requires_untracked_or_prior_artifacts": [
+      {
+        "target": "v1_viewport_source_zone_tables",
+        "missing_in_fresh_worktree": "zones_h_reconstruction.json"
+      },
+      {
+        "target": "touch_movement_viewport_source_lock",
+        "missing_in_fresh_worktree": "zones_h_reconstruction.json"
+      },
+      {
+        "target": "dm1_v1_original_movement_viewport_blocker_gate",
+        "missing_in_fresh_worktree": "parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json"
+      }
+    ],
+    "broad_regex_result": "27 selected; 24 passed, 3 failed because required generated/prior blocker artifacts are ignored or absent in a fresh origin/main worktree."
+  }
+}
