@@ -897,6 +897,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass207_dm1_v1_original_movement_viewport_blocker_gate.py
         )
         add_test(
+            NAME dm1_v1_original_route_sync_probe
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass212_dm1_v1_original_route_sync_probe.py
+        )
+        add_test(
             NAME dm1_v1_stairs_pits_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_stairs_pits_viewport_source_lock.py
         )

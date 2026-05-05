@@ -1,0 +1,201 @@
+{
+  "schema": "pass212_dm1_v1_original_route_sync_probe.v1",
+  "status": "BLOCKED_ROUTE_CAPTURE_SYNC",
+  "attempt_dir": "verification-screens/pass210-n2-original-movement-route-fresh",
+  "source_seam": [
+    {
+      "file": "COMMAND.C",
+      "symbols": [
+        "F0361_COMMAND_ProcessKeyPress",
+        "F0380_COMMAND_ProcessQueue_CPSC"
+      ],
+      "claim": "input commands must be queued/dequeued before movement evidence is captured"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "symbols": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "claim": "turn and movement handlers mutate party direction/position before redraw"
+    },
+    {
+      "file": "MOVESENS.C",
+      "symbols": [
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "claim": "movement legality/sensor processing gates post-command position changes"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "symbols": [
+        "F0002_MAIN_GameLoop_CPSDF"
+      ],
+      "claim": "the main loop owns command processing and redraw cadence"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "symbols": [
+        "F0128_DUNGEONVIEW_Draw_CPSF"
+      ],
+      "claim": "viewport cells are derived from party map/direction at draw time"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "symbols": [
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "M526_WaitVerticalBlank",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "claim": "the promotable seam is the presented 224x136 viewport after vblank/blit"
+    }
+  ],
+  "shots": [
+    {
+      "shot": 1,
+      "raw_frame": "image0001-raw.png",
+      "route_label": "start",
+      "expected_label": "start",
+      "classification": "entrance_menu",
+      "raw_sha256_prefix": "17bd7e878157",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+    },
+    {
+      "shot": 2,
+      "raw_frame": "image0002-raw.png",
+      "route_label": "turn_left",
+      "expected_label": "turn_left",
+      "classification": "wall_closeup",
+      "raw_sha256_prefix": "fbeb1b82cd09",
+      "viewport_sha256_prefix": "1e71ed879980",
+      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+    },
+    {
+      "shot": 3,
+      "raw_frame": "image0003-raw.png",
+      "route_label": "turn_right",
+      "expected_label": "turn_right",
+      "classification": "dungeon_gameplay",
+      "raw_sha256_prefix": "48ed3743ab6a",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+    },
+    {
+      "shot": 4,
+      "raw_frame": "image0004-raw.png",
+      "route_label": "forward",
+      "expected_label": "forward",
+      "classification": "dungeon_gameplay",
+      "raw_sha256_prefix": "48ed3743ab6a",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+    },
+    {
+      "shot": 5,
+      "raw_frame": "image0005-raw.png",
+      "route_label": "turn_left_2",
+      "expected_label": "turn_left_2",
+      "classification": "wall_closeup",
+      "raw_sha256_prefix": "fbeb1b82cd09",
+      "viewport_sha256_prefix": "1e71ed879980",
+      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+    },
+    {
+      "shot": 6,
+      "raw_frame": "image0006-raw.png",
+      "route_label": "post_redraw",
+      "expected_label": "post_redraw",
+      "classification": "dungeon_gameplay",
+      "raw_sha256_prefix": "48ed3743ab6a",
+      "viewport_sha256_prefix": "701689e73fc0",
+      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+    }
+  ],
+  "raw_duplicate_groups": {
+    "fbeb1b82cd09": [
+      2,
+      5
+    ],
+    "48ed3743ab6a": [
+      3,
+      4,
+      6
+    ]
+  },
+  "viewport_duplicate_groups": {
+    "701689e73fc0": [
+      1,
+      3,
+      4,
+      6
+    ],
+    "1e71ed879980": [
+      2,
+      5
+    ]
+  },
+  "problems": [
+    "readiness shot is 'entrance_menu', not 'dungeon_gameplay'; party-control gameplay was not proven before movement capture",
+    "movement shot 2 (turn_left) classified 'wall_closeup', not 'dungeon_gameplay'",
+    "movement shot 5 (turn_left_2) classified 'wall_closeup', not 'dungeon_gameplay'",
+    "duplicate raw-frame SHA groups show command/post-redraw collapse: fbeb1b82cd09=[2, 5], 48ed3743ab6a=[3, 4, 6]",
+    "duplicate viewport-crop SHA groups show non-distinct presented viewports: 701689e73fc0=[1, 3, 4, 6], 1e71ed879980=[2, 5]"
+  ],
+  "warnings": [
+    "using committed pass211 blocker manifest fallback because the raw attempt directory is absent/incomplete"
+  ],
+  "retry_contract": {
+    "purpose": "separate gameplay-readiness from post-command redraw capture; keep raw PNG/PPM payloads out of git",
+    "route_events": "wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank",
+    "expected_classifier": [
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay"
+    ],
+    "promotion_rule": "all six raw frames classify dungeon_gameplay and both raw/crop SHA groups are non-duplicate",
+    "recommended_command": "OUT_DIR=$PWD/verification-screens/pass212-n2-original-movement-route-sync-retry DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+  },
+  "audited_inputs": [
+    {
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_shot_labels.tsv",
+      "exists": false
+    },
+    {
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/raw_manifest.tsv",
+      "exists": false
+    },
+    {
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_224x136_manifest.tsv",
+      "exists": false
+    },
+    {
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/pass80_original_frame_classifier.json",
+      "exists": false
+    },
+    {
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/original-viewpoint-route-keys.log",
+      "exists": false
+    },
+    {
+      "path": "verification-screens/pass210-n2-original-movement-route-fresh/dosbox-original-viewports.log",
+      "exists": false
+    },
+    {
+      "path": "parity-evidence/verification/pass211_dm1_v1_original_movement_fresh_blocker/manifest.json",
+      "exists": true,
+      "size_bytes": 22254,
+      "sha256": "18820df8e60e3971cb71bc9c1d4f308bfb219d1565e1cbb7ec45f1b06103e491"
+    },
+    {
+      "path": "parity-evidence/verification/pass211_dm1_v1_original_movement_fresh_blocker/README.md",
+      "exists": true,
+      "size_bytes": 1744,
+      "sha256": "75d4ed2866ece28f8be42f9667807952541490da23e7aa9150d5bbbc50df337c"
+    }
+  ],
+  "honesty": "No raw screenshots or viewport crops are emitted by this probe; hashes/manifests only."
+}
