@@ -348,6 +348,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_command_movement_sensor_timing_pc34_compat
     )
 
+    add_executable(test_dm1_v2_movement_viewport_pc34
+        test_dm1_v2_movement_viewport_pc34.c
+        dm1_v2_movement_engine_pc34.c
+        dm1_v2_viewport_renderer_pc34.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v2_movement_viewport_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v2_movement_viewport_pc34
+        COMMAND test_dm1_v2_movement_viewport_pc34
+    )
+
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
     dm1_v1_creature_render_pc34_compat.c
