@@ -380,6 +380,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_command_movement_sensor_timing_pc34_compat
     )
 
+    add_executable(firestaff_dm1_v1_movement_core_probe
+        probes/dm1/firestaff_dm1_v1_movement_core_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_movement_core_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_movement_core_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_movement_core_probe
+        COMMAND firestaff_dm1_v1_movement_core_probe
+    )
+
     add_executable(test_dm1_v2_movement_viewport_pc34
         test_dm1_v2_movement_viewport_pc34.c
         dm1_v2_movement_engine_pc34.c
