@@ -242,6 +242,11 @@ endif()
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v1_viewport_draw_order_probe
+        COMMAND firestaff_dm1_v1_viewport_draw_order_probe
+    )
+
     if(Python3_Interpreter_FOUND)
         add_test(
             NAME dm1_v2_upscale_dry_run_validator
