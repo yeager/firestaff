@@ -17,6 +17,25 @@ static int dm1_v1_is_step_command(int command)
     return command >= DM1_V1_COMMAND_MOVE_FORWARD && command <= DM1_V1_COMMAND_MOVE_LEFT;
 }
 
+static void dm1_v1_apply_stairs_transition_result(
+    struct PartyState_Compat* party,
+    const struct StairsTransitionResult_Compat* stairs,
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+{
+    party->mapIndex = stairs->toMapIndex;
+    party->mapX = stairs->newMapX;
+    party->mapY = stairs->newMapY;
+    party->direction = stairs->newDirection;
+    outResult->movement.resultCode = MOVE_OK;
+    outResult->movement.newMapX = party->mapX;
+    outResult->movement.newMapY = party->mapY;
+    outResult->movement.newDirection = party->direction;
+    outResult->movement.newMapIndex = party->mapIndex;
+    outResult->stairTransitionApplied = 1;
+    outResult->stopWaitingForPlayerInput = 1;
+    outResult->viewportRedrawRequested = 1;
+}
+
 int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     const struct DungeonDatState_Compat* dungeon,
@@ -61,19 +80,9 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
          * current-square sensor leave/enter and F0284 turn rotation.
          */
         if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
-            party->mapIndex = stairs.toMapIndex;
-            party->mapX = stairs.newMapX;
-            party->mapY = stairs.newMapY;
-            party->direction = stairs.newDirection;
+            dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
             outResult->movement.resultCode = MOVE_TURN_ONLY;
-            outResult->movement.newMapX = party->mapX;
-            outResult->movement.newMapY = party->mapY;
-            outResult->movement.newDirection = party->direction;
-            outResult->movement.newMapIndex = party->mapIndex;
-            outResult->stairTransitionApplied = 1;
             outResult->turnApplied = 1;
-            outResult->stopWaitingForPlayerInput = 1;
-            outResult->viewportRedrawRequested = 1;
             return 1;
         }
 
@@ -104,12 +113,44 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
     outResult->commandHandled = 1;
     action = dm1_v1_command_to_move_action(outResult->queue.command);
+
+    /* Source lock: CLIKMENU.C:264-267 consumes MOVE_BACKWARD while already
+     * standing on stairs by taking those stairs immediately, before the
+     * relative coordinate step, blocker checks, or cooldown assignment.
+     */
+    if (action == MOVE_BACKWARD) {
+        struct StairsTransitionResult_Compat stairs;
+        if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+            dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
+            return 1;
+        }
+    }
+
     if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)) {
         outResult->movementBlocked = 1;
         outResult->inputDiscardRequested = 1;
         DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);
         return 1;
     }
+
+    /* Source lock: CLIKMENU.C:271-276 treats a target stairs square as a
+     * consequence square: the party is placed on the stairs and F0364 takes
+     * the level transition, returning before normal destination walk-on
+     * sensors, group collision, or G0310 cooldown assignment.
+     */
+    {
+        struct PartyState_Compat targetParty = *party;
+        struct StairsTransitionResult_Compat stairs;
+        targetParty.mapIndex = outResult->movement.newMapIndex;
+        targetParty.mapX = outResult->movement.newMapX;
+        targetParty.mapY = outResult->movement.newMapY;
+        targetParty.direction = outResult->movement.newDirection;
+        if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, &targetParty, &stairs) && stairs.transitioned) {
+            dm1_v1_apply_stairs_transition_result(party, &stairs, outResult);
+            return 1;
+        }
+    }
+
     if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(dungeon, things, party, action)) {
         outResult->movementBlocked = 1;
         outResult->blockedByGroup = 1;
@@ -147,5 +188,5 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
 const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:1304-1377,2045-2156; CLIKMENU.C:142-179,180-347; CHAMPION.C:117-130; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724";
+    return "COMMAND.C:1304-1377,2045-2156; CLIKMENU.C:124-139,142-179,180-347; DUNGEON.C:1508-1582; CHAMPION.C:117-130; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724";
 }

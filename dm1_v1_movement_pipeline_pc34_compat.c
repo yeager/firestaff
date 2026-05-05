@@ -145,7 +145,8 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     }
 
     /* Phase 4: Aggregate flags for the game loop. */
-    outResult->anyMovementOccurred = outResult->core.stepApplied;
+    outResult->anyMovementOccurred =
+        outResult->core.stepApplied || outResult->core.stairTransitionApplied;
     outResult->anyTurnOccurred = outResult->core.turnApplied;
     outResult->viewportDirty = outResult->core.viewportRedrawRequested;
 
@@ -165,8 +166,8 @@ void DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
 
 const char* DM1_V1_MovementPipeline_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:2045-2156; CLIKMENU.C:142-179,180-347,330-346; "
-           "MOVESENS.C:F0267,F0276; CHAMPION.C:F0310; GAMELOOP.C:150-155; "
+    return "COMMAND.C:2045-2156; CLIKMENU.C:124-139,142-179,180-347,330-346; "
+           "DUNGEON.C:1508-1582; MOVESENS.C:F0267,F0276; CHAMPION.C:F0310; GAMELOOP.C:150-155; "
            "Pipeline wires: dm1_v1_input_command_queue, "
            "dm1_v1_movement_command_core, dm1_v1_movement_timing, "
            "memory_movement (F0700-F0709), memory_sensor_execution (F0710-F0718)";

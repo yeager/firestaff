@@ -77,6 +77,43 @@ static void setup_dungeon(struct DungeonDatState_Compat* dungeon,
             set_sq(squares, height, x, y, sq(DUNGEON_ELEMENT_CORRIDOR, 0));
 }
 
+static void setup_two_level_stairs_dungeon(struct DungeonDatState_Compat* dungeon,
+    struct DungeonMapDesc_Compat maps[2],
+    struct DungeonMapTiles_Compat tiles[2],
+    unsigned char level0[5 * 5],
+    unsigned char level1[5 * 5])
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(maps, 0, sizeof(struct DungeonMapDesc_Compat) * 2);
+    memset(tiles, 0, sizeof(struct DungeonMapTiles_Compat) * 2);
+    memset(level0, 0, 25);
+    memset(level1, 0, 25);
+
+    for (int i = 0; i < 2; ++i) {
+        maps[i].width = 5;
+        maps[i].height = 5;
+        maps[i].level = (unsigned char)i;
+        maps[i].offsetMapX = 0;
+        maps[i].offsetMapY = 0;
+    }
+    tiles[0].squareData = level0;
+    tiles[0].squareCount = 25;
+    tiles[1].squareData = level1;
+    tiles[1].squareCount = 25;
+    dungeon->header.mapCount = 2;
+    dungeon->maps = maps;
+    dungeon->tiles = tiles;
+    dungeon->loaded = 1;
+    dungeon->tilesLoaded = 1;
+
+    for (int x = 0; x < 5; ++x) {
+        for (int y = 0; y < 5; ++y) {
+            set_sq(level0, 5, x, y, sq(DUNGEON_ELEMENT_CORRIDOR, 0));
+            set_sq(level1, 5, x, y, sq(DUNGEON_ELEMENT_CORRIDOR, 0));
+        }
+    }
+}
+
 static void setup_party(struct PartyState_Compat* party,
     int mapX, int mapY, int dir, int championCount)
 {
@@ -447,6 +484,61 @@ static void test_strafe(void)
     EXPECT_INT("strafe_l_y", party.mapY, 5);
 }
 
+/* ---- Test: source-locked stairs step consequences ---- */
+static void test_stairs_step_consequence(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char level0[5 * 5];
+    unsigned char level1[5 * 5];
+    struct PartyState_Compat party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat result;
+
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+
+    /* CLIKMENU.C:271-276: stepping into a stairs square calls F0364 and
+     * returns before the normal G0310 cooldown path at CLIKMENU.C:330-346.
+     * DUNGEON.C:1508-1582 maps the target by level/offset and computes exit
+     * facing from the destination stairs orientation/blocker probe.
+     */
+    set_sq(level0, 5, 2, 1, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    set_sq(level1, 5, 2, 1, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    setup_party(&party, 2, 2, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB35));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, NULL, &party, NULL, &result);
+
+    EXPECT("stairs_into_transition", result.core.stairTransitionApplied == 1);
+    EXPECT("stairs_into_no_regular_step", result.core.stepApplied == 0);
+    EXPECT("stairs_into_movement_flag", result.anyMovementOccurred == 1);
+    EXPECT_INT("stairs_into_map", party.mapIndex, 1);
+    EXPECT_INT("stairs_into_x", party.mapX, 2);
+    EXPECT_INT("stairs_into_y", party.mapY, 1);
+    EXPECT_INT("stairs_into_no_cooldown", pipeline.disabledMovementTicks, 0);
+
+    /* CLIKMENU.C:264-267: backward while already on stairs consumes the
+     * stairs before any relative backward coordinate step. */
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    set_sq(level0, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    set_sq(level1, 5, 2, 2, sq(DUNGEON_ELEMENT_STAIRS, 0));
+    setup_party(&party, 2, 2, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB32));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, NULL, &party, NULL, &result);
+
+    EXPECT("stairs_backward_transition", result.core.stairTransitionApplied == 1);
+    EXPECT_INT("stairs_backward_map", party.mapIndex, 1);
+    EXPECT_INT("stairs_backward_x_not_south", party.mapX, 2);
+    EXPECT_INT("stairs_backward_y_not_south", party.mapY, 2);
+    EXPECT_INT("stairs_backward_no_cooldown", pipeline.disabledMovementTicks, 0);
+}
+
 /* ---- Test: mouse click movement command ---- */
 static void test_mouse_movement(void)
 {
@@ -493,6 +585,7 @@ int main(void)
     test_source_evidence();
     test_backward_step();
     test_strafe();
+    test_stairs_step_consequence();
     test_mouse_movement();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
