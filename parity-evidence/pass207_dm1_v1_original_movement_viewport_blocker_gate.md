@@ -25,8 +25,11 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 
 - status: `MANIFESTS_SOURCE_LOCK_CAPTURE_ASSETS_WITHOUT_EMULATOR_GUESSING`
 - stable raw frames: `6`; labels: `6`; missing materialized ignored PNGs: `6`
+- stable duplicate raw SHA counts >1: `{'ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c': 4}`; blank labels: `['02_ingame_turn_right_original_viewport_224x136.ppm', '03_ingame_move_forward_original_viewport_224x136.ppm', '05_ingame_after_cast_original_viewport_224x136.ppm']`
 - route-probe 224x136 viewport crops: `6`; missing materialized ignored PPMs: `6`
-- boundary: Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean.
+- route-probe duplicate viewport SHA counts >1: `{'e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844': 3}`; duplicate raw SHA counts >1: `{'307323fbc1f7772cb259160f2f988a482981e33a339e4414b0bfc8c85f8d4bd0': 3}`
+- route-probe blank labels: `['02_ingame_turn_right_original_viewport_224x136.ppm', '03_ingame_move_forward_original_viewport_224x136.ppm', '05_ingame_after_cast_original_viewport_224x136.ppm']`
+- boundary: Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean and command-specific shots have distinct post-vblank viewport hashes.
 
 ## Current N2 original-runner attempt
 
@@ -50,5 +53,7 @@ Mismatches:
 - shot 4: `wall_closeup` expected `spell_panel` (`verification-screens/pass112-n2-stable-hud-route/image0004-raw.png`)
 - shot 5: `wall_closeup` expected `dungeon_gameplay` (`verification-screens/pass112-n2-stable-hud-route/image0005-raw.png`)
 - shot 6: `wall_closeup` expected `inventory` (`verification-screens/pass112-n2-stable-hud-route/image0006-raw.png`)
+
+Capture unblock requirement: the route-probe viewport manifest still has duplicate 224x136 viewport hashes for command-specific shots. Re-capture must materialize the ignored PPM/PNG assets and show distinct post-command/post-vblank viewport hashes for turn, move, spell, after-cast, and inventory boundaries before this can become parity evidence.
 
 Non-claims: no DANNESBURK use, no push, no new capture route, no original-vs-Firestaff pixel parity claim.

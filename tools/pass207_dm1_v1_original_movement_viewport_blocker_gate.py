@@ -339,6 +339,24 @@ def materialized_missing_count(rows: list[dict[str, str]], field: str, base_dir:
     return missing
 
 
+def duplicate_counts_gt1(rows: list[dict[str, str]], field: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        value = row.get(field, "")
+        if not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return {key: value for key, value in sorted(counts.items()) if value > 1}
+
+
+def blank_route_labels(rows: list[dict[str, str]]) -> list[str]:
+    missing: list[str] = []
+    for row in rows:
+        if not row.get("route_label", ""):
+            missing.append(row.get("filename") or row.get("index") or "<unknown>")
+    return missing
+
+
 def capture_asset_manifest_audit() -> dict[str, Any]:
     stable_raw = read_tsv(ATTEMPT_DIR / "raw_manifest.tsv")
     stable_labels = read_tsv(ATTEMPT_DIR / "original_viewport_shot_labels.tsv")
@@ -352,6 +370,8 @@ def capture_asset_manifest_audit() -> dict[str, Any]:
             "raw_count": len(stable_raw),
             "labels_count": len(stable_labels),
             "raw_missing_materialized_files": materialized_missing_count(stable_raw, "path"),
+            "raw_duplicate_sha256_counts_gt1": duplicate_counts_gt1(stable_raw, "sha256"),
+            "blank_route_labels": blank_route_labels(stable_labels),
         },
         "route_probe": {
             "dir": str(ROUTE_PROBE_DIR),
@@ -360,9 +380,12 @@ def capture_asset_manifest_audit() -> dict[str, Any]:
             "raw_count": len(route_raw),
             "viewport_224x136_count": len(route_viewports),
             "viewport_sha256": [row.get("sha256") for row in route_viewports],
+            "viewport_duplicate_sha256_counts_gt1": duplicate_counts_gt1(route_viewports, "sha256"),
             "viewport_missing_materialized_files": materialized_missing_count(route_viewports, "filename", ROUTE_PROBE_DIR),
+            "raw_duplicate_sha256_counts_gt1": duplicate_counts_gt1(route_raw, "sha256"),
+            "blank_route_labels": blank_route_labels(read_tsv(ROUTE_PROBE_DIR / "original_viewport_shot_labels.tsv")),
         },
-        "boundary": "Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean.",
+        "boundary": "Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean and command-specific shots have distinct post-vblank viewport hashes.",
     }
 
 
@@ -400,7 +423,10 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         "",
         f"- status: `{assets.get('status')}`",
         f"- stable raw frames: `{(assets.get('stable_attempt') or {}).get('raw_count')}`; labels: `{(assets.get('stable_attempt') or {}).get('labels_count')}`; missing materialized ignored PNGs: `{(assets.get('stable_attempt') or {}).get('raw_missing_materialized_files')}`",
+        f"- stable duplicate raw SHA counts >1: `{(assets.get('stable_attempt') or {}).get('raw_duplicate_sha256_counts_gt1')}`; blank labels: `{(assets.get('stable_attempt') or {}).get('blank_route_labels')}`",
         f"- route-probe 224x136 viewport crops: `{(assets.get('route_probe') or {}).get('viewport_224x136_count')}`; missing materialized ignored PPMs: `{(assets.get('route_probe') or {}).get('viewport_missing_materialized_files')}`",
+        f"- route-probe duplicate viewport SHA counts >1: `{(assets.get('route_probe') or {}).get('viewport_duplicate_sha256_counts_gt1')}`; duplicate raw SHA counts >1: `{(assets.get('route_probe') or {}).get('raw_duplicate_sha256_counts_gt1')}`",
+        f"- route-probe blank labels: `{(assets.get('route_probe') or {}).get('blank_route_labels')}`",
         f"- boundary: {assets.get('boundary')}",
         "",
         "## Current N2 original-runner attempt",
@@ -429,6 +455,12 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
                 lines.append(f"- shot {m.get("index")}: `{m.get("classification")}` expected `{m.get("expected")}` (`{m.get("file")}`)")
         else:
             lines.append("Mismatches: none recorded, but pass206 did not report `PASS_SEMANTIC_ROUTE_READY`.")
+        route_probe = (manifest.get("capture_asset_manifest_audit") or {}).get("route_probe") or {}
+        if route_probe.get("viewport_duplicate_sha256_counts_gt1"):
+            lines += [
+                "",
+                "Capture unblock requirement: the route-probe viewport manifest still has duplicate 224x136 viewport hashes for command-specific shots. Re-capture must materialize the ignored PPM/PNG assets and show distinct post-command/post-vblank viewport hashes for turn, move, spell, after-cast, and inventory boundaries before this can become parity evidence.",
+            ]
     elif manifest["status"].startswith("PASS"):
         lines.append("The current attempt is promotable by this narrow semantic gate; pixel parity still needs a separate gate.")
     else:
