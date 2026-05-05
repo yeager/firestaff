@@ -204,13 +204,13 @@
       "module": "dm1_v2_weather_fx_pc34.c"
     }
   ],
-  "moduleCount": 33,
+  "moduleCount": 34,
   "requiredCTestNames": [
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_settings_pc34",
     "dm1_v2_upscale_dry_run_validator"
   ],
   "status": "passed",
-  "testCount": 10,
+  "testCount": 11,
   "toolCount": 18
 }
