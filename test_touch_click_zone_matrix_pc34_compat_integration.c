@@ -40,7 +40,7 @@ int main(void) {
     printf("zoneCount=%u\n", TOUCHCLICK_Compat_GetZoneCount());
     printf("championNameHandEvidence=%s\n", champion_name_hand_routes_GetEvidence());
     printf("championNameHandRouteCount=%u\n", champion_name_hand_routes_GetRouteCount());
-    if (TOUCHCLICK_Compat_GetZoneCount() != 88u) ok = 0;
+    if (TOUCHCLICK_Compat_GetZoneCount() != 100u) ok = 0;
 
     if (!expect_zone(0u, 1u, 68u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 234, 125, 28, 21, "movement.turn_left")) ok = 0;
     if (!expect_zone(1u, 3u, 70u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 263, 125, 27, 21, "movement.forward")) ok = 0;
@@ -82,7 +82,7 @@ int main(void) {
     if (champion_name_hand_routes_ResolveStatusBoxClick(0u, 50, 20, 0u, &championDispatch)) ok = 0;
     if (!spell_area_routes_GetInvariant()) ok = 0;
     if (!spell_area_symbol_routes_GetInvariant()) ok = 0;
-    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u)) ok = 0;
+    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u) || !has_zone(7u, 187u) || !has_zone(12u, 151u) || !has_zone(125u, 113u) || !has_zone(128u, 116u)) ok = 0;
 
     if (!TOUCHCLICK_Compat_HitTest(264, 126, &hit) || hit.zoneIndex != 70u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestWithButton(234, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 1u || hit.zoneIndex != 68u) ok = 0;

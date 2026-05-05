@@ -183,8 +183,8 @@ def parse_firestaff_matrix() -> list[dict[str, Any]]:
             "h": int(h),
             "name": name,
         })
-    if len(rows) != 88:
-        raise SystemExit(f"expected 88 Firestaff matrix entries, found {len(rows)}")
+    if len(rows) != 100:
+        raise SystemExit(f"expected 100 Firestaff matrix entries, found {len(rows)}")
     return rows
 
 
@@ -282,7 +282,7 @@ def build_report() -> dict[str, Any]:
         "source_root": str(REDMCSB_SOURCE),
         "source_citations": [
             "DEFS.H:197-211 defines MOUSE_INPUT command/box/button records",
-            "COMMAND.C:375-506 defines primary interface, movement, inventory, action, spell, champion-name/hand, and chest mouse command-to-zone/button tables",
+            "COMMAND.C:375-506 defines primary interface, movement, inventory, action, spell, champion-name/hand, and chest mouse command-to-zone/button tables; COMMAND.C:380-391 covers the remaining source-locked bar-graph toggle and champion-icon primary-interface zones",
             "COMMAND.C:396-405 G0448_as_Graphic561_SecondaryMouseInput_Movement routes left/right movement and viewport/toggle commands to zones/buttons",
             "COMMAND.C:1403-1431 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans mouse-input entries and tests button/zone matches",
             "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",
