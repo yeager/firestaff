@@ -1,6 +1,7 @@
 #include "dm1_v2_hud_overlay_pc34.h"
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 static M11_V2_HudOverlay g_v2_hud_state;
 

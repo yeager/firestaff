@@ -42,6 +42,17 @@ void v2_champion_select_toggle(void) {
     g_champions[g_current_index].selected = !g_champions[g_current_index].selected;
 }
 
+int v2_champion_select_focus_index_pc34(unsigned int championIndex) {
+    if (!g_initialized || championIndex >= 4u) return 0;
+    g_current_index = (int)championIndex;
+    return 1;
+}
+
+int v2_champion_select_current_index_pc34(void) {
+    if (!g_initialized) return -1;
+    return g_current_index;
+}
+
 const struct M11_V2_ChampionEntry* v2_champion_select_get(void) {
     if (!g_initialized) return NULL;
     return &g_champions[g_current_index];

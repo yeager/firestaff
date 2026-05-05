@@ -27,6 +27,8 @@ void v2_champion_select_render(void);
 void v2_champion_select_cycle_forward(void);
 void v2_champion_select_cycle_backward(void);
 void v2_champion_select_toggle(void);
+int v2_champion_select_focus_index_pc34(unsigned int championIndex);
+int v2_champion_select_current_index_pc34(void);
 const struct M11_V2_ChampionEntry* v2_champion_select_get(void);
 int v2_champion_select_count(void);
 

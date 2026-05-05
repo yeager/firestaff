@@ -13,7 +13,7 @@
     "support/stats": 1,
     "support/tooling": 1,
     "ui/champion": 1,
-    "ui/hud": 1,
+    "ui/hud": 2,
     "ui/input": 2,
     "ui/inventory": 1,
     "ui/journal": 1,
@@ -77,6 +77,11 @@
       "category": "support/audio",
       "header": "dm1_v2_footstep_audio_pc34.h",
       "module": "dm1_v2_footstep_audio_pc34.c"
+    },
+    {
+      "category": "ui/hud",
+      "header": "dm1_v2_hud_interaction_pc34.h",
+      "module": "dm1_v2_hud_interaction_pc34.c"
     },
     {
       "category": "ui/hud",
@@ -207,5 +212,5 @@
   ],
   "status": "passed",
   "testCount": 10,
-  "toolCount": 17
+  "toolCount": 18
 }
