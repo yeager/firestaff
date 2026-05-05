@@ -264,6 +264,18 @@ if(BUILD_TESTING)
         COMMAND test_touch_pointer_input_pc34_compat_integration
     )
 
+    add_executable(test_menu_hit_launch_direct_click_m12
+        test_menu_hit_launch_direct_click_m12.c
+    )
+    target_link_libraries(test_menu_hit_launch_direct_click_m12 PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_menu_hit_launch_direct_click_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME menu_hit_launch_direct_click_m12
+        COMMAND test_menu_hit_launch_direct_click_m12
+    )
+
     add_executable(firestaff_m11_touch_pointer_dispatch_probe
         probes/m11/firestaff_m11_touch_pointer_dispatch_probe.c
     )
