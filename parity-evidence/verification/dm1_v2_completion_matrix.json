@@ -22,6 +22,7 @@
     "visual/camera": 2,
     "visual/creature": 1,
     "visual/effects": 5,
+    "visual/item": 1,
     "visual/lighting": 1,
     "visual/transition": 1
   },
@@ -97,6 +98,11 @@
       "category": "ui/inventory",
       "header": "dm1_v2_inventory_sort_pc34.h",
       "module": "dm1_v2_inventory_sort_pc34.c"
+    },
+    {
+      "category": "visual/item",
+      "header": "dm1_v2_item_render_pc34.h",
+      "module": "dm1_v2_item_render_pc34.c"
     },
     {
       "category": "ui/journal",
@@ -204,13 +210,13 @@
       "module": "dm1_v2_weather_fx_pc34.c"
     }
   ],
-  "moduleCount": 34,
+  "moduleCount": 35,
   "requiredCTestNames": [
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_settings_pc34",
     "dm1_v2_upscale_dry_run_validator"
   ],
   "status": "passed",
-  "testCount": 11,
+  "testCount": 12,
   "toolCount": 18
 }

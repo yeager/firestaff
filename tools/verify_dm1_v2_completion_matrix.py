@@ -42,6 +42,7 @@ CATEGORY_RULES = [
     ("input", "ui/input"),
     ("tooltip", "ui/input"),
     ("inventory", "ui/inventory"),
+    ("item", "visual/item"),
     ("minimap", "ui/minimap"),
     ("journal", "ui/journal"),
     ("message_log", "ui/message-log"),

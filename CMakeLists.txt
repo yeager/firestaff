@@ -418,6 +418,10 @@ if(BUILD_TESTING)
         test_dm1_v2_spell_effect_pc34.c
         dm1_v2_spell_effect_overlay_pc34.c
     )
+    add_executable(test_dm1_v2_item_render_pc34
+        test_dm1_v2_item_render_pc34.c
+        dm1_v2_item_render_pc34.c
+    )
     add_executable(test_dm1_v2_hud_interaction_pc34
         test_dm1_v2_hud_interaction_pc34.c
         dm1_v2_hud_interaction_pc34.c
@@ -426,6 +430,7 @@ if(BUILD_TESTING)
     )
     target_compile_definitions(test_dm1_v2_creature_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     target_compile_definitions(test_dm1_v2_spell_effect_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    target_compile_definitions(test_dm1_v2_item_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     target_link_libraries(test_dm1_v2_hud_interaction_pc34 PRIVATE firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm1_v2_movement_viewport_pc34 PRIVATE -Wall -Wextra -O2)
@@ -436,6 +441,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_movement_command_adapter_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_creature_render_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_spell_effect_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_interaction_pc34 PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
@@ -523,6 +529,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_spell_effect_pc34
         COMMAND test_dm1_v2_spell_effect_pc34
+    )
+    add_test(
+        NAME dm1_v2_item_render_pc34
+        COMMAND test_dm1_v2_item_render_pc34
     )
     add_test(
         NAME dm1_v2_hud_interaction_pc34
