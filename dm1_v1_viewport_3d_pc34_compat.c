@@ -101,6 +101,28 @@ static const DM1_ViewportDrawStep s_draw_order[] = {
     { DM1_VIEW_SQUARE_D0C, 0,  0, "F0127_DUNGEONVIEW_DrawSquareD0C", "DUNVIEW.C:8542" },
 };
 
+
+/* PC34/I34E wall bitmap selection table, source-locked to the MEDIA709/720
+ * draw calls in ReDMCSB DUNVIEW.C.  These entries encode the native draw
+ * bitmap and the parity draw bitmap used with F0105/F0792. */
+static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
+    { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260" },
+    { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327" },
+    { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  true,  false, "F0116_DUNGEONVIEW_DrawSquareD3L", "DUNVIEW.C:6421-6427" },
+    { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  true,  false, "F0117_DUNGEONVIEW_DrawSquareD3R", "DUNVIEW.C:6554-6564" },
+    { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  true,  true,  "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", "DUNVIEW.C:6707-6714" },
+    { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, true,  false, "F0678_DrawD2L2",                  "DUNVIEW.C:6849-6855" },
+    { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, true,  false, "F0679_DrawD2R2",                  "DUNVIEW.C:6880-6886" },
+    { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  true,  false, "F0119_DUNGEONVIEW_DrawSquareD2L", "DUNVIEW.C:6954-6964" },
+    { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  true,  false, "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", "DUNVIEW.C:7105-7115" },
+    { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  true,  true,  "F0121_DUNGEONVIEW_DrawSquareD2C", "DUNVIEW.C:7299-7306" },
+    { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  true,  false, "F0122_DUNGEONVIEW_DrawSquareD1L", "DUNVIEW.C:7445-7455" },
+    { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  true,  false, "F0123_DUNGEONVIEW_DrawSquareD1R", "DUNVIEW.C:7613-7623" },
+    { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  true,  true,  "F0124_DUNGEONVIEW_DrawSquareD1C", "DUNVIEW.C:7833-7840" },
+    { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8016-8034" },
+    { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8126-8140" },
+};
+
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_init
  *
@@ -442,13 +464,12 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      *   G0076 = (P0184_i_MapX + P0185_i_MapY + P0183_i_Direction) & 0x0001 */
     state->parity_flip = ((map_x + map_y + direction) & 1) != 0;
 
-    /* Step 3: If parity, swap to flipped wall set.
-     * ReDMCSB F0128 lines 8371-8427:
-     *   G2107_WallSet ← G3048_WallSetFlipped */
-    if (state->parity_flip) {
-        memcpy(state->wall_set, state->wall_set_flipped,
-               sizeof(state->wall_set));
-    }
+    /* Step 3: PC34/I34E parity is applied per draw call.
+     * ReDMCSB DUNVIEW.C lines 6254-6260, 6321-6327, 6421-6427, etc.:
+     *   side walls select the opposite G2107_WallSet[] entry and call F0105
+     *   to flip horizontally; center walls pass G0076 to F0792.  Keep the
+     *   native G2107 order stable in state->wall_set and use
+     *   dm1_viewport_3d_select_wall_bitmap() at integration points. */
 
     /* Steps 4-11: Draw all visible squares back-to-front.
      *
@@ -484,13 +505,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
     /* Draw depth 0 walls (party square sides) */
     /* D0L, D0R, D0C */
 
-    /* Step 12: Restore native wall set if parity was flipped.
-     * ReDMCSB F0128 lines 8556-8580:
-     *   G2107_WallSet ← G3071_WallSetNotFlipped */
-    if (state->parity_flip) {
-        memcpy(state->wall_set, state->wall_set_native,
-               sizeof(state->wall_set));
-    }
+    /* Step 12: Native wall set remains stable on PC34/I34E; other platform
+     * paths restore at DUNVIEW.C:8553-8579 after temporary flipped pointers. */
 
     /* Step 13: Mark floor/ceiling for anticipatory redraw.
      * ReDMCSB F0128 lines 8607-8609:
@@ -566,6 +582,38 @@ const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index)
     return &s_draw_order[index];
 }
 
+size_t dm1_viewport_3d_wall_draw_spec_count(void)
+{
+    return sizeof(s_wall_draw_specs) / sizeof(s_wall_draw_specs[0]);
+}
+
+const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_wall_draw_spec_count()) return NULL;
+    return &s_wall_draw_specs[index];
+}
+
+const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_wall_draw_spec_count(); ++i) {
+        if (s_wall_draw_specs[i].square == square) return &s_wall_draw_specs[i];
+    }
+    return NULL;
+}
+
+DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec,
+                                                    bool parity_flip,
+                                                    bool *flip_horizontally)
+{
+    if (flip_horizontally) *flip_horizontally = false;
+    if (!spec) return DM1_WALL_SET_COUNT;
+    if (parity_flip) {
+        if (flip_horizontally) *flip_horizontally = spec->parity_flips_horizontally;
+        return spec->parity_wall;
+    }
+    return spec->native_wall;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Source Evidence
  * ──────────────────────────────────────────────────────────────────────── */
@@ -576,7 +624,9 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  VIEWPORT.C:16  F0564_VIEWPORT_InitializeBitPlanes\n"
         "  VIEWPORT.C:33  F0565_VIEWPORT_SetPalette\n"
         "  VIEWPORT.C:56  F0566_VIEWPORT_BlitToScreen\n"
+        "  DUNVIEW.C:183  G2107_WallSet[15] PC34/I34E wall bitmap order\n"
         "  DUNVIEW.C:2225 F0096_DUNGEONVIEW_LoadCurrentMapGraphics_CPSDF\n"
+        "  DUNVIEW.C:2427-2443 G3048_WallSetFlipped pair generation for flipped-capable ports\n"
         "  DUNVIEW.C:581  G0163_aauc_Graphic558_Frame_Walls[12][8]\n"
         "  DUNVIEW.C:2962 F0098_DUNGEONVIEW_DrawFloorAndCeiling\n"
         "  DUNVIEW.C:3018 F0099_DUNGEONVIEW_CopyBitmapAndFlipHorizontal\n"
@@ -589,7 +639,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:3502 F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF\n"
         "  DUNVIEW.C:4218 F0111_DUNGEONVIEW_DrawDoor\n"
         "  DUNVIEW.C:4547 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n"
-        "  DUNVIEW.C:6226 F0676_DrawD3L2 / F0677_DrawD3R2 side wall passes\n"
+        "  DUNVIEW.C:6254-6327 F0676/F0677 PC34 parity side-wall selection\n"
         "  DUNVIEW.C:6361 F0116_DUNGEONVIEW_DrawSquareD3L\n"
         "  DUNVIEW.C:6500 F0117_DUNGEONVIEW_DrawSquareD3R\n"
         "  DUNVIEW.C:6642 F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n"

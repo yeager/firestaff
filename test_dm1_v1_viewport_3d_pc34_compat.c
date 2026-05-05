@@ -109,6 +109,65 @@ static void test_redmcsb_f0128_draw_order(void)
     check_int("F0128.draw_order.out_of_range", dm1_viewport_3d_get_draw_order_step(19) == NULL, 1);
 }
 
+
+static void test_pc34_wall_bitmap_selection(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        DM1_WallSetIndex native_wall;
+        DM1_WallSetIndex parity_wall;
+        int center;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, 0 },
+        { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, 0 },
+        { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  0 },
+        { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  0 },
+        { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  1 },
+        { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, 0 },
+        { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, 0 },
+        { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  0 },
+        { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  0 },
+        { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  1 },
+        { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  0 },
+        { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  0 },
+        { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  1 },
+        { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0 },
+        { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0 },
+    };
+
+    check_int("PC34.wall_draw_spec.count", (int)dm1_viewport_3d_wall_draw_spec_count(), (int)(sizeof(expected) / sizeof(expected[0])));
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportWallDrawSpec *spec = dm1_viewport_3d_get_wall_draw_spec_for_square(expected[i].square);
+        char id[96];
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.nonnull", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.native", i);
+        check_int(id, (int)spec->native_wall, (int)expected[i].native_wall);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.parity", i);
+        check_int(id, (int)spec->parity_wall, (int)expected[i].parity_wall);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.center", i);
+        check_int(id, spec->center_wall ? 1 : 0, expected[i].center);
+
+        bool flip = true;
+        DM1_WallSetIndex native_sel = dm1_viewport_3d_select_wall_bitmap(spec, false, &flip);
+        snprintf(id, sizeof(id), "PC34.wall_select.%02zu.native_index", i);
+        check_int(id, (int)native_sel, (int)expected[i].native_wall);
+        snprintf(id, sizeof(id), "PC34.wall_select.%02zu.native_flip", i);
+        check_int(id, flip ? 1 : 0, 0);
+
+        DM1_WallSetIndex parity_sel = dm1_viewport_3d_select_wall_bitmap(spec, true, &flip);
+        snprintf(id, sizeof(id), "PC34.wall_select.%02zu.parity_index", i);
+        check_int(id, (int)parity_sel, (int)expected[i].parity_wall);
+        snprintf(id, sizeof(id), "PC34.wall_select.%02zu.parity_flip", i);
+        check_int(id, flip ? 1 : 0, 1);
+    }
+
+    bool flip = true;
+    check_int("PC34.wall_select.null_index", (int)dm1_viewport_3d_select_wall_bitmap(NULL, true, &flip), (int)DM1_WALL_SET_COUNT);
+    check_int("PC34.wall_select.null_flip", flip ? 1 : 0, 0);
+}
+
 static void test_parity_flip_restore(void)
 {
     unsigned char viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -135,6 +194,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     if (!e) return;
     check_int("source_evidence.g0163", strstr(e, "G0163_aauc_Graphic558_Frame_Walls") != NULL, 1);
     check_int("source_evidence.f0128", strstr(e, "DUNVIEW.C:8318 F0128_DUNGEONVIEW_Draw_CPSF") != NULL, 1);
+    check_int("source_evidence.g2107", strstr(e, "G2107_WallSet[15]") != NULL, 1);
+    check_int("source_evidence.pc34_side", strstr(e, "PC34 parity side-wall selection") != NULL, 1);
     check_int("source_evidence.f0115", strstr(e, "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions") != NULL, 1);
 }
 
@@ -142,6 +203,7 @@ int main(void)
 {
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_f0128_draw_order();
+    test_pc34_wall_bitmap_selection();
     test_parity_flip_restore();
     test_source_evidence_mentions_visual_lane();
 

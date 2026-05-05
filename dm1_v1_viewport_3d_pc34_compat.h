@@ -235,6 +235,23 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportDrawStep;
 
+/* Source-locked PC34/I34E wall bitmap selection for a wall square.
+ *
+ * ReDMCSB PC34 selects the opposite left/right bitmap and requests
+ * F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally when
+ * G0076_B_UseFlippedWallAndFootprintsBitmaps is set.  Center walls keep
+ * the same index and pass G0076 to F0792_DUNGEONVIEW_DrawBitmapYYY.
+ */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    DM1_WallSetIndex native_wall;
+    DM1_WallSetIndex parity_wall;
+    bool parity_flips_horizontally;
+    bool center_wall;
+    const char *redmcsb_function;
+    const char *source_lines;
+} DM1_ViewportWallDrawSpec;
+
 /* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
  * They are outside the original M597-M611 dense enum, so use stable negative
  * identifiers for metadata/probe reporting only. */
@@ -451,6 +468,10 @@ const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square);
 /* Source-locked F0128 visible-square draw order metadata. */
 size_t dm1_viewport_3d_draw_order_count(void);
 const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index);
+size_t dm1_viewport_3d_wall_draw_spec_count(void);
+const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index);
+const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square);
+DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
 
 /*
  * Source evidence string for verification.
