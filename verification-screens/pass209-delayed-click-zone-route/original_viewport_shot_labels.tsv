@@ -1,0 +1,7 @@
+index	filename	route_label	route_token
+01	01_ingame_start_original_viewport_224x136.ppm	party_hud	shot:party_hud
+02	02_ingame_turn_right_original_viewport_224x136.ppm		shot
+03	03_ingame_move_forward_original_viewport_224x136.ppm		shot
+04	04_ingame_spell_panel_original_viewport_224x136.ppm	spell_panel	shot:spell_panel
+05	05_ingame_after_cast_original_viewport_224x136.ppm		shot
+06	06_ingame_inventory_panel_original_viewport_224x136.ppm	inventory_panel	shot:inventory_panel
