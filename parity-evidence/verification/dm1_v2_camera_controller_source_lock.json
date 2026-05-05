@@ -1,0 +1,42 @@
+{
+  "anchors": [
+    {
+      "file": "DUNGEON.C",
+      "line": 35,
+      "needle": "G0233_ai_Graphic559_DirectionToStepEastCount",
+      "text": "int16_t G0233_ai_Graphic559_DirectionToStepEastCount[4] = {"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 40,
+      "needle": "G0234_ai_Graphic559_DirectionToStepNorthCount",
+      "text": "int16_t G0234_ai_Graphic559_DirectionToStepNorthCount[4] = {"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 1371,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "text": "void F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement("
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 1389,
+      "needle": "G0233_ai_Graphic559_DirectionToStepEastCount",
+      "text": "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[P0253_i_Direction] * P0254_i_StepsForwardCount, *P0257_pi_MapY += G0234_ai_Graphic559_DirectionToStepNorthCount[P0253_i_Direction] * P0254_i_StepsForwardCount;"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 90,
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 215,
+      "needle": "F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "F0380_COMMAND_ProcessQueue_CPSC();"
+    }
+  ],
+  "errors": [],
+  "status": "passed"
+}

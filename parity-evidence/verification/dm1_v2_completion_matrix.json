@@ -18,7 +18,7 @@
     "ui/journal": 1,
     "ui/message-log": 1,
     "ui/minimap": 1,
-    "visual/camera": 1,
+    "visual/camera": 2,
     "visual/creature": 1,
     "visual/effects": 5,
     "visual/lighting": 1,
@@ -45,6 +45,11 @@
       "category": "support/persistence",
       "header": "dm1_v2_auto_save_pc34.h",
       "module": "dm1_v2_auto_save_pc34.c"
+    },
+    {
+      "category": "visual/camera",
+      "header": "dm1_v2_camera_controller_pc34.h",
+      "module": "dm1_v2_camera_controller_pc34.c"
     },
     {
       "category": "visual/camera",
@@ -182,12 +187,12 @@
       "module": "dm1_v2_weather_fx_pc34.c"
     }
   ],
-  "moduleCount": 30,
+  "moduleCount": 31,
   "requiredCTestNames": [
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_upscale_dry_run_validator"
   ],
   "status": "passed",
-  "testCount": 2,
-  "toolCount": 15
+  "testCount": 3,
+  "toolCount": 16
 }
