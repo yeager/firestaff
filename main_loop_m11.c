@@ -1418,6 +1418,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
     }
     M11_GameView_Init(&gameView);
+    int launchedEver = 0;
+    int exitAfterLaunch = getenv("FIRESTAFF_EXIT_AFTER_LAUNCH") != NULL;
+    int failIfNoLaunch = getenv("FIRESTAFF_FAIL_IF_NO_LAUNCH") != NULL;
+    int runRc = 0;
     M11_ApplyStartupMenuRuntime(&menuState);
     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
 
@@ -1482,6 +1486,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 break;
             }
             if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+                launchedEver = 1;
+                if (exitAfterLaunch) {
+                    break;
+                }
                 continue;
             }
             M11_ApplyStartupMenuRuntime(&menuState);
@@ -1543,6 +1551,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         break;
                     }
                     if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs)) {
+                        launchedEver = 1;
+                        if (exitAfterLaunch) {
+                            break;
+                        }
                         continue;
                     }
                     M11_ApplyStartupMenuRuntime(&menuState);
@@ -1572,6 +1584,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         now = SDL_GetTicks();
     }
 
+    if (failIfNoLaunch && !launchedEver) {
+        fprintf(stderr, "firestaff: launch smoke failed: no launch reached before exit\n");
+        runRc = 3;
+    }
     m11_sync_and_save_window_size(&menuState);
     M11_GameView_Shutdown(&gameView);
     free(launcherFramebuffer);
@@ -1579,5 +1595,5 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         free(modernRgba);
     }
     M11_Render_Shutdown();
-    return 0;
+    return runRc;
 }

@@ -92,13 +92,13 @@ int main(void) {
         M12_StartupMenuState s;
         M12_StartupMenu_Init(&s);
         /* Modern front-door layout: brand card at visual slot 0,
-         * then DM1/CSB/DM2 game cards at visual slots 1..3. */
+         * then four game/destination cards at visual slots 1..4. */
         int side = 48;
         int gap = 22;
-        int visualCount = 4;
+        int visualCount = 5;
         int cardW = (W - 2 * side - gap * (visualCount - 1)) / visualCount;
         int allOk = 1;
-        for (int entry = 0; entry < 3; ++entry) {
+        for (int entry = 0; entry < 4; ++entry) {
             int visualSlot = entry + 1;
             int cx = side + visualSlot * (cardW + gap) + cardW / 2;
             int cy = 400;
@@ -110,7 +110,7 @@ int main(void) {
             }
         }
         record(&t, "INV_MOUSE_01", allOk,
-               "hit-test maps visible game card centres to entry indices 0..2");
+               "hit-test maps visible game card centres to entry indices 0..3");
     }
 
     /* ---------- INV_MOUSE_02 ---------- */
@@ -120,7 +120,7 @@ int main(void) {
         force_dm1_ready(&s);
         int side = 48;
         int gap = 22;
-        int visualCount = 4;
+        int visualCount = 5;
         int cardW = (W - 2 * side - gap * (visualCount - 1)) / visualCount;
         /* Click visual card 3 / entry 2 (DM2): visible in the catalog,
          * but not launch-supported. */
@@ -202,14 +202,14 @@ int main(void) {
         s.activatedIndex = 0;
         s.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
 
-        /* Launch button is at (panelX+panelW-w-36, panelY+panelH-h-20) */
+        /* Launch button is rendered centered at panel bottom. */
         int panelX = 96;
         int panelY = 260;
         int panelW = W - 2 * panelX;
         int panelH = 400;
         int w = 240, h = 54;
-        int lx = panelX + panelW - w - 36;
-        int ly = panelY + panelH - h - 20;
+        int lx = panelX + (panelW - w) / 2;
+        int ly = panelY + panelH - h - 24;
 
         int changed = M12_ModernMenu_HandlePointer(&s, lx + w / 2, ly + h / 2, 1, NULL);
         record(&t, "INV_MOUSE_05",

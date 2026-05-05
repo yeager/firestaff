@@ -57,8 +57,8 @@
 /* Launch button inside game options panel. */
 #define M12_HIT_LAUNCH_W     240
 #define M12_HIT_LAUNCH_H     54
-#define M12_HIT_LAUNCH_X     (M12_HIT_PANEL_X + M12_HIT_PANEL_W - M12_HIT_LAUNCH_W - 36)
-#define M12_HIT_LAUNCH_Y     (M12_HIT_PANEL_Y + M12_HIT_PANEL_H - M12_HIT_LAUNCH_H - 20)
+#define M12_HIT_LAUNCH_X     (M12_HIT_PANEL_X + (M12_HIT_PANEL_W - M12_HIT_LAUNCH_W) / 2)
+#define M12_HIT_LAUNCH_Y     (M12_HIT_PANEL_Y + M12_HIT_PANEL_H - M12_HIT_LAUNCH_H - 24)
 
 /* Back button (visible in all non-main views, top-left). */
 #define M12_HIT_BACK_X     24

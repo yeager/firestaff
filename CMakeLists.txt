@@ -230,6 +230,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_pro
     endif()
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_menu_mouse_probe.c")
+    add_executable(firestaff_m12_menu_mouse_probe probes/m12/firestaff_m12_menu_mouse_probe.c)
+    target_link_libraries(firestaff_m12_menu_mouse_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_menu_mouse_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
+    endif()
+endif()
+
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
@@ -567,6 +575,13 @@ if(BUILD_TESTING)
         add_test(
             NAME m12_startup_menu
             COMMAND firestaff_m12_startup_menu_probe
+        )
+    endif()
+
+    if(TARGET firestaff_m12_menu_mouse_probe)
+        add_test(
+            NAME m12_menu_mouse
+            COMMAND firestaff_m12_menu_mouse_probe
         )
     endif()
 

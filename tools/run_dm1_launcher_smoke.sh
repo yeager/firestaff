@@ -30,13 +30,15 @@ fi
 
 # Native modern launcher canvas is 1920x1080. The script clicks:
 # 1. DM1 card center in the main menu.
-# 2. Launch button center in the game-options panel.
+# 2. Visible Launch button center in the game-options panel.
 # FIRESTAFF_AUTOTEST lets the entrance wait auto-confirm after the launcher
 # handoff, so the smoke catches the immediate Launch-click freeze/regression.
-SCRIPT="click:590:500,click:1668:613"
+SCRIPT="click:590:500,click:960:609"
 
 SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-dummy}" \
 FIRESTAFF_AUTOTEST=1 \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 timeout "${FIRESTAFF_LAUNCH_SMOKE_TIMEOUT:-15s}" \
   "$BIN" \
   --duration "${FIRESTAFF_LAUNCH_SMOKE_DURATION_MS:-6500}" \
