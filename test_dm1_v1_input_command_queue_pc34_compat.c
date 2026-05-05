@@ -73,6 +73,41 @@ int main(void)
     ok &= expect_int("direct touch peek", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
     ok &= expect_int("direct touch command", peek.command, 71);
 
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 shifted del turns left", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x9BFF, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("pc34 shifted del command", result.command, DM1_V1_COMMAND_TURN_LEFT);
+    ok &= expect_int("pc34 shifted del dispatches turn", result.dispatchedTurn, 1);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 shifted help turns right", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x9B6F, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("pc34 shifted help command", result.command, DM1_V1_COMMAND_TURN_RIGHT);
+    ok &= expect_int("pc34 shifted help dispatches turn", result.dispatchedTurn, 1);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 shifted backward arrow strafes right", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x9B60, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("pc34 shifted backward arrow command", result.command, DM1_V1_COMMAND_MOVE_RIGHT);
+    ok &= expect_int("pc34 shifted backward arrow dispatches move", result.dispatchedMove, 1);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("queue accepts first command", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    ok &= expect_int("queue accepts second command", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    ok &= expect_int("queue accepts third command", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    ok &= expect_int("queue accepts fourth command", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    ok &= expect_int("redmcsb queue holds four commands", (int)queue.count, 4);
+    ok &= expect_int("redmcsb fifth command is dropped", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 0);
+    ok &= expect_int("redmcsb fifth command counted dropped", (int)queue.droppedFullCount, 1);
+
     printf("dm1V1InputCommandQueueInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }

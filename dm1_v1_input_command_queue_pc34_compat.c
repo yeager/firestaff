@@ -4,6 +4,7 @@
 /* Source lock (ReDMCSB WIP20210206, Toolchains/Common/Source):
  * - COMMAND.C:106-121 G0448 movement mouse rows for C001/C003/C002/C006/C005/C004/C080/C083.
  * - COMMAND.C:252-260 and 272-305 G0459 movement keyboard rows for keypad/arrow movement commands.
+ *   DM1 V1 PC-34 follows the MEDIA433 rows: shifted Del/Help turn, shifted forward/back arrows strafe.
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
  * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
@@ -12,7 +13,7 @@
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
  */
 
-#define DM1_V1_QUEUE_MAX_REGULAR 5u
+#define DM1_V1_QUEUE_MAX_REGULAR 4u
 
 static int normalize_dir(int value)
 {
@@ -30,13 +31,13 @@ static int is_move_command(int command)
 static int command_for_key(int keyCode)
 {
     switch (keyCode) {
-    case 0xAB34: case 0x007F:
+    case 0xAB34: case 0x007F: case 0x9BFF:
         return DM1_V1_COMMAND_TURN_LEFT;
-    case 0xAB36: case 0x9B3F:
+    case 0xAB36: case 0x9B3F: case 0x9B6F:
         return DM1_V1_COMMAND_TURN_RIGHT;
     case 0xAB35: case 0x9B41: case 0x9B54:
         return DM1_V1_COMMAND_MOVE_FORWARD;
-    case 0xAB33: case 0x9B43:
+    case 0xAB33: case 0x9B43: case 0x9B60:
         return DM1_V1_COMMAND_MOVE_RIGHT;
     case 0xAB32: case 0x9B42: case 0x9B53:
         return DM1_V1_COMMAND_MOVE_BACKWARD;
@@ -211,5 +212,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:106-121,252-260,272-305,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,106-121,252-260,272-305,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
 }
