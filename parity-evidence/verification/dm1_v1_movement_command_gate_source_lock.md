@@ -30,4 +30,5 @@ Scope: source-lock command queue -> movement dispatch -> blocked/success side ef
 - `dm1_v1_input_command_queue_pc34_compat.c` — compat queue models lock, pending replay, movement-disabled gate, and dispatch fields
 - `dm1_v1_movement_command_core_pc34_compat.c` — compat command core owns F0380->F0365/F0366 parity boundaries: turns bypass movement gates, blocked steps discard input before side effects, accepted steps process leave/enter and timing
 - `test_dm1_v1_command_movement_sensor_timing_pc34_compat.c` — integration probe covers successful movement side effects, blocked movement side-effect absence, command gating, and command-core turn/step/collision/redraw seams
+- `test_dm1_v1_movement_command_core_pc34_compat.c` — focused command-core probe proves PC34 keyboard movement rows survive dequeue into turn, successful movement, cooldown clearing, and blocked-movement queue discard
 - `tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py` — broader source-lock gate already ties command queue, movement legality, sensor order, and timing to Firestaff files

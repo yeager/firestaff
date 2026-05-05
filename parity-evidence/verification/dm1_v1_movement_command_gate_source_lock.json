@@ -96,6 +96,10 @@
       "claim": "integration probe covers successful movement side effects, blocked movement side-effect absence, command gating, and command-core turn/step/collision/redraw seams"
     },
     {
+      "file": "test_dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "focused command-core probe proves PC34 keyboard movement rows survive dequeue into turn, successful movement, cooldown clearing, and blocked-movement queue discard"
+    },
+    {
       "file": "tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py",
       "claim": "broader source-lock gate already ties command queue, movement legality, sensor order, and timing to Firestaff files"
     }

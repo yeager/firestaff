@@ -140,6 +140,55 @@ int main(void)
     ok &= expect_int("blocked movement leaves y", party.mapY, 2);
     ok &= expect_int("blocked movement flushes queued input", (int)queue.count, 0);
 
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 core left arrow enqueues turn", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004B, 0, 0, 0 }), 1);
+    ok &= expect_int("pc34 core left arrow turn bypasses movement gate", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 9, 4, DIR_NORTH, 340, 320, footwear, &result), 1);
+    ok &= expect_int("pc34 core left arrow dequeued", result.queue.dequeued, 1);
+    ok &= expect_int("pc34 core left arrow dispatches turn", result.queue.dispatchedTurn, 1);
+    ok &= expect_int("pc34 core left arrow handled", result.commandHandled, 1);
+    ok &= expect_int("pc34 core left arrow rotates west", party.direction, DIR_WEST);
+    ok &= expect_int("pc34 core left arrow leaves position x", party.mapX, 2);
+    ok &= expect_int("pc34 core left arrow leaves position y", party.mapY, 2);
+    ok &= expect_int("pc34 core left arrow leaves no cooldown", result.timing.disabledMovementTicks, 0);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 core up arrow enqueues forward", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    ok &= expect_int("pc34 core up arrow processes forward", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 0, 0, 360, 340, footwear, &result), 1);
+    ok &= expect_int("pc34 core up arrow dequeued", result.queue.dequeued, 1);
+    ok &= expect_int("pc34 core up arrow dispatches move", result.queue.dispatchedMove, 1);
+    ok &= expect_int("pc34 core up arrow applies step", result.stepApplied, 1);
+    ok &= expect_int("pc34 core up arrow y decremented", party.mapY, 1);
+    ok &= expect_int("pc34 core up arrow sets cooldown", result.timing.disabledMovementTicks, 2);
+    ok &= expect_int("pc34 core up arrow clears projectile cooldown", result.timing.projectileDisabledMovementTicks, 0);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
+    set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, 0));
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 core blocked up arrow queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    ok &= expect_int("pc34 core blocked followup queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004D, 0, 0, 0 }), 1);
+    ok &= expect_int("pc34 core blocked up arrow processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 0, 0, 380, 360, footwear, &result), 1);
+    ok &= expect_int("pc34 core blocked up arrow dequeued", result.queue.dequeued, 1);
+    ok &= expect_int("pc34 core blocked up arrow reports wall", result.movement.resultCode, MOVE_BLOCKED_WALL);
+    ok &= expect_int("pc34 core blocked up arrow discards followup", (int)queue.count, 0);
+    ok &= expect_int("pc34 core blocked up arrow skips turn", result.turnApplied, 0);
+    ok &= expect_int("pc34 core blocked up arrow keeps y", party.mapY, 2);
+
     printf("dm1V1MovementCommandCoreInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
