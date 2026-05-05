@@ -234,6 +234,11 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->autoPause = 0;
     config->themeIndex = 0;
     config->bgAnimationPreset = 0;
+    config->dm1V2ScalePercent = 100;
+    config->dm1V2SmoothingEnabled = 1;
+    config->dm1V2DynamicLightingEnabled = 1;
+    config->dm1V2AccessibilityTouchEnabled = 0;
+    config->dm1V2AspectMode = 0;
     FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
     m12_default_config_path(config->path, sizeof(config->path));
 }
@@ -400,6 +405,29 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->bgAnimationPreset = val;
         return;
     }
+    if (m12_string_equals(key, "dm1_v2_scale_percent")) {
+        int val = m12_parse_int(value, config->dm1V2ScalePercent);
+        if (val < 100) val = 100;
+        if (val > 400) val = 400;
+        config->dm1V2ScalePercent = val;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_smoothing_enabled")) {
+        config->dm1V2SmoothingEnabled = m12_parse_int(value, config->dm1V2SmoothingEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_dynamic_lighting_enabled")) {
+        config->dm1V2DynamicLightingEnabled = m12_parse_int(value, config->dm1V2DynamicLightingEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_accessibility_touch_enabled")) {
+        config->dm1V2AccessibilityTouchEnabled = m12_parse_int(value, config->dm1V2AccessibilityTouchEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "dm1_v2_aspect_mode")) {
+        config->dm1V2AspectMode = m12_parse_int(value, config->dm1V2AspectMode) == 1 ? 1 : 0;
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
@@ -467,6 +495,11 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "auto_pause = %d\n", config->autoPause ? 1 : 0);
     fprintf(fp, "theme_index = %d\n", config->themeIndex);
     fprintf(fp, "bg_animation_preset = %d\n", config->bgAnimationPreset);
+    fprintf(fp, "dm1_v2_scale_percent = %d\n", config->dm1V2ScalePercent);
+    fprintf(fp, "dm1_v2_smoothing_enabled = %d\n", config->dm1V2SmoothingEnabled ? 1 : 0);
+    fprintf(fp, "dm1_v2_dynamic_lighting_enabled = %d\n", config->dm1V2DynamicLightingEnabled ? 1 : 0);
+    fprintf(fp, "dm1_v2_accessibility_touch_enabled = %d\n", config->dm1V2AccessibilityTouchEnabled ? 1 : 0);
+    fprintf(fp, "dm1_v2_aspect_mode = %d\n", config->dm1V2AspectMode == 1 ? 1 : 0);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);

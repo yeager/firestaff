@@ -9,6 +9,7 @@
     "support/achievements": 1,
     "support/audio": 2,
     "support/persistence": 1,
+    "support/settings": 1,
     "support/stats": 1,
     "support/tooling": 1,
     "ui/champion": 1,
@@ -26,6 +27,7 @@
   },
   "currentCTestNamesPresent": [
     "dm1_v2_movement_viewport_pc34",
+    "dm1_v2_settings_pc34",
     "dm1_v2_upscale_dry_run_validator"
   ],
   "errors": [],
@@ -157,6 +159,11 @@
       "module": "dm1_v2_screenshot_pc34.c"
     },
     {
+      "category": "support/settings",
+      "header": "dm1_v2_settings_pc34.h",
+      "module": "dm1_v2_settings_pc34.c"
+    },
+    {
       "category": "runtime/movement",
       "header": "dm1_v2_smooth_movement_pc34.h",
       "module": "dm1_v2_smooth_movement_pc34.c"
@@ -192,12 +199,13 @@
       "module": "dm1_v2_weather_fx_pc34.c"
     }
   ],
-  "moduleCount": 32,
+  "moduleCount": 33,
   "requiredCTestNames": [
     "dm1_v2_movement_viewport_pc34",
+    "dm1_v2_settings_pc34",
     "dm1_v2_upscale_dry_run_validator"
   ],
   "status": "passed",
-  "testCount": 9,
+  "testCount": 10,
   "toolCount": 17
 }

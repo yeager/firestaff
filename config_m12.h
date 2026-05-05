@@ -57,6 +57,13 @@ typedef struct {
 
     /* Animated background preset */
     int bgAnimationPreset;  /* 0 = static, see M12_BgPreset in animated_bg_m12.h */
+
+    /* DM1 V2 presentation settings (V2-only; V1 launch path ignores these) */
+    int dm1V2ScalePercent;                 /* 100-400, default 100 */
+    int dm1V2SmoothingEnabled;             /* 0 = nearest, 1 = smooth */
+    int dm1V2DynamicLightingEnabled;       /* 0 = off, 1 = V2 lighting overlays */
+    int dm1V2AccessibilityTouchEnabled;    /* 0 = off, 1 = larger/touch-friendly V2 controls */
+    int dm1V2AspectMode;                   /* 0 = 4:3 original, 1 = 16:9 widescreen envelope */
 } M12_Config;
 
 void M12_Config_SetDefaults(M12_Config* config);

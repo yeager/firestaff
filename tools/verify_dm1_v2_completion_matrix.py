@@ -23,11 +23,13 @@ REQUIRED_MODULES = {
     "dm1_v2_hud_overlay_pc34.c": "ui/hud",
     "dm1_v2_lighting_dynamic_pc34.c": "visual/lighting",
     "dm1_v2_particle_system_pc34.c": "visual/effects",
+    "dm1_v2_settings_pc34.c": "support/settings",
 }
 
 REQUIRED_CTEST_NAMES = {
     "dm1_v2_upscale_dry_run_validator",
     "dm1_v2_movement_viewport_pc34",
+    "dm1_v2_settings_pc34",
 }
 
 CATEGORY_RULES = [
@@ -59,6 +61,7 @@ CATEGORY_RULES = [
     ("pathfinding", "runtime/ai"),
     ("stat_tracker", "support/stats"),
     ("achievements", "support/achievements"),
+    ("settings", "support/settings"),
 ]
 
 
