@@ -910,6 +910,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.windowWidth = config.windowWidth > 0 ? config.windowWidth : 960;
     state->settings.windowHeight = config.windowHeight > 0 ? config.windowHeight : 540;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        state->gameOptions[gi].presentationModeIndex = state->settings.graphicsIndex;
         state->gameOptions[gi].versionIndex = config.gameVersionIndex[gi];
         state->gameOptions[gi].usePatch = config.gameUsePatch[gi];
         state->gameOptions[gi].languageIndex = config.gameLanguageIndex[gi];
@@ -1161,6 +1162,7 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     if (entry->available) {
         int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
         int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+        state->gameOptions[gi].presentationModeIndex = pmode;
         m12_normalize_game_version_index(state, gi);
         m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
         state->view = M12_MENU_VIEW_GAME_OPTIONS;
@@ -1327,6 +1329,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     pmode = state->gameOptions[gi].presentationModeIndex;
                     if (pmode < 0) pmode = 0;
                     if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
+                    state->settings.graphicsIndex = pmode;
                     m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
                     m12_save_config(state);
                 }
@@ -1345,6 +1348,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     pmode = state->gameOptions[gi].presentationModeIndex;
                     if (pmode < 0) pmode = 0;
                     if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
+                    state->settings.graphicsIndex = pmode;
                     m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
                     m12_save_config(state);
                 }
@@ -1395,6 +1399,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     pmode = state->gameOptions[gi].presentationModeIndex;
                     if (pmode < 0) pmode = 0;
                     if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
+                    state->settings.graphicsIndex = pmode;
                     m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
                     m12_save_config(state);
                 }

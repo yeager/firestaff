@@ -352,8 +352,7 @@ int main(void) {
                      M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 0,
                  "game options default to the first supported version, English, cheats off, speed normal, and hotkeys disabled");
 
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* patch row */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* language row */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_LANGUAGE;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT); /* EN -> SV */
     probe_record(&tally,
                  "INV_M12_06B2",
@@ -363,9 +362,8 @@ int main(void) {
     /* Reset language back to EN so later tests start from a known baseline */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_LEFT); /* SV -> EN */
 
-    /* Enable cheats and verify speed hotkeys unlock.
-     * Cursor is on LANGUAGE row after INV_M12_06B2. One DOWN reaches CHEATS. */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* cheats row */
+    /* Enable cheats and verify speed hotkeys unlock. */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_CHEATS;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* toggle on */
     probe_record(&tally,
                  "INV_M12_06C",
@@ -374,7 +372,7 @@ int main(void) {
                  "enabling cheats unlocks speed hotkeys");
 
     /* Cycle speed to FASTER */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* speed row */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_SPEED;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* NORMAL→FASTER */
     probe_record(&tally,
                  "INV_M12_06D",
@@ -382,7 +380,7 @@ int main(void) {
                  "game speed cycles to faster with cheats on");
 
     /* Disable cheats: speed resets, hotkeys disabled */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP); /* back to cheats row */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_CHEATS;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* toggle off */
     probe_record(&tally,
                  "INV_M12_06E",
@@ -391,12 +389,8 @@ int main(void) {
                      M12_GameOptions_SpeedHotkeysEnabled(&state.gameOptions[0]) == 0,
                  "disabling cheats resets speed to normal and disables hotkeys");
 
-    /* Navigate to launch and press accept.
-     * Cursor is on CHEATS after INV_M12_06E. Navigate: speed, aspect, res, launch. */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* speed */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* aspect */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* resolution */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN); /* launch row */
+    /* Navigate to launch and press accept. */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     probe_record(&tally,
                  "INV_M12_06F",
@@ -494,18 +488,20 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* csb */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* dm1 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* open DM1 options */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_PRESENTATION; /* already V2 from settings */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_VERSION;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);  /* version: 0 -> 1 */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* patch */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_PATCH;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* patch: ORIGINAL -> PATCHED */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* language */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_LANGUAGE;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* EN -> SV */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* cheats */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_CHEATS;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* OFF -> ON */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* speed */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_SPEED;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* NORMAL -> FASTER */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* aspect */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_ASPECT;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* ORIGINAL -> 4:3 */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);   /* resolution */
+    state.gameOptSelectedRow = M12_GAME_OPT_ROW_RESOLUTION;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT); /* 320x200 -> 640x400 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);   /* back to main */
 
@@ -728,6 +724,7 @@ int main(void) {
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V2_ENHANCED_2D;
+        modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V2_ENHANCED_2D;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_ASPECT;
@@ -781,6 +778,7 @@ int main(void) {
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V3_MODERN_3D;
+        modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V3_MODERN_3D;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         intent = M12_StartupMenu_GetLaunchIntent(&modeState);

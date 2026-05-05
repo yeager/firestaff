@@ -580,6 +580,15 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME dm1_launcher_click_smoke
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tools/run_dm1_launcher_smoke.sh
+    )
+    set_tests_properties(dm1_launcher_click_smoke PROPERTIES
+        ENVIRONMENT "BUILD_DIR=${CMAKE_BINARY_DIR};FIRESTAFF_DATA=$ENV{HOME}/.openclaw/data/firestaff-original-games/DM/_canonical/dm1;SDL_VIDEODRIVER=dummy"
+        TIMEOUT 35
+    )
+
+    add_test(
         NAME m11_audio
         COMMAND firestaff_m11_audio_probe
     )
