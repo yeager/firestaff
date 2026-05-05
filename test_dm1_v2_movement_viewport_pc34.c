@@ -73,8 +73,19 @@ static void test_viewport_basics(void) {
     dm1_v2_vp_begin_scroll(&vp, 8, 0, 16);
     CHECK(dm1_v2_vp_is_scrolling(&vp));
     dm1_v2_vp_tick_scroll(&vp, 250);
-    CHECK(vp.scroll.scrollOffX > 0);
+    CHECK(vp.scroll.scrollOffX == 4);
     CHECK(vp.scroll.scrollOffX <= vp.scroll.scrollTargetX);
+    dm1_v2_vp_tick_scroll(&vp, 250);
+    CHECK(vp.scroll.scrollOffX == 8);
+    CHECK(!dm1_v2_vp_is_scrolling(&vp));
+
+    dm1_v2_vp_begin_scroll(&vp, -8, 0, 16);
+    CHECK(dm1_v2_vp_is_scrolling(&vp));
+    dm1_v2_vp_tick_scroll(&vp, 250);
+    CHECK(vp.scroll.scrollOffX == 4);
+    dm1_v2_vp_tick_scroll(&vp, 250);
+    CHECK(vp.scroll.scrollOffX == 0);
+    CHECK(!dm1_v2_vp_is_scrolling(&vp));
 }
 
 int main(void) {

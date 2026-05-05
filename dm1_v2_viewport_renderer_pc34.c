@@ -78,19 +78,23 @@ void dm1_v2_vp_tick_scroll(DM1_V2_ViewportState* vp, int dtMs) {
     
     if (moveAmount <= 0) moveAmount = 1; // Minimum movement
     
-    // Move X
+    // Move X without overshooting in either direction.
     if (dx != 0) {
         int moveX = stepX * moveAmount;
-        if (moveX > dx) moveX = dx;
-        if (moveX < dx) moveX = dx;
+        if ((stepX > 0 && moveX > dx) ||
+            (stepX < 0 && moveX < dx)) {
+            moveX = dx;
+        }
         vp->scroll.scrollOffX += moveX;
     }
     
-    // Move Y
+    // Move Y without overshooting in either direction.
     if (dy != 0) {
         int moveY = stepY * moveAmount;
-        if (moveY > dy) moveY = dy;
-        if (moveY < dy) moveY = dy;
+        if ((stepY > 0 && moveY > dy) ||
+            (stepY < 0 && moveY < dy)) {
+            moveY = dy;
+        }
         vp->scroll.scrollOffY += moveY;
     }
     
