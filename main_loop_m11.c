@@ -416,9 +416,9 @@ typedef enum {
     M11_ENTRANCE_COMMAND_ENTER = 1
 } M11_EntranceCommand;
 
-static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void);
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
 
-static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
+static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int autoEnterAfterMs) {
     unsigned char* framebuffer;
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
@@ -486,7 +486,7 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
 
         M11_Render_PresentIndexedWithSpecialPalette(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
-            if (m11_wait_for_redmcsb_entrance_command() == M11_ENTRANCE_COMMAND_QUIT) {
+            if (m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs) == M11_ENTRANCE_COMMAND_QUIT) {
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_QUIT;
             }
@@ -504,7 +504,7 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView) {
     return 1;
 }
 
-static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void) {
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs) {
     /* ReDMCSB ENTRANCE.C:850-883 redraws the entrance, discards previous
      * input, then waits in the entrance command loop until a fresh command
      * changes G0298_B_NewGame away from C099_MODE_WAITING_ON_ENTRANCE.
@@ -577,9 +577,12 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(void) {
         }
 
         /* Scripted/headless probes cannot send a second physical command.
-         * Keep the real app faithful by waiting indefinitely, but avoid
-         * deadlocks under the SDL dummy driver / explicit autotest mode. */
-        if (allowHeadlessTimeout && SDL_GetTicks() - started > 5000U) {
+         * The modern launcher also treats its explicit Launch action as the
+         * user's entrance confirmation; otherwise the app appears to hang
+         * immediately after pressing Launch.  Preserve the entrance screen
+         * briefly, then continue unless the user quits. */
+        if ((allowHeadlessTimeout && SDL_GetTicks() - started > 5000U) ||
+            (autoEnterAfterMs > 0 && SDL_GetTicks() - started > (Uint64)autoEnterAfterMs)) {
             return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);
@@ -700,7 +703,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             *idleAccumulatorMs = 0;
         }
         if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
-            if (!m11_play_redmcsb_entrance_transition(gameView)) {
+            if (!m11_play_redmcsb_entrance_transition(gameView, 1200)) {
                 /* Non-fatal: skip entrance animation but continue to game.
                  * Previously this aborted back to menu, causing the black
                  * viewport bug when TITLE.DAT decode failed. */

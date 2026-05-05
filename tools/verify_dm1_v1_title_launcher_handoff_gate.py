@@ -25,7 +25,7 @@ else:
     body = m.group("body")
     title_idx = body.find("m11_play_redmcsb_title_intro_if_available(menuState")
     open_idx = body.find("M11_GameView_OpenSelectedMenuEntry(gameView, menuState)")
-    entrance_idx = body.find("m11_play_redmcsb_entrance_transition(gameView)")
+    entrance_idx = body.find("m11_play_redmcsb_entrance_transition(gameView")
     if title_idx < 0:
         errors.append("launcher handoff does not call m11_play_redmcsb_title_intro_if_available")
     if open_idx < 0:
@@ -34,6 +34,8 @@ else:
         errors.append("TITLE intro must run before M11_GameView_OpenSelectedMenuEntry")
     if title_idx >= 0 and entrance_idx >= 0 and not title_idx < entrance_idx:
         errors.append("TITLE intro must run before entrance transition")
+    if "m11_play_redmcsb_entrance_transition(gameView, 1200)" not in body:
+        errors.append("modern launcher must auto-confirm entrance wait shortly after explicit Launch")
     guard_start = body.rfind("M12_StartupMenu_GetPresentationMode", 0, title_idx if title_idx >= 0 else 0)
     if title_idx >= 0 and guard_start < 0:
         errors.append("TITLE intro call is not guarded by V1 presentation mode")
