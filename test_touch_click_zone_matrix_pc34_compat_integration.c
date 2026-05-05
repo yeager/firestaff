@@ -85,6 +85,22 @@ int main(void) {
     if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u)) ok = 0;
 
     if (!TOUCHCLICK_Compat_HitTest(264, 126, &hit) || hit.zoneIndex != 70u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(234, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 1u || hit.zoneIndex != 68u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(261, 145, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 1u || hit.zoneIndex != 68u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(263, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 3u || hit.zoneIndex != 70u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(289, 145, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 3u || hit.zoneIndex != 70u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(291, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 2u || hit.zoneIndex != 69u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(318, 145, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 2u || hit.zoneIndex != 69u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(234, 147, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 6u || hit.zoneIndex != 73u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(261, 167, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 6u || hit.zoneIndex != 73u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(263, 147, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 5u || hit.zoneIndex != 72u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(289, 167, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 5u || hit.zoneIndex != 72u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(291, 147, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 4u || hit.zoneIndex != 71u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(318, 167, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 4u || hit.zoneIndex != 71u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(0, 33, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 80u || hit.zoneIndex != 7u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(223, 168, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 80u || hit.zoneIndex != 7u) ok = 0;
+    if (TOUCHCLICK_Compat_HitTestWithButton(224, 168, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) && hit.zoneIndex == 7u) ok = 0;
+    if (TOUCHCLICK_Compat_HitTestWithButton(223, 169, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) && hit.zoneIndex == 7u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTest(286, 78, &hit) || hit.zoneIndex != 98u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTest(236, 52, &hit) || hit.zoneIndex != 245u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTest(25, 11, &hit) || hit.zoneIndex != 212u) ok = 0;
