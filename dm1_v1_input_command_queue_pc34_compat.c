@@ -3,8 +3,9 @@
 
 /* Source lock (ReDMCSB WIP20210206, Toolchains/Common/Source):
  * - COMMAND.C:106-121 G0448 movement mouse rows for C001/C003/C002/C006/C005/C004/C080/C083.
- * - COMMAND.C:252-260 and 272-305 G0459 movement keyboard rows for keypad/arrow movement commands.
- *   DM1 V1 PC-34 follows the MEDIA433 rows: shifted Del/Help turn, shifted forward/back arrows strafe.
+ * - COMMAND.C:252-260 / 272-305 legacy ST/Amiga movement keyboard rows still covered for shared-route probes.
+ * - COMMAND.C:677-684 MEDIA707_I34E_I34M movement keyboard rows use 0x004B..0x0051.
+ * - IO2.C:27-61 F0540_INPUT_Crawcin reads IODRV_00_GetKeyboardInput and normalizes shifted PC-34 arrow scancodes to the same 0x004B/0x004C/0x004D/0x0050 command-table codes.
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
  * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
@@ -32,17 +33,17 @@ static int is_move_command(int command)
 static int command_for_key(int keyCode)
 {
     switch (keyCode) {
-    case 0xAB34: case 0x007F: case 0x9BFF:
+    case 0xAB34: case 0x007F: case 0x9BFF: case 0x004B:
         return DM1_V1_COMMAND_TURN_LEFT;
-    case 0xAB36: case 0x9B3F: case 0x9B6F:
+    case 0xAB36: case 0x9B3F: case 0x9B6F: case 0x004D:
         return DM1_V1_COMMAND_TURN_RIGHT;
-    case 0xAB35: case 0x9B41: case 0x9B54:
+    case 0xAB35: case 0x9B41: case 0x9B54: case 0x004C:
         return DM1_V1_COMMAND_MOVE_FORWARD;
-    case 0xAB33: case 0x9B43: case 0x9B60:
+    case 0xAB33: case 0x9B43: case 0x9B60: case 0x0051:
         return DM1_V1_COMMAND_MOVE_RIGHT;
-    case 0xAB32: case 0x9B42: case 0x9B53:
+    case 0xAB32: case 0x9B42: case 0x9B53: case 0x0050:
         return DM1_V1_COMMAND_MOVE_BACKWARD;
-    case 0xAB31: case 0x9B44: case 0x9B61:
+    case 0xAB31: case 0x9B44: case 0x9B61: case 0x004F:
         return DM1_V1_COMMAND_MOVE_LEFT;
     default:
         return DM1_V1_COMMAND_NONE;
@@ -230,5 +231,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,106-121,252-260,272-305,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,106-121,252-260,272-305,677-684,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
 }

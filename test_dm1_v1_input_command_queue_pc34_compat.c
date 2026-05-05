@@ -74,6 +74,26 @@ int main(void)
     ok &= expect_int("direct touch command", peek.command, 71);
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 table left arrow turns left", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004B, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("pc34 table left arrow command", result.command, DM1_V1_COMMAND_TURN_LEFT);
+    ok &= expect_int("pc34 table left arrow dispatches turn", result.dispatchedTurn, 1);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 table up arrow moves forward", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("pc34 table up arrow command", result.command, DM1_V1_COMMAND_MOVE_FORWARD);
+    ok &= expect_int("pc34 table up arrow dispatches move", result.dispatchedMove, 1);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 io2 shifted up arrow normalizes to forward", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("pc34 io2 shifted up arrow command", result.command, DM1_V1_COMMAND_MOVE_FORWARD);
+    ok &= expect_int("pc34 io2 shifted up arrow dispatches move", result.dispatchedMove, 1);
+
     ok &= expect_int("pc34 shifted del turns left", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x9BFF, 0, 0, 0 }), 1);
     result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
