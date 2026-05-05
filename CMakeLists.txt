@@ -200,6 +200,15 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_hall_walkaround_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 viewport/collision integration route probe (TSV/JSON only).
+add_executable(firestaff_dm1_v1_viewport_collision_integration_probe
+    probes/m11/firestaff_dm1_v1_viewport_collision_integration_probe.c
+)
+target_link_libraries(firestaff_dm1_v1_viewport_collision_integration_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_viewport_collision_integration_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Deterministic in-game screenshot series used by parity evidence.
 add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
 target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)

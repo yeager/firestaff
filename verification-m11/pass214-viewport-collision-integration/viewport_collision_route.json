@@ -1,0 +1,11 @@
+{
+  "source": "ReDMCSB WIP20210206 Toolchains/Common/Source COMMAND.C CLIKMENU.C MOVESENS.C DUNVIEW.C DRAWVIEW.C VIEWPORT.C",
+  "rows": [
+    {"frame":1,"label":"open_step","command":"forward","cooldown_drained":0,"before":[2,2,0],"target":[2,1],"collision":"passable","door_state":-1,"door_passable":0,"turn_applied":0,"step_applied":1,"movement_blocked":0,"blocked_by_group":0,"viewport_dirty":1,"viewport_drawn":1,"presented":1,"after":[2,1,0],"parity_flip":1,"floor_dirty":1},
+    {"frame":2,"label":"turn_to_door","command":"turn_right","cooldown_drained":2,"before":[2,1,0],"target":[-1,-1],"collision":"unknown","door_state":-1,"door_passable":-1,"turn_applied":1,"step_applied":0,"movement_blocked":0,"blocked_by_group":0,"viewport_dirty":1,"viewport_drawn":1,"presented":1,"after":[2,1,1],"parity_flip":0,"floor_dirty":1},
+    {"frame":3,"label":"closed_door_block","command":"forward","cooldown_drained":0,"before":[2,1,1],"target":[3,1],"collision":"blocked_door","door_state":4,"door_passable":0,"turn_applied":0,"step_applied":0,"movement_blocked":1,"blocked_by_group":0,"viewport_dirty":0,"viewport_drawn":0,"presented":0,"after":[2,1,1],"parity_flip":0,"floor_dirty":1},
+    {"frame":4,"label":"open_door_step","command":"forward","cooldown_drained":0,"before":[2,1,1],"target":[3,1],"collision":"passable","door_state":0,"door_passable":1,"turn_applied":0,"step_applied":1,"movement_blocked":0,"blocked_by_group":0,"viewport_dirty":1,"viewport_drawn":1,"presented":1,"after":[3,1,1],"parity_flip":1,"floor_dirty":1},
+    {"frame":5,"label":"group_block","command":"forward","cooldown_drained":2,"before":[3,1,1],"target":[4,1],"collision":"passable","door_state":-1,"door_passable":0,"turn_applied":0,"step_applied":0,"movement_blocked":1,"blocked_by_group":1,"viewport_dirty":0,"viewport_drawn":0,"presented":0,"after":[3,1,1],"parity_flip":1,"floor_dirty":1},
+    {"frame":6,"label":"turn_after_blocks","command":"turn_right","cooldown_drained":0,"before":[3,1,1],"target":[-1,-1],"collision":"unknown","door_state":-1,"door_passable":-1,"turn_applied":1,"step_applied":0,"movement_blocked":0,"blocked_by_group":0,"viewport_dirty":1,"viewport_drawn":1,"presented":1,"after":[3,1,2],"parity_flip":0,"floor_dirty":1}
+  ]
+}
