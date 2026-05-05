@@ -430,6 +430,38 @@ if(BUILD_TESTING)
         NAME dm1_v2_camera_controller_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_camera_controller_source_lock.py
     )
+
+    # Phase 2: turn edge cases (binary midpoint, dt clamping, opposite/4, wrap-around)
+    add_executable(test_dm1_v2_camera_turn_edge_cases_pc34
+        test_dm1_v2_camera_turn_edge_cases_pc34.c
+        dm1_v2_camera_controller_pc34.c
+        dm1_v2_movement_engine_pc34.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v2_camera_turn_edge_cases_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v2_camera_turn_edge_cases_pc34
+        COMMAND test_dm1_v2_camera_turn_edge_cases_pc34
+    )
+
+    # Phase 2: movement + camera integration gate
+    add_executable(test_dm1_v2_movement_camera_pc34
+        test_dm1_v2_movement_camera_pc34.c
+        dm1_v2_movement_command_adapter_pc34.c
+        dm1_v2_runtime_pc34.c
+        dm1_v2_camera_controller_pc34.c
+        dm1_v2_movement_engine_pc34.c
+        dm1_v2_viewport_renderer_pc34.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v2_movement_camera_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v2_movement_camera_integration_pc34
+        COMMAND test_dm1_v2_movement_camera_pc34
+    )
+
     add_test(
         NAME dm1_v2_movement_command_adapter_pc34
         COMMAND test_dm1_v2_movement_command_adapter_pc34
