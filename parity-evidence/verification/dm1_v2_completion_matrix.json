@@ -1,6 +1,7 @@
 {
   "categories": {
     "asset/upscale": 1,
+    "orphan": 1,
     "runtime/ai": 1,
     "runtime/movement": 2,
     "runtime/transition": 1,
@@ -131,6 +132,11 @@
       "module": "dm1_v2_pathfinding_pc34.c"
     },
     {
+      "category": "orphan",
+      "header": "dm1_v2_runtime_pc34.h",
+      "module": "dm1_v2_runtime_pc34.c"
+    },
+    {
       "category": "visual/transition",
       "header": "dm1_v2_screen_transition_pc34.h",
       "module": "dm1_v2_screen_transition_pc34.c"
@@ -176,12 +182,12 @@
       "module": "dm1_v2_weather_fx_pc34.c"
     }
   ],
-  "moduleCount": 29,
+  "moduleCount": 30,
   "requiredCTestNames": [
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_upscale_dry_run_validator"
   ],
   "status": "passed",
-  "testCount": 1,
-  "toolCount": 14
+  "testCount": 2,
+  "toolCount": 15
 }

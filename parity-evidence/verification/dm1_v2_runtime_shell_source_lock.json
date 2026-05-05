@@ -1,0 +1,36 @@
+{
+  "anchors": [
+    {
+      "file": "GAMELOOP.C",
+      "line": 215,
+      "needle": "F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "F0380_COMMAND_ProcessQueue_CPSC();"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 164,
+      "needle": "G0321_B_StopWaitingForPlayerInput",
+      "text": "G0321_B_StopWaitingForPlayerInput = C0_FALSE;"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 219,
+      "needle": "G0301_B_GameTimeTicking",
+      "text": "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 1371,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "text": "void F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement("
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 1389,
+      "needle": "G0233_ai_Graphic559_DirectionToStepEastCount",
+      "text": "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[P0253_i_Direction] * P0254_i_StepsForwardCount, *P0257_pi_MapY += G0234_ai_Graphic559_DirectionToStepNorthCount[P0253_i_Direction] * P0254_i_StepsForwardCount;"
+    }
+  ],
+  "errors": [],
+  "status": "passed"
+}
