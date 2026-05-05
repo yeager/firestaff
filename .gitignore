@@ -84,10 +84,21 @@ exports_driver_probe_*
 test_*_pc34_compat
 test_vga_palette
 
-# Built/dumped images and traces (scratch output of probes)
+# Built/dumped images and traces (scratch output of probes).
+# verification-screens raw/crop PNG/PPM payloads stay out of git; keep
+# small repo-friendly evidence manifests (md/json/tsv/log/conf/txt/scripts) trackable.
 *.pgm
 *.ppm
 *.png
+verification-screens/**/*.ppm
+verification-screens/**/*.png
+!verification-screens/**/*.md
+!verification-screens/**/*.json
+!verification-screens/**/*.tsv
+!verification-screens/**/*.conf
+!verification-screens/**/*.txt
+!verification-screens/**/*.sh
+!verification-screens/**/*.swift
 !assets/branding/*.png
 !assets/cards/creatures/*.png
 !assets-v2/creatures/wave1/**/*.png
@@ -96,6 +107,7 @@ test_vga_palette
 !reference-artifacts/**/*.png
 !reference-artifacts/**/*.ppm
 *.log
+!verification-screens/**/*manifest*.log
 tmp_probe_*
 startup_dispatch_*
 
