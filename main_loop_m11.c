@@ -686,13 +686,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
-    if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
+    if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL &&
+        getenv("FIRESTAFF_PLAY_ORIGINAL_TITLE") != NULL) {
         int titleIntroPlayed = 0;
-        /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle()
-         * before F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher
-         * front door, so the original TITLE animation and title-song/swoosh cue must
-         * run at the launcher->DM1 handoff, before the game view opens and before the
-         * entrance transition. */
+        /* The original TITLE intro remains source-locked and opt-in for probes,
+         * but the modern launcher must not run a blocking intro after the user
+         * presses Launch.  Launch should hand off to the playable dungeon
+         * immediately; otherwise the app looks frozen on macOS builds. */
         m11_play_redmcsb_title_intro_if_available(menuState, &titleIntroPlayed);
         (void)titleIntroPlayed;
     }
@@ -702,8 +702,9 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (idleAccumulatorMs) {
             *idleAccumulatorMs = 0;
         }
-        if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL) {
-            if (!m11_play_redmcsb_entrance_transition(gameView, 1200)) {
+        if (M12_StartupMenu_GetPresentationMode(menuState) == M12_PRESENTATION_V1_ORIGINAL &&
+            getenv("FIRESTAFF_PLAY_ORIGINAL_ENTRANCE") != NULL) {
+            if (!m11_play_redmcsb_entrance_transition(gameView, 1)) {
                 /* Non-fatal: skip entrance animation but continue to game.
                  * Previously this aborted back to menu, causing the black
                  * viewport bug when TITLE.DAT decode failed. */
