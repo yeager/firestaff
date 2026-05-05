@@ -1,0 +1,10 @@
+index	class	reason	file	sha12
+01	entrance_menu	dungeon entrance/menu controls still occupy the right column	gate01_entrance_menu.png	ceb0c2eec633
+02	entrance_menu	dungeon entrance/menu controls still occupy the right column	gate02_entrance_menu.png	ceb0c2eec633
+03	entrance_menu	dungeon entrance/menu controls still occupy the right column	gate03_entrance_menu.png	7f34445c6d04
+04	graphics_320x200_unclassified	320x200 graphics frame, but layout heuristics did not match a known class	gate04_graphics_320x200_unclassified.png	2908c8c701b8
+05	graphics_320x200_unclassified	320x200 graphics frame, but layout heuristics did not match a known class	gate05_graphics_320x200_unclassified.png	0c198ddafde3
+06	entrance_menu	dungeon entrance/menu controls still occupy the right column	gate06_entrance_menu.png	d3ee1a4f1a36
+07	entrance_menu	dungeon entrance/menu controls still occupy the right column	gate07_entrance_menu.png	17bd7e878157
+08	entrance_menu	dungeon entrance/menu controls still occupy the right column	gate08_entrance_menu.png	17bd7e878157
+09	dungeon_gameplay	viewport content with mostly dark in-game right column	gate09_dungeon_gameplay.png	48ed3743ab6a

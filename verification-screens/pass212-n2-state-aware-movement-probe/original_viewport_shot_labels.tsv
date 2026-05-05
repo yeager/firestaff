@@ -1,0 +1,7 @@
+index	filename	route_label	route_token
+01	image0001-raw.png	gate_confirmed_gameplay	shot:gate_confirmed_gameplay
+02	image0002-raw.png	move_up_after_gate	shot:move_up_after_gate
+03	image0003-raw.png	turn_right_after_gate	shot:turn_right_after_gate
+04	image0004-raw.png	move_left_after_gate	shot:move_left_after_gate
+05	image0005-raw.png	spell_or_party_key_after_gate	shot:spell_or_party_key_after_gate
+06	image0006-raw.png	inventory_or_party_key_after_gate	shot:inventory_or_party_key_after_gate
