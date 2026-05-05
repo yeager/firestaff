@@ -10,6 +10,7 @@
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
  * - COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands, then replays pending click.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
+ * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement (except later-platform release/stop commands not modeled here).
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
  */
 
@@ -113,6 +114,23 @@ void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Co
     memset(queue, 0, sizeof(*queue));
 }
 
+void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue)
+{
+    if (!queue) {
+        return;
+    }
+
+    /* Source lock: CLIKMENU.C:317-323 calls F0357_COMMAND_DiscardAllInput
+     * after a blocked party step. COMMAND.C:1304-1377 flushes buffered input
+     * and clears the command queue, preserving only later-platform release/
+     * stop-pressing commands that this DM1 V1 PC-34 seam does not model.
+     */
+    queue->locked = 0;
+    queue->count = 0;
+    queue->pendingClickPresent = 0;
+    queue->pendingClickCommand = DM1_V1_COMMAND_NONE;
+}
+
 int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     int command,
@@ -212,5 +230,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,106-121,252-260,272-305,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,106-121,252-260,272-305,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
 }

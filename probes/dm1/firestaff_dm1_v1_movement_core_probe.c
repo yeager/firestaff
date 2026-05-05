@@ -243,14 +243,16 @@ int main(void)
     squares[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_WALL, 0);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("wall forward key enqueues", enqueue_key(&queue, 0xAB35), 1);
+    ok &= expect_int("wall followup turn enqueues", enqueue_key(&queue, 0xAB36), 1);
     ok &= expect_int("core wall processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         &queue, &dungeon, &things, &party, 0, 0, 0, 3000ul, 2990ul, footwear, &core), 1);
-    printf("wallBlock command=%d dequeued=%d movementBlocked=%d resultCode=%d inputDiscardRequested=%d viewportRedraw=%d stopWait=%d old=(%d,%d) newParty=(%d,%d) cooldownApplied=%d\n",
+    printf("wallBlock command=%d dequeued=%d movementBlocked=%d resultCode=%d inputDiscardRequested=%d remainingQueue=%u viewportRedraw=%d stopWait=%d old=(%d,%d) newParty=(%d,%d) cooldownApplied=%d source=CLIKMENU.C:317-323 COMMAND.C:1304-1377\n",
         core.queue.command,
         core.queue.dequeued,
         core.movementBlocked,
         core.movement.resultCode,
         core.inputDiscardRequested,
+        queue.count,
         core.viewportRedrawRequested,
         core.stopWaitingForPlayerInput,
         core.sourceMapX, core.sourceMapY,
@@ -262,6 +264,7 @@ int main(void)
     ok &= expect_int("blocked path keeps y", party.mapY, 1);
     ok &= expect_int("blocked path does not set movement cooldown", core.timing.disabledMovementTicks, 0);
     ok &= expect_int("blocked path requests input discard", core.inputDiscardRequested, 1);
+    ok &= expect_int("blocked path clears queued followup", (int)queue.count, 0);
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, &party);
     printf("\n[stepping:closed-door-block]\n");

@@ -107,12 +107,14 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)) {
         outResult->movementBlocked = 1;
         outResult->inputDiscardRequested = 1;
+        DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);
         return 1;
     }
     if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(dungeon, things, party, action)) {
         outResult->movementBlocked = 1;
         outResult->blockedByGroup = 1;
         outResult->inputDiscardRequested = 1;
+        DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);
         return 1;
     }
 
@@ -145,5 +147,5 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
 const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:2045-2156; CLIKMENU.C:142-179,180-347; CHAMPION.C:117-130; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724";
+    return "COMMAND.C:1304-1377,2045-2156; CLIKMENU.C:142-179,180-347; CHAMPION.C:117-130; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724";
 }

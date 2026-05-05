@@ -435,6 +435,8 @@ int main(void)
         DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
         ok &= expect_int("core blocked wall queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
             (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core blocked wall followup queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
         ok &= expect_int("core blocked wall processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
         ok &= expect_int("core blocked wall dequeued", core.queue.dequeued, 1);
@@ -443,6 +445,7 @@ int main(void)
         ok &= expect_int("core blocked wall skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core blocked wall skips viewport", core.viewportRedrawRequested, 0);
         ok &= expect_int("core blocked wall discards input", core.inputDiscardRequested, 1);
+        ok &= expect_int("core blocked wall clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core blocked wall keeps x", party.mapX, 1);
         ok &= expect_int("core blocked wall keeps y", party.mapY, 1);
     }
@@ -458,11 +461,14 @@ int main(void)
         DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
         ok &= expect_int("core group block queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
             (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core group block followup queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
         ok &= expect_int("core group block processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
         ok &= expect_int("core group block detected", core.blockedByGroup, 1);
         ok &= expect_int("core group block skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core group block skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core group block clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core group block keeps source", party.mapX + party.mapY, 2);
     }
 
