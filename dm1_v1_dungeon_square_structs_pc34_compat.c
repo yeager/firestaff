@@ -10,10 +10,10 @@
  *   DUNGEON.C:
  *     G0233_ai_Graphic559_DirectionToStepEastCount[4]   (rad 30-34)
  *     G0234_ai_Graphic559_DirectionToStepNorthCount[4]  (rad 35-39)
- *     F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement (rad 867-935)
- *     F0151_DUNGEON_GetSquare                            (rad 937-978)
- *     F0152_DUNGEON_GetRelativeSquare                    (rad 980-993)
- *     F0172_DUNGEON_SetSquareAspect                      (rad 1170-1327)
+ *     F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement (lines 1371-1421)
+ *     F0151_DUNGEON_GetSquare                            (lines 1423-1475)
+ *     F0152_DUNGEON_GetRelativeSquare                    (source-adjacent helper)
+ *     F0172_DUNGEON_SetSquareAspect                      (lines 2466-2721)
  *
  *   DEFS.H:
  *     M034_SQUARE_TYPE(square) = ((square) >> 5)
@@ -291,6 +291,43 @@ uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
 
 
 /* =======================================================================
+ * dm1_classify_square_aspect_element
+ *
+ * Source-lock: ReDMCSB DUNGEON.C:F0172_DUNGEON_SetSquareAspect
+ * (lines 2522-2523 reads raw type; 2628-2648 turns closed pits into
+ * corridors; 2651-2664 turns closed fakewalls into walls and open fakewalls
+ * into corridors; 2693-2707 maps stairs/doors to side/front aspect elements).
+ * ======================================================================= */
+
+int dm1_classify_square_aspect_element(uint8_t raw_byte, int direction) {
+    uint8_t element = DM1_SQUARE_TYPE(raw_byte);
+    uint8_t flags = raw_byte & 0x0F;
+    int oriented_west_east = direction & 1;
+
+    switch (element) {
+        case DM1_ELEMENT_PIT:
+            return (flags & DM1_PIT_OPEN) ? DM1_ELEMENT_PIT : DM1_ELEMENT_CORRIDOR;
+
+        case DM1_ELEMENT_FAKEWALL:
+            return (flags & DM1_FAKEWALL_OPEN) ? DM1_ELEMENT_CORRIDOR : DM1_ELEMENT_WALL;
+
+        case DM1_ELEMENT_STAIRS:
+            return (((flags & DM1_STAIRS_NS_ORIENTATION) >> 3) == oriented_west_east)
+                ? DM1_ELEMENT_STAIRS_SIDE
+                : DM1_ELEMENT_STAIRS_FRONT;
+
+        case DM1_ELEMENT_DOOR:
+            return (((flags & DM1_DOOR_NS_ORIENTATION) >> 3) == oriented_west_east)
+                ? DM1_ELEMENT_DOOR_SIDE
+                : DM1_ELEMENT_DOOR_FRONT;
+
+        default:
+            return element;
+    }
+}
+
+
+/* =======================================================================
  * dm1_build_viewport
  *
  * Huvudfunktion: bygg komplett viewport-state.
@@ -337,19 +374,20 @@ void dm1_build_viewport(int party_x, int party_y, int direction, int party_map,
         dm1_view_square_t *vs = &out->squares[i];
         uint8_t raw = reader(vs->map_x, vs->map_y, user_data);
 
-        /* Fyll grundläggande aspect */
-        uint8_t element = DM1_SQUARE_TYPE(raw);
+        /* Fyll grundläggande aspect enligt F0172. */
+        int element = dm1_classify_square_aspect_element(raw, direction);
 
-        /* Hantera fakewall: stängd → beter sig som WALL */
-        if (element == DM1_ELEMENT_FAKEWALL && !(raw & DM1_FAKEWALL_OPEN)) {
-            vs->aspect[DM1_SQA_ELEMENT] = DM1_ELEMENT_WALL;
-            vs->is_front_wall = true;
-        } else if (element == DM1_ELEMENT_WALL) {
-            vs->aspect[DM1_SQA_ELEMENT] = DM1_ELEMENT_WALL;
-            vs->is_front_wall = true;
-        } else {
-            vs->aspect[DM1_SQA_ELEMENT] = element;
-            vs->is_front_wall = false;
+        vs->aspect[DM1_SQA_ELEMENT] = (int16_t)element;
+        vs->is_front_wall = (element == DM1_ELEMENT_WALL);
+        if (element == DM1_ELEMENT_PIT) {
+            vs->aspect[DM1_SQA_PIT_TELEPORTER_VIS] = (raw & DM1_PIT_INVISIBLE) ? 1 : 0;
+        } else if (element == DM1_ELEMENT_TELEPORTER) {
+            vs->aspect[DM1_SQA_PIT_TELEPORTER_VIS] =
+                ((raw & DM1_TELEPORTER_OPEN) && (raw & DM1_TELEPORTER_VISIBLE)) ? 1 : 0;
+        } else if (element == DM1_ELEMENT_STAIRS_SIDE || element == DM1_ELEMENT_STAIRS_FRONT) {
+            vs->aspect[DM1_SQA_STAIRS_UP] = (raw & DM1_STAIRS_UP) ? 1 : 0;
+        } else if (element == DM1_ELEMENT_DOOR_SIDE || element == DM1_ELEMENT_DOOR_FRONT) {
+            vs->aspect[DM1_SQA_DOOR_STATE] = raw & DM1_DOOR_STATE_MASK;
         }
     }
 
@@ -407,16 +445,22 @@ bool dm1_is_front_wall_at_depth(const dm1_viewport_state_t *vp, int depth) {
  * dm1_get_visible_squares
  *
  * Returnerar index för icke-ockluderade rutor, ordnade back-to-front
- * (depth 3→0, per depth: C, L, R).
+ * (depth 3→0, per depth: L, R, C, matching DUNVIEW.C:8490-8542).
  * Denna ordning matchar DM1:s renderingsordning (DRAWVIEW.C).
  * ======================================================================= */
 
 int dm1_get_visible_squares(const dm1_viewport_state_t *vp,
                              int visible_indices[DM1_VIEWPORT_SQUARE_COUNT]) {
+    static const int draw_order[DM1_VIEWPORT_SQUARE_COUNT] = {
+        1, 2, 0,   /* D3L, D3R, D3C */
+        4, 5, 3,   /* D2L, D2R, D2C */
+        7, 8, 6,   /* D1L, D1R, D1C */
+        10, 11, 9  /* D0L, D0R, D0C */
+    };
     int count = 0;
 
-    /* Array-ordning är redan depth 3→0 (index 0..11) */
-    for (int i = 0; i < DM1_VIEWPORT_SQUARE_COUNT; i++) {
+    for (int o = 0; o < DM1_VIEWPORT_SQUARE_COUNT; o++) {
+        int i = draw_order[o];
         if (!vp->squares[i].occluded) {
             visible_indices[count++] = i;
         }
