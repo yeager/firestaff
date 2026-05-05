@@ -926,6 +926,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass224_dm1_v1_runtime_state_probe_scaffold.py
         )
         add_test(
+            NAME pass227_dm1_v1_original_runtime_hook_design
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass227_dm1_v1_original_runtime_hook_design.py
+        )
+        add_test(
             NAME dm1_v1_stairs_pits_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_stairs_pits_viewport_source_lock.py
         )
