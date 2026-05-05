@@ -117,22 +117,25 @@ static void test_pc34_wall_bitmap_selection(void)
         DM1_WallSetIndex native_wall;
         DM1_WallSetIndex parity_wall;
         int center;
+        int zone;
+        int wall_return;
+        int front_alcove;
     } expected[] = {
-        { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, 0 },
-        { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, 0 },
-        { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  0 },
-        { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  0 },
-        { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  1 },
-        { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, 0 },
-        { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, 0 },
-        { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  0 },
-        { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  0 },
-        { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  1 },
-        { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  0 },
-        { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  0 },
-        { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  1 },
-        { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0 },
-        { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0 },
+        { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, 0, DM1_PC34_ZONE_WALL_D3L2, 1, 0 },
+        { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, 0, DM1_PC34_ZONE_WALL_D3R2, 1, 0 },
+        { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  0, DM1_PC34_ZONE_WALL_D3L,  1, 1 },
+        { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  0, DM1_PC34_ZONE_WALL_D3R,  1, 1 },
+        { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  1, DM1_PC34_ZONE_WALL_D3C,  1, 1 },
+        { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, 0, DM1_PC34_ZONE_WALL_D2L2, 1, 0 },
+        { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, 0, DM1_PC34_ZONE_WALL_D2R2, 1, 0 },
+        { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  0, DM1_PC34_ZONE_WALL_D2L,  1, 1 },
+        { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  0, DM1_PC34_ZONE_WALL_D2R,  1, 1 },
+        { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  1, DM1_PC34_ZONE_WALL_D2C,  1, 1 },
+        { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  0, DM1_PC34_ZONE_WALL_D1L,  1, 0 },
+        { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  0, DM1_PC34_ZONE_WALL_D1R,  1, 0 },
+        { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  1, DM1_PC34_ZONE_WALL_D1C,  0, 1 },
+        { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0 },
+        { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0 },
     };
 
     check_int("PC34.wall_draw_spec.count", (int)dm1_viewport_3d_wall_draw_spec_count(), (int)(sizeof(expected) / sizeof(expected[0])));
@@ -148,6 +151,14 @@ static void test_pc34_wall_bitmap_selection(void)
         check_int(id, (int)spec->parity_wall, (int)expected[i].parity_wall);
         snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.center", i);
         check_int(id, spec->center_wall ? 1 : 0, expected[i].center);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.zone", i);
+        check_int(id, spec->pc34_zone, expected[i].zone);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.return", i);
+        check_int(id, spec->wall_case_returns ? 1 : 0, expected[i].wall_return);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.front_alcove", i);
+        check_int(id, spec->front_alcove_reveals_contents ? 1 : 0, expected[i].front_alcove);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.occlusion_source", i);
+        check_nonnull(id, spec->occlusion_source_lines);
 
         bool flip = true;
         DM1_WallSetIndex native_sel = dm1_viewport_3d_select_wall_bitmap(spec, false, &flip);
@@ -187,6 +198,19 @@ static void test_parity_flip_restore(void)
     check_int("F0128.native.wall_stable", memcmp(state.wall_set, native, sizeof(native)) == 0, 1);
 }
 
+static void test_floor_ceiling_bands_and_zones(void)
+{
+    check_int("F0098.viewport.width", DM1_VIEWPORT_WIDTH, 224);
+    check_int("F0098.viewport.height", DM1_VIEWPORT_HEIGHT, 136);
+    check_int("F0098.black_area_h", DM1_VIEWPORT_BLACK_AREA_H, 37);
+    check_int("F0098.ceiling_h", DM1_VIEWPORT_CEILING_H, 29);
+    check_int("F0098.floor_y", DM1_VIEWPORT_FLOOR_Y, 66);
+    check_int("F0098.floor_h", DM1_VIEWPORT_FLOOR_H, 70);
+    check_int("PC34.zone.ceiling", DM1_PC34_ZONE_VIEWPORT_CEILING_AREA, 700);
+    check_int("PC34.zone.floor", DM1_PC34_ZONE_VIEWPORT_FLOOR_AREA, 701);
+    check_int("PC34.zone.wall_d0r", DM1_PC34_ZONE_WALL_D0R, 717);
+}
+
 static void test_source_evidence_mentions_visual_lane(void)
 {
     const char *e = dm1_viewport_3d_source_evidence();
@@ -197,6 +221,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.g2107", strstr(e, "G2107_WallSet[15]") != NULL, 1);
     check_int("source_evidence.pc34_side", strstr(e, "PC34 parity side-wall selection") != NULL, 1);
     check_int("source_evidence.f0115", strstr(e, "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions") != NULL, 1);
+    check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
+    check_int("source_evidence.occlusion", strstr(e, "wall case returns") != NULL, 1);
 }
 
 int main(void)
@@ -205,6 +231,7 @@ int main(void)
     test_redmcsb_f0128_draw_order();
     test_pc34_wall_bitmap_selection();
     test_parity_flip_restore();
+    test_floor_ceiling_bands_and_zones();
     test_source_evidence_mentions_visual_lane();
 
     if (g_failures) {

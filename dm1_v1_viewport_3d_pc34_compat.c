@@ -106,21 +106,21 @@ static const DM1_ViewportDrawStep s_draw_order[] = {
  * draw calls in ReDMCSB DUNVIEW.C.  These entries encode the native draw
  * bitmap and the parity draw bitmap used with F0105/F0792. */
 static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
-    { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260" },
-    { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327" },
-    { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  true,  false, "F0116_DUNGEONVIEW_DrawSquareD3L", "DUNVIEW.C:6421-6427" },
-    { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  true,  false, "F0117_DUNGEONVIEW_DrawSquareD3R", "DUNVIEW.C:6554-6564" },
-    { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  true,  true,  "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", "DUNVIEW.C:6707-6714" },
-    { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, true,  false, "F0678_DrawD2L2",                  "DUNVIEW.C:6849-6855" },
-    { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, true,  false, "F0679_DrawD2R2",                  "DUNVIEW.C:6880-6886" },
-    { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  true,  false, "F0119_DUNGEONVIEW_DrawSquareD2L", "DUNVIEW.C:6954-6964" },
-    { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  true,  false, "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", "DUNVIEW.C:7105-7115" },
-    { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  true,  true,  "F0121_DUNGEONVIEW_DrawSquareD2C", "DUNVIEW.C:7299-7306" },
-    { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  true,  false, "F0122_DUNGEONVIEW_DrawSquareD1L", "DUNVIEW.C:7445-7455" },
-    { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  true,  false, "F0123_DUNGEONVIEW_DrawSquareD1R", "DUNVIEW.C:7613-7623" },
-    { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  true,  true,  "F0124_DUNGEONVIEW_DrawSquareD1C", "DUNVIEW.C:7833-7840" },
-    { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8016-8034" },
-    { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8126-8140" },
+    { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, DM1_PC34_ZONE_WALL_D3L2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260", "DUNVIEW.C:6263-6264 wall ornament then return" },
+    { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, DM1_PC34_ZONE_WALL_D3R2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327", "DUNVIEW.C:6330-6331 wall ornament then return" },
+    { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  true,  false, DM1_PC34_ZONE_WALL_D3L,  true,  true,  "F0116_DUNGEONVIEW_DrawSquareD3L", "DUNVIEW.C:6421-6427", "DUNVIEW.C:6432-6437 front alcove branches to F0115, else return" },
+    { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  true,  false, DM1_PC34_ZONE_WALL_D3R,  true,  true,  "F0117_DUNGEONVIEW_DrawSquareD3R", "DUNVIEW.C:6554-6564", "DUNVIEW.C:6566-6571 front alcove branches to F0115, else return" },
+    { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  true,  true,  DM1_PC34_ZONE_WALL_D3C,  true,  true,  "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", "DUNVIEW.C:6707-6714", "DUNVIEW.C:6716-6720 front alcove branches to F0115, else return" },
+    { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, true,  false, DM1_PC34_ZONE_WALL_D2L2, true,  false, "F0678_DrawD2L2",                  "DUNVIEW.C:6849-6858", "DUNVIEW.C:6848-6862 wall case returns" },
+    { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, true,  false, DM1_PC34_ZONE_WALL_D2R2, true,  false, "F0679_DrawD2R2",                  "DUNVIEW.C:6880-6889", "DUNVIEW.C:6879-6891 wall case returns" },
+    { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  true,  false, DM1_PC34_ZONE_WALL_D2L,  true,  true,  "F0119_DUNGEONVIEW_DrawSquareD2L", "DUNVIEW.C:6954-6964", "DUNVIEW.C:6968-6973 front alcove branches to F0115, else return" },
+    { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  true,  false, DM1_PC34_ZONE_WALL_D2R,  true,  true,  "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF", "DUNVIEW.C:7105-7115", "DUNVIEW.C:7119-7123 front alcove branches before blocker return" },
+    { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  true,  true,  DM1_PC34_ZONE_WALL_D2C,  true,  true,  "F0121_DUNGEONVIEW_DrawSquareD2C", "DUNVIEW.C:7299-7306", "DUNVIEW.C:7308-7312 front alcove branches to F0115, else return" },
+    { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  true,  false, DM1_PC34_ZONE_WALL_D1L,  true,  false, "F0122_DUNGEONVIEW_DrawSquareD1L", "DUNVIEW.C:7445-7455", "DUNVIEW.C:7459-7460 side ornament then return" },
+    { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  true,  false, DM1_PC34_ZONE_WALL_D1R,  true,  false, "F0123_DUNGEONVIEW_DrawSquareD1R", "DUNVIEW.C:7613-7623", "DUNVIEW.C:7627-7628 side ornament then return" },
+    { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  true,  true,  DM1_PC34_ZONE_WALL_D1C,  false, true,  "F0124_DUNGEONVIEW_DrawSquareD1C", "DUNVIEW.C:7833-7840", "DUNVIEW.C:7842-7844 front alcove draws F0115; no side cells behind D1C" },
+    { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8016-8033", "DUNVIEW.C:8036-8038 wall case returns" },
+    { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8126-8139", "DUNVIEW.C:8142-8144 wall case returns" },
 };
 
 /* ────────────────────────────────────────────────────────────────────────────

@@ -248,8 +248,12 @@ typedef struct {
     DM1_WallSetIndex parity_wall;
     bool parity_flips_horizontally;
     bool center_wall;
+    uint16_t pc34_zone;
+    bool wall_case_returns;
+    bool front_alcove_reveals_contents;
     const char *redmcsb_function;
     const char *source_lines;
+    const char *occlusion_source_lines;
 } DM1_ViewportWallDrawSpec;
 
 /* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
@@ -259,6 +263,26 @@ typedef struct {
 #define DM1_VIEW_SQUARE_D3R2 ((DM1_ViewSquareIndex)-102)
 #define DM1_VIEW_SQUARE_D2L2 ((DM1_ViewSquareIndex)-103)
 #define DM1_VIEW_SQUARE_D2R2 ((DM1_ViewSquareIndex)-104)
+
+/* PC34/I34E viewport zone ids from ReDMCSB DEFS.H:4040-4057. */
+#define DM1_PC34_ZONE_VIEWPORT_CEILING_AREA 700
+#define DM1_PC34_ZONE_VIEWPORT_FLOOR_AREA   701
+#define DM1_PC34_ZONE_WALL_D3L2             702
+#define DM1_PC34_ZONE_WALL_D3R2             703
+#define DM1_PC34_ZONE_WALL_D3C              704
+#define DM1_PC34_ZONE_WALL_D3L              705
+#define DM1_PC34_ZONE_WALL_D3R              706
+#define DM1_PC34_ZONE_WALL_D2L2             707
+#define DM1_PC34_ZONE_WALL_D2R2             708
+#define DM1_PC34_ZONE_WALL_D2C              709
+#define DM1_PC34_ZONE_WALL_D2L              710
+#define DM1_PC34_ZONE_WALL_D2R              711
+#define DM1_PC34_ZONE_WALL_D1C              712
+#define DM1_PC34_ZONE_WALL_D1L              713
+#define DM1_PC34_ZONE_WALL_D1R              714
+#define DM1_PC34_ZONE_WALL_D0C              715
+#define DM1_PC34_ZONE_WALL_D0L              716
+#define DM1_PC34_ZONE_WALL_D0R              717
 
 typedef struct {
     uint8_t left_x;     /* Viewport-relative left X (pixel) */
