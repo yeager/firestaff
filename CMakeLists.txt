@@ -74,6 +74,7 @@ set(M11_SOURCES
     dm1_v1_object_world_pc34_compat.c
     dm1_v1_graphics_loader_pc34_compat.c
     dm1_v1_fade_transition_pc34_compat.c
+    dm1_v1_room_transition_pc34_compat.c
     dm1_v1_portrait_panel_pc34_compat.c
     dm1_v1_wall_ornament_pc34_compat.c
     dm1_v1_dungeon_decompressor_pc34_compat.c
@@ -323,6 +324,25 @@ if(BUILD_TESTING)
         NAME dm1_v1_movement_core_pc34_compat
         COMMAND test_dm1_v1_movement_core_pc34_compat
     )
+
+    add_executable(test_m11_v1_turning_presentation_pc34_compat
+        test_m11_v1_turning_presentation_pc34_compat.c
+    )
+    target_link_libraries(test_m11_v1_turning_presentation_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_m11_v1_turning_presentation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_v1_turning_presentation_pc34_compat
+        COMMAND test_m11_v1_turning_presentation_pc34_compat
+    )
+
+    if(Python3_FOUND)
+        add_test(
+            NAME m11_v1_turning_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_m11_v1_turning_source_lock.py
+        )
+    endif()
 
     add_executable(test_dm1_v1_movement_timing_pc34_compat
         test_dm1_v1_movement_timing_pc34_compat.c
@@ -982,4 +1002,26 @@ if(NOT TARGET test_dm1_v1_endgame_system_pc34_compat)
         NAME dm1_v1_endgame_system_source_lock
         COMMAND test_dm1_v1_endgame_system_pc34_compat
     )
+endif()
+
+
+# ── DM1 V1 Room Transition source-lock gate ──────────────────────────
+if(NOT TARGET test_dm1_v1_room_transition_pc34_compat)
+    add_executable(test_dm1_v1_room_transition_pc34_compat
+        test_dm1_v1_room_transition_pc34_compat.c
+        dm1_v1_room_transition_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_room_transition_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_room_transition_source_lock
+        COMMAND test_dm1_v1_room_transition_pc34_compat
+    )
+    if(Python3_EXECUTABLE)
+        add_test(
+            NAME dm1_v1_room_transition_redmcsb_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_room_transition_source_lock_gate.py
+        )
+    endif()
 endif()

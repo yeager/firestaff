@@ -53,6 +53,7 @@ static const char * const s_moduleNames[] = {
     "dm1_v1_object_interaction_pc34_compat",
     "dm1_v1_object_world_pc34_compat",
     "dm1_v1_palette_font_pc34_compat",
+    "dm1_v1_room_transition_pc34_compat",
     "dm1_v1_portrait_panel_pc34_compat",
     "dm1_v1_projectile_explosion_render_pc34_compat",
     "dm1_v1_resurrection_pc34_compat",
