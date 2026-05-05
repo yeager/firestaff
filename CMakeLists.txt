@@ -674,6 +674,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_center_door_occlusion_gate.py
         )
         add_test(
+            NAME dm1_v1_viewport_walls_golden_comparison
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_walls_golden_comparison.py
+        )
+        add_test(
             NAME v1_viewport_front_wall_depth_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_front_wall_depth_gate.py
         )
