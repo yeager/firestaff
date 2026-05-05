@@ -12,7 +12,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-records = {int(k): v for k, v in json.load(open(ROOT / "zones_h_reconstruction.json"))["records"].items()}
+ZONES_JSON = ROOT / "data/zones_h_reconstruction.json"
+records = {int(k): v for k, v in json.load(open(ZONES_JSON, encoding="utf-8"))["records"].items()}
 
 
 def right(z): return z[0] + z[2] - 1
