@@ -3,7 +3,7 @@
     "asset/upscale": 1,
     "orphan": 1,
     "runtime/ai": 1,
-    "runtime/movement": 2,
+    "runtime/movement": 3,
     "runtime/transition": 1,
     "runtime/viewport": 1,
     "support/achievements": 1,
@@ -118,6 +118,11 @@
     },
     {
       "category": "runtime/movement",
+      "header": "dm1_v2_movement_command_adapter_pc34.h",
+      "module": "dm1_v2_movement_command_adapter_pc34.c"
+    },
+    {
+      "category": "runtime/movement",
       "header": "dm1_v2_movement_engine_pc34.h",
       "module": "dm1_v2_movement_engine_pc34.c"
     },
@@ -187,12 +192,12 @@
       "module": "dm1_v2_weather_fx_pc34.c"
     }
   ],
-  "moduleCount": 31,
+  "moduleCount": 32,
   "requiredCTestNames": [
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_upscale_dry_run_validator"
   ],
   "status": "passed",
-  "testCount": 3,
-  "toolCount": 16
+  "testCount": 4,
+  "toolCount": 17
 }
