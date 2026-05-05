@@ -83,6 +83,9 @@ def main() -> int:
     dungeon = read(RED / 'DUNGEON.C', 'latin-1')
     champion = read(RED / 'CHAMPION.C', 'latin-1')
     moves = read(RED / 'MOVESENS.C', 'latin-1')
+    gameloop = read(RED / 'GAMELOOP.C', 'latin-1')
+    dunview = read(RED / 'DUNVIEW.C', 'latin-1')
+    drawview = read(RED / 'DRAWVIEW.C', 'latin-1')
     fire_queue = read(ROOT / 'dm1_v1_input_command_queue_pc34_compat.c')
     fire_timing = read(ROOT / 'dm1_v1_movement_timing_pc34_compat.c')
     fire_lifecycle = read(ROOT / 'memory_champion_lifecycle_pc34_compat.c')
@@ -149,6 +152,15 @@ def main() -> int:
         ('F0276_SENSOR_ProcessThingAdditionOrRemoval(G0306_i_PartyMapX, G0307_i_PartyMapY, C0xFFFF_THING_PARTY, L0725_B_PartySquare, C1_TRUE);', 'destination enter sensor processing', 'MOVESENS.C', moves),
         ('while (L0766_T_Thing != C0xFFFE_THING_ENDOFLIST)', 'sensor thing-list traversal', 'MOVESENS.C', moves),
         ('F0272_SENSOR_TriggerEffect(L0769_ps_Sensor, L0778_i_Effect, P0588_ui_MapX, P0589_ui_MapY, CM1_CELL_ANY);', 'sensor effect trigger', 'MOVESENS.C', moves),
+        ('F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);', 'main loop redraws dungeon view from current party state', 'GAMELOOP.C', gameloop),
+        ('if (G0310_i_DisabledMovementTicks) {', 'main loop movement cooldown decrement gate', 'GAMELOOP.C', gameloop),
+        ('G0310_i_DisabledMovementTicks--;', 'main loop movement cooldown decrement', 'GAMELOOP.C', gameloop),
+        ('if (G0311_i_ProjectileDisabledMovementTicks) {', 'main loop projectile cooldown decrement gate', 'GAMELOOP.C', gameloop),
+        ('F0380_COMMAND_ProcessQueue_CPSC();', 'main loop processes command queue while waiting for input release', 'GAMELOOP.C', gameloop),
+        ('F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);', 'dungeon view presents rebuilt viewport bitmap', 'DUNVIEW.C', dunview),
+        ('F0098_DUNGEONVIEW_DrawFloorAndCeiling();', 'dungeon view anticipates next floor/ceiling redraw', 'DUNVIEW.C', dunview),
+        ('G0324_B_DrawViewportRequested = C1_TRUE;', 'draw viewport requests vertical-blank blit', 'DRAWVIEW.C', drawview),
+        ('M526_WaitVerticalBlank();', 'draw viewport waits for next vblank presentation', 'DRAWVIEW.C', drawview),
     ]:
         require(text, needle, label, fname, citations)
 
@@ -182,6 +194,30 @@ def main() -> int:
         'F0276_SENSOR_ProcessThingAdditionOrRemoval(P0558_i_SourceMapX, P0559_i_SourceMapY, C0xFFFF_THING_PARTY, L0725_B_PartySquare, C0_FALSE);',
         'F0276_SENSOR_ProcessThingAdditionOrRemoval(G0306_i_PartyMapX, G0307_i_PartyMapY, C0xFFFF_THING_PARTY, L0725_B_PartySquare, C1_TRUE);',
     ], 'MOVESENS result/timing/sensor order')
+    require_order(gameloop, [
+        'F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);',
+        'G0310_i_DisabledMovementTicks--;',
+        'G0311_i_ProjectileDisabledMovementTicks--;',
+        'G0321_B_StopWaitingForPlayerInput = C0_FALSE;',
+        'F0380_COMMAND_ProcessQueue_CPSC();',
+        'if (!G0321_B_StopWaitingForPlayerInput)',
+    ], 'GAMELOOP redraw/cooldown/input-wait order')
+    dunview_draw_start = dunview.index('void F0128_DUNGEONVIEW_Draw_CPSF')
+    dunview_rebuild_present = require_order_positions(dunview, [
+        'if (G0297_B_DrawFloorAndCeilingRequested)',
+        'F0098_DUNGEONVIEW_DrawFloorAndCeiling();',
+        'F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);',
+    ], 'DUNVIEW rebuild-before-present order', dunview_draw_start)
+    dunview_present_line = line_no(dunview, dunview_rebuild_present[-1])
+    dunview_anticipate = dunview.find('F0098_DUNGEONVIEW_DrawFloorAndCeiling();', dunview_rebuild_present[-1] + 1)
+    if dunview_anticipate < 0:
+        raise AssertionError('DUNVIEW anticipate floor/ceiling redraw missing after viewport present')
+    citations.append(f'dungeon view rebuild/present/anticipate redraw cadence: DUNVIEW.C:{line_no(dunview, dunview_rebuild_present[0])}-{line_no(dunview, dunview_anticipate)} (present at {dunview_present_line})')
+    require_order(drawview, [
+        'void F0097_DUNGEONVIEW_DrawViewport',
+        'G0324_B_DrawViewportRequested = C1_TRUE;',
+        'M526_WaitVerticalBlank();',
+    ], 'DRAWVIEW vblank viewport request order')
 
     for body, checks, label in [
         (find_function(fire_queue, 'DM1_V1_InputCommandQueue_EnqueueEventPc34Compat'), ['event.kind == DM1_V1_INPUT_KIND_MOUSE && queue->locked', 'pendingClickPresent', 'return 0;'], 'Firestaff pending click capture'),
@@ -192,6 +228,7 @@ def main() -> int:
         (find_function(fire_timing, 'DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat'), ['F0841_LIFECYCLE_ComputeMoveTicks_Compat(load, maxLoad, wounds, footwearIcon)'], 'Firestaff movement timing champion tick wrapper'),
         (find_function(fire_lifecycle, 'F0841_LIFECYCLE_ComputeMoveTicks_Compat'), ['if ((int)maxLoad > (int)load)', 'ticks = 2', 'ticks = 4 +', 'LIFECYCLE_ICON_BOOT_OF_SPEED', 'ticks -= 1'], 'Firestaff champion movement ticks'),
         (find_function(fire_timing, 'DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat'), ['DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat', 'projectileDisabledMovementTicks = 0', 'scentRecorded = 1', 'lastPartyMovementTime = currentGameTick'], 'Firestaff successful-step timing'),
+        (find_function(read(ROOT / 'dm1_v1_movement_command_core_pc34_compat.c'), 'DM1_V1_MovementCommandCore_ProcessOnePc34Compat'), ['viewportRedrawRequested = 1', 'stopWaitingForPlayerInput = 1', 'inputDiscardRequested = 1', 'movementBlocked = 1'], 'Firestaff command core redraw/input-release seam'),
     ]:
         for needle in checks:
             if needle not in body:
@@ -216,6 +253,11 @@ def main() -> int:
         'turn current-square enter sensors processed',
         'turn current-square leaves party x',
         'turn current-square updates direction only',
+        'core forward1 requests viewport',
+        'core turn requests viewport',
+        'core blocked wall skips viewport',
+        'core group block skips viewport',
+        'core multi-command viewport redraw count',
     ]:
         if needle not in probe:
             raise AssertionError(f'probe coverage missing {needle!r}')
@@ -234,6 +276,9 @@ def main() -> int:
             'memory_champion_lifecycle_pc34_compat.c',
             'DUNGEON.C:1371-1440',
             'CHAMPION.C:1180-1214',
+            'GAMELOOP.C:90,150-155,164,216-219',
+            'DUNVIEW.C:8318-8614',
+            'DRAWVIEW.C:709-724',
             'test_dm1_v1_command_movement_sensor_timing_pc34_compat.c',
         ],
     }
