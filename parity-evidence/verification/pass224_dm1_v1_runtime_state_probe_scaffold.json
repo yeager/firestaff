@@ -1,0 +1,305 @@
+{
+  "artifact_policy": {
+    "forbidden_extensions": [
+      ".png",
+      ".ppm"
+    ],
+    "json_only": true
+  },
+  "blocker": {
+    "acceptable_implementations": [
+      "DOSBox-X/debugger or dosbox-debug breakpoint script with a symbol/address map from ReDMCSB functions/globals to the loaded DM.EXE image",
+      "a custom DOSBox/Staging frame/runtime hook that logs the listed globals and call-site hits as JSON",
+      "a real-mode debugger/gdbstub bridge that can stop/log at the listed PC addresses and continue without screenshot artifacts"
+    ],
+    "exact_missing_hook_api": "A debugger/emulator bridge that binds ReDMCSB source seams to the loaded stock DM.EXE and can emit JSON events for G0432/G0433 command dequeue, G0308/G0306/G0307/G0310/G0321 state mutations, F0128 draw arguments, G0324 viewport-request/vblank, and C007_ZONE_VIEWPORT blit without using PNG/PPM screenshots.",
+    "id": "pass224_missing_original_runtime_state_hook_api",
+    "why_required": "pass223 identified the source seams, but the current route drivers only send input and trigger screenshots. Duplicate dungeon_gameplay SHA values prove visual capture alone cannot establish command accepted -> movement applied -> viewport present."
+  },
+  "existing_attempt_audit": {
+    "attempt_dir": "verification-screens/pass212-n2-state-aware-movement-probe",
+    "capture_count": 6,
+    "class_counts": {
+      "dungeon_gameplay": 6
+    },
+    "classifier_exists": true,
+    "duplicate_sha256_counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 6
+    },
+    "first_duplicate_sha12": "48ed3743ab6a",
+    "labels_exists": true
+  },
+  "pass223_input": "parity-evidence/verification/pass223_dm1_v1_post_redraw_instrumentation_lock.json",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff-pass224-redo-runtime-probe-20260505220427",
+  "runtime_api_audit": {
+    "classification": "blocked/missing-original-runtime-state-hook-api",
+    "dosbox_version": {
+      "argv": [
+        "/usr/bin/dosbox",
+        "-version"
+      ],
+      "output_head": [
+        "",
+        "DOSBox version 0.74-3, copyright 2002-2019 DOSBox Team.",
+        "",
+        "DOSBox is written by the DOSBox Team (See AUTHORS file))",
+        "DOSBox comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so.",
+        ""
+      ],
+      "returncode": 0
+    },
+    "dosbox_x_version": {
+      "argv": [
+        "/usr/bin/dosbox-x",
+        "-version"
+      ],
+      "output_head": [
+        "",
+        "DOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.",
+        "DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)",
+        "",
+        "DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so.",
+        ""
+      ],
+      "returncode": 1
+    },
+    "existing_runner_api_files": [
+      {
+        "exists": true,
+        "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh",
+        "tokens": {
+          "C007_ZONE_VIEWPORT": false,
+          "DM1_ORIGINAL_ROUTE_EVENTS": true,
+          "G0306": false,
+          "G0324": false,
+          "breakpoint": false,
+          "ctrl+F5": true,
+          "shot:<label>": true
+        }
+      },
+      {
+        "exists": true,
+        "path": "tools/pass118_state_aware_original_route_driver.py",
+        "tokens": {
+          "G0306": false,
+          "breakpoint": false,
+          "capture_new": true,
+          "pass118_driver.log": true,
+          "xdotool": true
+        }
+      },
+      {
+        "exists": true,
+        "path": "tools/pass223_dm1_v1_post_redraw_instrumentation_lock.py",
+        "tokens": {
+          "F0097_DUNGEONVIEW_DrawViewport": true,
+          "F0380_COMMAND_ProcessQueue_CPSC": true,
+          "SOURCE_LOCKS": true
+        }
+      }
+    ],
+    "gdb_version": {
+      "argv": [
+        "/usr/bin/gdb",
+        "--version"
+      ],
+      "output_head": [
+        "GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1",
+        "Copyright (C) 2024 Free Software Foundation, Inc.",
+        "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>",
+        "This is free software: you are free to change and redistribute it.",
+        "There is NO WARRANTY, to the extent permitted by law."
+      ],
+      "returncode": 0
+    },
+    "hook_capable": false,
+    "host_tools": {
+      "dosbox": "/usr/bin/dosbox",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "dosbox-x": "/usr/bin/dosbox-x",
+      "gdb": "/usr/bin/gdb",
+      "xdotool": "/usr/bin/xdotool",
+      "xvfb-run": "/usr/bin/xvfb-run"
+    }
+  },
+  "runtime_trace_schema": {
+    "capture_policy": {
+      "forbidden_extensions": [
+        ".png",
+        ".ppm"
+      ],
+      "json_only": true,
+      "no_screenshot_claim": true
+    },
+    "promotion_predicate": [
+      "one command_accepted event exists for the route label",
+      "a later turn_state_applied or step_state_applied event references the accepted command sequence",
+      "for step commands, a later party_coordinates_mutated event records the committed destination",
+      "a later game_loop_draw_tuple/dungeon_view_consumed_tuple uses the mutated direction/x/y tuple",
+      "a later viewport_request_vblank_return records G0324_B_DrawViewportRequested before and after M526_WaitVerticalBlank",
+      "a later viewport_present event records the C007_ZONE_VIEWPORT blit"
+    ],
+    "schema": "pass224_dm1_v1_runtime_state_trace.v1"
+  },
+  "schema": "pass224_dm1_v1_runtime_state_probe_scaffold.v1",
+  "source_locks": [
+    {
+      "citation": "COMMAND.C:2045-2156",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command_accepted_queue_dispatch",
+      "missing": [],
+      "runtime_event": {
+        "event": "command_accepted",
+        "required_fields": [
+          "seq",
+          "tick_or_vblank",
+          "command_id",
+          "queue_first_index"
+        ],
+        "state_edge": "input delivered -> command accepted"
+      },
+      "verified": true
+    },
+    {
+      "citation": "CLIKMENU.C:142-173",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn_handler_applies_direction_and_releases_wait",
+      "missing": [],
+      "runtime_event": {
+        "event": "turn_state_applied",
+        "required_fields": [
+          "seq",
+          "accepted_seq",
+          "party_direction",
+          "stop_waiting_for_input"
+        ],
+        "state_edge": "command accepted -> movement applied"
+      },
+      "verified": true
+    },
+    {
+      "citation": "CLIKMENU.C:180-328",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "step_handler_resolves_destination_and_releases_wait",
+      "missing": [],
+      "runtime_event": {
+        "event": "step_state_applied",
+        "required_fields": [
+          "seq",
+          "accepted_seq",
+          "from_x",
+          "from_y",
+          "to_x",
+          "to_y",
+          "disabled_movement_ticks",
+          "stop_waiting_for_input"
+        ],
+        "state_edge": "command accepted -> movement applied"
+      },
+      "verified": true
+    },
+    {
+      "citation": "MOVESENS.C:442-443",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "move_result_mutates_party_coordinates",
+      "missing": [],
+      "runtime_event": {
+        "event": "party_coordinates_mutated",
+        "required_fields": [
+          "seq",
+          "accepted_seq",
+          "party_map_x",
+          "party_map_y"
+        ],
+        "state_edge": "movement applied -> party coordinate state committed"
+      },
+      "verified": true
+    },
+    {
+      "citation": "GAMELOOP.C:88-91",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_draws_mutated_party_state",
+      "missing": [],
+      "runtime_event": {
+        "event": "game_loop_draw_tuple",
+        "required_fields": [
+          "seq",
+          "accepted_seq",
+          "party_direction",
+          "party_map_x",
+          "party_map_y"
+        ],
+        "state_edge": "movement applied -> redraw requested from mutated state"
+      },
+      "verified": true
+    },
+    {
+      "citation": "DUNVIEW.C:8318-8610",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "dungeon_view_consumes_state_before_viewport_request",
+      "missing": [],
+      "runtime_event": {
+        "event": "dungeon_view_consumed_tuple",
+        "required_fields": [
+          "seq",
+          "accepted_seq",
+          "direction_arg",
+          "map_x_arg",
+          "map_y_arg"
+        ],
+        "state_edge": "redraw requested from mutated state -> viewport draw requested"
+      },
+      "verified": true
+    },
+    {
+      "citation": "DRAWVIEW.C:709-722",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_requested_then_vertical_blank_returned",
+      "missing": [],
+      "runtime_event": {
+        "event": "viewport_request_vblank_return",
+        "required_fields": [
+          "seq",
+          "accepted_seq",
+          "draw_viewport_requested",
+          "vblank_counter_before",
+          "vblank_counter_after"
+        ],
+        "state_edge": "viewport draw requested -> vblank returned"
+      },
+      "verified": true
+    },
+    {
+      "citation": "DRAWVIEW.C:840-842",
+      "file": "DRAWVIEW.C",
+      "function": "E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF",
+      "id": "viewport_bitmap_blitted_to_screen",
+      "missing": [],
+      "runtime_event": {
+        "event": "viewport_present",
+        "required_fields": [
+          "seq",
+          "accepted_seq",
+          "zone",
+          "viewport_bitmap_address_or_digest",
+          "vblank_counter"
+        ],
+        "state_edge": "vblank returned -> viewport present"
+      },
+      "verified": true
+    }
+  ],
+  "status": "BLOCKED_MISSING_ORIGINAL_RUNTIME_STATE_HOOK_API"
+}
