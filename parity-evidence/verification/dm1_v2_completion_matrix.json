@@ -1,0 +1,187 @@
+{
+  "categories": {
+    "asset/upscale": 1,
+    "runtime/ai": 1,
+    "runtime/movement": 2,
+    "runtime/transition": 1,
+    "runtime/viewport": 1,
+    "support/achievements": 1,
+    "support/audio": 2,
+    "support/persistence": 1,
+    "support/stats": 1,
+    "support/tooling": 1,
+    "ui/champion": 1,
+    "ui/hud": 1,
+    "ui/input": 2,
+    "ui/inventory": 1,
+    "ui/journal": 1,
+    "ui/message-log": 1,
+    "ui/minimap": 1,
+    "visual/camera": 1,
+    "visual/creature": 1,
+    "visual/effects": 5,
+    "visual/lighting": 1,
+    "visual/transition": 1
+  },
+  "currentCTestNamesPresent": [
+    "dm1_v2_movement_viewport_pc34",
+    "dm1_v2_upscale_dry_run_validator"
+  ],
+  "errors": [],
+  "manifestCount": 14,
+  "matrix": [
+    {
+      "category": "support/achievements",
+      "header": "dm1_v2_achievements_pc34.h",
+      "module": "dm1_v2_achievements_pc34.c"
+    },
+    {
+      "category": "support/audio",
+      "header": "dm1_v2_audio_mixer_pc34.h",
+      "module": "dm1_v2_audio_mixer_pc34.c"
+    },
+    {
+      "category": "support/persistence",
+      "header": "dm1_v2_auto_save_pc34.h",
+      "module": "dm1_v2_auto_save_pc34.c"
+    },
+    {
+      "category": "visual/camera",
+      "header": "dm1_v2_camera_shake_pc34.h",
+      "module": "dm1_v2_camera_shake_pc34.c"
+    },
+    {
+      "category": "ui/champion",
+      "header": "dm1_v2_champion_select_pc34.h",
+      "module": "dm1_v2_champion_select_pc34.c"
+    },
+    {
+      "category": "visual/creature",
+      "header": "dm1_v2_creature_animation_pc34.h",
+      "module": "dm1_v2_creature_animation_pc34.c"
+    },
+    {
+      "category": "visual/effects",
+      "header": "dm1_v2_damage_numbers_pc34.h",
+      "module": "dm1_v2_damage_numbers_pc34.c"
+    },
+    {
+      "category": "support/audio",
+      "header": "dm1_v2_footstep_audio_pc34.h",
+      "module": "dm1_v2_footstep_audio_pc34.c"
+    },
+    {
+      "category": "ui/hud",
+      "header": "dm1_v2_hud_overlay_pc34.h",
+      "module": "dm1_v2_hud_overlay_pc34.c"
+    },
+    {
+      "category": "ui/input",
+      "header": "dm1_v2_input_remap_pc34.h",
+      "module": "dm1_v2_input_remap_pc34.c"
+    },
+    {
+      "category": "ui/inventory",
+      "header": "dm1_v2_inventory_sort_pc34.h",
+      "module": "dm1_v2_inventory_sort_pc34.c"
+    },
+    {
+      "category": "ui/journal",
+      "header": "dm1_v2_journal_pc34.h",
+      "module": "dm1_v2_journal_pc34.c"
+    },
+    {
+      "category": "runtime/transition",
+      "header": "dm1_v2_level_transition_pc34.h",
+      "module": "dm1_v2_level_transition_pc34.c"
+    },
+    {
+      "category": "visual/lighting",
+      "header": "dm1_v2_lighting_dynamic_pc34.h",
+      "module": "dm1_v2_lighting_dynamic_pc34.c"
+    },
+    {
+      "category": "ui/message-log",
+      "header": "dm1_v2_message_log_pc34.h",
+      "module": "dm1_v2_message_log_pc34.c"
+    },
+    {
+      "category": "ui/minimap",
+      "header": "dm1_v2_minimap_pc34.h",
+      "module": "dm1_v2_minimap_pc34.c"
+    },
+    {
+      "category": "runtime/movement",
+      "header": "dm1_v2_movement_engine_pc34.h",
+      "module": "dm1_v2_movement_engine_pc34.c"
+    },
+    {
+      "category": "visual/effects",
+      "header": "dm1_v2_particle_emitter_presets_pc34.h",
+      "module": "dm1_v2_particle_emitter_presets_pc34.c"
+    },
+    {
+      "category": "visual/effects",
+      "header": "dm1_v2_particle_system_pc34.h",
+      "module": "dm1_v2_particle_system_pc34.c"
+    },
+    {
+      "category": "runtime/ai",
+      "header": "dm1_v2_pathfinding_pc34.h",
+      "module": "dm1_v2_pathfinding_pc34.c"
+    },
+    {
+      "category": "visual/transition",
+      "header": "dm1_v2_screen_transition_pc34.h",
+      "module": "dm1_v2_screen_transition_pc34.c"
+    },
+    {
+      "category": "support/tooling",
+      "header": "dm1_v2_screenshot_pc34.h",
+      "module": "dm1_v2_screenshot_pc34.c"
+    },
+    {
+      "category": "runtime/movement",
+      "header": "dm1_v2_smooth_movement_pc34.h",
+      "module": "dm1_v2_smooth_movement_pc34.c"
+    },
+    {
+      "category": "visual/effects",
+      "header": "dm1_v2_spell_effect_overlay_pc34.h",
+      "module": "dm1_v2_spell_effect_overlay_pc34.c"
+    },
+    {
+      "category": "support/stats",
+      "header": "dm1_v2_stat_tracker_pc34.h",
+      "module": "dm1_v2_stat_tracker_pc34.c"
+    },
+    {
+      "category": "asset/upscale",
+      "header": "dm1_v2_texture_upscale_pc34.h",
+      "module": "dm1_v2_texture_upscale_pc34.c"
+    },
+    {
+      "category": "ui/input",
+      "header": "dm1_v2_tooltip_pc34.h",
+      "module": "dm1_v2_tooltip_pc34.c"
+    },
+    {
+      "category": "runtime/viewport",
+      "header": "dm1_v2_viewport_renderer_pc34.h",
+      "module": "dm1_v2_viewport_renderer_pc34.c"
+    },
+    {
+      "category": "visual/effects",
+      "header": "dm1_v2_weather_fx_pc34.h",
+      "module": "dm1_v2_weather_fx_pc34.c"
+    }
+  ],
+  "moduleCount": 29,
+  "requiredCTestNames": [
+    "dm1_v2_movement_viewport_pc34",
+    "dm1_v2_upscale_dry_run_validator"
+  ],
+  "status": "passed",
+  "testCount": 1,
+  "toolCount": 14
+}

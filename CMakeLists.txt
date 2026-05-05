@@ -360,6 +360,10 @@ if(BUILD_TESTING)
         NAME dm1_v2_movement_viewport_pc34
         COMMAND test_dm1_v2_movement_viewport_pc34
     )
+    add_test(
+        NAME dm1_v2_completion_matrix_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_completion_matrix.py
+    )
 
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
