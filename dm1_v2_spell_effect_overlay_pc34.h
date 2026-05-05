@@ -28,6 +28,9 @@ typedef struct {
 
 void v2_spell_overlay_init(void);
 void v2_spell_overlay_trigger(M11_V2_SpellVFX type, float speed);
+bool v2_spell_overlay_type_for_dm1_explosion_thing(int16_t dm1ExplosionThing, M11_V2_SpellVFX* outType);
+bool v2_spell_overlay_trigger_dm1_explosion_thing(int16_t dm1ExplosionThing, float speed);
+M11_V2_SpellOverlay v2_spell_overlay_snapshot(void);
 void v2_spell_overlay_update(float dt);
 void v2_spell_overlay_render(uint8_t* fb, int w, int h);
 bool v2_spell_overlay_is_active(void);

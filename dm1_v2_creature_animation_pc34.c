@@ -11,11 +11,12 @@ void v2_creature_anim_init(void) {
 void v2_creature_anim_define(M11_V2_CreatureAnim anim, const M11_V2_AnimFrame* frames, int count, bool loop) {
     if (anim < 0 || anim >= 6) return;
     M11_V2_AnimSequence* seq = &g_anim_sequences[anim];
-    seq->frame_count = count;
+    int copy_count = count;
+    if (copy_count < 0) copy_count = 0;
+    if (copy_count > 16) copy_count = 16;
+    seq->frame_count = copy_count;
     seq->loop = loop;
-    if (frames && count > 0) {
-        int copy_count = count;
-        if (copy_count > 16) copy_count = 16;
+    if (frames && copy_count > 0) {
         memcpy(seq->frames, frames, sizeof(M11_V2_AnimFrame) * copy_count);
     }
 }

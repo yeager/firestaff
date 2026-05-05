@@ -404,12 +404,24 @@ if(BUILD_TESTING)
         dm1_v2_movement_engine_pc34.c
         dm1_v2_viewport_renderer_pc34.c
     )
+    add_executable(test_dm1_v2_creature_render_pc34
+        test_dm1_v2_creature_render_pc34.c
+        dm1_v2_creature_animation_pc34.c
+    )
+    add_executable(test_dm1_v2_spell_effect_pc34
+        test_dm1_v2_spell_effect_pc34.c
+        dm1_v2_spell_effect_overlay_pc34.c
+    )
+    target_compile_definitions(test_dm1_v2_creature_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    target_compile_definitions(test_dm1_v2_spell_effect_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     if(NOT MSVC)
         target_compile_options(test_dm1_v2_movement_viewport_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_runtime_shell_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_camera_controller_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_movement_command_adapter_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_creature_render_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_spell_effect_pc34 PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME dm1_v2_movement_viewport_pc34
@@ -484,6 +496,21 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_movement_command_adapter_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_movement_command_adapter_source_lock.py
+    )
+    add_test(
+        NAME dm1_v2_creature_render_pc34
+        COMMAND test_dm1_v2_creature_render_pc34
+    )
+    add_test(
+        NAME dm1_v2_spell_effect_pc34
+        COMMAND test_dm1_v2_spell_effect_pc34
+    )
+    add_test(
+        NAME dm1_v2_asset_manifest_validation
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/validate_v2_manifests.py
+            assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json
+            assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json
+            assets-v2/manifests/firestaff-v2-wave1-effects-starter.manifest.json
     )
 
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat

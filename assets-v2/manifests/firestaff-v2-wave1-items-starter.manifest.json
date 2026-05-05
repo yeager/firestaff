@@ -1,0 +1,33 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-wave1-items-starter",
+  "description": "Bounded V2 starter item/icon manifest for action-hand and inventory readability gates.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": ["1080p"],
+    "layoutSkeleton": "dm1-object-aspect-icon"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.item.starter.empty-hand",
+      "family": "starter_item_icons",
+      "role": "empty hand/action hand baseline icon",
+      "productionClass": "redraw-native",
+      "sourceReference": {
+        "origin": "ReDMCSB DUNVIEW.C object aspect and grabbable-zone rendering audit",
+        "originalSize": {"width": 16, "height": 16}
+      },
+      "sizes": {
+        "master4k": {"width": 1024, "height": 1024},
+        "derived1080p": {"width": 512, "height": 512}
+      },
+      "paths": {
+        "masterDir": "assets-v2/items/wave1/starter-icons/masters/4k",
+        "derivedDir": "assets-v2/items/wave1/starter-icons/exports/1080p",
+        "spec": "assets-v2/items/wave1/specs/starter-icons.md"
+      },
+      "status": "planned",
+      "notes": ["Manifest-only gate; no V1 object/render behavior changes."]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-wave1-effects-starter",
+  "description": "Bounded V2 starter spell/effect manifest for cosmetic overlay bindings.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": ["1080p"],
+    "layoutSkeleton": "dm1-explosion-overlay-family"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.effect.fireball-burst.overlay",
+      "family": "starter_spell_effects",
+      "role": "fireball impact overlay family",
+      "productionClass": "system-rebuild",
+      "sourceReference": {
+        "origin": "ReDMCSB PROJEXPL.C F0213 explosion fireball/lightning/smoke family audit",
+        "originalSize": {"width": 32, "height": 32}
+      },
+      "sizes": {
+        "master4k": {"width": 2048, "height": 2048},
+        "derived1080p": {"width": 1024, "height": 1024}
+      },
+      "paths": {
+        "masterDir": "assets-v2/effects/wave1/starter-spell-effects/masters/4k",
+        "derivedDir": "assets-v2/effects/wave1/starter-spell-effects/exports/1080p",
+        "spec": "assets-v2/effects/wave1/specs/starter-spell-effects.md"
+      },
+      "status": "planned",
+      "notes": ["Cosmetic V2 overlay binding only; V1 projectile/explosion behavior remains authoritative."]
+    }
+  ]
+}
