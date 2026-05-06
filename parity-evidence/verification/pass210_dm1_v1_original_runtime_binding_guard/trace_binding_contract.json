@@ -1,0 +1,66 @@
+{
+  "hard_reject_if": [
+    "only compressed LZEXE loader CS:IP is supplied",
+    "no PSP/load segment is recorded",
+    "no decompressed transfer point or map symbol address is recorded",
+    "a breakpoint hit is missing its observed CS:IP and register/memory context",
+    "static compressed-file offsets are promoted as runtime text addresses"
+  ],
+  "required_hits": [
+    {
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "required_observations": [
+        "queue index",
+        "command id",
+        "command x/y",
+        "CS:IP before dispatch"
+      ],
+      "seam": "command_accepted",
+      "source": "COMMAND.C:2095-2127,2150-2156,2322-2324"
+    },
+    {
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "required_observations": [
+        "movement arrow index",
+        "destination x/y",
+        "blocked flag",
+        "CS:IP around move-result call"
+      ],
+      "seam": "movement_applied",
+      "source": "CLIKMENU.C:256-270,317-329,345-347"
+    },
+    {
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "required_observations": [
+        "thing == party",
+        "source x/y",
+        "destination x/y",
+        "committed G0306/G0307 values"
+      ],
+      "seam": "party_coordinates_committed",
+      "source": "MOVESENS.C:438-444,493-496,573-578"
+    },
+    {
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF / F0380_COMMAND_ProcessQueue_CPSC cadence",
+      "required_observations": [
+        "post-command party dir/x/y",
+        "draw call observed",
+        "frame/present marker after draw"
+      ],
+      "seam": "viewport_present",
+      "source": "GAMELOOP.C:83-91,164-168,215-219"
+    }
+  ],
+  "required_loader_facts": [
+    "psp_segment",
+    "program_load_segment = psp_segment + 0x10",
+    "post_lzexe_transfer_cs_ip_or_decompressed_entry",
+    "decompressed_image_sha256_or_map_sha256"
+  ],
+  "required_symbol_inputs": [
+    "FIRES.MAP public symbols or verified decompressed image offset map",
+    "symbol segment:offset for every seam",
+    "load/relocation rule used"
+  ],
+  "schema": "dm1_v1_original_runtime_trace_binding.v1"
+}

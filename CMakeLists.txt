@@ -836,6 +836,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass209_dm1_v1_original_delayed_click_route_gate.py
         )
         add_test(
+            NAME dm1_v1_original_runtime_binding_guard
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass210_dm1_v1_original_runtime_binding_guard.py
+        )
+        add_test(
             NAME dm1_v1_stairs_pits_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_stairs_pits_viewport_source_lock.py
         )

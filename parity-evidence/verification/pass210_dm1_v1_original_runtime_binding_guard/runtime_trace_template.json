@@ -1,0 +1,10 @@
+{
+  "decompressed_image_sha256": null,
+  "hits": [],
+  "map_sha256": null,
+  "post_lzexe_transfer_cs_ip": null,
+  "program_load_segment_hex": null,
+  "psp_segment_hex": null,
+  "schema": "dm1_v1_original_runtime_trace_binding.v1",
+  "symbol_bindings": []
+}
