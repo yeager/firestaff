@@ -188,5 +188,10 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
 const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:1304-1377,2045-2156; CLIKMENU.C:124-139,142-179,180-347; DUNGEON.C:1508-1582; CHAMPION.C:117-130; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724";
+    return "ReDMCSB Toolchains/Common/Source source lock: "
+           "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC:2075-2099 locks/empty-checks/movement-disabled gate, 2118-2127 dequeues, 2150-2156 dispatches turn/move; "
+           "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/discard, 325-346 move-result and cooldown; "
+           "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391 applies forward/right deltas; "
+           "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130 rotates champion cells/directions and party direction; "
+           "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-443 projectile-impact precheck and party coordinate write, 738-783 move-result globals and party scent/last-movement update.";
 }

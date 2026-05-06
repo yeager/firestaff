@@ -12,6 +12,15 @@ static int expect_int(const char* label, int got, int want)
     return 1;
 }
 
+static int expect_contains(const char* label, const char* haystack, const char* needle)
+{
+    if (!haystack || !needle || !strstr(haystack, needle)) {
+        fprintf(stderr, "FAIL %s missing substring: %s\n", label, needle ? needle : "(null)");
+        return 0;
+    }
+    return 1;
+}
+
 static unsigned char square_type(int elementType, int attrs)
 {
     return (unsigned char)((elementType << 5) | (attrs & DUNGEON_SQUARE_MASK_ATTRIBS));
@@ -82,8 +91,15 @@ int main(void)
     int footwear[CHAMPION_MAX_PARTY] = { 0, 0, 0, 0 };
     int ok = 1;
 
+    const char* sourceEvidence = DM1_V1_MovementCommandCore_SourceEvidencePc34Compat();
+
     printf("probe=dm1_v1_movement_command_core_pc34_compat\n");
-    printf("sourceEvidence=%s\n", DM1_V1_MovementCommandCore_SourceEvidencePc34Compat());
+    printf("sourceEvidence=%s\n", sourceEvidence);
+    ok &= expect_contains("source evidence command queue dispatch", sourceEvidence, "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC:2075-2099");
+    ok &= expect_contains("source evidence move party blockers", sourceEvidence, "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:224-233");
+    ok &= expect_contains("source evidence relative movement", sourceEvidence, "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391");
+    ok &= expect_contains("source evidence party rotation", sourceEvidence, "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130");
+    ok &= expect_contains("source evidence move result", sourceEvidence, "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328");
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
