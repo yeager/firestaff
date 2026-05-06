@@ -250,6 +250,10 @@ static void test_f0115_cell_order_and_layer_z_order(void)
         check_int(id, (int)layer->layer, (int)i);
         snprintf(id, sizeof(id), "F0115.layer.%zu.source", i);
         check_nonnull(id, layer->source_lines);
+        snprintf(id, sizeof(id), "F0115.layer.%zu.per_cell", i);
+        check_int(id, layer->repeats_per_cell ? 1 : 0, i < 3 ? 1 : 0);
+        snprintf(id, sizeof(id), "F0115.layer.%zu.after_all_cells", i);
+        check_int(id, layer->after_all_cells ? 1 : 0, i == 3 ? 1 : 0);
     }
     check_int("F0115.layer.out_of_range", dm1_viewport_3d_get_thing_layer_spec(4) == NULL, 1);
 }
@@ -266,6 +270,7 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.f0115", strstr(e, "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions") != NULL, 1);
     check_int("source_evidence.f0115_cell_order", strstr(e, "packed cell-order") != NULL, 1);
     check_int("source_evidence.f0115_projectiles", strstr(e, "projectile draw pass") != NULL, 1);
+    check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.occlusion", strstr(e, "wall case returns") != NULL, 1);
 }

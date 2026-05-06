@@ -110,10 +110,10 @@ static const DM1_ViewportDrawStep s_draw_order[] = {
  * times for each cell: objects first, then creatures, then projectiles; after
  * all packed cells are processed it restarts once more for explosions/fluxcage. */
 static const DM1_ViewportThingLayerSpec s_thing_layers[] = {
-    { DM1_VIEWPORT_THING_LAYER_OBJECTS,     "objects",     "DUNVIEW.C:4567-4571,4853-4860" },
-    { DM1_VIEWPORT_THING_LAYER_CREATURES,   "creatures",   "DUNVIEW.C:4573,5195-5202" },
-    { DM1_VIEWPORT_THING_LAYER_PROJECTILES, "projectiles", "DUNVIEW.C:4575-4577,5681-5883" },
-    { DM1_VIEWPORT_THING_LAYER_EXPLOSIONS,  "explosions",  "DUNVIEW.C:4579-4581,5915-5933" },
+    { DM1_VIEWPORT_THING_LAYER_OBJECTS,     "objects",     "DUNVIEW.C:4567-4571,4853-4860", true,  false },
+    { DM1_VIEWPORT_THING_LAYER_CREATURES,   "creatures",   "DUNVIEW.C:4573,5195-5202",      true,  false },
+    { DM1_VIEWPORT_THING_LAYER_PROJECTILES, "projectiles", "DUNVIEW.C:4575-4577,5681-5883", true,  false },
+    { DM1_VIEWPORT_THING_LAYER_EXPLOSIONS,  "explosions",  "DUNVIEW.C:4579-4581,5915-5933", false, true  },
 };
 
 static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
@@ -428,8 +428,8 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
  *   2. Allocate temp bitmap (largest = 160×111)
  *   3. Compute parity: G0076 = (mapX + mapY + direction) & 1
  *   4. If parity: flip floor, swap to flipped wall set
- *   5. Draw D3L2, D3R2 far-side walls (if wall type)
- *   6. Draw D4L, D4R, D4C (far background objects)
+ *   5. Draw D4L, D4R, D4C far background objects
+ *   6. Draw D3L2, D3R2 far-side PC34/I34E wall lanes
  *   7. Draw D3L → D3R → D3C (depth 3, all lanes)
  *   8. Draw D2L2, D2R2 (if applicable)
  *   9. Draw D2L → D2R → D2C (depth 2)

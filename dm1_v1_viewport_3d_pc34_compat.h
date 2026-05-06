@@ -251,6 +251,11 @@ typedef struct {
     DM1_ViewportThingLayer layer;
     const char *name;
     const char *source_lines;
+    /* ReDMCSB F0115 executes object/creature/projectile phases for each
+     * packed view cell, then restarts once after all cells for explosions.
+     * Source: DUNVIEW.C:4567-4581, 5915-5933. */
+    bool repeats_per_cell;
+    bool after_all_cells;
 } DM1_ViewportThingLayerSpec;
 
 typedef struct {
