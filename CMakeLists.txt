@@ -828,6 +828,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass207_dm1_v1_original_movement_viewport_blocker_gate.py
         )
         add_test(
+            NAME dm1_v1_fires_loader_csip_source_map_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass208_dm1_v1_fires_loader_csip_source_map_gate.py
+        )
+        add_test(
             NAME dm1_v1_original_delayed_click_route_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass209_dm1_v1_original_delayed_click_route_gate.py
         )
