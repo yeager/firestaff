@@ -16,6 +16,21 @@
     },
     {
       "file": "COMMAND.C",
+      "lines": "252-260",
+      "claim": "legacy movement keyboard rows map keypad 4/5/6/1/2/3 to turn/step commands"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "677-685",
+      "claim": "PC-34 movement keyboard rows map normalized 0x004B..0x0051 codes to turn/step commands"
+    },
+    {
+      "file": "IO2.C",
+      "lines": "39-61",
+      "claim": "PC-34 input normalizes shifted extended arrow scancodes before command-table lookup"
+    },
+    {
+      "file": "COMMAND.C",
       "lines": "1452-1662",
       "claim": "mouse click path stores pending clicks when locked and enqueues resolved commands otherwise"
     },
@@ -23,6 +38,11 @@
       "file": "COMMAND.C",
       "lines": "1692-1707",
       "claim": "pending click replay occurs after the queue is unlocked"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1709-1813",
+      "claim": "keyboard path locks the queue, checks primary then secondary tables, stores matching command, unlocks, and replays pending click"
     },
     {
       "file": "COMMAND.C",
@@ -85,11 +105,15 @@
   "firestaffEvidence": [
     {
       "file": "dm1_v1_input_command_queue_pc34_compat.c",
-      "claim": "compat queue models lock, pending replay, movement-disabled gate, and dispatch fields"
+      "claim": "compat queue models keyboard/mouse input rows, lock, pending replay, movement-disabled gate, and dispatch fields"
     },
     {
       "file": "dm1_v1_movement_command_core_pc34_compat.c",
       "claim": "compat command core owns F0380->F0365/F0366 parity boundaries: turns bypass movement gates, blocked steps discard input before side effects, accepted steps process leave/enter and timing"
+    },
+    {
+      "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
+      "claim": "input queue probe covers keypad, PC-34 normalized arrow rows, shifted arrows, pending mouse replay, turn gate bypass, movement gate retention, and four-command queue capacity"
     },
     {
       "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",
