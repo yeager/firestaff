@@ -227,6 +227,32 @@ typedef enum {
  * ReDMCSB DUNVIEW.C (G0163_aauc_Graphic558_Frame_Walls[12][8]).
  * ──────────────────────────────────────────────────────────────────────── */
 
+
+/* F0115 thing-layer phases inside each processed view cell.
+ * Source: ReDMCSB DUNVIEW.C:4561-4581, 4853-4860, 5195-5202,
+ *         5681-5883, 5915-5933.
+ */
+typedef enum {
+    DM1_VIEWPORT_THING_LAYER_OBJECTS = 0,
+    DM1_VIEWPORT_THING_LAYER_CREATURES = 1,
+    DM1_VIEWPORT_THING_LAYER_PROJECTILES = 2,
+    DM1_VIEWPORT_THING_LAYER_EXPLOSIONS = 3
+} DM1_ViewportThingLayer;
+
+typedef struct {
+    uint16_t cell_order;
+    unsigned char cells[4];
+    unsigned char cell_count;
+    unsigned char door_pass; /* 0=no door pass, 1=behind door/frame, 2=in front */
+    bool alcove;
+} DM1_ViewportCellOrder;
+
+typedef struct {
+    DM1_ViewportThingLayer layer;
+    const char *name;
+    const char *source_lines;
+} DM1_ViewportThingLayerSpec;
+
 typedef struct {
     DM1_ViewSquareIndex square;
     int8_t rel_depth;
@@ -496,6 +522,11 @@ size_t dm1_viewport_3d_wall_draw_spec_count(void);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square);
 DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
+
+/* Decode F0115's packed cell-order nibbles (DUNVIEW.C:4561-4564). */
+DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order);
+size_t dm1_viewport_3d_thing_layer_spec_count(void);
+const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t index);
 
 /*
  * Source evidence string for verification.

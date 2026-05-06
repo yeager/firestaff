@@ -105,6 +105,17 @@ static const DM1_ViewportDrawStep s_draw_order[] = {
 /* PC34/I34E wall bitmap selection table, source-locked to the MEDIA709/720
  * draw calls in ReDMCSB DUNVIEW.C.  These entries encode the native draw
  * bitmap and the parity draw bitmap used with F0105/F0792. */
+
+/* F0115 per-cell z-order.  ReDMCSB explicitly scans the thing list multiple
+ * times for each cell: objects first, then creatures, then projectiles; after
+ * all packed cells are processed it restarts once more for explosions/fluxcage. */
+static const DM1_ViewportThingLayerSpec s_thing_layers[] = {
+    { DM1_VIEWPORT_THING_LAYER_OBJECTS,     "objects",     "DUNVIEW.C:4567-4571,4853-4860" },
+    { DM1_VIEWPORT_THING_LAYER_CREATURES,   "creatures",   "DUNVIEW.C:4573,5195-5202" },
+    { DM1_VIEWPORT_THING_LAYER_PROJECTILES, "projectiles", "DUNVIEW.C:4575-4577,5681-5883" },
+    { DM1_VIEWPORT_THING_LAYER_EXPLOSIONS,  "explosions",  "DUNVIEW.C:4579-4581,5915-5933" },
+};
+
 static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
     { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, DM1_PC34_ZONE_WALL_D3L2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260", "DUNVIEW.C:6263-6264 wall ornament then return" },
     { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, DM1_PC34_ZONE_WALL_D3R2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327", "DUNVIEW.C:6330-6331 wall ornament then return" },
@@ -614,6 +625,42 @@ DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSp
     return spec->native_wall;
 }
 
+DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order)
+{
+    DM1_ViewportCellOrder out;
+    memset(&out, 0, sizeof(out));
+    out.cell_order = order;
+
+    uint16_t remaining = order;
+    uint16_t first = remaining & 0x000f;
+    if (first == 0) {
+        out.alcove = true;
+        return out;
+    }
+    if (first & 0x0008) {
+        out.door_pass = (unsigned char)((first & 0x0007) + 1);
+        remaining >>= 4;
+    }
+    for (int i = 0; i < 4; ++i) {
+        uint16_t cell = remaining & 0x000f;
+        if (cell == 0) break;
+        out.cells[out.cell_count++] = (unsigned char)cell;
+        remaining >>= 4;
+    }
+    return out;
+}
+
+size_t dm1_viewport_3d_thing_layer_spec_count(void)
+{
+    return sizeof(s_thing_layers) / sizeof(s_thing_layers[0]);
+}
+
+const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_thing_layer_spec_count()) return NULL;
+    return &s_thing_layers[index];
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Source Evidence
  * ──────────────────────────────────────────────────────────────────────── */
@@ -640,6 +687,9 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:3502 F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF\n"
         "  DUNVIEW.C:4218 F0111_DUNGEONVIEW_DrawDoor\n"
         "  DUNVIEW.C:4547 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n"
+        "  DUNVIEW.C:4561-4581 F0115 packed cell-order and object/creature/projectile/explosion z-order\n"
+        "  DUNVIEW.C:5681-5883 F0115 projectile draw pass and PC34 zone draw\n"
+        "  DUNVIEW.C:5915-5933 F0115 explosion pass after all ordered cells\n"
         "  DUNVIEW.C:6254-6327 F0676/F0677 PC34 parity side-wall selection; wall case returns / front alcove occlusion boundaries\n"
         "  DUNVIEW.C:6361 F0116_DUNGEONVIEW_DrawSquareD3L\n"
         "  DUNVIEW.C:6500 F0117_DUNGEONVIEW_DrawSquareD3R\n"

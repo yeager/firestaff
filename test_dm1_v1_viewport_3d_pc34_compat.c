@@ -211,6 +211,49 @@ static void test_floor_ceiling_bands_and_zones(void)
     check_int("PC34.zone.wall_d0r", DM1_PC34_ZONE_WALL_D0R, 717);
 }
 
+
+static void test_f0115_cell_order_and_layer_z_order(void)
+{
+    DM1_ViewportCellOrder o = dm1_viewport_3d_decode_cell_order(0x3421);
+    check_int("F0115.cell_order.3421.count", o.cell_count, 4);
+    check_int("F0115.cell_order.3421.cell0", o.cells[0], 1);
+    check_int("F0115.cell_order.3421.cell1", o.cells[1], 2);
+    check_int("F0115.cell_order.3421.cell2", o.cells[2], 4);
+    check_int("F0115.cell_order.3421.cell3", o.cells[3], 3);
+    check_int("F0115.cell_order.3421.door_pass", o.door_pass, 0);
+    check_int("F0115.cell_order.3421.alcove", o.alcove ? 1 : 0, 0);
+
+    o = dm1_viewport_3d_decode_cell_order(0x0218);
+    check_int("F0115.cell_order.0218.count", o.cell_count, 2);
+    check_int("F0115.cell_order.0218.door_pass", o.door_pass, 1);
+    check_int("F0115.cell_order.0218.cell0", o.cells[0], 1);
+    check_int("F0115.cell_order.0218.cell1", o.cells[1], 2);
+
+    o = dm1_viewport_3d_decode_cell_order(0x0349);
+    check_int("F0115.cell_order.0349.count", o.cell_count, 2);
+    check_int("F0115.cell_order.0349.door_pass", o.door_pass, 2);
+    check_int("F0115.cell_order.0349.cell0", o.cells[0], 4);
+    check_int("F0115.cell_order.0349.cell1", o.cells[1], 3);
+
+    o = dm1_viewport_3d_decode_cell_order(0x0000);
+    check_int("F0115.cell_order.alcove", o.alcove ? 1 : 0, 1);
+    check_int("F0115.cell_order.alcove.count", o.cell_count, 0);
+
+    check_int("F0115.layer.count", (int)dm1_viewport_3d_thing_layer_spec_count(), 4);
+    for (size_t i = 0; i < dm1_viewport_3d_thing_layer_spec_count(); ++i) {
+        const DM1_ViewportThingLayerSpec *layer = dm1_viewport_3d_get_thing_layer_spec(i);
+        char id[96];
+        snprintf(id, sizeof(id), "F0115.layer.%zu.nonnull", i);
+        check_nonnull(id, layer);
+        if (!layer) continue;
+        snprintf(id, sizeof(id), "F0115.layer.%zu.ordinal", i);
+        check_int(id, (int)layer->layer, (int)i);
+        snprintf(id, sizeof(id), "F0115.layer.%zu.source", i);
+        check_nonnull(id, layer->source_lines);
+    }
+    check_int("F0115.layer.out_of_range", dm1_viewport_3d_get_thing_layer_spec(4) == NULL, 1);
+}
+
 static void test_source_evidence_mentions_visual_lane(void)
 {
     const char *e = dm1_viewport_3d_source_evidence();
@@ -221,6 +264,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.g2107", strstr(e, "G2107_WallSet[15]") != NULL, 1);
     check_int("source_evidence.pc34_side", strstr(e, "PC34 parity side-wall selection") != NULL, 1);
     check_int("source_evidence.f0115", strstr(e, "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions") != NULL, 1);
+    check_int("source_evidence.f0115_cell_order", strstr(e, "packed cell-order") != NULL, 1);
+    check_int("source_evidence.f0115_projectiles", strstr(e, "projectile draw pass") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.occlusion", strstr(e, "wall case returns") != NULL, 1);
 }
@@ -230,6 +275,7 @@ int main(void)
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_f0128_draw_order();
     test_pc34_wall_bitmap_selection();
+    test_f0115_cell_order_and_layer_z_order();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();
     test_source_evidence_mentions_visual_lane();
