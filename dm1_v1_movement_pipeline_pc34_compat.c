@@ -150,6 +150,33 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     outResult->anyTurnOccurred = outResult->core.turnApplied;
     outResult->viewportDirty = outResult->core.viewportRedrawRequested;
 
+    /* Phase 5: Source-locked provenance trace.
+     *
+     * This is deliberately compat provenance only: it records that Firestaff
+     * accepted a command, applied movement, and requested/published the viewport
+     * according to the source-locked ReDMCSB path.  It is not DOSBox/original
+     * pixel evidence and must not be promoted as such.
+     */
+    outResult->provenance.commandAccepted =
+        outResult->core.commandHandled && outResult->core.queue.dequeued &&
+        !outResult->core.movementBlocked &&
+        (outResult->core.stepApplied || outResult->core.turnApplied ||
+         outResult->core.stairTransitionApplied);
+    outResult->provenance.movementApplied =
+        outResult->core.stepApplied || outResult->core.stairTransitionApplied ||
+        outResult->postMove.transitioned;
+    outResult->provenance.viewportPresent =
+        outResult->viewportDirty &&
+        (outResult->anyMovementOccurred || outResult->anyTurnOccurred);
+    outResult->provenance.originalRuntimeObserved = 0;
+    outResult->provenance.noPixelParityClaim = 1;
+    outResult->provenance.commandAcceptedEvidence =
+        "COMMAND.C:2075-2099 queue/gate; COMMAND.C:2118-2127 dequeue; COMMAND.C:2150-2156 movement dispatch";
+    outResult->provenance.movementAppliedEvidence =
+        "CLIKMENU.C:325-328 calls F0267_MOVE_GetMoveResult_CPSCE; CLIKMENU.C:330-346 assigns G0310/G0311 after accepted step";
+    outResult->provenance.viewportPresentEvidence =
+        "GAMELOOP.C:90 redraws F0128_DUNGEONVIEW_Draw_CPSF from party state; DRAWVIEW.C:721-722 requests viewport blit and waits for vblank; DRAWVIEW.C:1056-1068 blits G0296 viewport to screen";
+
     pipeline->gameTick++;
     return 1;
 }
@@ -167,7 +194,7 @@ void DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
 const char* DM1_V1_MovementPipeline_SourceEvidencePc34Compat(void)
 {
     return "COMMAND.C:2045-2156; CLIKMENU.C:124-139,142-179,180-347,330-346; "
-           "DUNGEON.C:1508-1582; MOVESENS.C:F0267,F0276; CHAMPION.C:F0310; GAMELOOP.C:150-155; "
+           "DUNGEON.C:1508-1582; MOVESENS.C:F0267,F0276; CHAMPION.C:F0310; GAMELOOP.C:90 viewport redraw,150-155 cooldown; DRAWVIEW.C:721-722 viewport blit request/vblank,1056-1068 screen blit; "
            "Pipeline wires: dm1_v1_input_command_queue, "
            "dm1_v1_movement_command_core, dm1_v1_movement_timing, "
            "memory_movement (F0700-F0709), memory_sensor_execution (F0710-F0718)";

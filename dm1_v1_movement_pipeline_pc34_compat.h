@@ -57,6 +57,18 @@ struct Dm1V1MovementPipelinePc34Compat {
 /*
  * Full pipeline result — produced by ProcessOneTick.
  */
+struct Dm1V1MovementPipelineProvenancePc34Compat {
+    /* Deterministic compat provenance, not a DOSBox/original screenshot claim. */
+    int commandAccepted;
+    int movementApplied;
+    int viewportPresent;
+    int originalRuntimeObserved;
+    int noPixelParityClaim;
+    const char* commandAcceptedEvidence;
+    const char* movementAppliedEvidence;
+    const char* viewportPresentEvidence;
+};
+
 struct Dm1V1MovementPipelineResultPc34Compat {
     /* From the command core */
     struct Dm1V1MovementCommandCoreResultPc34Compat core;
@@ -74,6 +86,9 @@ struct Dm1V1MovementPipelineResultPc34Compat {
     int anyMovementOccurred;
     int anyTurnOccurred;
     int viewportDirty;
+
+    /* Source-locked compat trace for command→movement→viewport provenance. */
+    struct Dm1V1MovementPipelineProvenancePc34Compat provenance;
 };
 
 /*

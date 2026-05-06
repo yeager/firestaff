@@ -420,6 +420,36 @@ static void test_source_evidence(void)
     EXPECT("evidence_has_GAMELOOP", strstr(ev, "GAMELOOP") != NULL);
 }
 
+/* ---- Test: compat provenance chain without fake original evidence ---- */
+static void test_command_movement_viewport_provenance(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squares[10 * 10];
+    struct PartyState_Compat party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat result;
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline,
+        key_event(0xAB35));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, NULL, &party, NULL, &result);
+
+    EXPECT_INT("prov_command_accepted", result.provenance.commandAccepted, 1);
+    EXPECT_INT("prov_movement_applied", result.provenance.movementApplied, 1);
+    EXPECT_INT("prov_viewport_present", result.provenance.viewportPresent, 1);
+    EXPECT_INT("prov_not_original_runtime", result.provenance.originalRuntimeObserved, 0);
+    EXPECT_INT("prov_no_pixel_parity_claim", result.provenance.noPixelParityClaim, 1);
+    EXPECT("prov_command_evidence", strstr(result.provenance.commandAcceptedEvidence, "COMMAND.C:2075-2099") != NULL);
+    EXPECT("prov_movement_evidence", strstr(result.provenance.movementAppliedEvidence, "CLIKMENU.C:325-328") != NULL);
+    EXPECT("prov_viewport_evidence", strstr(result.provenance.viewportPresentEvidence, "DRAWVIEW.C:721-722") != NULL);
+}
+
 /* ---- Test: backward step ---- */
 static void test_backward_step(void)
 {
@@ -583,6 +613,7 @@ int main(void)
     test_empty_queue();
     test_bounds_check();
     test_source_evidence();
+    test_command_movement_viewport_provenance();
     test_backward_step();
     test_strafe();
     test_stairs_step_consequence();
