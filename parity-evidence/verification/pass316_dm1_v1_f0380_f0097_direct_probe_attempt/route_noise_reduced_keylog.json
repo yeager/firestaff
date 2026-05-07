@@ -1,0 +1,239 @@
+[
+  {
+    "event": "route_step",
+    "route_item": "wait:9000",
+    "t": 1778157213.1289961
+  },
+  {
+    "event": "route_step",
+    "route_item": "enter",
+    "t": 1778157222.1569338
+  },
+  {
+    "event": "key",
+    "route_item": "enter",
+    "running_guard": true,
+    "t": 1778157222.179349
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778157222.3794742
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778157224.1849298
+  },
+  {
+    "event": "key",
+    "route_item": "one",
+    "running_guard": true,
+    "t": 1778157224.2058718
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778157224.405994
+  },
+  {
+    "event": "route_step",
+    "route_item": "click:276,140",
+    "t": 1778157226.2108662
+  },
+  {
+    "event": "click",
+    "route_item": "click:276,140",
+    "running_guard": true,
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778157226.3294842
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778157226.5295966
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778157228.3362322
+  },
+  {
+    "event": "key",
+    "route_item": "one",
+    "running_guard": true,
+    "t": 1778157228.3572938
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778157228.5574274
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778157230.3649478
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778157230.388483
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157230.5886028
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778157231.4909797
+  },
+  {
+    "event": "key",
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778157231.5140238
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157231.714127
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778157232.6163635
+  },
+  {
+    "event": "key",
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778157232.6408553
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157232.8409941
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778157233.7434304
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778157233.7675867
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157233.9677312
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778157234.870714
+  },
+  {
+    "event": "key",
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778157234.8945668
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157235.0961335
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778157235.9992356
+  },
+  {
+    "event": "key",
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778157236.022532
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157236.222648
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778157237.1257958
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778157237.1515741
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157237.3517034
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778157238.2542348
+  },
+  {
+    "event": "key",
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778157238.2753901
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157238.475483
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778157239.3778594
+  },
+  {
+    "event": "key",
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778157239.4008121
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157239.6009555
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778157240.5038078
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778157240.5260897
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778157240.7262528
+  },
+  {
+    "event": "route_done",
+    "t": 1778157241.6289563
+  }
+]

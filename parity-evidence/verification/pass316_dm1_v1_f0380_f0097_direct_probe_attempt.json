@@ -1,0 +1,210 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport": "2809:1E31",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699"
+  },
+  "attempted_command": "python3 tools/pass316_dm1_v1_f0380_f0097_direct_probe_attempt.py --seconds 75",
+  "bounded_sanitized_transcript_excerpt": [
+    "--- STOP 1 f0128_bp stage=code_only ---",
+    "-> BP 22F4:0699_   deleted.",
+    "-> BP 23AD:40FE_  int at 22F4:0699",
+    "-> BP 2809:1E31_  int at 23AD:40FE",
+    "Breakpoint list:",
+    "00. BP 2809:1E31",
+    "01. BP 23AD:40FE",
+    "(Running)F4:0699",
+    "-> BP 22F4:0699_   deleted.",
+    "-> BP 23AD:40FE_  int at 22F4:0699",
+    "-> BP 2809:1E31_  int at 23AD:40FE",
+    "Breakpoint list:",
+    "00. BP 2809:1E31",
+    "01. BP 23AD:40FE",
+    "(Running)F4:0699",
+    "-> BP 22F4:0699_   deleted.",
+    "-> BP 23AD:40FE_  int at 22F4:0699",
+    "-> BP 2809:1E31_  int at 23AD:40FE",
+    "Breakpoint list:",
+    "00. BP 2809:1E31",
+    "01. BP 23AD:40FE",
+    "(Running)F4:0699",
+    "-> BP 22F4:0699_   deleted.",
+    "-> BP 23AD:40FE_  int at 22F4:0699",
+    "-> BP 2809:1E31_  int at 23AD:40FE",
+    "Breakpoint list:",
+    "00. BP 2809:1E31",
+    "01. BP 23AD:40FE",
+    "(Running)F4:0699",
+    "-> BP 22F4:0699_   deleted.",
+    "-> BP 23AD:40FE_  int at 22F4:0699",
+    "-> BP 2809:1E31_  int at 23AD:40FE",
+    "Breakpoint list:",
+    "00. BP 2809:1E31",
+    "01. BP 23AD:40FE",
+    "(Running)F4:0699",
+    "-> BP 22F4:0699_   deleted.",
+    "-> BP 23AD:40FE_  int at 22F4:0699",
+    "-> BP 2809:1E31_  int at 23AD:40FE",
+    "Breakpoint list:"
+  ],
+  "debugger_bp_commands": [
+    "BP 22F4:0699",
+    "BP 23AD:40FE",
+    "BP 2809:1E31"
+  ],
+  "debugger_hit_kinds": [
+    "f0128_bp"
+  ],
+  "direct_hits": {
+    "f0097_2809_1E31": false,
+    "f0128_23AD_40FE_stayed_seen": true,
+    "f0380_22F4_0699": false
+  },
+  "narrowed_blocker": "Code-only BP probe armed 22F4:0699, 23AD:40FE, and 2809:1E31 under the pass278 DOSBox-debug/tmux/Xvfb/xdotool route. The run again captured only the existing F0128 hit. The F0380 BP command appears to collide during setup (22F4:0699 text appears while setting subsequent BPs, but BPLIST retains only 2809:1E31 and 23AD:40FE), so this is not promotable as a controlled dequeue hit. F0097 at 2809:1E31 did not stop before timeout.",
+  "next_missing_input_or_tool": "Need a debugger sequencing method that arms BP 22F4:0699 after the initial game-loop/setup collision without losing route control, or a validated finer F0097/VIDRV_09_BlitViewPort offset beyond 2809:1E31 that stops after F0128. pass312 must remain sourced from pass278/pass315, not this blocked attempt.",
+  "probe_manifest": "parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/manifest.json",
+  "probe_predicates": {
+    "cpu_memdump_after_stops": false,
+    "f0128_draw_hit_seen": true,
+    "f0380_dequeue_hit_seen": false,
+    "g0432_write_seen": false,
+    "party_tuple_mutation_seen": false,
+    "route_posted_controlled_keys": true
+  },
+  "schema": "pass316_dm1_v1_f0380_f0097_direct_probe_attempt.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "found": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command": 2095,
+        "if (++G0433_i_CommandQueueFirstIndex > M529_COMMAND_QUEUE_SIZE)": 2123,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "id": "f0380_dequeue",
+      "missing": [],
+      "needles": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+        "if (++G0433_i_CommandQueueFirstIndex > M529_COMMAND_QUEUE_SIZE)",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "ok": true,
+      "range": [
+        2045,
+        2156
+      ],
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "found": {
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "G0324_B_DrawViewportRequested = C1_TRUE": 721,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "id": "f0097_viewport_present",
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0324_B_DrawViewportRequested = C1_TRUE",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "range": [
+        709,
+        858
+      ],
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "found": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "G0296_puc_Bitmap_Viewport": 8367,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "id": "f0128_calls_f0097",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "G0296_puc_Bitmap_Viewport",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+      ],
+      "ok": true,
+      "range": [
+        8318,
+        8611
+      ],
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "found": {
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)": 90,
+        "F0380_COMMAND_ProcessQueue_CPSC()": 215
+      },
+      "id": "mainloop_order",
+      "missing": [],
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)",
+        "F0380_COMMAND_ProcessQueue_CPSC()"
+      ],
+      "ok": true,
+      "range": [
+        80,
+        215
+      ],
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "found": {
+        "F0267_MOVE_GetMoveResult_CPSCE": 272,
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "id": "turn_move_dispatch",
+      "missing": [],
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true,
+      "range": [
+        142,
+        328
+      ],
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "MOVESENS.C",
+      "found": {
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE": 316,
+        "F0128_DUNGEONVIEW_Draw_CPSF": 556,
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX": 442,
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY": 443
+      },
+      "id": "move_result_tuple",
+      "missing": [],
+      "needles": [
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE",
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX",
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY",
+        "F0128_DUNGEONVIEW_Draw_CPSF"
+      ],
+      "ok": true,
+      "range": [
+        316,
+        556
+      ],
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    }
+  ],
+  "status": "BLOCKED_DIRECT_F0380_F0097_AFTER_CODE_ONLY_PROBE"
+}
