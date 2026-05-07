@@ -737,6 +737,54 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->dataDir        = NULL;
 }
 
+
+static void m11_write_autotest_runtime_probe(const char* path,
+                                             int launchedEver,
+                                             const M11_GameViewState* gameView) {
+    FILE* f;
+    if (!path || path[0] == '\0') {
+        return;
+    }
+    f = fopen(path, "w");
+    if (!f) {
+        return;
+    }
+    fprintf(f,
+            "{\n"
+            "  \"schema\": \"firestaff_m11_autotest_runtime_probe.v1\",\n"
+            "  \"launchedEver\": %d,\n"
+            "  \"active\": %d,\n"
+            "  \"title\": \"%s\",\n"
+            "  \"sourceId\": \"%s\",\n"
+            "  \"lastAction\": \"%s\",\n"
+            "  \"lastOutcome\": \"%s\",\n"
+            "  \"gameTick\": %u,\n"
+            "  \"party\": {\"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d, \"direction\": %d, \"championCount\": %d},\n"
+            "  \"pipeline\": {\"dequeued\": %d, \"command\": %d, \"turnApplied\": %d, \"stepApplied\": %d, \"movementBlocked\": %d, \"anyMovementOccurred\": %d, \"anyTurnOccurred\": %d, \"viewportDirty\": %d}\n"
+            "}\n",
+            launchedEver,
+            gameView ? gameView->active : 0,
+            gameView ? gameView->title : "",
+            gameView ? gameView->sourceId : "",
+            gameView ? gameView->lastAction : "",
+            gameView ? gameView->lastOutcome : "",
+            gameView ? (unsigned int)gameView->world.gameTick : 0U,
+            gameView ? gameView->world.party.mapIndex : -1,
+            gameView ? gameView->world.party.mapX : -1,
+            gameView ? gameView->world.party.mapY : -1,
+            gameView ? gameView->world.party.direction : -1,
+            gameView ? gameView->world.party.championCount : -1,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.dequeued : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.command : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.turnApplied : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.stepApplied : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.movementBlocked : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.anyMovementOccurred : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.anyTurnOccurred : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.viewportDirty : 0);
+    fclose(f);
+}
+
 static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
     if (!token || len == 0U) {
         return M12_MENU_INPUT_NONE;
@@ -1628,6 +1676,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fprintf(stderr, "firestaff: launch smoke failed: no launch reached before exit\n");
         runRc = 3;
     }
+    m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
+                                     launchedEver,
+                                     &gameView);
     m11_sync_and_save_window_size(&menuState);
     M11_GameView_Shutdown(&gameView);
     free(launcherFramebuffer);
