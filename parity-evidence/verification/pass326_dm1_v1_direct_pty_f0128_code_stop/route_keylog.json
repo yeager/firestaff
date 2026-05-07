@@ -1,0 +1,225 @@
+[
+  {
+    "event": "route_step",
+    "route_item": "wait:9000",
+    "t": 1778165030.448466
+  },
+  {
+    "event": "route_step",
+    "route_item": "enter",
+    "t": 1778165039.4791548
+  },
+  {
+    "event": "key",
+    "route_item": "enter",
+    "t": 1778165039.5027926
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:8500",
+    "t": 1778165039.7029138
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778165048.2322283
+  },
+  {
+    "event": "key",
+    "route_item": "one",
+    "t": 1778165048.2546132
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778165048.4547784
+  },
+  {
+    "event": "route_step",
+    "route_item": "click:276,140",
+    "t": 1778165050.2605705
+  },
+  {
+    "event": "click",
+    "route_item": "click:276,140",
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778165050.3783123
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778165050.5784853
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778165052.3846533
+  },
+  {
+    "event": "key",
+    "route_item": "one",
+    "t": 1778165052.4067981
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778165052.6069303
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778165054.4132657
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "t": 1778165054.4372036
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165054.6373496
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778165055.5412972
+  },
+  {
+    "event": "key",
+    "route_item": "kp4",
+    "t": 1778165055.5658083
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165055.7659457
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778165056.6682498
+  },
+  {
+    "event": "key",
+    "route_item": "kp6",
+    "t": 1778165056.69093
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165056.8918252
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778165057.7943873
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "t": 1778165057.8168817
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165058.0171258
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778165058.9201736
+  },
+  {
+    "event": "key",
+    "route_item": "kp4",
+    "t": 1778165058.946099
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165059.1462367
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778165060.0490117
+  },
+  {
+    "event": "key",
+    "route_item": "kp6",
+    "t": 1778165060.0732005
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165060.2732985
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778165061.1760113
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "t": 1778165061.1978352
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165061.397952
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778165062.3029642
+  },
+  {
+    "event": "key",
+    "route_item": "kp6",
+    "t": 1778165062.3254695
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165062.5255845
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778165063.4304268
+  },
+  {
+    "event": "key",
+    "route_item": "kp4",
+    "t": 1778165063.4515138
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165063.65163
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778165064.5551114
+  },
+  {
+    "event": "key",
+    "route_item": "kp5",
+    "t": 1778165064.5785096
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778165064.7786634
+  },
+  {
+    "event": "route_done",
+    "t": 1778165065.6839125
+  }
+]
