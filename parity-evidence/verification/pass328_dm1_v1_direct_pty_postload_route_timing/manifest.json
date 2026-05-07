@@ -1,0 +1,221 @@
+{
+  "addresses": {
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
+  },
+  "blocker": "breakpoint arming timing: post-load debugger prompt was reached with Alt+Pause, BP 23AD:40FE was set and listed, but neither bounded direct-PTY probe transitioned from Running back to a strict 23AD:40FE code view after movement-route resume; no BPLIST/setup text was promoted.",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP command echo",
+    "tmux/capture-pane"
+  ],
+  "runtimeProbe": {
+    "boundedProbeCount": 2,
+    "commandLog": [
+      {
+        "control": "F5",
+        "purpose": "run unarmed to load route",
+        "t": 1778167583.9343941
+      },
+      {
+        "control": "Alt+Pause",
+        "purpose": "post-load debugger break",
+        "t": 1778167604.6080122
+      },
+      {
+        "cmd": "BPDEL *",
+        "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+        "t": 1778167610.4469087
+      },
+      {
+        "cmd": "BP 23AD:40FE",
+        "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....A_  ....D_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+        "t": 1778167611.2516377
+      },
+      {
+        "cmd": "BPLIST",
+        "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
+        "t": 1778167612.0553765
+      },
+      {
+        "control": "F5",
+        "purpose": "run after post-load F0128 arm",
+        "t": 1778167612.1056018
+      }
+    ],
+    "directHits": {
+      "f0097_2809_1EFF_after_f0128": false,
+      "f0128_23AD_40FE": false
+    },
+    "durationSeconds": 108.473,
+    "loadRoute": "wait:9000 enter wait:2200 one wait:2200 click:276,140 wait:2200 one wait:3500",
+    "method": "direct PTY; run unarmed through load route; Alt+Pause post-load prompt; arm F0128 only after prompt",
+    "moveRoute": "wait:2000 kp5 wait:1200 kp4 wait:1200 kp6 wait:1200 kp5 wait:1200 kp4 wait:1200 kp6 wait:1200 kp5 wait:1200",
+    "probeSummaries": [
+      {
+        "directHits": {
+          "f0097_2809_1EFF_after_f0128": false,
+          "f0128_23AD_40FE": false
+        },
+        "id": "probe1",
+        "manifest": "probe1_manifest.json",
+        "method": "direct PTY; run unarmed through load route; Alt+Pause post-load prompt; arm F0128 only after prompt",
+        "moveRoute": "kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900",
+        "transcript": "probe1_direct_pty_postload.clean.txt"
+      },
+      {
+        "directHits": {
+          "f0097_2809_1EFF_after_f0128": false,
+          "f0128_23AD_40FE": false
+        },
+        "id": "probe2",
+        "manifest": "manifest.json",
+        "method": "direct PTY; run unarmed through load route; Alt+Pause post-load prompt; arm F0128 only after prompt",
+        "moveRoute": "wait:2000 kp5 wait:1200 kp4 wait:1200 kp6 wait:1200 kp5 wait:1200 kp4 wait:1200 kp6 wait:1200 kp5 wait:1200",
+        "transcript": "direct_pty_postload.clean.txt"
+      }
+    ],
+    "ran": true,
+    "routeLog": [
+      {
+        "route_item": "wait:9000",
+        "t": 1778167584.4817426
+      },
+      {
+        "route_item": "enter",
+        "t": 1778167593.481998
+      },
+      {
+        "route_item": "wait:2200",
+        "t": 1778167593.7051148
+      },
+      {
+        "route_item": "one",
+        "t": 1778167595.905262
+      },
+      {
+        "route_item": "wait:2200",
+        "t": 1778167596.128172
+      },
+      {
+        "route_item": "click:276,140",
+        "screen": [
+          553,
+          281
+        ],
+        "t": 1778167598.328306
+      },
+      {
+        "route_item": "wait:2200",
+        "t": 1778167598.6474023
+      },
+      {
+        "route_item": "one",
+        "t": 1778167600.8475769
+      },
+      {
+        "route_item": "wait:3500",
+        "t": 1778167601.0705454
+      },
+      {
+        "route_item": "wait:2000",
+        "t": 1778167612.1188724
+      },
+      {
+        "route_item": "kp5",
+        "t": 1778167614.1190236
+      },
+      {
+        "route_item": "wait:1200",
+        "t": 1778167614.339054
+      },
+      {
+        "route_item": "kp4",
+        "t": 1778167615.5392053
+      },
+      {
+        "route_item": "wait:1200",
+        "t": 1778167615.763132
+      },
+      {
+        "route_item": "kp6",
+        "t": 1778167616.9633386
+      },
+      {
+        "route_item": "wait:1200",
+        "t": 1778167617.185816
+      },
+      {
+        "route_item": "kp5",
+        "t": 1778167618.3859138
+      },
+      {
+        "route_item": "wait:1200",
+        "t": 1778167618.609383
+      },
+      {
+        "route_item": "kp4",
+        "t": 1778167619.810525
+      },
+      {
+        "route_item": "wait:1200",
+        "t": 1778167620.0333
+      },
+      {
+        "route_item": "kp6",
+        "t": 1778167621.233456
+      },
+      {
+        "route_item": "wait:1200",
+        "t": 1778167621.4565387
+      },
+      {
+        "route_item": "kp5",
+        "t": 1778167622.6566997
+      },
+      {
+        "route_item": "wait:1200",
+        "t": 1778167622.8799396
+      }
+    ],
+    "stage": "breakpoint arming timing",
+    "stops": [],
+    "transcript": "/home/trv2/work/firestaff-worktrees/pass328-direct-pty-route-timing-20260507/parity-evidence/verification/pass328_dm1_v1_direct_pty_postload_route_timing/direct_pty_postload.clean.txt"
+  },
+  "schema": "pass328_dm1_v1_direct_pty_postload_route_timing.v1",
+  "sourceAudit": [
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "F0128",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "id": "F0097",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "F0380",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_PASS328_BREAKPOINT_ARMING_TIMING",
+  "timestampUtc": "2026-05-07T15:28:07.914533+00:00"
+}
