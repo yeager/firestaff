@@ -1,0 +1,850 @@
+{
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "checks": [
+    {
+      "kind": "evidence_file",
+      "markers": [
+        "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
+        "IO2.C:32",
+        "IO2.C:37",
+        "IO2.C:47",
+        "COMMAND.C:1379",
+        "COMMAND.C:1452",
+        "COMMAND.C:1641",
+        "COMMAND.C:1709",
+        "COMMAND.C:2045-2125",
+        "BLOCKED_FULL_LAUNCHER_SCRIPT_HANDOFF",
+        "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E"
+      ],
+      "ok": true
+    },
+    {
+      "file": "IO2.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "32",
+      "markers": [
+        "IODRV_00_GetKeyboardInput"
+      ],
+      "ok": true
+    },
+    {
+      "file": "IO2.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "37",
+      "markers": [
+        "IODRV_00_GetKeyboardInput"
+      ],
+      "ok": true
+    },
+    {
+      "file": "IO2.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "47-59",
+      "markers": [
+        "switch (L2944_ui_ - 0x1248)",
+        "Turn Forward",
+        "Move Backward",
+        "Turn Left",
+        "Turn Right"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "636-685",
+      "markers": [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+        "0x004B",
+        "0x004C",
+        "0x004D",
+        "0x004F",
+        "0x0050",
+        "0x0051"
+      ],
+      "ok": true
+    },
+    {
+      "file": "STARTUP2.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "1179-1182",
+      "markers": [
+        "G0441_ps_PrimaryMouseInput",
+        "G0442_ps_SecondaryMouseInput",
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "1379-1450",
+      "markers": [
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "1452-1661",
+      "markers": [
+        "F0359_COMMAND_ProcessClick_CPSC",
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
+        "G0441_ps_PrimaryMouseInput",
+        "G0442_ps_SecondaryMouseInput",
+        "G0432_as_CommandQueue"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "1709-1813",
+      "markers": [
+        "F0361_COMMAND_ProcessKeyPress",
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G0432_as_CommandQueue"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "2045-2125",
+      "markers": [
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "G0435_B_CommandQueueLocked",
+        "G0432_as_CommandQueue",
+        "G0310_i_DisabledMovementTicks"
+      ],
+      "ok": true
+    },
+    {
+      "file": "MENUDRAW.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "5-19",
+      "markers": [
+        "F0395_MENUS_DrawMovementArrows",
+        "C013_GRAPHIC_MOVEMENT_ARROWS",
+        "C009_ZONE_MOVEMENT_ARROWS"
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "142-174",
+      "markers": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "180-347",
+      "markers": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "static M12_MenuInput m11_map_script_token",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "strncmp(token, \"strafe-left\", len)",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "if (strcmp(name, \"up\") == 0) return SDLK_UP",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "if (strcmp(name, \"kp-1\") == 0 || strcmp(name, \"kp1\") == 0) return SDLK_KP_1",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "case SDLK_KP_5:",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "case SDLK_KP_1:",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "case SDLK_KP_6:",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "M11_GameView_HandleInput(&gameView, input)",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "m11_dm1_v1_pipeline_command_for_input",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "No OS keypad/NumLock synthesis is involved",
+      "ok": true
+    },
+    {
+      "kind": "cmake_configure",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "-S",
+          "/home/trv2/work/firestaff",
+          "-B",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify"
+        ],
+        "outputTail": "-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Configuring done (0.6s)\n-- Generating done (0.2s)\n-- Build files have been written to: /home/trv2/.openclaw/data/firestaff-builds/pass352-verify\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "cmake_build",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "--build",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify",
+          "--target",
+          "firestaff",
+          "test_dm1_v1_input_command_queue_pc34_compat",
+          "test_dm1_v1_movement_pipeline_pc34_compat",
+          "-j2"
+        ],
+        "outputTail": "firestaff_m11.dir/dm1_v1_save_load_system_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_blit_fill_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_dialog_scroll_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_click_routing_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_engine_pc34_compat.c.o\n[ 88%] Linking C static library libfirestaff_m11.a\n[ 88%] Built target firestaff_m11\n[ 88%] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_render_modern_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/menu_hit_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/config_m12.c.o\n[ 89%] Building C object CMakeFiles/firestaff_m12.dir/asset_status_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/card_art_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/card_art_generated_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_m12.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_readme_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/bestiary_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/creature_art_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/data_validator_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/changelog_m12.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m12.dir/theme_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/animated_bg_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/input_remap_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/save_browser_m12.c.o\n[ 94%] Building C object CMakeFiles/firestaff_m12.dir/custom_dungeon_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/item_encyclopedia_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/campaign_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/spell_reference_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/map_viewer_m12.c.o\n[ 96%] Building C object CMakeFiles/firestaff_m12.dir/music_jukebox_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/gamepad_config_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/touch_layout_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/presentation_preview_m12.c.o\n[ 98%] Building C object CMakeFiles/firestaff_m12.dir/screenshot_gallery_m12.c.o\n[100%] Linking C static library libfirestaff_m12.a\n[100%] Built target firestaff_m12\n[100%] Building C object CMakeFiles/firestaff.dir/firestaff_main_m11.c.o\n[100%] Linking C executable firestaff\n[100%] Built target firestaff\n[100%] Built target firestaff_m10\n[100%] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/test_dm1_v1_input_command_queue_pc34_compat.c.o\n[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[100%] Built target test_dm1_v1_input_command_queue_pc34_compat\n[ 93%] Built target firestaff_m10\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_viewport_3d_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/test_dm1_v1_movement_pipeline_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_creature_render_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_viewport_renderer_pc34.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_dungeon_world_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_movement_engine_pc34.c.o\n[ 95%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_game_state_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_champion_stats_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_inventory_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_spell_casting_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_stairs_level_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_text_message_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_sound_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_teleporter_pit_pc34_compat.c.o\n[100%] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_light_pc34_compat.c.o\n[100%] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "direct_input_queue_gate",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/test_dm1_v1_input_command_queue_pc34_compat"
+        ],
+        "outputTail": "probe=dm1_v1_input_command_queue_pc34_compat\nsourceEvidence=COMMAND.C:6,106-121,252-260,272-305,677-684,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19\ndm1V1InputCommandQueueInvariantOk=1\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "direct_command_queue_pipeline_gate",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/test_dm1_v1_movement_pipeline_pc34_compat"
+        ],
+        "outputTail": "DM1 V1 Movement Pipeline Integration Tests\nSource: MOVESENS.C, COMMAND.C, CLIKMENU.C, CHAMPION.C, GAMELOOP.C\n\n\n138 passed, 0 failed\n",
+        "returncode": 0
+      }
+    },
+    {
+      "case": "script_tokens",
+      "kind": "runtime_route",
+      "observed": {
+        "active": 1,
+        "gameTick": 11,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/script_tokens_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
+    },
+    {
+      "case": "arrow_key_symbols",
+      "kind": "runtime_route",
+      "observed": {
+        "active": 1,
+        "gameTick": 10,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/arrow_key_symbols_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
+    },
+    {
+      "case": "pc34_numpad_aliases",
+      "kind": "runtime_route",
+      "observed": {
+        "active": 1,
+        "gameTick": 10,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_aliases_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
+    },
+    {
+      "case": "pc34_numpad_hyphen_aliases",
+      "kind": "runtime_route",
+      "observed": {
+        "active": 1,
+        "gameTick": 10,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_hyphen_aliases_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
+    }
+  ],
+  "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "expectedRuntimeState": {
+    "active": 1,
+    "launchedEver": 1,
+    "party": {
+      "championCount": 0,
+      "direction": 0,
+      "mapIndex": 0,
+      "mapX": 0,
+      "mapY": 3
+    },
+    "pipeline": {
+      "command": 2,
+      "dequeued": 1,
+      "turnApplied": 1,
+      "viewportDirty": 1
+    }
+  },
+  "head": "1f57c034a026d07224ba1a4ecb9c08563e5656ef",
+  "notClaimed": [
+    "DOSBox/original FIRES debugger hit",
+    "pixel parity",
+    "original DOS/I34E keyboard-buffer proof"
+  ],
+  "repo": "/home/trv2/work/firestaff",
+  "retiredStaleBlockersInScope": [
+    "BLOCKED_FULL_LAUNCHER_SCRIPT_HANDOFF",
+    "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E for M11 SDL key:kp* route only"
+  ],
+  "runtimeCases": [
+    {
+      "case": "script_tokens",
+      "observed": {
+        "active": 1,
+        "gameTick": 11,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/script_tokens_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
+    },
+    {
+      "case": "arrow_key_symbols",
+      "observed": {
+        "active": 1,
+        "gameTick": 10,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/arrow_key_symbols_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
+    },
+    {
+      "case": "pc34_numpad_aliases",
+      "observed": {
+        "active": 1,
+        "gameTick": 10,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_aliases_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
+    },
+    {
+      "case": "pc34_numpad_hyphen_aliases",
+      "observed": {
+        "active": 1,
+        "gameTick": 10,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 1,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true,
+      "probeJson": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/pc34_numpad_hyphen_aliases_runtime_probe.json",
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
+    }
+  ],
+  "schema": "pass352_dm1_v1_movement_route_regression_matrix.v1",
+  "sourceLocks": [
+    {
+      "file": "IO2.C",
+      "lines": "32",
+      "markers": [
+        "IODRV_00_GetKeyboardInput"
+      ]
+    },
+    {
+      "file": "IO2.C",
+      "lines": "37",
+      "markers": [
+        "IODRV_00_GetKeyboardInput"
+      ]
+    },
+    {
+      "file": "IO2.C",
+      "lines": "47-59",
+      "markers": [
+        "switch (L2944_ui_ - 0x1248)",
+        "Turn Forward",
+        "Move Backward",
+        "Turn Left",
+        "Turn Right"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "636-685",
+      "markers": [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+        "0x004B",
+        "0x004C",
+        "0x004D",
+        "0x004F",
+        "0x0050",
+        "0x0051"
+      ]
+    },
+    {
+      "file": "STARTUP2.C",
+      "lines": "1179-1182",
+      "markers": [
+        "G0441_ps_PrimaryMouseInput",
+        "G0442_ps_SecondaryMouseInput",
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1379-1450",
+      "markers": [
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1452-1661",
+      "markers": [
+        "F0359_COMMAND_ProcessClick_CPSC",
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
+        "G0441_ps_PrimaryMouseInput",
+        "G0442_ps_SecondaryMouseInput",
+        "G0432_as_CommandQueue"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1709-1813",
+      "markers": [
+        "F0361_COMMAND_ProcessKeyPress",
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G0432_as_CommandQueue"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2125",
+      "markers": [
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "G0435_B_CommandQueueLocked",
+        "G0432_as_CommandQueue",
+        "G0310_i_DisabledMovementTicks"
+      ]
+    },
+    {
+      "file": "MENUDRAW.C",
+      "lines": "5-19",
+      "markers": [
+        "F0395_MENUS_DrawMovementArrows",
+        "C013_GRAPHIC_MOVEMENT_ARROWS",
+        "C009_ZONE_MOVEMENT_ARROWS"
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "markers": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection"
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "markers": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ]
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
+  "timestampUtc": "2026-05-07T20:41:23.634745+00:00"
+}

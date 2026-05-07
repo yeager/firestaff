@@ -673,6 +673,11 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_movement_command_gate_source_lock.py
     )
 
+    add_test(
+        NAME pass351_dm1_v1_live_viewport_redraw_parity_sweep
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass351_dm1_v1_live_viewport_redraw_parity_sweep.py
+    )
+
     add_executable(test_dm1_v1_sensor_trigger_pc34_compat
         test_dm1_v1_sensor_trigger_pc34_compat.c
     )
