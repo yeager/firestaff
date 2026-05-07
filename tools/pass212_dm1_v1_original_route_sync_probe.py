@@ -234,10 +234,14 @@ def classify_attempt(attempt: Path) -> dict[str, Any]:
     distinct_raw = len(raw_groups) == 6
     distinct_crops = len(crop_groups) == 6
     status = "PROMOTABLE_MOVEMENT_VIEWPORT_SYNC" if all_gameplay and distinct_raw and distinct_crops and not problems else "BLOCKED_ROUTE_CAPTURE_SYNC"
+    supersession = later_batch_capture_supersedes_route_sync()
+    if status == "BLOCKED_ROUTE_CAPTURE_SYNC" and supersession.get("superseded"):
+        status = "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING"
 
     return {
         "schema": "pass212_dm1_v1_original_route_sync_probe.v1",
         "status": status,
+        "superseded_by_later_batch_capture": supersession,
         "attempt_dir": rel(attempt),
         "source_seam": SOURCE_SEAM,
         "shots": rows,
@@ -263,6 +267,28 @@ def classify_attempt(attempt: Path) -> dict[str, Any]:
             file_digest(PASS211_README),
         ],
         "honesty": "No raw screenshots or viewport crops are emitted by this probe; hashes/manifests only.",
+    }
+
+
+
+
+def later_batch_capture_supersedes_route_sync() -> dict[str, Any]:
+    pass304 = REPO / "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json"
+    pass308 = REPO / "parity-evidence/verification/pass308_original_capture_execution_manifest.json"
+    if not (pass304.is_file() and pass308.is_file()):
+        return {"superseded": False, "reason": "pass304/pass308 manifests missing"}
+    m304 = json.loads(pass304.read_text())
+    m308 = json.loads(pass308.read_text())
+    coverage = m308.get("coverage") or {}
+    route_coverage = bool((m304.get("existingOriginalCropAudit") or {}).get("routeLabelCoverage"))
+    executed = m308.get("status") == "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING" and bool(coverage.get("requiredLabelCoverage")) and bool(coverage.get("requiredPromotionRowsGameplayOrWallCloseup"))
+    return {
+        "superseded": route_coverage and executed,
+        "reason": "pass304/pass308 captured the focused route-label set; remaining blocker is original runtime state-oracle proof" if route_coverage and executed else "later route-label capture coverage incomplete",
+        "pass304Status": m304.get("status"),
+        "pass304RouteLabelCoverage": route_coverage,
+        "pass308Status": m308.get("status"),
+        "pass308Coverage": coverage,
     }
 
 
@@ -298,6 +324,9 @@ def write_markdown(path: Path, result: dict[str, Any]) -> None:
         lines.extend(["", "## Warnings", ""])
         for warning in result["warnings"]:
             lines.append(f"- {warning}")
+    supersession = result.get("superseded_by_later_batch_capture") or {}
+    if supersession.get("superseded"):
+        lines.extend(["", "## Supersession", "", "This old route-sync blocker is retired as an active blocker by pass304/pass308 batch capture coverage.", f"- pass304: `{supersession.get('pass304Status')}` / route label coverage `{supersession.get('pass304RouteLabelCoverage')}`", f"- pass308: `{supersession.get('pass308Status')}` / coverage `{supersession.get('pass308Coverage')}`", "- Remaining blocker: state-oracle proof for original runtime party tuple/F0128 binding, not another retry of this stale six-shot route."])
     lines.extend([
         "",
         "## Retry contract",
@@ -324,6 +353,7 @@ def main() -> int:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "manifest.json").write_text(json.dumps(result, indent=2) + "\n")
     write_markdown(args.out_dir / "README.md", result)
+    write_markdown(REPO / "parity-evidence/pass212_dm1_v1_original_route_sync_probe.md", result)
     print(f"{result['status']} wrote {rel(args.out_dir / 'manifest.json')}")
     # Return success for both promotable and blocker states: the gate verifies
     # honest synchronization accounting, not parity promotion.

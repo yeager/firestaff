@@ -18,10 +18,10 @@ This is a focused golden-comparison lock for viewport/walls only. It verifies Re
 - Movement/viewport/wall golden: `PASS`; entry `{'direction': 2, 'mapIndex': 0, 'mapX': 1, 'mapY': 3}`; representative cases `5`.
 - Draw stack artifact: `PASS`.
 - Original capture integration: `PASS_SOURCE_LOCKED_ORIGINAL_RUNTIME_BLOCKED_ON_ADDRESS_MAP`; capture route `tooling-recovered-source-locked-not-overlay-ready`.
-- Original route follow-up: `BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE`.
+- Original route follow-up: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`.
 
 ## Boundary
 
 - Source-locked: side-door/detail layering, far-to-near draw order, F0115 object/creature/projectile stack, and C2500/C2900 row clipping.
-- Original capture: available artifacts are blocker evidence only; the current route is not promotable as original-faithful movement/viewport pixel reference.
+- Original capture: available artifacts are blocker/supersession evidence only; pass304/pass308 route-label coverage still waits on state-oracle proof before pixel promotion.
 - No push, no <private-host> use, no original-vs-Firestaff pixel parity claim.

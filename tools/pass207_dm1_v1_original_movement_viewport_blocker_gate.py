@@ -397,6 +397,8 @@ def decide_status(source: list[dict[str, Any]], audit: dict[str, Any]) -> str:
     if audit.get("missing_tools") or not all(audit.get("canonical_files_ok", {}).values()):
         return "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"
     if audit.get("attempt_status") != "PASS_SEMANTIC_ROUTE_READY":
+        if audit.get("pass206_status") == "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING":
+            return "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING"
         return "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE"
     return "PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE"
 
@@ -446,7 +448,9 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         "",
     ]
     mismatches = audit.get("mismatches") or []
-    if manifest["status"] == "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE":
+    if manifest["status"] == "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING":
+        lines.append("The old movement/viewport route blocker is retired as an active blocker by pass304/pass308 batch capture coverage. The remaining active blocker is state-oracle proof for binding original runtime party tuple/F0128 to those route labels; no pixel parity is claimed.")
+    elif manifest["status"] == "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE":
         lines.append("The current attempt is **not promotable** as original-faithful movement/viewport evidence. It has the right local runner prerequisites, but the captured sequence does not remain semantically aligned after movement: classifier mismatches and repeated wall-closeup frames mean the shots cannot be tied to the ReDMCSB post-command redraw seam above.")
         lines.append("")
         if mismatches:
@@ -504,7 +508,7 @@ def main() -> int:
         "mismatch_count": len(attempt.get("mismatches") or []),
         "missing_tools": attempt.get("missing_tools"),
     }, indent=2, sort_keys=True))
-    return 0 if status in {"PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE", "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE"} else 1
+    return 0 if status in {"PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE", "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE", "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING"} else 1
 
 
 if __name__ == "__main__":

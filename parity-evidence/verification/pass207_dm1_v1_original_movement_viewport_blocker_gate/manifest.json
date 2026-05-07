@@ -50,7 +50,7 @@
     "<private-host-ip>"
   ],
   "pass206_attempt_audit": {
-    "attempt_dir": "<firestaff-repo>/verification-screens/pass112-n2-stable-hud-route",
+    "attempt_dir": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route",
     "attempt_status": "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE",
     "canonical_files_ok": {
       "DATA/DUNGEON.DAT": true,
@@ -102,7 +102,7 @@
       }
     ],
     "missing_tools": [],
-    "pass206_status": "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE",
+    "pass206_status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
     "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json",
     "route_events": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 shot:party_hud kp5 wait:700 shot kp5 wait:700 shot f1 wait:700 shot:spell_panel one wait:700 shot i wait:700 shot:inventory_panel",
     "viewport_crop_ppm_count": 0
@@ -257,6 +257,6 @@
   "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "repo": "/home/trv2/work/firestaff",
   "schema": "pass207_dm1_v1_original_movement_viewport_blocker_gate.v1",
-  "status": "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE",
+  "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
   "worker": "N2 / firestaff-worker / trv2@<n2-private-ip>"
 }

@@ -1,6 +1,6 @@
 # Pass212 DM1 V1 original route/capture synchronization probe
 
-Status: `BLOCKED_ROUTE_CAPTURE_SYNC`
+Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
 
 Attempt audited: `verification-screens/pass210-n2-original-movement-route-fresh`
 
@@ -33,6 +33,13 @@ This is a manifest-only synchronization probe. It preserves why the original mov
 - movement shot 5 (turn_left_2) classified 'wall_closeup', not 'dungeon_gameplay'
 - duplicate raw-frame SHA groups show command/post-redraw collapse: fbeb1b82cd09=[2, 5], 48ed3743ab6a=[3, 4, 6]
 - duplicate viewport-crop SHA groups show non-distinct presented viewports: 701689e73fc0=[1, 3, 4, 6], 1e71ed879980=[2, 5]
+
+## Supersession
+
+This old route-sync blocker is retired as an active blocker by pass304/pass308 batch capture coverage.
+- pass304: `BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED` / route label coverage `True`
+- pass308: `PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING` / coverage `{'requiredLabelCoverage': True, 'requiredPromotionRowsGameplayOrWallCloseup': True}`
+- Remaining blocker: state-oracle proof for original runtime party tuple/F0128 binding, not another retry of this stale six-shot route.
 
 ## Retry contract
 

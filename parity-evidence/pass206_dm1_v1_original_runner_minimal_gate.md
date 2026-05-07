@@ -1,6 +1,6 @@
 # Pass206 — DM1 V1 original-runner minimal gate
 
-Status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
+Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
 
 Scope: N2 Linux-only original DM1 PC34 runner/capture readiness for movement/viewport evidence. No Firestaff renderer code changed; no pixel parity is claimed.
 
@@ -22,14 +22,14 @@ Scope: N2 Linux-only original DM1 PC34 runner/capture readiness for movement/vie
 - `convert`: `/usr/bin/convert`
 - `ffmpeg`: `/usr/bin/ffmpeg`
 
-- PASS `DM.EXE` `4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` at `<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
-- PASS `DATA/DUNGEON.DAT` `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` at `<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
-- PASS `DATA/GRAPHICS.DAT` `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` at `<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
+- PASS `DM.EXE` `4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` at `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
+- PASS `DATA/DUNGEON.DAT` `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` at `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
+- PASS `DATA/GRAPHICS.DAT` `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` at `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
 
 ## Reproducible dry-run command
 
 ```sh
-DM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \
+DM1_ORIGINAL_STAGE_DIR=~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
 DOSBOX=/usr/bin/dosbox \
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
@@ -39,7 +39,7 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 
 ## Existing N2 route attempt audit
 
-- Attempt: `<firestaff-repo>/verification-screens/pass112-n2-stable-hud-route`
+- Attempt: `/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route`
 - Classifier status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
 - Capture count/dimensions: `6` / `{'320x200': 6}`
 - Viewport crop PPM count: `0`
@@ -53,12 +53,20 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 - shot 5: `wall_closeup` expected `dungeon_gameplay` (`verification-screens/pass112-n2-stable-hud-route/image0005-raw.png`)
 - shot 6: `wall_closeup` expected `inventory` (`verification-screens/pass112-n2-stable-hud-route/image0006-raw.png`)
 
+## Supersession
+
+The early pass206 six-shot route blocker is retired as an active blocker by the later pass304/pass308 batch capture lane.
+- pass304: `BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED` / route label coverage `True`
+- pass308: `PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING` / coverage `{'requiredLabelCoverage': True, 'requiredPromotionRowsGameplayOrWallCloseup': True}`
+- Remaining blocker: state-oracle proof for binding original runtime party tuple/F0128 to those route labels.
+
+
 ## Decision
 
 This is a landable gate because it separates three facts cleanly:
 
 1. ReDMCSB source seams for movement/viewport capture are cited and checked.
 2. N2 has the Linux runner prerequisites and exact PC34 input hashes for a reproducible DOSBox capture attempt.
-3. The current six-shot route is **not promotable** as original movement/viewport evidence because semantic classifier mismatches and duplicate frames remain.
+3. The original pass206 six-shot attempt is historical; if pass304/pass308 coverage is present, the active blocker has moved to the state-oracle lane.
 
 Non-claims: no <private-host> use, no push, no original-vs-Firestaff pixel parity claim.

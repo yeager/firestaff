@@ -1,6 +1,17 @@
 {
   "schema": "pass212_dm1_v1_original_route_sync_probe.v1",
-  "status": "BLOCKED_ROUTE_CAPTURE_SYNC",
+  "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
+  "superseded_by_later_batch_capture": {
+    "superseded": true,
+    "reason": "pass304/pass308 captured the focused route-label set; remaining blocker is original runtime state-oracle proof",
+    "pass304Status": "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED",
+    "pass304RouteLabelCoverage": true,
+    "pass308Status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
+    "pass308Coverage": {
+      "requiredLabelCoverage": true,
+      "requiredPromotionRowsGameplayOrWallCloseup": true
+    }
+  },
   "attempt_dir": "verification-screens/pass210-n2-original-movement-route-fresh",
   "source_seam": [
     {

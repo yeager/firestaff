@@ -1,6 +1,6 @@
 # Pass207 — DM1 V1 original movement/viewport blocker gate
 
-Status: `BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE`
+Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
 
 Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox or salvage broad captures; it records the exact ReDMCSB movement→viewport seam and explains whether the current original-runner attempt can be promoted.
 
@@ -34,9 +34,9 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 ## Current N2 original-runner attempt
 
 - pass206 manifest: `/home/trv2/work/firestaff/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json`
-- pass206 status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
+- pass206 status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
 - attempt status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
-- attempt dir: `<firestaff-repo>/verification-screens/pass112-n2-stable-hud-route`
+- attempt dir: `/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route`
 - capture count / dimensions: `6` / `{'320x200': 6}`
 - viewport crop PPM count: `0`
 - class counts: `{'dungeon_gameplay': 2, 'wall_closeup': 4}`
@@ -46,14 +46,6 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 
 ## Blocker decision
 
-The current attempt is **not promotable** as original-faithful movement/viewport evidence. It has the right local runner prerequisites, but the captured sequence does not remain semantically aligned after movement: classifier mismatches and repeated wall-closeup frames mean the shots cannot be tied to the ReDMCSB post-command redraw seam above.
-
-Mismatches:
-- shot 3: `wall_closeup` expected `dungeon_gameplay` (`verification-screens/pass112-n2-stable-hud-route/image0003-raw.png`)
-- shot 4: `wall_closeup` expected `spell_panel` (`verification-screens/pass112-n2-stable-hud-route/image0004-raw.png`)
-- shot 5: `wall_closeup` expected `dungeon_gameplay` (`verification-screens/pass112-n2-stable-hud-route/image0005-raw.png`)
-- shot 6: `wall_closeup` expected `inventory` (`verification-screens/pass112-n2-stable-hud-route/image0006-raw.png`)
-
-Capture unblock requirement: the route-probe viewport manifest still has duplicate 224x136 viewport hashes for command-specific shots. Re-capture must materialize the ignored PPM/PNG assets and show distinct post-command/post-vblank viewport hashes for turn, move, spell, after-cast, and inventory boundaries before this can become parity evidence.
+The old movement/viewport route blocker is retired as an active blocker by pass304/pass308 batch capture coverage. The remaining active blocker is state-oracle proof for binding original runtime party tuple/F0128 to those route labels; no pixel parity is claimed.
 
 Non-claims: no <private-host> use, no push, no new capture route, no original-vs-Firestaff pixel parity claim.

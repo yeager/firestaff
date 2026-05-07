@@ -21,7 +21,7 @@ OUT_DIR = ROOT / "parity-evidence/verification/pass206_dm1_v1_original_runner_mi
 REPORT = ROOT / "parity-evidence/pass206_dm1_v1_original_runner_minimal_gate.md"
 
 EXPECTED_FILES = {
-    "DM.EXE": (DM1_STAGE / "DM.EXE", "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4").expanduser(),
+    "DM.EXE": (DM1_STAGE / "DM.EXE", "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"),
     "DATA/DUNGEON.DAT": (DM1_STAGE / "DATA/DUNGEON.DAT", "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"),
     "DATA/GRAPHICS.DAT": (DM1_STAGE / "DATA/GRAPHICS.DAT", "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"),
 }
@@ -107,12 +107,41 @@ def audit_existing_attempt() -> dict[str, Any]:
     return {"exists": True, "path": str(CLASSIFIER_JSON), "attempt_dir": str(ATTEMPT_DIR), "status": "PASS_SEMANTIC_ROUTE_READY" if semantic_ready else "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE", "capture_count": doc.get("capture_count"), "dimensions_seen": doc.get("dimensions_seen"), "expected_sequence": doc.get("expected_sequence", EXPECTED_SEQUENCE), "class_counts": doc.get("class_counts"), "mismatches": mismatches, "duplicate_sha256_counts_gt1": duplicate_blockers, "viewport_crop_ppm_count": len(crops), "labels_tsv": labels, "key_log_tail": key_log_tail}
 
 
-def decide_status(source: list[dict[str, Any]], runner: dict[str, Any], attempt: dict[str, Any]) -> str:
+def later_batch_capture_supersedes_minimal_attempt() -> dict[str, Any]:
+    """Return pass304/308 evidence that retires the old pass206 route blocker.
+
+    pass206 audits an early six-shot minimal route attempt.  Once pass304/308
+    have route-label coverage for the focused movement/viewport states, the old
+    semantic-route failure is no longer an active blocker; it remains historical
+    evidence only.  This does not claim pixel parity or resolve the state oracle.
+    """
+    pass304 = ROOT / "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json"
+    pass308 = ROOT / "parity-evidence/verification/pass308_original_capture_execution_manifest.json"
+    if not (pass304.is_file() and pass308.is_file()):
+        return {"superseded": False, "reason": "pass304/pass308 manifests missing"}
+    m304 = json.loads(pass304.read_text(encoding="utf-8"))
+    m308 = json.loads(pass308.read_text(encoding="utf-8"))
+    route_coverage = bool((m304.get("existingOriginalCropAudit") or {}).get("routeLabelCoverage"))
+    coverage = m308.get("coverage") or {}
+    executed = m308.get("status") == "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING" and bool(coverage.get("requiredLabelCoverage")) and bool(coverage.get("requiredPromotionRowsGameplayOrWallCloseup"))
+    return {
+        "superseded": route_coverage and executed,
+        "reason": "pass304 route labels and pass308 executed capture coverage are present; remaining blocker is state-oracle proof" if route_coverage and executed else "later capture coverage incomplete",
+        "pass304Status": m304.get("status"),
+        "pass308Status": m308.get("status"),
+        "pass304RouteLabelCoverage": route_coverage,
+        "pass308Coverage": coverage,
+    }
+
+
+def decide_status(source: list[dict[str, Any]], runner: dict[str, Any], attempt: dict[str, Any], supersession: dict[str, Any]) -> str:
     if any(not item["ok"] for item in source):
         return "FAIL_REDMCSB_SOURCE_AUDIT"
     if runner["missing_tools"] or any(not f["ok"] for f in runner["canonical_files"].values()) or not runner["capture_script"]["exists"]:
         return "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"
     if attempt.get("status") != "PASS_SEMANTIC_ROUTE_READY":
+        if supersession.get("superseded"):
+            return "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING"
         return "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE"
     return "PASS_MINIMAL_ORIGINAL_RUNNER_CAPTURE_GATE_READY"
 
@@ -138,7 +167,10 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
             lines.append(f"- shot {m['index']}: `{m['classification']}` expected `{m['expected']}` (`{m['file']}`)")
     else:
         lines.append("- none")
-    lines += ["", "## Decision", "", "This is a landable gate because it separates three facts cleanly:", "", "1. ReDMCSB source seams for movement/viewport capture are cited and checked.", "2. N2 has the Linux runner prerequisites and exact PC34 input hashes for a reproducible DOSBox capture attempt.", "3. The current six-shot route is **not promotable** as original movement/viewport evidence because semantic classifier mismatches and duplicate frames remain.", "", "Non-claims: no <private-host> use, no push, no original-vs-Firestaff pixel parity claim.", ""]
+    supersession = manifest.get("superseded_by_later_batch_capture") or {}
+    if supersession.get("superseded"):
+        lines += ["", "## Supersession", "", "The early pass206 six-shot route blocker is retired as an active blocker by the later pass304/pass308 batch capture lane.", f"- pass304: `{supersession.get('pass304Status')}` / route label coverage `{supersession.get('pass304RouteLabelCoverage')}`", f"- pass308: `{supersession.get('pass308Status')}` / coverage `{supersession.get('pass308Coverage')}`", "- Remaining blocker: state-oracle proof for binding original runtime party tuple/F0128 to those route labels.", ""]
+    lines += ["", "## Decision", "", "This is a landable gate because it separates three facts cleanly:", "", "1. ReDMCSB source seams for movement/viewport capture are cited and checked.", "2. N2 has the Linux runner prerequisites and exact PC34 input hashes for a reproducible DOSBox capture attempt.", "3. The original pass206 six-shot attempt is historical; if pass304/pass308 coverage is present, the active blocker has moved to the state-oracle lane.", "", "Non-claims: no <private-host> use, no push, no original-vs-Firestaff pixel parity claim.", ""]
     report.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -150,13 +182,14 @@ def main() -> int:
     source = audit_source()
     runner = audit_runner()
     attempt = audit_existing_attempt()
-    status = decide_status(source, runner, attempt)
-    manifest = {"schema": "pass206_dm1_v1_original_runner_minimal_gate.v1", "status": status, "worker": "portable host", "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["<private-host>", "<private-host-ip>"], "redmcsb_source_audit": source, "runner_prerequisites": runner, "existing_attempt_audit": attempt}
+    supersession = later_batch_capture_supersedes_minimal_attempt()
+    status = decide_status(source, runner, attempt, supersession)
+    manifest = {"schema": "pass206_dm1_v1_original_runner_minimal_gate.v1", "status": status, "worker": "portable host", "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["<private-host>", "<private-host-ip>"], "redmcsb_source_audit": source, "runner_prerequisites": runner, "existing_attempt_audit": attempt, "superseded_by_later_batch_capture": supersession}
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_report(manifest, args.report)
     print(json.dumps({"status": status, "manifest": str(args.out_dir / "manifest.json"), "report": str(args.report), "source_checks": len(source), "missing_tools": runner["missing_tools"], "attempt_status": attempt.get("status"), "mismatch_count": len(attempt.get("mismatches") or [])}, indent=2, sort_keys=True))
-    return 0 if status in {"PASS_MINIMAL_ORIGINAL_RUNNER_CAPTURE_GATE_READY", "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE"} else 1
+    return 0 if status in {"PASS_MINIMAL_ORIGINAL_RUNNER_CAPTURE_GATE_READY", "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE", "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING"} else 1
 
 
 if __name__ == "__main__":
