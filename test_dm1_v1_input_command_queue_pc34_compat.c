@@ -87,6 +87,40 @@ int main(void)
     ok &= expect_int("pc34 table up arrow command", result.command, DM1_V1_COMMAND_MOVE_FORWARD);
     ok &= expect_int("pc34 table up arrow dispatches move", result.dispatchedMove, 1);
 
+    /* Source lock: ReDMCSB COMMAND.C:677-684 is the I34E movement
+     * keyboard table. It is keypad/scancode-shaped, not WASD-shaped:
+     * 0x4B/0x4C/0x4D/0x4F/0x50/0x51 are left/forward/right/
+     * strafe-left/back/strafe-right. This probe keeps the full table
+     * pinned so SDL NumLock-on keypad routing in main_loop_m11.c cannot
+     * collapse to arrow-only movement again. */
+    {
+        const int keyCodes[6] = { 0x004B, 0x004C, 0x004D, 0x004F, 0x0050, 0x0051 };
+        const int commands[6] = {
+            DM1_V1_COMMAND_TURN_LEFT,
+            DM1_V1_COMMAND_MOVE_FORWARD,
+            DM1_V1_COMMAND_TURN_RIGHT,
+            DM1_V1_COMMAND_MOVE_LEFT,
+            DM1_V1_COMMAND_MOVE_BACKWARD,
+            DM1_V1_COMMAND_MOVE_RIGHT
+        };
+        const char* labels[6] = {
+            "i34e keypad 4 turns left",
+            "i34e keypad 5 moves forward",
+            "i34e keypad 6 turns right",
+            "i34e keypad 1 strafes left",
+            "i34e keypad 2 moves backward",
+            "i34e keypad 3 strafes right"
+        };
+        int i;
+        for (i = 0; i < 6; ++i) {
+            DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+            ok &= expect_int(labels[i], DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+                (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, keyCodes[i], 0, 0, 0 }), 1);
+            result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+            ok &= expect_int(labels[i], result.command, commands[i]);
+        }
+    }
+
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("pc34 io2 shifted up arrow normalizes to forward", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);

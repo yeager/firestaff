@@ -828,6 +828,12 @@ static int m11_script_keycode_from_name(const char* name) {
     if (strcmp(name, "right") == 0) return SDLK_RIGHT;
     if (strcmp(name, "enter") == 0 || strcmp(name, "return") == 0) return SDLK_RETURN;
     if (strcmp(name, "kp-enter") == 0) return SDLK_KP_ENTER;
+    if (strcmp(name, "kp-1") == 0 || strcmp(name, "kp1") == 0) return SDLK_KP_1;
+    if (strcmp(name, "kp-2") == 0 || strcmp(name, "kp2") == 0) return SDLK_KP_2;
+    if (strcmp(name, "kp-3") == 0 || strcmp(name, "kp3") == 0) return SDLK_KP_3;
+    if (strcmp(name, "kp-4") == 0 || strcmp(name, "kp4") == 0) return SDLK_KP_4;
+    if (strcmp(name, "kp-5") == 0 || strcmp(name, "kp5") == 0) return SDLK_KP_5;
+    if (strcmp(name, "kp-6") == 0 || strcmp(name, "kp6") == 0) return SDLK_KP_6;
     if (strcmp(name, "space") == 0) return SDLK_SPACE;
     if (strcmp(name, "tab") == 0) return SDLK_TAB;
     if (strcmp(name, "esc") == 0 || strcmp(name, "escape") == 0) return SDLK_ESCAPE;
@@ -1054,10 +1060,27 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_UP;
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
+                /* ReDMCSB PC-34/I34E source lock: COMMAND.C:677-684 maps
+                 * keypad scancodes 0x4B/0x4C/0x4D/0x4F/0x50/0x51 to
+                 * turn-left/forward/turn-right/strafe-left/back/strafe-right;
+                 * IO2.C:47-59 normalizes shifted arrow scancodes into the
+                 * same command-table codes. SDL reports NumLock-on keypad
+                 * keys as SDLK_KP_N, so route them explicitly before the
+                 * generic q/e/wasd convenience aliases. */
+                case SDLK_KP_5:
+                    return M12_MENU_INPUT_UP;
+                case SDLK_KP_2:
+                    return M12_MENU_INPUT_DOWN;
+                case SDLK_KP_1:
+                    return M12_MENU_INPUT_STRAFE_LEFT;
+                case SDLK_KP_3:
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
                 case SDLK_LEFT:
+                case SDLK_KP_4:
                 case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
+                case SDLK_KP_6:
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
                 case SDLK_A:
@@ -1250,10 +1273,27 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_UP;
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
+                /* ReDMCSB PC-34/I34E source lock: COMMAND.C:677-684 maps
+                 * keypad scancodes 0x4B/0x4C/0x4D/0x4F/0x50/0x51 to
+                 * turn-left/forward/turn-right/strafe-left/back/strafe-right;
+                 * IO2.C:47-59 normalizes shifted arrow scancodes into the
+                 * same command-table codes. SDL reports NumLock-on keypad
+                 * keys as SDLK_KP_N, so route them explicitly before the
+                 * generic q/e/wasd convenience aliases. */
+                case SDLK_KP_5:
+                    return M12_MENU_INPUT_UP;
+                case SDLK_KP_2:
+                    return M12_MENU_INPUT_DOWN;
+                case SDLK_KP_1:
+                    return M12_MENU_INPUT_STRAFE_LEFT;
+                case SDLK_KP_3:
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
                 case SDLK_LEFT:
+                case SDLK_KP_4:
                 case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
+                case SDLK_KP_6:
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
                 case SDLK_A:
