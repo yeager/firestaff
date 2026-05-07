@@ -1,5 +1,14 @@
 {
+  "captureExecutionSupport": {
+    "coverage": {
+      "requiredLabelCoverage": true,
+      "requiredPromotionRowsGameplayOrWallCloseup": true
+    },
+    "manifest": "parity-evidence/verification/pass308_original_capture_execution_manifest.json",
+    "status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING"
+  },
   "existingOriginalCropAudit": {
+    "fullComparatorPromotionBlockedByDecodedGraphics": true,
     "manifestsScanned": [
       "verification-screens/pass112-n2-route-probe/original_viewport_224x136_manifest.tsv",
       "verification-screens/pass209-delayed-click-zone-route/original_viewport_224x136_manifest.tsv",
@@ -9,7 +18,7 @@
       "verification-screens/pass304-original-pc34-wall-comparator-batch-C/original_viewport_224x136_manifest.tsv",
       "verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_224x136_manifest.tsv"
     ],
-    "reason": "required pass304 route labels have captured crop hashes, but the original runtime party tuple/F0128 state is not source-bound yet; keep hashes as evidence only",
+    "reason": "required pass304 route labels have captured crop hashes and pass308 capture coverage is true; pass312 binds the original runtime command/party-tuple/F0128 state oracle. Duplicate hashes remain semantic evidence only until comparator use.",
     "requiredLabelHits": [
       {
         "filename": "01_ingame_start_original_viewport_224x136.ppm",
@@ -78,7 +87,7 @@
       "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844",
       "ea845264f9229fed624079892da4c51653b7a101b2c0fa3f95aea4a4621f7edb"
     ],
-    "usableForPromotion": false
+    "usableForPromotion": true
   },
   "nextCaptureCommands": {
     "batchA_start_right_forward": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-A \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:move_forward_west wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
@@ -88,18 +97,33 @@
   },
   "notClaimed": [
     "pixel parity",
-    "existing original crop equivalence to pass127 route states",
     "decoded full GRAPHICS.DAT bitmap byte dump publication"
   ],
   "pass": "pass304_dm1_v1_original_viewport_capture_blocker_manifest",
-  "promotionCondition": "Promote only after each requiredRouteStates row has an original PC34 crop hash whose route label and party tuple are proven, and requiredDecodedGraphicsDatRecords.wallSetGraphicIndicesFromCurrentRenderPlan have deterministic compressed/packed/unpacked/palette byte hashes.",
+  "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion is blocked only until requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices is empty and matched original-vs-Firestaff viewport comparator passes.",
   "requiredDecodedGraphicsDatRecords": {
     "alreadyManifestedForEntryOnly": [
       78,
       79,
       107
     ],
-    "blocker": "pass302 proves only 78/79/107; wall comparator promotion needs decoded bitmap/palette byte manifests for every listed wall-set graphic index used by pass304 snapshots, without broad dumps.",
+    "blocker": "decoded bitmap/palette byte manifests are still missing for wall-set graphic indices 93,94,95,96,97,98,99,100,101,102,103,104,105,106; pass302 currently proves only 78/79/107.",
+    "missingWallSetGraphicIndices": [
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106
+    ],
     "wallSetGraphicIndicesFromCurrentRenderPlan": [
       93,
       94,
@@ -259,30 +283,63 @@
       "parity-evidence/pass127_viewport_world_f0115_row_mapping.md"
     ],
     "redmcsbAnchors": {
+      "CHAMPION.C": {
+        "bytes": 161349,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+        "sha256": "f4983741edc1c6ef4a7673271a36fefed39345c9dcb15e5a2eee06deaa7b8787"
+      },
+      "CLIKMENU.C": {
+        "bytes": 36305,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+        "sha256": "bb836ba5bcab765855a27ddd8e35d8df46693e965049e9c5f18340ea1d653409"
+      },
+      "COMMAND.C": {
+        "bytes": 194980,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+        "sha256": "68c7388a693c08c207c8dc7907acf1322b99a9467a035a044600c343c903a20f"
+      },
       "DRAWVIEW.C": {
         "bytes": 52330,
         "exists": true,
-        "path": "<redmcsb-source>/Toolchains/Common/Source/DRAWVIEW.C",
-        "resolvedPath": "<redmcsb-source>/Toolchains/Common/Source/DRAWVIEW.C",
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
         "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
       },
       "DUNVIEW.C": {
         "bytes": 613651,
         "exists": true,
-        "path": "<redmcsb-source>/Toolchains/Common/Source/DUNVIEW.C",
-        "resolvedPath": "<redmcsb-source>/Toolchains/Common/Source/DUNVIEW.C",
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
         "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
       },
       "GAMELOOP.C": {
         "bytes": 20376,
         "exists": true,
-        "path": "<redmcsb-source>/Toolchains/Common/Source/GAMELOOP.C",
-        "resolvedPath": "<redmcsb-source>/Toolchains/Common/Source/GAMELOOP.C",
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
         "sha256": "aedc34899c28024d657cdcb11976399cc2eaedc0a5d6fdd0f8cd3372e2c8c96b"
+      },
+      "MOVESENS.C": {
+        "bytes": 127437,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+        "sha256": "35cfd3ba0a4e33bd5f8731eb52184271cd22093e95ff98b639f240b3afb508da"
       }
     },
     "renderPlan": "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json",
     "renderPlanStatus": "PASS_RENDER_PLAN_COMPARATOR_SEAM"
   },
-  "status": "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED"
+  "stateOracleSupport": {
+    "manifest": "parity-evidence/verification/pass312_dm1_v1_original_runtime_state_oracle.json",
+    "partyTupleF0128StateOracle": true,
+    "status": "PASS_STATE_ORACLE_SOURCE_RUNTIME_BOUND"
+  },
+  "status": "BLOCKED_GRAPHICS_DAT_WALL_DECODE_RECORDS_REQUIRED"
 }

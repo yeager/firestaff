@@ -16,9 +16,16 @@ REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json"
 RENDER_PLAN = REPO / "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json"
 GRAPHICS_INDEX = REPO / "parity-evidence/verification/pass302_dm1_graphics_dat_index_manifest.json"
-DUNVIEW = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C")
-GAMELOOP = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/GAMELOOP.C")
-DRAWVIEW = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DRAWVIEW.C")
+SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DUNVIEW = SOURCE_ROOT / "DUNVIEW.C"
+GAMELOOP = SOURCE_ROOT / "GAMELOOP.C"
+DRAWVIEW = SOURCE_ROOT / "DRAWVIEW.C"
+COMMAND = SOURCE_ROOT / "COMMAND.C"
+CLIKMENU = SOURCE_ROOT / "CLIKMENU.C"
+CHAMPION = SOURCE_ROOT / "CHAMPION.C"
+MOVESENS = SOURCE_ROOT / "MOVESENS.C"
+PASS308 = REPO / "parity-evidence/verification/pass308_original_capture_execution_manifest.json"
+PASS312 = REPO / "parity-evidence/verification/pass312_dm1_v1_original_runtime_state_oracle.json"
 ASSET_PATHS = {
     "GRAPHICS.DAT": (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"),
     "DUNGEON.DAT": (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"),
@@ -171,17 +178,33 @@ def main() -> int:
             "pixelRegionsReady": all(e.get("pixelRegion") for e in wall_events),
         })
 
+    pass308 = json.loads(PASS308.read_text())
+    pass312 = json.loads(PASS312.read_text())
     existing = load_existing_original_crops()
     required_labels = {s["requiredShotLabel"] for s in snapshots}
     exact_label_hits = [r for r in existing if r["routeLabel"] in required_labels]
     candidate_hashes = sorted({r["sha256"] for r in existing})
     labels_found = {str(r["routeLabel"]) for r in exact_label_hits}
     route_label_coverage = required_labels <= labels_found
-    status = "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED" if route_label_coverage else "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN"
+    capture_coverage = pass308.get("coverage", {})
+    state_oracle = pass312.get("promotionDecision", {})
+    state_oracle_ok = state_oracle.get("partyTupleF0128StateOracle") is True
+    capture_ok = route_label_coverage and capture_coverage.get("requiredLabelCoverage") is True and capture_coverage.get("requiredPromotionRowsGameplayOrWallCloseup") is True
+    manifested_graphics = {int(r["graphicIndex"]) for r in graphics_index["records"]}
+    missing_wall_indices = sorted(needed_wall_indices - manifested_graphics)
+    if not capture_ok:
+        status = "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN"
+    elif not state_oracle_ok:
+        status = "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED"
+    elif missing_wall_indices:
+        status = "BLOCKED_GRAPHICS_DAT_WALL_DECODE_RECORDS_REQUIRED"
+    else:
+        status = "PASS_ORIGINAL_PC34_VIEWPORT_CAPTURE_PROMOTION_READY"
     audit_reason = (
-        "required pass304 route labels have captured crop hashes, but the original runtime party tuple/F0128 state is not source-bound yet; keep hashes as evidence only"
-        if route_label_coverage else
-        "tracked original viewport manifests do not contain every route label for the pass127/pass304 required snapshot names; crops cannot be bound to the required party tuple/F0128 state."
+        "required pass304 route labels have captured crop hashes and pass308 capture coverage is true; pass312 binds the original runtime command/party-tuple/F0128 state oracle. Duplicate hashes remain semantic evidence only until comparator use."
+        if capture_ok and state_oracle_ok else
+        ("required pass304 route labels have captured crop hashes, but the original runtime party tuple/F0128 state is not source-bound yet; keep hashes as evidence only" if route_label_coverage else
+        "tracked original viewport manifests do not contain every route label for the pass127/pass304 required snapshot names; crops cannot be bound to the required party tuple/F0128 state.")
     )
 
     manifest = {
@@ -189,7 +212,6 @@ def main() -> int:
         "status": status,
         "notClaimed": [
             "pixel parity",
-            "existing original crop equivalence to pass127 route states",
             "decoded full GRAPHICS.DAT bitmap byte dump publication",
         ],
         "sourceInputs": {
@@ -203,6 +225,10 @@ def main() -> int:
                 "DUNVIEW.C": file_record(DUNVIEW),
                 "GAMELOOP.C": file_record(GAMELOOP),
                 "DRAWVIEW.C": file_record(DRAWVIEW),
+                "COMMAND.C": file_record(COMMAND),
+                "CLIKMENU.C": file_record(CLIKMENU),
+                "CHAMPION.C": file_record(CHAMPION),
+                "MOVESENS.C": file_record(MOVESENS),
             },
         },
         "requiredOriginalCrop": {
@@ -214,12 +240,24 @@ def main() -> int:
         "requiredRouteStates": snapshots,
         "requiredOriginalAssets": {name: file_record(path) for name, path in ASSET_PATHS.items()},
         "requiredDecodedGraphicsDatRecords": {
-            "alreadyManifestedForEntryOnly": [r["graphicIndex"] for r in graphics_index["records"]],
+            "alreadyManifestedForEntryOnly": sorted(manifested_graphics),
             "wallSetGraphicIndicesFromCurrentRenderPlan": sorted(needed_wall_indices),
-            "blocker": "pass302 proves only 78/79/107; wall comparator promotion needs decoded bitmap/palette byte manifests for every listed wall-set graphic index used by pass304 snapshots, without broad dumps.",
+            "missingWallSetGraphicIndices": missing_wall_indices,
+            "blocker": ("decoded bitmap/palette byte manifests are still missing for wall-set graphic indices " + ",".join(map(str, missing_wall_indices)) + "; pass302 currently proves only 78/79/107.") if missing_wall_indices else "all wall-set graphic indices used by pass304 snapshots have decoded bitmap/palette byte records.",
+        },
+        "stateOracleSupport": {
+            "manifest": "parity-evidence/verification/pass312_dm1_v1_original_runtime_state_oracle.json",
+            "status": pass312.get("status"),
+            "partyTupleF0128StateOracle": state_oracle_ok,
+        },
+        "captureExecutionSupport": {
+            "manifest": "parity-evidence/verification/pass308_original_capture_execution_manifest.json",
+            "status": pass308.get("status"),
+            "coverage": capture_coverage,
         },
         "existingOriginalCropAudit": {
-            "usableForPromotion": False,
+            "usableForPromotion": capture_ok and state_oracle_ok,
+            "fullComparatorPromotionBlockedByDecodedGraphics": bool(missing_wall_indices),
             "routeLabelCoverage": route_label_coverage,
             "reason": audit_reason,
             "manifestsScanned": sorted({r["manifest"] for r in existing}),
@@ -232,7 +270,7 @@ def main() -> int:
             "batchB_start_left": command_for_batch("B", ["kp4"], ["start_south", "turn_left_east"]),
             "batchC_start_blocked_forward": command_for_batch("C", ["kp8"], ["start_south", "blocked_forward_south_wall"]),
         },
-        "promotionCondition": "Promote only after each requiredRouteStates row has an original PC34 crop hash whose route label and party tuple are proven, and requiredDecodedGraphicsDatRecords.wallSetGraphicIndicesFromCurrentRenderPlan have deterministic compressed/packed/unpacked/palette byte hashes.",
+        "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion is blocked only until requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices is empty and matched original-vs-Firestaff viewport comparator passes.",
     }
     OUT.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"wrote {OUT.relative_to(REPO)}")
