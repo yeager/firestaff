@@ -1,0 +1,308 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0267_MOVE_GetMoveResult_CPSCE": "1859:0516",
+    "F0361_COMMAND_ProcessKeyPress": "22F4:0407",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+    "G0444_ps_SecondaryKeyboardInput": "2C23:3EC0",
+    "G0458_as_Graphic561_PrimaryKeyboardInput_Interface": "2C23:26D4",
+    "G0459_as_Graphic561_SecondaryKeyboardInput_Movement": "2C23:26F4",
+    "G2153_i_QueuedCommandsCount": "2C23:3E78"
+  },
+  "blocker": "BLOCKED_PASS335_TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+  "hypothesesDistinguished": [
+    "ROUTE_BEFORE_DUNGEON_KEY_TABLE",
+    "TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+    "ADDRESS_BINDING_REQUIRED"
+  ],
+  "notPromotedBy": [
+    "BPLIST",
+    "BP command echo",
+    "tmux/capture-pane"
+  ],
+  "runtimeProbe": {
+    "boundedSecondsPerProbe": 20,
+    "missingTools": [],
+    "probes": [
+      {
+        "blocker": "BLOCKED_PASS335_TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+        "boundedSeconds": 20,
+        "commandLog": [
+          {
+            "control": "F5",
+            "purpose": "run unarmed to load/menu prefix",
+            "t": 1778174703.0962865
+          },
+          {
+            "control": "Alt+Pause",
+            "purpose": "pre-load-suffix debugger pause",
+            "t": 1778174719.3398027
+          },
+          {
+            "control": "F5",
+            "purpose": "run load suffix toward dungeon",
+            "t": 1778174724.4236803
+          },
+          {
+            "control": "Alt+Pause",
+            "purpose": "route-readiness pointer check before movement keys",
+            "t": 1778174728.199172
+          },
+          {
+            "cmd": "D 2C23:3EC0 L 4",
+            "excerpt": "00 00 62 2D  .&#,..........b-\n2C23:3ED23 2C 52 2D 23 2C 00 00 00 00 00 00 00 00 00 00  #,R-#,.......\n2C23:3EE00 00 62 2D 23 2C 52 2D 23 2C C0 01 01 00 BB 01  ..b-#,R-#,...\n2C23:3EF00 00 BC 01 00 00 BD 01 00 00 00 00 00 00 00 00  ......\n2C23:3F000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  .............\n2C23:3F100 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0.\n2C23:3F200 00 00 00 00 00 B7 01 01 00 B8 01 01 00 8D 01.....\n2C23:3F300 00 B1 01 00 00 A5 01 00 00 87 01 00 00 87 01.\n-> _               ",
+            "t": 1778174734.0543275
+          },
+          {
+            "cmd": "BPDEL *",
+            "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+            "t": 1778174734.8782635
+          },
+          {
+            "cmd": "BP 22F4:0407",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....4_  ....:_  ....0_  ....4_  ....0_  ....7_  \nDEBUG: Set breakpoint at 22F4:0407\n\n-> _            ",
+            "t": 1778174735.7020483
+          },
+          {
+            "cmd": "BP 22F4:0699",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....4_  ....:_  ....0_  ....6_  ....9_  ....9_  \nDEBUG: Set breakpoint at 22F4:0699\n\n-> _            ",
+            "t": 1778174736.5256977
+          },
+          {
+            "cmd": "BP 1EA4:010D",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....0_  ....D_  \nDEBUG: Set breakpoint at 1EA4:010D\n\n-> _            ",
+            "t": 1778174737.3493912
+          },
+          {
+            "cmd": "BP 1EA4:01AA",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....A_  ....A_  \nDEBUG: Set breakpoint at 1EA4:01AA\n\n-> _            ",
+            "t": 1778174738.1745503
+          },
+          {
+            "cmd": "BP 1859:0516",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....8_  ....5_  ....9_  ....:_  ....0_  ....5_  ....1_  ....6_  \nDEBUG: Set breakpoint at 1859:0516\n\n-> _            ",
+            "t": 1778174738.998393
+          },
+          {
+            "cmd": "BP 23AD:40FE",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....A_  ....D_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+            "t": 1778174739.822445
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n78\n01. BP 1859:0516\n78\n02. BP 1EA4:01AA\n78\n03. BP 1EA4:010D\n78\n04. BP 22F4:0699\n78\n05. BP 22F4:0407\n\n-> _      ",
+            "t": 1778174740.648183
+          },
+          {
+            "control": "F5",
+            "purpose": "run after route-readiness arms",
+            "t": 1778174740.6985672
+          }
+        ],
+        "durationSeconds": 62.426,
+        "expectedMovementTableOffset": "26F4",
+        "pointerCheck": {
+          "displayQuirk": "first byte high nibble elided in dosbox-debug data overview",
+          "farSegmentHex": "2C23",
+          "nearOffsetHex": "26F4",
+          "ok": true,
+          "rawBytes": [
+            "F4",
+            "26",
+            "23",
+            "2C"
+          ]
+        },
+        "ran": true,
+        "routeLog": [
+          {
+            "route_item": "wait:9000",
+            "slept": true,
+            "t": 1778174703.1149242
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "enter",
+            "t": 1778174712.1319385
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778174712.3524504
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778174714.55642
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778174714.7784338
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "click:276,140",
+            "screen": [
+              553,
+              281
+            ],
+            "t": 1778174716.9843683
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778174717.1015778
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778174724.4399664
+          },
+          {
+            "route_item": "wait:3500",
+            "slept": true,
+            "t": 1778174724.659386
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "numlock",
+            "t": 1778174740.7150857
+          },
+          {
+            "route_item": "wait:300",
+            "slept": true,
+            "t": 1778174740.9346004
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778174741.2350314
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778174741.4571474
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778174742.358464
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778174742.579522
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778174743.4807818
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778174743.7041793
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778174744.6054685
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778174744.8284636
+          }
+        ],
+        "sawRunning": true,
+        "stage": "route-readiness after dungeon load",
+        "status": "BLOCKED_PASS335_TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+        "stops": []
+      }
+    ],
+    "ran": true
+  },
+  "schema": "pass335_dm1_v1_keyboard_table_route_readiness.v1",
+  "sourceAudit": [
+    {
+      "anchors": {
+        "C001_COMMAND_TURN_LEFT,     0x004B": 678,
+        "C002_COMMAND_TURN_RIGHT,    0x004D": 680,
+        "C003_COMMAND_MOVE_FORWARD,  0x004C": 679,
+        "C004_COMMAND_MOVE_RIGHT,    0x0051": 683,
+        "C005_COMMAND_MOVE_BACKWARD, 0x0050": 682,
+        "C006_COMMAND_MOVE_LEFT,     0x004F": 681,
+        "KEYBOARD_INPUT G0459_as_Graphic561_SecondaryKeyboardInput_Movement[7]": 636,
+        "KEYBOARD_INPUT* G0444_ps_SecondaryKeyboardInput;": 25,
+        "MEDIA707_I34E_I34M": 677
+      },
+      "file": "COMMAND.C",
+      "id": "movement table definition and I34E key-code mapping",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0003_MAIN_ProcessNewPartyMap_CPSE(G0309_i_PartyMapIndex);": 1183,
+        "G0443_ps_PrimaryKeyboardInput = G0458_as_Graphic561_PrimaryKeyboardInput_Interface;": 1181,
+        "G0444_ps_SecondaryKeyboardInput = G0459_as_Graphic561_SecondaryKeyboardInput_Movement;": 1182
+      },
+      "file": "STARTUP2.C",
+      "id": "new-game dungeon input install",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0357_COMMAND_DiscardAllInput();": 2141,
+        "G0442_ps_SecondaryMouseInput = G0448_as_Graphic561_SecondaryMouseInput_Movement;": 2348,
+        "G0444_ps_SecondaryKeyboardInput = G0459_as_Graphic561_SecondaryKeyboardInput_Movement;": 2349
+      },
+      "file": "PANEL.C",
+      "id": "panel close returns to dungeon movement input",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "G0443_ps_PrimaryKeyboardInput": 24,
+        "G0444_ps_SecondaryKeyboardInput": 25,
+        "G2153_i_QueuedCommandsCount == 0": 2084,
+        "G2153_i_QueuedCommandsCount++": 1357,
+        "void F0361_COMMAND_ProcessKeyPress": 1709,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "keyboard processing path into F0361/F0380",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215
+      },
+      "file": "GAMELOOP.C",
+      "id": "runtime key poll and queue process loop",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_PASS335_TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+  "timestampUtc": "2026-05-07T17:26:01.636856+00:00"
+}

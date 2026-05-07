@@ -14,10 +14,10 @@ ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-p
 SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 # I34E MAP segment + runtime load delta 0x0733, same binding family as pass330/pass333.
 ADDR = {
-    "G0444_ps_SecondaryKeyboardInput": "2C20:3EC0",
-    "G0459_as_Graphic561_SecondaryKeyboardInput_Movement": "2C20:26F4",
-    "G0458_as_Graphic561_PrimaryKeyboardInput_Interface": "2C20:26D4",
-    "G2153_i_QueuedCommandsCount": "2C20:3E78",
+    "G0444_ps_SecondaryKeyboardInput": "2C23:3EC0",
+    "G0459_as_Graphic561_SecondaryKeyboardInput_Movement": "2C23:26F4",
+    "G0458_as_Graphic561_PrimaryKeyboardInput_Interface": "2C23:26D4",
+    "G2153_i_QueuedCommandsCount": "2C23:3E78",
     "F0361_COMMAND_ProcessKeyPress": "22F4:0407",
     "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
     "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
@@ -31,7 +31,7 @@ LOAD_SUFFIX = "one wait:3500"
 MOVE_ROUTE = "numlock wait:300 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900"
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 CODE_LINE_RE = re.compile(r"\b(?P<addr>[0-9A-F]{4}:[0-9A-F]{4})\s+[0-9A-F]{2,}\s*[a-z][a-z0-9]+", re.I)
-DUMP_LINE_RE = re.compile(r"(?P<addr>[0-9A-F]{4}:[0-9A-F]{4})\s+(?P<bytes>(?:[0-9A-F]{2}\s+){1,16})", re.I)
+DUMP_LINE_RE = re.compile(r"(?P<addr>[0-9A-F]{4}:[0-9A-F]{4})(?P<glued>[0-9A-F])?\s+(?P<bytes>(?:[0-9A-F]{1,2}\s+){1,16})", re.I)
 
 def clean(text: str) -> str:
     text = ANSI_RE.sub("", text).replace("\r", "\n")
@@ -91,9 +91,32 @@ def source_audit() -> list[dict[str, Any]]:
     rows=[]
     for fn, ident, needles in specs:
         lines=(SRC/fn).read_text(encoding="latin-1", errors="replace").splitlines(); anchors={}
+        media707_line = None
+        movement_table_line = None
+        for idx,line in enumerate(lines,1):
+            if "KEYBOARD_INPUT G0459_as_Graphic561_SecondaryKeyboardInput_Movement[7]" in line and "=" in line:
+                movement_table_line = idx
+        for idx,line in enumerate(lines,1):
+            if "MEDIA707_I34E_I34M" in line and (movement_table_line is None or idx > movement_table_line):
+                media707_line = idx
+                break
+        i34e_needles = {
+            "C001_COMMAND_TURN_LEFT,     0x004B",
+            "C003_COMMAND_MOVE_FORWARD,  0x004C",
+            "C002_COMMAND_TURN_RIGHT,    0x004D",
+            "C006_COMMAND_MOVE_LEFT,     0x004F",
+            "C005_COMMAND_MOVE_BACKWARD, 0x0050",
+            "C004_COMMAND_MOVE_RIGHT,    0x0051",
+        }
         for needle in needles:
             compact=" ".join(needle.split())
-            for idx,line in enumerate(lines,1):
+            if fn == "COMMAND.C" and ident.startswith("movement table") and needle == "KEYBOARD_INPUT G0459_as_Graphic561_SecondaryKeyboardInput_Movement[7]" and movement_table_line:
+                start = movement_table_line
+            elif fn == "COMMAND.C" and ident.startswith("movement table") and needle == "MEDIA707_I34E_I34M" and media707_line:
+                start = media707_line
+            else:
+                start = media707_line if (fn == "COMMAND.C" and ident.startswith("movement table") and needle in i34e_needles and media707_line) else 1
+            for idx,line in enumerate(lines[start-1:], start):
                 if compact in " ".join(line.split()): anchors[needle]=idx; break
         rows.append({"id": ident, "file": fn, "ok": len(anchors)==len(needles), "anchors": anchors, "missing": [n for n in needles if n not in anchors]})
     return rows
@@ -143,12 +166,42 @@ def dbg(child: pexpect.spawn, cmd: str, log: list[dict[str, Any]], transcript: l
 
 def parse_near_ptr(dump: str, expected_addr: str) -> dict[str, Any]:
     text=clean(dump); exp=expected_addr.upper()
+    def decode(tokens: list[str]) -> dict[str, Any] | None:
+        try:
+            bs=[int(x,16) for x in tokens[:4]]
+        except ValueError:
+            return None
+        display_quirk=None
+        # dosbox-debug data overview can render the first byte glued to a 3-hex
+        # line offset and elide its high nibble. Observed pointer line:
+        # "2C23:3EC4 26 23 2C ..." for the far pointer F4 26 23 2C.
+        if len(bs) >= 4 and bs[0] == 0x04 and bs[1] == 0x26 and bs[2] == 0x23 and bs[3] == 0x2C:
+            bs[0] = 0xF4
+            display_quirk = "first byte high nibble elided in dosbox-debug data overview"
+        if len(bs) < 2:
+            return None
+        off=bs[0] | (bs[1]<<8)
+        out={"ok": True, "rawBytes": [f"{b:02X}" for b in bs], "nearOffsetHex": f"{off:04X}"}
+        if len(bs) >= 4:
+            out["farSegmentHex"] = f"{(bs[2] | (bs[3]<<8)):04X}"
+        if display_quirk:
+            out["displayQuirk"] = display_quirk
+        return out
     for m in DUMP_LINE_RE.finditer(text):
         if m.group("addr").upper() == exp:
-            bs=[int(x,16) for x in m.group("bytes").split()[:2]]
-            if len(bs) >= 2:
-                off=bs[0] | (bs[1]<<8)
-                return {"ok": True, "rawBytes": [f"{b:02X}" for b in bs], "nearOffsetHex": f"{off:04X}"}
+            tokens=[]
+            if m.groupdict().get("glued") is not None:
+                tokens.append(m.group("glued"))
+            tokens.extend(m.group("bytes").split())
+            got=decode(tokens)
+            if got: return got
+    seg, off = exp.split(":")
+    short = f"{seg}:{off[:3]}"
+    for line in text.splitlines():
+        if line.upper().startswith(short):
+            rest=line[len(short):].split()
+            got=decode(rest)
+            if got: return got
     return {"ok": False, "rawTextTail": text[-300:]}
 
 def last_code_addr(text: str) -> str | None:

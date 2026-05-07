@@ -21,10 +21,10 @@ else:
  if data.get("notPromotedBy") != ["BPLIST","BP command echo","tmux/capture-pane"]: err.append("promotion guard missing")
  addr=data.get("addresses",{})
  expected={
-  "G0444_ps_SecondaryKeyboardInput":"2C20:3EC0",
-  "G0459_as_Graphic561_SecondaryKeyboardInput_Movement":"2C20:26F4",
-  "G0458_as_Graphic561_PrimaryKeyboardInput_Interface":"2C20:26D4",
-  "G2153_i_QueuedCommandsCount":"2C20:3E78",
+  "G0444_ps_SecondaryKeyboardInput":"2C23:3EC0",
+  "G0459_as_Graphic561_SecondaryKeyboardInput_Movement":"2C23:26F4",
+  "G0458_as_Graphic561_PrimaryKeyboardInput_Interface":"2C23:26D4",
+  "G2153_i_QueuedCommandsCount":"2C23:3E78",
   "F0361_COMMAND_ProcessKeyPress":"22F4:0407",
   "F0380_COMMAND_ProcessQueue_CPSC":"22F4:0699",
   "F0128_DUNGEONVIEW_Draw_CPSF":"23AD:40FE",
