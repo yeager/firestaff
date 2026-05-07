@@ -1,0 +1,280 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0267_MOVE_GetMoveResult_CPSCE": "1859:0516",
+    "F0361_COMMAND_ProcessKeyPress": "22F4:0407",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699"
+  },
+  "blocker": "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E",
+  "hypothesis": "NumLock/keypad mode prevents I34E movement codes from entering the command queue",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP command echo",
+    "tmux/capture-pane"
+  ],
+  "probeKeyMode": "Num_Lock then KP_5/KP_4/KP_6 (numeric keypad symbols)",
+  "runtimeProbe": {
+    "boundedSecondsPerProbe": 75,
+    "missingTools": [],
+    "probes": [
+      {
+        "blocker": "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E",
+        "boundedSeconds": 75,
+        "commandLog": [
+          {
+            "control": "F5",
+            "purpose": "run unarmed to load/menu prefix",
+            "t": 1778170998.2923048
+          },
+          {
+            "control": "Alt+Pause",
+            "purpose": "pre-command-route debugger pause",
+            "t": 1778171014.5353482
+          },
+          {
+            "cmd": "BPDEL *",
+            "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+            "t": 1778171020.3951848
+          },
+          {
+            "cmd": "BP 22F4:0407",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....4_  ....:_  ....0_  ....4_  ....0_  ....7_  \nDEBUG: Set breakpoint at 22F4:0407\n\n-> _            ",
+            "t": 1778171021.2194805
+          },
+          {
+            "cmd": "BP 22F4:0699",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....4_  ....:_  ....0_  ....6_  ....9_  ....9_  \nDEBUG: Set breakpoint at 22F4:0699\n\n-> _            ",
+            "t": 1778171022.0436056
+          },
+          {
+            "cmd": "BP 1EA4:010D",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....0_  ....D_  \nDEBUG: Set breakpoint at 1EA4:010D\n\n-> _            ",
+            "t": 1778171022.8676012
+          },
+          {
+            "cmd": "BP 1EA4:01AA",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....A_  ....A_  \nDEBUG: Set breakpoint at 1EA4:01AA\n\n-> _            ",
+            "t": 1778171023.6917293
+          },
+          {
+            "cmd": "BP 1859:0516",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....8_  ....5_  ....9_  ....:_  ....0_  ....5_  ....1_  ....6_  \nDEBUG: Set breakpoint at 1859:0516\n\n-> _            ",
+            "t": 1778171024.5158257
+          },
+          {
+            "cmd": "BP 23AD:40FE",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....A_  ....D_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+            "t": 1778171025.3399456
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n78\n01. BP 1859:0516\n78\n02. BP 1EA4:01AA\n78\n03. BP 1EA4:010D\n78\n04. BP 22F4:0699\n78\n05. BP 22F4:0407\n\n-> _      ",
+            "t": 1778171026.1638303
+          },
+          {
+            "control": "F5",
+            "purpose": "run after command/redraw path arms",
+            "t": 1778171026.2141676
+          }
+        ],
+        "durationSeconds": 107.722,
+        "ran": true,
+        "routeLog": [
+          {
+            "route_item": "wait:9000",
+            "slept": true,
+            "t": 1778170998.3102167
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "enter",
+            "t": 1778171007.324899
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778171007.547273
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778171009.7528968
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778171009.9746804
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "click:276,140",
+            "screen": [
+              553,
+              281
+            ],
+            "t": 1778171012.1794555
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778171012.2945137
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778171026.2315807
+          },
+          {
+            "route_item": "wait:3500",
+            "slept": true,
+            "t": 1778171026.4505374
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "numlock",
+            "t": 1778171029.9565606
+          },
+          {
+            "route_item": "wait:300",
+            "slept": true,
+            "t": 1778171030.1815014
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778171030.4823992
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778171030.706879
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778171031.608431
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778171031.8297417
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778171032.7310057
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778171032.9554877
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778171033.8572066
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778171034.0800545
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778171034.9815936
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778171035.2052639
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778171036.1068032
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778171036.3307717
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778171037.2328162
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778171037.4565547
+          }
+        ],
+        "sawRunning": true,
+        "stage": "NumLock/keypad mode",
+        "status": "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E",
+        "stops": []
+      }
+    ],
+    "ran": true
+  },
+  "schema": "pass333_dm1_v1_keypad_mode_command_queue_probe.v1",
+  "sourceAudit": [
+    {
+      "anchors": {
+        "C001_COMMAND_TURN_LEFT,     0x004B": 678,
+        "C002_COMMAND_TURN_RIGHT,    0x004D": 680,
+        "C003_COMMAND_MOVE_FORWARD,  0x004C": 679,
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "G2153_i_QueuedCommandsCount == 0": 2084,
+        "G2153_i_QueuedCommandsCount++": 1357,
+        "KEYBOARD_INPUT G0459_as_Graphic561_SecondaryKeyboardInput_Movement[7]": 46,
+        "MEDIA707_I34E_I34M": 602,
+        "void F0361_COMMAND_ProcessKeyPress": 1709,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "I34E movement key table and F0361/F0380 queue",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE": 316,
+        "P0557_T_Thing == C0xFFFF_THING_PARTY": 433
+      },
+      "file": "MOVESENS.C",
+      "id": "movement legality/result",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "F0128 redraw entry",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E",
+  "timestampUtc": "2026-05-07T16:25:02.151496+00:00"
+}

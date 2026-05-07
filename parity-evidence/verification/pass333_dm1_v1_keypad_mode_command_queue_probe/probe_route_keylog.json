@@ -1,0 +1,143 @@
+[
+  {
+    "route_item": "wait:9000",
+    "slept": true,
+    "t": 1778170998.3102167
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "enter",
+    "t": 1778171007.324899
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778171007.547273
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "t": 1778171009.7528968
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778171009.9746804
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "click:276,140",
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778171012.1794555
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778171012.2945137
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "t": 1778171026.2315807
+  },
+  {
+    "route_item": "wait:3500",
+    "slept": true,
+    "t": 1778171026.4505374
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "numlock",
+    "t": 1778171029.9565606
+  },
+  {
+    "route_item": "wait:300",
+    "slept": true,
+    "t": 1778171030.1815014
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "t": 1778171030.4823992
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778171030.706879
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "t": 1778171031.608431
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778171031.8297417
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "t": 1778171032.7310057
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778171032.9554877
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "t": 1778171033.8572066
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778171034.0800545
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "t": 1778171034.9815936
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778171035.2052639
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "t": 1778171036.1068032
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778171036.3307717
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "t": 1778171037.2328162
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778171037.4565547
+  }
+]
