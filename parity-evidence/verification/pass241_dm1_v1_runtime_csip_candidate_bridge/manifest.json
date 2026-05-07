@@ -20,9 +20,9 @@
     "symbol_map_has_no_promotions": true
   },
   "inputs": {
-    "pass235_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/manifest.json",
-    "pass237_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
-    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "pass235_manifest": "<repo>/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/manifest.json",
+    "pass237_manifest": "<repo>/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "symbol_map": "<repo>/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "load_segment_source": {
     "capture_kind": "pass235 automated DOSBox-debug entry capture for decompressed FIRES.EXENEW fixture",

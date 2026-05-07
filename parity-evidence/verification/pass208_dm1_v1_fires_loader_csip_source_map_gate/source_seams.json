@@ -13,7 +13,7 @@
       "F0377_COMMAND_ProcessType80_ClickInDungeonView"
     ],
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
     "seam": "command_accepted",
     "symbols": [
       "F0380_COMMAND_ProcessQueue_CPSC",
@@ -36,7 +36,7 @@
       "G0310_i_DisabledMovementTicks"
     ],
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
     "seam": "movement_applied",
     "symbols": [
       "F0366_COMMAND_ProcessTypes3To6_MoveParty",
@@ -56,7 +56,7 @@
       "G0307_i_PartyMapY = P0561_i_DestinationMapY"
     ],
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
     "seam": "party_coordinates_committed",
     "symbols": [
       "F0267_MOVE_GetMoveResult_CPSCE",
@@ -76,7 +76,7 @@
       "F0380_COMMAND_ProcessQueue_CPSC"
     ],
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
     "seam": "viewport_present",
     "symbols": [
       "F0128_DUNGEONVIEW_Draw_CPSF",
@@ -95,7 +95,7 @@
       "G0296_puc_Bitmap_Viewport"
     ],
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
     "seam": "viewport_present_blit",
     "symbols": [
       "F0097_DUNGEONVIEW_DrawViewport",
@@ -113,7 +113,7 @@
       "F0098_DUNGEONVIEW_DrawFloorAndCeiling"
     ],
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
     "seam": "viewport_buffer_composed",
     "symbols": [
       "F0097_DUNGEONVIEW_DrawViewport",

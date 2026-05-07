@@ -2557,7 +2557,7 @@
   "d4SourceAudit": {
     "auditedRange": "DUNVIEW.C:8466-8477",
     "predicate": "D4L/D4R/D4C call F0150 then F0115 with BACKLEFT cell order only; the D4 window contains no local PC34 wall bitmap/zone draw call",
-    "redmcsbSource": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C",
+    "redmcsbSource": "$HOME/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C",
     "rows": {
       "D4C": {
         "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",

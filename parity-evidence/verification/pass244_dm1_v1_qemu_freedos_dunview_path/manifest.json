@@ -82,7 +82,7 @@
         "QEMU_DUNVIEW_DONE "
       ]
     },
-    "run_dir": "/home/trv2/.openclaw/data/firestaff-qemu-dunview-20260506g"
+    "run_dir": "$HOME/.openclaw/data/firestaff-qemu-dunview-20260506g"
   },
   "schema": "pass244_dm1_v1_qemu_freedos_dunview_path.v1",
   "source_lines": {

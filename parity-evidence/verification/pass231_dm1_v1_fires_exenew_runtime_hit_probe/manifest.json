@@ -6,9 +6,9 @@
     "present": false
   },
   "inputs": {
-    "fires_exenew": "/home/trv2/work/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
-    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "fires_exenew": "<repo>/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "runtime_image": "<repo>/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "<repo>/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "non_claims": [
     "does not commit FIRES.EXENEW",
@@ -43,7 +43,7 @@
       "turn_dispatch": 2151,
       "unlock_queue": 2126
     },
-    "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    "source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
   },
   "schema": "pass231_dm1_v1_fires_exenew_runtime_hit_probe.v1"
 }
