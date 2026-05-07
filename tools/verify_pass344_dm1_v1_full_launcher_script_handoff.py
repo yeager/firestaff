@@ -18,8 +18,8 @@ from datetime import datetime, timezone
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "parity-evidence" / "verification" / "pass344_dm1_v1_full_launcher_script_handoff"
-BUILD_DIR = pathlib.Path("/tmp/firestaff-pass344-verify-build")
-HOME_DIR = pathlib.Path("/tmp/firestaff-pass344-verify-home")
+BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS344_BUILD_DIR", str(pathlib.Path.home() / ".openclaw/data/firestaff-builds/pass344-verify")))
+HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS344_HOME_DIR", str(pathlib.Path.home() / ".openclaw/data/firestaff-homes/pass344-verify")))
 DATA_DIR = pathlib.Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
 SCRIPT = "enter,down,down,down,down,down,down,enter,left,up,right"
 COMMAND = [
@@ -86,6 +86,8 @@ def main() -> int:
         if not ok:
             failures.append(f"missing {label}: {rel}")
 
+    if BUILD_DIR.exists():
+        shutil.rmtree(BUILD_DIR)
     cmake = run(["cmake", "-S", str(ROOT), "-B", str(BUILD_DIR)], timeout=120)
     if cmake.returncode != 0:
         failures.append("cmake configure failed")

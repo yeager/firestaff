@@ -1,10 +1,10 @@
 {
-  "branch": "worker/pass344-dm1-v1-full-launcher-script-handoff-20260507",
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
   "exact_narrow_launcher_command": {
     "argv": [
       "timeout",
       "45s",
-      "/tmp/firestaff-pass344-verify-build/firestaff",
+      "/home/trv2/.openclaw/data/firestaff-builds/pass344-verify/firestaff",
       "--duration",
       "12000",
       "--width",
@@ -19,7 +19,7 @@
     "env": {
       "FIRESTAFF_AUTOTEST": "1",
       "FIRESTAFF_FAIL_IF_NO_LAUNCH": "1",
-      "HOME": "/tmp/firestaff-pass344-verify-home",
+      "HOME": "/home/trv2/.openclaw/data/firestaff-homes/pass344-verify",
       "SDL_VIDEODRIVER": "dummy"
     },
     "log": "parity-evidence/verification/pass344_dm1_v1_full_launcher_script_handoff/full_launcher_script_probe.redacted.log",
@@ -32,7 +32,7 @@
     "cmake_configure_rc": 0,
     "probe_rc": 0
   },
-  "head": "256928de377cd49e3114e0997465eb491bde09dc",
+  "head": "b67e5d0abaf408d934909960296365e478dd2b53",
   "pass": "pass344_dm1_v1_full_launcher_script_handoff",
   "redmcsb_anchors": [
     {
@@ -76,7 +76,7 @@
       "meaning": "entrance enter/resume commands switch load mode"
     }
   ],
-  "repo": "/home/trv2/work/firestaff-worktrees/pass344-dm1-v1-full-launcher-script-handoff-20260507",
+  "repo": "/home/trv2/work/firestaff",
   "static_results": [
     {
       "check": "script token reader exists",
@@ -134,5 +134,5 @@
     }
   ],
   "status": "MOVEMENT_PROVED_FULL_LAUNCHER",
-  "utc": "2026-05-07T18:50:37.054932+00:00"
+  "utc": "2026-05-07T19:10:11.701224+00:00"
 }
