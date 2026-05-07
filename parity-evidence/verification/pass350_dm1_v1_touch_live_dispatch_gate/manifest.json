@@ -1,0 +1,136 @@
+{
+  "status": "PASS_DM1_V1_TOUCH_LIVE_DISPATCH_GATE",
+  "date": "2026-05-07",
+  "base_head_when_authored": "6d77f8acda860bf70272bc75c1ab213a6efb02fe",
+  "gate": "pass350_dm1_v1_touch_live_dispatch_gate",
+  "probe": "probes/m11/firestaff_m11_touch_live_dispatch_gate_probe.c",
+  "ctest_name": "pass350_dm1_v1_touch_live_dispatch_gate",
+  "verifier": "tools/verify_pass350_dm1_v1_touch_live_dispatch_gate.py",
+  "evidence": "parity-evidence/pass350_dm1_v1_touch_live_dispatch_gate.md",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_anchors": [
+    {
+      "file": "STARTUP2.C",
+      "lines": "1179-1182",
+      "claim": "active game installs primary interface mouse table before secondary movement mouse table"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "375-405",
+      "claim": "G0447 primary interface and G0448 secondary movement mouse rows define commands, zones and original button masks"
+    },
+    {
+      "file": "COMMAND.C",
+      "function": "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
+      "lines": "1379-1449",
+      "claim": "mouse hit-test scans table order and requires source button mask plus point-in-zone match"
+    },
+    {
+      "file": "COMMAND.C",
+      "function": "F0359_COMMAND_ProcessClick_CPSC",
+      "lines": "1641-1661",
+      "claim": "primary table is checked before secondary; command and original x/y are queued"
+    },
+    {
+      "file": "COMMAND.C",
+      "function": "F0360_COMMAND_ProcessPendingClick",
+      "lines": "1693-1707",
+      "claim": "pending click replays stored x/y/button status"
+    },
+    {
+      "file": "COORD.C",
+      "lines": "1693-1722",
+      "claim": "PC/I34E screen and viewport dimensions are 320x200 with viewport x=0 y=33 w=224 h=136"
+    },
+    {
+      "file": "COORD.C",
+      "function": "F0798_COMMAND_IsPointInZone",
+      "lines": "1915-1921",
+      "claim": "runtime zone hit-test is inclusive at source bounds"
+    },
+    {
+      "file": "DEFS.H",
+      "lines": "197-216",
+      "claim": "MOUSE_INPUT layout and masks 0x0001 right, 0x0002 left, 0x0004 left-up"
+    }
+  ],
+  "live_cases": [
+    {
+      "name": "primary_left_beats_status_box_child",
+      "input": "screen 25,11 left",
+      "expected_command": 12,
+      "expected_zone": 151,
+      "expected_button": "0x0002",
+      "expected_screen": [
+        25,
+        11
+      ],
+      "proves": "primary table order beats smaller champion hand child hit"
+    },
+    {
+      "name": "primary_right_status_box_toggle",
+      "input": "screen 25,11 right",
+      "expected_command": 7,
+      "expected_zone": 151,
+      "expected_button": "0x0001",
+      "expected_screen": [
+        25,
+        11
+      ],
+      "proves": "right mask uses original primary champion toggle"
+    },
+    {
+      "name": "secondary_left_movement_fallback",
+      "input": "screen 264,126 left",
+      "expected_command": 3,
+      "expected_zone": 70,
+      "expected_button": "0x0002",
+      "expected_screen": [
+        264,
+        126
+      ],
+      "proves": "secondary movement route is used after primary miss"
+    },
+    {
+      "name": "secondary_right_screen_toggle",
+      "input": "screen 264,126 right",
+      "expected_command": 83,
+      "expected_zone": 2,
+      "expected_button": "0x0001",
+      "expected_screen": [
+        264,
+        126
+      ],
+      "proves": "secondary right-button full-screen route preserves mask and coordinates"
+    },
+    {
+      "name": "scaled_primary_right_preserves_original_screen",
+      "input": "scaled 100,39 on 1280x800 right",
+      "expected_command": 7,
+      "expected_zone": 151,
+      "expected_button": "0x0001",
+      "expected_screen": [
+        25,
+        9
+      ],
+      "proves": "scaled M11/game-view touch normalizes to original 320x200 coordinates before dispatch"
+    },
+    {
+      "name": "pending_replay_original_click_state",
+      "input": "locked queue replay of primary-left case",
+      "expected_command": 12,
+      "expected_button": "0x0002",
+      "expected_screen": [
+        25,
+        11
+      ],
+      "proves": "pending-click state keeps source command/x/y/button and replays to queue"
+    }
+  ],
+  "required_probe_output_markers": [
+    "primaryBeforeSecondaryClickRoutingOk=1",
+    "originalButtonMasksAndCoordinatesOk=1",
+    "pass350TouchLiveDispatchGateOk=1"
+  ],
+  "status_reason": "The new CTest target runs the M11 touch-pointer dispatch seam through translation, command-queue enqueue, and pending-click replay with source-order primary-before-secondary expectations and original button masks/coordinates."
+}
