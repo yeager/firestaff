@@ -1,0 +1,26 @@
+{
+  "status": "PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE",
+  "pass": "pass361",
+  "date": "2026-05-08",
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "evidence_file": "parity-evidence/pass361_dm1_v1_viewport_occlusion_redraw_order_gate.md",
+  "verifier": "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py",
+  "source_anchors": [
+    {"file": "DUNVIEW.C", "lines": "8318-8618", "function": "F0128_DUNGEONVIEW_Draw_CPSF"},
+    {"file": "DUNVIEW.C", "lines": "8445-8542", "function": "F0128 visible-square order"},
+    {"file": "DUNVIEW.C", "lines": "6400-6835", "function": "D3 wall/door branches"},
+    {"file": "DUNVIEW.C", "lines": "7244-7937", "function": "D2C/D1C wall/door branches"},
+    {"file": "DRAWVIEW.C", "lines": "709-722", "function": "F0097_DUNGEONVIEW_DrawViewport"}
+  ],
+  "firestaff_artifacts": [
+    "m11_game_view.c:m11_draw_viewport",
+    "tools/verify_pass359_dm1_v1_viewport_wall_draw_order_occlusion_sweep.py",
+    "probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c",
+    "probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c"
+  ],
+  "required_gates": [
+    "pass359_dm1_v1_viewport_wall_draw_order_occlusion_sweep",
+    "dm1_v1_viewport_draw_order_probe",
+    "firestaff_dm1_v1_walls_occlusion_blockers_probe"
+  ]
+}
