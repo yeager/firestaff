@@ -191,6 +191,32 @@ int main(void)
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
     setup_party(&party);
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("pc34 core disabled gate queues forward", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    ok &= expect_int("pc34 core disabled gate processes without dequeue", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 3, 0, 0, 370, 350, footwear, &result), 1);
+    ok &= expect_int("pc34 core disabled gate observed", result.queue.movementDisabledGate, 1);
+    ok &= expect_int("pc34 core disabled gate keeps command queued", (int)queue.count, 1);
+    ok &= expect_int("pc34 core disabled gate does not dispatch move", result.queue.dispatchedMove, 0);
+    ok &= expect_int("pc34 core disabled gate does not step", result.stepApplied, 0);
+    ok &= expect_int("pc34 core disabled gate keeps x", party.mapX, 2);
+    ok &= expect_int("pc34 core disabled gate keeps y", party.mapY, 2);
+
+    ok &= expect_int("pc34 core projectile gate also holds same-direction move", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 2, DIR_NORTH, 372, 350, footwear, &result), 1);
+    ok &= expect_int("pc34 core projectile gate observed", result.queue.movementDisabledGate, 1);
+    ok &= expect_int("pc34 core projectile gate keeps command queued", (int)queue.count, 1);
+
+    ok &= expect_int("pc34 core cooldown expiry releases held move", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 0, DIR_NORTH, 374, 350, footwear, &result), 1);
+    ok &= expect_int("pc34 core cooldown expiry dequeues", result.queue.dequeued, 1);
+    ok &= expect_int("pc34 core cooldown expiry applies step", result.stepApplied, 1);
+    ok &= expect_int("pc34 core cooldown expiry decrements y", party.mapY, 1);
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_WALL, 0));
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("pc34 core blocked up arrow queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,

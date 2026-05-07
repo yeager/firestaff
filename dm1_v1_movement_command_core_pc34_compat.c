@@ -89,7 +89,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
             SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);
-    /* CHAMPION.C:117-130 rotates champion Cell/Direction and stores party direction. */
+        /* CHAMPION.C:117-130 rotates champion Cell/Direction and stores party direction. */
         outResult->turning = m11_v1_turning_apply_party_original_presentation_pc34_compat(
             M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL,
             outResult->queue.command,
