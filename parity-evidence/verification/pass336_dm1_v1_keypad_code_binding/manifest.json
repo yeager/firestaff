@@ -1,0 +1,166 @@
+{
+  "decision": {
+    "numLockInterference": false,
+    "reason": "After table-ready pointer check, keypad/arrow movement symbols and a top-row control route produced no F0361/F0380 stops; source binding is known, but post-ready xdotool route events are not entering the DOS keyboard buffer.",
+    "routeInjectionLayerBug": true,
+    "sdlTerminalCodeTranslationMismatch": "not proven; source binding requires the exact I34E codes listed above",
+    "xdotoolKeypadSymbolMismatch": false
+  },
+  "exactRuntimeBinding": [
+    {
+      "codeHex": "004B",
+      "command": "C001_COMMAND_TURN_LEFT",
+      "physicalSource": "PC extended Left arrow scancode 0x4B converted to 0x004B (K) by IO2.C:54-55",
+      "runtimeCode": "0x004B",
+      "source": "COMMAND.C:678"
+    },
+    {
+      "codeHex": "004C",
+      "command": "C003_COMMAND_MOVE_FORWARD",
+      "physicalSource": "PC extended Up arrow scancode 0x48 converted to 0x004C (L) by IO2.C:47-50",
+      "runtimeCode": "0x004C",
+      "source": "COMMAND.C:679"
+    },
+    {
+      "codeHex": "004D",
+      "command": "C002_COMMAND_TURN_RIGHT",
+      "physicalSource": "PC extended Right arrow scancode 0x4D converted to 0x004D (M) by IO2.C:57-58",
+      "runtimeCode": "0x004D",
+      "source": "COMMAND.C:680"
+    },
+    {
+      "codeHex": "004F",
+      "command": "C006_COMMAND_MOVE_LEFT",
+      "physicalSource": "I34E movement table direct code 0x004F (O)",
+      "runtimeCode": "0x004F",
+      "source": "COMMAND.C:681"
+    },
+    {
+      "codeHex": "0050",
+      "command": "C005_COMMAND_MOVE_BACKWARD",
+      "physicalSource": "PC extended Down arrow scancode 0x50 converted to 0x0050 (P) by IO2.C:51-52",
+      "runtimeCode": "0x0050",
+      "source": "COMMAND.C:682"
+    },
+    {
+      "codeHex": "0051",
+      "command": "C004_COMMAND_MOVE_RIGHT",
+      "physicalSource": "I34E movement table direct code 0x0051 (Q)",
+      "runtimeCode": "0x0051",
+      "source": "COMMAND.C:683"
+    }
+  ],
+  "parentCommit": "62075e4",
+  "runtimeComparisons": [
+    {
+      "name": "pass335_numlock_kp_symbols",
+      "pointerCheck": {
+        "displayQuirk": "first byte high nibble elided in dosbox-debug data overview",
+        "farSegmentHex": "2C23",
+        "nearOffsetHex": "26F4",
+        "ok": true,
+        "rawBytes": [
+          "F4",
+          "26",
+          "23",
+          "2C"
+        ]
+      },
+      "routeItems": [
+        "one",
+        "click:276,140",
+        "one",
+        "numlock",
+        "kp5",
+        "kp4",
+        "kp6",
+        "kp5"
+      ],
+      "status": "BLOCKED_PASS335_TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+      "stops": []
+    },
+    {
+      "name": "pass336_arrow_symbols",
+      "pointerCheck": {
+        "farSegmentHex": "2C23",
+        "nearOffsetHex": "26F4",
+        "ok": true
+      },
+      "routeItems": [
+        "left",
+        "up",
+        "right",
+        "down"
+      ],
+      "status": "BLOCKED_PASS335_TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+      "stops": []
+    },
+    {
+      "name": "pass336_post_ready_toprow_control",
+      "pointerCheck": {
+        "farSegmentHex": "2C23",
+        "nearOffsetHex": "26F4",
+        "ok": true
+      },
+      "routeItems": [
+        "one",
+        "one"
+      ],
+      "status": "BLOCKED_PASS335_TABLE_READY_BUT_KEYPAD_CODES_WRONG",
+      "stops": []
+    }
+  ],
+  "schema": "pass336_dm1_v1_keypad_code_binding.v1",
+  "sourceAudit": [
+    {
+      "file": "INPUT.C",
+      "finding": "Audited because INPUT.C contains platform input helpers, but the I34E PC34 path is selected through DEFS.H M527/M528 to IO2.C F0539/F0540, not these Amiga-family event handlers.",
+      "function": "F0540_INPUT_Crawcin/F0541_INPUT_WaitForMouseOrKeyboardActivity (non-I34E audit)",
+      "lines": "260-283,423-425,621-642"
+    },
+    {
+      "file": "IO2.C",
+      "finding": "I34E reads G2162_IODriver->IODRV_00_GetKeyboardInput; extended arrows 0x1248/0x1250/0x124B/0x124D are normalized to 0x004C/0x0050/0x004B/0x004D.",
+      "function": "F0540_INPUT_Crawcin",
+      "lines": "27-61"
+    },
+    {
+      "file": "COMMAND.C",
+      "finding": "I34E/I34M secondary movement table binds commands to 0x004B,0x004C,0x004D,0x004F,0x0050,0x0051.",
+      "function": "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+      "lines": "636-685"
+    },
+    {
+      "file": "COMMAND.C",
+      "finding": "P0728_KeyCode is compared against primary, then G0444 secondary table; matched entries queue commands and increment G2153_i_QueuedCommandsCount.",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "lines": "1709-1813"
+    },
+    {
+      "file": "COMMAND.C",
+      "finding": "I34E queue count gates processing; turn/move commands call F0365/F0366.",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "lines": "2045-2156"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "finding": "M527/M528 poll keyboard buffer and feed F0361 before F0380 processes the queue.",
+      "function": "game loop keyboard poll",
+      "lines": "164-168,215"
+    },
+    {
+      "file": "STARTUP2.C",
+      "finding": "G0444 is installed to G0459 movement table before ProcessNewPartyMap.",
+      "function": "new-game dungeon input install",
+      "lines": "1179-1183"
+    },
+    {
+      "file": "DEFS.H",
+      "finding": "I34E-family builds use F0539_INPUT_Cconis/F0540_INPUT_Crawcin for M527/M528.",
+      "function": "I34E input macros",
+      "lines": "3157-3160"
+    }
+  ],
+  "status": "BLOCKED_PASS336_ROUTE_INJECTION_LAYER_AFTER_READY",
+  "timestampUtc": "2026-05-07T17:59:37.518673+00:00"
+}
