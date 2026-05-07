@@ -1,0 +1,12 @@
+2319509 write(3, "HELP\n", 5)           = 5
+2319523 write(1, "***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***\r\33[1B", 68) = 68
+2319509 read(3, "***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***\r\33[1B", 4096) = 68
+2319523 write(1, "HELP\33[48;27H", 12)  = 12
+2319509 read(3, "\n\33[1;50r\33[48;1HHELP\33[48;27H", 4096) = 27
+2319509 write(3, "BP 1234:5678\n", 13)  = 13
+2319523 write(1, "DEBUG: Set breakpoint at 1234:5678\r\33[1B", 39) = 39
+2319509 read(3, "DEBUG: Set breakpoint at 1234:5678\r\33[1B", 4096) = 39
+2319523 write(1, "Breakpoint list:\r\33[1B", 21) = 21
+2319509 read(3, "Breakpoint list:\r\33[1B", 4096) = 21
+2319523 write(1, "00. BP 1234:5678\r\33[1B", 21) = 21
+2319509 read(3, "00. BP 1234:5678\r\33[1B", 4096) = 21
