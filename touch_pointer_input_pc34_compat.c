@@ -7,7 +7,8 @@
  * - COMMAND.C:1379-1449 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans
  *   source MOUSE_INPUT records with the current X/Y/button mask.
  * - COMMAND.C:1452-1644 F0359_COMMAND_ProcessClick_CPSC queues mouse commands
- *   after primary mouse input fails over to secondary mouse input.
+ *   after primary mouse input fails over to secondary mouse input; screen
+ *   taps use this same source-ordered primary-then-secondary lookup.
  * - COMMAND.C:396-405 is the movement/viewport/right-button mouse table.
  * - COMMAND.C:2296-2324 dispatches C083 inventory toggle, C111 action parent,
  *   and C080 dungeon-view click after the queue returns those command IDs.
@@ -70,7 +71,7 @@ int TOUCHPOINTER_Compat_TranslateEvent(const TouchPointerEventPc34Compat* event,
 
     switch (event->space) {
     case TOUCH_POINTER_SPACE_SCREEN_320X200_PC34_COMPAT:
-        if (!TOUCHCLICK_Compat_HitTestWithButton(event->x, event->y, event->buttonMask, &zone)) return 0;
+        if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(event->x, event->y, event->buttonMask, &zone)) return 0;
         copy_zone_to_dispatch(event->x, event->y, event->buttonMask, &zone, outDispatch);
         return 1;
 
@@ -78,7 +79,7 @@ int TOUCHPOINTER_Compat_TranslateEvent(const TouchPointerEventPc34Compat* event,
         if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(event->x, event->y,
                                                           event->surfaceW, event->surfaceH,
                                                           &screenX, &screenY)) return 0;
-        if (!TOUCHCLICK_Compat_HitTestWithButton(screenX, screenY, event->buttonMask, &zone)) return 0;
+        if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(screenX, screenY, event->buttonMask, &zone)) return 0;
         copy_zone_to_dispatch(screenX, screenY, event->buttonMask, &zone, outDispatch);
         return 1;
 

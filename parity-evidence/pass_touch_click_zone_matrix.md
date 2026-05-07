@@ -20,6 +20,6 @@ This pass keeps touchscreen support at the evidence/probe layer. It records a co
 - `test_touch_click_zone_matrix_pc34_compat_integration.c` gates representative movement, action, spell, champion hand, inventory viewport-relative, and smallest-zone hit-test behavior.
 - `action_area_routes_pc34_compat.c` now verifies all source action name/icon rows are present in the matrix.
 
-## Remaining implementation gap
+## pass347 follow-up
 
-The matrix intentionally does not implement broad touch abstraction yet. Next work should add a small adapter that selects the same COMMAND.C mouse-input list as M11 (`interface`, `movement`, `inventory`, etc.), translates viewport-relative inventory zones only when that list is active, and preserves keyboard/V1 command parity.
+Pass347 adds the active screen-space source-order helper for touch dispatch: primary interface routes are tested before secondary movement routes, matching `COMMAND.C:1641-1644`. Inventory/panel viewport-local zones remain explicit and are promoted only at the touch seam. Broader provider gesture work should continue to stop at coordinate normalization and must not add downstream touch-specific command shortcuts.

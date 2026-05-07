@@ -84,6 +84,17 @@ int main(void) {
     if (!spell_area_symbol_routes_GetInvariant()) ok = 0;
     if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u) || !has_zone(160u, 570u) || !has_zone(161u, 571u) || !has_zone(162u, 573u) || !has_zone(7u, 187u) || !has_zone(12u, 151u) || !has_zone(125u, 113u) || !has_zone(128u, 116u)) ok = 0;
 
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(25, 11, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||
+        hit.commandId != 12u || hit.zoneIndex != 151u || strcmp(hit.groupName, "champion0.status_box") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(25, 11, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) ||
+        hit.commandId != 7u || hit.zoneIndex != 151u || strcmp(hit.groupName, "champion0.toggle_box") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(264, 126, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||
+        hit.commandId != 3u || hit.zoneIndex != 70u || strcmp(hit.groupName, "movement.forward") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(111, 82, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) ||
+        hit.commandId != 80u || hit.zoneIndex != 7u || strcmp(hit.groupName, "viewport.dungeon") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(264, 126, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) ||
+        hit.commandId != 83u || hit.zoneIndex != 2u || strcmp(hit.groupName, "inventory.toggle_leader") != 0) ok = 0;
+
     if (!TOUCHCLICK_Compat_HitTest(264, 126, &hit) || hit.zoneIndex != 70u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestWithButton(234, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 1u || hit.zoneIndex != 68u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestWithButton(261, 145, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 1u || hit.zoneIndex != 68u) ok = 0;

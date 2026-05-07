@@ -83,6 +83,14 @@ int main(void) {
 
     event.x = 25;
     event.y = 11;
+    event.buttonMask = TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
+    if (!TOUCHPOINTER_Compat_TranslateEvent(&event, &dispatch) ||
+        !expect_dispatch(&dispatch, 25, 11, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         12u, 151u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT,
+                         "champion0.status_box")) ok = 0;
+
+    event.x = 25;
+    event.y = 11;
     event.buttonMask = TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT;
     if (!TOUCHPOINTER_Compat_TranslateEvent(&event, &dispatch) ||
         !expect_dispatch(&dispatch, 25, 11, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT,
