@@ -68,6 +68,11 @@ void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommand
 int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     struct Dm1V1InputEventPc34Compat event);
+int DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    int command,
+    int x,
+    int y);
 int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     int command,

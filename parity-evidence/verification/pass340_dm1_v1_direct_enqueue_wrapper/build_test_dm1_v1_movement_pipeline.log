@@ -1,0 +1,3 @@
+$ cmake --build build --target test_dm1_v1_movement_pipeline_pc34_compat -j2
+[ 93%] Built target firestaff_m10
+[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat

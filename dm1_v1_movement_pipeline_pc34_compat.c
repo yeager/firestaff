@@ -54,6 +54,17 @@ int DM1_V1_MovementPipeline_EnqueueInputPc34Compat(
         &pipeline->commandQueue, event);
 }
 
+int DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(
+    struct Dm1V1MovementPipelinePc34Compat* pipeline,
+    int command,
+    int x,
+    int y)
+{
+    if (!pipeline) return 0;
+    return DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+        &pipeline->commandQueue, command, x, y);
+}
+
 int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     struct Dm1V1MovementPipelinePc34Compat* pipeline,
     const struct DungeonDatState_Compat* dungeon,

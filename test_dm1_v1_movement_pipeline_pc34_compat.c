@@ -732,6 +732,39 @@ static void test_post_move_environment_side_effects(void)
     }
 }
 
+
+/* ---- Test: direct pipeline command wrapper bypasses key/mouse routing ---- */
+static void test_direct_command_wrapper_forward_step(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squares[10 * 10];
+    struct PartyState_Compat party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat result;
+    struct Dm1V1QueuedCommandPc34Compat queued;
+    int enqueued;
+
+    setup_dungeon(&dungeon, &map, &tiles, squares, 10, 10);
+    setup_party(&party, 5, 5, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+
+    enqueued = DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(
+        &pipeline, DM1_V1_COMMAND_MOVE_FORWARD, 0, 0);
+    EXPECT_INT("direct_wrapper_enqueued", enqueued, 1);
+    EXPECT_INT("direct_wrapper_peek", DM1_V1_InputCommandQueue_PeekPc34Compat(
+        &pipeline.commandQueue, &queued), 1);
+    EXPECT_INT("direct_wrapper_command", queued.command, DM1_V1_COMMAND_MOVE_FORWARD);
+
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, NULL, &party, NULL, &result);
+    EXPECT("direct_wrapper_step", result.core.stepApplied == 1);
+    EXPECT_INT("direct_wrapper_x", party.mapX, 5);
+    EXPECT_INT("direct_wrapper_y", party.mapY, 4);
+    EXPECT_INT("direct_wrapper_dequeued", result.core.queue.dequeued, 1);
+}
+
 /* ---- Test: mouse click movement command ---- */
 static void test_mouse_movement(void)
 {
@@ -782,6 +815,7 @@ int main(void)
     test_stairs_step_consequence();
     test_command_movement_viewport_wall_order_source_lock();
     test_post_move_environment_side_effects();
+    test_direct_command_wrapper_forward_step();
     test_mouse_movement();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

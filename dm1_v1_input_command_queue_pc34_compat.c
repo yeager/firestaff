@@ -132,6 +132,18 @@ void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommand
     queue->pendingClickCommand = DM1_V1_COMMAND_NONE;
 }
 
+int DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    int command,
+    int x,
+    int y)
+{
+    if (!queue) {
+        return 0;
+    }
+    return enqueue_command(queue, command, x, y);
+}
+
 int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     int command,
@@ -139,6 +151,9 @@ int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
     int y,
     int buttonMask)
 {
+    if (!queue) {
+        return 0;
+    }
     if (queue->locked) {
         queue->pendingClickPresent = 1;
         queue->pendingClickX = x;
@@ -147,7 +162,7 @@ int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
         queue->pendingClickCommand = command;
         return 0;
     }
-    return enqueue_command(queue, command, x, y);
+    return DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(queue, command, x, y);
 }
 
 int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(

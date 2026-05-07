@@ -1,0 +1,6 @@
+pass=340
+branch=worker/pass340-dm1-v1-direct-enqueue-wrapper-fix-20260507
+base=d48c30a
+status=CLOSED
+reDMCSB_root=/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
+gates=py_compile,verifier,build_test_dm1_v1_movement_pipeline,test_dm1_v1_movement_pipeline,git_diff_check
