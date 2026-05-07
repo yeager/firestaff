@@ -51,6 +51,7 @@ FIRESTAFF_NEEDLES = {
     "dm1_v1_input_command_queue_pc34_compat.c": [
         "static int enqueue_command",
         "return enqueue_command(queue, command, x, y);",
+        "DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat",
         "DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat",
         "result.dispatchedMove = 1;",
         "result.dispatchedTurn = 1;",
@@ -157,10 +158,20 @@ def main() -> int:
             raise AssertionError(f"{path.name}:{marker} not found in cited range {expected_start}-{expected_end}")
 
     q_c = read(ROOT / "dm1_v1_input_command_queue_pc34_compat.c")
-    if not re.search(r"int\s+DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat[\s\S]*return\s+enqueue_command\(queue, command, x, y\);", q_c):
+    direct_wrapper = re.search(
+        r"int\s+DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat[\s\S]*return\s+enqueue_command\(queue, command, x, y\);",
+        q_c,
+    )
+    mouse_wrapper = re.search(
+        r"int\s+DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat[\s\S]*DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat\(queue, command, x, y\);",
+        q_c,
+    )
+    if not direct_wrapper:
         raise AssertionError("direct command enqueue wrapper no longer forwards explicit command to enqueue_command")
+    if not mouse_wrapper:
+        raise AssertionError("mouse enqueue wrapper no longer forwards through direct command wrapper")
 
-    print("pass337b_dm1_v1_direct_command_injection=pass evidence=parity-evidence/pass337b_dm1_v1_direct_command_injection.md direct_queue_core=NOT_BLOCKED pipeline_wrapper=MINOR_API_GAP os_keypad=BYPASSED")
+    print("pass337b_dm1_v1_direct_command_injection=pass evidence=parity-evidence/pass337b_dm1_v1_direct_command_injection.md direct_queue_core=NOT_BLOCKED pipeline_wrapper=CLOSED_BY_PASS340 os_keypad=BYPASSED")
     return 0
 
 
