@@ -17,7 +17,7 @@ Current local edits at baseline time were intentionally preserved and not overwr
 `GRAPHICS.DAT` SHA-256:
 
 ```text
-2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e  /Users/bosse/.firestaff/data/GRAPHICS.DAT
+2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e  <local-home>/.firestaff/data/GRAPHICS.DAT
 ```
 
 This matches the expected DM1 PC 3.4 original asset bank used by the V1 path.

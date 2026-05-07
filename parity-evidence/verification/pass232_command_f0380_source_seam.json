@@ -1,0 +1,75 @@
+{
+  "schema": "pass232_command_f0380_source_seam.v1",
+  "status": "source_locked_runtime_hit_required",
+  "game": "dm1_pc34_i34e",
+  "seam": "command_accepted",
+  "source": {
+    "reference": "ReDMCSB_WIP20210206",
+    "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+    "function": "F0380_COMMAND_ProcessQueue_CPSC",
+    "line_range": "2045-2156"
+  },
+  "source_locked_behavior": [
+    {
+      "line_range": "2075-2085",
+      "statement": "The command queue is locked, then I34E/I34M/A36M/A35E/A35M media check queued command count via G2153_i_QueuedCommandsCount before dequeue."
+    },
+    {
+      "line_range": "2095-2096",
+      "statement": "The command value is read from G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command and movement-disable gates are checked before accepting movement commands."
+    },
+    {
+      "line_range": "2118-2126",
+      "statement": "The accepted command X/Y payload is read, queued-command count is decremented for I34E-family builds, first index advances with wrap, and the queue lock is released."
+    },
+    {
+      "line_range": "2150-2156",
+      "statement": "Turn commands dispatch to F0365_COMMAND_ProcessTypes1To2_TurnParty; movement commands dispatch to F0366_COMMAND_ProcessTypes3To6_MoveParty."
+    }
+  ],
+  "symbols_and_constants_seen_in_source": [
+    "G0435_B_CommandQueueLocked",
+    "G0434_i_CommandQueueLastIndex",
+    "G0433_i_CommandQueueFirstIndex",
+    "M529_COMMAND_QUEUE_SIZE",
+    "G2153_i_QueuedCommandsCount",
+    "G0432_as_CommandQueue[].Command",
+    "G0432_as_CommandQueue[].X",
+    "G0432_as_CommandQueue[].Y",
+    "G0310_i_DisabledMovementTicks",
+    "G0311_i_ProjectileDisabledMovementTicks",
+    "G0312_i_LastProjectileDisabledMovementDirection",
+    "G0308_i_PartyDirection",
+    "C001_COMMAND_TURN_LEFT",
+    "C002_COMMAND_TURN_RIGHT",
+    "C003_COMMAND_MOVE_FORWARD",
+    "C006_COMMAND_MOVE_LEFT",
+    "F0360_COMMAND_ProcessPendingClick",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+  ],
+  "debugger_watch_candidates": [
+    {
+      "id": "command_dequeue_read",
+      "source_lines": "2095-2096",
+      "watch": "break/watch where L1160_i_Command is loaded from G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+      "purpose": "Prove the accepted command value for turn_left_once before dispatch."
+    },
+    {
+      "id": "queue_index_and_count_commit",
+      "source_lines": "2120-2126",
+      "watch": "watch G2153_i_QueuedCommandsCount, G0433_i_CommandQueueFirstIndex, and G0435_B_CommandQueueLocked writes",
+      "purpose": "Prove dequeue acceptance state transition before ProcessPendingClick."
+    },
+    {
+      "id": "turn_or_move_dispatch",
+      "source_lines": "2150-2156",
+      "watch": "break at F0365_COMMAND_ProcessTypes1To2_TurnParty and F0366_COMMAND_ProcessTypes3To6_MoveParty entry",
+      "purpose": "Link accepted command to turn or movement handler."
+    }
+  ],
+  "runtime_evidence": {
+    "verified_runtime_hit": false,
+    "reason": "No DOSBox/dosbox-debug/DOSBox-X runtime breakpoint or memory-watch hit was captured in this pass. Symbol-map promotion remains blocked until runtime evidence binds FIRES.EXENEW addresses to this source seam."
+  }
+}

@@ -981,7 +981,7 @@ If ANY value != 1, `git checkout run_firestaff_m10_verify.sh` and retry.
 
 ```
 bash run_firestaff_m10_verify.sh \
-    /Users/bosse/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
+    <local-home>/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
     /tmp/m10-verify-out
 ```
 Exit must be 0. All 16 phases PASS.

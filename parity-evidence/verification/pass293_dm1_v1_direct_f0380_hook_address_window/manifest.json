@@ -1,0 +1,667 @@
+{
+  "addresses": {
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0359_COMMAND_ProcessClick_CPSC": "22F4:030D",
+    "F0361_COMMAND_ProcessKeyPress": "22F4:0407",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+    "G0306_i_PartyMapX": "2C20:3C94",
+    "G0307_i_PartyMapY": "2C20:3CE0",
+    "G0308_i_PartyDirection": "2C20:3C92",
+    "G0432_as_CommandQueue": "2C20:3E7A",
+    "G0433_i_CommandQueueFirstIndex": "2C20:3EC8",
+    "G0434_i_CommandQueueLastIndex": "2C20:1F08"
+  },
+  "direct_f0380_claim": false,
+  "exact_blocker": "No direct F0380 runtime proof. The source/map chain still points to public symbol 1BC1:0699 + load segment 0733 = 22F4:0699, and pass293 could set that BP in a broad candidate window, but the transcript contains no execution stop line at 22F4:0699. The broad window was additionally noisy on G0433 first-index writes and did not improve pass278. Next narrow step: run with only BP 22F4:0699 plus queue tuple watches, then if still silent disassemble/MEMDUMP live COMMAND_TEXT around 22F4:0680..06F0 and place BPs on post-prologue/dequeue instruction offsets rather than the public entry only.",
+  "memory_breakpoint_changes": [
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3E7A",
+      "00",
+      "1F"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3E7A",
+      "00",
+      "1F"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3E7A",
+      "00",
+      "1F"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ]
+  ],
+  "next_address_candidates": [
+    "22F4:0699 entry/public symbol (reconfirm with live disassembly bytes)",
+    "22F4:06A0..22F4:06F0 inside F0380 prologue/dequeue window",
+    "22F4:0407 F0361 caller-side source seam",
+    "1EA4:010D F0365 turn dispatch",
+    "1EA4:01AA F0366 move dispatch"
+  ],
+  "prior_inspection": {
+    "pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof": {
+      "blocker": "Staged BPM disable/re-enable reduced queue/index noise and captured controlled-key G0432 writes, party tuple mutation, and an F0128 draw BP hit after switching to code-only mode; the exact remaining blocker is no proven F0380 dequeue BP hit at 22F4:0699. This is not a runtime-hook claim.",
+      "f0380_seen": false,
+      "path": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+      "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK"
+    },
+    "pass284_dm1_v1_f0380_dequeue_ordering_proof": {
+      "blocker": "No proven runtime F0380 dequeue breakpoint hit at 22F4:0699 in the imported pass278 transcript; do not claim runtime hook despite G0432 write, party tuple mutation, and F0128 draw hit.",
+      "f0380_seen": false,
+      "path": "parity-evidence/verification/pass284_dm1_v1_f0380_dequeue_ordering_proof/manifest.json",
+      "status": "SOURCE_PROVEN_RUNTIME_F0380_BLOCKED"
+    },
+    "pass289_dm1_v1_f0380_dispatch_equivalent_proof": {
+      "blocker": "Direct F0380 body breakpoint at pass278 address 22F4:0699 still does not hit; reproduce with pass278 route and breakpoints from its manifest/transcript. The dispatch-equivalent seam is GAMELOOP.C:215 -> COMMAND.C:F0380 source ordering, not a direct runtime BP claim.",
+      "f0380_seen": false,
+      "path": "parity-evidence/verification/pass289_dm1_v1_f0380_dispatch_equivalent_proof/manifest.json",
+      "status": "DISPATCH_EQUIVALENT_PROVEN_DIRECT_F0380_BP_BLOCKED"
+    }
+  },
+  "proof_predicates": {
+    "controlled_keys_posted": true,
+    "direct_f0380_entry_bp_hit": false,
+    "dispatch_target_bp_hit": false,
+    "f0128_draw_bp_hit": false,
+    "f0361_keypress_bp_hit": false,
+    "party_tuple_bpm_seen": false,
+    "queue_or_index_bpm_seen": true
+  },
+  "reproduction_command": "cd <firestaff-worktree>/firestaff-oauth-n2-dm1v1-pass293-direct-f0380-hook-address-window-20260507-0308 && python3 tools/pass293_dm1_v1_direct_f0380_hook_address_window.py",
+  "runtime": {
+    "debugger_events": [
+      {
+        "cmd": "BPDEL *",
+        "event": "debugger_cmd",
+        "t": 1778116349.1392713
+      },
+      {
+        "cmd": "BP 22F4:0407",
+        "event": "debugger_cmd",
+        "t": 1778116349.3296142
+      },
+      {
+        "cmd": "BP 22F4:0699",
+        "event": "debugger_cmd",
+        "t": 1778116349.5179455
+      },
+      {
+        "cmd": "BP 1EA4:010D",
+        "event": "debugger_cmd",
+        "t": 1778116349.7075126
+      },
+      {
+        "cmd": "BP 1EA4:01AA",
+        "event": "debugger_cmd",
+        "t": 1778116349.8976972
+      },
+      {
+        "cmd": "BP 23AD:40FE",
+        "event": "debugger_cmd",
+        "t": 1778116350.0855258
+      },
+      {
+        "cmd": "BPM 2C20:3E7A",
+        "event": "debugger_cmd",
+        "t": 1778116350.2731545
+      },
+      {
+        "cmd": "BPM 2C20:3EC8",
+        "event": "debugger_cmd",
+        "t": 1778116350.460927
+      },
+      {
+        "cmd": "BPM 2C20:1F08",
+        "event": "debugger_cmd",
+        "t": 1778116350.6489966
+      },
+      {
+        "cmd": "BPM 2C20:3C92",
+        "event": "debugger_cmd",
+        "t": 1778116350.8380804
+      },
+      {
+        "cmd": "BPM 2C20:3C94",
+        "event": "debugger_cmd",
+        "t": 1778116351.0264559
+      },
+      {
+        "cmd": "BPM 2C20:3CE0",
+        "event": "debugger_cmd",
+        "t": 1778116351.2147791
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116351.4018269
+      },
+      {
+        "cmd": "CPU",
+        "event": "debugger_cmd",
+        "t": 1778116351.608289
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3E7A 96",
+        "event": "debugger_cmd",
+        "t": 1778116351.79534
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3C88 96",
+        "event": "debugger_cmd",
+        "t": 1778116351.9818678
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116352.169374
+      },
+      {
+        "cmd": "CPU",
+        "event": "debugger_cmd",
+        "t": 1778116359.3205438
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3E7A 96",
+        "event": "debugger_cmd",
+        "t": 1778116359.5077176
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3C88 96",
+        "event": "debugger_cmd",
+        "t": 1778116359.6942499
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116359.8809214
+      },
+      {
+        "cmd": "CPU",
+        "event": "debugger_cmd",
+        "t": 1778116360.2128072
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3E7A 96",
+        "event": "debugger_cmd",
+        "t": 1778116360.398003
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3C88 96",
+        "event": "debugger_cmd",
+        "t": 1778116360.5878096
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116360.7726886
+      },
+      {
+        "cmd": "CPU",
+        "event": "debugger_cmd",
+        "t": 1778116361.1032174
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3E7A 96",
+        "event": "debugger_cmd",
+        "t": 1778116361.2924464
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3C88 96",
+        "event": "debugger_cmd",
+        "t": 1778116361.4826
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116361.6709433
+      },
+      {
+        "cmd": "CPU",
+        "event": "debugger_cmd",
+        "t": 1778116362.001819
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3E7A 96",
+        "event": "debugger_cmd",
+        "t": 1778116362.1886113
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3C88 96",
+        "event": "debugger_cmd",
+        "t": 1778116362.3759778
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116362.562176
+      },
+      {
+        "cmd": "CPU",
+        "event": "debugger_cmd",
+        "t": 1778116362.8916597
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3E7A 96",
+        "event": "debugger_cmd",
+        "t": 1778116363.0810547
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3C88 96",
+        "event": "debugger_cmd",
+        "t": 1778116363.2679844
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116363.457467
+      },
+      {
+        "cmd": "CPU",
+        "event": "debugger_cmd",
+        "t": 1778116364.3106096
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3E7A 96",
+        "event": "debugger_cmd",
+        "t": 1778116364.4967325
+      },
+      {
+        "cmd": "MEMDUMP 2C20:3C88 96",
+        "event": "debugger_cmd",
+        "t": 1778116364.6818955
+      },
+      {
+        "cmd": "BPLIST",
+        "event": "debugger_cmd",
+        "t": 1778116364.8713055
+      }
+    ],
+    "debugger_hits_captured": [
+      {
+        "kind": "other",
+        "sig": "0000:0009  1000                adc  [bx+si],al             ds:[0000]=1060",
+        "t": 1778116351.6082783
+      },
+      {
+        "kind": "other",
+        "sig": "F000:14CD  59ILES:file open compop  cxfile data\\song.dat",
+        "t": 1778116359.3205333
+      },
+      {
+        "kind": "G0308_i_PartyDirection",
+        "sig": "DEBUG: Memory breakpoint : 2C20:3C92 - 00 -> 0E",
+        "t": 1778116360.2128005
+      },
+      {
+        "kind": "other",
+        "sig": "07CB:006E  8B46FE              mov  ax,[bp-02]   5         ss:[0FA4]=8000",
+        "t": 1778116361.1032054
+      },
+      {
+        "kind": "G0433_i_CommandQueueFirstIndex",
+        "sig": "DEBUG: Memory breakpoint : 2C20:3EC8 - 00 -> A2",
+        "t": 1778116362.0018091
+      },
+      {
+        "kind": "G0432_as_CommandQueue",
+        "sig": "DEBUG: Memory breakpoint : 2C20:3E7A - 00 -> 1F",
+        "t": 1778116362.8916483
+      },
+      {
+        "kind": "G0433_i_CommandQueueFirstIndex",
+        "sig": "DEBUG: Memory breakpoint : 2C20:3EC8 - 00 -> A2 71",
+        "t": 1778116364.3105993
+      }
+    ],
+    "dosbox_window_pid": 1982654,
+    "route_keylog": "parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/route_candidate_window_keylog.json",
+    "transcript": "parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/dosbox_debug_candidate_window.clean.txt"
+  },
+  "runtime_evidence_interpretation": {
+    "candidate_window_bplist_showed_22F4_0699_set_at_least_once": true,
+    "line_start_hit_at_22F4_0699_seen": false,
+    "live_code_window_dump": "parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/live_code_window_dump.clean.txt",
+    "party_tuple_watchpoint_seen_in_pass293": false,
+    "queue_or_index_watchpoint_seen_in_pass293": true,
+    "stronger_prior_runtime_chain_from_pass278": "pass278 already captured controlled keys, G0432 write, party tuple mutation, and F0128 draw hit, but no F0380 BP at 22F4:0699"
+  },
+  "schema": "pass293_dm1_v1_direct_f0380_hook_address_window.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "id": "queue globals/function",
+      "line_range": [
+        1,
+        16
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "keyboard scan/write queue",
+      "line_range": [
+        1734,
+        1812
+      ],
+      "missing": [
+        "F0361_COMMAND_ProcessKeyPress"
+      ],
+      "ok": false
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "F0380 dequeue/dispatch",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "id": "main loop F0361 then F0380",
+      "line_range": [
+        160,
+        216
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "id": "move tuple writes",
+      "line_range": [
+        316,
+        556
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "F0128 consumes args/draws viewport",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_SOURCE_MAP_DEBUGGER_WINDOW_FOR_DIRECT_F0380",
+  "timestamp_utc": "2026-05-07T01:14:17+00:00"
+}

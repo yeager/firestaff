@@ -1,0 +1,47 @@
+{
+  "errors": [],
+  "explicitBlocker": "PNG is a deterministic Firestaff composition/materialization seam only; original asset-backed renderer pixels are not wired and no matched original-vs-Firestaff pixel comparison was performed.",
+  "pass": "pass285_dm1_v2_entry_viewport_png_export_gate",
+  "pixelParityClaim": false,
+  "png": "parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png",
+  "pngSha256": "5105608387856212d7f600571eb69eab3f3469eaa1bb1913e937f4532ea95894",
+  "pngSize": {
+    "height": 136,
+    "width": 224
+  },
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "Firestaff-side PNG export seam for dm1_v2_vp_build_composition_from_dungeon(map=0,x=1,y=3,dir=2)",
+  "sourceAnchors": [
+    {
+      "actual": "if (G0297_B_DrawFloorAndCeilingRequested) {",
+      "file": "DUNVIEW.C",
+      "line": 8337,
+      "needle": "if (G0297_B_DrawFloorAndCeilingRequested)"
+    },
+    {
+      "actual": "F0098_DUNGEONVIEW_DrawFloorAndCeiling();",
+      "file": "DUNVIEW.C",
+      "line": 8338,
+      "needle": "F0098_DUNGEONVIEW_DrawFloorAndCeiling();"
+    },
+    {
+      "actual": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, -1, &L0224_i_MapX, &L0225_i_MapY);",
+      "file": "DUNVIEW.C",
+      "line": 8490,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, -1"
+    },
+    {
+      "actual": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);",
+      "file": "DUNVIEW.C",
+      "line": 8542,
+      "needle": "F0127_DUNGEONVIEW_DrawSquareD0C"
+    },
+    {
+      "actual": "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);",
+      "file": "DUNVIEW.C",
+      "line": 8606,
+      "needle": "F0097_DUNGEONVIEW_DrawViewport"
+    }
+  ],
+  "status": "passed"
+}

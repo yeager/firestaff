@@ -6,7 +6,7 @@
 
 ## ReDMCSB source citations
 
-Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C`.
+Primary source: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C`.
 
 - `F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF` signature and view-cell order semantics: `DUNVIEW.C:4547-4564`.
 - `F0115` content order is objects, then creatures, then projectiles, then explosions: `DUNVIEW.C:4565-4582`.

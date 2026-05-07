@@ -2,8 +2,8 @@
   "id": "m15_movement_source_lock",
   "created_at": "2026-05-05T22:55:00+02:00",
   "host": "firestaff-worker / N2",
-  "worktree": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228",
-  "source_base": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "worktree": "<firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228",
+  "source_base": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "requested_sources": [
     "MOVESENS.C",
     "MOVE.C",

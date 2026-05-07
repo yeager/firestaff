@@ -1,0 +1,247 @@
+{
+  "address_strings_seen": {
+    "F0128_DUNGEONVIEW_Draw_CPSF": true,
+    "F0267_MOVE_GetMoveResult_CPSCE": true,
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+    "F0380_COMMAND_ProcessQueue_CPSC": true,
+    "G0306_i_PartyMapX": true,
+    "G0307_i_PartyMapY": true,
+    "G0308_i_PartyDirection": true,
+    "G0432_as_CommandQueue": true,
+    "G0433_i_CommandQueueFirstIndex": true,
+    "G0434_i_CommandQueueLastIndex": true,
+    "G0435_B_CommandQueueLocked": false
+  },
+  "addresses": {
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0267_MOVE_GetMoveResult_CPSCE": "1859:0516",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+    "G0306_i_PartyMapX": "2C20:3C94",
+    "G0307_i_PartyMapY": "2C20:3CE0",
+    "G0308_i_PartyDirection": "2C20:3C92",
+    "G0432_as_CommandQueue": "2C20:3E7A",
+    "G0433_i_CommandQueueFirstIndex": "2C20:3EC8",
+    "G0434_i_CommandQueueLastIndex": "2C20:1F08",
+    "G0435_B_CommandQueueLocked": "2C20:1F0A"
+  },
+  "blocker": "The two-loop driver fixed the pass275 synchronous-input flaw and posted kp5/kp4/kp6 under the debugger-run guard, but the transcript still does not show F0380 dequeuing or F0128 consuming the mutated tuple as BP hits. Next step: reduce breakpoint noise or drive a longer in-game route after game input readiness so code BP hits are captured between queue write/mutation and draw.",
+  "debugger_hits_captured": [
+    {
+      "sig": "09. BP 1EA4:010D",
+      "t": 1778095032.7308555
+    },
+    {
+      "sig": "DEBUG: Memory breakpoint : 2C20:3EC8 - 00 -> A2",
+      "t": 1778095039.632324
+    },
+    {
+      "sig": "DEBUG: Memory breakpoint : 2C20:3E7A - 00 -> 1F",
+      "t": 1778095040.1043122
+    },
+    {
+      "sig": "-> _     mory breakpoint : 2C20:3C94 - C8 -> 7B",
+      "t": 1778095040.5794818
+    },
+    {
+      "sig": "-> _     mory breakpoint : 2C20:3CE0 - 80 -> B8",
+      "t": 1778095041.056546
+    },
+    {
+      "sig": "-> _     mory breakpoint : 2C20:3E7A - 1F -> 8B",
+      "t": 1778095041.5326512
+    },
+    {
+      "sig": "-> _     mory breakpoint : 2C20:3EC8 - A2 -> 3E",
+      "t": 1778095042.0088575
+    },
+    {
+      "sig": "-> CPU_  mory breakpoint : 2C20:3EC8 - A2 -> 3E",
+      "t": 1778095042.485905
+    },
+    {
+      "sig": "DEBUG: Memory breakpoint : 2C20:3E7A - 8B -> 1A",
+      "t": 1778095048.1099179
+    },
+    {
+      "sig": "-> CPU_  mory breakpoint : 2C20:3E7A - 8B -> 1A",
+      "t": 1778095048.5888512
+    },
+    {
+      "sig": "DEBUG: Memory breakpoint : 2C20:3C92 - 0A -> 00",
+      "t": 1778095049.067373
+    },
+    {
+      "sig": "DEBUG: Memory breakpoint : 2C20:3C94 - D0 -> 00",
+      "t": 1778095049.5443888
+    },
+    {
+      "sig": "DEBUG: Memory breakpoint : 2C20:3E7A - 1A -> 00",
+      "t": 1778095050.0206182
+    },
+    {
+      "sig": "DEBUG: Memory breakpoint : 2C20:3EC8 - 30 -> 00",
+      "t": 1778095050.4970999
+    },
+    {
+      "sig": "0736:0436  33C0ump success.    xor  ax,ax",
+      "t": 1778095050.9686856
+    }
+  ],
+  "dosbox_debug": "/usr/bin/dosbox-debug",
+  "dosbox_window_pid": 1881660,
+  "listed_breakpoints_or_watches": [
+    "1859:0516",
+    "1EA4:010D",
+    "1EA4:01AA",
+    "23AD:40FE",
+    "2C20:1F08",
+    "2C20:3E7A",
+    "2C20:3EC8"
+  ],
+  "memory_breakpoint_changes": [
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3E7A",
+      "00",
+      "1F"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3E7A",
+      "00",
+      "1F"
+    ],
+    [
+      "2C20:3EC8",
+      "00",
+      "A2"
+    ],
+    [
+      "2C20:3E7A",
+      "00",
+      "1F"
+    ],
+    [
+      "2C20:3E7A",
+      "8B",
+      "1A"
+    ],
+    [
+      "2C20:3C92",
+      "0A",
+      "00"
+    ],
+    [
+      "2C20:3C94",
+      "D0",
+      "00"
+    ],
+    [
+      "2C20:3E7A",
+      "1A",
+      "00"
+    ],
+    [
+      "2C20:3EC8",
+      "30",
+      "00"
+    ]
+  ],
+  "method": "two Python threads: route loop waits for debugger-run event before kp5/kp4/kp6; debugger loop captures CPU plus MEMDUMP 2C20:3E7A/2C20:3C88 on each BP/BPM stop and continues with vt100 F5 (Esc O t)",
+  "promotion_rule": "Claim runtime hook only if key input writes G0432, F0380 dequeues, movement/turn mutates G0308 or G0306/G0307, and F0128 consumes resulting tuple.",
+  "proof_predicates": {
+    "cpu_memdump_after_stops": true,
+    "f0128_draw_hit_seen": false,
+    "f0380_dequeue_hit_seen": false,
+    "g0432_write_seen": true,
+    "party_tuple_mutation_seen": true,
+    "route_posted_controlled_keys": true
+  },
+  "route": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 kp5 wait:700 kp4 wait:700 kp6 wait:700",
+  "route_keylog": "parity-evidence/verification/pass276_dm1_v1_two_loop_bpm_runtime_proof/route_two_loop_keylog.json",
+  "schema": "pass276_dm1_v1_two_loop_bpm_runtime_proof.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        1,
+        16
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        1734,
+        1812
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line_range": [
+        142,
+        328
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line_range": [
+        55,
+        91
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "line_range": [
+        316,
+        556
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK",
+  "timestamp_utc": "2026-05-06T19:18:09.594597+00:00",
+  "transcript": "parity-evidence/verification/pass276_dm1_v1_two_loop_bpm_runtime_proof/dosbox_debug_two_loop.clean.txt"
+}

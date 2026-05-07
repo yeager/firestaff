@@ -1,0 +1,68 @@
+{
+  "artifact_policy": {
+    "no_original_binaries_committed": true,
+    "no_source_or_log_dump": true,
+    "text_only": true
+  },
+  "build_metadata": {
+    "docs_turbo_c_201_line": {
+      "line": 234,
+      "text": "<li>Turbo C 2.01: <a href=\"https://winworldpc.com/product/borland-turbo-c/2x\">Borland Turbo C 2.01 (3.5)</a></li>"
+    },
+    "docs_turbo_cpp_101_line": {
+      "line": 236,
+      "text": "<li>Turbo C++ 1.01: <a href=\"https://winworldpc.com/product/turbo-c/1x\">Borland Turbo C++ 1.01 (3.5)</a></li>"
+    },
+    "dunview_compile_line": {
+      "line": 473,
+      "text": "TCC.EXE -c -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNVIEW.C  >>\\BUILD\\MKII.LOG"
+    },
+    "mkii_path_line": {
+      "line": 10,
+      "text": "SET PATH=\\TCPP101\\BIN;\\TASM20;\\LZEXE91"
+    },
+    "tlink_map_line": {
+      "line": 510,
+      "text": "TLINK.EXE /i /s \\OBJECT\\I34E\\STATS.EXE\\C0L.OBJ @\\SOURCE\\I34E.LNK \\TCPP101\\LIB\\CL.LIB,\\BUILD\\I34E\\FIRES.EXE,\\BUILD\\I34E\\FIRES.MAP >>\\BUILD\\MKII.LOG"
+    }
+  },
+  "classification": "N2 DOSBox-X reaches the authentic MKII.BAT I34E DUNVIEW.C compile under TCPP101, but the DOS runtime repeatedly reports CPU illegal interrupt 6 while Turbo C++ emits DUNVIEW.C errors; DUNVIEW.OBJ remains zero bytes, so TLINK cannot produce FIRES.MAP.",
+  "guards": {
+    "dunview_compile_errors_seen": true,
+    "dunview_obj_zero": true,
+    "fires_map_zero": true,
+    "illegal_int6_seen": true,
+    "mkii_dunview_compile_line_found": true,
+    "mkii_tlink_map_line_found": true,
+    "mkii_uses_tcpp101_path": true,
+    "pass236_attempted": true,
+    "redmcsb_docs_tcpp101_found": true
+  },
+  "inputs": {
+    "mkii_bat": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT",
+    "pass236_error_excerpt": "/home/trv2/work/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/mkii_log_error_excerpt.txt",
+    "pass236_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/manifest.json",
+    "pass236_stdout_tail": "/home/trv2/work/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/dosbox_build_stdout_tail.txt",
+    "toolchains_doc": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Documentation/Toolchains.htm"
+  },
+  "manual_followup_smoke": {
+    "date_utc": "2026-05-06",
+    "promotable": false,
+    "summary": "Direct N2 temp DUNVIEW.C compile attempts with TCPP101 under DOSBox-X using normal/simple CPU settings and with -O/-Z variants still left DUNVIEW.OBJ at 0 bytes and showed the same illegal interrupt 6 pattern. Temp build products were not committed."
+  },
+  "next_options": [
+    "Use a non-DOSBox PC emulator/VM or real MS-DOS/FreeDOS environment for the Turbo C++ 1.01 compile.",
+    "Patch/build DOSBox-X or use another emulator configuration that can run the TCPP101 DUNVIEW compile without INT6.",
+    "Obtain a trusted FIRES.MAP from an authentic ReDMCSB I34E build with the same MKII.BAT/I34E.LNK order."
+  ],
+  "observed_build_state": {
+    "compiled_object_count": 28,
+    "dunview_error_line_count_in_mkii_excerpt": 7,
+    "dunview_obj_size": 0,
+    "fires_map_size": 0,
+    "illegal_unhandled_interrupt_6_count_in_stdout_tail": 190,
+    "returncode": 0
+  },
+  "schema": "pass242_dm1_v1_dunview_tcc_int6_blocker.v1",
+  "status": "PASS_DUNVIEW_TCC_INT6_BLOCKER_CLASSIFIED"
+}

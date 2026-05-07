@@ -1,5 +1,5 @@
 ok
-graphicsDatPath=/Users/bosse/.firestaff/data/GRAPHICS.DAT
+graphicsDatPath=<local-home>/.firestaff/data/GRAPHICS.DAT
 outputPrefix=/tmp/firestaff_pass61_handoff
 bootScript=m7_reachability_b
 bootPublishedFrameCount=50
@@ -175,5 +175,5 @@ titleMenuHandoffFallbackFrameCount=0
 titleMenuHandoffMenuFrameCount=1
 titleMenuHandoffReadyCount=2
 titleMenuHandoffEnteredMenuCount=1
-titleMenuHandoffTitleDatPath=/Users/bosse/.openclaw/data/redmcsb-original/TITLE
+titleMenuHandoffTitleDatPath=<local-home>/.openclaw/data/redmcsb-original/TITLE
 titleMenuHandoffStepCount=54

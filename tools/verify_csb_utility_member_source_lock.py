@@ -13,10 +13,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_REDMCSB_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+DEFAULT_REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DEFAULT_EXTRACTED_DM = Path("~/.openclaw/data/firestaff-original-games/DM/_extracted").expanduser()
 DEFAULT_JSON_OUT = Path("parity-evidence/verification/csb_utility_member_source_lock.json").expanduser()
 
@@ -212,7 +209,7 @@ def run_checks(redmcsb_source: Path, extracted_dm: Path) -> dict[str, object]:
         "non_claims": [
             "Does not choose a CSB gameplay/rendering target beyond keeping Atari and Amiga utility members separate.",
             "Does not validate CSBGAME.DAT save contents or compatibility.",
-            "Does not use DANNESBURK or any UI/gameplay capture.",
+            "Does not use <private-host> or any UI/gameplay capture.",
         ],
         "failures": failures,
     }

@@ -8,7 +8,7 @@ Try to produce original DM1 PC 3.4 `224x136` viewport reference crops for the sa
 
 ## Inventory
 
-In this worktree (`/Users/bosse/.openclaw/workspace-main/tmp/firestaff-parallel-original-route-crops`, commit `2ee8100`):
+In this worktree (`<workspace>/tmp/firestaff-parallel-original-route-crops`, commit `2ee8100`):
 
 - `original-games/` is absent.
 - `verification-screens/dm1-dosbox-capture/` is absent.
@@ -24,8 +24,8 @@ In this worktree (`/Users/bosse/.openclaw/workspace-main/tmp/firestaff-parallel-
 Workspace-wide search found only partial ReDMCSB original reference trees, not the expected `original-games/` archive:
 
 ```text
-/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206/Reference/Original/I34E/DM.EXE
-/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206/Reference/Original/I34M/DM.EXE
+<workspace>/ReDMCSB_WIP20210206/Reference/Original/I34E/DM.EXE
+<workspace>/ReDMCSB_WIP20210206/Reference/Original/I34M/DM.EXE
 ```
 
 The I34E tree contains small readonly original files (`DM.EXE`, `VGA`, `IBMIO`, `FIRES`, etc.) but no `DUNGEON.DAT` / full staged `DungeonMasterPC34` tree.
@@ -70,7 +70,7 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 Result:
 
 ```text
-[blocked] staged DM1 tree missing: /Users/bosse/.openclaw/workspace-main/tmp/firestaff-parallel-original-route-crops/verification-screens/dm1-dosbox-capture/DungeonMasterPC34
+[blocked] staged DM1 tree missing: <workspace>/tmp/firestaff-parallel-original-route-crops/verification-screens/dm1-dosbox-capture/DungeonMasterPC34
           next: scripts/dosbox_dm1_capture.sh
 [blocked] DM1_ORIGINAL_ROUTE_EVENTS is not set. Do not guess; validate the exact original keystroke route first.
 ```
@@ -84,13 +84,13 @@ scripts/dosbox_dm1_capture.sh
 Result:
 
 ```text
-ERROR: DM1 archive missing: /Users/bosse/.openclaw/workspace-main/tmp/firestaff-parallel-original-route-crops/original-games/Game,Dungeon_Master,DOS,Software.7z
+ERROR: DM1 archive missing: <workspace>/tmp/firestaff-parallel-original-route-crops/original-games/Game,Dungeon_Master,DOS,Software.7z
 ```
 
 Dry-run against the partial ReDMCSB I34E tree to validate the override and route-shape gate:
 
 ```sh
-DM1_ORIGINAL_STAGE_DIR=/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206/Reference/Original/I34E \
+DM1_ORIGINAL_STAGE_DIR=<workspace>/ReDMCSB_WIP20210206/Reference/Original/I34E \
 DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot right wait:300 shot up wait:300 shot wait:300 shot wait:300 shot wait:300 shot' \
 scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 ```
@@ -105,7 +105,7 @@ Probe run against the same partial I34E tree (scratch output only under `/tmp/fi
 
 ```sh
 OUT_DIR=/tmp/firestaff-original-route-probe \
-DM1_ORIGINAL_STAGE_DIR=/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206/Reference/Original/I34E \
+DM1_ORIGINAL_STAGE_DIR=<workspace>/ReDMCSB_WIP20210206/Reference/Original/I34E \
 DM1_ORIGINAL_ROUTE_EVENTS='wait:9000 enter wait:2000 shot right wait:500 shot up wait:700 shot wait:500 shot wait:500 shot wait:500 shot' \
 WAIT_BEFORE_INPUT_MS=2500 \
 NEW_FILE_TIMEOUT_MS=4000 \

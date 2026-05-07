@@ -3,7 +3,7 @@
 
 Checks the worker-VM local canonical archive and extracted PC34 data set against
 the locked checksums used as Firestaff V1 source-data truth. This helper is
-intentionally local-only; worker subagents must not depend on DANNESBURK/SSH.
+intentionally local-only; worker subagents must not depend on <private-host>/SSH.
 """
 from __future__ import annotations
 

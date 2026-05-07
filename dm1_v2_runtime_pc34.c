@@ -22,6 +22,12 @@
 #define DM1_V2_DEFAULT_STEP_THRESHOLD 256
 #define DM1_V2_DEFAULT_SUBPIXEL_ACCEL 0
 #define DM1_V2_DEFAULT_COLLISION_PREDICT_FRAMES 0
+#define DM1_V2_COMMAND_MOVE_FORWARD 1
+#define DM1_V2_COMMAND_MOVE_BACKWARD 2
+#define DM1_V2_COMMAND_TURN_LEFT 3
+#define DM1_V2_COMMAND_TURN_RIGHT 4
+#define DM1_V2_COMMAND_MOVE_RIGHT 5
+#define DM1_V2_COMMAND_MOVE_LEFT 6
 
 void dm1_v2_runtime_init(DM1_V2_RuntimeState* runtime) {
     if (!runtime) return;
@@ -71,21 +77,29 @@ int dm1_v2_runtime_apply_command(DM1_V2_RuntimeState* runtime, int command, uint
     if (!dm1_v2_runtime_is_running(runtime)) return 0;
     runtime->lastCommand = command;
     switch (command) {
-        case 1: /* forward */
+        case DM1_V2_COMMAND_MOVE_FORWARD:
             dm1_v2_move_step(&runtime->player, &runtime->movement, runtime->player.facingDir, (int32_t)nowMs);
             dm1_v2_vp_begin_scroll(&runtime->viewport, 0, -8, 16);
             break;
-        case 2: /* back */
+        case DM1_V2_COMMAND_MOVE_BACKWARD:
             dm1_v2_move_step(&runtime->player, &runtime->movement, (runtime->player.facingDir + 4) & 7, (int32_t)nowMs);
             dm1_v2_vp_begin_scroll(&runtime->viewport, 0, 8, 16);
             break;
-        case 3: /* turn left */
+        case DM1_V2_COMMAND_TURN_LEFT:
             dm1_v2_turn(&runtime->player, -1);
             dm1_v2_vp_begin_scroll(&runtime->viewport, -8, 0, 16);
             break;
-        case 4: /* turn right */
+        case DM1_V2_COMMAND_TURN_RIGHT:
             dm1_v2_turn(&runtime->player, 1);
             dm1_v2_vp_begin_scroll(&runtime->viewport, 8, 0, 16);
+            break;
+        case DM1_V2_COMMAND_MOVE_RIGHT:
+            dm1_v2_move_step(&runtime->player, &runtime->movement, (runtime->player.facingDir + 2) & 7, (int32_t)nowMs);
+            dm1_v2_vp_begin_scroll(&runtime->viewport, 8, 0, 16);
+            break;
+        case DM1_V2_COMMAND_MOVE_LEFT:
+            dm1_v2_move_step(&runtime->player, &runtime->movement, (runtime->player.facingDir + 6) & 7, (int32_t)nowMs);
+            dm1_v2_vp_begin_scroll(&runtime->viewport, -8, 0, 16);
             break;
         default:
             return 0;

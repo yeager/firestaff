@@ -1,0 +1,471 @@
+{
+  "comparison": {
+    "diffPng": "parity-evidence/verification/pass286_dm1_v2_entry_viewport_original_vs_firestaff_diff.png",
+    "diffPngSha256": "78e325b9b080376ac14a95ae6c363bccc99a4212aebe6f2f86f36a21174d91db",
+    "height": 136,
+    "maxChannelDiff": 182,
+    "meanAbsDiffRgba": [
+      39.347722,
+      39.347722,
+      39.347722,
+      0.0
+    ],
+    "mismatchRatio": 0.5385044642857143,
+    "mismatchRegions": {
+      "connectedComponentCount": 1223,
+      "densest16x16Tiles": [
+        {
+          "bboxInclusive": [
+            64,
+            16,
+            79,
+            31
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            80,
+            16,
+            95,
+            31
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            80,
+            32,
+            95,
+            47
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            96,
+            16,
+            111,
+            31
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            96,
+            32,
+            111,
+            47
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            112,
+            16,
+            127,
+            31
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            112,
+            32,
+            127,
+            47
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            128,
+            32,
+            143,
+            47
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            144,
+            32,
+            159,
+            47
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            144,
+            48,
+            159,
+            63
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            144,
+            64,
+            159,
+            79
+          ],
+          "pixels": 256
+        },
+        {
+          "bboxInclusive": [
+            128,
+            16,
+            143,
+            31
+          ],
+          "pixels": 255
+        }
+      ],
+      "horizontalBands8px": [
+        {
+          "pixels": 556,
+          "yRangeInclusive": [
+            0,
+            7
+          ]
+        },
+        {
+          "pixels": 918,
+          "yRangeInclusive": [
+            8,
+            15
+          ]
+        },
+        {
+          "pixels": 1245,
+          "yRangeInclusive": [
+            16,
+            23
+          ]
+        },
+        {
+          "pixels": 1249,
+          "yRangeInclusive": [
+            24,
+            31
+          ]
+        },
+        {
+          "pixels": 1404,
+          "yRangeInclusive": [
+            32,
+            39
+          ]
+        },
+        {
+          "pixels": 1228,
+          "yRangeInclusive": [
+            40,
+            47
+          ]
+        },
+        {
+          "pixels": 878,
+          "yRangeInclusive": [
+            48,
+            55
+          ]
+        },
+        {
+          "pixels": 875,
+          "yRangeInclusive": [
+            56,
+            63
+          ]
+        },
+        {
+          "pixels": 1060,
+          "yRangeInclusive": [
+            64,
+            71
+          ]
+        },
+        {
+          "pixels": 1160,
+          "yRangeInclusive": [
+            72,
+            79
+          ]
+        },
+        {
+          "pixels": 1218,
+          "yRangeInclusive": [
+            80,
+            87
+          ]
+        },
+        {
+          "pixels": 1151,
+          "yRangeInclusive": [
+            88,
+            95
+          ]
+        },
+        {
+          "pixels": 884,
+          "yRangeInclusive": [
+            96,
+            103
+          ]
+        },
+        {
+          "pixels": 697,
+          "yRangeInclusive": [
+            104,
+            111
+          ]
+        },
+        {
+          "pixels": 573,
+          "yRangeInclusive": [
+            112,
+            119
+          ]
+        },
+        {
+          "pixels": 665,
+          "yRangeInclusive": [
+            120,
+            127
+          ]
+        },
+        {
+          "pixels": 644,
+          "yRangeInclusive": [
+            128,
+            135
+          ]
+        }
+      ],
+      "largestConnectedComponents": [
+        {
+          "bboxInclusive": [
+            0,
+            0,
+            223,
+            135
+          ],
+          "height": 136,
+          "pixels": 13618,
+          "width": 224
+        },
+        {
+          "bboxInclusive": [
+            53,
+            117,
+            64,
+            124
+          ],
+          "height": 8,
+          "pixels": 38,
+          "width": 12
+        },
+        {
+          "bboxInclusive": [
+            115,
+            66,
+            129,
+            69
+          ],
+          "height": 4,
+          "pixels": 36,
+          "width": 15
+        },
+        {
+          "bboxInclusive": [
+            32,
+            124,
+            49,
+            126
+          ],
+          "height": 3,
+          "pixels": 29,
+          "width": 18
+        },
+        {
+          "bboxInclusive": [
+            161,
+            115,
+            175,
+            118
+          ],
+          "height": 4,
+          "pixels": 29,
+          "width": 15
+        },
+        {
+          "bboxInclusive": [
+            80,
+            8,
+            92,
+            11
+          ],
+          "height": 4,
+          "pixels": 27,
+          "width": 13
+        },
+        {
+          "bboxInclusive": [
+            96,
+            129,
+            111,
+            131
+          ],
+          "height": 3,
+          "pixels": 21,
+          "width": 16
+        },
+        {
+          "bboxInclusive": [
+            98,
+            2,
+            106,
+            5
+          ],
+          "height": 4,
+          "pixels": 20,
+          "width": 9
+        }
+      ],
+      "topColorMismatches": [
+        {
+          "firestaffRgba": "#b6b6b6ff",
+          "originalRgba": "#929292ff",
+          "pixels": 6591
+        },
+        {
+          "firestaffRgba": "#b6b6b6ff",
+          "originalRgba": "#6d6d6dff",
+          "pixels": 4180
+        },
+        {
+          "firestaffRgba": "#b6b6b6ff",
+          "originalRgba": "#ffffffff",
+          "pixels": 1559
+        },
+        {
+          "firestaffRgba": "#b6b6b6ff",
+          "originalRgba": "#494949ff",
+          "pixels": 1429
+        },
+        {
+          "firestaffRgba": "#b6b6b6ff",
+          "originalRgba": "#000000ff",
+          "pixels": 1219
+        },
+        {
+          "firestaffRgba": "#000000ff",
+          "originalRgba": "#494949ff",
+          "pixels": 465
+        },
+        {
+          "firestaffRgba": "#000000ff",
+          "originalRgba": "#6d6d6dff",
+          "pixels": 406
+        },
+        {
+          "firestaffRgba": "#000000ff",
+          "originalRgba": "#929292ff",
+          "pixels": 404
+        },
+        {
+          "firestaffRgba": "#000000ff",
+          "originalRgba": "#b6b6b6ff",
+          "pixels": 152
+        }
+      ],
+      "totalMismatchedPixelsVerified": 16405
+    },
+    "mismatchedPixels": 16405,
+    "rmsDiffRgba": [
+      62.086171,
+      62.086171,
+      62.086171,
+      0.0
+    ],
+    "totalPixels": 30464,
+    "width": 224
+  },
+  "errors": [],
+  "exactBlocker": "Pass294 blocker: the remaining seam is not palette selection; it is the DUNVIEW.C wall-set/viewport-bitmap materialization path. ReDMCSB draws original floor/ceiling bitmaps into G0296_puc_Bitmap_Viewport at DUNVIEW.C:8337-8367, then visits D3/D2/D1/D0 squares through DUNVIEW.C:8490-8542 and uses wall-set bitmap draws for the blocking front wall at DUNVIEW.C:6699-6702 before returning at DUNVIEW.C:6720. Firestaff still exports a symbolic flat 224x136 renderer with only two colors, while the original crop contains six PC34 grayscale tones; mismatch remains 16405/30464 pixels. The next required implementation seam is original GRAPHICS.DAT-backed floor/ceiling/wall-set bitmap blitting/clipping for the same map=0 x=1 y=3 dir=2 route state, not another palette pass.",
+  "firestaff": {
+    "height": 136,
+    "modeAfterNormalize": "RGBA",
+    "path": "parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png",
+    "sha256": "5105608387856212d7f600571eb69eab3f3469eaa1bb1913e937f4532ea95894",
+    "uniqueColors": 2,
+    "width": 224
+  },
+  "original": {
+    "height": 136,
+    "modeAfterNormalize": "RGBA",
+    "path": "parity-evidence/verification/pass282_dm1_v2_original_pixel_capture/original_entry_viewport_224x136.png",
+    "sha256": "4e1c96ab757bb5b56907e207a69f53845ad7103c561e0f99aee11a763082149d",
+    "uniqueColors": 6,
+    "width": 224
+  },
+  "originalArchiveChecked": "/home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z",
+  "originalDataRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
+  "pass": "pass286_dm1_v2_entry_viewport_png_comparator_gate",
+  "pixelParityClaim": false,
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "Compare original DM1 PC34 entry viewport crop against Firestaff DM1 V2 entry viewport PNG seam.",
+  "sourceAnchors": [
+    {
+      "actual": "if (G0297_B_DrawFloorAndCeilingRequested) {",
+      "file": "DUNVIEW.C",
+      "line": 8337,
+      "needle": "if (G0297_B_DrawFloorAndCeilingRequested)"
+    },
+    {
+      "actual": "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);",
+      "file": "DUNVIEW.C",
+      "line": 8367,
+      "needle": "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport)"
+    },
+    {
+      "actual": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, -1, &L0224_i_MapX, &L0225_i_MapY);",
+      "file": "DUNVIEW.C",
+      "line": 8490,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement"
+    },
+    {
+      "actual": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);",
+      "file": "DUNVIEW.C",
+      "line": 8542,
+      "needle": "F0127_DUNGEONVIEW_DrawSquareD0C"
+    },
+    {
+      "actual": "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);",
+      "file": "DUNVIEW.C",
+      "line": 8606,
+      "needle": "F0097_DUNGEONVIEW_DrawViewport"
+    },
+    {
+      "actual": "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0698_puc_Bitmap_WallSet_Wall_D3LCR, G0163_aauc_Graphic558_Frame_Walls[M600_VIEW_SQUARE_D3C]);",
+      "file": "DUNVIEW.C",
+      "line": 6699,
+      "needle": "F0100_DUNGEONVIEW_DrawWallSetBitmap"
+    },
+    {
+      "actual": "F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency(G0698_puc_Bitmap_WallSet_Wall_D3LCR, G0163_aauc_Graphic558_Frame_Walls[M600_VIEW_SQUARE_D3C]);",
+      "file": "DUNVIEW.C",
+      "line": 6702,
+      "needle": "F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency"
+    },
+    {
+      "actual": "return;",
+      "file": "DUNVIEW.C",
+      "line": 6720,
+      "needle": "return"
+    }
+  ],
+  "status": "passed"
+}

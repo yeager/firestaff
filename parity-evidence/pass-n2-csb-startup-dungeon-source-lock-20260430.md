@@ -17,7 +17,7 @@ Scope: evidence gate only. This does **not** claim CSB runtime, rendering, gamep
 - `_canonical/csb/atari-DUNGEON.DAT`
   - bytes: `2098`
   - sha256: `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
-  - note: canonical Atari ST hard-disk extracted CSB dungeon member in `/home/trv2/.openclaw/data/firestaff-original-games/DM/`.
+  - note: canonical Atari ST hard-disk extracted CSB dungeon member in `<firestaff-original-games>/`.
 
 ## Verification
 

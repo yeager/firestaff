@@ -2,7 +2,7 @@
   "schema": "pass175_original_queue_breakpoint_probe.v1",
   "classification": "retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked",
   "next_blocker": "Original binary in-process route classification still needs a DOS real-mode/source-symbol bridge or address map; the stale Firestaff pass175 no-delta implementation blocker is retired by the source-locked M11 C080 gate.",
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "source_citations": [
     {
       "file": "COMMAND.C",
@@ -113,7 +113,7 @@
   ],
   "pass162": {
     "available": true,
-    "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass162_original_party_route_unblock/manifest.json",
+    "path": "<firestaff-repo>/parity-evidence/verification/pass162_original_party_route_unblock/manifest.json",
     "buckets": {
       "blocked/portrait-c080-no-visible-delta": 2
     },

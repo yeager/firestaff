@@ -1,0 +1,111 @@
+{
+  "entries": [
+    {
+      "breakpoint_anchor": "after COMMAND.C:2126 queue unlock or before COMMAND.C:2150 dispatch",
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "evidence": [
+        "pass227 source seam verified",
+        "pass229 decompressed FIRES image available",
+        "pass230 precise ReDMCSB line-anchor audit"
+      ],
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "global_addresses": {},
+      "hook_kind": "code breakpoint after command dequeue",
+      "id": "command_accepted",
+      "required_next_step": "bind with DOSBox-X debugger breakpoint/watchpoint and promote only after observed runtime hit",
+      "runtime_cs_ip": null,
+      "source_citation": "COMMAND.C:2075-2085,2095,2118-2126,2150-2156"
+    },
+    {
+      "breakpoint_anchor": "after CLIKMENU.C:173 for turns; after CLIKMENU.C:328 for steps",
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "evidence": [
+        "pass227 source seam verified",
+        "pass229 decompressed FIRES image available",
+        "pass230 precise ReDMCSB line-anchor audit"
+      ],
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "global_addresses": {},
+      "hook_kind": "code breakpoint after turn/step handler return plus global reads",
+      "id": "turn_or_step_state_applied",
+      "required_next_step": "bind with DOSBox-X debugger breakpoint/watchpoint and promote only after observed runtime hit",
+      "runtime_cs_ip": null,
+      "source_citation": "CLIKMENU.C:171-173,264-269,325-328"
+    },
+    {
+      "breakpoint_anchor": "memory watch on G0306_i_PartyMapX/G0307_i_PartyMapY anchored at MOVESENS.C:442-443",
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "evidence": [
+        "pass227 source seam verified",
+        "pass229 decompressed FIRES image available",
+        "pass230 precise ReDMCSB line-anchor audit"
+      ],
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "global_addresses": {},
+      "hook_kind": "memory write watchpoint for party X/Y globals",
+      "id": "party_coordinates_committed",
+      "required_next_step": "bind with DOSBox-X debugger breakpoint/watchpoint and promote only after observed runtime hit",
+      "runtime_cs_ip": null,
+      "source_citation": "MOVESENS.C:438-443,493-506,556"
+    },
+    {
+      "breakpoint_anchor": "GAMELOOP.C:90 F0128 call reads G0308/G0306/G0307",
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "evidence": [
+        "pass227 source seam verified",
+        "pass229 decompressed FIRES image available",
+        "pass230 precise ReDMCSB line-anchor audit"
+      ],
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "global_addresses": {},
+      "hook_kind": "code breakpoint at draw call with direction/x/y reads",
+      "id": "draw_uses_mutated_tuple",
+      "required_next_step": "bind with DOSBox-X debugger breakpoint/watchpoint and promote only after observed runtime hit",
+      "runtime_cs_ip": null,
+      "source_citation": "GAMELOOP.C:55-63,80-90"
+    },
+    {
+      "breakpoint_anchor": "DUNVIEW.C:8608-8611 after composition before F0097 draw viewport",
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "evidence": [
+        "pass227 source seam verified",
+        "pass229 decompressed FIRES image available",
+        "pass230 ReDMCSB source audit",
+        "pass230 precise ReDMCSB line-anchor audit"
+      ],
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "global_addresses": {},
+      "hook_kind": "code breakpoint at viewport composition path before F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_buffer_composed",
+      "required_next_step": "bind with DOSBox-X debugger breakpoint/watchpoint and promote only after observed runtime hit",
+      "runtime_cs_ip": null,
+      "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611"
+    },
+    {
+      "breakpoint_anchor": "DRAWVIEW.C:857 VIDRV_09_BlitViewPort with G0296_puc_Bitmap_Viewport",
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "evidence": [
+        "pass227 source seam verified",
+        "pass229 decompressed FIRES image available",
+        "pass230 precise ReDMCSB line-anchor audit"
+      ],
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport / E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF",
+      "global_addresses": {},
+      "hook_kind": "code breakpoint or memory watch on viewport request plus C007 blit call",
+      "id": "viewport_present",
+      "required_next_step": "bind with DOSBox-X debugger breakpoint/watchpoint and promote only after observed runtime hit",
+      "runtime_cs_ip": null,
+      "source_citation": "DRAWVIEW.C:709-713,821-839,849-857"
+    }
+  ],
+  "promotion_rule": "No entry may be used for trace promotion until confidence is verified_runtime_hit and runtime_cs_ip/global_addresses are populated from debugger evidence.",
+  "runtime_image": "data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+  "schema": "dm1_pc34_i34e_symbol_map.v1",
+  "status": "BLOCKED_RUNTIME_HITS_REQUIRED"
+}

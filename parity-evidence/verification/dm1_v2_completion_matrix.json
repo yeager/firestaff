@@ -1,15 +1,15 @@
 {
   "categories": {
     "asset/upscale": 1,
-    "orphan": 1,
+    "orphan": 2,
     "runtime/ai": 1,
     "runtime/movement": 3,
+    "runtime/shell": 1,
     "runtime/transition": 1,
     "runtime/viewport": 1,
     "support/achievements": 1,
     "support/audio": 2,
     "support/persistence": 1,
-    "support/settings": 1,
     "support/stats": 1,
     "support/tooling": 1,
     "ui/champion": 1,
@@ -22,17 +22,30 @@
     "visual/camera": 2,
     "visual/creature": 1,
     "visual/effects": 5,
-    "visual/item": 1,
     "visual/lighting": 1,
     "visual/transition": 1
   },
   "currentCTestNamesPresent": [
+    "dm1_v2_d0_d3_draw_list_comparator_gate",
+    "dm1_v2_dungeon_view_asset_bindings_source_lock",
+    "dm1_v2_entry_bitmap_materialization_blocker_gate",
+    "dm1_v2_entry_viewport_png_comparator_gate",
+    "dm1_v2_entry_viewport_png_export",
+    "dm1_v2_entry_viewport_png_export_gate",
+    "dm1_v2_hud_overlay_pc34",
+    "dm1_v2_hud_overlay_source_lock",
+    "dm1_v2_lighting_dynamic_pc34",
+    "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_movement_viewport_pc34",
-    "dm1_v2_settings_pc34",
-    "dm1_v2_upscale_dry_run_validator"
+    "dm1_v2_runtime_shell_pc34",
+    "dm1_v2_runtime_shell_source_lock",
+    "dm1_v2_upscale_dry_run_validator",
+    "dm1_v2_viewport_composition_source_lock",
+    "dm1_v2_viewport_pixel_capture_fixture_gate",
+    "dm1_v2_viewport_wall_occlusion_source_lock"
   ],
   "errors": [],
-  "manifestCount": 16,
+  "manifestCount": 17,
   "matrix": [
     {
       "category": "support/achievements",
@@ -100,7 +113,7 @@
       "module": "dm1_v2_inventory_sort_pc34.c"
     },
     {
-      "category": "visual/item",
+      "category": "orphan",
       "header": "dm1_v2_item_render_pc34.h",
       "module": "dm1_v2_item_render_pc34.c"
     },
@@ -155,7 +168,7 @@
       "module": "dm1_v2_pathfinding_pc34.c"
     },
     {
-      "category": "orphan",
+      "category": "runtime/shell",
       "header": "dm1_v2_runtime_pc34.h",
       "module": "dm1_v2_runtime_pc34.c"
     },
@@ -170,7 +183,7 @@
       "module": "dm1_v2_screenshot_pc34.c"
     },
     {
-      "category": "support/settings",
+      "category": "orphan",
       "header": "dm1_v2_settings_pc34.h",
       "module": "dm1_v2_settings_pc34.c"
     },
@@ -212,11 +225,25 @@
   ],
   "moduleCount": 35,
   "requiredCTestNames": [
+    "dm1_v2_d0_d3_draw_list_comparator_gate",
+    "dm1_v2_dungeon_view_asset_bindings_source_lock",
+    "dm1_v2_entry_bitmap_materialization_blocker_gate",
+    "dm1_v2_entry_viewport_png_comparator_gate",
+    "dm1_v2_entry_viewport_png_export",
+    "dm1_v2_entry_viewport_png_export_gate",
+    "dm1_v2_hud_overlay_pc34",
+    "dm1_v2_hud_overlay_source_lock",
+    "dm1_v2_lighting_dynamic_pc34",
+    "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_movement_viewport_pc34",
-    "dm1_v2_settings_pc34",
-    "dm1_v2_upscale_dry_run_validator"
+    "dm1_v2_runtime_shell_pc34",
+    "dm1_v2_runtime_shell_source_lock",
+    "dm1_v2_upscale_dry_run_validator",
+    "dm1_v2_viewport_composition_source_lock",
+    "dm1_v2_viewport_pixel_capture_fixture_gate",
+    "dm1_v2_viewport_wall_occlusion_source_lock"
   ],
   "status": "passed",
-  "testCount": 12,
-  "toolCount": 18
+  "testCount": 14,
+  "toolCount": 30
 }

@@ -25,15 +25,15 @@
     },
     {
       "file": "m11_game_view.c",
-      "start": 18885,
-      "end": 18895,
+      "start": 19075,
+      "end": 19090,
       "function": "m11_draw_inv_slot",
       "assertion": "Firestaff's current occupied inventory slot helper resolves a DM object icon index before drawing; this gate does not claim open-chest state mutation is implemented."
     },
     {
       "file": "m11_game_view.c",
-      "start": 19054,
-      "end": 19072,
+      "start": 19240,
+      "end": 19270,
       "function": "m11_draw_inventory_panel",
       "assertion": "Firestaff's normal V1 inventory overlay draws source-slot object icons, providing the narrow implementation seam for the ReDMCSB action-hand open-chest refresh rule."
     }
@@ -41,6 +41,6 @@
   "nonClaims": [
     "Does not implement or prove Firestaff runtime open-chest state mutation or click behavior.",
     "Does not validate V2 inventory art, V2 asset manifests, CSB utility member locks, or pass162/C080 delivery.",
-    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2 only."
+    "Does not use <private-host>; source paths are ReDMCSB and Firestaff N2 only."
   ]
 }

@@ -681,8 +681,8 @@ static const char* find_title_dat_for_frontend(const char* graphicsDatPath,
         int n = snprintf(outPath, outPathBytes, "%s/.firestaff/data/TITLE", home);
         if (n > 0 && (size_t)n < outPathBytes && file_exists_for_title_frontend(outPath)) return outPath;
     }
-    if (file_exists_for_title_frontend("/Users/bosse/.openclaw/data/redmcsb-original/TITLE")) {
-        return "/Users/bosse/.openclaw/data/redmcsb-original/TITLE";
+    if (file_exists_for_title_frontend("<local-home>/.openclaw/data/redmcsb-original/TITLE")) {
+        return "<local-home>/.openclaw/data/redmcsb-original/TITLE";
     }
     return 0;
 }

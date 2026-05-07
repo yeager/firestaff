@@ -1,8 +1,8 @@
 {
   "gate": "dm1-language-version-source-contract",
   "status": "PASS",
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/home/trv2/work/firestaff",
+  "redmcsb_source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "<firestaff-repo>",
   "redmcsb_citations": [
     {
       "file": "DM.C",

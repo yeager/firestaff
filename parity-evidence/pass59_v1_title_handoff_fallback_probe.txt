@@ -1,5 +1,5 @@
 ok
-graphicsDatPath=/Users/bosse/.firestaff/data/GRAPHICS.DAT
+graphicsDatPath=<local-home>/.firestaff/data/GRAPHICS.DAT
 outputPrefix=verification/pass59-title-handoff/fallback_invalid
 bootScript=m7_reachability_b
 bootPublishedFrameCount=50

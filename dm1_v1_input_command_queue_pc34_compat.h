@@ -64,6 +64,7 @@ struct Dm1V1InputQueueProcessResultPc34Compat {
 };
 
 void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue);
+void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue);
 int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     struct Dm1V1InputEventPc34Compat event);

@@ -40,7 +40,7 @@ int main(void) {
     printf("zoneCount=%u\n", TOUCHCLICK_Compat_GetZoneCount());
     printf("championNameHandEvidence=%s\n", champion_name_hand_routes_GetEvidence());
     printf("championNameHandRouteCount=%u\n", champion_name_hand_routes_GetRouteCount());
-    if (TOUCHCLICK_Compat_GetZoneCount() != 88u) ok = 0;
+    if (TOUCHCLICK_Compat_GetZoneCount() != 103u) ok = 0;
 
     if (!expect_zone(0u, 1u, 68u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 234, 125, 28, 21, "movement.turn_left")) ok = 0;
     if (!expect_zone(1u, 3u, 70u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 263, 125, 27, 21, "movement.forward")) ok = 0;
@@ -82,9 +82,25 @@ int main(void) {
     if (champion_name_hand_routes_ResolveStatusBoxClick(0u, 50, 20, 0u, &championDispatch)) ok = 0;
     if (!spell_area_routes_GetInvariant()) ok = 0;
     if (!spell_area_symbol_routes_GetInvariant()) ok = 0;
-    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u)) ok = 0;
+    if (!has_zone(119u, 92u) || !has_zone(107u, 254u) || !has_zone(27u, 218u) || !has_zone(141u, 568u) || !has_zone(65u, 544u) || !has_zone(160u, 570u) || !has_zone(161u, 571u) || !has_zone(162u, 573u) || !has_zone(7u, 187u) || !has_zone(12u, 151u) || !has_zone(125u, 113u) || !has_zone(128u, 116u)) ok = 0;
 
     if (!TOUCHCLICK_Compat_HitTest(264, 126, &hit) || hit.zoneIndex != 70u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(234, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 1u || hit.zoneIndex != 68u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(261, 145, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 1u || hit.zoneIndex != 68u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(263, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 3u || hit.zoneIndex != 70u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(289, 145, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 3u || hit.zoneIndex != 70u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(291, 125, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 2u || hit.zoneIndex != 69u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(318, 145, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 2u || hit.zoneIndex != 69u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(234, 147, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 6u || hit.zoneIndex != 73u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(261, 167, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 6u || hit.zoneIndex != 73u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(263, 147, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 5u || hit.zoneIndex != 72u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(289, 167, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 5u || hit.zoneIndex != 72u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(291, 147, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 4u || hit.zoneIndex != 71u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(318, 167, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 4u || hit.zoneIndex != 71u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(0, 33, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 80u || hit.zoneIndex != 7u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestWithButton(223, 168, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 80u || hit.zoneIndex != 7u) ok = 0;
+    if (TOUCHCLICK_Compat_HitTestWithButton(224, 168, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) && hit.zoneIndex == 7u) ok = 0;
+    if (TOUCHCLICK_Compat_HitTestWithButton(223, 169, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) && hit.zoneIndex == 7u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTest(286, 78, &hit) || hit.zoneIndex != 98u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTest(236, 52, &hit) || hit.zoneIndex != 245u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTest(25, 11, &hit) || hit.zoneIndex != 212u) ok = 0;
@@ -96,6 +112,9 @@ int main(void) {
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(56, 13, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 545u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(202, 33, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 536u) ok = 0;
     if (!TOUCHCLICK_Compat_HitTestInCoordMode(196, 105, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.zoneIndex != 544u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestInCoordMode(104, 53, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 160u || hit.zoneIndex != 570u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestInCoordMode(163, 53, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 161u || hit.zoneIndex != 571u) ok = 0;
+    if (!TOUCHCLICK_Compat_HitTestInCoordMode(104, 113, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &hit) || hit.commandId != 162u || hit.zoneIndex != 573u) ok = 0;
     if (TOUCHCLICK_Compat_HitTestInCoordMode(56, 13, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &hit) && hit.zoneIndex == 545u) ok = 0;
     if (!TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(56, 13, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
         dispatch.screenX != 56 || dispatch.screenY != 46 ||
@@ -105,6 +124,10 @@ int main(void) {
         dispatch.screenX != 196 || dispatch.screenY != 138 ||
         dispatch.commandId != 65u || dispatch.zoneIndex != 544u ||
         strcmp(dispatch.groupName, "inventory.chest_8") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(104, 113, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 104 || dispatch.screenY != 146 ||
+        dispatch.commandId != 162u || dispatch.zoneIndex != 573u ||
+        strcmp(dispatch.groupName, "panel.cancel") != 0) ok = 0;
     if (TOUCHCLICK_Compat_MapViewportLocalPointToDispatch(56, 13, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &dispatch)) ok = 0;
 
     if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(352, 180, 1280, 720, &normX, &normY) || normX != 80 || normY != 50) ok = 0;

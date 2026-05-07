@@ -9,16 +9,137 @@ extern "C" {
 
 #define DM1_V2_VIEWPORT_W 224
 #define DM1_V2_VIEWPORT_H 136
-#define DM1_V2_VIEWPORT_BYTE_W 112
-#define DM1_V2_VIEWPORT_BLACK_AREA_H 37
-#define DM1_V2_VIEWPORT_CEILING_H 29
-#define DM1_V2_VIEWPORT_FLOOR_Y 66
-#define DM1_V2_VIEWPORT_FLOOR_H 70
 #define DM1_V2_MAX_DEPTH 4
 #define DM1_V2_FOG_LEVELS 8
-#define DM1_V2_FIELD_ASPECT_COUNT 12
-#define DM1_V2_WALL_SET_COUNT 15
-#define DM1_V2_WALL_ZONE_COUNT 12
+#define DM1_V2_MAX_DRAW_COMMANDS 64
+#define DM1_V2_MAX_DUNGEON_MAPS 16
+
+#define DM1_V2_ELEMENT_WALL 0
+#define DM1_V2_ELEMENT_CORRIDOR 1
+#define DM1_V2_ELEMENT_PIT 2
+#define DM1_V2_ELEMENT_TELEPORTER 5
+#define DM1_V2_ELEMENT_DOOR_FRONT 17
+#define DM1_V2_ELEMENT_STAIRS_FRONT 19
+#define DM1_V2_ELEMENT_DOOR_SIDE 16
+#define DM1_V2_ELEMENT_STAIRS_SIDE 18
+
+typedef enum {
+    DM1_V2_VIEW_SQUARE_D3L = 0,
+    DM1_V2_VIEW_SQUARE_D3R = 1,
+    DM1_V2_VIEW_SQUARE_D3C = 2,
+    DM1_V2_VIEW_SQUARE_D2L = 3,
+    DM1_V2_VIEW_SQUARE_D2R = 4,
+    DM1_V2_VIEW_SQUARE_D2C = 5,
+    DM1_V2_VIEW_SQUARE_D1L = 6,
+    DM1_V2_VIEW_SQUARE_D1R = 7,
+    DM1_V2_VIEW_SQUARE_D1C = 8,
+    DM1_V2_VIEW_SQUARE_D0L = 9,
+    DM1_V2_VIEW_SQUARE_D0R = 10,
+    DM1_V2_VIEW_SQUARE_D0C = 11,
+    DM1_V2_VIEW_SQUARE_OTHER = 12
+} DM1_V2_ViewSquare;
+
+typedef enum {
+    DM1_V2_DRAW_FLOOR_CEILING = 1,
+    DM1_V2_DRAW_FLOOR_ORNAMENT = 2,
+    DM1_V2_DRAW_WALL = 3,
+    DM1_V2_DRAW_DOOR_FRONT = 4,
+    DM1_V2_DRAW_STAIRS_FRONT = 5,
+    DM1_V2_DRAW_OBJECTS_CREATURES_PROJECTILES = 6,
+    DM1_V2_DRAW_FIELD = 7,
+    DM1_V2_DRAW_PIT = 8
+} DM1_V2_DrawOp;
+
+typedef struct {
+    int element;
+    int hasObjects;
+    int hasField;
+} DM1_V2_ViewportSquareInput;
+
+typedef struct {
+    int mapX;
+    int mapY;
+    int direction;
+    DM1_V2_ViewportSquareInput squares[4][3]; /* depth D0-D3, lateral L/C/R */
+} DM1_V2_ViewportCompositionInput;
+
+
+typedef struct {
+    uint16_t rawMapDataByteOffset;
+    uint8_t offsetMapX;
+    uint8_t offsetMapY;
+    uint16_t packedA;
+    uint16_t packedB;
+    uint16_t packedC;
+    uint16_t packedD;
+    int level;
+    int width;
+    int height;
+    const uint8_t* column0;
+} DM1_V2_DungeonDatMap;
+
+typedef struct {
+    const uint8_t* bytes;
+    int byteCount;
+    uint16_t ornamentRandomSeed;
+    uint16_t rawMapDataByteCount;
+    uint8_t mapCount;
+    uint16_t textDataWordCount;
+    uint16_t initialPartyLocation;
+    uint16_t squareFirstThingCount;
+    int initialMapX;
+    int initialMapY;
+    int initialDirection;
+    int rawMapDataFileOffset;
+    int checksumFileOffset;
+    DM1_V2_DungeonDatMap maps[DM1_V2_MAX_DUNGEON_MAPS];
+} DM1_V2_DungeonDatState;
+
+typedef struct {
+    int mapX;
+    int mapY;
+    int element;
+    int hasObjects;
+    int hasField;
+} DM1_V2_DungeonFixtureSquare;
+
+typedef struct {
+    const char* name;
+    const char* sourceRef;
+    const char* dungeonDatSha256;
+    int mapIndex;
+    int startMapX;
+    int startMapY;
+    int startDirection;
+    int defaultElement;
+    const DM1_V2_DungeonFixtureSquare* squares;
+    int squareCount;
+} DM1_V2_DungeonStateFixture;
+
+typedef struct {
+    int x;
+    int y;
+    int width;
+    int height;
+    const char* name;
+} DM1_V2_ViewportRegion;
+
+typedef struct {
+    int comparedPixels;
+    int mismatchedPixels;
+    int firstMismatchX;
+    int firstMismatchY;
+} DM1_V2_RegionCompareResult;
+
+typedef struct {
+    DM1_V2_DrawOp op;
+    DM1_V2_ViewSquare square;
+    int depth;
+    int lateral;
+    int element;
+    int order;
+    const char* sourceRef;
+} DM1_V2_DrawCommand;
 
 typedef struct {
     uint8_t r;
@@ -26,77 +147,6 @@ typedef struct {
     uint8_t b;
     uint8_t a;
 } DM1_V2_Color;
-
-typedef enum {
-    DM1_V2_VIEW_MATERIAL_BLACK = 0,
-    DM1_V2_VIEW_MATERIAL_CEILING,
-    DM1_V2_VIEW_MATERIAL_WALL,
-    DM1_V2_VIEW_MATERIAL_FLOOR,
-    DM1_V2_VIEW_MATERIAL_OUT_OF_BOUNDS
-} DM1_V2_ViewMaterial;
-
-typedef enum {
-    DM1_V2_FIELD_D3C = 0,
-    DM1_V2_FIELD_D3L,
-    DM1_V2_FIELD_D3R,
-    DM1_V2_FIELD_D2C,
-    DM1_V2_FIELD_D2L,
-    DM1_V2_FIELD_D2R,
-    DM1_V2_FIELD_D1C,
-    DM1_V2_FIELD_D1L,
-    DM1_V2_FIELD_D1R,
-    DM1_V2_FIELD_D0C,
-    DM1_V2_FIELD_D0L,
-    DM1_V2_FIELD_D0R
-} DM1_V2_FieldAspectId;
-
-typedef struct {
-    uint8_t nativeBitmapRelativeIndex;
-    uint8_t baseStartUnitIndex;
-    uint8_t transparentColor;
-    uint8_t mask;
-    uint8_t byteWidth;
-    uint8_t height;
-    uint8_t x;
-    uint8_t bitPlaneWordCount;
-} DM1_V2_FieldAspect;
-
-typedef enum {
-    DM1_V2_WALL_ZONE_D3C = 0,
-    DM1_V2_WALL_ZONE_D3L,
-    DM1_V2_WALL_ZONE_D3R,
-    DM1_V2_WALL_ZONE_D2C,
-    DM1_V2_WALL_ZONE_D2L,
-    DM1_V2_WALL_ZONE_D2R,
-    DM1_V2_WALL_ZONE_D1C,
-    DM1_V2_WALL_ZONE_D1L,
-    DM1_V2_WALL_ZONE_D1R,
-    DM1_V2_WALL_ZONE_D0C,
-    DM1_V2_WALL_ZONE_D0L,
-    DM1_V2_WALL_ZONE_D0R
-} DM1_V2_WallZoneId;
-
-typedef struct {
-    uint8_t x1;
-    uint8_t x2;
-    uint8_t y1;
-    uint8_t y2;
-    uint8_t byteWidth;
-    uint8_t height;
-    uint8_t blitX;
-    uint8_t blitY;
-    uint16_t sourceZone;
-    uint8_t depth;
-    int8_t lane;
-    uint8_t drawOrder;
-} DM1_V2_WallZone;
-
-typedef struct {
-    int x1;
-    int y1;
-    int x2;
-    int y2;
-} DM1_V2_Rect;
 
 typedef struct {
     int16_t scrollOffX;
@@ -125,16 +175,6 @@ typedef struct {
     int32_t lastRenderMs;
 } DM1_V2_ViewportState;
 
-int dm1_v2_vp_source_width(void);
-int dm1_v2_vp_source_height(void);
-int dm1_v2_vp_source_byte_width(void);
-DM1_V2_ViewMaterial dm1_v2_vp_material_at(int x, int y);
-const DM1_V2_FieldAspect* dm1_v2_vp_field_aspect(DM1_V2_FieldAspectId id);
-int16_t dm1_v2_vp_wall_set_default(int idx);
-const DM1_V2_WallZone* dm1_v2_vp_wall_zone(DM1_V2_WallZoneId id);
-int dm1_v2_vp_wall_zone_clip(DM1_V2_WallZoneId id, DM1_V2_Rect* outRect);
-int dm1_v2_vp_wall_zone_occludes(DM1_V2_WallZoneId front, DM1_V2_WallZoneId back);
-
 void dm1_v2_vp_init(DM1_V2_ViewportState* vp);
 void dm1_v2_vp_begin_scroll(DM1_V2_ViewportState* vp, int dx, int dy, int speed);
 void dm1_v2_vp_tick_scroll(DM1_V2_ViewportState* vp, int dtMs);
@@ -146,7 +186,22 @@ void dm1_v2_vp_apply_fog(DM1_V2_ViewportState* vp, int depth);
 void dm1_v2_vp_apply_light(DM1_V2_ViewportState* vp, int cx, int cy, int radius, uint8_t intensity);
 void dm1_v2_vp_mark_dirty(DM1_V2_ViewportState* vp);
 int dm1_v2_vp_is_dirty(const DM1_V2_ViewportState* vp);
+int dm1_v2_vp_use_flipped_wall_bitmaps(int mapX, int mapY, int direction);
+int dm1_v2_vp_square_occludes_beyond(DM1_V2_ViewSquare square, int element);
 void dm1_v2_vp_present(DM1_V2_ViewportState* vp, int32_t nowMs);
+void dm1_v2_vp_composition_init(DM1_V2_ViewportCompositionInput* input);
+int dm1_v2_vp_relative_coords(int direction, int mapX, int mapY, int forward, int right, int* outX, int* outY);
+const DM1_V2_DungeonStateFixture* dm1_v2_vp_dm1_pc34_entry_state_fixture(void);
+int dm1_v2_vp_dungeon_dat_init(DM1_V2_DungeonDatState* outState, const uint8_t* bytes, int byteCount);
+int dm1_v2_vp_dungeon_dat_get_square_raw(const DM1_V2_DungeonDatState* state, int mapIndex, int mapX, int mapY, uint8_t* outSquare);
+int dm1_v2_vp_square_element_from_raw(uint8_t square, int direction);
+int dm1_v2_vp_build_composition_from_dungeon(const DM1_V2_DungeonDatState* state, int mapIndex, int mapX, int mapY, int direction, DM1_V2_ViewportCompositionInput* outInput);
+int dm1_v2_vp_build_composition_from_fixture(const DM1_V2_DungeonStateFixture* fixture, int mapX, int mapY, int direction, DM1_V2_ViewportCompositionInput* outInput);
+int dm1_v2_vp_compare_viewport_region(const DM1_V2_Color* expected, const DM1_V2_Color* actual, int stride, DM1_V2_ViewportRegion region, DM1_V2_RegionCompareResult* result);
+int dm1_v2_vp_emit_d0_d3_draw_list(const DM1_V2_ViewportCompositionInput* input, DM1_V2_DrawCommand* outCommands, int maxCommands);
+int dm1_v2_vp_compare_draw_lists(const DM1_V2_DrawCommand* expected, int expectedCount, const DM1_V2_DrawCommand* actual, int actualCount, int* mismatchIndex);
+int dm1_v2_vp_render_composition_flat(DM1_V2_ViewportState* vp, const DM1_V2_ViewportCompositionInput* input);
+int dm1_v2_vp_write_png_rgba(const char* path, const DM1_V2_Color* pixels, int width, int height, int stride);
 
 #ifdef __cplusplus
 }

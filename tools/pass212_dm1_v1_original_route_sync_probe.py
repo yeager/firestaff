@@ -250,7 +250,7 @@ def classify_attempt(attempt: Path) -> dict[str, Any]:
             "route_events": RETRY_ROUTE,
             "expected_classifier": [GAMEPLAY] * 6,
             "promotion_rule": "all six raw frames classify dungeon_gameplay and both raw/crop SHA groups are non-duplicate",
-            "recommended_command": "OUT_DIR=$PWD/verification-screens/pass212-n2-original-movement-route-sync-retry DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"" + RETRY_ROUTE + "\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+            "recommended_command": "OUT_DIR=$PWD/verification-screens/pass212-n2-original-movement-route-sync-retry DM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"" + RETRY_ROUTE + "\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
         },
         "audited_inputs": [
             file_digest(attempt / "original_viewport_shot_labels.tsv"),

@@ -123,6 +123,36 @@ static int command_to_move_action(int command)
     return command - DM1_V1_COMMAND_MOVE_FORWARD;
 }
 
+static int expect_relative_step_delta_table(void)
+{
+    static const int wantDx[4][4] = {
+        { 0, 1, 0, -1 },
+        { 1, 0, -1, 0 },
+        { 0, -1, 0, 1 },
+        { -1, 0, 1, 0 }
+    };
+    static const int wantDy[4][4] = {
+        { -1, 0, 1, 0 },
+        { 0, 1, 0, -1 },
+        { 1, 0, -1, 0 },
+        { 0, -1, 0, 1 }
+    };
+    int dir;
+    int action;
+    int dx;
+    int dy;
+    int ok = 1;
+
+    for (dir = DIR_NORTH; dir <= DIR_WEST; ++dir) {
+        for (action = MOVE_FORWARD; action <= MOVE_LEFT; ++action) {
+            F0701_MOVEMENT_GetStepDelta_Compat(dir, action, &dx, &dy);
+            ok &= expect_int("relative movement delta dx", dx, wantDx[dir][action]);
+            ok &= expect_int("relative movement delta dy", dy, wantDy[dir][action]);
+        }
+    }
+    return ok;
+}
+
 static int expect_blocked_step_without_side_effects(
     const char* label,
     struct DungeonDatState_Compat* dungeon,
@@ -201,6 +231,7 @@ int main(void)
     unsigned char squares[MAP_W * MAP_H];
     unsigned short squareFirstThings[MAP_W * MAP_H];
     struct DungeonSensor_Compat sensors[2];
+    struct DungeonGroup_Compat groups[1];
     struct PartyState_Compat party;
     struct Dm1V1InputCommandQueuePc34Compat queue;
     struct Dm1V1InputQueueProcessResultPc34Compat queueResult;
@@ -215,6 +246,8 @@ int main(void)
 
     printf("probe=dm1_v1_command_movement_sensor_timing_pc34_compat\n");
     printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-179,180-347; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215; MOVESENS.C:738-783,799-818,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724\n");
+
+    ok &= expect_relative_step_delta_table();
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
@@ -282,6 +315,9 @@ int main(void)
         "fakewall blocked-side-effects key queued", &dungeon, &things, &party, &queue, MOVE_BLOCKED_WALL, 0);
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    memset(groups, 0, sizeof(groups));
+    groups[0].next = THING_ENDOFLIST;
+    things.groups = groups;
     squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
     things.groupCount = 1;
     ok &= expect_blocked_step_without_side_effects(
@@ -431,6 +467,8 @@ int main(void)
         DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
         ok &= expect_int("core blocked wall queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
             (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core blocked wall followup queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
         ok &= expect_int("core blocked wall processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
         ok &= expect_int("core blocked wall dequeued", core.queue.dequeued, 1);
@@ -439,11 +477,15 @@ int main(void)
         ok &= expect_int("core blocked wall skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core blocked wall skips viewport", core.viewportRedrawRequested, 0);
         ok &= expect_int("core blocked wall discards input", core.inputDiscardRequested, 1);
+        ok &= expect_int("core blocked wall clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core blocked wall keeps x", party.mapX, 1);
         ok &= expect_int("core blocked wall keeps y", party.mapY, 1);
     }
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    memset(groups, 0, sizeof(groups));
+    groups[0].next = THING_ENDOFLIST;
+    things.groups = groups;
     squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
     things.groupCount = 1;
     {
@@ -451,12 +493,38 @@ int main(void)
         DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
         ok &= expect_int("core group block queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
             (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("core group block followup queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB36, 0, 0, 0 }), 1);
         ok &= expect_int("core group block processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
         ok &= expect_int("core group block detected", core.blockedByGroup, 1);
         ok &= expect_int("core group block skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core group block skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core group block clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core group block keeps source", party.mapX + party.mapY, 2);
+    }
+
+    reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
+    squareFirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
+    {
+        struct DungeonGroup_Compat group;
+        struct Dm1V1MovementCommandCoreResultPc34Compat core;
+        memset(&group, 0, sizeof(group));
+        group.next = THING_ENDOFLIST;
+        things.groups = &group;
+        things.groupCount = 1;
+        party.championCount = 0;
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("empty-party group collision bug queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        ok &= expect_int("empty-party group collision bug processed", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+            &queue, &dungeon, &things, &party, 0, 0, 0, 1000ul, 990ul, footwear, &core), 1);
+        ok &= expect_int("empty-party group collision bug not blocked", core.movementBlocked, 0);
+        ok &= expect_int("empty-party group collision bug step applied", core.stepApplied, 1);
+        ok &= expect_int("empty-party group collision bug reaches group square x", party.mapX, 1);
+        ok &= expect_int("empty-party group collision bug reaches group square y", party.mapY, 0);
+        ok &= expect_int("empty-party group collision bug no scent", core.timing.scentRecorded, 0);
+        ok &= expect_int("empty-party group collision bug minimum cooldown", core.timing.disabledMovementTicks, 1);
     }
 
     printf("dm1V1CommandMovementSensorTimingIntegrationOk=%u\n", ok ? 1u : 0u);

@@ -116,7 +116,7 @@ def main() -> int:
         'source_root': str(SOURCE_ROOT),
         'original_stage': str(STAGE),
         'dm_exe': str(DM_EXE),
-        'forbidden_roots_note': 'DANNESBURK not used.',
+        'forbidden_roots_note': '<private-host> not used.',
         'runners': {
             'gdb_script': str(GDB_SCRIPT),
             'gdb_command': f"gdb --batch -x {GDB_SCRIPT}",

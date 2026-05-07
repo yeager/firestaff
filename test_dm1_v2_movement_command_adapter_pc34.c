@@ -82,7 +82,8 @@ static int test_turns_start_presentation_only_camera_turns(void) {
     return 0;
 }
 
-static int test_rejects_unsupported_or_stopped_commands(void) {
+
+static int test_source_strafes_translate_to_runtime_ids(void) {
     DM1_V2_RuntimeState rt;
     DM1_V2_CameraController camera;
     DM1_V2_MovementCommandResult result;
@@ -91,19 +92,40 @@ static int test_rejects_unsupported_or_stopped_commands(void) {
     dm1_v2_runtime_start(&rt, 1000);
     dm1_v2_camera_init(&camera, &rt.player);
 
-    /* The ReDMCSB source has C004/C006 strafe commands, but the current V2
-     * runtime shell has no discrete strafe primitive yet; do not fake it. */
-    result = dm1_v2_movement_command_apply(&rt, &camera, DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT, 1300, 40);
-    CHECK(result.accepted == 0);
+    /* Source-lock: CLIKMENU.C:224-233 maps C004/C006 to right-step counts;
+     * DUNGEON.C:1389-1391 applies right/left movement without changing facing. */
+    result = dm1_v2_movement_command_apply(&rt, &camera, DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT, 1000, 40);
+    CHECK(result.accepted == 1);
     CHECK(result.sourceCommand == 4);
-    CHECK(result.runtimeCommand == 0);
-    CHECK(rt.lastCommand == 0);
+    CHECK(result.runtimeCommand == 5);
+    CHECK(rt.lastCommand == 5);
+    CHECK(rt.player.facingDir == 0);
+    CHECK(dm1_v2_get_x(&rt.player) == 0);
+    CHECK(dm1_v2_get_y(&rt.player) == 1);
+    CHECK(camera.logicalX == dm1_v2_get_x(&rt.player));
+    CHECK(camera.logicalY == dm1_v2_get_y(&rt.player));
 
-    result = dm1_v2_movement_command_apply(&rt, &camera, DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT, 1400, 40);
-    CHECK(result.accepted == 0);
+    rt.player.moveState = 0;
+    result = dm1_v2_movement_command_apply(&rt, &camera, DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT, 1000, 40);
+    CHECK(result.accepted == 1);
     CHECK(result.sourceCommand == 6);
-    CHECK(result.runtimeCommand == 0);
-    CHECK(rt.lastCommand == 0);
+    CHECK(result.runtimeCommand == 6);
+    CHECK(rt.lastCommand == 6);
+    CHECK(rt.player.facingDir == 0);
+    CHECK(dm1_v2_get_x(&rt.player) == 0);
+    CHECK(dm1_v2_get_y(&rt.player) == 0);
+
+    return 0;
+}
+
+static int test_rejects_stopped_commands(void) {
+    DM1_V2_RuntimeState rt;
+    DM1_V2_CameraController camera;
+    DM1_V2_MovementCommandResult result;
+
+    dm1_v2_runtime_init(&rt);
+    dm1_v2_runtime_start(&rt, 1000);
+    dm1_v2_camera_init(&camera, &rt.player);
 
     dm1_v2_runtime_stop(&rt);
     result = dm1_v2_movement_command_apply(&rt, &camera, DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD, 1500, 40);
@@ -116,7 +138,8 @@ static int test_rejects_unsupported_or_stopped_commands(void) {
 int main(void) {
     if (test_source_ids_translate_to_runtime_ids()) return 1;
     if (test_turns_start_presentation_only_camera_turns()) return 1;
-    if (test_rejects_unsupported_or_stopped_commands()) return 1;
+    if (test_source_strafes_translate_to_runtime_ids()) return 1;
+    if (test_rejects_stopped_commands()) return 1;
     puts("dm1_v2_movement_command_adapter_pc34: ok");
     return 0;
 }

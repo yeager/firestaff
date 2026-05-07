@@ -14,7 +14,7 @@
         "offset": "0x70c98"
       }
     },
-    "archive": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+    "archive": "<firestaff-original-games>/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip",
     "header_paragraphs": 6,
     "image_offsets": {
       "direct_inner_calls": [
@@ -33,31 +33,31 @@
   "dm2_disassembly_evidence": [
     {
       "decoded": "mov si,[bp+0Eh]; trim leading spaces; mov dx,si; mov ah,3Dh; int 21h",
-      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "file": "<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM",
       "id": "dm2-generic-open-inner",
       "range": "6154-6200"
     },
     {
       "decoded": "wrapper pushes its filename/flags args then calls the generic inner open routine",
-      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "file": "<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM",
       "id": "dm2-open-wrapper-calls-inner",
       "range": "6139-6153"
     },
     {
       "decoded": "push 0; push 0200h; lea ax,[bp+0Ah]; push ax; call open wrapper",
-      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "file": "<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM",
       "id": "dm2-direct-caller-first-path-buffer",
       "range": "4761-4783"
     },
     {
       "decoded": "push 0; push 0200h; lea ax,[bp+0Ah]; push ax; call open wrapper",
-      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "file": "<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM",
       "id": "dm2-direct-caller-second-path-buffer",
       "range": "4813-4826"
     },
     {
       "decoded": "canonical startup member string bytes are present, but this range has no labels/xrefs in SKULL.ASM",
-      "file": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM",
+      "file": "<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM",
       "id": "dm2-startup-member-strings-only",
       "range": "461403-461472"
     }
@@ -75,19 +75,19 @@
   },
   "redmcsb_source_audit": [
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
       "function": "global filename definitions",
       "id": "redmcsb-filename-dm-pc-data-members",
       "range": "4-10"
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
       "function": "F0477_MEMORY_OpenGraphicsDat_CPSDF",
       "id": "redmcsb-graphics-open-boundary",
       "range": "1212-1285"
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
       "function": "dungeon load open block in F0436_LOADSAVE_LoadGameFile",
       "id": "redmcsb-dungeon-open-boundary",
       "range": "2333-2377"

@@ -117,6 +117,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -225,6 +226,94 @@ typedef enum {
  * given depth/lane position. Mirrors the 8-byte frame arrays from
  * ReDMCSB DUNVIEW.C (G0163_aauc_Graphic558_Frame_Walls[12][8]).
  * ──────────────────────────────────────────────────────────────────────── */
+
+
+/* F0115 thing-layer phases inside each processed view cell.
+ * Source: ReDMCSB DUNVIEW.C:4561-4581, 4853-4860, 5195-5202,
+ *         5681-5883, 5915-5933.
+ */
+typedef enum {
+    DM1_VIEWPORT_THING_LAYER_OBJECTS = 0,
+    DM1_VIEWPORT_THING_LAYER_CREATURES = 1,
+    DM1_VIEWPORT_THING_LAYER_PROJECTILES = 2,
+    DM1_VIEWPORT_THING_LAYER_EXPLOSIONS = 3
+} DM1_ViewportThingLayer;
+
+typedef struct {
+    uint16_t cell_order;
+    unsigned char cells[4];
+    unsigned char cell_count;
+    unsigned char door_pass; /* 0=no door pass, 1=behind door/frame, 2=in front */
+    bool alcove;
+} DM1_ViewportCellOrder;
+
+typedef struct {
+    DM1_ViewportThingLayer layer;
+    const char *name;
+    const char *source_lines;
+    /* ReDMCSB F0115 executes object/creature/projectile phases for each
+     * packed view cell, then restarts once after all cells for explosions.
+     * Source: DUNVIEW.C:4567-4581, 5915-5933. */
+    bool repeats_per_cell;
+    bool after_all_cells;
+} DM1_ViewportThingLayerSpec;
+
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int8_t rel_depth;
+    int8_t rel_lateral;
+    const char *redmcsb_function;
+    const char *source_lines;
+} DM1_ViewportDrawStep;
+
+/* Source-locked PC34/I34E wall bitmap selection for a wall square.
+ *
+ * ReDMCSB PC34 selects the opposite left/right bitmap and requests
+ * F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally when
+ * G0076_B_UseFlippedWallAndFootprintsBitmaps is set.  Center walls keep
+ * the same index and pass G0076 to F0792_DUNGEONVIEW_DrawBitmapYYY.
+ */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    DM1_WallSetIndex native_wall;
+    DM1_WallSetIndex parity_wall;
+    bool parity_flips_horizontally;
+    bool center_wall;
+    uint16_t pc34_zone;
+    bool wall_case_returns;
+    bool front_alcove_reveals_contents;
+    const char *redmcsb_function;
+    const char *source_lines;
+    const char *occlusion_source_lines;
+} DM1_ViewportWallDrawSpec;
+
+/* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
+ * They are outside the original M597-M611 dense enum, so use stable negative
+ * identifiers for metadata/probe reporting only. */
+#define DM1_VIEW_SQUARE_D3L2 ((DM1_ViewSquareIndex)-101)
+#define DM1_VIEW_SQUARE_D3R2 ((DM1_ViewSquareIndex)-102)
+#define DM1_VIEW_SQUARE_D2L2 ((DM1_ViewSquareIndex)-103)
+#define DM1_VIEW_SQUARE_D2R2 ((DM1_ViewSquareIndex)-104)
+
+/* PC34/I34E viewport zone ids from ReDMCSB DEFS.H:4040-4057. */
+#define DM1_PC34_ZONE_VIEWPORT_CEILING_AREA 700
+#define DM1_PC34_ZONE_VIEWPORT_FLOOR_AREA   701
+#define DM1_PC34_ZONE_WALL_D3L2             702
+#define DM1_PC34_ZONE_WALL_D3R2             703
+#define DM1_PC34_ZONE_WALL_D3C              704
+#define DM1_PC34_ZONE_WALL_D3L              705
+#define DM1_PC34_ZONE_WALL_D3R              706
+#define DM1_PC34_ZONE_WALL_D2L2             707
+#define DM1_PC34_ZONE_WALL_D2R2             708
+#define DM1_PC34_ZONE_WALL_D2C              709
+#define DM1_PC34_ZONE_WALL_D2L              710
+#define DM1_PC34_ZONE_WALL_D2R              711
+#define DM1_PC34_ZONE_WALL_D1C              712
+#define DM1_PC34_ZONE_WALL_D1L              713
+#define DM1_PC34_ZONE_WALL_D1R              714
+#define DM1_PC34_ZONE_WALL_D0C              715
+#define DM1_PC34_ZONE_WALL_D0L              716
+#define DM1_PC34_ZONE_WALL_D0R              717
 
 typedef struct {
     uint8_t left_x;     /* Viewport-relative left X (pixel) */
@@ -430,6 +519,19 @@ void dm1_viewport_3d_copy_and_flip_h(const uint8_t *src, uint8_t *dst,
  * Source: DUNVIEW.C G0163_aauc_Graphic558_Frame_Walls[12][8]
  */
 const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square);
+
+/* Source-locked F0128 visible-square draw order metadata. */
+size_t dm1_viewport_3d_draw_order_count(void);
+const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index);
+size_t dm1_viewport_3d_wall_draw_spec_count(void);
+const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index);
+const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square);
+DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
+
+/* Decode F0115's packed cell-order nibbles (DUNVIEW.C:4561-4564). */
+DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order);
+size_t dm1_viewport_3d_thing_layer_spec_count(void);
+const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t index);
 
 /*
  * Source evidence string for verification.

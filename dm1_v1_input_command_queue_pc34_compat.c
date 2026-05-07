@@ -3,16 +3,19 @@
 
 /* Source lock (ReDMCSB WIP20210206, Toolchains/Common/Source):
  * - COMMAND.C:106-121 G0448 movement mouse rows for C001/C003/C002/C006/C005/C004/C080/C083.
- * - COMMAND.C:252-260 and 272-305 G0459 movement keyboard rows for keypad/arrow movement commands.
+ * - COMMAND.C:252-260 / 272-305 legacy ST/Amiga movement keyboard rows still covered for shared-route probes.
+ * - COMMAND.C:677-684 MEDIA707_I34E_I34M movement keyboard rows use 0x004B..0x0051.
+ * - IO2.C:27-61 F0540_INPUT_Crawcin reads IODRV_00_GetKeyboardInput and normalizes shifted PC-34 arrow scancodes to the same 0x004B/0x004C/0x004D/0x0050 command-table codes.
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
  * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
  * - COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands, then replays pending click.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
+ * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement (except later-platform release/stop commands not modeled here).
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
  */
 
-#define DM1_V1_QUEUE_MAX_REGULAR 5u
+#define DM1_V1_QUEUE_MAX_REGULAR 4u
 
 static int normalize_dir(int value)
 {
@@ -30,17 +33,17 @@ static int is_move_command(int command)
 static int command_for_key(int keyCode)
 {
     switch (keyCode) {
-    case 0xAB34: case 0x007F:
+    case 0xAB34: case 0x007F: case 0x9BFF: case 0x004B:
         return DM1_V1_COMMAND_TURN_LEFT;
-    case 0xAB36: case 0x9B3F:
+    case 0xAB36: case 0x9B3F: case 0x9B6F: case 0x004D:
         return DM1_V1_COMMAND_TURN_RIGHT;
-    case 0xAB35: case 0x9B41: case 0x9B54:
+    case 0xAB35: case 0x9B41: case 0x9B54: case 0x004C:
         return DM1_V1_COMMAND_MOVE_FORWARD;
-    case 0xAB33: case 0x9B43:
+    case 0xAB33: case 0x9B43: case 0x9B60: case 0x0051:
         return DM1_V1_COMMAND_MOVE_RIGHT;
-    case 0xAB32: case 0x9B42: case 0x9B53:
+    case 0xAB32: case 0x9B42: case 0x9B53: case 0x0050:
         return DM1_V1_COMMAND_MOVE_BACKWARD;
-    case 0xAB31: case 0x9B44: case 0x9B61:
+    case 0xAB31: case 0x9B44: case 0x9B61: case 0x004F:
         return DM1_V1_COMMAND_MOVE_LEFT;
     default:
         return DM1_V1_COMMAND_NONE;
@@ -110,6 +113,23 @@ static void process_pending_click(struct Dm1V1InputCommandQueuePc34Compat* queue
 void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue)
 {
     memset(queue, 0, sizeof(*queue));
+}
+
+void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue)
+{
+    if (!queue) {
+        return;
+    }
+
+    /* Source lock: CLIKMENU.C:317-323 calls F0357_COMMAND_DiscardAllInput
+     * after a blocked party step. COMMAND.C:1304-1377 flushes buffered input
+     * and clears the command queue, preserving only later-platform release/
+     * stop-pressing commands that this DM1 V1 PC-34 seam does not model.
+     */
+    queue->locked = 0;
+    queue->count = 0;
+    queue->pendingClickPresent = 0;
+    queue->pendingClickCommand = DM1_V1_COMMAND_NONE;
 }
 
 int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
@@ -211,5 +231,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:106-121,252-260,272-305,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,106-121,252-260,272-305,677-684,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
 }

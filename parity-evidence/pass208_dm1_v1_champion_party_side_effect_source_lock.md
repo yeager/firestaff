@@ -7,7 +7,7 @@ Verification JSON: `parity-evidence/verification/dm1_v1_champion_party_side_effe
 
 ## ReDMCSB source evidence
 
-Primary source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+Primary source root: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 - `CHAMPION.C:118-130` — `F0284_CHAMPION_SetPartyDirection` is not just a party-facing setter. If the direction changes it computes a delta, rotates every champion `Cell`, rotates every champion `Direction`, writes `G0308_i_PartyDirection`, then redraws changed object icons.
 - `COMMAND.C:106-113` and `COMMAND.C:252-260` — V1 movement command routing binds turn/forward/right/back/left commands to mouse arrows and keypad movement input.

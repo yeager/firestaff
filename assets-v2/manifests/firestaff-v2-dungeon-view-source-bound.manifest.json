@@ -1,0 +1,320 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "firestaff-v2-dungeon-view-source-bound",
+  "description": "Source-evidenced V2 dungeon-view manifest bindings for pass271. These entries bind shared logical IDs to ReDMCSB wall/floor/ceiling/door/stairs source contracts; they do not claim final rebuilt art acceptance.",
+  "targetPolicy": {
+    "masterResolution": "4k-first",
+    "derivedResolutions": [
+      "1080p"
+    ],
+    "layoutSkeleton": "dm1-320x200"
+  },
+  "assets": [
+    {
+      "id": "fs.v2.dungeon-view.wall.front-source",
+      "family": "dungeon_wall",
+      "role": "forward-facing wall plane source contract",
+      "productionClass": "source-evidenced-layout-contract",
+      "sourceReference": {
+        "origin": "ReDMCSB DM1 dungeon-view wall-set graphics and center wall blit route",
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "DM1/I34E wall-set center graphic constants",
+            "lines": {
+              "start": 2351,
+              "end": 2373
+            },
+            "assertion": "The PC34/I34E wall set enumerates center wall graphics C097/C102/C107 and neighboring D0-D3 wall planes from M646_GRAPHIC_FIRST_WALL_SET."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0100_DUNGEONVIEW_DrawWallSetBitmap",
+            "lines": {
+              "start": 3048,
+              "end": 3065
+            },
+            "assertion": "Wall-set bitmaps are blitted into G0296_puc_Bitmap_Viewport through the viewport wall frame contract."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0128_DUNGEONVIEW_Draw / square draw order",
+            "lines": {
+              "start": 8498,
+              "end": 8515
+            },
+            "assertion": "The main draw route walks D3 side/center squares before nearer rows, binding wall planes to relative dungeon composition rather than a standalone art guess."
+          }
+        ]
+      },
+      "sizes": {
+        "sourceContract": {
+          "viewportWidth": 224,
+          "viewportHeight": 136
+        }
+      },
+      "paths": {
+        "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
+      },
+      "status": "blocked",
+      "notes": [
+        "Source-evidenced binding only; final rebuilt wall artwork/capture acceptance remains a later gate."
+      ]
+    },
+    {
+      "id": "fs.v2.dungeon-view.wall.side-source",
+      "family": "dungeon_wall",
+      "role": "side wall planes source contract",
+      "productionClass": "source-evidenced-layout-contract",
+      "sourceReference": {
+        "origin": "ReDMCSB DM1 D0-D3 side wall graphic constants and horizontal flip route",
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "DM1/I34E left/right wall-set graphic constants",
+            "lines": {
+              "start": 2359,
+              "end": 2373
+            },
+            "assertion": "The wall-set includes D0/D1/D2/D3 side wall graphics and left/right variants used by side-lane viewport composition."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "flipped wall bitmap selection",
+            "lines": {
+              "start": 8418,
+              "end": 8449
+            },
+            "assertion": "The draw setup chooses flipped wall/floor/ceiling bitmaps from party position parity before composing side lanes."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "D3L/D3R square draw route",
+            "lines": {
+              "start": 8506,
+              "end": 8515
+            },
+            "assertion": "The viewport draw order explicitly draws relative D3 left and right squares as side-lane composition inputs."
+          }
+        ]
+      },
+      "sizes": {
+        "sourceContract": {
+          "viewportWidth": 224,
+          "viewportHeight": 136
+        }
+      },
+      "paths": {
+        "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
+      },
+      "status": "blocked",
+      "notes": [
+        "Source-evidenced binding only; final side-wall art/capture acceptance remains a later gate."
+      ]
+    },
+    {
+      "id": "fs.v2.dungeon-view.floor.base-source",
+      "family": "dungeon_floor_ceiling",
+      "role": "floor material source contract",
+      "productionClass": "source-evidenced-layout-contract",
+      "sourceReference": {
+        "origin": "ReDMCSB DM1 floor set loader and 224x70 floor band draw route",
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "DM1/I34E floor-set constants",
+            "lines": {
+              "start": 2348,
+              "end": 2350
+            },
+            "assertion": "M650_GRAPHIC_FLOOR_SET_0_FLOOR identifies the floor asset paired with its ceiling in the current floor set."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0094_DUNGEONVIEW_LoadFloorSet",
+            "lines": {
+              "start": 2037,
+              "end": 2054
+            },
+            "assertion": "The floor set loader resolves the floor-set graphic index and loads the floor bitmap and ceiling bitmap as a pair."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+            "lines": {
+              "start": 2962,
+              "end": 3002
+            },
+            "assertion": "The floor draw route copies/draws the floor band into the viewport floor area and marks the floor/ceiling redraw request complete."
+          }
+        ]
+      },
+      "sizes": {
+        "sourceContract": {
+          "viewportWidth": 224,
+          "floorBandHeight": 70
+        }
+      },
+      "paths": {
+        "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
+      },
+      "status": "blocked",
+      "notes": [
+        "Source-evidenced binding only; final floor material/capture acceptance remains a later gate."
+      ]
+    },
+    {
+      "id": "fs.v2.dungeon-view.ceiling.base-source",
+      "family": "dungeon_floor_ceiling",
+      "role": "ceiling material source contract",
+      "productionClass": "source-evidenced-layout-contract",
+      "sourceReference": {
+        "origin": "ReDMCSB DM1 floor set loader and 224x29 ceiling band draw route",
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "DM1/I34E floor-set ceiling constant",
+            "lines": {
+              "start": 2348,
+              "end": 2350
+            },
+            "assertion": "M651_GRAPHIC_FLOOR_SET_0_CEILING identifies the ceiling asset paired with the floor in the current floor set."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0094_DUNGEONVIEW_LoadFloorSet",
+            "lines": {
+              "start": 2037,
+              "end": 2054
+            },
+            "assertion": "The floor set loader resolves the floor-set graphic index and loads the floor bitmap and ceiling bitmap as a pair."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+            "lines": {
+              "start": 2962,
+              "end": 3002
+            },
+            "assertion": "The ceiling draw route copies/draws the ceiling band into the top of the 224-wide viewport before wall composition."
+          }
+        ]
+      },
+      "sizes": {
+        "sourceContract": {
+          "viewportWidth": 224,
+          "ceilingBandHeight": 29
+        }
+      },
+      "paths": {
+        "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
+      },
+      "status": "blocked",
+      "notes": [
+        "Source-evidenced binding only; final ceiling material/capture acceptance remains a later gate."
+      ]
+    },
+    {
+      "id": "fs.v2.dungeon-view.door.wood.closed-source",
+      "family": "dungeon_door",
+      "role": "closed wooden door source contract",
+      "productionClass": "source-evidenced-layout-contract",
+      "sourceReference": {
+        "origin": "ReDMCSB DM1 door set and closed/destroyed door draw route",
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "DM1/I34E door-set base constant",
+            "lines": {
+              "start": 2374,
+              "end": 2377
+            },
+            "assertion": "M633_GRAPHIC_FIRST_DOOR_SET anchors the door family graphics after the stairs range in PC34/I34E."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0102_DUNGEONVIEW_DrawDoorBitmap",
+            "lines": {
+              "start": 3082,
+              "end": 3096
+            },
+            "assertion": "Door bitmaps are blitted from the temporary door bitmap into the viewport using door frame coordinates."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0111_DUNGEONVIEW_DrawDoor",
+            "lines": {
+              "start": 4218,
+              "end": 4304
+            },
+            "assertion": "The door draw route copies the typed door bitmap, applies ornaments/animation, then draws ClosedOrDestroyed for C4_DOOR_STATE_CLOSED."
+          }
+        ]
+      },
+      "sizes": {
+        "sourceContract": {
+          "viewportWidth": 224,
+          "viewportHeight": 136
+        }
+      },
+      "paths": {
+        "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
+      },
+      "status": "blocked",
+      "notes": [
+        "Source-evidenced binding only; final door art/capture acceptance remains a later gate."
+      ]
+    },
+    {
+      "id": "fs.v2.dungeon-view.stairs.down-source",
+      "family": "dungeon_stairs",
+      "role": "down-stairs transition surface source contract",
+      "productionClass": "source-evidenced-layout-contract",
+      "sourceReference": {
+        "origin": "ReDMCSB DM1 stairs graphic range and down-stairs bitmap indices",
+        "sourceEvidence": [
+          {
+            "file": "DEFS.H",
+            "function": "stairs graphic count and down-stairs bitmap constants",
+            "lines": {
+              "start": 2430,
+              "end": 2458
+            },
+            "assertion": "The stairs graphic count and down-stairs front/side bitmap ordinal constants define the down-stairs visual family."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "stairs native bitmap index assignment",
+            "lines": {
+              "start": 2472,
+              "end": 2508
+            },
+            "assertion": "The viewport loader maps the stairs native bitmap sequence, including Down_Front and Down_Side variants, from the current wall-set graphic range."
+          },
+          {
+            "file": "DUNVIEW.C",
+            "function": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap",
+            "lines": {
+              "start": 3113,
+              "end": 3130
+            },
+            "assertion": "Floor-pit/stairs bitmaps are drawn through the viewport bitmap route with source frame/zone coordinates."
+          }
+        ]
+      },
+      "sizes": {
+        "sourceContract": {
+          "viewportWidth": 224,
+          "viewportHeight": 136
+        }
+      },
+      "paths": {
+        "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
+      },
+      "status": "blocked",
+      "notes": [
+        "Source-evidenced binding only; final stairs art/capture acceptance remains a later gate."
+      ]
+    }
+  ]
+}

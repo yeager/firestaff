@@ -1,4 +1,4 @@
-# TITLE path: /Users/bosse/.openclaw/data/redmcsb-original/TITLE
+# TITLE path: <local-home>/.openclaw/data/redmcsb-original/TITLE
 PASS P56_TITLE_01 local TITLE mapfile is 12002 bytes and parses to Greatstone's 59 items
 PASS P56_TITLE_02 control/palette records match Greatstone order: AN, BR, P8, PL, PL, DO
 PASS P56_TITLE_03 frame records match Greatstone: 2 ENcoded images plus 51 Delta Layers

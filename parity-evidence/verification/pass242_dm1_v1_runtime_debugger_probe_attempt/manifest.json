@@ -1,0 +1,80 @@
+{
+  "schema": "pass242_dm1_v1_runtime_debugger_probe_attempt.v1",
+  "status": "BLOCKED_COMMAND_MOVEMENT_VIEWPORT_CHAIN_NOT_PROVEN",
+  "artifact_policy": {
+    "text_only": true,
+    "no_original_binaries_committed": true,
+    "no_screenshots": true,
+    "bounded_transcript_excerpts_only": true
+  },
+  "inputs": {
+    "pass237_manifest": "parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "pass241_manifest": "parity-evidence/verification/pass241_dm1_v1_runtime_csip_candidate_bridge/manifest.json",
+    "runtime_trace_tool": "tools/dm1_original_runtime_trace.py"
+  },
+  "candidate_breakpoints_tested": [
+    "1D69:06E9",
+    "195E:010D",
+    "195E:01AA",
+    "1313:0516",
+    "25B9:110E"
+  ],
+  "attempts": [
+    {
+      "id": "debug_fires_exenew_candidate_probe",
+      "runtime": "dosbox-debug with temp unpacked FIRES.EXENEW copied as FIRES.EXE",
+      "fixture_sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+      "observed_entry_cs_ip": "01ED:0000",
+      "commands": [
+        "BP 1D69:06E9",
+        "BP 195E:010D",
+        "BP 195E:01AA",
+        "BP 1313:0516",
+        "BP 25B9:110E",
+        "F5 continue"
+      ],
+      "observed_hits": [
+        {
+          "candidate": "25B9:110E",
+          "classification": "debugger_observed_candidate_hit_not_chain_proof",
+          "excerpt": "25B9:110E 55 push bp; 25B9:110F 8BEC mov bp,sp; 25B9:1111 0E push cs"
+        }
+      ],
+      "non_hits": [
+        "1D69:06E9",
+        "195E:010D",
+        "195E:01AA",
+        "1313:0516"
+      ],
+      "blocker": "FIRES.EXE direct execution returns to DOS prompt / does not provide a verified, input-driven DM game route; the observed 25B9:110E hit is an early viewport-adjacent candidate only and does not prove command_accepted -> movement_applied -> viewport_present."
+    },
+    {
+      "id": "debug_dm_loader_with_pass241_candidates",
+      "runtime": "dosbox-debug DEBUG DM.EXE using staged DungeonMasterPC34 tree under Xvfb plus xdotool route",
+      "commands": [
+        "BP 1D69:06E9",
+        "BP 195E:010D",
+        "BP 195E:01AA",
+        "BP 1313:0516",
+        "BP 25B9:110E",
+        "F5 continue",
+        "bounded xdotool route: Return/v/Return/clicks/arrows"
+      ],
+      "observed_entry_cs_ip": "0499:000E",
+      "observed_hits": [],
+      "non_hits": [
+        "1D69:06E9",
+        "195E:010D",
+        "195E:01AA",
+        "1313:0516",
+        "25B9:110E"
+      ],
+      "blocker": "DM.EXE loader run did not hit any pass241 runtime CS:IP candidates in the bounded route. This means pass241 FIRES-direct load-segment candidates cannot be promoted for the real DM loader/game route without a runtime load-segment capture for the FIRES image as loaded by DM.EXE or a validated symbol/global-address bridge."
+    }
+  ],
+  "promotion_decision": {
+    "verified_runtime_hit_promoted": false,
+    "reason": "The only observed pass241 candidate hit was 25B9:110E during direct FIRES.EXE execution, before a verified command/movement route. No debugger-observed command_accepted or movement_applied hit was captured, and viewport_present remains unresolved."
+  },
+  "next_required_unblock": "Capture the actual FIRES load segment under the real DM.EXE route, then rebase pass241 CS:IP candidates to that segment and rerun breakpoints with state/watchpoint evidence for command_accepted -> movement_applied -> viewport_present."
+}

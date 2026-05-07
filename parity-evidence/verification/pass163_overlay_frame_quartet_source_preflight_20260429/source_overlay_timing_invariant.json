@@ -1,7 +1,7 @@
 {
   "blocked_original_route_evidence": {
     "ok": true,
-    "path": "/home/trv2/work/firestaff/verification-m11/n2-original-overlay-unblock-20260429/pass94-fixed-clean/pass80_original_frame_classifier.md",
+    "path": "<firestaff-repo>/verification-m11/n2-original-overlay-unblock-20260429/pass94-fixed-clean/pass80_original_frame_classifier.md",
     "reason": "existing classifier records static no-party hash 48ed3743ab6a / duplicate raw frames, so quartet acceptance remains blocked until Lane A party/control route is solved"
   },
   "firestaff_results": [
@@ -9,13 +9,13 @@
       "missing_patterns": [],
       "name": "firestaff_viewport_constants_match_source",
       "ok": true,
-      "path": "/home/trv2/work/firestaff/m11_game_view.c"
+      "path": "<firestaff-repo>/m11_game_view.c"
     },
     {
       "missing_patterns": [],
       "name": "original_capture_script_crops_source_viewport_rect",
       "ok": true,
-      "path": "/home/trv2/work/firestaff/scripts/dosbox_dm1_original_viewport_reference_capture.sh"
+      "path": "<firestaff-repo>/scripts/dosbox_dm1_original_viewport_reference_capture.sh"
     }
   ],
   "invariant": {
@@ -39,7 +39,7 @@
       "missing_patterns": [],
       "name": "title_zoom_waits_and_bug071",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C"
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C"
     },
     {
       "line_range": [
@@ -49,7 +49,7 @@
       "missing_patterns": [],
       "name": "entrance_door_steps_wait_vblank",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C"
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C"
     },
     {
       "line_range": [
@@ -59,7 +59,7 @@
       "missing_patterns": [],
       "name": "entrance_wait_loop_to_open_doors",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C"
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C"
     },
     {
       "line_range": [
@@ -69,7 +69,7 @@
       "missing_patterns": [],
       "name": "gameplay_viewport_request_wait",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     },
     {
       "line_range": [
@@ -79,7 +79,7 @@
       "missing_patterns": [],
       "name": "pc_vga_blitviewport_224_palette_offset",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C"
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C"
     },
     {
       "line_range": [
@@ -89,7 +89,7 @@
       "missing_patterns": [],
       "name": "amiga_viewport_origin_and_224x136_plane_copy",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIEWPORT.C"
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIEWPORT.C"
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 Date: 2026-05-01
 Lane: touchscreen support retry, source-locked only.
-Primary source audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+Primary source audited: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
 
 ## Intent
 

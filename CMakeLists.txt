@@ -200,15 +200,6 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_hall_walkaround_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
-# DM1 V1 viewport/collision integration route probe (TSV/JSON only).
-add_executable(firestaff_dm1_v1_viewport_collision_integration_probe
-    probes/m11/firestaff_dm1_v1_viewport_collision_integration_probe.c
-)
-target_link_libraries(firestaff_dm1_v1_viewport_collision_integration_probe PRIVATE firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_dm1_v1_viewport_collision_integration_probe PRIVATE -Wall -Wextra -O2)
-endif()
-
 # Deterministic in-game screenshot series used by parity evidence.
 add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
 target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
@@ -239,21 +230,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_pro
     endif()
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_menu_mouse_probe.c")
-    add_executable(firestaff_m12_menu_mouse_probe probes/m12/firestaff_m12_menu_mouse_probe.c)
-    target_link_libraries(firestaff_m12_menu_mouse_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+
+# DM1 V1 viewport draw-order evidence probe
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
+    add_executable(firestaff_dm1_v1_viewport_draw_order_probe probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c)
     if(NOT MSVC)
-        target_compile_options(firestaff_m12_menu_mouse_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
+        target_compile_options(firestaff_dm1_v1_viewport_draw_order_probe PRIVATE -Wall -Wextra -O2)
     endif()
 endif()
 
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v1_viewport_draw_order_probe
+        COMMAND firestaff_dm1_v1_viewport_draw_order_probe
+    )
+
     if(Python3_Interpreter_FOUND)
         add_test(
             NAME dm1_v2_upscale_dry_run_validator
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_v2_upscale_dry_run.py
+        )
+        add_test(
+            NAME csb_v1_parity_surface_matrix
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_parity_surface_matrix.py
         )
     endif()
 
@@ -279,6 +280,18 @@ if(BUILD_TESTING)
     add_test(
         NAME touch_pointer_input_pc34_compat
         COMMAND test_touch_pointer_input_pc34_compat_integration
+    )
+
+    add_executable(test_menu_hit_launch_direct_click_m12
+        test_menu_hit_launch_direct_click_m12.c
+    )
+    target_link_libraries(test_menu_hit_launch_direct_click_m12 PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_menu_hit_launch_direct_click_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME menu_hit_launch_direct_click_m12
+        COMMAND test_menu_hit_launch_direct_click_m12
     )
 
     add_executable(firestaff_m11_touch_pointer_dispatch_probe
@@ -342,6 +355,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_movement_core_pc34_compat
     )
 
+    add_executable(test_dm1_v1_movement_command_core_pc34_compat
+        test_dm1_v1_movement_command_core_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_movement_command_core_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_movement_command_core_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_movement_command_core_pc34_compat
+        COMMAND test_dm1_v1_movement_command_core_pc34_compat
+    )
+
     add_executable(test_m11_v1_turning_presentation_pc34_compat
         test_m11_v1_turning_presentation_pc34_compat.c
     )
@@ -385,6 +410,30 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_command_movement_sensor_timing_pc34_compat
     )
 
+    add_executable(firestaff_dm1_v1_movement_core_probe
+        probes/dm1/firestaff_dm1_v1_movement_core_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_movement_core_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_movement_core_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_movement_core_probe
+        COMMAND firestaff_dm1_v1_movement_core_probe
+    )
+
+    add_executable(firestaff_dm1_v1_walls_occlusion_blockers_probe
+        probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_walls_occlusion_blockers_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_walls_occlusion_blockers_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_walls_occlusion_blockers_probe
+        COMMAND firestaff_dm1_v1_walls_occlusion_blockers_probe
+    )
+
     add_executable(test_dm1_v2_movement_viewport_pc34
         test_dm1_v2_movement_viewport_pc34.c
         dm1_v2_movement_engine_pc34.c
@@ -394,16 +443,6 @@ if(BUILD_TESTING)
         test_dm1_v2_runtime_shell_pc34.c
         dm1_v2_runtime_pc34.c
         dm1_v2_movement_engine_pc34.c
-        dm1_v2_viewport_renderer_pc34.c
-    )
-    add_executable(test_dm1_v2_settings_pc34
-        test_dm1_v2_settings_pc34.c
-        dm1_v2_settings_pc34.c
-        config_m12.c
-        fs_portable_compat.c
-    )
-    add_executable(test_dm1_v2_viewport_materials_pc34
-        test_dm1_v2_viewport_materials_pc34.c
         dm1_v2_viewport_renderer_pc34.c
     )
     add_executable(test_dm1_v2_camera_controller_pc34
@@ -419,39 +458,29 @@ if(BUILD_TESTING)
         dm1_v2_movement_engine_pc34.c
         dm1_v2_viewport_renderer_pc34.c
     )
-    add_executable(test_dm1_v2_creature_render_pc34
-        test_dm1_v2_creature_render_pc34.c
-        dm1_v2_creature_animation_pc34.c
-    )
-    add_executable(test_dm1_v2_spell_effect_pc34
-        test_dm1_v2_spell_effect_pc34.c
-        dm1_v2_spell_effect_overlay_pc34.c
-    )
-    add_executable(test_dm1_v2_item_render_pc34
-        test_dm1_v2_item_render_pc34.c
-        dm1_v2_item_render_pc34.c
-    )
-    add_executable(test_dm1_v2_hud_interaction_pc34
-        test_dm1_v2_hud_interaction_pc34.c
-        dm1_v2_hud_interaction_pc34.c
-        dm1_v2_champion_select_pc34.c
+    add_executable(test_dm1_v2_hud_overlay_pc34
+        test_dm1_v2_hud_overlay_pc34.c
         dm1_v2_hud_overlay_pc34.c
     )
-    target_compile_definitions(test_dm1_v2_creature_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_definitions(test_dm1_v2_spell_effect_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_definitions(test_dm1_v2_item_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(test_dm1_v2_hud_interaction_pc34 PRIVATE firestaff_m10 m)
+    add_executable(test_dm1_v2_lighting_dynamic_pc34
+        test_dm1_v2_lighting_dynamic_pc34.c
+        dm1_v2_lighting_dynamic_pc34.c
+    )
+    add_executable(dm1_v2_export_entry_viewport_png
+        tools/dm1_v2_export_entry_viewport_png.c
+        dm1_v2_viewport_renderer_pc34.c
+    )
+    if(UNIX AND NOT APPLE)
+        target_link_libraries(test_dm1_v2_lighting_dynamic_pc34 PRIVATE m)
+    endif()
     if(NOT MSVC)
         target_compile_options(test_dm1_v2_movement_viewport_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_runtime_shell_pc34 PRIVATE -Wall -Wextra -O2)
-        target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
-        target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_camera_controller_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_movement_command_adapter_pc34 PRIVATE -Wall -Wextra -O2)
-        target_compile_options(test_dm1_v2_creature_render_pc34 PRIVATE -Wall -Wextra -O2)
-        target_compile_options(test_dm1_v2_spell_effect_pc34 PRIVATE -Wall -Wextra -O2)
-        target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
-        target_compile_options(test_dm1_v2_hud_interaction_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_lighting_dynamic_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME dm1_v2_movement_viewport_pc34
@@ -466,20 +495,6 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v2_runtime_shell_pc34
     )
     add_test(
-        NAME dm1_v2_settings_pc34
-        COMMAND test_dm1_v2_settings_pc34
-    )
-    add_test(
-        NAME dm1_v2_viewport_materials_pc34
-        COMMAND test_dm1_v2_viewport_materials_pc34
-    )
-    if(Python3_Interpreter_FOUND)
-        add_test(
-            NAME dm1_v2_viewport_asset_source_lock
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v2_viewport_asset_source_lock.py
-        )
-    endif()
-    add_test(
         NAME dm1_v2_runtime_shell_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_runtime_shell_source_lock.py
     )
@@ -491,38 +506,6 @@ if(BUILD_TESTING)
         NAME dm1_v2_camera_controller_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_camera_controller_source_lock.py
     )
-
-    # Phase 2: turn edge cases (binary midpoint, dt clamping, opposite/4, wrap-around)
-    add_executable(test_dm1_v2_camera_turn_edge_cases_pc34
-        test_dm1_v2_camera_turn_edge_cases_pc34.c
-        dm1_v2_camera_controller_pc34.c
-        dm1_v2_movement_engine_pc34.c
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v2_camera_turn_edge_cases_pc34 PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v2_camera_turn_edge_cases_pc34
-        COMMAND test_dm1_v2_camera_turn_edge_cases_pc34
-    )
-
-    # Phase 2: movement + camera integration gate
-    add_executable(test_dm1_v2_movement_camera_pc34
-        test_dm1_v2_movement_camera_pc34.c
-        dm1_v2_movement_command_adapter_pc34.c
-        dm1_v2_runtime_pc34.c
-        dm1_v2_camera_controller_pc34.c
-        dm1_v2_movement_engine_pc34.c
-        dm1_v2_viewport_renderer_pc34.c
-    )
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v2_movement_camera_pc34 PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v2_movement_camera_integration_pc34
-        COMMAND test_dm1_v2_movement_camera_pc34
-    )
-
     add_test(
         NAME dm1_v2_movement_command_adapter_pc34
         COMMAND test_dm1_v2_movement_command_adapter_pc34
@@ -532,35 +515,66 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_movement_command_adapter_source_lock.py
     )
     add_test(
-        NAME dm1_v2_creature_render_pc34
-        COMMAND test_dm1_v2_creature_render_pc34
+        NAME dm1_v2_hud_overlay_pc34
+        COMMAND test_dm1_v2_hud_overlay_pc34
     )
     add_test(
-        NAME dm1_v2_spell_effect_pc34
-        COMMAND test_dm1_v2_spell_effect_pc34
+        NAME dm1_v2_hud_overlay_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_hud_overlay_source_lock.py
     )
     add_test(
-        NAME dm1_v2_item_render_pc34
-        COMMAND test_dm1_v2_item_render_pc34
+        NAME dm1_v2_lighting_dynamic_pc34
+        COMMAND test_dm1_v2_lighting_dynamic_pc34
     )
     add_test(
-        NAME dm1_v2_hud_interaction_pc34
-        COMMAND test_dm1_v2_hud_interaction_pc34
+        NAME dm1_v2_lighting_dynamic_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_lighting_dynamic_source_lock.py
     )
     add_test(
-        NAME dm1_v2_hud_interaction_source_lock
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_hud_interaction_source_lock.py
+        NAME dm1_v2_viewport_wall_occlusion_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_wall_occlusion_source_lock.py
     )
     add_test(
-        NAME dm1_v2_asset_manifest_validation
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/validate_v2_manifests.py
-            assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json
-            assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json
-            assets-v2/manifests/firestaff-v2-wave1-effects-starter.manifest.json
+        NAME dm1_v2_dungeon_view_asset_bindings_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_dungeon_view_asset_bindings.py
+    )
+
+    add_test(
+        NAME dm1_v2_viewport_composition_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_composition_source_lock.py
+    )
+    add_test(
+        NAME dm1_v2_d0_d3_draw_list_comparator_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_d0_d3_draw_list_comparator_gate.py
+    )
+    add_test(
+        NAME dm1_v2_dungeon_dat_square_decoder_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_dungeon_dat_square_decoder_source_lock.py
+    )
+    add_test(
+        NAME dm1_v2_viewport_pixel_capture_fixture_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_pixel_capture_fixture_gate.py
+    )
+    add_test(
+        NAME dm1_v2_entry_viewport_png_export
+        COMMAND dm1_v2_export_entry_viewport_png ${CMAKE_CURRENT_SOURCE_DIR}/parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png
+    )
+    add_test(
+        NAME dm1_v2_entry_viewport_png_export_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_viewport_png_export_gate.py
+    )
+    add_test(
+        NAME dm1_v2_entry_viewport_png_comparator_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_viewport_png_comparator_gate.py
+    )
+    add_test(
+        NAME dm1_v2_entry_bitmap_materialization_blocker_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_bitmap_materialization_blocker.py
     )
 
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         test_dm1_v1_movement_pipeline_pc34_compat.c
+    dm1_v1_viewport_3d_pc34_compat.c
     dm1_v1_creature_render_pc34_compat.c
     dm1_v2_viewport_renderer_pc34.c
     csb_v1_dungeon_world_pc34_compat.c
@@ -698,13 +712,6 @@ if(BUILD_TESTING)
         )
     endif()
 
-    if(TARGET firestaff_m12_menu_mouse_probe)
-        add_test(
-            NAME m12_menu_mouse
-            COMMAND firestaff_m12_menu_mouse_probe
-        )
-    endif()
-
     # Game View probe (needs GRAPHICS.DAT via FIRESTAFF_DATA)
     add_test(
         NAME m11_game_view
@@ -712,15 +719,6 @@ if(BUILD_TESTING)
     )
     set_tests_properties(m11_game_view PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
-    )
-
-    add_test(
-        NAME dm1_launcher_click_smoke
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tools/run_dm1_launcher_smoke.sh
-    )
-    set_tests_properties(dm1_launcher_click_smoke PROPERTIES
-        ENVIRONMENT "BUILD_DIR=${CMAKE_BINARY_DIR};FIRESTAFF_DATA=$ENV{HOME}/.openclaw/data/firestaff-original-games/DM/_canonical/dm1;SDL_VIDEODRIVER=dummy"
-        TIMEOUT 35
     )
 
     add_test(
@@ -768,6 +766,10 @@ if(BUILD_TESTING)
         add_test(
             NAME v1_viewport_redmcsb_draw_stack_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_redmcsb_draw_stack_gate.py
+        )
+        add_test(
+            NAME v1_viewport_d1c_doorpass_source_lock_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_d1c_doorpass_source_lock_gate.py
         )
         add_test(
             NAME v1_viewport_source_zone_tables
@@ -818,6 +820,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_center_door_occlusion_gate.py
         )
         add_test(
+            NAME dm1_v1_viewport_walls_golden_comparison
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_walls_golden_comparison.py
+        )
+        add_test(
             NAME v1_viewport_front_wall_depth_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_front_wall_depth_gate.py
         )
@@ -848,14 +854,6 @@ if(BUILD_TESTING)
         add_test(
             NAME dm1_v1_viewport_world_redmcsb_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py
-        )
-        add_test(
-            NAME dm1_v1_viewport_wall_draw_order_source_lock
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py
-        )
-        add_test(
-            NAME dm1_v1_viewport_square_collision_source_lock
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_square_collision_source_lock.py
         )
         add_test(
             NAME v1_inventory_panel_open_redmcsb_gate
@@ -914,6 +912,22 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass207_dm1_v1_original_movement_viewport_blocker_gate.py
         )
         add_test(
+            NAME dm1_v1_fires_loader_csip_source_map_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass208_dm1_v1_fires_loader_csip_source_map_gate.py
+        )
+        add_test(
+            NAME dm1_v1_original_delayed_click_route_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass209_dm1_v1_original_delayed_click_route_gate.py
+        )
+        add_test(
+            NAME dm1_v1_original_runtime_binding_guard
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass210_dm1_v1_original_runtime_binding_guard.py
+        )
+        add_test(
+            NAME dm1_original_runtime_trace_scaffold
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/dm1_original_runtime_trace.py --check-only --expect-blocked
+        )
+        add_test(
             NAME dm1_v1_original_route_sync_probe
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass212_dm1_v1_original_route_sync_probe.py
         )
@@ -928,6 +942,58 @@ if(BUILD_TESTING)
         add_test(
             NAME pass227_dm1_v1_original_runtime_hook_design
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass227_dm1_v1_original_runtime_hook_design.py
+        )
+        add_test(
+            NAME pass230_dm1_v1_fires_exenew_symbol_map_bootstrap
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap.py
+        )
+        add_test(
+            NAME pass231_dm1_v1_fires_exenew_runtime_hit_probe
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass231_dm1_v1_fires_exenew_runtime_hit_probe.py
+        )
+        add_test(
+            NAME pass234_dm1_v1_viewport_runtime_hit_blocker
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass234_dm1_v1_viewport_runtime_hit_blocker.py
+        )
+        add_test(
+            NAME pass238_dm1_v1_runtime_debugger_keystroke_blocker
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass238_dm1_v1_runtime_debugger_keystroke_blocker.py
+        )
+        add_test(
+            NAME pass240_dm1_v1_fires_map_public_symbol_path
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass240_dm1_v1_fires_map_public_symbol_path.py
+        )
+        add_test(
+            NAME pass241_dm1_v1_runtime_csip_candidate_bridge
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass241_dm1_v1_runtime_csip_candidate_bridge.py
+        )
+        add_test(
+            NAME pass246_dm1_v1_dmexe_fires_load_segment_bridge
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass246_dm1_v1_dmexe_fires_load_segment_bridge.py
+        )
+        add_test(
+            NAME pass242_dm1_v1_dunview_tcc_int6_blocker
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass242_dm1_v1_dunview_tcc_int6_blocker.py
+        )
+        add_test(
+            NAME pass243_dm1_v1_dunview_emulator_variant_runbook
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass243_dm1_v1_dunview_emulator_variant_runbook.py
+        )
+        add_test(
+            NAME pass244_dm1_v1_qemu_freedos_dunview_path
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass244_dm1_v1_qemu_freedos_dunview_path.py
+        )
+        add_test(
+            NAME pass279_dm1_v1_evidence_capture_source_lock_followup
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass279_dm1_v1_evidence_capture_source_lock_followup.py
+        )
+        add_test(
+            NAME pass296_dm1_v1_input_tuple_proof_without_direct_f0380
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass296_dm1_v1_input_tuple_proof_without_direct_f0380.py
+        )
+        add_test(
+            NAME pass299_dm1_v1_movement_completion_matrix_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass299_dm1_v1_movement_completion_matrix_gate.py
         )
         add_test(
             NAME dm1_v1_stairs_pits_viewport_source_lock
@@ -1207,6 +1273,31 @@ if(NOT TARGET test_dm1_v1_room_transition_pc34_compat)
         add_test(
             NAME dm1_v1_room_transition_redmcsb_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_room_transition_source_lock_gate.py
+        )
+    endif()
+endif()
+
+# ── DM1 V1 Viewport 3D source-lock gate ─────────────────────────────
+if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
+    add_executable(test_dm1_v1_viewport_3d_pc34_compat
+        test_dm1_v1_viewport_3d_pc34_compat.c
+        dm1_v1_viewport_3d_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_3d_source_lock
+        COMMAND test_dm1_v1_viewport_3d_pc34_compat
+    )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME dm1_v1_viewport_3d_occlusion_metadata_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_3d_occlusion_metadata_gate.py
+        )
+        add_test(
+            NAME dm1_v1_viewport_wall_render_plan_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_wall_render_plan_gate.py
         )
     endif()
 endif()

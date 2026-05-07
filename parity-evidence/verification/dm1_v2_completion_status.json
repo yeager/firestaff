@@ -1,0 +1,43 @@
+{
+  "auditConclusion": "DM1 V2 is not verified as complete. Verified percentage is not verifiable from current repo evidence; do not report 100%.",
+  "auditedAt": "2026-05-06T13:58:00+02:00",
+  "auditedHead": "978463b6f5df12fc101763510384e9aa7d2e19f7",
+  "auditedHeadShort": "978463b",
+  "completionClaim": {
+    "isOneHundredPercent": false,
+    "reason": "Existing evidence verifies several V2 scaffolds/gates but does not define a complete percentage model or prove the DM1 V2 definition-of-done. The completion matrix gate inventories modules and required current gates; it explicitly says it does not claim V2 is done.",
+    "status": "not_verifiable",
+    "verifiedCompletionPercent": null
+  },
+  "missingOrUnprovenLanes": [
+    "Phase 0 completion-matrix ownership for every non-orphan V2 module is not fully enforced by the current tool.",
+    "Phase 1 V2 launcher/preview headless launch-smoke is not proven by current V2 gates.",
+    "Phase 2 turning/collision/door interaction and full source-locked movement-camera semantics are incomplete or unproven.",
+    "Phase 3 viewport materials, distance-row composition, clipping, lighting/fog and draw-order gates are incomplete or unproven.",
+    "Phase 4 HUD/champion panels/interaction/touch-zone route equivalence gates are absent.",
+    "Phase 5 creature, item, spell and effect render gates are absent.",
+    "Phase 6 settings, persistence, package smoke, and V1 regression proof for V2 release are absent."
+  ],
+  "observedInventory": {
+    "dm1V2CTestGateCount": 10,
+    "dm1V2CTestGates": [
+      "dm1_v2_upscale_dry_run_validator",
+      "dm1_v2_movement_viewport_pc34",
+      "dm1_v2_completion_matrix_gate",
+      "dm1_v2_runtime_shell_pc34",
+      "dm1_v2_runtime_shell_source_lock",
+      "dm1_v2_camera_controller_pc34",
+      "dm1_v2_camera_controller_source_lock",
+      "dm1_v2_movement_command_adapter_pc34",
+      "dm1_v2_movement_command_adapter_source_lock",
+      "dm1_v2_viewport_wall_occlusion_source_lock"
+    ],
+    "dm1V2ModuleCount": 32,
+    "v2LogicalCatalog": "8 categories / 45 logical IDs / 4 manifest bindings / 3 source-evidence bindings"
+  },
+  "scope": "DM1 V2 completion audit",
+  "verifiedPassingGates": [
+    "ctest --test-dir /tmp/firestaff-dm1v2-audit-build -R dm1_v2|v2_ --output-on-failure: 10/10 passed",
+    "scripts/validate_v2_logical_catalog.py required shared UI bindings/source-evidence: passed"
+  ]
+}

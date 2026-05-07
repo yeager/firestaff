@@ -3,6 +3,14 @@
 #include <stdio.h>
 #include <math.h>
 
+/* DM1 V2 HUD overlay completion note:
+ * ReDMCSB keeps champion status-box refresh in TIMELINE.C:F0260 and
+ * portrait/status drawing in PANEL.C:F0354.  This V2 overlay is deliberately
+ * presentation-only: it draws an optional compass/depth/stats layer into the
+ * supplied framebuffer and does not mutate dungeon, champion, or command
+ * runtime state.
+ */
+
 static M11_V2_HudOverlay g_v2_hud_state;
 
 static void v2_hud_plot_pixel(uint8_t* fb, int w, int x, int y, uint8_t val) {
@@ -101,9 +109,18 @@ void v2_hud_render(uint8_t* fb, int w, int h) {
     v2_hud_plot_pixel(fb, w, cx + 7, cy + 8, high_val);
     v2_hud_plot_pixel(fb, w, cx + 8, cy + 8, high_val);
 
-    float rad = g_v2_hud_state.compass.needle_angle * 3.14159265f / 180.0f;
-    int nx = (int)(8.0f * (-sinf(rad))) + cx + 8;
-    int ny = (int)(8.0f * (-cosf(rad))) + cy + 8;
+    /* Source-lock seam: ReDMCSB direction is a 0..3 logical value.  Keep the
+     * V2 compass deterministic on that cardinal state instead of depending on
+     * floating point trig in this portable C gate. */
+    int nx = cx + 8;
+    int ny = cy + 8;
+    switch (g_v2_hud_state.compass.direction) {
+    case 0: ny = cy - 8; break;
+    case 1: nx = cx - 8; break;
+    case 2: ny = cy + 16; break;
+    case 3: nx = cx + 16; break;
+    default: break;
+    }
     v2_hud_plot_pixel(fb, w, nx, ny, 255);
 
     char depth_buf[32];
@@ -126,6 +143,5 @@ void v2_hud_toggle(void) {
 }
 
 void v2_hud_set_opacity(uint8_t val) {
-    if (val > 255) val = 255;
     g_v2_hud_state.opacity = val;
 }

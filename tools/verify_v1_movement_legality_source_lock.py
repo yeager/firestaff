@@ -162,8 +162,10 @@ def main() -> int:
 
     _, f0704 = find_function(fire_c, "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat")
     require_in_order(f0704, [
-        "if (elementType == DUNGEON_ELEMENT_PIT)",
-        "int targetLevel = cursor.mapIndex + 1;",
+        "if (elementType == DUNGEON_ELEMENT_PIT &&",
+        "(squareByte & 0x08) && !(squareByte & 0x01))",
+        "targetLevel = movement_get_location_after_level_change(",
+        "dungeon, cursor.mapIndex, 1, &cursor.mapX, &cursor.mapY);",
         "cursor.mapIndex = targetLevel;",
         "outResolution->transitioned = 1;",
         "outResolution->pitCount += 1;",

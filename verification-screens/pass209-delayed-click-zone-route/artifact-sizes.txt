@@ -1,0 +1,15 @@
+-rw-rw-r-- 1 trv2 trv2  979 May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/original_viewport_224x136_manifest.tsv
+-rw-rw-r-- 1 trv2 trv2  475 May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/original_viewport_shot_labels.tsv
+-rw-rw-r-- 1 trv2 trv2 1.4K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/raw_manifest.tsv
+-rw-rw-r-- 1 trv2 trv2 8.2K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/01_ingame_start_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm
+-rw-rw-r-- 1 trv2 trv2 8.2K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png
+-rw-rw-r-- 1 trv2 trv2  90K May  5 10:01 <firestaff-repo>/verification-screens/pass209-delayed-click-zone-route/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm

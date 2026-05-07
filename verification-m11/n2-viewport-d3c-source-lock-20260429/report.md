@@ -4,7 +4,7 @@ Target: one narrow source-locked render target, the center far square `M600_VIEW
 
 ## Primary source audited
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+Source root: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 - `DUNVIEW.C:6642-6834` — `F0118_DUNGEONVIEW_DrawSquareD3C_CPSF`, the D3C square renderer.
   - `6664`: calls `F0172_DUNGEON_SetSquareAspect(...)` to classify square contents.
@@ -28,7 +28,7 @@ Added `d3c_draw_order_probe.py`, a source-only verification script. It hashes `D
 Run output saved to `probe_output.txt`:
 
 ```text
-source=/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C
+source=<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C
 dunview_sha256=6e1cc4f4aafdaf4ef93ea022fcea8b6f93a1d20e3d3f0db89f64419fe8c1c8c2
 F0118_D3C_range=6642-6834
 F0118_D3C_block_sha256=9f90e014ae9c56d81f7a6497bcd8f8a3a6338421e82b3fc2725cae9b76e859b3

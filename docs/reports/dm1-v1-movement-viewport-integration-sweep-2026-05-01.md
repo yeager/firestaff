@@ -1,8 +1,8 @@
 # DM1 V1 movement + viewport integration sweep — N2 2026-05-01
 
-Scope: N2 only (`firestaff-worker`, repo `/home/trv2/work/firestaff`). This is a source-first audit of DM1 V1 movement-to-viewport side effects after `ed83929` / `ceceeda`, focused on stepping/turning, side-lane occlusion, and object visibility after movement. No DANNESBURK/192.168.2.126 work was used.
+Scope: N2 only (`firestaff-worker`, repo `<firestaff-repo>`). This is a source-first audit of DM1 V1 movement-to-viewport side effects after `ed83929` / `ceceeda`, focused on stepping/turning, side-lane occlusion, and object visibility after movement. No <private-host>/<private-host-ip> work was used.
 
-Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+Primary source: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
 
 ## ReDMCSB source locks audited first
 
@@ -21,7 +21,7 @@ Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP2
 Commands:
 
 ```sh
-cd /home/trv2/work/firestaff
+cd <firestaff-repo>
 cmake --build build --target \
   firestaff_m11_game_view_probe \
   firestaff_m11_viewport_state_probe \

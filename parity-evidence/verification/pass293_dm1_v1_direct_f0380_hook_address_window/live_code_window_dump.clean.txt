@@ -1,0 +1,66 @@
+---(Register Overview                   )---
+EAX=          ESI=          DS=       ES=       FS=       GS=       SS=
+000000000000  60 100000000  DS=0000F0 60 00000 F0 60000 00 F00000..`...0000 Real
+0000:0010     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+000000000000  60 100000000  CS=0000F0 60 100000000  C0 Z0 S0 O0 A0 P0 D0 I1 T0.
+000000000000  60 10000000060 10 00 F0 80 10 00 F0 60 10 00 F0  `...`....0  CPL0
+000000000000  60 10000000060 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+
+
+0000:0000  60
+
+
+
+---(Code Overview   Scroll: up/down     )---
+
+
+                               pusha
+0000:0001  1000                adc  [bx+si],al             ds:[0000]=1060
+0000:0003  F060                lock pusha
+0000:0005  1000                adc  [bx+si],al             ds:[0000]=1060
+0000:0007  F060.c:528:(snd_seq_lock pushapen /dev/snd/seq failed: Permission den
+0000:0009  1000                adc  [bx+si],al             ds:[0000]=1060
+(Running)0: IO:Read from port 03BE  [bx+si],al             ds:[0000]=1060
+         0: INT10:Set Video Mode 3
+         0: VGA:Blinking 8
+         0: BIOS:KeyboardElayout1DDle auto1DDt found                    66F
+         0: BIOS:Keyboar8 layout499le auto not foEnd
+         0FFFILES:file 91Cn command 2 file CON                          3
+         1DDFILES:file o8en command 2 file CON              34
+         0: FILES:file open command 2 file CON
+         0: FILES:file open command 2 file CON
+         0: EXEC:Parsing c08 00 70 00 08 00 70 00 08 00 70 0       ..p...p...p
+         0: FI08 00 70 0l file open command 80 file Z:\AUTOEXEC..pT
+         0: FIA5 FEpecial 87 E9open co55 FF 80 file Z:\AUTOEXEC........U
+         0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6
+         0: FI20 13pecial 20 11open co40 11 80 file Z:1AUTOEXEC ... ...@
+         0: EXC0 11rsing cE0 11d line:00 12t c "/t40 12ss293-du............@os"
+         3: EXE0 12ecute mE0 12COM 0      2                    .....
+         3: FI80 12ile opeA4 Fmmand 0 file mount.C00 05 00 C0  .....       ....
+-> _        DOSMISC:DIRCACHE: Set volume label to C_DRIVE
+-> _            S:Special file open command 80 file Z:\AUTOEXEC.BAT
+-> _            :Parsing command li es c:
+0499:000F  0E  ES:Special file push cs
+0499:0010  1F  C:Parsing commanpop  ds   BUG DM.EXE -vv -sn -pk
+0499:0011  8B0E0C00ecute Z:\DEBmov  cx,[000C]                     C]=F00
+-> _       8BF1ES:file open commov  si,cxe Z:\DEBUG.COM
+-> _
+-> _
+-> _
+-> BP 22F4:0699_   deleted.
+-> BP 23AD:40FE_  int at 22F4:0699
+-> BPLIST_  reakpoint at 23AD:40FE
+-> _   int list:
+-------------------------------------------------------------------------
+00. BP 23AD:40FE
+-> MEMDUMP 22F4:0699 96_
+-> MEMDUMP 22F4:0680 160_
+-> MEMDUMP 23AD:40FE 64_  .
+-> CPU_  mory dump success.
+        34: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+        34: MISC:eflags:00007202 [vm=0 iopl=3 nt=1]
+        34: MISC:GDT base=00000000 limit=00000000
+        34: MISC:IDT base=00000000 limit=000003FF

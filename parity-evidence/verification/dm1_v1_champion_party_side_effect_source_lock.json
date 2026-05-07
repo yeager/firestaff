@@ -11,13 +11,13 @@
   "failures": [],
   "localChecks": [
     {
-      "file": "/home/trv2/work/firestaff/dm1_v1_movement_timing_pc34_compat.c",
+      "file": "<firestaff-repo>/dm1_v1_movement_timing_pc34_compat.c",
       "id": "movement_timing_records_square_change_scent_and_cooldown",
       "missing": [],
       "ok": true
     },
     {
-      "file": "/home/trv2/work/firestaff/memory_movement_pc34_compat.c",
+      "file": "<firestaff-repo>/memory_movement_pc34_compat.c",
       "id": "movement_core_keeps_pure_step_direction_helpers",
       "missing": [],
       "ok": true
@@ -28,40 +28,40 @@
   "pass": 208,
   "redmcsbChecks": [
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "champion_set_party_direction_rotates_champion_cell_direction_and_party_direction",
       "lines": "118-130",
       "missing": [],
       "ok": true
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "id": "command_tables_bind_movement_commands_to_mouse_and_keys",
       "lines": "106-113,252-260",
       "missing": [],
       "ok": true
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
       "id": "dungeon_direction_step_arrays_and_active_group_accessors",
       "lines": "35-42,1264-1327",
       "missing": [],
       "ok": true
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "id": "movesens_projectile_intermediary_party_cells",
       "lines": "232-313",
       "missing": [],
       "ok": true
     },
     {
-      "file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "file": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "id": "movesens_party_position_rotation_scent_sensor_handoff",
       "lines": "441-451,493-518,738-821,892-898",
       "missing": [],
       "ok": true
     }
   ],
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+  "redmcsbSourceRoot": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 }

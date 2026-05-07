@@ -39,6 +39,16 @@ enum {
     M12_SETTINGS_ROW_SCALING_FILTER,
     M12_SETTINGS_ROW_VSYNC,
     M12_SETTINGS_ROW_WASD_MOVEMENT,
+    M12_SETTINGS_ROW_AUDIO_MASTER,
+    M12_SETTINGS_ROW_AUDIO_MUSIC,
+    M12_SETTINGS_ROW_AUDIO_SFX,
+    M12_SETTINGS_ROW_AUDIO_MUTED,
+    M12_SETTINGS_ROW_FONT_SCALE,
+    M12_SETTINGS_ROW_HIGH_CONTRAST,
+    M12_SETTINGS_ROW_COLORBLIND_MODE,
+    M12_SETTINGS_ROW_AUTO_PAUSE,
+    M12_SETTINGS_ROW_THEME,
+    M12_SETTINGS_ROW_BACKGROUND,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -79,6 +89,9 @@ static const char* g_toggleModes[] = {"OFF", "ON"};
 static const char* g_scalingFilters[] = {"NEAREST", "LINEAR"};
 static const char* g_rendererBackendLabels[] = {"AUTO", "SOFTWARE", "SDL", "OPENGL", "VULKAN"};
 static const char* g_rendererBackendAvailable[] = {"AVAILABLE", "AVAILABLE", "AVAILABLE", "UNAVAILABLE", "UNAVAILABLE"};
+static const char* g_colorblindModes[] = {"OFF", "DEUT", "PROT", "TRIT"};
+static const char* g_themeLabels[] = {"CLASSIC", "DARK", "AMIGA", "CGA"};
+static const char* g_bgPresetLabels[] = {"STATIC", "DUNGEON", "TORCH", "STARS"};
 
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     if (!opts) {
@@ -864,6 +877,16 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.scalingFilterIndex = state->settings.scalingFilterIndex;
     config.vsyncIndex = state->settings.vsyncIndex;
     config.wasdMovementEnabled = state->settings.wasdMovementEnabled;
+    config.audioMasterVolume = state->settings.audioMasterVolume;
+    config.audioMusicVolume = state->settings.audioMusicVolume;
+    config.audioSfxVolume = state->settings.audioSfxVolume;
+    config.audioMuted = state->settings.audioMuted;
+    config.fontScale = state->settings.fontScale;
+    config.highContrast = state->settings.highContrast;
+    config.colorblindMode = state->settings.colorblindMode;
+    config.autoPause = state->settings.autoPause;
+    config.themeIndex = state->settings.themeIndex;
+    config.bgAnimationPreset = state->settings.bgAnimationPreset;
     config.windowWidth = state->settings.windowWidth;
     config.windowHeight = state->settings.windowHeight;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -907,6 +930,19 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.vsyncIndex = m12_clamp_index(config.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
     state->settings.wasdMovementEnabled = config.wasdMovementEnabled ? 1 : 0;
+    state->settings.audioMasterVolume = m12_clamp_index(config.audioMasterVolume, 129);
+    state->settings.audioMusicVolume = m12_clamp_index(config.audioMusicVolume, 129);
+    state->settings.audioSfxVolume = m12_clamp_index(config.audioSfxVolume, 129);
+    state->settings.audioMuted = config.audioMuted ? 1 : 0;
+    state->settings.fontScale = config.fontScale < 1 ? 1 : (config.fontScale > 3 ? 3 : config.fontScale);
+    state->settings.highContrast = config.highContrast ? 1 : 0;
+    state->settings.colorblindMode = m12_clamp_index(config.colorblindMode,
+                                                     (int)(sizeof(g_colorblindModes) / sizeof(g_colorblindModes[0])));
+    state->settings.autoPause = config.autoPause ? 1 : 0;
+    state->settings.themeIndex = m12_clamp_index(config.themeIndex,
+                                                 (int)(sizeof(g_themeLabels) / sizeof(g_themeLabels[0])));
+    state->settings.bgAnimationPreset = m12_clamp_index(config.bgAnimationPreset,
+                                                        (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->settings.windowWidth = config.windowWidth > 0 ? config.windowWidth : 960;
     state->settings.windowHeight = config.windowHeight > 0 ? config.windowHeight : 540;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -1009,6 +1045,153 @@ static const char* m12_settings_value_vsync(const M12_StartupMenuState* state) {
 
 static const char* m12_settings_value_wasd_movement(const M12_StartupMenuState* state) {
     return m12_tr(state, g_toggleModes[state->settings.wasdMovementEnabled ? 1 : 0]);
+}
+
+static const char* m12_settings_value_percent(int value) {
+    static char text[8];
+    value = m12_clamp_index(value, 129);
+    snprintf(text, sizeof(text), "%d%%", (value * 100) / 128);
+    return text;
+}
+
+static const char* m12_settings_value_audio_master(const M12_StartupMenuState* state) {
+    return m12_settings_value_percent(state ? state->settings.audioMasterVolume : 128);
+}
+
+static const char* m12_settings_value_audio_music(const M12_StartupMenuState* state) {
+    return m12_settings_value_percent(state ? state->settings.audioMusicVolume : 128);
+}
+
+static const char* m12_settings_value_audio_sfx(const M12_StartupMenuState* state) {
+    return m12_settings_value_percent(state ? state->settings.audioSfxVolume : 128);
+}
+
+static const char* m12_settings_value_audio_muted(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.audioMuted ? 1 : 0]);
+}
+
+static const char* m12_settings_value_font_scale(const M12_StartupMenuState* state) {
+    static char text[8];
+    int value = state ? state->settings.fontScale : 1;
+    if (value < 1) {
+        value = 1;
+    }
+    if (value > 3) {
+        value = 3;
+    }
+    snprintf(text, sizeof(text), "%dX", value);
+    return text;
+}
+
+static const char* m12_settings_value_high_contrast(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.highContrast ? 1 : 0]);
+}
+
+static const char* m12_settings_value_colorblind(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.colorblindMode,
+                                        (int)(sizeof(g_colorblindModes) / sizeof(g_colorblindModes[0])))
+                      : 0;
+    return m12_tr(state, g_colorblindModes[index]);
+}
+
+static const char* m12_settings_value_auto_pause(const M12_StartupMenuState* state) {
+    return m12_tr(state, g_toggleModes[state && state->settings.autoPause ? 1 : 0]);
+}
+
+static const char* m12_settings_value_theme(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.themeIndex,
+                                        (int)(sizeof(g_themeLabels) / sizeof(g_themeLabels[0])))
+                      : 0;
+    return m12_tr(state, g_themeLabels[index]);
+}
+
+static const char* m12_settings_value_background(const M12_StartupMenuState* state) {
+    int index = state ? m12_clamp_index(state->settings.bgAnimationPreset,
+                                        (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])))
+                      : 0;
+    return m12_tr(state, g_bgPresetLabels[index]);
+}
+
+static const char* m12_settings_label(const M12_StartupMenuState* state, int row) {
+    switch (row) {
+        case M12_SETTINGS_ROW_LANGUAGE: return m12_text(state, M12_TEXT_LANGUAGE);
+        case M12_SETTINGS_ROW_GRAPHICS: return m12_text(state, M12_TEXT_PRESENTATION_MODE);
+        case M12_SETTINGS_ROW_RENDERER_BACKEND: return m12_text(state, M12_TEXT_RENDERER_BACKEND);
+        case M12_SETTINGS_ROW_WINDOW_MODE: return m12_text(state, M12_TEXT_WINDOW_MODE);
+        case M12_SETTINGS_ROW_SCALE_MODE: return m12_tr(state, "SCALE");
+        case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_tr(state, "PIXEL SNAP");
+        case M12_SETTINGS_ROW_SCALING_FILTER: return m12_tr(state, "FILTER");
+        case M12_SETTINGS_ROW_VSYNC: return m12_tr(state, "VSYNC");
+        case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_tr(state, "WASD MOVEMENT");
+        case M12_SETTINGS_ROW_AUDIO_MASTER: return m12_tr(state, "MASTER VOLUME");
+        case M12_SETTINGS_ROW_AUDIO_MUSIC: return m12_tr(state, "MUSIC VOLUME");
+        case M12_SETTINGS_ROW_AUDIO_SFX: return m12_tr(state, "SFX VOLUME");
+        case M12_SETTINGS_ROW_AUDIO_MUTED: return m12_tr(state, "MUTE AUDIO");
+        case M12_SETTINGS_ROW_FONT_SCALE: return m12_tr(state, "FONT SCALE");
+        case M12_SETTINGS_ROW_HIGH_CONTRAST: return m12_tr(state, "HIGH CONTRAST");
+        case M12_SETTINGS_ROW_COLORBLIND_MODE: return m12_tr(state, "COLORBLIND");
+        case M12_SETTINGS_ROW_AUTO_PAUSE: return m12_tr(state, "AUTO PAUSE");
+        case M12_SETTINGS_ROW_THEME: return m12_tr(state, "THEME");
+        case M12_SETTINGS_ROW_BACKGROUND: return m12_tr(state, "BACKGROUND");
+        default: return "";
+    }
+}
+
+static const char* m12_settings_value(const M12_StartupMenuState* state, int row) {
+    switch (row) {
+        case M12_SETTINGS_ROW_LANGUAGE: return m12_settings_value_language(state);
+        case M12_SETTINGS_ROW_GRAPHICS: return m12_settings_value_graphics(state);
+        case M12_SETTINGS_ROW_RENDERER_BACKEND: return m12_settings_value_renderer_backend(state);
+        case M12_SETTINGS_ROW_WINDOW_MODE: return m12_settings_value_window_mode(state);
+        case M12_SETTINGS_ROW_SCALE_MODE: return m12_settings_value_scale_mode(state);
+        case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_settings_value_integer_scaling(state);
+        case M12_SETTINGS_ROW_SCALING_FILTER: return m12_settings_value_scaling_filter(state);
+        case M12_SETTINGS_ROW_VSYNC: return m12_settings_value_vsync(state);
+        case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_settings_value_wasd_movement(state);
+        case M12_SETTINGS_ROW_AUDIO_MASTER: return m12_settings_value_audio_master(state);
+        case M12_SETTINGS_ROW_AUDIO_MUSIC: return m12_settings_value_audio_music(state);
+        case M12_SETTINGS_ROW_AUDIO_SFX: return m12_settings_value_audio_sfx(state);
+        case M12_SETTINGS_ROW_AUDIO_MUTED: return m12_settings_value_audio_muted(state);
+        case M12_SETTINGS_ROW_FONT_SCALE: return m12_settings_value_font_scale(state);
+        case M12_SETTINGS_ROW_HIGH_CONTRAST: return m12_settings_value_high_contrast(state);
+        case M12_SETTINGS_ROW_COLORBLIND_MODE: return m12_settings_value_colorblind(state);
+        case M12_SETTINGS_ROW_AUTO_PAUSE: return m12_settings_value_auto_pause(state);
+        case M12_SETTINGS_ROW_THEME: return m12_settings_value_theme(state);
+        case M12_SETTINGS_ROW_BACKGROUND: return m12_settings_value_background(state);
+        default: return "";
+    }
+}
+
+static const char* m12_settings_group_label(const M12_StartupMenuState* state, int row) {
+    if (row <= M12_SETTINGS_ROW_LANGUAGE) {
+        return m12_tr(state, "GENERAL");
+    }
+    if (row <= M12_SETTINGS_ROW_GRAPHICS) {
+        return m12_tr(state, "PRESENTATION");
+    }
+    if (row <= M12_SETTINGS_ROW_VSYNC) {
+        return m12_tr(state, "DISPLAY / RENDERER");
+    }
+    if (row <= M12_SETTINGS_ROW_WASD_MOVEMENT) {
+        return m12_tr(state, "INPUT");
+    }
+    if (row <= M12_SETTINGS_ROW_AUDIO_MUTED) {
+        return m12_tr(state, "AUDIO");
+    }
+    if (row <= M12_SETTINGS_ROW_AUTO_PAUSE) {
+        return m12_tr(state, "ACCESSIBILITY");
+    }
+    return m12_tr(state, "APPEARANCE");
+}
+
+static int m12_settings_group_starts(int row) {
+    return row == M12_SETTINGS_ROW_LANGUAGE ||
+           row == M12_SETTINGS_ROW_GRAPHICS ||
+           row == M12_SETTINGS_ROW_RENDERER_BACKEND ||
+           row == M12_SETTINGS_ROW_WASD_MOVEMENT ||
+           row == M12_SETTINGS_ROW_AUDIO_MASTER ||
+           row == M12_SETTINGS_ROW_FONT_SCALE ||
+           row == M12_SETTINGS_ROW_THEME;
 }
 
 static int m12_game_slot_from_id(const char* gameId) {
@@ -1114,6 +1297,19 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     state->settings.vsyncIndex = m12_clamp_index(state->settings.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
     state->settings.wasdMovementEnabled = state->settings.wasdMovementEnabled ? 1 : 0;
+    state->settings.audioMasterVolume = m12_clamp_index(state->settings.audioMasterVolume, 129);
+    state->settings.audioMusicVolume = m12_clamp_index(state->settings.audioMusicVolume, 129);
+    state->settings.audioSfxVolume = m12_clamp_index(state->settings.audioSfxVolume, 129);
+    state->settings.audioMuted = state->settings.audioMuted ? 1 : 0;
+    state->settings.fontScale = state->settings.fontScale < 1 ? 1 : (state->settings.fontScale > 3 ? 3 : state->settings.fontScale);
+    state->settings.highContrast = state->settings.highContrast ? 1 : 0;
+    state->settings.colorblindMode = m12_clamp_index(state->settings.colorblindMode,
+                                                     (int)(sizeof(g_colorblindModes) / sizeof(g_colorblindModes[0])));
+    state->settings.autoPause = state->settings.autoPause ? 1 : 0;
+    state->settings.themeIndex = m12_clamp_index(state->settings.themeIndex,
+                                                 (int)(sizeof(g_themeLabels) / sizeof(g_themeLabels[0])));
+    state->settings.bgAnimationPreset = m12_clamp_index(state->settings.bgAnimationPreset,
+                                                        (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->gameOptSelectedRow = m12_clamp_index(state->gameOptSelectedRow,
                                                 M12_GAME_OPT_ROW_COUNT + 1);
     state->museumSelectedIndex = m12_clamp_index(state->museumSelectedIndex,
@@ -1246,6 +1442,66 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.wasdMovementEnabled,
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_AUDIO_MASTER:
+            state->settings.audioMasterVolume = m12_cycle_index(
+                state->settings.audioMasterVolume,
+                delta * 16,
+                129);
+            break;
+        case M12_SETTINGS_ROW_AUDIO_MUSIC:
+            state->settings.audioMusicVolume = m12_cycle_index(
+                state->settings.audioMusicVolume,
+                delta * 16,
+                129);
+            break;
+        case M12_SETTINGS_ROW_AUDIO_SFX:
+            state->settings.audioSfxVolume = m12_cycle_index(
+                state->settings.audioSfxVolume,
+                delta * 16,
+                129);
+            break;
+        case M12_SETTINGS_ROW_AUDIO_MUTED:
+            state->settings.audioMuted = m12_cycle_index(
+                state->settings.audioMuted,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_FONT_SCALE:
+            state->settings.fontScale = 1 + m12_cycle_index(
+                state->settings.fontScale - 1,
+                delta,
+                3);
+            break;
+        case M12_SETTINGS_ROW_HIGH_CONTRAST:
+            state->settings.highContrast = m12_cycle_index(
+                state->settings.highContrast,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_COLORBLIND_MODE:
+            state->settings.colorblindMode = m12_cycle_index(
+                state->settings.colorblindMode,
+                delta,
+                (int)(sizeof(g_colorblindModes) / sizeof(g_colorblindModes[0])));
+            break;
+        case M12_SETTINGS_ROW_AUTO_PAUSE:
+            state->settings.autoPause = m12_cycle_index(
+                state->settings.autoPause,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_THEME:
+            state->settings.themeIndex = m12_cycle_index(
+                state->settings.themeIndex,
+                delta,
+                (int)(sizeof(g_themeLabels) / sizeof(g_themeLabels[0])));
+            break;
+        case M12_SETTINGS_ROW_BACKGROUND:
+            state->settings.bgAnimationPreset = m12_cycle_index(
+                state->settings.bgAnimationPreset,
+                delta,
+                (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
             break;
         default:
             break;
@@ -2675,103 +2931,73 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                      framebufferHeight,
                      &settingsCard,
                      NULL);
-    m12_draw_frame(framebuffer,
-                   framebufferWidth,
-                   framebufferHeight,
-                   118,
-                   66,
-                   188,
-                   108,
-                   M12_COLOR_DARK_GRAY,
-                   M12_COLOR_BLACK);
-    m12_draw_text(framebuffer,
-                  framebufferWidth,
-                  framebufferHeight,
-                  126,
-                  54,
-                  m12_text(state, M12_TEXT_PERSISTED_OPTIONS),
-                  &g_textSmallAccent);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          64,
-                          m12_text(state, M12_TEXT_LANGUAGE),
-                          m12_settings_value_language(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE,
-                          state->settings.languageIndex,
-                          1);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          82,
-                          m12_text(state, M12_TEXT_PRESENTATION_MODE),
-                          m12_settings_value_graphics(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS,
-                          0,
-                          0);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          100,
-                          m12_text(state, M12_TEXT_RENDERER_BACKEND),
-                          m12_settings_value_renderer_backend(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_RENDERER_BACKEND,
-                          0,
-                          0);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          118,
-                          m12_text(state, M12_TEXT_WINDOW_MODE),
-                          m12_settings_value_window_mode(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
-                          0,
-                          0);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          136,
-                          m12_tr(state, "SCALE"),
-                          m12_settings_value_scale_mode(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALE_MODE,
-                          0,
-                          0);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          154,
-                          m12_tr(state, "PIXEL SNAP"),
-                          m12_settings_value_integer_scaling(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_INTEGER_SCALING,
-                          0,
-                          0);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          172,
-                          m12_tr(state, "FILTER"),
-                          m12_settings_value_scaling_filter(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALING_FILTER,
-                          0,
-                          0);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          190,
-                          m12_tr(state, "VSYNC"),
-                          m12_settings_value_vsync(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
-                          0,
-                          0);
-    m12_draw_settings_row(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          208,
-                          m12_tr(state, "WASD MOVEMENT"),
-                          m12_settings_value_wasd_movement(state),
-                          state->settingsSelectedIndex == M12_SETTINGS_ROW_WASD_MOVEMENT,
-                          0,
-                          0);
+    {
+        int panelTop = 54;
+        int rowY = 70;
+        int rowHeight = 18;
+        int visibleRows = 6;
+        int firstRow = state->settingsSelectedIndex - (visibleRows / 2);
+        int row;
+        int lastGroup = -1;
+        if (firstRow < 0) {
+            firstRow = 0;
+        }
+        if (firstRow > M12_SETTINGS_ROW_COUNT - visibleRows) {
+            firstRow = M12_SETTINGS_ROW_COUNT - visibleRows;
+        }
+        if (firstRow < 0) {
+            firstRow = 0;
+        }
+        m12_draw_frame(framebuffer,
+                       framebufferWidth,
+                       framebufferHeight,
+                       118,
+                       56,
+                       188,
+                       120,
+                       M12_COLOR_DARK_GRAY,
+                       M12_COLOR_BLACK);
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      126,
+                      panelTop,
+                      m12_text(state, M12_TEXT_PERSISTED_OPTIONS),
+                      &g_textSmallAccent);
+        for (row = firstRow; row < M12_SETTINGS_ROW_COUNT && row < firstRow + visibleRows; ++row) {
+            int groupStart = m12_settings_group_starts(row);
+            if (groupStart || row == firstRow) {
+                const char* group = m12_settings_group_label(state, row);
+                int groupId = row;
+                if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
+                else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VSYNC) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
+                else if (row > M12_SETTINGS_ROW_VSYNC && row <= M12_SETTINGS_ROW_WASD_MOVEMENT) groupId = M12_SETTINGS_ROW_WASD_MOVEMENT;
+                else if (row > M12_SETTINGS_ROW_WASD_MOVEMENT && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
+                else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
+                else if (row > M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_THEME;
+                if (groupId != lastGroup) {
+                    m12_draw_text(framebuffer,
+                                  framebufferWidth,
+                                  framebufferHeight,
+                                  126,
+                                  rowY - 8,
+                                  group,
+                                  &g_textSmallAccent);
+                    lastGroup = groupId;
+                }
+            }
+            m12_draw_settings_row(framebuffer,
+                                  framebufferWidth,
+                                  framebufferHeight,
+                                  rowY,
+                                  m12_settings_label(state, row),
+                                  m12_settings_value(state, row),
+                                  state->settingsSelectedIndex == row,
+                                  state->settings.languageIndex,
+                                  row == M12_SETTINGS_ROW_LANGUAGE);
+            rowY += rowHeight;
+        }
+    }
     m12_draw_frame(framebuffer,
                    framebufferWidth,
                    framebufferHeight,
@@ -3986,110 +4212,67 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                   contentY + 10,
                   m12_text(state, M12_TEXT_PERSISTED_OPTIONS),
                   &g_textSmallAccent);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 28,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_text(state, M12_TEXT_LANGUAGE),
-                                 m12_settings_value_language(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE,
-                                 state->settings.languageIndex,
-                                 1);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 60,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_text(state, M12_TEXT_PRESENTATION_MODE),
-                                 m12_settings_value_graphics(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_GRAPHICS,
-                                 0,
-                                 0);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 92,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_text(state, M12_TEXT_RENDERER_BACKEND),
-                                 m12_settings_value_renderer_backend(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_RENDERER_BACKEND,
-                                 0,
-                                 0);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 124,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_text(state, M12_TEXT_WINDOW_MODE),
-                                 m12_settings_value_window_mode(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_WINDOW_MODE,
-                                 0,
-                                 0);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 156,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_tr(state, "SCALE"),
-                                 m12_settings_value_scale_mode(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALE_MODE,
-                                 0,
-                                 0);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 188,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_tr(state, "PIXEL SNAP"),
-                                 m12_settings_value_integer_scaling(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_INTEGER_SCALING,
-                                 0,
-                                 0);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 220,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_tr(state, "FILTER"),
-                                 m12_settings_value_scaling_filter(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_SCALING_FILTER,
-                                 0,
-                                 0);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 252,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_tr(state, "VSYNC"),
-                                 m12_settings_value_vsync(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_VSYNC,
-                                 0,
-                                 0);
-    m12_draw_modern_settings_row(framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 panelX + 10,
-                                 contentY + 284,
-                                 framebufferWidth - margin - panelX - 20,
-                                 m12_tr(state, "WASD MOVEMENT"),
-                                 m12_settings_value_wasd_movement(state),
-                                 state->settingsSelectedIndex == M12_SETTINGS_ROW_WASD_MOVEMENT,
-                                 0,
-                                 0);
+    {
+        int rowY = contentY + 36;
+        int rowHeight = 34;
+        int availableH = framebufferHeight - contentY - 92;
+        int visibleRows = availableH / rowHeight;
+        int firstRow;
+        int row;
+        int lastGroup = -1;
+        if (visibleRows < 4) {
+            visibleRows = 4;
+        }
+        if (visibleRows > M12_SETTINGS_ROW_COUNT) {
+            visibleRows = M12_SETTINGS_ROW_COUNT;
+        }
+        firstRow = state->settingsSelectedIndex - (visibleRows / 2);
+        if (firstRow < 0) {
+            firstRow = 0;
+        }
+        if (firstRow > M12_SETTINGS_ROW_COUNT - visibleRows) {
+            firstRow = M12_SETTINGS_ROW_COUNT - visibleRows;
+        }
+        if (firstRow < 0) {
+            firstRow = 0;
+        }
+        for (row = firstRow; row < M12_SETTINGS_ROW_COUNT && row < firstRow + visibleRows; ++row) {
+            int groupId = row;
+            if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
+            else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VSYNC) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
+            else if (row > M12_SETTINGS_ROW_VSYNC && row <= M12_SETTINGS_ROW_WASD_MOVEMENT) groupId = M12_SETTINGS_ROW_WASD_MOVEMENT;
+            else if (row > M12_SETTINGS_ROW_WASD_MOVEMENT && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
+            else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
+            else if (row > M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_THEME;
+            if (groupId != lastGroup) {
+                m12_draw_text(framebuffer,
+                              framebufferWidth,
+                              framebufferHeight,
+                              panelX + 12,
+                              rowY - 10,
+                              m12_settings_group_label(state, row),
+                              &g_textSmallAccent);
+                lastGroup = groupId;
+            }
+            m12_draw_modern_settings_row(framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight,
+                                         panelX + 10,
+                                         rowY,
+                                         framebufferWidth - margin - panelX - 20,
+                                         m12_settings_label(state, row),
+                                         m12_settings_value(state, row),
+                                         state->settingsSelectedIndex == row,
+                                         state->settings.languageIndex,
+                                         row == M12_SETTINGS_ROW_LANGUAGE);
+            rowY += rowHeight;
+        }
+    }
     m12_draw_text(framebuffer,
                   framebufferWidth,
                   framebufferHeight,
                   panelX + 10,
-                  contentY + 320,
+                  framebufferHeight - 48,
                   m12_text(state, M12_TEXT_SETTINGS_SAVED),
                   &g_textSmallMuted);
     m12_draw_footer(framebuffer,

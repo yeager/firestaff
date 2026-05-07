@@ -83,7 +83,7 @@ def audit_runner() -> dict[str, Any]:
         observed = sha256(path) if exists else None
         files[label] = {"path": str(path), "exists": exists, "sha256": observed, "expectedSha256": expected, "ok": exists and observed == expected}
     return {
-        "host_contract": "portable host; DANNESBURK and 192.168.2.126 forbidden",
+        "host_contract": "portable host; <private-host> and <private-host-ip> forbidden",
         "tools": tools,
         "missing_tools": [cmd for cmd, path in tools.items() if not path],
         "canonical_files": files,
@@ -138,7 +138,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
             lines.append(f"- shot {m['index']}: `{m['classification']}` expected `{m['expected']}` (`{m['file']}`)")
     else:
         lines.append("- none")
-    lines += ["", "## Decision", "", "This is a landable gate because it separates three facts cleanly:", "", "1. ReDMCSB source seams for movement/viewport capture are cited and checked.", "2. N2 has the Linux runner prerequisites and exact PC34 input hashes for a reproducible DOSBox capture attempt.", "3. The current six-shot route is **not promotable** as original movement/viewport evidence because semantic classifier mismatches and duplicate frames remain.", "", "Non-claims: no DANNESBURK use, no push, no original-vs-Firestaff pixel parity claim.", ""]
+    lines += ["", "## Decision", "", "This is a landable gate because it separates three facts cleanly:", "", "1. ReDMCSB source seams for movement/viewport capture are cited and checked.", "2. N2 has the Linux runner prerequisites and exact PC34 input hashes for a reproducible DOSBox capture attempt.", "3. The current six-shot route is **not promotable** as original movement/viewport evidence because semantic classifier mismatches and duplicate frames remain.", "", "Non-claims: no <private-host> use, no push, no original-vs-Firestaff pixel parity claim.", ""]
     report.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -151,7 +151,7 @@ def main() -> int:
     runner = audit_runner()
     attempt = audit_existing_attempt()
     status = decide_status(source, runner, attempt)
-    manifest = {"schema": "pass206_dm1_v1_original_runner_minimal_gate.v1", "status": status, "worker": "portable host", "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["DANNESBURK", "192.168.2.126"], "redmcsb_source_audit": source, "runner_prerequisites": runner, "existing_attempt_audit": attempt}
+    manifest = {"schema": "pass206_dm1_v1_original_runner_minimal_gate.v1", "status": status, "worker": "portable host", "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["<private-host>", "<private-host-ip>"], "redmcsb_source_audit": source, "runner_prerequisites": runner, "existing_attempt_audit": attempt}
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_report(manifest, args.report)

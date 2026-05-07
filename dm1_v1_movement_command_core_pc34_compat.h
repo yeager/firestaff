@@ -20,10 +20,12 @@ extern "C" {
  *   C001/C002 turns to F0365 and C003..C006 steps to F0366.
  * - CLIKMENU.C:142-179 F0365 removes/re-adds the party on the same square
  *   around F0284_CHAMPION_SetPartyDirection and releases input wait.
- * - CLIKMENU.C:180-347 F0366 resolves relative step destination, rejects
- *   walls/closed doors/closed real fake-walls/groups, calls F0267_MOVE for
- *   source/destination/sensor mutation, applies movement cooldown, and releases
- *   input wait only after accepted party movement.
+ * - CLIKMENU.C:180-347 F0366 resolves relative step destination, takes
+ *   stairs immediately on turn/backward/current-square and target-square
+ *   stairs consequences, rejects walls/closed doors/closed real
+ *   fake-walls/groups, calls F0267_MOVE for source/destination/sensor
+ *   mutation, applies movement cooldown only after accepted non-stairs party
+ *   movement, and releases input wait after accepted command effects.
  * - MOVESENS.C:752-783 timestamps true party square changes; MOVESENS.C:1553-1794
  *   walks party leave/enter sensors; GAMELOOP.C:90 and DRAWVIEW.C:709-724 redraw
  *   and present the viewport from the mutated party state on the next loop.

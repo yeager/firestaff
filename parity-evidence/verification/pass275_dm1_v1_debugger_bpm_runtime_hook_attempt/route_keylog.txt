@@ -1,0 +1,16 @@
+route-step wait:7000
+route-step enter
+route-step wait:1500
+route-step one
+route-step wait:1500
+route-step click:276,140
+click:276,140->553,281
+route-step wait:1500
+route-step one
+route-step wait:1500
+route-step kp5
+route-step wait:700
+route-step kp4
+route-step wait:700
+route-step kp6
+route-step wait:700

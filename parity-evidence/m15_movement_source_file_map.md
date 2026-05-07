@@ -2,10 +2,10 @@
 
 Status: **blocked_requested_files_do_not_exist_in_redmcsb; mapped_to_actual_sources**
 
-Worktree: `/home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228`
+Worktree: `<firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228`
 Commit checked: `1ac505c`
-ReDMCSB source base checked: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
-Broader ReDMCSB base checked: `/home/trv2/.openclaw/data/firestaff-redmcsb-source`
+ReDMCSB source base checked: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Broader ReDMCSB base checked: `<firestaff-data>/firestaff-redmcsb-source`
 
 ## Requested file existence check
 
@@ -21,15 +21,15 @@ The requested split movement files are not ReDMCSB files in the checked local Re
 Verification command evidence:
 
 ```sh
-find /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206 -type f \
+find <redmcsb-source>/ReDMCSB_WIP20210206 -type f \
   \( -iname MOVE.C -o -iname MOVEOBJ.C -o -iname MOVESEN2.C -o -iname MOVESENS.C \)
 # only MOVESENS.C returned
 
-find /home/trv2/.openclaw/data/firestaff-redmcsb-source -type f \
+find <firestaff-data>/firestaff-redmcsb-source -type f \
   \( -iname MOVE.C -o -iname MOVEOBJ.C -o -iname MOVESEN2.C -o -iname MOVESENS.C \)
 # only Toolchains/Common/Source/MOVESENS.C in WIP and non-WIP trees returned
 
-grep -RIn -E "MOVEOBJ|MOVESEN2|MOVE\\.C" /home/trv2/.openclaw/data/firestaff-redmcsb-source
+grep -RIn -E "MOVEOBJ|MOVESEN2|MOVE\\.C" <firestaff-data>/firestaff-redmcsb-source
 # no filename mentions returned
 ```
 

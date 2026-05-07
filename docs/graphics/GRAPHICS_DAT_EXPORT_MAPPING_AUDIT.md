@@ -27,7 +27,7 @@ Current original exports come from `extraction-tools/extract_all_graphics.py`.
 That script:
 
 1. reads the real DM1 PC 3.4 `GRAPHICS.DAT`
-   - source: `/Users/bosse/.openclaw/data/redmcsb-original/GRAPHICS.DAT`
+   - source: `<local-home>/.openclaw/data/redmcsb-original/GRAPHICS.DAT`
    - SHA-256: `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`
 2. parses the format-1 header directly
 3. classifies entries by metadata (`bitmap`, `placeholder`, `special`, etc.)

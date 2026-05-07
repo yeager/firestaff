@@ -29,6 +29,8 @@
 #define DM1_V2_RUNTIME_COMMAND_MOVE_BACKWARD 2
 #define DM1_V2_RUNTIME_COMMAND_TURN_LEFT 3
 #define DM1_V2_RUNTIME_COMMAND_TURN_RIGHT 4
+#define DM1_V2_RUNTIME_COMMAND_MOVE_RIGHT 5
+#define DM1_V2_RUNTIME_COMMAND_MOVE_LEFT 6
 
 static DM1_V2_MovementCommandResult dm1_v2_result(int sourceCommand, int runtimeCommand) {
     DM1_V2_MovementCommandResult result;
@@ -51,7 +53,9 @@ static int dm1_v2_translate_runtime_command(DM1_V2_MovementCommand command) {
         case DM1_V2_MOVEMENT_COMMAND_MOVE_BACKWARD:
             return DM1_V2_RUNTIME_COMMAND_MOVE_BACKWARD;
         case DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT:
+            return DM1_V2_RUNTIME_COMMAND_MOVE_RIGHT;
         case DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT:
+            return DM1_V2_RUNTIME_COMMAND_MOVE_LEFT;
         case DM1_V2_MOVEMENT_COMMAND_NONE:
         default:
             return 0;

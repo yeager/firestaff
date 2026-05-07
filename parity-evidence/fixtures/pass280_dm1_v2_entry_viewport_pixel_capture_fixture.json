@@ -1,0 +1,39 @@
+{
+  "compare": {
+    "comparator": "dm1_v2_vp_compare_viewport_region",
+    "expectedComparedPixels": 30464,
+    "mode": "exact RGBA pixel equality over full_pc34_viewport",
+    "promotionRule": "Only promote beyond blocker when both required artifacts exist for the same state and mismatch count is zero."
+  },
+  "firestaffCapture": {
+    "requiredArtifact": "verification-screens/pass280-dm1-v2-entry-viewport/firestaff/entry_viewport_224x136.png",
+    "runtime": "Firestaff DM1 V2 renderer using decoded canonical DUNGEON.DAT state",
+    "stateBuilder": "dm1_v2_vp_build_composition_from_dungeon(map=0,x=1,y=3,dir=2)"
+  },
+  "fixture": "pass280_dm1_v2_entry_viewport_pixel_capture_fixture",
+  "knownBlocker": "No matched original/ReDMCSB and Firestaff entry-state viewport PNG pair is present in this pass.",
+  "pixelParityClaim": false,
+  "referenceCapture": {
+    "captureHarness": "scripts/dosbox_dm1_original_viewport_reference_capture.sh --run then normalize/crop to 224x136",
+    "requiredArtifact": "verification-screens/pass280-dm1-v2-entry-viewport/original/entry_viewport_224x136.png",
+    "routeRequirement": "validated route must leave entrance/menu and land on map=0 x=1 y=3 dir=2 before capture; do not infer from a screenshot alone",
+    "runtime": "original DM1 PC34 under DOSBox/ReDMCSB source-locked DUNVIEW path"
+  },
+  "region": {
+    "height": 136,
+    "name": "full_pc34_viewport",
+    "width": 224,
+    "x": 0,
+    "y": 0
+  },
+  "state": {
+    "direction": 2,
+    "dungeonDatSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "game": "Dungeon Master PC34",
+    "initialPartyLocationRawLE": "0x0861",
+    "mapIndex": 0,
+    "mapX": 1,
+    "mapY": 3
+  },
+  "status": "source_locked_capture_path_only"
+}

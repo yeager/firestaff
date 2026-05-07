@@ -1,0 +1,228 @@
+{
+  "artifact_policy": {
+    "no_binary_payloads_in_repo": true,
+    "no_screenshots": true,
+    "text_only": true
+  },
+  "entry_capture": {
+    "command": [
+      "bash",
+      "-lc",
+      "TERM=xterm timeout 5 xvfb-run -a dosbox-debug -conf <TMP>/dosbox-debug.conf -exit"
+    ],
+    "entry_runtime_cs_ip": "01ED:0000",
+    "evidence_regex": "([0-9A-F]{4}):0000\\s+BADA26",
+    "fires_exenew": {
+      "mz": {
+        "e_lfarlc": "0x001C",
+        "first_64_hex": "4d5a30005d01d60980020000fffffb2880000000000000001c0000000100000001000b0006000e00010023000a0038000000bf000400c6000100c7000900c700",
+        "header_bytes": 10240,
+        "relative_cs_ip": "0000:0000",
+        "relative_ss_sp": "28FB:0080",
+        "relocations": 2518
+      },
+      "path_policy": "temporary only; not copied into repo",
+      "returncode": 0,
+      "sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+      "sha256_matches_expected": true,
+      "size": 178224,
+      "size_matches_expected": true,
+      "stdout_tail": "0050:err:winediag:nodrv_CreateWindow Application tried to create a window, but no driver could be loaded.\n0050:err:winediag:nodrv_CreateWindow L\"The explorer process failed to start.\"\n0050:err:systray:initialize_systray Could not create tray window\nUNLZEXE Ver. 0.81\nDetected size of File is 94779 bytes\nfile 'Z:<TMP> is compressed by LZEXE Ver. 0.91\n unpacking....................end\nThe uncompressed size of the file is 178224 bytes",
+      "tool": "<redmcsb-source>/Toolchains/Common/Base/UNLZEXE/unlzexe.exe"
+    },
+    "matched_cs_registers": [
+      "0000",
+      "01ED"
+    ],
+    "matched_entry_segments": [],
+    "ok": true,
+    "psp_segment_inferred": "01DD",
+    "returncode": 124,
+    "safe_interpretation": "actual DOSBox debugger runtime entry for temp FIRES.EXENEW copy; not a ReDMCSB function seam hit",
+    "transcript_excerpt_path": "<firestaff-repo>/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/entry_debugger_transcript.clean.txt"
+  },
+  "repo": "<firestaff-repo>",
+  "runbook": "<firestaff-repo>/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/dosbox_debugger_runbook.md",
+  "runtime_seam_blocker": "Actual loader entry CS:IP is captured, but COMMAND.C F0380, CLIKMENU movement, MOVESENS F0267, GAMELOOP/DUNVIEW/DRAWVIEW viewport breakpoints remain blocked by missing FIRES.EXENEW source-symbol/global-address map. Numeric DOSBox BP/BPM addresses are required before runtime hits can be claimed.",
+  "schema": "pass235_dm1_v1_dosbox_debugger_workflow.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command_accepted",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing_needles": [],
+      "needle_lines": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "G0435_B_CommandQueueLocked = C0_FALSE;": 2087,
+        "G0435_B_CommandQueueLocked = C1_TRUE;": 2075,
+        "L1160_i_Command = G0432_as_CommandQueue": 2095,
+        "L1161_i_CommandX = G0432_as_CommandQueue": 2118,
+        "L1162_i_CommandY = G0432_as_CommandQueue": 2119,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "needles": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "G0435_B_CommandQueueLocked = C1_TRUE;",
+        "L1160_i_Command = G0432_as_CommandQueue",
+        "L1161_i_CommandX = G0432_as_CommandQueue",
+        "L1162_i_CommandY = G0432_as_CommandQueue",
+        "G0435_B_CommandQueueLocked = C0_FALSE;",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn_handler",
+      "line_range": [
+        142,
+        179
+      ],
+      "missing_needles": [],
+      "needle_lines": {
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval": 171,
+        "F0284_CHAMPION_SetPartyDirection": 172,
+        "G0308_i_PartyDirection": 172,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142
+      },
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0308_i_PartyDirection",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "move_handler",
+      "line_range": [
+        180,
+        347
+      ],
+      "missing_needles": [],
+      "needle_lines": {
+        "F0267_MOVE_GetMoveResult_CPSCE": 272,
+        "G0306_i_PartyMapX": 264,
+        "G0307_i_PartyMapY": 264,
+        "G0310_i_DisabledMovementTicks": 345,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "G0306_i_PartyMapX",
+        "G0307_i_PartyMapY",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "G0310_i_DisabledMovementTicks"
+      ],
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "move_result",
+      "line_range": [
+        316,
+        850
+      ],
+      "missing_needles": [],
+      "needle_lines": {
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE": 316,
+        "C02_ELEMENT_PIT": 538,
+        "C05_ELEMENT_TELEPORTER": 475,
+        "C0xFFFF_THING_PARTY": 427,
+        "G0306_i_PartyMapX": 442,
+        "G0307_i_PartyMapY": 443
+      },
+      "needles": [
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE",
+        "G0306_i_PartyMapX",
+        "G0307_i_PartyMapY",
+        "C0xFFFF_THING_PARTY",
+        "C02_ELEMENT_PIT",
+        "C05_ELEMENT_TELEPORTER"
+      ],
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "draw_uses_mutated_tuple",
+      "line_range": [
+        55,
+        95
+      ],
+      "missing_needles": [],
+      "needle_lines": {
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);": 90,
+        "F0261_TIMELINE_Process_CPSEF();": 69,
+        "for (;;) { /*_Infinite loop_*/": 55
+      },
+      "needles": [
+        "for (;;) { /*_Infinite loop_*/",
+        "F0261_TIMELINE_Process_CPSEF();",
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
+      ],
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_buffer_composed",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing_needles": [],
+      "needle_lines": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "F0127_DUNGEONVIEW_DrawSquareD0C": 8542,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_present",
+      "line_range": [
+        709,
+        858
+      ],
+      "missing_needles": [],
+      "needle_lines": {
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS_ENTRY_CAPTURE_BLOCKED_SOURCE_SEAM_CSIP"
+}

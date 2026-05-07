@@ -2,7 +2,7 @@ pass=pass176_redmcsb_c080_state_precondition
 host=firestaff-worker
 branch=sync/n2-dm1-v1-20260428
 base_head_before_pass=6187565
-source_root=/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
+source_root=<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source
 runtime_evidence_dir=parity-evidence/verification/pass176_redmcsb_c080_state_precondition/probe_run_data
 runtime_log=parity-evidence/verification/pass176_redmcsb_c080_state_precondition/probe_run_data/game_view_probe.log
 

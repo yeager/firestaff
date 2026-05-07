@@ -1,8 +1,8 @@
 # Pass 212 BLOCKER: entrance/menu state is not movement-ready
 
 Date: 2026-05-05
-Worktree: `/home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228`
-Primary source reference: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Worktree: `<firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228`
+Primary source reference: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ## Verdict
 

@@ -10,12 +10,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+REDMCSB = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+PASS206_TOOL = ROOT / "tools/pass206_dm1_v1_original_runner_minimal_gate.py"
 PASS206_MANIFEST = ROOT / "parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json"
+ATTEMPT_DIR = ROOT / "verification-screens/pass112-n2-stable-hud-route"
+ROUTE_PROBE_DIR = ROOT / "verification-screens/pass112-n2-route-probe"
 OUT_DIR = ROOT / "parity-evidence/verification/pass207_dm1_v1_original_movement_viewport_blocker_gate"
 REPORT = ROOT / "parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
 
@@ -193,6 +198,34 @@ SOURCE_CHECKS: list[dict[str, Any]] = [
         ],
         "claim": "A promotable capture must observe the presented 224x136 viewport after the source draw-request/vblank seam.",
     },
+    {
+        "id": "viewport-floor-ceiling-clears-base-before-walls",
+        "file": "DUNVIEW.C",
+        "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+        "ranges": [(2962, 3003)],
+        "needles": [
+            "void F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+            "F0008_MAIN_ClearBytes(G0086_puc_Bitmap_ViewportBlackArea",
+            "F0007_MAIN_CopyBytes(G0085_puc_Bitmap_Ceiling, G0296_puc_Bitmap_Viewport",
+            "F0007_MAIN_CopyBytes(G0084_puc_Bitmap_Floor",
+            "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;",
+        ],
+        "claim": "Wall evidence must be compared after the original viewport base is cleared and floor/ceiling are copied into the viewport bitmap.",
+    },
+    {
+        "id": "wall-door-bitmaps-composite-into-same-viewport-target",
+        "file": "DUNVIEW.C",
+        "function": "F0100_DUNGEONVIEW_DrawWallSetBitmap / F0102_DUNGEONVIEW_DrawDoorBitmap / F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally",
+        "ranges": [(3048, 3110)],
+        "needles": [
+            "void F0100_DUNGEONVIEW_DrawWallSetBitmap",
+            "F0132_VIDEO_Blit(P0105_puc_Bitmap, G0296_puc_Bitmap_Viewport",
+            "void F0102_DUNGEONVIEW_DrawDoorBitmap",
+            "F0132_VIDEO_Blit(G0074_puc_Bitmap_Temporary, G0296_puc_Bitmap_Viewport",
+            "void F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally",
+        ],
+        "claim": "Wall and door captures are viewport-composited wallset evidence, not separate asset screenshots or emulator guesses.",
+    },
 ]
 
 
@@ -222,7 +255,7 @@ def audit_source() -> list[dict[str, Any]]:
         checks.append({
             "id": check["id"],
             "function": check["function"],
-            "citations": [f"{check['file']}:{a}-{b}" for a, b in check["ranges"]],
+            "citations": [f"{check["file"]}:{a}-{b}" for a, b in check["ranges"]],
             "claim": check["claim"],
             "ok": not missing,
             "missing": missing,
@@ -230,9 +263,32 @@ def audit_source() -> list[dict[str, Any]]:
     return checks
 
 
+def ensure_pass206_manifest() -> dict[str, Any]:
+    if PASS206_MANIFEST.is_file():
+        return {"attempted": False, "ok": True, "stdout": "", "stderr": ""}
+    if not PASS206_TOOL.is_file():
+        return {"attempted": False, "ok": False, "stdout": "", "stderr": f"missing pass206 tool: {PASS206_TOOL}"}
+    proc = subprocess.run(
+        [sys.executable, str(PASS206_TOOL)],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=120,
+    )
+    return {
+        "attempted": True,
+        "ok": PASS206_MANIFEST.is_file() and proc.returncode == 0,
+        "returncode": proc.returncode,
+        "stdout": proc.stdout[-4000:],
+        "stderr": proc.stderr[-4000:],
+    }
+
+
 def load_pass206() -> dict[str, Any]:
+    ensure = ensure_pass206_manifest()
     if not PASS206_MANIFEST.is_file():
-        return {"exists": False, "path": str(PASS206_MANIFEST), "status": "BLOCKED_MISSING_PASS206_MANIFEST"}
+        return {"exists": False, "path": str(PASS206_MANIFEST), "status": "BLOCKED_MISSING_PASS206_MANIFEST", "ensure": ensure}
     doc = json.loads(PASS206_MANIFEST.read_text(encoding="utf-8"))
     attempt = doc.get("existing_attempt_audit", {})
     runner = doc.get("runner_prerequisites", {})
@@ -251,6 +307,85 @@ def load_pass206() -> dict[str, Any]:
         "missing_tools": runner.get("missing_tools") or [],
         "canonical_files_ok": {k: v.get("ok") for k, v in (runner.get("canonical_files") or {}).items()},
         "route_events": runner.get("route_events"),
+        "ensure": ensure,
+    }
+
+
+def read_tsv(path: Path) -> list[dict[str, str]]:
+    if not path.is_file():
+        return []
+    lines = [line for line in path.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
+    if not lines:
+        return []
+    header = lines[0].split("\t")
+    rows: list[dict[str, str]] = []
+    for line in lines[1:]:
+        fields = line.split("\t")
+        rows.append({header[i]: fields[i] if i < len(fields) else "" for i in range(len(header))})
+    return rows
+
+
+def materialized_missing_count(rows: list[dict[str, str]], field: str, base_dir: Path | None = None) -> int:
+    missing = 0
+    for row in rows:
+        value = row.get(field, "")
+        if not value:
+            continue
+        path = Path(value.replace("<repo>", str(ROOT)))
+        if not path.is_absolute() and base_dir is not None:
+            path = base_dir / path
+        if not path.is_file():
+            missing += 1
+    return missing
+
+
+def duplicate_counts_gt1(rows: list[dict[str, str]], field: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        value = row.get(field, "")
+        if not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return {key: value for key, value in sorted(counts.items()) if value > 1}
+
+
+def blank_route_labels(rows: list[dict[str, str]]) -> list[str]:
+    missing: list[str] = []
+    for row in rows:
+        if not row.get("route_label", ""):
+            missing.append(row.get("filename") or row.get("index") or "<unknown>")
+    return missing
+
+
+def capture_asset_manifest_audit() -> dict[str, Any]:
+    stable_raw = read_tsv(ATTEMPT_DIR / "raw_manifest.tsv")
+    stable_labels = read_tsv(ATTEMPT_DIR / "original_viewport_shot_labels.tsv")
+    route_raw = read_tsv(ROUTE_PROBE_DIR / "raw_manifest.tsv")
+    route_viewports = read_tsv(ROUTE_PROBE_DIR / "original_viewport_224x136_manifest.tsv")
+    return {
+        "status": "MANIFESTS_SOURCE_LOCK_CAPTURE_ASSETS_WITHOUT_EMULATOR_GUESSING",
+        "stable_attempt": {
+            "dir": str(ATTEMPT_DIR),
+            "raw_manifest": str(ATTEMPT_DIR / "raw_manifest.tsv"),
+            "raw_count": len(stable_raw),
+            "labels_count": len(stable_labels),
+            "raw_missing_materialized_files": materialized_missing_count(stable_raw, "path"),
+            "raw_duplicate_sha256_counts_gt1": duplicate_counts_gt1(stable_raw, "sha256"),
+            "blank_route_labels": blank_route_labels(stable_labels),
+        },
+        "route_probe": {
+            "dir": str(ROUTE_PROBE_DIR),
+            "raw_manifest": str(ROUTE_PROBE_DIR / "raw_manifest.tsv"),
+            "viewport_manifest": str(ROUTE_PROBE_DIR / "original_viewport_224x136_manifest.tsv"),
+            "raw_count": len(route_raw),
+            "viewport_224x136_count": len(route_viewports),
+            "viewport_sha256": [row.get("sha256") for row in route_viewports],
+            "viewport_duplicate_sha256_counts_gt1": duplicate_counts_gt1(route_viewports, "sha256"),
+            "viewport_missing_materialized_files": materialized_missing_count(route_viewports, "filename", ROUTE_PROBE_DIR),
+            "raw_duplicate_sha256_counts_gt1": duplicate_counts_gt1(route_raw, "sha256"),
+            "blank_route_labels": blank_route_labels(read_tsv(ROUTE_PROBE_DIR / "original_viewport_shot_labels.tsv")),
+        },
+        "boundary": "Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean and command-specific shots have distinct post-vblank viewport hashes.",
     }
 
 
@@ -259,9 +394,9 @@ def decide_status(source: list[dict[str, Any]], audit: dict[str, Any]) -> str:
         return "FAIL_REDMCSB_SOURCE_AUDIT"
     if not audit.get("exists"):
         return "BLOCKED_MISSING_PASS206_MANIFEST"
-    if audit.get('missing_tools') or not all(audit.get("canonical_files_ok", {}).values()):
+    if audit.get("missing_tools") or not all(audit.get("canonical_files_ok", {}).values()):
         return "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"
-    if audit.get('attempt_status') != "PASS_SEMANTIC_ROUTE_READY":
+    if audit.get("attempt_status") != "PASS_SEMANTIC_ROUTE_READY":
         return "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE"
     return "PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE"
 
@@ -271,9 +406,9 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
     lines = [
         "# Pass207 — DM1 V1 original movement/viewport blocker gate",
         "",
-        f"Status: `{manifest['status']}`",
+        f"Status: `{manifest["status"]}`",
         "",
-        "Scope: portable focused follow-up to pass206. This gate does **not** rerun DOSBox or salvage broad captures; it records the exact ReDMCSB movement→viewport seam and explains whether the current original-runner attempt can be promoted.",
+        "Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox or salvage broad captures; it records the exact ReDMCSB movement→viewport seam and explains whether the current original-runner attempt can be promoted.",
         "",
         "## ReDMCSB source seam audit",
         "",
@@ -281,20 +416,31 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
     for item in manifest["redmcsb_source_audit"]:
         mark = "PASS" if item["ok"] else "FAIL"
         lines.append("- {} `{}` — `{}` at {}: {}".format(mark, item["id"], item["function"], ", ".join(item["citations"]), item["claim"]))
+    assets = manifest.get("capture_asset_manifest_audit", {})
     lines += [
+        "",
+        "## Capture asset manifest boundary",
+        "",
+        f"- status: `{assets.get('status')}`",
+        f"- stable raw frames: `{(assets.get('stable_attempt') or {}).get('raw_count')}`; labels: `{(assets.get('stable_attempt') or {}).get('labels_count')}`; missing materialized ignored PNGs: `{(assets.get('stable_attempt') or {}).get('raw_missing_materialized_files')}`",
+        f"- stable duplicate raw SHA counts >1: `{(assets.get('stable_attempt') or {}).get('raw_duplicate_sha256_counts_gt1')}`; blank labels: `{(assets.get('stable_attempt') or {}).get('blank_route_labels')}`",
+        f"- route-probe 224x136 viewport crops: `{(assets.get('route_probe') or {}).get('viewport_224x136_count')}`; missing materialized ignored PPMs: `{(assets.get('route_probe') or {}).get('viewport_missing_materialized_files')}`",
+        f"- route-probe duplicate viewport SHA counts >1: `{(assets.get('route_probe') or {}).get('viewport_duplicate_sha256_counts_gt1')}`; duplicate raw SHA counts >1: `{(assets.get('route_probe') or {}).get('raw_duplicate_sha256_counts_gt1')}`",
+        f"- route-probe blank labels: `{(assets.get('route_probe') or {}).get('blank_route_labels')}`",
+        f"- boundary: {assets.get('boundary')}",
         "",
         "## Current N2 original-runner attempt",
         "",
-        f"- pass206 manifest: `{audit.get('path')}`",
-        f"- pass206 status: `{audit.get('pass206_status')}`",
-        f"- attempt status: `{audit.get('attempt_status')}`",
-        f"- attempt dir: `{audit.get('attempt_dir')}`",
-        f"- capture count / dimensions: `{audit.get('capture_count')}` / `{audit.get('dimensions_seen')}`",
-        f"- viewport crop PPM count: `{audit.get('viewport_crop_ppm_count')}`",
-        f"- class counts: `{audit.get('class_counts')}`",
-        f"- duplicate SHA counts >1: `{audit.get('duplicate_sha256_counts_gt1')}`",
-        f"- missing tools: `{audit.get('missing_tools')}`",
-        f"- canonical files ok: `{audit.get('canonical_files_ok')}`",
+        f"- pass206 manifest: `{audit.get("path")}`",
+        f"- pass206 status: `{audit.get("pass206_status")}`",
+        f"- attempt status: `{audit.get("attempt_status")}`",
+        f"- attempt dir: `{audit.get("attempt_dir")}`",
+        f"- capture count / dimensions: `{audit.get("capture_count")}` / `{audit.get("dimensions_seen")}`",
+        f"- viewport crop PPM count: `{audit.get("viewport_crop_ppm_count")}`",
+        f"- class counts: `{audit.get("class_counts")}`",
+        f"- duplicate SHA counts >1: `{audit.get("duplicate_sha256_counts_gt1")}`",
+        f"- missing tools: `{audit.get("missing_tools")}`",
+        f"- canonical files ok: `{audit.get("canonical_files_ok")}`",
         "",
         "## Blocker decision",
         "",
@@ -306,16 +452,22 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         if mismatches:
             lines.append("Mismatches:")
             for m in mismatches:
-                lines.append(f"- shot {m.get('index')}: `{m.get('classification')}` expected `{m.get('expected')}` (`{m.get('file')}`)")
+                lines.append(f"- shot {m.get("index")}: `{m.get("classification")}` expected `{m.get("expected")}` (`{m.get("file")}`)")
         else:
             lines.append("Mismatches: none recorded, but pass206 did not report `PASS_SEMANTIC_ROUTE_READY`.")
+        route_probe = (manifest.get("capture_asset_manifest_audit") or {}).get("route_probe") or {}
+        if route_probe.get("viewport_duplicate_sha256_counts_gt1"):
+            lines += [
+                "",
+                "Capture unblock requirement: the route-probe viewport manifest still has duplicate 224x136 viewport hashes for command-specific shots. Re-capture must materialize the ignored PPM/PNG assets and show distinct post-command/post-vblank viewport hashes for turn, move, spell, after-cast, and inventory boundaries before this can become parity evidence.",
+            ]
     elif manifest["status"].startswith("PASS"):
         lines.append("The current attempt is promotable by this narrow semantic gate; pixel parity still needs a separate gate.")
     else:
         lines.append("The gate is blocked before semantic promotion because a source/prerequisite artifact is missing or drifted.")
     lines += [
         "",
-        "Non-claims: no DANNESBURK use, no push, no new capture route, no original-vs-Firestaff pixel parity claim.",
+        "Non-claims: no <private-host> use, no push, no new capture route, no original-vs-Firestaff pixel parity claim.",
         "",
     ]
     report.write_text("\n".join(lines), encoding="utf-8")
@@ -332,12 +484,13 @@ def main() -> int:
     manifest = {
         "schema": "pass207_dm1_v1_original_movement_viewport_blocker_gate.v1",
         "status": status,
-        "worker": "portable host",
+        "worker": "N2 / firestaff-worker / trv2@<n2-private-ip>",
         "repo": str(ROOT),
         "redmcsb_source_root": str(REDMCSB),
-        "forbidden_hosts": ["DANNESBURK", "192.168.2.126"],
+        "forbidden_hosts": ["<private-host>", "<private-host-ip>"],
         "redmcsb_source_audit": source,
         "pass206_attempt_audit": attempt,
+        "capture_asset_manifest_audit": capture_asset_manifest_audit(),
     }
     args.out_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = args.out_dir / "manifest.json"

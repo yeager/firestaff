@@ -37,7 +37,7 @@ The handoff packet contains five patches:
 
 - Pass172 patch-gap inventory selected these five as the highest-value Christophe-friendly patches.
 - Pass160–171 closed the ReDMCSB source-lock coverage used to avoid emulator-only guessing.
-- The packet deliberately avoids DANNESBURK/local machine paths and avoids sending internal worker/runner metadata.
+- The packet deliberately avoids <private-host>/local machine paths and avoids sending internal worker/runner metadata.
 
 ## Sequential apply gate
 

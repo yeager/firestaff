@@ -1,6 +1,6 @@
 {
   "attempt_audit": {
-    "attempt_dir": "/home/trv2/work/firestaff-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe",
+    "attempt_dir": "<firestaff-repo>-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe",
     "blockers": [
       "shot 2 `move_up_after_gate` has no logged `Up` command before capture",
       "shot 2 `move_up_after_gate` repeats the previous raw SHA; no post-command redraw/state observable",
@@ -13,7 +13,7 @@
     "class_counts": {
       "dungeon_gameplay": 6
     },
-    "classifier_json": "/home/trv2/work/firestaff-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe/pass80_movement_six_class_gate.json",
+    "classifier_json": "<firestaff-repo>-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe/pass80_movement_six_class_gate.json",
     "classifier_pass": false,
     "driver_log_exists": false,
     "duplicate_sha256_counts": {
@@ -91,8 +91,8 @@
     "status": "BLOCKED_MISSING_POST_COMMAND_REDRAW_OBSERVABLE"
   },
   "forbidden_hosts": [
-    "DANNESBURK",
-    "192.168.2.126"
+    "<private-host>",
+    "<private-host-ip>"
   ],
   "redmcsb_source_audit": [
     {
@@ -176,8 +176,8 @@
       "ok": true
     }
   ],
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/home/trv2/work/firestaff-pass220-readiness",
+  "redmcsb_source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "<firestaff-repo>-pass220-readiness",
   "schema": "pass220_dm1_v1_original_readiness_oracle.v1",
   "status": "BLOCKED_MISSING_POST_COMMAND_REDRAW_OBSERVABLE"
 }

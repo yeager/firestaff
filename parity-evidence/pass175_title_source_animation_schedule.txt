@@ -1,7 +1,7 @@
 probe=firestaff_v1_title_menu_cadence_layout
 scope=bounded ReDMCSB TITLE.C source-locked timing plus runtime handoff evidence
 graphicsHeaderOk=1
-graphicsDatPath=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT
+graphicsDatPath=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT
 graphicsCount=713
 menuRange[boot_script_menu_candidate_a].available=1
 menuRange[boot_script_menu_candidate_a].first=304
@@ -44,7 +44,7 @@ menuRange[boot_script_menu_candidate_b_wide].maxWidth=160
 menuRange[boot_script_menu_candidate_b_wide].maxHeight=111
 menuRange[boot_script_menu_candidate_b_wide].zeroSizedCount=0
 menuMetricInvariantOk=1
-titleDatPath=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE
+titleDatPath=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/TITLE
 titleManifestOk=1
 titleFileBytes=12002
 titleItemCount=59

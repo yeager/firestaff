@@ -2903,8 +2903,11 @@ int main(int argc, char** argv) {
             }
         }
 
+        /* ReDMCSB DUNGEON.C F0172 only exposes C02_ELEMENT_PIT to
+         * DUNVIEW when MASK0x0008_PIT_OPEN is set; closed pits render
+         * as corridor, so focused pit visibility probes must set open. */
         probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
+                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
         memset(pitFb, 0, sizeof(pitFb));
         M11_GameView_Draw(&focusView, pitFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -2913,7 +2916,7 @@ int main(int argc, char** argv) {
         }
 
         probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x04));
+                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
         memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
         M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3142,7 +3145,7 @@ int main(int argc, char** argv) {
                 probe_set_square(focusView.world.dungeon,
                                  focusView.world.party.mapX + kPitPositions[pi].relSide,
                                  focusView.world.party.mapY - kPitPositions[pi].relForward,
-                                 (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
+                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
                 memset(pitFb, 0, sizeof(pitFb));
                 M11_GameView_Draw(&focusView, pitFb, 320, 200);
                 if (memcmp(baseFb, pitFb, sizeof(baseFb)) != 0) {
@@ -3156,7 +3159,7 @@ int main(int argc, char** argv) {
                 probe_set_square(focusView.world.dungeon,
                                  focusView.world.party.mapX + kInvisiblePitPositions[pi].relSide,
                                  focusView.world.party.mapY - kInvisiblePitPositions[pi].relForward,
-                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x04));
+                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
                 memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
                 M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
                 if (memcmp(baseFb, invisiblePitFb, sizeof(baseFb)) != 0) {

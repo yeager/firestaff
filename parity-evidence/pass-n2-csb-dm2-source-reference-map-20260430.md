@@ -4,11 +4,11 @@ Scope: worker-only evidence pass on N2 (`firestaff-worker`). No emulator probing
 
 ## Worker and worktree
 
-- Worktree: `/home/trv2/work/firestaff`
+- Worktree: `<firestaff-repo>`
 - Branch: `sync/n2-dm1-v1-20260428`
-- Primary ReDMCSB source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
-- Original/reference root: `/home/trv2/.openclaw/data/firestaff-original-games/DM/`
-- DANNESBURK was not used.
+- Primary ReDMCSB source: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+- Original/reference root: `<firestaff-original-games>/`
+- <private-host> was not used.
 
 ## Source/reference availability map
 
@@ -25,7 +25,7 @@ These are source-lock anchors only; they do not claim CSB runtime/render parity.
 
 ### CSB original/reference anchors on N2
 
-From `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/README.md`:
+From `<firestaff-original-games>/_canonical/csb/README.md`:
 
 - `Game,Chaos_Strikes_Back,Amiga,Software.7z` bytes `3327297`, sha256 `77c3b9ceb3b6d7a9cf96b7cb4801e2b7e51e6de11c5982c82342da268dfddc58`.
 - `Game,Chaos_Strikes_Back,Atari_ST,Software.7z` bytes `1669479`, sha256 `ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5`.
@@ -34,7 +34,7 @@ From `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/READM
 
 ### DM2 source/reference anchors on N2
 
-From `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/README.md`:
+From `<firestaff-original-games>/_canonical/dm2/README.md`:
 
 - `Dungeon-Master-II-Skullkeep_DOS_EN.zip` bytes `13203537`, sha256 `d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929`.
 - `Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip` bytes `46596215`, sha256 `a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228`.

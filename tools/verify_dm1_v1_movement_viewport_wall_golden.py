@@ -15,10 +15,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DM1_DUNGEON_DAT = Path(
     "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
 ).expanduser()
@@ -112,6 +109,34 @@ def verify_redmcsb() -> list[dict[str, Any]]:
         "Viewport/off-map probes source-lock as wall squares, which matters at the DM1 entrance edge.",
     ))
     checks.append(require(
+        "COMMAND.C:1513-1660 and COMMAND.C:1744-1792",
+        block("COMMAND.C", 1513, 1660) + "\n" + block("COMMAND.C", 1744, 1792),
+        [
+            "if ((L1108_i_CommandQueueIndex = G0434_i_CommandQueueLastIndex + 2) > M529_COMMAND_QUEUE_SIZE)",
+            "if (G2153_i_QueuedCommandsCount >= L2287_i_MaximumRegularCommandsInQueue)",
+            "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command;",
+            "G0432_as_CommandQueue[L1108_i_CommandQueueIndex].X = P0725_i_X;",
+            "G0432_as_CommandQueue[L1108_i_CommandQueueIndex].Y = P0726_i_Y;",
+            "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;",
+        ],
+        "Mouse/key input is normalized into the circular command queue before game-loop dispatch.",
+    ))
+    checks.append(require(
+        "COMMAND.C:2045-2156",
+        block("COMMAND.C", 2045, 2156),
+        [
+            "void F0380_COMMAND_ProcessQueue_CPSC",
+            "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;",
+            "G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks",
+            "L1161_i_CommandX = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].X;",
+            "L1162_i_CommandY = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Y;",
+            "G2153_i_QueuedCommandsCount--;",
+            "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+            "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);",
+        ],
+        "Game-loop command dequeue gates movement cooldowns, preserves X/Y payload, and dispatches turns/moves.",
+    ))
+    checks.append(require(
         "CLIKMENU.C:256-347",
         block("CLIKMENU.C", 256, 347),
         [
@@ -124,7 +149,7 @@ def verify_redmcsb() -> list[dict[str, Any]]:
             "F0175_GROUP_GetThing",
             "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;",
         ],
-        "Party step legality is wall/door/fakewall/group gated before cooldown/state changes.",
+        "Accepted movement commands enter the wall/door/fakewall/group legality gate before cooldown/state changes.",
     ))
     checks.append(require(
         "MOVESENS.C:315-385 and MOVESENS.C:752-775",
@@ -339,11 +364,16 @@ def source_asset_metadata() -> dict[str, Any]:
             "Wall occlusion is represented as source draw-order + representative wall/door rows, not pixel-diffed original screenshots.",
         ],
         "directions": [{"id": k, **v} for k, v in DIRS.items()],
+        "commandPipeline": {
+            "inputNormalization": "COMMAND.C:1513-1660 and 1744-1792 append mouse/key commands to G0432_as_CommandQueue with X/Y payloads.",
+            "gameLoopDispatch": "GAMELOOP.C:215 calls F0380_COMMAND_ProcessQueue_CPSC; COMMAND.C:2045-2156 dequeues, applies disabled-movement gates, then dispatches turns/moves.",
+            "movementLegality": "CLIKMENU.C:256-347 applies wall/door/fakewall/group blockers before movement commits.",
+        },
         "movementCommands": {
-            "turnLeft": "direction=(direction+3)&3; no coordinate change",
-            "turnRight": "direction=(direction+1)&3; no coordinate change",
-            "moveForward": "step along current direction after CLIKMENU legality checks",
-            "moveRight/moveLeft/moveBackward": "rotate relative step direction then apply DUNGEON.C vectors",
+            "turnLeft": "COMMAND.C dispatches F0365; direction=(direction+3)&3; no coordinate change",
+            "turnRight": "COMMAND.C dispatches F0365; direction=(direction+1)&3; no coordinate change",
+            "moveForward": "COMMAND.C dispatches F0366; step along current direction after CLIKMENU legality checks",
+            "moveRight/moveLeft/moveBackward": "COMMAND.C dispatches F0366; rotate relative step direction then apply DUNGEON.C vectors",
         },
         "movementBlockers": {
             "wall": "M034_SQUARE_TYPE(square)==C00_ELEMENT_WALL blocks party movement",

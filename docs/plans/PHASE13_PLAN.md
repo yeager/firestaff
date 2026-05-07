@@ -652,7 +652,7 @@ failed here).
   cc -Wall -Wextra -c -o /tmp/combat_h_check.o -x c \
       <(echo '#include "memory_combat_pc34_compat.h"'; \
         echo 'int main(void){return 0;}') \
-      -I/Users/bosse/.openclaw/workspace-main/tmp/firestaff
+      -I<workspace>/tmp/firestaff
   ```
 - Must compile with no warnings.
 
@@ -664,7 +664,7 @@ failed here).
 - Compile standalone:
   ```
   cc -Wall -Wextra -c memory_combat_pc34_compat.c -o /tmp/combat_stub.o \
-      -I/Users/bosse/.openclaw/workspace-main/tmp/firestaff
+      -I<workspace>/tmp/firestaff
   ```
 - Must compile with `-Wall -Wextra` clean.
 
@@ -750,7 +750,7 @@ timeline builder. Compile after each group:
   (Previous agent ran into this exact footgun 4× over.)
 
 ### Step 8 — Full verify
-- Run `bash run_firestaff_m10_verify.sh /Users/bosse/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT /tmp/m10-verify-out`
+- Run `bash run_firestaff_m10_verify.sh <local-home>/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT /tmp/m10-verify-out`
   from the repo root. Exit must be 0. If any earlier phase regresses
   (unlikely — we added files only), `git diff` the verify script and
   revert any accidental non-phase-13 change.

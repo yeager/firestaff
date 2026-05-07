@@ -1,0 +1,49 @@
+probe=firestaff_dm1_v1_movement_core_probe
+primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source
+sourceEvidence.commandQueue=COMMAND.C:6,106-121,252-260,272-305,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19
+sourceEvidence.commandCore=COMMAND.C:2045-2156; CLIKMENU.C:142-179,180-347; CHAMPION.C:117-130; MOVESENS.C:752-783,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724
+sourceEvidence.timing=COMMAND.C:2095-2100,2118-2127; CLIKMENU.C:256-269,330-346; CHAMPION.C:1180-1215,2065-2191; MOVESENS.C:752-775; GAMELOOP.C:150-155
+sourceEvidence.turning=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-174; CHAMPION.C:117-130; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724
+compileStructureRefs=FTL.H:5 FTL.H:21 PRIM.H:46
+
+[command-structure]
+queuedCommandFields=command,x,y source=DEFS.H:197-205 COMMAND.C:1651-1660
+queueFields=commands[5],count,locked,pendingClick*,pendingReplayCount,droppedFullCount source=COMMAND.C:1452-1661,1692-1707,2045-2156
+partyFields=mapIndex,mapX,mapY,direction,champions[].direction source=CHAMPION.C:93-130 TOWNSGLB.H:551
+speedStepTimingFields=G0310_i_DisabledMovementTicks,G0311_i_ProjectileDisabledMovementTicks,G0312_i_LastProjectileDisabledMovementDirection,G0362_l_LastPartyMovementTime source=COMMAND.C:2095-2100 CLIKMENU.C:330-346 GAMELOOP.C:150-155 MOVESENS.C:772-774
+turnRateFields=oldDirection,newDirection,delta,quarterTurnSteps,animationFrames,intermediateFrames source=CLIKMENU.C:171-173 CHAMPION.C:117-130 GAMELOOP.C:90,215-219
+
+[input-pipeline:key->queue->step]
+input=key:0xAB35 command=3 dequeued=1 dispatchedMove=1 source=(COMMAND.C:1709-1813 -> COMMAND.C:2045-2156 -> CLIKMENU.C:180-347)
+stepDistanceCells dx=0 dy=-1 old=(1,1) new=(1,0) direction=0 stepApplied=1
+timing disabledMovementTicks=4 projectileDisabledMovementTicks=0 scentRecorded=1 scentDelayTicks=10 lastPartyMovementTime=1000
+
+[frame-sync:cooldown-decrement]
+frame=1 disabledMovementTicks=3 projectileDisabledMovementTicks=2 source=GAMELOOP.C:150-155
+frame=2 disabledMovementTicks=2 projectileDisabledMovementTicks=1 source=GAMELOOP.C:150-155
+frame=3 disabledMovementTicks=1 projectileDisabledMovementTicks=0 source=GAMELOOP.C:150-155
+frame=4 disabledMovementTicks=0 projectileDisabledMovementTicks=0 source=GAMELOOP.C:150-155
+
+[input-pipeline:movement-gate-keeps-command]
+disabledGateResult command=3 movementDisabledGate=1 dequeued=0 remainingQueue=1 source=COMMAND.C:2095-2100
+
+[input-pipeline:projectile-direction-gate]
+projectileSameDirection command=3 movementDisabledGate=1 dequeued=0 remainingQueue=1 normalizedDirection=0 source=COMMAND.C:2095-2096
+
+[input-pipeline:mouse-pending-click-replay]
+pendingClickPresent=1 pendingX=270 pendingY=130 pendingCommand=3 source=COMMAND.C:1452-1505
+afterUnlockReplay pendingReplayCount=1 queueCount=1 source=COMMAND.C:1692-1707,2087-2100,2126-2127
+mouseCommand command=3 dequeued=1 dispatchedMove=1 source=COMMAND.C:1379-1449,396-405
+
+[turning:instant-quarter-turn]
+turn command=2 oldDirection=0 newDirection=1 delta=1 quarterTurnSteps=1 animationFrames=1 intermediateFrames=0 stopWait=1 redrawNextLoop=1 wallBlockCheck=0
+
+[stepping:blocked-wall-no-side-effects]
+wallBlock command=3 dequeued=1 movementBlocked=1 resultCode=1 inputDiscardRequested=1 viewportRedraw=0 stopWait=0 old=(1,1) newParty=(1,1) cooldownApplied=0
+
+[stepping:closed-door-block]
+doorBlock doorState=2 movementBlocked=1 resultCode=2 old=(1,1) newParty=(1,1) source=CLIKMENU.C:282-284
+
+[summary]
+movementCoreProbeOk=1
+primaryLocks=COMMAND.C:F0358/F0359/F0360/F0361/F0380;CLIKMENU.C:F0365/F0366;CHAMPION.C:F0284/F0310;DUNGEON.C:F0150;MOVESENS.C:F0267/F0276;GAMELOOP.C:cooldown+process-loop;DEFS.H/TOWNSGLB.H structs+globals

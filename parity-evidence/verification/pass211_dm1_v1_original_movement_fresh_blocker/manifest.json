@@ -393,16 +393,16 @@
       "DOSBox version 0.74-3",
       "Copyright 2002-2019 DOSBox Team, published under GNU GPL.",
       "---",
-      "CONFIG:Loading primary settings from config file /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/dosbox-original-viewports.conf",
+      "CONFIG:Loading primary settings from config file <firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/dosbox-original-viewports.conf",
       "MIXER:No Sound Mode Selected.",
       "ALSA:Can't open sequencer",
       "MIDI:Opened device:none",
-      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_000.png",
-      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_001.png",
-      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_002.png",
-      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_003.png",
-      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_004.png",
-      "Capturing Screenshot to /home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_005.png"
+      "Capturing Screenshot to <firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_000.png",
+      "Capturing Screenshot to <firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_001.png",
+      "Capturing Screenshot to <firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_002.png",
+      "Capturing Screenshot to <firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_003.png",
+      "Capturing Screenshot to <firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_004.png",
+      "Capturing Screenshot to <firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228/verification-screens/pass210-n2-original-movement-route-fresh/fires_005.png"
     ],
     "original_viewpoint_route_keys_log": [
       "route-token wait:7000",
@@ -436,11 +436,11 @@
   "non_claims": [
     "No PNG/PPM payload is committed by this manifest.",
     "No original-vs-Firestaff pixel parity claim.",
-    "No DANNESBURK use.",
+    "No <private-host> use.",
     "No push.",
     "No OpenAI API key, Sonnet, q3.6, or qwen3.6 use."
   ],
-  "repo": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228",
+  "repo": "<firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228",
   "route_events": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:2000 shot:start kp4 wait:1200 shot:turn_left kp6 wait:1200 shot:turn_right kp8 wait:1200 shot:forward kp4 wait:1200 shot:turn_left_2 kp6 wait:1200 shot:post_redraw",
   "schema": "firestaff.parity_evidence.verification.pass211_dm1_v1_original_movement_fresh_blocker.v1",
   "shots": [

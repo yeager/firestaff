@@ -1,0 +1,41 @@
+{
+  "dm_route": "DEBUG DM.EXE -vv -sn -pk; BPINT 21 AH=4B through launcher EXEC chain; BPINT 21 AH=3D for first FIRES-side file open",
+  "fires_exenew": {
+    "mz": {
+      "e_cs": 0,
+      "e_ip": 0,
+      "entry_cs_ip": "0000:0000",
+      "header_bytes": 10240
+    },
+    "path_policy": "temporary only; not committed",
+    "returncode": 0,
+    "sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+    "size": 178224
+  },
+  "match": {
+    "candidates": [
+      {
+        "linear": 146680,
+        "matched_len": 10,
+        "runtime_cs_ip": "2B02:0038",
+        "runtime_load_segment": "0733",
+        "static_cs": 9167,
+        "static_cs_ip": "23CF:0008",
+        "static_ip": 8
+      }
+    ],
+    "ok": true,
+    "runtime_cs_ip": "2B02:0038",
+    "selected_line": "2B02:0038  CD21  int  21",
+    "sequence_hex": "cd21721481e28000740e",
+    "stop_excerpt": " at INT 21 AH=3D\n_\n(Running)\n  <TICKS>: EXEC:Execute FIRES 0\n  <TICKS>: FILES:file open command 0 file FIRES\n36 076\n2B02:002B\n\u001b(B2B02:002D  1F pop  ds\n2B02:002E  722D      jc   0000005D ($+2d)(no jmp)\n2B02:0030  8946FEmov  [bp-02],axss:[0E18]=837A\n2B02:0033  8BD8bx,ax\n2B02:0035  B80044mov  ax,4400\n2B02:0038  CD21  int  21\n2B02:003A  7214jc   00000050 ($+14)(no jmp)\n2B02:003C  81E28000and  dx,0080\n2B02:0040  740E  je   00000050 ($+e)(down)\n->"
+  },
+  "non_claims": [
+    "does not promote verified_runtime_hit",
+    "does not prove command/movement/viewport chain",
+    "temporary original-derived FIRES.EXENEW not committed"
+  ],
+  "schema": "pass246_dm1_v1_dmexe_fires_load_segment_bridge.v1",
+  "status": "PASS_DMEXE_FIRES_LOAD_SEGMENT_BRIDGED_NO_RUNTIME_HIT_PROMOTION",
+  "transcript_excerpt": "parity-evidence/verification/pass246_dm1_v1_dmexe_fires_load_segment_bridge/dmexe_fires_bridge_transcript.clean.txt"
+}

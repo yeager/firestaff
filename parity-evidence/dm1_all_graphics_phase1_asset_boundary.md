@@ -10,7 +10,7 @@ V1 runtime truth is original DM1 PC 3.4 `GRAPHICS.DAT` plus ReDMCSB/source-bound
 ## Original asset bank
 
 ```text
-2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e  /Users/bosse/.firestaff/data/GRAPHICS.DAT
+2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e  <local-home>/.firestaff/data/GRAPHICS.DAT
 ```
 
 ## Runtime grep

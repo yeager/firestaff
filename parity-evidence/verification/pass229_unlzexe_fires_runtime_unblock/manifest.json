@@ -1,0 +1,36 @@
+{
+  "binary_policy": "FIRES.EXENEW is kept as local evidence only and is intentionally not committed",
+  "decompressed": {
+    "entry_cs_ip": "0000:0000",
+    "first_64": "4d5a30005d01d60980020000fffffb2880000000000000001c0000000100000001000b0006000e00010023000a0038000000bf000400c6000100c7000900c700",
+    "header_bytes": 10240,
+    "path": "<firestaff-repo>-dm1v1-viewport-walls-source-lock-20260506-0237/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "relocation_signature_at_lfarlc": "01000000",
+    "relocation_table_offset": "0x001c",
+    "relocations": 2518,
+    "sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+    "size": 178224,
+    "ss_sp": "28fb:0080"
+  },
+  "method": "UNLZEXE Ver. 0.81 run via Windows cmd.exe on <private-host> against <original-games>/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+  "non_claims": [
+    "does not yet bind ReDMCSB source symbols to runtime CS:IP",
+    "does not claim debugger breakpoint hits",
+    "does not replace pass224 runtime hook API requirement"
+  ],
+  "schema": "pass229_unlzexe_fires_runtime_unblock.v1",
+  "source_original": {
+    "entry_cs_ip": "1665:000e",
+    "first_64": "4d5a3b00ba00000002007613ffffd229800000000e0065161c0000004c5a3931ffffbaed242e8916d901b430cd218b2e02ffff008b1e2c008edaa37b008c0679",
+    "header_bytes": 32,
+    "path": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+    "relocation_signature_at_lfarlc": "4c5a3931",
+    "relocation_table_offset": "0x001c",
+    "relocations": 0,
+    "sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
+    "size": 94779,
+    "ss_sp": "29d2:0080"
+  },
+  "status": "PASS_DECOMPRESSED_FIRES_IMAGE_AVAILABLE",
+  "unblocks_next": "Use decompressed FIRES.EXENEW as runtime image input for pass227 step 1 runtime_image.json and symbol-map bootstrap."
+}

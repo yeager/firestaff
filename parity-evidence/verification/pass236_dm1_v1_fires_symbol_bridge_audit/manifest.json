@@ -1,0 +1,875 @@
+{
+  "artifact_policy": {
+    "no_original_binaries_committed": true,
+    "text_only_repo_artifacts": true
+  },
+  "build_script": {
+    "i34e_lnk_objects": [
+      "GAMELOOP.OBJ",
+      "PROJEXPL.OBJ",
+      "DIALOG.OBJ",
+      "DUNGEON.OBJ",
+      "MENUDRAW.OBJ",
+      "GROUP.OBJ",
+      "MEMORY.OBJ",
+      "OBJECT.OBJ",
+      "MENU.OBJ",
+      "CHAMPION.OBJ",
+      "CHAMDRAW.OBJ",
+      "REVIVE.OBJ",
+      "MOVESENS.OBJ",
+      "COORD.OBJ",
+      "SOUND.OBJ",
+      "DATA.OBJ",
+      "FLOPPY.OBJ",
+      "TEXT.OBJ",
+      "TIMELINE.OBJ",
+      "BASE.OBJ",
+      "CLIKVIEW.OBJ",
+      "CLIKMENU.OBJ",
+      "PANEL.OBJ",
+      "LOADSAVE.OBJ",
+      "ENDGAME.OBJ",
+      "STRING.OBJ",
+      "COMMAND.OBJ",
+      "DUNVIEW.OBJ",
+      "IMAGE.OBJ",
+      "IO.OBJ",
+      "BLTSHRNK.OBJ",
+      "BLITMASK.OBJ",
+      "BLITFILL.OBJ",
+      "MUSIC.OBJ",
+      "FILENAME.OBJ",
+      "STARTUP2.OBJ"
+    ],
+    "i34e_lnk_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK",
+    "mkii_fires_lines": [
+      {
+        "line": 358,
+        "text": "ECHO - Build executable I34E\\FIRES"
+      },
+      {
+        "line": 361,
+        "text": "ECHO - Build executable I34E\\FIRES>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 363,
+        "text": "ECHO ----- I34E\\FIRES Compile GAMELOOP.C"
+      },
+      {
+        "line": 364,
+        "text": "ECHO ----- I34E\\FIRES Compile GAMELOOP.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 365,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES GAMELOOP.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 366,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES GAMELOOP.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 367,
+        "text": "ECHO ----- I34E\\FIRES Compile PROJEXPL.C"
+      },
+      {
+        "line": 368,
+        "text": "ECHO ----- I34E\\FIRES Compile PROJEXPL.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 369,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES PROJEXPL.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 370,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES PROJEXPL.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 371,
+        "text": "ECHO ----- I34E\\FIRES Compile DIALOG.C"
+      },
+      {
+        "line": 372,
+        "text": "ECHO ----- I34E\\FIRES Compile DIALOG.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 373,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DIALOG.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 374,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DIALOG.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 375,
+        "text": "ECHO ----- I34E\\FIRES Compile DUNGEON.C"
+      },
+      {
+        "line": 376,
+        "text": "ECHO ----- I34E\\FIRES Compile DUNGEON.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 377,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNGEON.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 378,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNGEON.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 379,
+        "text": "ECHO ----- I34E\\FIRES Compile MENUDRAW.C"
+      },
+      {
+        "line": 380,
+        "text": "ECHO ----- I34E\\FIRES Compile MENUDRAW.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 381,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MENUDRAW.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 382,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MENUDRAW.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 383,
+        "text": "ECHO ----- I34E\\FIRES Compile GROUP.C"
+      },
+      {
+        "line": 384,
+        "text": "ECHO ----- I34E\\FIRES Compile GROUP.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 385,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES GROUP.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 386,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES GROUP.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 387,
+        "text": "ECHO ----- I34E\\FIRES Compile MEMORY.C"
+      },
+      {
+        "line": 388,
+        "text": "ECHO ----- I34E\\FIRES Compile MEMORY.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 389,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MEMORY.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 390,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MEMORY.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 391,
+        "text": "ECHO ----- I34E\\FIRES Compile OBJECT.C"
+      },
+      {
+        "line": 392,
+        "text": "ECHO ----- I34E\\FIRES Compile OBJECT.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 393,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES OBJECT.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 394,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES OBJECT.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 395,
+        "text": "ECHO ----- I34E\\FIRES Compile MENU.C"
+      },
+      {
+        "line": 396,
+        "text": "ECHO ----- I34E\\FIRES Compile MENU.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 397,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MENU.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 398,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MENU.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 399,
+        "text": "ECHO ----- I34E\\FIRES Compile CHAMPION.C"
+      },
+      {
+        "line": 400,
+        "text": "ECHO ----- I34E\\FIRES Compile CHAMPION.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 401,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CHAMPION.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 402,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CHAMPION.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 403,
+        "text": "ECHO ----- I34E\\FIRES Compile CHAMDRAW.C"
+      },
+      {
+        "line": 404,
+        "text": "ECHO ----- I34E\\FIRES Compile CHAMDRAW.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 405,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CHAMDRAW.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 406,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CHAMDRAW.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 407,
+        "text": "ECHO ----- I34E\\FIRES Compile REVIVE.C"
+      },
+      {
+        "line": 408,
+        "text": "ECHO ----- I34E\\FIRES Compile REVIVE.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 409,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES REVIVE.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 410,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES REVIVE.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 411,
+        "text": "ECHO ----- I34E\\FIRES Compile MOVESENS.C"
+      },
+      {
+        "line": 412,
+        "text": "ECHO ----- I34E\\FIRES Compile MOVESENS.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 413,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MOVESENS.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 414,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MOVESENS.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 415,
+        "text": "ECHO ----- I34E\\FIRES Compile COORD.C"
+      },
+      {
+        "line": 416,
+        "text": "ECHO ----- I34E\\FIRES Compile COORD.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 417,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES COORD.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 418,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES COORD.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 419,
+        "text": "ECHO ----- I34E\\FIRES Compile SOUND.C"
+      },
+      {
+        "line": 420,
+        "text": "ECHO ----- I34E\\FIRES Compile SOUND.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 421,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES SOUND.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 422,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES SOUND.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 423,
+        "text": "ECHO ----- I34E\\FIRES Compile DATA.C"
+      },
+      {
+        "line": 424,
+        "text": "ECHO ----- I34E\\FIRES Compile DATA.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 425,
+        "text": "TCC.EXE -c -ml -O    -B -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DATA.C     >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 426,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DATA.C     >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 427,
+        "text": "ECHO ----- I34E\\FIRES Compile FLOPPY.C"
+      },
+      {
+        "line": 428,
+        "text": "ECHO ----- I34E\\FIRES Compile FLOPPY.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 429,
+        "text": "TCC.EXE -c -ml -O    -B -DEXEID=74 -n\\OBJECT\\I34E\\FIRES FLOPPY.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 430,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES FLOPPY.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 431,
+        "text": "ECHO ----- I34E\\FIRES Compile TEXT.C"
+      },
+      {
+        "line": 432,
+        "text": "ECHO ----- I34E\\FIRES Compile TEXT.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 433,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES TEXT.C     >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 434,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES TEXT.C     >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 435,
+        "text": "ECHO ----- I34E\\FIRES Compile TIMELINE.C"
+      },
+      {
+        "line": 436,
+        "text": "ECHO ----- I34E\\FIRES Compile TIMELINE.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 437,
+        "text": "TCC.EXE -c -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES TIMELINE.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 438,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES TIMELINE.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 439,
+        "text": "ECHO ----- I34E\\FIRES Compile BASE.C"
+      },
+      {
+        "line": 440,
+        "text": "ECHO ----- I34E\\FIRES Compile BASE.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 441,
+        "text": "TCC.EXE -c -ml -O    -B -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BASE.C     >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 442,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BASE.C     >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 443,
+        "text": "ECHO ----- I34E\\FIRES Compile CLIKVIEW.C"
+      },
+      {
+        "line": 444,
+        "text": "ECHO ----- I34E\\FIRES Compile CLIKVIEW.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 445,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CLIKVIEW.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 446,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CLIKVIEW.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 447,
+        "text": "ECHO ----- I34E\\FIRES Compile CLIKMENU.C"
+      },
+      {
+        "line": 448,
+        "text": "ECHO ----- I34E\\FIRES Compile CLIKMENU.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 449,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CLIKMENU.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 450,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES CLIKMENU.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 451,
+        "text": "ECHO ----- I34E\\FIRES Compile PANEL.C"
+      },
+      {
+        "line": 452,
+        "text": "ECHO ----- I34E\\FIRES Compile PANEL.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 453,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES PANEL.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 454,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES PANEL.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 455,
+        "text": "ECHO ----- I34E\\FIRES Compile LOADSAVE.C"
+      },
+      {
+        "line": 456,
+        "text": "ECHO ----- I34E\\FIRES Compile LOADSAVE.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 457,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES LOADSAVE.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 458,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES LOADSAVE.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 459,
+        "text": "ECHO ----- I34E\\FIRES Compile ENDGAME.C"
+      },
+      {
+        "line": 460,
+        "text": "ECHO ----- I34E\\FIRES Compile ENDGAME.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 461,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES ENDGAME.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 462,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES ENDGAME.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 463,
+        "text": "ECHO ----- I34E\\FIRES Compile STRING.C"
+      },
+      {
+        "line": 464,
+        "text": "ECHO ----- I34E\\FIRES Compile STRING.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 465,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES STRING.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 466,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES STRING.C   >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 467,
+        "text": "ECHO ----- I34E\\FIRES Compile COMMAND.C"
+      },
+      {
+        "line": 468,
+        "text": "ECHO ----- I34E\\FIRES Compile COMMAND.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 469,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES COMMAND.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 470,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES COMMAND.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 471,
+        "text": "ECHO ----- I34E\\FIRES Compile DUNVIEW.C"
+      },
+      {
+        "line": 472,
+        "text": "ECHO ----- I34E\\FIRES Compile DUNVIEW.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 473,
+        "text": "TCC.EXE -c -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNVIEW.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 474,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNVIEW.C  >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 475,
+        "text": "ECHO ----- I34E\\FIRES Compile IMAGE.C"
+      },
+      {
+        "line": 476,
+        "text": "ECHO ----- I34E\\FIRES Compile IMAGE.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 477,
+        "text": "TCC.EXE -c -ml -O    -B -DEXEID=74 -n\\OBJECT\\I34E\\FIRES IMAGE.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 478,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES IMAGE.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 479,
+        "text": "ECHO ----- I34E\\FIRES Compile IO.C"
+      },
+      {
+        "line": 480,
+        "text": "ECHO ----- I34E\\FIRES Compile IO.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 481,
+        "text": "TCC.EXE -c -ml -O    -B -DEXEID=74 -n\\OBJECT\\I34E\\FIRES IO.C       >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 482,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES IO.C       >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 483,
+        "text": "ECHO ----- I34E\\FIRES Compile BLTSHRNK.C"
+      },
+      {
+        "line": 484,
+        "text": "ECHO ----- I34E\\FIRES Compile BLTSHRNK.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 485,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BLTSHRNK.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 486,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BLTSHRNK.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 487,
+        "text": "ECHO ----- I34E\\FIRES Compile BLITMASK.C"
+      },
+      {
+        "line": 488,
+        "text": "ECHO ----- I34E\\FIRES Compile BLITMASK.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 489,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BLITMASK.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 490,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BLITMASK.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 491,
+        "text": "ECHO ----- I34E\\FIRES Compile BLITFILL.C"
+      },
+      {
+        "line": 492,
+        "text": "ECHO ----- I34E\\FIRES Compile BLITFILL.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 493,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BLITFILL.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 494,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES BLITFILL.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 495,
+        "text": "ECHO ----- I34E\\FIRES Compile MUSIC.C"
+      },
+      {
+        "line": 496,
+        "text": "ECHO ----- I34E\\FIRES Compile MUSIC.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 497,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MUSIC.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 498,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES MUSIC.C    >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 499,
+        "text": "ECHO ----- I34E\\FIRES Compile FILENAME.C"
+      },
+      {
+        "line": 500,
+        "text": "ECHO ----- I34E\\FIRES Compile FILENAME.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 501,
+        "text": "TCC.EXE -c -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES FILENAME.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 502,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O       -DEXEID=74 -n\\OBJECT\\I34E\\FIRES FILENAME.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 503,
+        "text": "ECHO ----- I34E\\FIRES Compile STARTUP2.C"
+      },
+      {
+        "line": 504,
+        "text": "ECHO ----- I34E\\FIRES Compile STARTUP2.C>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 505,
+        "text": "TCC.EXE -c -ml -O -Z -B -DEXEID=74 -n\\OBJECT\\I34E\\FIRES STARTUP2.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 506,
+        "text": "IF EXIST \\SOURCE\\ASSEMBLY.TXT TCC.EXE -S -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES STARTUP2.C >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 507,
+        "text": "ECHO ----- I34E\\FIRES Link"
+      },
+      {
+        "line": 508,
+        "text": "ECHO ----- I34E\\FIRES Link>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 509,
+        "text": "CD \\OBJECT\\I34E\\FIRES"
+      },
+      {
+        "line": 510,
+        "text": "TLINK.EXE /i /s \\OBJECT\\I34E\\STATS.EXE\\C0L.OBJ @\\SOURCE\\I34E.LNK \\TCPP101\\LIB\\CL.LIB,\\BUILD\\I34E\\FIRES.EXE,\\BUILD\\I34E\\FIRES.MAP >>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 511,
+        "text": "ECHO ----- I34E\\FIRES Compress"
+      },
+      {
+        "line": 512,
+        "text": "ECHO ----- I34E\\FIRES Compress>>\\BUILD\\MKII.LOG"
+      },
+      {
+        "line": 677,
+        "text": "TLINK.EXE /i /s \\OBJECT\\I34E\\STATS.EXE\\C0L.OBJ @\\SOURCE\\I34M.LNK \\TCPP101\\LIB\\CL.LIB,\\BUILD\\I34M\\FIRES.EXE,\\BUILD\\I34M\\FIRES.MAP >>\\BUILD\\MKII.LOG"
+      }
+    ],
+    "mkii_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT"
+  },
+  "dosbox_build_attempt": {
+    "attempted": true,
+    "compiled_objects": [
+      {
+        "name": "BASE.OBJ",
+        "size": 5363
+      },
+      {
+        "name": "CHAMDRAW.OBJ",
+        "size": 7335
+      },
+      {
+        "name": "CHAMPION.OBJ",
+        "size": 16793
+      },
+      {
+        "name": "CLIKMENU.OBJ",
+        "size": 4181
+      },
+      {
+        "name": "CLIKVIEW.OBJ",
+        "size": 3829
+      },
+      {
+        "name": "COMMAND.OBJ",
+        "size": 10985
+      },
+      {
+        "name": "COORD.OBJ",
+        "size": 7246
+      },
+      {
+        "name": "DATA.OBJ",
+        "size": 2980
+      },
+      {
+        "name": "DIALOG.OBJ",
+        "size": 5018
+      },
+      {
+        "name": "DUNGEON.OBJ",
+        "size": 14822
+      },
+      {
+        "name": "DUNVIEW.OBJ",
+        "size": 0
+      },
+      {
+        "name": "ENDGAME.OBJ",
+        "size": 6126
+      },
+      {
+        "name": "FLOPPY.OBJ",
+        "size": 3209
+      },
+      {
+        "name": "GAMELOOP.OBJ",
+        "size": 3379
+      },
+      {
+        "name": "GROUP.OBJ",
+        "size": 18477
+      },
+      {
+        "name": "LOADSAVE.OBJ",
+        "size": 14611
+      },
+      {
+        "name": "MEMORY.OBJ",
+        "size": 18628
+      },
+      {
+        "name": "MENU.OBJ",
+        "size": 12357
+      },
+      {
+        "name": "MENUDRAW.OBJ",
+        "size": 4180
+      },
+      {
+        "name": "MOVESENS.OBJ",
+        "size": 12223
+      },
+      {
+        "name": "OBJECT.OBJ",
+        "size": 3454
+      },
+      {
+        "name": "PANEL.OBJ",
+        "size": 12675
+      },
+      {
+        "name": "PROJEXPL.OBJ",
+        "size": 12132
+      },
+      {
+        "name": "REVIVE.OBJ",
+        "size": 7492
+      },
+      {
+        "name": "SOUND.OBJ",
+        "size": 1686
+      },
+      {
+        "name": "STRING.OBJ",
+        "size": 1380
+      },
+      {
+        "name": "TEXT.OBJ",
+        "size": 5439
+      },
+      {
+        "name": "TIMELINE.OBJ",
+        "size": 12123
+      }
+    ],
+    "dunview_obj_size": 0,
+    "error_excerpt_path": "<firestaff-repo>/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/mkii_log_error_excerpt.txt",
+    "errors": [
+      "Error dunview.c 4791: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff",
+      "Error dunview.c 4791: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff",
+      "Error dunview.c 4791: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff",
+      "Error dunview.c 4827: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff",
+      "Error dunview.c 4838: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff",
+      "Error dunview.c 4845: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff",
+      "Error dunview.c 4849: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff"
+    ],
+    "fires_map_size": 0,
+    "ok": false,
+    "returncode": 0,
+    "stdout_tail_path": "<firestaff-repo>/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/dosbox_build_stdout_tail.txt",
+    "tempdir_policy": "temporary build tree removed after run; repo receives text excerpts only"
+  },
+  "promotion_decision": "CS:IP candidates are still blocked. The build-script TLINK line is actionable evidence for the next unblock path, but it is not a verified public-symbol/runtime bridge until FIRES.MAP is actually produced and matched to FIRES.EXENEW or debugger-observed seam hits.",
+  "result": "No existing FIRES.MAP/FIRES.SYM/listing/object bridge was found in focused N2-local roots. ReDMCSB MKII.BAT can in principle emit FIRES.MAP, but the bounded DOSBox-X build did not produce a usable map.",
+  "schema": "pass236_dm1_v1_fires_symbol_bridge_audit.v1",
+  "searched_paths": [
+    "<redmcsb-source>/Reference/ReDMCSB/I34E",
+    "<redmcsb-source>/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E",
+    "<redmcsb-source>/Reference/Original/I34E",
+    "<redmcsb-source>/ReDMCSB_WIP20210206/Reference/Original/I34E",
+    "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
+    "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "<firestaff-original-games>/_canonical/dm1",
+    "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34"
+  ],
+  "source_seams": [
+    {
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "line": 1497,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "line": 142,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "line": 180,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "line": 152,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "line": 2962,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap",
+      "line": 3113,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0108_DUNGEONVIEW_DrawFloorOrnament",
+      "line": 3940,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0109_DUNGEONVIEW_DrawDoorOrnament",
+      "line": 4013,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "line": 4547,
+      "ok": true,
+      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    }
+  ],
+  "status": "BLOCKED_NO_PROMOTED_CSIP",
+  "symbol_file_hits": []
+}

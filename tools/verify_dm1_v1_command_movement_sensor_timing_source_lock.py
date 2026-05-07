@@ -108,6 +108,21 @@ def main() -> int:
     for needle, label, fname, text, start in command_checks:
         require(text, needle, label, fname, citations, start)
 
+    clik_positions = require_order_positions(clik, [
+        'static int16_t G0465_ai_Graphic561_MovementArrowToStepForwardCount[4] = {',
+        '1,   /* Forward */',
+        '0,   /* Right */',
+        '-1,  /* Backward */',
+        '0 }; /* Left */',
+        'static int16_t G0466_ai_Graphic561_MovementArrowToStepRightCount[4] = {',
+        '0,    /* Forward */',
+        '1,    /* Right */',
+        '0,    /* Backward */',
+        '-1 }; /* Left */',
+    ], 'CLIKMENU movement-arrow relative step tables', clik.index('static int16_t G0465_ai_Graphic561_MovementArrowToStepForwardCount[4]'))
+    a, b = exact_lines(clik, clik_positions)
+    citations.append(f'movement command to forward/right relative steps: CLIKMENU.C:{a}-{b}')
+
     dungeon_positions = require_order_positions(dungeon, [
         'void F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement',
         '*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[P0253_i_Direction] * P0254_i_StepsForwardCount',
@@ -222,6 +237,7 @@ def main() -> int:
     for body, checks, label in [
         (find_function(fire_queue, 'DM1_V1_InputCommandQueue_EnqueueEventPc34Compat'), ['event.kind == DM1_V1_INPUT_KIND_MOUSE && queue->locked', 'pendingClickPresent', 'return 0;'], 'Firestaff pending click capture'),
         (find_function(fire_queue, 'DM1_V1_InputCommandQueue_ProcessOnePc34Compat'), ['queue->locked = 1;', 'is_move_command(result.command)', 'projectileDisabledMovementTicks', 'lastProjectileDisabledMovementDirection == normalize_dir', 'movementDisabledGate = 1', 'process_pending_click(queue)', 'result.dequeued = 1', 'result.dispatchedMove = 1'], 'Firestaff queue gate/replay/dispatch'),
+        (find_function(fire_move, 'F0701_MOVEMENT_GetStepDelta_Compat'), ['case MOVE_FORWARD:  stepDir = direction; break;', 'case MOVE_RIGHT:    stepDir = (direction + 1) & 3; break;', 'case MOVE_BACKWARD: stepDir = (direction + 2) & 3; break;', 'case MOVE_LEFT:     stepDir = (direction + 3) & 3; break;', '*outDx = s_dx[stepDir];', '*outDy = s_dy[stepDir];'], 'Firestaff relative movement delta table'),
         (find_function(fire_move, 'F0702_MOVEMENT_TryMove_Compat'), ['F0701_MOVEMENT_GetStepDelta_Compat', 'MOVE_BLOCKED_DOOR', 'MOVE_BLOCKED_WALL', 'outResult->newMapX = nx', 'outResult->resultCode = MOVE_OK'], 'Firestaff movement legality core'),
         (find_function(fire_move, 'F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat'), ['party->championCount <= 0', 'F0702_MOVEMENT_TryMove_Compat', 'DUNGEON_SQUARE_MASK_THING_LIST', 'THING_GET_TYPE(thing) == THING_TYPE_GROUP'], 'Firestaff party/group collision gate'),
         (find_function(fire_sensor, 'F0718_SENSOR_ProcessPartyEnterLeave_Compat'), ['F0717_SENSOR_EnumerateOnSquare_Compat', 'F0710_SENSOR_Execute_Compat', 'outList->effects[outList->count++]'], 'Firestaff sensor enter/leave walker'),
@@ -239,6 +255,8 @@ def main() -> int:
         'pending click becomes queued command',
         'mouse forward dispatched as move',
         'mouse movement destination sensors processed',
+        'relative movement delta dx',
+        'relative movement delta dy',
         'successful step cadence from slowest living champion',
         'wall blocked-side-effects key queued',
         'door blocked-side-effects key queued',

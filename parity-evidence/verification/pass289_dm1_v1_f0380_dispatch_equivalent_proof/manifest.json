@@ -1,0 +1,152 @@
+{
+  "direct_f0380_body_bp_seen": false,
+  "dispatch_equivalent_proven": true,
+  "exact_smaller_blocker": "Direct F0380 body breakpoint at pass278 address 22F4:0699 still does not hit; reproduce with pass278 route and breakpoints from its manifest/transcript. The dispatch-equivalent seam is GAMELOOP.C:215 -> COMMAND.C:F0380 source ordering, not a direct runtime BP claim.",
+  "imported_pass278": {
+    "addresses": {
+      "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+      "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+      "G0306_i_PartyMapX": "2C20:3C94",
+      "G0307_i_PartyMapY": "2C20:3CE0",
+      "G0308_i_PartyDirection": "2C20:3C92",
+      "G0432_as_CommandQueue": "2C20:3E7A"
+    },
+    "blocker": "Staged BPM disable/re-enable reduced queue/index noise and captured controlled-key G0432 writes, party tuple mutation, and an F0128 draw BP hit after switching to code-only mode; the exact remaining blocker is no proven F0380 dequeue BP hit at 22F4:0699. This is not a runtime-hook claim.",
+    "path": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+    "present": true,
+    "proof_predicates": {
+      "cpu_memdump_after_stops": true,
+      "f0128_draw_hit_seen": true,
+      "f0380_dequeue_hit_seen": false,
+      "g0432_write_seen": true,
+      "party_tuple_mutation_seen": true,
+      "route_posted_controlled_keys": true
+    },
+    "route_keylog": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/route_noise_reduced_keylog.json",
+    "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK",
+    "transcript": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt"
+  },
+  "imported_pass284": {
+    "exact_remaining_blocker": "No proven runtime F0380 dequeue breakpoint hit at 22F4:0699 in the imported pass278 transcript; do not claim runtime hook despite G0432 write, party tuple mutation, and F0128 draw hit.",
+    "path": "parity-evidence/verification/pass284_dm1_v1_f0380_dequeue_ordering_proof/manifest.json",
+    "present": true,
+    "runtime_chain_proven": false,
+    "source_chain_proven": true,
+    "status": "SOURCE_PROVEN_RUNTIME_F0380_BLOCKED"
+  },
+  "pass281_inspection": {
+    "matches": [],
+    "note": "No pass281 artifact exists in this worktree",
+    "present": false
+  },
+  "runtime_equivalent_proven": true,
+  "schema": "pass289_dm1_v1_f0380_dispatch_equivalent_proof.v1",
+  "source_chain_proven": true,
+  "source_checks": [
+    {
+      "claim": "PC-34 movement keyboard input maps keypad/arrow controls to C001/C002 turns and C003..C006 movement commands.",
+      "file": "COMMAND.C",
+      "id": "controlled_pc34_key_rows",
+      "line_range": [
+        252,
+        260
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0361 scans keyboard tables, reserves next circular slot, writes command to G0432, advances G0434, and increments guarded G2153 count where present.",
+      "file": "COMMAND.C",
+      "id": "f0361_key_to_g0432_g0434_count",
+      "line_range": [
+        1734,
+        1812
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0380 tests G0433/G0434 empty state, reads G0432[G0433], gates disabled movement, reads X/Y, decrements guarded G2153, advances/wraps G0433, unlocks/replays, then dispatches turns/moves.",
+      "file": "COMMAND.C",
+      "id": "f0380_dequeue_source_equivalent",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "The active game loop reads keyboard input through F0361 and then calls F0380_COMMAND_ProcessQueue_CPSC, giving the dispatch-equivalent caller seam when direct F0380 body BP misses.",
+      "file": "GAMELOOP.C",
+      "id": "main_loop_calls_f0380",
+      "line_range": [
+        160,
+        216
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "Turn dispatch mutates the party tuple by writing G0308_i_PartyDirection.",
+      "file": "CHAMPION.C",
+      "id": "turn_dispatch_mutates_g0308",
+      "line_range": [
+        117,
+        130
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "Move dispatch reaches F0267, where successful party movement writes G0306_i_PartyMapX/G0307_i_PartyMapY; pit/teleporter variants repeat tuple writes before draw/sensor consequences.",
+      "file": "MOVESENS.C",
+      "id": "move_dispatch_mutates_g0306_g0307",
+      "line_range": [
+        316,
+        556
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "The main loop redraw consumes the current party tuple by passing G0308/G0306/G0307 to F0128.",
+      "file": "GAMELOOP.C",
+      "id": "f0128_consumes_tuple_from_gameloop",
+      "line_range": [
+        88,
+        90
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "DUNVIEW.C F0128 receives direction/mapX/mapY parameters and ends by drawing the dungeon viewport.",
+      "file": "DUNVIEW.C",
+      "id": "dunview_f0128_argument_consumption",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    }
+  ],
+  "source_map_justification": {
+    "caller_seam": "GAMELOOP.C:160-216 reads keyboard input with F0361 and then calls F0380_COMMAND_ProcessQueue_CPSC at line 215.",
+    "dequeue_equivalence": "COMMAND.C:2045-2156 establishes that any observed G0432 write followed by G0306/G0307/G0308 mutation and later F0128 draw on the main-loop route traverses the F0380 dispatch semantics, even though BP 22F4:0699 itself did not stop.",
+    "draw_consumption": "GAMELOOP.C:88-90 passes G0308/G0306/G0307 into DUNVIEW.C F0128; DUNVIEW.C:8318-8611 consumes those args before viewport draw.",
+    "queue_authority": "COMMAND.C:6-11 defines G0432 and circular G0433/G0434; G2153 exists, but for this PC-34 route the source proof is index authority plus guarded count updates."
+  },
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "DISPATCH_EQUIVALENT_PROVEN_DIRECT_F0380_BP_BLOCKED",
+  "timestamp_utc": "2026-05-07T01:05:44Z"
+}

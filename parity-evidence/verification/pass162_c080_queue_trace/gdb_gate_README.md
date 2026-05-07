@@ -16,15 +16,15 @@ First missing gate: debugger/source-symbol binding prerequisite; C080 mouse/queu
   - DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,
   - and you are welcome to redistribute it under certain conditions;
   - please read the COPYING file thoroughly before doing so.
-- `dm_exe_file` rc=0: `/usr/bin/file /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
-  - /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed
-- `gdb_stock_dm_symbol_gate` rc=1: `/usr/bin/gdb --batch -x /home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
-  - /home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb:3: Error in sourced command file:
-  - "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE": not in executable format: file format not recognized
+- `dm_exe_file` rc=0: `/usr/bin/file <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
+  - <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed
+- `gdb_stock_dm_symbol_gate` rc=1: `/usr/bin/gdb --batch -x <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
+  - <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb:3: Error in sourced command file:
+  - "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE": not in executable format: file format not recognized
 
 ## Runnable artifacts
-- gdb: `gdb --batch -x /home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
-- DOSBox-X: `dosbox-x -conf /home/trv2/work/firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf`
+- gdb: `gdb --batch -x <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
+- DOSBox-X: `dosbox-x -conf <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf`
 
 ## Source citations audited
 - PASS `COMMAND.C:1452-1662` `F0359_COMMAND_ProcessClick_CPSC` — Actual mouse-click queue writer: derives command from primary/secondary mouse tables and writes nonzero command plus X/Y into G0432_as_CommandQueue.

@@ -1,0 +1,105 @@
+{
+  "claim": "Decoder feeds canonical DUNGEON.DAT raw map squares into the D0-D3 draw-list; no pixel parity claim.",
+  "dungeonDat": {
+    "byteCount": 33357,
+    "initialPartyLocationRaw": "0x0861",
+    "initialState": {
+      "direction": 2,
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3
+    },
+    "map0": {
+      "checksumFileOffset": 33355,
+      "entryD0C_raw_x1_y3": 176,
+      "entryD1C_raw_x1_y4": 48,
+      "entryD3L_raw_x0_y6": 0,
+      "height": 19,
+      "level": 0,
+      "rawMapDataByteOffset": 0,
+      "rawMapDataFileOffset": 21072,
+      "width": 18
+    },
+    "mapCount": 14,
+    "ornamentRandomSeed": 99,
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "rawMapDataByteCount": 12283,
+    "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "squareFirstThingCount": 1679,
+    "textDataWordCount": 1749
+  },
+  "errors": [],
+  "firestaffAnchors": [
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "needle": "DM1_V2_DungeonDatState"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "needle": "dm1_v2_vp_build_composition_from_dungeon"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "needle": "LOADSAVE.C:906-923"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "needle": "DEFS.H:972-1016"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "needle": "DUNGEON.C:2238-2239"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "needle": "DUNGEON.C:2243-2246"
+    },
+    {
+      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "needle": "dm1_v2_vp_dungeon_dat_get_square_raw"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "needle": "test_viewport_dungeon_dat_decoder_entry_draw_list"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "needle": "raw == 0xB0"
+    },
+    {
+      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "needle": "DM1_V2_VIEW_SQUARE_D3L"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "needle": "dm1_v2_dungeon_dat_square_decoder_source_lock"
+    }
+  ],
+  "pass": "pass279_dm1_v2_dungeon_dat_square_decoder",
+  "redmcsbSource": "/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/SOURCE",
+  "sourceChecks": {
+    "DEFS.H": [
+      "M034_SQUARE_TYPE(square)",
+      "RawMapDataByteOffset",
+      "Width",
+      "Height"
+    ],
+    "DUNGEON.C": [
+      "F0151_DUNGEON_GetSquare",
+      "F0152_DUNGEON_GetRelativeSquare",
+      "F0173_DUNGEON_SetCurrentMap"
+    ],
+    "DUNVIEW.C": [
+      "F0127_DUNGEONVIEW_DrawSquareD0C",
+      "F0124_DUNGEONVIEW_DrawSquareD1C",
+      "F0116_DUNGEONVIEW_DrawSquareD3L"
+    ],
+    "LOADSAVE.C": [
+      "RawMapDataByteCount",
+      "G0276_puc_DungeonRawMapData",
+      "G0279_pppuc_DungeonMapData",
+      "RawMapDataByteOffset"
+    ]
+  },
+  "status": "PASS"
+}

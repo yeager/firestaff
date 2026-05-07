@@ -1,5 +1,5 @@
 ok
-graphicsDatPath=/Users/bosse/.firestaff/data/GRAPHICS.DAT
+graphicsDatPath=<local-home>/.firestaff/data/GRAPHICS.DAT
 outputPrefix=verification/pass58-title-frontend/title_frontend_fallback
 bootScript=m7_reachability_b
 bootPublishedFrameCount=50
@@ -9,5 +9,5 @@ unifiedBootMode=1
 titleHoldMode=1
 titleFrontendOriginalFrameCount=0
 titleFrontendFallbackFrameCount=1
-titleFrontendTitleDatPath=/Users/bosse/.firestaff/data/GRAPHICS.DAT
+titleFrontendTitleDatPath=<local-home>/.firestaff/data/GRAPHICS.DAT
 titleHoldRepeatCount=1

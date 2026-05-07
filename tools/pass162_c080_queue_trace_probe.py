@@ -111,14 +111,14 @@ def build_manifest(dry_run: bool) -> dict[str, object]:
         "dry_run": dry_run,
         "source_root": str(SOURCE_ROOT),
         "allowed_original_roots": [str(ORIGINAL_DM), str(EXTRACTED_DM)],
-        "forbidden_roots_note": "DANNESBURK not used by this script.",
+        "forbidden_roots_note": "<private-host> not used by this script.",
         "pass162_context": {"summary_path": str(PASS162_SUMMARY), "loaded": pass162 is not None, "classification": pass162.get("classification") if isinstance(pass162, dict) else None, "reason": pass162.get("reason") if isinstance(pass162, dict) else None},
         "source_audit": citations,
         "symbol_note": "Hard-rule symbol F0365 is audited, but in this ReDMCSB tree F0365 is turn-party; the actual mouse queue writer for C080 is F0359_COMMAND_ProcessClick_CPSC at COMMAND.C:1452-1662.",
         "probe_gates": BREAKPOINTS,
         "tool_probe": {"bins": bins, "dosbox_version": run_cmd([bins["dosbox"], "-version"]) if bins.get("dosbox") else None, "dosbox_x_version": run_cmd([bins["dosbox-x"], "-version"]) if bins.get("dosbox-x") else None},
         "next_step": "Run the emitted gate list in DOSBox-X/debugger against the source-locked pass162 pose; classify first missing gate instead of trying more coordinates.",
-        "non_claims": ["does not prove the stock original binary reached C080/F0377/F0280", "does not use DANNESBURK", "does not claim x=111,y=82 is wrong; it narrows where to instrument before changing coordinates"],
+        "non_claims": ["does not prove the stock original binary reached C080/F0377/F0280", "does not use <private-host>", "does not claim x=111,y=82 is wrong; it narrows where to instrument before changing coordinates"],
     }
     if any(not item["ok"] for item in citations):
         manifest["classification"] = "blocked/source-audit-token-mismatch"

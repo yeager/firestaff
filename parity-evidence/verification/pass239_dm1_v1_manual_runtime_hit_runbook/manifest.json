@@ -1,0 +1,206 @@
+{
+  "candidate_breakpoints": [
+    {
+      "bp_command": "BP 1D69:06E9",
+      "bp_template": "BP {LOAD+0x1b7c}:06e9",
+      "classification": "candidate_only",
+      "confidence": "medium_high",
+      "id": "command_accepted",
+      "runtime_cs_ip": "1D69:06E9",
+      "runtime_formula": "{program_load_segment + 0x1b7c}:0x06e9",
+      "source_file": "COMMAND.C",
+      "source_function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "static_cs_ip": "1b7c:06e9"
+    },
+    {
+      "bp_command": "BP 195E:010D",
+      "bp_template": "BP {LOAD+0x1771}:010d",
+      "classification": "candidate_only",
+      "confidence": "high_static",
+      "id": "turn_types_1_to_2",
+      "runtime_cs_ip": "195E:010D",
+      "runtime_formula": "{program_load_segment + 0x1771}:0x010d",
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "static_cs_ip": "1771:010d"
+    },
+    {
+      "bp_command": "BP 195E:01AA",
+      "bp_template": "BP {LOAD+0x1771}:01aa",
+      "classification": "candidate_only",
+      "confidence": "high_static",
+      "id": "move_types_3_to_6",
+      "runtime_cs_ip": "195E:01AA",
+      "runtime_formula": "{program_load_segment + 0x1771}:0x01aa",
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "static_cs_ip": "1771:01aa"
+    },
+    {
+      "bp_command": "BP 1313:0516",
+      "bp_template": "BP {LOAD+0x1126}:0516",
+      "classification": "candidate_only",
+      "confidence": "medium_high",
+      "id": "move_get_move_result",
+      "runtime_cs_ip": "1313:0516",
+      "runtime_formula": "{program_load_segment + 0x1126}:0x0516",
+      "source_file": "MOVESENS.C",
+      "source_function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "static_cs_ip": "1126:0516"
+    },
+    {
+      "bp_command": "BP 25B9:110E",
+      "bp_template": "BP {LOAD+0x23cc}:110e",
+      "classification": "candidate_only",
+      "confidence": "low_medium",
+      "id": "viewport_game_loop_draw_call_site",
+      "runtime_cs_ip": "25B9:110E",
+      "runtime_formula": "{program_load_segment + 0x23cc}:0x110e",
+      "source_file": "GAMELOOP.C",
+      "source_function": "F0002_MAIN_GameLoop_CPSDF -> F0128_DUNGEONVIEW_Draw_CPSF",
+      "static_cs_ip": "23cc:110e"
+    }
+  ],
+  "debugger_capabilities": {
+    "dosbox-debug": "/usr/bin/dosbox-debug",
+    "has_bp": true,
+    "has_bpint": true,
+    "has_bplist": true,
+    "has_memdump": true
+  },
+  "inputs": {
+    "pass237_manifest": "<firestaff-repo>/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "runtime_image": "<firestaff-repo>/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "symbol_map": "<firestaff-repo>/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+  },
+  "load_segment_hex": "01ED",
+  "loader_breakpoint": "BPINT 21 4B",
+  "promotion_guardrail": "No candidate row is a verified_runtime_hit. Promote only after a real DOSBox debugger stop at the computed runtime CS:IP with registers/disassembly/state evidence for the movement-to-viewport chain.",
+  "psp_segment_formula": "PSP = program_load_segment - 0x10 (FIRES.EXENEW entry is 0000:0000)",
+  "psp_segment_hex": "01DD",
+  "runbook": [
+    "Start from a stock DM1 PC34 directory outside this repo.",
+    "Copy the verified decompressed fixture as FIRES.EXE only in that scratch directory; never commit FIRES/FIRES.EXENEW.",
+    "Run /usr/bin/dosbox-debug from a real terminal/console. Do not use stdin-only SSH automation for this pass.",
+    "At the debugger prompt, set the loader breakpoint: BPINT 21 4B; BPLIST; F5.",
+    "At DOS C:\\>, run FIRES.EXE. When INT 21 AH=4B breaks, note the parent PSP from registers if visible, then continue/step until the child entry line shows CS:0000 with the decompressed FIRES first instruction.",
+    "Record that child-entry CS as program_load_segment. Because FIRES.EXENEW has entry 0000:0000, PSP = program_load_segment - 0x10.",
+    "Compute each runtime breakpoint as runtime_cs = program_load_segment + static_cs and runtime_ip = static_ip.",
+    "Set the movement/viewport breakpoints printed below, press F5, enter/reach a playable viewport, then issue one movement command.",
+    "For each hit record: exact CS:IP, register dump, 8-16 nearby disassembly lines, command value/state if visible, and whether the sequence proves command accepted -> movement resolver -> viewport draw.",
+    "Do not edit data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json to verified_runtime_hit unless a debugger-observed hit at the computed CS:IP is captured."
+  ],
+  "runtime_image": {
+    "binary_policy": "do not commit original/decompressed FIRES binaries",
+    "decompressed_fires": {
+      "entry_cs_ip": "0000:0000",
+      "first_64": "4d5a30005d01d60980020000fffffb2880000000000000001c0000000100000001000b0006000e00010023000a0038000000bf000400c6000100c7000900c700",
+      "header_bytes": 10240,
+      "path": "parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+      "relocation_signature_at_lfarlc": "01000000",
+      "relocation_table_offset": "0x001c",
+      "relocations": 2518,
+      "sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+      "size": 178224,
+      "ss_sp": "28fb:0080"
+    },
+    "packed_fires": {
+      "entry_cs_ip": "1665:000e",
+      "first_64": "4d5a3b00ba00000002007613ffffd229800000000e0065161c0000004c5a3931ffffbaed242e8916d901b430cd218b2e02ffff008b1e2c008edaa37b008c0679",
+      "header_bytes": 32,
+      "path": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+      "relocation_signature_at_lfarlc": "4c5a3931",
+      "relocation_table_offset": "0x001c",
+      "relocations": 0,
+      "sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
+      "size": 94779,
+      "ss_sp": "29d2:0080"
+    },
+    "runtime_load_base_policy": "runtime PSP/load segment still must be captured from emulator/debugger; static MZ CS:IP is relative to loaded image only",
+    "schema": "dm1_pc34_i34e_runtime_image.v1",
+    "source": "pass229_unlzexe_fires_runtime_unblock_n2_local_wine_unlzexe_0_81",
+    "status": "PASS_RUNTIME_IMAGE_FIXTURE_BOOTSTRAPPED"
+  },
+  "schema": "pass239_dm1_v1_manual_runtime_hit_runbook.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "id": "command_accepted",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "id": "turn_types_1_to_2",
+      "line_range": [
+        142,
+        179
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "id": "move_types_3_to_6",
+      "line_range": [
+        180,
+        347
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "MOVESENS.C",
+      "id": "move_get_move_result",
+      "line_range": [
+        316,
+        850
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "id": "viewport_game_loop_draw_call_site",
+      "line_range": [
+        35,
+        95
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "viewport_buffer_composed",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "id": "viewport_present",
+      "line_range": [
+        709,
+        858
+      ],
+      "missing": [],
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "status": "PASS_MANUAL_RUNTIME_HIT_PATH_EXECUTABLE_NO_PROMOTIONS"
+}

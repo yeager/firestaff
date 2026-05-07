@@ -654,6 +654,111 @@
       "name": "inventory.eye",
       "route_found": true,
       "zone": 546
+    },
+    {
+      "button": "left",
+      "command": 160,
+      "name": "panel.resurrect",
+      "route_found": true,
+      "zone": 570
+    },
+    {
+      "button": "left",
+      "command": 161,
+      "name": "panel.reincarnate",
+      "route_found": true,
+      "zone": 571
+    },
+    {
+      "button": "left",
+      "command": 162,
+      "name": "panel.cancel",
+      "route_found": true,
+      "zone": 573
+    },
+    {
+      "button": "left",
+      "command": 7,
+      "name": "champion0.bar_graphs_toggle",
+      "route_found": true,
+      "zone": 187
+    },
+    {
+      "button": "left",
+      "command": 8,
+      "name": "champion1.bar_graphs_toggle",
+      "route_found": true,
+      "zone": 188
+    },
+    {
+      "button": "left",
+      "command": 9,
+      "name": "champion2.bar_graphs_toggle",
+      "route_found": true,
+      "zone": 189
+    },
+    {
+      "button": "left",
+      "command": 10,
+      "name": "champion3.bar_graphs_toggle",
+      "route_found": true,
+      "zone": 190
+    },
+    {
+      "button": "left",
+      "command": 12,
+      "name": "champion0.status_box",
+      "route_found": true,
+      "zone": 151
+    },
+    {
+      "button": "left",
+      "command": 13,
+      "name": "champion1.status_box",
+      "route_found": true,
+      "zone": 152
+    },
+    {
+      "button": "left",
+      "command": 14,
+      "name": "champion2.status_box",
+      "route_found": true,
+      "zone": 153
+    },
+    {
+      "button": "left",
+      "command": 15,
+      "name": "champion3.status_box",
+      "route_found": true,
+      "zone": 154
+    },
+    {
+      "button": "left",
+      "command": 125,
+      "name": "champion.icon_top_left",
+      "route_found": true,
+      "zone": 113
+    },
+    {
+      "button": "left",
+      "command": 126,
+      "name": "champion.icon_top_right",
+      "route_found": true,
+      "zone": 114
+    },
+    {
+      "button": "left",
+      "command": 127,
+      "name": "champion.icon_bottom_right",
+      "route_found": true,
+      "zone": 115
+    },
+    {
+      "button": "left",
+      "command": 128,
+      "name": "champion.icon_bottom_left",
+      "route_found": true,
+      "zone": 116
     }
   ],
   "full_matrix_zones": [
@@ -1624,9 +1729,174 @@
       },
       "name": "inventory.eye",
       "zone": 546
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 57,
+        "w": 55,
+        "x": 104,
+        "y": 53
+      },
+      "name": "panel.resurrect",
+      "zone": 570
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 57,
+        "w": 55,
+        "x": 163,
+        "y": 53
+      },
+      "name": "panel.reincarnate",
+      "zone": 571
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 11,
+        "w": 114,
+        "x": 104,
+        "y": 113
+      },
+      "name": "panel.cancel",
+      "zone": 573
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 24,
+        "x": 43,
+        "y": 0
+      },
+      "name": "champion0.bar_graphs_toggle",
+      "zone": 187
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 24,
+        "x": 112,
+        "y": 0
+      },
+      "name": "champion1.bar_graphs_toggle",
+      "zone": 188
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 24,
+        "x": 181,
+        "y": 0
+      },
+      "name": "champion2.bar_graphs_toggle",
+      "zone": 189
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 24,
+        "x": 250,
+        "y": 0
+      },
+      "name": "champion3.bar_graphs_toggle",
+      "zone": 190
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 0,
+        "y": 0
+      },
+      "name": "champion0.status_box",
+      "zone": 151
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 69,
+        "y": 0
+      },
+      "name": "champion1.status_box",
+      "zone": 152
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 138,
+        "y": 0
+      },
+      "name": "champion2.status_box",
+      "zone": 153
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 29,
+        "w": 67,
+        "x": 207,
+        "y": 0
+      },
+      "name": "champion3.status_box",
+      "zone": 154
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 14,
+        "w": 19,
+        "x": 281,
+        "y": 0
+      },
+      "name": "champion.icon_top_left",
+      "zone": 113
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 14,
+        "w": 19,
+        "x": 301,
+        "y": 0
+      },
+      "name": "champion.icon_top_right",
+      "zone": 114
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 14,
+        "w": 19,
+        "x": 301,
+        "y": 15
+      },
+      "name": "champion.icon_bottom_right",
+      "zone": 115
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 14,
+        "w": 19,
+        "x": 281,
+        "y": 15
+      },
+      "name": "champion.icon_bottom_left",
+      "zone": 116
     }
   ],
-  "matrix_zone_count": 88,
+  "matrix_zone_count": 103,
   "non_claims": [
     "No input behavior is changed by this verifier.",
     "This does not source-lock V2 inventory art or HUD rendering behavior.",
@@ -1701,19 +1971,19 @@
   "scope": "DM1 V1 source-locked in-game UI hit-zone matrix for future touch/click abstraction",
   "source_citations": [
     "DEFS.H:197-211 defines MOUSE_INPUT command/box/button records",
-    "COMMAND.C:375-506 defines primary interface, movement, inventory, action, spell, champion-name/hand, and chest mouse command-to-zone/button tables",
+    "COMMAND.C:375-511 defines primary interface, movement, inventory, action, spell, champion-name/hand, chest, and resurrect/reincarnate panel mouse command-to-zone/button tables; COMMAND.C:380-391 covers the remaining source-locked bar-graph toggle and champion-icon primary-interface zones",
     "COMMAND.C:396-405 G0448_as_Graphic561_SecondaryMouseInput_Movement routes left/right movement and viewport/toggle commands to zones/buttons",
     "COMMAND.C:1403-1431 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans mouse-input entries and tests button/zone matches",
     "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",
     "COORD.C:1915-1920 F0798_COMMAND_IsPointInZone inclusive zone hit-test"
   ],
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "pass",
   "verified_files": [
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
-    "/home/trv2/work/firestaff/zones_h_reconstruction.json",
-    "/home/trv2/work/firestaff/touch_click_zone_matrix_pc34_compat.c"
+    "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+    "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+    "<firestaff-repo>/data/zones_h_reconstruction.json",
+    "<firestaff-repo>/touch_click_zone_matrix_pc34_compat.c"
   ],
   "zones": [
     {

@@ -177,7 +177,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
             lines.append(f"- {blocker}")
     else:
         lines.append("PASS: the route has a fresh gameplay frame after every logged movement/turn command.")
-    lines += ["", "Non-claims: no DANNESBURK use, no push, no PNG/PPM committed, no original-vs-Firestaff pixel parity claim.", ""]
+    lines += ["", "Non-claims: no <private-host> use, no push, no PNG/PPM committed, no original-vs-Firestaff pixel parity claim.", ""]
     report.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -190,7 +190,7 @@ def main() -> int:
     source = audit_source()
     attempt = audit_attempt(args.attempt_dir)
     status = decide_status(source, attempt)
-    manifest = {"schema": "pass220_dm1_v1_original_readiness_oracle.v1", "status": status, "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["DANNESBURK", "192.168.2.126"], "redmcsb_source_audit": source, "attempt_audit": attempt}
+    manifest = {"schema": "pass220_dm1_v1_original_readiness_oracle.v1", "status": status, "repo": str(ROOT), "redmcsb_source_root": str(REDMCSB), "forbidden_hosts": ["<private-host>", "<private-host-ip>"], "redmcsb_source_audit": source, "attempt_audit": attempt}
     args.out_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = args.out_dir / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")

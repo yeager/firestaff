@@ -856,7 +856,7 @@ Syntax smoke:
 ```
 cc -Wall -Wextra -c -o /tmp/savegame_h_check.o -x c \
     <(printf '#include "memory_savegame_pc34_compat.h"\nint main(void){return 0;}') \
-    -I/Users/bosse/.openclaw/workspace-main/tmp/firestaff
+    -I<workspace>/tmp/firestaff
 ```
 Must compile clean (zero warnings).
 
@@ -1051,7 +1051,7 @@ the pre-check.
 
 ```
 bash run_firestaff_m10_verify.sh \
-    /Users/bosse/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
+    <local-home>/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
     /tmp/m10-verify-out
 ```
 Exit must be 0. All 15 phases (1..14 unchanged + new 15) PASS.

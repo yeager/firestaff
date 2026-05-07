@@ -14,10 +14,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT = ROOT / "parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json"
 
 SRC = {name: REDMCSB / name for name in [

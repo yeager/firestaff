@@ -1,0 +1,39 @@
+{
+  "catalogGate": "validated V2 logical catalog: 8 categories / 45 logical IDs / 10 manifest bindings / 9 source-evidence bindings",
+  "completionImpact": "Closes one pass267 asset-binding gap for wall/front, wall/side, floor, ceiling, door/wood.closed and stairs/down logical IDs. Does not prove final rebuilt art, screenshot parity, or full viewport composition.",
+  "logicalBindings": {
+    "fs.v2.shared.dungeon-view.ceiling.base": "fs.v2.dungeon-view.ceiling.base-source",
+    "fs.v2.shared.dungeon-view.door.wood.closed": "fs.v2.dungeon-view.door.wood.closed-source",
+    "fs.v2.shared.dungeon-view.floor.base": "fs.v2.dungeon-view.floor.base-source",
+    "fs.v2.shared.dungeon-view.stairs.down": "fs.v2.dungeon-view.stairs.down-source",
+    "fs.v2.shared.dungeon-view.wall.front": "fs.v2.dungeon-view.wall.front-source",
+    "fs.v2.shared.dungeon-view.wall.side": "fs.v2.dungeon-view.wall.side-source"
+  },
+  "redmcsbMarkers": {
+    "DEFS.H": [
+      "M650_GRAPHIC_FLOOR_SET_0_FLOOR",
+      "M651_GRAPHIC_FLOOR_SET_0_CEILING",
+      "M646_GRAPHIC_FIRST_WALL_SET",
+      "C097_GRAPHIC_WALLSET_0_D1C",
+      "C107_GRAPHIC_WALLSET_0_D3C",
+      "M633_GRAPHIC_FIRST_DOOR_SET",
+      "C018_STAIRS_GRAPHIC_COUNT",
+      "C08_STAIRS_BITMAP_DOWN_FRONT_D3C",
+      "C16_STAIRS_BITMAP_DOWN_SIDE_D1L"
+    ],
+    "DUNVIEW.C": [
+      "F0094_DUNGEONVIEW_LoadFloorSet",
+      "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "F0100_DUNGEONVIEW_DrawWallSetBitmap",
+      "F0102_DUNGEONVIEW_DrawDoorBitmap",
+      "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap",
+      "F0111_DUNGEONVIEW_DrawDoor",
+      "G0676_i_StairsNativeBitmapIndex_Up_Front_D3C",
+      "G0683_i_StairsNativeBitmapIndex_Down_Front_D3C",
+      "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF"
+    ]
+  },
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V2 dungeon-view source-evidenced asset bindings",
+  "status": "passed"
+}

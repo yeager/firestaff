@@ -17,10 +17,7 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-REDMCSB_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DM2_CANONICAL = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2").expanduser()
 DM2_ASM = Path("~/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM").expanduser()
 CANONICAL_ARCHIVE = "Dungeon-Master-II-Skullkeep_DOS_EN.zip"

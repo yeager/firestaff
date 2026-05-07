@@ -10,7 +10,7 @@ Scope: N2-only fresh movement-focused route. Spell/inventory were deliberately e
 
 ```sh
 OUT_DIR=$PWD/verification-screens/pass210-n2-original-movement-route-fresh \
-DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
+DM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \
 DOSBOX=/usr/bin/dosbox \
 DM1_ORIGINAL_PROGRAM="DM -vv -sn -pk" \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
@@ -84,4 +84,4 @@ The materialized frames do **not** promote this seam because fixed-sleep shots s
 
 The current N2 original-runner route can materialize raw DOSBox images and 224x136 crops, but it still cannot produce a non-duplicate, semantically aligned movement-only sequence. The blocker is route synchronization/state readiness: screenshots are still taken before the route is provably in party-control gameplay, and subsequent movement commands collapse to repeated two-state viewport hashes.
 
-Non-claims: no DANNESBURK use, no push, no OpenAI API key, no Sonnet/q3.6 use, no original-vs-Firestaff pixel parity claim.
+Non-claims: no <private-host> use, no push, no OpenAI API key, no Sonnet/q3.6 use, no original-vs-Firestaff pixel parity claim.

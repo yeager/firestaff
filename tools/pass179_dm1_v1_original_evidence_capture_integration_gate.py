@@ -111,13 +111,13 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         "1. Build or obtain an original DM.EXE address/symbol map for the pass175 gates: F0359 enqueue, F0380 dequeue, F0377 C080 handler, and F0280 candidate transition.",
         "2. Produce a semantic-ready 320x200 original route capture after party/champion control is proven; source/tool recovery alone is not an overlay reference.",
         "3. Only then run original-vs-Firestaff viewport/HUD/inventory pixel overlays from the source-locked movement state.","",
-        "## Non-claims","","- No DANNESBURK/192.168.2.126 use.","- No push.","- No original pixel parity claim.","- No claim that DOSBox has reached F0359/F0380/F0377/F0280 until the address-map gate is solved.",""]
+        "## Non-claims","","- No <private-host>/<private-host-ip> use.","- No push.","- No original pixel parity claim.","- No claim that DOSBox has reached F0359/F0380/F0377/F0280 until the address-map gate is solved.",""]
     report.write_text("\n".join(lines), encoding="utf-8")
 
 def main() -> int:
     p = argparse.ArgumentParser(); p.add_argument("--out-dir", type=Path, default=OUT_DIR); p.add_argument("--report", type=Path, default=REPORT); args = p.parse_args()
     source_results = source_audit(); artifacts = existing_artifact_audit(); status = overall_status(source_results, artifacts)
-    manifest = {"schema":"pass179_dm1_v1_original_evidence_capture_integration_gate.v1","status":status,"worker":"portable host","repo":str(ROOT),"redmcsb_source_root":str(REDMCSB),"canonical_dm1_root":str(CANONICAL_DM1),"forbidden_hosts":["DANNESBURK","192.168.2.126"],"redmcsb_source_audit":source_results,"existing_artifacts":artifacts}
+    manifest = {"schema":"pass179_dm1_v1_original_evidence_capture_integration_gate.v1","status":status,"worker":"portable host","repo":str(ROOT),"redmcsb_source_root":str(REDMCSB),"canonical_dm1_root":str(CANONICAL_DM1),"forbidden_hosts":["<private-host>","<private-host-ip>"],"redmcsb_source_audit":source_results,"existing_artifacts":artifacts}
     args.out_dir.mkdir(parents=True, exist_ok=True); (args.out_dir/"manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True)+"\n", encoding="utf-8"); write_report(manifest, args.report)
     print(json.dumps({"status":status,"manifest":str(args.out_dir/"manifest.json"),"report":str(args.report),"source_checks":len(source_results),"source_failures":[x["id"] for x in source_results if not x["ok"]],"pass175_remaining_blocker":artifacts["pass175_status"]["remaining_blocker"]}, indent=2, sort_keys=True))
     return 0 if status.startswith("PASS") else 1

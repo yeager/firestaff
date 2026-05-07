@@ -32,7 +32,7 @@ This is the merge lane for the current big original-faithful blocker cluster. It
 
 ## Non-claims
 
-- No DANNESBURK/192.168.2.126 use.
+- No <private-host>/<private-host-ip> use.
 - No push.
 - No original pixel parity claim.
 - No claim that DOSBox has reached F0359/F0380/F0377/F0280 until the address-map gate is solved.

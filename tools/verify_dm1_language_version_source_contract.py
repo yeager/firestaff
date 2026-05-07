@@ -13,10 +13,7 @@ import json
 import re
 from pathlib import Path
 
-DEFAULT_REDMCSB_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+DEFAULT_REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DEFAULT_REPO = Path(__file__).resolve().parents[1]
 
 SOURCE_CITATIONS = [

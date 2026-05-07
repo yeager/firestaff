@@ -1,0 +1,59 @@
+{
+  "classification": "blocked/source-symbol-map-and-debugger-hits-required",
+  "exact_remaining_blocker": "FIRES.EXENEW now supplies the decompressed runtime image layout, but no N2-local FIRES.MAP/public-symbol table or debugger-observed source seam CS:IP/global addresses bind ReDMCSB functions to the loaded image.",
+  "required_to_promote": [
+    "PSP/program_load_segment from the actual FIRES run",
+    "FIRES.MAP/TLINK public symbols or verified function/global offsets for each source seam",
+    "debugger/hook hits proving command_accepted -> movement_applied -> viewport_present order"
+  ],
+  "schema": "pass230_symbol_gap.v1",
+  "supersedes_blocker_fragment": {
+    "pass208_old_blocker": "Stock FIRES is LZEXE v0.91; this pass proves the compressed loader entry CS:IP and source seams, but no decompressed FIRES memory dump or TLINK FIRES.MAP artifact is present on N2, so source symbols cannot yet be converted to stock runtime CS:IP breakpoints.",
+    "pass210_classification": "blocked/runtime-base-and-symbol-map-unavailable",
+    "pass229_status": "PASS_DECOMPRESSED_FIRES_IMAGE_AVAILABLE"
+  },
+  "unresolved_symbol_entries": [
+    {
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command_accepted",
+      "runtime_cs_ip": null,
+      "source_citation": "COMMAND.C:2075-2085,2095,2118-2126,2150-2156"
+    },
+    {
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "turn_or_step_state_applied",
+      "runtime_cs_ip": null,
+      "source_citation": "CLIKMENU.C:171-173,264-269,325-328"
+    },
+    {
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "party_coordinates_committed",
+      "runtime_cs_ip": null,
+      "source_citation": "MOVESENS.C:438-443,493-506,556"
+    },
+    {
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "draw_uses_mutated_tuple",
+      "runtime_cs_ip": null,
+      "source_citation": "GAMELOOP.C:55-63,80-90"
+    },
+    {
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_buffer_composed",
+      "runtime_cs_ip": null,
+      "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611"
+    },
+    {
+      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "function": "F0097_DUNGEONVIEW_DrawViewport / E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF",
+      "id": "viewport_present",
+      "runtime_cs_ip": null,
+      "source_citation": "DRAWVIEW.C:709-713,821-839,849-857"
+    }
+  ]
+}

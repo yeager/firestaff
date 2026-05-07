@@ -21,6 +21,9 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <errno.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -391,8 +394,13 @@ static int ensure_campaigns_dir(const char* dataDir) {
     if (stat(dirPath, &st) == 0 && S_ISDIR(st.st_mode))
         return 1;
 
+#ifdef _WIN32
+    if (_mkdir(dirPath) == 0)
+        return 1;
+#else
     if (mkdir(dirPath, 0755) == 0)
         return 1;
+#endif
 
     return 0;
 }

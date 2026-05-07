@@ -1,0 +1,107 @@
+{
+  "command_summary": {
+    "boot": "FreeDOS 1.3 floppy x86BOOT.img with FDAUTO.BAT",
+    "compile": "TCC.EXE -c -ml -O -Z -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNVIEW.C >> C:\\QEMU_DUN.LOG",
+    "disk": "dd 256M; sfdisk DOS partition at sector 2048 type 6; mkfs.fat -F 16 --offset=2048; mtools copy source/toolchain into image partition",
+    "qemu": "qemu-system-i386 -drive file=c.img,format=raw,if=ide,index=0 -fda boot.img -boot a -m 64 -display none -serial none -monitor none -no-reboot -no-shutdown"
+  },
+  "conclusion": "QEMU+FreeDOS now has a reproducible partitioned hard-disk route that starts the authentic TCPP101 DUNVIEW.C compile outside DOSBox. The observed N2 run completed the TCPP101 invocation outside DOSBox, but TCC reported out-of-memory at DUNVIEW.C line 3938 and emitted no DUNVIEW.OBJ; FIRES.MAP therefore remains blocked before TLINK.",
+  "guards": {
+    "authentic_dunview_compile_line_found": true,
+    "no_original_binary_repo_artifacts": true,
+    "non_dosbox_route": true,
+    "qemu_hard_image_not_vvfat": true
+  },
+  "run_metadata": {
+    "disk_image_exists": true,
+    "disk_image_sha256": null,
+    "disk_image_size": 268435456,
+    "dunview_obj_mdir": {
+      "present": false,
+      "stderr_excerpt": "mdir: File \"::/OBJECT/I34E/FIRES/DUNVIEW.OBJ\" not found\n",
+      "stdout_excerpt": ""
+    },
+    "fires_map_mdir": {
+      "present": false,
+      "stderr_excerpt": "mdir: File \"::/BUILD/I34E/FIRES.MAP\" not found\n",
+      "stdout_excerpt": ""
+    },
+    "first_error": "Error dunview.c 3938: Out of memory in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
+    "host_end": "2026-05-06T13:42:57+00:00",
+    "host_start": "2026-05-06T13:34:50+00:00",
+    "qemu_log": {
+      "char_count": 1220,
+      "head": [
+        "QEMU_DUNVIEW_START ",
+        "Turbo C++  Version 1.01 Copyright (c) 1990 Borland International",
+        "dunview.c:",
+        "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2810: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2813: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2881: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2941: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 3590: Possibly incorrect assignment in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
+        "Warning dunview.c 3826: Suspicious pointer conversion in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
+        "Error dunview.c 3938: Out of memory in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
+        "*** 1 errors in Compile ***",
+        "",
+        "",
+        "        Available memory 0",
+        "",
+        "AFTER_TCC ",
+        " Volume in drive C is CDRIVE",
+        " Volume Serial Number is 37A6-34C0",
+        "QEMU_DUNVIEW_DONE "
+      ],
+      "line_count": 22,
+      "present": true,
+      "tail": [
+        "QEMU_DUNVIEW_START ",
+        "Turbo C++  Version 1.01 Copyright (c) 1990 Borland International",
+        "dunview.c:",
+        "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2810: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2813: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2881: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 2941: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
+        "Warning dunview.c 3590: Possibly incorrect assignment in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
+        "Warning dunview.c 3826: Suspicious pointer conversion in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
+        "Error dunview.c 3938: Out of memory in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
+        "*** 1 errors in Compile ***",
+        "",
+        "",
+        "        Available memory 0",
+        "",
+        "AFTER_TCC ",
+        " Volume in drive C is CDRIVE",
+        " Volume Serial Number is 37A6-34C0",
+        "QEMU_DUNVIEW_DONE "
+      ]
+    },
+    "run_dir": "/home/trv2/.openclaw/data/firestaff-qemu-dunview-20260506g"
+  },
+  "schema": "pass244_dm1_v1_qemu_freedos_dunview_path.v1",
+  "source_lines": {
+    "dunview_first_failing_assignment": {
+      "line": 4791,
+      "text": "L0174_B_DrawCreaturesCompleted = L0186_B_SquareHasProjectile = L0195_B_SquareHasExplosion = C0_FALSE;"
+    },
+    "mkii_dunview_compile": {
+      "line": 473,
+      "text": "TCC.EXE -c -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNVIEW.C  >>\\BUILD\\MKII.LOG"
+    },
+    "mkii_fires_map_tlink": {
+      "line": 510,
+      "text": "TLINK.EXE /i /s \\OBJECT\\I34E\\STATS.EXE\\C0L.OBJ @\\SOURCE\\I34E.LNK \\TCPP101\\LIB\\CL.LIB,\\BUILD\\I34E\\FIRES.EXE,\\BUILD\\I34E\\FIRES.MAP >>\\BUILD\\MKII.LOG"
+    },
+    "mkii_tcpp101_path": {
+      "line": 10,
+      "text": "SET PATH=\\TCPP101\\BIN;\\TASM20;\\LZEXE91"
+    }
+  },
+  "status": "BLOCKED_QEMU_FREEDOS_DUNVIEW_COMPLETED_ZERO_OR_MISSING_OBJ"
+}
