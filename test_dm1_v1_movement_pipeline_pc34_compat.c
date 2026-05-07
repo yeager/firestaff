@@ -142,6 +142,11 @@ static struct Dm1V1InputEventPc34Compat key_event(int keyCode)
     return ev;
 }
 
+static unsigned short thing_ref(int type, int index)
+{
+    return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
+}
+
 /* ---- Test: keyboard forward step on open corridor ---- */
 static void test_keyboard_forward_step(void)
 {
@@ -609,6 +614,11 @@ static void test_command_movement_viewport_wall_order_source_lock(void)
     EXPECT("cmd_move_view.evidence.f0366_collision", strstr(movementEvidence, "CLIKMENU.C:278-323") != NULL);
     EXPECT("cmd_move_view.evidence.f0366_timing", strstr(movementEvidence, "CLIKMENU.C:325-346") != NULL);
     EXPECT("cmd_move_view.evidence.gameloop_cooldown", strstr(movementEvidence, "GAMELOOP.C:150-155") != NULL);
+    EXPECT("cmd_move_view.evidence.projectile_precheck", strstr(movementEvidence, "MOVESENS.C:433-435") != NULL);
+    EXPECT("cmd_move_view.evidence.post_move_teleporter", strstr(movementEvidence, "MOVESENS.C:475-535") != NULL);
+    EXPECT("cmd_move_view.evidence.post_move_pit", strstr(movementEvidence, "MOVESENS.C:538-606") != NULL);
+    EXPECT("cmd_move_view.evidence.group_interlock", strstr(movementEvidence, "MOVESENS.C:830-887") != NULL);
+    EXPECT("cmd_move_view.evidence.projectile_sensor_exception", strstr(movementEvidence, "MOVESENS.C:893-897") != NULL);
     EXPECT("cmd_move_view.evidence.viewport_order", strstr(movementEvidence, "DUNVIEW.C:8446-8542") != NULL);
     EXPECT("cmd_move_view.evidence.viewport_blit", strstr(movementEvidence, "DUNVIEW.C:8609-8610") != NULL);
     EXPECT("cmd_move_view.evidence.drawview_blit", strstr(movementEvidence, "DRAWVIEW.C:721-722") != NULL);
@@ -630,6 +640,96 @@ static void test_command_movement_viewport_wall_order_source_lock(void)
     EXPECT("cmd_move_view.wall.d3l2", wall && wall->native_wall == DM1_WALL_D3L2 && wall->parity_wall == DM1_WALL_D3R2 && wall->wall_case_returns);
     wall = dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_VIEW_SQUARE_D2C);
     EXPECT("cmd_move_view.wall.d2c", wall && wall->center_wall && wall->front_alcove_reveals_contents && strstr(wall->occlusion_source_lines, "7312") != NULL);
+}
+
+/* ---- Test: F0267 post-move environment side effects: pit + teleporter ---- */
+static void test_post_move_environment_side_effects(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char level0[5 * 5];
+    unsigned char level1[5 * 5];
+    struct PartyState_Compat party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat result;
+
+    /* MOVESENS.C:538-606: after a legal step onto an open, non-imaginary
+     * pit, F0267 chains to the lower map and applies 20 fall damage to each
+     * living champion.  This is not just position bookkeeping: the pipeline
+     * must publish the map transition and HP side effect together. */
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    set_sq(level0, 5, 2, 1, sq(DUNGEON_ELEMENT_PIT, 0x08));
+    setup_party(&party, 2, 2, DIR_NORTH, 1);
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, NULL, &party, NULL, &result);
+
+    EXPECT("post_pit_step_applied", result.core.stepApplied == 1);
+    EXPECT("post_pit_resolved", result.postMoveResolved == 1);
+    EXPECT_INT("post_pit_count", result.postMove.pitCount, 1);
+    EXPECT_INT("post_pit_map", party.mapIndex, 1);
+    EXPECT_INT("post_pit_x", party.mapX, 2);
+    EXPECT_INT("post_pit_y", party.mapY, 1);
+    EXPECT_INT("post_pit_damage_recorded", result.postMove.championFallDamage[0], 20);
+    EXPECT_INT("post_pit_hp_applied", party.champions[0].hp.current, 80);
+    EXPECT_INT("post_pit_any_movement", result.anyMovementOccurred, 1);
+
+    /* MOVESENS.C:475-535: teleporters only fire when open and scoped for
+     * objects/party, then move the party to the target and apply absolute or
+     * relative rotation before normal post-move completion. */
+    {
+        struct DungeonDatState_Compat tdungeon;
+        struct DungeonMapDesc_Compat tmap;
+        struct DungeonMapTiles_Compat ttiles;
+        unsigned char tsquares[6 * 6];
+        struct DungeonThings_Compat things;
+        unsigned short firstThings[6 * 6];
+        struct DungeonTeleporter_Compat teleporters[1];
+        int i;
+
+        setup_dungeon(&tdungeon, &tmap, &ttiles, tsquares, 6, 6);
+        memset(&things, 0, sizeof(things));
+        memset(teleporters, 0, sizeof(teleporters));
+        for (i = 0; i < 6 * 6; ++i) firstThings[i] = THING_ENDOFLIST;
+        things.loaded = 1;
+        things.squareFirstThings = firstThings;
+        things.squareFirstThingCount = 6 * 6;
+        things.teleporters = teleporters;
+        things.teleporterCount = 1;
+        firstThings[(3 * 6) + 2] = thing_ref(THING_TYPE_TELEPORTER, 0);
+        teleporters[0].next = THING_ENDOFLIST;
+        teleporters[0].targetMapIndex = 0;
+        teleporters[0].targetMapX = 1;
+        teleporters[0].targetMapY = 4;
+        teleporters[0].rotation = DIR_SOUTH;
+        teleporters[0].absoluteRotation = 1;
+        teleporters[0].scope = 0x02;
+
+        set_sq(tsquares, 6, 3, 2, sq(DUNGEON_ELEMENT_TELEPORTER, 0));
+        setup_party(&party, 2, 2, DIR_EAST, 1);
+        DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+        DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &tdungeon, &things, &party, NULL, &result);
+        EXPECT_INT("post_teleporter_closed_no_chain", result.postMove.teleporterCount, 0);
+        EXPECT_INT("post_teleporter_closed_x", party.mapX, 3);
+        EXPECT_INT("post_teleporter_closed_y", party.mapY, 2);
+        EXPECT_INT("post_teleporter_closed_dir", party.direction, DIR_EAST);
+
+        set_sq(tsquares, 6, 3, 2, sq(DUNGEON_ELEMENT_TELEPORTER, 0x08));
+        setup_party(&party, 2, 2, DIR_EAST, 1);
+        DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+        DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &tdungeon, &things, &party, NULL, &result);
+        EXPECT_INT("post_teleporter_count", result.postMove.teleporterCount, 1);
+        EXPECT_INT("post_teleporter_final_x", party.mapX, 1);
+        EXPECT_INT("post_teleporter_final_y", party.mapY, 4);
+        EXPECT_INT("post_teleporter_abs_rotation", party.direction, DIR_SOUTH);
+        EXPECT_INT("post_teleporter_any_movement", result.anyMovementOccurred, 1);
+    }
 }
 
 /* ---- Test: mouse click movement command ---- */
@@ -681,6 +781,7 @@ int main(void)
     test_strafe();
     test_stairs_step_consequence();
     test_command_movement_viewport_wall_order_source_lock();
+    test_post_move_environment_side_effects();
     test_mouse_movement();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

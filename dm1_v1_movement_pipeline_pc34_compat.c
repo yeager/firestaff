@@ -109,10 +109,20 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
         outResult->postMoveResolved = 1;
 
         if (outResult->postMove.transitioned) {
+            int i;
             party->mapX = outResult->postMove.finalMapX;
             party->mapY = outResult->postMove.finalMapY;
             party->direction = outResult->postMove.finalDirection;
             party->mapIndex = outResult->postMove.finalMapIndex;
+            for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+                if (outResult->postMove.championFallDamage[i] > 0 &&
+                    party->champions[i].present &&
+                    party->champions[i].hp.current > 0) {
+                    int hp = (int)party->champions[i].hp.current -
+                        outResult->postMove.championFallDamage[i];
+                    party->champions[i].hp.current = (int16_t)((hp > 0) ? hp : 0);
+                }
+            }
         }
     }
 
@@ -146,7 +156,8 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
 
     /* Phase 4: Aggregate flags for the game loop. */
     outResult->anyMovementOccurred =
-        outResult->core.stepApplied || outResult->core.stairTransitionApplied;
+        outResult->core.stepApplied || outResult->core.stairTransitionApplied ||
+        outResult->postMove.transitioned;
     outResult->anyTurnOccurred = outResult->core.turnApplied;
     outResult->viewportDirty = outResult->core.viewportRedrawRequested;
 
@@ -173,7 +184,7 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
     outResult->provenance.commandAcceptedEvidence =
         "COMMAND.C:2075-2099 queue/gate; COMMAND.C:2118-2127 dequeue; COMMAND.C:2150-2156 movement dispatch";
     outResult->provenance.movementAppliedEvidence =
-        "CLIKMENU.C:325-328 calls F0267_MOVE_GetMoveResult_CPSCE; CLIKMENU.C:330-346 assigns G0310/G0311 after accepted step";
+        "CLIKMENU.C:325-328 calls F0267_MOVE_GetMoveResult_CPSCE; MOVESENS.C:475-606 resolves open teleporter/pit chains and party HP side effects; CLIKMENU.C:330-346 assigns G0310/G0311 after accepted step";
     outResult->provenance.viewportPresentEvidence =
         "GAMELOOP.C:90 redraws F0128_DUNGEONVIEW_Draw_CPSF from party state; DRAWVIEW.C:721-722 requests viewport blit and waits for vblank; DRAWVIEW.C:1056-1068 blits G0296 viewport to screen";
 
@@ -203,7 +214,7 @@ const char* DM1_V1_MovementPipeline_SourceEvidencePc34Compat(void)
            "CLIKMENU.C:325-346 F0267 move-result call and G0310/G0311 cooldown write; "
            "DUNGEON.C:1371-1421 F0150 relative coordinate math; "
            "MOVESENS.C:316-328 F0267 signature/source-destination contract, "
-           "MOVESENS.C:760-783 scent/G0362_l_LastPartyMovementTime, MOVESENS.C:799-818 F0276 source leave and destination enter sensors; "
+           "MOVESENS.C:433-435 movement/projectile impact precheck, MOVESENS.C:475-535 open/scoped teleporter chain and party rotation, MOVESENS.C:538-606 open non-imaginary pit fall and party damage/rope reset, MOVESENS.C:760-783 scent/G0362_l_LastPartyMovementTime, MOVESENS.C:799-818 F0276 source leave and destination enter sensors, MOVESENS.C:830-887 group/party occupancy interlock and active-group refresh/defer, MOVESENS.C:893-897 projectile/explosion destination sensor exception; "
            "CHAMPION.C:1180-1215 F0310 movement ticks; "
            "GAMELOOP.C:90 redraws F0128_DUNGEONVIEW_Draw_CPSF from party state, GAMELOOP.C:150-155 cooldown decrement; "
            "DUNVIEW.C:8446-8542 F0128 back-to-front viewport wall/object draw order, "

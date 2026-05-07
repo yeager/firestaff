@@ -776,9 +776,10 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
             int targetX;
             int targetY;
 
-            if (!things || !things->teleporters ||
+            if (!(squareByte & 0x08) || !things || !things->teleporters ||
                 !movement_find_teleporter_on_square(dungeon, things,
-                    cursor.mapIndex, cursor.mapX, cursor.mapY, &tp)) {
+                    cursor.mapIndex, cursor.mapX, cursor.mapY, &tp) ||
+                !(tp.scope & 0x02)) {
                 break;
             }
             targetMapIndex = (int)tp.targetMapIndex;
