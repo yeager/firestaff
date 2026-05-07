@@ -54,7 +54,7 @@
       "wine": "/usr/bin/wine"
     }
   },
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-runtime-debugger-pass234-238-20260507121404",
   "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
   "source_audit": [
     {
@@ -131,7 +131,7 @@
       },
       {
         "id": "viewport_buffer_composed",
-        "verified_runtime_hit": false
+        "verified_runtime_hit": true
       },
       {
         "id": "viewport_present",
@@ -140,6 +140,6 @@
     ],
     "entry_count": 6,
     "exists": true,
-    "has_verified_runtime_hit": false
+    "has_verified_runtime_hit": true
   }
 }

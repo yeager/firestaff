@@ -1,12 +1,11 @@
 # Pass238 — DM1 PC34 runtime debugger keystroke blocker
 
-Status: `NO_RUNTIME_HITS_CAPTURED_NO_PROMOTIONS`.
-Classification: `blocked/debugger-keystroke-control-required`.
+Status: `PARTIAL_F0128_RUNTIME_HIT_F0380_BLOCKED`.
+Classification: `blocked/direct-f0380-dequeue-hit-required`.
 
 ## Result
 
-No pass237 `candidate_only` CS:IP was promoted to `verified_runtime_hit`. The N2 DOSBox debugger is present, but stdin/SSH automation did not reach the stopped debugger command prompt or acknowledge `BPINT 21 4B` / `BPLIST`.
-
+No pass237 candidate-only F0380/movement CS:IP was promoted. N2 DOSBox-debug/tmux/xdotool control did produce a narrow F0128 runtime BP hit at 23AD:40FE, so the remaining blocker is direct F0380 dequeue (22F4:0699) and viewport-present/F0097 hits, not basic debugger keystroke control.
 Sanitized attempt transcript: `parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/stdin_bpint_attempt_sanitized.txt`.
 
 ## Candidate runtime formulas
@@ -31,6 +30,6 @@ Sanitized attempt transcript: `parity-evidence/verification/pass238_dm1_v1_runti
 
 ## Guardrail
 
-The symbol map remains unpromoted. Static decompressed-image offsets and formulas are not runtime-hit proof.
+The symbol map now contains only the narrow viewport_buffer_composed/F0128 verified runtime hit. Static decompressed-image offsets and formulas remain insufficient for all other entries.
 
 Evidence manifest: `parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/manifest.json`.

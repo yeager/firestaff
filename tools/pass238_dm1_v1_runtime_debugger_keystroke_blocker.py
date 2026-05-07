@@ -20,6 +20,7 @@ PASS237 = ROOT / "parity-evidence/verification/pass237_dm1_v1_fires_static_csip_
 SYMBOL_MAP = ROOT / "data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
 RUNTIME_IMAGE = ROOT / "data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json"
 ATTEMPT_LOG = OUT_DIR / "stdin_bpint_attempt_sanitized.txt"
+PASS278 = ROOT / "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -38,14 +39,18 @@ def main() -> int:
     runtime_image = load_json(RUNTIME_IMAGE)
     candidates = pass237.get("candidates", [])
     promoted = [entry for entry in symbol_map.get("entries", []) if entry.get("confidence") == "verified_runtime_hit"]
-    if promoted:
-        raise SystemExit(f"Refusing blocker report: symbol map already has promoted runtime hits: {[e.get('id') for e in promoted]}")
+    allowed_promoted_ids = {"viewport_buffer_composed"}
+    unexpected_promoted = [entry for entry in promoted if entry.get("id") not in allowed_promoted_ids]
+    if unexpected_promoted:
+        raise SystemExit(f"Refusing blocker report: unexpected promoted runtime hits: {[e.get("id") for e in unexpected_promoted]}")
 
     attempt_text = ATTEMPT_LOG.read_text(errors="replace") if ATTEMPT_LOG.exists() else ""
     stdin_control_succeeded = "DEBUG: Set interrupt breakpoint" in attempt_text or "BPLIST" in attempt_text and "INT 21" in attempt_text
-    classification = "blocked/debugger-keystroke-control-required"
+    classification = "blocked/direct-f0380-dequeue-hit-required" if promoted else "blocked/debugger-keystroke-control-required"
     if stdin_control_succeeded:
         classification = "fail/unexpected-stdin-debugger-control-detected"
+    pass278 = load_json(PASS278) if PASS278.exists() else {}
+    f0128_runtime_hit = pass278.get("proof_predicates", {}).get("f0128_draw_hit_seen") is True
 
     candidate_rows = [
         {
@@ -74,7 +79,7 @@ def main() -> int:
     manifest = {
         "schema": "pass238_dm1_v1_runtime_debugger_keystroke_blocker.v1",
         "classification": classification,
-        "status": "NO_RUNTIME_HITS_CAPTURED_NO_PROMOTIONS",
+        "status": "PARTIAL_F0128_RUNTIME_HIT_F0380_BLOCKED" if promoted else "NO_RUNTIME_HITS_CAPTURED_NO_PROMOTIONS",
         "tools": {"dosbox-debug": shutil.which("dosbox-debug"), "dosbox-x": shutil.which("dosbox-x")},
         "inputs": {
             "pass237_manifest": str(PASS237),
@@ -88,7 +93,8 @@ def main() -> int:
             "result": "no debugger command acknowledgement observed; input was consumed by running DOSBox session, not by stopped debugger command prompt",
             "searched_for": ["DEBUG: Set interrupt breakpoint", "BPLIST INT 21"],
         },
-        "promoted_symbol_map_entries": [],
+        "promoted_symbol_map_entries": [{"id": e.get("id"), "runtime_cs_ip": e.get("runtime_cs_ip"), "scope": e.get("verified_runtime_hit", {}).get("scope")} for e in promoted],
+        "pass278_runtime_control": {"manifest": str(PASS278), "f0128_runtime_hit_seen": f0128_runtime_hit, "f0380_dequeue_hit_seen": pass278.get("proof_predicates", {}).get("f0380_dequeue_hit_seen")},
         "manual_keystroke_runbook": runbook,
         "promotion_guardrail": "Do not promote candidate_only CS:IP rows until runtime PSP/load segment and debugger-observed hits are captured.",
     }
@@ -102,7 +108,7 @@ def main() -> int:
         "",
         "## Result",
         "",
-        "No pass237 `candidate_only` CS:IP was promoted to `verified_runtime_hit`. The N2 DOSBox debugger is present, but stdin/SSH automation did not reach the stopped debugger command prompt or acknowledge `BPINT 21 4B` / `BPLIST`.",
+        "No pass237 candidate-only F0380/movement CS:IP was promoted. N2 DOSBox-debug/tmux/xdotool control did produce a narrow F0128 runtime BP hit at 23AD:40FE, so the remaining blocker is direct F0380 dequeue (22F4:0699) and viewport-present/F0097 hits, not basic debugger keystroke control."
         "",
         "Sanitized attempt transcript: `parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/stdin_bpint_attempt_sanitized.txt`.",
         "",
@@ -121,12 +127,12 @@ def main() -> int:
         "",
         "## Guardrail",
         "",
-        "The symbol map remains unpromoted. Static decompressed-image offsets and formulas are not runtime-hit proof.",
+        "The symbol map now contains only the narrow viewport_buffer_composed/F0128 verified runtime hit. Static decompressed-image offsets and formulas remain insufficient for all other entries.",
         "",
         "Evidence manifest: `parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/manifest.json`.",
     ])
     REPORT.write_text("\n".join(lines) + "\n")
-    print(json.dumps({"classification": classification, "manifest": str(OUT_DIR / "manifest.json"), "report": str(REPORT), "promoted": []}, indent=2, sort_keys=True))
+    print(json.dumps({"classification": classification, "manifest": str(OUT_DIR / "manifest.json"), "report": str(REPORT), "promoted": [e.get("id") for e in promoted]}, indent=2, sort_keys=True))
     return 0 if classification.startswith("blocked/") else 1
 
 

@@ -30,7 +30,7 @@ Scope: source-lock viewport draw/present seams, inventory debugger availability,
 - dosbox-debug: `/usr/bin/dosbox-debug`
 - dosbox-x: `/usr/bin/dosbox-x`
 - symbol map exists: `True`
-- verified runtime hits in symbol map: `False`
+- verified runtime hits in symbol map: `True`
 
 ## Blocker
 

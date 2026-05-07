@@ -70,21 +70,30 @@
     },
     {
       "breakpoint_anchor": "DUNVIEW.C:8608-8611 after composition before F0097 draw viewport",
-      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+      "confidence": "verified_runtime_hit",
       "evidence": [
         "pass227 source seam verified",
         "pass229 decompressed FIRES image available",
         "pass230 ReDMCSB source audit",
-        "pass230 precise ReDMCSB line-anchor audit"
+        "pass230 precise ReDMCSB line-anchor audit",
+        "pass278 N2 DOSBox-debug BP 23AD:40FE runtime hit",
+        "pass315 conservative F0128 runtime-hit verifier"
       ],
       "file": "DUNVIEW.C",
       "function": "F0128_DUNGEONVIEW_Draw_CPSF",
       "global_addresses": {},
       "hook_kind": "code breakpoint at viewport composition path before F0097_DUNGEONVIEW_DrawViewport",
       "id": "viewport_buffer_composed",
-      "required_next_step": "bind with DOSBox-X debugger breakpoint/watchpoint and promote only after observed runtime hit",
-      "runtime_cs_ip": null,
-      "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611"
+      "required_next_step": "viewport composition entry has one verified runtime hit; still need direct F0380 dequeue and/or viewport_present hit for full movement-to-present chain",
+      "runtime_cs_ip": "23AD:40FE",
+      "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611",
+      "verified_runtime_hit": {
+        "hit_signature": "00. BP 23AD:40FE",
+        "manifest": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+        "scope": "F0128_DUNGEONVIEW_Draw_CPSF runtime code breakpoint hit only; does not prove direct F0380 dequeue or full movement-to-viewport chain",
+        "source": "pass278 fresh N2 DOSBox-debug run via tools/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof.py --seconds 55",
+        "transcript": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt"
+      }
     },
     {
       "breakpoint_anchor": "DRAWVIEW.C:857 VIDRV_09_BlitViewPort with G0296_puc_Bitmap_Viewport",
@@ -104,8 +113,8 @@
       "source_citation": "DRAWVIEW.C:709-713,821-839,849-857"
     }
   ],
-  "promotion_rule": "No entry may be used for trace promotion until confidence is verified_runtime_hit and runtime_cs_ip/global_addresses are populated from debugger evidence.",
+  "promotion_rule": "Only entries with verified_runtime_hit evidence may carry runtime_cs_ip. Current promotion is limited to F0128 viewport_buffer_composed; command/dequeue and viewport_present entries remain blocked until their own runtime hits are captured.",
   "runtime_image": "data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
   "schema": "dm1_pc34_i34e_symbol_map.v1",
-  "status": "BLOCKED_RUNTIME_HITS_REQUIRED"
+  "status": "PARTIAL_RUNTIME_HIT_F0128_VIEWPORT_PRESENT_AND_F0380_BLOCKED"
 }

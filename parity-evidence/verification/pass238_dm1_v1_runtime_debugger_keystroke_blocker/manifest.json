@@ -41,12 +41,12 @@
       "static_cs_ip": "23cc:110e"
     }
   ],
-  "classification": "blocked/debugger-keystroke-control-required",
+  "classification": "blocked/direct-f0380-dequeue-hit-required",
   "inputs": {
     "fires_exenew_sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
-    "pass237_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
-    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "pass237_manifest": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-runtime-debugger-pass234-238-20260507121404/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "runtime_image": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-runtime-debugger-pass234-238-20260507121404/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-runtime-debugger-pass234-238-20260507121404/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "manual_keystroke_runbook": [
     "Create a scratch DOS directory outside the repo; copy the stock DM1 PC34 files and copy the local verified FIRES.EXENEW fixture as FIRES.EXE (do not commit it).",
@@ -59,17 +59,28 @@
     "Run the route (one movement command after reaching a playable viewport). On every hit, record CS:IP, registers, nearby disassembly, and enough state to prove command_accepted -> movement_applied -> viewport_present.",
     "Only after an actual breakpoint hit may a symbol-map entry become verified_runtime_hit; static CS:IP candidates alone remain candidate_only."
   ],
-  "promoted_symbol_map_entries": [],
+  "pass278_runtime_control": {
+    "f0128_runtime_hit_seen": true,
+    "f0380_dequeue_hit_seen": false,
+    "manifest": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-runtime-debugger-pass234-238-20260507121404/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
+  },
+  "promoted_symbol_map_entries": [
+    {
+      "id": "viewport_buffer_composed",
+      "runtime_cs_ip": "23AD:40FE",
+      "scope": "F0128_DUNGEONVIEW_Draw_CPSF runtime code breakpoint hit only; does not prove direct F0380 dequeue or full movement-to-viewport chain"
+    }
+  ],
   "promotion_guardrail": "Do not promote candidate_only CS:IP rows until runtime PSP/load segment and debugger-observed hits are captured.",
   "schema": "pass238_dm1_v1_runtime_debugger_keystroke_blocker.v1",
-  "status": "NO_RUNTIME_HITS_CAPTURED_NO_PROMOTIONS",
+  "status": "PARTIAL_F0128_RUNTIME_HIT_F0380_BLOCKED",
   "stdin_automation_attempt": {
     "result": "no debugger command acknowledgement observed; input was consumed by running DOSBox session, not by stopped debugger command prompt",
     "searched_for": [
       "DEBUG: Set interrupt breakpoint",
       "BPLIST INT 21"
     ],
-    "transcript": "/home/trv2/work/firestaff/parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/stdin_bpint_attempt_sanitized.txt"
+    "transcript": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-runtime-debugger-pass234-238-20260507121404/parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/stdin_bpint_attempt_sanitized.txt"
   },
   "tools": {
     "dosbox-debug": "/usr/bin/dosbox-debug",
