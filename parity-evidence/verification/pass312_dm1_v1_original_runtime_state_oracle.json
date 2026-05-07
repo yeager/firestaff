@@ -1,0 +1,186 @@
+{
+  "captureCoverageSupport": {
+    "coverage": {
+      "requiredLabelCoverage": true,
+      "requiredPromotionRowsGameplayOrWallCloseup": true
+    },
+    "manifest": "parity-evidence/verification/pass308_original_capture_execution_manifest.json",
+    "status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING"
+  },
+  "notClaimed": [
+    "original-vs-Firestaff pixel parity",
+    "direct F0380 binary breakpoint/dequeue hit",
+    "tracked bitmap-byte publication",
+    "screenshot promotion without comparator pass"
+  ],
+  "pass": "pass312_dm1_v1_original_runtime_state_oracle",
+  "primaryEvidence": "ReDMCSB source audit under ~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "promotionDecision": {
+    "nextRequiredGate": "run matched original-vs-Firestaff viewport comparator on promoted route labels and require non-duplicate, semantically matched outputs before any pixel-parity wording",
+    "partyTupleF0128StateOracle": true,
+    "pixelParityClaim": false,
+    "unblocksOriginalCapturePromotionToComparatorInputs": true
+  },
+  "runtimeSupport": {
+    "directF0380BreakpointRequiredForThisOracle": false,
+    "directF0380BreakpointSeen": false,
+    "manifest": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+    "reasonDirectF0380IsNonBlocking": "ReDMCSB source proves F0380 queue dequeue and turn/move dispatch; pass278 independently proves controlled original-runtime queue writes, party tuple mutation, and F0128 draw hit. A direct F0380 BP remains useful for a stronger binary-hook claim but is not required for this source-first state oracle.",
+    "requiredPredicates": {
+      "cpu_memdump_after_stops": true,
+      "f0128_draw_hit_seen": true,
+      "g0432_write_seen": true,
+      "party_tuple_mutation_seen": true,
+      "route_posted_controlled_keys": true
+    },
+    "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK"
+  },
+  "scope": "DM1 V1 original-runtime state oracle for command input -> queue write -> party tuple mutation -> F0128 viewport draw consumption. No pixel parity or bitmap publication is claimed.",
+  "sourceAudit": [
+    {
+      "file": "GAMELOOP.C",
+      "functionOrSeam": "main_loop_draws_current_tuple",
+      "id": "main_loop_draws_current_tuple",
+      "lineRange": [
+        80,
+        90
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "functionOrSeam": "main_loop_processes_command_queue",
+      "id": "main_loop_processes_command_queue",
+      "lineRange": [
+        214,
+        215
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "functionOrSeam": "command_queue_dequeues_command",
+      "id": "command_queue_dequeues_command",
+      "lineRange": [
+        2045,
+        2126
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "functionOrSeam": "command_dispatch_turn_or_move",
+      "id": "command_dispatch_turn_or_move",
+      "lineRange": [
+        2150,
+        2156
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "functionOrSeam": "turn_mutates_party_direction",
+      "id": "turn_mutates_party_direction",
+      "lineRange": [
+        142,
+        173
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "CHAMPION.C",
+      "functionOrSeam": "direction_setter_writes_g0308",
+      "id": "direction_setter_writes_g0308",
+      "lineRange": [
+        93,
+        130
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "functionOrSeam": "move_computes_destination_and_calls_move_result",
+      "id": "move_computes_destination_and_calls_move_result",
+      "lineRange": [
+        180,
+        329
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "functionOrSeam": "move_result_writes_party_xy",
+      "id": "move_result_writes_party_xy",
+      "lineRange": [
+        438,
+        443
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "functionOrSeam": "teleporter_case_updates_tuple_direction",
+      "id": "teleporter_case_updates_tuple_direction",
+      "lineRange": [
+        493,
+        517
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "functionOrSeam": "falling_case_draws_with_tuple",
+      "id": "falling_case_draws_with_tuple",
+      "lineRange": [
+        550,
+        556
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "functionOrSeam": "f0128_accepts_direction_xy",
+      "id": "f0128_accepts_direction_xy",
+      "lineRange": [
+        8318,
+        8324
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "functionOrSeam": "f0128_uses_tuple_in_view_calculation",
+      "id": "f0128_uses_tuple_in_view_calculation",
+      "lineRange": [
+        8356,
+        8542
+      ],
+      "missingNeedles": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "functionOrSeam": "f0128_presents_viewport",
+      "id": "f0128_presents_viewport",
+      "lineRange": [
+        8604,
+        8610
+      ],
+      "missingNeedles": [],
+      "ok": true
+    }
+  ],
+  "status": "PASS_STATE_ORACLE_SOURCE_RUNTIME_BOUND",
+  "timestampUtc": "2026-05-07T09:42:14.225928+00:00"
+}
