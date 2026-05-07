@@ -2,7 +2,7 @@
   "classification": "blocked/decompressed-runtime-address-map-required",
   "exact_remaining_blocker": "Stock FIRES is LZEXE v0.91; this pass proves the compressed loader entry CS:IP and source seams, but no decompressed FIRES memory dump or TLINK FIRES.MAP artifact is present on N2, so source symbols cannot yet be converted to stock runtime CS:IP breakpoints.",
   "expected_map_if_rebuilt": "\\\\BUILD\\\\I34E\\\\FIRES.MAP from Toolchains/IBM PC/Source/MKII.BAT TLINK line",
-  "i34e_link_file": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK",
+  "i34e_link_file": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK",
   "i34e_link_order": [
     "GAMELOOP.OBJ",
     "PROJEXPL.OBJ",
@@ -41,7 +41,7 @@
     "FILENAME.OBJ",
     "STARTUP2.OBJ"
   ],
-  "ibm_source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
+  "ibm_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
   "map_artifacts_found": [],
   "n2_only": true,
   "non_claims": [
@@ -125,7 +125,7 @@
         "hex": "0x29d2"
       }
     },
-    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E/FIRES",
+    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E/FIRES",
     "sha256": "3e59c1a8d4dec64c3cac1fd06a064077754cd012bef8d627cca969cad32311d0",
     "size": 94841
   },
@@ -203,12 +203,12 @@
         "hex": "0x29d2"
       }
     },
-    "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E/FIRES",
+    "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E/FIRES",
     "sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
     "size": 94779
   },
   "schema": "pass208_dm1_v1_fires_loader_csip_source_map_gate.v1",
-  "source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "source_seams": [
     {
       "break_when": "queued command is read from G0432_as_CommandQueue and before C001/C002/C003-C006/C080 dispatch",
@@ -224,7 +224,7 @@
         "F0377_COMMAND_ProcessType80_ClickInDungeonView"
       ],
       "ok": true,
-      "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "seam": "command_accepted",
       "symbols": [
         "F0380_COMMAND_ProcessQueue_CPSC",
@@ -247,7 +247,7 @@
         "G0310_i_DisabledMovementTicks"
       ],
       "ok": true,
-      "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
       "seam": "movement_applied",
       "symbols": [
         "F0366_COMMAND_ProcessTypes3To6_MoveParty",
@@ -267,7 +267,7 @@
         "G0307_i_PartyMapY = P0561_i_DestinationMapY"
       ],
       "ok": true,
-      "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "seam": "party_coordinates_committed",
       "symbols": [
         "F0267_MOVE_GetMoveResult_CPSCE",
@@ -287,7 +287,7 @@
         "F0380_COMMAND_ProcessQueue_CPSC"
       ],
       "ok": true,
-      "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
       "seam": "viewport_present",
       "symbols": [
         "F0128_DUNGEONVIEW_Draw_CPSF",
@@ -306,7 +306,7 @@
         "G0296_puc_Bitmap_Viewport"
       ],
       "ok": true,
-      "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "seam": "viewport_present_blit",
       "symbols": [
         "F0097_DUNGEONVIEW_DrawViewport",
@@ -324,7 +324,7 @@
         "F0098_DUNGEONVIEW_DrawFloorAndCeiling"
       ],
       "ok": true,
-      "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "seam": "viewport_buffer_composed",
       "symbols": [
         "F0097_DUNGEONVIEW_DrawViewport",
@@ -406,7 +406,7 @@
         "hex": "0x29d2"
       }
     },
-    "path": "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
     "sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
     "size": 94779
   },

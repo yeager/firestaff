@@ -54,7 +54,7 @@
       "wine": "/usr/bin/wine"
     }
   },
-  "repo": "<repo>",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
   "source_audit": [
     {
@@ -71,7 +71,7 @@
       },
       "observable": "main loop consumes G0308_i_PartyDirection/G0306_i_PartyMapX/G0307_i_PartyMapY in the F0128 draw call",
       "ok": true,
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -90,7 +90,7 @@
       },
       "observable": "I34E-family F0128 composes G0296_puc_Bitmap_Viewport from direction/X/Y before calling F0097",
       "ok": true,
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -106,10 +106,10 @@
       },
       "observable": "PC I34E-family F0097 resolves C007_ZONE_VIEWPORT and blits G0296_puc_Bitmap_Viewport via VIDRV_09_BlitViewPort",
       "ok": true,
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_RUNTIME_HITS_REQUIRED",
   "symbol_map_guardrail": {
     "entries": [

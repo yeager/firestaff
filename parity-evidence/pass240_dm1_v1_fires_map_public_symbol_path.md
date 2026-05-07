@@ -4,8 +4,8 @@ Status: `VERIFIED_NEGATIVE_FIRES_MAP_PUBLIC_SYMBOLS_MISSING`
 
 ## Concrete FIRES.MAP path
 
-- ReDMCSB script: `$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT` line `510`
-- Link order: `$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK` (36 objects)
+- ReDMCSB script: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT` line `510`
+- Link order: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK` (36 objects)
 - TLINK command: `TLINK.EXE /i /s \OBJECT\I34E\STATS.EXE\C0L.OBJ @\SOURCE\I34E.LNK \TCPP101\LIB\CL.LIB,\BUILD\I34E\FIRES.EXE,\BUILD\I34E\FIRES.MAP`
 - Expected output in DOS build: `C:\BUILD\I34E\FIRES.MAP`
 - Expected output from a DOSBox-mounted HARDDISK tree: `<HARDDISK_MOUNT>/BUILD/I34E/FIRES.MAP`

@@ -2,7 +2,7 @@
   "batchPlans": [
     {
       "batchIndex": 0,
-      "commandHash": "7ba8b10b02d86a5553941a1104d9165d9b8a4c0f22ec14f1da33f46c4b786518",
+      "commandHash": "487c335f9eb7a83a6bec258e9d0ada5dd043e88d3c74bef01deb3dcc6f4aeaa3",
       "expectedViewportCrop": {
         "height": 136,
         "width": 224
@@ -30,7 +30,7 @@
     },
     {
       "batchIndex": 1,
-      "commandHash": "418628ade451411cccaec8e587f3bc5c73532cffad282c5aae0cfbea940eb1df",
+      "commandHash": "5663d133d6f3353f1b893047737ec5de0f5ebe19bf80ae88d9b3c2214ab21d85",
       "expectedViewportCrop": {
         "height": 136,
         "width": 224
@@ -57,7 +57,7 @@
     },
     {
       "batchIndex": 2,
-      "commandHash": "1c59966d32cbcec07986bc31788ce2a8447eb5cac051fb5ae6e169d0bb191551",
+      "commandHash": "ea1128975716a71926226239597be778a1320d35c09791c984276640e195a440",
       "expectedViewportCrop": {
         "height": 136,
         "width": 224
@@ -190,11 +190,11 @@
   },
   "inputStatus": {
     "pass300": "PASS_RENDER_PLAN_COMPARATOR_SEAM",
-    "pass304": "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN",
+    "pass304": "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED",
     "pass306": "passed"
   },
   "knownBlockers": [
-    "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches or a script enhancement that supports multiple fresh-run batches with per-shot labels."
+    "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches; route capture now uses a proven title->entrance->gameplay prelude plus keypad tokens, but party-tuple promotion still needs a source-bound runtime state oracle."
   ],
   "notClaimed": [
     "original screenshot capture succeeded",

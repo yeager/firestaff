@@ -1,7 +1,7 @@
 {
   "canonicalGraphicsDat": {
     "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-    "path": "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
     "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
   },
   "currentMismatch": {

@@ -1,0 +1,177 @@
+{
+  "batches": [
+    {
+      "batch": "A",
+      "classifierClassCounts": {
+        "dungeon_gameplay": 1,
+        "wall_closeup": 5
+      },
+      "classifierProblems": [
+        "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+      ],
+      "dir": "verification-screens/pass304-original-pc34-wall-comparator-batch-A",
+      "labelsPresent": [
+        "start_south",
+        "turn_right_west",
+        "move_forward_west",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion"
+      ],
+      "promotionRows": [
+        {
+          "classification": "dungeon_gameplay",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "filename": "01_ingame_start_original_viewport_224x136.ppm",
+          "index": "01",
+          "promotableLabel": true,
+          "routeLabel": "start_south"
+        },
+        {
+          "classification": "wall_closeup",
+          "cropSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+          "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+          "index": "02",
+          "promotableLabel": true,
+          "routeLabel": "turn_right_west"
+        },
+        {
+          "classification": "wall_closeup",
+          "cropSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+          "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+          "index": "03",
+          "promotableLabel": true,
+          "routeLabel": "move_forward_west"
+        }
+      ],
+      "requiredLabelCoverage": true,
+      "requiredLabelsPresent": [
+        "move_forward_west",
+        "start_south",
+        "turn_right_west"
+      ],
+      "requiredPromotionLabels": [
+        "start_south",
+        "turn_right_west",
+        "move_forward_west"
+      ]
+    },
+    {
+      "batch": "B",
+      "classifierClassCounts": {
+        "dungeon_gameplay": 1,
+        "wall_closeup": 5
+      },
+      "classifierProblems": [
+        "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+      ],
+      "dir": "verification-screens/pass304-original-pc34-wall-comparator-batch-B",
+      "labelsPresent": [
+        "start_south",
+        "turn_left_east",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion"
+      ],
+      "promotionRows": [
+        {
+          "classification": "dungeon_gameplay",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "filename": "01_ingame_start_original_viewport_224x136.ppm",
+          "index": "01",
+          "promotableLabel": true,
+          "routeLabel": "start_south"
+        },
+        {
+          "classification": "wall_closeup",
+          "cropSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+          "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+          "index": "02",
+          "promotableLabel": true,
+          "routeLabel": "turn_left_east"
+        }
+      ],
+      "requiredLabelCoverage": true,
+      "requiredLabelsPresent": [
+        "start_south",
+        "turn_left_east"
+      ],
+      "requiredPromotionLabels": [
+        "start_south",
+        "turn_left_east"
+      ]
+    },
+    {
+      "batch": "C",
+      "classifierClassCounts": {
+        "dungeon_gameplay": 6
+      },
+      "classifierProblems": [
+        "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+      ],
+      "dir": "verification-screens/pass304-original-pc34-wall-comparator-batch-C",
+      "labelsPresent": [
+        "start_south",
+        "blocked_forward_south_wall",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion"
+      ],
+      "promotionRows": [
+        {
+          "classification": "dungeon_gameplay",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "filename": "01_ingame_start_original_viewport_224x136.ppm",
+          "index": "01",
+          "promotableLabel": true,
+          "routeLabel": "start_south"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "cropSha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+          "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+          "index": "02",
+          "promotableLabel": true,
+          "routeLabel": "blocked_forward_south_wall"
+        }
+      ],
+      "requiredLabelCoverage": true,
+      "requiredLabelsPresent": [
+        "blocked_forward_south_wall",
+        "start_south"
+      ],
+      "requiredPromotionLabels": [
+        "start_south",
+        "blocked_forward_south_wall"
+      ]
+    }
+  ],
+  "coverage": {
+    "requiredLabelCoverage": true,
+    "requiredPromotionRowsGameplayOrWallCloseup": true
+  },
+  "notClaimed": [
+    "pixel parity",
+    "complete state-oracle proof",
+    "bitmap-byte publication"
+  ],
+  "pass": "pass308_original_capture_execution_manifest",
+  "remainingBlockers": [
+    "party tuple/F0128 state is not source-bound for the original runtime yet",
+    "duplicate viewport hashes are preserved as evidence and must not be interpreted as pixel parity",
+    "no screenshots/PPM/PNG are promoted to tracked release artifacts by this pass"
+  ],
+  "scope": "Metadata-only execution record for pass304 original PC34 DOSBox batches; records hashes/classes but not screenshots and not pixel parity.",
+  "sourceInputs": {
+    "captureDirs": [
+      "verification-screens/pass304-original-pc34-wall-comparator-batch-A",
+      "verification-screens/pass304-original-pc34-wall-comparator-batch-B",
+      "verification-screens/pass304-original-pc34-wall-comparator-batch-C"
+    ],
+    "pass304": "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json",
+    "pass307": "parity-evidence/verification/pass307_original_capture_batch_plan_manifest.json"
+  },
+  "status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING"
+}

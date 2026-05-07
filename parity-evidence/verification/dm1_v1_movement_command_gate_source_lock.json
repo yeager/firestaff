@@ -1,7 +1,7 @@
 {
   "status": "pass",
   "schema": "firestaff.dm1_v1_movement_command_gate_source_lock.v1",
-  "redmcsbRoot": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "source-lock command queue -> movement dispatch -> blocked/success side effects",
   "citations": [
     {

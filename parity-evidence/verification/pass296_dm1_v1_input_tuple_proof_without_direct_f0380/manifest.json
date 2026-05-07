@@ -183,7 +183,7 @@
       "order_missing": []
     }
   ],
-  "source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "MOVEMENT_INPUT_TUPLE_PROOF_SOURCE_LOCKED_RUNTIME_SUPPORTED_DIRECT_F0380_BLOCKED_NOT_REQUIRED",
   "timestamp_utc": "2026-05-07T01:22:00Z"
 }

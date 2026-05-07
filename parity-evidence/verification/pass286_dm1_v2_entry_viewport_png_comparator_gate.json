@@ -411,11 +411,11 @@
     "uniqueColors": 6,
     "width": 224
   },
-  "originalArchiveChecked": "$HOME/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z",
-  "originalDataRoot": "$HOME/.openclaw/data/firestaff-original-games/DM",
+  "originalArchiveChecked": "/home/trv2/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z",
+  "originalDataRoot": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
   "pass": "pass286_dm1_v2_entry_viewport_png_comparator_gate",
   "pixelParityClaim": false,
-  "redmcsbSourceRoot": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "Compare original DM1 PC34 entry viewport crop against Firestaff DM1 V2 entry viewport PNG seam.",
   "sourceAnchors": [
     {

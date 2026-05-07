@@ -22,7 +22,7 @@
     },
     "mapCount": 14,
     "ornamentRandomSeed": 99,
-    "path": "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
     "rawMapDataByteCount": 12283,
     "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "squareFirstThingCount": 1679,
@@ -76,7 +76,7 @@
     }
   ],
   "pass": "pass279_dm1_v2_dungeon_dat_square_decoder",
-  "redmcsbSource": "$HOME/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/SOURCE",
+  "redmcsbSource": "/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/SOURCE",
   "sourceChecks": {
     "DEFS.H": [
       "M034_SQUARE_TYPE(square)",

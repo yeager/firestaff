@@ -67,7 +67,7 @@
   },
   "classification": "blocked/runtime-base-and-symbol-map-unavailable",
   "exact_remaining_blocker": "No decompressed stock FIRES runtime image base, post-LZEXE transfer CS:IP, or TLINK FIRES.MAP is present on N2; compressed loader CS:IP remains loader-only evidence.",
-  "ibm_source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
+  "ibm_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
   "n2_only": true,
   "non_claims": [
     "does not claim a loaded/decompressed FIRES runtime image base",
@@ -91,7 +91,7 @@
         },
         "lzexe_signature_at_relocation_table": "LZ91",
         "mz": true,
-        "path": "$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+        "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
         "runtime_claim": "none; inventory only",
         "sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
         "size": 94779,
@@ -106,7 +106,7 @@
         },
         "lzexe_signature_at_relocation_table": "LZ91",
         "mz": true,
-        "path": "$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/FIRES",
+        "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/FIRES",
         "runtime_claim": "none; inventory only",
         "sha256": "df34b92e658ae07a0d21567c11bb38b1a749cc21ea98bff7a669d388716b1c92",
         "size": 94174,
@@ -121,7 +121,7 @@
         },
         "lzexe_signature_at_relocation_table": "LZ91",
         "mz": true,
-        "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34M/FIRES",
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34M/FIRES",
         "runtime_claim": "none; inventory only",
         "sha256": "0034ea6087b4713387fd34d6cf3e3259be810a07c5f9c0b987b9e2394db04681",
         "size": 94218,
@@ -136,7 +136,7 @@
         },
         "lzexe_signature_at_relocation_table": "LZ91",
         "mz": true,
-        "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E/FIRES",
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E/FIRES",
         "runtime_claim": "none; inventory only",
         "sha256": "3e59c1a8d4dec64c3cac1fd06a064077754cd012bef8d627cca969cad32311d0",
         "size": 94841,
@@ -151,7 +151,7 @@
         },
         "lzexe_signature_at_relocation_table": "\u0004\u0001\u0000\u0000",
         "mz": true,
-        "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/P20JA/FIRES.EXE",
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/P20JA/FIRES.EXE",
         "runtime_claim": "none; inventory only",
         "sha256": "0b0ce28ad06281c9148a10fad6be98ce6aae4176b622ca235de23eea1cb6f631",
         "size": 186306,
@@ -166,7 +166,7 @@
         },
         "lzexe_signature_at_relocation_table": "LZ91",
         "mz": true,
-        "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/P20JB/FIRES",
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/P20JB/FIRES",
         "runtime_claim": "none; inventory only",
         "sha256": "4cf17f96b83b4305401dae6b77a4d6e549b6b9ce97e7fe778bc3b4c38d27a08f",
         "size": 97538,
@@ -181,7 +181,7 @@
         },
         "lzexe_signature_at_relocation_table": "LZ91",
         "mz": true,
-        "path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/P31J/FIRES",
+        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/P31J/FIRES",
         "runtime_claim": "none; inventory only",
         "sha256": "1aff33e7531d75f060863049e51eea3b665c363e163b052cc691f9a194a37d0b",
         "size": 9527,
@@ -190,14 +190,14 @@
     ],
     "redmcsb_map_artifacts": [],
     "unpack_or_link_tools_found": [
-      "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Base/UNLZEXE/unlzexe.exe",
-      "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/LZEXE91/LZEXE.EXE",
-      "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/TLINK.EXE",
-      "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/BIN/TLINK.EXE"
+      "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Base/UNLZEXE/unlzexe.exe",
+      "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/LZEXE91/LZEXE.EXE",
+      "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/TLINK.EXE",
+      "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/BIN/TLINK.EXE"
     ]
   },
   "schema": "pass210_dm1_v1_original_runtime_binding_guard.v1",
-  "source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "source_seams": [
     {
       "excerpt": "COMMAND.C:2095:         L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;\nCOMMAND.C:2096:         if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && (G0312_i_LastProjectileDisabledMovementDirection == (M021_NORMALIZE(G0308_i_PartyDirection + L1160_i_Command - C003_COMMAND_MOVE_FORWARD)))))) { /* If movement is disabled */\nCOMMAND.C:2097:                 T0380xxx:\nCOMMAND.C:2098:                 G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2099:                 F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2100:                 goto T0380042;\nCOMMAND.C:2101:         }\nCOMMAND.C:2102: #endif\nCOMMAND.C:2103: #ifdef MEDIA551_F20E_F20J_F31E_F31J\nCOMMAND.C:2104:         if (AL1159_i_CommandQueueIndex != G0433_i_CommandQueueFirstIndex) { /* If the command queue is empty */\nCOMMAND.C:2105:                 L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;\nCOMMAND.C:2106:                 if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks && (G0312_i_LastProjectileDisabledMovementDirection == (M021_NORMALIZE(G0308_i_PartyDirection + L1160_i_Command - C003_COMMAND_MOVE_FORWARD)))))) { /* If movement is disabled */\nCOMMAND.C:2107:                         G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2108:                         F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2109:                         goto T0380042;\nCOMMAND.C:2110:                 }\nCOMMAND.C:2111:         } else {\nCOMMAND.C:2112:                 T0380xxx:\nCOMMAND.C:2113:                 G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2114:                 F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2115:                 goto T0380042;\nCOMMAND.C:2116:         }\nCOMMAND.C:2117: #endif\nCOMMAND.C:2118:         L1161_i_CommandX = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].X;\nCOMMAND.C:2119:         L1162_i_CommandY = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Y;\nCOMMAND.C:2120: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\nCOMMAND.C:2121:         G2153_i_QueuedCommandsCount--;\nCOMMAND.C:2122: #endif\nCOMMAND.C:2123:         if (++G0433_i_CommandQueueFirstIndex > M529_COMMAND_QUEUE_SIZE) {\nCOMMAND.C:2124:                 G0433_i_CommandQueueFirstIndex = 0;\nCOMMAND.C:2125:         }\nCOMMAND.C:2126:         G0435_B_CommandQueueLocked = C0_FALSE;\nCOMMAND.C:2127:         F0360_COMMAND_ProcessPendingClick();\nCOMMAND.C:2150:         if ((L1160_i_Command == C002_COMMAND_TURN_RIGHT) || (L1160_i_Command == C001_COMMAND_TURN_LEFT)) {\nCOMMAND.C:2151:                 F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);\nCOMMAND.C:2152:                 goto T0380042;\nCOMMAND.C:2153:         }\nCOMMAND.C:2154:         if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT)) {\nCOMMAND.C:2155:                 F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);\nCOMMAND.C:2156:                 goto T0380042;\nCOMMAND.C:2322:         if (L1160_i_Command == C080_COMMAND_CLICK_IN_DUNGEON_VIEW) {\nCOMMAND.C:2323:                 F0377_COMMAND_ProcessType80_ClickInDungeonView(L1161_i_CommandX, L1162_i_CommandY);\nCOMMAND.C:2324:                 goto T0380042;",
@@ -220,7 +220,7 @@
         "command x/y",
         "CS:IP before dispatch"
       ],
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "excerpt": "CLIKMENU.C:256:         AL1118_ui_MovementArrowIndex = P0735_ui_Command - C003_COMMAND_MOVE_FORWARD;\nCLIKMENU.C:257: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\nCLIKMENU.C:258:         L1120_pi_Box = G0463_aai_Graphic561_Box_MovementArrows[AL1118_ui_MovementArrowIndex];\nCLIKMENU.C:259:         F0362_COMMAND_HighlightBoxEnable(M768_BOX_LEFT(L1120_pi_Box), M769_BOX_RIGHT(L1120_pi_Box), M770_BOX_TOP(L1120_pi_Box), M771_BOX_BOTTOM(L1120_pi_Box));\nCLIKMENU.C:260: #endif\nCLIKMENU.C:261: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCLIKMENU.C:262:         F0362_COMMAND_HighlightBoxEnable(C070_ZONE_MOVE_FORWARD + AL1118_ui_MovementArrowIndex);\nCLIKMENU.C:263: #endif\nCLIKMENU.C:264:         L1123_B_StairsSquare = (M034_SQUARE_TYPE(AL1115_ui_Square = F0151_DUNGEON_GetSquare(L1121_i_MapX = G0306_i_PartyMapX, L1122_i_MapY = G0307_i_PartyMapY)) == C03_ELEMENT_STAIRS);\nCLIKMENU.C:265:         if (L1123_B_StairsSquare && (AL1118_ui_MovementArrowIndex == 2)) { /* If moving backward while in stairs */\nCLIKMENU.C:266:                 F0364_COMMAND_TakeStairs(M007_GET(AL1115_ui_Square, MASK0x0004_STAIRS_UP));\nCLIKMENU.C:267:                 return;\nCLIKMENU.C:268:         }\nCLIKMENU.C:269:         F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(G0308_i_PartyDirection, G0465_ai_Graphic561_MovementArrowToStepForwardCount[AL1118_ui_MovementArrowIndex], G0466_ai_Graphic561_MovementArrowToStepRightCount[AL1118_ui_MovementArrowIndex], &L1121_i_MapX, &L1122_i_MapY);\nCLIKMENU.C:270:         L1116_i_SquareType = M034_SQUARE_TYPE(AL1115_ui_Square = F0151_DUNGEON_GetSquare(L1121_i_MapX, L1122_i_MapY));\nCLIKMENU.C:317:         if (L1117_B_MovementBlocked) {\nCLIKMENU.C:318:                 F0357_COMMAND_DiscardAllInput();\nCLIKMENU.C:319: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nCLIKMENU.C:320:                 F0693_WaitVerticalBlank();\nCLIKMENU.C:321: #endif\nCLIKMENU.C:322:                 G0321_B_StopWaitingForPlayerInput = C0_FALSE;\nCLIKMENU.C:323:                 return;\nCLIKMENU.C:324:         }\nCLIKMENU.C:325:         if (L1123_B_StairsSquare) {\nCLIKMENU.C:326:                 F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY, CM1_MAPX_NOT_ON_A_SQUARE, 0, L1121_i_MapX, L1122_i_MapY);\nCLIKMENU.C:327:         } else {\nCLIKMENU.C:328:                 F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY, G0306_i_PartyMapX, G0307_i_PartyMapY, L1121_i_MapX, L1122_i_MapY);\nCLIKMENU.C:329:         }\nCLIKMENU.C:345:         G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;\nCLIKMENU.C:346:         G0311_i_ProjectileDisabledMovementTicks = 0;\nCLIKMENU.C:347: }",
@@ -243,7 +243,7 @@
         "blocked flag",
         "CS:IP around move-result call"
       ],
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "excerpt": "MOVESENS.C:438:         if (P0560_i_DestinationMapX >= 0) {\nMOVESENS.C:439:                 L0714_ui_MapIndexSource = L0715_ui_MapIndexDestination = G0272_i_CurrentMapIndex;\nMOVESENS.C:440:                 L0721_B_GroupOnPartyMap = (L0714_ui_MapIndexSource == G0309_i_PartyMapIndex) && (P0558_i_SourceMapX >= 0);\nMOVESENS.C:441:                 if (P0557_T_Thing == C0xFFFF_THING_PARTY) {\nMOVESENS.C:442:                         G0306_i_PartyMapX = P0560_i_DestinationMapX;\nMOVESENS.C:443:                         G0307_i_PartyMapY = P0561_i_DestinationMapY;\nMOVESENS.C:444:                         L0718_i_RequiredTeleporterScope = MASK0x0002_SCOPE_OBJECTS_OR_PARTY;\nMOVESENS.C:493:                                 if (P0557_T_Thing == C0xFFFF_THING_PARTY) {\nMOVESENS.C:494:                                         G0306_i_PartyMapX = P0560_i_DestinationMapX;\nMOVESENS.C:495:                                         G0307_i_PartyMapY = P0561_i_DestinationMapY;\nMOVESENS.C:496:                                         if (L0712_ps_Teleporter->Audible) {\nMOVESENS.C:573: #endif\nMOVESENS.C:574:                                         F0173_DUNGEON_SetCurrentMap(L0715_ui_MapIndexDestination);\nMOVESENS.C:575:                                         if (P0557_T_Thing == C0xFFFF_THING_PARTY) {\nMOVESENS.C:576:                                                 G0306_i_PartyMapX = P0560_i_DestinationMapX;\nMOVESENS.C:577:                                                 G0307_i_PartyMapY = P0561_i_DestinationMapY;\nMOVESENS.C:578:                                                 if (G0305_ui_PartyChampionCount > 0) {",
@@ -264,7 +264,7 @@
         "destination x/y",
         "committed G0306/G0307 values"
       ],
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "excerpt": "GAMELOOP.C:83: #ifdef MEDIA593_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\nGAMELOOP.C:84:                 if (!G0300_B_PartyIsResting) {\nGAMELOOP.C:85:                         if (!G0299_ui_CandidateChampionOrdinal) {\nGAMELOOP.C:86:                                 F0457_START_DrawEnabledMenus_CPSF();\nGAMELOOP.C:87:                         }\nGAMELOOP.C:88:                         if (!G0423_i_InventoryChampionOrdinal) {\nGAMELOOP.C:89: #endif\nGAMELOOP.C:90:                                 F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);\nGAMELOOP.C:91:                                 if (G0325_B_SetMousePointerToObjectInMainLoop) {\nGAMELOOP.C:164:                 G0321_B_StopWaitingForPlayerInput = C0_FALSE;\nGAMELOOP.C:165:                 do {\nGAMELOOP.C:166:                         while (M527_IsCharacterInKeyboardBuffer()) {\nGAMELOOP.C:167:                                 F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());\nGAMELOOP.C:168:                         }\nGAMELOOP.C:215:                         F0380_COMMAND_ProcessQueue_CPSC();\nGAMELOOP.C:216:                         if (!G0321_B_StopWaitingForPlayerInput) {\nGAMELOOP.C:217:                                 F0363_COMMAND_HighlightBoxDisable();\nGAMELOOP.C:218:                         }\nGAMELOOP.C:219:                 } while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);",
@@ -284,7 +284,7 @@
         "draw call observed",
         "frame/present marker after draw"
       ],
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "excerpt": "DRAWVIEW.C:849: #ifdef MEDIA709_I34E_I34M_P31J\nDRAWVIEW.C:850:         F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);\nDRAWVIEW.C:851:         M768_BOX_LEFT(L2413_ai_Box) = M704_ZONE_LEFT(L2414_ai_XYZ);\nDRAWVIEW.C:852:         M769_BOX_RIGHT(L2413_ai_Box) = M705_ZONE_RIGHT(L2414_ai_XYZ);\nDRAWVIEW.C:853:         M770_BOX_TOP(L2413_ai_Box) = M706_ZONE_TOP(L2414_ai_XYZ);\nDRAWVIEW.C:854:         M771_BOX_BOTTOM(L2413_ai_Box) = M707_ZONE_BOTTOM(L2414_ai_XYZ);\nDRAWVIEW.C:855: #endif\nDRAWVIEW.C:856: #ifdef MEDIA463_P20JA_P20JB_I34E_I34M_P31J\nDRAWVIEW.C:857:         (*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);\nDRAWVIEW.C:858:         if (L2415_B_) {",
@@ -304,7 +304,7 @@
         "viewport bitmap pointer",
         "video-driver blit call"
       ],
-      "source_path": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
   "stock_fires": {
@@ -316,7 +316,7 @@
     "header_bytes": 32,
     "load_image_bytes_from_mz_header": 94747,
     "lzexe_signature_at_relocation_table": "LZ91",
-    "path": "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
     "sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
     "size": 94779,
     "stack_at_loader_entry": "29d2:0080"

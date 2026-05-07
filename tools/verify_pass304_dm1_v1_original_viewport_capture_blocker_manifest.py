@@ -68,12 +68,26 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def public_path(path: Path) -> str:
+    text = str(path)
+    replacements = {
+        str(Path.home() / ".openclaw/data/firestaff-original-games/DM"): "<firestaff-original-games>",
+        str(Path.home() / ".openclaw/data/firestaff-redmcsb-source"): "<redmcsb-source>",
+    }
+    for prefix, label in replacements.items():
+        if text == prefix:
+            return label
+        if text.startswith(prefix + "/"):
+            return label + text[len(prefix):]
+    return text
+
+
 def file_record(path: Path) -> dict[str, object]:
     target = Path(path)
     resolved = target.resolve() if target.exists() else target
     return {
-        "path": str(target),
-        "resolvedPath": str(resolved),
+        "path": public_path(target),
+        "resolvedPath": public_path(resolved),
         "exists": target.exists(),
         "bytes": resolved.stat().st_size if resolved.exists() else None,
         "sha256": sha256(resolved) if resolved.exists() else None,
@@ -105,10 +119,17 @@ def load_existing_original_crops() -> list[dict[str, object]]:
 def command_for_batch(batch: str, route_tokens_after_entry: list[str], labels: list[str]) -> str:
     # Keep exactly six shots because the current capture script validates that shape.
     # Repeated final labels are explicitly non-promotable padding until the script accepts
-    # arbitrary shot counts or a state-reset marker.
-    events = ["wait:7000", "shot:" + labels[0]]
+    # arbitrary shot counts or a state-reset marker. Linux/DOSBox 0.74 needs the
+    # explicit title->entrance->gameplay prelude and keypad movement tokens; plain
+    # cursor arrows remain title/menu or no-op and must not be promoted.
+    events = [
+        "wait:7000", "enter", "wait:1500",
+        "click:260,50", "wait:1500",
+        "click:276,140", "wait:3000",
+        "shot:" + labels[0],
+    ]
     for token, label in zip(route_tokens_after_entry, labels[1:]):
-        events.extend([token, "wait:600", "shot:" + label])
+        events.extend([token, "wait:1200", "shot:" + label])
     while len([t for t in events if t.startswith("shot")]) < 6:
         events.extend(["wait:600", "shot:padding_not_for_promotion"])
     route = " ".join(events)
@@ -154,10 +175,18 @@ def main() -> int:
     required_labels = {s["requiredShotLabel"] for s in snapshots}
     exact_label_hits = [r for r in existing if r["routeLabel"] in required_labels]
     candidate_hashes = sorted({r["sha256"] for r in existing})
+    labels_found = {str(r["routeLabel"]) for r in exact_label_hits}
+    route_label_coverage = required_labels <= labels_found
+    status = "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED" if route_label_coverage else "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN"
+    audit_reason = (
+        "required pass304 route labels have captured crop hashes, but the original runtime party tuple/F0128 state is not source-bound yet; keep hashes as evidence only"
+        if route_label_coverage else
+        "tracked original viewport manifests do not contain every route label for the pass127/pass304 required snapshot names; crops cannot be bound to the required party tuple/F0128 state."
+    )
 
     manifest = {
         "pass": "pass304_dm1_v1_original_viewport_capture_blocker_manifest",
-        "status": "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN",
+        "status": status,
         "notClaimed": [
             "pixel parity",
             "existing original crop equivalence to pass127 route states",
@@ -191,22 +220,24 @@ def main() -> int:
         },
         "existingOriginalCropAudit": {
             "usableForPromotion": False,
-            "reason": "tracked original viewport manifests do not contain route labels for the pass127/pass304 required snapshot names; several crops are duplicate no-party/diagnostic hashes, so they cannot be bound to the required party tuple/F0128 state.",
+            "routeLabelCoverage": route_label_coverage,
+            "reason": audit_reason,
             "manifestsScanned": sorted({r["manifest"] for r in existing}),
             "uniqueCropSha256": candidate_hashes,
             "requiredLabelHits": exact_label_hits,
         },
         "nextCaptureCommands": {
-            "knownBlocker": "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches or a script enhancement that supports multiple fresh-run batches with per-shot labels.",
-            "batchA_start_right_forward": command_for_batch("A", ["right", "up"], ["start_south", "turn_right_west", "move_forward_west"]),
-            "batchB_start_left": command_for_batch("B", ["left"], ["start_south", "turn_left_east"]),
-            "batchC_start_blocked_forward": command_for_batch("C", ["up"], ["start_south", "blocked_forward_south_wall"]),
+            "knownBlocker": "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches; route capture now uses a proven title->entrance->gameplay prelude plus keypad tokens, but party-tuple promotion still needs a source-bound runtime state oracle.",
+            "batchA_start_right_forward": command_for_batch("A", ["kp6", "kp8"], ["start_south", "turn_right_west", "move_forward_west"]),
+            "batchB_start_left": command_for_batch("B", ["kp4"], ["start_south", "turn_left_east"]),
+            "batchC_start_blocked_forward": command_for_batch("C", ["kp8"], ["start_south", "blocked_forward_south_wall"]),
         },
         "promotionCondition": "Promote only after each requiredRouteStates row has an original PC34 crop hash whose route label and party tuple are proven, and requiredDecodedGraphicsDatRecords.wallSetGraphicIndicesFromCurrentRenderPlan have deterministic compressed/packed/unpacked/palette byte hashes.",
     }
     OUT.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"wrote {OUT.relative_to(REPO)}")
     print(manifest["status"])
+    print("route label coverage:", route_label_coverage)
     print("required states:", len(snapshots))
     print("wall graphics:", ",".join(map(str, sorted(needed_wall_indices))))
     return 0

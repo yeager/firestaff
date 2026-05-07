@@ -30,8 +30,8 @@
     "labels_exists": true
   },
   "pass223_input": "parity-evidence/verification/pass223_dm1_v1_post_redraw_instrumentation_lock.json",
-  "redmcsb_source_root": "$HOME/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "<repo>",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
   "runtime_api_audit": {
     "classification": "blocked/missing-original-runtime-state-hook-api",
     "dosbox_version": {
