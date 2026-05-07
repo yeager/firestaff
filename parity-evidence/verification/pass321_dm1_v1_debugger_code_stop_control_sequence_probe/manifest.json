@@ -1,0 +1,424 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport_entry": "2809:1E31",
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0097_after_palette_zone_setup": "2809:1EBD",
+    "F0097_before_viewport_args": "2809:1EEE",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
+  },
+  "bounded_sanitized_excerpt": [
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted.",
+    "(Running)t breakpoint at 23AD:40FE",
+    "-> BPDEL *_  P (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***",
+    "-> BP 23AD:40FE_   deleted."
+  ],
+  "direct_hits": {
+    "f0097_after_f0128_real_code_stop": false,
+    "f0097_hits": [],
+    "f0128_real_code_stop": false
+  },
+  "next_blocker": "tmux-pane DOSBox-debug control still lacks a reliable actual code-stop line distinct from BP/BPLIST setup echoes. Need a raw debugger event stream or a paused/running-state primitive before promoting runtime F0128/F0097 sequencing.",
+  "parser_selftest": {
+    "accepted": [
+      "actual_code_stop_1",
+      "actual_code_stop_2",
+      "actual_code_stop_3"
+    ],
+    "expected": [
+      "actual_code_stop_1",
+      "actual_code_stop_2",
+      "actual_code_stop_3"
+    ],
+    "ok": true,
+    "results": {
+      "actual_code_stop_1": [
+        {
+          "addr": "23AD:40FE",
+          "line": "CODE STOP: 23AD:40FE"
+        }
+      ],
+      "actual_code_stop_2": [
+        {
+          "addr": "2809:1EFF",
+          "line": "Code breakpoint at 2809:1EFF"
+        }
+      ],
+      "actual_code_stop_3": [
+        {
+          "addr": "2809:1E31",
+          "line": "Breakpoint hit at 2809:1E31"
+        }
+      ],
+      "bp_command_echo": [],
+      "bplist_entry": [],
+      "bplist_header": [],
+      "setup_prefixed_bplist": []
+    }
+  },
+  "prior_artifact_audit": {
+    "pass318": {
+      "bplist_echo_confusion": true,
+      "legacy_hits": [
+        {
+          "kind": "other",
+          "sig": "Breakpoint list:",
+          "stage": "f0128_gate",
+          "t": 1778159568.6098797
+        }
+      ],
+      "status": "BLOCKED_F0097_AFTER_F0128_WINDOW_NO_HIT",
+      "strict_code_stop_hits": [],
+      "strict_hit_count": 0
+    },
+    "pass320": {
+      "bplist_echo_confusion": false,
+      "legacy_hits": [],
+      "status": "BLOCKED_F0128_GATE_NOT_RECAPTURED_STRICT_STOP_FILTER",
+      "strict_code_stop_hits": [],
+      "strict_hit_count": 0
+    }
+  },
+  "runtime_limit_seconds": 50,
+  "runtime_probe": {
+    "duration_seconds": 54.416,
+    "events": [
+      {
+        "cmd": "BPDEL *",
+        "event": "debugger_cmd",
+        "t": 1778162550.7167938
+      },
+      {
+        "cmd": "BP 23AD:40FE",
+        "event": "debugger_cmd",
+        "t": 1778162550.9468722
+      }
+    ],
+    "hits": [],
+    "ran": true,
+    "route_log": [
+      {
+        "event": "route_step",
+        "route_item": "wait:9000",
+        "t": 1778162551.2239172
+      },
+      {
+        "event": "route_step",
+        "route_item": "enter",
+        "t": 1778162560.2530887
+      },
+      {
+        "event": "key",
+        "route_item": "enter",
+        "t": 1778162560.2762246
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:1800",
+        "t": 1778162560.4763796
+      },
+      {
+        "event": "route_step",
+        "route_item": "one",
+        "t": 1778162562.2825224
+      },
+      {
+        "event": "key",
+        "route_item": "one",
+        "t": 1778162562.303585
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:1800",
+        "t": 1778162562.5036933
+      },
+      {
+        "event": "route_step",
+        "route_item": "click:276,140",
+        "t": 1778162564.3101168
+      },
+      {
+        "event": "click",
+        "route_item": "click:276,140",
+        "screen": [
+          553,
+          281
+        ],
+        "t": 1778162564.4302828
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:1800",
+        "t": 1778162564.6304443
+      },
+      {
+        "event": "route_step",
+        "route_item": "one",
+        "t": 1778162566.4360578
+      },
+      {
+        "event": "key",
+        "route_item": "one",
+        "t": 1778162566.4589477
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:1800",
+        "t": 1778162566.659062
+      },
+      {
+        "event": "route_step",
+        "route_item": "kp5",
+        "t": 1778162568.4640481
+      },
+      {
+        "event": "key",
+        "route_item": "kp5",
+        "t": 1778162568.4876204
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:900",
+        "t": 1778162568.6877854
+      },
+      {
+        "event": "route_step",
+        "route_item": "kp4",
+        "t": 1778162569.5908315
+      },
+      {
+        "event": "key",
+        "route_item": "kp4",
+        "t": 1778162569.6118224
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:900",
+        "t": 1778162569.8119783
+      },
+      {
+        "event": "route_step",
+        "route_item": "kp6",
+        "t": 1778162570.71505
+      },
+      {
+        "event": "key",
+        "route_item": "kp6",
+        "t": 1778162570.737994
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:900",
+        "t": 1778162570.9381099
+      },
+      {
+        "event": "route_step",
+        "route_item": "kp5",
+        "t": 1778162571.8421016
+      },
+      {
+        "event": "key",
+        "route_item": "kp5",
+        "t": 1778162571.8639824
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:900",
+        "t": 1778162572.0640998
+      },
+      {
+        "event": "route_step",
+        "route_item": "kp4",
+        "t": 1778162572.966963
+      },
+      {
+        "event": "key",
+        "route_item": "kp4",
+        "t": 1778162572.9900517
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:900",
+        "t": 1778162573.1901946
+      },
+      {
+        "event": "route_step",
+        "route_item": "kp6",
+        "t": 1778162574.0925446
+      },
+      {
+        "event": "key",
+        "route_item": "kp6",
+        "t": 1778162574.115601
+      },
+      {
+        "event": "route_step",
+        "route_item": "wait:900",
+        "t": 1778162574.3157225
+      },
+      {
+        "event": "route_done",
+        "t": 1778162575.218213
+      }
+    ],
+    "transcript": "parity-evidence/verification/pass321_dm1_v1_debugger_code_stop_control_sequence_probe/dosbox_debug_strict_probe.clean.txt"
+  },
+  "schema": "pass321_dm1_v1_debugger_code_stop_control_sequence_probe.v1",
+  "source_audit": [
+    {
+      "anchors": {
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "id": "f0097_viewport_present",
+      "line_range": [
+        709,
+        858
+      ],
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);": 8606,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "f0128_calls_f0097",
+      "line_range": [
+        8318,
+        8612
+      ],
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "f0380_command_process",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "needles": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    }
+  ],
+  "status": "BLOCKED_PASS321_MISSING_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE",
+  "strict_code_stop_filter": {
+    "accepts": [
+      "^(?:CODE\\s+STOP|CODE\\s+BREAKPOINT|BREAKPOINT\\s+HIT)\\s*:?[ \\t]+(?P<addr>[0-9A-F]{4}:[0-9A-F]{4})\\b",
+      "^(?:Code|CPU)\\s+breakpoint\\s+(?:hit\\s+)?(?:at\\s+)?(?P<addr>[0-9A-F]{4}:[0-9A-F]{4})\\b",
+      "^Breakpoint\\s+(?:hit\\s+)?at\\s+(?P<addr>[0-9A-F]{4}:[0-9A-F]{4})\\b"
+    ],
+    "ignores": [
+      "^->",
+      "^Breakpoint list:?",
+      "^[-]{5,}",
+      "^[0-9]+\\.\\s+BP\\s+[0-9A-F]{4}:[0-9A-F]{4}\\b",
+      "^BP\\s+[0-9A-F]{4}:[0-9A-F]{4}\\b"
+    ],
+    "rule": "Only an unprompted CODE STOP / code-breakpoint-hit line counts. BP command echoes, BPLIST headers, and BPLIST entries never count as stops."
+  },
+  "timestamp_utc": "2026-05-07T14:03:21.596231+00:00"
+}
