@@ -508,3 +508,16 @@ bool dm1_square_blocks_movement(uint8_t raw_byte) {
             return false;
     }
 }
+
+
+/* =======================================================================
+ * dm1_viewport_uses_flipped_wall_and_footprints
+ *
+ * Source-lock: ReDMCSB DUNVIEW.C:F0128_DUNGEONVIEW_Draw_CPSF line 8357.
+ * The parity flag drives flipped wall/floor-set selection in F0128 and
+ * center-lane footprint floor ornament flipping in F0108 lines 3967-3980.
+ * ======================================================================= */
+
+bool dm1_viewport_uses_flipped_wall_and_footprints(int map_x, int map_y, int direction) {
+    return ((map_x + map_y + (direction & 3)) & 1) != 0;
+}

@@ -489,6 +489,16 @@ int dm1_get_visible_squares(const dm1_viewport_state_t *vp,
  */
 bool dm1_square_blocks_movement(uint8_t raw_byte);
 
+/*
+ * dm1_viewport_uses_flipped_wall_and_footprints — ReDMCSB DUNVIEW.C:F0128
+ * parity switch for alternate wall/floor rendering.  Source line 8357 assigns
+ * G0076_B_UseFlippedWallAndFootprintsBitmaps = (mapX + mapY + direction) & 1;
+ * F0108 then reuses that flag for center-lane footprint floor ornaments
+ * (DUNVIEW.C:3967-3980), while wall and floor blits use it throughout
+ * F0128/F0122-F0127.
+ */
+bool dm1_viewport_uses_flipped_wall_and_footprints(int map_x, int map_y, int direction);
+
 
 #ifdef __cplusplus
 }

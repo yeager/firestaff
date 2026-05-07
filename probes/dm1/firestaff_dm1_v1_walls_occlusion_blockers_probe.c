@@ -113,6 +113,29 @@ static int expect_front_aspect(struct MapFixture* fixture, unsigned char raw,
     return ok;
 }
 
+static int verify_parity_flip(void)
+{
+    int ok = 1;
+
+    printf("parityFlip source=DUNVIEW.C:8357,F0108:3967-3980 matrix=");
+    for (int dir = DIR_NORTH; dir <= DIR_WEST; ++dir) {
+        int expected = (2 + 2 + dir) & 1;
+        int actual = dm1_viewport_uses_flipped_wall_and_footprints(2, 2, dir) ? 1 : 0;
+        printf("%sdir%d:%d", dir ? "," : "", dir, actual);
+        ok &= expect_int("wall/floor parity by direction", actual, expected);
+    }
+    printf("\n");
+
+    ok &= expect_int("parity toggles with east step",
+        dm1_viewport_uses_flipped_wall_and_footprints(3, 2, DIR_NORTH) ? 1 : 0, 1);
+    ok &= expect_int("parity toggles with south step",
+        dm1_viewport_uses_flipped_wall_and_footprints(2, 3, DIR_NORTH) ? 1 : 0, 1);
+    ok &= expect_int("parity masks direction to DM1 cardinal range",
+        dm1_viewport_uses_flipped_wall_and_footprints(2, 2, DIR_NORTH + 4) ? 1 : 0, 0);
+
+    return ok;
+}
+
 static int verify_draw_order(struct MapFixture* fixture)
 {
     dm1_viewport_state_t vp;
@@ -209,6 +232,7 @@ int main(void)
 
     reset_fixture(&fixture, &dungeon, &map, &tiles, &party);
     ok &= verify_draw_order(&fixture);
+    ok &= verify_parity_flip();
 
     if (!ok) {
         fprintf(stderr, "probe failed\n");
