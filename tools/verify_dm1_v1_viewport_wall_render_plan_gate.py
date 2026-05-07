@@ -177,7 +177,7 @@ def require_d4_source_has_no_wall_draws() -> dict[str, Any]:
     if failures:
         raise SystemExit("D4 source audit drift:\n- " + "\n- ".join(failures))
     return {
-        "redmcsbSource": str(REDMCSB_DUNVIEW),
+        "redmcsbSource": "<redmcsb-source>/Toolchains/Common/Source/DUNVIEW.C",
         "auditedRange": "DUNVIEW.C:8466-8477",
         "predicate": "D4L/D4R/D4C call F0150 then F0115 with BACKLEFT cell order only; the D4 window contains no local PC34 wall bitmap/zone draw call",
         "rows": D4_OBJECT_SPECS,

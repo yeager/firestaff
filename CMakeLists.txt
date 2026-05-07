@@ -1040,7 +1040,7 @@ if(BUILD_TESTING)
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_firestaff_m11_launcher_smoke.sh
     )
     set_tests_properties(m11_launcher_smoke PROPERTIES
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;FIRESTAFF_BIN=${CMAKE_CURRENT_BINARY_DIR}/firestaff;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     )
 
     # Deterministic in-game screenshot capture smoke. This guards the
@@ -1051,7 +1051,7 @@ if(BUILD_TESTING)
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_firestaff_m11_ingame_capture_smoke.sh
     )
     set_tests_properties(m11_ingame_capture_smoke PROPERTIES
-        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     )
 
     # DM1 V1 Sound & Music System source-lock gate
