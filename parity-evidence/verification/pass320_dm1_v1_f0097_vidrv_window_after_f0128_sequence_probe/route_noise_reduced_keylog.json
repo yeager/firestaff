@@ -1,0 +1,209 @@
+[
+  {
+    "event": "route_step",
+    "route_item": "wait:9000",
+    "t": 1778160685.6895032
+  },
+  {
+    "event": "route_step",
+    "route_item": "enter",
+    "t": 1778160694.718288
+  },
+  {
+    "event": "key",
+    "route_item": "enter",
+    "running_guard": true,
+    "t": 1778160694.7407937
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778160694.9409292
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778160695.7435808
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436035
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778160695.7436063
+  },
+  {
+    "event": "route_step",
+    "route_item": "click:276,140",
+    "t": 1778160695.7436242
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.743628
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778160695.7436311
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778160695.7436364
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436388
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778160695.74364
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778160695.743645
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436478
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.743649
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778160695.7436533
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436578
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7436588
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778160695.743662
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436635
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.743665
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778160695.7436755
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436771
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7436779
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778160695.7436812
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436826
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7436836
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778160695.743686
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436872
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7436879
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778160695.7436903
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436917
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7436934
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp6",
+    "t": 1778160695.7436962
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7436976
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7436984
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp4",
+    "t": 1778160695.7437007
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7437022
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7437031
+  },
+  {
+    "event": "route_step",
+    "route_item": "kp5",
+    "t": 1778160695.7437053
+  },
+  {
+    "event": "wait_running_timeout",
+    "t": 1778160695.7437077
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:900",
+    "t": 1778160695.7437084
+  },
+  {
+    "event": "route_done",
+    "t": 1778160695.7437134
+  }
+]

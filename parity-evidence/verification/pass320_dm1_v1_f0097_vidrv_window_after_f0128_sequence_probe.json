@@ -1,0 +1,48 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport_entry": "2809:1E31",
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0097_after_palette_zone_setup": "2809:1EBD",
+    "F0097_before_viewport_args": "2809:1EEE",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
+  },
+  "blocker": "Pass320 strict stop filter did not recapture F0128. Pass318/older scripts confuse BPLIST setup echoes with stops; the next blocker is debugger stop/control sequencing before the post-F0128 F0097 window can be trusted.",
+  "ok": true,
+  "pass318_reuse": {
+    "conclusion": "2809:1E31 is the F0097 function entry from FIRES.MAP. Static original-byte binding narrows DRAWVIEW.C:857 / VIDRV_09_BlitViewPort to the indirect lcall at 20D6:1EFF, runtime 2809:1EFF. Runtime probe did not capture a post-F0128 F0097-window stop, so viewport_present remains unpromoted.",
+    "path": "parity-evidence/verification/pass318_dm1_v1_f0097_after_f0128_offset_window_probe.json",
+    "static_ok": true,
+    "status": "BLOCKED_F0097_RUNTIME_HIT_STATIC_VIDRV_CANDIDATE_2809_1EFF"
+  },
+  "runtime": {
+    "debugger_cmd_count": 3,
+    "f0097_window_hit": false,
+    "f0128_strict_hit": false,
+    "hit_count": 0,
+    "manifest": "parity-evidence/verification/pass320_dm1_v1_f0097_vidrv_window_after_f0128_sequence_probe/manifest.json",
+    "vidrv_2809_1EFF_armed_after_f0128": false
+  },
+  "schema": "pass320_dm1_v1_f0097_vidrv_window_after_f0128_sequence_probe.verify.v1",
+  "source_anchors": {
+    "DEFS.H": {
+      "void (*VIDRV_09_BlitViewPort)(unsigned char* Pxxxx_puc_Bitmap, int16_t* Pxxxx_pi_Box);": 4279
+    },
+    "DRAWVIEW.C": {
+      "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);": 857,
+      "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+      "void F0097_DUNGEONVIEW_DrawViewport": 709
+    },
+    "DUNVIEW.C": {
+      "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+      "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);": 8606
+    },
+    "IBMIO.C": {
+      "G2156_VideoDriver = (VIDEO_DRIVER*)getvect(C255_DM_VIDEO_INTERRUPT);": 2518
+    },
+    "VIDEODRV.C": {
+      "(char*)F8161_VIDRV_09_BlitViewPort,                             /*  9 */": 950,
+      "FUNC_DEF void F8161_VIDRV_09_BlitViewPort(": 3566
+    }
+  },
+  "status": "BLOCKED_F0128_GATE_NOT_RECAPTURED_STRICT_STOP_FILTER"
+}
