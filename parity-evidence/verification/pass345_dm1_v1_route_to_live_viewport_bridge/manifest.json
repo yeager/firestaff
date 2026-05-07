@@ -145,7 +145,7 @@
         "cmd": [
           "cmake",
           "-S",
-          "/home/trv2/work/firestaff-worktrees/pass345-dm1-v1-route-to-live-viewport-bridge-20260507",
+          "/home/trv2/work/firestaff",
           "-B",
           "/home/trv2/.openclaw/data/firestaff-builds/pass345-verify"
         ],
@@ -191,9 +191,9 @@
         "cmd": [
           "/home/trv2/.openclaw/data/firestaff-builds/pass345-verify/firestaff_m11_hall_walkaround_runtime_probe",
           "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-          "/home/trv2/work/firestaff-worktrees/pass345-dm1-v1-route-to-live-viewport-bridge-20260507/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe"
+          "/home/trv2/work/firestaff/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe"
         ],
-        "outputTail": "wrote /home/trv2/work/firestaff-worktrees/pass345-dm1-v1-route-to-live-viewport-bridge-20260507/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe/dm1_v1_hall_walkaround_runtime_probe.md and /home/trv2/work/firestaff-worktrees/pass345-dm1-v1-route-to-live-viewport-bridge-20260507/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe/dm1_v1_hall_walkaround_runtime_probe.json\nPASS dm1 v1 hall walkaround runtime probe\n",
+        "outputTail": "wrote /home/trv2/work/firestaff/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe/dm1_v1_hall_walkaround_runtime_probe.md and /home/trv2/work/firestaff/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe/dm1_v1_hall_walkaround_runtime_probe.json\nPASS dm1 v1 hall walkaround runtime probe\n",
         "returncode": 0
       }
     },
@@ -295,7 +295,7 @@
     "pixel parity",
     "full launcher handoff closure"
   ],
-  "repo": "/home/trv2/work/firestaff-worktrees/pass345-dm1-v1-route-to-live-viewport-bridge-20260507",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass345_dm1_v1_route_to_live_viewport_bridge.v1",
   "sourceLocks": [
     {
@@ -363,5 +363,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BRIDGE_CLOSED",
-  "timestampUtc": "2026-05-07T19:06:25.788226+00:00"
+  "timestampUtc": "2026-05-07T19:11:59.138432+00:00"
 }
