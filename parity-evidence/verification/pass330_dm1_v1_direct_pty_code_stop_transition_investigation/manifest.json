@@ -1,0 +1,236 @@
+{
+  "addresses": {
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
+  },
+  "blocker": "F0128 breakpoint armed/retained; pass278-cadence route input delivered; post-route pause showed non-F0128 code address; no strict running-to-23AD:40FE transition appeared.",
+  "hypothesisInvestigated": "debugger breakpoint is retained but CPU never reaches F0128 under route",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP command echo",
+    "tmux/capture-pane"
+  ],
+  "runtimeProbe": {
+    "boundedSecondsPerStrategy": 55,
+    "missingTools": [],
+    "ran": true,
+    "strategies": [
+      {
+        "blocker": "F0128 breakpoint armed/retained but no strict running-to-23AD:40FE prompt transition emitted",
+        "breakpointRetainedPostRoute": true,
+        "commandLog": [
+          {
+            "cmd": "BPDEL *",
+            "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+            "t": 1778168827.285905
+          },
+          {
+            "cmd": "BP 23AD:40FE",
+            "excerpt": "\n-> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+            "t": 1778168828.1105762
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
+            "t": 1778168828.9349613
+          },
+          {
+            "control": "F5",
+            "purpose": "run after initial F0128 arm",
+            "t": 1778168828.9852436
+          },
+          {
+            "control": "Alt+Pause",
+            "purpose": "post-route retention check",
+            "t": 1778168884.0679257
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "...\n-> B_  ...P_  ...L_  ...I_  ...S_  ...T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
+            "t": 1778168889.9266505
+          }
+        ],
+        "directHits": {
+          "f0097_2809_1EFF_after_f0128": false,
+          "f0128_23AD_40FE": false
+        },
+        "durationSeconds": 68.011,
+        "method": "arm F0128 at initial debugger prompt before any game route input, run through full load+movement route",
+        "postRoutePauseCodeAddr": "280C:01E3",
+        "ran": true,
+        "routeLog": [
+          {
+            "route_item": "wait:9000",
+            "slept": true,
+            "t": 1778168829.0032434
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "enter",
+            "t": 1778168838.018358
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168838.2425156
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778168840.4465072
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168840.667955
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "click:276,140",
+            "screen": [
+              553,
+              281
+            ],
+            "t": 1778168842.8716235
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168842.9913082
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778168845.1966739
+          },
+          {
+            "route_item": "wait:3500",
+            "slept": true,
+            "t": 1778168845.4188628
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168848.9261189
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168849.1488051
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778168850.0510519
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168850.2737277
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778168851.1752818
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168851.3982599
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168852.300611
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168852.5235069
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778168853.4262106
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168853.650035
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778168854.5524237
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168854.774579
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168855.6761677
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168855.8995817
+          }
+        ],
+        "sawRunning": true,
+        "stage": "code-stop transition",
+        "stops": [],
+        "strategy": "pre_arm_before_route"
+      }
+    ]
+  },
+  "schema": "pass330_dm1_v1_direct_pty_code_stop_transition_investigation.v1",
+  "sourceAudit": [
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "F0128",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "id": "F0097",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "F0380",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE",
+  "timestampUtc": "2026-05-07T15:48:10.657265+00:00"
+}
