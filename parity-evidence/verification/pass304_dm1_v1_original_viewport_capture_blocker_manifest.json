@@ -8,7 +8,7 @@
     "status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING"
   },
   "existingOriginalCropAudit": {
-    "fullComparatorPromotionBlockedByDecodedGraphics": true,
+    "fullComparatorPromotionBlockedByDecodedGraphics": false,
     "manifestsScanned": [
       "verification-screens/pass112-n2-route-probe/original_viewport_224x136_manifest.tsv",
       "verification-screens/pass209-delayed-click-zone-route/original_viewport_224x136_manifest.tsv",
@@ -102,13 +102,9 @@
   "pass": "pass304_dm1_v1_original_viewport_capture_blocker_manifest",
   "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion is blocked only until requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices is empty and matched original-vs-Firestaff viewport comparator passes.",
   "requiredDecodedGraphicsDatRecords": {
-    "alreadyManifestedForEntryOnly": [
+    "allManifestedGraphicIndices": [
       78,
       79,
-      107
-    ],
-    "blocker": "decoded bitmap/palette byte manifests are still missing for wall-set graphic indices 93,94,95,96,97,98,99,100,101,102,103,104,105,106; pass302 currently proves only 78/79/107.",
-    "missingWallSetGraphicIndices": [
       93,
       94,
       95,
@@ -122,8 +118,33 @@
       103,
       104,
       105,
-      106
+      106,
+      107
     ],
+    "blocker": "all wall-set graphic indices used by pass304 snapshots have decoded bitmap/palette byte records via pass305.",
+    "manifestedEntryGraphicIndices": [
+      78,
+      79,
+      107
+    ],
+    "manifestedWallGraphicIndices": [
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ],
+    "missingWallSetGraphicIndices": [],
     "wallSetGraphicIndicesFromCurrentRenderPlan": [
       93,
       94,
@@ -278,6 +299,7 @@
     }
   ],
   "sourceInputs": {
+    "entryGraphicsIndexManifest": "parity-evidence/verification/pass302_dm1_graphics_dat_index_manifest.json",
     "pass127StateTables": [
       "parity-evidence/pass127_turn_viewport_orientation_probe.md",
       "parity-evidence/pass127_viewport_world_f0115_row_mapping.md"
@@ -334,12 +356,14 @@
       }
     },
     "renderPlan": "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json",
-    "renderPlanStatus": "PASS_RENDER_PLAN_COMPARATOR_SEAM"
+    "renderPlanStatus": "PASS_RENDER_PLAN_COMPARATOR_SEAM",
+    "wallGraphicsIndexManifest": "parity-evidence/verification/pass305_dm1_wall_graphics_93_107_manifest.json",
+    "wallGraphicsIndexStatus": "passed"
   },
   "stateOracleSupport": {
     "manifest": "parity-evidence/verification/pass312_dm1_v1_original_runtime_state_oracle.json",
     "partyTupleF0128StateOracle": true,
     "status": "PASS_STATE_ORACLE_SOURCE_RUNTIME_BOUND"
   },
-  "status": "BLOCKED_GRAPHICS_DAT_WALL_DECODE_RECORDS_REQUIRED"
+  "status": "PASS_ORIGINAL_PC34_VIEWPORT_CAPTURE_PROMOTION_READY"
 }

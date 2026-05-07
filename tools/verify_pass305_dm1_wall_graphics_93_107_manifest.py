@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate/verify pass302 DM1 GRAPHICS.DAT index manifest.
+"""Generate/verify pass305 DM1 GRAPHICS.DAT wall graphics manifest.
 
 Bounded to pass304 wall-comparator GRAPHICS.DAT entries 93..107.
 No image files are dumped; checksums are computed from the canonical source
@@ -325,6 +325,12 @@ def build_manifest(graphics_dat: Path) -> dict[str, Any]:
         "decoder": {
             "algorithm": "Firestaff IMG3-compatible nibble RLE expansion, then row-stride-aware unpack to one byte per 4-bit pixel",
             "sourceAnchors": [
+                "ReDMCSB MEMORY.C:1330-1473 F0479_MEMORY_ReadGraphicsDatHeader reads GRAPHICS.DAT signature/count, compressed/decompressed byte tables, and width/height table",
+                "ReDMCSB MEMORY.C:1823-2263 F0484_MEMORY_LoadGraphics_CPSDEF loads GRAPHICS.DAT records into G0636_ppuc_Graphics",
+                "ReDMCSB IMAGE2.C:339-459 F0689_IMG_ExpandGraphicToBitmap IMG3 local-palette/nibble-RLE expansion",
+                "ReDMCSB DUNVIEW.C:183-200 G2107_WallSet negative bitmap slots",
+                "ReDMCSB DUNVIEW.C:2214-2217 wall-set graphics load loop",
+                "ReDMCSB DEFS.H:2359-2373 wall-set GRAPHICS.DAT indices 93..107",
                 "asset_loader_m11.c:M11_AssetLoader_Load",
                 "image_backend_pc34_compat.c:IMG3_Compat_ExpandFromSource",
                 "graphics_dat_snd3_loader_v1.c:V1_GraphicsSnd3_ParseManifest header table layout",

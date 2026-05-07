@@ -16,6 +16,7 @@ REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json"
 RENDER_PLAN = REPO / "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json"
 GRAPHICS_INDEX = REPO / "parity-evidence/verification/pass302_dm1_graphics_dat_index_manifest.json"
+WALL_GRAPHICS_INDEX = REPO / "parity-evidence/verification/pass305_dm1_wall_graphics_93_107_manifest.json"
 SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW = SOURCE_ROOT / "DUNVIEW.C"
 GAMELOOP = SOURCE_ROOT / "GAMELOOP.C"
@@ -155,6 +156,7 @@ def command_for_batch(batch: str, route_tokens_after_entry: list[str], labels: l
 def main() -> int:
     render = json.loads(RENDER_PLAN.read_text())
     graphics_index = json.loads(GRAPHICS_INDEX.read_text())
+    wall_graphics_index = json.loads(WALL_GRAPHICS_INDEX.read_text())
     snapshots = []
     needed_wall_indices: set[int] = set()
     for snap in render["comparedSnapshots"]:
@@ -190,7 +192,9 @@ def main() -> int:
     state_oracle = pass312.get("promotionDecision", {})
     state_oracle_ok = state_oracle.get("partyTupleF0128StateOracle") is True
     capture_ok = route_label_coverage and capture_coverage.get("requiredLabelCoverage") is True and capture_coverage.get("requiredPromotionRowsGameplayOrWallCloseup") is True
-    manifested_graphics = {int(r["graphicIndex"]) for r in graphics_index["records"]}
+    entry_manifested_graphics = {int(r["graphicIndex"]) for r in graphics_index["records"]}
+    wall_manifested_graphics = {int(r["graphicIndex"]) for r in wall_graphics_index["records"]}
+    manifested_graphics = entry_manifested_graphics | wall_manifested_graphics
     missing_wall_indices = sorted(needed_wall_indices - manifested_graphics)
     if not capture_ok:
         status = "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN"
@@ -217,6 +221,9 @@ def main() -> int:
         "sourceInputs": {
             "renderPlan": str(RENDER_PLAN.relative_to(REPO)),
             "renderPlanStatus": render["status"],
+            "entryGraphicsIndexManifest": str(GRAPHICS_INDEX.relative_to(REPO)),
+            "wallGraphicsIndexManifest": str(WALL_GRAPHICS_INDEX.relative_to(REPO)),
+            "wallGraphicsIndexStatus": wall_graphics_index.get("status"),
             "pass127StateTables": [
                 "parity-evidence/pass127_turn_viewport_orientation_probe.md",
                 "parity-evidence/pass127_viewport_world_f0115_row_mapping.md",
@@ -240,10 +247,12 @@ def main() -> int:
         "requiredRouteStates": snapshots,
         "requiredOriginalAssets": {name: file_record(path) for name, path in ASSET_PATHS.items()},
         "requiredDecodedGraphicsDatRecords": {
-            "alreadyManifestedForEntryOnly": sorted(manifested_graphics),
+            "manifestedEntryGraphicIndices": sorted(entry_manifested_graphics),
+            "manifestedWallGraphicIndices": sorted(wall_manifested_graphics),
+            "allManifestedGraphicIndices": sorted(manifested_graphics),
             "wallSetGraphicIndicesFromCurrentRenderPlan": sorted(needed_wall_indices),
             "missingWallSetGraphicIndices": missing_wall_indices,
-            "blocker": ("decoded bitmap/palette byte manifests are still missing for wall-set graphic indices " + ",".join(map(str, missing_wall_indices)) + "; pass302 currently proves only 78/79/107.") if missing_wall_indices else "all wall-set graphic indices used by pass304 snapshots have decoded bitmap/palette byte records.",
+            "blocker": ("decoded bitmap/palette byte manifests are still missing for wall-set graphic indices " + ",".join(map(str, missing_wall_indices)) + "; pass302 proves entry indices and pass305 proves bounded wall-set decode records.") if missing_wall_indices else "all wall-set graphic indices used by pass304 snapshots have decoded bitmap/palette byte records via pass305.",
         },
         "stateOracleSupport": {
             "manifest": "parity-evidence/verification/pass312_dm1_v1_original_runtime_state_oracle.json",
