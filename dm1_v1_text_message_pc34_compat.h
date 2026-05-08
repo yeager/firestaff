@@ -54,6 +54,8 @@ extern "C" {
 #define DM1_V1_STRING_BUILD_BUFFER_SIZE     150
 #define DM1_V1_MESSAGE_MAX_LENGTH           128
 #define DM1_V1_SCROLL_TEXT_MAX_LENGTH       512
+#define DM1_V1_SCROLL_LAYOUT_MAX_LINES       32
+#define DM1_V1_SCROLL_TEXT_CENTER_Y          92
 
 #define DM1_V1_COLOR_BLACK                  0
 #define DM1_V1_COLOR_WHITE                  15
@@ -75,6 +77,14 @@ typedef struct {
     int  active;
     int  color;
 } DM1_V1_ScrollTextState;
+
+typedef struct {
+    int lineCount;          /* ReDMCSB-computed logical line count, unclamped */
+    int storedLineCount;    /* Number of entries copied into lines[] */
+    int firstLineY;         /* Viewport Y for the first line */
+    int overflow;           /* lineCount exceeded DM1_V1_SCROLL_LAYOUT_MAX_LINES */
+    char lines[DM1_V1_SCROLL_LAYOUT_MAX_LINES][DM1_V1_MESSAGE_MAX_LENGTH];
+} DM1_V1_ScrollLayout;
 
 typedef struct {
     int  active;
@@ -123,6 +133,10 @@ void dm1_v1_text_show_scroll(DM1_V1_TextMessageState* state,
                              const char* text, int textType, int color);
 void dm1_v1_text_clear_scroll(DM1_V1_TextMessageState* state);
 int  dm1_v1_text_scroll_active(const DM1_V1_TextMessageState* state);
+int  dm1_v1_text_scroll_encode_line(const char* src, unsigned char* dst,
+                                    int dstSize);
+int  dm1_v1_text_scroll_measure_layout(const char* text,
+                                       DM1_V1_ScrollLayout* outLayout);
 
 void dm1_v1_text_show_damage(DM1_V1_TextMessageState* state,
                              int championIndex, int damageValue, int big);

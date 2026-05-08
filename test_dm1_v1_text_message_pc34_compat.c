@@ -272,6 +272,36 @@ static void test_scroll_text(void) {
     ASSERT_EQ(dm1_v1_text_scroll_active(&state), 0, "scroll cleared");
 }
 
+
+static void test_scroll_layout_source_lock(void) {
+    DM1_V1_ScrollLayout layout;
+    unsigned char encoded[16];
+
+    ASSERT_EQ(dm1_v1_text_scroll_measure_layout("ONE\nTWO\nTHREE", &layout),
+              3, "scroll layout three lines");
+    ASSERT_EQ(layout.lineCount, 3, "scroll layout lineCount");
+    ASSERT_EQ(layout.storedLineCount, 3, "scroll layout stored count");
+    ASSERT_EQ(layout.firstLineY,
+              DM1_V1_SCROLL_TEXT_CENTER_Y - ((DM1_V1_TEXT_LINE_HEIGHT * 3) / 2),
+              "scroll layout first Y centered");
+    ASSERT_STR_EQ(layout.lines[0], "ONE", "scroll layout line 0");
+    ASSERT_STR_EQ(layout.lines[1], "TWO", "scroll layout line 1");
+    ASSERT_STR_EQ(layout.lines[2], "THREE", "scroll layout line 2");
+
+    /* ReDMCSB F0341 preserves the double-trailing-newline quirk by reducing
+     * the logical line count by one. */
+    ASSERT_EQ(dm1_v1_text_scroll_measure_layout("ONE\nTWO\n\n", &layout),
+              2, "scroll layout double trailing newline quirk");
+
+    /* ReDMCSB F0340 / CSBWin DisplayScrollText_OneLine scroll-glyph remap. */
+    ASSERT_EQ(dm1_v1_text_scroll_encode_line("AZ{a", encoded, sizeof(encoded)),
+              4, "scroll glyph encoded length");
+    ASSERT_EQ(encoded[0], 1, "scroll glyph A maps to 1");
+    ASSERT_EQ(encoded[1], 26, "scroll glyph Z maps to 26");
+    ASSERT_EQ(encoded[2], 27, "scroll glyph { maps to 27");
+    ASSERT_EQ(encoded[3], 'a', "scroll glyph lowercase unchanged");
+}
+
 /* ── Test: Damage indicators ────────────────────────────────────────── */
 static void test_damage_indicators(void) {
     DM1_V1_TextMessageState state;
@@ -397,6 +427,7 @@ int main(void) {
     test_row_expiration();
     test_tick();
     test_scroll_text();
+    test_scroll_layout_source_lock();
     test_damage_indicators();
     test_multiple_messages_scroll();
     test_legacy_compat();

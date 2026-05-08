@@ -30,6 +30,16 @@
 #include <string.h>
 #include <stdio.h>
 
+static int dm1_v1_text_copy_scroll_line(char* dst, int dstSize,
+                                        const char* start, int len) {
+    if (!dst || dstSize <= 0) return 0;
+    if (!start || len < 0) len = 0;
+    if (len >= dstSize) len = dstSize - 1;
+    if (len > 0) memcpy(dst, start, (size_t)len);
+    dst[len] = '\0';
+    return len;
+}
+
 /* ── Internal: shift visible rows up by one ─────────────────────────── */
 static void dm1_v1_text_shift_rows_up(DM1_V1_TextMessageState* state) {
     int i;
@@ -256,6 +266,77 @@ void dm1_v1_text_clear_scroll(DM1_V1_TextMessageState* state) {
 int dm1_v1_text_scroll_active(const DM1_V1_TextMessageState* state) {
     return state ? state->scrollText.active : 0;
 }
+
+int dm1_v1_text_scroll_encode_line(const char* src, unsigned char* dst,
+                                   int dstSize) {
+    int count = 0;
+    if (!src || !dst || dstSize <= 0) return 0;
+
+    /* Source lock: ReDMCSB F0340_INVENTORY_DrawPanel_ScrollTextLine and
+     * CSBWin DisplayScrollText_OneLine remap A-Z to scroll glyphs by
+     * subtracting 64, and bytes >= '{' by subtracting 96, before drawing. */
+    while (*src && count < dstSize - 1) {
+        unsigned char ch = (unsigned char)*src++;
+        if (ch >= 'A' && ch <= 'Z') ch = (unsigned char)(ch - 64);
+        else if (ch >= '{') ch = (unsigned char)(ch - 96);
+        dst[count++] = ch;
+    }
+    dst[count] = 0;
+    return count;
+}
+
+int dm1_v1_text_scroll_measure_layout(const char* text,
+                                      DM1_V1_ScrollLayout* outLayout) {
+    const char* p;
+    const char* lineStart;
+    int lineCount;
+    int stored;
+
+    if (!text) text = "";
+    if (outLayout) memset(outLayout, 0, sizeof(*outLayout));
+
+    /* Source lock: ReDMCSB F0341_INVENTORY_DrawPanel_Scroll splits the
+     * decoded scroll text at newlines, counts one first line plus each later
+     * newline, adds a final line when the text does not end in newline, and
+     * subtracts one for a double trailing newline. Unlike CSBWin DisplayScroll,
+     * the original DM1 path intentionally does not clamp long custom scrolls. */
+    p = text;
+    while (*p && *p != '\n') p++;
+    lineCount = 1;
+    if (*p == '\n') {
+        const char* tail = p + 1;
+        const char* end = tail;
+        for (; *end; end++) {
+            if (*end == '\n') lineCount++;
+        }
+        if (end > tail) {
+            if (*(end - 1) != '\n') lineCount++;
+            else if (end - tail >= 2 && *(end - 2) == '\n') lineCount--;
+        }
+    }
+
+    if (!outLayout) return lineCount;
+    outLayout->lineCount = lineCount;
+    outLayout->firstLineY = DM1_V1_SCROLL_TEXT_CENTER_Y -
+        ((DM1_V1_TEXT_LINE_HEIGHT * lineCount) / 2);
+    outLayout->overflow = lineCount > DM1_V1_SCROLL_LAYOUT_MAX_LINES;
+
+    lineStart = text;
+    stored = 0;
+    while (stored < DM1_V1_SCROLL_LAYOUT_MAX_LINES && stored < lineCount) {
+        const char* lineEnd = lineStart;
+        while (*lineEnd && *lineEnd != '\n') lineEnd++;
+        dm1_v1_text_copy_scroll_line(outLayout->lines[stored],
+                                     DM1_V1_MESSAGE_MAX_LENGTH,
+                                     lineStart, (int)(lineEnd - lineStart));
+        stored++;
+        if (!*lineEnd) break;
+        lineStart = lineEnd + 1;
+    }
+    outLayout->storedLineCount = stored;
+    return lineCount;
+}
+
 
 /* ── Damage Indicators ──────────────────────────────────────────────── */
 
