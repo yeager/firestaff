@@ -10,7 +10,7 @@
     "tmux/capture-pane"
   ],
   "runtimeProbe": {
-    "boundedSecondsPerStrategy": 45,
+    "boundedSecondsPerStrategy": 75,
     "missingTools": [],
     "ran": true,
     "strategies": [
@@ -21,69 +21,69 @@
           {
             "cmd": "BPDEL *",
             "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
-            "t": 1778231442.8104687
+            "t": 1778236105.759714
           },
           {
             "cmd": "BP 23AD:40FE",
             "excerpt": "\n-> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
-            "t": 1778231443.6343331
+            "t": 1778236106.5847907
           },
           {
             "cmd": "BPLIST",
             "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
-            "t": 1778231444.4579911
+            "t": 1778236107.4091225
           },
           {
             "control": "F5",
             "purpose": "run after initial F0128 arm",
-            "t": 1778231444.5091312
+            "t": 1778236107.4594
           },
           {
             "control": "Alt+Pause",
             "purpose": "post-route retention check",
-            "t": 1778231489.617465
+            "t": 1778236182.7473276
           },
           {
             "cmd": "BPLIST",
             "excerpt": "...\n-> B_  ...P_  ...L_  ...I_  ...S_  ...T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
-            "t": 1778231495.4766698
+            "t": 1778236188.6028423
           }
         ],
         "directHits": {
           "f0097_2809_1EFF_after_f0128": false,
           "f0128_23AD_40FE": false
         },
-        "durationSeconds": 58.032,
+        "durationSeconds": 88.205,
         "method": "arm F0128 at initial debugger prompt before any game route input, run through full load+movement route",
-        "postRoutePauseCodeAddr": "22F7:03FF",
+        "postRoutePauseCodeAddr": "280C:1528",
         "ran": true,
         "routeLog": [
           {
             "route_item": "wait:9000",
             "slept": true,
-            "t": 1778231444.5256467
+            "t": 1778236107.4803529
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "enter",
-            "t": 1778231453.538507
+            "t": 1778236116.4968
           },
           {
             "route_item": "wait:2200",
             "slept": true,
-            "t": 1778231453.7599795
+            "t": 1778236116.718522
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "one",
-            "t": 1778231455.9624527
+            "t": 1778236118.9230692
           },
           {
             "route_item": "wait:2200",
             "slept": true,
-            "t": 1778231456.1834388
+            "t": 1778236119.1421506
           },
           {
             "out": "",
@@ -93,100 +93,100 @@
               553,
               281
             ],
-            "t": 1778231458.3859541
+            "t": 1778236121.347012
           },
           {
             "route_item": "wait:2200",
             "slept": true,
-            "t": 1778231458.5006084
+            "t": 1778236121.4590106
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "one",
-            "t": 1778231460.7066734
+            "t": 1778236123.6640048
           },
           {
             "route_item": "wait:3500",
             "slept": true,
-            "t": 1778231460.9256508
+            "t": 1778236123.8868213
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp5",
-            "t": 1778231464.431413
+            "t": 1778236127.3951666
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778231464.65211
+            "t": 1778236127.6153703
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp4",
-            "t": 1778231465.5531778
+            "t": 1778236128.5164878
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778231465.7741556
+            "t": 1778236128.7357812
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp6",
-            "t": 1778231466.6753616
+            "t": 1778236129.639253
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778231466.8967252
+            "t": 1778236129.8600585
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp5",
-            "t": 1778231467.7984693
+            "t": 1778236130.761281
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778231468.0198033
+            "t": 1778236130.9815664
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp4",
-            "t": 1778231468.9223862
+            "t": 1778236131.8828225
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778231469.1411269
+            "t": 1778236132.1016302
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp6",
-            "t": 1778231470.042219
+            "t": 1778236133.0025797
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778231470.262952
+            "t": 1778236133.2232103
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp5",
-            "t": 1778231471.1641264
+            "t": 1778236134.124721
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778231471.3869765
+            "t": 1778236134.3461227
           }
         ],
         "sawRunning": true,
@@ -231,5 +231,5 @@
     }
   ],
   "status": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE",
-  "timestampUtc": "2026-05-08T09:11:36.205231+00:00"
+  "timestampUtc": "2026-05-08T10:29:49.331044+00:00"
 }

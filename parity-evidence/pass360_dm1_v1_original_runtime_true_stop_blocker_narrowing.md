@@ -29,8 +29,8 @@ The remaining blocker is now narrower: movement routing and debugger control are
 
 ## Latest controlled runtime attempt
 
-- Pass330 status: `BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE`; ran=`True`; bounded seconds=`45`
-- Direct hits: `{'f0097_2809_1EFF_after_f0128': False, 'f0128_23AD_40FE': False}`; retained post-route=`True`; post-route pause code=`22F7:03FF`
+- Pass330 status: `BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE`; ran=`True`; bounded seconds=`75`
+- Direct hits: `{'f0097_2809_1EFF_after_f0128': False, 'f0128_23AD_40FE': False}`; retained post-route=`True`; post-route pause code=`280C:1528`
 - Blocker: `F0128 breakpoint armed/retained but no strict running-to-23AD:40FE prompt transition emitted`
 - Exact next command: `python3 tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py --seconds 75 && python3 tools/verify_pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py && python3 tools/verify_pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.py`
 
