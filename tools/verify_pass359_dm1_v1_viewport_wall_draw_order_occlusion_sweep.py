@@ -41,6 +41,27 @@ def source_block(file_name: str, start: int, end: int) -> str:
     return "\n".join(lines[start - 1:end])
 
 
+
+def function_body(path: Path, function_name: str) -> str:
+    blob = text(path)
+    needle = f"{function_name}("
+    name_pos = blob.find(needle)
+    require(name_pos >= 0, f"missing {function_name}")
+    line_start = blob.rfind("\n", 0, name_pos) + 1
+    start = line_start
+    brace = blob.find("{", name_pos)
+    require(brace >= 0, f"missing body for {function_name}")
+    depth = 0
+    for pos in range(brace, len(blob)):
+        ch = blob[pos]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return blob[start:pos + 1]
+    raise AssertionError(f"unterminated body for {function_name}")
+
 def repo_block(file_name: str, start: int, end: int) -> str:
     path = ROOT / file_name
     require(path.exists(), f"missing Firestaff file {path}")
@@ -119,22 +140,28 @@ def main() -> int:
             "C702_ZONE_WALL_D3L2", "C704_ZONE_WALL_D3C", "C709_ZONE_WALL_D2C", "C712_ZONE_WALL_D1C", "C717_ZONE_WALL_D0R",
         ], "DEFS.H:4042-4057")
 
-        require_all(repo_block("m11_game_view.c", 9329, 9371), [
-            "m11_dm1_max_visible_forward_from_center", "m11_dm1_nearest_blocking_center_depth_index", "m11_dm1_nearest_blocking_center_door_depth",
-        ], "m11_game_view.c:9329-9371")
-        require_all(repo_block("m11_game_view.c", 9373, 9414), [
+        view_path = ROOT / "m11_game_view.c"
+        require_all(function_body(view_path, "m11_dm1_max_visible_forward_from_center") +
+                    function_body(view_path, "m11_dm1_nearest_blocking_center_depth_index") +
+                    function_body(view_path, "m11_dm1_nearest_blocking_center_door_depth"), [
+            "m11_dm1_max_visible_forward_from_center",
+            "m11_dm1_nearest_blocking_center_depth_index",
+            "m11_dm1_nearest_blocking_center_door_depth",
+            "m11_viewport_cell_is_open",
+        ], "m11_game_view.c:center blocking helpers")
+        require_all(function_body(view_path, "m11_draw_dm1_front_walls"), [
             "m11_draw_dm1_front_walls", "M11_GFX_WALLSET0_D1C", "M11_GFX_WALLSET0_D2C", "M11_GFX_WALLSET0_D3C", "occluded = 1",
-        ], "m11_game_view.c:9373-9414")
-        require_all(repo_block("m11_game_view.c", 9918, 9979), [
+        ], "m11_game_view.c:m11_draw_dm1_front_walls")
+        require_all(function_body(view_path, "m11_draw_dm1_side_walls"), [
             "m11_draw_dm1_side_walls", "Far to near", "m11_dm1_side_lane_clear_for_rel", "m11_viewport_cell_is_wall_like",
-        ], "m11_game_view.c:9918-9979")
-        require_all(repo_block("m11_game_view.c", 12107, 12135), [
+        ], "m11_game_view.c:m11_draw_dm1_side_walls")
+        require_all(function_body(view_path, "m11_draw_dm1_side_contents"), [
             "m11_draw_dm1_side_contents", "after source wall/door panels and before center", "m11_dm1_center_line_clear_before_depth",
-        ], "m11_game_view.c:12107-12135")
-        require_all(repo_block("m11_game_view.c", 17980, 18080), [
+        ], "m11_game_view.c:m11_draw_dm1_side_contents")
+        require_all(function_body(view_path, "m11_draw_viewport"), [
             "m11_draw_viewport", "m11_sample_viewport_cell", "m11_draw_dm1_side_walls", "m11_draw_dm1_front_walls",
             "replay only", "m11_draw_dm1_side_contents",
-        ], "m11_game_view.c:17980-18080")
+        ], "m11_game_view.c:m11_draw_viewport")
 
         run_gate([sys.executable, "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"])
         for gate in [
