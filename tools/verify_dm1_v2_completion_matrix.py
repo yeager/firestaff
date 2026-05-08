@@ -46,6 +46,8 @@ REQUIRED_CTEST_NAMES = {
     "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_settings_pc34",
     "dm1_v2_settings_source_lock",
+    "dm1_v2_item_render_pc34",
+    "dm1_v2_item_render_source_lock",
 }
 
 CATEGORY_RULES = [
@@ -59,6 +61,7 @@ CATEGORY_RULES = [
     ("input", "ui/input"),
     ("tooltip", "ui/input"),
     ("inventory", "ui/inventory"),
+    ("item_render", "visual/item"),
     ("minimap", "ui/minimap"),
     ("journal", "ui/journal"),
     ("message_log", "ui/message-log"),
