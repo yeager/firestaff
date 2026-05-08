@@ -137,6 +137,14 @@ def main() -> int:
     args = parser.parse_args()
 
     roots = {"csbwin": args.csbwin_source, "csb": args.csb_source}
+    default_roots = args.csbwin_source == DEFAULT_CSBWIN and args.csb_source == DEFAULT_CSB
+    if default_roots and (not args.csbwin_source.exists() or not args.csb_source.exists()):
+        print("[csb v1 viewport/inventory mouse source lock]")
+        print("SKIP default CSB/CSBWin lineage source roots are not available on this host")
+        print(f"missing_csbwin={args.csbwin_source}")
+        print(f"missing_csb={args.csb_source}")
+        return 0
+
     failures: list[str] = []
     passes: list[str] = []
 
