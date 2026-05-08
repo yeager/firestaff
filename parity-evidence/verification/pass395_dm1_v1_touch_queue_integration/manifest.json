@@ -1,0 +1,34 @@
+{
+  "localAudits": [
+    "queue_existing_mouse_path",
+    "test_proves_touch_queue_dispatch",
+    "touch_header_uses_queue",
+    "touch_translation_and_enqueue"
+  ],
+  "notPromotedBy": [
+    "route keylog alone",
+    "touch table hit without queue enqueue",
+    "synthetic keyboard remap",
+    "F0380 entry without G2153 pop/decrement",
+    "source-only address binding"
+  ],
+  "pass391PredicatesUsed": {
+    "f0365OrF0366DispatchObserved": true,
+    "f0380PopLoadAfterQueueWriteObserved": true,
+    "g2153DecrementPopLoadObserved": true,
+    "g2153IncrementObserved": true,
+    "sourceAuditOk": true
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/pass395-touch-queue-integration",
+  "reversibleScope": "touch_pointer_input_pc34_compat.{h,c} maps pointer/touch hits to existing DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat; no keyboard synthesis and no replacement dispatcher",
+  "sourceAudits": [
+    "defs_mouse_payload_buttons",
+    "f0358_mouse_hit_test",
+    "f0359_click_enqueue",
+    "pending_click_replay_and_f0380",
+    "startup_primary_secondary_tables",
+    "viewport_coordinates"
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS395_TOUCH_POINTER_TO_EXISTING_COMMAND_QUEUE_SEAM_VERIFIED"
+}

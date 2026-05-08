@@ -135,6 +135,9 @@ int main(void) {
     if (!TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(&event, &queue, &dispatch)) ok = 0;
     if (queue.count != 1u || !DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &queued) ||
         queued.command != DM1_V1_COMMAND_MOVE_FORWARD || queued.x != 275 || queued.y != 125) ok = 0;
+    processResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    if (!processResult.dequeued || !processResult.dispatchedMove ||
+        processResult.command != DM1_V1_COMMAND_MOVE_FORWARD || queue.count != 0u) ok = 0;
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     event.action = TOUCH_POINTER_ACTION_CLICK_PC34_COMPAT;

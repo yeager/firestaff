@@ -286,6 +286,13 @@ if(BUILD_TESTING)
         COMMAND test_touch_pointer_input_pc34_compat_integration
     )
 
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME pass395_touch_queue_integration_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass395_touch_queue_integration.py
+        )
+    endif()
+
     add_executable(test_menu_hit_launch_direct_click_m12
         test_menu_hit_launch_direct_click_m12.c
     )
