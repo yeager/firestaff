@@ -258,9 +258,10 @@ typedef struct {
     bool after_all_cells;
 } DM1_ViewportThingLayerSpec;
 
-/* Door-front occlusion contract for ReDMCSB F0116/F0118/F0121 front-door
- * branches: rear cells are drawn with F0115 before the frame and door bitmap,
- * then front cells are drawn with a second F0115 pass after the door. */
+/* Door-front occlusion contract for ReDMCSB F0116/F0118/F0121/F0124
+ * front-door branches: rear cells are drawn with F0115 before the frame and
+ * door bitmap, then front cells are drawn with a second F0115 pass after the
+ * door. */
 typedef struct {
     DM1_ViewSquareIndex square;
     uint16_t rear_cell_order;

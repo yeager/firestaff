@@ -275,9 +275,10 @@ static void test_door_front_occlusion_split_passes(void)
         { DM1_VIEW_SQUARE_D3L, "6444", "6446", "6457", "6459" },
         { DM1_VIEW_SQUARE_D3C, "6723", "6725", "6744", "6746" },
         { DM1_VIEW_SQUARE_D2C, "7315", "7317", "7339", "7341" },
+        { DM1_VIEW_SQUARE_D1C, "7875", "7877", "7905", "7937" },
     };
 
-    check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 3);
+    check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 4);
     for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         const DM1_ViewportDoorFrontOcclusionSpec *spec =
             dm1_viewport_3d_get_door_front_occlusion_spec_for_square(expected[i].square);
@@ -308,7 +309,7 @@ static void test_door_front_occlusion_split_passes(void)
         snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_line", i);
         check_int(id, strstr(spec->front_pass_source_lines, expected[i].front_line) != NULL, 1);
     }
-    check_int("door_front_occlusion.out_of_range", dm1_viewport_3d_get_door_front_occlusion_spec(3) == NULL, 1);
+    check_int("door_front_occlusion.out_of_range", dm1_viewport_3d_get_door_front_occlusion_spec(4) == NULL, 1);
     check_int("door_front_occlusion.no_side_door_spec", dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
 }
 
@@ -340,6 +341,7 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.f0115_projectiles", strstr(e, "projectile draw pass") != NULL, 1);
     check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
+    check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.occlusion", strstr(e, "wall case returns") != NULL, 1);
     check_int("source_evidence.command_dispatch", strstr(e, "COMMAND.C:2045-2156") != NULL, 1);
