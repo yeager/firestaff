@@ -10,7 +10,7 @@ EDX=ESP=
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /tmp/firestaff-pass387-1n4e5t8s/dosbox.conf
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass387-pkqqrtvw/dosbox.conf
 0: IO:Writing 05 to port 03CF
 MIXER:No Sound Mode Selected.
 ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
@@ -67,7 +67,7 @@ MIDI:Opened device:none
 0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
 
 
-0: EXEC:Parsing command line: mount c /tmp/firestaff-pass387-1n4e5t8s/dos
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass387-pkqqrtvw/dos
 78
 3: EXEC:Execute mount.COM 0
 78
@@ -201,17 +201,17 @@ MIDI:Opened device:none
 78
 41509645: FILES:file open command 2 file DATA\DUNGEON.DAT
 FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
-0223:020B  D1E8shr  ax,1
-0223:020D  86DCxchg ah,bl
-0223:020F  23C5and  ax,bp
-0223:0211  23DD    and  bx,bp
-0223:0213  0BC2or   ax,d
-0223:0215  0BDAor   bx,dx
-0223:0217  AB  stosw
-0223:0218  8BC3ax,bx
-0223:021A  AB      stosw
-0223:021B  E2E5loop 00000202 ($-1b)
--> _     1A5EE72  DS=95D0A0003031D2F1521422320B103F0F1010F3A63008329....
+0223:0217  ABstosw
+0223:0218  8BC3mov  ax,bx
+0223:021A  ABstosw
+0223:021B  E2E5    loop 00000202 ($-1b)
+0223:021D  5D  pop  bp
+0223:021E  9Dpopf
+0223:021F  7311jnc  00000232 ($+11)(down)
+0223:0221  AC  lodsb
+0223:0222  8AE0    mov  ah,al
+0223:0224  D0E8shr  al,1
+-> _     101C1D20  DS=95D0A00030311017C32232171CF0F1010F3A63038322....
 -> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_
 DEBUG: Breakpoints deleted.
 
@@ -235,17 +235,17 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
-22F7:0407  55  push bp
-22F7:0408  8BEmov  bp,sp
-22F7:040A  83EC04sub  sp,0004
+22F7:0407  55push bp
+22F7:0408  8BECbp,sp
+22F7:040A  83EC04ub  sp,0004
 22F7:040D  56  push si
-22F7:040E  57  push di
-22F7:040F  FF7606push word [bp+06]ss:[0FD0]=0006
+22F7:040E  57ush di
+22F7:040F  FF7606ush word [bp+06]ss:[0FD0]=0006
 22F7:0412  9AF22C930Fcall 0F93:2CF2
-22F7:0417  59  pop  cx
-22F7:0418  A1BE3Emov  ax,[3EBE]ds:[3EBE]=2C23
-22F7:041B  8B16BC3Emov  dx,[3EBC]      ds:[3EBC]=26D4
--> _     004C004  DS=2C230663EE040056  CS=22F7407111BCA0002C2123456....
+22F7:0417  59pop  cx
+22F7:0418  A1BE3Ex,[3EBE]ds:[3EBE]=2C23
+22F7:041B  8B16BC3Emov  dx,[3EBC]ds:[3EBC]=26D4
+-> _     0040004  DS=2C230663EE040056  CS=22F7401 O0 A1 P1BCA0002C2159405....
 -> B_  ....P_  ....L_  ....I_  ....S_  ....T_
 Breakpoint list:
 78
@@ -259,7 +259,7 @@ Breakpoint list:
 (Running)
 DEBUG: Memory breakpoint : 2C23:3E78 - 00 -> 01
 74  EB3Fjmp  short 000004B5 ($+3f)  (down)76  8346FC04add  word [bp-04],0004ss:[0FBC]=26F87A  C45EFCles  bx,[bp-04]ss:[0FBC]=26F87D  268B07mov  ax,es:[bx]es:[0000]=000080  8BF8mov  di,ax82  0BC0  or   ax,ax84  75C4      jne  0000044A ($-3c)(up)86  A1C23Emov  ax,[3EC2]ds:[3EC2]=2C2389  8B16C03Edx,[3EC0C0]=26F48D  8956FC  [bp-04],dxss:[0FF8
--> _     0002C2000003740 O0 A0 P04C00B8643....
+-> _     0002C2000003740 O0 A0 P04C00B8592....
 -> B_  ....P_  ....L_  ....I_  ....S_  ....T_
 Breakpoint list:
 78

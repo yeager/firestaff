@@ -6,7 +6,7 @@
   "blocker": null,
   "branch": "pass387-keyboard-f0361-queue-write",
   "decision": "Arm after the saved-game/load suffix. A post-gameplay F0361 hit followed by a G2153 00->01 write proves keyboard input reaches the queue write; the pass386 no-write observation was caused by probe timing/arming before gameplay, not by F0361 gating.",
-  "head": "8a42bd3641e091914d59244a2c437bf040605e41",
+  "head": "bc16cd83251f792b16ee43a1e24621ff8e0fbe3f",
   "notPromotedBy": [
     "source-only queue write lines",
     "route keylog alone",
@@ -31,7 +31,7 @@
   },
   "runtimeProbe": {
     "boundedSeconds": 25,
-    "durationSeconds": 42.231,
+    "durationSeconds": 42.242,
     "postGameplayArm": true,
     "queueCountAtArm": "00",
     "ran": true,
@@ -48,20 +48,20 @@
         "kind": "F0361_COMMAND_ProcessKeyPress",
         "memoryBreakpoints": [],
         "postRunningCodeLines": [
-          "22F7:0407  55  push",
-          "22F7:0408  8BEmov",
-          "22F7:040A  83EC04sub",
+          "22F7:0407  55push",
+          "22F7:0408  8BECbp",
+          "22F7:040A  83EC04ub",
           "22F7:040D  56  push",
-          "22F7:040E  57  push",
-          "22F7:040F  FF7606push",
+          "22F7:040E  57ush",
+          "22F7:040F  FF7606ush",
           "22F7:0412  9AF22C930Fcall",
           "0F93:2CF2\n22F7",
-          "22F7:0418  A1BE3Emov",
+          "22F7:0418  A1BE3Ex",
           "22F7:041B  8B16BC3Emov"
         ],
-        "postRunningExcerpt": "....\n22F7:0407  55  push bp  \n22F7:0408  8BEmov  bp,sp\n22F7:040A  83EC04sub  sp,0004\n22F7:040D  56  push si   \n22F7:040E  57  push di   \n22F7:040F  FF7606push word [bp+06]ss:[0FD0]=0006\n22F7:0412  9AF22C930Fcall 0F93:2CF2\n22F7:0417  59  pop  cx   \n22F7:0418  A1BE3Emov  ax,[3EBE]ds:[3EBE]=2C23\n22F7:041B  8B16BC3Emov  dx,[3EBC]      ds:[3EBC]=26D4\n-> _     004C004  DS=2C230663EE040056  CS=22F7407111BCA0002C2123456",
+        "postRunningExcerpt": "....\n22F7:0407  55push bp\n22F7:0408  8BECbp,sp\n22F7:040A  83EC04ub  sp,0004\n22F7:040D  56  push si             \n22F7:040E  57ush di\n22F7:040F  FF7606ush word [bp+06]ss:[0FD0]=0006\n22F7:0412  9AF22C930Fcall 0F93:2CF2\n22F7:0417  59pop  cx\n22F7:0418  A1BE3Ex,[3EBE]ds:[3EBE]=2C23\n22F7:041B  8B16BC3Emov  dx,[3EBC]ds:[3EBC]=26D4\n-> _     0040004  DS=2C230663EE040056  CS=22F7401 O0 A1 P1BCA0002C2159405",
         "queueCountBplistValue": "00",
-        "t": 1778247057.9645555
+        "t": 1778247802.1120348
       },
       {
         "keyArgumentHex": null,
@@ -74,9 +74,9 @@
           }
         ],
         "postRunningCodeLines": [],
-        "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:3E78 - 00 -> 01\n74  EB3Fjmp  short 000004B5 ($+3f)  (down)76  8346FC04add  word [bp-04],0004ss:[0FBC]=26F87A  C45EFCles  bx,[bp-04]ss:[0FBC]=26F87D  268B07mov  ax,es:[bx]es:[0000]=000080  8BF8mov  di,ax82  0BC0  or   ax,ax84  75C4      jne  0000044A ($-3c)(up)86  A1C23Emov  ax,[3EC2]ds:[3EC2]=2C2389  8B16C03Edx,[3EC0C0]=26F48D  8956FC  [bp-04],dxss:[0FF8\n-> _     0002C2000003740 O0 A0 P04C00B8643",
+        "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:3E78 - 00 -> 01\n74  EB3Fjmp  short 000004B5 ($+3f)  (down)76  8346FC04add  word [bp-04],0004ss:[0FBC]=26F87A  C45EFCles  bx,[bp-04]ss:[0FBC]=26F87D  268B07mov  ax,es:[bx]es:[0000]=000080  8BF8mov  di,ax82  0BC0  or   ax,ax84  75C4      jne  0000044A ($-3c)(up)86  A1C23Emov  ax,[3EC2]ds:[3EC2]=2C2389  8B16C03Edx,[3EC0C0]=26F48D  8956FC  [bp-04],dxss:[0FF8\n-> _     0002C2000003740 O0 A0 P04C00B8592",
         "queueCountBplistValue": "01",
-        "t": 1778247059.1412568
+        "t": 1778247803.2884035
       }
     ]
   },
@@ -126,5 +126,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS387_KEYBOARD_F0361_QUEUE_WRITE_PROVEN",
-  "timestampUtc": "2026-05-08T13:31:00.694107+00:00"
+  "timestampUtc": "2026-05-08T13:43:24.839650+00:00"
 }
