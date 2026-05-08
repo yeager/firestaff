@@ -12154,9 +12154,12 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                        const M11_ViewRect frames[4],
                                        const M11_ViewportCell cells[3][3]) {
     int depth;
+    int blockingCenterDepth;
     if (!state || !framebuffer || !frames || !cells) {
         return;
     }
+
+    blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
 
     /* Source-bound side contents pass.  DUNVIEW.C F0115 places side-cell
      * objects through the same layout-696 C2500 object zones and C3200
@@ -12173,6 +12176,13 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
         const M11_ViewRect* inner = &frames[depth + 1];
         int paneY = inner->y + 3;
         int paneH = inner->h - 6;
+        if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth) {
+            /* ReDMCSB DUNVIEW.C F0128 draws DnL/DnR before DnC.  Firestaff's
+             * split renderer draws center walls/doors before this late side
+             * contents pass, so same-depth/farther side contents must not be
+             * allowed to repaint over the nearest blocking center square. */
+            break;
+        }
         if (!m11_dm1_center_line_clear_before_depth(cells, depth)) {
             break;
         }
@@ -12405,10 +12415,12 @@ static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state,
                                                  const M11_ViewRect frames[4],
                                                  const M11_ViewportCell cells[3][3]) {
     int depth;
+    int blockingCenterDepth;
     (void)state;
     if (!framebuffer || !frames || !cells) {
         return;
     }
+    blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
     /* ReDMCSB F0115 source lock: DUNVIEW.C:5915 exits the packed-cell
      * object/creature/projectile loop, then DUNVIEW.C:5916-5933 starts
      * a separate explosion-only pass by restarting at L0146_T_FirstThingToDraw.
@@ -12425,6 +12437,9 @@ static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state,
         for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
             int side = sideSlot == 0 ? -1 : 1;
             int sideIndex = side < 0 ? 0 : 2;
+            if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth) {
+                continue;
+            }
             if (!m11_dm1_center_line_clear_before_depth(cells, depth)) {
                 continue;
             }
