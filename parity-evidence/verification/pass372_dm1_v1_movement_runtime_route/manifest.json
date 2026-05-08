@@ -1,5 +1,5 @@
 {
-  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "branch": "worker/dm1v1-post-main-movement-viewport-matrix-20260508",
   "checks": [
     {
       "expected": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
@@ -120,7 +120,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34 test_dm1_v2_movement_command_adapter_pc34.c",
     "ok": true
   },
-  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  11: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #11: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  13: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #13: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  42: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #42: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 125: dm1_v1_input_command_queue_source_lock\n4/4 Test #125: dm1_v1_input_command_queue_source_lock .....   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.08 sec",
+  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  11: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #11: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  13: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #13: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  46: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #46: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 133: dm1_v1_input_command_queue_source_lock\n4/4 Test #133: dm1_v1_input_command_queue_source_lock .....   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.08 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -198,7 +198,7 @@
       "path": "test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "f4c90690c133a8c47d5e23db5e4d6ad2d6529a6b",
+  "head": "0bb88925aed0c74fac43d1712355b23c5dfb7a80",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -354,5 +354,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-08T07:31:56.035989+00:00"
+  "timestampUtc": "2026-05-08T09:14:07.929165+00:00"
 }

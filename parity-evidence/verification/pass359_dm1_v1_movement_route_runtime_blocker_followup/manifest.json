@@ -1,5 +1,5 @@
 {
-  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "branch": "worker/dm1v1-post-main-movement-viewport-matrix-20260508",
   "classification": {
     "activeBlocker": "original FIRES strict true-stop sequence: F0128_DUNGEONVIEW_Draw_CPSF then F0097_DUNGEONVIEW_DrawViewport or VIDRV_09_BlitViewPort in one bounded controlled run",
     "firestaffMovementRoute": "unblocked/proved by pass349 plus pass351/pass352/pass358 guards",
@@ -14,7 +14,7 @@
       "pass333/pass335 keypad-symbol blockers are retired for Firestaff --script key:kp* routing by pass349/pass352"
     ]
   },
-  "head": "3547d1ca5be6ea0bd2a32646f55f026a922e87e1",
+  "head": "0bb88925aed0c74fac43d1712355b23c5dfb7a80",
   "notClaimed": [
     "new original DOSBox/FIRES debugger hit",
     "F0128->F0097 true-stop transcript",
@@ -271,5 +271,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
-  "timestampUtc": "2026-05-07T21:43:00.426527+00:00"
+  "timestampUtc": "2026-05-08T09:14:07.638380+00:00"
 }
