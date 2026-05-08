@@ -1,0 +1,225 @@
+{
+  "blocker_narrowing": {
+    "blocker_4": "paired Firestaff/original diff artifacts",
+    "depends_on_blockers_1_to_3": [
+      "blocker_1_original_true_stop_transcript",
+      "blocker_2_labelled_original_full_frames",
+      "blocker_3_original_viewport_crops"
+    ],
+    "diffs_run": false,
+    "firestaff_side_ready": true,
+    "original_side_ready": false,
+    "parity_claimed": false
+  },
+  "branch": "worker/dm1v1-paired-diff-artifacts-fix-20260508",
+  "dependencies": {
+    "blocker_1_original_true_stop_transcript": {
+      "active_blocker": null,
+      "exists": true,
+      "expected_status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing/manifest.json",
+      "role": "strict original FIRES F0128 -> F0097/VIDRV true-stop is still required before original frames are promotable",
+      "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED"
+    },
+    "blocker_2_labelled_original_full_frames": {
+      "active_blocker": [
+        "pass360 still blocks strict original FIRES F0128 -> F0097/VIDRV true-stop promotion",
+        "labelled original 320x200 gameplay frames for this route are not tracked",
+        "224x136 original crops for this route are not tracked",
+        "paired Firestaff/original diff artifacts for this route are not tracked"
+      ],
+      "exists": true,
+      "expected_status": "BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY",
+      "ok": true,
+      "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
+      "role": "labels/raw original 320x200 frames are command-contract only until actually captured/classified",
+      "status": "BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY"
+    },
+    "blocker_3_original_viewport_crops": {
+      "active_blocker": null,
+      "exists": true,
+      "expected_status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING",
+      "ok": true,
+      "path": "parity-evidence/verification/pass376_dm1_v1_original_overlay_parity_plan/manifest.json",
+      "role": "224x136 original crops are missing until pass86 succeeds on labelled original frames",
+      "status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING"
+    },
+    "firestaff_route_source_locked": {
+      "active_blocker": null,
+      "exists": true,
+      "expected_status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json",
+      "role": "Firestaff movement/capture side is not the active route blocker",
+      "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED"
+    }
+  },
+  "firestaff_artifacts": [
+    {
+      "index": "01",
+      "ok": true,
+      "png": "verification-screens/01_ingame_start_latest_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/01_ingame_start_latest_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_start"
+    },
+    {
+      "index": "02",
+      "ok": true,
+      "png": "verification-screens/02_ingame_turn_right_latest_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/02_ingame_turn_right_latest_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_turn_right"
+    },
+    {
+      "index": "03",
+      "ok": true,
+      "png": "verification-screens/03_ingame_move_forward_latest_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/03_ingame_move_forward_latest_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_move_forward"
+    },
+    {
+      "index": "04",
+      "ok": true,
+      "png": "verification-screens/04_ingame_spell_panel_latest_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/04_ingame_spell_panel_latest_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_spell_panel"
+    },
+    {
+      "index": "05",
+      "ok": true,
+      "png": "verification-screens/05_ingame_after_cast_latest_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/05_ingame_after_cast_latest_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_after_cast"
+    },
+    {
+      "index": "06",
+      "ok": true,
+      "png": "verification-screens/06_ingame_inventory_panel_latest_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/06_ingame_inventory_panel_latest_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_inventory_panel"
+    }
+  ],
+  "head": "b45b20ff442e395812cbd71f63d85e5fad625662",
+  "not_claimed": [
+    "original-vs-Firestaff pixel parity",
+    "paired diff masks/stats",
+    "new original FIRES F0128/F0097/VIDRV true stop",
+    "semantically matched original gameplay capture"
+  ],
+  "pairing_plan_blockers": [
+    "missing original manifest: verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+    "not all six Firestaff/original viewport crop pairs are present"
+  ],
+  "pairing_plan_path": "parity-evidence/overlays/pass377/pass377_pairing_plan.json",
+  "pairing_plan_schema": "pass70_viewport_pair_compare.v1",
+  "pairing_plan_stdout": "[pass-70] wrote plan: parity-evidence/overlays/pass377/pass377_pairing_plan.json\n01 ingame_start: firestaff=yes original=no\n02 ingame_turn_right: firestaff=yes original=no\n03 ingame_move_forward: firestaff=yes original=no\n04 ingame_spell_panel: firestaff=yes original=no\n05 ingame_after_cast: firestaff=yes original=no\n06 ingame_inventory_panel: firestaff=yes original=no\n[blocked] missing original manifest: verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv\n[blocked] not all six Firestaff/original viewport crop pairs are present\n",
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass377_dm1_v1_paired_diff_artifact_blocker.v1",
+  "source_audit": [
+    {
+      "file": "COORD.C",
+      "id": "viewport_geometry_pc34",
+      "lines": "1693-1724",
+      "missing_markers": [],
+      "needles": [
+        "G2067_i_ViewportScreenX = 0",
+        "G2068_i_ViewportScreenY = 33",
+        "G2073_C224_ViewportPixelWidth = 224",
+        "G2074_C136_ViewportHeight = 136",
+        "G2070_ViewportBitmapByteCount = 15232"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "why": "paired diff inputs must be 224x136 viewport crops from the PC34 viewport at x=0,y=33"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "viewport_composition_buffer",
+      "lines": "2962-3002,3048-3092",
+      "missing_markers": [],
+      "needles": [
+        "void F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+        "G0296_puc_Bitmap_Viewport",
+        "C112_BYTE_WIDTH_VIEWPORT",
+        "C136_HEIGHT_VIEWPORT"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "why": "Firestaff/original crops must compare the composed G0296 viewport buffer, not arbitrary full-frame pixels"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "id": "viewport_presentation_seam",
+      "lines": "709-858",
+      "missing_markers": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "why": "original-side captures are promotable only after the source presentation seam"
+    },
+    {
+      "file": "VIDEODRV.C",
+      "id": "pc34_vidrv_slot9",
+      "lines": "3566-3582",
+      "missing_markers": [],
+      "needles": [
+        "FUNC_DEF void F8161_VIDRV_09_BlitViewPort",
+        "G8177_c_ViewportColorIndexOffset = 0x10",
+        "F8151_VIDRV_02_Blit",
+        "224, 320"
+      ],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C",
+      "why": "PC34 slot 9 presents the viewport with the expected 224-wide source and 320-wide screen stride"
+    }
+  ],
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS377_PAIRED_DIFF_ARTIFACTS_ORIGINAL_SIDE_MISSING_FIRESTAFF_SIDE_READY",
+  "timestamp_utc": "2026-05-08T10:39:54.106674+00:00"
+}
