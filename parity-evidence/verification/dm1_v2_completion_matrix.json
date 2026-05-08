@@ -1,7 +1,7 @@
 {
   "categories": {
     "asset/upscale": 1,
-    "orphan": 2,
+    "orphan": 1,
     "runtime/ai": 1,
     "runtime/movement": 3,
     "runtime/shell": 1,
@@ -22,6 +22,7 @@
     "visual/camera": 2,
     "visual/creature": 1,
     "visual/effects": 5,
+    "visual/item": 1,
     "visual/lighting": 1,
     "visual/transition": 1
   },
@@ -34,6 +35,8 @@
     "dm1_v2_entry_viewport_png_export_gate",
     "dm1_v2_hud_overlay_pc34",
     "dm1_v2_hud_overlay_source_lock",
+    "dm1_v2_item_render_pc34",
+    "dm1_v2_item_render_source_lock",
     "dm1_v2_lighting_dynamic_pc34",
     "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_movement_viewport_pc34",
@@ -115,7 +118,7 @@
       "module": "dm1_v2_inventory_sort_pc34.c"
     },
     {
-      "category": "orphan",
+      "category": "visual/item",
       "header": "dm1_v2_item_render_pc34.h",
       "module": "dm1_v2_item_render_pc34.c"
     },
@@ -235,6 +238,8 @@
     "dm1_v2_entry_viewport_png_export_gate",
     "dm1_v2_hud_overlay_pc34",
     "dm1_v2_hud_overlay_source_lock",
+    "dm1_v2_item_render_pc34",
+    "dm1_v2_item_render_source_lock",
     "dm1_v2_lighting_dynamic_pc34",
     "dm1_v2_lighting_dynamic_source_lock",
     "dm1_v2_movement_viewport_pc34",
@@ -249,5 +254,5 @@
   ],
   "status": "passed",
   "testCount": 14,
-  "toolCount": 31
+  "toolCount": 32
 }

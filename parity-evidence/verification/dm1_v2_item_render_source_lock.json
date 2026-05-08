@@ -1,0 +1,53 @@
+{
+  "anchors": [
+    {
+      "file": "DUNVIEW.C",
+      "line": 4547,
+      "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "text": "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 4800,
+      "needle": "L0135_B_DrawAlcoveObjects = !(L0130_ul_RemainingViewCellOrdinalsToProcess = P0146_ui_OrderedViewCellOrdinals)",
+      "text": "L0135_B_DrawAlcoveObjects = !(L0130_ul_RemainingViewCellOrdinalsToProcess = P0146_ui_OrderedViewCellOrdinals);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 4820,
+      "needle": "/* Draw objects */",
+      "text": "/* Draw objects */"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 4826,
+      "needle": "AL0126_i_ViewCell = M001_ORDINAL_TO_INDEX",
+      "text": "AL0126_i_ViewCell = M001_ORDINAL_TO_INDEX((int16_t)L0130_ul_RemainingViewCellOrdinalsToProcess & 0x000F); /* View cell is the index of coordinates to draw object */"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 4923,
+      "needle": "M011_CELL(P0141_T_Thing) == L0139_i_Cell",
+      "text": "if ((AL0127_i_ThingType >= C05_THING_TYPE_WEAPON) && (AL0127_i_ThingType <= C10_THING_TYPE_JUNK) && (L2476_i_ >= 0) && (M011_CELL(P0141_T_Thing) == L0139_i_Cell) && ((L2475_i_ViewDepth != 3) || (AL0126_i_ViewCell > C01_VIEW_CELL_FRONT_RIGHT)) && ((L2475_i_ViewDepth != 0) || (AL0126_i_ViewCell < C02_VIEW_CELL_BACK_RIGHT))) { /* Square where objects are visible and object is located on cell being processed */"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 5178,
+      "needle": "G0292_aT_PileTopObject[AL0126_i_ViewCell] = P0141_T_Thing",
+      "text": "G0292_aT_PileTopObject[AL0126_i_ViewCell] = P0141_T_Thing; /* The object is at the top of the pile */"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 5201,
+      "needle": "/* Draw creatures */",
+      "text": "/* Draw creatures */"
+    }
+  ],
+  "errors": [],
+  "evidenceImpact": {
+    "completionMatrixGap": "test_dm1_v2_item_render_pc34 and item starter manifest existed but were not wired into CTest/source-lock ownership; dm1_v2_item_render_pc34 was still classified as an orphan V2 module.",
+    "verifiedCompletionPercent": null
+  },
+  "scope": "dm1_v2_item_render_pc34 Phase-5 item render source-lock and CTest wiring",
+  "status": "passed"
+}
