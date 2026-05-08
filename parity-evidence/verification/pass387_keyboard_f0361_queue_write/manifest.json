@@ -1,0 +1,130 @@
+{
+  "addresses": {
+    "F0361_COMMAND_ProcessKeyPress": "22F7:0407",
+    "G2153_i_QueuedCommandsCount": "2C23:3E78"
+  },
+  "blocker": null,
+  "branch": "pass387-keyboard-f0361-queue-write",
+  "decision": "Arm after the saved-game/load suffix. A post-gameplay F0361 hit followed by a G2153 00->01 write proves keyboard input reaches the queue write; the pass386 no-write observation was caused by probe timing/arming before gameplay, not by F0361 gating.",
+  "head": "8a42bd3641e091914d59244a2c437bf040605e41",
+  "notPromotedBy": [
+    "source-only queue write lines",
+    "route keylog alone",
+    "F0361 entry without a G2153 write",
+    "BPLIST command echo"
+  ],
+  "proofPredicates": {
+    "anyQueuedCommandCountWriteObserved": true,
+    "breakpointsRetainedAtArm": true,
+    "f0361HitAfterGameplayArm": true,
+    "postGameplayArm": true,
+    "queueCountAtArmZero": true,
+    "queuedCommandCountWriteObserved": true,
+    "routeRanAfterArm": true,
+    "sourceAuditOk": true
+  },
+  "repo": "/home/trv2/work/firestaff",
+  "runtimeArtifacts": {
+    "commandLog": "parity-evidence/verification/pass387_keyboard_f0361_queue_write/pass387_keyboard_command_log.json",
+    "routeKeylog": "parity-evidence/verification/pass387_keyboard_f0361_queue_write/pass387_keyboard_route_keylog.json",
+    "transcript": "parity-evidence/verification/pass387_keyboard_f0361_queue_write/pass387_keyboard_runtime.clean.txt"
+  },
+  "runtimeProbe": {
+    "boundedSeconds": 25,
+    "durationSeconds": 42.231,
+    "postGameplayArm": true,
+    "queueCountAtArm": "00",
+    "ran": true,
+    "retainedAtArm": {
+      "F0361_COMMAND_ProcessKeyPress": true,
+      "G2153_i_QueuedCommandsCount": true
+    },
+    "route": "kp5 wait:700 kp4 wait:700 kp6 wait:700 kp5 wait:1500",
+    "routeInputAfterArming": true,
+    "sawRunning": true,
+    "stops": [
+      {
+        "keyArgumentHex": "0006",
+        "kind": "F0361_COMMAND_ProcessKeyPress",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [
+          "22F7:0407  55  push",
+          "22F7:0408  8BEmov",
+          "22F7:040A  83EC04sub",
+          "22F7:040D  56  push",
+          "22F7:040E  57  push",
+          "22F7:040F  FF7606push",
+          "22F7:0412  9AF22C930Fcall",
+          "0F93:2CF2\n22F7",
+          "22F7:0418  A1BE3Emov",
+          "22F7:041B  8B16BC3Emov"
+        ],
+        "postRunningExcerpt": "....\n22F7:0407  55  push bp  \n22F7:0408  8BEmov  bp,sp\n22F7:040A  83EC04sub  sp,0004\n22F7:040D  56  push si   \n22F7:040E  57  push di   \n22F7:040F  FF7606push word [bp+06]ss:[0FD0]=0006\n22F7:0412  9AF22C930Fcall 0F93:2CF2\n22F7:0417  59  pop  cx   \n22F7:0418  A1BE3Emov  ax,[3EBE]ds:[3EBE]=2C23\n22F7:041B  8B16BC3Emov  dx,[3EBC]      ds:[3EBC]=26D4\n-> _     004C004  DS=2C230663EE040056  CS=22F7407111BCA0002C2123456",
+        "queueCountBplistValue": "00",
+        "t": 1778247057.9645555
+      },
+      {
+        "keyArgumentHex": null,
+        "kind": "g2153_queue_count_bpm",
+        "memoryBreakpoints": [
+          {
+            "addr": "2C23:3E78",
+            "new": "01",
+            "old": "00"
+          }
+        ],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:3E78 - 00 -> 01\n74  EB3Fjmp  short 000004B5 ($+3f)  (down)76  8346FC04add  word [bp-04],0004ss:[0FBC]=26F87A  C45EFCles  bx,[bp-04]ss:[0FBC]=26F87D  268B07mov  ax,es:[bx]es:[0000]=000080  8BF8mov  di,ax82  0BC0  or   ax,ax84  75C4      jne  0000044A ($-3c)(up)86  A1C23Emov  ax,[3EC2]ds:[3EC2]=2C2389  8B16C03Edx,[3EC0C0]=26F48D  8956FC  [bp-04],dxss:[0FF8\n-> _     0002C2000003740 O0 A0 P04C00B8643",
+        "queueCountBplistValue": "01",
+        "t": 1778247059.1412568
+      }
+    ]
+  },
+  "schema": "pass387_keyboard_f0361_queue_write.v1",
+  "sourceAudit": [
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "KEYBOARD_INPUT G0459_as_Graphic561_SecondaryKeyboardInput_Movement": 46,
+        "{ C001_COMMAND_TURN_LEFT": 108,
+        "{ C002_COMMAND_TURN_RIGHT": 110,
+        "{ C003_COMMAND_MOVE_FORWARD": 109
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "section": "movement_keyboard_table"
+    },
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "F0360_COMMAND_ProcessPendingClick();": 1086,
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;": 1765,
+        "G0435_B_CommandQueueLocked = C1_TRUE;": 12,
+        "G2153_i_QueuedCommandsCount++;": 1357,
+        "if ((L1112_ps_KeyboardInput = G0443_ps_PrimaryKeyboardInput) == NULL)": 1734,
+        "if (G2153_i_QueuedCommandsCount < C5_UNKNOWN)": 1744,
+        "if (L1110_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex)": 1750,
+        "void F0361_COMMAND_ProcessKeyPress": 1709
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "section": "f0361_gate_and_queue_write"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lineHits": {
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "while (M527_IsCharacterInKeyboardBuffer())": 166
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+      "section": "keyboard_buffer_feeds_f0361"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS387_KEYBOARD_F0361_QUEUE_WRITE_PROVEN",
+  "timestampUtc": "2026-05-08T13:31:00.694107+00:00"
+}

@@ -1,0 +1,53 @@
+[
+  {
+    "control": "F5",
+    "purpose": "run unarmed through load prefix and suffix",
+    "t": 1778247022.3275251
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "post-gameplay arm point",
+    "t": 1778247044.8322165
+  },
+  {
+    "cmd": "BPDEL *",
+    "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+    "t": 1778247050.6849704
+  },
+  {
+    "cmd": "BP 22F7:0407",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....4_  ....0_  ....7_  \nDEBUG: Set breakpoint at 22F7:0407\n\n-> _            ",
+    "t": 1778247051.509448
+  },
+  {
+    "cmd": "BPM 2C23:3E78",
+    "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  \nDEBUG: Set memory breakpoint at 2C23:3E78\n\n-> _             ",
+    "t": 1778247052.3343043
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3E78 (00)\n78\n01. BP 22F7:0407\n\n-> _      ",
+    "t": 1778247053.1583445
+  },
+  {
+    "control": "F5",
+    "purpose": "run after post-gameplay arm",
+    "t": 1778247053.2092412
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3E78 (00)\n78\n01. BP 22F7:0407\n\n-> _      ",
+    "t": 1778247058.7891603
+  },
+  {
+    "control": "F5",
+    "kind": "F0361_COMMAND_ProcessKeyPress",
+    "purpose": "continue after pass387 stop",
+    "t": 1778247058.8394961
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3E78 (01)\n78\n01. BP 22F7:0407\n\n-> _      ",
+    "t": 1778247059.9664402
+  }
+]
