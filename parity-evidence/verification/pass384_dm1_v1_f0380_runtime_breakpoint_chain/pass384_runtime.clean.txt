@@ -10,7 +10,7 @@ EDX=ESP=
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /tmp/firestaff-pass384-9m9ma319/dosbox.conf
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass384-m_gy3z20/dosbox.conf
 0: IO:Writing 05 to port 03CF
 MIXER:No Sound Mode Selected.
 ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
@@ -67,7 +67,7 @@ MIDI:Opened device:none
 0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
 
 
-0: EXEC:Parsing command line: mount c /tmp/firestaff-pass384-9m9ma319/dos
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass384-m_gy3z20/dos
 78
 3: EXEC:Execute mount.COM 0
 78
@@ -201,17 +201,17 @@ MIDI:Opened device:none
 78
 41509645: FILES:file open command 2 file DATA\DUNGEON.DAT
 FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
-0F93:004C  4inc  si
-0F93:004D  3B7606cmp  si,[bp+06]ss:[0F3A]=0103
-0F93:0050  72E6jc   00000038 ($-1a)(no jmp)
-0F93:0052  8B56FE  dx,[bp-02]ss:[0F32]=0001
-0F93:0055  8B46FCax,[bp-04]ss:[0F30]=83C1
-0F93:0058  5pop
-0F93:0059  8BE5sp,bp
-0F93:005B  5D  pop  bp
-0F93:005C  CB      retf
-0F93:005D  55  push bp
--> _     616FB  DS=2C23EC2C30311F8103F934CC04F347A95F2E44644321....
+0736:0A9A  CBretf
+0736:0A9B  07op  e
+0736:0A9C  0Eush c
+0736:0A9D  06      push es
+0736:0A9E  0BC9or   cx
+0736:0AA0  7D0Cjge  00000AAE ($+c)(down)
+0736:0AA2  F7D3not  bx
+0736:0AA4  F7D1not  cx
+0736:0AA6  83C301  0001
+0736:0AA9  83D100adc  cx,0000
+-> _     65D  DS=2C232C23303142E108736A9A13604F887A41F5844652088....
 -> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_
 DEBUG: Breakpoints deleted.
 
@@ -253,17 +253,17 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
-22F7:03E3  8BECmov  bp,sp
-22F7:03E5  833EC63E00word [3EC6],0000ds:[3EC6]=0000
-22F7:03EA  7419e405 ($+19down)
-22F7:03EC  C706C63E0000word [3EC6],0000ds:[3EC6]=0000
-22F7:03F2  FF36C43Epush word [3EC4]ds:[3EC4]=0000
-22F7:03F6  FF36B23Eush word [3EB2]ds:[3EB2]=0000
-22F7:03FA  FF36B03Epush word [3EB0]ds:[3EB0]=0000
-22F7:03FE  0Eush cs
-22F7:03FF  E80BFFcall 0000030D ($-f5)
-22F7:0402  83C406add  sp,0006
--> _     007040663339007  CS=22F73E31101BC2FFFFB4269012812...
+0477:0477  C746FE0000mov  word [bp-02],0000ss:[0FBA]=0056
+0477:047C  8B46FEmov  ax,[bp-02]ss:[0FBA]=0056
+0477:047F  1Fop  d
+0477:0480  8BE5mov  sp,bp
+0477:0482  5D  pop  bp
+0477:0483  CB  retf
+0477:0484  55  push bp
+0477:0485  8BECmov  bp,sp
+0477:0487  56    push si
+0477:0488  57    push di
+-> _     66304  DS=0660663390564774771001BBCFFFFB268925843...
 -> B_  ...P_  ...L_  ...I_  ...S_  ...T_
 Breakpoint list:
 78

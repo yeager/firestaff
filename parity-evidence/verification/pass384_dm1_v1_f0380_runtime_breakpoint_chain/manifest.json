@@ -8,8 +8,8 @@
     "G0321_B_StopWaitingForPlayerInput": "2C20:1A7C"
   },
   "blocker": "strict post-Running runtime chain incomplete; missing f0380Hit, f0365OrF0366Hit, g0321StopWaitWriteObserved, nextF0128AfterStopWaitObserved",
-  "branch": "worker/dm1v1-pass381-route-f0380-transition-20260508",
-  "head": "964364c9b692b2d6c042edf436b630b2521b1809",
+  "branch": "worker/pass384-n2-runtime-recheck-20260508",
+  "head": "03477dd04c24cb45d3919d80706f63dfe01e297e",
   "notPromotedBy": [
     "BPLIST",
     "BP/BPM command echo",
@@ -35,8 +35,8 @@
   },
   "runtimeProbe": {
     "boundedSeconds": 75,
-    "durationSeconds": 112.758,
-    "finalPauseCodeAddr": "22F7:0402",
+    "durationSeconds": 112.729,
+    "finalPauseCodeAddr": "0477:0488",
     "method": "post-load pexpect-owned PTY; arm F0380/F0365/F0366/F0128 code breakpoints plus G0321 BPM; strict stops require (Running)->prompt",
     "ran": true,
     "retainedAtArm": {
@@ -107,5 +107,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS384_RUNTIME_CHAIN_NOT_PROVEN",
-  "timestampUtc": "2026-05-08T12:01:18.213375+00:00"
+  "timestampUtc": "2026-05-08T12:26:55.455442+00:00"
 }
