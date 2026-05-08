@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import hashlib
+import struct
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -24,7 +26,7 @@ REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
     str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
-STATUS = "BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY"
+STATUS = "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED"
 
 SOURCE_ANCHORS: list[dict[str, Any]] = [
     {
@@ -185,6 +187,85 @@ def load_prior() -> dict[str, Any]:
     return out
 
 
+
+def file_sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def png_dims(path: Path) -> tuple[int, int] | None:
+    try:
+        data = path.read_bytes()[:24]
+    except OSError:
+        return None
+    if data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", data[16:24])
+
+
+def route_artifact_probe() -> dict[str, Any]:
+    raw_dir = ROOT / "verification-screens/pass376-original-route"
+    crop_dir = ROOT / "verification-screens/pass376-original-dm1-viewports"
+    raw_paths = sorted(raw_dir.glob("image*-raw.png"))
+    raw_rows = []
+    for path in raw_paths:
+        dims = png_dims(path)
+        raw_rows.append({
+            "path": str(path.relative_to(ROOT)),
+            "width": dims[0] if dims else None,
+            "height": dims[1] if dims else None,
+            "sha256": file_sha256(path),
+            "bytes": path.stat().st_size,
+        })
+    class_json = raw_dir / "pass80_original_frame_classifier.json"
+    class_data = json.loads(class_json.read_text(encoding="utf-8")) if class_json.exists() else {}
+    crop_json = crop_dir / "pass86_original_viewport_crop_manifest.json"
+    crop_data = json.loads(crop_json.read_text(encoding="utf-8")) if crop_json.exists() else {}
+    manifest = crop_dir / "original_viewport_224x136_manifest.tsv"
+    manifest_rows = []
+    if manifest.exists():
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split("\t")
+            if len(parts) == 6:
+                manifest_rows.append({
+                    "kind": parts[0], "filename": parts[1], "width": int(parts[2]),
+                    "height": int(parts[3]), "bytes": int(parts[4]), "sha256": parts[5],
+                })
+    raw_ok = len(raw_rows) == 6 and all(r["width"] == 320 and r["height"] == 200 for r in raw_rows)
+    crop_shape_ok = len(manifest_rows) == 6 and all(r["kind"] == "original_viewport_224x136" and r["width"] == 224 and r["height"] == 136 and len(r["sha256"]) == 64 for r in manifest_rows)
+    semantic_ok = bool(crop_data.get("pass")) and not class_data.get("duplicate_sha256_counts")
+    return {
+        "raw_dir": "verification-screens/pass376-original-route",
+        "crop_dir": "verification-screens/pass376-original-dm1-viewports",
+        "raw_frame_count": len(raw_rows),
+        "raw_320x200_ok": raw_ok,
+        "raw_frames": raw_rows,
+        "shot_labels_exists": (raw_dir / "original_viewport_shot_labels.tsv").exists(),
+        "raw_manifest_exists": (raw_dir / "raw_manifest.tsv").exists(),
+        "classifier_json": str(class_json.relative_to(ROOT)) if class_json.exists() else None,
+        "class_counts": class_data.get("class_counts"),
+        "duplicate_sha256_counts": class_data.get("duplicate_sha256_counts"),
+        "crop_manifest": str(manifest.relative_to(ROOT)) if manifest.exists() else None,
+        "crop_manifest_rows": manifest_rows,
+        "crop_shape_ok": crop_shape_ok,
+        "pass86_json": str(crop_json.relative_to(ROOT)) if crop_json.exists() else None,
+        "pass86_pass": crop_data.get("pass"),
+        "pass86_problems": crop_data.get("problems", []),
+        "semantic_promotion_ok": semantic_ok,
+        "blocker_narrowing": [
+            "blocker #2 narrowed: six labelled 320x200 raw frames were captured, but semantic promotion is still blocked by duplicate frames and pass86 class mismatches",
+            "blocker #3 narrowed/fixed mechanically: six 224x136 viewport crops and checksum manifest exist; promotion remains blocked because source raw route is not semantically clean",
+        ],
+        "mechanical_crop_command_used": "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports --allow-mismatch",
+        "promotion_crop_command": "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports",
+        "missing_to_promote": "rerun scripts/dosbox_dm1_original_viewport_reference_capture.sh with a route that yields pass86_original_viewport_crop_manifest.py pass=true: expected dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory with no duplicate raw frame hashes",
+    }
+
 def artifact_probe() -> list[dict[str, Any]]:
     paths = [p for cmd in ARTIFACT_COMMANDS for p in cmd["required_outputs"]]
     rows = []
@@ -215,6 +296,14 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines.extend(["", "## Prior evidence", ""])
     for name, row in manifest["prior_evidence"].items():
         lines.append(f"- `{name}` `{row['status']}` — {row['role']} ok=`{row['ok']}`")
+    route_probe = manifest.get("route_artifact_probe", {})
+    lines.extend(["", "## Generated route artifact probe", ""])
+    lines.append(f"- raw frames: `{route_probe.get('raw_frame_count')}`; all 320x200: `{route_probe.get('raw_320x200_ok')}`")
+    lines.append(f"- classifier counts: `{route_probe.get('class_counts')}`; duplicate hashes: `{route_probe.get('duplicate_sha256_counts')}`")
+    lines.append(f"- viewport crop manifest rows: `{len(route_probe.get('crop_manifest_rows', []))}`; all 224x136: `{route_probe.get('crop_shape_ok')}`")
+    lines.append(f"- pass86 semantic promotion: `{route_probe.get('pass86_pass')}`; problems: `{route_probe.get('pass86_problems')}`")
+    lines.append(f"- mechanical crop command used: `{route_probe.get('mechanical_crop_command_used')}`")
+    lines.append(f"- missing to promote: {route_probe.get('missing_to_promote')}")
     lines.extend(["", "## Exact commands and artifact paths", ""])
     for idx, cmd in enumerate(manifest["artifact_commands"], 1):
         lines.append(f"{idx}. `{cmd['id']}` / `{cmd['artifact_class']}`")
@@ -228,11 +317,10 @@ def write_report(manifest: dict[str, Any]) -> None:
             lines.append(f"   - `{output}`")
         lines.append(f"   - promotion rule: {cmd['promotion_rule']}")
         lines.append("")
+    lines.extend(["## Blockers", ""])
+    for blocker in manifest.get("blockers", []):
+        lines.append(f"- {blocker}")
     lines.extend([
-        "## Blockers",
-        "",
-        "- The pass360 strict FIRES true-stop blocker remains active until the first command proves F0128 -> F0097/VIDRV in a bounded owned-PTY run.",
-        "- Existing pass94-era original frames/crops are historical inputs only; pass376 needs fresh labelled artifacts tied to this route contract before pairing.",
         "",
         "## Non-claims",
         "",
@@ -263,10 +351,11 @@ def main() -> int:
         "prior_evidence": priors,
         "artifact_commands": ARTIFACT_COMMANDS,
         "artifact_probe": artifact_probe(),
+        "route_artifact_probe": route_artifact_probe(),
         "blockers": [
             "pass360 still blocks strict original FIRES F0128 -> F0097/VIDRV true-stop promotion",
-            "labelled original 320x200 gameplay frames for this route are not tracked",
-            "224x136 original crops for this route are not tracked",
+            "labelled original 320x200 frames exist, but semantic promotion is blocked by duplicate hashes/pass86 mismatches",
+            "224x136 original crops and manifest exist, but are review inputs only until semantic raw route passes",
             "paired Firestaff/original diff artifacts for this route are not tracked",
         ],
         "not_claimed": [
