@@ -67,10 +67,10 @@
     {
       "kind": "completion_matrix_credit",
       "observed": {
-        "completionPercent": 56,
-        "note": "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 now proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, but full pixel/content parity remains open.",
-        "points": 56,
-        "viewport_ui_render": 11
+        "completionPercent": 57,
+        "note": "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, and pass375 moves explosions into the ReDMCSB F0115 after-all-packed-cells deferred pass. Full pixel/content parity remains open.",
+        "points": 57,
+        "viewport_ui_render": 12
       },
       "ok": true
     },
@@ -98,13 +98,13 @@
           "/usr/bin/python3",
           "tools/firestaff_completion_status.py"
         ],
-        "outputTail": "DM1 V1 | completionPercent=56% | points=56/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=10% | points=10/100 | status=inventory_only | primaryBlocker=Need CSB-specific parity matrix and launch/render gates; do not infer from DM1.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+        "outputTail": "DM1 V1 | completionPercent=57% | points=57/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=10% | points=10/100 | status=inventory_only | primaryBlocker=Need CSB-specific parity matrix and launch/render gates; do not infer from DM1.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
         "returncode": 0
       }
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "3ad9c106b93c8d0e8e1ec1eb138488b952a76e2a",
+  "head": "184be187c038948eaf714a4c9c2e21f3a4c70fce",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -223,5 +223,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-05-08T09:37:38.697940+00:00"
+  "timestampUtc": "2026-05-08T09:58:31.595955+00:00"
 }

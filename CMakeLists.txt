@@ -1098,6 +1098,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass374_dm1_v1_completion_viewport_wall_credit.py
         )
         add_test(
+            NAME pass376_dm1_v1_completion_deferred_explosion_credit
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass376_dm1_v1_completion_deferred_explosion_credit.py
+        )
+        add_test(
             NAME firestaff_completion_matrix
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_firestaff_completion_matrix.py
         )
