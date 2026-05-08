@@ -1078,6 +1078,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_touch_movement_viewport_source_lock.py
         )
         add_test(
+            NAME dm1_v1_wall_click_touch_seam_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_wall_click_touch_seam_source_lock.py
+        )
+        add_test(
             NAME dm1_v1_input_command_queue_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_input_command_queue_source_lock.py
         )
