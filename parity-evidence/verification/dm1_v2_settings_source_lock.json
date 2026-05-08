@@ -1,0 +1,35 @@
+{
+  "anchors": [
+    {
+      "file": "DUNVIEW.C",
+      "line": 8318,
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "void F0128_DUNGEONVIEW_Draw_CPSF("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 2999,
+      "needle": "M100_PIXEL_WIDTH(G0296_puc_Bitmap_Viewport) = G2073_C224_ViewportPixelWidth",
+      "text": "M100_PIXEL_WIDTH(G0296_puc_Bitmap_Viewport) = G2073_C224_ViewportPixelWidth;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 3000,
+      "needle": "M101_PIXEL_HEIGHT(G0296_puc_Bitmap_Viewport) = G2074_C136_ViewportHeight",
+      "text": "M101_PIXEL_HEIGHT(G0296_puc_Bitmap_Viewport) = G2074_C136_ViewportHeight;"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 90,
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)",
+      "text": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
+    }
+  ],
+  "errors": [],
+  "evidenceImpact": {
+    "completionMatrixGap": "test_dm1_v2_settings_pc34 existed but was not wired into CTest; no settings source-lock gate tied V2 presentation settings back to ReDMCSB viewport geometry and V1-safe M12 persistence.",
+    "verifiedCompletionPercent": null
+  },
+  "scope": "dm1_v2_settings_pc34 Phase-6 settings persistence source-lock",
+  "status": "passed"
+}
