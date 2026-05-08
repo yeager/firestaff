@@ -1,0 +1,111 @@
+{
+  "addresses": {
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+    "G0321_B_StopWaitingForPlayerInput": "2C20:1A7C"
+  },
+  "blocker": "strict post-Running runtime chain incomplete; missing f0380Hit, f0365OrF0366Hit, g0321StopWaitWriteObserved, nextF0128AfterStopWaitObserved",
+  "branch": "worker/dm1v1-pass381-route-f0380-transition-20260508",
+  "head": "964364c9b692b2d6c042edf436b630b2521b1809",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP/BPM command echo",
+    "forced pause",
+    "route keylog alone",
+    "source-only address binding"
+  ],
+  "promotionRule": "Promote only if strict post-Running stops prove F0380 plus F0365/F0366, G0321 writes nonzero, and a later F0128 stop in the same bounded post-load run. BPLIST/setup echoes and forced pause samples are excluded.",
+  "proofPredicates": {
+    "breakpointsRetainedAtArm": true,
+    "f0365OrF0366Hit": false,
+    "f0380Hit": false,
+    "g0321StopWaitWriteObserved": false,
+    "nextF0128AfterStopWaitObserved": false,
+    "routeInputAfterArming": true,
+    "sawRunning": true
+  },
+  "repo": "/home/trv2/work/firestaff",
+  "runtimeArtifacts": {
+    "commandLog": "parity-evidence/verification/pass384_dm1_v1_f0380_runtime_breakpoint_chain/pass384_command_log.json",
+    "routeKeylog": "parity-evidence/verification/pass384_dm1_v1_f0380_runtime_breakpoint_chain/pass384_route_keylog.json",
+    "transcript": "parity-evidence/verification/pass384_dm1_v1_f0380_runtime_breakpoint_chain/pass384_runtime.clean.txt"
+  },
+  "runtimeProbe": {
+    "boundedSeconds": 75,
+    "durationSeconds": 112.758,
+    "finalPauseCodeAddr": "22F7:0402",
+    "method": "post-load pexpect-owned PTY; arm F0380/F0365/F0366/F0128 code breakpoints plus G0321 BPM; strict stops require (Running)->prompt",
+    "ran": true,
+    "retainedAtArm": {
+      "F0128_DUNGEONVIEW_Draw_CPSF": true,
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+      "F0380_COMMAND_ProcessQueue_CPSC": true,
+      "G0321_B_StopWaitingForPlayerInput": true
+    },
+    "retainedFinal": {
+      "F0128_DUNGEONVIEW_Draw_CPSF": true,
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+      "F0380_COMMAND_ProcessQueue_CPSC": true,
+      "G0321_B_StopWaitingForPlayerInput": true
+    },
+    "route": "one wait:3500 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900",
+    "routeInputAfterArming": true,
+    "sawRunning": true,
+    "stops": []
+  },
+  "schema": "pass384_dm1_v1_f0380_runtime_breakpoint_chain.v1",
+  "sourceAudit": [
+    {
+      "file": "GAMELOOP.C",
+      "lineHits": {
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;": 164,
+        "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);": 219
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lineHits": {
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;": 156,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS384_RUNTIME_CHAIN_NOT_PROVEN",
+  "timestampUtc": "2026-05-08T12:01:18.213375+00:00"
+}

@@ -1,0 +1,103 @@
+{
+  "artifactChecks": [
+    {
+      "artifact": "parity-evidence/pass349_dm1_v1_full_launcher_keypad_runtime_route.md",
+      "expected": "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED",
+      "ok": true
+    },
+    {
+      "artifact": "parity-evidence/verification/pass339b_dm1_v1_runtime_movement_gate/manifest.json",
+      "expected": "MOVEMENT_PROVED",
+      "ok": true
+    },
+    {
+      "artifact": "parity-evidence/pass211_dm1_v1_original_movement_fresh_blocker.md",
+      "expected": "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE",
+      "ok": true
+    },
+    {
+      "artifact": "parity-evidence/pass243_dm1_v1_dunview_emulator_variant_runbook.md",
+      "expected": "BLOCKED_DUNVIEW_TCPP101_DOSBOX_VARIANTS_EXHAUSTED",
+      "ok": true
+    }
+  ],
+  "branch": "worker/dm1v1-pass381-route-f0380-transition-20260508",
+  "buildDir": "/home/trv2/.openclaw/data/firestaff-builds/pass383-verify",
+  "ctestTail": "Test project /home/trv2/.openclaw/data/firestaff-builds/pass383-verify\n    Start 18: dm1_v1_command_movement_sensor_timing_pc34_compat\n1/2 Test #18: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 47: dm1_v1_movement_pipeline_pc34_compat\n2/2 Test #47: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 2\n\nTotal Test time (real) =   0.01 sec\n",
+  "proofs": [
+    {
+      "claim": "movement cooldown gate returns before dequeue, so the queued C003..C006 command is retained",
+      "file": "COMMAND.C",
+      "lines": "2075-2100",
+      "ok": true
+    },
+    {
+      "claim": "ungated command dequeues exactly one entry, unlocks/replays pending click, then dispatches movement",
+      "file": "COMMAND.C",
+      "lines": "2118-2155",
+      "ok": true
+    },
+    {
+      "claim": "accepted step stops the wait loop and arms movement cooldown from max living champion movement ticks",
+      "file": "CLIKMENU.C",
+      "lines": "237-346",
+      "ok": true
+    },
+    {
+      "claim": "blocked movement discards buffered input, waits one vblank on PC-family ports, and keeps the input wait loop alive",
+      "file": "CLIKMENU.C",
+      "lines": "293-323",
+      "ok": true
+    },
+    {
+      "claim": "real party square changes update last movement time before leave/enter sensor processing",
+      "file": "MOVESENS.C",
+      "lines": "774-818",
+      "ok": true
+    },
+    {
+      "claim": "PC34 game loop redraws first, ticks game time/cooldowns once, then drains input/commands until stop-wait or ticking gate",
+      "file": "GAMELOOP.C",
+      "lines": "47-219",
+      "ok": true
+    },
+    {
+      "claim": "vblank cadence flips StopWaitingForPlayerInput when the per-platform threshold is reached",
+      "file": "VBLANK.C",
+      "lines": "60-62",
+      "ok": true
+    },
+    {
+      "claim": "PC-family wait primitive advances the same vblank counter/stop-wait gate",
+      "file": "IO.C",
+      "lines": "772-778",
+      "ok": true
+    },
+    {
+      "claim": "ENTRANCE uses the same vblank counter for door animation pacing, not for party movement command acceptance",
+      "file": "ENTRANCE.C",
+      "lines": "322-357",
+      "ok": true
+    },
+    {
+      "claim": "Firestaff exposes explicit per-loop cooldown decrement seam",
+      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "line": 206,
+      "ok": true
+    },
+    {
+      "claim": "Firestaff has a source-locked successful-step timing seam",
+      "file": "dm1_v1_movement_timing_pc34_compat.c",
+      "line": 59,
+      "ok": true
+    }
+  ],
+  "runtimeBoundary": {
+    "firestaffRuntime": "pass339b/pass349 prove live-route command delivery through Firestaff movement pipeline",
+    "originalDosboxDunview": "pass211/pass243 remain blockers: no semantically aligned original movement sequence and no authentic FIRES.MAP/DUNVIEW build route",
+    "pixelParityClaim": false
+  },
+  "schema": "firestaff.parity.pass383.dm1_v1_movement_timing_integration.v1",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS_DM1_V1_MOVEMENT_TIMING_GATES_SOURCE_LOCKED_RUNTIME_BOUNDARY_CLASSIFIED"
+}

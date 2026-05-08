@@ -1,0 +1,62 @@
+[
+  {
+    "control": "F5",
+    "purpose": "run unarmed to load/menu prefix",
+    "t": 1778241569.3112092
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "post-load arm point",
+    "t": 1778241585.572924
+  },
+  {
+    "cmd": "BPDEL *",
+    "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+    "t": 1778241591.4285889
+  },
+  {
+    "cmd": "BP 22F4:0699",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....4_  ....:_  ....0_  ....6_  ....9_  ....9_  \nDEBUG: Set breakpoint at 22F4:0699\n\n-> _            ",
+    "t": 1778241592.251603
+  },
+  {
+    "cmd": "BP 1EA4:010D",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....0_  ....D_  \nDEBUG: Set breakpoint at 1EA4:010D\n\n-> _            ",
+    "t": 1778241593.075688
+  },
+  {
+    "cmd": "BP 1EA4:01AA",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....A_  ....A_  \nDEBUG: Set breakpoint at 1EA4:01AA\n\n-> _            ",
+    "t": 1778241593.8995335
+  },
+  {
+    "cmd": "BP 23AD:40FE",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....A_  ....D_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+    "t": 1778241594.7241845
+  },
+  {
+    "cmd": "BPM 2C20:1A7C",
+    "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....0_  ....:_  ....1_  ....A_  ....7_  ....C_  \nDEBUG: Set memory breakpoint at 2C20:1A7C\n\n-> _             ",
+    "t": 1778241595.547107
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C20:1A7C (00)\n78\n01. BP 23AD:40FE\n78\n02. BP 1EA4:01AA\n78\n03. BP 1EA4:010D\n78\n04. BP 22F4:0699\n\n-> _      ",
+    "t": 1778241596.3724227
+  },
+  {
+    "control": "F5",
+    "purpose": "run after F0380/F0365/F0366/F0128/G0321 arm",
+    "t": 1778241596.422729
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "final retention/position sample",
+    "t": 1778241671.6260717
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "...\n-> B_  ...P_  ...L_  ...I_  ...S_  ...T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C20:1A7C (00)\n78\n01. BP 23AD:40FE\n78\n02. BP 1EA4:01AA\n78\n03. BP 1EA4:010D\nBreakpoint list:\n-------------------------------------------------------------------------\n00. BPMEM 2C20:1A7C (00)\n01. BP 23AD:40FE        \n02. BP 1EA4:01AA\n030D\n04. BP 22F4:0699\nBreakpoint list:\n-------------------------------------------------------------------------\n00. BPMEM 2C20:1A7C (00)\n01. BP 23AD:40FE        \n02. BP 1EA4:01AA\n030D\n04. BP 22F4:0699\n\n-> _      ",
+    "t": 1778241677.480059
+  }
+]

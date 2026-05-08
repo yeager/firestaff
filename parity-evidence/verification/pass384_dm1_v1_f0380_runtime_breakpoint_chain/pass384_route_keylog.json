@@ -1,0 +1,140 @@
+[
+  {
+    "route_item": "wait:9000",
+    "slept": true,
+    "t": 1778241569.3274474
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "enter",
+    "t": 1778241578.3605862
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778241578.5805662
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "t": 1778241580.7898822
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778241581.0087845
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "click:276,140",
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778241583.2183049
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778241583.332513
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "running_guard": true,
+    "t": 1778241596.4411757
+  },
+  {
+    "route_item": "wait:3500",
+    "slept": true,
+    "t": 1778241596.9125245
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778241600.4269824
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778241600.6503816
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778241601.5541382
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778241601.772546
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778241602.675924
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778241602.8972087
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778241603.8008707
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778241604.024493
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778241604.927025
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778241605.1514711
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778241606.054086
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778241606.2738893
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778241607.1757836
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778241607.3949163
+  }
+]
