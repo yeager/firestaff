@@ -39,6 +39,8 @@
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_runtime_shell_pc34",
     "dm1_v2_runtime_shell_source_lock",
+    "dm1_v2_settings_pc34",
+    "dm1_v2_settings_source_lock",
     "dm1_v2_upscale_dry_run_validator",
     "dm1_v2_viewport_composition_source_lock",
     "dm1_v2_viewport_pixel_capture_fixture_gate",
@@ -238,6 +240,8 @@
     "dm1_v2_movement_viewport_pc34",
     "dm1_v2_runtime_shell_pc34",
     "dm1_v2_runtime_shell_source_lock",
+    "dm1_v2_settings_pc34",
+    "dm1_v2_settings_source_lock",
     "dm1_v2_upscale_dry_run_validator",
     "dm1_v2_viewport_composition_source_lock",
     "dm1_v2_viewport_pixel_capture_fixture_gate",
@@ -245,5 +249,5 @@
   ],
   "status": "passed",
   "testCount": 14,
-  "toolCount": 30
+  "toolCount": 31
 }

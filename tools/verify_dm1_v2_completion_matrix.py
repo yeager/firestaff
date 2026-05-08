@@ -44,6 +44,8 @@ REQUIRED_CTEST_NAMES = {
     "dm1_v2_hud_overlay_source_lock",
     "dm1_v2_lighting_dynamic_pc34",
     "dm1_v2_lighting_dynamic_source_lock",
+    "dm1_v2_settings_pc34",
+    "dm1_v2_settings_source_lock",
 }
 
 CATEGORY_RULES = [

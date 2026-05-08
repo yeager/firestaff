@@ -2,9 +2,13 @@
 
 /* DM1 V2 release-safe settings adapter.
  *
- * Phase-6 source-lock intent:
- * - V2 settings live in the existing M12 config file so data-dir and package
- *   behavior stay unchanged.
+ * Source-lock intent:
+ * - ReDMCSB primary anchor DUNVIEW.C:F0128_DUNGEONVIEW_Draw_CPSF writes the
+ *   original viewport bitmap dimensions through G2073_C224_ViewportPixelWidth
+ *   and G2074_C136_ViewportHeight. V2 settings may scale/present that picture,
+ *   but they must not redefine gameplay-space geometry.
+ * - V2 settings live in the existing M12 config file so data-dir/package
+ *   behavior stays unchanged.
  * - V1 behavior is not read from these fields; V2 consumers opt in through
  *   this adapter.
  * - Aspect mode never means stretch-to-fill. ORIGINAL_4_3 preserves the DM1
