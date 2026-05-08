@@ -3491,7 +3491,7 @@ int main(int argc, char** argv) {
         pDungeon->tiles[0].squareData[1 * 3 + 2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         pDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         pDungeon->tiles[0].squareData[2 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08);
-        pDungeon->tiles[0].squareData[1 * 3 + 0] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+        pDungeon->tiles[0].squareData[1 * 3 + 0] = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x18);
 
         /* Map 1 layout: all corridor except border walls */
         for (pI = 0; pI < pSquareCount1; ++pI) {
@@ -3504,6 +3504,7 @@ int main(int argc, char** argv) {
         pThings->teleporters[0].targetMapY = 2;
         pThings->teleporters[0].rotation = 1;
         pThings->teleporters[0].absoluteRotation = 0;
+        pThings->teleporters[0].scope = 0x02;
         pThings->teleporters[0].audible = 1;
         pThings->teleporters[0].next = THING_ENDOFLIST;
         /* Link teleporter thing to square (1,0) on map 0 */

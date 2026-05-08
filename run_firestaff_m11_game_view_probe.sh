@@ -92,6 +92,11 @@ cc $CFLAGS_COMMON \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
     "$HERE/dm1_v1_vblank_timing.c" \
     "$HERE/dm1_v1_save_load.c" \
+    "$HERE/dm1_v1_input_command_queue_pc34_compat.c" \
+    "$HERE/dm1_v1_movement_timing_pc34_compat.c" \
+    "$HERE/dm1_v1_movement_command_core_pc34_compat.c" \
+    "$HERE/dm1_v1_movement_pipeline_pc34_compat.c" \
+    "$HERE/m11_v1_turning_presentation_pc34_compat.c" \
     "$HERE/changelog_m12.c" \
     $GFX_OBJS \
     $SDL3_LIBS
