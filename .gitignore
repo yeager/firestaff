@@ -173,3 +173,6 @@ __pycache__/
 /parity-evidence/verification/*
 !/parity-evidence/verification/pass175_redmcsb_c080_no_delta_blocker_audit/
 !/parity-evidence/verification/pass175_redmcsb_c080_no_delta_blocker_audit/**
+
+# DOSBox/debugger scratch memory dumps
+/MEMDUMP.TXT
