@@ -1,0 +1,47 @@
+{
+  "auditedFunctions": {
+    "CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty": {
+      "lines": [
+        142,
+        174
+      ]
+    },
+    "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty": {
+      "lines": [
+        180,
+        352
+      ]
+    },
+    "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC": {
+      "lines": [
+        2045,
+        2829
+      ]
+    },
+    "GAMELOOP.C:F0002_MAIN_GameLoop_CPSDF": "contains F0361 keyboard drain, F0380 call, and G0321/G0301 wait loop",
+    "PC.H:G2153_i_QueuedCommandsCount": "PC symbol alias present"
+  },
+  "conclusion": "Given pass386 observed click entering F0380 but no F0365/F0366 and keyboard entering F0361 with no G2153 write, the remaining blocker is an empty/not-pop-eligible command queue at F0380, not bad F0365/F0366 anchors.",
+  "exactBlockingPredicate": "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC checks G2153_i_QueuedCommandsCount == 0 before loading/popping G0432_as_CommandQueue; that branch unlocks, processes pending click, and jumps to T0380042, bypassing F0365/F0366 dispatch.",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP/BPM command echo",
+    "forced pause",
+    "route keylog alone",
+    "source-only address binding"
+  ],
+  "pass386Predicates": {
+    "clickDispatchReached": false,
+    "clickF0128Observed": true,
+    "clickF0380Hit": true,
+    "clickRouteRanAfterArm": true,
+    "clickStopWaitWriteObserved": true,
+    "keyboardDispatchReached": false,
+    "keyboardF0361Hit": true,
+    "keyboardQueueCountChanged": false,
+    "keyboardRouteRanAfterArm": true
+  },
+  "secondaryEligibilityPredicate": "Movement commands C003..C006 also bypass dispatch when G0310_i_DisabledMovementTicks is non-zero or projectile-disabled movement matches the attempted direction.",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS387_F0380_QUEUE_POP_ELIGIBILITY_PREDICATE_PROVEN"
+}
