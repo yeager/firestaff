@@ -27,7 +27,7 @@ REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
     str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
-STATUS = "BLOCKED_PASS377_PAIRED_DIFF_ARTIFACTS_ORIGINAL_SIDE_MISSING_FIRESTAFF_SIDE_READY"
+STATUS = "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED"
 WIDTH = 224
 HEIGHT = 136
 
@@ -96,7 +96,7 @@ PRIOR_DEPENDENCIES = {
     "blocker_3_original_viewport_crops": {
         "path": "parity-evidence/verification/pass376_dm1_v1_original_overlay_parity_plan/manifest.json",
         "expected_status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING",
-        "role": "224x136 original crops are missing until pass86 succeeds on labelled original frames",
+        "role": "224x136 original crops are present as review-only inputs, but cannot be promoted until pass86/semantic route succeeds",
     },
     "firestaff_route_source_locked": {
         "path": "parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json",
@@ -147,6 +147,9 @@ def load_dependencies() -> dict[str, Any]:
             "ok": path.exists() and status == dep["expected_status"],
             "active_blocker": data.get("activeBlocker") or data.get("blocker") or data.get("blockers"),
             "semantic_promotion_ok": route_probe.get("semantic_promotion_ok"),
+            "pass86_pass": route_probe.get("pass86_pass"),
+            "pass86_problems": route_probe.get("pass86_problems"),
+            "missing_to_promote": route_probe.get("missing_to_promote"),
             "duplicate_sha256_counts": route_probe.get("duplicate_sha256_counts"),
         }
     return out
@@ -160,15 +163,16 @@ def png_dims(path: Path) -> tuple[int, int] | None:
     return None
 
 
-def firestaff_artifact_rows(plan: dict[str, Any]) -> list[dict[str, Any]]:
+def artifact_rows(plan: dict[str, Any], side: str, manifest_path: Path, manifest_kind: str) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    manifest_path = ROOT / "verification-screens" / "capture_manifest_sha256.tsv"
     manifest_text = manifest_path.read_text(encoding="utf-8") if manifest_path.exists() else ""
+    png_key = f"{side}_png"
+    ppm_key = f"{side}_ppm"
     for pair in plan.get("pairings", []):
-        png_rel = pair["firestaff_png"]
-        ppm_rel = pair["firestaff_ppm"]
+        png_rel = pair[png_key]
+        ppm_rel = pair[ppm_key]
         png = ROOT / png_rel
-        ppm_manifested = Path(ppm_rel).name in manifest_text and "viewport_224x136\t" in manifest_text
+        ppm_manifested = Path(ppm_rel).name in manifest_text and f"{manifest_kind}\t" in manifest_text
         dims = png_dims(png) if png.exists() else None
         rows.append({
             "index": pair["index"],
@@ -182,6 +186,24 @@ def firestaff_artifact_rows(plan: dict[str, Any]) -> list[dict[str, Any]]:
             "ok": png.exists() and dims == (WIDTH, HEIGHT) and ppm_manifested,
         })
     return rows
+
+
+def firestaff_artifact_rows(plan: dict[str, Any]) -> list[dict[str, Any]]:
+    return artifact_rows(
+        plan,
+        "firestaff",
+        ROOT / "verification-screens" / "capture_manifest_sha256.tsv",
+        "viewport_224x136",
+    )
+
+
+def original_review_artifact_rows(plan: dict[str, Any]) -> list[dict[str, Any]]:
+    return artifact_rows(
+        plan,
+        "original",
+        ROOT / "verification-screens" / "pass376-original-dm1-viewports" / "original_viewport_224x136_manifest.tsv",
+        "original_viewport_224x136",
+    )
 
 
 def build_pairing_plan() -> tuple[dict[str, Any], str, int]:
@@ -206,7 +228,7 @@ def write_report(manifest: dict[str, Any]) -> None:
         "",
         "## Decision",
         "",
-        "Blocker #4 is narrowed to original-side absence only: all six Firestaff viewport inputs are present and dimension-checked, and the pass70 pairing plan is materialized. Paired diffs are deliberately not run because blockers #1-#3 are still active.",
+        "Blocker #4 is narrowed to review-only pairing metadata: all six Firestaff viewport inputs and all six current original viewport crops are present and dimension-checked, and the pass70 pairing plan is materialized. Paired diffs/masks/stats are deliberately not run because the original route is not semantic-clean yet.",
         "",
         "## Source audit",
         "",
@@ -219,18 +241,24 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines.extend(["", "## Firestaff-side artifacts", ""])
     for row in manifest["firestaff_artifacts"]:
         lines.append("- `{}` `{}` dims=`{}` manifest_ppm=`{}` ok=`{}`".format(row["scene"], row["png"], row["png_dims"], row["ppm_manifested_as_224x136"], row["ok"]))
+    lines.extend(["", "## Original review-only artifacts", ""])
+    for row in manifest["original_review_artifacts"]:
+        lines.append("- `{}` `{}` dims=`{}` manifest_ppm=`{}` review_only_ok=`{}`".format(row["scene"], row["png"], row["png_dims"], row["ppm_manifested_as_224x136"], row["ok"]))
     lines.extend([
         "",
         "## Pairing/diff plan",
         "",
         "- plan: `{}`".format(manifest["pairing_plan_path"]),
         "- original-side blockers from pass70: `{}`".format(manifest["pairing_plan_blockers"]),
-        "- diffs run: `False` (requires promotable original pair; no parity claim)",
+        "- review-only metadata materialized: `{}`".format(manifest["blocker_narrowing"]["review_pair_metadata_materialized"]),
+        "- semantic-clean original route required: `{}`".format(manifest["blocker_narrowing"]["semantic_clean_original_required"]),
+        "- masks/stats materialized: `{}`".format(manifest["blocker_narrowing"]["masks_stats_materialized"]),
+        "- diffs run: `False` (requires promotable semantic-clean original pair; no parity claim)",
         "",
         "## Non-claims",
         "",
         "- No original-vs-Firestaff pixel parity is claimed.",
-        "- No paired diff masks/stats are claimed because the original pair is missing.",
+        "- No paired diff masks/stats are claimed because the current original crops are review-only, not semantic-clean.",
         "- No original true-stop transcript or semantically matched original frame is claimed.",
         "",
         "Manifest: `parity-evidence/verification/{}/manifest.json`".format(PASS),
@@ -245,12 +273,15 @@ def main() -> int:
     deps = load_dependencies()
     plan, plan_stdout, plan_rc = build_pairing_plan()
     fs_rows = firestaff_artifact_rows(plan)
+    original_rows = original_review_artifact_rows(plan)
     source_ok = all(row["ok"] for row in sources)
     deps_ok = all(row["ok"] for row in deps.values())
     firestaff_ok = len(fs_rows) == 6 and all(row["ok"] for row in fs_rows)
-    original_semantic_ready = deps.get("blocker_2_labelled_original_full_frames", {}).get("semantic_promotion_ok") is True
+    original_review_metadata_ok = len(original_rows) == 6 and all(row["ok"] for row in original_rows) and not plan.get("blockers")
+    original_dep = deps.get("blocker_2_labelled_original_full_frames", {})
+    original_semantic_ready = original_dep.get("semantic_promotion_ok") is True and original_dep.get("pass86_pass") is True
     original_not_promotable = not original_semantic_ready
-    ok = source_ok and deps_ok and firestaff_ok and original_not_promotable and plan_rc == 0
+    ok = source_ok and deps_ok and firestaff_ok and original_review_metadata_ok and original_not_promotable and plan_rc == 0
     manifest: dict[str, Any] = {
         "schema": f"{PASS}.v1",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -266,10 +297,15 @@ def main() -> int:
         "pairing_plan_blockers": plan.get("blockers", []),
         "pairing_plan_stdout": plan_stdout,
         "firestaff_artifacts": fs_rows,
+        "original_review_artifacts": original_rows,
         "blocker_narrowing": {
             "blocker_4": "paired Firestaff/original diff artifacts",
             "firestaff_side_ready": firestaff_ok,
+            "original_review_metadata_ready": original_review_metadata_ok,
             "original_side_ready": original_semantic_ready,
+            "semantic_clean_original_required": original_not_promotable,
+            "review_pair_metadata_materialized": original_review_metadata_ok and firestaff_ok and not plan.get("blockers"),
+            "masks_stats_materialized": False,
             "depends_on_blockers_1_to_3": [
                 "blocker_1_original_true_stop_transcript",
                 "blocker_2_labelled_original_full_frames",
