@@ -1113,16 +1113,28 @@ int F0822_EXPLOSION_Advance_Compat(
         attackTypeCode = (in->explosionType == C002_EXPLOSION_LIGHTNING_BOLT)
                          ? COMBAT_ATTACK_LIGHTNING : COMBAT_ATTACK_FIRE;
         if (digest->destHasChampion) {
+            /* ReDMCSB PROJEXPL.C:F0213 lines 129-146 checks the
+             * party square first; creature damage is in the else branch. */
             build_explosion_champion_action(in, digest, attackApplied,
                                             attackTypeCode,
                                             &outResult->outActionParty);
             outResult->emittedCombatActionPartyCount = 1;
-        }
-        if (digest->destHasCreatureGroup) {
-            build_explosion_group_action(in, digest, attackApplied,
-                                         attackTypeCode,
-                                         &outResult->outActionGroup);
-            outResult->emittedCombatActionGroupCount = 1;
+        } else if (digest->destHasCreatureGroup) {
+            int groupAttackApplied = attackApplied;
+            /* ReDMCSB PROJEXPL.C:F0213 lines 137-142 quarters
+             * fireball/lightning damage against non-material creatures
+             * before resistance adjustment. The digest has the
+             * non-material bit, so preserve that high-impact parity even
+             * though fire-resistance remains caller-side Phase 13 data. */
+            if (digest->destCreatureIsNonMaterial) {
+                groupAttackApplied >>= 2;
+            }
+            if (groupAttackApplied > 0) {
+                build_explosion_group_action(in, digest, groupAttackApplied,
+                                             attackTypeCode,
+                                             &outResult->outActionGroup);
+                outResult->emittedCombatActionGroupCount = 1;
+            }
         }
         if (digest->destSquareType == PROJECTILE_ELEMENT_DOOR
             && digest->destDoorState != PROJECTILE_DOOR_STATE_NONE

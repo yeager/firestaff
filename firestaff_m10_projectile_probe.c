@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- Teleporter direction rotation (memory_projectile_pc34_compat.c F0811 step 7) — v1 honours `destTeleporterNewDirection` when caller pre-rotates; no in-module rotation.\n");
     fprintf(report, "- Kinetic pass-through door random roll (PROJEXPL.C:490-500, pouch/thrown) — v1 deterministic non-pass for kinetic projectiles.\n");
     fprintf(report, "- Projectile-vs-projectile annihilation order (PROJEXPL.C F0218) — v1 picks order-independent variant (both despawn); Fontanel's \"earlier wins\" depends on list-iteration order which is not save-stable.\n");
-    fprintf(report, "- Non-material creature pass-through — v1 despawns kinetic/non-HARM_NON_MATERIAL projectile on non-material-creature contact (plan §4.3 simplification); Fontanel actually continues past.\n");
+    fprintf(report, "- Non-material creature pass-through — source-locked: kinetic/non-HARM_NON_MATERIAL projectiles do not impact and continue past; HARM_NON_MATERIAL still damages the group (PROJEXPL.C F0217/F0219).\n");
     fprintf(report, "- Paired source-cell explosion damage (PROJEXPL.C F0213 lines 169-175 fireball/lightning) — v1 emits single-cell damage only; source-cell lag-one-tick is v2.\n");
     fprintf(report, "- Sharp-weapon absorption by creatures with KEEP_THROWN_SHARP_WEAPONS (PROJEXPL.C:572-590) — v1 drops the weapon; projectile just despawns.\n");
     fprintf(report, "- Cell → champion-index rotation by party facing (Phase 10 packing convention); v1 uses direct cell == index.\n");
@@ -806,7 +806,7 @@ int main(int argc, char* argv[]) {
     /* ================================================================
      *  Block F — explosion per-type behaviour (invariants 28-31)
      * ================================================================ */
-    /* 28: Fireball attack=80 -> ONE_SHOT + party+group actions (both present) */
+    /* 28: Fireball attack=80 -> ONE_SHOT + party preempts group */
     {
         struct ExplosionInstance_Compat e, eOut;
         struct CellContentDigest_Compat d;
@@ -823,12 +823,36 @@ int main(int argc, char* argv[]) {
         set_source_and_dest(&d, 0, 5, 5, 5, 5);
         d.destHasChampion      = 1;
         d.destChampionCellMask = 0x01;
-        d.destHasCreatureGroup = 0;
+        d.destHasCreatureGroup = 1;
+        d.destCreatureCellMask = 0x02;
         F0730_COMBAT_RngInit_Compat(&rng, 0x1234);
         F0822_EXPLOSION_Advance_Compat(&e, &d, 100, &rng, &eOut, &r);
         CHECK(r.despawn == 1 && r.resultKind == EXPLOSION_RESULT_ONE_SHOT
-              && r.emittedCombatActionPartyCount == 1,
-              "Fireball attack=80 -> ONE_SHOT + despawn + party action emitted");
+              && r.emittedCombatActionPartyCount == 1
+              && r.emittedCombatActionGroupCount == 0,
+              "Fireball attack=80 -> party action emitted; group preempted (PROJEXPL.C F0213)");
+    }
+    /* 28b: Fireball vs non-material creature quarters group attack */
+    {
+        struct ExplosionInstance_Compat e, eOut;
+        struct CellContentDigest_Compat d;
+        struct ExplosionTickResult_Compat r;
+        memset(&e, 0, sizeof(e));
+        e.slotIndex     = 0;
+        e.explosionType = C000_EXPLOSION_FIREBALL;
+        e.attack        = 80;
+        e.currentFrame  = 0;
+        e.maxFrames     = 3;
+        e.reserved0     = 1;
+        zero_digest(&d);
+        set_source_and_dest(&d, 0, 5, 5, 5, 5);
+        d.destHasCreatureGroup     = 1;
+        d.destCreatureCellMask     = 0x01;
+        d.destCreatureIsNonMaterial = 1;
+        F0822_EXPLOSION_Advance_Compat(&e, &d, 100, NULL, &eOut, &r);
+        CHECK(r.emittedCombatActionGroupCount == 1
+              && r.outActionGroup.rawAttackValue == 10,
+              "Fireball attack=80 vs non-material creature -> group attack quartered before resistance");
     }
     /* 29: Poison cloud attack=32 -> newAttack=29, reschedule +1 */
     {
