@@ -15,8 +15,9 @@
  *   queue, movement-gates C003..C006 without dequeueing, then dispatches turns
  *   to F0365 and moves to F0366.
  * - CLIKMENU.C:142-174 F0365 turns the party and runs leave/enter sensor
- *   processing on the current square; CLIKMENU.C:256-347 F0366 maps command
- *   arrows through DUNGEON.C:1371-1421 relative-coordinate math, blocks walls/
+ *   processing on the current square; CLIKMENU.C:237-255 F0366 applies
+ *   living-champion movement stamina before stairs/blocker resolution;
+ *   CLIKMENU.C:256-347 maps command arrows through DUNGEON.C:1371-1421 relative-coordinate math, blocks walls/
  *   closed doors/fake-walls/groups at CLIKMENU.C:278-323 before any F0267
  *   movement/sensor core call, calls F0267_MOVE_GetMoveResult_CPSCE for
  *   successful steps, then writes G0310_i_DisabledMovementTicks from
@@ -113,9 +114,13 @@ static void reset_fixture(
     party->champions[0].hp.current = 25;
     party->champions[0].load = 40;
     party->champions[0].maxLoad = 100;
+    party->champions[0].stamina.current = 100;
+    party->champions[0].stamina.maximum = 100;
     party->champions[1].hp.current = 35;
     party->champions[1].load = 100;
     party->champions[1].maxLoad = 100;
+    party->champions[1].stamina.current = 100;
+    party->champions[1].stamina.maximum = 100;
 }
 
 static int command_to_move_action(int command)
@@ -245,7 +250,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_command_movement_sensor_timing_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-179,180-347; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215; MOVESENS.C:738-783,799-818,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724\n");
+    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-179,180-347 including 237-255 pre-resolution stamina; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215,2025-2048; MOVESENS.C:738-783,799-818,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724\n");
 
     ok &= expect_relative_step_delta_table();
 
@@ -430,6 +435,10 @@ int main(void)
         ok &= expect_int("core forward1 teleport sensor first", core.enterEffects.effects[0].kind, SENSOR_EFFECT_TELEPORT);
         ok &= expect_int("core forward1 text sensor second", core.enterEffects.effects[1].kind, SENSOR_EFFECT_SHOW_TEXT);
         ok &= expect_int("core forward1 timing records scent", core.timing.scentRecorded, 1);
+        ok &= expect_int("core forward1 stamina cost champion0", core.staminaCost[0], 2);
+        ok &= expect_int("core forward1 stamina cost champion1", core.staminaCost[1], 4);
+        ok &= expect_int("core forward1 decrements champion0 stamina", party.champions[0].stamina.current, 98);
+        ok &= expect_int("core forward1 decrements champion1 stamina", party.champions[1].stamina.current, 96);
         ok &= expect_int("core forward1 requests viewport", core.viewportRedrawRequested, 1);
         ok &= expect_int("core forward1 releases input wait", core.stopWaitingForPlayerInput, 1);
 
@@ -445,6 +454,8 @@ int main(void)
         ok &= expect_int("core turn keeps y", party.mapY, 0);
         ok &= expect_int("core turn updates direction", party.direction, DIR_EAST);
         ok &= expect_int("core turn current-square enter sensors", core.enterEffects.count, 2);
+        ok &= expect_int("core turn leaves champion0 stamina", party.champions[0].stamina.current, 98);
+        ok &= expect_int("core turn leaves champion1 stamina", party.champions[1].stamina.current, 96);
         ok &= expect_int("core turn requests viewport", core.viewportRedrawRequested, 1);
 
         ok &= expect_int("core right queued from east", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
@@ -456,6 +467,9 @@ int main(void)
         ok &= expect_int("core east-facing right strafe x unchanged", party.mapX, 1);
         ok &= expect_int("core east-facing right strafe moves south", party.mapY, 1);
         ok &= expect_int("core east-facing right strafe direction unchanged", party.direction, DIR_EAST);
+        ok &= expect_int("core east-facing right strafe stamina affected count", core.staminaAffectedCount, 2);
+        ok &= expect_int("core east-facing right strafe decrements champion0 stamina again", party.champions[0].stamina.current, 96);
+        ok &= expect_int("core east-facing right strafe decrements champion1 stamina again", party.champions[1].stamina.current, 92);
         ok &= expect_int("core multi-command viewport redraw count", redraws, 3);
         ok &= expect_int("core multi-command stop-wait count", stops, 3);
     }
@@ -476,6 +490,8 @@ int main(void)
         ok &= expect_int("core blocked wall code", core.movement.resultCode, MOVE_BLOCKED_WALL);
         ok &= expect_int("core blocked wall skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core blocked wall skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core blocked wall still applies pre-resolution stamina", party.champions[0].stamina.current, 98);
+        ok &= expect_int("core blocked wall records stamina cost", core.staminaCost[0], 2);
         ok &= expect_int("core blocked wall discards input", core.inputDiscardRequested, 1);
         ok &= expect_int("core blocked wall clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core blocked wall keeps x", party.mapX, 1);
@@ -500,6 +516,8 @@ int main(void)
         ok &= expect_int("core group block detected", core.blockedByGroup, 1);
         ok &= expect_int("core group block skips sensors", core.enterEffects.count + core.leaveEffects.count, 0);
         ok &= expect_int("core group block skips viewport", core.viewportRedrawRequested, 0);
+        ok &= expect_int("core group block still applies pre-resolution stamina", party.champions[0].stamina.current, 98);
+        ok &= expect_int("core group block records stamina cost", core.staminaCost[0], 2);
         ok &= expect_int("core group block clears queued followup", (int)queue.count, 0);
         ok &= expect_int("core group block keeps source", party.mapX + party.mapY, 2);
     }
