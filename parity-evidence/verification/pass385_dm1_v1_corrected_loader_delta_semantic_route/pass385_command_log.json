@@ -1,0 +1,656 @@
+[
+  {
+    "control": "F5",
+    "purpose": "run unarmed to load/menu prefix",
+    "t": 1778243607.2749588
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "post-load arm point",
+    "t": 1778243623.5397148
+  },
+  {
+    "cmd": "BPDEL *",
+    "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+    "t": 1778243629.3940482
+  },
+  {
+    "cmd": "BP 22F7:0699",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....6_  ....9_  ....9_  \nDEBUG: Set breakpoint at 22F7:0699\n\n-> _            ",
+    "t": 1778243630.2185373
+  },
+  {
+    "cmd": "BP 1EA7:010D",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....0_  ....D_  \nDEBUG: Set breakpoint at 1EA7:010D\n\n-> _            ",
+    "t": 1778243631.041792
+  },
+  {
+    "cmd": "BP 1EA7:01AA",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....A_  ....A_  \nDEBUG: Set breakpoint at 1EA7:01AA\n\n-> _            ",
+    "t": 1778243631.8645556
+  },
+  {
+    "cmd": "BP 23B0:40FE",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....B_  ....0_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23B0:40FE\n\n-> _            ",
+    "t": 1778243632.6875162
+  },
+  {
+    "cmd": "BPM 2C23:1A7C",
+    "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  \nDEBUG: Set memory breakpoint at 2C23:1A7C\n\n-> _             ",
+    "t": 1778243633.5103726
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243634.3335369
+  },
+  {
+    "control": "F5",
+    "purpose": "run after F0380/F0365/F0366/F0128/G0321 arm",
+    "t": 1778243634.3838787
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n44644322: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n44644322: MISC:eflags:00007206 [vm=0 iopl=3 nt=1]\n78\n44644322: MISC:GDT base=00000000 limit=00000000\n78\n44644322: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243635.4600697
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243636.285141
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (01)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243637.1077895
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "g0321_bpm",
+    "purpose": "continue after strict stop",
+    "t": 1778243637.1580477
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n45897301: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n45897301: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n45897301: MISC:GDT base=00000000 limit=00000000\n78\n45897301: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243638.5948386
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243639.4178746
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (01)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243640.2412002
+  },
+  {
+    "addr": "23B0:4113",
+    "control": "F5",
+    "kind": "F0128_DUNGEONVIEW_Draw_CPSF",
+    "purpose": "continue after strict stop",
+    "t": 1778243640.2914796
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46286865: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46286865: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46286865: MISC:GDT base=00000000 limit=00000000\n78\n46286865: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243641.4348602
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243642.2601788
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243643.0845034
+  },
+  {
+    "addr": "07FB:01D6",
+    "control": "F5",
+    "kind": "g0321_bpm",
+    "purpose": "continue after strict stop",
+    "t": 1778243643.1347725
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46286895: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46286895: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46286895: MISC:GDT base=00000000 limit=00000000\n78\n46286895: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243644.2601411
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243645.0839431
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243645.9072363
+  },
+  {
+    "addr": "22F7:06AD",
+    "control": "F5",
+    "kind": "F0380_COMMAND_ProcessQueue_CPSC",
+    "purpose": "continue after strict stop",
+    "t": 1778243645.9575348
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287033: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287033: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287033: MISC:GDT base=00000000 limit=00000000\n78\n46287033: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243647.082291
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243647.9071593
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243648.7303944
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243648.7806735
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287171: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287171: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287171: MISC:GDT base=00000000 limit=00000000\n78\n46287171: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243649.9059536
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243650.7350283
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243651.5584369
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243651.6086893
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287309: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287309: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287309: MISC:GDT base=00000000 limit=00000000\n78\n46287309: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243652.734779
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243653.558538
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243654.3829896
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243654.4332616
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287447: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287447: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287447: MISC:GDT base=00000000 limit=00000000\n78\n46287447: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243655.5600939
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243656.3831463
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243657.2059877
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243657.2562265
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287585: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287585: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287585: MISC:GDT base=00000000 limit=00000000\n78\n46287585: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243658.3806453
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243659.2038128
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243660.0272226
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243660.0774586
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287723: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287723: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287723: MISC:GDT base=00000000 limit=00000000\n78\n46287723: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243661.2020621
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243662.0249891
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243662.847847
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243662.898074
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287861: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287861: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287861: MISC:GDT base=00000000 limit=00000000\n78\n46287861: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243664.0228894
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243664.8459992
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243665.670315
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243665.7205951
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46287999: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46287999: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46287999: MISC:GDT base=00000000 limit=00000000\n78\n46287999: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243666.8471618
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243667.6732414
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243668.498241
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243668.5485432
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288137: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288137: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288137: MISC:GDT base=00000000 limit=00000000\n78\n46288137: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243669.6755111
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243670.4992688
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243671.3245986
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243671.3748894
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288275: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288275: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288275: MISC:GDT base=00000000 limit=00000000\n78\n46288275: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243672.502883
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243673.326346
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243674.1518142
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243674.2020557
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288413: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288413: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288413: MISC:GDT base=00000000 limit=00000000\n78\n46288413: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243675.327578
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243676.1508286
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243676.9740963
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243677.0243464
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288551: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288551: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288551: MISC:GDT base=00000000 limit=00000000\n78\n46288551: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243678.1491067
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243678.9728546
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243679.797883
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243679.8481164
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288689: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288689: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288689: MISC:GDT base=00000000 limit=00000000\n78\n46288689: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243680.9723322
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243681.79653
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243682.622561
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243682.6728396
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288827: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288827: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288827: MISC:GDT base=00000000 limit=00000000\n78\n46288827: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243683.797442
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243684.62064
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243685.4439104
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243685.4941628
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46288965: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46288965: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46288965: MISC:GDT base=00000000 limit=00000000\n78\n46288965: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243686.621663
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243687.4472194
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243688.2702591
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243688.320509
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289103: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289103: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289103: MISC:GDT base=00000000 limit=00000000\n78\n46289103: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243689.4464166
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243690.2714539
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243691.0960906
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243691.14632
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289241: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289241: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289241: MISC:GDT base=00000000 limit=00000000\n78\n46289241: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243692.2713938
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243693.0944235
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243693.9181702
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243693.9683888
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289379: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289379: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289379: MISC:GDT base=00000000 limit=00000000\n78\n46289379: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243695.094813
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243695.9181566
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243696.743534
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243696.7937906
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289517: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289517: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289517: MISC:GDT base=00000000 limit=00000000\n78\n46289517: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243697.9208493
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243698.743872
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243699.5681381
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243699.6184535
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289655: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289655: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289655: MISC:GDT base=00000000 limit=00000000\n78\n46289655: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243700.7438
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243701.5668483
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243702.3897758
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243702.4401371
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289793: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289793: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289793: MISC:GDT base=00000000 limit=00000000\n78\n46289793: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243703.566275
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243704.3910308
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243705.214167
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243705.2644234
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46289931: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46289931: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46289931: MISC:GDT base=00000000 limit=00000000\n78\n46289931: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243706.3896685
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243707.2129884
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243708.0361779
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243708.0864284
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "....\n-> C_  ....P_  ....U_  \n46290069: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0\n78\n46290069: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]\n78\n46290069: MISC:GDT base=00000000 limit=00000000\n78\n46290069: MISC:IDT base=00000000 limit=000003FF\n\n-> _   ",
+    "t": 1778243709.212089
+  },
+  {
+    "cmd": "MEMDUMP 2C23:1A7C 8",
+    "excerpt": "....\n-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_  \nDEBUG: Memory dump success.\n\n-> _  ",
+    "t": 1778243710.0351603
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\n78\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243710.8582354
+  },
+  {
+    "addr": null,
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after strict stop",
+    "t": 1778243710.9085064
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "final retention/position sample",
+    "t": 1778243710.993336
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:1A7C (00)\n78\n01. BP 23B0:40FE\n78\n02. BP 1EA7:01AA\n78\n03. BP 1EA7:010D\nBreakpoint list:           \n-------------------------------------------------------------------------\n00. BPMEM 2C23:1A7C (00)\n01. BP 23B0:40FE        \n02. BP 1EA7:01AA\n030D\n04. BP 22F7:0699\nBreakpoint list:\n-------------------------------------------------------------------------\n00. BPMEM 2C23:1A7C (00)\n01. BP 23B0:40FE        \n02. BP 1EA7:01AA\n030D\n04. BP 22F7:0699\n\n-> _      ",
+    "t": 1778243716.8562305
+  }
+]

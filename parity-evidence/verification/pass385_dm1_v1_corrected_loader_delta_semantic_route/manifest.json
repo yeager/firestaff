@@ -1,0 +1,454 @@
+{
+  "addresses": {
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "280C:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23B0:40FE",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA7:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA7:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F7:0699",
+    "G0321_B_StopWaitingForPlayerInput": "2C23:1A7C"
+  },
+  "blocker": "corrected loader delta proves F0380/G0321/F0128 runtime path, but semantic command dispatch still missing f0365OrF0366Hit",
+  "branch": "worker/pass384-n2-runtime-recheck-20260508",
+  "head": "91c859adf81619c45a9718a68fa68ac8367cb4b4",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP/BPM command echo",
+    "forced pause",
+    "route keylog alone",
+    "source-only address binding"
+  ],
+  "promotionRule": "Promote only if strict post-Running stops prove F0380 plus F0365/F0366, G0321 writes nonzero, and a later F0128 stop in the same bounded post-load run. BPLIST/setup echoes, route keylogs, and forced pause samples are excluded. Pass385 uses FIRES.MAP plus the observed DS/CS +0x0736 loader delta from pass384/pass385 runtime, replacing pass384 +0x0733 candidates.",
+  "proofPredicates": {
+    "breakpointsRetainedAtArm": true,
+    "f0365OrF0366Hit": false,
+    "f0380Hit": true,
+    "g0321StopWaitWriteObserved": true,
+    "nextF0128AfterStopWaitObserved": true,
+    "routeInputAfterArming": true,
+    "sawRunning": true
+  },
+  "repo": "/home/trv2/work/firestaff",
+  "runtimeArtifacts": {
+    "commandLog": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/pass385_command_log.json",
+    "routeKeylog": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/pass385_route_keylog.json",
+    "transcript": "parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/pass385_runtime.clean.txt"
+  },
+  "runtimeProbe": {
+    "boundedSeconds": 75,
+    "durationSeconds": 114.17,
+    "finalPauseCodeAddr": "22F7:06AD",
+    "method": "post-load pexpect-owned PTY; arm corrected-loader-delta F0380/F0365/F0366/F0128 code breakpoints plus G0321 BPM; strict stops require (Running)->prompt",
+    "ran": true,
+    "retainedAtArm": {
+      "F0128_DUNGEONVIEW_Draw_CPSF": true,
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+      "F0380_COMMAND_ProcessQueue_CPSC": true,
+      "G0321_B_StopWaitingForPlayerInput": true
+    },
+    "retainedFinal": {
+      "F0128_DUNGEONVIEW_Draw_CPSF": true,
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+      "F0380_COMMAND_ProcessQueue_CPSC": true,
+      "G0321_B_StopWaitingForPlayerInput": true
+    },
+    "route": "one wait:3500 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900",
+    "routeInputAfterArming": true,
+    "sawRunning": true,
+    "stops": [
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "g0321_bpm",
+        "memoryBreakpoints": [
+          {
+            "addr": "2C23:1A7C",
+            "new": "01",
+            "old": "00"
+          }
+        ],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01\n\n-> _     CD12",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243634.6373243
+      },
+      {
+        "addr": "23B0:4113",
+        "entryAddr": "23B0:40FE",
+        "kind": "F0128_DUNGEONVIEW_Draw_CPSF",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [
+          "23B0:40FE  55push",
+          "23B0:40FF  8BEC  mov",
+          "23B0:4101  83EC04sub",
+          "23B0:4104  56    push",
+          "23B0:4105  57    push",
+          "23B0:4106  8B7606mov",
+          "23B0:4109  8B7E0Adi",
+          "23B0:410C  833E741A00cmp",
+          "23B0:4111  7404je",
+          "23B0:4113  0Ecs"
+        ],
+        "postRunningExcerpt": "....\n23B0:40FE  55push bp\n23B0:40FF  8BEC  mov  bp,sp\n23B0:4101  83EC04sub  sp,0004\n23B0:4104  56    push si\n23B0:4105  57    push di\n23B0:4106  8B7606mov  si,[bp+06]ss:[0FD0]=0006\n23B0:4109  8B7E0Adi,[bp+0A]ss:[0FD4]=0FF4\n23B0:410C  833E741A00cmp  word [1A74],0000ds:[1A74]=0001\n23B0:4111  7404je   00004117 ($+4)(down)\n23B0:4113  0Ecs\n-> _     000040663339056  CS=23B040FE1000CA0001B5897301",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243637.7699227
+      },
+      {
+        "addr": "07FB:01D6",
+        "entryAddr": null,
+        "kind": "g0321_bpm",
+        "memoryBreakpoints": [
+          {
+            "addr": "2C23:1A7C",
+            "new": "00",
+            "old": "01"
+          }
+        ],
+        "postRunningCodeLines": [
+          "07FB:01BA  EB0Cjmp",
+          "07FB:01BC  9AB407132Acall",
+          "2A13:07B4\n07FB",
+          "07FB:01C2  9A0704F722call",
+          "22F7:0407\n07FB",
+          "07FB:01C8  9A2508132Acall",
+          "2A13:0825\n07FB",
+          "07FB:01CF  75EB      jne",
+          "07FB:01D1  833E543D00cmp",
+          "07FB:01D6  744Dje"
+        ],
+        "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 01 -> 00\n\n07FB:01BA  EB0Cjmp  short 000001C8 ($+c)   (down)\n07FB:01BC  9AB407132Acall 2A13:07B4\n07FB:01C1  50    push ax     \n07FB:01C2  9A0704F722call 22F7:0407\n07FB:01C7  59op  cx\n07FB:01C8  9A2508132Acall 2A13:0825\n07FB:01CD  0BC0  or   ax,ax\n07FB:01CF  75EB      jne  000001BC ($-15) (no jmp)      \n07FB:01D1  833E543D00cmp  word [3D54],0000ds:[3D54]=0000\n07FB:01D6  744Dje   00000225 ($+4d)(down)\n-> _     FFFF303100C07FB01BA1BFFFFC86286865",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243640.6110785
+      },
+      {
+        "addr": "22F7:06AD",
+        "entryAddr": "22F7:0699",
+        "kind": "F0380_COMMAND_ProcessQueue_CPSC",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [
+          "22F7:0699  55  push",
+          "22F7:069A  8BEC      mov",
+          "22F7:069C  83EC04sub",
+          "22F7:069F  56        push",
+          "22F7:06A0  57ush",
+          "22F7:06A1  C7060A1F0100mov",
+          "22F7:06A7  A1081Fmov",
+          "22F7:06AA  40  inc",
+          "22F7:06AB  8BF8      mov",
+          "22F7:06AD  3D0800cmp"
+        ],
+        "postRunningExcerpt": "....\n22F7:0699  55  push bp\n22F7:069A  8BEC      mov  bp,sp    \n22F7:069C  83EC04sub  sp,0004\n22F7:069F  56        push si       \n22F7:06A0  57ush di\n22F7:06A1  C7060A1F0100mov  word [1F0A],0001ds:[1F0A]=0000\n22F7:06A7  A1081Fmov  ax,[1F08]ds:[1F08]=0008\n22F7:06AA  40  inc  ax\n22F7:06AB  8BF8      mov  di,ax\n22F7:06AD  3D0800cmp  ax,0008\n-> _     0000066333922F769949",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243643.4363337
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     7033",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243646.2590714
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     171",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243649.0826714
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     309",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243651.9101388
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     447",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243654.7348442
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     585",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243657.5577164
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     723",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243660.3788872
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     861",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243663.1996126
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     999",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243666.0220687
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     8137",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243668.8507342
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     275",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243671.6763093
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     413",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243674.5032752
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     551",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243677.3260021
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     689",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243680.1497002
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     827",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243682.9742851
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     965",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243685.7960896
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     9103",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243688.6220903
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     241",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243691.4483058
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     379",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243694.2711267
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     517",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243697.0965831
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     655",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243699.9199104
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     793",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243702.7431786
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     931",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243705.5662873
+      },
+      {
+        "addr": null,
+        "entryAddr": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....\n-> _     90069",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778243708.3877945
+      }
+    ]
+  },
+  "schema": "pass385_dm1_v1_corrected_loader_delta_semantic_route.v1",
+  "sourceAudit": [
+    {
+      "file": "GAMELOOP.C",
+      "lineHits": {
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;": 164,
+        "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);": 219
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lineHits": {
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;": 156,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS385_F0365_F0366_COMMAND_DISPATCH_NOT_PROVEN",
+  "timestampUtc": "2026-05-08T12:35:17.583727+00:00"
+}
