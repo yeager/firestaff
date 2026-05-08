@@ -116,6 +116,15 @@ static const DM1_ViewportThingLayerSpec s_thing_layers[] = {
     { DM1_VIEWPORT_THING_LAYER_EXPLOSIONS,  "explosions",  "DUNVIEW.C:4579-4581,5915-5933", false, true  },
 };
 
+static const DM1_ViewportPostCommandRedrawSpec s_post_command_redraw = {
+    true,
+    true,
+    true,
+    "COMMAND.C:2045-2156/F0380 pops a queued command and dispatches turn/move mutations",
+    "GAMELOOP.C:55-90 next loop iteration redraws F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)",
+    "DRAWVIEW.C:709-722 F0097_DUNGEONVIEW_DrawViewport requests the G0296 viewport blit and waits for vertical blank",
+};
+
 static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
     { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, DM1_PC34_ZONE_WALL_D3L2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260", "DUNVIEW.C:6263-6264 wall ornament then return" },
     { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, DM1_PC34_ZONE_WALL_D3R2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327", "DUNVIEW.C:6330-6331 wall ornament then return" },
@@ -661,6 +670,11 @@ const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t in
     return &s_thing_layers[index];
 }
 
+const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spec(void)
+{
+    return &s_post_command_redraw;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Source Evidence
  * ──────────────────────────────────────────────────────────────────────── */
@@ -705,6 +719,9 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:8064 F0126_DUNGEONVIEW_DrawSquareD0R\n"
         "  DUNVIEW.C:8164 F0127_DUNGEONVIEW_DrawSquareD0C\n"
         "  DUNVIEW.C:8318 F0128_DUNGEONVIEW_Draw_CPSF\n"
+        "  COMMAND.C:2045-2156 F0380 command dispatch before next main-loop redraw\n"
+        "  GAMELOOP.C:55-90 next loop iteration redraws F0128 from post-command G0308/G0306/G0307 party tuple\n"
+        "  DRAWVIEW.C:709-722 F0097 requests viewport blit and waits for vertical blank\n"
         "  DUNVIEW.C:8446-8542 F0128 back-to-front viewport wall/object draw order\n"
         "  DUNVIEW.C:8577-8579 F0128 restores G3071_WallSetNotFlipped to G2107_WallSet\n"
         "  DUNVIEW.C:8609-8610 F0128 calls F0097_DUNGEONVIEW_DrawViewport after wall order completes\n"

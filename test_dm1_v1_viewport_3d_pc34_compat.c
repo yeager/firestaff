@@ -261,6 +261,20 @@ static void test_f0115_cell_order_and_layer_z_order(void)
     check_int("F0115.layer.out_of_range", dm1_viewport_3d_get_thing_layer_spec(4) == NULL, 1);
 }
 
+
+static void test_post_command_redraw_contract(void)
+{
+    const DM1_ViewportPostCommandRedrawSpec *spec = dm1_viewport_3d_post_command_redraw_spec();
+    check_nonnull("post_command_redraw.nonnull", spec);
+    if (!spec) return;
+    check_int("post_command_redraw.command_mutates_before_draw", spec->command_mutates_before_draw ? 1 : 0, 1);
+    check_int("post_command_redraw.redraw_uses_party_tuple", spec->redraw_uses_party_tuple ? 1 : 0, 1);
+    check_int("post_command_redraw.present_waits", spec->present_waits_for_viewport ? 1 : 0, 1);
+    check_int("post_command_redraw.command_source", strstr(spec->command_source_lines, "COMMAND.C:2045-2156") != NULL, 1);
+    check_int("post_command_redraw.mainloop_source", strstr(spec->main_loop_source_lines, "GAMELOOP.C:55-90") != NULL, 1);
+    check_int("post_command_redraw.present_source", strstr(spec->present_source_lines, "DRAWVIEW.C:709-722") != NULL, 1);
+}
+
 static void test_source_evidence_mentions_visual_lane(void)
 {
     const char *e = dm1_viewport_3d_source_evidence();
@@ -277,6 +291,9 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.occlusion", strstr(e, "wall case returns") != NULL, 1);
+    check_int("source_evidence.command_dispatch", strstr(e, "COMMAND.C:2045-2156") != NULL, 1);
+    check_int("source_evidence.next_redraw", strstr(e, "GAMELOOP.C:55-90") != NULL, 1);
+    check_int("source_evidence.present_wait", strstr(e, "DRAWVIEW.C:709-722") != NULL, 1);
 }
 
 int main(void)
@@ -287,6 +304,7 @@ int main(void)
     test_f0115_cell_order_and_layer_z_order();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();
+    test_post_command_redraw_contract();
     test_source_evidence_mentions_visual_lane();
 
     if (g_failures) {

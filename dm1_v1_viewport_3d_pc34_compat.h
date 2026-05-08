@@ -259,6 +259,15 @@ typedef struct {
 } DM1_ViewportThingLayerSpec;
 
 typedef struct {
+    bool command_mutates_before_draw;
+    bool redraw_uses_party_tuple;
+    bool present_waits_for_viewport;
+    const char *command_source_lines;
+    const char *main_loop_source_lines;
+    const char *present_source_lines;
+} DM1_ViewportPostCommandRedrawSpec;
+
+typedef struct {
     DM1_ViewSquareIndex square;
     int8_t rel_depth;
     int8_t rel_lateral;
@@ -532,6 +541,11 @@ DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSp
 DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order);
 size_t dm1_viewport_3d_thing_layer_spec_count(void);
 const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t index);
+
+/* Source-locked post-command redraw contract: a completed command mutates the
+ * party/world state first, GAMELOOP.C redraws F0128 from G0308/G0306/G0307,
+ * and F0097 waits until the viewport buffer has been presented. */
+const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spec(void);
 
 /*
  * Source evidence string for verification.
