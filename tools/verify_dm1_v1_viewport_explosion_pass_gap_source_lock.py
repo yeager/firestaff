@@ -105,6 +105,16 @@ def main() -> int:
             "C15_THING_TYPE_EXPLOSION",
         ], "DUNVIEW.C:5915-5933")
 
+        # This gate originally locked the pre-pass375 blocker.  If pass375 is
+        # present in the merged tree, the blocker is superseded by the deferred
+        # explosion pass gate below; keep this historical verifier green while
+        # still proving that the original ReDMCSB anchors and evidence exist.
+        if "m11_draw_dm1_deferred_explosion_pass" in view_text and "m11_draw_explosion_sprite" in view_text:
+            print("status=PASS_DM1_V1_VIEWPORT_EXPLOSION_PASS_GAP_SOURCE_LOCK_SUPERSEDED_BY_PASS375")
+            print("anchors=DUNVIEW.C:4547-4582,DUNVIEW.C:5679-5683,DUNVIEW.C:5915-5933")
+            print("superseded_by=pass375_deferred_after_all_packed_cells_explosion_pass")
+            return 0
+
         effect = find_function(view_text, "m11_draw_effect_cue")
         projectile_pos = effect.find("summary.projectiles > 0")
         explosion_pos = effect.find("summary.explosions > 0")
