@@ -1,0 +1,443 @@
+{
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "checks": [
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "kind": "redmcsb_source_lock",
+      "lines": "2962-3003",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0100/F0101/F0102 blitters",
+      "kind": "redmcsb_source_lock",
+      "lines": "3048-3082",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "kind": "redmcsb_source_lock",
+      "lines": "4547-4910",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0116/F0117/F0118 D3 side/center squares",
+      "kind": "redmcsb_source_lock",
+      "lines": "6400-6835",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0121/F0124 D2C/D1C center squares",
+      "kind": "redmcsb_source_lock",
+      "lines": "7244-7937",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "kind": "redmcsb_source_lock",
+      "lines": "8318-8618",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "kind": "redmcsb_source_lock",
+      "lines": "709-722",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "script token route feeds the active game view and redraw result calls M11_GameView_Draw",
+      "file": "main_loop_m11.c",
+      "kind": "firestaff_product_lock",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "runtime probe records the same live movement pipeline result used by the redraw route",
+      "file": "main_loop_m11.c",
+      "kind": "firestaff_product_lock",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport",
+      "file": "m11_game_view.c",
+      "kind": "firestaff_product_lock",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "claim": "normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback",
+      "file": "m11_game_view.c",
+      "kind": "firestaff_product_lock",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "function": "m11_draw_viewport",
+      "kind": "firestaff_viewport_order_lock",
+      "ok": true,
+      "orderedMarkers": [
+        "m11_draw_viewport_background(state",
+        "m11_draw_dm1_floor_pits(state",
+        "m11_draw_dm1_side_walls(state",
+        "m11_draw_dm1_front_walls(state",
+        "m11_draw_dm1_center_doors(state",
+        "m11_dm1_nearest_blocking_center_depth_index(cells)",
+        "m11_draw_dm1_side_contents(state",
+        "if (state->showDebugHUD)"
+      ]
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
+      ],
+      "kind": "prior_wall_occlusion_gate",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/usr/bin/python3",
+          "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
+        ],
+        "outputTail": "status=PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE\nsourceAnchors=5\npass359ChainOk=1\nnormalViewportRedrawOrderOk=1\n",
+        "returncode": 0
+      }
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
+      ],
+      "kind": "prior_wall_occlusion_gate",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/usr/bin/python3",
+          "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
+        ],
+        "outputTail": "PASS drawview-presents-after-dungeonview-buffer DRAWVIEW.C:709-900 F0097_DUNGEONVIEW_DrawViewport\n  Presentation is a final blit of G0296 after DUNVIEW has replayed walls/objects into the viewport buffer.\nPASS floor-ceiling-base-before-wall-replay DUNVIEW.C:2962-3003 F0098_DUNGEONVIEW_DrawFloorAndCeiling\n  The renderer starts from a clean floor/ceiling buffer before replaying visible wall zones and contents.\nPASS f0128-far-to-near-square-replay DUNVIEW.C:8318-8618 F0128_DUNGEONVIEW_Draw_CPSF\n  DUNVIEW replays cells from far D4 through D0 before presentation; later near-side calls naturally occlude earlier far pixels.\nPASS d3-side-wall-occludes-by-early-return DUNVIEW.C:6400-6835 F0116_DUNGEONVIEW_DrawSquareD3L / F0117_DUNGEONVIEW_DrawSquareD3R / F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n  A wall square draws its wall zone and normally returns before open-cell content; only alcove wall ornaments intentionally replay contained items.\nPASS f0115-ordered-cell-pass-not-depth-sort DUNVIEW.C:4547-4910 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n  Within each visible square, F0115 consumes encoded cell order nibbles and rescans the thing list per cell; primitive batching would lose this source order.\nPASS door-front-two-pass-near-side-replay DUNVIEW.C:6428-6816 F0116/F0117/F0118 door-front branches\n  Door-front squares draw rear-side contents, then the door/frame, then replay front-side contents; this is explicit near-side replay, not a flat depth batch.\n",
+        "returncode": 0
+      }
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_v1_viewport_occlusion_gate.py"
+      ],
+      "kind": "prior_wall_occlusion_gate",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/usr/bin/python3",
+          "tools/verify_v1_viewport_occlusion_gate.py"
+        ],
+        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:9329\n- pits gate before sampling: m11_game_view.c:9426\n- floor ornaments gate before sampling: m11_game_view.c:9494\n- stairs gate before sampling: m11_game_view.c:9777\n- teleporter fields gate before sampling: m11_game_view.c:9847\n- side walls gate before sampling: m11_game_view.c:9918\n- side doors gate before sampling: m11_game_view.c:10310\n- side door ornaments gate before sampling: m11_game_view.c:10406\n- side destroyed-door masks gate before sampling: m11_game_view.c:10484\n- viewport call-site wiring: m11_game_view.c:17980\n",
+        "returncode": 0
+      }
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
+      ],
+      "kind": "prior_wall_occlusion_gate",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/usr/bin/python3",
+          "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
+        ],
+        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:9603, 9628\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:12107\n- Firestaff side-wall opaque far-to-near blits guarded by same-lane occlusion: m11_game_view.c:9918\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:9639\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:10310\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:10406\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:10484\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:17980\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "cmake_configure",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "-S",
+          "/home/trv2/work/firestaff",
+          "-B",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass373-verify",
+          "-G",
+          "Ninja"
+        ],
+        "outputTail": "-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Configuring done (0.5s)\n-- Generating done (0.1s)\n-- Build files have been written to: /home/trv2/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "cmake_build_firestaff",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "--build",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass373-verify",
+          "--target",
+          "firestaff",
+          "--parallel",
+          "1"
+        ],
+        "outputTail": "irestaff_m11.dir/audio_sdl_m11.c.o\n[207/266] Building C object CMakeFiles/firestaff_m11.dir/graphics_dat_snd3_loader_v1.c.o\n[208/266] Building C object CMakeFiles/firestaff_m11.dir/song_dat_loader_v1.c.o\n[209/266] Building C object CMakeFiles/firestaff_m11.dir/sound_event_snd3_map_v1.c.o\n[210/266] Building C object CMakeFiles/firestaff_m11.dir/title_dat_loader_v1.c.o\n[211/266] Building C object CMakeFiles/firestaff_m11.dir/title_frontend_v1.c.o\n[212/266] Building C object CMakeFiles/firestaff_m11.dir/asset_loader_m11.c.o\n[213/266] Building C object CMakeFiles/firestaff_m11.dir/font_m11.c.o\n[214/266] Building C object CMakeFiles/firestaff_m11.dir/fs_portable_compat.c.o\n[215/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_vblank_timing.c.o\n[216/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_save_load.c.o\n[217/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_viewport_3d_pc34_compat.c.o\n[218/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_dungeon_loader_pc34_compat.c.o\n[219/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_title_screen_pc34_compat.c.o\n[220/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_palette_font_pc34_compat.c.o\n[221/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_object_world_pc34_compat.c.o\n[222/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_graphics_loader_pc34_compat.c.o\n[223/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_fade_transition_pc34_compat.c.o\n[224/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_room_transition_pc34_compat.c.o\n[225/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_portrait_panel_pc34_compat.c.o\n[226/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_wall_ornament_pc34_compat.c.o\n[227/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_dungeon_decompressor_pc34_compat.c.o\n[228/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_field_teleporter_effect_pc34_compat.c.o\n[229/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_game_loop_integration_pc34_compat.c.o\n[230/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_creature_viewport_pc34_compat.c.o\n[231/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_save_load_system_pc34_compat.c.o\n[232/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_blit_fill_pc34_compat.c.o\n[233/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_dialog_scroll_pc34_compat.c.o\n[234/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_click_routing_pc34_compat.c.o\n[235/266] Building C object CMakeFiles/firestaff_m11.dir/dm1_v1_engine_pc34_compat.c.o\n[236/266] Linking C static library libfirestaff_m11.a\n[237/266] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_m12.c.o\n[238/266] Building C object CMakeFiles/firestaff_m12.dir/menu_startup_render_modern_m12.c.o\n[239/266] Building C object CMakeFiles/firestaff_m12.dir/menu_hit_m12.c.o\n[240/266] Building C object CMakeFiles/firestaff_m12.dir/config_m12.c.o\n[241/266] Building C object CMakeFiles/firestaff_m12.dir/asset_status_m12.c.o\n[242/266] Building C object CMakeFiles/firestaff_m12.dir/card_art_m12.c.o\n[243/266] Building C object CMakeFiles/firestaff_m12.dir/card_art_generated_m12.c.o\n[244/266] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_m12.c.o\n[245/266] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_readme_m12.c.o\n[246/266] Building C object CMakeFiles/firestaff_m12.dir/bestiary_m12.c.o\n[247/266] Building C object CMakeFiles/firestaff_m12.dir/creature_art_m12.c.o\n[248/266] Building C object CMakeFiles/firestaff_m12.dir/data_validator_m12.c.o\n[249/266] Building C object CMakeFiles/firestaff_m12.dir/changelog_m12.c.o\n[250/266] Building C object CMakeFiles/firestaff_m12.dir/theme_m12.c.o\n[251/266] Building C object CMakeFiles/firestaff_m12.dir/animated_bg_m12.c.o\n[252/266] Building C object CMakeFiles/firestaff_m12.dir/input_remap_m12.c.o\n[253/266] Building C object CMakeFiles/firestaff_m12.dir/save_browser_m12.c.o\n[254/266] Building C object CMakeFiles/firestaff_m12.dir/custom_dungeon_m12.c.o\n[255/266] Building C object CMakeFiles/firestaff_m12.dir/item_encyclopedia_m12.c.o\n[256/266] Building C object CMakeFiles/firestaff_m12.dir/campaign_m12.c.o\n[257/266] Building C object CMakeFiles/firestaff_m12.dir/spell_reference_m12.c.o\n[258/266] Building C object CMakeFiles/firestaff_m12.dir/map_viewer_m12.c.o\n[259/266] Building C object CMakeFiles/firestaff_m12.dir/music_jukebox_m12.c.o\n[260/266] Building C object CMakeFiles/firestaff_m12.dir/gamepad_config_m12.c.o\n[261/266] Building C object CMakeFiles/firestaff_m12.dir/touch_layout_m12.c.o\n[262/266] Building C object CMakeFiles/firestaff_m12.dir/presentation_preview_m12.c.o\n[263/266] Building C object CMakeFiles/firestaff_m12.dir/screenshot_gallery_m12.c.o\n[264/266] Linking C static library libfirestaff_m12.a\n[265/266] Building C object CMakeFiles/firestaff.dir/firestaff_main_m11.c.o\n[266/266] Linking C executable firestaff\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "launcher_route_runtime_probe",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "timeout",
+          "45s",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass373-verify/firestaff",
+          "--duration",
+          "9000",
+          "--width",
+          "1920",
+          "--height",
+          "1080",
+          "--data-dir",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "--script",
+          "enter,down,down,down,down,down,down,enter,right,up"
+        ],
+        "outputTail": "",
+        "returncode": 0
+      },
+      "script": "enter,down,down,down,down,down,down,enter,right,up"
+    },
+    {
+      "expected": "launcher route reaches active DM1 V1 state; forward command applies one movement step and sets viewportDirty=1",
+      "kind": "live_runtime_redraw_state",
+      "observed": {
+        "active": 1,
+        "gameTick": 8,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 3,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 1,
+          "anyTurnOccurred": 0,
+          "command": 3,
+          "dequeued": 1,
+          "movementBlocked": 0,
+          "stepApplied": 1,
+          "turnApplied": 0,
+          "viewportDirty": 1
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "ok": true
+    }
+  ],
+  "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "head": "72841d58ec4d3ad7e092829a8d21c7044ac62c02",
+  "notClaimed": [
+    "original DOS keyboard-buffer/NumLock parity",
+    "DOSBox/FIRES CS:IP debugger hit",
+    "pixel-perfect viewport parity"
+  ],
+  "probeJson": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/launcher_route_viewport_redraw_probe.json",
+  "productLocks": [
+    {
+      "claim": "script token route feeds the active game view and redraw result calls M11_GameView_Draw",
+      "file": "main_loop_m11.c",
+      "markers": [
+        "m11_next_script_input(&scriptCursor)",
+        "M11_GameView_HandleInput(&gameView, input)",
+        "if (result == M11_GAME_INPUT_REDRAW)",
+        "M11_GameView_Draw(&gameView"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/work/firestaff/main_loop_m11.c"
+    },
+    {
+      "claim": "runtime probe records the same live movement pipeline result used by the redraw route",
+      "file": "main_loop_m11.c",
+      "markers": [
+        "FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON",
+        "lastDm1V1MovementPipelineResult.core.queue.dequeued",
+        "lastDm1V1MovementPipelineResult.viewportDirty"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/work/firestaff/main_loop_m11.c"
+    },
+    {
+      "claim": "input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport",
+      "file": "m11_game_view.c",
+      "markers": [
+        "m11_dm1_v1_pipeline_command_for_input",
+        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
+        "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat",
+        "lastDm1V1MovementPipelineResult.viewportDirty",
+        "return M11_GAME_INPUT_REDRAW"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/work/firestaff/m11_game_view.c"
+    },
+    {
+      "claim": "normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback",
+      "file": "m11_game_view.c",
+      "markers": [
+        "static void m11_draw_viewport(",
+        "m11_draw_dm1_side_walls(state",
+        "m11_draw_dm1_front_walls(state",
+        "m11_draw_dm1_center_doors(state",
+        "m11_dm1_nearest_blocking_center_depth_index(cells)",
+        "m11_draw_dm1_side_destroyed_door_masks(state",
+        "m11_draw_dm1_side_contents(state",
+        "if (state->showDebugHUD)"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/work/firestaff/m11_game_view.c"
+    }
+  ],
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.v1",
+  "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
+  "script": "enter,down,down,down,down,down,down,enter,right,up",
+  "sourceLocks": [
+    {
+      "claim": "viewport floor/ceiling base is drawn into G0296/G0087 before wall passes",
+      "file": "DUNVIEW.C",
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "lines": "2962-3003",
+      "markers": [
+        "void F0098_DUNGEONVIEW_DrawFloorAndCeiling(",
+        "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);",
+        "F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);",
+        "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "wall, opaque wall, and door bitmaps target the viewport bitmap",
+      "file": "DUNVIEW.C",
+      "function": "F0100/F0101/F0102 blitters",
+      "lines": "3048-3082",
+      "markers": [
+        "void F0100_DUNGEONVIEW_DrawWallSetBitmap(",
+        "void F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency(",
+        "void F0102_DUNGEONVIEW_DrawDoorBitmap(",
+        "G0296_puc_Bitmap_Viewport"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "ordered cell contents use source cell-order nibbles and normalized view cells",
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "lines": "4547-4910",
+      "markers": [
+        "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(",
+        "P0146_ui_OrderedViewCellOrdinals >>= 4;",
+        "L0139_i_Cell = M021_NORMALIZE(AL0126_i_ViewCell + P0142_i_Direction);",
+        "P0141_T_Thing = L0146_T_FirstThingToDraw;"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "D3 wall/doorpass branches draw wall panels and return to enforce occlusion",
+      "file": "DUNVIEW.C",
+      "function": "F0116/F0117/F0118 D3 side/center squares",
+      "lines": "6400-6835",
+      "markers": [
+        "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0698_puc_Bitmap_WallSet_Wall_D3LCR",
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
+        "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
+        "return;"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "center wall/door branches draw opaque/door layers before ordered contents",
+      "file": "DUNVIEW.C",
+      "function": "F0121/F0124 D2C/D1C center squares",
+      "lines": "7244-7937",
+      "markers": [
+        "STATICFUNCTION void F0121_DUNGEONVIEW_DrawSquareD2C(",
+        "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C(",
+        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G3013_i_WallSet_Wall_D1C",
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "main viewport pass samples view squares, draws far-to-near D3/D2/D1/D0, then requests viewport blit",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "lines": "8318-8618",
+      "markers": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF(",
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling(",
+        "F0116_DUNGEONVIEW_DrawSquareD3L(",
+        "F0121_DUNGEONVIEW_DrawSquareD2C(",
+        "F0124_DUNGEONVIEW_DrawSquareD1C(",
+        "F0127_DUNGEONVIEW_DrawSquareD0C(",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "source draw pass flips the viewport redraw request and waits for vblank",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "lines": "709-722",
+      "markers": [
+        "void F0097_DUNGEONVIEW_DrawViewport(",
+        "G0324_B_DrawViewportRequested = C1_TRUE;",
+        "M526_WaitVerticalBlank();"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
+  "timestampUtc": "2026-05-08T07:58:53.896356+00:00"
+}

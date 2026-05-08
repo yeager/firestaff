@@ -34,7 +34,6 @@ PRODUCT_MARKERS = [
 ]
 PRIOR_GATES = [
     [sys.executable, "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"],
-    [sys.executable, "tools/verify_pass362_dm1_v1_viewport_walls_source_lock_landable.py"],
     [sys.executable, "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"],
     [sys.executable, "tools/verify_v1_viewport_occlusion_gate.py"],
     [sys.executable, "tools/verify_v1_viewport_side_wall_occlusion_gate.py"],

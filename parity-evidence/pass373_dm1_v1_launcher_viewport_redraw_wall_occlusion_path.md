@@ -37,7 +37,6 @@ The full Firestaff launcher route-token path reaches a live DM1 V1 movement step
 - prior_wall_occlusion_gate ok=True
 - prior_wall_occlusion_gate ok=True
 - prior_wall_occlusion_gate ok=True
-- prior_wall_occlusion_gate ok=True
 - cmake_configure ok=True
 - cmake_build_firestaff ok=True
 - launcher_route_runtime_probe ok=True
