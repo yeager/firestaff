@@ -13,9 +13,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = Path(
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.openclaw/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+).expanduser()
 PASS386_MANIFEST = REPO / "parity-evidence/verification/pass386_dm1_v1_keyboard_vs_click_command_dispatch/manifest.json"
 OUT = REPO / "parity-evidence/verification/pass387_dm1_v1_f0380_queue_pop_eligibility/manifest.json"
 
