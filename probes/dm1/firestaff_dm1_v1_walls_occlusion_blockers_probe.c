@@ -188,6 +188,49 @@ static int verify_draw_order(struct MapFixture* fixture)
     ok &= expect_int("D1L side wall has side-only wall mask", dm1_compute_wall_visibility(&vp.squares[7], DIR_NORTH), (1 << DM1_VW_D1L_RIGHT));
     ok &= expect_int("D1L side wall does not set center D1 front flag", dm1_is_front_wall_at_depth(&vp, 1) ? 1 : 0, 0);
 
+    reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles_Compat){0}, &(struct PartyState_Compat){0});
+    set_square(fixture->squares, 1, 2, sqb(DM1_ELEMENT_WALL, 0));
+    set_square(fixture->squares, 3, 2, sqb(DM1_ELEMENT_WALL, 0));
+    dm1_build_viewport(2, 2, DIR_NORTH, 0, read_square_for_view, fixture, &vp);
+    count = dm1_get_visible_squares(&vp, visible);
+    printf("nearestD0SideWalls visibleCount=%d d0lMask=0x%04x d0rMask=0x%04x source=DUNVIEW.C:7960-8164\n",
+        count, dm1_compute_wall_visibility(&vp.squares[10], DIR_NORTH),
+        dm1_compute_wall_visibility(&vp.squares[11], DIR_NORTH));
+    ok &= expect_int("D0 side walls do not occlude farther rows", count, DM1_VIEWPORT_SQUARE_COUNT);
+    ok &= expect_int("D0L nearest side wall mask", dm1_compute_wall_visibility(&vp.squares[10], DIR_NORTH), (1 << DM1_VW_D0L_SIDE));
+    ok &= expect_int("D0R nearest side wall mask", dm1_compute_wall_visibility(&vp.squares[11], DIR_NORTH), (1 << DM1_VW_D0R_SIDE));
+    ok &= expect_int("D0 side walls do not set center D0 front flag", dm1_is_front_wall_at_depth(&vp, 0) ? 1 : 0, 0);
+
+    {
+        int x = 0;
+        int y = 0;
+        unsigned char farMask = 0;
+
+        ok &= expect_int("PC34 D3L2 coordinate exists", dm1_get_pc34_extra_side_wall_coords(2, 2, DIR_NORTH, 3, -2, &x, &y) ? 1 : 0, 1);
+        ok &= expect_int("PC34 D3L2 x", x, 0);
+        ok &= expect_int("PC34 D3L2 y", y, -1);
+        ok &= expect_int("PC34 D3R2 coordinate exists", dm1_get_pc34_extra_side_wall_coords(2, 2, DIR_NORTH, 3, 2, &x, &y) ? 1 : 0, 1);
+        ok &= expect_int("PC34 D3R2 x", x, 4);
+        ok &= expect_int("PC34 D3R2 y", y, -1);
+        ok &= expect_int("PC34 D2L2 coordinate exists", dm1_get_pc34_extra_side_wall_coords(2, 2, DIR_NORTH, 2, -2, &x, &y) ? 1 : 0, 1);
+        ok &= expect_int("PC34 D2L2 x", x, 0);
+        ok &= expect_int("PC34 D2L2 y", y, 0);
+        ok &= expect_int("PC34 D2R2 coordinate exists", dm1_get_pc34_extra_side_wall_coords(2, 2, DIR_NORTH, 2, 2, &x, &y) ? 1 : 0, 1);
+        ok &= expect_int("PC34 D2R2 x", x, 4);
+        ok &= expect_int("PC34 D2R2 y", y, 0);
+        ok &= expect_int("non-PC34 extra coordinate rejected", dm1_get_pc34_extra_side_wall_coords(2, 2, DIR_NORTH, 1, 2, &x, &y) ? 1 : 0, 0);
+
+        farMask |= dm1_compute_pc34_extra_side_wall_visibility(3, -2, sqb(DM1_ELEMENT_WALL, 0), DIR_NORTH);
+        farMask |= dm1_compute_pc34_extra_side_wall_visibility(3, 2, sqb(DM1_ELEMENT_WALL, 0), DIR_NORTH);
+        farMask |= dm1_compute_pc34_extra_side_wall_visibility(2, -2, sqb(DM1_ELEMENT_WALL, 0), DIR_NORTH);
+        farMask |= dm1_compute_pc34_extra_side_wall_visibility(2, 2, sqb(DM1_ELEMENT_WALL, 0), DIR_NORTH);
+        printf("pc34ExtraFarSideWalls mask=0x%02x source=DUNVIEW.C:6226-6331,6837-6893,8479-8508 DEFS.H:2595-2611,2695-2710\n", farMask);
+        ok &= expect_int("PC34 D3L2/D3R2/D2L2/D2R2 wall planes visible", farMask, 0x0f);
+        ok &= expect_int("PC34 extras ignore corridor", dm1_compute_pc34_extra_side_wall_visibility(3, -2, sqb(DM1_ELEMENT_CORRIDOR, 0), DIR_NORTH), 0);
+        ok &= expect_int("PC34 extras classify closed fakewall as wall", dm1_compute_pc34_extra_side_wall_visibility(2, 2, sqb(DM1_ELEMENT_FAKEWALL, 0), DIR_NORTH), (1 << DM1_PC34_EXTRA_WALL_D2R2));
+        ok &= expect_int("PC34 extras reject D1 side", dm1_compute_pc34_extra_side_wall_visibility(1, 2, sqb(DM1_ELEMENT_WALL, 0), DIR_NORTH), 0);
+    }
+
     return ok;
 }
 
@@ -203,7 +246,7 @@ int main(void)
 
     printf("probe=firestaff_dm1_v1_walls_occlusion_blockers_probe\n");
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source\n");
-    printf("sourceEvidence=DEFS.H:1001-1015; DUNGEON.C:35-44,1371-1475,2466-2721; CLIKMENU.C:224-233,264-323; DUNVIEW.C:7727-7926,7960-8162,8164+,8445-8542\n");
+    printf("sourceEvidence=DEFS.H:1001-1015; DUNGEON.C:35-44,1371-1475,2466-2721; CLIKMENU.C:224-233,264-323; DUNVIEW.C:6226-6331,6837-6893,7727-7926,7960-8162,8164+,8445-8542\n");
 
     reset_fixture(&fixture, &dungeon, &map, &tiles, &party);
     set_square(fixture.squares, 2, 1, sqb(DM1_ELEMENT_WALL, 0));

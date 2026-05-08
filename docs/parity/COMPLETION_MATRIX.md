@@ -21,9 +21,9 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 
 | Target | completionPercent | Points | Status | Primary blockers |
 |---|---:|---:|---|---|
-| DM1 V1 | 55% | 55/100 | `in_progress_verified_partial` | Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.<br>Representative original runtime movement/HUD/viewport overlay parity missing. |
+| DM1 V1 | 57% | 57/100 | `in_progress_verified_partial` | Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.<br>Representative original runtime movement/HUD/viewport overlay parity missing. |
 | DM1 V2 | 27% | 27/100 | `in_progress_verified_partial` | V2 completion audit says 100% is not verifiable; phases 1–6 remain absent/incomplete. |
-| CSB V1 | 10% | 10/100 | `inventory_only` | Need CSB-specific parity matrix and launch/render gates; do not infer from DM1. |
+| CSB V1 | 18% | 18/100 | `inventory_only` | Need CSB V1 launch/render smoke and runtime/capture gates; definition matrix is now complete but evidence-only.<br>Do not infer CSB runtime/render/gameplay parity from DM1. |
 | CSB V2 | 0% | 0/100 | `not_started` | No CSB V2 matrix or gates. |
 | DM2 V1 | 7% | 7/100 | `inventory_only` | Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB. |
 | DM2 V2 | 0% | 0/100 | `not_started` | No DM2 V2 matrix or gates. |
@@ -40,7 +40,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 | `definition_matrix` | 10/10 | docs/parity/PARITY_MATRIX_DM1_V1.md exists and carries DM1 V1 labels/status rows. |
 | `launch_smoke` | 8/10 | M9/M10/M11 infrastructure and startup/menu/title gates exist, but current original route still has input/table blockers. |
 | `core_input_movement` | 12/15 | pass296/pass299 plus pass372 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof. |
-| `viewport_ui_render` | 10/20 | Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; full pixel/content parity remains open. |
+| `viewport_ui_render` | 12/20 | Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, and pass375 moves explosions into the ReDMCSB F0115 after-all-packed-cells deferred pass. Full pixel/content parity remains open. |
 | `gameplay_systems` | 2/15 | Semantic suites exist but most gameplay rows remain UNPROVEN or need original-backed cases. |
 | `audio_timing` | 3/10 | Audio assets/event mapping are partly source-backed; cadence/timing overlap remain blocked/unproven. |
 | `original_overlay_regression` | 0/10 | Representative original runtime overlay parity is not yet proven; route/capture remains active blocker. |
@@ -63,7 +63,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 | Criterion | Score | Evidence note |
 |---|---:|---|
 | `reference_inventory` | 8/10 | CSB source/runtime archives and source-lock boundary guard exist. |
-| `definition_matrix` | 2/10 | A parity surface matrix artifact exists, but no complete CSB V1 DoD matrix. |
+| `definition_matrix` | 10/10 | docs/parity/PARITY_MATRIX_CSB_V1.md defines the full CSB V1 DoD matrix with acceptance labels, required proof boundaries, and verifier-backed source anchors; parity surface matrix remains evidence-only. |
 | `launch_smoke` | 0/10 | No complete CSB V1 launch/render smoke proof. |
 | `core_input_movement` | 0/15 | No CSB V1 movement/input completion gates. |
 | `viewport_ui_render` | 0/20 | No CSB V1 render/UI completion gates. |

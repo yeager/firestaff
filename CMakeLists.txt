@@ -256,6 +256,10 @@ if(BUILD_TESTING)
             NAME csb_v1_parity_surface_matrix
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_parity_surface_matrix.py
         )
+        add_test(
+            NAME csb_v1_completion_matrix
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_completion_matrix.py
+        )
     endif()
 
     add_executable(test_touch_click_zone_matrix_pc34_compat_integration
@@ -1092,6 +1096,18 @@ if(BUILD_TESTING)
         add_test(
             NAME pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.py
+        )
+        add_test(
+            NAME pass374_dm1_v1_completion_viewport_wall_credit
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass374_dm1_v1_completion_viewport_wall_credit.py
+        )
+        add_test(
+            NAME pass376_dm1_v1_completion_deferred_explosion_credit
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass376_dm1_v1_completion_deferred_explosion_credit.py
+        )
+        add_test(
+            NAME firestaff_completion_matrix
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_firestaff_completion_matrix.py
         )
         add_test(
             NAME dm1_v1_movement_timing_source_lock

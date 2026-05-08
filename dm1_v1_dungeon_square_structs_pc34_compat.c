@@ -243,7 +243,9 @@ void dm1_compute_view_square_coords(int party_x, int party_y, int direction,
  * som berörs av denna specifika ruta. Den fulla renderingsloopen itererar
  * alla rutor och aggregerar.
  *
- * Returvärde: 13-bit bitmask, bit N = view wall index N.
+ * Returvärde: 15-bit bitmask, bit N = view wall index N.
+ * D0L/D0R are nearest side-wall planes; they do not center-occlude, but
+ * ReDMCSB still draws their side wall bitmaps before returning.
  * ======================================================================= */
 
 uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
@@ -282,7 +284,13 @@ uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
             }
             break;
         case 0:
-            /* Depth 0 har inga synliga front walls (partyt står här) */
+            /* D0 has no center front wall, but nearest side walls are drawn.
+             * Source: ReDMCSB DUNVIEW.C F0125/F0126 wall branches
+             * draw C716_ZONE_WALL_D0L / C717_ZONE_WALL_D0R and return. */
+            switch (square->lane) {
+                case 1: mask = (1 << DM1_VW_D0L_SIDE); break;
+                case 2: mask = (1 << DM1_VW_D0R_SIDE); break;
+            }
             break;
     }
 
@@ -326,6 +334,49 @@ int dm1_classify_square_aspect_element(uint8_t raw_byte, int direction) {
     }
 }
 
+
+
+/* =======================================================================
+ * dm1_get_pc34_extra_side_wall_coords / dm1_compute_pc34_extra_side_wall_visibility
+ *
+ * Source-lock: ReDMCSB DUNVIEW.C MEDIA720/I34E adds supplemental far side
+ * wall planes outside the 12-square core.  F0128 calls D3L2/D3R2 after the
+ * D4 object pass (DUNVIEW.C:8479-8486) and D2L2/D2R2 before D2L/D2R/D2C
+ * (DUNVIEW.C:8501-8508).  The helpers themselves draw only when F0172
+ * classifies the square aspect as WALL (DUNVIEW.C:6253-6264,6320-6331,
+ * 6846-6862,6877-6893).
+ * ======================================================================= */
+
+bool dm1_get_pc34_extra_side_wall_coords(int party_x, int party_y, int direction,
+                                          int depth, int steps_right,
+                                          int *out_x, int *out_y) {
+    if (!(((depth == 3) || (depth == 2)) &&
+          ((steps_right == -2) || (steps_right == 2)))) {
+        return false;
+    }
+    dm1_get_relative_map_coords(party_x, party_y, direction, depth, steps_right, out_x, out_y);
+    return true;
+}
+
+uint8_t dm1_compute_pc34_extra_side_wall_visibility(int depth, int steps_right,
+                                                    uint8_t raw_byte, int direction) {
+    int element;
+
+    if (!(((depth == 3) || (depth == 2)) &&
+          ((steps_right == -2) || (steps_right == 2)))) {
+        return 0;
+    }
+
+    element = dm1_classify_square_aspect_element(raw_byte, direction);
+    if (element != DM1_ELEMENT_WALL) {
+        return 0;
+    }
+
+    if (depth == 3) {
+        return (uint8_t)(1u << ((steps_right < 0) ? DM1_PC34_EXTRA_WALL_D3L2 : DM1_PC34_EXTRA_WALL_D3R2));
+    }
+    return (uint8_t)(1u << ((steps_right < 0) ? DM1_PC34_EXTRA_WALL_D2L2 : DM1_PC34_EXTRA_WALL_D2R2));
+}
 
 /* =======================================================================
  * dm1_build_viewport
