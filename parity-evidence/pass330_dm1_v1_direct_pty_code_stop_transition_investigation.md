@@ -17,4 +17,3 @@ Status: `BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE`
 - Blocker: `F0128 breakpoint armed/retained; pass278-cadence route input delivered; post-route pause showed non-F0128 code address; no strict running-to-23AD:40FE transition appeared.`
 
 Manifest: `parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json`
-

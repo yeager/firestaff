@@ -69,14 +69,14 @@ MIDI:Opened device:none
 01DD:0108  CD21int  21
 01DD:010A  FE380600callback 0006  (internal pro
 01DD:010E  B8004Cmov  ax,4C00
-01DD:0111  CD21int  21   
+01DD:0111  CD21int  21
 01DD:0113  0Cor   al,00
 01DD:0115  000add  [bx+si],alds:[0100]=00BC
 01DD:0117  0d100]=00BC
 -> _     11DD1DD1DDFFFE1DD1FF91C1DDFFFE16
 ***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
 
--> H_  E_  L_  P_  
+-> H_  E_  L_  P_
 Debugger commands (enter all values in hex or as register):
 78
 --------------------------------------------------------------------------
@@ -165,16 +165,16 @@ TIMERIRQ- Run the system timer.
 78
 HELP- Help
 
--> _    
--> B_  P_   _  1_  2_  3_  4_  :_  5_  6_  7_  8_  
+-> _
+-> B_  P_   _  1_  2_  3_  4_  :_  5_  6_  7_  8_
 DEBUG: Set breakpoint at 1234:5678
 
--> _            
--> B_  P_  L_  I_  S_  T_  
+-> _
+-> B_  P_  L_  I_  S_  T_
 Breakpoint list:
 78
 -------------------------------------------------------------------------
 78
 00. BP 1234:5678
 
--> _      
+-> _
