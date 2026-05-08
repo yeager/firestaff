@@ -6426,48 +6426,20 @@ static void m11_draw_teleporter_effect(unsigned char* framebuffer,
     }
 }
 
-static void m11_draw_effect_cue(unsigned char* framebuffer,
-                                int framebufferWidth,
-                                int framebufferHeight,
-                                int x,
-                                int y,
-                                int w,
-                                int h,
-                                const M11_ViewportCell* cell,
-                                int depthIndex) {
+
+static void m11_draw_explosion_cue(unsigned char* framebuffer,
+                                   int framebufferWidth,
+                                   int framebufferHeight,
+                                   int x,
+                                   int y,
+                                   int w,
+                                   int h,
+                                   const M11_ViewportCell* cell,
+                                   int depthIndex) {
     int cx = x + w / 2;
     int cy = y + h / 2;
-    if (!cell) {
+    if (!cell || cell->summary.explosions <= 0) {
         return;
-    }
-    /* Projectile sprite from GRAPHICS.DAT, or fallback crosshair */
-    if (cell->summary.projectiles > 0) {
-        if (!g_drawState ||
-            !m11_draw_projectile_sprite(g_drawState, framebuffer,
-                                        framebufferWidth, framebufferHeight,
-                                        x, y, w, h,
-                                        cell->firstProjectileGfxIndex,
-                                        depthIndex,
-                                        cell->firstProjectileRelDir,
-                                        cell->firstProjectileCell,
-                                        cell->firstProjectileFlipFlags,
-                                        -1)) {
-            /* Fallback: cyan crosshair */
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
-            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
-        }
-    }
-    /* Teleporter shimmer effect */
-    if (cell->summary.teleporters > 0) {
-        m11_draw_teleporter_effect(framebuffer, framebufferWidth, framebufferHeight,
-                                   x, y, w, h, depthIndex);
-    }
-    /* Pit darkness effect — only if PIT_OPEN (MASK0x0008, DEFS.H:1027) */
-    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
-        m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
-                            x, y, w, h, depthIndex);
     }
     /* DM1 explosion-type-specific viewport visual effects.
      *
@@ -6487,7 +6459,7 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
      * Fallback: when no GRAPHICS.DAT loader is available (headless
      * probes using synthetic worlds) we keep the palette-rect cue so
      * probes keep asserting visible content at the cell. */
-    if (cell->summary.explosions > 0) {
+    {
         unsigned char expColor;
         int expType = cell->firstExplosionType;
         int baseR   = 5 + (depthIndex == 0 ? 2 : 0);
@@ -6595,6 +6567,57 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
             (void)frame; (void)maxF; (void)atk; (void)expType;
         }
     }
+}
+
+static void m11_draw_effect_cue(unsigned char* framebuffer,
+                                int framebufferWidth,
+                                int framebufferHeight,
+                                int x,
+                                int y,
+                                int w,
+                                int h,
+                                const M11_ViewportCell* cell,
+                                int depthIndex) {
+    int cx = x + w / 2;
+    int cy = y + h / 2;
+    if (!cell) {
+        return;
+    }
+    /* Projectile sprite from GRAPHICS.DAT, or fallback crosshair */
+    if (cell->summary.projectiles > 0) {
+        if (!g_drawState ||
+            !m11_draw_projectile_sprite(g_drawState, framebuffer,
+                                        framebufferWidth, framebufferHeight,
+                                        x, y, w, h,
+                                        cell->firstProjectileGfxIndex,
+                                        depthIndex,
+                                        cell->firstProjectileRelDir,
+                                        cell->firstProjectileCell,
+                                        cell->firstProjectileFlipFlags,
+                                        -1)) {
+            /* Fallback: cyan crosshair */
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
+        }
+    }
+    /* Teleporter shimmer effect */
+    if (cell->summary.teleporters > 0) {
+        m11_draw_teleporter_effect(framebuffer, framebufferWidth, framebufferHeight,
+                                   x, y, w, h, depthIndex);
+    }
+    /* Pit darkness effect — only if PIT_OPEN (MASK0x0008, DEFS.H:1027) */
+    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
+        m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
+                            x, y, w, h, depthIndex);
+    }
+    /* Explosions are intentionally not drawn here.  ReDMCSB F0115
+     * finishes every packed object/creature/projectile cell first, then
+     * restarts the thing list for a separate explosion pass
+     * (DUNVIEW.C:5915-5933).  m11_draw_dm1_deferred_explosion_pass()
+     * owns that after-all-cells layer. */
+
     if (cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       cx - 4, cy - 4, 9, 9, M11_COLOR_MAGENTA);
@@ -12169,35 +12192,120 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 }
             }
 
-            if (cell->summary.explosions > 0) {
-                int expArea = paneH / 2;
-                int expY;
-                if (expArea < 7) expArea = 7;
-                expY = paneY + (paneH - expArea) / 2;
-                if (!g_drawState ||
-                    !m11_draw_explosion_sprite(g_drawState, framebuffer,
-                                               framebufferWidth, framebufferHeight,
-                                               paneX + 1, expY,
-                                               paneW - 2, expArea,
-                                               cell->firstExplosionType,
-                                               cell->firstExplosionFrame,
-                                               cell->firstExplosionMaxFrames,
-                                               cell->firstExplosionAttack,
-                                               depth + 1)) {
-                    int ecx = paneX + paneW / 2;
-                    int ecy = paneY + paneH / 2;
-                    int er = depth == 0 ? 3 : 2;
-                    /* F0115 draws explosions after the projectile pass for the
-                     * same view cell; keep a visible side-lane fallback when
-                     * GRAPHICS.DAT is absent in probes. */
-                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  ecx - er, ecy - er, er * 2 + 1, er * 2 + 1,
-                                  M11_COLOR_LIGHT_RED);
-                    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  ecx - er - 1, ecy - er - 1,
-                                  er * 2 + 3, er * 2 + 3, M11_COLOR_YELLOW);
-                }
+            /* Explosions are deferred to m11_draw_dm1_deferred_explosion_pass()
+             * after every packed side/center cell has drawn objects,
+             * creatures, and projectiles (ReDMCSB DUNVIEW.C:5915-5933). */
+
+        }
+    }
+}
+
+static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
+                                                   int framebufferWidth,
+                                                   int framebufferHeight,
+                                                   const M11_ViewRect* rect,
+                                                   const M11_ViewportCell* cell,
+                                                   int depthIndex) {
+    int inset;
+    int faceX;
+    int faceY;
+    int faceW;
+    int faceH;
+    if (!rect || !cell || !m11_viewport_cell_is_open(cell) ||
+        cell->summary.explosions <= 0) {
+        return;
+    }
+    inset = 6 + depthIndex * 4;
+    faceX = rect->x + inset;
+    faceY = rect->y + inset / 2;
+    faceW = rect->w - inset * 2;
+    faceH = rect->h - inset;
+    if (faceW < 8 || faceH < 8) {
+        return;
+    }
+    m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
+                           faceX + 3, faceY + 3, faceW - 6, faceH - 6,
+                           cell, depthIndex);
+}
+
+static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
+                                                 int framebufferWidth,
+                                                 int framebufferHeight,
+                                                 const M11_ViewRect* outer,
+                                                 const M11_ViewRect* inner,
+                                                 const M11_ViewportCell* cell,
+                                                 int depthIndex,
+                                                 int side) {
+    int paneY;
+    int paneH;
+    int paneX;
+    int paneW;
+    int expArea;
+    int expY;
+    if (!outer || !inner || !cell || !m11_viewport_cell_is_open(cell) ||
+        cell->summary.explosions <= 0) {
+        return;
+    }
+    paneY = inner->y + 3;
+    paneH = inner->h - 6;
+    if (paneH <= 4) {
+        return;
+    }
+    if (side < 0) {
+        paneX = outer->x + 4;
+        paneW = (inner->x - outer->x) - 8;
+    } else {
+        paneX = inner->x + inner->w + 4;
+        paneW = (outer->x + outer->w) - paneX - 4;
+    }
+    if (paneW <= 4) {
+        return;
+    }
+    expArea = paneH / 2;
+    if (expArea < 7) expArea = 7;
+    expY = paneY + (paneH - expArea) / 2;
+    m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
+                           paneX + 1, expY, paneW - 2, expArea,
+                           cell, depthIndex + 1);
+}
+
+static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state,
+                                                 unsigned char* framebuffer,
+                                                 int framebufferWidth,
+                                                 int framebufferHeight,
+                                                 const M11_ViewRect frames[4],
+                                                 const M11_ViewportCell cells[3][3]) {
+    int depth;
+    (void)state;
+    if (!framebuffer || !frames || !cells) {
+        return;
+    }
+    /* ReDMCSB F0115 source lock: DUNVIEW.C:5915 exits the packed-cell
+     * object/creature/projectile loop, then DUNVIEW.C:5916-5933 starts
+     * a separate explosion-only pass by restarting at L0146_T_FirstThingToDraw.
+     * Keep Firestaff's DM1 V1 explosions out of per-cell effect cues and draw
+     * them only here, after all visible packed cells have had their normal
+     * contents pass. */
+    for (depth = 2; depth >= 0; --depth) {
+        int sideSlot;
+        if (m11_dm1_center_line_clear_before_depth(cells, depth)) {
+            m11_draw_dm1_deferred_center_explosion(
+                framebuffer, framebufferWidth, framebufferHeight,
+                &frames[depth + 1], &cells[depth][1], depth);
+        }
+        for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
+            int side = sideSlot == 0 ? -1 : 1;
+            int sideIndex = side < 0 ? 0 : 2;
+            if (!m11_dm1_center_line_clear_before_depth(cells, depth)) {
+                continue;
             }
+            if (!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)) {
+                continue;
+            }
+            m11_draw_dm1_deferred_side_explosion(
+                framebuffer, framebufferWidth, framebufferHeight,
+                &frames[depth], &frames[depth + 1], &cells[depth][sideIndex],
+                depth, side);
         }
     }
 }
@@ -17979,6 +18087,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
+
+    m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
+                                         framebufferWidth, framebufferHeight,
+                                         frames, cells);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal

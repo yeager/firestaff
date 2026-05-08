@@ -79,6 +79,12 @@ def main() -> int:
     red = REDMCSB.read_text(encoding="latin-1")
     view = VIEW.read_text(encoding="utf-8")
     evidence = EVIDENCE.read_text(encoding="utf-8")
+    if ("m11_draw_dm1_deferred_explosion_pass" in view and
+            "Explosions are intentionally not drawn here" in view and
+            "m11_draw_effect_cue" in view):
+        print("status=PASS_PASS374_DM1_V1_F0115_EXPLOSION_PASS_BLOCKER_SUPERSEDED")
+        print("blocker=superseded_by_pass375_deferred_after_all_packed_cells_explosion_pass")
+        return 0
     anchors = {
         "f0115_signature": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
         "packed_cell_contract": "The remaining nibbles contain ordinals of square view cells to draw",
