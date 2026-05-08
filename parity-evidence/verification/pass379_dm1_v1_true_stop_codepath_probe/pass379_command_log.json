@@ -1,0 +1,57 @@
+[
+  {
+    "control": "F5",
+    "purpose": "run unarmed to load/menu prefix",
+    "t": 1778239247.2015324
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "pass379 load/menu prefix pause",
+    "t": 1778239263.4379778
+  },
+  {
+    "cmd": "BPDEL *",
+    "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+    "t": 1778239269.5231955
+  },
+  {
+    "cmd": "BP 23AD:40FE",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....A_  ....D_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+    "t": 1778239270.5829465
+  },
+  {
+    "cmd": "BP 2809:1EFF",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....8_  ....0_  ....9_  ....:_  ....1_  ....E_  ....F_  ....F_  \nDEBUG: Set breakpoint at 2809:1EFF\n\n-> _            ",
+    "t": 1778239271.6424584
+  },
+  {
+    "cmd": "BP 2809:1E31",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....8_  ....0_  ....9_  ....:_  ....1_  ....E_  ....3_  ....1_  \nDEBUG: Set breakpoint at 2809:1E31\n\n-> _            ",
+    "t": 1778239272.7001684
+  },
+  {
+    "cmd": "BP 07FB:01EB",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....0_  ....7_  ....F_  ....B_  ....:_  ....0_  ....1_  ....E_  ....B_  \nDEBUG: Set breakpoint at 07FB:01EB\n\n-> _            ",
+    "t": 1778239273.756638
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 07FB:01EB\n78\n01. BP 2809:1E31\n78\n02. BP 2809:1EFF\n78\n03. BP 23AD:40FE\n\n-> _      ",
+    "t": 1778239274.817118
+  },
+  {
+    "control": "F5",
+    "purpose": "run after pass379 multi-arm",
+    "t": 1778239274.8687632
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "pass379 final retention pause",
+    "t": 1778239350.1026363
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "...\n-> B_  ...P_  ...L_  ...I_  ...S_  ...T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 07FB:01EB\n78\n01. BP 2809:1E31\n78\n02. BP 2809:1EFF\n78\n03. BP 23AD:40FE\n\n-> _      ",
+    "t": 1778239356.194822
+  }
+]
