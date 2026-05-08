@@ -40,20 +40,34 @@
             "file": "DUNVIEW.C",
             "function": "F0128_DUNGEONVIEW_Draw / square draw order",
             "lines": {
-              "start": 8498,
-              "end": 8515
+              "start": 8488,
+              "end": 8499
             },
-            "assertion": "The main draw route walks D3 side/center squares before nearer rows, binding wall planes to relative dungeon composition rather than a standalone art guess."
+            "assertion": "The main draw route updates relative coordinates and draws D3L, D3R, then D3C before nearer rows, binding wall planes to relative dungeon composition rather than a standalone art guess."
           }
-        ]
+        ],
+        "originalSize": {
+          "width": 224,
+          "height": 136
+        }
       },
       "sizes": {
         "sourceContract": {
           "viewportWidth": 224,
           "viewportHeight": 136
+        },
+        "master4k": {
+          "width": 2240,
+          "height": 1360
+        },
+        "derived1080p": {
+          "width": 1120,
+          "height": 680
         }
       },
       "paths": {
+        "masterDir": "assets-v2/dungeon-view/source-bound/wall/front-source/masters/4k",
+        "derivedDir": "assets-v2/dungeon-view/source-bound/wall/front-source/exports/1080p",
         "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
       },
       "status": "blocked",
@@ -91,20 +105,34 @@
             "file": "DUNVIEW.C",
             "function": "D3L/D3R square draw route",
             "lines": {
-              "start": 8506,
-              "end": 8515
+              "start": 8488,
+              "end": 8499
             },
-            "assertion": "The viewport draw order explicitly draws relative D3 left and right squares as side-lane composition inputs."
+            "assertion": "The viewport draw order explicitly updates relative coordinates and draws D3 left and right squares before the D3 center square as side-lane composition inputs."
           }
-        ]
+        ],
+        "originalSize": {
+          "width": 224,
+          "height": 136
+        }
       },
       "sizes": {
         "sourceContract": {
           "viewportWidth": 224,
           "viewportHeight": 136
+        },
+        "master4k": {
+          "width": 2240,
+          "height": 1360
+        },
+        "derived1080p": {
+          "width": 1120,
+          "height": 680
         }
       },
       "paths": {
+        "masterDir": "assets-v2/dungeon-view/source-bound/wall/side-source/masters/4k",
+        "derivedDir": "assets-v2/dungeon-view/source-bound/wall/side-source/exports/1080p",
         "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
       },
       "status": "blocked",
@@ -147,15 +175,29 @@
             },
             "assertion": "The floor draw route copies/draws the floor band into the viewport floor area and marks the floor/ceiling redraw request complete."
           }
-        ]
+        ],
+        "originalSize": {
+          "width": 224,
+          "height": 70
+        }
       },
       "sizes": {
         "sourceContract": {
           "viewportWidth": 224,
           "floorBandHeight": 70
+        },
+        "master4k": {
+          "width": 2240,
+          "height": 700
+        },
+        "derived1080p": {
+          "width": 1120,
+          "height": 350
         }
       },
       "paths": {
+        "masterDir": "assets-v2/dungeon-view/source-bound/floor/base-source/masters/4k",
+        "derivedDir": "assets-v2/dungeon-view/source-bound/floor/base-source/exports/1080p",
         "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
       },
       "status": "blocked",
@@ -198,15 +240,29 @@
             },
             "assertion": "The ceiling draw route copies/draws the ceiling band into the top of the 224-wide viewport before wall composition."
           }
-        ]
+        ],
+        "originalSize": {
+          "width": 224,
+          "height": 29
+        }
       },
       "sizes": {
         "sourceContract": {
           "viewportWidth": 224,
           "ceilingBandHeight": 29
+        },
+        "master4k": {
+          "width": 2240,
+          "height": 290
+        },
+        "derived1080p": {
+          "width": 1120,
+          "height": 145
         }
       },
       "paths": {
+        "masterDir": "assets-v2/dungeon-view/source-bound/ceiling/base-source/masters/4k",
+        "derivedDir": "assets-v2/dungeon-view/source-bound/ceiling/base-source/exports/1080p",
         "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
       },
       "status": "blocked",
@@ -249,15 +305,29 @@
             },
             "assertion": "The door draw route copies the typed door bitmap, applies ornaments/animation, then draws ClosedOrDestroyed for C4_DOOR_STATE_CLOSED."
           }
-        ]
+        ],
+        "originalSize": {
+          "width": 224,
+          "height": 136
+        }
       },
       "sizes": {
         "sourceContract": {
           "viewportWidth": 224,
           "viewportHeight": 136
+        },
+        "master4k": {
+          "width": 2240,
+          "height": 1360
+        },
+        "derived1080p": {
+          "width": 1120,
+          "height": 680
         }
       },
       "paths": {
+        "masterDir": "assets-v2/dungeon-view/source-bound/door/wood-closed-source/masters/4k",
+        "derivedDir": "assets-v2/dungeon-view/source-bound/door/wood-closed-source/exports/1080p",
         "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
       },
       "status": "blocked",
@@ -300,15 +370,29 @@
             },
             "assertion": "Floor-pit/stairs bitmaps are drawn through the viewport bitmap route with source frame/zone coordinates."
           }
-        ]
+        ],
+        "originalSize": {
+          "width": 224,
+          "height": 136
+        }
       },
       "sizes": {
         "sourceContract": {
           "viewportWidth": 224,
           "viewportHeight": 136
+        },
+        "master4k": {
+          "width": 2240,
+          "height": 1360
+        },
+        "derived1080p": {
+          "width": 1120,
+          "height": 680
         }
       },
       "paths": {
+        "masterDir": "assets-v2/dungeon-view/source-bound/stairs/down-source/masters/4k",
+        "derivedDir": "assets-v2/dungeon-view/source-bound/stairs/down-source/exports/1080p",
         "spec": "assets-v2/dungeon-view/specs/source-bound-dungeon-view.md"
       },
       "status": "blocked",
