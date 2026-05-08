@@ -171,6 +171,46 @@ int main(void)
     ok &= expect_int("blocked movement records stamina cost", result.staminaCost[0], 1);
     ok &= expect_int("blocked movement flushes queued input", (int)queue.count, 0);
 
+    setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+    memset(&things, 0, sizeof(things));
+    setup_party(&party);
+    party.championCount = CHAMPION_MAX_PARTY + 3;
+    party.champions[0].load = 100;
+    party.champions[0].maxLoad = 100;
+    party.champions[0].stamina.current = 1;
+    party.champions[0].stamina.maximum = 100;
+    party.champions[1].hp.current = 0;
+    party.champions[1].load = 100;
+    party.champions[1].maxLoad = 100;
+    party.champions[1].stamina.current = 50;
+    party.champions[1].stamina.maximum = 100;
+    party.champions[2].present = 1;
+    party.champions[2].hp.current = 10;
+    party.champions[2].load = 0;
+    party.champions[2].maxLoad = 0;
+    party.champions[2].stamina.current = 120;
+    party.champions[2].stamina.maximum = 100;
+    party.champions[3].present = 1;
+    party.champions[3].hp.current = 10;
+    party.champions[3].load = 200;
+    party.champions[3].maxLoad = 100;
+    party.champions[3].stamina.current = 100;
+    party.champions[3].stamina.maximum = 100;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("enqueue stamina bounds step", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    ok &= expect_int("process stamina bounds step", DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
+        &queue, &dungeon, &things, &party, 0, 0, 0, 330, 300, footwear, &result), 1);
+    ok &= expect_int("stamina loop clamps to champion array window", result.staminaAffectedCount, CHAMPION_MAX_PARTY - 1);
+    ok &= expect_int("stamina underflow clamps to zero", party.champions[0].stamina.current, 0);
+    ok &= expect_int("stamina underflow records damage", result.staminaDamage[0], 1);
+    ok &= expect_int("stamina underflow applies damage", party.champions[0].hp.current, 9);
+    ok &= expect_int("dead champion skipped by stamina window", party.champions[1].stamina.current, 50);
+    ok &= expect_int("dead champion records no stamina cost", result.staminaCost[1], 0);
+    ok &= expect_int("max load zero still costs one", result.staminaCost[2], 1);
+    ok &= expect_int("stamina clamps down to maximum after decrement", party.champions[2].stamina.current, 100);
+    ok &= expect_int("overloaded champion cost uses load/maxLoad ratio", result.staminaCost[3], 7);
+    ok &= expect_int("stamina bounds step still redraws viewport", result.viewportRedrawRequested, 1);
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
