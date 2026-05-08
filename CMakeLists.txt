@@ -1049,6 +1049,10 @@ if(BUILD_TESTING)
             NAME dm1_v1_projectile_movement_interlock_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_projectile_movement_interlock_source_lock.py
         )
+        add_test(
+            NAME csb_v1_inventory_render_grid_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_inventory_render_grid_source_lock.py
+        )
 
     add_executable(test_dm1_v1_spell_casting_pc34_compat
         test_dm1_v1_spell_casting_pc34_compat.c
