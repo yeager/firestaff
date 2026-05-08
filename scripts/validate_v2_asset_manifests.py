@@ -16,7 +16,12 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_DIR = REPO_ROOT / "assets-v2" / "manifests"
-ALLOWED_PRODUCTION_CLASSES = {"preserve-scale-repaint", "redraw-native", "system-rebuild"}
+ALLOWED_PRODUCTION_CLASSES = {
+    "preserve-scale-repaint",
+    "redraw-native",
+    "source-evidenced-layout-contract",
+    "system-rebuild",
+}
 ALLOWED_STATUS = {"planned", "stubbed", "in-progress", "approved", "shipped", "blocked", "rebuilt"}
 REQUIRED_TOP_LEVEL = {"manifestVersion", "packId", "targetPolicy", "assets"}
 REQUIRED_TARGET_POLICY = {"masterResolution", "derivedResolutions", "layoutSkeleton"}

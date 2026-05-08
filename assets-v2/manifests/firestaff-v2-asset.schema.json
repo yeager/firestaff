@@ -71,6 +71,7 @@
             "enum": [
               "preserve-scale-repaint",
               "redraw-native",
+              "source-evidenced-layout-contract",
               "system-rebuild"
             ]
           },

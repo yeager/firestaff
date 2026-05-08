@@ -28,6 +28,7 @@ DEFAULT_MANIFEST_GLOB = "assets-v2/manifests/*.manifest.json"
 ALLOWED_PRODUCTION_CLASSES = {
     "preserve-scale-repaint",
     "redraw-native",
+    "source-evidenced-layout-contract",
     "system-rebuild",
 }
 ALLOWED_STATUSES = {
