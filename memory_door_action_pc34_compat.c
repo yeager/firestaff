@@ -310,6 +310,60 @@ int F0712_DOOR_StepAnimation_Compat(
     return 1;
 }
 
+
+int F0717_DOOR_ResolveClosingObstruction_Compat(
+    int doorState,
+    int doorVertical,
+    int partyOnDoorSquare,
+    int partyChampionCount,
+    int materialCreatureOnDoorSquare,
+    int creatureHeight,
+    struct DoorClosingObstruction_Compat* outResult)
+{
+    int threshold;
+    if (!outResult) return 0;
+    memset(outResult, 0, sizeof(*outResult));
+    outResult->kind = DOOR_OBSTRUCTION_NONE;
+    outResult->oldDoorState = doorState;
+    outResult->newDoorState = doorState;
+
+    if (doorState < 0 || doorState > 5) return 0;
+    if (doorState == 5 /* DESTROYED */) return 1;
+
+    /* TIMELINE.C:759-774: only a non-open closing door on the party square
+     * is held open and rescheduled two ticks after the original fire time
+     * (the common pre-increment at line 752 plus the extra increment at
+     * line 772).  The PC 3.4 wound expression intentionally preserves
+     * BUG0_78 precedence: it always resolves to HEAD for both orientations. */
+    if (partyOnDoorSquare && partyChampionCount > 0 && doorState != 0) {
+        outResult->kind = DOOR_OBSTRUCTION_PARTY;
+        outResult->newDoorState = 0;
+        outResult->rescheduleDelayTicks = 2;
+        outResult->damageAmount = 5;
+        outResult->woundMask = DOOR_OBSTRUCTION_WOUND_HEAD;
+        outResult->soundId = 1; /* party damaged sound stand-in */
+        return 1;
+    }
+
+    /* TIMELINE.C:779-797: a material creature can hold the door; vertical
+     * doors compare against creature height, horizontal doors against 1. */
+    if (materialCreatureOnDoorSquare) {
+        threshold = doorVertical ? creatureHeight : 1;
+        if (threshold < 1) threshold = 1;
+        if (doorState >= threshold) {
+            outResult->kind = DOOR_OBSTRUCTION_CREATURE;
+            outResult->newDoorState = (doorState == 0) ? 0 : doorState - 1;
+            outResult->rescheduleDelayTicks = 1;
+            outResult->damageAmount = 5;
+            outResult->woundMask = 0;
+            outResult->soundId = 4; /* wooden thud / attack sound stand-in */
+            return 1;
+        }
+    }
+
+    return 1;
+}
+
 int F0716_DOOR_RouteFrontCellClick_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,

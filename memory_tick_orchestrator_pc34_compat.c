@@ -1297,6 +1297,66 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 struct DoorAnimationStep_Compat step;
                 int effect = ev.aux1;
                 memset(&step, 0, sizeof(step));
+
+                /* Pass 418 — source-locked F0241 closing-door hazard gate.
+                 * Before the normal CLEAR (+1) step, ReDMCSB checks whether
+                 * the party occupies the door square (TIMELINE.C:759-774).
+                 * If so, it forces the door back open, applies damage, and
+                 * reschedules the same event two ticks after the original
+                 * fire time.  We keep damage as deterministic emissions here;
+                 * HP mutation remains owned by the champion combat/lifecycle
+                 * layers. */
+                if (effect == DOOR_EFFECT_CLEAR &&
+                    F0712_DOOR_StepAnimation_Compat(
+                        world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
+                        DOOR_EFFECT_SET, 0 /* read current only */, &step)) {
+                    struct DoorClosingObstruction_Compat obstruction;
+                    int partyOnDoor = (world->party.mapIndex == ev.mapIndex &&
+                                       world->party.mapX == ev.mapX &&
+                                       world->party.mapY == ev.mapY);
+                    if (F0717_DOOR_ResolveClosingObstruction_Compat(
+                            step.oldDoorState, step.doorVertical,
+                            partyOnDoor, world->party.championCount,
+                            0 /* creature hazard not wired in orchestrator yet */,
+                            0, &obstruction) &&
+                        obstruction.kind == DOOR_OBSTRUCTION_PARTY) {
+                        int guard = 0;
+                        while (guard++ < 5) {
+                            struct DoorAnimationStep_Compat openStep;
+                            memset(&openStep, 0, sizeof(openStep));
+                            if (!F0712_DOOR_StepAnimation_Compat(
+                                    world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
+                                    DOOR_EFFECT_SET, 1, &openStep)) break;
+                            if (openStep.newDoorState == obstruction.newDoorState ||
+                                openStep.kind == DOOR_ANIM_STEP_REACHED_TARGET) break;
+                        }
+                        emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY,
+                             obstruction.newDoorState, ev.mapIndex);
+                        emit(result, EMIT_DAMAGE_DEALT,
+                             obstruction.damageAmount, obstruction.woundMask,
+                             world->party.championCount, ev.mapIndex);
+                        emit(result, EMIT_SOUND_REQUEST,
+                             obstruction.soundId, ev.mapX, ev.mapY, ev.mapIndex);
+                        {
+                            struct TimelineEvent_Compat next;
+                            memset(&next, 0, sizeof(next));
+                            next.kind       = TIMELINE_EVENT_DOOR_ANIMATE;
+                            next.fireAtTick = world->gameTick +
+                                (uint32_t)obstruction.rescheduleDelayTicks;
+                            next.mapIndex   = ev.mapIndex;
+                            next.mapX       = ev.mapX;
+                            next.mapY       = ev.mapY;
+                            next.cell       = ev.cell;
+                            next.aux0       = obstruction.newDoorState;
+                            next.aux1       = effect;
+                            (void)F0721_TIMELINE_Schedule_Compat(
+                                &world->timeline, &next);
+                        }
+                        break;
+                    }
+                }
+
+                memset(&step, 0, sizeof(step));
                 if (F0712_DOOR_StepAnimation_Compat(
                         world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
                         effect, 1 /* mutateSquare */, &step)) {

@@ -69,6 +69,26 @@ struct TimelineEvent_Compat;  /* forward decl; defined in memory_timeline_pc34_c
 #define DOOR_ANIM_STEP_ADVANCED          1  /* newState is a new intermediate step; reschedule */
 #define DOOR_ANIM_STEP_REACHED_TARGET    2  /* newState is the final state (0 or 4); do not reschedule */
 
+/* ---- Closing-door obstruction result (F0241 hazard branches) ---- */
+#define DOOR_OBSTRUCTION_NONE              0
+#define DOOR_OBSTRUCTION_PARTY             1
+#define DOOR_OBSTRUCTION_CREATURE          2
+
+#define DOOR_OBSTRUCTION_WOUND_READY_HAND  0x0001
+#define DOOR_OBSTRUCTION_WOUND_HEAD        0x0002
+#define DOOR_OBSTRUCTION_WOUND_TORSO       0x0004
+#define DOOR_OBSTRUCTION_WOUND_ACTION_HAND 0x0008
+
+struct DoorClosingObstruction_Compat {
+    int kind;
+    int oldDoorState;
+    int newDoorState;
+    int rescheduleDelayTicks;
+    int damageAmount;
+    int woundMask;
+    int soundId;
+};
+
 struct DoorAnimationStep_Compat {
     int kind;               /* DOOR_ANIM_STEP_* */
     int mapIndex;
@@ -214,6 +234,34 @@ int F0713_DOOR_BuildAnimationEvent_Compat(
  *   mutateSquare == 0 leaves the dungeon untouched (used for
  *   deterministic testing of the stepper).
  */
+
+/*
+ * F0717_DOOR_ResolveClosingObstruction_Compat:
+ *   Source-locked pure resolver for the two early CLEAR-effect hazard
+ *   branches in ReDMCSB TIMELINE.C:F0241_ProcessEvent1_DoorAnimation.
+ *   It does not apply champion/group damage; it tells the runtime whether
+ *   closing is blocked by the party or a material creature and what door
+ *   state/reschedule delay the source uses before the normal animation
+ *   step can continue.
+ *
+ * Source anchors (PC 3.4 ReDMCSB):
+ *   - TIMELINE.C:749-754 reads square/state and pre-increments Map_Time.
+ *   - TIMELINE.C:759-774 party-on-door branch: force OPEN, damage all
+ *     champions for 5, increment Map_Time again, reschedule.
+ *   - TIMELINE.C:779-797 material-creature branch: if doorState >=
+ *     (vertical ? creatureHeight : 1), damage group for 5, step door
+ *     one state toward OPEN, reschedule after the single pre-increment.
+ *   - TIMELINE.C:803-817 otherwise performs the normal +/-1 animation step.
+ */
+int F0717_DOOR_ResolveClosingObstruction_Compat(
+    int doorState,
+    int doorVertical,
+    int partyOnDoorSquare,
+    int partyChampionCount,
+    int materialCreatureOnDoorSquare,
+    int creatureHeight,
+    struct DoorClosingObstruction_Compat* outResult);
+
 int F0712_DOOR_StepAnimation_Compat(
     struct DungeonDatState_Compat* dungeon,
     int mapIndex,
