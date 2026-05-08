@@ -1,0 +1,147 @@
+{
+  "artifactProbe": [
+    {
+      "exists": false,
+      "id": "original_route_dir",
+      "path": "verification-screens/pass376-original-route"
+    },
+    {
+      "exists": false,
+      "id": "original_crop_manifest",
+      "path": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv"
+    },
+    {
+      "exists": false,
+      "id": "pairing_plan",
+      "path": "parity-evidence/overlays/pass376/pass376_pairing_plan.json"
+    }
+  ],
+  "branch": "worker/dm1v1-original-overlay-parity-plan-20260508",
+  "exactNextCommands": [
+    {
+      "command": "python3 tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py --seconds 75 && python3 tools/verify_pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py && python3 tools/verify_pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.py",
+      "id": "strict_original_true_stop_sequence",
+      "must_produce": [
+        "parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json with strict F0128 stop after running",
+        "same bounded transcript showing F0097_DUNGEONVIEW_DrawViewport or VIDRV_09_BlitViewPort after F0128"
+      ]
+    },
+    {
+      "command": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+      "id": "semantic_original_runtime_capture",
+      "must_produce": [
+        "verification-screens/pass376-original-route/imageNNNN-raw.png frames with 320x200 gameplay dimensions",
+        "route labels proving party-control-ready movement/HUD/viewport states, not menu/title/no-party duplicates"
+      ]
+    },
+    {
+      "command": "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports",
+      "id": "original_viewport_crop_manifest",
+      "must_produce": [
+        "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+        "six 224x136 original viewport crops for pass70-compatible pairing"
+      ]
+    },
+    {
+      "command": "python3 tools/pass70_viewport_pair_compare.py --firestaff-dir verification-screens --original-dir verification-screens/pass376-original-dm1-viewports/viewport_224x136 --original-manifest verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv --out-dir parity-evidence/overlays/pass376 --plan-json parity-evidence/overlays/pass376/pass376_pairing_plan.json --run-diff",
+      "id": "paired_firestaff_overlay_compare",
+      "must_produce": [
+        "parity-evidence/overlays/pass376/pass376_pairing_plan.json",
+        "per-scene viewport diff masks/stats; these are eligibility artifacts, not parity claims until reviewed"
+      ]
+    }
+  ],
+  "head": "3ad9c106b93c8d0e8e1ec1eb138488b952a76e2a",
+  "missingRuntimeArtifacts": [
+    {
+      "blocks": "source-bound original runtime state identity",
+      "id": "original_true_stop_transcript",
+      "missing": "A bounded FIRES debugger transcript proving F0128_DUNGEONVIEW_Draw_CPSF then F0097_DUNGEONVIEW_DrawViewport or VIDRV_09_BlitViewPort after controlled movement input."
+    },
+    {
+      "blocks": "movement/HUD/viewport overlay eligibility",
+      "id": "semantic_original_full_frames",
+      "missing": "320x200 original PC34 gameplay frames classified as party-control-ready movement/HUD/viewport states, with route labels and hashes."
+    },
+    {
+      "blocks": "viewport crop comparator",
+      "id": "pass70_original_viewport_crops",
+      "missing": "224x136 original viewport crops and manifest derived from semantically matched original frames."
+    },
+    {
+      "blocks": "representative original-vs-Firestaff overlay review",
+      "id": "paired_firestaff_capture_and_diff",
+      "missing": "Same-scene Firestaff captures paired with the original crops plus diff masks/stats under parity-evidence/overlays/pass376."
+    }
+  ],
+  "notClaimed": [
+    "original-vs-Firestaff pixel parity",
+    "new original FIRES F0128/F0097/VIDRV true stop",
+    "semantically matched original gameplay capture",
+    "HUD/viewport overlay parity"
+  ],
+  "priorEvidence": {
+    "pass360": {
+      "activeBlocker": null,
+      "exists": true,
+      "expected": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
+      "notClaimed": [
+        "new original FIRES F0128/F0097/VIDRV true stop",
+        "original-vs-Firestaff pixel parity",
+        "runtime proof from static offsets alone",
+        "runtime proof from BPLIST/setup text"
+      ],
+      "ok": true,
+      "path": "parity-evidence/verification/pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing/manifest.json",
+      "role": "strict original FIRES F0128 -> F0097/VIDRV true-stop blocker",
+      "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED"
+    },
+    "pass372": {
+      "activeBlocker": null,
+      "exists": true,
+      "expected": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
+      "notClaimed": null,
+      "ok": true,
+      "path": "parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json",
+      "role": "Firestaff M11 movement route source-locked; not the active blocker",
+      "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED"
+    }
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-original-overlay-parity-plan-20260508",
+  "schema": "pass376_dm1_v1_original_overlay_parity_plan.v1",
+  "sourceAudit": [
+    {
+      "decision": "Representative movement parity must be tied to accepted source turns/steps, not screenshots with unknown party tuple.",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "movement_mutates_party_tuple",
+      "lines": "142-174,180-347",
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "decision": "The viewport crop to compare is only promotable after F0128 composes G0296 for the known direction/X/Y tuple.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_composed_from_tuple",
+      "lines": "8318-8611",
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "decision": "The original-side viewport artifact must be captured after the PC34 present seam, not at setup/BPLIST time.",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_presented_by_pc34_blit",
+      "lines": "709-858",
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING",
+  "timestampUtc": "2026-05-08T09:36:57.977012+00:00"
+}
