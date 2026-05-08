@@ -133,7 +133,7 @@ def verify_firestaff() -> list[str]:
     ]:
         if marker not in c:
             raise AssertionError(f"compat source evidence missing {marker}")
-    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"#define\s+DM1_V1_QUEUE_MAX_REGULAR\s+4u")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"#define\s+DM1_V1_QUEUE_MAX_REGULAR\s+5u")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9BFF.*0x004B.*DM1_V1_COMMAND_TURN_LEFT")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B6F.*0x004D.*DM1_V1_COMMAND_TURN_RIGHT")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B60.*0x0051.*DM1_V1_COMMAND_MOVE_RIGHT")
@@ -151,11 +151,11 @@ def verify_firestaff() -> list[str]:
         "pc34 table left arrow turns left", "pc34 table up arrow moves forward",
         "pc34 io2 shifted up arrow normalizes to forward", "pc34 shifted del turns left",
         "pc34 shifted help turns right", "pc34 shifted backward arrow strafes right",
-        "redmcsb fifth command is dropped",
+        "redmcsb fifth command accepted before C5 limit", "redmcsb sixth command is dropped at C5 limit",
     ]:
         if needle not in t:
             raise AssertionError(f"test missing invariant label {needle!r}")
-    notes.append("Firestaff compat queue model and regression probe cover pending replay, actual PC-34 movement keys, IO2 shifted-arrow normalization, legacy shifted movement keys, and four-command queue capacity")
+    notes.append("Firestaff compat queue model and regression probe cover pending replay, actual PC-34 movement keys, IO2 shifted-arrow normalization, legacy shifted movement keys, and five-command PC34/I34 queue capacity")
     return notes
 
 

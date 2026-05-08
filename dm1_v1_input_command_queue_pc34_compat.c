@@ -2,6 +2,7 @@
 #include <string.h>
 
 /* Source lock (ReDMCSB WIP20210206, Toolchains/Common/Source):
+ * - COMMAND.C:72-84 and 375-405 source-order active mouse tables: G0447 primary interface is searched before G0448 movement/viewport/right-button secondary.
  * - COMMAND.C:106-121 G0448 movement mouse rows for C001/C003/C002/C006/C005/C004/C080/C083.
  * - COMMAND.C:252-260 / 272-305 legacy ST/Amiga movement keyboard rows still covered for shared-route probes.
  * - COMMAND.C:677-684 MEDIA707_I34E_I34M movement keyboard rows use 0x004B..0x0051.
@@ -9,7 +10,7 @@
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
  * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
- * - COMMAND.C:729-812 F0361 queues primary/secondary keyboard commands while G2153_i_QueuedCommandsCount < C5, then replays pending click.
+ * - COMMAND.C:729-812 and COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands while G2153_i_QueuedCommandsCount < C5, then replays pending click.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
  * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement (except later-platform release/stop commands not modeled here).
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
@@ -55,7 +56,40 @@ static int in_box(int x, int y, int left, int right, int top, int bottom)
     return x >= left && x <= right && y >= top && y <= bottom;
 }
 
-static int command_for_mouse(int x, int y, int buttonMask)
+static int in_box_wh(int x, int y, int left, int top, int width, int height)
+{
+    return in_box(x, y, left, left + width - 1, top, top + height - 1);
+}
+
+static int command_for_primary_mouse(int x, int y, int buttonMask)
+{
+    if ((buttonMask & DM1_V1_BUTTON_RIGHT) != 0) {
+        if (in_box_wh(x, y, 0,   0, 67, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0;
+        if (in_box_wh(x, y, 69,  0, 67, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_1;
+        if (in_box_wh(x, y, 138, 0, 67, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_2;
+        if (in_box_wh(x, y, 207, 0, 67, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_3;
+    }
+
+    if ((buttonMask & DM1_V1_BUTTON_LEFT) != 0) {
+        if (in_box_wh(x, y, 43,   0, 24, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0;
+        if (in_box_wh(x, y, 112,  0, 24, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_1;
+        if (in_box_wh(x, y, 181,  0, 24, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_2;
+        if (in_box_wh(x, y, 250,  0, 24, 29)) return DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_3;
+        if (in_box_wh(x, y, 0,   0, 67, 29)) return DM1_V1_COMMAND_CLICK_CHAMPION_STATUS_0;
+        if (in_box_wh(x, y, 69,  0, 67, 29)) return DM1_V1_COMMAND_CLICK_CHAMPION_STATUS_1;
+        if (in_box_wh(x, y, 138, 0, 67, 29)) return DM1_V1_COMMAND_CLICK_CHAMPION_STATUS_2;
+        if (in_box_wh(x, y, 207, 0, 67, 29)) return DM1_V1_COMMAND_CLICK_CHAMPION_STATUS_3;
+        if (in_box_wh(x, y, 281,  0, 19, 14)) return DM1_V1_COMMAND_CHAMPION_ICON_TOP_LEFT;
+        if (in_box_wh(x, y, 301,  0, 19, 14)) return DM1_V1_COMMAND_CHAMPION_ICON_TOP_RIGHT;
+        if (in_box_wh(x, y, 301, 15, 19, 14)) return DM1_V1_COMMAND_CHAMPION_ICON_BOTTOM_RIGHT;
+        if (in_box_wh(x, y, 281, 15, 19, 14)) return DM1_V1_COMMAND_CHAMPION_ICON_BOTTOM_LEFT;
+        if (in_box_wh(x, y, 233, 42, 87, 33)) return DM1_V1_COMMAND_CLICK_IN_SPELL_AREA;
+        if (in_box_wh(x, y, 233, 77, 87, 45)) return DM1_V1_COMMAND_CLICK_IN_ACTION_AREA;
+    }
+    return DM1_V1_COMMAND_NONE;
+}
+
+static int command_for_secondary_mouse(int x, int y, int buttonMask)
 {
     if ((buttonMask & DM1_V1_BUTTON_LEFT) != 0) {
         if (in_box(x, y, 234, 261, 125, 145)) return DM1_V1_COMMAND_TURN_LEFT;
@@ -66,10 +100,19 @@ static int command_for_mouse(int x, int y, int buttonMask)
         if (in_box(x, y, 291, 318, 147, 167)) return DM1_V1_COMMAND_MOVE_RIGHT;
         if (in_box(x, y, 0, 223, 33, 168)) return DM1_V1_COMMAND_CLICK_IN_DUNGEON_VIEW;
     }
-    if ((buttonMask & DM1_V1_BUTTON_RIGHT) != 0 && in_box(x, y, 0, 319, 33, 199)) {
+    if ((buttonMask & DM1_V1_BUTTON_RIGHT) != 0 && in_box(x, y, 0, 319, 0, 199)) {
         return DM1_V1_COMMAND_TOGGLE_INVENTORY_LEADER;
     }
     return DM1_V1_COMMAND_NONE;
+}
+
+static int command_for_mouse(int x, int y, int buttonMask)
+{
+    int command = command_for_primary_mouse(x, y, buttonMask);
+    if (command != DM1_V1_COMMAND_NONE) {
+        return command;
+    }
+    return command_for_secondary_mouse(x, y, buttonMask);
 }
 
 static int enqueue_command(struct Dm1V1InputCommandQueuePc34Compat* queue, int command, int x, int y)
@@ -246,5 +289,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,106-121,252-260,272-305,677-684,729-812,1304-1377,1379-1449,1452-1661,1692-1707,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,72-84,106-121,252-260,272-305,677-684,729-812,1304-1377,1379-1449,1452-1661,1692-1707,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
 }

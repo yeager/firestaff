@@ -74,6 +74,63 @@ int main(void)
     ok &= expect_int("direct touch command", peek.command, 71);
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("primary action area beats secondary viewport",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 250, 90, DM1_V1_BUTTON_LEFT }), 1);
+    ok &= expect_int("primary action queued", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("primary action command", peek.command, DM1_V1_COMMAND_CLICK_IN_ACTION_AREA);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("primary action dequeued", result.dequeued, 1);
+    ok &= expect_int("primary action result command", result.command, DM1_V1_COMMAND_CLICK_IN_ACTION_AREA);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("primary spell area beats secondary viewport",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 250, 60, DM1_V1_BUTTON_LEFT }), 1);
+    ok &= expect_int("primary spell queued", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("primary spell command", peek.command, DM1_V1_COMMAND_CLICK_IN_SPELL_AREA);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    queue.locked = 1;
+    ok &= expect_int("locked primary action pending",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 250, 90, DM1_V1_BUTTON_LEFT }), 0);
+    ok &= expect_int("locked primary action pending command", queue.pendingClickCommand, DM1_V1_COMMAND_CLICK_IN_ACTION_AREA);
+    queue.locked = 0;
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
+    ok &= expect_int("locked primary action replayed", result.pendingReplayCount, 1);
+    ok &= expect_int("locked primary action replay command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("locked primary action queued", peek.command, DM1_V1_COMMAND_CLICK_IN_ACTION_AREA);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("left button bar graph source-order toggle",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 50, 10, DM1_V1_BUTTON_LEFT }), 1);
+    ok &= expect_int("left button bar graph command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("left button bar graph toggle command", peek.command, DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("left button name-hand status command",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 25, 10, DM1_V1_BUTTON_LEFT }), 1);
+    ok &= expect_int("left button status command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("left button champion status command", peek.command, DM1_V1_COMMAND_CLICK_CHAMPION_STATUS_0);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("right button top primary champion toggle",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 25, 11, DM1_V1_BUTTON_RIGHT }), 1);
+    ok &= expect_int("right button primary command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("right button primary champion command", peek.command, DM1_V1_COMMAND_TOGGLE_INVENTORY_CHAMPION_0);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("right button secondary full-screen leader toggle",
+        DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_MOUSE, 0, 250, 180, DM1_V1_BUTTON_RIGHT }), 1);
+    ok &= expect_int("right button secondary command", DM1_V1_InputCommandQueue_PeekPc34Compat(&queue, &peek), 1);
+    ok &= expect_int("right button secondary leader command", peek.command, DM1_V1_COMMAND_TOGGLE_INVENTORY_LEADER);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     ok &= expect_int("pc34 table left arrow turns left", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004B, 0, 0, 0 }), 1);
     result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 0, 0);
