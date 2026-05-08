@@ -20,6 +20,8 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
 
+#define THING_REF(type, index) ((unsigned short)(((type) << 10) | ((index) & 0x03FF)))
+
 #define MAP_W 3
 #define MAP_H 3
 static int g_pass, g_fail;
@@ -53,6 +55,24 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon, unsigned char*
 static void free_fixture(struct DungeonDatState_Compat* dungeon) {
     free(dungeon->maps);
     free(dungeon->tiles);
+}
+static void build_group_fixture(struct DungeonThings_Compat* things,
+                                unsigned short* squareFirstThings,
+                                struct DungeonGroup_Compat* groups) {
+    memset(things, 0, sizeof(*things));
+    memset(squareFirstThings, 0, sizeof(unsigned short));
+    memset(groups, 0, sizeof(*groups));
+    squareFirstThings[0] = THING_REF(THING_TYPE_GROUP, 0);
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 10; /* Mummy: material, height=1 in ReDMCSB I34 attrs */
+    groups[0].count = 1;         /* two creatures */
+    groups[0].health[0] = 20;
+    groups[0].health[1] = 20;
+    things->squareFirstThings = squareFirstThings;
+    things->squareFirstThingCount = 1;
+    things->groups = groups;
+    things->groupCount = 1;
+    things->loaded = 1;
 }
 static int has_emit(const struct TickResult_Compat* r, int kind) {
     int i;
@@ -131,6 +151,51 @@ int main(void) {
         ev.aux1 == DOOR_EFFECT_CLEAR,
         "occupied-door CLEAR event is rescheduled two ticks later, matching TIMELINE.C party branch");
 
+
+    build_fixture(&dungeon, squares);
+    squares[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_DOOR,
+                                  DUNGEON_SQUARE_MASK_THING_LIST | 2);
+    {
+        struct DungeonThings_Compat things;
+        unsigned short squareFirstThings[1];
+        struct DungeonGroup_Compat groups[1];
+        build_group_fixture(&things, squareFirstThings, groups);
+        memset(&world, 0, sizeof(world));
+        F0881_WORLD_InitDefault_Compat(&world, 4321u);
+        world.dungeon = &dungeon;
+        world.things = &things;
+        world.ownsDungeon = 0;
+        world.party.mapIndex = 0;
+        world.party.mapX = 0;
+        world.party.mapY = 0;
+        world.party.championCount = 4;
+        world.gameTick = 10;
+
+        memset(&ev, 0, sizeof(ev));
+        ev.kind = TIMELINE_EVENT_DOOR_ANIMATE;
+        ev.fireAtTick = 10;
+        ev.mapIndex = 0;
+        ev.mapX = 1;
+        ev.mapY = 1;
+        ev.aux1 = DOOR_EFFECT_CLEAR;
+        F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev);
+
+        memset(&result, 0, sizeof(result));
+        F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+        rec("P418_ORCH_CREATURE_STEPS_OPEN_DAMAGES",
+            square_state(&dungeon, 1, 1) == 1 &&
+            groups[0].health[0] == 15 && groups[0].health[1] == 15 &&
+            has_emit(&result, EMIT_DOOR_STATE) &&
+            has_emit(&result, EMIT_DAMAGE_DEALT) &&
+            has_emit(&result, EMIT_SOUND_REQUEST),
+            "material creature on a horizontal closing door is damaged, door steps one state toward open, and markers emit");
+
+        rec("P418_ORCH_CREATURE_RESCHEDULES_PLUS_ONE",
+            F0722_TIMELINE_Peek_Compat(&world.timeline, &ev) == 1 &&
+            ev.kind == TIMELINE_EVENT_DOOR_ANIMATE && ev.fireAtTick == 11 &&
+            ev.aux1 == DOOR_EFFECT_CLEAR,
+            "material-creature obstruction reschedules after the single pre-increment tick");
+    }
     free_fixture(&dungeon);
     printf("# summary: %d/%d passed\n", g_pass, g_pass + g_fail);
     return g_fail ? 1 : 0;

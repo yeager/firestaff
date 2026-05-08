@@ -914,6 +914,146 @@ int F0880b_WORLD_Clone_Compat(
 /* Translate a player command to a movement action (0..5) and/or
  * party-direction change. Returns movement-action or -1 if not a
  * movement command. */
+
+static const unsigned short s_dm1_i34_creature_attributes[27] = {
+    0x0482, 0x0480, 0x4510, 0x04B4, 0x0701, 0x0581, 0x070C,
+    0x0300, 0x5864, 0x0282, 0x1480, 0x18C6, 0x1280, 0x14A2,
+    0x05B8, 0x0381, 0x0680, 0x04A0, 0x0280, 0x4060, 0x10DE,
+    0x0082, 0x1480, 0x78AA, 0x068A, 0x78AA, 0x78AA
+};
+
+static unsigned short orch_next_thing_compat(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    int type;
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return THING_NONE;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (index < 0) return THING_NONE;
+    switch (type) {
+    case THING_TYPE_DOOR:
+        return (index < things->doorCount) ? things->doors[index].next : THING_NONE;
+    case THING_TYPE_TELEPORTER:
+        return (index < things->teleporterCount) ? things->teleporters[index].next : THING_NONE;
+    case THING_TYPE_TEXTSTRING:
+        return (index < things->textStringCount) ? things->textStrings[index].next : THING_NONE;
+    case THING_TYPE_SENSOR:
+        return (index < things->sensorCount) ? things->sensors[index].next : THING_NONE;
+    case THING_TYPE_GROUP:
+        return (index < things->groupCount) ? things->groups[index].next : THING_NONE;
+    case THING_TYPE_WEAPON:
+        return (index < things->weaponCount) ? things->weapons[index].next : THING_NONE;
+    case THING_TYPE_ARMOUR:
+        return (index < things->armourCount) ? things->armours[index].next : THING_NONE;
+    case THING_TYPE_SCROLL:
+        return (index < things->scrollCount) ? things->scrolls[index].next : THING_NONE;
+    case THING_TYPE_POTION:
+        return (index < things->potionCount) ? things->potions[index].next : THING_NONE;
+    case THING_TYPE_CONTAINER:
+        return (index < things->containerCount) ? things->containers[index].next : THING_NONE;
+    case THING_TYPE_JUNK:
+        return (index < things->junkCount) ? things->junks[index].next : THING_NONE;
+    case THING_TYPE_PROJECTILE:
+        return (index < things->projectileCount) ? things->projectiles[index].next : THING_NONE;
+    case THING_TYPE_EXPLOSION:
+        return (index < things->explosionCount) ? things->explosions[index].next : THING_NONE;
+    default:
+        return THING_NONE;
+    }
+}
+
+static int orch_square_first_thing_list_index_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    int sftIndex = 0;
+    int m;
+    int squareIndex;
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->tiles || !dungeon->maps) return -1;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return -1;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return -1;
+    for (m = 0; m < mapIndex; ++m) {
+        int i;
+        int count = dungeon->maps[m].width * dungeon->maps[m].height;
+        if (!dungeon->tiles[m].squareData) return -1;
+        for (i = 0; i < count; ++i) {
+            if (dungeon->tiles[m].squareData[i] & DUNGEON_SQUARE_MASK_THING_LIST) ++sftIndex;
+        }
+    }
+    squareIndex = mapX * map->height + mapY;
+    if (!dungeon->tiles[mapIndex].squareData) return -1;
+    {
+        int i;
+        for (i = 0; i < squareIndex; ++i) {
+            if (dungeon->tiles[mapIndex].squareData[i] & DUNGEON_SQUARE_MASK_THING_LIST) ++sftIndex;
+        }
+    }
+    return sftIndex;
+}
+
+static int orch_find_material_group_on_square_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outGroupIndex,
+    int* outCreatureHeight)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+    if (outGroupIndex) *outGroupIndex = -1;
+    if (outCreatureHeight) *outCreatureHeight = 0;
+    if (!dungeon || !things || !things->loaded || !things->squareFirstThings) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= things->squareFirstThingCount) return 0;
+    thing = things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_GROUP && index >= 0 && index < things->groupCount) {
+            const struct DungeonGroup_Compat* group = &things->groups[index];
+            int creatureType = group->creatureType;
+            unsigned short attributes = 0;
+            if (creatureType >= 0 && creatureType < 27) {
+                attributes = s_dm1_i34_creature_attributes[creatureType];
+            }
+            if ((attributes & CREATURE_ATTR_MASK_NON_MATERIAL) == 0) {
+                if (outGroupIndex) *outGroupIndex = index;
+                if (outCreatureHeight) *outCreatureHeight = (int)((attributes >> 7) & 0x0003u);
+                return 1;
+            }
+        }
+        thing = orch_next_thing_compat(things, thing);
+    }
+    return 0;
+}
+
+static int orch_damage_group_all_creatures_compat(
+    struct DungeonGroup_Compat* group,
+    int damage)
+{
+    int i;
+    int damaged = 0;
+    if (!group || damage <= 0) return 0;
+    for (i = 0; i <= (int)group->count && i < 4; ++i) {
+        if (group->health[i] > 0) {
+            group->health[i] = (group->health[i] > (unsigned int)damage)
+                ? (unsigned short)(group->health[i] - damage)
+                : 0;
+            damaged++;
+        }
+    }
+    return damaged;
+}
+
 static int cmd_to_move_action(uint8_t cmd, int partyDirection, int* outSetDir) {
     *outSetDir = -1;
     switch (cmd) {
@@ -1311,30 +1451,50 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                         world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
                         DOOR_EFFECT_SET, 0 /* read current only */, &step)) {
                     struct DoorClosingObstruction_Compat obstruction;
+                    int groupIndex = -1;
+                    int creatureHeight = 0;
+                    int hasMaterialCreature = orch_find_material_group_on_square_compat(
+                        world->dungeon, world->things, ev.mapIndex, ev.mapX, ev.mapY,
+                        &groupIndex, &creatureHeight);
                     int partyOnDoor = (world->party.mapIndex == ev.mapIndex &&
                                        world->party.mapX == ev.mapX &&
                                        world->party.mapY == ev.mapY);
                     if (F0717_DOOR_ResolveClosingObstruction_Compat(
                             step.oldDoorState, step.doorVertical,
                             partyOnDoor, world->party.championCount,
-                            0 /* creature hazard not wired in orchestrator yet */,
-                            0, &obstruction) &&
-                        obstruction.kind == DOOR_OBSTRUCTION_PARTY) {
-                        int guard = 0;
-                        while (guard++ < 5) {
-                            struct DoorAnimationStep_Compat openStep;
-                            memset(&openStep, 0, sizeof(openStep));
-                            if (!F0712_DOOR_StepAnimation_Compat(
-                                    world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
-                                    DOOR_EFFECT_SET, 1, &openStep)) break;
-                            if (openStep.newDoorState == obstruction.newDoorState ||
-                                openStep.kind == DOOR_ANIM_STEP_REACHED_TARGET) break;
+                            hasMaterialCreature,
+                            creatureHeight, &obstruction) &&
+                        obstruction.kind != DOOR_OBSTRUCTION_NONE) {
+                        if (obstruction.kind == DOOR_OBSTRUCTION_PARTY) {
+                            int guard = 0;
+                            while (guard++ < 5) {
+                                struct DoorAnimationStep_Compat openStep;
+                                memset(&openStep, 0, sizeof(openStep));
+                                if (!F0712_DOOR_StepAnimation_Compat(
+                                        world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
+                                        DOOR_EFFECT_SET, 1, &openStep)) break;
+                                if (openStep.newDoorState == obstruction.newDoorState ||
+                                    openStep.kind == DOOR_ANIM_STEP_REACHED_TARGET) break;
+                            }
+                            emit(result, EMIT_DAMAGE_DEALT,
+                                 obstruction.damageAmount, obstruction.woundMask,
+                                 world->party.championCount, ev.mapIndex);
+                        } else if (obstruction.kind == DOOR_OBSTRUCTION_CREATURE) {
+                            (void)F0712_DOOR_StepAnimation_Compat(
+                                world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
+                                DOOR_EFFECT_SET, 1, &step);
+                            if (world->things && groupIndex >= 0 &&
+                                groupIndex < world->things->groupCount) {
+                                (void)orch_damage_group_all_creatures_compat(
+                                    &world->things->groups[groupIndex],
+                                    obstruction.damageAmount);
+                            }
+                            emit(result, EMIT_DAMAGE_DEALT,
+                                 obstruction.damageAmount, obstruction.woundMask,
+                                 groupIndex, ev.mapIndex);
                         }
                         emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY,
                              obstruction.newDoorState, ev.mapIndex);
-                        emit(result, EMIT_DAMAGE_DEALT,
-                             obstruction.damageAmount, obstruction.woundMask,
-                             world->party.championCount, ev.mapIndex);
                         emit(result, EMIT_SOUND_REQUEST,
                              obstruction.soundId, ev.mapX, ev.mapY, ev.mapIndex);
                         {
