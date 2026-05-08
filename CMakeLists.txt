@@ -1038,6 +1038,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_input_command_queue_source_lock.py
         )
         add_test(
+            NAME pass372_dm1_v1_movement_runtime_route
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass372_dm1_v1_movement_runtime_route.py
+        )
+        add_test(
             NAME dm1_v1_movement_timing_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_movement_timing_source_lock.py
         )
