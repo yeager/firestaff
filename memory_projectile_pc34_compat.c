@@ -551,12 +551,13 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
     case PROJECTILE_RESULT_HIT_CREATURE:
         if (digest->destCreatureIsNonMaterial
             && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) {
-            /* v1 simplification: pass-through of non-material creatures
-             * without damage is treated as despawn. NEEDS DISASSEMBLY
-             * REVIEW: Fontanel PROJEXPL.C:F0217 — actually projectile
-             * continues past non-material creatures for most types. */
-            outResult->resultKind = PROJECTILE_RESULT_DESPAWN_ENERGY;
-            outResult->despawn    = 1;
+            /* Defensive parity fallback for direct F0820 callers. F0217
+             * returns FALSE for this case (PROJEXPL.C:532-533), so the
+             * F0219 caller keeps the projectile alive rather than applying
+             * creature damage or despawning it. F0811 handles the full
+             * movement/reschedule path before dispatch. */
+            outResult->resultKind = PROJECTILE_RESULT_FLEW;
+            outResult->despawn    = 0;
             return 1;
         }
         outResult->resultKind = PROJECTILE_RESULT_HIT_CREATURE;
@@ -735,8 +736,16 @@ int F0811_PROJECTILE_Advance_Compat(
         && digest->sourceMapIndex == digest->destMapIndex
         && digest->sourceMapX == digest->destMapX
         && digest->sourceMapY == digest->destMapY) {
-        dispatch = PROJECTILE_RESULT_HIT_CREATURE;
-        goto RESOLVE;
+        /* ReDMCSB PROJEXPL.C:F0217 lines 532-533 returns FALSE for
+         * non-material creatures unless the projectile is
+         * HARM_NON_MATERIAL. In F0219 lines 693-697, FALSE means
+         * "no impact" and the projectile keeps moving/reschedules; it
+         * is not consumed. */
+        if (!(digest->destCreatureIsNonMaterial
+              && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL)) {
+            dispatch = PROJECTILE_RESULT_HIT_CREATURE;
+            goto RESOLVE;
+        }
     }
     if (digest->sourceHasOtherProjectile) {
         dispatch = PROJECTILE_RESULT_HIT_OTHER_PROJECTILE;
@@ -812,8 +821,11 @@ MOTION_STEP:
             outNewState->mapIndex = digest->destMapIndex;
             outNewState->mapX     = digest->destMapX;
             outNewState->mapY     = digest->destMapY;
-            dispatch = PROJECTILE_RESULT_HIT_CREATURE;
-            goto RESOLVE;
+            if (!(digest->destCreatureIsNonMaterial
+                  && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL)) {
+                dispatch = PROJECTILE_RESULT_HIT_CREATURE;
+                goto RESOLVE;
+            }
         }
 
         /* Commit the cross-cell step. Teleporter rotation: v1 does

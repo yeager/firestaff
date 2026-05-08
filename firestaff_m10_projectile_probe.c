@@ -4,7 +4,7 @@
  * Validates the pure projectile/explosion tick-transform data layer
  * against PHASE17_PLAN.md §5 invariants.
  *
- * Shipped: 53 invariants (≥30 gate, 48 target). Two sub-checks are
+ * Shipped: 54 invariants (≥30 gate, 48 target). Two sub-checks are
  * folded under invariant #49 and counted as one.
  */
 
@@ -674,7 +674,10 @@ int main(int argc, char* argv[]) {
               && r.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_GROUP,
               "Creature on dest cell -> HIT_CREATURE + APPLY_DAMAGE_GROUP");
     }
-    /* 23: Non-material creature + non-HARM projectile -> DESPAWN_ENERGY (v1) */
+    /* 23: Non-material creature + non-HARM projectile -> pass-through/no impact.
+     * ReDMCSB PROJEXPL.C:F0217 lines 532-533 returns FALSE; F0219 lines
+     * 696-697 only returns when F0217 reports TRUE, so FALSE falls through
+     * to movement/reschedule. */
     {
         struct ProjectileInstance_Compat p, pOut;
         struct CellContentDigest_Compat d;
@@ -689,9 +692,35 @@ int main(int argc, char* argv[]) {
         make_projectile_kinetic(&p, 1, 1, 5, 5, 10, 30, 1);
         F0730_COMBAT_RngInit_Compat(&rng, 1);
         F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
-        CHECK(r.despawn == 1 && r.resultKind == PROJECTILE_RESULT_DESPAWN_ENERGY
-              && r.emittedCombatAction == 0,
-              "Non-material creature + non-HARM_NON_MATERIAL projectile -> DESPAWN_ENERGY, no emission");
+        CHECK(r.despawn == 0
+              && r.resultKind == PROJECTILE_RESULT_FLEW
+              && r.emittedCombatAction == 0
+              && r.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE
+              && pOut.mapX == 6,
+              "Non-material creature + non-HARM_NON_MATERIAL projectile -> no impact; projectile keeps flying (PROJEXPL.C:532-533,696-697)");
+    }
+    /* 23b: HARM_NON_MATERIAL still impacts non-material creatures. */
+    {
+        struct ProjectileInstance_Compat p, pOut;
+        struct CellContentDigest_Compat d;
+        struct ProjectileTickResult_Compat r;
+        struct RngState_Compat rng;
+        zero_digest(&d);
+        set_source_and_dest(&d, 0, 5, 5, 6, 5);
+        d.destHasCreatureGroup     = 1;
+        d.destCreatureCellMask     = 0x01;
+        d.destCreatureIsNonMaterial= 1;
+        d.destCreatureType         = 5;
+        make_projectile_magical(&p, PROJECTILE_SUBTYPE_HARM_NON_MATERIAL,
+                                 COMBAT_ATTACK_NORMAL,
+                                 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 1);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        CHECK(r.resultKind == PROJECTILE_RESULT_HIT_CREATURE
+              && r.despawn == 1
+              && r.emittedCombatAction == 1
+              && r.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_GROUP,
+              "HARM_NON_MATERIAL vs non-material creature -> impact + APPLY_DAMAGE_GROUP");
     }
     /* 24: Fluxcage on dest -> HIT_FLUXCAGE, despawn=1, nothing emitted */
     {
