@@ -696,6 +696,10 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py
     )
     add_test(
+        NAME pass383_dm1_v1_movement_timing_integration
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass383_dm1_v1_movement_timing_integration.py
+    )
+    add_test(
         NAME dm1_v1_party_movement_sensor_order_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_party_movement_sensor_order_source_lock.py
     )
