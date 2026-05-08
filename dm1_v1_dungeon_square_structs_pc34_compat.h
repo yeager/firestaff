@@ -221,6 +221,17 @@ extern "C" {
 
 #define DM1_VIEW_WALL_COUNT_V1  15
 
+/* PC34/I34E supplemental far side wall planes drawn outside the 12-square core.
+ * ReDMCSB MEDIA720 adds D3L2/D3R2 and D2L2/D2R2 draw calls around the
+ * normal D3/D2 rows; these are tracked separately so the legacy 15-bit
+ * view-wall mask remains stable for existing callers. */
+#define DM1_PC34_EXTRA_WALL_D3L2 0
+#define DM1_PC34_EXTRA_WALL_D3R2 1
+#define DM1_PC34_EXTRA_WALL_D2L2 2
+#define DM1_PC34_EXTRA_WALL_D2R2 3
+
+#define DM1_PC34_EXTRA_WALL_COUNT 4
+
 /* View cell indices (för objekt/kreatur-rendering inom en ruta) */
 #define DM1_VCELL_FRONT_LEFT   0
 #define DM1_VCELL_FRONT_RIGHT  1
@@ -435,6 +446,18 @@ void dm1_compute_view_square_coords(int party_x, int party_y, int direction,
  */
 uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
                                       int direction);
+
+/*
+ * dm1_get_pc34_extra_side_wall_coords / dm1_compute_pc34_extra_side_wall_visibility
+ * — source-lock the I34E/PC34 supplemental far side wall planes: D3L2, D3R2,
+ * D2L2, D2R2.  Return false/0 for non-PC34 supplemental coordinates.
+ */
+bool dm1_get_pc34_extra_side_wall_coords(int party_x, int party_y, int direction,
+                                          int depth, int steps_right,
+                                          int *out_x, int *out_y);
+
+uint8_t dm1_compute_pc34_extra_side_wall_visibility(int depth, int steps_right,
+                                                    uint8_t raw_byte, int direction);
 
 
 /*
