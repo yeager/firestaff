@@ -21,11 +21,11 @@ Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB
 
 ## Firestaff verification
 
-- `m11_game_view.c:9329-9371` keeps source-style center-line blocking helpers: nearest non-open center square stops deeper center decoration.
-- `m11_game_view.c:9373-9414` draws front wall panels with layout-696 resolved D1C/D2C/D3C zones and stops after the nearest wall-like center square.
-- `m11_game_view.c:9918-9979` draws side wall panels far-to-near with layout-696 side zones and same-lane occlusion guards.
-- `m11_game_view.c:12107-12135` keeps side-lane contents bounded by nearer closed center blockers.
-- `m11_game_view.c:17980-18080` wires the normal viewport pass: sample cells, draw source-bound floor/wall/door layers, replay nearer side occluders after a farther blocking center square, then draw side and center contents.
+- `m11_game_view.c:m11_dm1_max_visible_forward_from_center`, `m11_dm1_nearest_blocking_center_depth_index`, and `m11_dm1_nearest_blocking_center_door_depth` keep source-style center-line blocking helpers: nearest non-open center square stops deeper center decoration.
+- `m11_game_view.c:m11_draw_dm1_front_walls` draws front wall panels with layout-696 resolved D1C/D2C/D3C zones and stops after the nearest wall-like center square.
+- `m11_game_view.c:m11_draw_dm1_side_walls` draws side wall panels far-to-near with layout-696 side zones and same-lane occlusion guards.
+- `m11_game_view.c:m11_draw_dm1_side_contents` keeps side-lane contents bounded by nearer closed center blockers.
+- `m11_game_view.c:m11_draw_viewport` wires the normal viewport pass: sample cells, draw source-bound floor/wall/door layers, replay nearer side occluders after a farther blocking center square, then draw side and center contents.
 - Existing gates are chained by the new verifier: source wall draw-order lock, viewport draw-order, wall depth, generic occlusion, side-wall occlusion, center-door occlusion, and ReDMCSB draw-stack source shape.
 
 ## Result
