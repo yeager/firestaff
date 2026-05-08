@@ -113,7 +113,7 @@
     },
     {
       "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
-      "claim": "input queue probe covers keypad, PC-34 normalized arrow rows, shifted arrows, pending mouse replay, turn gate bypass, movement gate retention, and four-command queue capacity"
+      "claim": "input queue probe covers keypad, PC-34 normalized arrow rows, shifted arrows, pending mouse replay, turn gate bypass, movement gate retention, and C5 regular-command queue capacity"
     },
     {
       "file": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c",

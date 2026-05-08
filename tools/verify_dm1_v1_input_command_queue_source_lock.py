@@ -17,6 +17,7 @@ COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 MENUDRAW_C = REDMCSB_SOURCE / "MENUDRAW.C"
 IO2_C = REDMCSB_SOURCE / "IO2.C"
+DEFS_H = REDMCSB_SOURCE / "DEFS.H"
 COMPAT_C = ROOT / "dm1_v1_input_command_queue_pc34_compat.c"
 TEST_C = ROOT / "test_dm1_v1_input_command_queue_pc34_compat.c"
 
@@ -53,8 +54,15 @@ def verify_redmcsb() -> list[str]:
     citations: list[str] = []
     require("COMMAND.C:6", block(COMMAND_C, 6, 6), [
         "G0432_as_CommandQueue[M529_COMMAND_QUEUE_SIZE + 1]",
-        "Can only contain up to 4 actual commands at a time",
-    ]); citations.append("COMMAND.C:6 circular command queue capacity")
+    ]); citations.append("COMMAND.C:6 circular command queue storage declaration")
+    require("DEFS.H:3263-3264", block(DEFS_H, 3263, 3264), [
+        "MEDIA728_I34E_I34M_A36M_A35E_A35M",
+        "M529_COMMAND_QUEUE_SIZE",
+        "8",
+    ]); citations.append("DEFS.H:3263-3264 PC34 command queue storage size")
+    require("DEFS.H:3507", block(DEFS_H, 3507, 3507), [
+        "C5_UNKNOWN", "5",
+    ]); citations.append("DEFS.H:3507 PC34 regular-command cap constant")
     require("COMMAND.C:106-121", block(COMMAND_C, 106, 121), [
         "C001_COMMAND_TURN_LEFT", "C003_COMMAND_MOVE_FORWARD", "C002_COMMAND_TURN_RIGHT",
         "C006_COMMAND_MOVE_LEFT", "C005_COMMAND_MOVE_BACKWARD", "C004_COMMAND_MOVE_RIGHT",
@@ -126,7 +134,7 @@ def verify_firestaff() -> list[str]:
     t = TEST_C.read_text()
     notes: list[str] = []
     for marker in [
-        "COMMAND.C:6", "COMMAND.C:106-121", "COMMAND.C:677-684", "IO2.C:27-61",
+        "COMMAND.C:6", "COMMAND.C:106-121", "COMMAND.C:636-685", "DEFS.H:3263-3264", "IO2.C:27-61",
         "COMMAND.C:1379-1449", "COMMAND.C:1452-1661", "COMMAND.C:1692-1707",
         "COMMAND.C:1709-1813", "COMMAND.C:2045-2156",
         "CLIKMENU.C:142-174", "CLIKMENU.C:180-330", "MENUDRAW.C:5-19",
@@ -155,7 +163,7 @@ def verify_firestaff() -> list[str]:
     ]:
         if needle not in t:
             raise AssertionError(f"test missing invariant label {needle!r}")
-    notes.append("Firestaff compat queue model and regression probe cover pending replay, actual PC-34 movement keys, IO2 shifted-arrow normalization, legacy shifted movement keys, and five-command PC34/I34 queue capacity")
+    notes.append("Firestaff compat queue model and regression probe cover pending replay, actual PC-34 movement keys, IO2 shifted-arrow normalization, legacy shifted movement keys, and C5 PC34/I34 regular-command queue capacity")
     return notes
 
 

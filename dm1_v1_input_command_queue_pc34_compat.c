@@ -5,12 +5,12 @@
  * - COMMAND.C:72-84 and 375-405 source-order active mouse tables: G0447 primary interface is searched before G0448 movement/viewport/right-button secondary.
  * - COMMAND.C:106-121 G0448 movement mouse rows for C001/C003/C002/C006/C005/C004/C080/C083.
  * - COMMAND.C:252-260 / 272-305 legacy ST/Amiga movement keyboard rows still covered for shared-route probes.
- * - COMMAND.C:677-684 MEDIA707_I34E_I34M movement keyboard rows use 0x004B..0x0051.
- * - IO2.C:27-61 F0540_INPUT_Crawcin reads IODRV_00_GetKeyboardInput and normalizes shifted PC-34 arrow scancodes to the same 0x004B/0x004C/0x004D/0x0050 command-table codes.
+ * - COMMAND.C:636-685 MEDIA707_I34E_I34M movement keyboard rows use 0x004B..0x0051.
+ * - IO2.C:27-61 F0540_INPUT_Crawcin reads IODRV_00_GetKeyboardInput and normalizes shifted PC-34 arrow scancodes to the same 0x004B/0x004C/0x004D/0x004F/0x0050/0x0051 command-table codes.
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
  * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
- * - COMMAND.C:729-812 and COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands while G2153_i_QueuedCommandsCount < C5, then replays pending click.
+ * - COMMAND.C:729-812 and COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands while G2153_i_QueuedCommandsCount < C5, then replays pending click; DEFS.H:3263-3264 gives PC-34 queue storage size 8 and DEFS.H:3507 defines C5.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
  * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement (except later-platform release/stop commands not modeled here).
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
@@ -289,5 +289,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,72-84,106-121,252-260,272-305,677-684,729-812,1304-1377,1379-1449,1452-1661,1692-1707,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,72-84,106-121,252-260,272-305,636-685,729-812,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; DEFS.H:3263-3264,3507; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
 }
