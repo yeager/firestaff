@@ -1,0 +1,120 @@
+[
+  {
+    "route_item": "wait:9000",
+    "slept": true,
+    "t": 1778249574.4305031
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "enter",
+    "t": 1778249583.4583008
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778249583.6803408
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "t": 1778249585.8910182
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778249586.1112673
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "click:276,140",
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778249588.3190002
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778249588.433993
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "t": 1778249590.640613
+  },
+  {
+    "route_item": "wait:3500",
+    "slept": true,
+    "t": 1778249590.865137
+  },
+  {
+    "route_item": "wait:2500",
+    "slept": true,
+    "t": 1778249594.3738825
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778249606.9477396
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778249607.416846
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778249608.319531
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778249608.588801
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778249609.4931924
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778249613.0755115
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778249613.9772978
+  },
+  {
+    "route_item": "wait:900",
+    "slept": true,
+    "t": 1778249614.2496169
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778249615.1522837
+  },
+  {
+    "route_item": "wait:1200",
+    "slept": true,
+    "t": 1778249615.4243948
+  }
+]

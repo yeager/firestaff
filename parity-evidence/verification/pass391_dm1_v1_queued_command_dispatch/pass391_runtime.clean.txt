@@ -1,0 +1,422 @@
+(B)0=---(Register Overview)---
+EAX=ESI=DS=ES=FS=GS=SS=
+EBX=EDI=CS=EIP=C  Z  S  O  A  P  D  I  T
+ECX=EBP=IOPL   CPL
+EDX=ESP=
+---(Data Overview   Scroll: page up/down)---
+---(Code Overview   Scroll: up/down     )---
+---(Variable Overview)---
+---(OutPut/Input    Scroll: home/end    )---
+DOSBox version 0.74-3
+Copyright 2002-2019 DOSBox Team, published under GNU GPL.
+---
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass391-q9e2oj90/dosbox.conf
+0: IO:Writing 05 to port 03CF
+MIXER:No Sound Mode Selected.
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+0000:0000     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0010     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0020     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0030     60 10 00 F0 60 10 00 F0 80 10 00 F0 60 10 00 F0  `...`.......`...
+0000:0040     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0000  60pusha
+0000:0001  1000adc  [bx+si],alds:[0000]=1060
+0000:0003  F060lock pusha
+0000:0005  1000adc  [bx+si],alds:[0000]=1060
+0000:0007  F060lock pusha
+0000:0009  1000adc  [bx+si],alds:[0000]=1060
+0000:000B  F060lock pusha
+0000:000D  1000adc  [bx+si],alds:[0000]=1060
+0000:000F  F060lock pusha
+0000:0011  1000adc  [bx+si],alds:[0000]=1060
+(Running)0000000000000000  DS=00000000000000000000 Real0000000000000000  CS=000000000000  C0 Z0 S0 O0 A0 P0 D0 I1 T000000000000000000  CPL0000000000000000000: SBLASTER:DSP:Reset
+0: IO:Read from port 0278
+0: IO:Read from port 0279
+0: IO:Read from port 03BC
+0: IO:Read from port 03BE
+78
+0: INT10:Set Video Mode 3
+78
+0: VGA:Blinking 8
+78
+0: BIOS:Keyboard layout file auto not found
+78
+0: BIOS:Keyboard layout file auto not found
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: EXEC:Parsing command line: AUTOEXEC.BAT
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+
+
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass391-q9e2oj90/dos
+78
+3: EXEC:Execute mount.COM 0
+78
+3: FILES:file open command 0 file mount.COM
+78
+12: DOSMISC:DIRCACHE: Set volume label to C_DRIVE
+78
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+18: EXEC:Parsing command line: c:
+78
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+18: EXEC:Parsing command line: DEBUG DM.EXE -vv -sn -pk
+78
+21: EXEC:Execute Z:\DEBUG.COM 0
+78
+21: FILES:file open command 0 file Z:\DEBUG.COM
+78
+33: EXEC:Execute DM.EXE 0
+78
+33: FILES:file open command 0 file DM.EXE
+08 00 70 00 08 00 70 00 08 00 70 0..p...p...p08 00 70 0..pA5 FE87 E955 FF........U20 1320 1140 111 ... ...@C0 11E0 1100 1240 12............@E0 12E0 122.....80 12A4 F00 05 00 C0  .........
+0499:000E  06 es
+0499:000F  0E  push cs
+0499:0010  1F  pop  ds
+0499:0011  8B0E0C00mov  cx,[000C] C]=F00
+0499:0015  8BF1mov  si,cx
+0499:0017  4E  dec  si
+0499:0018  89F7mov  di,si
+0499:001A  8CDBmov  bx,ds
+0499:001C  031E0A00add  bx,[000A]ds:[000A]=20C8
+0499:0020  8EC3mov  es,bx
+-> _     E1DD1DD66F8499EFF91C31DD834
+***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
+
+(Running)
+6070: VGA:h total 100 end 80 blank (80/98) retrace (85/97)
+78
+6070: VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+
+
+6070: VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02701/0.03082)
+
+
+6070: VGA:v total 14.26806 (70.09Hz) blank(12.93341/14.04562) retrace(13.09230/13.15585)
+78
+6070: VGA:Width 640, Height 400, fps 70.086592
+78
+6070: VGA:normal width, normal height aspect 1.000000
+78
+163415: MOUSE:New video is the same as the old
+78
+163466: SBLASTER:Unhandled write to SB Port  22A
+78
+163474: SBLASTER:DSP:Reset
+78
+211707: FILES:file open command 2 file VGA
+78
+211760: FILES:file open command 2 file VGA
+78
+211884: FILES:file open command 2 file IBMIO
+78
+211937: FILES:file open command 2 file IBMIO
+78
+211990: FILES:file open command 2 file FIRES
+78
+212043: FILES:file open command 2 file FIRES
+78
+212255: FILES:file open command 0 file dmset
+78
+214301: FILES:file open command 0 file C:\VGA
+78
+214325: FCB:DOS:29:FCB Parse Filename, result:al=0
+78
+214332: FCB:DOS:29:FCB Parse Filename, result:al=0
+78
+214526: EXEC:Execute C:\VGA 3
+78
+214526: FILES:file open command 0 file C:\VGA
+78
+267531: INT10:Set Video Mode 13
+78
+267531: VGA:Blinking 0
+78
+267891: EXEC:Execute IBMIO 0
+78
+267891: FILES:file open command 0 file IBMIO
+78
+362031: EXEC:Execute swoosh 0
+78
+362031: FILES:file open command 0 file swoosh
+78
+408241: VGA:h total 100 end 80 blank (80/98) retrace (84/96)
+78
+408241: VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+
+
+408241: VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02669/0.03051)
+
+
+408241: VGA:v total 14.26806 (70.09Hz) blank(12.93347/14.04568) retrace(13.09235/13.15591)
+78
+408241: VGA:Width 320, Height 200, fps 70.086303
+78
+408241: VGA:double width, double height aspect 1.200000
+78
+5086889: EXEC:Execute anim 0
+78
+5086889: FILES:file open command 0 file anim
+78
+5154362: FILES:file open command 2 file title
+78
+16472456: EXEC:Execute selector 0
+78
+16472456: FILES:file open command 0 file selector
+78
+16647115: FILES:file open command 2 file data\song.dat
+78
+24910620: FILES:file open command 2 file data\graphics.dat
+78
+37395189: EXEC:Execute FIRES 0
+78
+37395189: FILES:file open command 0 file FIRES
+78
+38625007: FILES:file open command 0 file EMMXXXX0
+78
+38625024: IOCTL:07:Fakes output status is ready for handle 3
+78
+38636665: FILES:file open command 2 file DATA\GRAPHICS.DAT
+78
+41509645: FILES:file open command 2 file DATA\DUNGEON.DAT
+FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
+0477:0B43  268907mov  es:[bx],axes:[0FAA]=0FBC
+0477:0B46  C45E0Ales  bx,[bp+0A]ss:[0F7A]=0FA8
+0477:0B49  A1EA01mov  ax,[01EA]ds:[01EA]=0034
+0477:0B4C  268907  es:[bx],axes:[0FAA]=0FBC
+0477:0B4F  C45E0Eles  bx,[bp+0E]ss:[0F7E]=0FA6
+0477:0B52  A12409mov  ax,[0924]ds:[0924]=0000
+0477:0B55  268907es:[bx],axes:[0FAA]=0FBC
+0477:0B58  9D  popf
+0477:0B59  1F      pop  ds
+0477:0B5A  5D  pop  bp
+-> _     FA266330313031FAA0377B431 D0 I086B0F7088DBF6C62978334....
+-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_
+DEBUG: Breakpoints deleted.
+
+-> _       ....
+-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....4_  ....0_  ....7_
+DEBUG: Set breakpoint at 22F7:0407
+
+-> _            ....
+-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_
+DEBUG: Set memory breakpoint at 2C23:3E78
+
+-> _             ....
+-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....C_  ....9_  ....A_
+DEBUG: Set memory breakpoint at 2C23:3C9A
+
+-> _             ....
+-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....D_  ....2_  ....8_
+DEBUG: Set memory breakpoint at 2C23:3D28
+
+-> _             ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3D28 (00)
+78
+01. BPMEM 2C23:3C9A (00)
+78
+02. BPMEM 2C23:3E78 (00)
+78
+03. BP 22F7:0407
+
+-> _      ....
+(Running)....
+22F7:0407  55    push bp
+22F7:0408  8BEC  mov  bp,sp
+22F7:040A  83EC04sub  sp,0004
+22F7:040D  56    push si
+22F7:040E  57    push di
+22F7:040F  FF7606push word [bp+06]ss:[0FD0]=0006
+22F7:0412  9AF22C930Fcall 0F93:2CF2
+22F7:0417  59  cx
+22F7:0418  A1BE3Emov  ax,[3EBE]ds:[3EBE]=2C23
+22F7:041B  8B16BC3Emov  dx,[3EBC]ds:[3EBC]=26D4
+-> _     4B4  DS=2C20663EE0356  CS=22F4071 O0 A1 P0 D0 I1001BCA0002C23834728....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3D28 (00)
+78
+01. BPMEM 2C23:3C9A (00)
+78
+02. BPMEM 2C23:3E78 (00)
+78
+03. BP 22F7:0407
+
+-> _      ....
+(Running)
+DEBUG: Memory breakpoint : 2C23:3E78 - 00 -> 01
+74  EB3Fjmp  short 000004B5 ($+3f)  (down)76  8346FC04add  word [bp-04],0004ss:[0FBC]=26F47A  C45EFCles  bx,[bp-04]ss:[0FBC]=26F47D  268B07mov  ax,es:[bx]es:[0000]=000080  8BF8mov  di,ax82  0BC0  or   ax,ax84  75C4      jne  0000044A ($-3c)(up)86  A1C23Emov  ax,[3EC2]ds:[3EC2]=2C2389  8B16C03Edx,[3EC0C0]=26F48D  8956FC  [bp-04],dxss:[0FF
+-> _     0002C2000001740 O0 A0400B8905....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3D28 (00)
+78
+01. BPMEM 2C23:3C9A (00)
+78
+02. BPMEM 2C23:3E78 (01)
+78
+03. BP 22F7:0407
+
+-> _      ....
+-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....6_  ....9_  ....9_
+DEBUG: Set breakpoint at 22F7:0699
+
+-> _            ....
+-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....0_  ....D_
+DEBUG: Set breakpoint at 1EA7:010D
+
+-> _            ....
+-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....A_  ....A_
+DEBUG: Set breakpoint at 1EA7:01AA
+
+-> _            ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BP 1EA7:01AA
+78
+01. BP 1EA7:010D
+78
+02. BP 22F7:0699
+78
+03. BPMEM 2C23:3D28 (00)
+78
+04. BPMEM 2C23:3C9A (00)
+78
+05. BPMEM 2C23:3E78 (01)
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....699  55  push bp69A  8BEC    mov  bp,sp69C  83EC04sub  sp,000469F  56    push si6A0  57  push di   6A1  C7060A1F0100mov  word [1F0A],0001ds:[1F0A]=00006A7  A1081Fmov  ax,[1F08]      ds:[1F08]=00006AA  40    inc  ax6AB  8BF8    i,ax6AD  3D0800cmp  ax,0008
+-> _     40663395669911AC450....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BP 1EA7:01AA
+78
+01. BP 1EA7:010D
+78
+02. BP 22F7:0699
+78
+03. BPMEM 2C23:3D28 (00)
+78
+04. BPMEM 2C23:3C9A (00)
+78
+05. BPMEM 2C23:3E78 (01)
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)
+DEBUG: Memory breakpoint : 2C23:3E78 - 01 -> 00
+725  FF06C83Einc  word [3EC8]ds:[3EC8]=0000729  A1C83Eax,[3EC8]ds:[3EC8]=000072C  3D0800cmp  ax,000872F  7E06jle  00000737 ($+6)(down)731  C706C83E0000mov  word [3EC8],0000ds:[3EC8]=000073700173D  0E    push cs73E  E8A1FCcall 000003E2 ($-35f)741  81FEFE00cmp  si,00FE745  7554  jne  0000079B ($+54)(no jmp)
+-> _     1000017252BA83....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BP 1EA7:01AA
+78
+01. BP 1EA7:010D
+78
+02. BP 22F7:0699
+78
+03. BPMEM 2C23:3D28 (00)
+78
+04. BPMEM 2C23:3C9A (00)
+78
+05. BPMEM 2C23:3E78 (00)
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+1EA7:010D  55      push bp
+1EA7:010E  8BEC  bp,sp
+1EA7:0110  56    push si
+1EA7:0111  C7067C1A0100mov  word [1A7C],0001ds:[1A7C]=0000
+1EA7:0117  837E0601    cmpbp+06],0001ss:[0F4
+1EA7:011B  7505        jne  00000122 ($+5)  (no jmp)
+1EA7:011D  B84400mov  ax,0044
+1EA7:0120  EB03  jmp  short 00000125 ($+3)   (down)
+1EA7:0122  B84500  mov  ax,0045
+1EA7:0125  50  push ax
+-> _     11EA10D45004....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BP 1EA7:01AA
+78
+01. BP 1EA7:010D
+78
+02. BP 22F7:0699
+78
+03. BPMEM 2C23:3D28 (00)
+78
+04. BPMEM 2C23:3C9A (00)
+78
+05. BPMEM 2C23:3E78 (00)
+78
+06. BP 22F7:0407
+
+-> _      ........
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BP 1EA7:01AA
+78
+01. BP 1EA7:010D
+78
+02. BP 22F7:0699
+78
+03. BPMEM 2C23:3D28 (00)
+78
+04. BPMEM 2C23:3C9A (00)
+78
+05. BPMEM 2C23:3E78 (00)
+78
+06. BP 22F7:0407
+
+-> _

@@ -1,0 +1,131 @@
+[
+  {
+    "control": "F5",
+    "purpose": "run unarmed through load prefix and suffix",
+    "t": 1778249574.4183764
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "post-gameplay arm point",
+    "t": 1778249596.9131563
+  },
+  {
+    "cmd": "BPDEL *",
+    "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+    "t": 1778249602.7661262
+  },
+  {
+    "cmd": "BP 22F7:0407",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....4_  ....0_  ....7_  \nDEBUG: Set breakpoint at 22F7:0407\n\n-> _            ",
+    "t": 1778249603.5888367
+  },
+  {
+    "cmd": "BPM 2C23:3E78",
+    "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  \nDEBUG: Set memory breakpoint at 2C23:3E78\n\n-> _             ",
+    "t": 1778249604.4132829
+  },
+  {
+    "cmd": "BPM 2C23:3C9A",
+    "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....C_  ....9_  ....A_  \nDEBUG: Set memory breakpoint at 2C23:3C9A\n\n-> _             ",
+    "t": 1778249605.236155
+  },
+  {
+    "cmd": "BPM 2C23:3D28",
+    "excerpt": "....\n-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....D_  ....2_  ....8_  \nDEBUG: Set memory breakpoint at 2C23:3D28\n\n-> _             ",
+    "t": 1778249606.0631847
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3D28 (00)\n78\n01. BPMEM 2C23:3C9A (00)\n78\n02. BPMEM 2C23:3E78 (00)\n78\n03. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249606.8862796
+  },
+  {
+    "control": "F5",
+    "purpose": "run after pass391 post-gameplay arm",
+    "t": 1778249606.9365332
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3D28 (00)\n78\n01. BPMEM 2C23:3C9A (00)\n78\n02. BPMEM 2C23:3E78 (00)\n78\n03. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249608.314531
+  },
+  {
+    "control": "F5",
+    "kind": "F0361_COMMAND_ProcessKeyPress",
+    "purpose": "continue after pass391 strict stop",
+    "t": 1778249608.364843
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BPMEM 2C23:3D28 (00)\n78\n01. BPMEM 2C23:3C9A (00)\n78\n02. BPMEM 2C23:3E78 (01)\n78\n03. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249609.4898224
+  },
+  {
+    "cmd": "BP 22F7:0699",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....6_  ....9_  ....9_  \nDEBUG: Set breakpoint at 22F7:0699\n\n-> _            ",
+    "t": 1778249610.3130515
+  },
+  {
+    "cmd": "BP 1EA7:010D",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....0_  ....D_  \nDEBUG: Set breakpoint at 1EA7:010D\n\n-> _            ",
+    "t": 1778249611.1394007
+  },
+  {
+    "cmd": "BP 1EA7:01AA",
+    "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....A_  ....A_  \nDEBUG: Set breakpoint at 1EA7:01AA\n\n-> _            ",
+    "t": 1778249611.9626646
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 1EA7:01AA\n78\n01. BP 1EA7:010D\n78\n02. BP 22F7:0699\n78\n03. BPMEM 2C23:3D28 (00)\n78\n04. BPMEM 2C23:3C9A (00)\n78\n05. BPMEM 2C23:3E78 (01)\n78\n06. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249612.78939
+  },
+  {
+    "control": "F5",
+    "kind": "g2153_queue_count_bpm",
+    "purpose": "continue after pass391 strict stop",
+    "t": 1778249612.8397233
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 1EA7:01AA\n78\n01. BP 1EA7:010D\n78\n02. BP 22F7:0699\n78\n03. BPMEM 2C23:3D28 (00)\n78\n04. BPMEM 2C23:3C9A (00)\n78\n05. BPMEM 2C23:3E78 (01)\n78\n06. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249613.9655585
+  },
+  {
+    "control": "F5",
+    "kind": "other",
+    "purpose": "continue after pass391 strict stop",
+    "t": 1778249614.0160081
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 1EA7:01AA\n78\n01. BP 1EA7:010D\n78\n02. BP 22F7:0699\n78\n03. BPMEM 2C23:3D28 (00)\n78\n04. BPMEM 2C23:3C9A (00)\n78\n05. BPMEM 2C23:3E78 (00)\n78\n06. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249615.1431637
+  },
+  {
+    "control": "F5",
+    "kind": "g2153_queue_count_bpm",
+    "purpose": "continue after pass391 strict stop",
+    "t": 1778249615.193571
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 1EA7:01AA\n78\n01. BP 1EA7:010D\n78\n02. BP 22F7:0699\n78\n03. BPMEM 2C23:3D28 (00)\n78\n04. BPMEM 2C23:3C9A (00)\n78\n05. BPMEM 2C23:3E78 (00)\n78\n06. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249616.318117
+  },
+  {
+    "control": "Alt+Pause",
+    "purpose": "final retention/position sample",
+    "t": 1778249616.3632698
+  },
+  {
+    "control": "Pause",
+    "purpose": "final retention/position sample",
+    "t": 1778249621.4222984
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 1EA7:01AA\n78\n01. BP 1EA7:010D\n78\n02. BP 22F7:0699\n78\n03. BPMEM 2C23:3D28 (00)\n78\n04. BPMEM 2C23:3C9A (00)\n78\n05. BPMEM 2C23:3E78 (00)\n78\n06. BP 22F7:0407\n\n-> _      ",
+    "t": 1778249627.2726662
+  }
+]

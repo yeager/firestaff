@@ -1,0 +1,264 @@
+{
+  "addresses": {
+    "F0361_COMMAND_ProcessKeyPress": "22F7:0407",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA7:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA7:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F7:0699",
+    "G0310_i_DisabledMovementTicks": "2C23:3C9A",
+    "G0311_i_ProjectileDisabledMovementTicks": "2C23:3D28",
+    "G2153_i_QueuedCommandsCount": "2C23:3E78"
+  },
+  "blocker": null,
+  "branch": "",
+  "head": "290ba1f5d8ce4cf56ff3c741e5c138e19b080b9f",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP/BPM command echo",
+    "forced pause",
+    "route keylog alone",
+    "source-only address binding",
+    "F0380 entry without G2153 decrement"
+  ],
+  "promotionRule": "Promote only if the same bounded post-gameplay run has strict post-Running stops proving F0361, G2153 increment, F0380-scoped G2153 decrement/pop-load, and F0365/F0366 dispatch. The F0380 entry breakpoint is diagnostic only because consumer breakpoints are armed after the first queue-count increment to avoid F0380 idle-loop starvation.",
+  "proofPredicates": {
+    "consumerBreakpointsArmedAfterIncrement": true,
+    "f0361HitAfterArm": true,
+    "f0365OrF0366DispatchObserved": true,
+    "f0380EntryBreakpointObservedAfterQueueWrite": false,
+    "f0380PopLoadAfterQueueWriteObserved": true,
+    "g2153DecrementPopLoadObserved": true,
+    "g2153IncrementObserved": true,
+    "initialBreakpointsRetainedAtArm": true,
+    "postGameplayRuntimeRan": true,
+    "queueCountAtArmZero": true,
+    "routeInputAfterArming": true,
+    "sourceAuditOk": true
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/pass391-queued-command-dispatch",
+  "runtimeArtifacts": {
+    "commandLog": "parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_command_log.json",
+    "routeKeylog": "parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_route_keylog.json",
+    "transcript": "parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_runtime.clean.txt"
+  },
+  "runtimeProbe": {
+    "boundedSeconds": 60,
+    "consumerBreakpointsArmedAfterIncrement": true,
+    "durationSeconds": 57.442,
+    "method": "post-gameplay pexpect-owned PTY; arm F0361 plus G2153/G0310/G0311 BPM, then arm F0380/F0365/F0366 after first G2153 increment; strict stops require (Running)->prompt",
+    "queueCountAtArm": "00",
+    "ran": true,
+    "retainedAtArm": {
+      "F0361_COMMAND_ProcessKeyPress": true,
+      "G0310_i_DisabledMovementTicks": true,
+      "G0311_i_ProjectileDisabledMovementTicks": true,
+      "G2153_i_QueuedCommandsCount": true
+    },
+    "retainedFinal": {
+      "F0361_COMMAND_ProcessKeyPress": true,
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+      "F0380_COMMAND_ProcessQueue_CPSC": true,
+      "G0310_i_DisabledMovementTicks": true,
+      "G0311_i_ProjectileDisabledMovementTicks": true,
+      "G2153_i_QueuedCommandsCount": true
+    },
+    "route": "kp4 wait:900 kp6 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:1200",
+    "routeInputAfterArming": true,
+    "sawRunning": true,
+    "stops": [
+      {
+        "addr": "22F7:041B",
+        "bplistValues": {
+          "2C23:3C9A": "00",
+          "2C23:3D28": "00",
+          "2C23:3E78": "00"
+        },
+        "entryAddr": "22F7:0407",
+        "keyArgumentHex": "0006",
+        "kind": "F0361_COMMAND_ProcessKeyPress",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [
+          "22F7:0407  55    push",
+          "22F7:0408  8BEC  mov",
+          "22F7:040A  83EC04sub",
+          "22F7:040D  56    push",
+          "22F7:040E  57    push",
+          "22F7:040F  FF7606push",
+          "22F7:0412  9AF22C930Fcall",
+          "0F93:2CF2\n22F7",
+          "22F7:0418  A1BE3Emov",
+          "22F7:041B  8B16BC3Emov"
+        ],
+        "postRunningExcerpt": "....\n22F7:0407  55    push bp\n22F7:0408  8BEC  mov  bp,sp\n22F7:040A  83EC04sub  sp,0004\n22F7:040D  56    push si\n22F7:040E  57    push di\n22F7:040F  FF7606push word [bp+06]ss:[0FD0]=0006\n22F7:0412  9AF22C930Fcall 0F93:2CF2\n22F7:0417  59  cx\n22F7:0418  A1BE3Emov  ax,[3EBE]ds:[3EBE]=2C23\n22F7:041B  8B16BC3Emov  dx,[3EBC]ds:[3EBC]=26D4\n-> _     4B4  DS=2C20663EE0356  CS=22F4071 O0 A1 P0 D0 I1001BCA0002C23834728",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778249607.4899747
+      },
+      {
+        "addr": null,
+        "bplistValues": {
+          "2C23:3C9A": "00",
+          "2C23:3D28": "00",
+          "2C23:3E78": "01"
+        },
+        "consumerBreakpointsArmedAfterIncrement": true,
+        "entryAddr": null,
+        "keyArgumentHex": null,
+        "kind": "g2153_queue_count_bpm",
+        "memoryBreakpoints": [
+          {
+            "addr": "2C23:3E78",
+            "new": "01",
+            "old": "00"
+          }
+        ],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:3E78 - 00 -> 01\n74  EB3Fjmp  short 000004B5 ($+3f)  (down)76  8346FC04add  word [bp-04],0004ss:[0FBC]=26F47A  C45EFCles  bx,[bp-04]ss:[0FBC]=26F47D  268B07mov  ax,es:[bx]es:[0000]=000080  8BF8mov  di,ax82  0BC0  or   ax,ax84  75C4      jne  0000044A ($-3c)(up)86  A1C23Emov  ax,[3EC2]ds:[3EC2]=2C2389  8B16C03Edx,[3EC0C0]=26F48D  8956FC  [bp-04],dxss:[0FF\n-> _     0002C2000001740 O0 A0400B8905",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778249608.6665094
+      },
+      {
+        "addr": null,
+        "bplistValues": {
+          "2C23:3C9A": "00",
+          "2C23:3D28": "00",
+          "2C23:3E78": "01"
+        },
+        "entryAddr": null,
+        "keyArgumentHex": null,
+        "kind": "other",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "....699  55  push bp69A  8BEC    mov  bp,sp69C  83EC04sub  sp,000469F  56    push si6A0  57  push di   6A1  C7060A1F0100mov  word [1F0A],0001ds:[1F0A]=00006A7  A1081Fmov  ax,[1F08]      ds:[1F08]=00006AA  40    inc  ax6AB  8BF8    i,ax6AD  3D0800cmp  ax,0008\n-> _     40663395669911AC450",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778249613.1413515
+      },
+      {
+        "addr": null,
+        "bplistValues": {
+          "2C23:3C9A": "00",
+          "2C23:3D28": "00",
+          "2C23:3E78": "00"
+        },
+        "entryAddr": null,
+        "keyArgumentHex": null,
+        "kind": "g2153_queue_count_bpm",
+        "memoryBreakpoints": [
+          {
+            "addr": "2C23:3E78",
+            "new": "00",
+            "old": "01"
+          }
+        ],
+        "postRunningCodeLines": [],
+        "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:3E78 - 01 -> 00\n725  FF06C83Einc  word [3EC8]ds:[3EC8]=0000729  A1C83Eax,[3EC8]ds:[3EC8]=000072C  3D0800cmp  ax,000872F  7E06jle  00000737 ($+6)(down)731  C706C83E0000mov  word [3EC8],0000ds:[3EC8]=000073700173D  0E    push cs73E  E8A1FCcall 000003E2 ($-35f)741  81FEFE00cmp  si,00FE745  7554  jne  0000079B ($+54)(no jmp)\n-> _     1000017252BA83",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778249614.3173847
+      },
+      {
+        "addr": "1EA7:0125",
+        "bplistValues": {
+          "2C23:3C9A": "00",
+          "2C23:3D28": "00",
+          "2C23:3E78": "00"
+        },
+        "entryAddr": "1EA7:010D",
+        "keyArgumentHex": null,
+        "kind": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "memoryBreakpoints": [],
+        "postRunningCodeLines": [
+          "1EA7:010D  55      push",
+          "1EA7:010E  8BEC  bp",
+          "1EA7:0110  56    push",
+          "1EA7:0111  C7067C1A0100mov",
+          "1EA7:0117  837E0601    cmpbp",
+          "1EA7:011B  7505        jne",
+          "1EA7:011D  B84400mov",
+          "1EA7:0120  EB03  jmp",
+          "1EA7:0122  B84500  mov",
+          "1EA7:0125  50  push"
+        ],
+        "postRunningExcerpt": "....\n1EA7:010D  55      push bp\n1EA7:010E  8BEC  bp,sp\n1EA7:0110  56    push si     \n1EA7:0111  C7067C1A0100mov  word [1A7C],0001ds:[1A7C]=0000\n1EA7:0117  837E0601    cmpbp+06],0001ss:[0F4\n1EA7:011B  7505        jne  00000122 ($+5)  (no jmp)      \n1EA7:011D  B84400mov  ax,0044\n1EA7:0120  EB03  jmp  short 00000125 ($+3)   (down)\n1EA7:0122  B84500  mov  ax,0045\n1EA7:0125  50  push ax\n-> _     11EA10D45004",
+        "promptReappearedAfterRunning": true,
+        "runningMarkerSeen": true,
+        "t": 1778249615.4949877
+      }
+    ]
+  },
+  "schema": "pass391_dm1_v1_queued_command_dispatch.v1",
+  "sourceAudit": [
+    {
+      "file": "GAMELOOP.C",
+      "lineHits": {
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);": 219,
+        "while (M527_IsCharacterInKeyboardBuffer())": 166
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+      "section": "keyboard_drain_then_queue_process"
+    },
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;": 1765,
+        "G2153_i_QueuedCommandsCount++;": 1357,
+        "if ((L1112_ps_KeyboardInput = G0443_ps_PrimaryKeyboardInput) == NULL)": 1734,
+        "void F0361_COMMAND_ProcessKeyPress": 1709
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "section": "f0361_keyboard_queue_write"
+    },
+    {
+      "file": "COMMAND.C",
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "G2153_i_QueuedCommandsCount--;": 2121,
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095,
+        "L1161_i_CommandX = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].X;": 2118,
+        "if ((L1160_i_Command >= C003_COMMAND_MOVE_FORWARD) && (L1160_i_Command <= C006_COMMAND_MOVE_LEFT) && (G0310_i_DisabledMovementTicks": 2096,
+        "if (G2153_i_QueuedCommandsCount == 0)": 2084,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "section": "f0380_pop_load_dispatch"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lineHits": {
+        "F0267_MOVE_GetMoveResult_CPSCE": 135,
+        "F0284_CHAMPION_SetPartyDirection": 138,
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;": 156,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "section": "semantic_turn_move_handlers"
+    },
+    {
+      "file": "PC.H",
+      "lineHits": {
+        "#define G2153_i_QueuedCommandsCount": 357
+      },
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H",
+      "section": "pc34_queue_count_alias"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS391_KEYBOARD_QUEUE_TO_F0380_DISPATCH_PROVEN",
+  "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
+}
