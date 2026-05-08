@@ -30,6 +30,20 @@ SOURCE_RANGES = [
         "assertion": "Panel redraw closes any open chest, reads the inventory champion action hand, classifies container as chest panel, scroll as scroll panel, otherwise falls back to food/water, then draws either food/water or object panel.",
     },
     {
+        "file": "COMMAND.C",
+        "start": 2180,
+        "end": 2183,
+        "function": "F0380_COMMAND_ProcessQueue_CPSC",
+        "assertion": "Inventory toggle/close commands C007..C011 dispatch to F0355_INVENTORY_Toggle_CPSE when no candidate champion blocks input.",
+    },
+    {
+        "file": "PANEL.C",
+        "start": 2244,
+        "end": 2447,
+        "function": "F0355_INVENTORY_Toggle_CPSE",
+        "assertion": "Opening inventory sets G0423_i_InventoryChampionOrdinal, expands C017 inventory backdrop, draws all champion slots with F0291, marks redraw attributes, then switches secondary input to ChampionInventory.",
+    },
+    {
         "file": "CHAMDRAW.C",
         "start": 536,
         "end": 673,
@@ -38,15 +52,15 @@ SOURCE_RANGES = [
     },
     {
         "file": "m11_game_view.c",
-        "start": 19025,
-        "end": 19120,
+        "start": 19281,
+        "end": 19380,
         "function": "m11_draw_inv_slot",
         "assertion": "Firestaff occupied slots draw 16x16 DM object icons inside original 18x18 slot boxes when assets are available.",
     },
     {
         "file": "m11_game_view.c",
-        "start": 19126,
-        "end": 19230,
+        "start": 19382,
+        "end": 19517,
         "function": "m11_draw_inventory_panel",
         "assertion": "Firestaff normal V1 inventory path draws source slot boxes 8..37, overlays champion objects by source slot-box zone, and returns before the debug/freehand layout.",
     },
@@ -166,6 +180,37 @@ def verify_redmcsb() -> list[str]:
         "ReDMCSB F0347 panel decision order",
     )
 
+    command_path = REDMCSB_ROOT / "COMMAND.C"
+    command_text = read_text(command_path)
+    command_start = command_text.find("if ((L1160_i_Command >= C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0)")
+    if command_start < 0:
+        raise AssertionError("missing inventory toggle dispatch block in COMMAND.C")
+    command_body = command_text[command_start : command_text.find("goto T0380042;", command_start)]
+    command_markers = require_in_order(
+        command_body,
+        [
+            ("toggle command range", "L1160_i_Command >= C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0"),
+            ("close inventory command", "L1160_i_Command <= C011_COMMAND_CLOSE_INVENTORY"),
+            ("candidate champion guard", "!G0299_ui_CandidateChampionOrdinal"),
+            ("toggle dispatch", "F0355_INVENTORY_Toggle_CPSE(AL1159_i_ChampionIndex)"),
+        ],
+        "ReDMCSB F0380 inventory command dispatch",
+    )
+
+    toggle_start, _toggle_end, toggle_body = find_source_window(panel_text, "F0355_INVENTORY_Toggle_CPSE")
+    toggle_markers = require_in_order(
+        toggle_body,
+        [
+            ("existing inventory ordinal", "AL1102_ui_InventoryChampionOrdinal = G0423_i_InventoryChampionOrdinal"),
+            ("set inventory ordinal", "G0423_i_InventoryChampionOrdinal = M000_INDEX_TO_ORDINAL(P0719_i_ChampionIndex)"),
+            ("inventory backdrop", "F0488_MEMORY_ExpandGraphicToBitmap(C017_GRAPHIC_INVENTORY"),
+            ("draw source slots", "F0291_CHAMPION_DrawSlot(P0719_i_ChampionIndex, AL1102_ui_SlotIndex)"),
+            ("mark redraw attributes", "MASK0x4000_VIEWPORT | MASK0x1000_STATUS_BOX | MASK0x0800_PANEL"),
+            ("champion inventory input", "G0442_ps_SecondaryMouseInput = G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory"),
+        ],
+        "ReDMCSB F0355 inventory open/draw sequence",
+    )
+
     cham_path = REDMCSB_ROOT / "CHAMDRAW.C"
     cham_text = read_text(cham_path)
     cham_start, _cham_end, cham_body = find_source_window(cham_text, "F0291_CHAMPION_DrawSlot", "F0292_CHAMPION_DrawState")
@@ -184,11 +229,17 @@ def verify_redmcsb() -> list[str]:
     )
 
     require_excerpt("PANEL.C", 1639, 1692, ["F0347_INVENTORY_DrawPanel", "M569_PANEL_CHEST", "M643_PANEL_SCROLL"])
+    require_excerpt("COMMAND.C", 2180, 2183, ["C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0", "C011_COMMAND_CLOSE_INVENTORY", "F0355_INVENTORY_Toggle_CPSE"])
+    require_excerpt("PANEL.C", 2244, 2447, ["F0355_INVENTORY_Toggle_CPSE", "C017_GRAPHIC_INVENTORY", "F0291_CHAMPION_DrawSlot", "G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory"])
     require_excerpt("CHAMDRAW.C", 536, 673, ["C08_SLOT_BOX_INVENTORY_FIRST_SLOT", "G0296_puc_Bitmap_Viewport", "F0038_OBJECT_DrawIconInSlotBox"])
 
     return [
         f"ReDMCSB PANEL.C F0347 starts at {panel_path}:{line_no(panel_text, panel_start)}",
         *(f"ReDMCSB F0347 {name}: line {line_no(panel_text, panel_start + pos)}" for name, pos in panel_markers),
+        f"ReDMCSB COMMAND.C F0380 inventory dispatch block starts at {command_path}:{line_no(command_text, command_start)}",
+        *(f"ReDMCSB F0380 {name}: line {line_no(command_text, command_start + pos)}" for name, pos in command_markers),
+        f"ReDMCSB PANEL.C F0355 starts at {panel_path}:{line_no(panel_text, toggle_start)}",
+        *(f"ReDMCSB F0355 {name}: line {line_no(panel_text, toggle_start + pos)}" for name, pos in toggle_markers),
         f"ReDMCSB CHAMDRAW.C F0291 starts at {cham_path}:{line_no(cham_text, cham_start)}",
         *(f"ReDMCSB F0291 {name}: line {line_no(cham_text, cham_start + pos)}" for name, pos in slot_markers),
     ]
@@ -231,8 +282,8 @@ def verify_firestaff() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot branch",
     )
-    require_excerpt("m11_game_view.c", 19025, 19120, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
-    require_excerpt("m11_game_view.c", 19126, 19230, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
+    require_excerpt("m11_game_view.c", 19281, 19380, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
+    require_excerpt("m11_game_view.c", 19382, 19517, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
 
     return [
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",

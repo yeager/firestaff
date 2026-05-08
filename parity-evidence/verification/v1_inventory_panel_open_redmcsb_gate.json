@@ -10,6 +10,20 @@
       "assertion": "Action-hand object type selects chest/scroll/food-water panel before drawing the corresponding panel."
     },
     {
+      "file": "COMMAND.C",
+      "start": 2180,
+      "end": 2183,
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "assertion": "Inventory toggle/close commands C007..C011 dispatch to F0355_INVENTORY_Toggle_CPSE when no candidate champion blocks input."
+    },
+    {
+      "file": "PANEL.C",
+      "start": 2244,
+      "end": 2447,
+      "function": "F0355_INVENTORY_Toggle_CPSE",
+      "assertion": "Opening inventory sets G0423_i_InventoryChampionOrdinal, expands C017 inventory backdrop, draws all champion slots with F0291, marks redraw attributes, then switches secondary input to ChampionInventory."
+    },
+    {
       "file": "CHAMDRAW.C",
       "start": 536,
       "end": 673,
@@ -18,15 +32,15 @@
     },
     {
       "file": "m11_game_view.c",
-      "start": 19025,
-      "end": 19120,
+      "start": 19281,
+      "end": 19380,
       "function": "m11_draw_inv_slot",
       "assertion": "Firestaff slot helper draws original 18x18 slot boxes and occupied 16x16 DM object icons."
     },
     {
       "file": "m11_game_view.c",
-      "start": 19126,
-      "end": 19230,
+      "start": 19382,
+      "end": 19517,
       "function": "m11_draw_inventory_panel",
       "assertion": "Firestaff normal V1 inventory branch draws source slot boxes 8..37 and returns before debug/freehand layout."
     }
