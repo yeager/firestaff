@@ -27,6 +27,13 @@ The remaining blocker is now narrower: movement routing and debugger control are
 - `pass357`: `BLOCKED_PASS357_ORIGINAL_RUNTIME_TRUE_STOP_CONTROL_REQUIRED` (expected `BLOCKED_PASS357_ORIGINAL_RUNTIME_TRUE_STOP_CONTROL_REQUIRED`) — prior consolidated true-stop blocker ok=`True`
 - `pass359`: `PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED` (expected `PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED`) — movement route retired / original true-stop active classification ok=`True`
 
+## Latest controlled runtime attempt
+
+- Pass330 status: `BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE`; ran=`True`; bounded seconds=`45`
+- Direct hits: `{'f0097_2809_1EFF_after_f0128': False, 'f0128_23AD_40FE': False}`; retained post-route=`True`; post-route pause code=`22F7:03FF`
+- Blocker: `F0128 breakpoint armed/retained but no strict running-to-23AD:40FE prompt transition emitted`
+- Exact next command: `python3 tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py --seconds 75 && python3 tools/verify_pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py && python3 tools/verify_pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.py`
+
 ## Blocker narrowing
 
 Not blocked by:
@@ -38,6 +45,8 @@ Not blocked by:
 Still blocked by: `No bounded controlled original FIRES run produces a strict post-running code stop at F0128, followed by F0097 or VIDRV slot 9, at the current candidate CS:IP targets.`
 
 Next unblocker: `Re-establish the live FIRES CS:IP map or an equivalent source-bound runtime locator for F0128/F0097/VIDRV, then rerun a single owned-PTY sequence that records F0128 -> F0097/VIDRV after controlled movement input.`
+
+Next command: `python3 tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py --seconds 75 && python3 tools/verify_pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py && python3 tools/verify_pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.py`
 
 ## Non-claims
 

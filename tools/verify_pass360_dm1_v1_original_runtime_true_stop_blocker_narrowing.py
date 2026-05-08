@@ -49,6 +49,8 @@ TARGETS = {
     "VIDRV_09_BlitViewPort_indirect_call_candidate": "2809:1EFF",
 }
 
+NEXT_CONTROLLED_COMMAND = "python3 tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py --seconds 75 && python3 tools/verify_pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py && python3 tools/verify_pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.py"
+
 
 def run(cmd: list[str]) -> str:
     p = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
@@ -125,6 +127,27 @@ def direct_hit_flags(data: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def summarize_latest_pass330_attempt(priors: dict[str, Any]) -> dict[str, Any]:
+    data = load_json("parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json")
+    runtime = data.get("runtimeProbe", {}) if isinstance(data, dict) else {}
+    strategies = runtime.get("strategies", []) if isinstance(runtime, dict) else []
+    first = strategies[0] if strategies and isinstance(strategies[0], dict) else {}
+    return {
+        "sourceManifest": "parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json",
+        "status": data.get("status"),
+        "boundedSecondsPerStrategy": runtime.get("boundedSecondsPerStrategy"),
+        "ran": runtime.get("ran"),
+        "strategy": first.get("strategy"),
+        "method": first.get("method"),
+        "directHits": first.get("directHits", {}),
+        "breakpointRetainedPostRoute": first.get("breakpointRetainedPostRoute"),
+        "postRoutePauseCodeAddr": first.get("postRoutePauseCodeAddr"),
+        "blocker": data.get("blocker") or first.get("blocker"),
+        "strictReconciliationOk": priors.get("pass330", {}).get("ok", False),
+        "nextCommand": NEXT_CONTROLLED_COMMAND,
+    }
+
+
 def audit_priors() -> dict[str, Any]:
     rows: dict[str, Any] = {}
     for name, spec in PRIOR.items():
@@ -153,6 +176,7 @@ def build_manifest() -> dict[str, Any]:
     any_f0128 = any(x["strictF0128Stop"] for x in strict_attempts)
     any_present_after = any(x["strictF0097OrVidrvAfterF0128"] for x in strict_attempts)
     ok = all(x["ok"] for x in sources) and all(x["ok"] for x in priors.values()) and not any_f0128 and not any_present_after
+    latest_pass330 = summarize_latest_pass330_attempt(priors)
     return {
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
@@ -164,6 +188,7 @@ def build_manifest() -> dict[str, Any]:
         "sourceAudit": sources,
         "priorArtifactAudit": priors,
         "candidateRuntimeTargets": TARGETS,
+        "latestControlledRuntimeAttempt": latest_pass330,
         "blockerNarrowing": {
             "notBlockedBy": [
                 "Firestaff M11 movement route (pass349/pass351/pass352/pass358/pass359)",
@@ -173,6 +198,7 @@ def build_manifest() -> dict[str, Any]:
             ],
             "stillBlockedBy": "No bounded controlled original FIRES run produces a strict post-running code stop at F0128, followed by F0097 or VIDRV slot 9, at the current candidate CS:IP targets.",
             "nextUnblocker": "Re-establish the live FIRES CS:IP map or an equivalent source-bound runtime locator for F0128/F0097/VIDRV, then rerun a single owned-PTY sequence that records F0128 -> F0097/VIDRV after controlled movement input.",
+            "nextCommand": NEXT_CONTROLLED_COMMAND,
             "promoteViewportComparator": False,
         },
         "notClaimed": [
@@ -202,10 +228,16 @@ def write_report(m: dict[str, Any]) -> None:
     lines += ["", "## Prior runtime reconciliation", ""]
     for name, row in m["priorArtifactAudit"].items():
         lines.append("- `{}`: `{}` (expected `{}`) — {} ok=`{}`".format(name, row["status"], row["expected"], row["role"], row["ok"]))
+    latest = m["latestControlledRuntimeAttempt"]
+    lines += ["", "## Latest controlled runtime attempt", ""]
+    lines.append("- Pass330 status: `{}`; ran=`{}`; bounded seconds=`{}`".format(latest["status"], latest["ran"], latest["boundedSecondsPerStrategy"]))
+    lines.append("- Direct hits: `{}`; retained post-route=`{}`; post-route pause code=`{}`".format(latest["directHits"], latest["breakpointRetainedPostRoute"], latest["postRoutePauseCodeAddr"]))
+    lines.append("- Blocker: `{}`".format(latest["blocker"]))
+    lines.append("- Exact next command: `{}`".format(latest["nextCommand"]))
     b = m["blockerNarrowing"]
     lines += ["", "## Blocker narrowing", "", "Not blocked by:"]
     lines += ["- " + x for x in b["notBlockedBy"]]
-    lines += ["", "Still blocked by: `" + b["stillBlockedBy"] + "`", "", "Next unblocker: `" + b["nextUnblocker"] + "`", "", "## Non-claims", ""]
+    lines += ["", "Still blocked by: `" + b["stillBlockedBy"] + "`", "", "Next unblocker: `" + b["nextUnblocker"] + "`", "", "Next command: `" + b["nextCommand"] + "`", "", "## Non-claims", ""]
     lines += ["- " + x for x in m["notClaimed"]]
     REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

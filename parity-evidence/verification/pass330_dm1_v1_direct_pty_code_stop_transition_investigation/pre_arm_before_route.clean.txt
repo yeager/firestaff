@@ -10,7 +10,7 @@ EDX=ESP=
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /tmp/firestaff-pass329-sbgntyz7/dosbox.conf
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass330-sxgf6mkh/dosbox.conf
 0: IO:Writing 05 to port 03CF
 MIXER:No Sound Mode Selected.
 ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
@@ -67,7 +67,7 @@ MIDI:Opened device:none
 0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
 
 
-0: EXEC:Parsing command line: mount c /tmp/firestaff-pass329-sbgntyz7/dos
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass330-sxgf6mkh/dos
 78
 3: EXEC:Execute mount.COM 0
 78
@@ -93,7 +93,7 @@ MIDI:Opened device:none
 08 00 70 00 08 00 70 00 08 00 70 0..p...p...p08 00 70 0..pA5 FE87 E955 FF........U20 1320 1140 111 ... ...@C0 11E0 1100 1240 12............@E0 12E0 122.....80 12A4 F00 05 00 C0  .........
 0499:000E  06 es
 0499:000F  0E  push cs
-0499:0010  1F  pop  ds   
+0499:0010  1F  pop  ds
 0499:0011  8B0E0C00mov  cx,[000C] C]=F00
 0499:0015  8BF1mov  si,cx
 0499:0017  4E  dec  si
@@ -104,22 +104,22 @@ MIDI:Opened device:none
 -> _     E1DD1DD66F8499EFF91C31DD834
 ***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
 
--> B_  P_  D_  E_  L_   _  *_  
+-> B_  P_  D_  E_  L_   _  *_
 DEBUG: Breakpoints deleted.
 
--> _       
--> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_  
+-> _
+-> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_
 DEBUG: Set breakpoint at 23AD:40FE
 
--> _            
--> B_  P_  L_  I_  S_  T_  
+-> _
+-> B_  P_  L_  I_  S_  T_
 Breakpoint list:
 78
 -------------------------------------------------------------------------
 78
 00. BP 23AD:40FE
 
--> _      
+-> _
 (Running)
 6070: VGA:h total 100 end 80 blank (80/98) retrace (85/97)
 78
@@ -205,34 +205,34 @@ Breakpoint list:
 78
 24910620: FILES:file open command 2 file data\graphics.dat
 78
-37395195: EXEC:Execute FIRES 0
+37395189: EXEC:Execute FIRES 0
 78
-37395195: FILES:file open command 0 file FIRES
+37395189: FILES:file open command 0 file FIRES
 78
-38625013: FILES:file open command 0 file EMMXXXX0
+38625007: FILES:file open command 0 file EMMXXXX0
 78
-38625030: IOCTL:07:Fakes output status is ready for handle 3
+38625024: IOCTL:07:Fakes output status is ready for handle 3
 78
-38636671: FILES:file open command 2 file DATA\GRAPHICS.DAT
+38636665: FILES:file open command 2 file DATA\GRAPHICS.DAT
 78
-41509651: FILES:file open command 2 file DATA\DUNGEON.DAT
+41509645: FILES:file open command 2 file DATA\DUNGEON.DAT
 FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
-280C:01D3  0AC2or   al,dl
-280C:01D5  AAstosb  
-280C:01D6  E2F1loop 000001C9 ($-f)
-280C:01D8  9D      popf
-280C:01D9  7308jnc  000001E3 ($+8)(down)
-280C:01DB  268A05mov  al,es:[di]es:[13FB]=1C0C
-280C:01DE  240Fand  al,0F
-280C:01E0  0AC4or   al,ah
-280C:01E2  AA      stosb
-280C:01E3  1F  pop  ds   
--> _     10012C8  DS=E21795D030311E713FB  CS=280C1D304F16010F0E160279925...
--> B_  ...P_  ...L_  ...I_  ...S_  ...T_  
+22F7:03E2  55bp
+22F7:03E3  8BECmov  bp,sp
+22F7:03E5  833EC63E00cmp  word [3EC6],0000ds:[3EC6]=0000
+22F7:03EA  7419    je   00000405 ($+19)(down)
+22F7:03EC  C706C63E0000word [3EC6],0000ds:[3EC6]=0000
+22F7:03F2  FF36C43Epush word [3EC4]ds:[3EC4]=0000
+22F7:03F6  FF36B23Epush word [3EB2]ds:[3EB2]=0000
+22F7:03FA  FF36B03Epush word [3EB0]ds:[3EB0]=0000
+22F7:03FE  0E      push cs
+22F7:03FF  E80BFFcall 0000030D ($-f5)
+-> _     74  DS=2C23663303133907  CS=22F73E2111BFC2FFFFFB6130459162...
+-> B_  ...P_  ...L_  ...I_  ...S_  ...T_
 Breakpoint list:
 78
 -------------------------------------------------------------------------
 78
 00. BP 23AD:40FE
 
--> _      
+-> _
