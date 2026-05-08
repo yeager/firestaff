@@ -3357,6 +3357,39 @@ int main(int argc, char** argv) {
                          changedWallOrnament == (int)(sizeof(kWallOrnamentPositions) / sizeof(kWallOrnamentPositions[0])),
                          "focused viewport: all source-bound wall ornament specs change their wall frames");
 
+            {
+                static const ProbeFocusedPos kFarSideWallGapPositions[] = {
+                    {3,-2}, {3,2}, {2,-2}, {2,2}
+                };
+                int changedFarSideWalls = 0;
+                int clippedFarSideWalls = 0;
+                for (pi = 0; pi < sizeof(kFarSideWallGapPositions) / sizeof(kFarSideWallGapPositions[0]); ++pi) {
+                    probe_reset_synthetic_view_to_corridor(&focusView);
+                    memset(baseFb, 0, sizeof(baseFb));
+                    M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                    probe_set_square(focusView.world.dungeon,
+                                     focusView.world.party.mapX + kFarSideWallGapPositions[pi].relSide,
+                                     focusView.world.party.mapY - kFarSideWallGapPositions[pi].relForward,
+                                     (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+                    memset(teleporterFb, 0, sizeof(teleporterFb));
+                    M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
+                    if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
+                        ++changedFarSideWalls;
+                    }
+                    if (probe_count_diffs_outside_rect(baseFb, teleporterFb,
+                                                       320, 200,
+                                                       PROBE_DM1_VIEWPORT_X,
+                                                       PROBE_DM1_VIEWPORT_Y,
+                                                       PROBE_DM1_VIEWPORT_W,
+                                                       PROBE_DM1_VIEWPORT_H) == 0) {
+                        ++clippedFarSideWalls;
+                    }
+                }
+                probe_record(&tally, "INV_GV_38AL",
+                             changedFarSideWalls == (int)(sizeof(kFarSideWallGapPositions) / sizeof(kFarSideWallGapPositions[0])) &&
+                             clippedFarSideWalls == (int)(sizeof(kFarSideWallGapPositions) / sizeof(kFarSideWallGapPositions[0])),
+                             "focused viewport: D3L2/D3R2/D2L2/D2R2 wall slivers render and stay clipped inside C007");
+            }
 
             /* INV_GV_38AK: ReDMCSB DUNVIEW.C F0128 draws full view
              * squares far-to-near (D3, then D2, then D1), while F0115

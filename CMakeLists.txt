@@ -886,6 +886,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_side_wall_occlusion_gate.py
         )
         add_test(
+            NAME pass427_dm1_v1_viewport_walls_gap_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass427_dm1_v1_viewport_walls_gap_gate.py
+        )
+        add_test(
             NAME v1_viewport_side_wall_ornament_source_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_side_wall_ornament_source_gate.py
         )
