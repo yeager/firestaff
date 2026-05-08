@@ -1,0 +1,240 @@
+{
+  "branch": "worker/dm1v1-pass381-route-f0380-transition-20260508",
+  "controlFlow": {
+    "criticalPredicate": "route key delivery is insufficient; evidence must prove F0380 dequeued a movement/turn command, F0365/F0366 set G0321 true, G0301_B_GameTimeTicking allowed the wait loop to exit, and the outer loop wrapped to F0128.",
+    "sourceOrder": [
+      {
+        "file": "GAMELOOP.C",
+        "line": 90,
+        "meaning": "outer-loop viewport draw",
+        "step": 1
+      },
+      {
+        "file": "GAMELOOP.C",
+        "line": 164,
+        "meaning": "input wait flag reset later in the same outer iteration",
+        "step": 2
+      },
+      {
+        "file": "GAMELOOP.C",
+        "line": 215,
+        "meaning": "queue processing inside wait loop",
+        "step": 3
+      },
+      {
+        "file": "CLIKMENU.C",
+        "line": 156,
+        "meaning": "accepted turn/move handlers set stop flag",
+        "step": 4
+      },
+      {
+        "file": "GAMELOOP.C",
+        "line": 219,
+        "meaning": "wait loop exits only after stop flag and game-time tick",
+        "step": 5
+      },
+      {
+        "file": "GAMELOOP.C",
+        "line": 90,
+        "meaning": "next F0128 occurs only when the outer loop wraps to its next draw section",
+        "step": 6
+      },
+      {
+        "file": "DUNVIEW.C",
+        "line": 8610,
+        "meaning": "F0128 eventually presents through F0097",
+        "step": 7
+      }
+    ]
+  },
+  "decision": {
+    "conclusion": "ReDMCSB source puts the next viewport draw on the outer-loop wrap: route keys must first become queued commands, F0380 must dispatch F0365/F0366, those handlers set G0321_B_StopWaitingForPlayerInput, and the wait loop exits only when G0321 and G0301_B_GameTimeTicking are both true. pass379 retained F0128/F0097 breakpoints and delivered host route keys, but it did not prove F0380 dequeue/G0321 wait-loop exit; after 75s it still had no F0128/F0097 hit and a forced pause decoded to IMAGE_TEXT near F0683. So pass379 should be read as a semantic route/wait-loop-exit blocker, not a reason to retarget F0128/F0097 addresses.",
+    "nextF0128PathLocated": true,
+    "pass379NoHitExplained": true
+  },
+  "errors": [],
+  "head": "5847792447b9f119e53385499fab870252e713a5",
+  "notPromotedBy": [
+    "host route keylog alone",
+    "BPLIST retention alone",
+    "BP command echo",
+    "source-only address binding",
+    "forced-pause IMAGE_TEXT sample"
+  ],
+  "pass379NoHitExplanation": {
+    "anyF0128OrF0097Hit": false,
+    "breakpointRetainedPostRoute": true,
+    "directHits": {
+      "f0097_2809_1EFF": false,
+      "f0097_entry_2809_1E31": false,
+      "f0128_23AD_40FE": false,
+      "probe_07FB_01EB": false
+    },
+    "explainsNoHit": true,
+    "finalPauseCodeAddr": "280C:14B5",
+    "finalPauseDecode": {
+      "isF0128OrF0097": false,
+      "linkLinearHex": "0x22245",
+      "nearestSymbol": {
+        "delta": 189,
+        "link": "20D6:1428",
+        "name": "F0683_COPYPIXELLINETOSCREENWITHT"
+      },
+      "ok": true,
+      "runtime": "280C:14B5",
+      "segment": "IMAGE_TEXT"
+    },
+    "movementKeyEventsAfterArming": [
+      "kp5",
+      "kp4",
+      "kp6",
+      "kp5",
+      "kp4",
+      "kp6",
+      "kp5"
+    ],
+    "routeInputAfterArming": true,
+    "sawRunning": true
+  },
+  "priorAudit": {
+    "pass330": {
+      "exists": true,
+      "expectedAny": [
+        "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE"
+      ],
+      "ok": true,
+      "path": "parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json",
+      "status": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE"
+    },
+    "pass360": {
+      "exists": true,
+      "expectedAny": [
+        "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED"
+      ],
+      "ok": true,
+      "path": "parity-evidence/verification/pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing/manifest.json",
+      "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED"
+    },
+    "pass377": {
+      "exists": true,
+      "expectedAny": [
+        "BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED",
+        "PASS377_POSTLOAD_F0128_F0097_TRUE_STOP_SEQUENCE_PROVEN",
+        "PASS377_POSTLOAD_F0128_TRUE_STOP_ONLY_F0097_BLOCKED"
+      ],
+      "ok": true,
+      "path": "parity-evidence/verification/pass377_dm1_v1_postload_f0128_f0097_true_stop_route/manifest.json",
+      "status": "BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED"
+    },
+    "pass379": {
+      "exists": true,
+      "expectedAny": [
+        "BLOCKED_PASS379_POST_ROUTE_PAUSE_MOVED_MAP_OR_PATH_UNRESOLVED"
+      ],
+      "ok": true,
+      "path": "parity-evidence/verification/pass379_dm1_v1_true_stop_codepath_probe/manifest.json",
+      "status": "BLOCKED_PASS379_POST_ROUTE_PAUSE_MOVED_MAP_OR_PATH_UNRESOLVED"
+    },
+    "pass380": {
+      "exists": true,
+      "expectedAny": [
+        "BLOCKED_PASS380_SOURCE_PATH_TRANSITION_NARROWED_MAP_BINDING_HELD"
+      ],
+      "ok": true,
+      "path": "parity-evidence/verification/pass380_dm1_v1_f0128_f0097_map_transition_narrowing/manifest.json",
+      "status": "BLOCKED_PASS380_SOURCE_PATH_TRANSITION_NARROWED_MAP_BINDING_HELD"
+    }
+  },
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass381_dm1_v1_post_input_next_f0128_path.v1",
+  "sourceAudit": [
+    {
+      "decision": "F0128 is reached in the outer game-loop draw section before the later input wait/dequeue loop.",
+      "file": "GAMELOOP.C",
+      "id": "outer_loop_draw_before_input_wait",
+      "lineHits": {
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);": 90
+      },
+      "lines": "80-92",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "decision": "Host keys must become queued game commands; then F0380 must set G0321 true and game-time ticking must be true before the loop can exit.",
+      "file": "GAMELOOP.C",
+      "id": "wait_loop_resets_and_dequeues_until_stop_and_tick",
+      "lineHits": {
+        "F0361_COMMAND_ProcessKeyPress(M528_GetCharacterInKeyboardBuffer());": 167,
+        "F0380_COMMAND_ProcessQueue_CPSC();": 215,
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;": 164,
+        "if (!G0321_B_StopWaitingForPlayerInput)": 216,
+        "while (M527_IsCharacterInKeyboardBuffer())": 166,
+        "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);": 219
+      },
+      "lines": "160-220",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "decision": "The path from route key input to movement draw goes through F0380 queue dequeue and movement dispatch, not directly to F0128.",
+      "file": "COMMAND.C",
+      "id": "movement_dequeue_dispatches_turn_or_step",
+      "lineHits": {
+        "F0360_COMMAND_ProcessPendingClick();": 1086,
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": 2155,
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;": 2095
+      },
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "decision": "A semantic turn command sets G0321 true before changing party direction.",
+      "file": "CLIKMENU.C",
+      "id": "accepted_turn_sets_stop_flag",
+      "lineHits": {
+        "F0284_CHAMPION_SetPartyDirection": 138,
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;": 156,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142
+      },
+      "lines": "142-174",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "decision": "A semantic move command also sets G0321 true before movement processing continues.",
+      "file": "CLIKMENU.C",
+      "id": "accepted_step_sets_stop_flag",
+      "lineHits": {
+        "F0362_COMMAND_HighlightBoxEnable": 6,
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE;": 156,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "lines": "180-270",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "decision": "Once the outer-loop draw path reaches F0128, F0097 is the source viewport-present call site.",
+      "file": "DUNVIEW.C",
+      "id": "f0128_calls_f0097_viewport_present",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "lines": "8318-8612",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS381_NEXT_F0128_REQUIRES_WAIT_LOOP_EXIT_NOT_PROVED_BY_PASS379",
+  "timestampUtc": "2026-05-08T11:46:54.597730+00:00"
+}
