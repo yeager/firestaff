@@ -1369,19 +1369,26 @@ int main(int argc, char** argv) {
                      syntheticView.lastWorldHash != initialHash,
                  "idle cadence advances the real world clock without requiring a manual wait input");
 
-    syntheticView.world.party.direction = DIR_NORTH;
-    syntheticView.world.party.mapX = 2;
-    syntheticView.world.party.mapY = 3;
-    initialTick = syntheticView.world.gameTick;
-    probe_record(&tally,
-                 "INV_GV_07K",
-                 M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_STRAFE_LEFT) == M11_GAME_INPUT_REDRAW &&
-                     syntheticView.world.gameTick == initialTick + 1 &&
-                     syntheticView.world.party.mapX == 1 &&
-                     syntheticView.world.party.mapY == 3 &&
-                     strcmp(syntheticView.lastAction, "STRAFE LEFT") == 0 &&
-                     strcmp(syntheticView.lastOutcome, "PARTY MOVED") == 0,
-                 "A strafes relative to facing and moves into the left lane through the real tick path");
+    {
+        M11_GameViewState strafeView;
+        memset(&strafeView, 0, sizeof(strafeView));
+        (void)probe_init_synthetic_view(&strafeView);
+        strafeView.showDebugHUD = 0;
+        strafeView.world.party.direction = DIR_NORTH;
+        strafeView.world.party.mapX = 2;
+        strafeView.world.party.mapY = 3;
+        initialTick = strafeView.world.gameTick;
+        probe_record(&tally,
+                     "INV_GV_07K",
+                     M11_GameView_HandleInput(&strafeView, M12_MENU_INPUT_STRAFE_LEFT) == M11_GAME_INPUT_REDRAW &&
+                         strafeView.world.gameTick == initialTick + 1 &&
+                         strafeView.world.party.mapX == 1 &&
+                         strafeView.world.party.mapY == 3 &&
+                         strcmp(strafeView.lastAction, "STRAFE LEFT") == 0 &&
+                         strcmp(strafeView.lastOutcome, "PARTY MOVED") == 0,
+                     "A strafes relative to facing and moves into the left lane through the real tick path");
+        probe_free_synthetic_view(&strafeView);
+    }
 
     {
         M11_GameViewState arrowView;
@@ -3491,7 +3498,7 @@ int main(int argc, char** argv) {
         pDungeon->tiles[0].squareData[1 * 3 + 2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         pDungeon->tiles[0].squareData[1 * 3 + 1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         pDungeon->tiles[0].squareData[2 * 3 + 1] = (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08);
-        pDungeon->tiles[0].squareData[1 * 3 + 0] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+        pDungeon->tiles[0].squareData[1 * 3 + 0] = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x08);
 
         /* Map 1 layout: all corridor except border walls */
         for (pI = 0; pI < pSquareCount1; ++pI) {
@@ -3505,6 +3512,7 @@ int main(int argc, char** argv) {
         pThings->teleporters[0].rotation = 1;
         pThings->teleporters[0].absoluteRotation = 0;
         pThings->teleporters[0].audible = 1;
+        pThings->teleporters[0].scope = 0x02;
         pThings->teleporters[0].next = THING_ENDOFLIST;
         /* Link teleporter thing to square (1,0) on map 0 */
         pThings->squareFirstThings[1 * 3 + 0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
