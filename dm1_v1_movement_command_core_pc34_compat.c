@@ -194,5 +194,5 @@ const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
            "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/discard, 325-346 move-result and cooldown; "
            "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391 applies forward/right deltas; "
            "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130 rotates champion cells/directions and party direction; "
-           "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-443 projectile-impact precheck and party coordinate write, 738-783 move-result globals and party scent/last-movement update.";
+           "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-435 projectile-impact precheck, 738-741 move-result globals, 752-783 party-square/scent/last-movement update.";
 }

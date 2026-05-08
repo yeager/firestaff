@@ -100,6 +100,8 @@ int main(void)
     ok &= expect_contains("source evidence relative movement", sourceEvidence, "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391");
     ok &= expect_contains("source evidence party rotation", sourceEvidence, "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130");
     ok &= expect_contains("source evidence move result", sourceEvidence, "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328");
+    ok &= expect_contains("source evidence move result globals", sourceEvidence, "738-741 move-result globals");
+    ok &= expect_contains("source evidence movement scent", sourceEvidence, "752-783 party-square/scent/last-movement update");
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));

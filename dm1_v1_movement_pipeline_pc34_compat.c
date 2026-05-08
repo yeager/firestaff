@@ -18,8 +18,8 @@
  *   sensors for the turn.
  *
  * CLIKMENU.C:180-347 F0366_COMMAND_ProcessTypes3To6_MoveParty:
- *   Resolves relative step destination via F0150_DUNGEON_GetUnobstructedSquare
- *   helper; rejects walls (M034_SQUARE_TYPE == C00_ELEMENT_WALL), closed
+ *   Resolves relative step destination via F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement
+ *   (DUNGEON.C:1389-1391); rejects walls (M034_SQUARE_TYPE == C00_ELEMENT_WALL), closed
  *   doors (door-state bits 2..4), closed real fake-walls (not OPEN and
  *   not IMAGINARY).  Checks F0175_GROUP_GetThing for group collision.
  *   Calls F0267_MOVE_GetMoveResult_CPSCE for source/destination sensor
@@ -223,7 +223,7 @@ const char* DM1_V1_MovementPipeline_SourceEvidencePc34Compat(void)
            "CLIKMENU.C:224-233 F0366 movement-arrow forward/right deltas, "
            "CLIKMENU.C:264-276 stairs special cases, CLIKMENU.C:278-323 wall/door/fakewall/group collision and discard, "
            "CLIKMENU.C:325-346 F0267 move-result call and G0310/G0311 cooldown write; "
-           "DUNGEON.C:1371-1421 F0150 relative coordinate math; "
+           "DUNGEON.C:1389-1391 F0150 relative coordinate math; "
            "MOVESENS.C:316-328 F0267 signature/source-destination contract, "
            "MOVESENS.C:433-435 movement/projectile impact precheck, MOVESENS.C:475-535 open/scoped teleporter chain and party rotation, MOVESENS.C:538-606 open non-imaginary pit fall and party damage/rope reset, MOVESENS.C:760-783 scent/G0362_l_LastPartyMovementTime, MOVESENS.C:799-818 F0276 source leave and destination enter sensors, MOVESENS.C:830-887 group/party occupancy interlock and active-group refresh/defer, MOVESENS.C:893-897 projectile/explosion destination sensor exception; "
            "CHAMPION.C:1180-1215 F0310 movement ticks; "
