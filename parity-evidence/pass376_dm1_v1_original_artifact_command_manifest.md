@@ -1,6 +1,6 @@
 # Pass376 — DM1 V1 original artifact command manifest
 
-Status: `BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY`
+Status: `BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED`
 
 ## Decision
 
@@ -16,6 +16,15 @@ The overlay blocker is now an explicit artifact-command contract. No parity is c
 
 - `pass360` `BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED` — strict original FIRES F0128 -> F0097/VIDRV true-stop blocker ok=`True`
 - `pass372` `PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED` — Firestaff M11 movement route source-locked; not the active blocker ok=`True`
+
+## Generated route artifact probe
+
+- raw frames: `6`; all 320x200: `True`
+- classifier counts: `{'dungeon_gameplay': 4, 'wall_closeup': 2}`; duplicate hashes: `{'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': 4, 'fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde': 2}`
+- viewport crop manifest rows: `6`; all 224x136: `True`
+- pass86 semantic promotion: `False`; problems: `['image0002-raw.png: classified wall_closeup, expected dungeon_gameplay', 'image0004-raw.png: classified dungeon_gameplay, expected spell_panel', 'image0005-raw.png: classified wall_closeup, expected dungeon_gameplay', 'image0006-raw.png: classified dungeon_gameplay, expected inventory']`
+- mechanical crop command used: `python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports --allow-mismatch`
+- missing to promote: rerun scripts/dosbox_dm1_original_viewport_reference_capture.sh with a route that yields pass86_original_viewport_crop_manifest.py pass=true: expected dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory with no duplicate raw frame hashes
 
 ## Exact commands and artifact paths
 
@@ -73,8 +82,10 @@ The overlay blocker is now an explicit artifact-command contract. No parity is c
 
 ## Blockers
 
-- The pass360 strict FIRES true-stop blocker remains active until the first command proves F0128 -> F0097/VIDRV in a bounded owned-PTY run.
-- Existing pass94-era original frames/crops are historical inputs only; pass376 needs fresh labelled artifacts tied to this route contract before pairing.
+- pass360 still blocks strict original FIRES F0128 -> F0097/VIDRV true-stop promotion
+- labelled original 320x200 frames exist, but semantic promotion is blocked by duplicate hashes/pass86 mismatches
+- 224x136 original crops and manifest exist, but are review inputs only until semantic raw route passes
+- paired Firestaff/original diff artifacts for this route are not tracked
 
 ## Non-claims
 

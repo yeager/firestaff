@@ -1,0 +1,153 @@
+{
+  "schema": "pass86_original_viewport_crop_manifest.v1",
+  "honesty": "Original-reference input preparation only; no pixel parity is claimed.",
+  "raw_dir": "verification-screens/pass376-original-route",
+  "out_dir": "verification-screens/pass376-original-dm1-viewports",
+  "viewport_xywh": [
+    0,
+    33,
+    224,
+    136
+  ],
+  "expected_sequence": [
+    {
+      "index": "01",
+      "scene": "ingame_start",
+      "class": "dungeon_gameplay"
+    },
+    {
+      "index": "02",
+      "scene": "ingame_turn_right",
+      "class": "dungeon_gameplay"
+    },
+    {
+      "index": "03",
+      "scene": "ingame_move_forward",
+      "class": "dungeon_gameplay"
+    },
+    {
+      "index": "04",
+      "scene": "ingame_spell_panel",
+      "class": "spell_panel"
+    },
+    {
+      "index": "05",
+      "scene": "ingame_after_cast",
+      "class": "dungeon_gameplay"
+    },
+    {
+      "index": "06",
+      "scene": "ingame_inventory_panel",
+      "class": "inventory"
+    }
+  ],
+  "frames": [
+    {
+      "index": "01",
+      "scene": "ingame_start",
+      "raw": "verification-screens/pass376-original-route/image0001-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "width": 320,
+      "height": 200,
+      "classification": "dungeon_gameplay",
+      "classification_reason": "viewport content with mostly dark in-game right column",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.png",
+      "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm",
+      "png_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "ppm_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c"
+    },
+    {
+      "index": "02",
+      "scene": "ingame_turn_right",
+      "raw": "verification-screens/pass376-original-route/image0002-raw.png",
+      "raw_sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+      "width": 320,
+      "height": 200,
+      "classification": "wall_closeup",
+      "classification_reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
+      "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm",
+      "png_sha256": "40140a2771d73c52ced24f280e922915227cbe62a85e8142c9f8aad23e5b3f96",
+      "ppm_sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81"
+    },
+    {
+      "index": "03",
+      "scene": "ingame_move_forward",
+      "raw": "verification-screens/pass376-original-route/image0003-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "width": 320,
+      "height": 200,
+      "classification": "dungeon_gameplay",
+      "classification_reason": "viewport content with mostly dark in-game right column",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
+      "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm",
+      "png_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "ppm_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c"
+    },
+    {
+      "index": "04",
+      "scene": "ingame_spell_panel",
+      "raw": "verification-screens/pass376-original-route/image0004-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "width": 320,
+      "height": 200,
+      "classification": "dungeon_gameplay",
+      "classification_reason": "viewport content with mostly dark in-game right column",
+      "expected_class": "spell_panel",
+      "expected_match": false,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png",
+      "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "png_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "ppm_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c"
+    },
+    {
+      "index": "05",
+      "scene": "ingame_after_cast",
+      "raw": "verification-screens/pass376-original-route/image0005-raw.png",
+      "raw_sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+      "width": 320,
+      "height": 200,
+      "classification": "wall_closeup",
+      "classification_reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": false,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png",
+      "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm",
+      "png_sha256": "40140a2771d73c52ced24f280e922915227cbe62a85e8142c9f8aad23e5b3f96",
+      "ppm_sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81"
+    },
+    {
+      "index": "06",
+      "scene": "ingame_inventory_panel",
+      "raw": "verification-screens/pass376-original-route/image0006-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "width": 320,
+      "height": 200,
+      "classification": "dungeon_gameplay",
+      "classification_reason": "viewport content with mostly dark in-game right column",
+      "expected_class": "inventory",
+      "expected_match": false,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png",
+      "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm",
+      "png_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "ppm_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c"
+    }
+  ],
+  "manifest": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+  "markdown": "verification-screens/pass376-original-dm1-viewports/pass86_original_viewport_crop_manifest.md",
+  "stats": "verification-screens/pass376-original-dm1-viewports/pass86_original_viewport_crop_manifest.json",
+  "dry_run": false,
+  "problems": [
+    "image0002-raw.png: classified wall_closeup, expected dungeon_gameplay",
+    "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+    "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+    "image0006-raw.png: classified dungeon_gameplay, expected inventory"
+  ],
+  "pass": false
+}
