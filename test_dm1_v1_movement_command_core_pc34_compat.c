@@ -71,10 +71,14 @@ static void setup_party(struct PartyState_Compat* party)
     party->champions[0].present = 1;
     party->champions[0].hp.current = 10;
     party->champions[0].maxLoad = 100;
+    party->champions[0].stamina.current = 100;
+    party->champions[0].stamina.maximum = 100;
     party->champions[0].direction = DIR_NORTH;
     party->champions[1].present = 1;
     party->champions[1].hp.current = 10;
     party->champions[1].maxLoad = 100;
+    party->champions[1].stamina.current = 100;
+    party->champions[1].stamina.maximum = 100;
     party->champions[1].direction = DIR_EAST;
 }
 
@@ -96,7 +100,9 @@ int main(void)
     printf("probe=dm1_v1_movement_command_core_pc34_compat\n");
     printf("sourceEvidence=%s\n", sourceEvidence);
     ok &= expect_contains("source evidence command queue dispatch", sourceEvidence, "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC:2075-2099");
-    ok &= expect_contains("source evidence move party blockers", sourceEvidence, "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:224-233");
+    ok &= expect_contains("source evidence move party stamina", sourceEvidence, "CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:237-255");
+    ok &= expect_contains("source evidence stamina clamp", sourceEvidence, "CHAMPION.C:F0325_CHAMPION_DecrementStamina:2025-2048");
+    ok &= expect_contains("source evidence move party blockers", sourceEvidence, "224-233 arrow deltas");
     ok &= expect_contains("source evidence relative movement", sourceEvidence, "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391");
     ok &= expect_contains("source evidence party rotation", sourceEvidence, "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130");
     ok &= expect_contains("source evidence move result", sourceEvidence, "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328");
@@ -120,6 +126,7 @@ int main(void)
     ok &= expect_int("turn requests viewport redraw", result.viewportRedrawRequested, 1);
     ok &= expect_int("turn releases input wait", result.stopWaitingForPlayerInput, 1);
     ok &= expect_int("turn does not set movement cooldown", result.timing.disabledMovementTicks, 0);
+    ok &= expect_int("turn does not decrement stamina", party.champions[0].stamina.current, 100);
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
@@ -138,6 +145,10 @@ int main(void)
     ok &= expect_int("step records scent/last movement time", result.timing.scentRecorded, 1);
     ok &= expect_int("step updates last movement time", (int)result.timing.lastPartyMovementTime, 260);
     ok &= expect_int("step clears projectile cooldown", result.timing.projectileDisabledMovementTicks, 0);
+    ok &= expect_int("step decrements living champion0 stamina before resolution", party.champions[0].stamina.current, 99);
+    ok &= expect_int("step decrements living champion1 stamina before resolution", party.champions[1].stamina.current, 99);
+    ok &= expect_int("step records stamina affected count", result.staminaAffectedCount, 2);
+    ok &= expect_int("step records stamina cost", result.staminaCost[0], 1);
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
@@ -156,6 +167,8 @@ int main(void)
     ok &= expect_int("blocked command does not redraw viewport", result.viewportRedrawRequested, 0);
     ok &= expect_int("blocked movement leaves x", party.mapX, 2);
     ok &= expect_int("blocked movement leaves y", party.mapY, 2);
+    ok &= expect_int("blocked movement still decrements stamina", party.champions[0].stamina.current, 99);
+    ok &= expect_int("blocked movement records stamina cost", result.staminaCost[0], 1);
     ok &= expect_int("blocked movement flushes queued input", (int)queue.count, 0);
 
 
@@ -189,6 +202,7 @@ int main(void)
     ok &= expect_int("pc34 core up arrow y decremented", party.mapY, 1);
     ok &= expect_int("pc34 core up arrow sets cooldown", result.timing.disabledMovementTicks, 2);
     ok &= expect_int("pc34 core up arrow clears projectile cooldown", result.timing.projectileDisabledMovementTicks, 0);
+    ok &= expect_int("pc34 core up arrow decrements stamina", party.champions[0].stamina.current, 99);
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));

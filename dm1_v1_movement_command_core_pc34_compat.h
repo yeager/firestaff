@@ -20,7 +20,8 @@ extern "C" {
  *   C001/C002 turns to F0365 and C003..C006 steps to F0366.
  * - CLIKMENU.C:142-179 F0365 removes/re-adds the party on the same square
  *   around F0284_CHAMPION_SetPartyDirection and releases input wait.
- * - CLIKMENU.C:180-347 F0366 resolves relative step destination, takes
+ * - CLIKMENU.C:180-347 F0366 decrements living champion stamina for every
+ *   dequeued step command before stairs/blocker resolution, resolves relative step destination, takes
  *   stairs immediately on turn/backward/current-square and target-square
  *   stairs consequences, rejects walls/closed doors/closed real
  *   fake-walls/groups, calls F0267_MOVE for source/destination/sensor
@@ -37,6 +38,9 @@ struct Dm1V1MovementCommandCoreResultPc34Compat {
     struct M11V1TurningPresentationResultPc34Compat turning;
     struct SensorEffectList_Compat leaveEffects;
     struct SensorEffectList_Compat enterEffects;
+    int staminaCost[CHAMPION_MAX_PARTY];
+    int staminaDamage[CHAMPION_MAX_PARTY];
+    int staminaAffectedCount;
     int commandHandled;
     int turnApplied;
     int stepApplied;
