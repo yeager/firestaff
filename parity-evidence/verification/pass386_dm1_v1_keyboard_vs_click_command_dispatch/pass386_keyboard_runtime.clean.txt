@@ -1,0 +1,842 @@
+(B)0=---(Register Overview)---
+EAX=ESI=DS=ES=FS=GS=SS=
+EBX=EDI=CS=EIP=C  Z  S  O  A  P  D  I  T
+ECX=EBP=IOPL   CPL
+EDX=ESP=
+---(Data Overview   Scroll: page up/down)---
+---(Code Overview   Scroll: up/down     )---
+---(Variable Overview)---
+---(OutPut/Input    Scroll: home/end    )---
+DOSBox version 0.74-3
+Copyright 2002-2019 DOSBox Team, published under GNU GPL.
+---
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass386-keyboard-l_e4gzv7/dosbox.conf
+0: IO:Writing 05 to port 03CF
+MIXER:No Sound Mode Selected.
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+0000:0000     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0010     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0020     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0030     60 10 00 F0 60 10 00 F0 80 10 00 F0 60 10 00 F0  `...`.......`...
+0000:0040     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0000  60pusha
+0000:0001  1000adc  [bx+si],alds:[0000]=1060
+0000:0003  F060lock pusha
+0000:0005  1000adc  [bx+si],alds:[0000]=1060
+0000:0007  F060lock pusha
+0000:0009  1000adc  [bx+si],alds:[0000]=1060
+0000:000B  F060lock pusha
+0000:000D  1000adc  [bx+si],alds:[0000]=1060
+0000:000F  F060lock pusha
+0000:0011  1000adc  [bx+si],alds:[0000]=1060
+(Running)0000000000000000  DS=00000000000000000000 Real0000000000000000  CS=000000000000  C0 Z0 S0 O0 A0 P0 D0 I1 T000000000000000000  CPL0000000000000000000: SBLASTER:DSP:Reset
+0: IO:Read from port 0278
+0: IO:Read from port 0279
+0: IO:Read from port 03BC
+0: IO:Read from port 03BE
+78
+0: INT10:Set Video Mode 3
+78
+0: VGA:Blinking 8
+78
+0: BIOS:Keyboard layout file auto not found
+78
+0: BIOS:Keyboard layout file auto not found
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: EXEC:Parsing command line: AUTOEXEC.BAT
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+
+
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass386-keyboard-l_e4gzv7/dos
+78
+3: EXEC:Execute mount.COM 0
+78
+3: FILES:file open command 0 file mount.COM
+78
+12: DOSMISC:DIRCACHE: Set volume label to C_DRIVE
+78
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+18: EXEC:Parsing command line: c:
+78
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+18: EXEC:Parsing command line: DEBUG DM.EXE -vv -sn -pk
+78
+21: EXEC:Execute Z:\DEBUG.COM 0
+78
+21: FILES:file open command 0 file Z:\DEBUG.COM
+78
+33: EXEC:Execute DM.EXE 0
+78
+33: FILES:file open command 0 file DM.EXE
+08 00 70 00 08 00 70 00 08 00 70 0..p...p...p08 00 70 0..pA5 FE87 E955 FF........U20 1320 1140 111 ... ...@C0 11E0 1100 1240 12............@E0 12E0 122.....80 12A4 F00 05 00 C0  .........
+0499:000E  06 es
+0499:000F  0E  push cs
+0499:0010  1F  pop  ds
+0499:0011  8B0E0C00mov  cx,[000C] C]=F00
+0499:0015  8BF1mov  si,cx
+0499:0017  4E  dec  si
+0499:0018  89F7mov  di,si
+0499:001A  8CDBmov  bx,ds
+0499:001C  031E0A00add  bx,[000A]ds:[000A]=20C8
+0499:0020  8EC3mov  es,bx
+-> _     E1DD1DD66F8499EFF91C31DD834
+***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
+
+(Running)
+6070: VGA:h total 100 end 80 blank (80/98) retrace (85/97)
+78
+6070: VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+
+
+6070: VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02701/0.03082)
+
+
+6070: VGA:v total 14.26806 (70.09Hz) blank(12.93341/14.04562) retrace(13.09230/13.15585)
+78
+6070: VGA:Width 640, Height 400, fps 70.086592
+78
+6070: VGA:normal width, normal height aspect 1.000000
+78
+163415: MOUSE:New video is the same as the old
+78
+163466: SBLASTER:Unhandled write to SB Port  22A
+78
+163474: SBLASTER:DSP:Reset
+78
+211707: FILES:file open command 2 file VGA
+78
+211760: FILES:file open command 2 file VGA
+78
+211884: FILES:file open command 2 file IBMIO
+78
+211937: FILES:file open command 2 file IBMIO
+78
+211990: FILES:file open command 2 file FIRES
+78
+212043: FILES:file open command 2 file FIRES
+78
+212255: FILES:file open command 0 file dmset
+78
+214301: FILES:file open command 0 file C:\VGA
+78
+214325: FCB:DOS:29:FCB Parse Filename, result:al=0
+78
+214332: FCB:DOS:29:FCB Parse Filename, result:al=0
+78
+214526: EXEC:Execute C:\VGA 3
+78
+214526: FILES:file open command 0 file C:\VGA
+78
+267531: INT10:Set Video Mode 13
+78
+267531: VGA:Blinking 0
+78
+267891: EXEC:Execute IBMIO 0
+78
+267891: FILES:file open command 0 file IBMIO
+78
+362031: EXEC:Execute swoosh 0
+78
+362031: FILES:file open command 0 file swoosh
+78
+408241: VGA:h total 100 end 80 blank (80/98) retrace (84/96)
+78
+408241: VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+
+
+408241: VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02669/0.03051)
+
+
+408241: VGA:v total 14.26806 (70.09Hz) blank(12.93347/14.04568) retrace(13.09235/13.15591)
+78
+408241: VGA:Width 320, Height 200, fps 70.086303
+78
+408241: VGA:double width, double height aspect 1.200000
+78
+5086889: EXEC:Execute anim 0
+78
+5086889: FILES:file open command 0 file anim
+78
+5154362: FILES:file open command 2 file title
+78
+16472456: EXEC:Execute selector 0
+78
+16472456: FILES:file open command 0 file selector
+78
+16647115: FILES:file open command 2 file data\song.dat
+78
+24910620: FILES:file open command 2 file data\graphics.dat
+78
+37395189: EXEC:Execute FIRES 0
+78
+37395189: FILES:file open command 0 file FIRES
+78
+38625007: FILES:file open command 0 file EMMXXXX0
+78
+38625024: IOCTL:07:Fakes output status is ready for handle 3
+78
+38636665: FILES:file open command 2 file DATA\GRAPHICS.DAT
+78
+41509645: FILES:file open command 2 file DATA\DUNGEON.DAT
+FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
+0F93:0040  03D8add  bx,ax
+0F93:0042  268B07mov  ax,es:[bx]es:[0002]=00EF
+0F93:0045  0146FCadd  [bp-04],axss:[0F30]=7272
+0F93:0048  8356FEadc  word [bp-02],0000ss:[0F32]=0001
+0F93:004C  46  inc  si
+0F93:004D  3B7606cmp  si,[bp+06]ss:[0F3A]=00FB
+0F93:0050  72E6jc   00000038 ($-1a)(no jmp)
+0F93:0052  8B56FEdx,[bp-02]ss:[0F32]=0001
+0F93:0055  8B46FC  mov  ax,[bp-04]ss:[0F30]=7272
+0F93:0058  5E  pop  si
+-> _     1C4E2  DS=2C23EC2C30312FBF93401404F347B18F2E44636909....
+-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_
+DEBUG: Breakpoints deleted.
+
+-> _       ....
+-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....4_  ....0_  ....7_
+DEBUG: Set breakpoint at 22F7:0407
+
+-> _            ....
+-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....7_  ....:_  ....0_  ....6_  ....9_  ....9_
+DEBUG: Set breakpoint at 22F7:0699
+
+-> _            ....
+-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....0_  ....D_
+DEBUG: Set breakpoint at 1EA7:010D
+
+-> _            ....
+-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....7_  ....:_  ....0_  ....1_  ....A_  ....A_
+DEBUG: Set breakpoint at 1EA7:01AA
+
+-> _            ....
+-> B_  ....P_  .... _  ....2_  ....3_  ....B_  ....0_  ....:_  ....4_  ....0_  ....F_  ....E_
+DEBUG: Set breakpoint at 23B0:40FE
+
+-> _            ....
+-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_
+DEBUG: Set memory breakpoint at 2C23:1A7C
+
+-> _             ....
+-> B_  ....P_  ....M_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_
+DEBUG: Set memory breakpoint at 2C23:3E78
+
+-> _             ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)
+DEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01
+1C6]=0000
+-> _     1C620 P110....
+-> C_  ....P_  ....U_
+44636910: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+44636910: MISC:eflags:00007206 [vm=0 iopl=3 nt=1]
+78
+44636910: MISC:GDT base=00000000 limit=00000000
+78
+44636910: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (01)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+23B0:40FE  55  push bp
+23B0:40FF  8BEC  bp,sp
+23B0:4101  83EC04sub  sp,0004
+23B0:4104  56      push si
+23B0:4105  57push d
+23B0:4106  8movD0]=0006
+23B0:4109  8B7E0Amov  di,[bp+0A]     ss:[0FD4]=0FF4
+23B0:410C  833E741A00cmp  word [1A74],0000ds:[1A74
+23B0:4111  7404  je   00004117 ($+4)(down)
+23B0:4113  0ush cs
+-> _     00004066333956  CS=23B040FE1000CA0001B5897304....
+-> C_  ....P_  ....U_
+45897304: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+45897304: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+45897304: MISC:GDT base=00000000 limit=00000000
+78
+45897304: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (01)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)
+DEBUG: Memory breakpoint : 2C23:1A7C - 01 -> 00
+
+07FB:01BA  EB0Cjmp  short 000001C8 ($+c)   (down)
+07FB:01BC  9AB407132Acall 2A13:07B4
+07FB:01C1  50    push ax
+07FB:01C2  9A0704F722call 22F7:0407
+07FB:01C7  59op  cx
+07FB:01C8  9A2508132Acall 2A13:0825
+07FB:01CD  0BC0  or   ax,ax
+07FB:01CF  75EB      jne  000001BC ($-15) (no jmp)
+07FB:01D1  833E543D00cmp  word [3D54],0000ds:[3D54]=0000
+07FB:01D6  744Dje   00000225 ($+4d)(down)
+-> _     FFFF303100C07FB01BA1BFFFFC8628695....
+-> C_  ....P_  ....U_
+46286954: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46286954: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46286954: MISC:GDT base=00000000 limit=00000000
+78
+46286954: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+22F7:0407  55  push bp
+22F7:0408  8BEC      mov  bp,sp
+22F7:040A  83EC04sub  sp,0004
+22F7:040D  56        push si
+22F7:040E  57ush di
+22F7:040F  FF7606    push word [bp+06]ss:[0FD0]=0006
+22F7:0412  9AF22C930Fcall 0F93:2CF2
+22F7:0417  59  pop  cx
+22F7:0418  A1BE3E    mov  ax,[3EBE]       EBE]=2C23
+22F7:041B  8B16BC3Emov  dx,[3EBC]      ds:[3EBC]=26D4
+-> _     084C0663F60422F74070 S1 O0 A1000227031....
+-> C_  ....P_  ....U_
+46287031: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46287031: MISC:eflags:00007296 [vm=0 iopl=3 nt=1]
+78
+46287031: MISC:GDT base=00000000 limit=00000000
+78
+46287031: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....69969A69C69F6A06A1  C7060A1F0100mov 1F0A],0001ds:[1F0A]=00006A7  A1081F    mov  ax,[1F08]ds:[1F08]=00086AA  40inc  a6AB  8BF8  di,ax6AD  3D0800  cmp  ax,0008
+-> _     00003396991 S0 O0 A084C2EF74297....
+-> C_  ....P_  ....U_
+46287297: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46287297: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46287297: MISC:GDT base=00000000 limit=00000000
+78
+46287297: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     435....
+-> C_  ....P_  ....U_
+46287435: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46287435: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46287435: MISC:GDT base=00000000 limit=00000000
+78
+46287435: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     573....
+-> C_  ....P_  ....U_
+46287573: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46287573: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46287573: MISC:GDT base=00000000 limit=00000000
+78
+46287573: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     711....
+-> C_  ....P_  ....U_
+46287711: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46287711: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46287711: MISC:GDT base=00000000 limit=00000000
+78
+46287711: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     849....
+-> C_  ....P_  ....U_
+46287849: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46287849: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46287849: MISC:GDT base=00000000 limit=00000000
+78
+46287849: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     987....
+-> C_  ....P_  ....U_
+46287987: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46287987: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46287987: MISC:GDT base=00000000 limit=00000000
+78
+46287987: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     8125....
+-> C_  ....P_  ....U_
+46288125: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46288125: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46288125: MISC:GDT base=00000000 limit=00000000
+78
+46288125: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     263....
+-> C_  ....P_  ....U_
+46288263: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46288263: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46288263: MISC:GDT base=00000000 limit=00000000
+78
+46288263: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     401....
+-> C_  ....P_  ....U_
+46288401: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+78
+46288401: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+78
+46288401: MISC:GDT base=00000000 limit=00000000
+78
+46288401: MISC:IDT base=00000000 limit=000003FF
+
+-> _   ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....3_  ....E_  ....7_  ....8_  .... _  ....8_
+DEBUG: Memory dump success.
+
+-> _  ....
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _      ....
+(Running)....
+-> _     539........
+-> B_  ....P_  ....L_  ....I_  ....S_  ....T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BPMEM 2C23:3E78 (00)
+78
+01. BPMEM 2C23:1A7C (00)
+78
+02. BP 23B0:40FE
+78
+03. BP 1EA7:01AA
+78
+04. BP 1EA7:010D
+78
+05. BP 22F7:0699
+78
+06. BP 22F7:0407
+
+-> _

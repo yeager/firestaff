@@ -1,0 +1,104 @@
+[
+  {
+    "route_item": "wait:9000",
+    "slept": true,
+    "t": 1778245070.624655
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "enter",
+    "t": 1778245079.6584318
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778245079.8799243
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "t": 1778245082.0858998
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778245082.3047237
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "click:276,140",
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778245084.5143166
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778245084.6300113
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "running_guard": true,
+    "t": 1778245099.3769057
+  },
+  {
+    "route_item": "wait:3500",
+    "slept": true,
+    "t": 1778245103.2058153
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778245106.717097
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778245107.1887727
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778245107.8907394
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778245110.8206246
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778245111.5248773
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778245114.5029593
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778245115.2044404
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778245118.1351972
+  }
+]
