@@ -8,17 +8,24 @@
     ],
     "diffs_run": false,
     "firestaff_side_ready": true,
+    "masks_stats_materialized": false,
+    "original_review_metadata_ready": true,
     "original_side_ready": false,
-    "parity_claimed": false
+    "parity_claimed": false,
+    "review_pair_metadata_materialized": true,
+    "semantic_clean_original_required": true
   },
-  "branch": "bosse/land-blockers-20260508-1248",
+  "branch": "worker/dm1v1-paired-diff-after-crops-plan-20260508",
   "dependencies": {
     "blocker_1_original_true_stop_transcript": {
       "active_blocker": null,
       "duplicate_sha256_counts": null,
       "exists": true,
       "expected_status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
+      "missing_to_promote": null,
       "ok": true,
+      "pass86_pass": null,
+      "pass86_problems": null,
       "path": "parity-evidence/verification/pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing/manifest.json",
       "role": "strict original FIRES F0128 -> F0097/VIDRV true-stop is still required before original frames are promotable",
       "semantic_promotion_ok": null,
@@ -37,7 +44,15 @@
       },
       "exists": true,
       "expected_status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED",
+      "missing_to_promote": "rerun scripts/dosbox_dm1_original_viewport_reference_capture.sh with a route that yields pass86_original_viewport_crop_manifest.py pass=true: expected dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory with no duplicate raw frame hashes",
       "ok": true,
+      "pass86_pass": false,
+      "pass86_problems": [
+        "image0002-raw.png: classified wall_closeup, expected dungeon_gameplay",
+        "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+        "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+        "image0006-raw.png: classified dungeon_gameplay, expected inventory"
+      ],
       "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
       "role": "labels/raw original 320x200 frames and 224x136 crops exist, but duplicate hashes/pass86 mismatches still block semantic promotion",
       "semantic_promotion_ok": false,
@@ -48,9 +63,12 @@
       "duplicate_sha256_counts": null,
       "exists": true,
       "expected_status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING",
+      "missing_to_promote": null,
       "ok": true,
+      "pass86_pass": null,
+      "pass86_problems": null,
       "path": "parity-evidence/verification/pass376_dm1_v1_original_overlay_parity_plan/manifest.json",
-      "role": "224x136 original crops are missing until pass86 succeeds on labelled original frames",
+      "role": "224x136 original crops are present as review-only inputs, but cannot be promoted until pass86/semantic route succeeds",
       "semantic_promotion_ok": null,
       "status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING"
     },
@@ -59,7 +77,10 @@
       "duplicate_sha256_counts": null,
       "exists": true,
       "expected_status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
+      "missing_to_promote": null,
       "ok": true,
+      "pass86_pass": null,
+      "pass86_problems": null,
       "path": "parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json",
       "role": "Firestaff movement/capture side is not the active route blocker",
       "semantic_promotion_ok": null,
@@ -152,18 +173,104 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "822ee6befecc641d840e9966746b90ba88ae38bb",
+  "head": "a54e4eb36358e54fe8928bf90b2d6b3a6a273591",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
     "new original FIRES F0128/F0097/VIDRV true stop",
     "semantically matched original gameplay capture"
   ],
+  "original_review_artifacts": [
+    {
+      "index": "01",
+      "ok": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_start"
+    },
+    {
+      "index": "02",
+      "ok": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_turn_right"
+    },
+    {
+      "index": "03",
+      "ok": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_move_forward"
+    },
+    {
+      "index": "04",
+      "ok": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_spell_panel"
+    },
+    {
+      "index": "05",
+      "ok": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_after_cast"
+    },
+    {
+      "index": "06",
+      "ok": true,
+      "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png",
+      "png_dims": [
+        224,
+        136
+      ],
+      "png_dims_ok": true,
+      "png_exists": true,
+      "ppm_manifest_row": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm",
+      "ppm_manifested_as_224x136": true,
+      "scene": "ingame_inventory_panel"
+    }
+  ],
   "pairing_plan_blockers": [],
   "pairing_plan_path": "parity-evidence/overlays/pass377/pass377_pairing_plan.json",
   "pairing_plan_schema": "pass70_viewport_pair_compare.v1",
   "pairing_plan_stdout": "[pass-70] wrote plan: parity-evidence/overlays/pass377/pass377_pairing_plan.json\n01 ingame_start: firestaff=yes original=yes\n02 ingame_turn_right: firestaff=yes original=yes\n03 ingame_move_forward: firestaff=yes original=yes\n04 ingame_spell_panel: firestaff=yes original=yes\n05 ingame_after_cast: firestaff=yes original=yes\n06 ingame_inventory_panel: firestaff=yes original=yes\n",
-  "repo": "/Users/bosse/.openclaw/workspace-main/firestaff-local/firestaff-land-blockers-20260508-1248",
+  "repo": "/home/trv2/work/firestaff",
   "schema": "pass377_dm1_v1_paired_diff_artifact_blocker.v1",
   "source_audit": [
     {
@@ -179,7 +286,7 @@
         "G2070_ViewportBitmapByteCount = 15232"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
       "why": "paired diff inputs must be 224x136 viewport crops from the PC34 viewport at x=0,y=33"
     },
     {
@@ -194,7 +301,7 @@
         "C136_HEIGHT_VIEWPORT"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "why": "Firestaff/original crops must compare the composed G0296 viewport buffer, not arbitrary full-frame pixels"
     },
     {
@@ -208,7 +315,7 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "why": "original-side captures are promotable only after the source presentation seam"
     },
     {
@@ -223,11 +330,11 @@
         "224, 320"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C",
       "why": "PC34 slot 9 presents the viewport with the expected 224-wide source and 320-wide screen stride"
     }
   ],
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS377_PAIRED_DIFF_ARTIFACTS_ORIGINAL_SIDE_MISSING_FIRESTAFF_SIDE_READY",
-  "timestamp_utc": "2026-05-08T10:49:09.864617+00:00"
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED",
+  "timestamp_utc": "2026-05-08T11:03:37.830737+00:00"
 }
