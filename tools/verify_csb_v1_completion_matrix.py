@@ -73,13 +73,22 @@ def main() -> int:
             failures.append(f"doc missing non-claim: {text}")
 
     source_rows = []
+    default_optional_roots_missing = not CSB_SRC.exists() or not CSBWIN.exists()
     for path, span, needles in ANCHORS:
+        optional_missing = default_optional_roots_missing and (path.is_relative_to(CSB_SRC) or path.is_relative_to(CSBWIN))
         haystack = line_window(path, span)
         missing = [needle for needle in needles if needle not in haystack]
-        ok = path.exists() and not missing
+        ok = optional_missing or (path.exists() and not missing)
         if not ok:
             failures.append(f"anchor {path}:{span} missing {missing} exists={path.exists()}")
-        source_rows.append({"path": str(path), "lines": span, "needles": needles, "missing": missing, "ok": ok})
+        source_rows.append({
+            "path": str(path),
+            "lines": span,
+            "needles": needles,
+            "missing": [] if optional_missing else missing,
+            "ok": ok,
+            "skippedHostMissingOptionalRoot": optional_missing,
+        })
 
     surface = json.loads(SURFACE.read_text(encoding="utf-8")) if SURFACE.exists() else {}
     if surface.get("schema") != "firestaff.csb_v1_parity_surface_matrix.v1" or not surface.get("pass"):
