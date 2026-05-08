@@ -740,7 +740,10 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
 
 static void m11_write_autotest_runtime_probe(const char* path,
                                              int launchedEver,
-                                             const M11_GameViewState* gameView) {
+                                             const M11_GameViewState* gameView,
+                                             int inputRedrawDrawCount,
+                                             int inputRedrawAfterViewportDirtyCount,
+                                             int lastInputRedrawAfterViewportDirty) {
     FILE* f;
     if (!path || path[0] == '\0') {
         return;
@@ -760,7 +763,8 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"lastOutcome\": \"%s\",\n"
             "  \"gameTick\": %u,\n"
             "  \"party\": {\"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d, \"direction\": %d, \"championCount\": %d},\n"
-            "  \"pipeline\": {\"dequeued\": %d, \"command\": %d, \"turnApplied\": %d, \"stepApplied\": %d, \"movementBlocked\": %d, \"anyMovementOccurred\": %d, \"anyTurnOccurred\": %d, \"viewportDirty\": %d}\n"
+            "  \"pipeline\": {\"dequeued\": %d, \"command\": %d, \"turnApplied\": %d, \"stepApplied\": %d, \"movementBlocked\": %d, \"anyMovementOccurred\": %d, \"anyTurnOccurred\": %d, \"viewportDirty\": %d},\n"
+            "  \"redraw\": {\"inputRedrawDrawCount\": %d, \"inputRedrawAfterViewportDirtyCount\": %d, \"lastInputRedrawAfterViewportDirty\": %d}\n"
             "}\n",
             launchedEver,
             gameView ? gameView->active : 0,
@@ -781,7 +785,10 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->lastDm1V1MovementPipelineResult.core.movementBlocked : 0,
             gameView ? gameView->lastDm1V1MovementPipelineResult.anyMovementOccurred : 0,
             gameView ? gameView->lastDm1V1MovementPipelineResult.anyTurnOccurred : 0,
-            gameView ? gameView->lastDm1V1MovementPipelineResult.viewportDirty : 0);
+            gameView ? gameView->lastDm1V1MovementPipelineResult.viewportDirty : 0,
+            inputRedrawDrawCount,
+            inputRedrawAfterViewportDirtyCount,
+            lastInputRedrawAfterViewportDirty);
     fclose(f);
 }
 
@@ -1507,6 +1514,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     M11_GameView_Init(&gameView);
     int launchedEver = 0;
+    int inputRedrawDrawCount = 0;
+    int inputRedrawAfterViewportDirtyCount = 0;
+    int lastInputRedrawAfterViewportDirty = 0;
     int exitAfterLaunch = getenv("FIRESTAFF_EXIT_AFTER_LAUNCH") != NULL;
     int failIfNoLaunch = getenv("FIRESTAFF_FAIL_IF_NO_LAUNCH") != NULL;
     int runRc = 0;
@@ -1611,10 +1621,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 } else if (result == M11_GAME_INPUT_REDRAW) {
+                    int redrawWasAfterViewportDirty =
+                        gameView.lastDm1V1MovementPipelineResult.viewportDirty;
                     M11_GameView_Draw(&gameView,
                                       M11_Render_GetFramebuffer(),
                                       M11_FB_WIDTH,
                                       M11_FB_HEIGHT);
+                    inputRedrawDrawCount++;
+                    if (redrawWasAfterViewportDirty) {
+                        inputRedrawAfterViewportDirtyCount++;
+                    }
+                    lastInputRedrawAfterViewportDirty = redrawWasAfterViewportDirty;
                     if (gameView.world.gameTick != tickBeforeInput) {
                         idleAccumulatorMs = 0;
                     }
@@ -1678,7 +1695,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
                                      launchedEver,
-                                     &gameView);
+                                     &gameView,
+                                     inputRedrawDrawCount,
+                                     inputRedrawAfterViewportDirtyCount,
+                                     lastInputRedrawAfterViewportDirty);
     m11_sync_and_save_window_size(&menuState);
     M11_GameView_Shutdown(&gameView);
     free(launcherFramebuffer);
