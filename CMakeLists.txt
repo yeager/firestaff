@@ -710,6 +710,11 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME pass394_dm1_v1_dispatch_to_movement_state
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/verify_pass394_dm1_v1_dispatch_to_movement_state.py
+    )
+
+    add_test(
         NAME pass351_dm1_v1_live_viewport_redraw_parity_sweep
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_pass351_dm1_v1_live_viewport_redraw_parity_sweep.py
     )
