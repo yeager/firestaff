@@ -97,6 +97,23 @@ SOURCE_CHECKS = [
         "needles": ["C028_GRAPHIC_CHAMPION_ICONS", "G0348_Bitmap_Screen", "C113_ZONE_CHAMPION_ICON_TOP_LEFT", "F0021_MAIN_BlitToScreen"],
         "claim": "Top champion icons/names are screen-HUD draws, not viewport-crop content.",
     },
+
+    {
+        "id": "runtime-interface-mouse-route",
+        "file": "COMMAND.C",
+        "start": 375,
+        "end": 405,
+        "needles": ["C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0", "C187_ZONE_CHAMPION_0_STATUS_BOX_BAR_GRAPHS", "C100_COMMAND_CLICK_IN_SPELL_AREA", "C013_ZONE_SPELL_AREA", "C003_COMMAND_MOVE_FORWARD", "C070_ZONE_MOVE_FORWARD", "C083_COMMAND_TOGGLE_INVENTORY_LEADER", "MASK0x0001_MOUSE_RIGHT_BUTTON"],
+        "claim": "Original runtime movement, spell-area entry, champion inventory toggle, and right-click leader-inventory commands are source-owned mouse routes, so capture automation must support serialized clicks including right-clicks.",
+    },
+    {
+        "id": "runtime-spell-area-subroute",
+        "file": "COMMAND.C",
+        "start": 473,
+        "end": 482,
+        "needles": ["C109_COMMAND_CLICK_IN_SPELL_AREA_SET_MAGIC_CASTER", "C245_ZONE_SPELL_AREA_SYMBOL_1", "C252_ZONE_SPELL_AREA_CAST_SPELL", "MASK0x0002_MOUSE_LEFT_BUTTON"],
+        "claim": "Spell panel interactions are source-owned subroutes inside the screen-relative spell area and require precise left-click route tokens.",
+    },
     {
         "id": "inventory-overlay-viewport",
         "file": "PANEL.C",
@@ -116,7 +133,7 @@ SOURCE_CHECKS = [
 ]
 
 ROUTE_TOOL_CHECKS = [
-    ("scripts/dosbox_dm1_original_viewport_reference_capture.sh", ["DM1_ORIGINAL_ROUTE_EVENTS", "shot:<label>", "--normalize-only"]),
+    ("scripts/dosbox_dm1_original_viewport_reference_capture.sh", ["DM1_ORIGINAL_ROUTE_EVENTS", "shot:<label>", "rclick:<x>,<y>", "--normalize-only"]),
     ("tools/pass80_original_frame_classifier.py", ["wall_closeup", "inventory", "spell_panel"]),
     ("tools/pass112_original_semantic_route_audit.py", ["expected_route_labels", "semantic_route_ready_for_overlay"]),
 ]

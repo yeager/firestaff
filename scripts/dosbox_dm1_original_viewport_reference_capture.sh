@@ -48,7 +48,7 @@ Required for --run:
 Supported route tokens:
   shot, shot:<label>, wait:<ms>, click:<x>,<y>, enter, esc, space, up, down,
   left, right, one, two, three, four, five, six, f1-f4, kp0-kp9,
-  kpenter, a-z, 0-9
+  kpenter, a-z, 0-9, rclick:<x>,<y>
 
 Labeled shot tokens:
   shot:<label> is equivalent to shot for capture input, and records the label
@@ -74,6 +74,9 @@ Optional environment:
   click:<x>,<y>    posts one serialized left-click in original 320x200 game
                     coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
                     mixed mouse/keyboard commands can be lost when packed tightly.
+  rclick:<x>,<y>   posts one serialized right-click in original 320x200 game
+                    coordinates. This is needed for source-owned inventory close/
+                    toggle routes such as C011/C083, not a parity claim by itself.
   manifest:        ${CROP_MANIFEST}
   shot labels:     ${SHOT_LABEL_MANIFEST}
 
@@ -195,8 +198,8 @@ for token in route:
         if not re.fullmatch(r"wait:[0-9]+", low):
             raise SystemExit(f"ERROR: invalid wait token: {token}")
         continue
-    if low.startswith("click:"):
-        m = re.fullmatch(r"click:([0-9]{1,3}),([0-9]{1,3})", low)
+    if low.startswith("click:") or low.startswith("rclick:"):
+        m = re.fullmatch(r"(?:r?click):([0-9]{1,3}),([0-9]{1,3})", low)
         if not m:
             raise SystemExit(f"ERROR: invalid click token: {token}")
         x, y = map(int, m.groups())
@@ -328,7 +331,7 @@ func dosboxWindowBounds() -> CGRect? {
     return nil
 }
 
-func clickOriginalFrame(x: Int, y: Int) {
+func clickOriginalFrame(x: Int, y: Int, button: String = "left") {
     guard let bounds = dosboxWindowBounds() else {
         fputs("could not find DOSBox window bounds for click:\(x),\(y)\n", stderr)
         exit(3)
@@ -348,12 +351,15 @@ func clickOriginalFrame(x: Int, y: Int) {
     let px = left + ((Double(x) + 0.5) / 320.0) * contentW
     let py = top + ((Double(y) + 0.5) / 200.0) * contentH
     let point = CGPoint(x: px, y: py)
-    guard let down = CGEvent(mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left),
-          let up = CGEvent(mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left) else { return }
+    let cgButton: CGMouseButton = (button == "right") ? .right : .left
+    let downType: CGEventType = (button == "right") ? .rightMouseDown : .leftMouseDown
+    let upType: CGEventType = (button == "right") ? .rightMouseUp : .leftMouseUp
+    guard let down = CGEvent(mouseEventSource: source, mouseType: downType, mouseCursorPosition: point, mouseButton: cgButton),
+          let up = CGEvent(mouseEventSource: source, mouseType: upType, mouseCursorPosition: point, mouseButton: cgButton) else { return }
     down.postToPid(pid)
     usleep(45_000)
     up.postToPid(pid)
-    print("click-mapped \(x),\(y) -> \(Int(px)),\(Int(py)) window=\(Int(bounds.width))x\(Int(bounds.height))")
+    print("\(button)-click-mapped \(x),\(y) -> \(Int(px)),\(Int(py)) window=\(Int(bounds.width))x\(Int(bounds.height))")
     usleep(180_000)
 }
 
@@ -380,13 +386,15 @@ for token in route {
             exit(2)
         }
         usleep(ms * 1000)
-    } else if lowerToken.hasPrefix("click:") {
-        let coords = lowerToken.dropFirst("click:".count).split(separator: ",")
+    } else if lowerToken.hasPrefix("click:") || lowerToken.hasPrefix("rclick:") {
+        let isRightClick = lowerToken.hasPrefix("rclick:")
+        let prefix = isRightClick ? "rclick:" : "click:"
+        let coords = lowerToken.dropFirst(prefix.count).split(separator: ",")
         guard coords.count == 2, let x = Int(coords[0]), let y = Int(coords[1]), x >= 0, x < 320, y >= 0, y < 200 else {
             fputs("invalid click token: \(token)\n", stderr)
             exit(2)
         }
-        clickOriginalFrame(x: x, y: y)
+        clickOriginalFrame(x: x, y: y, button: isRightClick ? "right" : "left")
     } else if let key = keycodes[lowerToken] {
         tap(key)
     } else {
@@ -435,7 +443,7 @@ shot() {
 }
 
 click_original_frame() {
-    local x="$1" y="$2"
+    local x="$1" y="$2" button="${3:-1}"
     local geom gx gy gw gh px py
     geom="$(xdotool getwindowgeometry --shell "$window")"
     eval "$geom"
@@ -459,8 +467,10 @@ PY
     # xdotool --window coordinates are relative to the target window.  Do not
     # add the absolute X/Y origin here; doing so can click outside the DOSBox
     # client under Xvfb when the window is offset from 0,0.
-    xdotool mousemove --window "$window" "$px" "$py" click 1
-    echo "click-mapped ${x},${y} -> window-relative ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
+    xdotool mousemove --window "$window" "$px" "$py" click "$button"
+    local button_name=left
+    if [[ "$button" == "3" ]]; then button_name=right; fi
+    echo "${button_name}-click-mapped ${x},${y} -> window-relative ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
     sleep 0.18
 }
 
@@ -518,9 +528,14 @@ t = sys.argv[1]
 print(int(t.split(':', 1)[1]) / 1000.0)
 PY
 )" ;;
-        click:*)
-            coords="${low#click:}"
-            click_original_frame "${coords%,*}" "${coords#*,}"
+        click:*|rclick:*)
+            if [[ "$low" == rclick:* ]]; then
+                coords="${low#rclick:}"
+                click_original_frame "${coords%,*}" "${coords#*,}" 3
+            else
+                coords="${low#click:}"
+                click_original_frame "${coords%,*}" "${coords#*,}" 1
+            fi
             ;;
         *)
             key="$(key_for_token "$low")" || { echo "unknown route token: $token" >&2; exit 2; }
