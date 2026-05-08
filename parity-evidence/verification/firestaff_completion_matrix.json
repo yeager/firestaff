@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.completion_matrix.v1",
-  "updatedAt": "2026-05-08T11:15:00+02:00",
+  "updatedAt": "2026-05-08T11:26:00+02:00",
   "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
   "criteria": [
     {
@@ -65,8 +65,8 @@
           "pass296/pass299 plus pass372 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof."
         ],
         "viewport_ui_render": [
-          10,
-          "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; full pixel/content parity remains open."
+          11,
+          "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 now proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, but full pixel/content parity remains open."
         ],
         "gameplay_systems": [
           2,
@@ -86,8 +86,8 @@
         "Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.",
         "Representative original runtime movement/HUD/viewport overlay parity missing."
       ],
-      "completionPercent": 55,
-      "points": 55,
+      "completionPercent": 56,
+      "points": 56,
       "maxPoints": 100
     },
     {

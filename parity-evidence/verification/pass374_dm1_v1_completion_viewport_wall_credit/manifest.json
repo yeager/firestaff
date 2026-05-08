@@ -1,0 +1,227 @@
+{
+  "branch": "worker/dm1v1-post-55-next-gap-20260508",
+  "checks": [
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "kind": "redmcsb_source_lock",
+      "lines": "2962-3003",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0100/F0101/F0102 viewport blitters",
+      "kind": "redmcsb_source_lock",
+      "lines": "3048-3082",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "kind": "redmcsb_source_lock",
+      "lines": "4547-4910",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0116/F0117/F0118 D3 side and center square draws",
+      "kind": "redmcsb_source_lock",
+      "lines": "6400-6835",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0121/F0124 D2C and D1C center square draws",
+      "kind": "redmcsb_source_lock",
+      "lines": "7244-7937",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "kind": "redmcsb_source_lock",
+      "lines": "8318-8618",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "kind": "redmcsb_source_lock",
+      "lines": "709-722",
+      "missingMarkers": [],
+      "ok": true
+    },
+    {
+      "kind": "pass373_prerequisite",
+      "manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
+      "ok": true,
+      "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
+      "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
+    },
+    {
+      "kind": "completion_matrix_credit",
+      "observed": {
+        "completionPercent": 56,
+        "note": "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 now proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, but full pixel/content parity remains open.",
+        "points": 56,
+        "viewport_ui_render": 11
+      },
+      "ok": true
+    },
+    {
+      "kind": "completion_doc_credit",
+      "ok": true
+    },
+    {
+      "kind": "firestaff_completion_matrix_verifier",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/usr/bin/python3",
+          "tools/verify_firestaff_completion_matrix.py"
+        ],
+        "outputTail": "firestaff completion matrix verifier OK\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "firestaff_completion_status_cli",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/usr/bin/python3",
+          "tools/firestaff_completion_status.py"
+        ],
+        "outputTail": "DM1 V1 | completionPercent=56% | points=56/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=10% | points=10/100 | status=inventory_only | primaryBlocker=Need CSB-specific parity matrix and launch/render gates; do not infer from DM1.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+        "returncode": 0
+      }
+    }
+  ],
+  "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
+  "head": "3ad9c106b93c8d0e8e1ec1eb138488b952a76e2a",
+  "notClaimed": [
+    "pixel-perfect viewport parity",
+    "representative original overlay regression",
+    "DOS keyboard-buffer true-stop proof"
+  ],
+  "pass373Manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass374_dm1_v1_completion_viewport_wall_credit.v1",
+  "sourceLocks": [
+    {
+      "claim": "floor/ceiling base is copied into viewport buffers before wall replay",
+      "file": "DUNVIEW.C",
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "lines": "2962-3003",
+      "markers": [
+        "void F0098_DUNGEONVIEW_DrawFloorAndCeiling(",
+        "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);",
+        "F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "transparent wall, opaque wall, and door bitmap routines target the viewport bitmap",
+      "file": "DUNVIEW.C",
+      "function": "F0100/F0101/F0102 viewport blitters",
+      "lines": "3048-3082",
+      "markers": [
+        "void F0100_DUNGEONVIEW_DrawWallSetBitmap(",
+        "void F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency(",
+        "void F0102_DUNGEONVIEW_DrawDoorBitmap(",
+        "G0296_puc_Bitmap_Viewport"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "contents are replayed by ordered cell nibbles rather than by a flat depth sort",
+      "file": "DUNVIEW.C",
+      "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "lines": "4547-4910",
+      "markers": [
+        "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(",
+        "P0146_ui_OrderedViewCellOrdinals >>= 4;",
+        "L0139_i_Cell = M021_NORMALIZE(AL0126_i_ViewCell + P0142_i_Direction);",
+        "P0141_T_Thing = L0146_T_FirstThingToDraw;"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "D3 wall/door branches draw wall layers, door passes, and return/occlude as source order dictates",
+      "file": "DUNVIEW.C",
+      "function": "F0116/F0117/F0118 D3 side and center square draws",
+      "lines": "6400-6835",
+      "markers": [
+        "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0698_puc_Bitmap_WallSet_Wall_D3LCR",
+        "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
+        "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
+        "return;"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "center wall/door branches layer opaque wall/door graphics before ordered contents",
+      "file": "DUNVIEW.C",
+      "function": "F0121/F0124 D2C and D1C center square draws",
+      "lines": "7244-7937",
+      "markers": [
+        "STATICFUNCTION void F0121_DUNGEONVIEW_DrawSquareD2C(",
+        "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C(",
+        "F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency",
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "main viewport pass redraws floor/ceiling, replays visible squares far-to-near, then requests viewport presentation",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "lines": "8318-8618",
+      "markers": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF(",
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling();",
+        "F0116_DUNGEONVIEW_DrawSquareD3L(",
+        "F0121_DUNGEONVIEW_DrawSquareD2C(",
+        "F0124_DUNGEONVIEW_DrawSquareD1C(",
+        "F0127_DUNGEONVIEW_DrawSquareD0C(",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "viewport redraw request is presented and synchronized after composition",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "lines": "709-722",
+      "markers": [
+        "void F0097_DUNGEONVIEW_DrawViewport(",
+        "G0324_B_DrawViewportRequested = C1_TRUE;",
+        "M526_WaitVerticalBlank();"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
+  "timestampUtc": "2026-05-08T09:37:38.697940+00:00"
+}
