@@ -11,7 +11,7 @@
   },
   "blocker": "keyboard route reaches F0361 but no queued-command-count write is observed; panel-click route reaches F0380/G0321/F0128 but still no strict F0365/F0366 stop",
   "branch": "worker/pass384-n2-runtime-recheck-20260508",
-  "head": "44b7098355e93b1e0ef03c1fd24f3fe99e8a4cad",
+  "head": "a0036465005792402a57dc23698afe12110f74c3",
   "notPromotedBy": [
     "BPLIST",
     "BP/BPM command echo",
@@ -39,7 +39,7 @@
   "runtimeProbes": [
     {
       "boundedSeconds": 45,
-      "durationSeconds": 86.965,
+      "durationSeconds": 87.009,
       "label": "keyboard",
       "ran": true,
       "retainedAtArm": {
@@ -76,30 +76,32 @@
             }
           ],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01\n1C6]=0000\n-> _     1C620 P110",
+          "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01\n\n-> _     89",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245099.6144238
+          "t": 1778245940.95867
         },
         {
-          "addr": "23B0:4111",
+          "addr": "23B0:4113",
           "entryAddr": "23B0:40FE",
           "kind": "F0128_DUNGEONVIEW_Draw_CPSF",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [
             "23B0:40FE  55  push",
-            "23B0:40FF  8BEC  bp",
+            "23B0:40FF  8BECmov",
             "23B0:4101  83EC04sub",
-            "23B0:4104  56      push",
-            "23B0:4105  57push",
+            "23B0:4104  56  push",
+            "23B0:4105  57  push",
+            "23B0:4106  8B7606mov",
             "23B0:4109  8B7E0Amov",
             "23B0:410C  833E741A00cmp",
-            "23B0:4111  7404  je"
+            "23B0:4111  7404je",
+            "23B0:4113  0E      push"
           ],
-          "postRunningExcerpt": "....\n23B0:40FE  55  push bp   \n23B0:40FF  8BEC  bp,sp\n23B0:4101  83EC04sub  sp,0004\n23B0:4104  56      push si\n23B0:4105  57push d\n23B0:4106  8movD0]=0006\n23B0:4109  8B7E0Amov  di,[bp+0A]     ss:[0FD4]=0FF4\n23B0:410C  833E741A00cmp  word [1A74],0000ds:[1A74\n23B0:4111  7404  je   00004117 ($+4)(down)        \n23B0:4113  0ush cs\n-> _     00004066333956  CS=23B040FE1000CA0001B5897304",
+          "postRunningExcerpt": "....\n23B0:40FE  55  push bp\n23B0:40FF  8BECmov  bp,sp\n23B0:4101  83EC04sub  sp,0004\n23B0:4104  56  push si\n23B0:4105  57  push di   \n23B0:4106  8B7606mov  si,[bp+06]ss:[0FD0]=0006\n23B0:4109  8B7E0Amov  di,[bp+0A]ss:[0FD4]=0FF4\n23B0:410C  833E741A00cmp  word [1A74],0000ds:[1A74]=0001\n23B0:4111  7404je   00004117 ($+4)(down)\n23B0:4113  0E      push cs     \n-> _     004066333956  CS=23B040FE0FCA0001BE5897304",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245103.5783339
+          "t": 1778245944.9170089
         },
         {
           "addr": "07FB:01D6",
@@ -127,7 +129,7 @@
           "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 01 -> 00\n\n07FB:01BA  EB0Cjmp  short 000001C8 ($+c)   (down)\n07FB:01BC  9AB407132Acall 2A13:07B4\n07FB:01C1  50    push ax     \n07FB:01C2  9A0704F722call 22F7:0407\n07FB:01C7  59op  cx\n07FB:01C8  9A2508132Acall 2A13:0825\n07FB:01CD  0BC0  or   ax,ax\n07FB:01CF  75EB      jne  000001BC ($-15) (no jmp)      \n07FB:01D1  833E543D00cmp  word [3D54],0000ds:[3D54]=0000\n07FB:01D6  744Dje   00000225 ($+4d)(down)\n-> _     FFFF303100C07FB01BA1BFFFFC8628695",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245107.2424994
+          "t": 1778245948.5849102
         },
         {
           "addr": "22F7:041B",
@@ -149,7 +151,7 @@
           "postRunningExcerpt": "....\n22F7:0407  55  push bp\n22F7:0408  8BEC      mov  bp,sp    \n22F7:040A  83EC04sub  sp,0004\n22F7:040D  56        push si       \n22F7:040E  57ush di\n22F7:040F  FF7606    push word [bp+06]ss:[0FD0]=0006\n22F7:0412  9AF22C930Fcall 0F93:2CF2\n22F7:0417  59  pop  cx\n22F7:0418  A1BE3E    mov  ax,[3EBE]       EBE]=2C23\n22F7:041B  8B16BC3Emov  dx,[3EBC]      ds:[3EBC]=26D4\n-> _     084C0663F60422F74070 S1 O0 A1000227031",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245110.8899896
+          "t": 1778245952.232681
         },
         {
           "addr": null,
@@ -160,7 +162,7 @@
           "postRunningExcerpt": "....69969A69C69F6A06A1  C7060A1F0100mov 1F0A],0001ds:[1F0A]=00006A7  A1081F    mov  ax,[1F08]ds:[1F08]=00086AA  40inc  a6AB  8BF8  di,ax6AD  3D0800  cmp  ax,0008\n-> _     00003396991 S0 O0 A084C2EF74297",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245114.5372567
+          "t": 1778245955.8807302
         },
         {
           "addr": null,
@@ -171,7 +173,7 @@
           "postRunningExcerpt": "....\n-> _     435",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245118.183796
+          "t": 1778245959.5261934
         },
         {
           "addr": null,
@@ -182,7 +184,7 @@
           "postRunningExcerpt": "....\n-> _     573",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245121.8304403
+          "t": 1778245963.178342
         },
         {
           "addr": null,
@@ -193,7 +195,7 @@
           "postRunningExcerpt": "....\n-> _     711",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245125.4769592
+          "t": 1778245966.8306706
         },
         {
           "addr": null,
@@ -204,7 +206,7 @@
           "postRunningExcerpt": "....\n-> _     849",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245129.124192
+          "t": 1778245970.4804232
         },
         {
           "addr": null,
@@ -215,7 +217,7 @@
           "postRunningExcerpt": "....\n-> _     987",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245132.7682562
+          "t": 1778245974.1281796
         },
         {
           "addr": null,
@@ -226,7 +228,7 @@
           "postRunningExcerpt": "....\n-> _     8125",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245136.4155092
+          "t": 1778245977.7769165
         },
         {
           "addr": null,
@@ -237,7 +239,7 @@
           "postRunningExcerpt": "....\n-> _     263",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245140.062413
+          "t": 1778245981.426272
         },
         {
           "addr": null,
@@ -248,13 +250,13 @@
           "postRunningExcerpt": "....\n-> _     401",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245143.7102349
+          "t": 1778245985.076669
         }
       ]
     },
     {
       "boundedSeconds": 45,
-      "durationSeconds": 86.99,
+      "durationSeconds": 87.041,
       "label": "click",
       "ran": true,
       "retainedAtArm": {
@@ -291,10 +293,10 @@
             }
           ],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01\n0\n-> _     F7",
+          "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01\n7878\n-> _     8114",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245187.3165503
+          "t": 1778246028.6959426
         },
         {
           "addr": "23B0:4113",
@@ -305,18 +307,18 @@
             "23B0:40FE  55    push",
             "23B0:40FF  8BEC    mov",
             "23B0:4101  83EC04sub",
-            "23B0:4104  56  push",
+            "23B0:4104  56    push",
             "23B0:4105  57  push",
-            "23B0:4106  8B7606mov",
-            "23B0:4109  8B7E0A    mov",
-            "23B0:410C  833E741A001A74",
-            "23B0:4111  7404e4117",
-            "23B0:4113  0E  push"
+            "23B0:4106  8B7606si",
+            "23B0:4109  8B7E0Adi",
+            "23B0:410C  833E741A00cmp",
+            "23B0:4111  7404je",
+            "23B0:4113  0Eush"
           ],
-          "postRunningExcerpt": "....\n23B0:40FE  55    push bp\n23B0:40FF  8BEC    mov  bp,sp\n23B0:4101  83EC04sub  sp,0004\n23B0:4104  56  push si   \n23B0:4105  57  push di   \n23B0:4106  8B7606mov  si6D0]=0006\n23B0:4109  8B7E0A    mov  di,[bp+0A]ss:[0FD4]=0FF4\n23B0:410C  833E741A001A74],0000 ds:[1A74]=0001\n23B0:4111  7404e4117 ($+4) down)  \n23B0:4113  0E  push cs\n-> _     004663339056  CS=23B040FE0CA1BE5897306",
+          "postRunningExcerpt": "....\n23B0:40FE  55    push bp\n23B0:40FF  8BEC    mov  bp,sp\n23B0:4101  83EC04sub  sp,0004\n23B0:4104  56    push si\n23B0:4105  57  push di\n23B0:4106  8B7606si,[bp+06D0]=0006\n23B0:4109  8B7E0Adi,[bp+0AD4]=0FF4\n23B0:410C  833E741A00cmp  word [1A74],0000ds:[1A74]=0001\n23B0:4111  7404je   00004117 ($+4)(down)\n23B0:4113  0Eush cs\n-> _     00040663339056  CS=23B040FE1 S00000CA0001B5897302",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245191.2811754
+          "t": 1778246032.6909683
         },
         {
           "addr": "07FB:01D6",
@@ -344,7 +346,7 @@
           "postRunningExcerpt": "\nDEBUG: Memory breakpoint : 2C23:1A7C - 01 -> 00\n\n07FB:01BA  EB0Cjmp  short 000001C8 ($+c)   (down)\n07FB:01BC  9AB407132Acall 2A13:07B4\n07FB:01C1  50    push ax     \n07FB:01C2  9A0704F722call 22F7:0407\n07FB:01C7  59op  cx\n07FB:01C8  9A2508132Acall 2A13:0825\n07FB:01CD  0BC0  or   ax,ax\n07FB:01CF  75EB      jne  000001BC ($-15) (no jmp)      \n07FB:01D1  833E543D00cmp  word [3D54],0000ds:[3D54]=0000\n07FB:01D6  744Dje   00000225 ($+4d)(down)\n-> _     FFFF303100C07FB01BA1BFFFFC8628687",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245194.946398
+          "t": 1778246036.3566692
         },
         {
           "addr": "22F7:06AD",
@@ -363,10 +365,10 @@
             "22F7:06AB  8BF8      mov",
             "22F7:06AD  3D0800cmp"
           ],
-          "postRunningExcerpt": "....\n22F7:0699  55  push bp\n22F7:069A  8BEC      mov  bp,sp    \n22F7:069C  83EC04sub  sp,0004\n22F7:069F  56        push si       \n22F7:06A0  57ush di\n22F7:06A1  C7060A1F0100mov  word [1F0A],0001ds:[1F0A]=0000\n22F7:06A7  A1081Fmov  ax,[1F08]ds:[1F08]=0008\n22F7:06AA  40  inc  ax\n22F7:06AB  8BF8      mov  di,ax\n22F7:06AD  3D0800cmp  ax,0008\n-> _     0000066333922F7699490....21",
+          "postRunningExcerpt": "....\n22F7:0699  55  push bp\n22F7:069A  8BEC      mov  bp,sp    \n22F7:069C  83EC04sub  sp,0004\n22F7:069F  56        push si       \n22F7:06A0  57ush di\n22F7:06A1  C7060A1F0100mov  word [1F0A],0001ds:[1F0A]=0000\n22F7:06A7  A1081Fmov  ax,[1F08]ds:[1F08]=0008\n22F7:06AA  40  inc  ax\n22F7:06AB  8BF8      mov  di,ax\n22F7:06AD  3D0800cmp  ax,0008\n-> _     0000066333922F7699490....17",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245198.5941656
+          "t": 1778246040.0036912
         },
         {
           "addr": null,
@@ -374,10 +376,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     7059",
+          "postRunningExcerpt": "....\n-> _     7055",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245202.241467
+          "t": 1778246043.6503522
         },
         {
           "addr": null,
@@ -385,10 +387,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     197",
+          "postRunningExcerpt": "....\n-> _     193",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245205.8920918
+          "t": 1778246047.3001206
         },
         {
           "addr": null,
@@ -396,10 +398,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     335",
+          "postRunningExcerpt": "....\n-> _     331",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245209.5369015
+          "t": 1778246050.9501655
         },
         {
           "addr": null,
@@ -407,10 +409,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     473",
+          "postRunningExcerpt": "....\n-> _     469",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245213.1819522
+          "t": 1778246054.5946941
         },
         {
           "addr": null,
@@ -418,10 +420,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     557",
+          "postRunningExcerpt": "....\n-> _     553",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245216.830676
+          "t": 1778246058.243781
         },
         {
           "addr": null,
@@ -429,10 +431,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     695",
+          "postRunningExcerpt": "....\n-> _     691",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245220.4777186
+          "t": 1778246061.8905215
         },
         {
           "addr": null,
@@ -440,10 +442,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     833",
+          "postRunningExcerpt": "....\n-> _     829",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245224.1227236
+          "t": 1778246065.5436132
         },
         {
           "addr": null,
@@ -451,10 +453,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     971",
+          "postRunningExcerpt": "....\n-> _     967",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245227.7739286
+          "t": 1778246069.1898603
         },
         {
           "addr": null,
@@ -462,10 +464,10 @@
           "kind": "other",
           "memoryBreakpoints": [],
           "postRunningCodeLines": [],
-          "postRunningExcerpt": "....\n-> _     8109",
+          "postRunningExcerpt": "....\n-> _     8105",
           "promptReappearedAfterRunning": true,
           "runningMarkerSeen": true,
-          "t": 1778245231.4213374
+          "t": 1778246072.8396487
         }
       ]
     }
@@ -566,5 +568,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS386_F0365_F0366_NOT_REACHED_AFTER_KEYBOARD_AND_CLICK_PROBES",
-  "timestampUtc": "2026-05-08T13:00:41.435739+00:00"
+  "timestampUtc": "2026-05-08T13:14:42.857520+00:00"
 }

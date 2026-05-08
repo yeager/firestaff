@@ -10,7 +10,7 @@ EDX=ESP=
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /tmp/firestaff-pass386-click-4lp2_7dr/dosbox.conf
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass386-click-c11abg03/dosbox.conf
 0: IO:Writing 05 to port 03CF
 MIXER:No Sound Mode Selected.
 ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
@@ -67,7 +67,7 @@ MIDI:Opened device:none
 0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
 
 
-0: EXEC:Parsing command line: mount c /tmp/firestaff-pass386-click-4lp2_7dr/dos
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass386-click-c11abg03/dos
 78
 3: EXEC:Execute mount.COM 0
 78
@@ -201,17 +201,17 @@ MIDI:Opened device:none
 78
 41509645: FILES:file open command 2 file DATA\DUNGEON.DAT
 FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
-1B18:006C  294608sub  [bp+08],axss:[0F34]=0400
-1B18:006F  835E0A00sbb  word [bp+0A],0000ss:[0F36]=0000
-1B18:0073  8B5EFEmov  bx,[bp-02]ss:[0F2A]=0400
-1B18:0076  33C9    xor  cx,cx
-1B18:0078  8CD2dx,ss
-1B18:007A  8D460Clea  ax,[bp+0C]ss:[0F38]=0000
-1B18:007D  9AE7093607call 0736:09E7
-1B18:0082  837E0A00cmp  word [bp+0A],0000ss:[0F36]=0000
-1B18:0086  77AD    ja   00000035 ($-53)(no jmp)
-1B18:0088  7506jne  00000090 ($+6)(no jmp)
--> _     460  DS=2C2300130315255  CS=1B186C11400F2000F2A44637786....
+0F93:0045  0146FCadd  [bp-04],axss:[0F30]=9D03
+0F93:0048  8356FE00adc  word [bp-02],0000ss:[0F32]=0000
+0F93:004C  46inc  si
+0F93:004D  3B7606  cmp  si,[bp+06]ss:[0F3A]=010F
+0F93:0050  72E6jc   00000038 ($-1a)(no jmp)
+0F93:0052  8B56FEmov  dx,[bp-02]ss:[0F32]=0000
+0F93:0055  8B46FCax,[bp-04]ss:[0F30]=9D03
+0F93:0058  5E  pop  si
+0F93:0059  8BE5    mov  sp,bp
+0F93:005B  5D  pop  bp
+-> _     7525  DS=2C23EC2C30314C10FF9345FE04F3479F2F2E44663053....
 -> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_
 DEBUG: Breakpoints deleted.
 
@@ -266,16 +266,16 @@ Breakpoint list:
 -> _      ....
 (Running)
 DEBUG: Memory breakpoint : 2C23:1A7C - 00 -> 01
-0
--> _     F7....
+7878
+-> _     8114....
 -> C_  ....P_  ....U_
-44637787: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+44663054: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-44637787: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+44663054: MISC:eflags:00007286 [vm=0 iopl=3 nt=1]
 78
-44637787: MISC:GDT base=00000000 limit=00000000
+44663054: MISC:GDT base=00000000 limit=00000000
 78
-44637787: MISC:IDT base=00000000 limit=000003FF
+44663054: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -310,22 +310,22 @@ Breakpoint list:
 23B0:40FE  55    push bp
 23B0:40FF  8BEC    mov  bp,sp
 23B0:4101  83EC04sub  sp,0004
-23B0:4104  56  push si
+23B0:4104  56    push si
 23B0:4105  57  push di
-23B0:4106  8B7606mov  si6D0]=0006
-23B0:4109  8B7E0A    mov  di,[bp+0A]ss:[0FD4]=0FF4
-23B0:410C  833E741A001A74],0000 ds:[1A74]=0001
-23B0:4111  7404e4117 ($+4) down)
-23B0:4113  0E  push cs
--> _     004663339056  CS=23B040FE0CA1BE5897306....
+23B0:4106  8B7606si,[bp+06D0]=0006
+23B0:4109  8B7E0Adi,[bp+0AD4]=0FF4
+23B0:410C  833E741A00cmp  word [1A74],0000ds:[1A74]=0001
+23B0:4111  7404je   00004117 ($+4)(down)
+23B0:4113  0Eush cs
+-> _     00040663339056  CS=23B040FE1 S00000CA0001B5897302....
 -> C_  ....P_  ....U_
-45897306: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+45897302: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-45897306: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+45897302: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-45897306: MISC:GDT base=00000000 limit=00000000
+45897302: MISC:GDT base=00000000 limit=00000000
 78
-45897306: MISC:IDT base=00000000 limit=000003FF
+45897302: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -371,13 +371,13 @@ DEBUG: Memory breakpoint : 2C23:1A7C - 01 -> 00
 07FB:01D6  744Dje   00000225 ($+4d)(down)
 -> _     FFFF303100C07FB01BA1BFFFFC8628687....
 -> C_  ....P_  ....U_
-46286876: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46286872: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46286876: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46286872: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46286876: MISC:GDT base=00000000 limit=00000000
+46286872: MISC:GDT base=00000000 limit=00000000
 78
-46286876: MISC:IDT base=00000000 limit=000003FF
+46286872: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -419,15 +419,15 @@ Breakpoint list:
 22F7:06AA  40  inc  ax
 22F7:06AB  8BF8      mov  di,ax
 22F7:06AD  3D0800cmp  ax,0008
--> _     0000066333922F7699490....21....
+-> _     0000066333922F7699490....17....
 -> C_  ....P_  ....U_
-46286921: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46286917: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46286921: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46286917: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46286921: MISC:GDT base=00000000 limit=00000000
+46286917: MISC:GDT base=00000000 limit=00000000
 78
-46286921: MISC:IDT base=00000000 limit=000003FF
+46286917: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -459,15 +459,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     7059....
+-> _     7055....
 -> C_  ....P_  ....U_
-46287059: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287055: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287059: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287055: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287059: MISC:GDT base=00000000 limit=00000000
+46287055: MISC:GDT base=00000000 limit=00000000
 78
-46287059: MISC:IDT base=00000000 limit=000003FF
+46287055: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -499,15 +499,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     197....
+-> _     193....
 -> C_  ....P_  ....U_
-46287197: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287193: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287197: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287193: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287197: MISC:GDT base=00000000 limit=00000000
+46287193: MISC:GDT base=00000000 limit=00000000
 78
-46287197: MISC:IDT base=00000000 limit=000003FF
+46287193: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -539,15 +539,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     335....
+-> _     331....
 -> C_  ....P_  ....U_
-46287335: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287331: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287335: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287331: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287335: MISC:GDT base=00000000 limit=00000000
+46287331: MISC:GDT base=00000000 limit=00000000
 78
-46287335: MISC:IDT base=00000000 limit=000003FF
+46287331: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -579,15 +579,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     473....
+-> _     469....
 -> C_  ....P_  ....U_
-46287473: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287469: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287473: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287469: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287473: MISC:GDT base=00000000 limit=00000000
+46287469: MISC:GDT base=00000000 limit=00000000
 78
-46287473: MISC:IDT base=00000000 limit=000003FF
+46287469: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -619,15 +619,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     557....
+-> _     553....
 -> C_  ....P_  ....U_
-46287557: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287553: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287557: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287553: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287557: MISC:GDT base=00000000 limit=00000000
+46287553: MISC:GDT base=00000000 limit=00000000
 78
-46287557: MISC:IDT base=00000000 limit=000003FF
+46287553: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -659,15 +659,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     695....
+-> _     691....
 -> C_  ....P_  ....U_
-46287695: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287691: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287695: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287691: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287695: MISC:GDT base=00000000 limit=00000000
+46287691: MISC:GDT base=00000000 limit=00000000
 78
-46287695: MISC:IDT base=00000000 limit=000003FF
+46287691: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -699,15 +699,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     833....
+-> _     829....
 -> C_  ....P_  ....U_
-46287833: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287829: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287833: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287829: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287833: MISC:GDT base=00000000 limit=00000000
+46287829: MISC:GDT base=00000000 limit=00000000
 78
-46287833: MISC:IDT base=00000000 limit=000003FF
+46287829: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -739,15 +739,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     971....
+-> _     967....
 -> C_  ....P_  ....U_
-46287971: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46287967: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46287971: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46287967: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46287971: MISC:GDT base=00000000 limit=00000000
+46287967: MISC:GDT base=00000000 limit=00000000
 78
-46287971: MISC:IDT base=00000000 limit=000003FF
+46287967: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -779,15 +779,15 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     8109....
+-> _     8105....
 -> C_  ....P_  ....U_
-46288109: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
+46288105: MISC:cr0:00000000 cr2:00000000 cr3:00000000  cpl=0
 78
-46288109: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
+46288105: MISC:eflags:00007246 [vm=0 iopl=3 nt=1]
 78
-46288109: MISC:GDT base=00000000 limit=00000000
+46288105: MISC:GDT base=00000000 limit=00000000
 78
-46288109: MISC:IDT base=00000000 limit=000003FF
+46288105: MISC:IDT base=00000000 limit=000003FF
 
 -> _   ....
 -> M_  ....E_  ....M_  ....D_  ....U_  ....M_  ....P_  .... _  ....2_  ....C_  ....2_  ....3_  ....:_  ....1_  ....A_  ....7_  ....C_  .... _  ....8_
@@ -819,7 +819,7 @@ Breakpoint list:
 
 -> _      ....
 (Running)....
--> _     93........
+-> _     89........
 -> B_  ....P_  ....L_  ....I_  ....S_  ....T_
 Breakpoint list:
 78
