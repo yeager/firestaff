@@ -11,12 +11,14 @@
  * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
  * - COMMAND.C:729-812 and COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands while G2153_i_QueuedCommandsCount < C5, then replays pending click; DEFS.H:3263-3264 gives PC-34 queue storage size 8 and DEFS.H:3507 defines C5.
+ * - DEFS.H:3263-3264 sets M529_COMMAND_QUEUE_SIZE to 8 for later I34 builds; COMMAND.C:1506-1511 lets release/stop mouse events use the queue while regular events stop at C5 and reserve two slots.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
- * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement (except later-platform release/stop commands not modeled here).
+ * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement and preserves later-platform release/stop commands.
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
  */
 
 #define DM1_V1_QUEUE_MAX_REGULAR 5u
+#define DM1_V1_QUEUE_MAX_RESERVED 7u
 
 static int normalize_dir(int value)
 {
@@ -115,12 +117,18 @@ static int command_for_mouse(int x, int y, int buttonMask)
     return command_for_secondary_mouse(x, y, buttonMask);
 }
 
-static int enqueue_command(struct Dm1V1InputCommandQueuePc34Compat* queue, int command, int x, int y)
+static int is_reserved_release_command(int command)
+{
+    return command == DM1_V1_COMMAND_RELEASE_CHAMPION_ICON ||
+           command == DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL;
+}
+
+static int enqueue_command_with_limit(struct Dm1V1InputCommandQueuePc34Compat* queue, int command, int x, int y, unsigned int limit)
 {
     if (command == DM1_V1_COMMAND_NONE) {
         return 0;
     }
-    if (queue->count >= DM1_V1_QUEUE_MAX_REGULAR) {
+    if (queue->count >= limit) {
         queue->droppedFullCount++;
         return 0;
     }
@@ -129,6 +137,19 @@ static int enqueue_command(struct Dm1V1InputCommandQueuePc34Compat* queue, int c
     queue->commands[queue->count].y = y;
     queue->count++;
     return 1;
+}
+
+static int enqueue_command(struct Dm1V1InputCommandQueuePc34Compat* queue, int command, int x, int y)
+{
+    return enqueue_command_with_limit(queue, command, x, y, DM1_V1_QUEUE_MAX_REGULAR);
+}
+
+static int enqueue_mouse_command(struct Dm1V1InputCommandQueuePc34Compat* queue, int command, int x, int y)
+{
+    const unsigned int limit = is_reserved_release_command(command)
+        ? DM1_V1_QUEUE_MAX_RESERVED
+        : DM1_V1_QUEUE_MAX_REGULAR;
+    return enqueue_command_with_limit(queue, command, x, y, limit);
 }
 
 static void process_pending_click(struct Dm1V1InputCommandQueuePc34Compat* queue)
@@ -150,7 +171,7 @@ static void process_pending_click(struct Dm1V1InputCommandQueuePc34Compat* queue
     if (command == DM1_V1_COMMAND_NONE) {
         command = command_for_mouse(x, y, buttons);
     }
-    (void)enqueue_command(queue, command, x, y);
+    (void)enqueue_mouse_command(queue, command, x, y);
 }
 
 void DM1_V1_InputCommandQueue_InitPc34Compat(struct Dm1V1InputCommandQueuePc34Compat* queue)
@@ -205,7 +226,7 @@ int DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
         queue->pendingClickCommand = command;
         return 0;
     }
-    return DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(queue, command, x, y);
+    return enqueue_mouse_command(queue, command, x, y);
 }
 
 int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
@@ -289,5 +310,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,72-84,106-121,252-260,272-305,636-685,729-812,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; DEFS.H:3263-3264,3507; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,72-84,106-121,252-260,272-305,636-685,677-684,729-812,1304-1377,1379-1449,1452-1661,1506-1511,1692-1707,1709-1813,2045-2156,2831-2928; DEFS.H:3263-3264,3507-3509; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
 }

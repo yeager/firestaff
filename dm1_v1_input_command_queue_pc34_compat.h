@@ -28,7 +28,9 @@ enum Dm1V1InputCommandPc34Compat {
     DM1_V1_COMMAND_CHAMPION_ICON_TOP_LEFT = 125,
     DM1_V1_COMMAND_CHAMPION_ICON_TOP_RIGHT = 126,
     DM1_V1_COMMAND_CHAMPION_ICON_BOTTOM_RIGHT = 127,
-    DM1_V1_COMMAND_CHAMPION_ICON_BOTTOM_LEFT = 128
+    DM1_V1_COMMAND_CHAMPION_ICON_BOTTOM_LEFT = 128,
+    DM1_V1_COMMAND_RELEASE_CHAMPION_ICON = 129,
+    DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL = 254
 };
 
 enum Dm1V1InputKindPc34Compat {
@@ -56,7 +58,7 @@ struct Dm1V1InputEventPc34Compat {
 };
 
 struct Dm1V1InputCommandQueuePc34Compat {
-    struct Dm1V1QueuedCommandPc34Compat commands[5];
+    struct Dm1V1QueuedCommandPc34Compat commands[7];
     unsigned int count;
     int locked;
     int pendingClickPresent;

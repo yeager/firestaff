@@ -222,6 +222,19 @@ int main(void)
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 0);
     ok &= expect_int("redmcsb sixth command counted dropped", (int)queue.droppedFullCount, 1);
 
+    ok &= expect_int("release command uses first reserved slot",
+        DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(&queue,
+            DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 11, 12, 0), 1);
+    ok &= expect_int("release slot raises queue to six", (int)queue.count, 6);
+    ok &= expect_int("stop pressing uses second reserved slot",
+        DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(&queue,
+            DM1_V1_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL, 13, 14, 0), 1);
+    ok &= expect_int("reserved queue holds seven commands", (int)queue.count, 7);
+    ok &= expect_int("third reserved release is dropped at C7 limit",
+        DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(&queue,
+            DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 15, 16, 0), 0);
+    ok &= expect_int("reserved overflow counted dropped", (int)queue.droppedFullCount, 2);
+
     printf("dm1V1InputCommandQueueInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
