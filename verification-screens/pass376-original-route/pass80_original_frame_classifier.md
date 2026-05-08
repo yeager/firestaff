@@ -5,21 +5,25 @@ It is measurement-only and records the layout features behind each label.
 
 - attempt dir: `verification-screens/pass376-original-route`
 - capture count: 6
-- pass: `True`
+- pass: `False`
 - honesty: Classifier/audit only. A 320x200 frame is not parity evidence until its semantic class matches the intended route state.
 
-## Warnings
+## Problems
 
+- image0002-raw.png: classified wall_closeup, expected dungeon_gameplay
+- image0004-raw.png: classified dungeon_gameplay, expected spell_panel
+- image0005-raw.png: classified wall_closeup, expected dungeon_gameplay
+- image0006-raw.png: classified dungeon_gameplay, expected inventory
 - duplicate raw frames detected: 2 unique sha256 value(s) repeat
 
 | # | file | classification | expected | ok | reason | sha256 |
 |---|------|----------------|----------|----|--------|--------|
-| 1 | `verification-screens/pass376-original-route/image0001-raw.png` | `dungeon_gameplay` | `` |  | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
-| 2 | `verification-screens/pass376-original-route/image0002-raw.png` | `wall_closeup` | `` |  | flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence | `fbeb1b82cd09` |
-| 3 | `verification-screens/pass376-original-route/image0003-raw.png` | `dungeon_gameplay` | `` |  | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
-| 4 | `verification-screens/pass376-original-route/image0004-raw.png` | `dungeon_gameplay` | `` |  | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
-| 5 | `verification-screens/pass376-original-route/image0005-raw.png` | `wall_closeup` | `` |  | flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence | `fbeb1b82cd09` |
-| 6 | `verification-screens/pass376-original-route/image0006-raw.png` | `dungeon_gameplay` | `` |  | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
+| 1 | `verification-screens/pass376-original-route/image0001-raw.png` | `dungeon_gameplay` | `dungeon_gameplay` | yes | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
+| 2 | `verification-screens/pass376-original-route/image0002-raw.png` | `wall_closeup` | `dungeon_gameplay` | NO | flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence | `fbeb1b82cd09` |
+| 3 | `verification-screens/pass376-original-route/image0003-raw.png` | `dungeon_gameplay` | `dungeon_gameplay` | yes | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
+| 4 | `verification-screens/pass376-original-route/image0004-raw.png` | `dungeon_gameplay` | `spell_panel` | NO | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
+| 5 | `verification-screens/pass376-original-route/image0005-raw.png` | `wall_closeup` | `dungeon_gameplay` | NO | flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence | `fbeb1b82cd09` |
+| 6 | `verification-screens/pass376-original-route/image0006-raw.png` | `dungeon_gameplay` | `inventory` | NO | viewport content with mostly dark in-game right column | `48ed3743ab6a` |
 
 ## Region metrics
 

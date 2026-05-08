@@ -1,0 +1,389 @@
+{
+  "schema": "pass378_dm1_v1_original_route_semantic_clean_blocker.v1",
+  "timestampUtc": "2026-05-08T10:56:16.999430+00:00",
+  "status": "BLOCKED_PASS378_ORIGINAL_ROUTE_NOT_SEMANTICALLY_CLEAN",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceAnchors": [
+    {
+      "id": "clikmenu_turn_move_acceptance",
+      "file": "CLIKMENU.C",
+      "lines": "142-174,180-347",
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "why": "A promotable route must prove source turn/move acceptance, not merely repeated static screenshots.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "ok": true,
+      "missing_markers": []
+    },
+    {
+      "id": "dunview_viewport_composition",
+      "file": "DUNVIEW.C",
+      "lines": "8318-8611",
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "G0296_puc_Bitmap_Viewport",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+      ],
+      "why": "The original crop is meaningful only when bound to F0128 composing a known direction/X/Y viewport buffer.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "ok": true,
+      "missing_markers": []
+    },
+    {
+      "id": "drawview_viewport_presentation",
+      "file": "DRAWVIEW.C",
+      "lines": "709-858",
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0324_B_DrawViewportRequested = C1_TRUE",
+        "M526_WaitVerticalBlank",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "why": "Promotion still needs a post-composition presentation seam, not BPLIST/setup echo text.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "ok": true,
+      "missing_markers": []
+    },
+    {
+      "id": "portrait_candidate_source_route",
+      "file": "MOVESENS.C",
+      "lines": "1392-1502",
+      "needles": [
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty"
+      ],
+      "why": "The bounded retry uses the prior ReDMCSB champion-portrait route hypothesis to try to escape no-party static gameplay.",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "ok": true,
+      "missing_markers": []
+    }
+  ],
+  "priorManifests": {
+    "pass376_artifact_command": {
+      "exists": true,
+      "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
+      "status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED",
+      "blocker": [
+        "pass360 still blocks strict original FIRES F0128 -> F0097/VIDRV true-stop promotion",
+        "labelled original 320x200 frames exist, but semantic promotion is blocked by duplicate hashes/pass86 mismatches",
+        "224x136 original crops and manifest exist, but are review inputs only until semantic raw route passes",
+        "paired Firestaff/original diff artifacts for this route are not tracked"
+      ]
+    },
+    "pass377_paired_diff": {
+      "exists": true,
+      "path": "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json",
+      "status": "BLOCKED_PASS377_PAIRED_DIFF_ARTIFACTS_ORIGINAL_SIDE_MISSING_FIRESTAFF_SIDE_READY",
+      "blocker": null
+    },
+    "pass162_party_route": {
+      "exists": true,
+      "path": "parity-evidence/verification/pass162_original_party_route_unblock/manifest.json",
+      "status": null,
+      "buckets": {
+        "blocked/portrait-c080-no-visible-delta": 2
+      },
+      "errors": [],
+      "result_summaries": [
+        {
+          "name": "source_gated_portrait_then_resurrect",
+          "classification": "blocked/portrait-c080-no-visible-delta",
+          "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280",
+          "classes": [
+            "entrance_menu",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay"
+          ],
+          "unique_hashes": [
+            "48ed3743ab6a",
+            "ceb0c2eec633"
+          ],
+          "static_hits": [
+            "48ed3743ab6a"
+          ],
+          "control_count": 0
+        },
+        {
+          "name": "source_gated_portrait_then_reincarnate",
+          "classification": "blocked/portrait-c080-no-visible-delta",
+          "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280",
+          "classes": [
+            "entrance_menu",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay"
+          ],
+          "unique_hashes": [
+            "48ed3743ab6a",
+            "ceb0c2eec633"
+          ],
+          "static_hits": [
+            "48ed3743ab6a"
+          ],
+          "control_count": 0
+        }
+      ]
+    },
+    "pass166_portrait_route": {
+      "exists": true,
+      "path": "parity-evidence/verification/pass166_source_portrait_click_route_probe/manifest.json",
+      "status": null,
+      "buckets": {
+        "blocked/static-no-party": 2
+      },
+      "errors": [],
+      "result_summaries": [
+        {
+          "name": "enter_portrait11182_then_resurrect",
+          "classification": "blocked/static-no-party",
+          "reason": "known static no-party hash present: 48ed3743ab6a",
+          "classes": [
+            "entrance_menu",
+            "entrance_menu",
+            "entrance_menu",
+            "graphics_320x200_unclassified",
+            "title_or_menu",
+            "title_or_menu",
+            "entrance_menu",
+            "entrance_menu",
+            "entrance_menu",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay"
+          ],
+          "unique_hashes": [
+            "014ed52c71a0",
+            "1339aaf0473c",
+            "17bd7e878157",
+            "307323fbc1f7",
+            "48ed3743ab6a",
+            "84171db7b6d4",
+            "a914971a8a47",
+            "c6f457763e2e"
+          ],
+          "static_hits": [
+            "48ed3743ab6a"
+          ],
+          "control_count": 0
+        },
+        {
+          "name": "enter_portrait11182_then_reincarnate",
+          "classification": "blocked/static-no-party",
+          "reason": "known static no-party hash present: 48ed3743ab6a",
+          "classes": [
+            "entrance_menu",
+            "entrance_menu",
+            "entrance_menu",
+            "graphics_320x200_unclassified",
+            "title_or_menu",
+            "title_or_menu",
+            "entrance_menu",
+            "entrance_menu",
+            "entrance_menu",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay",
+            "dungeon_gameplay"
+          ],
+          "unique_hashes": [
+            "014ed52c71a0",
+            "125549ae51c3",
+            "17bd7e878157",
+            "307323fbc1f7",
+            "48ed3743ab6a",
+            "4c74e1f91f3c",
+            "a914971a8a47",
+            "ceb0c2eec633"
+          ],
+          "static_hits": [
+            "48ed3743ab6a"
+          ],
+          "control_count": 0
+        }
+      ]
+    }
+  },
+  "currentPass376Classifier": {
+    "exists": true,
+    "path": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
+    "pass": false,
+    "capture_count": 6,
+    "class_counts": {
+      "dungeon_gameplay": 4,
+      "wall_closeup": 2
+    },
+    "duplicate_sha256_counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+      "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+    },
+    "problems": [
+      "image0002-raw.png: classified wall_closeup, expected dungeon_gameplay",
+      "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+      "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+      "image0006-raw.png: classified dungeon_gameplay, expected inventory",
+      "duplicate raw frames detected: 2 unique sha256 value(s) repeat"
+    ],
+    "warnings": [],
+    "captures": [
+      {
+        "file": "verification-screens/pass376-original-route/image0001-raw.png",
+        "classification": "dungeon_gameplay",
+        "sha12": "48ed3743ab6a",
+        "reason": "viewport content with mostly dark in-game right column"
+      },
+      {
+        "file": "verification-screens/pass376-original-route/image0002-raw.png",
+        "classification": "wall_closeup",
+        "sha12": "fbeb1b82cd09",
+        "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence"
+      },
+      {
+        "file": "verification-screens/pass376-original-route/image0003-raw.png",
+        "classification": "dungeon_gameplay",
+        "sha12": "48ed3743ab6a",
+        "reason": "viewport content with mostly dark in-game right column"
+      },
+      {
+        "file": "verification-screens/pass376-original-route/image0004-raw.png",
+        "classification": "dungeon_gameplay",
+        "sha12": "48ed3743ab6a",
+        "reason": "viewport content with mostly dark in-game right column"
+      },
+      {
+        "file": "verification-screens/pass376-original-route/image0005-raw.png",
+        "classification": "wall_closeup",
+        "sha12": "fbeb1b82cd09",
+        "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence"
+      },
+      {
+        "file": "verification-screens/pass376-original-route/image0006-raw.png",
+        "classification": "dungeon_gameplay",
+        "sha12": "48ed3743ab6a",
+        "reason": "viewport content with mostly dark in-game right column"
+      }
+    ]
+  },
+  "sourcePortraitRetry": {
+    "exists": true,
+    "path": "verification-screens/pass378-source-portrait-sixshot-retry/pass80_original_frame_classifier.json",
+    "pass": false,
+    "capture_count": 6,
+    "class_counts": {
+      "dungeon_gameplay": 3,
+      "entrance_menu": 2,
+      "title_or_menu": 1
+    },
+    "duplicate_sha256_counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 3
+    },
+    "problems": [
+      "image0001-raw.png: classified title_or_menu, expected dungeon_gameplay",
+      "image0002-raw.png: classified entrance_menu, expected dungeon_gameplay",
+      "image0003-raw.png: classified entrance_menu, expected dungeon_gameplay",
+      "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+      "image0006-raw.png: classified dungeon_gameplay, expected inventory",
+      "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+    ],
+    "warnings": [],
+    "captures": [
+      {
+        "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0001-raw.png",
+        "classification": "title_or_menu",
+        "sha12": "7addedda4327",
+        "reason": "sparse viewport plus colorful/right-column title-menu art"
+      },
+      {
+        "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0002-raw.png",
+        "classification": "entrance_menu",
+        "sha12": "880d853d1bbe",
+        "reason": "dungeon entrance/menu controls still occupy the right column"
+      },
+      {
+        "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0003-raw.png",
+        "classification": "entrance_menu",
+        "sha12": "17bd7e878157",
+        "reason": "dungeon entrance/menu controls still occupy the right column"
+      },
+      {
+        "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0004-raw.png",
+        "classification": "dungeon_gameplay",
+        "sha12": "48ed3743ab6a",
+        "reason": "viewport content with mostly dark in-game right column"
+      },
+      {
+        "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0005-raw.png",
+        "classification": "dungeon_gameplay",
+        "sha12": "48ed3743ab6a",
+        "reason": "viewport content with mostly dark in-game right column"
+      },
+      {
+        "file": "verification-screens/pass378-source-portrait-sixshot-retry/image0006-raw.png",
+        "classification": "dungeon_gameplay",
+        "sha12": "48ed3743ab6a",
+        "reason": "viewport content with mostly dark in-game right column"
+      }
+    ]
+  },
+  "failedCommands": [
+    "OUT=$PWD/verification-screens/pass378-source-portrait-sixshot-retry; rm -rf \"$OUT\"; OUT_DIR=\"$OUT\" DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:2500 shot:party_hud click:111,82 wait:1200 shot:portrait_candidate click:130,115 wait:1200 shot:resurrect_choice enter wait:1500 shot:after_confirm f1 wait:1200 shot:spell_panel f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "python3 tools/pass80_original_frame_classifier.py verification-screens/pass378-source-portrait-sixshot-retry --expected pass77 --fail-on-duplicates",
+    "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass378-source-portrait-sixshot-retry --out-dir verification-screens/pass378-source-portrait-sixshot-viewports --dry-run"
+  ],
+  "nextConcreteCommand": "python3 tools/pass162_original_party_route_unblock.py && python3 tools/pass166_source_portrait_click_route_probe.py && python3 tools/verify_pass378_dm1_v1_original_route_semantic_clean_blocker.py",
+  "blockers": [
+    "current pass376 route repeats raw frame hashes",
+    "current pass376 route fails pass80/pass86 expected semantic sequence",
+    "source-portrait retry fails pass80/pass86 expected semantic sequence",
+    "source-portrait retry still repeats raw frame hashes"
+  ],
+  "promotionRule": "Promote only when six raw 320x200 frames classify as dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory with no duplicate raw hashes, then pass86 succeeds without --allow-mismatch.",
+  "notClaimed": [
+    "pixel parity",
+    "semantically matched original runtime route",
+    "strict F0128->F0097 original true-stop promotion"
+  ]
+}

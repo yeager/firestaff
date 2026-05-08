@@ -1,0 +1,15 @@
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+X connection to :99 broken (explicit kill or server shutdown).
+DOSBox version 0.74-3
+Copyright 2002-2019 DOSBox Team, published under GNU GPL.
+---
+CONFIG:Loading primary settings from config file /home/trv2/work/firestaff-worktrees/dm1v1-original-route-semantic-clean-fix-20260508/verification-screens/pass378-source-portrait-sixshot-retry/dosbox-original-viewports.conf
+MIXER:No Sound Mode Selected.
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/dm1v1-original-route-semantic-clean-fix-20260508/verification-screens/pass378-source-portrait-sixshot-retry/selector_000.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/dm1v1-original-route-semantic-clean-fix-20260508/verification-screens/pass378-source-portrait-sixshot-retry/selector_001.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/dm1v1-original-route-semantic-clean-fix-20260508/verification-screens/pass378-source-portrait-sixshot-retry/fires_000.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/dm1v1-original-route-semantic-clean-fix-20260508/verification-screens/pass378-source-portrait-sixshot-retry/fires_001.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/dm1v1-original-route-semantic-clean-fix-20260508/verification-screens/pass378-source-portrait-sixshot-retry/fires_002.png
+Capturing Screenshot to /home/trv2/work/firestaff-worktrees/dm1v1-original-route-semantic-clean-fix-20260508/verification-screens/pass378-source-portrait-sixshot-retry/fires_003.png

@@ -1,0 +1,21 @@
+route-token wait:7000
+route-token enter
+route-token wait:2500
+route-token shot:party_hud
+route-token click:111,82
+click-mapped 111,82 -> window-relative 223,165 window=640x400 origin=320,312
+route-token wait:1200
+route-token shot:portrait_candidate
+route-token click:130,115
+click-mapped 130,115 -> window-relative 261,231 window=640x400 origin=320,312
+route-token wait:1200
+route-token shot:resurrect_choice
+route-token enter
+route-token wait:1500
+route-token shot:after_confirm
+route-token f1
+route-token wait:1200
+route-token shot:spell_panel
+route-token f4
+route-token wait:1200
+route-token shot:inventory_panel
