@@ -1,0 +1,107 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport_entry": "2809:1E31",
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
+  },
+  "blocker": "F0128 breakpoint armed but no strict running-to-23AD:40FE prompt transition emitted",
+  "branch": "CompletedProcess(args=['git', 'branch', '--show-current'], returncode=0, stdout='worker/dm1v1-f0128-true-stop-fix-20260508\\n')",
+  "head": "CompletedProcess(args=['git', 'rev-parse', 'HEAD'], returncode=0, stdout='b45b20ff442e395812cbd71f63d85e5fad625662\\n')",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP command echo",
+    "tmux/capture-pane",
+    "source-only address binding"
+  ],
+  "priorContract": {
+    "pass360": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
+    "pass376": "BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY"
+  },
+  "promotionRule": "Promote only if a strict post-Running stop at 23AD:40FE is followed in the same bounded owned-PTY run by 2809:1EFF/VIDRV; setup echo/BPLIST text is excluded.",
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-f0128-true-stop-fix-20260508",
+  "runtimeProbe": {
+    "blocker": "F0128 breakpoint armed but no strict running-to-23AD:40FE prompt transition emitted",
+    "boundedSeconds": 75,
+    "commandLogCount": 6,
+    "directHits": {
+      "f0097_2809_1EFF_after_f0128": false,
+      "f0128_23AD_40FE": false
+    },
+    "durationSeconds": 103.515,
+    "method": "run to stable load/menu prefix, pause to debugger prompt, arm F0128, then continue into route",
+    "ran": true,
+    "routeInputAfterArming": true,
+    "routeKeylog": "parity-evidence/verification/pass377_dm1_v1_postload_f0128_f0097_true_stop_route/post_load_arm_before_route_route_keylog.json",
+    "routeLogCount": 23,
+    "sawRunning": true,
+    "stage": "code-stop transition",
+    "stops": [],
+    "strategy": "post_load_arm_before_route",
+    "transcript": "parity-evidence/verification/pass377_dm1_v1_postload_f0128_f0097_true_stop_route/post_load_arm_before_route.clean.txt"
+  },
+  "schema": "pass377_dm1_v1_postload_f0128_f0097_true_stop_route.v1",
+  "sourceAudit": [
+    {
+      "anchors": {
+        "F0284_CHAMPION_SetPartyDirection": 138,
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE": 156,
+        "G0465_ai_Graphic561_MovementArrowToStepForwardCount": 220,
+        "G0466_ai_Graphic561_MovementArrowToStepRightCount": 221,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "file": "CLIKMENU.C",
+      "id": "clikmenu_turn_step_route",
+      "lines": "142-174,180-237",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "P0183_i_Direction": 8320,
+        "P0184_i_MapX": 8320,
+        "P0185_i_MapY": 8320,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "dunview_f0128_entry_and_handoff",
+      "lines": "8318-8338,8598-8612",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "anchors": {
+        "G0324_B_DrawViewportRequested = C1_TRUE": 721,
+        "M526_WaitVerticalBlank": 722,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "id": "drawview_f0097_request",
+      "lines": "709-724,849-858",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "anchors": {
+        "/*  9 */": 950,
+        "F8151_VIDRV_02_Blit": 21,
+        "F8161_VIDRV_09_BlitViewPort": 28,
+        "extern void F8161_VIDRV_09_BlitViewPort": 28
+      },
+      "file": "VIDEODRV.C",
+      "id": "vidrv_slot9_binding",
+      "lines": "18-34,940-951,3566-3582",
+      "missing": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/VIDEODRV.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED",
+  "timestampUtc": "2026-05-08T10:45:09.613345+00:00"
+}

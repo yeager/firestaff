@@ -11,16 +11,16 @@
     "promoteViewportComparator": false,
     "stillBlockedBy": "No bounded controlled original FIRES run produces a strict post-running code stop at F0128, followed by F0097 or VIDRV slot 9, at the current candidate CS:IP targets."
   },
-  "branch": "worker/dm1v1-pass360-true-stop-route-20260508",
+  "branch": "worker/dm1v1-f0128-true-stop-fix-20260508",
   "candidateRuntimeTargets": {
     "F0097_DUNGEONVIEW_DrawViewport": "2809:1E31",
     "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
     "VIDRV_09_BlitViewPort_indirect_call_candidate": "2809:1EFF"
   },
-  "head": "039e781cc966b37a52d8dc0af71bef89a0db10d5",
+  "head": "b45b20ff442e395812cbd71f63d85e5fad625662",
   "latestControlledRuntimeAttempt": {
     "blocker": "F0128 breakpoint armed/retained but no strict running-to-23AD:40FE prompt transition emitted",
-    "boundedSecondsPerStrategy": 45,
+    "boundedSecondsPerStrategy": 75,
     "breakpointRetainedPostRoute": true,
     "directHits": {
       "f0097_2809_1EFF_after_f0128": false,
@@ -28,7 +28,7 @@
     },
     "method": "arm F0128 at initial debugger prompt before any game route input, run through full load+movement route",
     "nextCommand": "python3 tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py --seconds 75 && python3 tools/verify_pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py && python3 tools/verify_pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.py",
-    "postRoutePauseCodeAddr": "22F7:03FF",
+    "postRoutePauseCodeAddr": "280C:1528",
     "ran": true,
     "sourceManifest": "parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json",
     "status": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE",
@@ -121,7 +121,7 @@
       "role": "route-to-target stop transition investigation",
       "runtimeFlags": {
         "breakpointRetainedPostRoute": true,
-        "postRoutePauseCodeAddr": "22F7:03FF",
+        "postRoutePauseCodeAddr": "280C:1528",
         "ran": true,
         "sawRunning": true,
         "strictF0097OrVidrvAfterF0128": false,
@@ -146,7 +146,7 @@
       "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/home/trv2/work/firestaff-dm1v1-pass360-true-stop-route-20260508",
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-f0128-true-stop-fix-20260508",
   "schema": "pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.v1",
   "sourceAudit": [
     {
@@ -222,5 +222,5 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
-  "timestampUtc": "2026-05-08T09:13:59.051804+00:00"
+  "timestampUtc": "2026-05-08T10:45:09.834326+00:00"
 }

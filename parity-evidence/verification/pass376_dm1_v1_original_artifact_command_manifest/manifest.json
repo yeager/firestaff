@@ -141,8 +141,8 @@
     "224x136 original crops for this route are not tracked",
     "paired Firestaff/original diff artifacts for this route are not tracked"
   ],
-  "branch": "worker/dm1v1-original-artifact-command-manifest-20260508",
-  "head": "3ad9c106b93c8d0e8e1ec1eb138488b952a76e2a",
+  "branch": "worker/dm1v1-f0128-true-stop-fix-20260508",
+  "head": "b45b20ff442e395812cbd71f63d85e5fad625662",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "new original FIRES F0128/F0097/VIDRV true stop",
@@ -176,7 +176,7 @@
       "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED"
     }
   },
-  "repo": "/tmp/firestaff-dm1v1-original-artifact-command-manifest-20260508",
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-f0128-true-stop-fix-20260508",
   "schema": "pass376_dm1_v1_original_artifact_command_manifest.v1",
   "source_audit": [
     {
@@ -231,5 +231,5 @@
   ],
   "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY",
-  "timestamp_utc": "2026-05-08T10:18:37.653523+00:00"
+  "timestamp_utc": "2026-05-08T10:45:09.931269+00:00"
 }
