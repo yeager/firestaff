@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.completion_matrix.v1",
-  "updatedAt": "2026-05-07T18:55:00+02:00",
+  "updatedAt": "2026-05-08T11:15:00+02:00",
   "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
   "criteria": [
     {
@@ -61,8 +61,8 @@
           "M9/M10/M11 infrastructure and startup/menu/title gates exist, but current original route still has input/table blockers."
         ],
         "core_input_movement": [
-          9,
-          "pass296/pass299 source-lock input→tuple proof exists; pass333 still blocks keypad/table route into I34E command queue."
+          12,
+          "pass296/pass299 plus pass372 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof."
         ],
         "viewport_ui_render": [
           10,
@@ -83,12 +83,11 @@
       },
       "status": "in_progress_verified_partial",
       "primaryBlockers": [
-        "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E",
-        "Need proof whether G0444_ps_SecondaryKeyboardInput/dungeon keyboard table is installed before route keys.",
+        "Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.",
         "Representative original runtime movement/HUD/viewport overlay parity missing."
       ],
-      "completionPercent": 52,
-      "points": 52,
+      "completionPercent": 55,
+      "points": 55,
       "maxPoints": 100
     },
     {
@@ -129,7 +128,7 @@
       },
       "status": "in_progress_verified_partial",
       "primaryBlockers": [
-        "V2 completion audit says 100% is not verifiable; phases 1–6 remain absent/incomplete."
+        "V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete."
       ],
       "completionPercent": 27,
       "points": 27,

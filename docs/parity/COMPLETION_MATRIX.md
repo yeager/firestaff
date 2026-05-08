@@ -1,6 +1,6 @@
 # Firestaff Completion Matrix
 
-Last updated: 2026-05-07
+Last updated: 2026-05-08
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source/runtime evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 
@@ -21,7 +21,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 
 | Target | completionPercent | Points | Status | Primary blockers |
 |---|---:|---:|---|---|
-| DM1 V1 | 52% | 52/100 | `in_progress_verified_partial` | BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E<br>Need proof whether G0444_ps_SecondaryKeyboardInput/dungeon keyboard table is installed before route keys.<br>Representative original runtime movement/HUD/viewport overlay parity missing. |
+| DM1 V1 | 55% | 55/100 | `in_progress_verified_partial` | Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.<br>Representative original runtime movement/HUD/viewport overlay parity missing. |
 | DM1 V2 | 27% | 27/100 | `in_progress_verified_partial` | V2 completion audit says 100% is not verifiable; phases 1–6 remain absent/incomplete. |
 | CSB V1 | 10% | 10/100 | `inventory_only` | Need CSB-specific parity matrix and launch/render gates; do not infer from DM1. |
 | CSB V2 | 0% | 0/100 | `not_started` | No CSB V2 matrix or gates. |
@@ -39,7 +39,7 @@ This is a conservative 100-point parity-completion model. A point is counted onl
 | `reference_inventory` | 10/10 | DM1 PC 3.4 canonical anchors, ReDMCSB source and Greatstone references are present and repeatedly cited. |
 | `definition_matrix` | 10/10 | docs/parity/PARITY_MATRIX_DM1_V1.md exists and carries DM1 V1 labels/status rows. |
 | `launch_smoke` | 8/10 | M9/M10/M11 infrastructure and startup/menu/title gates exist, but current original route still has input/table blockers. |
-| `core_input_movement` | 9/15 | pass296/pass299 source-lock input→tuple proof exists; pass333 still blocks keypad/table route into I34E command queue. |
+| `core_input_movement` | 12/15 | pass296/pass299 plus pass372 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof. |
 | `viewport_ui_render` | 10/20 | Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; full pixel/content parity remains open. |
 | `gameplay_systems` | 2/15 | Semantic suites exist but most gameplay rows remain UNPROVEN or need original-backed cases. |
 | `audio_timing` | 3/10 | Audio assets/event mapping are partly source-backed; cadence/timing overlap remain blocked/unproven. |
