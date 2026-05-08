@@ -782,6 +782,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_projectile_explosion_render_source_lock_gate.py
         )
         add_test(
+            NAME pass374_dm1_v1_f0115_explosion_pass_blocker
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass374_dm1_v1_f0115_explosion_pass_blocker.py
+        )
+        add_test(
             NAME v1_viewport_distance_row_clip_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_distance_row_clip_gate.py
         )
