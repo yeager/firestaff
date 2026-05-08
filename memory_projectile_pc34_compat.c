@@ -372,14 +372,17 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
 
     /* Magical projectile vs a door flagged
      * MASK0x0002_PROJECTILES_CAN_PASS_THROUGH. Source parity:
-     * ReDMCSB PROJEXPL.C:F0217 door branch lines 491-505 only lets
-     * explosion-backed projectiles pass when the associated thing is
-     * >= C0xFF83_THING_EXPLOSION_HARM_NON_MATERIAL. Lightning (0x82)
-     * must still strike the door; HARM_NON_MATERIAL/open-door/poison
-     * style projectiles pass through portcullis-type doors. */
+     * ReDMCSB PROJEXPL.C:F0217 door branch lines 485-505 handles
+     * OPEN_DOOR before the pass-through branch (it schedules a
+     * C10_EVENT_DOOR/C02_EFFECT_TOGGLE when DOOR->Button is set).
+     * The pass-through branch only lets explosion-backed projectiles
+     * with associated thing >= C0xFF83 pass; exclude OPEN_DOOR here
+     * so it impacts the door instead of silently flying through a
+     * portcullis-type door. Lightning (0x82) still strikes. */
     if (in->projectileCategory == PROJECTILE_CATEGORY_MAGICAL
         && digest->destDoorAllowsProjectilePassThrough
-        && in->projectileSubtype >= PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) {
+        && in->projectileSubtype >= PROJECTILE_SUBTYPE_HARM_NON_MATERIAL
+        && in->projectileSubtype != PROJECTILE_SUBTYPE_OPEN_DOOR) {
         *outPasses = 1;
         return 1;
     }
@@ -528,6 +531,7 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
     outResult->emittedCombatAction         = 0;
     outResult->emittedExplosion            = 0;
     outResult->emittedDoorDestructionEvent = 0;
+    outResult->emittedDoorToggleEvent       = 0;
 
     F0815_PROJECTILE_ComputeImpactAttack_Compat(in, &impactAttack);
 
@@ -580,9 +584,33 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
             return 1;
         }
         outResult->resultKind = PROJECTILE_RESULT_HIT_DOOR;
-        F0819_PROJECTILE_BuildDoorDestructionEvent_Compat(
-            in, digest, impactAttack, currentTick, rng, &outResult->outNextTick);
-        outResult->emittedDoorDestructionEvent = 1;
+        if (in->projectileSubtype == PROJECTILE_SUBTYPE_OPEN_DOOR) {
+            /* ReDMCSB PROJEXPL.C:F0217 lines 485-489: an OPEN_DOOR
+             * projectile does not use the door-destruction attack path;
+             * if DOOR->Button is set it enqueues
+             * F0268_SENSOR_AddEvent(C10_EVENT_DOOR, x, y, 0,
+             * C02_EFFECT_TOGGLE, GameTime+1). The digest has no
+             * DOOR->Button bit yet, so this pure seam exposes the
+             * source-locked delayed sensor event and lets the caller
+             * decide whether the actual door supports it. */
+            memset(&outResult->outNextTick, 0, sizeof(outResult->outNextTick));
+            outResult->outNextTick.kind       = TIMELINE_EVENT_SENSOR_DELAYED;
+            outResult->outNextTick.fireAtTick = currentTick + 1u;
+            outResult->outNextTick.mapIndex   = digest->destMapIndex;
+            outResult->outNextTick.mapX       = digest->destMapX;
+            outResult->outNextTick.mapY       = digest->destMapY;
+            outResult->outNextTick.cell       = 0;
+            outResult->outNextTick.aux0       = 10; /* C10_EVENT_DOOR */
+            outResult->outNextTick.aux1       = 2;  /* C02_EFFECT_TOGGLE */
+            outResult->outNextTick.aux2       = in->projectileSubtype;
+            outResult->outNextTick.aux3       = in->ownerIndex;
+            outResult->outNextTick.aux4       = in->ownerKind;
+            outResult->emittedDoorToggleEvent = 1;
+        } else {
+            F0819_PROJECTILE_BuildDoorDestructionEvent_Compat(
+                in, digest, impactAttack, currentTick, rng, &outResult->outNextTick);
+            outResult->emittedDoorDestructionEvent = 1;
+        }
         outResult->despawn = 1;
         return 1;
     }

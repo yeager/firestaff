@@ -293,9 +293,9 @@ struct ProjectileTickResult_Compat {
     int emittedCombatAction;
     int emittedExplosion;
     int emittedDoorDestructionEvent;
+    int emittedDoorToggleEvent;
     int emittedSoundCode;
     int rngCallCount;
-    int reserved0;
     int reserved1;
 
     struct CombatAction_Compat      outAction;     /* 48 B */

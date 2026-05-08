@@ -180,6 +180,7 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- Kinetic pass-through door random roll (PROJEXPL.C:490-500, pouch/thrown) — v1 deterministic non-pass for kinetic projectiles.\n");
     fprintf(report, "- Projectile-vs-projectile annihilation order (PROJEXPL.C F0218) — v1 picks order-independent variant (both despawn); Fontanel's \"earlier wins\" depends on list-iteration order which is not save-stable.\n");
     fprintf(report, "- Non-material creature pass-through — source-locked: kinetic/non-HARM_NON_MATERIAL projectiles do not impact and continue past; HARM_NON_MATERIAL still damages the group (PROJEXPL.C F0217/F0219).\n");
+    fprintf(report, "- OPEN_DOOR projectile door-button filtering — v1 exposes a delayed C10_EVENT_DOOR/C02_EFFECT_TOGGLE sensor event on impact; caller must filter by DOOR->Button because the Phase 17 digest does not carry that bit yet.\n");
     fprintf(report, "- Paired source-cell explosion damage (PROJEXPL.C F0213 lines 169-175 fireball/lightning) — v1 emits single-cell damage only; source-cell lag-one-tick is v2.\n");
     fprintf(report, "- Sharp-weapon absorption by creatures with KEEP_THROWN_SHARP_WEAPONS (PROJEXPL.C:572-590) — v1 drops the weapon; projectile just despawns.\n");
     fprintf(report, "- Cell → champion-index rotation by party facing (Phase 10 packing convention); v1 uses direct cell == index.\n");
@@ -590,6 +591,7 @@ int main(int argc, char* argv[]) {
         struct RngState_Compat rng;
         int okHarm;
         int okLightning;
+        int okOpenDoor;
         zero_digest(&d);
         set_source_and_dest(&d, 0, 5, 5, 6, 5);
         d.destSquareType = PROJECTILE_ELEMENT_DOOR;
@@ -611,8 +613,21 @@ int main(int argc, char* argv[]) {
         okLightning = (r.resultKind == PROJECTILE_RESULT_HIT_DOOR
                        && r.emittedDoorDestructionEvent == 1
                        && r.despawn == 1);
-        CHECK(okHarm && okLightning,
-              "Portcullis projectile gate: HARM_NON_MATERIAL passes; LIGHTNING_BOLT hits door (PROJEXPL.C F0217 >= C0xFF83)");
+
+        make_projectile_magical(&p, PROJECTILE_SUBTYPE_OPEN_DOOR,
+                                 COMBAT_ATTACK_MAGIC,
+                                 1, 1, 5, 5, 10, 30, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 1);
+        F0811_PROJECTILE_Advance_Compat(&p, &d, 100, &rng, &pOut, &r);
+        okOpenDoor = (r.resultKind == PROJECTILE_RESULT_HIT_DOOR
+                      && r.emittedDoorDestructionEvent == 0
+                      && r.emittedDoorToggleEvent == 1
+                      && r.outNextTick.kind == TIMELINE_EVENT_SENSOR_DELAYED
+                      && r.outNextTick.aux0 == 10
+                      && r.outNextTick.aux1 == 2
+                      && r.despawn == 1);
+        CHECK(okHarm && okLightning && okOpenDoor,
+              "Portcullis projectile gate: HARM_NON_MATERIAL passes; LIGHTNING_BOLT hits; OPEN_DOOR schedules C10_EVENT_DOOR/C02_EFFECT_TOGGLE (PROJEXPL.C:485-505)");
     }
     /* 20c: Solid doors do not honor magical pass-through projectile subtypes. */
     {
