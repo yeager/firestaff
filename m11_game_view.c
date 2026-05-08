@@ -4908,6 +4908,16 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
         m11_set_status(state, actionLabel, "QUEUE FULL");
         return 0;
     }
+
+    /* ReDMCSB GAMELOOP.C:124-155 advances game time and decrements
+     * G0310/G0311 before entering the input/command wait loop at
+     * GAMELOOP.C:164-219.  Keep that ordering here: old cooldowns age
+     * before F0380 gates the queued movement command; a cooldown written
+     * by this successful step must not be decremented in the same tick.
+     */
+    DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
+        &state->dm1V1MovementPipeline);
+
     if (!DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
             &state->dm1V1MovementPipeline,
             state->world.dungeon,
@@ -4951,8 +4961,6 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
         m11_set_status(state, actionLabel, "INPUT CONSUMED");
     }
 
-    DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
-        &state->dm1V1MovementPipeline);
     DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
     return state->lastDm1V1MovementPipelineResult.viewportDirty ||
            state->lastDm1V1MovementPipelineResult.core.queue.dequeued;
