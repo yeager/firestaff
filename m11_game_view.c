@@ -4989,6 +4989,13 @@ static int m11_apply_tick(M11_GameViewState* state,
         input.commandArg2 = (uint8_t)state->world.party.direction;
     }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    /* ReDMCSB GAMELOOP.C:122-127 ages movement cooldowns once per
+     * real tick before F0380_COMMAND_ProcessQueue_CPSC can gate queued
+     * movement.  Keep the live M11 DM1-V1 pipeline cooldown mirror in
+     * sync even when this tick is attack/wait/door rather than movement.
+     */
+    DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
+        &state->dm1V1MovementPipeline);
     {
         int orchResult = F0884_ORCH_AdvanceOneTick_Compat(
             &state->world, &input, &state->lastTickResult);
@@ -7862,6 +7869,11 @@ static int m11_toggle_front_door(M11_GameViewState* state) {
         input.tick    = state->world.gameTick;
         input.command = CMD_NONE;
         memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+        /* Door animation consumes a real game tick; GAMELOOP.C:122-127
+         * still decrements G0310/G0311 on that tick before command polling.
+         */
+        DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
+            &state->dm1V1MovementPipeline);
         (void)F0884_ORCH_AdvanceOneTick_Compat(
             &state->world, &input, &state->lastTickResult);
     }
