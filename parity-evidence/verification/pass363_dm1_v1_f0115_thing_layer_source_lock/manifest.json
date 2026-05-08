@@ -1,0 +1,14 @@
+{
+  "status": "PASS_DM1_V1_F0115_THING_LAYER_SOURCE_LOCK_BLOCKER_NARROWED",
+  "scope": "dm1-v1-movement-viewport-walls",
+  "renderer_behavior_changes": false,
+  "pixel_parity_claim": false,
+  "source_anchors": [
+    {"file": "DUNVIEW.C", "lines": "4547-4582", "purpose": "F0115 object/creature/projectile/explosion high-level loop"},
+    {"file": "DUNVIEW.C", "lines": "4819-4860", "purpose": "object pass and defer group/projectile/explosion"},
+    {"file": "DUNVIEW.C", "lines": "5195-5202", "purpose": "creature pass after objects"},
+    {"file": "DUNVIEW.C", "lines": "5679-5683", "purpose": "projectile pass restarts thing list per cell"},
+    {"file": "DUNVIEW.C", "lines": "5915-5933", "purpose": "explosion pass after packed view cells"}
+  ],
+  "blocker_narrowed": "M11 local effect cue coalesces projectiles/explosions per open cell; ReDMCSB F0115 schedules explosions after all packed cells."
+}
