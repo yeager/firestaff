@@ -235,6 +235,34 @@ int main(void)
             DM1_V1_COMMAND_RELEASE_CHAMPION_ICON, 15, 16, 0), 0);
     ok &= expect_int("reserved overflow counted dropped", (int)queue.droppedFullCount, 2);
 
+    /* Source lock: ReDMCSB COMMAND.C:2095-2100 gates only movement
+     * commands whose relative direction matches the pending projectile
+     * disable direction: normalize(partyDirection + command - C003).
+     * The command remains queued on a matching projectile gate and is
+     * dequeued on a non-matching projectile direction. */
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("projectile-gated forward enqueue", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 1, 0, 4, 1);
+    ok &= expect_int("projectile matching direction gates move", result.movementDisabledGate, 1);
+    ok &= expect_int("projectile matching direction keeps command queued", result.dequeued, 0);
+    ok &= expect_int("projectile gated command still queued", (int)queue.count, 1);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("projectile-mismatched forward enqueue", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004C, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 1, 0, 4, 2);
+    ok &= expect_int("projectile mismatched direction does not gate", result.movementDisabledGate, 0);
+    ok &= expect_int("projectile mismatched direction dequeues", result.dequeued, 1);
+    ok &= expect_int("projectile mismatched direction dispatches move", result.dispatchedMove, 1);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    ok &= expect_int("projectile-gated strafe-left enqueue", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0x004F, 0, 0, 0 }), 1);
+    result = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, 0, 0, 4, 3);
+    ok &= expect_int("projectile gates normalized strafe-left direction", result.movementDisabledGate, 1);
+    ok &= expect_int("projectile gated strafe-left stays queued", (int)queue.count, 1);
+
     printf("dm1V1InputCommandQueueInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
 }
