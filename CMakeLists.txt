@@ -842,6 +842,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py
         )
         add_test(
+            NAME pass362_dm1_v1_viewport_walls_source_lock_landable
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass362_dm1_v1_viewport_walls_source_lock_landable.py
+        )
+        add_test(
             NAME dm1_v1_viewport_walls_golden_comparison
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_walls_golden_comparison.py
         )
