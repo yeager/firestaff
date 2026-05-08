@@ -1,0 +1,104 @@
+[
+  {
+    "route_item": "wait:9000",
+    "slept": true,
+    "t": 1778247156.6960068
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "enter",
+    "t": 1778247165.7309837
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778247165.9514441
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "t": 1778247168.1611276
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778247168.3812406
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "click:276,140",
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778247170.5864413
+  },
+  {
+    "route_item": "wait:2200",
+    "slept": true,
+    "t": 1778247170.6994407
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "one",
+    "running_guard": true,
+    "t": 1778247187.9200797
+  },
+  {
+    "route_item": "wait:3500",
+    "slept": true,
+    "t": 1778247190.1000857
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778247193.611733
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778247194.4363143
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp4",
+    "running_guard": true,
+    "t": 1778247195.1394014
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778247196.4115074
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp6",
+    "running_guard": true,
+    "t": 1778247197.1130033
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778247198.4355083
+  },
+  {
+    "out": "",
+    "rc": 0,
+    "route_item": "kp5",
+    "running_guard": true,
+    "t": 1778247199.137096
+  },
+  {
+    "route_item": "wait:700",
+    "slept": true,
+    "t": 1778247200.410034
+  }
+]
