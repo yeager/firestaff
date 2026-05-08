@@ -3566,7 +3566,74 @@ static int m11_square_walkable_for_creature(
         MOVEMENT_PASS_CTX_CREATURE);
 }
 
-/* Move a creature one step toward the party. Returns 1 if moved. */
+static void m11_creature_step_for_dir(int direction, int* dx, int* dy) {
+    switch (direction & 3) {
+        case 0: *dx = 0;  *dy = -1; break;  /* NORTH */
+        case 1: *dx = +1; *dy =  0; break;  /* EAST  */
+        case 2: *dx = 0;  *dy = +1; break;  /* SOUTH */
+        case 3: *dx = -1; *dy =  0; break;  /* WEST  */
+        default:*dx = 0;  *dy =  0; break;
+    }
+}
+
+static int m11_creature_compute_primary_secondary_dirs(
+    M11_GameViewState* state,
+    int groupX,
+    int groupY,
+    int partyX,
+    int partyY,
+    int* outPrimary,
+    int* outSecondary) {
+    int dx = partyX - groupX;
+    int dy = partyY - groupY;
+    int absDx = abs(dx);
+    int absDy = abs(dy);
+    int coin = 0;
+    if (!outPrimary || !outSecondary) return 0;
+    *outPrimary = 0;
+    *outSecondary = 1;
+    if (dx == 0 && dy == 0) return 0;
+
+    /* Source lock: ReDMCSB PROJEXPL.C F0228:1214-1282 derives a
+     * primary direction plus G0363 secondary direction; GROUP.C
+     * F0209:2262-2267 then attempts primary, secondary, opposite,
+     * and 1/4 random opposite-primary.  This M11 runtime mirror keeps
+     * those cardinal-only choices and deliberately removes the earlier
+     * synthetic diagonal step. */
+    if (dx == 0) {
+        *outPrimary = (dy < 0) ? 0 : 2;
+        coin = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
+        *outSecondary = coin ? 3 : 1;
+        return 1;
+    }
+    if (dy == 0) {
+        *outPrimary = (dx < 0) ? 3 : 1;
+        coin = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
+        *outSecondary = coin ? 2 : 0;
+        return 1;
+    }
+
+    if (absDx > absDy) {
+        *outPrimary = (dx < 0) ? 3 : 1;
+        *outSecondary = (dy < 0) ? 0 : 2;
+    } else if (absDy > absDx) {
+        *outPrimary = (dy < 0) ? 0 : 2;
+        *outSecondary = (dx < 0) ? 3 : 1;
+    } else {
+        coin = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
+        if (coin) {
+            *outPrimary = (dx < 0) ? 3 : 1;
+            *outSecondary = (dy < 0) ? 0 : 2;
+        } else {
+            *outPrimary = (dy < 0) ? 0 : 2;
+            *outSecondary = (dx < 0) ? 3 : 1;
+        }
+    }
+    return 1;
+}
+
+/* Move a creature one source-ordered cardinal step toward the party.
+ * Returns 1 if moved. */
 static int m11_creature_try_move(
     M11_GameViewState* state,
     unsigned short groupThing,
@@ -3577,97 +3644,65 @@ static int m11_creature_try_move(
     int partyX = state->world.party.mapX;
     int partyY = state->world.party.mapY;
     int mapIdx = state->world.party.mapIndex;
-    int dx = 0, dy = 0;
-    int bestX = groupX, bestY = groupY;
-    int bestDist;
-    int candidates[4][2];
+    int primaryDir, secondaryDir;
+    int candidates[4];
     int candidateCount = 0;
+    int randomOppPrimaryIndex = -1;
     int i;
 
-    /* Compute desired direction */
-    if (partyX > groupX) dx = 1;
-    else if (partyX < groupX) dx = -1;
-    if (partyY > groupY) dy = 1;
-    else if (partyY < groupY) dy = -1;
-
-    /* Already on party square? Don't move. */
     if (groupX == partyX && groupY == partyY) {
         *outNewX = groupX;
         *outNewY = groupY;
         return 0;
     }
-
-    /* Try primary direction first, then lateral, then diagonal */
-    if (dx != 0) {
-        candidates[candidateCount][0] = groupX + dx;
-        candidates[candidateCount][1] = groupY;
-        candidateCount++;
-    }
-    if (dy != 0) {
-        candidates[candidateCount][0] = groupX;
-        candidates[candidateCount][1] = groupY + dy;
-        candidateCount++;
-    }
-    if (dx != 0 && dy != 0) {
-        candidates[candidateCount][0] = groupX + dx;
-        candidates[candidateCount][1] = groupY + dy;
-        candidateCount++;
-    }
-    /* Lateral fallback: if only one axis differs, try the other axis */
-    if (dx == 0 && dy != 0) {
-        candidates[candidateCount][0] = groupX + 1;
-        candidates[candidateCount][1] = groupY;
-        candidateCount++;
-    }
-    if (dy == 0 && dx != 0) {
-        candidates[candidateCount][0] = groupX;
-        candidates[candidateCount][1] = groupY + 1;
-        candidateCount++;
+    if (!m11_creature_compute_primary_secondary_dirs(
+            state, groupX, groupY, partyX, partyY,
+            &primaryDir, &secondaryDir)) {
+        *outNewX = groupX;
+        *outNewY = groupY;
+        return 0;
     }
 
-    bestDist = abs(partyX - groupX) + abs(partyY - groupY);
+    candidates[candidateCount++] = primaryDir;
+    if (secondaryDir != primaryDir) {
+        candidates[candidateCount++] = secondaryDir;
+        candidates[candidateCount++] = (secondaryDir + 2) & 3;
+    }
+    randomOppPrimaryIndex = candidateCount;
+    candidates[candidateCount++] = (primaryDir + 2) & 3;
+
     for (i = 0; i < candidateCount; ++i) {
-        int cx = candidates[i][0];
-        int cy = candidates[i][1];
-        int dist;
-        if (!m11_square_walkable_for_creature(&state->world, mapIdx, cx, cy)) {
+        int stepX = 0, stepY = 0;
+        int bestX, bestY;
+        if (i == randomOppPrimaryIndex &&
+            F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 4) != 0) {
             continue;
         }
-        /* Don't step onto a square that already has another group */
-        if (m11_find_group_on_square(&state->world, mapIdx, cx, cy) != THING_NONE) {
-            /* Allow stepping onto the party square even if another group is there */
-            if (cx != partyX || cy != partyY) continue;
+        m11_creature_step_for_dir(candidates[i], &stepX, &stepY);
+        bestX = groupX + stepX;
+        bestY = groupY + stepY;
+
+        if (!m11_square_walkable_for_creature(&state->world, mapIdx, bestX, bestY)) {
+            continue;
         }
-        dist = abs(partyX - cx) + abs(partyY - cy);
-        if (dist < bestDist) {
-            bestDist = dist;
-            bestX = cx;
-            bestY = cy;
+        if (m11_find_group_on_square(&state->world, mapIdx, bestX, bestY) != THING_NONE) {
+            if (bestX != partyX || bestY != partyY) continue;
         }
+        if (!m11_unlink_thing_from_square(&state->world, mapIdx, groupX, groupY, groupThing)) {
+            break;
+        }
+        if (!m11_prepend_thing_to_square(&state->world, mapIdx, bestX, bestY, groupThing)) {
+            m11_prepend_thing_to_square(&state->world, mapIdx, groupX, groupY, groupThing);
+            break;
+        }
+        *outNewX = bestX;
+        *outNewY = bestY;
+        return 1;
     }
 
-    if (bestX == groupX && bestY == groupY) {
-        *outNewX = groupX;
-        *outNewY = groupY;
-        return 0; /* couldn't move */
-    }
-
-    /* Move: unlink from old square, prepend to new square */
-    if (!m11_unlink_thing_from_square(&state->world, mapIdx, groupX, groupY, groupThing)) {
-        *outNewX = groupX;
-        *outNewY = groupY;
-        return 0;
-    }
-    if (!m11_prepend_thing_to_square(&state->world, mapIdx, bestX, bestY, groupThing)) {
-        /* Failed to place — put it back */
-        m11_prepend_thing_to_square(&state->world, mapIdx, groupX, groupY, groupThing);
-        *outNewX = groupX;
-        *outNewY = groupY;
-        return 0;
-    }
-    *outNewX = bestX;
-    *outNewY = bestY;
-    return 1;
+    *outNewX = groupX;
+    *outNewY = groupY;
+    return 0;
 }
 
 /* Deal autonomous creature damage to the party. */
