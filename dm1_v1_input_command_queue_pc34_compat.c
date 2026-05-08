@@ -9,13 +9,13 @@
  * - COMMAND.C:1379-1449 F0358 hit matcher walks mouse rows, checks button mask, returns command.
  * - COMMAND.C:1452-1661 / 2831-2928 F0359 queues mouse commands; if locked it records G0436..G0439 pending click, otherwise enqueues command/x/y.
  * - COMMAND.C:1692-1707 F0360 replays one pending click after unlock.
- * - COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands, then replays pending click.
+ * - COMMAND.C:729-812 F0361 queues primary/secondary keyboard commands while G2153_i_QueuedCommandsCount < C5, then replays pending click.
  * - COMMAND.C:2045-2156 F0380 locks, checks empty/movement-disabled gate, dequeues one command, replays pending click, dispatches turns to F0365 and moves to F0366.
  * - COMMAND.C:1304-1377 F0357 flushes queued input after blocked movement (except later-platform release/stop commands not modeled here).
  * - CLIKMENU.C:142-174 F0365 executes turn boundaries; CLIKMENU.C:180-330 F0366 executes move boundaries.
  */
 
-#define DM1_V1_QUEUE_MAX_REGULAR 4u
+#define DM1_V1_QUEUE_MAX_REGULAR 5u
 
 static int normalize_dir(int value)
 {
@@ -246,5 +246,5 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
-    return "COMMAND.C:6,106-121,252-260,272-305,677-684,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19";
+    return "COMMAND.C:6,106-121,252-260,272-305,677-684,729-812,1304-1377,1379-1449,1452-1661,1692-1707,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
 }

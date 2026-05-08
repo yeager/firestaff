@@ -157,10 +157,13 @@ int main(void)
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
     ok &= expect_int("queue accepts fourth command", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
-    ok &= expect_int("redmcsb queue holds four commands", (int)queue.count, 4);
-    ok &= expect_int("redmcsb fifth command is dropped", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+    ok &= expect_int("redmcsb queue holds four before C5 limit", (int)queue.count, 4);
+    ok &= expect_int("redmcsb fifth command accepted before C5 limit", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+        (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+    ok &= expect_int("redmcsb queue holds five commands", (int)queue.count, 5);
+    ok &= expect_int("redmcsb sixth command is dropped at C5 limit", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
         (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 0);
-    ok &= expect_int("redmcsb fifth command counted dropped", (int)queue.droppedFullCount, 1);
+    ok &= expect_int("redmcsb sixth command counted dropped", (int)queue.droppedFullCount, 1);
 
     printf("dm1V1InputCommandQueueInvariantOk=%u\n", ok ? 1u : 0u);
     return ok ? 0 : 1;
