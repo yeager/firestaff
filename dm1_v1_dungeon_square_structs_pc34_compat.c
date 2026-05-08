@@ -243,7 +243,9 @@ void dm1_compute_view_square_coords(int party_x, int party_y, int direction,
  * som berörs av denna specifika ruta. Den fulla renderingsloopen itererar
  * alla rutor och aggregerar.
  *
- * Returvärde: 13-bit bitmask, bit N = view wall index N.
+ * Returvärde: 15-bit bitmask, bit N = view wall index N.
+ * D0L/D0R are nearest side-wall planes; they do not center-occlude, but
+ * ReDMCSB still draws their side wall bitmaps before returning.
  * ======================================================================= */
 
 uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
@@ -282,7 +284,13 @@ uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
             }
             break;
         case 0:
-            /* Depth 0 har inga synliga front walls (partyt står här) */
+            /* D0 has no center front wall, but nearest side walls are drawn.
+             * Source: ReDMCSB DUNVIEW.C F0125/F0126 wall branches
+             * draw C716_ZONE_WALL_D0L / C717_ZONE_WALL_D0R and return. */
+            switch (square->lane) {
+                case 1: mask = (1 << DM1_VW_D0L_SIDE); break;
+                case 2: mask = (1 << DM1_VW_D0R_SIDE); break;
+            }
             break;
     }
 

@@ -188,6 +188,19 @@ static int verify_draw_order(struct MapFixture* fixture)
     ok &= expect_int("D1L side wall has side-only wall mask", dm1_compute_wall_visibility(&vp.squares[7], DIR_NORTH), (1 << DM1_VW_D1L_RIGHT));
     ok &= expect_int("D1L side wall does not set center D1 front flag", dm1_is_front_wall_at_depth(&vp, 1) ? 1 : 0, 0);
 
+    reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles_Compat){0}, &(struct PartyState_Compat){0});
+    set_square(fixture->squares, 1, 2, sqb(DM1_ELEMENT_WALL, 0));
+    set_square(fixture->squares, 3, 2, sqb(DM1_ELEMENT_WALL, 0));
+    dm1_build_viewport(2, 2, DIR_NORTH, 0, read_square_for_view, fixture, &vp);
+    count = dm1_get_visible_squares(&vp, visible);
+    printf("nearestD0SideWalls visibleCount=%d d0lMask=0x%04x d0rMask=0x%04x source=DUNVIEW.C:7960-8164\n",
+        count, dm1_compute_wall_visibility(&vp.squares[10], DIR_NORTH),
+        dm1_compute_wall_visibility(&vp.squares[11], DIR_NORTH));
+    ok &= expect_int("D0 side walls do not occlude farther rows", count, DM1_VIEWPORT_SQUARE_COUNT);
+    ok &= expect_int("D0L nearest side wall mask", dm1_compute_wall_visibility(&vp.squares[10], DIR_NORTH), (1 << DM1_VW_D0L_SIDE));
+    ok &= expect_int("D0R nearest side wall mask", dm1_compute_wall_visibility(&vp.squares[11], DIR_NORTH), (1 << DM1_VW_D0R_SIDE));
+    ok &= expect_int("D0 side walls do not set center D0 front flag", dm1_is_front_wall_at_depth(&vp, 0) ? 1 : 0, 0);
+
     return ok;
 }
 

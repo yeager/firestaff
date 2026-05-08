@@ -216,8 +216,10 @@ extern "C" {
 #define DM1_VW_D1L_RIGHT  10
 #define DM1_VW_D1R_LEFT   11
 #define DM1_VW_D1C_FRONT  12
+#define DM1_VW_D0L_SIDE   13
+#define DM1_VW_D0R_SIDE   14
 
-#define DM1_VIEW_WALL_COUNT_V1  13
+#define DM1_VIEW_WALL_COUNT_V1  15
 
 /* View cell indices (för objekt/kreatur-rendering inom en ruta) */
 #define DM1_VCELL_FRONT_LEFT   0
@@ -429,7 +431,7 @@ void dm1_compute_view_square_coords(int party_x, int party_y, int direction,
  * - Side walls (right/left) ritas vid gränsen mot WALL-ruta i grann-lane.
  * - Front walls ritas BARA om rutan FRAMFÖR (mot partyt) INTE är en vägg.
  *
- * Returnerar en 13-bit bitmask: bit N = view wall N ska ritas.
+ * Returnerar en 15-bit bitmask: bit N = view wall N ska ritas.
  */
 uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
                                       int direction);
