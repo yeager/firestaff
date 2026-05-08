@@ -8,7 +8,8 @@ known wall square has:
 * native wall-set entry;
 * parity-flipped source entry and horizontal flip call where applicable;
 * PC34 viewport zone;
-* the wall-case return or front-alcove exception used as the occlusion contract.
+* the wall-case return or front-alcove exception used as the occlusion contract;
+* front-door split occlusion: rear contents, frame/door, then front contents.
 """
 from __future__ import annotations
 
@@ -118,6 +119,59 @@ CASES: tuple[WallCase, ...] = (
 )
 
 
+
+DOOR_CASES: tuple[tuple[str, tuple[int, int], tuple[str, ...], tuple[str, ...]], ...] = (
+    (
+        "D3L-door-front",
+        (6443, 6459),
+        (
+            "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+            "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
+            "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2120_DoorFrameLeftD3L",
+            "F0111_DUNGEONVIEW_DrawDoor",
+            "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
+        ),
+        (
+            "DM1_VIEW_SQUARE_D3L, 0x0218, 0x0349",
+            "DUNVIEW.C:6443-6444 pass1 rear cells before left frame",
+            "DUNVIEW.C:6457 F0111 door bitmap/ornament",
+            "DUNVIEW.C:6459 pass2 front cells after door",
+        ),
+    ),
+    (
+        "D3C-door-front",
+        (6722, 6746),
+        (
+            "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
+            "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0706_puc_Bitmap_WallSet_DoorFrameLeft_D3C",
+            "F0111_DUNGEONVIEW_DrawDoor",
+            "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
+        ),
+        (
+            "DM1_VIEW_SQUARE_D3C, 0x0218, 0x0349",
+            "DUNVIEW.C:6722-6723 pass1 rear cells before frame",
+            "DUNVIEW.C:6744 F0111 door bitmap/ornament",
+            "DUNVIEW.C:6746 pass2 front cells after door",
+        ),
+    ),
+    (
+        "D2C-door-front",
+        (7314, 7341),
+        (
+            "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
+            "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0703_puc_Bitmap_WallSet_DoorFrameTop_D2LCR",
+            "F0111_DUNGEONVIEW_DrawDoor",
+            "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
+        ),
+        (
+            "DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349",
+            "DUNVIEW.C:7314-7315 pass1 rear cells before frame",
+            "DUNVIEW.C:7339 F0111 door bitmap/ornament",
+            "DUNVIEW.C:7341 pass2 front cells after door",
+        ),
+    ),
+)
+
 def line_slice(text: str, bounds: tuple[int, int]) -> str:
     start, end = bounds
     return "\n".join(text.splitlines()[start - 1 : end])
@@ -140,6 +194,16 @@ def main() -> int:
             if needle not in local:
                 failures.append(f"{case.square} missing local metadata needle: {needle}")
 
+
+    for name, bounds, redmcsb_needles, local_needles in DOOR_CASES:
+        excerpt = line_slice(redmcsb, bounds)
+        for needle in redmcsb_needles:
+            if needle not in excerpt:
+                failures.append(f"{name} missing ReDMCSB needle in lines {bounds[0]}-{bounds[1]}: {needle}")
+        for needle in local_needles:
+            if needle not in local:
+                failures.append(f"{name} missing local door-front metadata needle: {needle}")
+
     if failures:
         print("FAIL dm1-v1-viewport-3d-occlusion-metadata-gate")
         for failure in failures:
@@ -151,6 +215,8 @@ def main() -> int:
     for case in CASES:
         start, end = case.redmcsb_range
         print(f"- {case.square}: {case.native}->{case.parity} {case.zone} {case.source_lines} occlusion lines {start}-{end}")
+    for name, bounds, _, _ in DOOR_CASES:
+        print(f"- {name}: door-front split occlusion lines {bounds[0]}-{bounds[1]}")
     return 0
 
 

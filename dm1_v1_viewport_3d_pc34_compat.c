@@ -116,6 +116,12 @@ static const DM1_ViewportThingLayerSpec s_thing_layers[] = {
     { DM1_VIEWPORT_THING_LAYER_EXPLOSIONS,  "explosions",  "DUNVIEW.C:4579-4581,5915-5933", false, true  },
 };
 
+static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[] = {
+    { DM1_VIEW_SQUARE_D3L, 0x0218, 0x0349, "DUNVIEW.C:6443-6444 pass1 rear cells before left frame", "DUNVIEW.C:6446-6454 left/right frame draw", "DUNVIEW.C:6457 F0111 door bitmap/ornament", "DUNVIEW.C:6459 pass2 front cells after door" },
+    { DM1_VIEW_SQUARE_D3C, 0x0218, 0x0349, "DUNVIEW.C:6722-6723 pass1 rear cells before frame", "DUNVIEW.C:6725-6739 top/side frame and button draw", "DUNVIEW.C:6744 F0111 door bitmap/ornament", "DUNVIEW.C:6746 pass2 front cells after door" },
+    { DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349, "DUNVIEW.C:7314-7315 pass1 rear cells before frame", "DUNVIEW.C:7317-7333 top/side frame and button draw", "DUNVIEW.C:7339 F0111 door bitmap/ornament", "DUNVIEW.C:7341 pass2 front cells after door" },
+};
+
 static const DM1_ViewportPostCommandRedrawSpec s_post_command_redraw = {
     true,
     true,
@@ -670,6 +676,25 @@ const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t in
     return &s_thing_layers[index];
 }
 
+size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)
+{
+    return sizeof(s_door_front_occlusion_specs) / sizeof(s_door_front_occlusion_specs[0]);
+}
+
+const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_door_front_occlusion_spec_count()) return NULL;
+    return &s_door_front_occlusion_specs[index];
+}
+
+const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_door_front_occlusion_spec_count(); ++i) {
+        if (s_door_front_occlusion_specs[i].square == square) return &s_door_front_occlusion_specs[i];
+    }
+    return NULL;
+}
+
 const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spec(void)
 {
     return &s_post_command_redraw;
@@ -704,6 +729,9 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:4561-4581 F0115 packed cell-order and object/creature/projectile/explosion z-order\n"
         "  DUNVIEW.C:5681-5883 F0115 projectile draw pass and PC34 zone draw\n"
         "  DUNVIEW.C:5915-5933 F0115 explosion pass after all ordered cells\n"
+        "  DUNVIEW.C:6443-6459 D3L door-front occlusion: rear pass, frame/door, front pass\n"
+        "  DUNVIEW.C:6722-6746 D3C door-front occlusion: rear pass, frame/door, front pass\n"
+        "  DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:6254-6327 F0676/F0677 PC34 parity side-wall selection; wall case returns / front alcove occlusion boundaries\n"
         "  DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns\n"
         "  DUNVIEW.C:6361 F0116_DUNGEONVIEW_DrawSquareD3L\n"

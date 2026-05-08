@@ -262,6 +262,56 @@ static void test_f0115_cell_order_and_layer_z_order(void)
 }
 
 
+
+static void test_door_front_occlusion_split_passes(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        const char *rear_line;
+        const char *frame_line;
+        const char *door_line;
+        const char *front_line;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L, "6444", "6446", "6457", "6459" },
+        { DM1_VIEW_SQUARE_D3C, "6723", "6725", "6744", "6746" },
+        { DM1_VIEW_SQUARE_D2C, "7315", "7317", "7339", "7341" },
+    };
+
+    check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 3);
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportDoorFrontOcclusionSpec *spec =
+            dm1_viewport_3d_get_door_front_occlusion_spec_for_square(expected[i].square);
+        DM1_ViewportCellOrder rear;
+        DM1_ViewportCellOrder front;
+        char id[96];
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.nonnull", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+        check_int("door_front_occlusion.rear_order", spec->rear_cell_order, 0x0218);
+        check_int("door_front_occlusion.front_order", spec->front_cell_order, 0x0349);
+        rear = dm1_viewport_3d_decode_cell_order(spec->rear_cell_order);
+        front = dm1_viewport_3d_decode_cell_order(spec->front_cell_order);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_pass", i);
+        check_int(id, rear.door_pass, 1);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_cells", i);
+        check_int(id, rear.cell_count == 2 && rear.cells[0] == 1 && rear.cells[1] == 2, 1);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_pass", i);
+        check_int(id, front.door_pass, 2);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_cells", i);
+        check_int(id, front.cell_count == 2 && front.cells[0] == 4 && front.cells[1] == 3, 1);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.rear_line", i);
+        check_int(id, strstr(spec->rear_pass_source_lines, expected[i].rear_line) != NULL, 1);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.frame_line", i);
+        check_int(id, strstr(spec->frame_source_lines, expected[i].frame_line) != NULL, 1);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.door_line", i);
+        check_int(id, strstr(spec->door_source_lines, expected[i].door_line) != NULL, 1);
+        snprintf(id, sizeof(id), "door_front_occlusion.%zu.front_line", i);
+        check_int(id, strstr(spec->front_pass_source_lines, expected[i].front_line) != NULL, 1);
+    }
+    check_int("door_front_occlusion.out_of_range", dm1_viewport_3d_get_door_front_occlusion_spec(3) == NULL, 1);
+    check_int("door_front_occlusion.no_side_door_spec", dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
+}
+
 static void test_post_command_redraw_contract(void)
 {
     const DM1_ViewportPostCommandRedrawSpec *spec = dm1_viewport_3d_post_command_redraw_spec();
@@ -289,6 +339,7 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.f0115_cell_order", strstr(e, "packed cell-order") != NULL, 1);
     check_int("source_evidence.f0115_projectiles", strstr(e, "projectile draw pass") != NULL, 1);
     check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
+    check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
     check_int("source_evidence.occlusion", strstr(e, "wall case returns") != NULL, 1);
     check_int("source_evidence.command_dispatch", strstr(e, "COMMAND.C:2045-2156") != NULL, 1);
@@ -302,6 +353,7 @@ int main(void)
     test_redmcsb_f0128_draw_order();
     test_pc34_wall_bitmap_selection();
     test_f0115_cell_order_and_layer_z_order();
+    test_door_front_occlusion_split_passes();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();
     test_post_command_redraw_contract();

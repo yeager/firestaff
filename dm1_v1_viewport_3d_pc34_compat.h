@@ -258,6 +258,19 @@ typedef struct {
     bool after_all_cells;
 } DM1_ViewportThingLayerSpec;
 
+/* Door-front occlusion contract for ReDMCSB F0116/F0118/F0121 front-door
+ * branches: rear cells are drawn with F0115 before the frame and door bitmap,
+ * then front cells are drawn with a second F0115 pass after the door. */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    uint16_t rear_cell_order;
+    uint16_t front_cell_order;
+    const char *rear_pass_source_lines;
+    const char *frame_source_lines;
+    const char *door_source_lines;
+    const char *front_pass_source_lines;
+} DM1_ViewportDoorFrontOcclusionSpec;
+
 typedef struct {
     bool command_mutates_before_draw;
     bool redraw_uses_party_tuple;
@@ -541,6 +554,9 @@ DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSp
 DM1_ViewportCellOrder dm1_viewport_3d_decode_cell_order(uint16_t order);
 size_t dm1_viewport_3d_thing_layer_spec_count(void);
 const DM1_ViewportThingLayerSpec *dm1_viewport_3d_get_thing_layer_spec(size_t index);
+size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
+const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
+const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);
 
 /* Source-locked post-command redraw contract: a completed command mutates the
  * party/world state first, GAMELOOP.C redraws F0128 from G0308/G0306/G0307,
