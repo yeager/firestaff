@@ -14308,9 +14308,22 @@ static int m11_build_projectile_digest(
             out->destDoorState = doorAttr;  /* CLOSED_ONE_FOURTH..CLOSED_FULL */
         } else if (doorAttr == 5) {
             out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
-            out->destDoorIsDestroyed = 1;
         } else {
             out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        }
+        {
+            unsigned short firstThing = THING_ENDOFLIST;
+            firstThing = m11_get_first_square_thing(world, p->mapIndex, destX, destY);
+            if (firstThing != THING_ENDOFLIST
+                    && firstThing != THING_NONE
+                    && THING_GET_TYPE(firstThing) == THING_TYPE_DOOR
+                    && world->things
+                    && world->things->doors) {
+                int doorIndex = THING_GET_INDEX(firstThing);
+                if (doorIndex >= 0 && doorIndex < world->things->doorCount) {
+                    out->destDoorHasButton = world->things->doors[doorIndex].button ? 1 : 0;
+                }
+            }
         }
         /* Magical projectiles pass through normal doors; v1 leaves
          * the per-door MASK0x0002 flag unset so F0816 uses its
@@ -14638,7 +14651,6 @@ static int m11_build_explosion_digest(
             out->destDoorState = doorAttr;
         } else if (doorAttr == 5) {
             out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
-            out->destDoorIsDestroyed = 1;
         } else {
             out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
         }

@@ -240,9 +240,9 @@ struct ExplosionList_Compat {
  * motion. Phase 17 reads ONLY this struct in the per-tick path.
  *
  * NEEDS DISASSEMBLY REVIEW: teleporter direction rotation.
- *   `destTeleporterNewDirection` replaces a reserved slot from the
- *   plan's §2.4 draft so the struct stays 100 bytes. v1 leaves the
- *   field default -1 and does NOT rotate; caller pre-rotates.
+ *   `destTeleporterNewDirection` and `destDoorHasButton` replace reserved
+ *   slots from the plan's §2.4 draft so the struct stays 100 bytes. v1 leaves
+ *   teleporter direction default -1 and does NOT rotate; caller pre-rotates.
  */
 struct CellContentDigest_Compat {
     /* Source cell (where projectile currently sits). */
@@ -270,7 +270,7 @@ struct CellContentDigest_Compat {
     int destCreatureIsNonMaterial;
     int destDoorState;
     int destDoorAllowsProjectilePassThrough;
-    int destDoorIsDestroyed;
+    int destDoorHasButton;             /* ReDMCSB DOOR->Button */
     int destIsMapBoundary;
     int destTeleporterNewDirection;   /* -1 = no rotation */
 };

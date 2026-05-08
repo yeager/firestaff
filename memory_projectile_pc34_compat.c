@@ -44,6 +44,12 @@ _Static_assert(PROJECTILE_LIST_SERIALIZED_SIZE == 5768,
 _Static_assert(EXPLOSION_LIST_SERIALIZED_SIZE == 2056,
                "ExplosionList serialized size must be 2056 bytes");
 
+
+static int projectile_digest_door_is_destroyed(const struct CellContentDigest_Compat* digest)
+{
+    return digest && digest->destDoorState == PROJECTILE_DOOR_STATE_DESTROYED;
+}
+
 /* ==========================================================
  *  Static tables.
  * ========================================================== */
@@ -329,7 +335,7 @@ int F0814_PROJECTILE_InspectDestination_Compat(
     }
     if (digest->destSquareType == PROJECTILE_ELEMENT_DOOR
         && digest->destDoorState != PROJECTILE_DOOR_STATE_NONE
-        && !digest->destDoorIsDestroyed
+        && !projectile_digest_door_is_destroyed(digest)
         && digest->destDoorState >= PROJECTILE_DOOR_STATE_CLOSED_HALF) {
         *outBlocker = PROJECTILE_BLOCKER_CLOSED_DOOR;
         return 1;
@@ -363,7 +369,7 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
     *outPasses = 0;
 
     /* Destroyed or fully open door — passes trivially. */
-    if (digest->destDoorIsDestroyed
+    if (projectile_digest_door_is_destroyed(digest)
         || digest->destDoorState == PROJECTILE_DOOR_STATE_OPEN
         || digest->destDoorState == PROJECTILE_DOOR_STATE_CLOSED_ONE_FOURTH) {
         *outPasses = 1;
@@ -589,10 +595,13 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
              * projectile does not use the door-destruction attack path;
              * if DOOR->Button is set it enqueues
              * F0268_SENSOR_AddEvent(C10_EVENT_DOOR, x, y, 0,
-             * C02_EFFECT_TOGGLE, GameTime+1). The digest has no
-             * DOOR->Button bit yet, so this pure seam exposes the
-             * source-locked delayed sensor event and lets the caller
-             * decide whether the actual door supports it. */
+             * C02_EFFECT_TOGGLE, GameTime+1). Without the button bit
+             * ReDMCSB just breaks from F0217: no destruction event, no
+             * sensor event, projectile consumed. */
+            if (!digest->destDoorHasButton) {
+                outResult->despawn = 1;
+                return 1;
+            }
             memset(&outResult->outNextTick, 0, sizeof(outResult->outNextTick));
             outResult->outNextTick.kind       = TIMELINE_EVENT_SENSOR_DELAYED;
             outResult->outNextTick.fireAtTick = currentTick + 1u;
@@ -882,7 +891,7 @@ MOTION_STEP:
         /* Intra-cell flip, did we land on a door inside the square? */
         if (digest->destSquareType == PROJECTILE_ELEMENT_DOOR
             && digest->destDoorState != PROJECTILE_DOOR_STATE_NONE
-            && !digest->destDoorIsDestroyed
+            && !projectile_digest_door_is_destroyed(digest)
             && digest->destDoorState >= PROJECTILE_DOOR_STATE_CLOSED_HALF) {
             int passesDoor = 0;
             F0816_PROJECTILE_DoesPassThroughDoor_Compat(
@@ -1184,7 +1193,7 @@ int F0822_EXPLOSION_Advance_Compat(
         }
         if (digest->destSquareType == PROJECTILE_ELEMENT_DOOR
             && digest->destDoorState != PROJECTILE_DOOR_STATE_NONE
-            && !digest->destDoorIsDestroyed) {
+            && !projectile_digest_door_is_destroyed(digest)) {
             memset(&outResult->outNextTick, 0, sizeof(outResult->outNextTick));
             outResult->outNextTick.kind       = TIMELINE_EVENT_DOOR_DESTRUCTION;
             outResult->outNextTick.fireAtTick = currentTick + 1u;

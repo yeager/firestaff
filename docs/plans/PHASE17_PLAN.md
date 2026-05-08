@@ -383,7 +383,7 @@ struct CellContentDigest_Compat {
     int destCreatureIsNonMaterial;       /* MASK0x0040                */
     int destDoorState;                   /* DOOR_STATE_OPEN..CLOSED_FULL..DESTROYED; -1 if not door */
     int destDoorAllowsProjectilePassThrough; /* MASK0x0002              */
-    int destDoorIsDestroyed;
+    int destDoorHasButton;
     int destIsMapBoundary;               /* 1 if dest is off-map (clamp boundary) */
     int reserved0;
     int reserved1;
@@ -720,7 +720,7 @@ MOTION_STEP:
         outResult->crossedCell = 1
     else:
         /* Not crossing — did we land on a door? */
-        if digest->destDoorState >= 0 && !digest->destDoorIsDestroyed:
+        if digest->destDoorState >= 0 && digest->destDoorState != PROJECTILE_DOOR_STATE_DESTROYED:
             dispatch = DOOR_HIT
             goto RESOLVE
 
