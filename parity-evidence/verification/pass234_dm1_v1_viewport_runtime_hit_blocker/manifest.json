@@ -1,0 +1,145 @@
+{
+  "artifact_policy": {
+    "json_and_markdown_only": true,
+    "no_screenshot_claim": true
+  },
+  "blocker": {
+    "exact_missing_input": "Need FIRES.MAP/public symbols or another reproducible debugger binding from ReDMCSB source seams/globals to loaded original FIRES CS:IP/data addresses.",
+    "id": "blocked/runtime-base-and-symbol-map-unavailable",
+    "promotion_guardrail": "No static source line, MZ entrypoint, or EXENEW offset may be promoted without verified_runtime_hit evidence.",
+    "required_formula": [
+      "runtime_cs = (PSP + 0x10) + map_segment",
+      "runtime_ip = map_offset"
+    ]
+  },
+  "debugger_inventory": {
+    "probes": {
+      "dosbox_debug_help_probe": {
+        "cmd": [
+          "bash",
+          "-lc",
+          "TERM=xterm timeout 3 dosbox-debug -help 2>&1 | head -40"
+        ],
+        "returncode": 0,
+        "stderr_tail": "",
+        "stdout_tail": " 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...\n\u001b[10d0000:0020     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...\n\u001b[11d0000:0030     60 10 00 F0 60 10 00 F0 80 10 00 F0 60 10 00 F0  `...`.\u001b[6b`...\n\u001b[12d0000:0040     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...\n\u001b[13d0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...\n\u001b[14d0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...\n\u001b[15d0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...\n\u001b[18d\u001b[32m\u001b[40m0000:0000  60\u001b[18X\u001b[18;32Hpusha\u001b[43X\n\u001b[19d\u001b(B\u001b[m\u001b[39;49m\u001b[37m\u001b[40m0000:0001  1000\u001b[19;32Hadc  [bx+si],al\u001b[19;60Hds:[0000]=1060\n\u001b[20d0000:0003  F060\u001b[20;32Hlock pusha\n\u001b[21d0000:0005  1000\u001b[21;32Hadc  [bx+si],al\u001b[21;60Hds:[0000]=1060\n\u001b[22d0000:0007  F060\u001b[22;32Hlock pusha\n\u001b[23d0000:0009  1000\u001b[23;32Hadc  [bx+si],al\u001b[23;60Hds:[0000]=1060\n\u001b[24d0000:000B  F060\u001b[24;32Hlock pusha\n\u001b[25d0000:000D  1000\u001b[25;32Hadc  [bx+si],al\u001b[25;60Hds:[0000]=1060\n\u001b[26d0000:000F  F060\u001b[26;32Hlock pusha\n\u001b[27d0000:0011  1000\u001b[27;32Hadc  [bx+si],al\u001b[27;60Hds:[0000]=1060\n\u001b[28d(Running)\u001b[2;5H0\u001b[7b\u001b[19G0\u001b[7b  DS=0000\u001b[42G0000\u001b[52G0000\u001b[62G0000\u001b[72G0000 Real\u001b[3;5H0\u001b[7b\u001b[19G0\u001b[7b  CS=0000\u001b[43G0\u001b[7b  C0 Z0 S0 O0 A0 P0 D0 I\u001b[33m\u001b[40m1\u001b(B\u001b[m\u001b[39;49m\u001b[37m\u001b[40m T0\u001b[4;5H0\u001b[7b\u001b[19G0\u001b[7b\u001b[73G0  CPL0\u001b[5;5H0\u001b[7b\u001b[19G0\u001b[7b\u001b[5;61H0\u001b[69G\u001b[44;10H0: SBLASTER:DSP:Reset\n\u001b[45d\u001b[45;10H0: IO:Read from port 0278\n\u001b[46d\u001b[46;10H0: IO:Read from port 0279\n\u001b[47d\u001b[47;10H0: IO:Read from port 03BC\n\u001b[48d\u001b[48;10H0: IO:Read from port 03BE\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: INT10:Set Video Mode 3\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: VGA:Blinking 8\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: BIOS:Keyboard layout file auto not found\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: BIOS:Keyboard layout file auto not found\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: FILES:file open command 2 file CON\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: FILES:file open command 2 file CON\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: FILES:file open command 2 file CON\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: FILES:file open command 2 file CON\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: EXEC:Parsing command line: AUTOEXEC.BAT\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: FILES:Special file open command 80 file Z:\\AUTOEXEC.BAT\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: FILES:Special file open command 80 file Z:\\AUTOEXEC.BAT\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6\n\u001b[49d\u001b[35d\u001b[M\u001b[48;10H0: FILES:Special file open command 80 file Z:\\AUTOEXEC.BAT\n\u001b[49d\u001b[35d\u001b[M\u001b[48;6H15000: VGA:h total 100 end 80 blank (80/98) retrace (85/97)\n\u001b[49d\u001b[35d\u001b[M\u001b[48;6H15000: VGA:v total 449 end 400 blank (407/442) retrace (412/414)\n\u001b[49d\u001b[35d\u001b[2M\u001b[47;6H15000: VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.0270\u001b[48;1H1/0.03082)\n\u001b[49d\u001b[35d\u001b[2M\u001b[47;6H15000: VGA:v total 14.26806 (70.09Hz) blank(12.93341/14.04562) retrace(13.0\u001b[48;1H9230/13.15585)\n\u001b[49d\u001b[35d\u001b[M\u001b[48;6H15000: VGA:Width 640, Height 400, fps 70.086592\n\u001b[49d\u001b[35d\u001b[M\u001b[48;6H15000: VGA:normal width, normal height aspect 1.000000\n\u001b[49d\u001b[39;49m\u001b[50d\u001b[K\u001b[50;1H\u001b[?12l\u001b[?25h\u001b[?1049l\u001b[23;0;0t\n\u001b[?1l\u001b>"
+      },
+      "dosbox_x_version_probe": {
+        "cmd": [
+          "dosbox-x",
+          "-version"
+        ],
+        "returncode": 1,
+        "stderr_tail": "\nDOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.\nDOSBox-X project maintainer: joncampbell123 (The Great Codeholio)\n\nDOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,\nand you are welcome to redistribute it under certain conditions;\nplease read the COPYING file thoroughly before doing so.\n\n",
+        "stdout_tail": ""
+      },
+      "fires_exenew_probe": {
+        "cmd": [
+          "bash",
+          "-lc",
+          "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
+        ],
+        "returncode": 0,
+        "stderr_tail": "",
+        "stdout_tail": ""
+      }
+    },
+    "symbol_map_exists": true,
+    "toolchain_root_exists": true,
+    "tools": {
+      "dosbox": "/usr/bin/dosbox",
+      "dosbox-debug": "/usr/bin/dosbox-debug",
+      "dosbox-x": "/usr/bin/dosbox-x",
+      "objdump": "/usr/bin/objdump",
+      "wine": "/usr/bin/wine"
+    }
+  },
+  "repo": "/home/trv2/work/firestaff-worktrees/n2-dm1v1-runtime-debugger-pass234-238-20260507121404",
+  "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
+  "source_audit": [
+    {
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "draw_uses_mutated_tuple",
+      "line_range": "GAMELOOP.C:55-95",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);": 90,
+        "F0261_TIMELINE_Process_CPSEF();": 69,
+        "for (;;) { /*_Infinite loop_*/": 55,
+        "if (!G0300_B_PartyIsResting) {": 84
+      },
+      "observable": "main loop consumes G0308_i_PartyDirection/G0306_i_PartyMapX/G0307_i_PartyMapY in the F0128 draw call",
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_buffer_composed",
+      "line_range": "DUNVIEW.C:8336-8611",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);": 8542,
+        "F0607_FreeMemForGraphic(G0074_puc_Bitmap_Temporary);": 8602,
+        "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);": 8367,
+        "G0074_puc_Bitmap_Temporary = F0606_AllocateMemForGraphic": 8355,
+        "G0076_B_UseFlippedWallAndFootprintsBitmaps = (P0184_i_MapX + P0185_i_MapY + P0183_i_Direction) & 0x0001": 8357,
+        "if (G0297_B_DrawFloorAndCeilingRequested) {": 8337
+      },
+      "observable": "I34E-family F0128 composes G0296_puc_Bitmap_Viewport from direction/X/Y before calling F0097",
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_present",
+      "line_range": "DRAWVIEW.C:709-858",
+      "missing_needles": [],
+      "needle_lines": {
+        "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);": 857,
+        "F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);": 850,
+        "switch (P0100_i_PaletteSwitchingRequestedState) {": 821,
+        "void F0097_DUNGEONVIEW_DrawViewport(": 709
+      },
+      "observable": "PC I34E-family F0097 resolves C007_ZONE_VIEWPORT and blits G0296_puc_Bitmap_Viewport via VIDRV_09_BlitViewPort",
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_RUNTIME_HITS_REQUIRED",
+  "symbol_map_guardrail": {
+    "entries": [
+      {
+        "id": "command_accepted",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "turn_or_step_state_applied",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "party_coordinates_committed",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "draw_uses_mutated_tuple",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "viewport_buffer_composed",
+        "verified_runtime_hit": true
+      },
+      {
+        "id": "viewport_present",
+        "verified_runtime_hit": false
+      }
+    ],
+    "entry_count": 6,
+    "exists": true,
+    "has_verified_runtime_hit": true
+  }
+}

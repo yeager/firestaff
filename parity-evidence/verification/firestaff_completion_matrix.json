@@ -1,0 +1,403 @@
+{
+  "schema": "firestaff.completion_matrix.v1",
+  "updatedAt": "2026-05-07T18:55:00+02:00",
+  "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
+  "criteria": [
+    {
+      "id": "reference_inventory",
+      "weight": 10,
+      "description": "Original/source reference inventory exists and is source-locked for this target."
+    },
+    {
+      "id": "definition_matrix",
+      "weight": 10,
+      "description": "Target-specific parity/completion matrix exists with clear acceptance labels."
+    },
+    {
+      "id": "launch_smoke",
+      "weight": 10,
+      "description": "Target launches or renders through a repeatable repo gate/smoke path."
+    },
+    {
+      "id": "core_input_movement",
+      "weight": 15,
+      "description": "Core input, movement/camera, command routing, and first viewport redraw path are source/runtime-gated."
+    },
+    {
+      "id": "viewport_ui_render",
+      "weight": 20,
+      "description": "Viewport, HUD, panels, title/menu, palette, graphics decode, and UI render surfaces are source/runtime-gated."
+    },
+    {
+      "id": "gameplay_systems",
+      "weight": 15,
+      "description": "Combat, creatures, items, spells, sensors, projectiles, save/load, lifecycle, and dungeon systems are original/source-gated."
+    },
+    {
+      "id": "audio_timing",
+      "weight": 10,
+      "description": "Audio content, trigger cadence, animation/timing, input responsiveness, and music/SFX overlap are original/source-gated."
+    },
+    {
+      "id": "original_overlay_regression",
+      "weight": 10,
+      "description": "Original runtime captures/overlays/regression gates prove pixel/behavior parity for representative states."
+    }
+  ],
+  "rows": [
+    {
+      "target": "DM1 V1",
+      "scores": {
+        "reference_inventory": [
+          10,
+          "DM1 PC 3.4 canonical anchors, ReDMCSB source and Greatstone references are present and repeatedly cited."
+        ],
+        "definition_matrix": [
+          10,
+          "docs/parity/PARITY_MATRIX_DM1_V1.md exists and carries DM1 V1 labels/status rows."
+        ],
+        "launch_smoke": [
+          8,
+          "M9/M10/M11 infrastructure and startup/menu/title gates exist, but current original route still has input/table blockers."
+        ],
+        "core_input_movement": [
+          9,
+          "pass296/pass299 source-lock input→tuple proof exists; pass333 still blocks keypad/table route into I34E command queue."
+        ],
+        "viewport_ui_render": [
+          10,
+          "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; full pixel/content parity remains open."
+        ],
+        "gameplay_systems": [
+          2,
+          "Semantic suites exist but most gameplay rows remain UNPROVEN or need original-backed cases."
+        ],
+        "audio_timing": [
+          3,
+          "Audio assets/event mapping are partly source-backed; cadence/timing overlap remain blocked/unproven."
+        ],
+        "original_overlay_regression": [
+          0,
+          "Representative original runtime overlay parity is not yet proven; route/capture remains active blocker."
+        ]
+      },
+      "status": "in_progress_verified_partial",
+      "primaryBlockers": [
+        "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E",
+        "Need proof whether G0444_ps_SecondaryKeyboardInput/dungeon keyboard table is installed before route keys.",
+        "Representative original runtime movement/HUD/viewport overlay parity missing."
+      ],
+      "completionPercent": 52,
+      "points": 52,
+      "maxPoints": 100
+    },
+    {
+      "target": "DM1 V2",
+      "scores": {
+        "reference_inventory": [
+          8,
+          "DM1 source/original inventory applies; V2 remains original-required but not separately complete."
+        ],
+        "definition_matrix": [
+          6,
+          "dm1_v2_completion_matrix/status artifacts exist but explicitly do not prove completion."
+        ],
+        "launch_smoke": [
+          5,
+          "Some V2 shell/scaffold gates exist; full launcher/preview smoke is unproven."
+        ],
+        "core_input_movement": [
+          4,
+          "Movement/camera scaffolds exist; source-locked V2 semantics incomplete."
+        ],
+        "viewport_ui_render": [
+          4,
+          "Viewport/wall/upscale scaffolds exist; full V2 render/material/UI gates absent."
+        ],
+        "gameplay_systems": [
+          0,
+          "No complete V2 gameplay-system parity gates."
+        ],
+        "audio_timing": [
+          0,
+          "No V2 audio/timing completion gates."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No V2 representative original-overlay regression proof."
+        ]
+      },
+      "status": "in_progress_verified_partial",
+      "primaryBlockers": [
+        "V2 completion audit says 100% is not verifiable; phases 1–6 remain absent/incomplete."
+      ],
+      "completionPercent": 27,
+      "points": 27,
+      "maxPoints": 100
+    },
+    {
+      "target": "CSB V1",
+      "scores": {
+        "reference_inventory": [
+          8,
+          "CSB source/runtime archives and source-lock boundary guard exist."
+        ],
+        "definition_matrix": [
+          2,
+          "A parity surface matrix artifact exists, but no complete CSB V1 DoD matrix."
+        ],
+        "launch_smoke": [
+          0,
+          "No complete CSB V1 launch/render smoke proof."
+        ],
+        "core_input_movement": [
+          0,
+          "No CSB V1 movement/input completion gates."
+        ],
+        "viewport_ui_render": [
+          0,
+          "No CSB V1 render/UI completion gates."
+        ],
+        "gameplay_systems": [
+          0,
+          "No CSB V1 gameplay completion gates."
+        ],
+        "audio_timing": [
+          0,
+          "No CSB V1 audio/timing completion gates."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No CSB V1 overlay regression proof."
+        ]
+      },
+      "status": "inventory_only",
+      "primaryBlockers": [
+        "Need CSB-specific parity matrix and launch/render gates; do not infer from DM1."
+      ],
+      "completionPercent": 10,
+      "points": 10,
+      "maxPoints": 100
+    },
+    {
+      "target": "CSB V2",
+      "scores": {
+        "reference_inventory": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ],
+        "definition_matrix": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ],
+        "launch_smoke": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ],
+        "core_input_movement": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ],
+        "viewport_ui_render": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ],
+        "gameplay_systems": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ],
+        "audio_timing": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No CSB V2 completion evidence/gate defined."
+        ]
+      },
+      "status": "not_started",
+      "primaryBlockers": [
+        "No CSB V2 matrix or gates."
+      ],
+      "completionPercent": 0,
+      "points": 0,
+      "maxPoints": 100
+    },
+    {
+      "target": "DM2 V1",
+      "scores": {
+        "reference_inventory": [
+          7,
+          "DM2 DOS archive and SKULL.ASM inventory exist; no ReDMCSB C source-lock equivalent."
+        ],
+        "definition_matrix": [
+          0,
+          "No DM2 V1 parity matrix."
+        ],
+        "launch_smoke": [
+          0,
+          "No DM2 V1 launch/render smoke proof."
+        ],
+        "core_input_movement": [
+          0,
+          "No DM2 V1 movement/input completion gates."
+        ],
+        "viewport_ui_render": [
+          0,
+          "No DM2 V1 render/UI completion gates."
+        ],
+        "gameplay_systems": [
+          0,
+          "No DM2 V1 gameplay completion gates."
+        ],
+        "audio_timing": [
+          0,
+          "No DM2 V1 audio/timing completion gates."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No DM2 V1 overlay regression proof."
+        ]
+      },
+      "status": "inventory_only",
+      "primaryBlockers": [
+        "Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB."
+      ],
+      "completionPercent": 7,
+      "points": 7,
+      "maxPoints": 100
+    },
+    {
+      "target": "DM2 V2",
+      "scores": {
+        "reference_inventory": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ],
+        "definition_matrix": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ],
+        "launch_smoke": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ],
+        "core_input_movement": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ],
+        "viewport_ui_render": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ],
+        "gameplay_systems": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ],
+        "audio_timing": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No DM2 V2 completion evidence/gate defined."
+        ]
+      },
+      "status": "not_started",
+      "primaryBlockers": [
+        "No DM2 V2 matrix or gates."
+      ],
+      "completionPercent": 0,
+      "points": 0,
+      "maxPoints": 100
+    },
+    {
+      "target": "DM Nexus V1",
+      "scores": {
+        "reference_inventory": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ],
+        "definition_matrix": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ],
+        "launch_smoke": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ],
+        "core_input_movement": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ],
+        "viewport_ui_render": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ],
+        "gameplay_systems": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ],
+        "audio_timing": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No DM Nexus V1 completion evidence/gate defined."
+        ]
+      },
+      "status": "not_started",
+      "primaryBlockers": [
+        "No DM Nexus V1 reference inventory, matrix, or gates."
+      ],
+      "completionPercent": 0,
+      "points": 0,
+      "maxPoints": 100
+    },
+    {
+      "target": "DM Nexus V2",
+      "scores": {
+        "reference_inventory": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ],
+        "definition_matrix": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ],
+        "launch_smoke": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ],
+        "core_input_movement": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ],
+        "viewport_ui_render": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ],
+        "gameplay_systems": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ],
+        "audio_timing": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No DM Nexus V2 completion evidence/gate defined."
+        ]
+      },
+      "status": "not_started",
+      "primaryBlockers": [
+        "No DM Nexus V2 reference inventory, matrix, or gates."
+      ],
+      "completionPercent": 0,
+      "points": 0,
+      "maxPoints": 100
+    }
+  ]
+}

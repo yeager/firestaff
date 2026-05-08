@@ -3,6 +3,14 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * Source-lock: ReDMCSB PANEL.C:F0337_INVENTORY_SetDungeonViewPalette_...
+ * computes the canonical dungeon light from torch charges plus magical light,
+ * then selects G0304_i_DungeonViewPaletteIndex.  DM1 V2 keeps that gameplay
+ * lighting semantic in the V1-compatible core; this module is a presentation-only
+ * additive light map/fog overlay for the modern viewport.
+ */
+
 static M11_V2_LightSource g_sources[M11_V2_LIGHT_MAX_SOURCES];
 static int g_source_count = 0;
 static M11_V2_LightMap g_light_map;

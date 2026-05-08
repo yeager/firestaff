@@ -1,6 +1,6 @@
 # Parity Matrix — DM1 V1 (Original-Compatible)
 
-Last updated: 2026-04-26
+Last updated: 2026-05-07
 
 Target: **Dungeon Master 1, PC DOS, VGA, English — 1:1 original-faithful behavior and presentation.**
 
@@ -107,7 +107,7 @@ Rules for this matrix:
 
 | Area | Original/Reference Evidence | Firestaff Current State | Status | Next Action |
 |------|---------------------------|------------------------|--------|-------------|
-| Movement and turning | `DUNGEON.C` source available | `verification-m10/movement-champions/` suite exists | `UNPROVEN` — suite tests internal consistency, not original-match | Add original-behavior-backed test cases |
+| Movement and turning | ReDMCSB-first source chain is locked for the movement input-to-party-tuple path: `GAMELOOP.C:F0002` drains keyboard input and calls `F0380_COMMAND_ProcessQueue_CPSC`; `COMMAND.C:F0361/F0380` maps controlled keys, writes/dequeues `G0432`, applies disabled-movement gates, and dispatches turns/moves; `CLIKMENU.C:F0365/F0366` handles turn/move command semantics; `MOVESENS.C:F0267` commits `G0306/G0307` and movement consequences; `DUNVIEW.C:F0128` consumes direction/mapX/mapY for viewport draw. Pass296 imports pass278/pass289/pass293 runtime support and returns `MOVEMENT_INPUT_TUPLE_PROOF_SOURCE_LOCKED_RUNTIME_SUPPORTED_DIRECT_F0380_BLOCKED_NOT_REQUIRED`. | Firestaff has source-lock/runtime-supported gates for the input queue, movement command core, movement pipeline/timing/sensors, entry movement-to-viewport, stairs/pits/projectile interlocks, and pass296 direct-F0380-not-required proof. The direct original F0380 entry/body breakpoint remains blocked and unclaimed; it is no longer a blocker for the movement source/runtime-supported proof. | `KNOWN_DIFF` (narrowed) — movement input→queue→dispatch-equivalent→party tuple→F0128 draw proof is source-locked and runtime-supported, but full original-behavior/pixel parity is not claimed. | Remaining movement blockers are tracked separately: obtain semantically party-control-ready original PC gameplay captures for movement/HUD/viewport overlays; if binary-level direct F0380 proof is needed later, produce decompressed FIRES/FIRES.MAP or live disassembly BPs around the post-prologue/dequeue window; expand original-backed cases for full movement side effects (groups/projectiles/sensors/environment timing) before promoting this row to `MATCHED`. See `parity-evidence/pass296_dm1_v1_input_tuple_proof_without_direct_f0380.md` and `parity-evidence/pass299_dm1_v1_movement_completion_matrix_gate.md`. |
 | Collision and doors | `DUNGEON.C` source available | `verification-m10/dungeon-doors-sensors/` suite exists | `UNPROVEN` | Add original-backed cases |
 | Combat and attack timing | `DUNGEON.C` source available | `verification-m10/combat/` suite exists | `UNPROVEN` | Add original-backed cases |
 | Creature AI/movement | `DUNGEON.C` source available | `verification-m10/creature-ai/` suite exists | `UNPROVEN` | Add original-backed cases |

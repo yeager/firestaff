@@ -15,10 +15,7 @@ import sys
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_REDMCSB_ROOT = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+DEFAULT_REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", DEFAULT_REDMCSB_ROOT))
 FIRESTAFF_SRC = ROOT / "m11_game_view.c"
 OUT_JSON = ROOT / "parity-evidence/verification/v1_status_refresh_order_redmcsb_gate.json"
@@ -29,7 +26,7 @@ SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "function": "F0292_CHAMPION_DrawState", "start": 843, "end": 940},
     {"file": "CHAMDRAW.C", "function": "F0292_CHAMPION_DrawState", "start": 1080, "end": 1110},
     {"file": "CHAMDRAW.C", "function": "F0293_CHAMPION_DrawAllChampionStates", "start": 1117, "end": 1139},
-    {"file": "m11_game_view.c", "function": "m11_draw_party_panel", "start": 18244, "end": 18474},
+    {"file": "m11_game_view.c", "function": "m11_draw_party_panel", "start": 18335, "end": 18680},
 ]
 
 
@@ -165,7 +162,7 @@ def verify_firestaff() -> list[dict[str, int | str]]:
         ],
         "Firestaff m11_draw_party_panel V1 status refresh order",
     )
-    require_excerpt(FIRESTAFF_SRC, "m11_game_view.c", 18244, 18474, [
+    require_excerpt(FIRESTAFF_SRC, "m11_game_view.c", 18335, 18680, [
         "V1 source status-box background",
         "before top-row",
         "V1 champion name/title status text",

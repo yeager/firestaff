@@ -1,0 +1,309 @@
+{
+  "checks": [
+    {
+      "kind": "report",
+      "markers": [
+        "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
+        "RESIDUAL_PASS348_I34E_DOS_KEYBOARD_BUFFER_NOT_PROVEN",
+        "INPUT.C",
+        "IO2.C",
+        "COMMAND.C",
+        "CLIKMENU.C"
+      ],
+      "ok": true
+    },
+    {
+      "file": "INPUT.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "298-430",
+      "markers": [
+        "F0543_INPUT_DeviceInterruptHandler",
+        "IECLASS_RAWKEY",
+        "G1044_B_MouseOrKeyboardInput"
+      ],
+      "ok": true
+    },
+    {
+      "file": "IO2.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "5-61",
+      "markers": [
+        "F0540_INPUT_Crawcin",
+        "IODRV_00_GetKeyboardInput",
+        "L2944_ui_ = 'L'",
+        "L2944_ui_ = 'P'",
+        "L2944_ui_ = 'K'",
+        "L2944_ui_ = 'M'"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "636-685",
+      "markers": [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+        "MEDIA707_I34E_I34M",
+        "0x004B",
+        "0x004C",
+        "0x004D",
+        "0x004F",
+        "0x0050",
+        "0x0051"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "1716-1808",
+      "markers": [
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G2153_i_QueuedCommandsCount++"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "2058-2100",
+      "markers": [
+        "G0435_B_CommandQueueLocked",
+        "G2153_i_QueuedCommandsCount == 0",
+        "F0360_COMMAND_ProcessPendingClick"
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "142-174",
+      "markers": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection",
+        "G0321_B_StopWaitingForPlayerInput"
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "180-330",
+      "markers": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0357_COMMAND_DiscardAllInput"
+      ],
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "if (strcmp(name, \"kp-1\") == 0 || strcmp(name, \"kp1\") == 0) return SDLK_KP_1",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "if (strcmp(name, \"kp-6\") == 0 || strcmp(name, \"kp6\") == 0) return SDLK_KP_6",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "case SDLK_KP_5:",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "case SDLK_KP_1:",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "product_marker",
+      "marker": "case SDLK_KP_6:",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "m11_dm1_v1_pipeline_command_for_input",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "No OS keypad/NumLock synthesis is involved",
+      "ok": true
+    },
+    {
+      "kind": "cmake_configure",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "-S",
+          "/home/trv2/work/firestaff",
+          "-B",
+          "/tmp/firestaff-pass348-verify2"
+        ],
+        "outputTail": "-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Configuring done (0.7s)\n-- Generating done (0.3s)\n-- Build files have been written to: /tmp/firestaff-pass348-verify2\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "cmake_build_targets",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "--build",
+          "/tmp/firestaff-pass348-verify2",
+          "--target",
+          "test_dm1_v1_input_command_queue_pc34_compat",
+          "-j1"
+        ],
+        "outputTail": "Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_transaction_pc34_compat.c.o\n[ 82%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_used_list_pc34_compat.c.o\n[ 82%] Building C object CMakeFiles/firestaff_m10.dir/memory_graphics_dat_viewport_path_pc34_compat.c.o\n[ 82%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_expand_pc34_compat.c.o\n[ 82%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_pipeline_pc34_compat.c.o\n[ 84%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_session_pc34_compat.c.o\n[ 84%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_transaction_pc34_compat.c.o\n[ 84%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_wrappers_pc34_compat.c.o\n[ 84%] Building C object CMakeFiles/firestaff_m10.dir/memory_load_wrappers_transaction_pc34_compat.c.o\n[ 86%] Building C object CMakeFiles/firestaff_m10.dir/memory_magic_pc34_compat.c.o\n[ 86%] Building C object CMakeFiles/firestaff_m10.dir/memory_movement_pc34_compat.c.o\n[ 86%] Building C object CMakeFiles/firestaff_m10.dir/memory_native_or_graphic_pc34_compat.c.o\n[ 86%] Building C object CMakeFiles/firestaff_m10.dir/memory_projectile_pc34_compat.c.o\n[ 86%] Building C object CMakeFiles/firestaff_m10.dir/memory_runtime_dynamics_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m10.dir/memory_savegame_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m10.dir/memory_sensor_execution_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m10.dir/memory_tick_orchestrator_pc34_compat.c.o\n[ 88%] Building C object CMakeFiles/firestaff_m10.dir/memory_timeline_pc34_compat.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m10.dir/multi_frame_runtime_driver_pc34_compat.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m10.dir/panel_chest_mouse_routes_pc34_compat.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m10.dir/party_resting_input_routes_pc34_compat.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m10.dir/rename_route_family_pc34_compat.c.o\n[ 91%] Building C object CMakeFiles/firestaff_m10.dir/resurrect_reincarnate_cancel_routes_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m10.dir/save_rest_toggle_consequences_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_export_pgm_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_export_ppm_falsecolor_pc34_compat.c.o\n[ 93%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_export_ppm_vga_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/firestaff_m10.dir/screen_bitmap_present_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/firestaff_m10.dir/selector_frontend_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/firestaff_m10.dir/special_palette_constants_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/firestaff_m10.dir/spell_area_routes_pc34_compat.c.o\n[ 95%] Building C object CMakeFiles/firestaff_m10.dir/spell_area_symbol_routes_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/firestaff_m10.dir/startup_runtime_driver_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/firestaff_m10.dir/stateful_boot_plan_reachability_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/firestaff_m10.dir/stateful_runtime_driver_pc34_compat.c.o\n[ 97%] Building C object CMakeFiles/firestaff_m10.dir/swsh_frontend_pc34_compat.c.o\n[100%] Building C object CMakeFiles/firestaff_m10.dir/touch_click_zone_matrix_pc34_compat.c.o\n[100%] Building C object CMakeFiles/firestaff_m10.dir/touch_pointer_input_pc34_compat.c.o\n[100%] Building C object CMakeFiles/firestaff_m10.dir/vga_palette_pc34_compat.c.o\n[100%] Linking C static library libfirestaff_m10.a\n[100%] Built target firestaff_m10\n[100%] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/test_dm1_v1_input_command_queue_pc34_compat.c.o\n[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[100%] Built target test_dm1_v1_input_command_queue_pc34_compat\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "executable_gate",
+      "name": "test_dm1_v1_input_command_queue_pc34_compat",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/tmp/firestaff-pass348-verify2/test_dm1_v1_input_command_queue_pc34_compat"
+        ],
+        "outputTail": "probe=dm1_v1_input_command_queue_pc34_compat\nsourceEvidence=COMMAND.C:6,106-121,252-260,272-305,677-684,1304-1377,1379-1449,1452-1661,1692-1707,1709-1813,2045-2156,2831-2928; IO2.C:27-61; CLIKMENU.C:142-174,180-330; MENUDRAW.C:5-19\ndm1V1InputCommandQueueInvariantOk=1\n",
+        "returncode": 0
+      }
+    }
+  ],
+  "decision": {
+    "i34eDosKeyboardBufferProven": false,
+    "m11SdlNumlockKeypadRouteClosed": true,
+    "pass333BlockerFullyClosed": false,
+    "residual": "RESIDUAL_PASS348_I34E_DOS_KEYBOARD_BUFFER_NOT_PROVEN"
+  },
+  "productMarkers": [
+    {
+      "file": "main_loop_m11.c",
+      "marker": "if (strcmp(name, \"kp-1\") == 0 || strcmp(name, \"kp1\") == 0) return SDLK_KP_1"
+    },
+    {
+      "file": "main_loop_m11.c",
+      "marker": "if (strcmp(name, \"kp-6\") == 0 || strcmp(name, \"kp6\") == 0) return SDLK_KP_6"
+    },
+    {
+      "file": "main_loop_m11.c",
+      "marker": "case SDLK_KP_5:"
+    },
+    {
+      "file": "main_loop_m11.c",
+      "marker": "case SDLK_KP_1:"
+    },
+    {
+      "file": "main_loop_m11.c",
+      "marker": "case SDLK_KP_6:"
+    },
+    {
+      "file": "m11_game_view.c",
+      "marker": "m11_dm1_v1_pipeline_command_for_input"
+    },
+    {
+      "file": "m11_game_view.c",
+      "marker": "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat"
+    },
+    {
+      "file": "m11_game_view.c",
+      "marker": "No OS keypad/NumLock synthesis is involved"
+    }
+  ],
+  "schema": "pass348_dm1_v1_numlock_keypad_blocker_closure.v1",
+  "sourceLocks": [
+    {
+      "file": "INPUT.C",
+      "lines": "298-430",
+      "markers": [
+        "F0543_INPUT_DeviceInterruptHandler",
+        "IECLASS_RAWKEY",
+        "G1044_B_MouseOrKeyboardInput"
+      ]
+    },
+    {
+      "file": "IO2.C",
+      "lines": "5-61",
+      "markers": [
+        "F0540_INPUT_Crawcin",
+        "IODRV_00_GetKeyboardInput",
+        "L2944_ui_ = 'L'",
+        "L2944_ui_ = 'P'",
+        "L2944_ui_ = 'K'",
+        "L2944_ui_ = 'M'"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "636-685",
+      "markers": [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+        "MEDIA707_I34E_I34M",
+        "0x004B",
+        "0x004C",
+        "0x004D",
+        "0x004F",
+        "0x0050",
+        "0x0051"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "1716-1808",
+      "markers": [
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G2153_i_QueuedCommandsCount++"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2058-2100",
+      "markers": [
+        "G0435_B_CommandQueueLocked",
+        "G2153_i_QueuedCommandsCount == 0",
+        "F0360_COMMAND_ProcessPendingClick"
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "markers": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection",
+        "G0321_B_StopWaitingForPlayerInput"
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-330",
+      "markers": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0357_COMMAND_DiscardAllInput"
+      ]
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
+  "timestampUtc": "2026-05-07T19:49:09.730039+00:00"
+}

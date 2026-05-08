@@ -1,5 +1,5 @@
 ok
-graphicsDatPath=/Users/bosse/.firestaff/data/GRAPHICS.DAT
+graphicsDatPath=<local-home>/.firestaff/data/GRAPHICS.DAT
 outputPrefix=verification/pass59-title-handoff/title_hold
 bootScript=m7_reachability_b
 bootPublishedFrameCount=50
@@ -119,5 +119,5 @@ titleFrontendOriginalFrameCount=54
 titleFrontendFallbackFrameCount=0
 titleFrontendHandoffReadyCount=2
 titleFrontendHeldLastFrameCount=1
-titleFrontendTitleDatPath=/Users/bosse/.openclaw/data/redmcsb-original/TITLE
+titleFrontendTitleDatPath=<local-home>/.openclaw/data/redmcsb-original/TITLE
 titleHoldRepeatCount=54

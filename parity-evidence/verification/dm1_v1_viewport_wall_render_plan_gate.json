@@ -1,0 +1,2602 @@
+{
+  "boundary": {
+    "d4Decision": "D4 needs no local PC34 wall draw specs: F0128 has no D4 wall bitmap/zone branch and only calls F0115 object/content rendering with BACKLEFT cell order",
+    "notClaimed": "original pixel parity, screenshot comparison, or decoded GRAPHICS.DAT byte equality",
+    "nowProduced": "deterministic wall render events plus comparator-ready expected wall pixel-region descriptors (viewport rect, source clip, layout zone, wall-set graphic index), with D4 object-stack events sourced to F0128/F0115",
+    "remainingBlocker": null
+  },
+  "comparedSnapshots": [
+    {
+      "d4ObjectRows": [
+        "D4L",
+        "D4R"
+      ],
+      "expectedWallRows": [
+        "D4L",
+        "D4R",
+        "D3R2",
+        "D3L",
+        "D3C",
+        "D2R2",
+        "D2L",
+        "D2R",
+        "D1C",
+        "D0L"
+      ],
+      "name": "start_south",
+      "parityFlip": false,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "renderEvents": [
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": 2,
+          "mapY": 7,
+          "pixelRegion": null,
+          "row": "D4L",
+          "source": "DUNVIEW.C:8468-8469",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 1,
+          "viewSquare": "M598_VIEW_SQUARE_D4L"
+        },
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": 0,
+          "mapY": 7,
+          "pixelRegion": null,
+          "row": "D4R",
+          "source": "DUNVIEW.C:8472-8473",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 1,
+          "viewSquare": "M599_VIEW_SQUARE_D4R"
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 6,
+          "nativeWall": "DM1_WALL_D3R2",
+          "parityWall": "DM1_WALL_D3L2",
+          "pc34Zone": 703,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 180,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 103,
+            "zone": 703
+          },
+          "row": "D3R2",
+          "selectedWall": "DM1_WALL_D3R2",
+          "source": "DUNVIEW.C:6321-6327",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 2,
+          "mapY": 6,
+          "nativeWall": "DM1_WALL_D3L",
+          "parityWall": "DM1_WALL_D3R",
+          "pc34Zone": 705,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 83,
+              "x": 7,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 83,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 106,
+            "zone": 705
+          },
+          "row": "D3L",
+          "selectedWall": "DM1_WALL_D3L",
+          "source": "DUNVIEW.C:6421-6427",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 1,
+          "mapY": 6,
+          "nativeWall": "DM1_WALL_D3C",
+          "parityWall": "DM1_WALL_D3C",
+          "pc34Zone": 704,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 70,
+              "x": 77,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 70,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 107,
+            "zone": 704
+          },
+          "row": "D3C",
+          "selectedWall": "DM1_WALL_D3C",
+          "source": "DUNVIEW.C:6707-6714",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2R2",
+          "parityWall": "DM1_WALL_D2L2",
+          "pc34Zone": 708,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 52,
+              "width": 8,
+              "x": 216,
+              "y": 24
+            },
+            "selectedWall": "DM1_WALL_D2R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 98,
+            "zone": 708
+          },
+          "row": "D2R2",
+          "selectedWall": "DM1_WALL_D2R2",
+          "source": "DUNVIEW.C:6880-6889",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 2,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2L",
+          "parityWall": "DM1_WALL_D2R",
+          "pc34Zone": 710,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 101,
+            "zone": 710
+          },
+          "row": "D2L",
+          "selectedWall": "DM1_WALL_D2L",
+          "source": "DUNVIEW.C:6954-6964",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 0,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2R",
+          "parityWall": "DM1_WALL_D2L",
+          "pc34Zone": 711,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 146,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 100,
+            "zone": 711
+          },
+          "row": "D2R",
+          "selectedWall": "DM1_WALL_D2R",
+          "source": "DUNVIEW.C:7105-7115",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 1,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D1C",
+          "parityWall": "DM1_WALL_D1C",
+          "pc34Zone": 712,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 111,
+              "width": 160,
+              "x": 32,
+              "y": 9
+            },
+            "selectedWall": "DM1_WALL_D1C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 111,
+              "width": 160,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 97,
+            "zone": 712
+          },
+          "row": "D1C",
+          "selectedWall": "DM1_WALL_D1C",
+          "source": "DUNVIEW.C:7833-7840",
+          "valid": 1,
+          "wallCaseReturns": false
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 2,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D0L",
+          "parityWall": "DM1_WALL_D0R",
+          "pc34Zone": 716,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "selectedWall": "DM1_WALL_D0L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 94,
+            "zone": 716
+          },
+          "row": "D0L",
+          "selectedWall": "DM1_WALL_D0L",
+          "source": "DUNVIEW.C:8016-8033",
+          "valid": 1,
+          "wallCaseReturns": true
+        }
+      ],
+      "status": "PASS_RENDER_PLAN",
+      "unsupportedWallRows": []
+    },
+    {
+      "d4ObjectRows": [
+        "D4L",
+        "D4R",
+        "D4C"
+      ],
+      "expectedWallRows": [
+        "D4L",
+        "D4R",
+        "D4C",
+        "D3L2",
+        "D3R2",
+        "D3L",
+        "D3R",
+        "D3C",
+        "D2L2",
+        "D2R2",
+        "D2L",
+        "D2R",
+        "D2C",
+        "D1R",
+        "D0L",
+        "D0R"
+      ],
+      "name": "turn_right_west",
+      "parityFlip": true,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "renderEvents": [
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": -3,
+          "mapY": 4,
+          "pixelRegion": null,
+          "row": "D4L",
+          "source": "DUNVIEW.C:8468-8469",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 0,
+          "viewSquare": "M598_VIEW_SQUARE_D4L"
+        },
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": -3,
+          "mapY": 2,
+          "pixelRegion": null,
+          "row": "D4R",
+          "source": "DUNVIEW.C:8472-8473",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 0,
+          "viewSquare": "M599_VIEW_SQUARE_D4R"
+        },
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": -3,
+          "mapY": 3,
+          "pixelRegion": null,
+          "row": "D4C",
+          "source": "DUNVIEW.C:8476-8477",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 0,
+          "viewSquare": "M597_VIEW_SQUARE_D4C"
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -2,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D3L2",
+          "parityWall": "DM1_WALL_D3R2",
+          "pc34Zone": 702,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 104,
+            "zone": 702
+          },
+          "row": "D3L2",
+          "selectedWall": "DM1_WALL_D3R2",
+          "source": "DUNVIEW.C:6254-6260",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -2,
+          "mapY": 1,
+          "nativeWall": "DM1_WALL_D3R2",
+          "parityWall": "DM1_WALL_D3L2",
+          "pc34Zone": 703,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 180,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3L2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 103,
+            "zone": 703
+          },
+          "row": "D3R2",
+          "selectedWall": "DM1_WALL_D3L2",
+          "source": "DUNVIEW.C:6321-6327",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -2,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D3L",
+          "parityWall": "DM1_WALL_D3R",
+          "pc34Zone": 705,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 83,
+              "x": 7,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 83,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 106,
+            "zone": 705
+          },
+          "row": "D3L",
+          "selectedWall": "DM1_WALL_D3R",
+          "source": "DUNVIEW.C:6421-6427",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -2,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D3R",
+          "parityWall": "DM1_WALL_D3L",
+          "pc34Zone": 706,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 83,
+              "x": 134,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 83,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 105,
+            "zone": 706
+          },
+          "row": "D3R",
+          "selectedWall": "DM1_WALL_D3L",
+          "source": "DUNVIEW.C:6554-6564",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -2,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D3C",
+          "parityWall": "DM1_WALL_D3C",
+          "pc34Zone": 704,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 70,
+              "x": 77,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 70,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 107,
+            "zone": 704
+          },
+          "row": "D3C",
+          "selectedWall": "DM1_WALL_D3C",
+          "source": "DUNVIEW.C:6707-6714",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2L2",
+          "parityWall": "DM1_WALL_D2R2",
+          "pc34Zone": 707,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 24
+            },
+            "selectedWall": "DM1_WALL_D2R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 99,
+            "zone": 707
+          },
+          "row": "D2L2",
+          "selectedWall": "DM1_WALL_D2R2",
+          "source": "DUNVIEW.C:6849-6858",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 1,
+          "nativeWall": "DM1_WALL_D2R2",
+          "parityWall": "DM1_WALL_D2L2",
+          "pc34Zone": 708,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 52,
+              "width": 8,
+              "x": 216,
+              "y": 24
+            },
+            "selectedWall": "DM1_WALL_D2L2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 98,
+            "zone": 708
+          },
+          "row": "D2R2",
+          "selectedWall": "DM1_WALL_D2L2",
+          "source": "DUNVIEW.C:6880-6889",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -1,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D2L",
+          "parityWall": "DM1_WALL_D2R",
+          "pc34Zone": 710,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 101,
+            "zone": 710
+          },
+          "row": "D2L",
+          "selectedWall": "DM1_WALL_D2R",
+          "source": "DUNVIEW.C:6954-6964",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -1,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D2R",
+          "parityWall": "DM1_WALL_D2L",
+          "pc34Zone": 711,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 146,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 100,
+            "zone": 711
+          },
+          "row": "D2R",
+          "selectedWall": "DM1_WALL_D2L",
+          "source": "DUNVIEW.C:7105-7115",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -1,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D2C",
+          "parityWall": "DM1_WALL_D2C",
+          "pc34Zone": 709,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 106,
+              "x": 59,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 106,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 102,
+            "zone": 709
+          },
+          "row": "D2C",
+          "selectedWall": "DM1_WALL_D2C",
+          "source": "DUNVIEW.C:7299-7306",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 0,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D1R",
+          "parityWall": "DM1_WALL_D1L",
+          "pc34Zone": 714,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 111,
+              "width": 60,
+              "x": 164,
+              "y": 9
+            },
+            "selectedWall": "DM1_WALL_D1L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 111,
+              "width": 60,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 95,
+            "zone": 714
+          },
+          "row": "D1R",
+          "selectedWall": "DM1_WALL_D1L",
+          "source": "DUNVIEW.C:7613-7623",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 1,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D0L",
+          "parityWall": "DM1_WALL_D0R",
+          "pc34Zone": 716,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "selectedWall": "DM1_WALL_D0R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 94,
+            "zone": 716
+          },
+          "row": "D0L",
+          "selectedWall": "DM1_WALL_D0R",
+          "source": "DUNVIEW.C:8016-8033",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 1,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D0R",
+          "parityWall": "DM1_WALL_D0L",
+          "pc34Zone": 717,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 136,
+              "width": 33,
+              "x": 191,
+              "y": 0
+            },
+            "selectedWall": "DM1_WALL_D0L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 93,
+            "zone": 717
+          },
+          "row": "D0R",
+          "selectedWall": "DM1_WALL_D0L",
+          "source": "DUNVIEW.C:8126-8139",
+          "valid": 1,
+          "wallCaseReturns": true
+        }
+      ],
+      "status": "PASS_RENDER_PLAN",
+      "unsupportedWallRows": []
+    },
+    {
+      "d4ObjectRows": [
+        "D4L",
+        "D4R",
+        "D4C"
+      ],
+      "expectedWallRows": [
+        "D4L",
+        "D4R",
+        "D4C",
+        "D3L2",
+        "D3R2",
+        "D3L",
+        "D3R",
+        "D3C",
+        "D2L2",
+        "D2R2",
+        "D2L",
+        "D2R",
+        "D2C",
+        "D1L",
+        "D1R",
+        "D1C",
+        "D0R"
+      ],
+      "name": "move_forward_west",
+      "parityFlip": false,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "renderEvents": [
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": -4,
+          "mapY": 4,
+          "pixelRegion": null,
+          "row": "D4L",
+          "source": "DUNVIEW.C:8468-8469",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 0,
+          "viewSquare": "M598_VIEW_SQUARE_D4L"
+        },
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": -4,
+          "mapY": 2,
+          "pixelRegion": null,
+          "row": "D4R",
+          "source": "DUNVIEW.C:8472-8473",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 0,
+          "viewSquare": "M599_VIEW_SQUARE_D4R"
+        },
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": -4,
+          "mapY": 3,
+          "pixelRegion": null,
+          "row": "D4C",
+          "source": "DUNVIEW.C:8476-8477",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 0,
+          "viewSquare": "M597_VIEW_SQUARE_D4C"
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -3,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D3L2",
+          "parityWall": "DM1_WALL_D3R2",
+          "pc34Zone": 702,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3L2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 104,
+            "zone": 702
+          },
+          "row": "D3L2",
+          "selectedWall": "DM1_WALL_D3L2",
+          "source": "DUNVIEW.C:6254-6260",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -3,
+          "mapY": 1,
+          "nativeWall": "DM1_WALL_D3R2",
+          "parityWall": "DM1_WALL_D3L2",
+          "pc34Zone": 703,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 180,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 103,
+            "zone": 703
+          },
+          "row": "D3R2",
+          "selectedWall": "DM1_WALL_D3R2",
+          "source": "DUNVIEW.C:6321-6327",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -3,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D3L",
+          "parityWall": "DM1_WALL_D3R",
+          "pc34Zone": 705,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 83,
+              "x": 7,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 83,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 106,
+            "zone": 705
+          },
+          "row": "D3L",
+          "selectedWall": "DM1_WALL_D3L",
+          "source": "DUNVIEW.C:6421-6427",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -3,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D3R",
+          "parityWall": "DM1_WALL_D3L",
+          "pc34Zone": 706,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 83,
+              "x": 134,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 83,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 105,
+            "zone": 706
+          },
+          "row": "D3R",
+          "selectedWall": "DM1_WALL_D3R",
+          "source": "DUNVIEW.C:6554-6564",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -3,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D3C",
+          "parityWall": "DM1_WALL_D3C",
+          "pc34Zone": 704,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 70,
+              "x": 77,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 70,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 107,
+            "zone": 704
+          },
+          "row": "D3C",
+          "selectedWall": "DM1_WALL_D3C",
+          "source": "DUNVIEW.C:6707-6714",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -2,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2L2",
+          "parityWall": "DM1_WALL_D2R2",
+          "pc34Zone": 707,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 24
+            },
+            "selectedWall": "DM1_WALL_D2L2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 99,
+            "zone": 707
+          },
+          "row": "D2L2",
+          "selectedWall": "DM1_WALL_D2L2",
+          "source": "DUNVIEW.C:6849-6858",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -2,
+          "mapY": 1,
+          "nativeWall": "DM1_WALL_D2R2",
+          "parityWall": "DM1_WALL_D2L2",
+          "pc34Zone": 708,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 52,
+              "width": 8,
+              "x": 216,
+              "y": 24
+            },
+            "selectedWall": "DM1_WALL_D2R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 98,
+            "zone": 708
+          },
+          "row": "D2R2",
+          "selectedWall": "DM1_WALL_D2R2",
+          "source": "DUNVIEW.C:6880-6889",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -2,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D2L",
+          "parityWall": "DM1_WALL_D2R",
+          "pc34Zone": 710,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 101,
+            "zone": 710
+          },
+          "row": "D2L",
+          "selectedWall": "DM1_WALL_D2L",
+          "source": "DUNVIEW.C:6954-6964",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -2,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D2R",
+          "parityWall": "DM1_WALL_D2L",
+          "pc34Zone": 711,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 146,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 100,
+            "zone": 711
+          },
+          "row": "D2R",
+          "selectedWall": "DM1_WALL_D2R",
+          "source": "DUNVIEW.C:7105-7115",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -2,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D2C",
+          "parityWall": "DM1_WALL_D2C",
+          "pc34Zone": 709,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 106,
+              "x": 59,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 106,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 102,
+            "zone": 709
+          },
+          "row": "D2C",
+          "selectedWall": "DM1_WALL_D2C",
+          "source": "DUNVIEW.C:7299-7306",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D1L",
+          "parityWall": "DM1_WALL_D1R",
+          "pc34Zone": 713,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 111,
+              "width": 60,
+              "x": 0,
+              "y": 9
+            },
+            "selectedWall": "DM1_WALL_D1L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 111,
+              "width": 60,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 96,
+            "zone": 713
+          },
+          "row": "D1L",
+          "selectedWall": "DM1_WALL_D1L",
+          "source": "DUNVIEW.C:7445-7455",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D1R",
+          "parityWall": "DM1_WALL_D1L",
+          "pc34Zone": 714,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 111,
+              "width": 60,
+              "x": 164,
+              "y": 9
+            },
+            "selectedWall": "DM1_WALL_D1R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 111,
+              "width": 60,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 95,
+            "zone": 714
+          },
+          "row": "D1R",
+          "selectedWall": "DM1_WALL_D1R",
+          "source": "DUNVIEW.C:7613-7623",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": -1,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D1C",
+          "parityWall": "DM1_WALL_D1C",
+          "pc34Zone": 712,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 111,
+              "width": 160,
+              "x": 32,
+              "y": 9
+            },
+            "selectedWall": "DM1_WALL_D1C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 111,
+              "width": 160,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 97,
+            "zone": 712
+          },
+          "row": "D1C",
+          "selectedWall": "DM1_WALL_D1C",
+          "source": "DUNVIEW.C:7833-7840",
+          "valid": 0,
+          "wallCaseReturns": false
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 0,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D0R",
+          "parityWall": "DM1_WALL_D0L",
+          "pc34Zone": 717,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 136,
+              "width": 33,
+              "x": 191,
+              "y": 0
+            },
+            "selectedWall": "DM1_WALL_D0R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 93,
+            "zone": 717
+          },
+          "row": "D0R",
+          "selectedWall": "DM1_WALL_D0R",
+          "source": "DUNVIEW.C:8126-8139",
+          "valid": 1,
+          "wallCaseReturns": true
+        }
+      ],
+      "status": "PASS_RENDER_PLAN",
+      "unsupportedWallRows": []
+    },
+    {
+      "d4ObjectRows": [
+        "D4R",
+        "D4C"
+      ],
+      "expectedWallRows": [
+        "D4R",
+        "D4C",
+        "D3L2",
+        "D3R2",
+        "D2L",
+        "D2R",
+        "D2C",
+        "D1C",
+        "D0L",
+        "D0R"
+      ],
+      "name": "turn_left_east",
+      "parityFlip": true,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "renderEvents": [
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": 5,
+          "mapY": 4,
+          "pixelRegion": null,
+          "row": "D4R",
+          "source": "DUNVIEW.C:8472-8473",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 1,
+          "viewSquare": "M599_VIEW_SQUARE_D4R"
+        },
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": 5,
+          "mapY": 3,
+          "pixelRegion": null,
+          "row": "D4C",
+          "source": "DUNVIEW.C:8476-8477",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 1,
+          "viewSquare": "M597_VIEW_SQUARE_D4C"
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 4,
+          "mapY": 1,
+          "nativeWall": "DM1_WALL_D3L2",
+          "parityWall": "DM1_WALL_D3R2",
+          "pc34Zone": 702,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 104,
+            "zone": 702
+          },
+          "row": "D3L2",
+          "selectedWall": "DM1_WALL_D3R2",
+          "source": "DUNVIEW.C:6254-6260",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 4,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D3R2",
+          "parityWall": "DM1_WALL_D3L2",
+          "pc34Zone": 703,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 180,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3L2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 103,
+            "zone": 703
+          },
+          "row": "D3R2",
+          "selectedWall": "DM1_WALL_D3L2",
+          "source": "DUNVIEW.C:6321-6327",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 3,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D2L",
+          "parityWall": "DM1_WALL_D2R",
+          "pc34Zone": 710,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 101,
+            "zone": 710
+          },
+          "row": "D2L",
+          "selectedWall": "DM1_WALL_D2R",
+          "source": "DUNVIEW.C:6954-6964",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 3,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D2R",
+          "parityWall": "DM1_WALL_D2L",
+          "pc34Zone": 711,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 146,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 100,
+            "zone": 711
+          },
+          "row": "D2R",
+          "selectedWall": "DM1_WALL_D2L",
+          "source": "DUNVIEW.C:7105-7115",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 3,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D2C",
+          "parityWall": "DM1_WALL_D2C",
+          "pc34Zone": 709,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 106,
+              "x": 59,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 106,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 102,
+            "zone": 709
+          },
+          "row": "D2C",
+          "selectedWall": "DM1_WALL_D2C",
+          "source": "DUNVIEW.C:7299-7306",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 2,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D1C",
+          "parityWall": "DM1_WALL_D1C",
+          "pc34Zone": 712,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 111,
+              "width": 160,
+              "x": 32,
+              "y": 9
+            },
+            "selectedWall": "DM1_WALL_D1C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 111,
+              "width": 160,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 97,
+            "zone": 712
+          },
+          "row": "D1C",
+          "selectedWall": "DM1_WALL_D1C",
+          "source": "DUNVIEW.C:7833-7840",
+          "valid": 1,
+          "wallCaseReturns": false
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 1,
+          "mapY": 2,
+          "nativeWall": "DM1_WALL_D0L",
+          "parityWall": "DM1_WALL_D0R",
+          "pc34Zone": 716,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "selectedWall": "DM1_WALL_D0R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 94,
+            "zone": 716
+          },
+          "row": "D0L",
+          "selectedWall": "DM1_WALL_D0R",
+          "source": "DUNVIEW.C:8016-8033",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": true,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 1,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D0R",
+          "parityWall": "DM1_WALL_D0L",
+          "pc34Zone": 717,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 136,
+              "width": 33,
+              "x": 191,
+              "y": 0
+            },
+            "selectedWall": "DM1_WALL_D0L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 93,
+            "zone": 717
+          },
+          "row": "D0R",
+          "selectedWall": "DM1_WALL_D0L",
+          "source": "DUNVIEW.C:8126-8139",
+          "valid": 1,
+          "wallCaseReturns": true
+        }
+      ],
+      "status": "PASS_RENDER_PLAN",
+      "unsupportedWallRows": []
+    },
+    {
+      "d4ObjectRows": [
+        "D4L",
+        "D4R"
+      ],
+      "expectedWallRows": [
+        "D4L",
+        "D4R",
+        "D3R2",
+        "D3L",
+        "D3C",
+        "D2R2",
+        "D2L",
+        "D2R",
+        "D1C",
+        "D0L"
+      ],
+      "name": "blocked_forward_south_wall",
+      "parityFlip": false,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "renderEvents": [
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": 2,
+          "mapY": 7,
+          "pixelRegion": null,
+          "row": "D4L",
+          "source": "DUNVIEW.C:8468-8469",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 1,
+          "viewSquare": "M598_VIEW_SQUARE_D4L"
+        },
+        {
+          "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+          "comparatorBoundary": "content event only; compare through F0115 object/creature/projectile/explosion regions, not wall bitmap regions",
+          "event": "draw_d4_f0115_object_stack",
+          "localWallSpecRequired": false,
+          "mapX": 0,
+          "mapY": 7,
+          "pixelRegion": null,
+          "row": "D4R",
+          "source": "DUNVIEW.C:8472-8473",
+          "sourcePredicate": "F0128 D4 path has no wall bitmap/zone draw; it directly delegates visible content to F0115",
+          "thingLayers": [
+            "objects",
+            "creatures",
+            "projectiles",
+            "explosions"
+          ],
+          "valid": 1,
+          "viewSquare": "M599_VIEW_SQUARE_D4R"
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 6,
+          "nativeWall": "DM1_WALL_D3R2",
+          "parityWall": "DM1_WALL_D3L2",
+          "pc34Zone": 703,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 44,
+              "x": 180,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 44,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 103,
+            "zone": 703
+          },
+          "row": "D3R2",
+          "selectedWall": "DM1_WALL_D3R2",
+          "source": "DUNVIEW.C:6321-6327",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 2,
+          "mapY": 6,
+          "nativeWall": "DM1_WALL_D3L",
+          "parityWall": "DM1_WALL_D3R",
+          "pc34Zone": 705,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 83,
+              "x": 7,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 83,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 106,
+            "zone": 705
+          },
+          "row": "D3L",
+          "selectedWall": "DM1_WALL_D3L",
+          "source": "DUNVIEW.C:6421-6427",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 1,
+          "mapY": 6,
+          "nativeWall": "DM1_WALL_D3C",
+          "parityWall": "DM1_WALL_D3C",
+          "pc34Zone": 704,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 49,
+              "width": 70,
+              "x": 77,
+              "y": 25
+            },
+            "selectedWall": "DM1_WALL_D3C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 49,
+              "width": 70,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 107,
+            "zone": 704
+          },
+          "row": "D3C",
+          "selectedWall": "DM1_WALL_D3C",
+          "source": "DUNVIEW.C:6707-6714",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": -1,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2R2",
+          "parityWall": "DM1_WALL_D2L2",
+          "pc34Zone": 708,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 52,
+              "width": 8,
+              "x": 216,
+              "y": 24
+            },
+            "selectedWall": "DM1_WALL_D2R2",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 52,
+              "width": 8,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 98,
+            "zone": 708
+          },
+          "row": "D2R2",
+          "selectedWall": "DM1_WALL_D2R2",
+          "source": "DUNVIEW.C:6880-6889",
+          "valid": 0,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 2,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2L",
+          "parityWall": "DM1_WALL_D2R",
+          "pc34Zone": 710,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 101,
+            "zone": 710
+          },
+          "row": "D2L",
+          "selectedWall": "DM1_WALL_D2L",
+          "source": "DUNVIEW.C:6954-6964",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 0,
+          "mapY": 5,
+          "nativeWall": "DM1_WALL_D2R",
+          "parityWall": "DM1_WALL_D2L",
+          "pc34Zone": 711,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 74,
+              "width": 78,
+              "x": 146,
+              "y": 19
+            },
+            "selectedWall": "DM1_WALL_D2R",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 74,
+              "width": 78,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 100,
+            "zone": 711
+          },
+          "row": "D2R",
+          "selectedWall": "DM1_WALL_D2R",
+          "source": "DUNVIEW.C:7105-7115",
+          "valid": 1,
+          "wallCaseReturns": true
+        },
+        {
+          "centerWall": true,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": true,
+          "mapX": 1,
+          "mapY": 4,
+          "nativeWall": "DM1_WALL_D1C",
+          "parityWall": "DM1_WALL_D1C",
+          "pc34Zone": 712,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 111,
+              "width": 160,
+              "x": 32,
+              "y": 9
+            },
+            "selectedWall": "DM1_WALL_D1C",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 111,
+              "width": 160,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 97,
+            "zone": 712
+          },
+          "row": "D1C",
+          "selectedWall": "DM1_WALL_D1C",
+          "source": "DUNVIEW.C:7833-7840",
+          "valid": 1,
+          "wallCaseReturns": false
+        },
+        {
+          "centerWall": false,
+          "event": "draw_wall_bitmap",
+          "flipHorizontally": false,
+          "frontAlcoveMayRevealContents": false,
+          "mapX": 2,
+          "mapY": 3,
+          "nativeWall": "DM1_WALL_D0L",
+          "parityWall": "DM1_WALL_D0R",
+          "pc34Zone": 716,
+          "pixelRegion": {
+            "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+            "kind": "expected_wall_bitmap_region",
+            "layout": 696,
+            "rect": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "selectedWall": "DM1_WALL_D0L",
+            "source": "COORD.C:F0635_ layout-696 zone resolution; DUNVIEW.C wall draw call cited by event.source",
+            "sourceClip": {
+              "height": 136,
+              "width": 33,
+              "x": 0,
+              "y": 0
+            },
+            "viewport": {
+              "height": 136,
+              "origin": "DUNVIEW.C viewport bitmap G0296_puc_Bitmap_Viewport",
+              "width": 224
+            },
+            "wallSetGraphicIndex": 94,
+            "zone": 716
+          },
+          "row": "D0L",
+          "selectedWall": "DM1_WALL_D0L",
+          "source": "DUNVIEW.C:8016-8033",
+          "valid": 1,
+          "wallCaseReturns": true
+        }
+      ],
+      "status": "PASS_RENDER_PLAN",
+      "unsupportedWallRows": []
+    }
+  ],
+  "d4SourceAudit": {
+    "auditedRange": "DUNVIEW.C:8466-8477",
+    "predicate": "D4L/D4R/D4C call F0150 then F0115 with BACKLEFT cell order only; the D4 window contains no local PC34 wall bitmap/zone draw call",
+    "redmcsbSource": "<redmcsb-source>/Toolchains/Common/Source/DUNVIEW.C",
+    "rows": {
+      "D4C": {
+        "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+        "relDepth": 4,
+        "relLateral": 0,
+        "source": "DUNVIEW.C:8476-8477",
+        "viewSquare": "M597_VIEW_SQUARE_D4C"
+      },
+      "D4L": {
+        "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+        "relDepth": 4,
+        "relLateral": -1,
+        "source": "DUNVIEW.C:8468-8469",
+        "viewSquare": "M598_VIEW_SQUARE_D4L"
+      },
+      "D4R": {
+        "cellOrder": "C0x0001_CELL_ORDER_BACKLEFT",
+        "relDepth": 4,
+        "relLateral": 1,
+        "source": "DUNVIEW.C:8472-8473",
+        "viewSquare": "M599_VIEW_SQUARE_D4R"
+      }
+    }
+  },
+  "pixelComparatorPromotionBlockers": [
+    "Need captured original DM1 PC34 viewport pixels for the same pass127 route snapshots, including crop sha256 and palette provenance",
+    "Need decoded GRAPHICS.DAT wall-set bitmap bytes keyed by selectedWall/wallSetGraphicIndex with asset sha256 and palette table",
+    "Need a comparator harness to blit expected wall regions over the floor/ceiling base and then apply F0115 content layers for D4/content events"
+  ],
+  "schema": "dm1_v1_viewport_wall_render_plan_gate.v1",
+  "sourceInputs": {
+    "localWallMetadata": "dm1_v1_viewport_3d_pc34_compat.c",
+    "pass127": "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
+    "redmcsbOrder": "DUNVIEW.C:8318-8542 F0128 far-to-near draw order",
+    "redmcsbWallSpecs": "DUNVIEW.C:6254-8144 PC34 wall cases and occlusion returns",
+    "redmcsbZoneDefines": "DEFS.H:4042-4057 C702..C717 wall-zone IDs",
+    "redmcsbZoneResolver": "COORD.C:F0635_ layout-696 zone-to-viewport clipping semantics",
+    "regionDerivation": "tools/resolve_dm1_zone.py + parity-evidence/dm1_all_graphics_phase10_source_front_walls.md + parity-evidence/dm1_all_graphics_phase11_source_side_walls.md"
+  },
+  "status": "PASS_RENDER_PLAN_COMPARATOR_SEAM",
+  "unsupportedWallRows": []
+}

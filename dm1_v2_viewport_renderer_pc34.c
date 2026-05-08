@@ -1,129 +1,12 @@
 #include "dm1_v2_viewport_renderer_pc34.h"
-#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static uint8_t clamp_u8(int val) {
     if (val < 0) return 0;
     if (val > 255) return 255;
     return (uint8_t)val;
-}
-
-/* Source-locked V2 viewport material metadata.
- *
- * ReDMCSB WIP20210206 anchors:
- *   DEFS.H:2407 names C000_DERIVED_BITMAP_VIEWPORT as a 224x136 derived bitmap.
- *   DEFS.H:2478/2484 defines C112_BYTE_WIDTH_VIEWPORT and C136_HEIGHT_VIEWPORT.
- *   DUNVIEW.C:581-593 defines G0163_aauc_Graphic558_Frame_Walls clip/blit zones
- *     for D3C..D0R as {X1, X2, Y1, Y2, ByteWidth, Height, X, Y}.
- *   DUNVIEW.C:734-753 defines G0188_aauc_Graphic558_FieldAspects for D3C..D0R.
- *   DUNVIEW.C:2968-2971 clears 37 black lines, copies a 224x29 ceiling band,
- *     then copies a 224x70 floor band.
- *   DUNVIEW.C:8318-8542 F0128 draws visible squares back-to-front; the wall-zone
- *     drawOrder below follows its D3L/D3R/D3C, D2L/D2R/D2C, D1L/D1R/D1C,
- *     D0L/D0R/D0C order for same-generation V2 clipping/occlusion checks.
- * Existing V1 parity module dm1_v1_viewport_3d_pc34_compat.c keeps the original
- * draw behavior; this table is V2-only metadata for the modern material pass.
- */
-static const DM1_V2_FieldAspect s_field_aspects[DM1_V2_FIELD_ASPECT_COUNT] = {
-    {0, 63, 0x8A, 0xFF,  76,  51,  0, 64}, /* D3C */
-    {0, 63, 0x0A, 0x80,  84,  51, 11, 64}, /* D3L */
-    {0, 63, 0x0A, 0x00,  85,  51,  0, 64}, /* D3R */
-    {0, 60, 0x8A, 0xFF, 104,  71,  0, 64}, /* D2C */
-    {0, 63, 0x0A, 0x81,  80,  71,  5, 64}, /* D2L, MEDIA488 PC */
-    {0, 63, 0x0A, 0x01,  80,  71,  0, 64}, /* D2R, MEDIA488 PC */
-    {0, 61, 0x8A, 0xFF, 160, 111,  0, 64}, /* D1C */
-    {0, 63, 0x0A, 0x82,  59, 111,  0, 64}, /* D1L */
-    {0, 63, 0x0A, 0x02,  59, 111,  0, 64}, /* D1R */
-    {0, 59, 0x8A, 0xFF, 224, 136,  0, 64}, /* D0C */
-    {0, 63, 0x0A, 0x83,  32, 136,  0, 64}, /* D0L */
-    {0, 63, 0x0A, 0x03,  32, 136,  0, 64}, /* D0R */
-};
-
-static const int16_t s_wall_set_default[DM1_V2_WALL_SET_COUNT] = {
-    -17, -16, -15, -14, -13,
-     -9,  -8, -12, -11, -10,
-     -4,  -3,  -7,  -6,  -5
-};
-
-static const DM1_V2_WallZone s_wall_zones[DM1_V2_WALL_ZONE_COUNT] = {
-    /* x1, x2, y1, y2, byteWidth, height, blitX, blitY, sourceZone, depth, lane, drawOrder */
-    { 74, 149, 25,  75,  64,  51,  18, 0, 704, 3,  0,  2 }, /* D3C */
-    {  0,  83, 25,  75,  64,  51,  32, 0, 705, 3, -1,  0 }, /* D3L */
-    {139, 223, 25,  75,  64,  51,   0, 0, 706, 3,  1,  1 }, /* D3R */
-    { 60, 163, 20,  90,  72,  71,  16, 0, 709, 2,  0,  5 }, /* D2C */
-    {  0,  74, 20,  90,  72,  71,  61, 0, 710, 2, -1,  3 }, /* D2L */
-    {149, 223, 20,  90,  72,  71,   0, 0, 711, 2,  1,  4 }, /* D2R */
-    { 32, 191,  9, 119, 128, 111,  48, 0, 712, 1,  0,  8 }, /* D1C */
-    {  0,  63,  9, 119, 128, 111, 192, 0, 713, 1, -1,  6 }, /* D1L */
-    {160, 223,  9, 119, 128, 111,   0, 0, 714, 1,  1,  7 }, /* D1R */
-    {  0, 223,  0, 135,   0,   0,   0, 0, 715, 0,  0, 11 }, /* D0C */
-    {  0,  31,  0, 135,  16, 136,   0, 0, 716, 0, -1,  9 }, /* D0L */
-    {192, 223,  0, 135,  16, 136,   0, 0, 717, 0,  1, 10 }  /* D0R */
-};
-
-int dm1_v2_vp_source_width(void) {
-    return DM1_V2_VIEWPORT_W;
-}
-
-int dm1_v2_vp_source_height(void) {
-    return DM1_V2_VIEWPORT_H;
-}
-
-int dm1_v2_vp_source_byte_width(void) {
-    return DM1_V2_VIEWPORT_BYTE_W;
-}
-
-DM1_V2_ViewMaterial dm1_v2_vp_material_at(int x, int y) {
-    if (x < 0 || x >= DM1_V2_VIEWPORT_W || y < 0 || y >= DM1_V2_VIEWPORT_H) {
-        return DM1_V2_VIEW_MATERIAL_OUT_OF_BOUNDS;
-    }
-    if (y < DM1_V2_VIEWPORT_CEILING_H) {
-        return DM1_V2_VIEW_MATERIAL_CEILING;
-    }
-    if (y < DM1_V2_VIEWPORT_BLACK_AREA_H) {
-        return DM1_V2_VIEW_MATERIAL_BLACK;
-    }
-    if (y >= DM1_V2_VIEWPORT_FLOOR_Y) {
-        return DM1_V2_VIEW_MATERIAL_FLOOR;
-    }
-    return DM1_V2_VIEW_MATERIAL_WALL;
-}
-
-const DM1_V2_FieldAspect* dm1_v2_vp_field_aspect(DM1_V2_FieldAspectId id) {
-    if (id < 0 || id >= DM1_V2_FIELD_ASPECT_COUNT) return NULL;
-    return &s_field_aspects[id];
-}
-
-int16_t dm1_v2_vp_wall_set_default(int idx) {
-    if (idx < 0 || idx >= DM1_V2_WALL_SET_COUNT) return 0;
-    return s_wall_set_default[idx];
-}
-
-const DM1_V2_WallZone* dm1_v2_vp_wall_zone(DM1_V2_WallZoneId id) {
-    if (id < 0 || id >= DM1_V2_WALL_ZONE_COUNT) return NULL;
-    return &s_wall_zones[id];
-}
-
-int dm1_v2_vp_wall_zone_clip(DM1_V2_WallZoneId id, DM1_V2_Rect* outRect) {
-    const DM1_V2_WallZone* zone = dm1_v2_vp_wall_zone(id);
-    if (!zone || !outRect) return 0;
-
-    outRect->x1 = zone->x1 < DM1_V2_VIEWPORT_W ? zone->x1 : DM1_V2_VIEWPORT_W - 1;
-    outRect->y1 = zone->y1 < DM1_V2_VIEWPORT_H ? zone->y1 : DM1_V2_VIEWPORT_H - 1;
-    outRect->x2 = zone->x2 < DM1_V2_VIEWPORT_W ? zone->x2 : DM1_V2_VIEWPORT_W - 1;
-    outRect->y2 = zone->y2 < DM1_V2_VIEWPORT_H ? zone->y2 : DM1_V2_VIEWPORT_H - 1;
-    return outRect->x1 <= outRect->x2 && outRect->y1 <= outRect->y2;
-}
-
-int dm1_v2_vp_wall_zone_occludes(DM1_V2_WallZoneId front, DM1_V2_WallZoneId back) {
-    DM1_V2_Rect a;
-    DM1_V2_Rect b;
-    const DM1_V2_WallZone* frontZone = dm1_v2_vp_wall_zone(front);
-    const DM1_V2_WallZone* backZone = dm1_v2_vp_wall_zone(back);
-    if (!frontZone || !backZone) return 0;
-    if (frontZone->drawOrder <= backZone->drawOrder) return 0;
-    if (!dm1_v2_vp_wall_zone_clip(front, &a) || !dm1_v2_vp_wall_zone_clip(back, &b)) return 0;
-    return a.x1 <= b.x2 && b.x1 <= a.x2 && a.y1 <= b.y2 && b.y1 <= a.y2;
 }
 
 void dm1_v2_vp_init(DM1_V2_ViewportState* vp) {
@@ -356,10 +239,656 @@ int dm1_v2_vp_is_dirty(const DM1_V2_ViewportState* vp) {
     return vp->dirty;
 }
 
+
+int dm1_v2_vp_use_flipped_wall_bitmaps(int mapX, int mapY, int direction) {
+    /* Source-lock: ReDMCSB DUNVIEW.C:8357 uses
+       G0076_B_UseFlippedWallAndFootprintsBitmaps = (P0184_i_MapX + P0185_i_MapY + P0183_i_Direction) & 0x0001. */
+    return (mapX + mapY + direction) & 0x0001;
+}
+
+int dm1_v2_vp_square_occludes_beyond(DM1_V2_ViewSquare square, int element) {
+    /* Source-lock: ReDMCSB DUNVIEW.C:6697-6720 draws D3C wall and returns before
+       DUNVIEW.C:6816 object/creature/projectile/explosion draw, so a center wall
+       terminates the forward composition lane. Doors/corridors still continue into
+       the pass-specific draw-order path at DUNVIEW.C:6721-6816. */
+    return square == DM1_V2_VIEW_SQUARE_D3C && element == DM1_V2_ELEMENT_WALL;
+}
+
+
+static int dm1_v2_vp_lateral_index(int lateral) {
+    if (lateral < 0) return 0;
+    if (lateral > 0) return 2;
+    return 1;
+}
+
+static DM1_V2_ViewSquare dm1_v2_vp_square_id(int depth, int lateral) {
+    if (depth == 3 && lateral < 0) return DM1_V2_VIEW_SQUARE_D3L;
+    if (depth == 3 && lateral > 0) return DM1_V2_VIEW_SQUARE_D3R;
+    if (depth == 3) return DM1_V2_VIEW_SQUARE_D3C;
+    if (depth == 2 && lateral < 0) return DM1_V2_VIEW_SQUARE_D2L;
+    if (depth == 2 && lateral > 0) return DM1_V2_VIEW_SQUARE_D2R;
+    if (depth == 2) return DM1_V2_VIEW_SQUARE_D2C;
+    if (depth == 1 && lateral < 0) return DM1_V2_VIEW_SQUARE_D1L;
+    if (depth == 1 && lateral > 0) return DM1_V2_VIEW_SQUARE_D1R;
+    if (depth == 1) return DM1_V2_VIEW_SQUARE_D1C;
+    if (depth == 0 && lateral < 0) return DM1_V2_VIEW_SQUARE_D0L;
+    if (depth == 0 && lateral > 0) return DM1_V2_VIEW_SQUARE_D0R;
+    if (depth == 0) return DM1_V2_VIEW_SQUARE_D0C;
+    return DM1_V2_VIEW_SQUARE_OTHER;
+}
+
+static int dm1_v2_vp_push_draw(DM1_V2_DrawCommand* outCommands,
+                               int maxCommands,
+                               int* count,
+                               DM1_V2_DrawOp op,
+                               DM1_V2_ViewSquare square,
+                               int depth,
+                               int lateral,
+                               int element,
+                               int order,
+                               const char* sourceRef) {
+    if (!outCommands || !count || *count < 0 || maxCommands < 0) return 0;
+    if (*count >= maxCommands) return 0;
+    outCommands[*count].op = op;
+    outCommands[*count].square = square;
+    outCommands[*count].depth = depth;
+    outCommands[*count].lateral = lateral;
+    outCommands[*count].element = element;
+    outCommands[*count].order = order;
+    outCommands[*count].sourceRef = sourceRef;
+    (*count)++;
+    return 1;
+}
+
+
+
+static uint16_t dm1_v2_read_le16(const uint8_t* bytes, int offset) {
+    return (uint16_t)(bytes[offset] | ((uint16_t)bytes[offset + 1] << 8));
+}
+
+int dm1_v2_vp_dungeon_dat_init(DM1_V2_DungeonDatState* outState,
+                               const uint8_t* bytes,
+                               int byteCount) {
+    int mapTableOffset = 44;
+    int mapStructSize = 16;
+    int mapTableEnd = 0;
+    int rawOffset = 0;
+    if (!outState || !bytes || byteCount < mapTableOffset + 2) return 0;
+    memset(outState, 0, sizeof(*outState));
+    outState->bytes = bytes;
+    outState->byteCount = byteCount;
+    outState->ornamentRandomSeed = dm1_v2_read_le16(bytes, 0);
+    outState->rawMapDataByteCount = dm1_v2_read_le16(bytes, 2);
+    outState->mapCount = bytes[4];
+    outState->textDataWordCount = dm1_v2_read_le16(bytes, 6);
+    outState->initialPartyLocation = dm1_v2_read_le16(bytes, 8);
+    outState->squareFirstThingCount = dm1_v2_read_le16(bytes, 10);
+    outState->initialMapX = outState->initialPartyLocation & 0x001F;
+    outState->initialMapY = (outState->initialPartyLocation >> 5) & 0x001F;
+    outState->initialDirection = (outState->initialPartyLocation >> 10) & 0x0003;
+    if (outState->mapCount == 0 || outState->mapCount > DM1_V2_MAX_DUNGEON_MAPS) return 0;
+    mapTableEnd = mapTableOffset + outState->mapCount * mapStructSize;
+    if (byteCount < mapTableEnd) return 0;
+
+    /* Source-lock: ReDMCSB LOADSAVE.C:906-923 reads RawMapDataByteCount and then
+       builds G0279_pppuc_DungeonMapData columns from G0276_puc_DungeonRawMapData +
+       MAP.RawMapDataByteOffset. The canonical PC34 DUNGEON.DAT stores a trailing
+       checksum after raw map data, so this decoder anchors raw map data at EOF - 2 - count. */
+    rawOffset = byteCount - 2 - (int)outState->rawMapDataByteCount;
+    if (rawOffset < mapTableEnd || rawOffset + (int)outState->rawMapDataByteCount > byteCount) return 0;
+    outState->rawMapDataFileOffset = rawOffset;
+    outState->checksumFileOffset = rawOffset + (int)outState->rawMapDataByteCount;
+
+    for (int i = 0; i < outState->mapCount; i++) {
+        const int off = mapTableOffset + i * mapStructSize;
+        DM1_V2_DungeonDatMap* map = &outState->maps[i];
+        map->rawMapDataByteOffset = dm1_v2_read_le16(bytes, off + 0);
+        map->offsetMapX = bytes[off + 6];
+        map->offsetMapY = bytes[off + 7];
+        map->packedA = dm1_v2_read_le16(bytes, off + 8);
+        map->packedB = dm1_v2_read_le16(bytes, off + 10);
+        map->packedC = dm1_v2_read_le16(bytes, off + 12);
+        map->packedD = dm1_v2_read_le16(bytes, off + 14);
+        /* Source-lock: DEFS.H:972-1016 MAP.A bitfields on PC/I34E are Level:6,
+           Width:5, Height:5; DUNGEON.C:2276-2277 exposes dimensions as +1. */
+        map->level = map->packedA & 0x003F;
+        map->width = ((map->packedA >> 6) & 0x001F) + 1;
+        map->height = ((map->packedA >> 11) & 0x001F) + 1;
+        if (map->width <= 0 || map->height <= 0) return 0;
+        if ((int)map->rawMapDataByteOffset + map->width * map->height > (int)outState->rawMapDataByteCount) return 0;
+        map->column0 = bytes + rawOffset + map->rawMapDataByteOffset;
+    }
+    return 1;
+}
+
+int dm1_v2_vp_dungeon_dat_get_square_raw(const DM1_V2_DungeonDatState* state,
+                                         int mapIndex,
+                                         int mapX,
+                                         int mapY,
+                                         uint8_t* outSquare) {
+    const DM1_V2_DungeonDatMap* map;
+    if (!state || !outSquare || mapIndex < 0 || mapIndex >= state->mapCount) return 0;
+    map = &state->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) {
+        *outSquare = 0; /* ReDMCSB F0151 returns a wall square type for out-of-bounds. */
+        return 1;
+    }
+    /* Source-lock: LOADSAVE.C:917-923 stores column pointers; each next column advances by height+1. */
+    *outSquare = map->column0[mapX * map->height + mapY];
+    return 1;
+}
+
+int dm1_v2_vp_square_element_from_raw(uint8_t square, int direction) {
+    int type = square >> 5; /* Source-lock: DEFS.H:922-941 M034_SQUARE_TYPE. */
+    direction &= 3;
+    switch (type) {
+        case 0: return DM1_V2_ELEMENT_WALL;
+        case 1: return DM1_V2_ELEMENT_CORRIDOR;
+        case 2: return DM1_V2_ELEMENT_PIT;
+        case 3:
+            /* Source-lock: DUNGEON.C:2238-2239 turns stair raw type into side/front aspect. */
+            return (((square & 0x08) >> 3) == (direction & 1)) ? DM1_V2_ELEMENT_STAIRS_SIDE : DM1_V2_ELEMENT_STAIRS_FRONT;
+        case 4:
+            /* Source-lock: DUNGEON.C:2243-2246 turns door raw type into side/front aspect. */
+            return (((square & 0x08) >> 3) == (direction & 1)) ? DM1_V2_ELEMENT_DOOR_SIDE : DM1_V2_ELEMENT_DOOR_FRONT;
+        case 5: return DM1_V2_ELEMENT_TELEPORTER;
+        case 6:
+            /* Closed fake walls become wall aspect; open fake walls become corridor (DUNGEON.C:2199-2210). */
+            return (square & 0x04) ? DM1_V2_ELEMENT_CORRIDOR : DM1_V2_ELEMENT_WALL;
+        default: return DM1_V2_ELEMENT_WALL;
+    }
+}
+
+int dm1_v2_vp_build_composition_from_dungeon(const DM1_V2_DungeonDatState* state,
+                                             int mapIndex,
+                                             int mapX,
+                                             int mapY,
+                                             int direction,
+                                             DM1_V2_ViewportCompositionInput* outInput) {
+    static const int kDepthOrder[12] = {3,3,3, 2,2,2, 1,1,1, 0,0,0};
+    static const int kLateralOrder[12] = {-1,1,0, -1,1,0, -1,1,0, -1,1,0};
+    if (!state || !outInput || mapIndex < 0 || mapIndex >= state->mapCount) return 0;
+    dm1_v2_vp_composition_init(outInput);
+    outInput->mapX = mapX;
+    outInput->mapY = mapY;
+    outInput->direction = direction & 3;
+    for (int i = 0; i < 12; i++) {
+        int x = 0;
+        int y = 0;
+        uint8_t raw = 0;
+        int depth = kDepthOrder[i];
+        int lateral = kLateralOrder[i];
+        int lateralIndex = dm1_v2_vp_lateral_index(lateral);
+        if (!dm1_v2_vp_relative_coords(direction, mapX, mapY, depth, lateral, &x, &y)) return 0;
+        if (!dm1_v2_vp_dungeon_dat_get_square_raw(state, mapIndex, x, y, &raw)) return 0;
+        outInput->squares[depth][lateralIndex].element = dm1_v2_vp_square_element_from_raw(raw, direction);
+        outInput->squares[depth][lateralIndex].hasObjects = (raw & 0x10) ? 1 : 0;
+        outInput->squares[depth][lateralIndex].hasField = ((raw >> 5) == 5 && (raw & 0x0C) == 0x0C) ? 1 : 0;
+    }
+    return 1;
+}
+
+static const DM1_V2_DungeonFixtureSquare k_dm1_pc34_entry_state_squares[] = {
+    /* Real DM1 PC34 start: DUNGEON.DAT offset 8 decodes to map0 x=1 y=3 dir=2.
+       pass173/pass162 source audits identify the front square x=1,y=4 as the wall
+       champion-portrait sensor square. This fixture keeps the rest corridor until
+       a full DUNGEON.DAT square decoder is landed. */
+    {1, 4, DM1_V2_ELEMENT_WALL, 0, 0},
+};
+
+static const DM1_V2_DungeonStateFixture k_dm1_pc34_entry_state_fixture = {
+    "dm1_pc34_entry_portrait_wall",
+    "DUNGEON.DAT offset 8 + DEFS.H:989-998 + LOADSAVE.C:1940-1945 + pass173 front-wall sensor audit",
+    "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    0,
+    1,
+    3,
+    2,
+    DM1_V2_ELEMENT_CORRIDOR,
+    k_dm1_pc34_entry_state_squares,
+    (int)(sizeof(k_dm1_pc34_entry_state_squares) / sizeof(k_dm1_pc34_entry_state_squares[0])),
+};
+
+static DM1_V2_ViewportSquareInput dm1_v2_vp_lookup_fixture_square(const DM1_V2_DungeonStateFixture* fixture,
+                                                                   int mapX,
+                                                                   int mapY) {
+    DM1_V2_ViewportSquareInput square;
+    square.element = fixture ? fixture->defaultElement : DM1_V2_ELEMENT_WALL;
+    square.hasObjects = 0;
+    square.hasField = 0;
+    if (!fixture || !fixture->squares || fixture->squareCount <= 0) return square;
+    for (int i = 0; i < fixture->squareCount; i++) {
+        const DM1_V2_DungeonFixtureSquare* candidate = &fixture->squares[i];
+        if (candidate->mapX == mapX && candidate->mapY == mapY) {
+            square.element = candidate->element;
+            square.hasObjects = candidate->hasObjects;
+            square.hasField = candidate->hasField;
+            return square;
+        }
+    }
+    return square;
+}
+
+int dm1_v2_vp_relative_coords(int direction,
+                              int mapX,
+                              int mapY,
+                              int forward,
+                              int right,
+                              int* outX,
+                              int* outY) {
+    /* Source-lock: ReDMCSB DUNGEON.C:35-44 direction step tables and
+       DUNGEON.C:1371-1391 F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement. */
+    static const int kStepEast[4] = {0, 1, 0, -1};
+    static const int kStepNorth[4] = {-1, 0, 1, 0};
+    if (!outX || !outY) return 0;
+    direction &= 3;
+    int rightDirection = (direction + 1) & 3;
+    *outX = mapX + kStepEast[direction] * forward + kStepEast[rightDirection] * right;
+    *outY = mapY + kStepNorth[direction] * forward + kStepNorth[rightDirection] * right;
+    return 1;
+}
+
+const DM1_V2_DungeonStateFixture* dm1_v2_vp_dm1_pc34_entry_state_fixture(void) {
+    return &k_dm1_pc34_entry_state_fixture;
+}
+
+int dm1_v2_vp_build_composition_from_fixture(const DM1_V2_DungeonStateFixture* fixture,
+                                             int mapX,
+                                             int mapY,
+                                             int direction,
+                                             DM1_V2_ViewportCompositionInput* outInput) {
+    static const int kDepthOrder[12] = {3,3,3, 2,2,2, 1,1,1, 0,0,0};
+    static const int kLateralOrder[12] = {-1,1,0, -1,1,0, -1,1,0, -1,1,0};
+    if (!fixture || !outInput) return 0;
+    dm1_v2_vp_composition_init(outInput);
+    outInput->mapX = mapX;
+    outInput->mapY = mapY;
+    outInput->direction = direction & 3;
+    for (int i = 0; i < 12; i++) {
+        int x = 0;
+        int y = 0;
+        int depth = kDepthOrder[i];
+        int lateral = kLateralOrder[i];
+        int lateralIndex = dm1_v2_vp_lateral_index(lateral);
+        if (!dm1_v2_vp_relative_coords(direction, mapX, mapY, depth, lateral, &x, &y)) return 0;
+        outInput->squares[depth][lateralIndex] = dm1_v2_vp_lookup_fixture_square(fixture, x, y);
+    }
+    return 1;
+}
+
+int dm1_v2_vp_compare_viewport_region(const DM1_V2_Color* expected,
+                                      const DM1_V2_Color* actual,
+                                      int stride,
+                                      DM1_V2_ViewportRegion region,
+                                      DM1_V2_RegionCompareResult* result) {
+    if (result) {
+        result->comparedPixels = 0;
+        result->mismatchedPixels = 0;
+        result->firstMismatchX = -1;
+        result->firstMismatchY = -1;
+    }
+    if (!expected || !actual || stride <= 0 || region.width <= 0 || region.height <= 0) return 0;
+    if (region.x < 0 || region.y < 0 || region.x + region.width > stride || region.y + region.height > DM1_V2_VIEWPORT_H) return 0;
+    DM1_V2_RegionCompareResult local = {0, 0, -1, -1};
+    for (int y = region.y; y < region.y + region.height; y++) {
+        for (int x = region.x; x < region.x + region.width; x++) {
+            const DM1_V2_Color* e = &expected[y * stride + x];
+            const DM1_V2_Color* a = &actual[y * stride + x];
+            local.comparedPixels++;
+            if (e->r != a->r || e->g != a->g || e->b != a->b || e->a != a->a) {
+                if (local.mismatchedPixels == 0) {
+                    local.firstMismatchX = x;
+                    local.firstMismatchY = y;
+                }
+                local.mismatchedPixels++;
+            }
+        }
+    }
+    if (result) *result = local;
+    return local.mismatchedPixels == 0;
+}
+
+void dm1_v2_vp_composition_init(DM1_V2_ViewportCompositionInput* input) {
+    if (!input) return;
+    memset(input, 0, sizeof(*input));
+    for (int depth = 0; depth < 4; depth++) {
+        for (int lateral = 0; lateral < 3; lateral++) {
+            input->squares[depth][lateral].element = DM1_V2_ELEMENT_CORRIDOR;
+        }
+    }
+}
+
+int dm1_v2_vp_emit_d0_d3_draw_list(const DM1_V2_ViewportCompositionInput* input,
+                                   DM1_V2_DrawCommand* outCommands,
+                                   int maxCommands) {
+    static const int kDepthOrder[12] = {3,3,3, 2,2,2, 1,1,1, 0,0,0};
+    static const int kLateralOrder[12] = {-1,1,0, -1,1,0, -1,1,0, -1,1,0};
+    int count = 0;
+    if (!input || !outCommands || maxCommands <= 0) return 0;
+
+    /* Source-lock: ReDMCSB DUNVIEW.C:8337-8338 draws floor/ceiling before
+       F0128 walks the visible squares. */
+    if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                             DM1_V2_DRAW_FLOOR_CEILING,
+                             DM1_V2_VIEW_SQUARE_OTHER, -1, 0,
+                             DM1_V2_ELEMENT_CORRIDOR, 0,
+                             "DUNVIEW.C:8337-8338")) return 0;
+
+    for (int i = 0; i < 12; i++) {
+        int depth = kDepthOrder[i];
+        int lateral = kLateralOrder[i];
+        int lateralIndex = dm1_v2_vp_lateral_index(lateral);
+        const DM1_V2_ViewportSquareInput* square = &input->squares[depth][lateralIndex];
+        DM1_V2_ViewSquare viewSquare = dm1_v2_vp_square_id(depth, lateral);
+        int order = i + 1;
+
+        /* Source-lock: ReDMCSB DUNVIEW.C:8490-8542 visits D3L/D3R/D3C,
+           D2L/D2R/D2C, D1L/D1R/D1C, then D0L/D0R/D0C. */
+        if (square->element == DM1_V2_ELEMENT_WALL) {
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_WALL, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6697-6720")) return 0;
+            continue;
+        }
+
+        if (square->element == DM1_V2_ELEMENT_DOOR_FRONT) {
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_FLOOR_ORNAMENT, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6721-6816")) return 0;
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_OBJECTS_CREATURES_PROJECTILES, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6761-6769")) return 0;
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_DOOR_FRONT, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6721-6816")) return 0;
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_OBJECTS_CREATURES_PROJECTILES, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6816")) return 0;
+            continue;
+        }
+
+        if (square->element == DM1_V2_ELEMENT_STAIRS_FRONT) {
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_STAIRS_FRONT, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6666-6696")) return 0;
+            continue;
+        }
+
+        if (square->element == DM1_V2_ELEMENT_PIT) {
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_PIT, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6820-6827")) return 0;
+        }
+        if (square->hasObjects) {
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_OBJECTS_CREATURES_PROJECTILES, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6816")) return 0;
+        }
+        if (square->element == DM1_V2_ELEMENT_TELEPORTER || square->hasField) {
+            if (!dm1_v2_vp_push_draw(outCommands, maxCommands, &count,
+                                     DM1_V2_DRAW_FIELD, viewSquare, depth, lateral,
+                                     square->element, order, "DUNVIEW.C:6828")) return 0;
+        }
+    }
+    return count;
+}
+
+int dm1_v2_vp_compare_draw_lists(const DM1_V2_DrawCommand* expected,
+                                 int expectedCount,
+                                 const DM1_V2_DrawCommand* actual,
+                                 int actualCount,
+                                 int* mismatchIndex) {
+    int minCount = expectedCount < actualCount ? expectedCount : actualCount;
+    if (mismatchIndex) *mismatchIndex = -1;
+    if (!expected || !actual || expectedCount < 0 || actualCount < 0) {
+        if (mismatchIndex) *mismatchIndex = 0;
+        return 0;
+    }
+    for (int i = 0; i < minCount; i++) {
+        if (expected[i].op != actual[i].op ||
+            expected[i].square != actual[i].square ||
+            expected[i].depth != actual[i].depth ||
+            expected[i].lateral != actual[i].lateral ||
+            expected[i].element != actual[i].element ||
+            expected[i].order != actual[i].order) {
+            if (mismatchIndex) *mismatchIndex = i;
+            return 0;
+        }
+    }
+    if (expectedCount != actualCount) {
+        if (mismatchIndex) *mismatchIndex = minCount;
+        return 0;
+    }
+    return 1;
+}
+
 void dm1_v2_vp_present(DM1_V2_ViewportState* vp, int32_t nowMs) {
     if (!vp) return;
     
     vp->dirty = 0;
     vp->frameCount++;
     vp->lastRenderMs = nowMs;
+}
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} DM1_V2_MaterialColor;
+
+static const DM1_V2_MaterialColor kDm1V2EntryCeilingTone = {182, 182, 182};
+static const DM1_V2_MaterialColor kDm1V2EntryFloorTone = {182, 182, 182};
+static const DM1_V2_MaterialColor kDm1V2EntryWallOuterTone = {182, 182, 182};
+static const DM1_V2_MaterialColor kDm1V2EntryWallInnerTone = {182, 182, 182};
+static const DM1_V2_MaterialColor kDm1V2EntryFieldTone = {0, 0, 0};
+static const DM1_V2_MaterialColor kDm1V2EntryStairsTone = {182, 182, 182};
+static const DM1_V2_MaterialColor kDm1V2EntryDoorTone = {146, 146, 146};
+static const DM1_V2_MaterialColor kDm1V2EntryObjectTone = {73, 73, 73};
+static const DM1_V2_MaterialColor kDm1V2EntryPitTone = {0, 0, 0};
+static const DM1_V2_MaterialColor kDm1V2EntryFloorOrnamentTone = {109, 109, 109};
+
+static void dm1_v2_vp_fill_rect(DM1_V2_ViewportState* vp,
+                                int x0,
+                                int y0,
+                                int w,
+                                int h,
+                                uint8_t r,
+                                uint8_t g,
+                                uint8_t b) {
+    if (!vp || w <= 0 || h <= 0) return;
+    if (x0 < 0) { w += x0; x0 = 0; }
+    if (y0 < 0) { h += y0; y0 = 0; }
+    if (x0 + w > DM1_V2_VIEWPORT_W) w = DM1_V2_VIEWPORT_W - x0;
+    if (y0 + h > DM1_V2_VIEWPORT_H) h = DM1_V2_VIEWPORT_H - y0;
+    if (w <= 0 || h <= 0) return;
+    for (int y = y0; y < y0 + h; y++) {
+        for (int x = x0; x < x0 + w; x++) {
+            dm1_v2_vp_set_pixel(vp, x, y, r, g, b, 255);
+        }
+    }
+}
+
+static int dm1_v2_vp_square_rect(DM1_V2_ViewSquare square, int* x, int* y, int* w, int* h) {
+    if (!x || !y || !w || !h) return 0;
+    switch (square) {
+        case DM1_V2_VIEW_SQUARE_D3L: *x = 0; *y = 42; *w = 42; *h = 52; return 1;
+        case DM1_V2_VIEW_SQUARE_D3R: *x = 182; *y = 42; *w = 42; *h = 52; return 1;
+        case DM1_V2_VIEW_SQUARE_D3C: *x = 86; *y = 38; *w = 52; *h = 60; return 1;
+        case DM1_V2_VIEW_SQUARE_D2L: *x = 18; *y = 34; *w = 54; *h = 72; return 1;
+        case DM1_V2_VIEW_SQUARE_D2R: *x = 152; *y = 34; *w = 54; *h = 72; return 1;
+        case DM1_V2_VIEW_SQUARE_D2C: *x = 70; *y = 28; *w = 84; *h = 84; return 1;
+        case DM1_V2_VIEW_SQUARE_D1L: *x = 0; *y = 24; *w = 82; *h = 96; return 1;
+        case DM1_V2_VIEW_SQUARE_D1R: *x = 142; *y = 24; *w = 82; *h = 96; return 1;
+        case DM1_V2_VIEW_SQUARE_D1C: *x = 46; *y = 16; *w = 132; *h = 112; return 1;
+        case DM1_V2_VIEW_SQUARE_D0L: *x = 0; *y = 10; *w = 92; *h = 126; return 1;
+        case DM1_V2_VIEW_SQUARE_D0R: *x = 132; *y = 10; *w = 92; *h = 126; return 1;
+        case DM1_V2_VIEW_SQUARE_D0C: *x = 24; *y = 6; *w = 176; *h = 130; return 1;
+        default: return 0;
+    }
+}
+
+int dm1_v2_vp_render_composition_flat(DM1_V2_ViewportState* vp,
+                                      const DM1_V2_ViewportCompositionInput* input) {
+    DM1_V2_DrawCommand commands[DM1_V2_MAX_DRAW_COMMANDS];
+    int count;
+    if (!vp || !input) return 0;
+    dm1_v2_vp_clear(vp, 0, 0, 0);
+    count = dm1_v2_vp_emit_d0_d3_draw_list(input, commands, DM1_V2_MAX_DRAW_COMMANDS);
+    if (count <= 0) return 0;
+
+    /* Source-lock: this is an explicit export seam, not original pixel parity.
+       It materializes the DUNVIEW.C:8337-8542 composition/draw-command order into
+       a deterministic 224x136 RGBA viewport. Pass288 keeps this symbolic renderer,
+       but normalizes its material colors to the pass282 original PC34 grayscale
+       viewport palette so the comparator can measure geometry/order mismatches
+       instead of failing every pixel solely on non-original RGBA colors. */
+    for (int i = 0; i < count; i++) {
+        int x = 0, y = 0, w = 0, h = 0;
+        const DM1_V2_DrawCommand* c = &commands[i];
+        if (c->op == DM1_V2_DRAW_FLOOR_CEILING) {
+            dm1_v2_vp_fill_rect(vp, 0, 0, DM1_V2_VIEWPORT_W, DM1_V2_VIEWPORT_H / 2, kDm1V2EntryCeilingTone.r, kDm1V2EntryCeilingTone.g, kDm1V2EntryCeilingTone.b);
+            dm1_v2_vp_fill_rect(vp, 0, DM1_V2_VIEWPORT_H / 2, DM1_V2_VIEWPORT_W, DM1_V2_VIEWPORT_H / 2, kDm1V2EntryFloorTone.r, kDm1V2EntryFloorTone.g, kDm1V2EntryFloorTone.b);
+            continue;
+        }
+        if (!dm1_v2_vp_square_rect(c->square, &x, &y, &w, &h)) continue;
+        switch (c->op) {
+            case DM1_V2_DRAW_WALL:
+                dm1_v2_vp_fill_rect(vp, x, y, w, h, kDm1V2EntryWallOuterTone.r, kDm1V2EntryWallOuterTone.g, kDm1V2EntryWallOuterTone.b);
+                dm1_v2_vp_fill_rect(vp, x + 2, y + 2, w > 4 ? w - 4 : w, h > 4 ? h - 4 : h, kDm1V2EntryWallInnerTone.r, kDm1V2EntryWallInnerTone.g, kDm1V2EntryWallInnerTone.b);
+                break;
+            case DM1_V2_DRAW_DOOR_FRONT:
+                dm1_v2_vp_fill_rect(vp, x + w / 4, y, w / 2, h, kDm1V2EntryDoorTone.r, kDm1V2EntryDoorTone.g, kDm1V2EntryDoorTone.b);
+                break;
+            case DM1_V2_DRAW_STAIRS_FRONT:
+                for (int step = 0; step < 5; step++) {
+                    dm1_v2_vp_fill_rect(vp, x + step * 4, y + h - 10 - step * 8, w - step * 8, 5, kDm1V2EntryStairsTone.r, kDm1V2EntryStairsTone.g, kDm1V2EntryStairsTone.b);
+                }
+                break;
+            case DM1_V2_DRAW_PIT:
+                dm1_v2_vp_fill_rect(vp, x + w / 4, y + h / 2, w / 2, h / 3, kDm1V2EntryPitTone.r, kDm1V2EntryPitTone.g, kDm1V2EntryPitTone.b);
+                break;
+            case DM1_V2_DRAW_FIELD:
+                dm1_v2_vp_fill_rect(vp, x + w / 3, y + h / 3, w / 3, h / 3, kDm1V2EntryFieldTone.r, kDm1V2EntryFieldTone.g, kDm1V2EntryFieldTone.b);
+                break;
+            case DM1_V2_DRAW_OBJECTS_CREATURES_PROJECTILES:
+                dm1_v2_vp_fill_rect(vp, x + w / 2 - 3, y + h / 2 - 3, 6, 6, kDm1V2EntryObjectTone.r, kDm1V2EntryObjectTone.g, kDm1V2EntryObjectTone.b);
+                break;
+            case DM1_V2_DRAW_FLOOR_ORNAMENT:
+                dm1_v2_vp_fill_rect(vp, x + w / 3, y + h - 8, w / 3, 4, kDm1V2EntryFloorOrnamentTone.r, kDm1V2EntryFloorOrnamentTone.g, kDm1V2EntryFloorOrnamentTone.b);
+                break;
+            default:
+                break;
+        }
+    }
+    dm1_v2_vp_present(vp, 0);
+    return 1;
+}
+
+static uint32_t dm1_v2_png_crc32(const uint8_t* data, int len) {
+    uint32_t crc = 0xFFFFFFFFu;
+    for (int i = 0; i < len; i++) {
+        crc ^= data[i];
+        for (int b = 0; b < 8; b++) crc = (crc >> 1) ^ (0xEDB88320u & (uint32_t)-(int)(crc & 1u));
+    }
+    return crc ^ 0xFFFFFFFFu;
+}
+
+static uint32_t dm1_v2_png_adler32(const uint8_t* data, int len) {
+    uint32_t a = 1, b = 0;
+    for (int i = 0; i < len; i++) {
+        a = (a + data[i]) % 65521u;
+        b = (b + a) % 65521u;
+    }
+    return (b << 16) | a;
+}
+
+static int dm1_v2_png_write_u32(FILE* f, uint32_t v) {
+    uint8_t b[4];
+    b[0] = (uint8_t)((v >> 24) & 255u); b[1] = (uint8_t)((v >> 16) & 255u);
+    b[2] = (uint8_t)((v >> 8) & 255u); b[3] = (uint8_t)(v & 255u);
+    return fwrite(b, 1, 4, f) == 4;
+}
+
+static int dm1_v2_png_write_chunk(FILE* f, const char type[4], const uint8_t* data, int len) {
+    uint8_t* typeAndData;
+    uint32_t crc;
+    int ok;
+    if (!f || !type || len < 0) return 0;
+    typeAndData = (uint8_t*)malloc((size_t)len + 4u);
+    if (!typeAndData) return 0;
+    memcpy(typeAndData, type, 4);
+    if (len > 0) memcpy(typeAndData + 4, data, (size_t)len);
+    crc = dm1_v2_png_crc32(typeAndData, len + 4);
+    ok = dm1_v2_png_write_u32(f, (uint32_t)len) &&
+         fwrite(type, 1, 4, f) == 4 &&
+         (len == 0 || fwrite(data, 1, (size_t)len, f) == (size_t)len) &&
+         dm1_v2_png_write_u32(f, crc);
+    free(typeAndData);
+    return ok;
+}
+
+int dm1_v2_vp_write_png_rgba(const char* path,
+                             const DM1_V2_Color* pixels,
+                             int width,
+                             int height,
+                             int stride) {
+    static const uint8_t sig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+    FILE* f = NULL;
+    uint8_t ihdr[13];
+    uint8_t* raw = NULL;
+    uint8_t* z = NULL;
+    int rawLen;
+    int zLen;
+    int zp;
+    int remaining;
+    int pos;
+    if (!path || !pixels || width <= 0 || height <= 0 || stride < width) return 0;
+    rawLen = height * (1 + width * 4);
+    zLen = 2 + rawLen + 5 * ((rawLen + 65534) / 65535) + 4;
+    raw = (uint8_t*)malloc((size_t)rawLen);
+    z = (uint8_t*)malloc((size_t)zLen);
+    if (!raw || !z) { free(raw); free(z); return 0; }
+    for (int y = 0; y < height; y++) {
+        uint8_t* row = raw + y * (1 + width * 4);
+        row[0] = 0;
+        for (int x = 0; x < width; x++) {
+            const DM1_V2_Color* c = &pixels[y * stride + x];
+            row[1 + x * 4 + 0] = c->r;
+            row[1 + x * 4 + 1] = c->g;
+            row[1 + x * 4 + 2] = c->b;
+            row[1 + x * 4 + 3] = c->a;
+        }
+    }
+    zp = 0;
+    z[zp++] = 0x78; z[zp++] = 0x01;
+    remaining = rawLen;
+    pos = 0;
+    while (remaining > 0) {
+        int block = remaining > 65535 ? 65535 : remaining;
+        int final = remaining <= 65535;
+        z[zp++] = (uint8_t)(final ? 1 : 0);
+        z[zp++] = (uint8_t)(block & 255); z[zp++] = (uint8_t)((block >> 8) & 255);
+        z[zp++] = (uint8_t)((~block) & 255); z[zp++] = (uint8_t)(((~block) >> 8) & 255);
+        memcpy(z + zp, raw + pos, (size_t)block);
+        zp += block; pos += block; remaining -= block;
+    }
+    {
+        uint32_t adler = dm1_v2_png_adler32(raw, rawLen);
+        z[zp++] = (uint8_t)((adler >> 24) & 255u); z[zp++] = (uint8_t)((adler >> 16) & 255u);
+        z[zp++] = (uint8_t)((adler >> 8) & 255u); z[zp++] = (uint8_t)(adler & 255u);
+    }
+    f = fopen(path, "wb");
+    if (!f) { free(raw); free(z); return 0; }
+    memset(ihdr, 0, sizeof(ihdr));
+    ihdr[0] = (uint8_t)((width >> 24) & 255); ihdr[1] = (uint8_t)((width >> 16) & 255);
+    ihdr[2] = (uint8_t)((width >> 8) & 255); ihdr[3] = (uint8_t)(width & 255);
+    ihdr[4] = (uint8_t)((height >> 24) & 255); ihdr[5] = (uint8_t)((height >> 16) & 255);
+    ihdr[6] = (uint8_t)((height >> 8) & 255); ihdr[7] = (uint8_t)(height & 255);
+    ihdr[8] = 8; ihdr[9] = 6;
+    if (fwrite(sig, 1, 8, f) != 8 ||
+        !dm1_v2_png_write_chunk(f, "IHDR", ihdr, 13) ||
+        !dm1_v2_png_write_chunk(f, "IDAT", z, zp) ||
+        !dm1_v2_png_write_chunk(f, "IEND", NULL, 0)) {
+        fclose(f); free(raw); free(z); return 0;
+    }
+    fclose(f); free(raw); free(z); return 1;
 }

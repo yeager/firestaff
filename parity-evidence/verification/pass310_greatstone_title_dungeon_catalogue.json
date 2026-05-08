@@ -1,0 +1,371 @@
+{
+  "canonicalBinaryIdentity": {
+    "DUNGEON.DAT": {
+      "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "ok": true,
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    "TITLE": {
+      "expectedSha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "ok": true,
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    }
+  },
+  "coverage": {
+    "dungeonMaps": 14,
+    "map1Anchors": 6,
+    "titleItems": 59
+  },
+  "dungeonCatalogue": {
+    "map1Anchors": [
+      {
+        "description": "Hall of champions",
+        "x": 8,
+        "y": 5
+      },
+      {
+        "description": "Vi altar of rebirth",
+        "x": 5,
+        "y": 17
+      },
+      {
+        "description": "champion Chani",
+        "x": 14,
+        "y": 2
+      },
+      {
+        "description": "champion Iaido",
+        "x": 10,
+        "y": 3
+      },
+      {
+        "description": "champion Zed",
+        "x": 10,
+        "y": 6
+      },
+      {
+        "description": "champion Stamm",
+        "x": 11,
+        "y": 16
+      }
+    ],
+    "mapLinkCount": 14,
+    "mapLinks": [
+      {
+        "map": 1,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_1.html"
+      },
+      {
+        "map": 2,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_2.html"
+      },
+      {
+        "map": 3,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_3.html"
+      },
+      {
+        "map": 4,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_4.html"
+      },
+      {
+        "map": 5,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_5.html"
+      },
+      {
+        "map": 6,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_6.html"
+      },
+      {
+        "map": 7,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_7.html"
+      },
+      {
+        "map": 8,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_8.html"
+      },
+      {
+        "map": 9,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_9.html"
+      },
+      {
+        "map": 10,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_10.html"
+      },
+      {
+        "map": 11,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_11.html"
+      },
+      {
+        "map": 12,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_12.html"
+      },
+      {
+        "map": 13,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_13.html"
+      },
+      {
+        "map": 14,
+        "url": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_14.html"
+      }
+    ],
+    "mapsContiguous1To14": true
+  },
+  "notClaimed": [
+    "full dungeon tile parity",
+    "title animation timing parity",
+    "Greatstone as primary engine source"
+  ],
+  "pass": "pass310_greatstone_title_dungeon_catalogue",
+  "scope": "Catalogue Greatstone TITLE and DUNGEON.DAT references Daniel supplied, with canonical local PC34 binary identity checks.",
+  "sourceCaveat": "Greatstone is secondary catalogue metadata. ReDMCSB and canonical PC34 binaries remain the primary evidence sources for behavior/parity.",
+  "sourceInputs": {
+    "canonicalDungeonDat": "<firestaff-original-games>/_canonical/dm1/DUNGEON.DAT",
+    "canonicalTitle": "<firestaff-original-games>/_canonical/dm1/TITLE",
+    "greatstoneDungeon": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/dungeon.html",
+    "greatstoneDungeonMap1": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/map_1.html",
+    "greatstoneTitle": "http://greatstone.free.fr/dm/db_data/dm_pc_34/title/title.html"
+  },
+  "status": "passed",
+  "titleCatalogue": {
+    "indicesContiguous0To58": true,
+    "itemCount": 59,
+    "items": [
+      {
+        "index": 0,
+        "label": "ANimation"
+      },
+      {
+        "index": 1,
+        "label": "BReak"
+      },
+      {
+        "index": 2,
+        "label": "EGA Palette"
+      },
+      {
+        "index": 3,
+        "label": "PaLette"
+      },
+      {
+        "index": 4,
+        "label": "ENcoded image"
+      },
+      {
+        "index": 5,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 6,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 7,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 8,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 9,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 10,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 11,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 12,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 13,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 14,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 15,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 16,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 17,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 18,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 19,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 20,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 21,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 22,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 23,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 24,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 25,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 26,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 27,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 28,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 29,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 30,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 31,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 32,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 33,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 34,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 35,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 36,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 37,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 38,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 39,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 40,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 41,
+        "label": "PaLette"
+      },
+      {
+        "index": 42,
+        "label": "ENcoded image"
+      },
+      {
+        "index": 43,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 44,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 45,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 46,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 47,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 48,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 49,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 50,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 51,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 52,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 53,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 54,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 55,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 56,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 57,
+        "label": "Delta Layer"
+      },
+      {
+        "index": 58,
+        "label": "DOne"
+      }
+    ]
+  }
+}

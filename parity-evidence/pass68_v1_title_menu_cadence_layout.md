@@ -53,7 +53,7 @@ Result: `menuMetricInvariantOk=1`, `titleManifestInvariantOk=1`, `titleHandoffIn
 Relevant source is available at:
 
 ```text
-/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C
+<workspace>/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C
 ```
 
 The PC-family block guarded by `MEDIA508_F20E_F20J_X30J_P20JA_P20JB`/subguards builds 18 shrinked title bitmaps, then presents them with one `M526_WaitVerticalBlank()` per step, followed by two additional vertical blanks, a `StrikesBack` blit/fade, and a final vertical blank before freeing the title bitmap.  That is useful timing evidence, but it is not enough to close DM1 PC 3.4 yet because the exact build macro mapping for local PC 3.4 (`F20E/F20J/X30J/P20JA/P20JB`) still needs to be isolated, and the local original `TITLE` mapfile path is 53 rendered records rather than those 18 generated shrink steps.

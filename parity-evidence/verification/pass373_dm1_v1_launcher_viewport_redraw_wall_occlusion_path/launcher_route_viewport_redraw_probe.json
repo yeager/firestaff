@@ -1,0 +1,12 @@
+{
+  "schema": "firestaff_m11_autotest_runtime_probe.v1",
+  "launchedEver": 1,
+  "active": 1,
+  "title": "DUNGEON MASTER",
+  "sourceId": "dm1",
+  "lastAction": "WAIT",
+  "lastOutcome": "IDLE TICK ADVANCED",
+  "gameTick": 8,
+  "party": {"mapIndex": 0, "mapX": 0, "mapY": 3, "direction": 3, "championCount": 0},
+  "pipeline": {"dequeued": 1, "command": 3, "turnApplied": 0, "stepApplied": 1, "movementBlocked": 0, "anyMovementOccurred": 1, "anyTurnOccurred": 0, "viewportDirty": 1}
+}

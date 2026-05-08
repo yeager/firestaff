@@ -16,8 +16,8 @@ Exit code `0` means a DS:DX-resolved target frame was captured. Exit code `2` me
 
 ## Source policy / anchors
 
-- ReDMCSB source is limited to DM/CSB comparison only: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
-- DM2 anchors are N2-local only: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/`.
+- ReDMCSB source is limited to DM/CSB comparison only: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+- DM2 anchors are N2-local only: `<firestaff-original-games>/_canonical/dm2/`.
 - Prior gate `473d17c` supplied the canonical `open_int21_ah3d` anchor: image `0x19da`, file `0x1a3a`, bytes `B4 3D CD 21`.
 - `SKULL.ASM:6154-6200` is the generic open routine: `mov si,[bp+0Eh]`, leading-space trim, `mov dx,si`, `mov ah,3Dh`, `int 21h`.
 

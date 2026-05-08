@@ -8,7 +8,7 @@
       "mapY": 3
     },
     "initialPartyLocationLE": "0x0861",
-    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "path": "<firestaff-original-games>/_canonical/dm1/DUNGEON.DAT",
     "verified": true
   },
   "golden": {
@@ -22,7 +22,7 @@
       "turn_left_east has D1C front wall blocker",
       "blocked_forward_south preserves party state after wall collision"
     ],
-    "citation": "/home/trv2/work/firestaff/parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
+    "citation": "<firestaff-repo>/parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
     "representativeCases": [
       {
         "frontLeftCenterRight": [
@@ -1498,6 +1498,34 @@
       "why": "Viewport/off-map probes source-lock as wall squares, which matters at the DM1 entrance edge."
     },
     {
+      "citation": "COMMAND.C:1513-1660 and COMMAND.C:1744-1792",
+      "needles": [
+        "if ((L1108_i_CommandQueueIndex = G0434_i_CommandQueueLastIndex + 2) > M529_COMMAND_QUEUE_SIZE)",
+        "if (G2153_i_QueuedCommandsCount >= L2287_i_MaximumRegularCommandsInQueue)",
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command;",
+        "G0432_as_CommandQueue[L1108_i_CommandQueueIndex].X = P0725_i_X;",
+        "G0432_as_CommandQueue[L1108_i_CommandQueueIndex].Y = P0726_i_Y;",
+        "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;"
+      ],
+      "verified": true,
+      "why": "Mouse/key input is normalized into the circular command queue before game-loop dispatch."
+    },
+    {
+      "citation": "COMMAND.C:2045-2156",
+      "needles": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;",
+        "G0310_i_DisabledMovementTicks || (G0311_i_ProjectileDisabledMovementTicks",
+        "L1161_i_CommandX = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].X;",
+        "L1162_i_CommandY = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Y;",
+        "G2153_i_QueuedCommandsCount--;",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+      ],
+      "verified": true,
+      "why": "Game-loop command dequeue gates movement cooldowns, preserves X/Y payload, and dispatches turns/moves."
+    },
+    {
       "citation": "CLIKMENU.C:256-347",
       "needles": [
         "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
@@ -1510,7 +1538,7 @@
         "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;"
       ],
       "verified": true,
-      "why": "Party step legality is wall/door/fakewall/group gated before cooldown/state changes."
+      "why": "Accepted movement commands enter the wall/door/fakewall/group legality gate before cooldown/state changes."
     },
     {
       "citation": "MOVESENS.C:315-385 and MOVESENS.C:752-775",
@@ -1576,9 +1604,14 @@
       "why": "Viewport traversal is source-ordered from far D4/D3 rows through near D0/current square."
     }
   ],
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 movement/orientation/viewport/wall source+asset+runtime-golden evidence",
   "source_asset_metadata": {
+    "commandPipeline": {
+      "gameLoopDispatch": "GAMELOOP.C:215 calls F0380_COMMAND_ProcessQueue_CPSC; COMMAND.C:2045-2156 dequeues, applies disabled-movement gates, then dispatches turns/moves.",
+      "inputNormalization": "COMMAND.C:1513-1660 and 1744-1792 append mouse/key commands to G0432_as_CommandQueue with X/Y payloads.",
+      "movementLegality": "CLIKMENU.C:256-347 applies wall/door/fakewall/group blockers before movement commits."
+    },
     "directions": [
       {
         "id": 0,
@@ -1617,10 +1650,10 @@
       "wall": "M034_SQUARE_TYPE(square)==C00_ELEMENT_WALL blocks party movement"
     },
     "movementCommands": {
-      "moveForward": "step along current direction after CLIKMENU legality checks",
-      "moveRight/moveLeft/moveBackward": "rotate relative step direction then apply DUNGEON.C vectors",
-      "turnLeft": "direction=(direction+3)&3; no coordinate change",
-      "turnRight": "direction=(direction+1)&3; no coordinate change"
+      "moveForward": "COMMAND.C dispatches F0366; step along current direction after CLIKMENU legality checks",
+      "moveRight/moveLeft/moveBackward": "COMMAND.C dispatches F0366; rotate relative step direction then apply DUNGEON.C vectors",
+      "turnLeft": "COMMAND.C dispatches F0365; direction=(direction+3)&3; no coordinate change",
+      "turnRight": "COMMAND.C dispatches F0365; direction=(direction+1)&3; no coordinate change"
     },
     "viewportRowOrder": [
       {

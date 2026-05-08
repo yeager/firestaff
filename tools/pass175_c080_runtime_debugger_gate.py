@@ -6,7 +6,7 @@ C080 implementation blocker was retired: can N2 bind the stock original runtime
 tightly enough to prove F0359 -> F0380 -> F0377 -> F0280 for screen click
 (111,82), or is the remaining blocker still debugger/address-map binding?
 
-This script does not use DANNESBURK, does not try new coordinates, and does not
+This script does not use <private-host>, does not try new coordinates, and does not
 retire anything on visual no-delta. It validates the required ReDMCSB source
 anchors, probes available debugger/address tools against the N2-local original
 DM.EXE, and emits a concrete breakpoint/address-map runbook plus exact blocker.
@@ -218,7 +218,7 @@ def main() -> int:
         "repo": str(REPO),
         "source_root": str(SOURCE_ROOT),
         "allowed_original_roots": [str(ORIGINAL_ROOT), str(ORIGINAL_ROOT / "_extracted")],
-        "forbidden_roots_note": "DANNESBURK/192.168.2.126 not used.",
+        "forbidden_roots_note": "<private-host>/<private-host-ip> not used.",
         "dm_exe": str(DM_EXE),
         "tools": tools,
         "artifacts": artifacts,
@@ -229,7 +229,7 @@ def main() -> int:
             "does not prove original runtime reached F0359/F0380/F0377/F0280",
             "does not retire pass175 on visual no-delta",
             "does not try alternate coordinates",
-            "does not use DANNESBURK or non-N2 references",
+            "does not use <private-host> or non-N2 references",
         ],
     }
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")

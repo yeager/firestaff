@@ -4,7 +4,7 @@
   "created_on": "2026-05-05",
   "scope": "Evidence-only consolidation. No screenshots, PNGs, PPMs, runtime captures, renderer changes, or parity claims.",
   "base_commit": "c01a81ee9b5274195d84bb953af0763dc22ed327",
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "blockers": [
     {
       "id": "original_route_post_command_readiness",

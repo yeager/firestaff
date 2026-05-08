@@ -1,0 +1,62 @@
+[
+  {
+    "event": "route_step",
+    "route_item": "wait:9000",
+    "t": 1778165308.8809528
+  },
+  {
+    "event": "route_step",
+    "route_item": "enter",
+    "t": 1778165317.907285
+  },
+  {
+    "event": "key",
+    "route_item": "enter",
+    "t": 1778165317.9289947
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778165318.1293075
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778165319.9340768
+  },
+  {
+    "event": "key",
+    "route_item": "one",
+    "t": 1778165319.9578154
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778165320.1579585
+  },
+  {
+    "event": "route_step",
+    "route_item": "click:276,140",
+    "t": 1778165321.964382
+  },
+  {
+    "event": "click",
+    "route_item": "click:276,140",
+    "t": 1778165322.072914
+  },
+  {
+    "event": "route_step",
+    "route_item": "wait:1800",
+    "t": 1778165322.0729208
+  },
+  {
+    "event": "route_step",
+    "route_item": "one",
+    "t": 1778165323.8798225
+  },
+  {
+    "event": "key",
+    "route_item": "one",
+    "t": 1778165323.9009032
+  }
+]

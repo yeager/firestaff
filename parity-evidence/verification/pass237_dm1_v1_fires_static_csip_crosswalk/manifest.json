@@ -1,0 +1,187 @@
+{
+  "artifact_policy": {
+    "no_original_binaries_committed": true,
+    "text_only_repo_artifacts": true
+  },
+  "candidates": [
+    {
+      "blocker_to_promote": "Capture loaded FIRES PSP/load segment and debugger hit at this queue-dispatch prologue or branch after command dequeuing.",
+      "body_linear": 115369,
+      "candidate_static_cs_ip": "1b7c:06e9",
+      "classification": "candidate_only",
+      "confidence": "medium_high",
+      "evidence": [
+        "function prologue followed by queue-count guard at data 3e78 and queue index at 3ec8",
+        "branches compare accepted command in SI against 1/2 and 3..6",
+        "dispatch lcall targets at 1c3b6 -> 1771:010d and 1c3ca -> 1771:01aa"
+      ],
+      "id": "command_accepted",
+      "source_file": "COMMAND.C",
+      "source_function": "F0380_COMMAND_ProcessQueue_CPSC"
+    },
+    {
+      "blocker_to_promote": "Runtime hit on 1771:010d with command 1/2 and party-direction before/after values.",
+      "body_linear": 96285,
+      "candidate_static_cs_ip": "1771:010d",
+      "classification": "candidate_only",
+      "confidence": "high_static",
+      "evidence": [
+        "exact far-call operand from F0380 branch for command values 1 or 2",
+        "prologue sets movement redraw flag at 1a7c then selects zone constants 0x44/0x45 (C068/C069 turn arrows)",
+        "updates party direction through 0d06:000d before invoking movement result helper 1126:18ba"
+      ],
+      "id": "turn_types_1_to_2",
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+    },
+    {
+      "blocker_to_promote": "Runtime hit on 1771:01aa with command 3..6 and source/destination party coordinates.",
+      "body_linear": 96442,
+      "candidate_static_cs_ip": "1771:01aa",
+      "classification": "candidate_only",
+      "confidence": "high_static",
+      "evidence": [
+        "exact far-call operand from F0380 branch for command values 3..6",
+        "prologue sets movement redraw flag at 1a7c then computes command-3 movement index",
+        "adds 0x46 to movement index, matching C070_ZONE_MOVE_FORWARD + movement-arrow index family"
+      ],
+      "id": "move_types_3_to_6",
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+    },
+    {
+      "blocker_to_promote": "Runtime hit on 1126:0516 plus watchpoints proving G0306/G0307 writes for the party path.",
+      "body_linear": 71542,
+      "candidate_static_cs_ip": "1126:0516",
+      "classification": "candidate_only",
+      "confidence": "medium_high",
+      "evidence": [
+        "exact far-call target repeatedly used with five pushed arguments including 0xffff party thing sentinel",
+        "entry decodes thing cell bits with masks 0x3c00/0xc000 and branches on source/destination map state",
+        "called from F0365/F0366 static candidates as the legal step / collision resolver"
+      ],
+      "id": "move_get_move_result",
+      "source_file": "MOVESENS.C",
+      "source_function": "F0267_MOVE_GetMoveResult_CPSCE"
+    },
+    {
+      "blocker_to_promote": "Need FIRES.MAP or debugger stepping from F0128 through DUNVIEW helpers; current static evidence only identifies a viewport-adjacent loop cluster.",
+      "body_linear": 150990,
+      "candidate_static_cs_ip": "23cc:110e",
+      "classification": "candidate_only",
+      "confidence": "low_medium",
+      "evidence": [
+        "function calls input/timeline/viewport-adjacent routines and later conditionally calls 1126:0516 with party coordinates",
+        "candidate came from the decompressed-image control-flow cluster around pass234 viewport blocker follow-up",
+        "not yet separated into the exact F0098/F0104/F0108/F0109/F0115 draw helpers without FIRES.MAP"
+      ],
+      "id": "viewport_game_loop_draw_call_site",
+      "source_file": "GAMELOOP.C",
+      "source_function": "F0002_MAIN_GameLoop_CPSDF -> F0128_DUNGEONVIEW_Draw_CPSF"
+    }
+  ],
+  "fires_input": {
+    "artifact_policy": "read-only original-derived binary; not copied into repo",
+    "body_size": 167984,
+    "path": "<firestaff-repo>-dm1v1-viewport-walls-source-lock-20260506-0237/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+    "size": 178224
+  },
+  "mz": {
+    "declared_pages": 349,
+    "e_cparhdr": 640,
+    "e_crlc": 2518,
+    "e_lfarlc": 28,
+    "entry_body_linear": 0,
+    "entry_cs_ip": "0000:0000",
+    "header_bytes": 10240,
+    "initial_ss_sp": "28fb:0080",
+    "last_page_bytes": 48,
+    "maxalloc": 65535,
+    "minalloc": 0
+  },
+  "pattern_hits": {
+    "command_dispatch_lcall_move": [
+      "0x1c3ca"
+    ],
+    "command_dispatch_lcall_turn": [
+      "0x1c3b6"
+    ],
+    "move_result_far_call": [
+      "0x00ccd",
+      "0x00faf",
+      "0x013ba",
+      "0x01cec",
+      "0x024bb",
+      "0x044aa",
+      "0x05d96",
+      "0x05ee9",
+      "0x0608d",
+      "0x06116",
+      "0x075f1",
+      "0x07c48",
+      "0x0c736",
+      "0x0ced4",
+      "0x0e749",
+      "0x0e890",
+      "0x15eeb",
+      "0x15f19",
+      "0x15f86",
+      "0x16250",
+      "0x17270",
+      "0x1731b",
+      "0x177c1",
+      "0x179c4",
+      "0x17b30",
+      "0x24eac"
+    ],
+    "move_zone_46_add": [
+      "0x17917"
+    ],
+    "turn_zone_44_45": [
+      "0x1782d"
+    ],
+    "viewport_cluster_entry": [
+      "0x24dce"
+    ]
+  },
+  "promotion_blocker": "Exact blocker to promote any candidate: capture runtime PSP/load segment and debugger-observed hit at the listed static CS:IP (runtime_cs = PSP + 0x10 + static_cs, runtime_ip = static_ip), plus seam-specific state/watchpoint evidence. Until then every row remains candidate_only, not verified_runtime_hit.",
+  "schema": "pass237_dm1_v1_fires_static_csip_crosswalk.v1",
+  "source_audit": {
+    "CLIKMENU.C": {
+      "needles": {
+        "C068_ZONE_TURN_LEFT": true,
+        "C070_ZONE_MOVE_FORWARD": true,
+        "F0267_MOVE_GetMoveResult_CPSCE": true
+      },
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    "COMMAND.C": {
+      "needles": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);": true,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);": true
+      },
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    "DUNVIEW.C": {
+      "needles": {
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling": true,
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF": true,
+        "F0128_DUNGEONVIEW_Draw_CPSF": true
+      },
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    "MOVESENS.C": {
+      "needles": {
+        "F0267_MOVE_GetMoveResult_CPSCE": true,
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX": true
+      },
+      "ok": true,
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    }
+  },
+  "status": "CANDIDATE_ONLY_RUNTIME_HITS_REQUIRED"
+}

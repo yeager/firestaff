@@ -1,7 +1,7 @@
 {
   "gate": "v1_entrance_input_wait_redmcsb",
   "scope": "DM1/V1 entrance frontend waits for input before switch sound, fixed 20-tick pre-open delay, and door-open handoff evidence.",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRanges": [
     { "file": "ENTRANCE.C", "start": 850, "end": 883, "function": "F0438/F0439 entrance frontend loop", "assertion": "Draw entrance, show pointer, discard all stale input, set C099_MODE_WAITING_ON_ENTRANCE, wait at least one VBlank per poll, process queued commands, and redraw credits until a non-credits command exits the loop." },
     { "file": "ENTRANCE.C", "start": 906, "end": 943, "function": "F0438/F0439 entrance post-command path", "assertion": "After a command exits the wait loop, source plays switch sound, delays F0022_MAIN_Delay(20), hides pointer, then opens doors when G0298_B_NewGame is nonzero." },
@@ -14,6 +14,6 @@
   "nonClaims": [
     "Does not claim runtime pixel parity for entrance art, palettes, or screenshots; this is a source/evidence gate only.",
     "Does not replace a future live input queue timing probe; it locks the source ordering and Firestaff evidence contract for the entrance handoff.",
-    "Does not use DANNESBURK; source paths are ReDMCSB and Firestaff N2-local only."
+    "Does not use <private-host>; source paths are ReDMCSB and Firestaff N2-local only."
   ]
 }

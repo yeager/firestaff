@@ -4,15 +4,18 @@
 /* Provider-neutral pointer/touch seam for DM1 V1 input.
  *
  * ReDMCSB source lock:
- * - COMMAND.C:2831-2915 F0359_COMMAND_ProcessClick_CPSC queues mouse commands
- *   after matching MOUSE_INPUT records against current coordinates/buttons.
- * - COMMAND.C:2922-2928 F0360_COMMAND_ProcessPendingClick replays pending clicks
- *   through the same click function.
+ * - COMMAND.C:1379-1449 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans
+ *   source MOUSE_INPUT records with the current X/Y/button mask.
+ * - COMMAND.C:1452-1644 F0359_COMMAND_ProcessClick_CPSC queues mouse commands
+ *   after primary mouse input fails over to secondary mouse input; screen
+ *   taps use this same source-ordered primary-then-secondary lookup.
  * - COMMAND.C:396-405 is the movement/viewport/right-button mouse table.
- * - COMMAND.C:1709-1765 F0361_COMMAND_ProcessKeyPress is the separate keyboard
- *   queue path; this shim deliberately emits click coordinates/buttons, not
- *   synthesized keys.
- * - CLIKMENU.C:142-174 and 180-347 execute turn/move commands after dispatch,
+ * - COMMAND.C:2296-2324 dispatches C083 inventory toggle, C111 action parent,
+ *   and C080 dungeon-view click after the queue returns those command IDs.
+ * - STARTUP2.C:1179-1182 installs primary interface + secondary movement
+ *   mouse/keyboard tables; this shim deliberately emits click coordinates and
+ *   button masks, not synthesized keys.
+ * - CLIKMENU.C:519-585 resolves action-menu child clicks after C111 dispatch,
  *   so touch/click only feeds the original command IDs and does not touch
  *   dungeon movement/collision timing.
  */
@@ -68,7 +71,7 @@ int TOUCHPOINTER_Compat_TranslateEvent(const TouchPointerEventPc34Compat* event,
 
     switch (event->space) {
     case TOUCH_POINTER_SPACE_SCREEN_320X200_PC34_COMPAT:
-        if (!TOUCHCLICK_Compat_HitTestWithButton(event->x, event->y, event->buttonMask, &zone)) return 0;
+        if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(event->x, event->y, event->buttonMask, &zone)) return 0;
         copy_zone_to_dispatch(event->x, event->y, event->buttonMask, &zone, outDispatch);
         return 1;
 
@@ -76,7 +79,7 @@ int TOUCHPOINTER_Compat_TranslateEvent(const TouchPointerEventPc34Compat* event,
         if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(event->x, event->y,
                                                           event->surfaceW, event->surfaceH,
                                                           &screenX, &screenY)) return 0;
-        if (!TOUCHCLICK_Compat_HitTestWithButton(screenX, screenY, event->buttonMask, &zone)) return 0;
+        if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(screenX, screenY, event->buttonMask, &zone)) return 0;
         copy_zone_to_dispatch(screenX, screenY, event->buttonMask, &zone, outDispatch);
         return 1;
 
@@ -119,5 +122,5 @@ int TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue(
 }
 
 const char* TOUCHPOINTER_Compat_GetSourceEvidence(void) {
-    return "ReDMCSB COMMAND.C:2831-2915 click queue, 2922-2928 pending click, 396-405 movement/viewport mouse inputs, 1709-1765 keyboard-separate; COORD.C:1693-1722 source viewport origin/extent and 1918-1921 point-in-zone inclusive bounds; viewport-local touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:142-174/180-347 movement execution unchanged";
+    return "ReDMCSB COMMAND.C:1379-1449 source mouse hit-test, 1452-1644 click queue primary-to-secondary search, 396-405 movement/viewport/right-button mouse table, 2296-2324 C083/C111/C080 dispatch; STARTUP2.C:1179-1182 installs primary interface and secondary movement mouse tables; COORD.C:1693-1722 source viewport origin/extent and 1915-1920 inclusive point-in-zone bounds; viewport-local touch events are promoted to original screen coordinates before queueing; touch bridge enqueues resolved mouse commands through DM1_V1_InputCommandQueue without changing keyboard routes; CLIKMENU.C:519-585 action-area child-click resolution unchanged";
 }

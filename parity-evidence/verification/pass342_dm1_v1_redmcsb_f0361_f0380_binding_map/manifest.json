@@ -1,0 +1,42 @@
+{
+  "schema": "pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.v1",
+  "status": "SOURCE_LOCKED_BINDING_MAP_COMPLETE",
+  "n2_only": true,
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "evidence": "parity-evidence/pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.md",
+  "verifier": "tools/verify_pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.py",
+  "exact_remaining_seam": "product/runtime route-to-compat-pipeline/live-viewport bridge",
+  "non_claims": [
+    "no raw source dump is committed",
+    "no new DOSBox/runtime F0380 hook is claimed",
+    "no pixel parity is claimed",
+    "OS keypad/NumLock delivery is not required for the next direct-command path"
+  ],
+  "redmcsb_anchors": [
+    {"file": "COMMAND.C", "function": "movement keyboard table", "range": [252, 305]},
+    {"file": "COMMAND.C", "function": "F0361_COMMAND_ProcessKeyPress", "range": [1709, 1813]},
+    {"file": "COMMAND.C", "function": "F0380_COMMAND_ProcessQueue_CPSC", "range": [2045, 2156]},
+    {"file": "CLIKMENU.C", "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty", "range": [142, 174]},
+    {"file": "CLIKMENU.C", "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty", "range": [180, 346]},
+    {"file": "MOVESENS.C", "function": "F0267_MOVE_GetMoveResult_CPSCE", "range": [316, 328]},
+    {"file": "MOVESENS.C", "function": "party source/destination sensors", "range": [799, 818]},
+    {"file": "GAMELOOP.C", "function": "viewport redraw/cooldown", "ranges": [[86, 92], [150, 155]]}
+  ],
+  "firestaff_bindings": [
+    "dm1_v1_input_command_queue_pc34_compat.c",
+    "dm1_v1_input_command_queue_pc34_compat.h",
+    "dm1_v1_movement_command_core_pc34_compat.c",
+    "dm1_v1_movement_pipeline_pc34_compat.c",
+    "dm1_v1_movement_timing_pc34_compat.c",
+    "memory_movement_pc34_compat.c",
+    "memory_sensor_execution_pc34_compat.c",
+    "dm1_v1_game_loop_pc34_compat.c",
+    "dm1_v1_viewport_3d_pc34_compat.c",
+    "main_loop_m11.c"
+  ],
+  "predecessor_context": {
+    "pass336": "table ready but keypad-code route wrong",
+    "pass337b": "direct compat queue/core injection not blocked; OS keypad bypassed",
+    "pass338b": "plain high-level route tokens audited; native kp4/kp5/kp6/numlock absent/wrong-family"
+  }
+}

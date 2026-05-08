@@ -1,11 +1,11 @@
 # Pass 173 / pass 4 — gated source portrait route probe
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe`
+- run base: `<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe`
 - evidence root: `parity-evidence/verification/pass173_source_portrait_route_gate_probe`
 - completed: 2
 - errors: 0
 - buckets: blocked/static-no-party-after-gate=2
-- ReDMCSB source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- ReDMCSB source root: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ## ReDMCSB source audit
 

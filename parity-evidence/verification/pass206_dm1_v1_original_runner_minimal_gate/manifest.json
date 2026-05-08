@@ -1,0 +1,212 @@
+{
+  "existing_attempt_audit": {
+    "attempt_dir": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route",
+    "capture_count": 6,
+    "class_counts": {
+      "dungeon_gameplay": 2,
+      "wall_closeup": 4
+    },
+    "dimensions_seen": {
+      "320x200": 6
+    },
+    "duplicate_sha256_counts_gt1": {
+      "ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c": 4
+    },
+    "exists": true,
+    "expected_sequence": [
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "spell_panel",
+      "dungeon_gameplay",
+      "inventory"
+    ],
+    "key_log_tail": [
+      "route-token wait:7000",
+      "route-token enter",
+      "route-token wait:1500",
+      "route-token one",
+      "route-token wait:1500",
+      "route-token click:276,140",
+      "click-mapped 276,140 -> window-relative 553,281 window=640x400 origin=320,312",
+      "route-token wait:1500",
+      "route-token one",
+      "route-token wait:1500",
+      "route-token shot:party_hud",
+      "route-token kp5",
+      "route-token wait:700",
+      "route-token shot",
+      "route-token kp5",
+      "route-token wait:700",
+      "route-token shot",
+      "route-token f1",
+      "route-token wait:700",
+      "route-token shot:spell_panel",
+      "route-token one",
+      "route-token wait:700",
+      "route-token shot",
+      "route-token i",
+      "route-token wait:700",
+      "route-token shot:inventory_panel"
+    ],
+    "labels_tsv": [
+      "index\tfilename\troute_label\troute_token",
+      "01\t01_ingame_start_original_viewport_224x136.ppm\tparty_hud\tshot:party_hud",
+      "02\t02_ingame_turn_right_original_viewport_224x136.ppm\t\tshot",
+      "03\t03_ingame_move_forward_original_viewport_224x136.ppm\t\tshot",
+      "04\t04_ingame_spell_panel_original_viewport_224x136.ppm\tspell_panel\tshot:spell_panel",
+      "05\t05_ingame_after_cast_original_viewport_224x136.ppm\t\tshot",
+      "06\t06_ingame_inventory_panel_original_viewport_224x136.ppm\tinventory_panel\tshot:inventory_panel"
+    ],
+    "mismatches": [
+      {
+        "classification": "wall_closeup",
+        "expected": "dungeon_gameplay",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0003-raw.png",
+        "index": 3
+      },
+      {
+        "classification": "wall_closeup",
+        "expected": "spell_panel",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0004-raw.png",
+        "index": 4
+      },
+      {
+        "classification": "wall_closeup",
+        "expected": "dungeon_gameplay",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0005-raw.png",
+        "index": 5
+      },
+      {
+        "classification": "wall_closeup",
+        "expected": "inventory",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0006-raw.png",
+        "index": 6
+      }
+    ],
+    "path": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route/pass80_original_frame_classifier.json",
+    "status": "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE",
+    "viewport_crop_ppm_count": 0
+  },
+  "forbidden_hosts": [
+    "<private-host>",
+    "<private-host-ip>"
+  ],
+  "redmcsb_source_audit": [
+    {
+      "citations": [
+        "COMMAND.C:396-402",
+        "COMMAND.C:670-675"
+      ],
+      "claim": "Original PC34 exposes movement by right-panel zones and keyboard scan codes before command dispatch.",
+      "id": "pc34-movement-input-bindings",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "COMMAND.C:2096-2156"
+      ],
+      "claim": "The route must reach command processing, not just produce visually changing frames.",
+      "id": "command-dispatch-to-turn-step",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:156-173",
+        "CLIKMENU.C:237-347"
+      ],
+      "claim": "Successful turn/step captures must be after the source movement handler has stopped the input wait loop.",
+      "id": "turn-step-state-mutation-and-wait-stop",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "GAMELOOP.C:90-90",
+        "GAMELOOP.C:215-219"
+      ],
+      "claim": "A movement/viewport gate must sample after redraw from current party state, not during menu/input churn.",
+      "id": "game-loop-redraw-cadence",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:8318-8616"
+      ],
+      "claim": "The viewport reference is the dungeon-view draw from updated direction/map coordinates.",
+      "id": "viewport-draw-and-present-seam",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DRAWVIEW.C:709-724",
+        "DRAWVIEW.C:840-858"
+      ],
+      "claim": "The comparison seam is the presented 224x136 viewport after the draw request/vblank path.",
+      "id": "viewport-present-request",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
+  "runner_prerequisites": {
+    "canonical_files": {
+      "DATA/DUNGEON.DAT": {
+        "exists": true,
+        "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        "ok": true,
+        "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+        "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+      },
+      "DATA/GRAPHICS.DAT": {
+        "exists": true,
+        "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "ok": true,
+        "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+        "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+      },
+      "DM.EXE": {
+        "exists": true,
+        "expectedSha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+        "ok": true,
+        "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+        "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"
+      }
+    },
+    "capture_script": {
+      "executable": true,
+      "exists": true,
+      "path": "/home/trv2/work/firestaff/scripts/dosbox_dm1_original_viewport_reference_capture.sh"
+    },
+    "host_contract": "portable host; <private-host> and <private-host-ip> forbidden",
+    "missing_tools": [],
+    "route_events": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 shot:party_hud kp5 wait:700 shot kp5 wait:700 shot f1 wait:700 shot:spell_panel one wait:700 shot i wait:700 shot:inventory_panel",
+    "tools": {
+      "convert": "/usr/bin/convert",
+      "dosbox": "/usr/bin/dosbox",
+      "ffmpeg": "/usr/bin/ffmpeg",
+      "python3": "/usr/bin/python3",
+      "xdotool": "/usr/bin/xdotool",
+      "xvfb-run": "/usr/bin/xvfb-run"
+    }
+  },
+  "schema": "pass206_dm1_v1_original_runner_minimal_gate.v1",
+  "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
+  "superseded_by_later_batch_capture": {
+    "pass304RouteLabelCoverage": true,
+    "pass304Status": "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED",
+    "pass308Coverage": {
+      "requiredLabelCoverage": true,
+      "requiredPromotionRowsGameplayOrWallCloseup": true
+    },
+    "pass308Status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
+    "reason": "pass304 route labels and pass308 executed capture coverage are present; remaining blocker is state-oracle proof",
+    "superseded": true
+  },
+  "worker": "portable host"
+}

@@ -1,0 +1,87 @@
+{
+  "addresses": {
+    "F0097_VIDRV_candidate": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699"
+  },
+  "decision": {
+    "next_blocker": "Promote this direct-PTY primitive into the F0097/F0380 runtime-evidence probes: after strict F0128 stop, arm 2809:1EFF/2809:1E31 and 22F4:0699 without tmux scraping.",
+    "separable_from_tmux_echo": false,
+    "tmux_echo_confuser": "BPLIST/setup text is present before any run marker, but pass326 does not count it. A stop requires (Running)->-> transition in an owned PTY."
+  },
+  "runtime_probe": {
+    "bounded_seconds": 100,
+    "bplist_negative_control_before_running": true,
+    "command_log": [
+      {
+        "cmd": "BPDEL *",
+        "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+        "t": 1778165028.8622472
+      },
+      {
+        "cmd": "BP 23AD:40FE",
+        "excerpt": "\n-> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+        "t": 1778165029.6160698
+      },
+      {
+        "cmd": "BPLIST",
+        "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
+        "t": 1778165030.3707256
+      },
+      {
+        "bytes": "ESC O t",
+        "control": "F5",
+        "purpose": "run after arming F0128",
+        "t": 1778165030.421111
+      }
+    ],
+    "duration_seconds": 107.518,
+    "f0128_target_stops": [],
+    "method": "pexpect-owned PTY to dosbox-debug under Xvfb; no tmux/capture-pane",
+    "ran": true,
+    "route": "wait:9000 enter wait:8500 one wait:1800 click:276,140 wait:1800 one wait:1800 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp6 wait:900 kp4 wait:900 kp5 wait:900",
+    "route_log_path": "/home/trv2/work/firestaff-worktrees/pass326-direct-pty-proof-20260507142500/parity-evidence/verification/pass326_dm1_v1_direct_pty_f0128_code_stop/route_keylog.json",
+    "stops": [],
+    "strict_stop_detection_rule": "accept stop only after F5/run, observed (Running), observed prompt -> after running, and post-running disassembly address equals target; reject BPLIST/setup echoes",
+    "transcript_path": "/home/trv2/work/firestaff-worktrees/pass326-direct-pty-proof-20260507142500/parity-evidence/verification/pass326_dm1_v1_direct_pty_f0128_code_stop/dosbox_debug_pty.clean.txt"
+  },
+  "schema": "pass326_dm1_v1_direct_pty_f0128_code_stop.v1",
+  "source_audit": [
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "DUNVIEW.C F0128",
+      "missing": [],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "anchors": {
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "id": "DRAWVIEW.C F0097",
+      "missing": [],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "COMMAND.C F0380",
+      "missing": [],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    }
+  ],
+  "status": "BLOCKED_PASS326_DIRECT_PTY_F0128_CODE_STOP_NOT_PROVEN",
+  "timestamp_utc": "2026-05-07T14:45:31.194535+00:00"
+}

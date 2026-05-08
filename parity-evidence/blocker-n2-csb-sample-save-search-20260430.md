@@ -36,13 +36,28 @@ Archive/string evidence found but not accepted as runtime samples:
 - CSB Atari/Amiga `.msa`, `.st`, and `.adf` images contain strings such as `CSBGAME.DAT`, `CSBGAME.BAK`, `DF0:CSBGAME.DAT`, and localized `CSBGAMEF/G.DAT`. Those strings prove executable/disk routing names exist, not that an extracted saved-game sample is available.
 - ReDMCSB also has `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/P31J/CSBGAME` (`sha256 3c7c1cbe86af08dd23d628ac2e23c956369f96c357055949ace75b58de57889b`), but `file` identifies it as an `MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed`; it is not a saved-game sample.
 
+
+## 2026-05-06 Save Disk MSA candidate narrowed
+
+The only save-named Atari ST filesystem candidate was decoded instead of treated as a raw string hit:
+
+- `~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa`
+- size: `730035` bytes
+- sha256: `bca3db90f795c633fcb0cc7a10a4811dae616b7d8e7eb8b65b4f59af10598d29`
+- decoded MSA geometry: magic `0x0e0f`, 9 sectors/track, 2 sides, tracks 0-79, decoded size `737280` bytes
+- GEMDOS/FAT12 boot fields: 512-byte sectors, 2 sectors/cluster, 2 FATs, 112 root entries, 1440 total sectors, media `0xf9`, 5 sectors/FAT
+- root directory inventory: 0 active entries, 0 deleted entries, 112 free entries, `contains_csbgame_root_entry=false`
+
+Conclusion: this Save Disk MSA is an original/candidate save disk container but not a usable `CSBGAME*.DAT`/`.BAK` sample. The CSBGAME sample blocker remains open, but the Save Disk MSA candidate is now specifically closed as empty.
+
 ## Verification
 
-Commands run on N2 (`Firestaff-Worker-VM`) in `/home/trv2/work/firestaff`:
+Commands run on N2 (`Firestaff-Worker-VM`) in `<firestaff-repo>`:
 
 ```sh
 python3 -m py_compile tools/verify_csb_sample_save_search_blocker.py
 ./tools/verify_csb_sample_save_search_blocker.py
+./tools/verify_csb_v1_parity_surface_matrix.py
 python3 -m json.tool parity-evidence/verification/csb_sample_save_search_blocker.json >/dev/null
 ```
 
@@ -50,6 +65,7 @@ Output:
 
 ```text
 PASS csb sample-save inventory: blocker recorded; no exact extracted CSBGAME*.DAT/BAK sample present
+MSA NO_ROOT_DIRECTORY_FILES: ~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa
 wrote parity-evidence/verification/csb_sample_save_search_blocker.json
 ```
 

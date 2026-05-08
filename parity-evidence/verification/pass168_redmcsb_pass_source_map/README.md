@@ -1,6 +1,6 @@
 # Pass168 — Firestaff pass → ReDMCSB source map
 
-- source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- source root: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - pass groups: 274
 - status counts: {'needs-redmcsb-anchor': 11, 'source-locked': 217, 'source-mentioned-unresolved': 46}
 

@@ -1,0 +1,182 @@
+(B=---(Register Overview)---
+(BEAX=ESI=DS=ES=FS=GS=SS=
+EBX=EDI=CS=EIP=C  Z  S  O  A  P  D  I  T
+ECX=EBP=IOPL   CPL
+EDX=ESP=
+---(Data Overview   Scroll: page up/down)---
+---(Code Overview   Scroll: up/down     )---
+---(Variable Overview)---
+---(OutPut/Input    Scroll: home/end    )---(B
+DOSBox version 0.74-3
+Copyright 2002-2019 DOSBox Team, published under GNU GPL.
+---
+CONFIG:Loading primary settings from config file <TMP>
+0: IO:Writing 05 to port 03CF
+MIXER:No Sound Mode Selected.
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+0000:0000     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0010     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0020     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0030     60 10 00 F0 60 10 00 F0 80 10 00 F0 60 10 00 F0  `...`.`...
+0000:0040     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0000  60pusha
+(B0000:0001  1000adc  [bx+si],alds:[0000]=1060
+0000:0003  F060lock pusha
+0000:0005  1000adc  [bx+si],alds:[0000]=1060
+0000:0007  F060lock pusha
+0000:0009  1000adc  [bx+si],alds:[0000]=1060
+0000:000B  F060lock pusha
+0000:000D  1000adc  [bx+si],alds:[0000]=1060
+0000:000F  F060lock pusha
+0000:0011  1000adc  [bx+si],alds:[0000]=1060
+(Running)00  DS=00000000000000000000 Real00  CS=00000  C0 Z0 S0 O0 A0 P0 D0 I1(B T0000  CPL00000: SBLASTER:DSP:Reset
+0: IO:Read from port 0278
+0: IO:Read from port 0279
+0: IO:Read from port 03BC
+0: IO:Read from port 03BE
+0: INT10:Set Video Mode 3
+0: VGA:Blinking 8
+0: BIOS:Keyboard layout file auto not found
+0: BIOS:Keyboard layout file auto not found
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: EXEC:Parsing command line: AUTOEXEC.BAT
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: EXEC:Parsing command line: mount c "<TMP>"3: EXEC:Execute mount.COM 0
+3: FILES:file open command 0 file mount.COM
+12: DOSMISC:DIRCACHE: Set volume label to C_DRIVE
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+18: EXEC:Parsing command line: c:
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+18: EXEC:Parsing command line: DEBUG DM.EXE -vv -sn -pk
+21: EXEC:Execute Z:\DEBUG.COM 0
+21: FILES:file open command 0 file Z:\DEBUG.COM
+33: EXEC:Execute DM.EXE 0
+33: FILES:file open command 0 file DM.EXE
+08 00 70 00 08 00 70 00 08 00 70 0..p...p...p08 00 70 0..pA5 FE87 E955 FF.U20 1320 1140 111 ... ...@C0 11E0 1100 1240 12.@E0 12E0 122.....80 12A4 F00 05 00 C0  .........499:000E  06 es(B499:000F  0E  push cs
+0499:0010  1F  pop  ds
+0499:0011  8B0E0C00mov  cx,[000C] C]=F00
+0499:0015  8BF1mov  si,cx
+0499:0017  4E  dec  si
+0499:0018  89F7mov  di,si
+0499:001A  8CDBmov  bx,ds
+0499:001C  031E0A00add  bx,[000A]ds:[000A]=20C8
+0499:0020  8EC3mov  es,bx
+-> _  0E(B  DS=01DD01DD066F00000080(B  CS=04990E(B1000000FF0000091C3000001DD00000080(B34
+***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
+0E  DS=01DD01DD066F00000080  CS=04990E000000FF0000091C3000001DD00000080b_  p_  i_  n_  t_   _  2_  1_   _  4_  b_
+DEBUG: Set interrupt breakpoint at INT 21 AH=4B
+_
+(Running)
+6070: VGA:h total 100 end 80 blank (80/98) retrace (85/97)
+6070: VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+6070: VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02701/0.03082)
+6070: VGA:v total 14.26806 (70.09Hz) blank(12.93341/14.04562) retrace(13.09230/13.15585)
+6070: VGA:Width 640, Height 400, fps 70.086592
+6070: VGA:normal width, normal height aspect 1.000000
+<TICKS>: MOUSE:New video is the same as the old
+<TICKS>: SBLASTER:Unhandled write to SB Port  22A
+<TICKS>: SBLASTER:DSP:Reset
+<TICKS>: FILES:file open command 2 file VGA
+<TICKS>: FILES:file open command 2 file VGA
+<TICKS>: FILES:file open command 2 file IBMIO
+<TICKS>: FILES:file open command 2 file IBMIO
+<TICKS>: FILES:file open command 2 file FIRES
+<TICKS>: FILES:file open command 2 file FIRES
+<TICKS>: FILES:file open command 0 file dmset
+<TICKS>: FILES:file open command 0 file C:\VGA
+<TICKS>: FCB:DOS:29:FCB Parse Filename, result:al=0
+<TICKS>: FCB:DOS:29:FCB Parse Filename, result:al=0
+FD 00 ED 01.
+9FE8:011C  CD21int  21
+(B9FE8:011E  5Aop  dx
+9FE8:011F  59cx
+9FE8:0120  722D    jc   0000014F ($+2d)(no jmp)
+9FE8:0122  33FFxor  di,di
+9FE8:0124  FAcli
+9FE8:0125  8E95F100ss,[di+00F1]ds:[00F1]=03DB
+9FE8:0129  8BA5F300sp,[di+00F3]ds:[00F3]=0080
+9FE8:012D  FB      sti
+9FE8:012E  8BECbp,sp
+-> _  00004B0300000060(B  DS=9FE89FE89FE8000000FB0(B  CS=9FE80000011C11000001D300000DEA000000910000008B(B214524
+(Running)00004B0300000060  DS=9FE89FE89FE8000000FB0  CS=9FE80000011C11000001D300000DEA000000910000008B
+<TICKS>: EXEC:Execute C:\VGA 3
+<TICKS>: FILES:file open command 0 file C:\VGA
+<TICKS>: INT10:Set Video Mode 13
+<TICKS>: VGA:Blinking 0
+
+0223:0C64
+(B0223:0C66  2E8E163C0Cmov  ss,cs:[0C3C]cs:[0C3C]=03A6
+0223:0C6B  2E8B263A0Cmov  sp,cs:[0C3A]cs:[0C3A]=0160
+0223:0C70  1F  pop  ds
+0223:0C71  5D  pop  bp
+0223:0C72  CBretf
+0223:0C73  55      push bp
+0223:0C74  8BEC    bp,sp
+0223:0C76  83EC54ub  sp,0054
+0223:0C79  56  push si
+-> _  00004B0003(B  DS=03A6022303A600000C0705(B  CS=022300000C64(B  C1(B Z01(B P0000000162000001F700000160(B67890
+(Running)00004B0003  DS=03A6022303A600000C0705  CS=022300000C64  C1 Z01 P0000000162000001F700000160
+<TICKS>: EXEC:Execute IBMIO 0
+<TICKS>: FILES:file open command 0 file IBMIO
+2 0391 0E 77 04 8A 00 77 04w...w477:19A3(B477:19A57B19197B197B]=06FA
+0477:19AA791919791979]=00BC
+0477:19AF
+0477:19B0  B44Dmov  ah,4D
+0477:19B2  CD21int  21
+0477:19B4  80FC00cmp  ah,00
+0477:19B7  B400ah,00
+0477:19B9  7403  je   000019BE ($+3)(no jmp)
+0477:19BB  B8FFFFmov  ax,FFFF
+-> _  05(B  DS=0663047706FA000019460A(B  CS=0477000019A3(B  C0100000112000003B5000000BC(B362033
+(Running)05  DS=0663047706FA000019460A  CS=0477000019A3  C0100000112000003B5000000BC
+<TICKS>: EXEC:Execute swoosh 0
+<TICKS>: FILES:file open command 0 file swoosh
+<TICKS>: VGA:h total 100 end 80 blank (80/98) retrace (84/96)
+<TICKS>: VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+<TICKS>: VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02669/0.03051)
+<TICKS>: VGA:v total 14.26806 (70.09Hz) blank(12.93347/14.04568) retrace(13.09235/13.15591)
+<TICKS>: VGA:Width 320, Height 200, fps 70.086303
+<TICKS>: VGA:double width, double height aspect 1.200000
+
+-> _  0000003DC(B5107631
+(Running)0000003DC
+<TICKS>: EXEC:Execute anim 0
+<TICKS>: FILES:file open command 0 file anim
+<TICKS>: FILES:file open command 2 file title
+
+-> _  00000403(B16450881
+(Running)00000403
+  <TICKS>: EXEC:Execute selector 0
+  <TICKS>: FILES:file open command 0 file selector
+  <TICKS>: FILES:file open command 2 file data\song.dat
+  <TICKS>: FILES:file open command 2 file data\graphics.dat
+
+-> _  02(B  DS=06FA000001FD(B<TICKS>b_  02  DS=06FA000001FDp_  i_  n_  t_   _  2_  1_   _  3_  d_
+DEBUG: Set interrupt breakpoint at INT 21 AH=3D
+_
+(Running)
+  <TICKS>: EXEC:Execute FIRES 0
+  <TICKS>: FILES:file open command 0 file FIRES
+36 076
+2B02:002B
+(B2B02:002D  1F pop  ds
+2B02:002E  722D      jc   0000005D ($+2d)(no jmp)
+2B02:0030  8946FEmov  [bp-02],axss:[0E18]=837A
+2B02:0033  8BD8bx,ax
+2B02:0035  B80044mov  ax,4400
+2B02:0038  CD21  int  21
+2B02:003A  7214jc   00000050 ($+14)(no jmp)
+2B02:003C  81E28000and  dx,0080
+2B02:0040  740E  je   00000050 ($+e)(down)
+->

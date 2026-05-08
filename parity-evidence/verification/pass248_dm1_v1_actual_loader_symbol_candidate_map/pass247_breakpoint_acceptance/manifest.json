@@ -1,0 +1,37 @@
+{
+  "accepted_all": true,
+  "commands": [
+    "HELP",
+    "BP 22AF:06E9",
+    "BP 1EA4:010D",
+    "BP 1EA4:01AA",
+    "BP 1859:0516",
+    "BP 2AFF:110E",
+    "BPLIST"
+  ],
+  "dosbox_debug": "/usr/bin/dosbox-debug",
+  "expected_breakpoints": [
+    "1859:0516",
+    "1EA4:010D",
+    "1EA4:01AA",
+    "22AF:06E9",
+    "2AFF:110E"
+  ],
+  "listed_breakpoints": [
+    "1859:0516",
+    "1EA4:010D",
+    "1EA4:01AA",
+    "22AF:06E9",
+    "2AFF:110E"
+  ],
+  "method": "tmux PTY with TERM=vt100; autoexec DEBUG COMMAND.COM; tmux send-keys text + Enter",
+  "notes": [
+    "TERM=xterm/screen/linux showed the UI but did not reliably parse Enter on this build.",
+    "DEBUG COMMAND.COM is only a built-in target to enter the debugger loop; no original game binaries are used."
+  ],
+  "schema": "pass247_dm1_v1_dosbox_debug_pty_breakpoint_driver.v1",
+  "status": "PASS_BREAKPOINT_COMMANDS_ACCEPTED",
+  "timestamp_utc": "2026-05-06T15:42:22.927567+00:00",
+  "tmux": "/usr/bin/tmux",
+  "transcript": "parity-evidence/verification/pass248_dm1_v1_actual_loader_symbol_candidate_map/pass247_breakpoint_acceptance/dosbox_debug_pty_breakpoints.clean.txt"
+}

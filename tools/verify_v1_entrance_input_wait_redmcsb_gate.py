@@ -92,7 +92,7 @@ def verify_json() -> None:
     miss=set(RANGES)-got
     if miss: raise AssertionError(f"evidence JSON missing ranges: {sorted(miss)}")
     nc="\n".join(data.get("nonClaims",[]))
-    if "runtime pixel parity" not in nc or "DANNESBURK" not in nc: raise AssertionError("evidence JSON must state runtime pixel parity and DANNESBURK non-claims")
+    if "runtime pixel parity" not in nc or "<private-host>" not in nc: raise AssertionError("evidence JSON must state runtime pixel parity and <private-host> non-claims")
     print(f"evidence={EVIDENCE_JSON.relative_to(ROOT)} status=ok")
 
 def main() -> None:

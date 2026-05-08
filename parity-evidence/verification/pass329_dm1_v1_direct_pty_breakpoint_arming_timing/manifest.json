@@ -1,0 +1,413 @@
+{
+  "addresses": {
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
+  },
+  "blocker": "F0128 breakpoint armed/retained but no strict running-to-23AD:40FE prompt transition emitted",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP command echo",
+    "tmux/capture-pane"
+  ],
+  "runtimeProbe": {
+    "boundedSecondsPerStrategy": 35,
+    "missingTools": [],
+    "ran": true,
+    "strategies": [
+      {
+        "blocker": "F0128 breakpoint armed/retained but no strict running-to-23AD:40FE prompt transition emitted",
+        "breakpointRetainedPostRoute": true,
+        "commandLog": [
+          {
+            "cmd": "BPDEL *",
+            "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+            "t": 1778168298.6108446
+          },
+          {
+            "cmd": "BP 23AD:40FE",
+            "excerpt": "\n-> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+            "t": 1778168299.4351747
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
+            "t": 1778168300.2588043
+          },
+          {
+            "control": "F5",
+            "purpose": "run after initial F0128 arm",
+            "t": 1778168300.3090534
+          },
+          {
+            "control": "Alt+Pause",
+            "purpose": "post-route retention check",
+            "t": 1778168335.4489694
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "...\n-> B_  ...P_  ...L_  ...I_  ...S_  ...T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
+            "t": 1778168341.3020594
+          }
+        ],
+        "directHits": {
+          "f0097_2809_1EFF_after_f0128": false,
+          "f0128_23AD_40FE": false
+        },
+        "durationSeconds": 48.052,
+        "method": "arm F0128 at initial debugger prompt before any game route input, run through full load+movement route",
+        "ran": true,
+        "routeLog": [
+          {
+            "route_item": "wait:9000",
+            "slept": true,
+            "t": 1778168300.326648
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "enter",
+            "t": 1778168309.3424993
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168309.5632882
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778168311.766273
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168311.9865026
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "click:276,140",
+            "screen": [
+              553,
+              281
+            ],
+            "t": 1778168314.189822
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168314.3088527
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778168316.5133362
+          },
+          {
+            "route_item": "wait:3500",
+            "slept": true,
+            "t": 1778168316.7330232
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168320.2390077
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168320.4614413
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778168321.3627322
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168321.5842288
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778168322.4853885
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168322.7066674
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168323.6079857
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168323.8297722
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778168324.731214
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168324.952532
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778168325.8537712
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168326.0768783
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168326.978541
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168327.201059
+          }
+        ],
+        "sawRunning": true,
+        "stage": "code-stop transition",
+        "stops": [],
+        "strategy": "pre_arm_before_route"
+      },
+      {
+        "blocker": "F0128 breakpoint armed but no strict running-to-23AD:40FE prompt transition emitted",
+        "commandLog": [
+          {
+            "control": "F5",
+            "purpose": "run unarmed to load/menu prefix",
+            "t": 1778168346.622224
+          },
+          {
+            "control": "Alt+Pause",
+            "purpose": "load/menu prefix debugger pause before arming",
+            "t": 1778168362.8757322
+          },
+          {
+            "cmd": "BPDEL *",
+            "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+            "t": 1778168368.734899
+          },
+          {
+            "cmd": "BP 23AD:40FE",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....A_  ....D_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+            "t": 1778168369.5597277
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
+            "t": 1778168370.3835638
+          },
+          {
+            "control": "F5",
+            "purpose": "run after load/menu F0128 arm",
+            "t": 1778168370.4339178
+          }
+        ],
+        "directHits": {
+          "f0097_2809_1EFF_after_f0128": false,
+          "f0128_23AD_40FE": false
+        },
+        "durationSeconds": 63.444,
+        "method": "run to stable load/menu prefix, pause to debugger prompt, arm F0128, then continue into route",
+        "ran": true,
+        "routeInputAfterArming": true,
+        "routeLog": [
+          {
+            "route_item": "wait:9000",
+            "slept": true,
+            "t": 1778168346.6405478
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "enter",
+            "t": 1778168355.6601937
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168355.8834798
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778168358.087791
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168358.310626
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "click:276,140",
+            "screen": [
+              553,
+              281
+            ],
+            "t": 1778168360.5150821
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778168360.6340747
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778168370.4514427
+          },
+          {
+            "route_item": "wait:3500",
+            "slept": true,
+            "t": 1778168370.671988
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168374.176696
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168374.400038
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778168375.3026862
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168375.5252726
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778168376.426641
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168376.6519675
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168377.5544515
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168377.777635
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778168378.6792731
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168378.9019103
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778168379.803505
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168380.0269027
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778168380.9289193
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778168381.152524
+          }
+        ],
+        "sawRunning": true,
+        "stage": "code-stop transition",
+        "stops": [],
+        "strategy": "arm_at_stable_load_menu_prompt"
+      }
+    ]
+  },
+  "schema": "pass329_dm1_v1_direct_pty_breakpoint_arming_timing.v1",
+  "sourceAudit": [
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "F0128",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "id": "F0097",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "F0380",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_PASS329_CODE_STOP_TRANSITION_NOT_EMITTED",
+  "timestampUtc": "2026-05-07T15:40:06.199006+00:00"
+}

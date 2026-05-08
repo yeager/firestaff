@@ -1,6 +1,6 @@
 # Parity V2 viewport/walls check
 
-Worktree: `/home/trv2/work/firestaff-worktrees/n2-dm1v1-viewport-walls-20260505-1227`
+Worktree: `<firestaff-worktree>/n2-dm1v1-viewport-walls-20260505-1227`
 Branch: `worker/n2-dm1v1-viewport-walls-20260505-1227`
 Checked: 2026-05-05
 
@@ -16,7 +16,7 @@ Checked: 2026-05-05
 
 ## ReDMCSB source audit
 
-Reference root used: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/`.
+Reference root used: `<redmcsb-source>/Toolchains/Common/Source/`.
 
 Files requested/found:
 

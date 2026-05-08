@@ -1,6 +1,6 @@
 # Pass212 DM1 V1 original route/capture synchronization probe
 
-Status: `BLOCKED_ROUTE_CAPTURE_SYNC`
+Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
 
 Attempt audited: `verification-screens/pass210-n2-original-movement-route-fresh`
 
@@ -19,12 +19,12 @@ This is a manifest-only synchronization probe. It preserves why the original mov
 
 | shot | route label | classification | raw sha12 | viewport sha12 | reason |
 |---:|---|---|---|---|---|
-| 1 | `start` | `entrance_menu` | `17bd7e878157` | `701689e73fc0` | from committed pass211 blocker shot binding; raw payload intentionally untracked |
-| 2 | `turn_left` | `wall_closeup` | `fbeb1b82cd09` | `1e71ed879980` | from committed pass211 blocker shot binding; raw payload intentionally untracked |
-| 3 | `turn_right` | `dungeon_gameplay` | `48ed3743ab6a` | `701689e73fc0` | from committed pass211 blocker shot binding; raw payload intentionally untracked |
-| 4 | `forward` | `dungeon_gameplay` | `48ed3743ab6a` | `701689e73fc0` | from committed pass211 blocker shot binding; raw payload intentionally untracked |
-| 5 | `turn_left_2` | `wall_closeup` | `fbeb1b82cd09` | `1e71ed879980` | from committed pass211 blocker shot binding; raw payload intentionally untracked |
-| 6 | `post_redraw` | `dungeon_gameplay` | `48ed3743ab6a` | `701689e73fc0` | from committed pass211 blocker shot binding; raw payload intentionally untracked |
+| 1 | `start` | `entrance_menu` | `17bd7e878157` | `701689e73fc0` | dungeon entrance/menu controls still occupy the right column |
+| 2 | `turn_left` | `wall_closeup` | `fbeb1b82cd09` | `1e71ed879980` | flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence |
+| 3 | `turn_right` | `dungeon_gameplay` | `48ed3743ab6a` | `701689e73fc0` | viewport content with mostly dark in-game right column |
+| 4 | `forward` | `dungeon_gameplay` | `48ed3743ab6a` | `701689e73fc0` | viewport content with mostly dark in-game right column |
+| 5 | `turn_left_2` | `wall_closeup` | `fbeb1b82cd09` | `1e71ed879980` | flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence |
+| 6 | `post_redraw` | `dungeon_gameplay` | `48ed3743ab6a` | `701689e73fc0` | viewport content with mostly dark in-game right column |
 
 ## Blockers
 
@@ -34,16 +34,19 @@ This is a manifest-only synchronization probe. It preserves why the original mov
 - duplicate raw-frame SHA groups show command/post-redraw collapse: fbeb1b82cd09=[2, 5], 48ed3743ab6a=[3, 4, 6]
 - duplicate viewport-crop SHA groups show non-distinct presented viewports: 701689e73fc0=[1, 3, 4, 6], 1e71ed879980=[2, 5]
 
-## Warnings
+## Supersession
 
-- using committed pass211 blocker manifest fallback because the raw attempt directory is absent/incomplete
+This old route-sync blocker is retired as an active blocker by pass304/pass308 batch capture coverage.
+- pass304: `BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED` / route label coverage `True`
+- pass308: `PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING` / coverage `{'requiredLabelCoverage': True, 'requiredPromotionRowsGameplayOrWallCloseup': True}`
+- Remaining blocker: state-oracle proof for original runtime party tuple/F0128 binding, not another retry of this stale six-shot route.
 
 ## Retry contract
 
 The next N2 route should use readiness/post-vblank waits and promote only if all six frames classify as `dungeon_gameplay` and both raw/crop SHA groups are unique.
 
 ```sh
-OUT_DIR=$PWD/verification-screens/pass212-n2-original-movement-route-sync-retry DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS="wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
+OUT_DIR=$PWD/verification-screens/pass212-n2-original-movement-route-sync-retry DM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS="wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 ```
 
 Honesty: No raw screenshots or viewport crops are emitted by this probe; hashes/manifests only.

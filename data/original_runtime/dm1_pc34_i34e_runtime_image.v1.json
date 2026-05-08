@@ -1,0 +1,31 @@
+{
+  "binary_policy": "do not commit original/decompressed FIRES binaries",
+  "decompressed_fires": {
+    "entry_cs_ip": "0000:0000",
+    "first_64": "4d5a30005d01d60980020000fffffb2880000000000000001c0000000100000001000b0006000e00010023000a0038000000bf000400c6000100c7000900c700",
+    "header_bytes": 10240,
+    "path": "parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "relocation_signature_at_lfarlc": "01000000",
+    "relocation_table_offset": "0x001c",
+    "relocations": 2518,
+    "sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+    "size": 178224,
+    "ss_sp": "28fb:0080"
+  },
+  "packed_fires": {
+    "entry_cs_ip": "1665:000e",
+    "first_64": "4d5a3b00ba00000002007613ffffd229800000000e0065161c0000004c5a3931ffffbaed242e8916d901b430cd218b2e02ffff008b1e2c008edaa37b008c0679",
+    "header_bytes": 32,
+    "path": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+    "relocation_signature_at_lfarlc": "4c5a3931",
+    "relocation_table_offset": "0x001c",
+    "relocations": 0,
+    "sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
+    "size": 94779,
+    "ss_sp": "29d2:0080"
+  },
+  "runtime_load_base_policy": "runtime PSP/load segment still must be captured from emulator/debugger; static MZ CS:IP is relative to loaded image only",
+  "schema": "dm1_pc34_i34e_runtime_image.v1",
+  "source": "pass229_unlzexe_fires_runtime_unblock_n2_local_wine_unlzexe_0_81",
+  "status": "PASS_RUNTIME_IMAGE_FIXTURE_BOOTSTRAPPED"
+}

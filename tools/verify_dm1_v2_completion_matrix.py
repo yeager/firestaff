@@ -17,22 +17,37 @@ ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "parity-evidence/verification/dm1_v2_completion_matrix.json"
 
 REQUIRED_MODULES = {
+    "dm1_v2_runtime_pc34.c": "runtime/shell",
     "dm1_v2_movement_engine_pc34.c": "runtime/movement",
     "dm1_v2_viewport_renderer_pc34.c": "runtime/viewport",
     "dm1_v2_texture_upscale_pc34.c": "asset/upscale",
     "dm1_v2_hud_overlay_pc34.c": "ui/hud",
     "dm1_v2_lighting_dynamic_pc34.c": "visual/lighting",
     "dm1_v2_particle_system_pc34.c": "visual/effects",
-    "dm1_v2_settings_pc34.c": "support/settings",
 }
 
 REQUIRED_CTEST_NAMES = {
     "dm1_v2_upscale_dry_run_validator",
     "dm1_v2_movement_viewport_pc34",
-    "dm1_v2_settings_pc34",
+    "dm1_v2_runtime_shell_pc34",
+    "dm1_v2_runtime_shell_source_lock",
+    "dm1_v2_viewport_wall_occlusion_source_lock",
+    "dm1_v2_dungeon_view_asset_bindings_source_lock",
+    "dm1_v2_viewport_composition_source_lock",
+    "dm1_v2_d0_d3_draw_list_comparator_gate",
+    "dm1_v2_viewport_pixel_capture_fixture_gate",
+    "dm1_v2_entry_viewport_png_export",
+    "dm1_v2_entry_viewport_png_export_gate",
+    "dm1_v2_entry_viewport_png_comparator_gate",
+    "dm1_v2_entry_bitmap_materialization_blocker_gate",
+    "dm1_v2_hud_overlay_pc34",
+    "dm1_v2_hud_overlay_source_lock",
+    "dm1_v2_lighting_dynamic_pc34",
+    "dm1_v2_lighting_dynamic_source_lock",
 }
 
 CATEGORY_RULES = [
+    ("runtime", "runtime/shell"),
     ("movement", "runtime/movement"),
     ("smooth_movement", "runtime/movement"),
     ("viewport", "runtime/viewport"),
@@ -42,7 +57,6 @@ CATEGORY_RULES = [
     ("input", "ui/input"),
     ("tooltip", "ui/input"),
     ("inventory", "ui/inventory"),
-    ("item", "visual/item"),
     ("minimap", "ui/minimap"),
     ("journal", "ui/journal"),
     ("message_log", "ui/message-log"),
@@ -62,7 +76,6 @@ CATEGORY_RULES = [
     ("pathfinding", "runtime/ai"),
     ("stat_tracker", "support/stats"),
     ("achievements", "support/achievements"),
-    ("settings", "support/settings"),
 ]
 
 

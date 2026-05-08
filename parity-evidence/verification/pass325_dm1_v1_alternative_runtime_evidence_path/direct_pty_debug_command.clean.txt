@@ -1,0 +1,180 @@
+0: IO:Writing 05 to port 03CF
+MIXER:No Sound Mode Selected.
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+0000:0000     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0010     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0020     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0030     60 10 00 F0 60 10 00 F0 80 10 00 F0 60 10 00 F0  `...`.......`...
+0000:0040     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0000  60pusha
+0000:0001  1000adc  [bx+si],alds:[0000]=1060
+0000:0003  F060lock pusha
+0000:0005  1000adc  [bx+si],alds:[0000]=1060
+0000:0007  F060lock pusha
+0000:0009  1000adc  [bx+si],alds:[0000]=1060
+0000:000B  F060lock pusha
+0000:000D  1000adc  [bx+si],alds:[0000]=1060
+0000:000F  F060lock pusha
+0000:0011  1000adc  [bx+si],alds:[0000]=1060
+(Running)0000000000000000  DS=00000000000000000000 Real0000000000000000  CS=000000000000  C0 Z0 S0 O0 A0 P0 D0 I1 T000000000000000000  CPL0000000000000000000: SBLASTER:DSP:Reset
+0: IO:Read from port 0278
+0: IO:Read from port 0279
+0: IO:Read from port 03BC
+0: IO:Read from port 03BE
+78
+0: INT10:Set Video Mode 3
+78
+0: VGA:Blinking 8
+78
+0: BIOS:Keyboard layout file auto not found
+78
+0: BIOS:Keyboard layout file auto not found
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: FILES:file open command 2 file CON
+78
+0: EXEC:Parsing command line: AUTOEXEC.BAT
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6
+78
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+78
+0: EXEC:Parsing command line: DEBUG COMMAND.COM
+78
+3: EXEC:Execute DEBUG.COM 0
+78
+3: FILES:file open command 0 file DEBUG.COM
+78
+15: EXEC:Execute COMMAND.COM 0
+78
+15: FILES:file open command 0 file COMMAND.COM
+08 00 70 00 08 00 70 00 08 00 70 0..p...p...p08 00 70 0..pA5 FE87 E955 FF........U20 1320 1140 111 ... ...@C0 11E0 1100 1240 12............@E0 12E0 122.....80 12A4 F00 05 00 C0  .........
+01DD:0100  BC0004mov  sp,0400
+01DD:0103  BB4000mov  bx,0040
+01DD:0106  B44Amov  ah,4A
+01DD:0108  CD21int  21
+01DD:010A  FE380600callback 0006  (internal pro
+01DD:010E  B8004Cmov  ax,4C00
+01DD:0111  CD21int  21   
+01DD:0113  0Cor   al,00
+01DD:0115  000add  [bx+si],alds:[0100]=00BC
+01DD:0117  0d100]=00BC
+-> _     11DD1DD1DDFFFE1DD1FF91C1DDFFFE16
+***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
+
+-> H_  E_  L_  P_  
+Debugger commands (enter all values in hex or as register):
+78
+--------------------------------------------------------------------------
+78
+F3/F6- Re-enter previous command.
+78
+F5- Run.
+78
+F9- Set/Remove breakpoint.
+78
+F10/F11- Step over / trace into instruction.
+78
+ALT + D/E/S/X/B- Set data view to DS:SI/ES:DI/SS:SP/DS:DX/ES:BX.
+78
+Escape- Clear input line.
+78
+Up/Down- Move code view cursor.
+78
+Page Up/Down- Scroll data view.
+78
+Home/End- Scroll log messages.
+78
+BP     [segment]:[offset] - Set breakpoint.
+78
+BPINT  [intNr] *- Set interrupt breakpoint.
+78
+BPINT  [intNr] [ah]- Set interrupt breakpoint with ah.
+78
+BPM    [segment]:[offset] - Set memory breakpoint (memory change).
+78
+BPPM   [selector]:[offset]- Set pmode-memory breakpoint (memory change).
+78
+BPLM   [linear address]   - Set linear memory breakpoint (memory change).
+78
+BPLIST- List breakpoints.
+78
+BPDEL  [bpNr] / *- Delete breakpoint nr / all.
+78
+C / D  [segment]:[offset] - Set code / data view address.
+78
+DOS MCBS- Show Memory Control Block chain.
+78
+INT [nr] / INTT [nr]- Execute / Trace into interrupt.
+78
+LOG [num]- Write cpu log file.
+78
+LOGS/LOGL [num]- Write short/long cpu log file.
+78
+HEAVYLOG- Enable/Disable automatic cpu log when dosbox exits.
+78
+ZEROPROTECT- Enable/Disable zero code execution detecion.
+78
+SR [reg] [value]- Set register value.
+78
+SM [seg]:[off] [val] [.]..- Set memory with following values.
+78
+IV [seg]:[off] [name]     - Create var name for memory address.
+78
+SV [filename]- Save var list in file.
+78
+LV [filename]- Load var list from file.
+78
+MEMDUMP [seg]:[off] [len] - Write memory to file memdump.txt.
+78
+MEMDUMPBIN [s]:[o] [len]  - Write memory to file memdump.bin.
+78
+SELINFO [segName]- Show selector info.
+78
+INTVEC [filename]- Writes interrupt vector table to file.
+78
+INTHAND [intNum]- Set code view to interrupt handler.
+78
+CPU- Display CPU status information.
+78
+GDT- Lists descriptors of the GDT.
+78
+LDT- Lists descriptors of the LDT.
+78
+IDT- Lists descriptors of the IDT.
+78
+PAGING [page]- Display content of page table.
+78
+EXTEND- Toggle additional info.
+78
+TIMERIRQ- Run the system timer.
+78
+HELP- Help
+
+-> _    
+-> B_  P_   _  1_  2_  3_  4_  :_  5_  6_  7_  8_  
+DEBUG: Set breakpoint at 1234:5678
+
+-> _            
+-> B_  P_  L_  I_  S_  T_  
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BP 1234:5678
+
+-> _      

@@ -1,0 +1,2 @@
+$ python3 tools/verify_pass340_dm1_v1_direct_enqueue_wrapper.py
+pass340_dm1_v1_direct_enqueue_wrapper=pass direct_queue_wrapper=CLOSED pipeline_wrapper=CLOSED os_keypad=BYPASSED evidence=parity-evidence/pass340_dm1_v1_direct_enqueue_wrapper.md

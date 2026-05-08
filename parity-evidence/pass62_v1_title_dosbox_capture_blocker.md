@@ -40,7 +40,7 @@ Prepare configs:
 
 ```sh
 scripts/dosbox_dm1_title_cadence_pass62.sh --prepare
-# [pass-62] wrote configs under /Users/bosse/.openclaw/workspace-main/tmp/firestaff/verification-screens/pass62-dosbox-title-cadence
+# [pass-62] wrote configs under <workspace>/tmp/firestaff/verification-screens/pass62-dosbox-title-cadence
 ```
 
 Direct selector argument attempt:

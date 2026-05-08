@@ -1,0 +1,74 @@
+{
+  "checks": {
+    "direct_f0380_nonblocking": true,
+    "matrix_has_status": true,
+    "matrix_lists_remaining_blockers": true,
+    "matrix_marks_direct_f0380_nonblocking": true,
+    "pass296_gate_passed": true,
+    "pass296_status_locked": true,
+    "remaining_blocker_manifest_complete": true,
+    "source_citations_complete": true
+  },
+  "direct_f0380_decision": {
+    "blocked": true,
+    "pass278": "Staged BPM disable/re-enable reduced queue/index noise and captured controlled-key G0432 writes, party tuple mutation, and an F0128 draw BP hit after switching to code-only mode; the exact remaining blocker is no proven F0380 dequeue BP hit at 22F4:0699. This is not a runtime-hook claim.",
+    "pass289": "Direct F0380 body breakpoint at pass278 address 22F4:0699 still does not hit; reproduce with pass278 route and breakpoints from its manifest/transcript. The dispatch-equivalent seam is GAMELOOP.C:215 -> COMMAND.C:F0380 source ordering, not a direct runtime BP claim.",
+    "pass293": "No direct F0380 runtime proof. The source/map chain still points to public symbol 1BC1:0699 + load segment 0733 = 22F4:0699, and pass293 could set that BP in a broad candidate window, but the transcript contains no execution stop line at 22F4:0699. The broad window was additionally noisy on G0433 first-index writes and did not improve pass278. Next narrow step: run with only BP 22F4:0699 plus queue tuple watches, then if still silent disassemble/MEMDUMP live COMMAND_TEXT around 22F4:0680..06F0 and place BPs on post-prologue/dequeue instruction offsets rather than the public entry only.",
+    "required_for_this_gate": false
+  },
+  "matrix": "docs/parity/PARITY_MATRIX_DM1_V1.md",
+  "pass296_manifest": "parity-evidence/verification/pass296_dm1_v1_input_tuple_proof_without_direct_f0380/manifest.json",
+  "pass296_status": "MOVEMENT_INPUT_TUPLE_PROOF_SOURCE_LOCKED_RUNTIME_SUPPORTED_DIRECT_F0380_BLOCKED_NOT_REQUIRED",
+  "remaining_movement_blockers": [
+    {
+      "blocks": "original-runtime movement/HUD/viewport pixel parity",
+      "id": "original_party_control_ready_capture",
+      "missing": "A deterministic original PC route that reaches party-control-ready gameplay and yields semantically labelled movement before/after captures, not direct-start/no-party or menu/title frames."
+    },
+    {
+      "blocks": "only a future binary-level direct-F0380 hook claim, not the source/runtime-supported movement proof",
+      "id": "direct_f0380_binary_trace_optional",
+      "missing": "Decompressed stock FIRES memory map/FIRES.MAP or live disassembly breakpoints around the F0380 post-prologue/dequeue window; pass296 keeps this blocked and non-required."
+    },
+    {
+      "blocks": "promotion of the whole movement row to MATCHED",
+      "id": "full_movement_side_effect_coverage",
+      "missing": "Original-backed cases for the broader movement side effects: group/projectile interlocks, sensor/environment consequence breadth, timing/cooldown edge cases, and overlay comparison from matched runtime states."
+    }
+  ],
+  "schema": "pass299_dm1_v1_movement_completion_matrix_gate.v1",
+  "source_citations": [
+    {
+      "claim": "redraw consumes G0308/G0306/G0307; keyboard input is drained before F0380; the wait loop invokes F0380.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "range": "80-90, 160-168, 215-219"
+    },
+    {
+      "claim": "controlled movement keys map to commands, enqueue into G0432, dequeue/dispatch from F0380, and apply disabled-movement gates.",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress / F0380_COMMAND_ProcessQueue_CPSC",
+      "range": "252-260, 1734-1812, 2045-2156"
+    },
+    {
+      "claim": "turn commands set party direction; move commands compute relative destination, check blockers, and invoke movement result/timing paths.",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "range": "156-347"
+    },
+    {
+      "claim": "successful movement commits G0306/G0307, handles consequences, records movement result/timing/scent, and runs sensor side effects.",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "range": "316-565, 738-818"
+    },
+    {
+      "claim": "viewport draw receives direction/mapX/mapY arguments and presents the dungeon viewport.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "range": "8318-8611"
+    }
+  ],
+  "status": "MOVEMENT_COMPLETION_MATRIX_UPDATED_DIRECT_F0380_NONBLOCKING_REMAINING_BLOCKERS_EXPLICIT",
+  "timestamp_utc": "2026-05-07T01:38:00Z"
+}

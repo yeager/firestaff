@@ -1,0 +1,50 @@
+{
+  "schema": "pass245_redmcsb_binary_build_probe.v1",
+  "status": "BUILT_AND_SMOKE_RAN_DOS_TARGETS_ON_N2",
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206",
+  "scratch_root": "<firestaff-data>/redmcsb-n2-build-probe",
+  "supported_build_model": {
+    "host_native_binary": false,
+    "windows_orchestrated": true,
+    "emulator_target_builds": true,
+    "dm1_pc34_target": "IBM PC / 16-bit DOS",
+    "dm1_pc34_toolchain": ["DOSBox", "Turbo C++ 1.01", "Turbo Assembler 2.0", "Turbo Link", "LZEXE"]
+  },
+  "original_data_needed": {
+    "compile_dm_exe_or_fires": false,
+    "run_game_launcher_path": true,
+    "runtime_data_files_checked": ["DATA/GRAPHICS.DAT", "DATA/DUNGEON.DAT"]
+  },
+  "builds": {
+    "I34E_DM_EXE_EXEID72": {
+      "status": "PASS",
+      "size": 11471,
+      "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
+      "reference_cmp": "Reference/Original/I34E/DM.EXE identical"
+    },
+    "I34E_FIRES_EXEID74": {
+      "status": "PASS",
+      "size": 94841,
+      "sha256": "3e59c1a8d4dec64c3cac1fd06a064077754cd012bef8d627cca969cad32311d0",
+      "reference_cmp": "Reference/ReDMCSB/I34E/FIRES identical; Reference/Original/I34E/FIRES different"
+    }
+  },
+  "runtime_probe": {
+    "path": "<firestaff-data>/redmcsb-n2-build-probe/runtime-i34e-built-fires",
+    "launcher": "original I34E DM.EXE with built ReDMCSB I34E/FIRES in copied original PC34 folder",
+    "dm_exe_timeout_seconds": 12,
+    "dm_exe_rc": 124,
+    "dm_exe_observation": "DOSBox process remained alive until guard timeout; no stderr crash output",
+    "fires_direct_rc": 0,
+    "fires_direct_observation": "Direct FIRES invocation returned immediately; not a useful standalone host/runtime harness"
+  },
+  "blocker_result": {
+    "removed": "N2-local ReDMCSB IBM PC binary build path is proven for I34E DM.EXE and FIRES",
+    "remaining": "Produced binaries are DOS target executables, not native host binaries; movement/viewport binding still needs DOS debugger/runtime CS:IP/state capture"
+  },
+  "artifact_policy": {
+    "committed_original_or_build_binaries": false,
+    "committed_logs": false,
+    "scratch_only_build_outputs": true
+  }
+}

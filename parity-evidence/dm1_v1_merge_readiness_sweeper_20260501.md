@@ -1,10 +1,10 @@
 # DM1 V1 merge-readiness sweeper — N2 — 2026-05-01
 
-Host: N2 / `Firestaff-Worker-VM` (`/home/trv2/work/firestaff`).  Main integration branch inspected: `sync/n2-dm1-v1-20260428` at `35827f9` (`Lock DM1 viewport side-lane occlusion`), 70 commits ahead of `origin/main`.
+Host: N2 / `Firestaff-Worker-VM` (`<firestaff-repo>`).  Main integration branch inspected: `sync/n2-dm1-v1-20260428` at `35827f9` (`Lock DM1 viewport side-lane occlusion`), 70 commits ahead of `origin/main`.
 
 ## ReDMCSB source audit first
 
-Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source root audited: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 Verifier-relevant anchors:
 
@@ -21,7 +21,7 @@ Verifier-relevant anchors:
 
 ## Current branch state
 
-`git status --short` on `/home/trv2/work/firestaff`: clean before this report.
+`git status --short` on `<firestaff-repo>`: clean before this report.
 
 Ahead commits include the large DM1 V1 lane, not fine-tuning, already integrated into `sync/n2-dm1-v1-20260428`:
 

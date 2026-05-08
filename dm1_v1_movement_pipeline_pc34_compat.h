@@ -57,6 +57,18 @@ struct Dm1V1MovementPipelinePc34Compat {
 /*
  * Full pipeline result — produced by ProcessOneTick.
  */
+struct Dm1V1MovementPipelineProvenancePc34Compat {
+    /* Deterministic compat provenance, not a DOSBox/original screenshot claim. */
+    int commandAccepted;
+    int movementApplied;
+    int viewportPresent;
+    int originalRuntimeObserved;
+    int noPixelParityClaim;
+    const char* commandAcceptedEvidence;
+    const char* movementAppliedEvidence;
+    const char* viewportPresentEvidence;
+};
+
 struct Dm1V1MovementPipelineResultPc34Compat {
     /* From the command core */
     struct Dm1V1MovementCommandCoreResultPc34Compat core;
@@ -74,6 +86,9 @@ struct Dm1V1MovementPipelineResultPc34Compat {
     int anyMovementOccurred;
     int anyTurnOccurred;
     int viewportDirty;
+
+    /* Source-locked compat trace for command→movement→viewport provenance. */
+    struct Dm1V1MovementPipelineProvenancePc34Compat provenance;
 };
 
 /*
@@ -91,6 +106,24 @@ void DM1_V1_MovementPipeline_InitPc34Compat(
 int DM1_V1_MovementPipeline_EnqueueInputPc34Compat(
     struct Dm1V1MovementPipelinePc34Compat* pipeline,
     struct Dm1V1InputEventPc34Compat event);
+
+/*
+ * Feed an already-resolved ReDMCSB command id into the pipeline queue.
+ *
+ * This is the direct command seam for I34E movement-table commands after
+ * COMMAND.C F0361 has resolved 0x004B..0x0051 into C001..C006. It bypasses
+ * OS/keypad delivery while preserving the F0380 queue/core/pipeline gates.
+ *
+ * x/y are retained because the ReDMCSB queue carries command coordinates;
+ * movement commands C001..C006 ignore them during F0365/F0366 dispatch.
+ *
+ * Returns 1 if the command was queued, 0 if invalid/full.
+ */
+int DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(
+    struct Dm1V1MovementPipelinePc34Compat* pipeline,
+    int command,
+    int x,
+    int y);
 
 /*
  * Process one tick of the movement pipeline.

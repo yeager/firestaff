@@ -1,0 +1,224 @@
+{
+  "schema": "firestaff.csb_v1_source_lock_inventory.v1",
+  "pass": true,
+  "scope": "CSB V1 source-lock inventory and first landable gaps only, using N2-local CSB/CSBWin/ReDMCSB/original-data references.",
+  "git_refs": [
+    {
+      "id": "csb_source",
+      "path": "<csb-source>/CSB/src",
+      "expected_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
+      "actual_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
+      "ok": true
+    },
+    {
+      "id": "csbwin_source",
+      "path": "<csbwin-source>/CSBWin",
+      "expected_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
+      "actual_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
+      "ok": true
+    }
+  ],
+  "asset_refs": [
+    {
+      "id": "atari_archive",
+      "path": "<firestaff-original-games>/Game,Chaos_Strikes_Back,Atari_ST,Software.7z",
+      "expected_size": 1669479,
+      "actual_size": 1669479,
+      "expected_sha256": "ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5",
+      "actual_sha256": "ce6e638622a099bbf15e6dacd7750ce811a52373a20b2d0f92ef6332cc47d7f5",
+      "ok": true
+    },
+    {
+      "id": "atari_v20_msa",
+      "path": "<firestaff-original-games>/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Game Disk v2.0 (English).msa",
+      "expected_size": 404254,
+      "actual_size": 404254,
+      "expected_sha256": "e3d8dc75956ade33658b700e9ae2512dcef7a8dfa538116b8a717f4efaefe0b4",
+      "actual_sha256": "e3d8dc75956ade33658b700e9ae2512dcef7a8dfa538116b8a717f4efaefe0b4",
+      "ok": true
+    },
+    {
+      "id": "atari_v21_stx",
+      "path": "<firestaff-original-games>/_extracted/csb-atari/Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx",
+      "expected_size": 941828,
+      "actual_size": 941828,
+      "expected_sha256": "aea724d663554e84393a77c45c010753c5bfb1a3a5a83d1264b5ef2af9aa5c6f",
+      "actual_sha256": "aea724d663554e84393a77c45c010753c5bfb1a3a5a83d1264b5ef2af9aa5c6f",
+      "ok": true
+    },
+    {
+      "id": "canonical_atari_graphics",
+      "path": "<firestaff-original-games>/_canonical/csb/atari-GRAPHICS.DAT",
+      "expected_size": 319080,
+      "actual_size": 319080,
+      "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "actual_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "ok": true
+    },
+    {
+      "id": "canonical_atari_dungeon",
+      "path": "<firestaff-original-games>/_canonical/csb/atari-DUNGEON.DAT",
+      "expected_size": 2098,
+      "actual_size": 2098,
+      "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "ok": true
+    },
+    {
+      "id": "canonical_amiga_graphics",
+      "path": "<firestaff-original-games>/_canonical/csb/amiga-Graphics.DAT",
+      "expected_size": 435076,
+      "actual_size": 435076,
+      "expected_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "actual_sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
+      "ok": true
+    },
+    {
+      "id": "canonical_amiga_dungeon",
+      "path": "<firestaff-original-games>/_canonical/csb/amiga-Dungeon.DAT",
+      "expected_size": 2098,
+      "actual_size": 2098,
+      "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "ok": true
+    }
+  ],
+  "source_anchors": [
+    {
+      "id": "redmcsb_dungeon_ids",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "519-523",
+      "needles": [
+        "C10_DUNGEON_DM",
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_csb_save_format",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "468-498",
+      "needles": [
+        "DM_SAVE_HEADER",
+        "CSB_SAVE_HEADER",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_new_adventure_gate",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-64",
+      "needles": [
+        "F7086_IsReadyToMakeNewAdventure",
+        "F7272_IsDungeonValid(&G7111_Games[C0_GAME_SOURCE], 3)",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_save_routing",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINC8.C",
+      "lines": "101-118",
+      "needles": [
+        "M745_FILE_ID_SAVE_DMSAVE_DAT",
+        "M746_FILE_ID_SAVE_CSBGAME_DAT",
+        "C12_DUNGEON_CSB_PRISON"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_required_payloads",
+      "path": "<csb-source>/CSB/src/README",
+      "lines": "1-30",
+      "needles": [
+        "dungeon.dat",
+        "hcsb.dat",
+        "hcsb.hct",
+        "mini.dat",
+        "graphics.dat",
+        "config.txt"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_graphics_open_boundary",
+      "path": "<csb-source>/CSB/src/Graphics.cpp",
+      "lines": "1740-1915",
+      "needles": [
+        "graphics.dat",
+        "Cannot find 'graphics.dat'",
+        "CSBgraphics.dat"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_new_adventure_flow",
+      "path": "<csb-source>/CSB/src/Chaos.cpp",
+      "lines": "1-40",
+      "needles": [
+        "Create New Adventure",
+        "prison savegame",
+        "Make New Adventure"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_csbgame_slots",
+      "path": "<csb-source>/CSB/src/Chaos.cpp",
+      "lines": "500-625",
+      "needles": [
+        "CSBGAME",
+        "CSBGAME2",
+        "csbgame.dat",
+        "csbgame.bak"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csbwin_play_workflow",
+      "path": "<csbwin-source>/CSBWin/Game/readme.txt",
+      "lines": "1-30",
+      "needles": [
+        "Enter the dungeon",
+        "choose prison",
+        "Make New Adventure"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "firestaff_csb_launch_still_gated",
+      "path": "<firestaff-repo>/menu_startup_m12.c",
+      "lines": "1180-1222",
+      "needles": [
+        "strcmp(gameId, \"csb\") == 0",
+        "return gameId && strcmp(gameId, \"dm1\") == 0;"
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "next_landable_gaps": [
+    "Land a CSB asset-pair manifest/verifier that requires the selected Atari ST graphics plus dungeon/runtime data before any launch intent is accepted.",
+    "Add an explicit experimental CSB launch-intent probe that proves menu/config routing only, with render/gameplay still disabled.",
+    "Resolve the curated CSB sample-save/new-adventure fixture gap, or formalize it as blocked with exact approved search roots and missing filenames.",
+    "Define the first CSB V1 parity surface matrix: startup/load, prison/champion route, viewport/HUD, input, save/new-adventure, with each row tied to a source anchor or BLOCKED."
+  ],
+  "non_claims": [
+    "No CSB Firestaff runtime/render parity claim.",
+    "No CSB launch enablement claim; menu_startup_m12 remains launch-gated to DM1.",
+    "No platform substitution claim; Atari ST and Amiga graphics anchors differ and stay separate.",
+    "No CSB sample-save/new-adventure runtime proof; existing sample-save blocker remains open."
+  ],
+  "failures": []
+}

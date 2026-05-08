@@ -2,8 +2,8 @@
 
 Status: **partial_blocked_missing_requested_sources**
 
-Worktree: `/home/trv2/work/firestaff-worktrees/n2-dm1v1-merge-readiness-20260505-1228`
-Source base: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Worktree: `<firestaff-worktree>/n2-dm1v1-merge-readiness-20260505-1228`
+Source base: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ## Source availability
 

@@ -222,7 +222,7 @@ Gates:
 
 Every V2 worker prompt must include:
 
-- work in N2 repo: `/home/trv2/work/firestaff`, not Mac worktrees,
+- work in N2 repo: `<firestaff-repo>`, not Mac worktrees,
 - start with source audit and list files/lines,
 - do not push,
 - commit only after build/test,

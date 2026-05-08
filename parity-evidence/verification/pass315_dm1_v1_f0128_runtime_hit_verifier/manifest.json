@@ -1,0 +1,198 @@
+{
+  "remaining_blocker": "Direct F0380 dequeue BP at 22F4:0699 is still not observed; viewport_present/F0097 is still unpromoted. F0128 hit is a narrow viewport composition runtime fact, not a full command-to-present chain.",
+  "runtime_evidence": {
+    "debugger_control_seen": true,
+    "f0128_runtime_cs_ip": "23AD:40FE",
+    "hit_seen": true,
+    "hit_signature_required": "BP 23AD:40FE",
+    "pass278_manifest": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+    "proof_predicates": {
+      "cpu_memdump_after_stops": true,
+      "f0128_draw_hit_seen": true,
+      "f0380_dequeue_hit_seen": false,
+      "g0432_write_seen": true,
+      "party_tuple_mutation_seen": true,
+      "route_posted_controlled_keys": true
+    },
+    "transcript": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt"
+  },
+  "schema": "pass315_dm1_v1_f0128_runtime_hit_verifier.v1",
+  "source_audit": [
+    {
+      "anchors": {
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);": 90
+      },
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "gameloop_draw_call",
+      "line_range": [
+        55,
+        95
+      ],
+      "missing": [],
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "G0296_puc_Bitmap_Viewport": 8367,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_viewport_compose",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "G0296_puc_Bitmap_Viewport",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "anchors": {
+        "C007_ZONE_VIEWPORT": 842,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_viewport_present",
+      "line_range": [
+        709,
+        858
+      ],
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_command_dispatch",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "needles": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "anchors": {
+        "F0267_MOVE_GetMoveResult_CPSCE": 272,
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "file": "CLIKMENU.C",
+      "function": "F0365/F0366 movement dispatch",
+      "id": "clickmenu_movement_dispatch",
+      "line_range": [
+        142,
+        328
+      ],
+      "missing": [],
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "anchors": {
+        "G0308_i_PartyDirection = P0600_i_Direction;": 129
+      },
+      "file": "CHAMPION.C",
+      "function": "F0284_CHAMPION_SetPartyDirection",
+      "id": "champion_turn_state_write",
+      "line_range": [
+        117,
+        130
+      ],
+      "missing": [],
+      "needles": [
+        "G0308_i_PartyDirection = P0600_i_Direction;"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C"
+    },
+    {
+      "anchors": {
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX;": 442,
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY;": 443
+      },
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "movesens_step_state_write",
+      "line_range": [
+        438,
+        444
+      ],
+      "missing": [],
+      "needles": [
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX;",
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY;"
+      ],
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    }
+  ],
+  "status": "F0128_RUNTIME_HIT_VERIFIED_F0380_REMAINS_BLOCKED",
+  "symbol_map_check": {
+    "entry": {
+      "breakpoint_anchor": "DUNVIEW.C:8608-8611 after composition before F0097 draw viewport",
+      "confidence": "verified_runtime_hit",
+      "evidence": [
+        "pass227 source seam verified",
+        "pass229 decompressed FIRES image available",
+        "pass230 ReDMCSB source audit",
+        "pass230 precise ReDMCSB line-anchor audit",
+        "pass278 N2 DOSBox-debug BP 23AD:40FE runtime hit",
+        "pass315 conservative F0128 runtime-hit verifier"
+      ],
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "global_addresses": {},
+      "hook_kind": "code breakpoint at viewport composition path before F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_buffer_composed",
+      "required_next_step": "viewport composition entry has one verified runtime hit; still need direct F0380 dequeue and/or viewport_present hit for full movement-to-present chain",
+      "runtime_cs_ip": "23AD:40FE",
+      "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611",
+      "verified_runtime_hit": {
+        "hit_signature": "00. BP 23AD:40FE",
+        "manifest": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+        "scope": "F0128_DUNGEONVIEW_Draw_CPSF runtime code breakpoint hit only; does not prove direct F0380 dequeue or full movement-to-viewport chain",
+        "source": "pass278 fresh N2 DOSBox-debug run via tools/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof.py --seconds 55",
+        "transcript": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt"
+      }
+    },
+    "path": "data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json",
+    "viewport_buffer_composed_updated": true
+  }
+}

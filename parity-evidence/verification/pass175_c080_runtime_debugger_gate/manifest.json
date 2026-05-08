@@ -1,12 +1,12 @@
 {
   "allowed_original_roots": [
-    "/home/trv2/.openclaw/data/firestaff-original-games/DM",
-    "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted"
+    "<firestaff-data>/firestaff-original-games/DM",
+    "<firestaff-original-games>/_extracted"
   ],
   "artifacts": {
-    "dosbox_debug_conf": "/home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/dosbox-debug-pass175.conf",
-    "gdb_script": "/home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb",
-    "runbook": "/home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/breakpoint_runbook.md"
+    "dosbox_debug_conf": "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/dosbox-debug-pass175.conf",
+    "gdb_script": "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb",
+    "runbook": "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/breakpoint_runbook.md"
   },
   "breakpoint_gates": [
     {
@@ -48,10 +48,10 @@
     "dm_exe_file": {
       "argv": [
         "/usr/bin/file",
-        "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"
+        "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"
       ],
       "output": [
-        "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed"
+        "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed"
       ],
       "returncode": 0
     },
@@ -94,11 +94,11 @@
         "/usr/bin/gdb",
         "--batch",
         "-x",
-        "/home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb"
+        "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb"
       ],
       "output": [
-        "/home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:",
-        "\"/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE\": not in executable format: file format not recognized"
+        "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:",
+        "\"<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE\": not in executable format: file format not recognized"
       ],
       "returncode": 1
     },
@@ -117,16 +117,16 @@
       "returncode": 0
     }
   },
-  "dm_exe": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+  "dm_exe": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
   "exact_remaining_blocker": "native gdb can open/probe only far enough to show the stock DOS DM.EXE has no ReDMCSB symbol binding; need a DOS real-mode/source-symbol bridge or address map before F0359/F0380/F0377/F0280 can be proven",
-  "forbidden_roots_note": "DANNESBURK/192.168.2.126 not used.",
+  "forbidden_roots_note": "<private-host>/<private-host-ip> not used.",
   "non_claims": [
     "does not prove original runtime reached F0359/F0380/F0377/F0280",
     "does not retire pass175 on visual no-delta",
     "does not try alternate coordinates",
-    "does not use DANNESBURK or non-N2 references"
+    "does not use <private-host> or non-N2 references"
   ],
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "<firestaff-repo>",
   "schema": "pass175_c080_runtime_debugger_gate.v1",
   "source_audit": [
     {
@@ -140,7 +140,7 @@
         "P0721_ps_MouseInput->Command"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0358 scans MOUSE_INPUT rectangles/zones and returns the matching command for the click/button state.",
       "symbol": "F0358_COMMAND_GetCommandFromMouseInput_CPSC"
     },
@@ -159,7 +159,7 @@
         ".Y = P0726_i_Y"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0359 is the original click queue writer: records pending clicks, resolves primary/secondary mouse inputs via F0358, then queues command/X/Y in G0432_as_CommandQueue.",
       "symbol": "F0359_COMMAND_ProcessClick_CPSC"
     },
@@ -176,7 +176,7 @@
         "F0377_COMMAND_ProcessType80_ClickInDungeonView"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0380 locks/dequeues command/X/Y from G0432_as_CommandQueue, processes pending clicks, then dispatches C080 to F0377.",
       "symbol": "F0380_COMMAND_ProcessQueue_CPSC"
     },
@@ -192,7 +192,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "point": "F0377 is the C080 handler; PC builds subtract viewport origin and empty-hand C05 wall-ornament hits call F0372.",
       "symbol": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
     },
@@ -208,7 +208,7 @@
         "F0010_MAIN_WriteSpacedWords"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "point": "DUNVIEW stores front-wall champion portrait and D1C door-button clickability in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT; startup clears the clickable storage.",
       "symbol": "C05 clickable portrait/door-button storage"
     },
@@ -222,7 +222,7 @@
         "F0280_CHAMPION_AddCandidateChampionToParty"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "point": "MOVESENS identifies wall champion portrait sensors and calls F0280 with the sensor data/portrait index.",
       "symbol": "C127_SENSOR_WALL_CHAMPION_PORTRAIT"
     },
@@ -238,12 +238,12 @@
         "G0299_ui_CandidateChampionOrdinal"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "point": "F0280 is the candidate transition reached from C127; it checks empty hand/party count and sets up the candidate champion path.",
       "symbol": "F0280_CHAMPION_AddCandidateChampionToParty"
     }
   ],
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "tools": {
     "dosbox": "/usr/bin/dosbox",
     "dosbox-debug": "/usr/bin/dosbox-debug",

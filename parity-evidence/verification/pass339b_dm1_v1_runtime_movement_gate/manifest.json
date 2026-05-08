@@ -1,0 +1,57 @@
+{
+  "schema": "firestaff.parity.pass339b.dm1_v1_runtime_movement_gate.v1",
+  "pass": "pass339b",
+  "status": "MOVEMENT_PROVED",
+  "fullLauncherStatus": "BLOCKED_FULL_LAUNCHER_SCRIPT_HANDOFF",
+  "baseCommit": "d48c30a1797c7f49b7a53116ab407ff526af396b",
+  "branch": "worker/pass339b-dm1-v1-runtime-movement-gate-artifact-20260507",
+  "worktree": "/home/trv2/work/firestaff-worktrees/pass339b-dm1-v1-runtime-movement-gate-artifact-20260507",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "routeTokens": ["up", "left", "right"],
+  "runtimeRouteEquivalent": ["left", "up", "left", "up", "left", "up", "right", "right"],
+  "redmcsbAnchors": [
+    "COMMAND.C:106-121",
+    "COMMAND.C:678-683",
+    "COMMAND.C:1709-1813",
+    "COMMAND.C:2029-2042",
+    "COMMAND.C:2045-2158",
+    "CLIKMENU.C:223-233",
+    "CLIKMENU.C:264-328",
+    "MOVESENS.C:315-545",
+    "INPUT.C:531-568",
+    "IO2.C:47-59"
+  ],
+  "artifacts": {
+    "evidence": "parity-evidence/pass339b_dm1_v1_runtime_movement_gate.md",
+    "verifier": "tools/verify_pass339b_dm1_v1_runtime_movement_gate.py",
+    "runtimeJson": "parity-evidence/verification/pass339b_dm1_v1_runtime_movement_gate/runtime_hall_walkaround_route.json",
+    "runtimeMarkdown": "parity-evidence/verification/pass339b_dm1_v1_runtime_movement_gate/runtime_hall_walkaround_route.md",
+    "runtimeCommandLog": "parity-evidence/verification/pass339b_dm1_v1_runtime_movement_gate/runtime_probe_command.log",
+    "pipelineTestLog": "parity-evidence/verification/pass339b_dm1_v1_runtime_movement_gate/pipeline_test.log",
+    "launcherAttemptEnterLog": "parity-evidence/verification/pass339b_dm1_v1_runtime_movement_gate/full_launcher_attempt_enter_blocked.log",
+    "launcherAttemptScriptLog": "parity-evidence/verification/pass339b_dm1_v1_runtime_movement_gate/full_launcher_attempt_script_blocked.log"
+  },
+  "commands": [
+    {
+      "name": "pipeline_integration_test",
+      "command": "./build-pass339b/test_dm1_v1_movement_pipeline_pc34_compat",
+      "result": "131 passed, 0 failed"
+    },
+    {
+      "name": "runtime_hall_walkaround_probe",
+      "command": "./build-pass339b/firestaff_m11_hall_walkaround_runtime_probe /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 /tmp/pass339b-hall-out",
+      "result": "PASS dm1 v1 hall walkaround runtime probe"
+    },
+    {
+      "name": "full_launcher_script_attempt",
+      "command": "SDL_VIDEODRIVER=dummy FIRESTAFF_AUTOTEST=1 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 ./build-pass339b/firestaff --duration ... --script ...",
+      "result": "firestaff: launch smoke failed: no launch reached before exit"
+    }
+  ],
+  "proofPoints": {
+    "turnRedraw": "turn_left_east_view_changes result=1 lastOutcome=FACING UPDATED",
+    "stepMovement": "step_west_moves_in_hall result=1 mapX=0 mapY=3 lastOutcome=PARTY MOVED",
+    "noCandidateSideEffect": "all runtime steps championCount=0 candidateMirrorPanelActive=0",
+    "notPixelParity": true
+  }
+}

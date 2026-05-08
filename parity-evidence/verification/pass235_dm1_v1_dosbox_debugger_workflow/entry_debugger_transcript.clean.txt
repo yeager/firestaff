@@ -1,0 +1,79 @@
+(B=---(Register Overview)---
+(BEAX=ESI=DS=ES=FS=GS=SS=
+EBX=EDI=CS=EIP=C  Z  S  O  A  P  D  I  T
+ECX=EBP=IOPL   CPL
+EDX=ESP=
+---(Data Overview   Scroll: page up/down)---
+---(Code Overview   Scroll: up/down     )---
+---(Variable Overview)---
+---(OutPut/Input    Scroll: home/end    )---(B
+DOSBox version 0.74-3
+Copyright 2002-2019 DOSBox Team, published under GNU GPL.
+---
+CONFIG:Loading primary settings from config file <TMP>
+0: IO:Writing 05 to port 03CF
+MIXER:No Sound Mode Selected.
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+0000:0000     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0010     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0020     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0030     60 10 00 F0 60 10 00 F0 80 10 00 F0 60 10 00 F0  `...`.`...
+0000:0040     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0000  60pusha
+(B0000:0001  1000adc  [bx+si],alds:[0000]=1060
+0000:0003  F060lock pusha
+0000:0005  1000adc  [bx+si],alds:[0000]=1060
+0000:0007  F060lock pusha
+0000:0009  1000adc  [bx+si],alds:[0000]=1060
+0000:000B  F060lock pusha
+0000:000D  1000adc  [bx+si],alds:[0000]=1060
+0000:000F  F060lock pusha
+0000:0011  1000adc  [bx+si],alds:[0000]=1060
+(Running)00  DS=00000000000000000000 Real00  CS=00000  C0 Z0 S0 O0 A0 P0 D0 I1(B T0000  CPL00000: SBLASTER:DSP:Reset
+0: IO:Read from port 0278
+0: IO:Read from port 0279
+0: IO:Read from port 03BC
+0: IO:Read from port 03BE
+0: INT10:Set Video Mode 3
+0: VGA:Blinking 8
+0: BIOS:Keyboard layout file auto not found
+0: BIOS:Keyboard layout file auto not found
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: EXEC:Parsing command line: AUTOEXEC.BAT
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: EXEC:Parsing command line: mount c "<TMP>"3: EXEC:Execute mount.COM 0
+3: FILES:file open command 0 file mount.COM
+12: DOSMISC:DIRCACHE: Set volume label to C_DRIVE
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+18: EXEC:Parsing command line: c:
+18: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+18: EXEC:Parsing command line: DEBUG FIRES.EXE
+21: EXEC:Execute Z:\DEBUG.COM 0
+21: FILES:file open command 0 file Z:\DEBUG.COM
+33: EXEC:Execute FIRES.EXE 0
+33: FILES:file open command 0 file FIRES.EXE
+08 00 70 00 08 00 70 00 08 00 70 0..p...p...p08 00 70 0..pA5 FE87 E955 FF.U20 1320 1140 111 ... ...@C0 11E0 1100 1240 12.@E0 12E0 122.....80 12A4 F00 05 00 C0  .........1EDBADA26mov  dx,26DA(B1ED:0003  2E8916D901mov  cs:[01D9],dxcs:[01D9]=000
+01ED:0008  B43mov  ah,30
+01ED:000A  CD21int  21
+01ED:000C  8B2E0200mov  bp,[0002]ds:[0002]=9FFF
+01ED:0010  8B1E2C00mov  bx,[002C] 2C]=01D3
+01ED:0014  8EDAmov  ds,dx
+01ED:0016  A37B00mov  [007B],ax 7B]=000
+01ED:0019  8C067900mov  [0079],esds:[0079]=0000
+01ED:001D  891E7500mov  [0075],bx 75]=202
+-> _  01DD01DD2AE800000080(B  CS=01ED(B1000000FF0000091C3000001DD00000080(B34
+***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
+01DD01DD2AE800000080  CS=01ED000000FF0000091C3000001DD00000080
+
+>

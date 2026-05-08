@@ -17,7 +17,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "m11_game_view.c"
-ZONES = ROOT / "zones_h_reconstruction.json"
+ZONES = ROOT / "data/zones_h_reconstruction.json"
 
 
 def line_no(text: str, offset: int) -> int:

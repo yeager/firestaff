@@ -1,0 +1,189 @@
+{
+  "completion_wording": "DM1 V1 movement proof status: source-locked and runtime-supported from controlled key to queue predicates to dispatch-equivalent source chain to party tuple mutation to F0128 draw consumption. Direct F0380 entry/body BP remains blocked and is explicitly not claimed or required by this gate.",
+  "direct_f0380_decision": {
+    "blocked": true,
+    "pass278": "Staged BPM disable/re-enable reduced queue/index noise and captured controlled-key G0432 writes, party tuple mutation, and an F0128 draw BP hit after switching to code-only mode; the exact remaining blocker is no proven F0380 dequeue BP hit at 22F4:0699. This is not a runtime-hook claim.",
+    "pass289": "Direct F0380 body breakpoint at pass278 address 22F4:0699 still does not hit; reproduce with pass278 route and breakpoints from its manifest/transcript. The dispatch-equivalent seam is GAMELOOP.C:215 -> COMMAND.C:F0380 source ordering, not a direct runtime BP claim.",
+    "pass293": "No direct F0380 runtime proof. The source/map chain still points to public symbol 1BC1:0699 + load segment 0733 = 22F4:0699, and pass293 could set that BP in a broad candidate window, but the transcript contains no execution stop line at 22F4:0699. The broad window was additionally noisy on G0433 first-index writes and did not improve pass278. Next narrow step: run with only BP 22F4:0699 plus queue tuple watches, then if still silent disassemble/MEMDUMP live COMMAND_TEXT around 22F4:0680..06F0 and place BPs on post-prologue/dequeue instruction offsets rather than the public entry only.",
+    "required_for_this_gate": false
+  },
+  "imported_manifests": {
+    "pass278": {
+      "path": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+      "proof_predicates": {
+        "cpu_memdump_after_stops": true,
+        "f0128_draw_hit_seen": true,
+        "f0380_dequeue_hit_seen": false,
+        "g0432_write_seen": true,
+        "party_tuple_mutation_seen": true,
+        "route_posted_controlled_keys": true
+      },
+      "route_keylog": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/route_noise_reduced_keylog.json",
+      "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK",
+      "transcript": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt"
+    },
+    "pass289": {
+      "direct_f0380_body_bp_seen": false,
+      "dispatch_equivalent_proven": true,
+      "path": "parity-evidence/verification/pass289_dm1_v1_f0380_dispatch_equivalent_proof/manifest.json",
+      "runtime_equivalent_proven": true,
+      "source_chain_proven": true,
+      "status": "DISPATCH_EQUIVALENT_PROVEN_DIRECT_F0380_BP_BLOCKED"
+    },
+    "pass293": {
+      "direct_f0380_claim": false,
+      "path": "parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/manifest.json",
+      "proof_predicates": {
+        "controlled_keys_posted": true,
+        "direct_f0380_entry_bp_hit": false,
+        "dispatch_target_bp_hit": false,
+        "f0128_draw_bp_hit": false,
+        "f0361_keypress_bp_hit": false,
+        "party_tuple_bpm_seen": false,
+        "queue_or_index_bpm_seen": true
+      },
+      "route_keylog": "parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/route_candidate_window_keylog.json",
+      "status": "BLOCKED_SOURCE_MAP_DEBUGGER_WINDOW_FOR_DIRECT_F0380",
+      "transcript": "parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/dosbox_debug_candidate_window.clean.txt"
+    }
+  },
+  "proof_chain": [
+    {
+      "ok": true,
+      "runtime_support": "pass278 route_posted_controlled_keys=true and pass293 controlled_keys_posted=true",
+      "source": "COMMAND.C:252-260 movement keyboard table; COMMAND.C:F0361",
+      "step": "controlled key"
+    },
+    {
+      "ok": true,
+      "runtime_support": "pass278 g0432_write_seen=true and pass293 queue_or_index_bpm_seen=true",
+      "source": "COMMAND.C:F0361 writes G0432/G0434/G2153; COMMAND.C:F0380 reads/dequeues G0432/G0433",
+      "step": "queue predicates"
+    },
+    {
+      "ok": true,
+      "runtime_support": "pass289 dispatch_equivalent_proven=true via pass278 runtime predicates",
+      "source": "GAMELOOP.C:F0002 calls F0361 then F0380; COMMAND.C:F0380 dispatches F0365/F0366",
+      "step": "dispatch-equivalent/source chain"
+    },
+    {
+      "ok": true,
+      "runtime_support": "pass278 party_tuple_mutation_seen=true with CPU/MEMDUMP after stops",
+      "source": "MOVESENS.C:F0267 writes G0306/G0307 and uses G0308 direction path",
+      "step": "party tuple mutation"
+    },
+    {
+      "ok": true,
+      "runtime_support": "pass278 f0128_draw_hit_seen=true",
+      "source": "GAMELOOP.C:88-90 passes G0308/G0306/G0307; DUNVIEW.C:F0128 receives P0183/P0184/P0185 and draws viewport",
+      "step": "F0128 draw consumption"
+    }
+  ],
+  "proof_gate_passed": true,
+  "runtime_support": {
+    "after_stop_state_supported": true,
+    "controlled_key_supported": true,
+    "dispatch_equivalent_supported": true,
+    "draw_consumption_supported": true,
+    "queue_predicates_supported": true,
+    "tuple_mutation_supported": true
+  },
+  "schema": "pass296_dm1_v1_input_tuple_proof_without_direct_f0380.v1",
+  "source_chain_locked": true,
+  "source_checks": [
+    {
+      "claim": "PC-34 controlled movement keys map to turn/move commands before enqueue.",
+      "file": "COMMAND.C",
+      "function": "PC-34 movement keyboard table / F0361_COMMAND_ProcessKeyPress",
+      "id": "controlled_key_mapping",
+      "line_range": [
+        252,
+        260
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0361 locks the queue, selects the next slot, writes G0432, advances G0434, increments the guarded count, unlocks, then processes pending click replay.",
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress",
+      "id": "keypress_enqueue_predicates",
+      "line_range": [
+        1734,
+        1812
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "The active game loop scans keys with F0361 and then invokes F0380, creating the accepted caller seam when direct F0380 entry BP misses.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "gameloop_dispatch_equivalent_seam",
+      "line_range": [
+        160,
+        216
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0380 source semantics dequeue G0432/G0433, apply the disabled-movement gate, advance/wrap the queue, replay pending click, then dispatch turn/move commands.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_dequeue_dispatch_source_chain",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "Successful movement writes the party tuple G0306/G0307 and calls direction/draw paths for movement consequences.",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "party_tuple_mutation",
+      "line_range": [
+        316,
+        556
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "The main redraw passes the current party tuple G0308/G0306/G0307 into F0128.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF -> F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "main_redraw_consumes_tuple",
+      "line_range": [
+        88,
+        90
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0128 receives direction/mapX/mapY arguments and finishes by drawing the dungeon viewport.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "dunview_consumes_tuple_args",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    }
+  ],
+  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "MOVEMENT_INPUT_TUPLE_PROOF_SOURCE_LOCKED_RUNTIME_SUPPORTED_DIRECT_F0380_BLOCKED_NOT_REQUIRED",
+  "timestamp_utc": "2026-05-07T01:22:00Z"
+}

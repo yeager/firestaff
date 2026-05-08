@@ -137,6 +137,9 @@ cc $CFLAGS_M11 \
     "$HERE/memory_champion_state_pc34_compat.c" \
     "$HERE/memory_dungeon_dat_pc34_compat.c" \
     "$HERE/entrance_frontend_pc34_compat.c" \
+    "$HERE/dm1_v1_vblank_timing.c" \
+    "$HERE/dm1_v1_save_load.c" \
+    "$HERE/changelog_m12.c" \
     "$VGA_OBJ" \
     $GFX_OBJS \
     $SDL_LIBS -lm

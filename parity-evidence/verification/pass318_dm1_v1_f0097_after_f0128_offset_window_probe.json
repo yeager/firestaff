@@ -1,0 +1,65 @@
+{
+  "conclusion": "2809:1E31 is the F0097 function entry from FIRES.MAP. Static original-byte binding narrows DRAWVIEW.C:857 / VIDRV_09_BlitViewPort to the indirect lcall at 20D6:1EFF, runtime 2809:1EFF. Runtime probe did not capture a post-F0128 F0097-window stop, so viewport_present remains unpromoted.",
+  "map_audit": {
+    "f0097_link": "20D6:1E31",
+    "f0097_runtime_entry": "2809:1E31",
+    "f0128_link": "1C7A:40FE",
+    "f0128_runtime": "23AD:40FE",
+    "ok": true,
+    "path": "/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP"
+  },
+  "probe_manifest": "parity-evidence/verification/pass318_dm1_v1_f0097_after_f0128_offset_window_probe/manifest.json",
+  "probe_status": "BLOCKED_F0097_AFTER_F0128_WINDOW_NO_HIT",
+  "schema": "pass318_dm1_v1_f0097_offset_binding.v1",
+  "source_audit": [
+    {
+      "file": "DRAWVIEW.C",
+      "found": {
+        "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);": 857,
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "line_range": [
+        709,
+        858
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "found": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610
+      },
+      "line_range": [
+        8604,
+        8611
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "static_offset_binding": {
+    "entry_20D6_1E31_runtime_2809_1E31": {
+      "bytes": "558bec83ec16",
+      "expect_prefix": "558bec",
+      "offset": "1E31"
+    },
+    "post_zone_20D6_1EBD_runtime_2809_1EBD": {
+      "bytes": "168d46ea50b80700",
+      "expect_prefix": "168d46ea50",
+      "offset": "1EBD"
+    },
+    "vidrv_call_20D6_1EFF_runtime_2809_1EFF": {
+      "bytes": "26ff5f24",
+      "expect_prefix": "26ff5f24",
+      "offset": "1EFF"
+    },
+    "viewport_args_20D6_1EEE_runtime_2809_1EEE": {
+      "bytes": "168d46f250ff362c3dff362a3d",
+      "expect_prefix": "168d46f250ff362c3dff362a3d",
+      "offset": "1EEE"
+    }
+  },
+  "status": "BLOCKED_F0097_RUNTIME_HIT_STATIC_VIDRV_CANDIDATE_2809_1EFF"
+}

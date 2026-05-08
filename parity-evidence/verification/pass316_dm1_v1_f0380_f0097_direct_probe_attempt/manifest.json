@@ -1,0 +1,758 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport": "2809:1E31",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+    "G0306_i_PartyMapX": "2C20:3C94",
+    "G0307_i_PartyMapY": "2C20:3CE0",
+    "G0308_i_PartyDirection": "2C20:3C92",
+    "G0432_as_CommandQueue": "2C20:3E7A"
+  },
+  "blocker": "Code-only probe captured the existing F0128 hit but not a direct F0380 dequeue hit at 22F4:0699 or F0097 viewport-present hit at 2809:1E31. This remains a blocked attempt, not a runtime-hook promotion.",
+  "debugger_events": [
+    {
+      "cmd": "BPDEL *",
+      "event": "debugger_cmd",
+      "t": 1778157212.0785587
+    },
+    {
+      "cmd": "BP 22F4:0699",
+      "event": "debugger_cmd",
+      "t": 1778157212.2446105
+    },
+    {
+      "cmd": "BP 23AD:40FE",
+      "event": "debugger_cmd",
+      "t": 1778157212.4134204
+    },
+    {
+      "cmd": "BP 2809:1E31",
+      "event": "debugger_cmd",
+      "t": 1778157212.5821345
+    },
+    {
+      "cmd": "BPLIST",
+      "event": "debugger_cmd",
+      "t": 1778157212.7514918
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157212.940351
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157213.1072829
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157213.2738016
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157214.7546864
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157214.9238622
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157215.092492
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157216.5656743
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157216.7324975
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157216.9009082
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157218.3754783
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157218.5415053
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157218.710851
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157220.187193
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157220.3546376
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157220.523851
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157221.9920099
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157222.1598852
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157222.3275774
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157223.8035948
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157223.9703903
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157224.1404266
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157225.6154375
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157225.7825172
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157225.9509647
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157227.4267046
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157227.5961423
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157227.7644913
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157229.2521696
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157229.4221876
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157229.5914147
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157231.07658
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157231.2462573
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157231.4149296
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157232.8956747
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157233.0634282
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157233.2334814
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157234.716415
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157234.8839452
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157235.0525265
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157236.5373328
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157236.7066321
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157236.8754022
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157238.3533773
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157238.5236418
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157238.6940987
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157240.1788151
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157240.3444757
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157240.5154142
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157241.9907966
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157242.1591172
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157242.3282585
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157243.8087401
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157243.976181
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157244.1446588
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157245.6230865
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157245.7895043
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157245.9584725
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157247.4402652
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157247.6084359
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157247.7784235
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157249.2636065
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157249.4311233
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157249.6000137
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157251.0845447
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157251.2519667
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157251.4193041
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157252.8968494
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157253.0637376
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157253.2322695
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157254.7166784
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157254.883955
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157255.053288
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157256.5383778
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157256.707283
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157256.8770516
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157258.3657987
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157258.5355458
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157258.703733
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157260.1893053
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157260.3574157
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157260.5268276
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157262.0107877
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157262.1786075
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157262.3470914
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157263.831636
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157263.9990895
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157264.1689124
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157265.6542163
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157265.8212798
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157265.989674
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157267.4735522
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157267.6424434
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157267.8099477
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157269.290271
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157269.4598095
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157269.62992
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157271.1152644
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157271.284244
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157271.4545364
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157272.9423547
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157273.1121976
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157273.2813425
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157274.7726238
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157274.9398131
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157275.1079834
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157276.5948348
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157276.7644713
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157276.9328012
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157278.4136896
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157278.5826254
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157278.7522616
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157280.2337768
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157280.401213
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157280.5713158
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157282.0503943
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157282.2192216
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157282.3875027
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157283.8731174
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157284.0409992
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157284.2097893
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157285.6929839
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157285.8617938
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157286.0313509
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157287.5160666
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157287.683813
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157287.851799
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778157289.3321612
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3E7A 80",
+      "event": "debugger_cmd",
+      "t": 1778157289.5017161
+    },
+    {
+      "cmd": "MEMDUMP 2C20:3C88 80",
+      "event": "debugger_cmd",
+      "t": 1778157289.6704087
+    }
+  ],
+  "debugger_hits_captured": [
+    {
+      "kind": "f0128_bp",
+      "sig": "01. BP 23AD:40FE",
+      "stage": "code_only",
+      "t": 1778157212.9403408
+    }
+  ],
+  "dosbox_debug": "/usr/bin/dosbox-debug",
+  "dosbox_window_pid": 2239042,
+  "memory_breakpoint_changes": [],
+  "method": "pass316 code-only debugger window after pass315: arm F0380 22F4:0699, F0128 23AD:40FE, and F0097 2809:1E31, then drive the pass278 guarded xdotool route",
+  "promotion_rule": "Promote only an explicit debugger stop for F0380 at 22F4:0699 or F0097 at 2809:1E31; do not reinterpret setup echo/collision text as a direct runtime hit.",
+  "proof_predicates": {
+    "cpu_memdump_after_stops": false,
+    "f0128_draw_hit_seen": true,
+    "f0380_dequeue_hit_seen": false,
+    "g0432_write_seen": false,
+    "party_tuple_mutation_seen": false,
+    "route_posted_controlled_keys": true
+  },
+  "route": "wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:1800 one wait:1800 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp6 wait:900 kp4 wait:900 kp5 wait:900",
+  "route_keylog": "parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/route_noise_reduced_keylog.json",
+  "schema": "pass316_dm1_v1_f0380_f0097_direct_probe_attempt.raw_probe.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        1,
+        16
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        1734,
+        1812
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "line_range": [
+        316,
+        556
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK",
+  "timestamp_utc": "2026-05-07T12:34:50.021586+00:00",
+  "transcript": "parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/dosbox_debug_noise_reduced.clean.txt"
+}

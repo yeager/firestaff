@@ -1,7 +1,7 @@
 {
   "gate": "v1_inventory_mouth_eye_routing_redmcsb",
   "purpose": "Source-lock DM1/V1 champion inventory mouth and eye click routing to ReDMCSB COMMAND.C/PANEL.C, then verify Firestaff routes viewport-relative C545/C546 zones to C070/C071 without disturbing slot-box/action-hand routing.",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRanges": [
     {"file": "COMMAND.C", "start": 128, "end": 138, "why": "absolute S10 inventory mouse rows show action hand C029, mouth C070 at 56..71/46..61, and eye C071 at 12..27/46..61"},
     {"file": "COMMAND.C", "start": 420, "end": 428, "why": "G0449 source routes action hand C508 then mouth C545 and eye C546 as viewport-relative rows before quiver C514"},

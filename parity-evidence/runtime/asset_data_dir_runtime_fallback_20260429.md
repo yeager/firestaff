@@ -6,9 +6,9 @@ The V1 startup/title/entrance runtime can have the correct ReDMCSB-backed code p
 
 On N2, the verified files are:
 
-- `/home/trv2/.firestaff/data/DUNGEON.DAT` md5 `766450c940651fc021c92fe5d0d0b3a6`
-- `/home/trv2/.firestaff/data/GRAPHICS.DAT` md5 `fa6b1aa29e191418713bf2cda93d962e`
-- `/home/trv2/.firestaff/data/TITLE` md5 `05c2ab94ce4dffe51b63985f7b0d1822`
+- `<n2-home>/.firestaff/data/DUNGEON.DAT` md5 `766450c940651fc021c92fe5d0d0b3a6`
+- `<n2-home>/.firestaff/data/GRAPHICS.DAT` md5 `fa6b1aa29e191418713bf2cda93d962e`
+- `<n2-home>/.firestaff/data/TITLE` md5 `05c2ab94ce4dffe51b63985f7b0d1822`
 
 ## Fix
 
@@ -22,7 +22,7 @@ This keeps the already-landed ReDMCSB title/entrance paths fed with the real `TI
 Ad-hoc data-dir probe after patch:
 
 ```text
-dataDir=/home/trv2/.firestaff/data
+dataDir=<n2-home>/.firestaff/data
 dm1=1
 ```
 

@@ -1,0 +1,28 @@
+{
+  "status": "PASS_DM1_V1_VIEWPORT_WALLS_SOURCE_LOCK_LANDABLE",
+  "pass": "pass362",
+  "date": "2026-05-08",
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "scope": "metadata/probe gate only; no renderer behavior changes; no pixel parity claim",
+  "evidence_file": "parity-evidence/pass362_dm1_v1_viewport_walls_source_lock_landable.md",
+  "verifier": "tools/verify_pass362_dm1_v1_viewport_walls_source_lock_landable.py",
+  "source_anchors": [
+    {"file": "DUNVIEW.C", "lines": "8318-8618", "function": "F0128_DUNGEONVIEW_Draw_CPSF"},
+    {"file": "DUNVIEW.C", "lines": "8445-8542", "function": "F0128 visible-square order"},
+    {"file": "DUNVIEW.C", "lines": "6213-6356", "function": "D3L2/D3R2 far-extra order"},
+    {"file": "DUNVIEW.C", "lines": "6361-6835", "function": "F0116/F0117/F0118 D3 branches"},
+    {"file": "DUNVIEW.C", "lines": "7244-7937", "function": "F0121/F0124 D2C/D1C branches"},
+    {"file": "DUNVIEW.C", "lines": "7960-8308", "function": "F0125/F0126/F0127 D0 branches"},
+    {"file": "DRAWVIEW.C", "lines": "709-722", "function": "F0097_DUNGEONVIEW_DrawViewport"}
+  ],
+  "canonical_original_assets": [
+    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+  ],
+  "required_gates": [
+    "pass361_dm1_v1_viewport_occlusion_redraw_order_gate",
+    "dm1_v1_viewport_3d_occlusion_metadata_gate",
+    "dm1_v1_viewport_draw_order_probe",
+    "firestaff_dm1_v1_walls_occlusion_blockers_probe"
+  ]
+}

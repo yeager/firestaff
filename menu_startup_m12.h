@@ -95,6 +95,16 @@ typedef struct {
     int scalingFilterIndex;
     int vsyncIndex;
     int wasdMovementEnabled;
+    int audioMasterVolume;
+    int audioMusicVolume;
+    int audioSfxVolume;
+    int audioMuted;
+    int fontScale;
+    int highContrast;
+    int colorblindMode;
+    int autoPause;
+    int themeIndex;
+    int bgAnimationPreset;
     int windowWidth;
     int windowHeight;
 } M12_MenuSettingsState;

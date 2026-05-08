@@ -6,13 +6,13 @@ Scope: follow-up gate for the DM2 startup file-open/source boundary. This is sti
 
 ReDMCSB remains a DM/CSB comparison source only, not DM2 C source. Exact audited ranges:
 
-- `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C:4-10` — global filename definitions for `DATA\DUNGEON.DAT` and `DATA\GRAPHICS.DAT`.
-- `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C:1212-1285` — `F0477_MEMORY_OpenGraphicsDat_CPSDF`, including `F0770_FILE_Open(G2130_GraphicsDatFileName)` and the graphics-open error boundary.
-- `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C:2333-2377` — dungeon-load open block in `F0436_LOADSAVE_LoadGameFile`, including `F0770_FILE_Open(G1059_pc_DungeonFileName)` and platform-specific dungeon fallbacks.
+- `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C:4-10` — global filename definitions for `DATA\DUNGEON.DAT` and `DATA\GRAPHICS.DAT`.
+- `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C:1212-1285` — `F0477_MEMORY_OpenGraphicsDat_CPSDF`, including `F0770_FILE_Open(G2130_GraphicsDatFileName)` and the graphics-open error boundary.
+- `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C:2333-2377` — dungeon-load open block in `F0436_LOADSAVE_LoadGameFile`, including `F0770_FILE_Open(G1059_pc_DungeonFileName)` and platform-specific dungeon fallbacks.
 
 ## DM2 canonical open anchors
 
-The verifier normalizes file offsets versus loaded-image offsets for canonical `SKULL.EXE` from `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip`:
+The verifier normalizes file offsets versus loaded-image offsets for canonical `SKULL.EXE` from `<firestaff-original-games>/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip`:
 
 - Header size: 6 paragraphs / 96 bytes; entry `0000:04f6`.
 - Direct wrapper calls: image `0x1439` / file `0x1499`, and image `0x1464` / file `0x14c4`.
@@ -23,10 +23,10 @@ The verifier normalizes file offsets versus loaded-image offsets for canonical `
 
 Relevant `SKULL.ASM` ranges:
 
-- `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM:6139-6153` — wrapper prepares args and calls the generic open inner routine.
-- `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM:6154-6200` — generic DOS open routine reaches `AH=3Dh / int 21h`.
-- `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM:4761-4783` and `4813-4826` — the only direct wrapper callers found so far pass a `BP+0Ah` path buffer.
-- `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM:461403-461472` — db-only member strings; no xrefs in this dump.
+- `<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM:6139-6153` — wrapper prepares args and calls the generic open inner routine.
+- `<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM:6154-6200` — generic DOS open routine reaches `AH=3Dh / int 21h`.
+- `<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM:4761-4783` and `4813-4826` — the only direct wrapper callers found so far pass a `BP+0Ah` path buffer.
+- `<firestaff-original-games>/_extracted/dm2-dos-asm/SKULL.ASM:461403-461472` — db-only member strings; no xrefs in this dump.
 
 ## Finding / blocker
 

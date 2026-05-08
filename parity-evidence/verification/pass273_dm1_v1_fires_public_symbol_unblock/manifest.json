@@ -1,0 +1,319 @@
+{
+  "binary_policy": "No original/decompressed executable copied or committed; this pass records text map paths, hashes, and derived addresses only.",
+  "debugger_next_step": [
+    "Launch stock PC34/I34E under dosbox-debug and verify FIRES load segment 0733 in that run.",
+    "Set BP at runtime F0380/F0365/F0366/F0267/F0128 addresses from this manifest.",
+    "Set BPM writes on runtime G0432/G0433/G0434/G0308/G0306/G0307 addresses, then press kp5/kp4/kp6 in a controlled in-game run.",
+    "Promote only after transcript proves command queue write/dequeue plus G0308 or G0306/G0307 mutation and subsequent F0128 draw consumption."
+  ],
+  "functions": [
+    {
+      "idle": false,
+      "line": 533,
+      "link_csip": "1BC1:030D",
+      "map_symbol_prefix": "F0359_COMMAND_PROCESSCLICK_CPSC",
+      "meaning": "COMMAND.C mouse/click queue writer",
+      "name": "F0359_COMMAND_PROCESSCLICK_CPSC",
+      "runtime_with_load_seg_0733": "22F4:030D",
+      "source_name": "F0359_COMMAND_ProcessClick_CPSC"
+    },
+    {
+      "idle": false,
+      "line": 543,
+      "link_csip": "1BC1:0699",
+      "map_symbol_prefix": "F0380_COMMAND_PROCESSQUEUE_CPSC",
+      "meaning": "COMMAND.C command dequeue/dispatch",
+      "name": "F0380_COMMAND_PROCESSQUEUE_CPSC",
+      "runtime_with_load_seg_0733": "22F4:0699",
+      "source_name": "F0380_COMMAND_ProcessQueue_CPSC"
+    },
+    {
+      "idle": false,
+      "line": 536,
+      "link_csip": "1771:010D",
+      "map_symbol_prefix": "F0365_COMMAND_PROCESSTYPES1TO2_",
+      "meaning": "CLIKMENU.C turn handler",
+      "name": "F0365_COMMAND_PROCESSTYPES1TO2_T",
+      "runtime_with_load_seg_0733": "1EA4:010D",
+      "source_name": "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+    },
+    {
+      "idle": false,
+      "line": 537,
+      "link_csip": "1771:01AA",
+      "map_symbol_prefix": "F0366_COMMAND_PROCESSTYPES3TO6_",
+      "meaning": "CLIKMENU.C move handler",
+      "name": "F0366_COMMAND_PROCESSTYPES3TO6_M",
+      "runtime_with_load_seg_0733": "1EA4:01AA",
+      "source_name": "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+    },
+    {
+      "idle": false,
+      "line": 476,
+      "link_csip": "0D06:000D",
+      "map_symbol_prefix": "F0284_CHAMPION_SETPARTYDIRECTIO",
+      "meaning": "CHAMPION.C direction write",
+      "name": "F0284_CHAMPION_SETPARTYDIRECTION",
+      "runtime_with_load_seg_0733": "1439:000D",
+      "source_name": "F0284_CHAMPION_SetPartyDirection"
+    },
+    {
+      "idle": false,
+      "line": 465,
+      "link_csip": "1126:0516",
+      "map_symbol_prefix": "F0267_MOVE_GETMOVERESULT_CPSCE",
+      "meaning": "MOVESENS.C movement result / coordinate writes",
+      "name": "F0267_MOVE_GETMOVERESULT_CPSCE",
+      "runtime_with_load_seg_0733": "1859:0516",
+      "source_name": "F0267_MOVE_GetMoveResult_CPSCE"
+    },
+    {
+      "idle": false,
+      "line": 382,
+      "link_csip": "1C7A:40FE",
+      "map_symbol_prefix": "F0128_DUNGEONVIEW_DRAW_CPSF",
+      "meaning": "DUNVIEW.C viewport compose",
+      "name": "F0128_DUNGEONVIEW_DRAW_CPSF",
+      "runtime_with_load_seg_0733": "23AD:40FE",
+      "source_name": "F0128_DUNGEONVIEW_Draw_CPSF"
+    },
+    {
+      "idle": false,
+      "line": 379,
+      "link_csip": "20D6:1E31",
+      "map_symbol_prefix": "F0097_DUNGEONVIEW_DRAWVIEWPORT",
+      "meaning": "DRAWVIEW.C viewport present request/blit",
+      "name": "F0097_DUNGEONVIEW_DRAWVIEWPORT",
+      "runtime_with_load_seg_0733": "2809:1E31",
+      "source_name": "F0097_DUNGEONVIEW_DrawViewport"
+    }
+  ],
+  "globals": [
+    {
+      "idle": false,
+      "line": 1119,
+      "link_csip": "24ED:3D2A",
+      "name": "KBJ6QT",
+      "pc_public_symbol": "KBJ6QT",
+      "runtime_with_load_seg_0733": "2C20:3D2A",
+      "source_name": "G0296_puc_Bitmap_Viewport"
+    },
+    {
+      "idle": false,
+      "line": 849,
+      "link_csip": "24ED:1A74",
+      "name": "G0297_B_DRAWFLOORANDCEILINGREQUE",
+      "pc_public_symbol": "G0297_B_DrawFloorAndCeilingRequested",
+      "runtime_with_load_seg_0733": "2C20:1A74",
+      "source_name": "G0297_B_DrawFloorAndCeilingRequested"
+    },
+    {
+      "idle": false,
+      "line": 1251,
+      "link_csip": "24ED:3D52",
+      "name": "WCUDICL7",
+      "pc_public_symbol": "WCUDICL7",
+      "runtime_with_load_seg_0733": "2C20:3D52",
+      "source_name": "G0305_ui_PartyChampionCount"
+    },
+    {
+      "idle": false,
+      "line": 1182,
+      "link_csip": "24ED:3C92",
+      "name": "QEQRGB4",
+      "pc_public_symbol": "QEQRGB4",
+      "runtime_with_load_seg_0733": "2C20:3C92",
+      "source_name": "G0308_i_PartyDirection"
+    },
+    {
+      "idle": false,
+      "line": 1249,
+      "link_csip": "24ED:3C94",
+      "name": "W9JOPB2",
+      "pc_public_symbol": "W9JOPB2",
+      "runtime_with_load_seg_0733": "2C20:3C94",
+      "source_name": "G0306_i_PartyMapX"
+    },
+    {
+      "idle": false,
+      "line": 1100,
+      "link_csip": "24ED:3CE0",
+      "name": "IQFBAUTV8Z",
+      "pc_public_symbol": "IQFBAUTV8Z",
+      "runtime_with_load_seg_0733": "2C20:3CE0",
+      "source_name": "G0307_i_PartyMapY"
+    },
+    {
+      "idle": false,
+      "line": 1263,
+      "link_csip": "24ED:3C8A",
+      "name": "WXYKIUAQBP",
+      "pc_public_symbol": "WXYKIUAQBP",
+      "runtime_with_load_seg_0733": "2C20:3C8A",
+      "source_name": "G0309_i_PartyMapIndex"
+    },
+    {
+      "idle": false,
+      "line": 1287,
+      "link_csip": "24ED:3C9A",
+      "name": "ZPFIGRFT8FM",
+      "pc_public_symbol": "ZPFIGRFT8FM",
+      "runtime_with_load_seg_0733": "2C20:3C9A",
+      "source_name": "G0310_i_DisabledMovementTicks"
+    },
+    {
+      "idle": false,
+      "line": 1174,
+      "link_csip": "24ED:3D28",
+      "name": "PM1CAJ3O5",
+      "pc_public_symbol": "PM1CAJ3O5",
+      "runtime_with_load_seg_0733": "2C20:3D28",
+      "source_name": "G0311_i_ProjectileDisabledMovementTicks"
+    },
+    {
+      "idle": false,
+      "line": 1283,
+      "link_csip": "24ED:3CE4",
+      "name": "ZH5OGNXB8COW",
+      "pc_public_symbol": "ZH5OGNXB8COW",
+      "runtime_with_load_seg_0733": "2C20:3CE4",
+      "source_name": "G0312_i_LastProjectileDisabledMovementDirection"
+    },
+    {
+      "idle": false,
+      "line": 851,
+      "link_csip": "24ED:1A7C",
+      "name": "G0321_B_STOPWAITINGFORPLAYERINPU",
+      "pc_public_symbol": "G0321_B_StopWaitingForPlayerInput",
+      "runtime_with_load_seg_0733": "2C20:1A7C",
+      "source_name": "G0321_B_StopWaitingForPlayerInput"
+    },
+    {
+      "idle": true,
+      "line": 1103,
+      "link_csip": "24ED:3E7A",
+      "name": "J0OV9EXG6",
+      "pc_public_symbol": "J0OV9EXG6",
+      "runtime_with_load_seg_0733": "2C20:3E7A",
+      "source_name": "G0432_as_CommandQueue"
+    },
+    {
+      "idle": true,
+      "line": 286,
+      "link_csip": "24ED:3EC8",
+      "name": "B6SYPBHVQH3",
+      "pc_public_symbol": "B6SYPBHVQH3",
+      "runtime_with_load_seg_0733": "2C20:3EC8",
+      "source_name": "G0433_i_CommandQueueFirstIndex"
+    },
+    {
+      "idle": true,
+      "line": 863,
+      "link_csip": "24ED:1F08",
+      "name": "G0434_I_COMMANDQUEUELASTINDEX",
+      "pc_public_symbol": "G0434_i_CommandQueueLastIndex",
+      "runtime_with_load_seg_0733": "2C20:1F08",
+      "source_name": "G0434_i_CommandQueueLastIndex"
+    },
+    {
+      "idle": true,
+      "line": 864,
+      "link_csip": "24ED:1F0A",
+      "name": "G0435_B_COMMANDQUEUELOCKED",
+      "pc_public_symbol": "G0435_B_CommandQueueLocked",
+      "runtime_with_load_seg_0733": "2C20:1F0A",
+      "source_name": "G0435_B_CommandQueueLocked"
+    },
+    {
+      "idle": true,
+      "line": 1078,
+      "link_csip": "24ED:3EC6",
+      "name": "GZPWC3PM6",
+      "pc_public_symbol": "GZPWC3PM6",
+      "runtime_with_load_seg_0733": "2C20:3EC6",
+      "source_name": "G0436_B_PendingClickPresent"
+    }
+  ],
+  "inputs": {
+    "dm_map": {
+      "bytes": 26161,
+      "path": "<firestaff-data>/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP",
+      "sha256": "c438a75e4c29c88a744621aeacac49aca4f414a83b3f6aeb39159bf40fd80cc8"
+    },
+    "fires_map": {
+      "bytes": 104565,
+      "path": "<firestaff-data>/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
+      "sha256": "eb85fee47611b4368bc218f0768937174ceab98e4bec2fa860059429288bd8c0"
+    },
+    "pc_h": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H"
+  },
+  "load_segment_from_pass246_lineage": "0733",
+  "pass270_correction": "The preserved FIRES.MAP shows e.g. F0267 at 1126:0516, F0365 at 1771:010D, and F0366 at 1771:01AA. Adding load segment 0733 yields 1859:0516, 1EA4:010D, and 1EA4:01AA respectively, matching prior pass263/pass270 candidates. Therefore pass270's extra +0733 runtime column was a double-add for these map-backed candidates.",
+  "schema": "pass273_dm1_v1_fires_public_symbol_unblock.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        1,
+        16
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        1734,
+        1812
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        2045,
+        2156
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        142,
+        328
+      ]
+    },
+    {
+      "file": "GAMELOOP.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        55,
+        91
+      ]
+    },
+    {
+      "file": "MOVESENS.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        316,
+        556
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        8318,
+        8611
+      ]
+    }
+  ],
+  "status": "UNBLOCKED_PUBLIC_SYMBOLS_FOUND_NO_RUNTIME_HOOK"
+}

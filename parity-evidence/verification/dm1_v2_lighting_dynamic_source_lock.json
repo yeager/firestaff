@@ -1,0 +1,47 @@
+{
+  "anchors": [
+    {
+      "file": "PANEL.C",
+      "line": 336,
+      "needle": "F0337_INVENTORY_SetDungeonViewPalette",
+      "text": "REGISTER int16_t* L1040_pi_Multiple;"
+    },
+    {
+      "file": "PANEL.C",
+      "line": 370,
+      "needle": "Get torch light power from both hands of each champion in the party",
+      "text": "/* Get torch light power from both hands of each champion in the party */"
+    },
+    {
+      "file": "PANEL.C",
+      "line": 412,
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount[*AL1040_pi_TorchLightPower]",
+      "text": "L1036_i_TotalLightAmount += (G0039_ai_Graphic562_LightPowerToLightAmount[*AL1040_pi_TorchLightPower] << L1037_ui_TorchLightAmountMultiplier) >> 6;"
+    },
+    {
+      "file": "PANEL.C",
+      "line": 417,
+      "needle": "G0407_s_Party.MagicalLightAmount",
+      "text": "L1036_i_TotalLightAmount += G0407_s_Party.MagicalLightAmount;"
+    },
+    {
+      "file": "PANEL.C",
+      "line": 428,
+      "needle": "G0304_i_DungeonViewPaletteIndex = AL1039_ui_PaletteIndex",
+      "text": "G0304_i_DungeonViewPaletteIndex = AL1039_ui_PaletteIndex;"
+    },
+    {
+      "file": "DATA.C",
+      "line": 359,
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount[16] = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 }",
+      "text": "int16_t G0039_ai_Graphic562_LightPowerToLightAmount[16] = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 };"
+    }
+  ],
+  "errors": [],
+  "evidenceImpact": {
+    "completionMatrixGap": "Phase 3 lighting/fog gates were incomplete or unproven; this adds a first deterministic lighting CTest plus ReDMCSB source-reference gate, but does not prove the full Phase 3 viewport lane complete.",
+    "verifiedCompletionPercent": null
+  },
+  "scope": "dm1_v2_lighting_dynamic_pc34 presentation-only source-lock",
+  "status": "passed"
+}

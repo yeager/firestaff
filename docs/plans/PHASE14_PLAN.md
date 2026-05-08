@@ -848,7 +848,7 @@ mid-task. If step N fails, fix before step N+1.
   cc -Wall -Wextra -c -o /tmp/magic_h_check.o -x c \
       <(echo '#include "memory_magic_pc34_compat.h"'; \
         echo 'int main(void){return 0;}') \
-      -I/Users/bosse/.openclaw/workspace-main/tmp/firestaff
+      -I<workspace>/tmp/firestaff
   ```
   Must compile clean.
 
@@ -999,7 +999,7 @@ must equal **1**. If not, git checkout and retry.
 
 ```
 bash run_firestaff_m10_verify.sh \
-    /Users/bosse/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
+    <local-home>/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
     /tmp/m10-verify-out
 ```
 Exit must be 0. All 14 phases (1..13 unchanged + new 14) PASS.

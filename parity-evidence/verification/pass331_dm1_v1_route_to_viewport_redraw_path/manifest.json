@@ -1,0 +1,263 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport": "2809:1EFF",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0267_MOVE_GetMoveResult_CPSCE": "1859:0516",
+    "F0361_COMMAND_ProcessKeyPress": "22F4:0407",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699"
+  },
+  "blocker": "BLOCKED_PASS331_ROUTE_KEYS_NOT_COMMAND_QUEUE",
+  "hypothesis": "route keys are delivered but not mapped to DM command queue",
+  "notPromotedBy": [
+    "BPLIST",
+    "BP command echo",
+    "tmux/capture-pane"
+  ],
+  "runtimeProbe": {
+    "boundedSecondsPerProbe": 75,
+    "missingTools": [],
+    "probes": [
+      {
+        "blocker": "BLOCKED_PASS331_ROUTE_KEYS_NOT_COMMAND_QUEUE",
+        "boundedSeconds": 75,
+        "commandLog": [
+          {
+            "control": "F5",
+            "purpose": "run unarmed to load/menu prefix",
+            "t": 1778169950.163324
+          },
+          {
+            "control": "Alt+Pause",
+            "purpose": "pre-command-route debugger pause",
+            "t": 1778169966.4034543
+          },
+          {
+            "cmd": "BPDEL *",
+            "excerpt": "....\n-> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+            "t": 1778169972.260555
+          },
+          {
+            "cmd": "BP 22F4:0407",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....4_  ....:_  ....0_  ....4_  ....0_  ....7_  \nDEBUG: Set breakpoint at 22F4:0407\n\n-> _            ",
+            "t": 1778169973.0843048
+          },
+          {
+            "cmd": "BP 22F4:0699",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....2_  ....F_  ....4_  ....:_  ....0_  ....6_  ....9_  ....9_  \nDEBUG: Set breakpoint at 22F4:0699\n\n-> _            ",
+            "t": 1778169973.9084487
+          },
+          {
+            "cmd": "BP 1EA4:010D",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....0_  ....D_  \nDEBUG: Set breakpoint at 1EA4:010D\n\n-> _            ",
+            "t": 1778169974.733251
+          },
+          {
+            "cmd": "BP 1EA4:01AA",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....E_  ....A_  ....4_  ....:_  ....0_  ....1_  ....A_  ....A_  \nDEBUG: Set breakpoint at 1EA4:01AA\n\n-> _            ",
+            "t": 1778169975.5569193
+          },
+          {
+            "cmd": "BP 1859:0516",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....1_  ....8_  ....5_  ....9_  ....:_  ....0_  ....5_  ....1_  ....6_  \nDEBUG: Set breakpoint at 1859:0516\n\n-> _            ",
+            "t": 1778169976.3805652
+          },
+          {
+            "cmd": "BP 23AD:40FE",
+            "excerpt": "....\n-> B_  ....P_  .... _  ....2_  ....3_  ....A_  ....D_  ....:_  ....4_  ....0_  ....F_  ....E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
+            "t": 1778169977.2046356
+          },
+          {
+            "cmd": "BPLIST",
+            "excerpt": "....\n-> B_  ....P_  ....L_  ....I_  ....S_  ....T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n78\n01. BP 1859:0516\n78\n02. BP 1EA4:01AA\n78\n03. BP 1EA4:010D\n78\n04. BP 22F4:0699\n78\n05. BP 22F4:0407\n\n-> _      ",
+            "t": 1778169978.0282633
+          },
+          {
+            "control": "F5",
+            "purpose": "run after command/redraw path arms",
+            "t": 1778169978.0786176
+          }
+        ],
+        "durationSeconds": 107.673,
+        "ran": true,
+        "routeLog": [
+          {
+            "route_item": "wait:9000",
+            "slept": true,
+            "t": 1778169950.1802142
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "enter",
+            "t": 1778169959.195971
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778169959.4171226
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778169961.620442
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778169961.8433378
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "click:276,140",
+            "screen": [
+              553,
+              281
+            ],
+            "t": 1778169964.0469413
+          },
+          {
+            "route_item": "wait:2200",
+            "slept": true,
+            "t": 1778169964.1639748
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "one",
+            "t": 1778169978.0973196
+          },
+          {
+            "route_item": "wait:3500",
+            "slept": true,
+            "t": 1778169978.3188033
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778169981.8251739
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778169982.04652
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778169982.947823
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778169983.171239
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778169984.0724504
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778169984.293623
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778169985.1954217
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778169985.4157822
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp4",
+            "t": 1778169986.317089
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778169986.5390885
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp6",
+            "t": 1778169987.4402916
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778169987.6636453
+          },
+          {
+            "out": "",
+            "rc": 0,
+            "route_item": "kp5",
+            "t": 1778169988.5650187
+          },
+          {
+            "route_item": "wait:900",
+            "slept": true,
+            "t": 1778169988.7880309
+          }
+        ],
+        "sawRunning": true,
+        "stage": "command queue mapping",
+        "status": "BLOCKED_PASS331_ROUTE_KEYS_NOT_COMMAND_QUEUE",
+        "stops": []
+      }
+    ],
+    "ran": true
+  },
+  "schema": "pass331_dm1_v1_route_to_viewport_redraw_path.v1",
+  "sourceAudit": [
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement": 46,
+        "G2153_i_QueuedCommandsCount == 0": 2084,
+        "void F0361_COMMAND_ProcessKeyPress": 1709,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "F0380 command dequeue/dispatch",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE": 316,
+        "P0557_T_Thing == C0xFFFF_THING_PARTY": 433
+      },
+      "file": "MOVESENS.C",
+      "id": "movement legality/result",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "F0128 redraw entry",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_PASS331_ROUTE_KEYS_NOT_COMMAND_QUEUE",
+  "timestampUtc": "2026-05-07T16:07:33.970266+00:00"
+}

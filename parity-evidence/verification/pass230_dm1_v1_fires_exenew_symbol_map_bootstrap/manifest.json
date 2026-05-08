@@ -1,0 +1,192 @@
+{
+  "classification": "blocked/source-symbol-map-and-debugger-hits-required",
+  "exact_remaining_blocker": "FIRES.EXENEW now supplies the decompressed runtime image layout, but no N2-local FIRES.MAP/public-symbol table or debugger-observed source seam CS:IP/global addresses bind ReDMCSB functions to the loaded image.",
+  "inputs": {
+    "pass208": "/home/trv2/work/firestaff/parity-evidence/verification/pass208_dm1_v1_fires_loader_csip_source_map_gate/manifest.json",
+    "pass210": "/home/trv2/work/firestaff/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json",
+    "pass229": "/home/trv2/work/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/manifest.json",
+    "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+  },
+  "n2_only": true,
+  "non_claims": [
+    "does not commit or require FIRES.EXENEW binary payload in git",
+    "does not claim ReDMCSB functions are mapped to runtime CS:IP",
+    "does not claim any debugger breakpoint/watchpoint was hit"
+  ],
+  "runtime_formula": {
+    "decompressed_binary_checks": {
+      "path": null,
+      "present": false
+    },
+    "decompressed_binary_present_on_n2": false,
+    "decompressed_evidence_path": null,
+    "decompressed_fires_sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+    "entry_ip": 0,
+    "entry_relative_cs": 0,
+    "entry_relative_cs_ip": "0000:0000",
+    "linear_formula": "linear_pc = (runtime_cs << 4) + runtime_ip",
+    "load_base_rule": "DOS loads the EXE image immediately after the MZ header at program_load_segment = PSP + 0x10; TLINK/MAP segment:offsets are relative to that loaded image, not the packed LZEXE file bytes.",
+    "loaded_image_bytes_excluding_mz_header": 167984,
+    "module": "FIRES",
+    "mz_header_bytes": 10240,
+    "non_promotable_inputs": [
+      "packed FIRES compressed loader entry 1665:000e",
+      "static compressed-file offsets",
+      "source citations without FIRES.MAP/debugger CS:IP binding"
+    ],
+    "packed_fires_sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
+    "relocations": 2518,
+    "runtime_cs_formula": "runtime_cs = program_load_segment + map_segment_or_relative_cs",
+    "runtime_ip_formula": "runtime_ip = map_offset_or_relative_ip",
+    "schema": "dm1_pc34_i34e_runtime_address_formula.v1"
+  },
+  "schema": "pass230_dm1_v1_fires_exenew_symbol_map_bootstrap.v1",
+  "source_audit": [
+    {
+      "breakpoint_anchor": "after COMMAND.C:2126 queue unlock or before COMMAND.C:2150 turn/move dispatch",
+      "citation": "COMMAND.C:2045-2156",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command_accepted",
+      "line_refs": [
+        "COMMAND.C:2075-2085 locks/emptiness-checks the queue",
+        "COMMAND.C:2095 reads accepted command id from G0432_as_CommandQueue",
+        "COMMAND.C:2118-2126 reads X/Y, decrements queued count, advances first index, unlocks queue",
+        "COMMAND.C:2150-2156 dispatches turn or movement handlers"
+      ],
+      "missing": [],
+      "observable": "queue dequeue plus turn/step/click dispatch after accepted command id is read",
+      "ok": true
+    },
+    {
+      "breakpoint_anchor": "after CLIKMENU.C:173 for turns; after CLIKMENU.C:328 for steps",
+      "citation": "CLIKMENU.C:142-328",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "turn_or_step_state_applied",
+      "line_refs": [
+        "CLIKMENU.C:171-173 removes/adds party sensor state around F0284_CHAMPION_SetPartyDirection",
+        "CLIKMENU.C:264-269 derives move destination from G0308_i_PartyDirection and movement-arrow deltas",
+        "CLIKMENU.C:325-328 commits legal movement through F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "missing": [],
+      "observable": "party direction or destination state after turn/step handler",
+      "ok": true
+    },
+    {
+      "breakpoint_anchor": "memory write watchpoint on G0306_i_PartyMapX/G0307_i_PartyMapY, source-anchored at MOVESENS.C:442-443",
+      "citation": "MOVESENS.C:316-556",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "party_coordinates_committed",
+      "line_refs": [
+        "MOVESENS.C:438-443 enters destination path and writes G0306_i_PartyMapX/G0307_i_PartyMapY",
+        "MOVESENS.C:493-506 rewrites party X/Y/direction again for teleporter destinations",
+        "MOVESENS.C:556 redraws during fall using G0308_i_PartyDirection and destination X/Y"
+      ],
+      "missing": [],
+      "observable": "party X/Y global writes for successful move result",
+      "ok": true
+    },
+    {
+      "breakpoint_anchor": "GAMELOOP.C:90 call to F0128_DUNGEONVIEW_Draw_CPSF with the mutated direction/X/Y tuple",
+      "citation": "GAMELOOP.C:35-91",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "draw_uses_mutated_tuple",
+      "line_refs": [
+        "GAMELOOP.C:55-63 begins each main-loop iteration and handles new map movement result",
+        "GAMELOOP.C:80-90 gates drawing while not resting/in inventory and passes G0308/G0306/G0307 to F0128"
+      ],
+      "missing": [],
+      "observable": "post-command draw call consumes direction/X/Y tuple",
+      "ok": true
+    },
+    {
+      "breakpoint_anchor": "before DUNVIEW.C:8608-8611 after buffer composition and before F0097_DUNGEONVIEW_DrawViewport",
+      "citation": "DUNVIEW.C:8318-8610",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_buffer_composed",
+      "line_refs": [
+        "DUNVIEW.C:8336-8356 prepares floor/ceiling/clickable/temporary viewport buffers",
+        "DUNVIEW.C:8357-8368 derives flip state from map X/Y plus direction",
+        "DUNVIEW.C:8466-8542 walks relative squares and draws D4..D0 into G0296_puc_Bitmap_Viewport",
+        "DUNVIEW.C:8608-8611 requests viewport presentation for I34E/I34M/PC-family builds"
+      ],
+      "missing": [],
+      "observable": "dungeon view path composes viewport buffer from current party tuple and requests present",
+      "ok": true
+    },
+    {
+      "breakpoint_anchor": "DRAWVIEW.C:857 PC-family VIDRV_09_BlitViewPort call with G0296_puc_Bitmap_Viewport",
+      "citation": "DRAWVIEW.C:709-858",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_present",
+      "line_refs": [
+        "DRAWVIEW.C:709-713 enters F0097_DUNGEONVIEW_DrawViewport",
+        "DRAWVIEW.C:821-839 resolves requested dungeon/inventory palette state",
+        "DRAWVIEW.C:849-857 resolves C007_ZONE_VIEWPORT and calls VIDRV_09_BlitViewPort for I34E/I34M/P31J"
+      ],
+      "missing": [],
+      "observable": "C007 viewport-zone blit presents the composed viewport bitmap",
+      "ok": true
+    }
+  ],
+  "symbol_gap": {
+    "classification": "blocked/source-symbol-map-and-debugger-hits-required",
+    "exact_remaining_blocker": "FIRES.EXENEW now supplies the decompressed runtime image layout, but no N2-local FIRES.MAP/public-symbol table or debugger-observed source seam CS:IP/global addresses bind ReDMCSB functions to the loaded image.",
+    "required_to_promote": [
+      "PSP/program_load_segment from the actual FIRES run",
+      "FIRES.MAP/TLINK public symbols or verified function/global offsets for each source seam",
+      "debugger/hook hits proving command_accepted -> movement_applied -> viewport_present order"
+    ],
+    "schema": "pass230_symbol_gap.v1",
+    "supersedes_blocker_fragment": {
+      "pass208_old_blocker": "Stock FIRES is LZEXE v0.91; this pass proves the compressed loader entry CS:IP and source seams, but no decompressed FIRES memory dump or TLINK FIRES.MAP artifact is present on N2, so source symbols cannot yet be converted to stock runtime CS:IP breakpoints.",
+      "pass210_classification": "blocked/runtime-base-and-symbol-map-unavailable",
+      "pass229_status": "PASS_DECOMPRESSED_FIRES_IMAGE_AVAILABLE"
+    },
+    "unresolved_symbol_entries": [
+      {
+        "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+        "function": "F0380_COMMAND_ProcessQueue_CPSC",
+        "id": "command_accepted",
+        "runtime_cs_ip": null,
+        "source_citation": "COMMAND.C:2075-2085,2095,2118-2126,2150-2156"
+      },
+      {
+        "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+        "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "id": "turn_or_step_state_applied",
+        "runtime_cs_ip": null,
+        "source_citation": "CLIKMENU.C:171-173,264-269,325-328"
+      },
+      {
+        "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+        "function": "F0267_MOVE_GetMoveResult_CPSCE",
+        "id": "party_coordinates_committed",
+        "runtime_cs_ip": null,
+        "source_citation": "MOVESENS.C:438-443,493-506,556"
+      },
+      {
+        "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+        "function": "F0002_MAIN_GameLoop_CPSDF",
+        "id": "draw_uses_mutated_tuple",
+        "runtime_cs_ip": null,
+        "source_citation": "GAMELOOP.C:55-63,80-90"
+      },
+      {
+        "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+        "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+        "id": "viewport_buffer_composed",
+        "runtime_cs_ip": null,
+        "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611"
+      },
+      {
+        "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
+        "function": "F0097_DUNGEONVIEW_DrawViewport / E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF",
+        "id": "viewport_present",
+        "runtime_cs_ip": null,
+        "source_citation": "DRAWVIEW.C:709-713,821-839,849-857"
+      }
+    ]
+  }
+}

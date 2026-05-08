@@ -34,7 +34,7 @@ Classification: `ready/probe-plan-emitted`
 
 ## Non-claims
 - does not prove the stock original binary reached C080/F0377/F0280
-- does not use DANNESBURK
+- does not use <private-host>
 - does not claim x=111,y=82 is wrong; it narrows where to instrument before changing coordinates
 
 Next step: Run the emitted gate list in DOSBox-X/debugger against the source-locked pass162 pose; classify first missing gate instead of trying more coordinates.

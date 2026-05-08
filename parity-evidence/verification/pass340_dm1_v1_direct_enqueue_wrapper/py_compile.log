@@ -1,0 +1,2 @@
+$ python3 -m py_compile tools/verify_pass340_dm1_v1_direct_enqueue_wrapper.py
+py_compile=pass

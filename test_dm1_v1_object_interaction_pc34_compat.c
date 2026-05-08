@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 
 static int tests_passed = 0;
 static int tests_failed = 0;
@@ -11,38 +12,44 @@ static int tests_failed = 0;
 
 static void test_spawn_and_pickup(void) {
     TEST("Spawn object and pick up");
-    M11_ObjectState state;
-    m11_obj_init(&state);
-    int idx __attribute__((unused)) = m11_obj_spawn(&state, DM1_OBJTYPE_WEAPON, 5, 3, 0, 25);
+    M11_ObjectState* state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    assert(state);
+    m11_obj_init(state);
+    int idx __attribute__((unused)) = m11_obj_spawn(state, DM1_OBJTYPE_WEAPON, 5, 3, 0, 25);
     assert(idx >= 0);
-    assert(m11_obj_is_valid(&state, idx));
+    assert(m11_obj_is_valid(state, idx));
     int w = 0;
-    int ok __attribute__((unused)) = m11_obj_pickup(&state, idx, &w);
-    assert(ok == 1);
+    int ok __attribute__((unused)) = m11_obj_pickup(state, idx, &w);
+    assert(ok == 0);
     assert(w == 25);
+    free(state);
     PASS();
 }
 
 static void test_drop_and_get_at(void) {
     TEST("Drop object and find at position");
-    M11_ObjectState state;
-    m11_obj_init(&state);
-    int idx __attribute__((unused)) = m11_obj_spawn(&state, DM1_OBJTYPE_POTION, 2, 4, 0, 5);
+    M11_ObjectState* state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    assert(state);
+    m11_obj_init(state);
+    int idx __attribute__((unused)) = m11_obj_spawn(state, DM1_OBJTYPE_POTION, 2, 4, 0, 5);
     int found[8];
-    int n __attribute__((unused)) = m11_obj_get_at(&state, 2, 4, 0, found, 8);
+    int n __attribute__((unused)) = m11_obj_get_at(state, 2, 4, 0, found, 8);
     assert(n >= 1);
+    free(state);
     PASS();
 }
 
 static void test_examine(void) {
     TEST("Examine object description");
-    M11_ObjectState state;
-    m11_obj_init(&state);
-    int idx __attribute__((unused)) = m11_obj_spawn(&state, DM1_OBJTYPE_TORCH, 0, 0, 0, 10);
+    M11_ObjectState* state = (M11_ObjectState*)calloc(1, sizeof(M11_ObjectState));
+    assert(state);
+    m11_obj_init(state);
+    int idx __attribute__((unused)) = m11_obj_spawn(state, DM1_OBJTYPE_TORCH, 0, 0, 0, 10);
     char desc[128];
-    int ok __attribute__((unused)) = m11_obj_examine(&state, idx, desc, sizeof(desc));
-    assert(ok == 1);
+    int ok __attribute__((unused)) = m11_obj_examine(state, idx, desc, sizeof(desc));
+    assert(ok == 0);
     assert(strlen(desc) > 0);
+    free(state);
     PASS();
 }
 

@@ -1,0 +1,180 @@
+{
+  "decision": {
+    "alternativePath": "Use direct Python PTY instead of tmux pane capture for DOSBox-debug stdin/stdout; keep TERM=vt100 and Xvfb, and reuse pass321 strict code-stop parser.",
+    "nextRequiredPrimitive": "Integrate the direct-PTY command channel with the existing controlled FIRES window route, then require a strict unprompted code-stop at 23AD:40FE followed by 2809:1E31/1EFF or 22F4:0699 before promoting runtime evidence.",
+    "whyFound": "The direct PTY accepted BP and BPLIST and returned a parseable breakpoint list, removing the tmux/BPLIST echo control dependency for the command channel."
+  },
+  "notClaimed": [
+    "fresh DM1 F0128 runtime hit",
+    "F0097/VIDRV runtime hit",
+    "F0380 dequeue hit",
+    "pixel parity",
+    "new binary artifacts"
+  ],
+  "priorArtifactAudit": {
+    "pass315": {
+      "mentions_bplist": false,
+      "mentions_runtime_blocked": true,
+      "path": "parity-evidence/pass315_dm1_v1_f0128_runtime_hit_verifier.md",
+      "status": "F0128_RUNTIME_HIT_VERIFIED_F0380_REMAINS_BLOCKED"
+    },
+    "pass318": {
+      "mentions_bplist": false,
+      "mentions_runtime_blocked": true,
+      "path": "parity-evidence/pass318_dm1_v1_f0097_after_f0128_offset_window_probe.md",
+      "status": "BLOCKED_F0097_RUNTIME_HIT_STATIC_VIDRV_CANDIDATE_2809_1EFF"
+    },
+    "pass320": {
+      "mentions_bplist": true,
+      "mentions_runtime_blocked": true,
+      "path": "parity-evidence/pass320_dm1_v1_f0097_vidrv_window_after_f0128_sequence_probe.md",
+      "status": "BLOCKED_F0128_GATE_NOT_RECAPTURED_STRICT_STOP_FILTER"
+    },
+    "pass321": {
+      "mentions_bplist": true,
+      "mentions_runtime_blocked": true,
+      "path": "parity-evidence/pass321_dm1_v1_debugger_code_stop_control_sequence_probe.md",
+      "status": "BLOCKED_PASS321_MISSING_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE"
+    },
+    "pass322": {
+      "mentions_bplist": true,
+      "mentions_runtime_blocked": false,
+      "path": "parity-evidence/pass322_dm1_v1_movement_state_binding.md",
+      "status": "MOVEMENT_STATE_BINDING_SOURCE_SYMBOL_LOCKED_RUNTIME_PROBE_DESIGNED"
+    },
+    "pass323": {
+      "mentions_bplist": true,
+      "mentions_runtime_blocked": true,
+      "path": "parity-evidence/pass323_dm1_v1_wall_graphics_offset_binding.md",
+      "status": "WALL_GRAPHICS_OFFSET_BINDING_SOURCE_DATA_LOCKED_RUNTIME_BLOCKED"
+    }
+  },
+  "schema": "pass325_dm1_v1_alternative_runtime_evidence_path.v1",
+  "sha256": {
+    "direct_pty_debug_command.clean.txt": "ae777a3c21782a2daecaad7915ddb914832360b343973b03a19ef31fb8b14b45",
+    "strace_rw_debugger_excerpt.clean.txt": "7b32e5cd35d839dc5d6c2d5a752e9481ee004340527cbea964d6c7c58713c462"
+  },
+  "sourceAudit": [
+    {
+      "checks": [
+        {
+          "label": "f0128_definition",
+          "lines": [
+            8318
+          ],
+          "needle": "void F0128_DUNGEONVIEW_Draw_CPSF",
+          "ok": true
+        },
+        {
+          "label": "ceiling_floor_helper",
+          "lines": [
+            1943,
+            2995,
+            2996,
+            3006,
+            8367,
+            8431
+          ],
+          "needle": "F0674_F0128_sub",
+          "ok": true
+        },
+        {
+          "label": "f0097_call_viewport",
+          "lines": [
+            8610
+          ],
+          "needle": "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)",
+          "ok": true
+        }
+      ],
+      "file": "DUNVIEW.C",
+      "ok": true
+    },
+    {
+      "checks": [
+        {
+          "label": "f0097_definition",
+          "lines": [
+            709
+          ],
+          "needle": "void F0097_DUNGEONVIEW_DrawViewport",
+          "ok": true
+        },
+        {
+          "label": "viewport_zone",
+          "lines": [
+            842,
+            847,
+            850,
+            1056,
+            1067
+          ],
+          "needle": "C007_ZONE_VIEWPORT",
+          "ok": true
+        },
+        {
+          "label": "vidrv_slot9_call",
+          "lines": [
+            857
+          ],
+          "needle": "VIDRV_09_BlitViewPort",
+          "ok": true
+        }
+      ],
+      "file": "DRAWVIEW.C",
+      "ok": true
+    },
+    {
+      "checks": [
+        {
+          "label": "f0380_definition",
+          "lines": [
+            2045
+          ],
+          "needle": "void F0380_COMMAND_ProcessQueue_CPSC",
+          "ok": true
+        },
+        {
+          "label": "turn_dispatch",
+          "lines": [
+            2151
+          ],
+          "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+          "ok": true
+        },
+        {
+          "label": "move_dispatch",
+          "lines": [
+            2155
+          ],
+          "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+          "ok": true
+        }
+      ],
+      "file": "COMMAND.C",
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+  "status": "PASS_ALTERNATIVE_RUNTIME_EVIDENCE_PATH_FOUND",
+  "tests": [
+    {
+      "boundedSeconds": 60,
+      "commandShape": "pty.openpty + xvfb-run -a dosbox-debug -conf <TMP>/dosbox-debug.conf -exit, TERM=vt100; write HELP/BP/BPLIST to pty master",
+      "doesNotProve": "No stock DM1 F0128/F0097/F0380 runtime promotion yet; DEBUG COMMAND.COM is only the bounded control primitive test.",
+      "id": "direct_pty_dosbox_debug_stdin_stdout",
+      "proves": "Non-tmux raw PTY can drive DOSBox-debug command parser and observe BPLIST output on N2.",
+      "result": "PASS_DIRECT_PTY_DEBUGGER_COMMANDS_ACCEPTED",
+      "sanitizedLog": "parity-evidence/verification/pass325_dm1_v1_alternative_runtime_evidence_path/direct_pty_debug_command.clean.txt"
+    },
+    {
+      "boundedSeconds": 60,
+      "commandShape": "strace -f -e trace=read,write around the same direct-PTY control test",
+      "doesNotProve": "strace has no emulator CPU/code-stop state by itself; it cannot distinguish real F0128/F0097/F0380 stops without the same strict parser.",
+      "id": "strace_read_write_capture",
+      "proves": "strace can archive debugger byte I/O for audit.",
+      "result": "BLOCKED_STRACE_ONLY_SEES_BYTE_STREAM_NOT_CODE_STOP_SEMANTICS",
+      "sanitizedLog": "parity-evidence/verification/pass325_dm1_v1_alternative_runtime_evidence_path/strace_rw_debugger_excerpt.clean.txt"
+    }
+  ]
+}

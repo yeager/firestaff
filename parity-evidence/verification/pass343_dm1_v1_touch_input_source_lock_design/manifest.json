@@ -1,0 +1,39 @@
+{
+  "pass": "pass343_dm1_v1_touch_input_source_lock_design",
+  "date": "2026-05-07",
+  "branch": "worker/pass343-dm1-v1-touch-input-source-lock-design-20260507",
+  "evidence_file": "parity-evidence/pass343_dm1_v1_touch_input_source_lock_design.md",
+  "verifier": "tools/verify_pass343_dm1_v1_touch_input_source_lock_design.py",
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_anchors": [
+    "STARTUP2.C:1179-1182",
+    "COMMAND.C:375-395",
+    "COMMAND.C:396-405",
+    "COMMAND.C:412-419",
+    "COMMAND.C:461-511",
+    "COMMAND.C:1379-1449",
+    "COMMAND.C:1452-1661",
+    "COMMAND.C:1692-1707",
+    "COMMAND.C:2045-2156",
+    "COMMAND.C:2296-2324",
+    "CLIKMENU.C:142-174",
+    "CLIKMENU.C:180-330",
+    "CLIKMENU.C:519-585",
+    "COORD.C:1693-1722",
+    "COORD.C:1915-1920"
+  ],
+  "firestaff_seams": [
+    "touch_click_zone_matrix_pc34_compat.c",
+    "touch_click_zone_matrix_pc34_compat.h",
+    "touch_pointer_input_pc34_compat.c",
+    "touch_pointer_input_pc34_compat.h",
+    "dm1_v1_input_command_queue_pc34_compat.c",
+    "dm1_v1_input_command_queue_pc34_compat.h"
+  ],
+  "gates": [
+    "python3 -m py_compile tools/verify_pass343_dm1_v1_touch_input_source_lock_design.py",
+    "tools/verify_pass343_dm1_v1_touch_input_source_lock_design.py",
+    "git diff --check"
+  ],
+  "implementation_policy": "Touch providers normalize coordinates only; command ids, button masks, queue behavior, pending-click replay, and action/viewport dispatch remain source-locked to ReDMCSB mouse/click routes."
+}

@@ -50,8 +50,8 @@ static const char* find_title_dat(char* buf, size_t cap) {
             if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
         }
     }
-    if (file_exists("/Users/bosse/.openclaw/data/redmcsb-original/TITLE")) {
-        return "/Users/bosse/.openclaw/data/redmcsb-original/TITLE";
+    if (file_exists("<local-home>/.openclaw/data/redmcsb-original/TITLE")) {
+        return "<local-home>/.openclaw/data/redmcsb-original/TITLE";
     }
     return NULL;
 }

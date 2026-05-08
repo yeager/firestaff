@@ -154,10 +154,10 @@
   "pass_condition": "Accept only a trace frame at INT 21h/AH=3Dh that captures AH plus DS:DX and resolves DS:DX to DUNGEON.DAT or GRAPHICS.DAT.",
   "returncode": "timeout",
   "schema": "firestaff.dm2_int21_file_open_trace_next.v1",
-  "skull_asm_anchor": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/SKULL.ASM",
+  "skull_asm_anchor": "<firestaff-original-games>/_canonical/dm2/SKULL.ASM",
   "source_policy": {
     "dm2": "canonical DM2 SKULL.EXE and SKULL.ASM anchors only.",
-    "redmcsb": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ is DM/CSB comparison only; not DM2 C source."
+    "redmcsb": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/ is DM/CSB comparison only; not DM2 C source."
   },
   "status": "blocked_fileio_only_no_ds_dx_register_frame",
   "timed_out": true,

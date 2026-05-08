@@ -1,0 +1,125 @@
+{
+  "canonicalGraphicsDat": {
+    "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "fileBytes": 363417,
+    "headerBytes": 5708,
+    "itemCount": 713,
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "signature": "0x8001"
+  },
+  "decoder": {
+    "algorithm": "Firestaff IMG3-compatible nibble RLE expansion, then row-stride-aware unpack to one byte per 4-bit pixel",
+    "outputs": [
+      "compressedRecordSha256",
+      "packedSha256",
+      "unpackedPixelSha256"
+    ],
+    "sourceAnchors": [
+      "asset_loader_m11.c:M11_AssetLoader_Load",
+      "image_backend_pc34_compat.c:IMG3_Compat_ExpandFromSource",
+      "graphics_dat_snd3_loader_v1.c:V1_GraphicsSnd3_ParseManifest header table layout"
+    ]
+  },
+  "pass": "pass302_dm1_graphics_dat_index_manifest",
+  "records": [
+    {
+      "compressedBytes": 3243,
+      "compressedRecordSha256": "5ecb30c2035c18c05f50a65d928a9ced415fa9a997750c454b7815a9b28fb414",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 6485,
+        "localPaletteNibbles": [
+          2,
+          1,
+          13,
+          12,
+          0,
+          15
+        ],
+        "packedBytes": 10864,
+        "packedSha256": "bb74434a197f1f52f94131c6f4bc769dabc93c960cda3775553f1c9e01ef8269",
+        "stridePixels": 224,
+        "unpackedBytes": 21728,
+        "unpackedPixelSha256": "b2a764de68513d3d3bd4ccf2fc9134aad90af97cd640c0c7437e5f2bb39bae6c"
+      },
+      "decompressedBytesHeaderValue": 3243,
+      "entryPrefixHex": "e0006100",
+      "fileOffset": 57578,
+      "graphicIndex": 78,
+      "height": 97,
+      "nativeBitmap": "G2108_Floor",
+      "pass298Need": "floor panel bitmap for entry viewport materialization",
+      "role": "floor.base",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "M650_GRAPHIC_FLOOR_SET_0_FLOOR",
+      "viewportZone": "C701_ZONE_VIEWPORT_FLOOR_AREA",
+      "width": 224
+    },
+    {
+      "compressedBytes": 1546,
+      "compressedRecordSha256": "9fb4a00d8f238e3933d0325ac6fcf4e0a0790add9d34292ba8c69cfc98816f7c",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 3091,
+        "localPaletteNibbles": [
+          2,
+          13,
+          1,
+          15,
+          12,
+          0
+        ],
+        "packedBytes": 4368,
+        "packedSha256": "9632a527da86614eb9ecb42bc98c783a6ee535671a4c1b6cc32ca45c1bc13e30",
+        "stridePixels": 224,
+        "unpackedBytes": 8736,
+        "unpackedPixelSha256": "c97bdb0bbc338552bf66325ae544774d680e16454ac89b897d1fc9d890373eb0"
+      },
+      "decompressedBytesHeaderValue": 1546,
+      "entryPrefixHex": "e0002700",
+      "fileOffset": 60821,
+      "graphicIndex": 79,
+      "height": 39,
+      "nativeBitmap": "G2109_Ceiling",
+      "pass298Need": "ceiling panel bitmap for entry viewport materialization",
+      "role": "ceiling.base",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "M651_GRAPHIC_FLOOR_SET_0_CEILING",
+      "viewportZone": "C700_ZONE_VIEWPORT_CEILING_AREA",
+      "width": 224
+    },
+    {
+      "compressedBytes": 421,
+      "compressedRecordSha256": "77fb4c0b45d9da6297f923bae2b32dbb75544c75f3146f5c4a0ec599ede87b3a",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 842,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          0,
+          3,
+          4
+        ],
+        "packedBytes": 1715,
+        "packedSha256": "39ecbd1aba333bcf2bd3fdcd2f708a00e2ae590aa1673c55ccc2fbe61876e91b",
+        "stridePixels": 70,
+        "unpackedBytes": 3430,
+        "unpackedPixelSha256": "2ec0205368dcc4d046ed829c6e435730b1f1e8b21773fe12953a2c9e3ca19578"
+      },
+      "decompressedBytesHeaderValue": 421,
+      "entryPrefixHex": "46003100",
+      "fileOffset": 77914,
+      "graphicIndex": 107,
+      "height": 49,
+      "nativeBitmap": "G2107_WallSet[C14_WALL_D3C]",
+      "pass298Need": "D3C front blocking wall bitmap for entry viewport materialization",
+      "role": "wall.front.blocking.d3c",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C107_GRAPHIC_WALLSET_0_D3C",
+      "viewportZone": "C704_ZONE_WALL_D3C",
+      "width": 70
+    }
+  ],
+  "scope": "Deterministic source/data inventory for GRAPHICS.DAT indices 78, 79, and 107 required by pass298; no bitmap dumps emitted.",
+  "status": "passed"
+}

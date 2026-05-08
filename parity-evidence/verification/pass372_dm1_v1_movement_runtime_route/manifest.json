@@ -1,0 +1,358 @@
+{
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "checks": [
+    {
+      "expected": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
+      "kind": "prior_status",
+      "name": "pass348_dm1_v1_numlock_keypad_blocker_closure",
+      "observed": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
+      "ok": true
+    },
+    {
+      "expected": "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED",
+      "kind": "prior_status",
+      "name": "pass349_dm1_v1_full_launcher_keypad_runtime_route",
+      "observed": "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED",
+      "ok": true
+    },
+    {
+      "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
+      "kind": "prior_status",
+      "name": "pass352_dm1_v1_movement_route_regression_matrix",
+      "observed": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
+      "ok": true
+    },
+    {
+      "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
+      "kind": "prior_status",
+      "name": "pass359_dm1_v1_movement_route_runtime_blocker_followup",
+      "observed": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
+      "ok": true
+    },
+    {
+      "file": "IO2.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "27-61",
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "164-168,215",
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "636-685",
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "1709-1813",
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "2045-2156",
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "142-174",
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "180-330",
+      "ok": true
+    },
+    {
+      "file": "STARTUP2.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "1179-1183",
+      "ok": true
+    },
+    {
+      "file": "main_loop_m11.c",
+      "kind": "firestaff_route_lock",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "firestaff_route_lock",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "kind": "firestaff_route_lock",
+      "ok": true
+    },
+    {
+      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "kind": "firestaff_route_lock",
+      "ok": true
+    },
+    {
+      "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
+      "kind": "firestaff_route_lock",
+      "ok": true
+    },
+    {
+      "file": "CMakeLists.txt",
+      "kind": "cmakelists_466_467_audit",
+      "lines": "466-467",
+      "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34 test_dm1_v2_movement_command_adapter_pc34.c",
+      "ok": true
+    },
+    {
+      "kind": "narrow_ctest",
+      "ok": true,
+      "regex": "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock"
+    }
+  ],
+  "cmakeLists466_467": {
+    "lines": "466-467",
+    "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34 test_dm1_v2_movement_command_adapter_pc34.c",
+    "ok": true
+  },
+  "ctestTail": "Internal ctest changing into directory: /home/trv2/work/firestaff/build\nTest project /home/trv2/work/firestaff/build\n    Start  11: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #11: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  13: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #13: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start  42: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #42: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 125: dm1_v1_input_command_queue_source_lock\n4/4 Test #125: dm1_v1_input_command_queue_source_lock .....   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.08 sec",
+  "firestaffLocks": [
+    {
+      "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
+      "file": "main_loop_m11.c",
+      "markers": [
+        "SDLK_KP_1",
+        "SDLK_KP_2",
+        "SDLK_KP_3",
+        "SDLK_KP_4",
+        "SDLK_KP_5",
+        "SDLK_KP_6",
+        "SDL reports NumLock-on keypad"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "main_loop_m11.c"
+    },
+    {
+      "claim": "The live game view converts M12 movement inputs to C001..C006 and queues resolved command ids directly, so product movement is not blocked by original-DOS keyboard-buffer delivery.",
+      "file": "m11_game_view.c",
+      "markers": [
+        "m11_dm1_v1_pipeline_command_for_input",
+        "DM1_V1_COMMAND_TURN_LEFT",
+        "DM1_V1_COMMAND_MOVE_FORWARD",
+        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
+        "No OS keypad/NumLock synthesis is involved"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "m11_game_view.c"
+    },
+    {
+      "claim": "The compat queue still covers original keyboard rows when an original-shaped keycode is supplied.",
+      "file": "dm1_v1_input_command_queue_pc34_compat.c",
+      "markers": [
+        "COMMAND.C:1709-1813 F0361 queues primary/secondary keyboard commands",
+        "IO2.C:27-61 F0540_INPUT_Crawcin",
+        "case 0x004B:",
+        "case 0x004C:",
+        "case 0x004D:",
+        "case 0x004F:",
+        "case 0x0050:",
+        "case 0x0051:"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "dm1_v1_input_command_queue_pc34_compat.c"
+    },
+    {
+      "claim": "The compat pipeline wires enqueue/dequeue/gate/turn/move/post-move processing under ReDMCSB citations.",
+      "file": "dm1_v1_movement_pipeline_pc34_compat.c",
+      "markers": [
+        "DM1_V1_MovementPipeline_EnqueueInputPc34Compat",
+        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
+        "DM1_V1_MovementCommandCore_ProcessOnePc34Compat",
+        "COMMAND.C:2045-2156 F0380_COMMAND_ProcessQueue_CPSC",
+        "CLIKMENU.C:180-347 F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "dm1_v1_movement_pipeline_pc34_compat.c"
+    },
+    {
+      "claim": "Regression covers PC34 K/L/M/O/P/Q table rows, IO2 shifted arrows, pending replay, and four-command capacity.",
+      "file": "test_dm1_v1_input_command_queue_pc34_compat.c",
+      "markers": [
+        "i34e keypad 4 turns left",
+        "i34e keypad 5 moves forward",
+        "pc34 io2 shifted up arrow normalizes to forward",
+        "pc34 shifted backward arrow strafes right",
+        "redmcsb fifth command is dropped"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "test_dm1_v1_input_command_queue_pc34_compat.c"
+    }
+  ],
+  "head": "f4c90690c133a8c47d5e23db5e4d6ad2d6529a6b",
+  "priorManifestStatuses": {
+    "pass348_dm1_v1_numlock_keypad_blocker_closure": {
+      "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
+      "status": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED"
+    },
+    "pass349_dm1_v1_full_launcher_keypad_runtime_route": {
+      "path": "parity-evidence/verification/pass349_dm1_v1_full_launcher_keypad_runtime_route/manifest.json",
+      "status": "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED"
+    },
+    "pass352_dm1_v1_movement_route_regression_matrix": {
+      "path": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/manifest.json",
+      "status": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED"
+    },
+    "pass359_dm1_v1_movement_route_runtime_blocker_followup": {
+      "path": "parity-evidence/verification/pass359_dm1_v1_movement_route_runtime_blocker_followup/manifest.json",
+      "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
+    }
+  },
+  "repo": "/home/trv2/work/firestaff",
+  "residualScope": {
+    "decision": "do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task",
+    "firestaffRuntimeRoute": "closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline",
+    "originalDosResidual": "still unclaimed: DOSBox/FIRES keyboard-buffer adapter causing M527/M528 or IODRV_00_GetKeyboardInput to return 0x004B/0x004C/0x004D/0x004F/0x0050/0x0051 in a bounded original run"
+  },
+  "schema": "pass372_dm1_v1_movement_runtime_route.v1",
+  "sourceLocks": [
+    {
+      "claim": "I34E F0540 reads IODRV_00_GetKeyboardInput and normalizes shifted extended arrows to K/L/M/P before returning to the main loop.",
+      "file": "IO2.C",
+      "lines": "27-61",
+      "markers": [
+        "IODRV_00_GetKeyboardInput",
+        "MEDIA707_I34E_I34M",
+        "0x48 = Scancode of Up arrow",
+        "L2944_ui_ = 'L'",
+        "0x50 = Scancode of Down arrow",
+        "L2944_ui_ = 'P'",
+        "0x4B = Scancode of Left arrow",
+        "L2944_ui_ = 'K'",
+        "0x4D = Scancode of Right arrow",
+        "L2944_ui_ = 'M'",
+        "return L2944_ui_"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "claim": "The game loop drains buffered keyboard characters through F0361, then processes the command queue through F0380.",
+      "file": "GAMELOOP.C",
+      "lines": "164-168,215",
+      "markers": [
+        "M527_IsCharacterInKeyboardBuffer",
+        "F0361_COMMAND_ProcessKeyPress",
+        "M528_GetCharacterInKeyboardBuffer",
+        "F0380_COMMAND_ProcessQueue_CPSC"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "claim": "I34E movement keyboard table binds K/L/M/O/P/Q to C001..C006.",
+      "file": "COMMAND.C",
+      "lines": "636-685",
+      "markers": [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+        "MEDIA707_I34E_I34M",
+        "C001_COMMAND_TURN_LEFT,     0x004B",
+        "C003_COMMAND_MOVE_FORWARD,  0x004C",
+        "C002_COMMAND_TURN_RIGHT,    0x004D",
+        "C006_COMMAND_MOVE_LEFT,     0x004F",
+        "C005_COMMAND_MOVE_BACKWARD, 0x0050",
+        "C004_COMMAND_MOVE_RIGHT,    0x0051"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "F0361 scans primary then secondary keyboard tables and enqueues the matched command.",
+      "file": "COMMAND.C",
+      "lines": "1709-1813",
+      "markers": [
+        "F0361_COMMAND_ProcessKeyPress",
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G0432_as_CommandQueue",
+        "F0360_COMMAND_ProcessPendingClick"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "F0380 locks/dequeues the queue, gates movement ticks, and dispatches turns to F0365 and steps to F0366.",
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "markers": [
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "G0435_B_CommandQueueLocked",
+        "G0310_i_DisabledMovementTicks",
+        "G0311_i_ProjectileDisabledMovementTicks",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "claim": "F0365 turns the party and fires leave/enter sensors around F0284_CHAMPION_SetPartyDirection.",
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "markers": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "F0366 maps C003..C006 to relative step deltas, validates collision, moves, and applies movement timing.",
+      "file": "CLIKMENU.C",
+      "lines": "180-330",
+      "markers": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "G0465_ai_Graphic561_MovementArrowToStepForwardCount",
+        "G0466_ai_Graphic561_MovementArrowToStepRightCount",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "F0357_COMMAND_DiscardAllInput"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "After dungeon load, secondary keyboard input is installed to the movement table.",
+      "file": "STARTUP2.C",
+      "lines": "1179-1183",
+      "markers": [
+        "G0443_ps_PrimaryKeyboardInput",
+        "G0444_ps_SecondaryKeyboardInput",
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement"
+      ],
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
+  "timestampUtc": "2026-05-08T07:31:56.035989+00:00"
+}

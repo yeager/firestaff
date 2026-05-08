@@ -12,13 +12,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 MENUDRAW_C = REDMCSB_SOURCE / "MENUDRAW.C"
+IO2_C = REDMCSB_SOURCE / "IO2.C"
 COMPAT_C = ROOT / "dm1_v1_input_command_queue_pc34_compat.c"
 TEST_C = ROOT / "test_dm1_v1_input_command_queue_pc34_compat.c"
 
@@ -53,6 +51,10 @@ def require_regex(cite: str, text: str, pattern: str) -> None:
 
 def verify_redmcsb() -> list[str]:
     citations: list[str] = []
+    require("COMMAND.C:6", block(COMMAND_C, 6, 6), [
+        "G0432_as_CommandQueue[M529_COMMAND_QUEUE_SIZE + 1]",
+        "Can only contain up to 4 actual commands at a time",
+    ]); citations.append("COMMAND.C:6 circular command queue capacity")
     require("COMMAND.C:106-121", block(COMMAND_C, 106, 121), [
         "C001_COMMAND_TURN_LEFT", "C003_COMMAND_MOVE_FORWARD", "C002_COMMAND_TURN_RIGHT",
         "C006_COMMAND_MOVE_LEFT", "C005_COMMAND_MOVE_BACKWARD", "C004_COMMAND_MOVE_RIGHT",
@@ -62,7 +64,22 @@ def verify_redmcsb() -> list[str]:
         "G0459_as_Graphic561_SecondaryKeyboardInput_Movement", "C001_COMMAND_TURN_LEFT",
         "C003_COMMAND_MOVE_FORWARD", "C002_COMMAND_TURN_RIGHT", "C006_COMMAND_MOVE_LEFT",
         "C005_COMMAND_MOVE_BACKWARD", "C004_COMMAND_MOVE_RIGHT", "0xAB34", "0x9B41",
-    ]); citations.append("COMMAND.C:272-305 keyboard movement rows")
+        "0x9BFF", "0x9B6F", "0x9B60",
+    ]); citations.append("COMMAND.C:272-305 legacy keyboard movement rows")
+    require("COMMAND.C:636-685", block(COMMAND_C, 636, 685), [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement", "MEDIA707_I34E_I34M",
+        "C001_COMMAND_TURN_LEFT,     0x004B", "C003_COMMAND_MOVE_FORWARD,  0x004C",
+        "C002_COMMAND_TURN_RIGHT,    0x004D", "C006_COMMAND_MOVE_LEFT,     0x004F",
+        "C005_COMMAND_MOVE_BACKWARD, 0x0050", "C004_COMMAND_MOVE_RIGHT,    0x0051",
+    ]); citations.append("COMMAND.C:636-685 PC34 keyboard movement rows")
+    require("IO2.C:27-61", block(IO2_C, 27, 61), [
+        "MEDIA463_P20JA_P20JB_I34E_I34M_P31J", "IODRV_00_GetKeyboardInput",
+        "MEDIA707_I34E_I34M", "switch (L2944_ui_ - 0x1248)",
+        "0x48 = Scancode of Up arrow", "L2944_ui_ = 'L'",
+        "0x50 = Scancode of Down arrow", "L2944_ui_ = 'P'",
+        "0x4B = Scancode of Left arrow", "L2944_ui_ = 'K'",
+        "0x4D = Scancode of Right arrow", "L2944_ui_ = 'M'",
+    ]); citations.append("IO2.C:27-61 PC34 raw keyboard read and shifted-arrow normalization")
     require("COMMAND.C:1379-1449", block(COMMAND_C, 1379, 1449), [
         "F0358_COMMAND_GetCommandFromMouseInput_CPSC", "while (L1107_Command = P0721_ps_MouseInput->Command)",
         "P0724_i_ButtonsStatus & P0721_ps_MouseInput->Button", "F0798_COMMAND_IsPointInZone", "return L1107_Command",
@@ -109,12 +126,20 @@ def verify_firestaff() -> list[str]:
     t = TEST_C.read_text()
     notes: list[str] = []
     for marker in [
-        "COMMAND.C:106-121", "COMMAND.C:1379-1449", "COMMAND.C:1452-1661",
-        "COMMAND.C:1692-1707", "COMMAND.C:1709-1813", "COMMAND.C:2045-2156",
+        "COMMAND.C:6", "COMMAND.C:106-121", "COMMAND.C:677-684", "IO2.C:27-61",
+        "COMMAND.C:1379-1449", "COMMAND.C:1452-1661", "COMMAND.C:1692-1707",
+        "COMMAND.C:1709-1813", "COMMAND.C:2045-2156",
         "CLIKMENU.C:142-174", "CLIKMENU.C:180-330", "MENUDRAW.C:5-19",
     ]:
         if marker not in c:
             raise AssertionError(f"compat source evidence missing {marker}")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"#define\s+DM1_V1_QUEUE_MAX_REGULAR\s+4u")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9BFF.*0x004B.*DM1_V1_COMMAND_TURN_LEFT")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B6F.*0x004D.*DM1_V1_COMMAND_TURN_RIGHT")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B60.*0x0051.*DM1_V1_COMMAND_MOVE_RIGHT")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B54.*0x004C.*DM1_V1_COMMAND_MOVE_FORWARD")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B53.*0x0050.*DM1_V1_COMMAND_MOVE_BACKWARD")
+    require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"0x9B61.*0x004F.*DM1_V1_COMMAND_MOVE_LEFT")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"queue->pendingClickPresent\s*=\s*1;.*queue->pendingClickButtons.*queue->pendingClickCommand")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"process_pending_click\(queue\).*result\.movementDisabledGate\s*=\s*1")
     require_regex("dm1_v1_input_command_queue_pc34_compat.c", c, r"result\.dispatchedTurn\s*=\s*1;.*result\.dispatchedMove\s*=\s*1;")
@@ -123,10 +148,14 @@ def verify_firestaff() -> list[str]:
         "pending replayed", "forward dequeued after gate clears", "turn dispatched",
         "turn bypasses movement disabled gate", "turn dequeued despite movement disabled",
         "locked direct touch inventory pending", "direct touch command",
+        "pc34 table left arrow turns left", "pc34 table up arrow moves forward",
+        "pc34 io2 shifted up arrow normalizes to forward", "pc34 shifted del turns left",
+        "pc34 shifted help turns right", "pc34 shifted backward arrow strafes right",
+        "redmcsb fifth command is dropped",
     ]:
         if needle not in t:
             raise AssertionError(f"test missing invariant label {needle!r}")
-    notes.append("Firestaff compat queue model and regression probe cover pending replay during movement-disabled gate")
+    notes.append("Firestaff compat queue model and regression probe cover pending replay, actual PC-34 movement keys, IO2 shifted-arrow normalization, legacy shifted movement keys, and four-command queue capacity")
     return notes
 
 

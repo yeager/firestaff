@@ -1,0 +1,12 @@
+{
+  "note": "Original PC34 entry viewport crop exists; parity is not claimed until matched Firestaff viewport PNG exists and region comparator passes.",
+  "original_entry_viewport_224x136": {
+    "height": 136,
+    "path": "parity-evidence/verification/pass282_dm1_v2_original_pixel_capture/original_entry_viewport_224x136.png",
+    "sha256": "4e1c96ab757bb5b56907e207a69f53845ad7103c561e0f99aee11a763082149d",
+    "width": 224
+  },
+  "pass": "pass282_dm1_v2_original_pixel_capture",
+  "source_capture_dir": "verification-screens/pass282-dm1-v2-entry-original-capture-attempt",
+  "status": "blocked_missing_firestaff_matched_png"
+}

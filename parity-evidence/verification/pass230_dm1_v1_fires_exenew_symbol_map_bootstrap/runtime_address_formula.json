@@ -1,0 +1,27 @@
+{
+  "decompressed_binary_checks": {
+    "path": null,
+    "present": false
+  },
+  "decompressed_binary_present_on_n2": false,
+  "decompressed_evidence_path": null,
+  "decompressed_fires_sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+  "entry_ip": 0,
+  "entry_relative_cs": 0,
+  "entry_relative_cs_ip": "0000:0000",
+  "linear_formula": "linear_pc = (runtime_cs << 4) + runtime_ip",
+  "load_base_rule": "DOS loads the EXE image immediately after the MZ header at program_load_segment = PSP + 0x10; TLINK/MAP segment:offsets are relative to that loaded image, not the packed LZEXE file bytes.",
+  "loaded_image_bytes_excluding_mz_header": 167984,
+  "module": "FIRES",
+  "mz_header_bytes": 10240,
+  "non_promotable_inputs": [
+    "packed FIRES compressed loader entry 1665:000e",
+    "static compressed-file offsets",
+    "source citations without FIRES.MAP/debugger CS:IP binding"
+  ],
+  "packed_fires_sha256": "ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb",
+  "relocations": 2518,
+  "runtime_cs_formula": "runtime_cs = program_load_segment + map_segment_or_relative_cs",
+  "runtime_ip_formula": "runtime_ip = map_offset_or_relative_ip",
+  "schema": "dm1_pc34_i34e_runtime_address_formula.v1"
+}

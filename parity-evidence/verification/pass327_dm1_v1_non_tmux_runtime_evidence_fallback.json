@@ -1,0 +1,305 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport_entry": "2809:1E31",
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0097_after_palette_zone_setup": "2809:1EBD",
+    "F0097_before_viewport_args": "2809:1EEE",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+    "movementBpm": [
+      "2C20:3E7E",
+      "2C20:3E84",
+      "2C20:3E8A",
+      "2C20:3E90",
+      "2C20:3E96",
+      "2C20:3EC8",
+      "2C20:1F08",
+      "2C20:1F0A",
+      "2C20:3C92",
+      "2C20:3C94",
+      "2C20:3CE0",
+      "2C20:3C9A",
+      "2C20:3D28",
+      "2C20:3CE4"
+    ]
+  },
+  "fallbackPath": {
+    "boundedSeconds": 15,
+    "control": "pexpect raw PTY",
+    "routeDriver": "xdotool window by child pid",
+    "tmuxRequired": false,
+    "xDisplay": "Xvfb isolated"
+  },
+  "ok": true,
+  "parserSelftest": {
+    "accepted": [
+      "actual_f0128",
+      "actual_f0380",
+      "actual_vidrv"
+    ],
+    "expected": [
+      "actual_f0128",
+      "actual_f0380",
+      "actual_vidrv"
+    ],
+    "ok": true
+  },
+  "priorArtifacts": {
+    "pass320Status": "BLOCKED_F0128_GATE_NOT_RECAPTURED_STRICT_STOP_FILTER",
+    "pass321Status": "BLOCKED_PASS321_MISSING_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE",
+    "pass322Status": "MOVEMENT_STATE_BINDING_SOURCE_SYMBOL_LOCKED_RUNTIME_PROBE_DESIGNED"
+  },
+  "promotionRules": {
+    "allowedPromotionOnlyIf": [
+      "strict F0128 code stop",
+      "later strict F0097/VIDRV code stop",
+      "movement/F0380 or movement memory stop from pass322 addresses",
+      "order is observed in one bounded run"
+    ],
+    "notPromotedBy": [
+      "BP command echoes",
+      "BPLIST entries",
+      "tmux pane noise",
+      "source-only address binding"
+    ],
+    "sourceLockPreserved": true
+  },
+  "runtimeProbe": {
+    "directHits": {
+      "f0097AfterF0128": false,
+      "f0128": false,
+      "movementOrF0380": false
+    },
+    "durationSeconds": 20.923,
+    "events": [
+      {
+        "cmd": "BPDEL *",
+        "event": "debugger_cmd",
+        "t": 1778165306.7002301
+      },
+      {
+        "cmd": "BP 23AD:40FE",
+        "event": "debugger_cmd",
+        "t": 1778165307.0007775
+      },
+      {
+        "cmd": "BPM 2C20:3E7E",
+        "event": "debugger_cmd",
+        "t": 1778165307.301113
+      },
+      {
+        "cmd": "BPM 2C20:3E84",
+        "event": "debugger_cmd",
+        "t": 1778165307.6014278
+      },
+      {
+        "cmd": "BPM 2C20:3E8A",
+        "event": "debugger_cmd",
+        "t": 1778165307.9017758
+      },
+      {
+        "cmd": "BPM 2C20:3E90",
+        "event": "debugger_cmd",
+        "t": 1778165308.2021255
+      },
+      {
+        "cmd": "BPM 2C20:3E96",
+        "event": "debugger_cmd",
+        "t": 1778165308.502459
+      }
+    ],
+    "hits": [],
+    "method": "pexpect_raw_pty_no_tmux",
+    "ran": true,
+    "routeLogCount": 12,
+    "streamExcerpt": [
+      "ECX=EBP=IOPL   CPL",
+      "---(Code Overview   Scroll: up/down     )---",
+      "(Running)0000000000000000  DS=00000000000000000000 Real0000000000000000  CS=000000000000  C0 Z0 S0 O0 A0 P0 D0 I1 T000000000000000000  CPL0000000000000000000: SBLASTER:DSP:Reset",
+      "DEBUG: Breakpoints deleted.",
+      "DEBUG: Set breakpoint at 23AD:40FE",
+      "DEBUG: Set memory breakpoint at 2C20:3E7E",
+      "DEBUG: Set memory breakpoint at 2C20:3E84",
+      "DEBUG: Set memory breakpoint at 2C20:3E8A",
+      "DEBUG: Set memory breakpoint at 2C20:3E90",
+      "DEBUG: Set memory breakpoint at 2C20:3E96",
+      "(Running)",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E96 - 00 -> 28",
+      "DEBUG: Memory breakpoint : 2C20:3E90 - 00 -> F6",
+      "DEBUG: Memory breakpoint : 2C20:3E90 - 00 -> F6",
+      "DEBUG: Memory breakpoint : 2C20:3E90 - 00 -> F6",
+      "DEBUG: Memory breakpoint : 2C20:3E90 - 00 -> F6"
+    ],
+    "usedTmux": false
+  },
+  "schema": "pass327_dm1_v1_non_tmux_runtime_evidence_fallback.v1",
+  "sourceAudit": [
+    {
+      "file": "DRAWVIEW.C",
+      "function_or_anchor": "void F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_entry",
+      "line": 709,
+      "lineRange": [
+        709,
+        730
+      ],
+      "ok": true
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function_or_anchor": "G0324_B_DrawViewportRequested = C1_TRUE",
+      "id": "f0097_sets_draw_request",
+      "line": 721,
+      "lineRange": [
+        709,
+        730
+      ],
+      "ok": true
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function_or_anchor": "F0021_MAIN_BlitToScreen(G0296_puc_Bitmap_Viewport",
+      "id": "f0097_blits_to_screen",
+      "line": 842,
+      "lineRange": [
+        830,
+        865
+      ],
+      "ok": true
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function_or_anchor": "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);",
+      "id": "f0097_vidrv_slot9_call",
+      "line": 857,
+      "lineRange": [
+        830,
+        865
+      ],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function_or_anchor": "void F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_entry",
+      "line": 8318,
+      "lineRange": [
+        8318,
+        8335
+      ],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function_or_anchor": "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);",
+      "id": "f0128_ceiling_viewport_bitmap",
+      "line": 8367,
+      "lineRange": [
+        8360,
+        8375
+      ],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function_or_anchor": "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);",
+      "id": "f0128_calls_f0097_not_entrance",
+      "line": 8606,
+      "lineRange": [
+        8600,
+        8612
+      ],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function_or_anchor": "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);",
+      "id": "f0128_calls_f0097_dungeon_view",
+      "line": 8610,
+      "lineRange": [
+        8600,
+        8612
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "function_or_anchor": "void F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "f0380_entry",
+      "line": 2045,
+      "lineRange": [
+        2045,
+        2065
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "function_or_anchor": "G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+      "id": "f0380_dequeues_command",
+      "line": 2095,
+      "lineRange": [
+        2045,
+        2125
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "function_or_anchor": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0380_dispatches_move",
+      "line": 2155,
+      "lineRange": [
+        2045,
+        2156
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function_or_anchor": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "move_party_entry",
+      "line": 180,
+      "lineRange": [
+        180,
+        205
+      ],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "function_or_anchor": "G0306_i_PartyMapX = P0560_i_DestinationMapX",
+      "id": "move_result_commit_x",
+      "line": 442,
+      "lineRange": [
+        316,
+        506
+      ],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "function_or_anchor": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, P0560_i_DestinationMapX, P0561_i_DestinationMapY)",
+      "id": "move_draw_while_falling",
+      "line": 556,
+      "lineRange": [
+        550,
+        556
+      ],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS327_NON_TMUX_RAW_STREAM_NO_STRICT_CODE_STOP_PROMOTION",
+  "timestampUtc": "2026-05-07T14:48:44.098889+00:00"
+}

@@ -1,0 +1,262 @@
+{
+  "capture_asset_manifest_audit": {
+    "boundary": "Tracked TSV manifests preserve filenames, dimensions, labels, and sha256 for ignored PNG/PPM capture assets. They unblock reproducible asset requests, but do not promote the route until semantic classifier/pass206 is clean and command-specific shots have distinct post-vblank viewport hashes.",
+    "route_probe": {
+      "blank_route_labels": [
+        "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "05_ingame_after_cast_original_viewport_224x136.ppm"
+      ],
+      "dir": "/home/trv2/work/firestaff/verification-screens/pass112-n2-route-probe",
+      "raw_count": 6,
+      "raw_duplicate_sha256_counts_gt1": {
+        "307323fbc1f7772cb259160f2f988a482981e33a339e4414b0bfc8c85f8d4bd0": 3
+      },
+      "raw_manifest": "/home/trv2/work/firestaff/verification-screens/pass112-n2-route-probe/raw_manifest.tsv",
+      "viewport_224x136_count": 6,
+      "viewport_duplicate_sha256_counts_gt1": {
+        "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844": 3
+      },
+      "viewport_manifest": "/home/trv2/work/firestaff/verification-screens/pass112-n2-route-probe/original_viewport_224x136_manifest.tsv",
+      "viewport_missing_materialized_files": 6,
+      "viewport_sha256": [
+        "358136006c6d53d112d1cfea3d4bd0fa0902df0ad8b7130cf68778e298a24aa9",
+        "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844",
+        "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844",
+        "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844",
+        "88a17d0b56fe3a8363ff006f498354e87e455098369b414143b0271cb9105aba",
+        "84788a8c8e6f6104255fd7041a9fafa81291e346e64cc2427a7a033b5a77e46e"
+      ]
+    },
+    "stable_attempt": {
+      "blank_route_labels": [
+        "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "05_ingame_after_cast_original_viewport_224x136.ppm"
+      ],
+      "dir": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route",
+      "labels_count": 6,
+      "raw_count": 6,
+      "raw_duplicate_sha256_counts_gt1": {
+        "ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c": 4
+      },
+      "raw_manifest": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route/raw_manifest.tsv",
+      "raw_missing_materialized_files": 6
+    },
+    "status": "MANIFESTS_SOURCE_LOCK_CAPTURE_ASSETS_WITHOUT_EMULATOR_GUESSING"
+  },
+  "forbidden_hosts": [
+    "<private-host>",
+    "<private-host-ip>"
+  ],
+  "pass206_attempt_audit": {
+    "attempt_dir": "/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route",
+    "attempt_status": "BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE",
+    "canonical_files_ok": {
+      "DATA/DUNGEON.DAT": true,
+      "DATA/GRAPHICS.DAT": true,
+      "DM.EXE": true
+    },
+    "capture_count": 6,
+    "class_counts": {
+      "dungeon_gameplay": 2,
+      "wall_closeup": 4
+    },
+    "dimensions_seen": {
+      "320x200": 6
+    },
+    "duplicate_sha256_counts_gt1": {
+      "ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c": 4
+    },
+    "ensure": {
+      "attempted": false,
+      "ok": true,
+      "stderr": "",
+      "stdout": ""
+    },
+    "exists": true,
+    "mismatches": [
+      {
+        "classification": "wall_closeup",
+        "expected": "dungeon_gameplay",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0003-raw.png",
+        "index": 3
+      },
+      {
+        "classification": "wall_closeup",
+        "expected": "spell_panel",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0004-raw.png",
+        "index": 4
+      },
+      {
+        "classification": "wall_closeup",
+        "expected": "dungeon_gameplay",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0005-raw.png",
+        "index": 5
+      },
+      {
+        "classification": "wall_closeup",
+        "expected": "inventory",
+        "file": "verification-screens/pass112-n2-stable-hud-route/image0006-raw.png",
+        "index": 6
+      }
+    ],
+    "missing_tools": [],
+    "pass206_status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
+    "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json",
+    "route_events": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 shot:party_hud kp5 wait:700 shot kp5 wait:700 shot f1 wait:700 shot:spell_panel one wait:700 shot i wait:700 shot:inventory_panel",
+    "viewport_crop_ppm_count": 0
+  },
+  "redmcsb_source_audit": [
+    {
+      "citations": [
+        "TITLE.C:12-40"
+      ],
+      "claim": "Original route capture starts at the ReDMCSB title/front-door path, before any dungeon movement evidence is promotable.",
+      "function": "F0437_STARTEND_DrawTitle",
+      "id": "title-launch-draws-original-front-door",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "ENTRANCE.C:850-883",
+        "ENTRANCE.C:906-943"
+      ],
+      "claim": "A launch/capture route must cross the source entrance input-wait loop and post-enter delay before dungeon-entry frames are evidence.",
+      "function": "F0441_STARTEND_ProcessEntrance",
+      "id": "entrance-wait-processes-input-queue-before-load",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "ENTRANCE.C:1095-1147"
+      ],
+      "claim": "Entrance animation capture boundaries are tied to the original bitplane/vblank door-blit seam, not arbitrary screenshots.",
+      "function": "F0579_ENTRANCE_InitializeBitPlanes / F0580_ENTRANCE_DrawDoorAnimationStep / F0581_ENTRANCE_BlitDoors",
+      "id": "entrance-door-animation-vblank-seam",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "VBLANK.C:626-646"
+      ],
+      "claim": "Original-faithful capture timing must respect the source vblank wait seam used by entrance, highlighting, and viewport presentation.",
+      "function": "F0693_WaitVerticalBlank",
+      "id": "vblank-wait-is-explicit-capture-timing-seam",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "COMMAND.C:1305-1325",
+        "COMMAND.C:1709-1812"
+      ],
+      "claim": "Route keypress/click evidence must begin from the source discard/input queue path before movement dispatch is evaluated.",
+      "function": "F0357_COMMAND_DiscardAllInput / F0361_COMMAND_ProcessKeyPress",
+      "id": "command-discard-keypress-queue-primes-route",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:8-35",
+        "CLIKMENU.C:83-95"
+      ],
+      "claim": "Highlight/vblank feedback can appear in captures; it is not by itself proof that the movement handler or viewport redraw seam was reached.",
+      "function": "F0665_F0362_sub / F0363_COMMAND_HighlightBoxDisable",
+      "id": "click-highlight-vblank-feedback-does-not-equal-movement",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "COMMAND.C:2045-2156"
+      ],
+      "claim": "Movement/turn shots are only original-faithful after the command queue reaches the source turn/step handlers.",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command-dispatch-reaches-turn-step-handlers",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:142-179"
+      ],
+      "claim": "Turn evidence must be captured after source direction mutation and input-wait release.",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn-handler-mutates-direction-and-stops-wait",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:180-347"
+      ],
+      "claim": "Forward/side movement evidence must pass source legality, move-result, cooldown, and wait-release logic.",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "step-handler-resolves-destination-and-cooldown",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "GAMELOOP.C:35-97",
+        "GAMELOOP.C:215-219"
+      ],
+      "claim": "The next viewport reference must come from the game-loop redraw using the mutated party state.",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game-loop-redraws-before-next-input-wait",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:8318-8616"
+      ],
+      "claim": "The comparable viewport is the source dungeon-view draw from current direction/X/Y, not a transient full-screen frame.",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport-draw-uses-direction-and-map-coordinates",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DRAWVIEW.C:709-724",
+        "DRAWVIEW.C:840-858"
+      ],
+      "claim": "A promotable capture must observe the presented 224x136 viewport after the source draw-request/vblank seam.",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport-present-requests-vblank-blit",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:2962-3003"
+      ],
+      "claim": "Wall evidence must be compared after the original viewport base is cleared and floor/ceiling are copied into the viewport bitmap.",
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
+      "id": "viewport-floor-ceiling-clears-base-before-walls",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:3048-3110"
+      ],
+      "claim": "Wall and door captures are viewport-composited wallset evidence, not separate asset screenshots or emulator guesses.",
+      "function": "F0100_DUNGEONVIEW_DrawWallSetBitmap / F0102_DUNGEONVIEW_DrawDoorBitmap / F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally",
+      "id": "wall-door-bitmaps-composite-into-same-viewport-target",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass207_dm1_v1_original_movement_viewport_blocker_gate.v1",
+  "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
+  "worker": "N2 / firestaff-worker / trv2@<n2-private-ip>"
+}

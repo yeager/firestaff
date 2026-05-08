@@ -1,0 +1,375 @@
+{
+  "binary": {
+    "body_bytes": 167984,
+    "header_bytes": 10240,
+    "path": "<firestaff-repo>-dm1v1-viewport-walls-source-lock-20260506-0237/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "path_policy": "read local pass229 FIRES.EXENEW only; not copied or committed",
+    "sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+    "size": 178224
+  },
+  "code_candidate_scan": [
+    {
+      "bytes_16": "ec 0a 56 57 83 3e 3a 3e 00 74 03 e9 2a 01 8b 46",
+      "id": "A",
+      "meaning": "command/input candidate from pass263",
+      "prefix12_occurrences": {
+        "count": 1,
+        "first_offsets": [
+          "0x231d9"
+        ],
+        "truncated_first_offsets": false
+      },
+      "prefix8_occurrences": {
+        "count": 1,
+        "first_offsets": [
+          "0x231d9"
+        ],
+        "truncated_first_offsets": false
+      },
+      "runtime_by_pass246_load_seg_0733": "29E2:06E9",
+      "source": "COMMAND.C",
+      "static": "22AF:06E9",
+      "static_linear": "0x231d9",
+      "status": "inside_fires_exenew_body"
+    },
+    {
+      "bytes_16": "83 7e ea 03 75 08 83 ff 01 7f 03 e9 c0 02 83 7e",
+      "id": "B",
+      "meaning": "sensor/turn-chain candidate from pass263",
+      "prefix12_occurrences": {
+        "count": 2,
+        "first_offsets": [
+          "0x1e2e0",
+          "0x1eb4d"
+        ],
+        "truncated_first_offsets": false
+      },
+      "prefix8_occurrences": {
+        "count": 2,
+        "first_offsets": [
+          "0x1e2e0",
+          "0x1eb4d"
+        ],
+        "truncated_first_offsets": false
+      },
+      "runtime_by_pass246_load_seg_0733": "25D7:010D",
+      "source": "MOVESENS.C",
+      "static": "1EA4:010D",
+      "static_linear": "0x1eb4d",
+      "status": "inside_fires_exenew_body"
+    },
+    {
+      "bytes_16": "26 8b 47 02 25 00 01 f7 d8 1b c0 40 89 46 94 0b",
+      "id": "C",
+      "meaning": "move/event-chain candidate from pass263",
+      "prefix12_occurrences": {
+        "count": 1,
+        "first_offsets": [
+          "0x1ebea"
+        ],
+        "truncated_first_offsets": false
+      },
+      "prefix8_occurrences": {
+        "count": 1,
+        "first_offsets": [
+          "0x1ebea"
+        ],
+        "truncated_first_offsets": false
+      },
+      "runtime_by_pass246_load_seg_0733": "25D7:01AA",
+      "source": "MOVESENS.C",
+      "static": "1EA4:01AA",
+      "static_linear": "0x1ebea",
+      "status": "inside_fires_exenew_body"
+    },
+    {
+      "bytes_16": "0e e8 be f9 83 3e 96 3c 00 74 06 0e e8 cb ff eb",
+      "id": "D",
+      "meaning": "move-result/collision candidate from pass263",
+      "prefix12_occurrences": {
+        "count": 1,
+        "first_offsets": [
+          "0x18aa6"
+        ],
+        "truncated_first_offsets": false
+      },
+      "prefix8_occurrences": {
+        "count": 1,
+        "first_offsets": [
+          "0x18aa6"
+        ],
+        "truncated_first_offsets": false
+      },
+      "runtime_by_pass246_load_seg_0733": "1F8C:0516",
+      "source": "MOVESENS.C",
+      "static": "1859:0516",
+      "static_linear": "0x18aa6",
+      "status": "inside_fires_exenew_body"
+    },
+    {
+      "blocker": "static linear 0x2c0fe >= body 0x29030",
+      "id": "E",
+      "meaning": "viewport draw candidate from pass263; expected out of body",
+      "runtime_by_pass246_load_seg_0733": "3232:110E",
+      "source": "DUNVIEW.C",
+      "static": "2AFF:110E",
+      "static_linear": "0x2c0fe",
+      "status": "outside_fires_exenew_body"
+    }
+  ],
+  "conclusion": "A-D code prefixes are bounded inside FIRES.EXENEW and their byte prefixes are usable static-image anchors; E remains outside the decompressed body. The IDC-derived data offsets land inside the decompressed file body but on non-zero/code-like bytes, while the zero-shaped tuple/queue patterns are massively non-unique elsewhere. Therefore the IDC labels cannot be promoted through a simple FIRES.EXENEW linear-body mapping or naive zero-pattern scan; BPM promotion still needs FIRES.MAP/public symbols or a debugger-observed write/read transition.",
+  "data_target_scan": [
+    {
+      "bytes": 2,
+      "bytes_at_target": "ff 76",
+      "idc_linear": 134412,
+      "kind": "party_tuple",
+      "name": "G0306_i_PartyMapX",
+      "runtime_by_pass246_load_seg_0733": "2803:000C",
+      "static_csip_from_idc_linear": "20D0:000C",
+      "status": "inside_fires_exenew_body",
+      "window_minus8_plus24": "62 03 83 c4 0e ff 76 fc ff 76 fe 56 0e e8 00 f9 83 c4 06 57 ff 76 08 56 0e e8 eb f9 83 c4 06 c4"
+    },
+    {
+      "bytes": 2,
+      "bytes_at_target": "fe 56",
+      "idc_linear": 134414,
+      "kind": "party_tuple",
+      "name": "G0307_i_PartyMapY",
+      "runtime_by_pass246_load_seg_0733": "2803:000E",
+      "static_csip_from_idc_linear": "20D0:000E",
+      "status": "inside_fires_exenew_body",
+      "window_minus8_plus24": "83 c4 0e ff 76 fc ff 76 fe 56 0e e8 00 f9 83 c4 06 57 ff 76 08 56 0e e8 eb f9 83 c4 06 c4 1e d6"
+    },
+    {
+      "bytes": 2,
+      "bytes_at_target": "0e e8",
+      "idc_linear": 134416,
+      "kind": "party_tuple",
+      "name": "G0308_i_PartyDirection",
+      "runtime_by_pass246_load_seg_0733": "2804:0000",
+      "static_csip_from_idc_linear": "20D1:0000",
+      "status": "inside_fires_exenew_body",
+      "window_minus8_plus24": "0e ff 76 fc ff 76 fe 56 0e e8 00 f9 83 c4 06 57 ff 76 08 56 0e e8 eb f9 83 c4 06 c4 1e d6 3f a1"
+    },
+    {
+      "bytes": 30,
+      "bytes_at_target": "0e 80 04 25 a6 0f 20 14 6e 50 0f 14 00 32 31 a9 33 42 0e 84 03 41 fc 03 00 02 06 10 45 98",
+      "idc_linear": 153728,
+      "kind": "queue",
+      "name": "G0432_as_CommandQueue",
+      "runtime_by_pass246_load_seg_0733": "2CBB:0000",
+      "static_csip_from_idc_linear": "2588:0000",
+      "status": "inside_fires_exenew_body",
+      "window_minus8_plus24": "08 54 02 40 fd 04 00 01 0e 80 04 25 a6 0f 20 14 6e 50 0f 14 00 32 31 a9 33 42 0e 84 03 41 fc 03"
+    },
+    {
+      "bytes": 2,
+      "bytes_at_target": "61 03",
+      "idc_linear": 153758,
+      "kind": "queue_index",
+      "name": "G0433_i_CommandQueueFirstIndex",
+      "runtime_by_pass246_load_seg_0733": "2CBC:000E",
+      "static_csip_from_idc_linear": "2589:000E",
+      "status": "inside_fires_exenew_body",
+      "window_minus8_plus24": "fc 03 00 02 06 10 45 98 61 03 05 32 0a 0a 00 6e 00 76 13 0a 71 35 02 22 02 20 fd 00 00 03 00 b4"
+    },
+    {
+      "bytes": 2,
+      "bytes_at_target": "05 32",
+      "idc_linear": 153760,
+      "kind": "queue_index",
+      "name": "G0434_i_CommandQueueLastIndex",
+      "runtime_by_pass246_load_seg_0733": "2CBD:0000",
+      "static_csip_from_idc_linear": "258A:0000",
+      "status": "inside_fires_exenew_body",
+      "window_minus8_plus24": "00 02 06 10 45 98 61 03 05 32 0a 0a 00 6e 00 76 13 0a 71 35 02 22 02 20 fd 00 00 03 00 b4 04 25"
+    }
+  ],
+  "load_segment": "0733",
+  "next_step": "Preserve/build I34E DM.MAP, or dump live loaded FIRES data segments after a controlled queue write and scan for a changed queue/index pattern; do not promote the current zero-pattern matches as addresses.",
+  "pattern_checks": {
+    "party_tuple_8_zero_bytes": {
+      "count": 6320,
+      "first_offsets": [
+        "0x0049d",
+        "0x0049e",
+        "0x0049f",
+        "0x004a0",
+        "0x004a1",
+        "0x004a2",
+        "0x004a3",
+        "0x004a4",
+        "0x19770",
+        "0x19771",
+        "0x21194",
+        "0x21195",
+        "0x21196",
+        "0x21197",
+        "0x21198",
+        "0x21199",
+        "0x2119a",
+        "0x2119b",
+        "0x211a4",
+        "0x211a5"
+      ],
+      "truncated_first_offsets": true
+    },
+    "queue_30_zero_bytes_then_first0_last4": {
+      "count": 0,
+      "first_offsets": [],
+      "truncated_first_offsets": false
+    },
+    "queue_30_zero_bytes_then_indices_zero": {
+      "count": 3954,
+      "first_offsets": [
+        "0x24f29",
+        "0x24f2a",
+        "0x24f2b",
+        "0x24f2c",
+        "0x24f2d",
+        "0x24f2e",
+        "0x24f2f",
+        "0x24f30",
+        "0x24f31",
+        "0x24f32",
+        "0x24f33",
+        "0x24f34",
+        "0x24f35",
+        "0x24f36",
+        "0x24f37",
+        "0x24f38",
+        "0x24f39",
+        "0x24f3a",
+        "0x24f3b",
+        "0x24f3c"
+      ],
+      "truncated_first_offsets": true
+    },
+    "queue_36_zero_bytes": {
+      "count": 3944,
+      "first_offsets": [
+        "0x24f29",
+        "0x24f2a",
+        "0x24f2b",
+        "0x24f2c",
+        "0x24f2d",
+        "0x24f2e",
+        "0x24f2f",
+        "0x24f30",
+        "0x24f31",
+        "0x24f32",
+        "0x24f33",
+        "0x24f34",
+        "0x24f35",
+        "0x24f36",
+        "0x24f37",
+        "0x24f38",
+        "0x24f39",
+        "0x24f3a",
+        "0x24f3b",
+        "0x24f3c"
+      ],
+      "truncated_first_offsets": true
+    }
+  },
+  "schema": "pass270_dm1_v1_fires_segment_pattern_scan.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        2045,
+        2156
+      ],
+      "refs": [
+        "COMMAND.C:2045: void F0380_COMMAND_ProcessQueue_CPSC(",
+        "COMMAND.C:2046: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J",
+        "COMMAND.C:2047: void",
+        "COMMAND.C:2048: #endif",
+        "COMMAND.C:2049: )",
+        "COMMAND.C:2050: {",
+        "COMMAND.C:2051: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J",
+        "COMMAND.C:2052: REGISTER int16_t L1160_i_Command;"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        1734,
+        1812
+      ],
+      "refs": [
+        "COMMAND.C:1734: if ((L1112_ps_KeyboardInput = G0443_ps_PrimaryKeyboardInput) == NULL) {",
+        "COMMAND.C:1735: return;",
+        "COMMAND.C:1736: }",
+        "COMMAND.C:1737: G0435_B_CommandQueueLocked = C1_TRUE;",
+        "COMMAND.C:1738: #ifdef MEDIA007_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E",
+        "COMMAND.C:1739: if ((int16_t)P0728_KeyCode == 0) {",
+        "COMMAND.C:1740: P0728_KeyCode >>= 8;",
+        "COMMAND.C:1741: }"
+      ]
+    },
+    {
+      "file": "MOVESENS.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        316,
+        556
+      ],
+      "refs": [
+        "MOVESENS.C:316: BOOLEAN F0267_MOVE_GetMoveResult_CPSCE(",
+        "MOVESENS.C:317: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G",
+        "MOVESENS.C:318: P0557_T_Thing, P0558_i_SourceMapX, P0559_i_SourceMapY, P0560_i_DestinationMapX, P0561_i_DestinationMapY)",
+        "MOVESENS.C:319: #endif",
+        "MOVESENS.C:320: REGISTER THING   P0557_T_Thing           SEPARATOR",
+        "MOVESENS.C:321: int16_t          P0558_i_SourceMapX      SEPARATOR /* If P0558_i_SourceMapX is negative (CM1_MAPX_NOT_ON_A_SQUARE or CM2_MAPX_PROJECTILE_ASSOCIATED_OBJECT) then place the thing on the destination square. If placing a projectile associated object (CM2_MAPX_PROJECTILE_ASSOCIATED_OBJECT) on a teleporter square with an absolute rotation then ignore the rotation */",
+        "MOVESENS.C:322: int16_t          P0559_i_SourceMapY      SEPARATOR",
+        "MOVESENS.C:323: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G"
+      ]
+    },
+    {
+      "file": "GAMELOOP.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        55,
+        91
+      ],
+      "refs": [
+        "GAMELOOP.C:55: for (;;) { /*_Infinite loop_*/",
+        "GAMELOOP.C:56: G0317_i_WaitForInputVerticalBlankCount = 0;",
+        "GAMELOOP.C:57: #ifdef MEDIA128_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G20E_G21E_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J",
+        "GAMELOOP.C:58: if (G0327_i_NewPartyMapIndex != CM1_MAP_INDEX_NONE) {",
+        "GAMELOOP.C:59: T0002002:",
+        "GAMELOOP.C:60: F0003_MAIN_ProcessNewPartyMap_CPSE(G0327_i_NewPartyMapIndex);",
+        "GAMELOOP.C:61: F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY, CM1_MAPX_NOT_ON_A_SQUARE, 0, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+        "GAMELOOP.C:62: G0327_i_NewPartyMapIndex = CM1_MAP_INDEX_NONE;"
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        8318,
+        8611
+      ],
+      "refs": [
+        "DUNVIEW.C:8318: void F0128_DUNGEONVIEW_Draw_CPSF(",
+        "DUNVIEW.C:8319: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G",
+        "DUNVIEW.C:8320: P0183_i_Direction, P0184_i_MapX, P0185_i_MapY)",
+        "DUNVIEW.C:8321: #endif",
+        "DUNVIEW.C:8322: REGISTER int16_t P0183_i_Direction SEPARATOR",
+        "DUNVIEW.C:8323: REGISTER int16_t P0184_i_MapX      SEPARATOR",
+        "DUNVIEW.C:8324: REGISTER int16_t P0185_i_MapY      FINAL_SEPARATOR",
+        "DUNVIEW.C:8325: {"
+      ]
+    }
+  ],
+  "status": "BLOCKED_ZERO_DATA_PATTERNS_NON_UNIQUE_CODE_PATTERNS_ONLY"
+}

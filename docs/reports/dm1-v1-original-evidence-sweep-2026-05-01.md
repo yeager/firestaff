@@ -1,10 +1,10 @@
 # DM1 V1 original evidence sweep — N2 2026-05-01
 
-Scope: N2 only (`firestaff-worker`, repo `/home/trv2/work/firestaff`, source at `dc53ed5`, after required `4287c47`). This sweep audits ReDMCSB first, then runs the original DOSBox/Xvfb evidence gates. It does **not** claim original-vs-Firestaff pixel parity.
+Scope: N2 only (`firestaff-worker`, repo `<firestaff-repo>`, source at `dc53ed5`, after required `4287c47`). This sweep audits ReDMCSB first, then runs the original DOSBox/Xvfb evidence gates. It does **not** claim original-vs-Firestaff pixel parity.
 
 ## ReDMCSB source locks used before runtime probing
 
-Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+Primary source: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
 
 - Movement mouse matrix: `COMMAND.C:396-405` maps the visible movement panel and viewport click routes: turn left/right, move forward/back/left/right, `C080_COMMAND_CLICK_IN_DUNGEON_VIEW`, and right-click inventory toggle.
 - Movement keyboard matrix: `COMMAND.C:272-305` maps keypad/arrows/shift variants onto `C001`..`C006`; `INPUT.C:548-568` normalizes numeric keypad 7/9/8/5/2/4/6 to DEL/Help/arrows before buffering.
@@ -22,13 +22,13 @@ Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP2
 Command:
 
 ```sh
-cd /home/trv2/work/firestaff
+cd <firestaff-repo>
 python3 -m py_compile tools/pass166_source_portrait_click_route_probe.py tools/pass118_state_aware_original_route_driver.py tools/pass80_original_frame_classifier.py
 xvfb-run -a python3 tools/pass166_source_portrait_click_route_probe.py
 ```
 
 Result file: `parity-evidence/verification/pass166_source_portrait_click_route_probe/README.md`.
-Run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260501-152806-pass166-source-portrait-click-route-probe`.
+Run base: `<firestaff-data>/firestaff-n2-runs/20260501-152806-pass166-source-portrait-click-route-probe`.
 
 Outcome: **blocked/static-no-party** for both source-locked routes:
 
@@ -42,7 +42,7 @@ The probe shows a visible transition around the source portrait/C160/C161 sequen
 Command:
 
 ```sh
-cd /home/trv2/work/firestaff
+cd <firestaff-repo>
 base="$HOME/.openclaw/data/firestaff-n2-runs/20260501-153102-pass153-xvfb-input-delivery"
 xvfb-run -a python3 tools/pass153_xvfb_input_delivery_matrix.py "$base"
 ```
@@ -56,7 +56,7 @@ Outcome: input delivery is not the blocker. Helper keys, xdotool window keys, xd
 Command:
 
 ```sh
-cd /home/trv2/work/firestaff
+cd <firestaff-repo>
 python3 tools/verify_original_overlay_capture_source_lock.py \
   --attempt-dir parity-evidence/verification/pass166_source_portrait_click_route_probe/enter_portrait11182_then_resurrect
 ```

@@ -25,6 +25,8 @@
 #define M12_HIT_PANEL_Y        260
 #define M12_HIT_PANEL_W        (M12_HIT_CANVAS_W - 2 * M12_HIT_PANEL_X)
 #define M12_HIT_PANEL_H        400
+#define M12_HIT_GAMEOPT_PANEL_H_V1  460
+#define M12_HIT_GAMEOPT_PANEL_H_V2  560
 #define M12_HIT_ROW_INDENT     36
 #define M12_HIT_ROW_HEIGHT     50
 
@@ -54,11 +56,11 @@
 #define M12_HIT_MUSEUM_CONTENT_W      (M12_HIT_PANEL_W - M12_HIT_MUSEUM_CAT_W - 100)
 #define M12_HIT_MUSEUM_CONTENT_H      (M12_HIT_PANEL_H - 48)
 
-/* Launch button inside game options panel. */
+/* Launch button inside game options panel.  Must mirror
+ * menu_startup_render_modern_m12.c:draw_game_options_view(). */
 #define M12_HIT_LAUNCH_W     240
 #define M12_HIT_LAUNCH_H     54
-#define M12_HIT_LAUNCH_X     (M12_HIT_PANEL_X + (M12_HIT_PANEL_W - M12_HIT_LAUNCH_W) / 2)
-#define M12_HIT_LAUNCH_Y     (M12_HIT_PANEL_Y + M12_HIT_PANEL_H - M12_HIT_LAUNCH_H - 24)
+#define M12_HIT_LAUNCH_BOTTOM_PAD 24
 
 /* Back button (visible in all non-main views, top-left). */
 #define M12_HIT_BACK_X     24
@@ -111,6 +113,20 @@ static int m12_hit_gameopt_row_rect(int row, int* rx, int* ry, int* rw, int* rh)
     *ry = M12_HIT_GAMEOPT_ROW_Y0 + row * M12_HIT_GAMEOPT_ROW_STEP;
     *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
     *rh = M12_HIT_ROW_HEIGHT;
+    return 1;
+}
+
+static int m12_hit_launch_rect(const M12_StartupMenuState* state,
+                               int* rx, int* ry, int* rw, int* rh) {
+    int panelH;
+    if (!state) return 0;
+    panelH = (M12_StartupMenu_GetPresentationMode(state) == M12_PRESENTATION_V1_ORIGINAL)
+                 ? M12_HIT_GAMEOPT_PANEL_H_V1
+                 : M12_HIT_GAMEOPT_PANEL_H_V2;
+    *rw = M12_HIT_LAUNCH_W;
+    *rh = M12_HIT_LAUNCH_H;
+    *rx = M12_HIT_PANEL_X + (M12_HIT_PANEL_W - *rw) / 2;
+    *ry = M12_HIT_PANEL_Y + panelH - *rh - M12_HIT_LAUNCH_BOTTOM_PAD;
     return 1;
 }
 
@@ -199,8 +215,8 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             break;
         case M12_MENU_VIEW_GAME_OPTIONS:
             /* Launch button */
-            if (rect_contains(M12_HIT_LAUNCH_X, M12_HIT_LAUNCH_Y,
-                              M12_HIT_LAUNCH_W, M12_HIT_LAUNCH_H, x, y)) {
+            if (m12_hit_launch_rect(state, &rx, &ry, &rw, &rh) &&
+                rect_contains(rx, ry, rw, rh, x, y)) {
                 hit.kind = M12_HIT_GAMEOPT_LAUNCH;
                 hit.index = M12_GAME_OPT_ROW_COUNT;
                 return hit;

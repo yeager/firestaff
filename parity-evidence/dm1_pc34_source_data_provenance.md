@@ -23,7 +23,7 @@ Worker-VM local extracted set:
 
 Deprecated reference note:
 
-- Earlier audit text referenced DANNESBURK / `<deprecated-remote-host>`; that source is deprecated for worker subagents and must not be used. This note and helper now use only the worker-VM local original game data paths above.
+- Earlier audit text referenced <private-host> / `<deprecated-remote-host>`; that source is deprecated for worker subagents and must not be used. This note and helper now use only the worker-VM local original game data paths above.
 
 ## Locked PC34 data-file anchors
 
@@ -49,4 +49,4 @@ Use the committed helper:
 
 It extracts the local `.7z` with `7zz`/`7z`, hashes `DUNGEON.DAT`,
 `GRAPHICS.DAT`, and `SONG.DAT`, then hashes the worker-VM local extracted data
-set. It performs no SSH or DANNESBURK access.
+set. It performs no SSH or <private-host> access.

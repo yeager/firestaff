@@ -1,0 +1,139 @@
+{
+  "decision": "Static ReDMCSB source proves controlled key -> G0432 write -> index-based dequeue ordering -> tuple mutation -> F0128 consumption. Existing runtime evidence proves controlled keys, G0432 write, tuple mutation, and F0128 hit, but disproves promotion of the full runtime chain because no F0380 dequeue BP hit is present.",
+  "exact_remaining_blocker": "No proven runtime F0380 dequeue breakpoint hit at 22F4:0699 in the imported pass278 transcript; do not claim runtime hook despite G0432 write, party tuple mutation, and F0128 draw hit.",
+  "f0128_runtime_seen": true,
+  "f0380_runtime_seen": false,
+  "imported_runtime_evidence": {
+    "addresses": {
+      "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+      "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+      "G0306_i_PartyMapX": "2C20:3C94",
+      "G0307_i_PartyMapY": "2C20:3CE0",
+      "G0308_i_PartyDirection": "2C20:3C92",
+      "G0432_as_CommandQueue": "2C20:3E7A"
+    },
+    "blocker": "Staged BPM disable/re-enable reduced queue/index noise and captured controlled-key G0432 writes, party tuple mutation, and an F0128 draw BP hit after switching to code-only mode; the exact remaining blocker is no proven F0380 dequeue BP hit at 22F4:0699. This is not a runtime-hook claim.",
+    "manifest": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",
+    "present": true,
+    "proof_predicates": {
+      "cpu_memdump_after_stops": true,
+      "f0128_draw_hit_seen": true,
+      "f0380_dequeue_hit_seen": false,
+      "g0432_write_seen": true,
+      "party_tuple_mutation_seen": true,
+      "route_posted_controlled_keys": true
+    },
+    "route_keylog": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/route_noise_reduced_keylog.json",
+    "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK",
+    "transcript": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt"
+  },
+  "queue_index_count_resolution": {
+    "count_note": "G2153_i_QueuedCommandsCount decrement is guarded by MEDIA728_I34E/I35 and is not the PC-34 DM1 V1 queue authority; the PC-34 source path is resolved by G0433/G0434 index ordering.",
+    "dequeue_order": "read G0432[G0433].Command, apply movement-disabled gate before dequeue, then read X/Y, optionally decrement G2153 only on MEDIA728, increment/wrap G0433, unlock/replay, dispatch",
+    "dm1_v1_pc34_queue_model": "first/last circular indices G0433/G0434; empty when (G0434+1 wrapped) == G0433"
+  },
+  "runtime_chain_proven": false,
+  "schema": "pass284_dm1_v1_f0380_dequeue_ordering_proof.v1",
+  "source_chain_proven": true,
+  "source_checks": [
+    {
+      "claim": "PC movement keyboard rows map keypad/arrow controls to C001..C006 movement commands before F0361 scans them.",
+      "file": "COMMAND.C",
+      "id": "controlled_key_rows",
+      "line_range": [
+        252,
+        260
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0361 locks the queue, scans primary then secondary keyboard tables, writes matching commands into G0432, unlocks, then replays one pending click.",
+      "file": "COMMAND.C",
+      "id": "controlled_key_write_to_g0432",
+      "line_range": [
+        1734,
+        1812
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0380 locks, checks empty/gated movement before dequeue, reads command/X/Y from first index, advances G0433, then unlocks and replays pending clicks before dispatch.",
+      "file": "COMMAND.C",
+      "id": "f0380_index_dequeue_before_dispatch",
+      "line_range": [
+        2075,
+        2127
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0380 dispatches C001/C002 turns and C003..C006 steps only after dequeue/unlock/replay.",
+      "file": "COMMAND.C",
+      "id": "f0380_dispatch_after_dequeue",
+      "line_range": [
+        2118,
+        2156
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "Turn commands mutate the party tuple by writing G0308_i_PartyDirection after rotating champion cells/directions.",
+      "file": "CHAMPION.C",
+      "id": "turn_tuple_mutation",
+      "line_range": [
+        117,
+        130
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "Successful step commands mutate the party tuple by writing G0306/G0307 from F0267 destination coordinates.",
+      "file": "MOVESENS.C",
+      "id": "step_tuple_mutation",
+      "line_range": [
+        438,
+        444
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "The game loop calls F0128 with the current G0308/G0306/G0307 tuple.",
+      "file": "GAMELOOP.C",
+      "id": "main_loop_draw_consumes_tuple",
+      "line_range": [
+        88,
+        90
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    },
+    {
+      "claim": "F0128 receives direction/mapX/mapY parameters and requests the dungeon viewport from that draw path.",
+      "file": "DUNVIEW.C",
+      "id": "f0128_consumes_draw_args_before_viewport",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true,
+      "order_missing": []
+    }
+  ],
+  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "SOURCE_PROVEN_RUNTIME_F0380_BLOCKED",
+  "timestamp_utc": "2026-05-06T20:13:00.825611+00:00"
+}

@@ -1,0 +1,40 @@
+{
+  "status": "PASS_DM1_V1_TOUCH_SOURCE_ORDER_RUNTIME_SWEEP",
+  "pass": "pass358",
+  "date": "2026-05-07",
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "evidence_file": "parity-evidence/pass358_dm1_v1_touch_source_order_runtime_sweep.md",
+  "verifier": "tools/verify_pass358_dm1_v1_touch_source_order_runtime_sweep.py",
+  "source_anchors": [
+    {"file": "STARTUP2.C", "lines": "1179-1182"},
+    {"file": "COMMAND.C", "lines": "375-405"},
+    {"file": "COMMAND.C", "lines": "412-451"},
+    {"file": "COMMAND.C", "lines": "498-511"},
+    {"file": "COMMAND.C", "lines": "1379-1449"},
+    {"file": "COMMAND.C", "lines": "1641-1661"},
+    {"file": "COMMAND.C", "lines": "1692-1707"},
+    {"file": "COMMAND.C", "lines": "2296-2324"},
+    {"file": "CLIKMENU.C", "lines": "519-585"},
+    {"file": "COORD.C", "lines": "1693-1698"},
+    {"file": "DEFS.H", "lines": "202-215"},
+    {"file": "DEFS.H", "lines": "3979-3982"}
+  ],
+  "firestaff_artifacts": [
+    "touch_click_zone_matrix_pc34_compat.c",
+    "touch_click_zone_matrix_pc34_compat.h",
+    "touch_pointer_input_pc34_compat.c",
+    "touch_pointer_input_pc34_compat.h",
+    "test_touch_click_zone_matrix_pc34_compat_integration.c",
+    "test_touch_pointer_input_pc34_compat_integration.c",
+    "probes/m11/firestaff_m11_touch_live_dispatch_gate_probe.c",
+    "parity-evidence/pass347_touch_input_primary_secondary_source_order.md",
+    "parity-evidence/pass350_dm1_v1_touch_live_dispatch_gate.md"
+  ],
+  "required_runtime_gates": [
+    "touch_click_zone_matrix_pc34_compat",
+    "touch_pointer_input_pc34_compat",
+    "pass350_dm1_v1_touch_live_dispatch_gate",
+    "movement_core_pc34_compat",
+    "movement_command_pc34_compat"
+  ]
+}

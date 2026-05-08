@@ -4,10 +4,10 @@ Scope: worker-only evidence/verifier pass on N2 (`firestaff-worker`). No emulato
 
 ## Worktree and branch
 
-- Worktree: `/home/trv2/work/firestaff`
+- Worktree: `<firestaff-repo>`
 - Branch: `sync/n2-dm1-v1-20260428`
-- Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
-- Canonical refs: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/`
+- Primary source: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+- Canonical refs: `<firestaff-original-games>/_canonical/csb/`
 
 ## Source identity anchors first
 

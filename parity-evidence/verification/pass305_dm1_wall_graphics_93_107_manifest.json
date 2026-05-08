@@ -1,0 +1,515 @@
+{
+  "canonicalGraphicsDat": {
+    "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "fileBytes": 363417,
+    "headerBytes": 5708,
+    "itemCount": 713,
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "signature": "0x8001"
+  },
+  "decoder": {
+    "algorithm": "Firestaff IMG3-compatible nibble RLE expansion, then row-stride-aware unpack to one byte per 4-bit pixel",
+    "outputs": [
+      "compressedRecordSha256",
+      "packedSha256",
+      "unpackedPixelSha256"
+    ],
+    "sourceAnchors": [
+      "ReDMCSB MEMORY.C:1330-1473 F0479_MEMORY_ReadGraphicsDatHeader reads GRAPHICS.DAT signature/count, compressed/decompressed byte tables, and width/height table",
+      "ReDMCSB MEMORY.C:1823-2263 F0484_MEMORY_LoadGraphics_CPSDEF loads GRAPHICS.DAT records into G0636_ppuc_Graphics",
+      "ReDMCSB IMAGE2.C:339-459 F0689_IMG_ExpandGraphicToBitmap IMG3 local-palette/nibble-RLE expansion",
+      "ReDMCSB DUNVIEW.C:183-200 G2107_WallSet negative bitmap slots",
+      "ReDMCSB DUNVIEW.C:2214-2217 wall-set graphics load loop",
+      "ReDMCSB DEFS.H:2359-2373 wall-set GRAPHICS.DAT indices 93..107",
+      "asset_loader_m11.c:M11_AssetLoader_Load",
+      "image_backend_pc34_compat.c:IMG3_Compat_ExpandFromSource",
+      "graphics_dat_snd3_loader_v1.c:V1_GraphicsSnd3_ParseManifest header table layout"
+    ]
+  },
+  "pass": "pass305_dm1_wall_graphics_93_107_manifest",
+  "records": [
+    {
+      "compressedBytes": 1164,
+      "compressedRecordSha256": "9ecf557b1eea5674240bd416b231f984064c43abce85a195dfd5658cb9d204d5",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 2328,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedBytes": 2312,
+        "packedSha256": "093d5115c3329a9049ac7a3848cef97c221b5f4fe30a0273419596d3b18f1591",
+        "stridePixels": 34,
+        "unpackedBytes": 4488,
+        "unpackedPixelSha256": "310d84187894af6ad39550d547c28e171f809b731d59d133ca47061d99b48635"
+      },
+      "decompressedBytesHeaderValue": 1164,
+      "entryPrefixHex": "21008800",
+      "fileOffset": 64065,
+      "graphicIndex": 93,
+      "height": 136,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_93",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C93_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 33
+    },
+    {
+      "compressedBytes": 1092,
+      "compressedRecordSha256": "b08dd46981ef4ef905b1074f835f78a4328cdb7ee64380575c688da18ab589ec",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 2183,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedBytes": 2312,
+        "packedSha256": "9b475ac0ccbc73412bfd20a58d0a8ed1ec31cd9561a3836fba02af208f7d7e5e",
+        "stridePixels": 34,
+        "unpackedBytes": 4488,
+        "unpackedPixelSha256": "9b73c633c61d387f4453a3449c3cb8df6d84115707a20f52e5267a6ef064ff31"
+      },
+      "decompressedBytesHeaderValue": 1092,
+      "entryPrefixHex": "21008800",
+      "fileOffset": 65229,
+      "graphicIndex": 94,
+      "height": 136,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_94",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C94_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 33
+    },
+    {
+      "compressedBytes": 1545,
+      "compressedRecordSha256": "8a53fb2431031b9900667a682984d3dcc2f73394f7f75a9583f5e724d12cd54b",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 3089,
+        "localPaletteNibbles": [
+          2,
+          13,
+          1,
+          15,
+          12,
+          10
+        ],
+        "packedBytes": 3330,
+        "packedSha256": "f99d3c393a758e24e052bfa2a17bf6c6e4ceac1ff23203d089de659766bc9ec9",
+        "stridePixels": 60,
+        "unpackedBytes": 6660,
+        "unpackedPixelSha256": "3312d9dcb1749f37805c9d3328864eeddedc1377b22169b0f65355d913d4787c"
+      },
+      "decompressedBytesHeaderValue": 1545,
+      "entryPrefixHex": "3c006f00",
+      "fileOffset": 66321,
+      "graphicIndex": 95,
+      "height": 111,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_95",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C95_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 60
+    },
+    {
+      "compressedBytes": 1605,
+      "compressedRecordSha256": "c40e6dc635e72a174a6b21b409f80381f1e6b75b0e030dd1ec6a38e687166789",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 3209,
+        "localPaletteNibbles": [
+          2,
+          13,
+          1,
+          15,
+          12,
+          10
+        ],
+        "packedBytes": 3330,
+        "packedSha256": "4e7cf5182a68f411ed68a2711855693883400fd41a988282567e4c8ea6af2b8b",
+        "stridePixels": 60,
+        "unpackedBytes": 6660,
+        "unpackedPixelSha256": "688cf9032dad24570c2ce7a8480b14ee1e232e9b98c3a1f8e193549bae419d49"
+      },
+      "decompressedBytesHeaderValue": 1605,
+      "entryPrefixHex": "3c006f00",
+      "fileOffset": 67866,
+      "graphicIndex": 96,
+      "height": 111,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_96",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C96_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 60
+    },
+    {
+      "compressedBytes": 2456,
+      "compressedRecordSha256": "4fd3456fef8d200d04874dfabf372804eb640910359c1e1739c5a6a9908941f3",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 4911,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          12,
+          0
+        ],
+        "packedBytes": 8880,
+        "packedSha256": "3788c7117221a99e6b2d3b9b5dadde60a2d1185f0dfb7ff2d27258ad8ba7fb83",
+        "stridePixels": 160,
+        "unpackedBytes": 17760,
+        "unpackedPixelSha256": "21090a186ba9545307b356b0693c17ea2e5165197e6e0d56f32528f754a8bfc2"
+      },
+      "decompressedBytesHeaderValue": 2456,
+      "entryPrefixHex": "a0006f00",
+      "fileOffset": 69471,
+      "graphicIndex": 97,
+      "height": 111,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_97",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C97_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 160
+    },
+    {
+      "compressedBytes": 126,
+      "compressedRecordSha256": "1ae8cf04388720e7fc98956db432f75ca430c5e32203745a645251ee27a9801e",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 252,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedBytes": 208,
+        "packedSha256": "f80f39cc9ffe84fcfb947ea49732a166850de6dccc3aa005929d85f0588b535a",
+        "stridePixels": 8,
+        "unpackedBytes": 416,
+        "unpackedPixelSha256": "4915e30ac285629899b44d33004db77480dc0a2992d87d38689a4022739b7e6a"
+      },
+      "decompressedBytesHeaderValue": 126,
+      "entryPrefixHex": "08003400",
+      "fileOffset": 71927,
+      "graphicIndex": 98,
+      "height": 52,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_98",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C98_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 8
+    },
+    {
+      "compressedBytes": 136,
+      "compressedRecordSha256": "88b934e6399b16409233d7e951cf0b042e1c9020c732b9411db836ae078ff504",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 271,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedBytes": 208,
+        "packedSha256": "9ee01018cd61747076e5841ba67aea0f7f723678ee72c573b3ea2018bc36b33b",
+        "stridePixels": 8,
+        "unpackedBytes": 416,
+        "unpackedPixelSha256": "984794cba13ce7e7d89fb3a22614862a5eb0627400cc0ed5901b5909406b2fa6"
+      },
+      "decompressedBytesHeaderValue": 136,
+      "entryPrefixHex": "08003400",
+      "fileOffset": 72053,
+      "graphicIndex": 99,
+      "height": 52,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_99",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C99_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 8
+    },
+    {
+      "compressedBytes": 1089,
+      "compressedRecordSha256": "d930addad0f09129bb6fe3f70750dfe9f30a10ad33dbd17e054c6321b46221ea",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 2177,
+        "localPaletteNibbles": [
+          1,
+          2,
+          12,
+          13,
+          10,
+          0
+        ],
+        "packedBytes": 2886,
+        "packedSha256": "c031ac6a319490d60db570d0ab37a3cbe99d1b7dbff693f4729d3fefe5c1b33b",
+        "stridePixels": 78,
+        "unpackedBytes": 5772,
+        "unpackedPixelSha256": "a8a05e342a5a651b291c4b5a60e819dc3c202bffebea9830aa85be2df5c784bb"
+      },
+      "decompressedBytesHeaderValue": 1089,
+      "entryPrefixHex": "4e004a00",
+      "fileOffset": 72189,
+      "graphicIndex": 100,
+      "height": 74,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_100",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C100_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 78
+    },
+    {
+      "compressedBytes": 1117,
+      "compressedRecordSha256": "7efa9b0affa13c2714457cbb19d68081003844f501a19ea89fdcd69be436dffd",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 2234,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          10,
+          0
+        ],
+        "packedBytes": 2886,
+        "packedSha256": "d6512838f7f975c27ac07fb396075d8e7ca7c68739552fc23695a163547b6618",
+        "stridePixels": 78,
+        "unpackedBytes": 5772,
+        "unpackedPixelSha256": "0616c704688d22a286a31d5e1c8056c7e3f82bb571399ae2103988e36e728520"
+      },
+      "decompressedBytesHeaderValue": 1117,
+      "entryPrefixHex": "4e004a00",
+      "fileOffset": 73278,
+      "graphicIndex": 101,
+      "height": 74,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_101",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C101_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 78
+    },
+    {
+      "compressedBytes": 1012,
+      "compressedRecordSha256": "eea676ef285a7c1d8c7d9071f18d2cff646079bbd836ff13ac0bba89cdc97728",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 2023,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          0,
+          3
+        ],
+        "packedBytes": 3922,
+        "packedSha256": "3305aad48565c8e6a0ba6af44d754f8fafb6999401dc1785f9520fd5723db5e6",
+        "stridePixels": 106,
+        "unpackedBytes": 7844,
+        "unpackedPixelSha256": "a0e5832c7b1dba6ca4c2f2aa38bb73725cde3be5789dab6220edc6f7abaee267"
+      },
+      "decompressedBytesHeaderValue": 1012,
+      "entryPrefixHex": "6a004a00",
+      "fileOffset": 74395,
+      "graphicIndex": 102,
+      "height": 74,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_102",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C102_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 106
+    },
+    {
+      "compressedBytes": 643,
+      "compressedRecordSha256": "eccbec82a89cf368aa26293cf3563e1c0cd8f027ebd437ea637802afbb21aef8",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 1285,
+        "localPaletteNibbles": [
+          12,
+          1,
+          0,
+          2,
+          10,
+          13
+        ],
+        "packedBytes": 1078,
+        "packedSha256": "dfbea8f9f7f0d7c07f5371ccac4e912b648c03d3e718714e548a4369dc16e3ae",
+        "stridePixels": 44,
+        "unpackedBytes": 2156,
+        "unpackedPixelSha256": "9583ee58a22f26efb026b5ad65bdd804603201843973c5f696680bd836b9a0bd"
+      },
+      "decompressedBytesHeaderValue": 643,
+      "entryPrefixHex": "2c003100",
+      "fileOffset": 75407,
+      "graphicIndex": 103,
+      "height": 49,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_103",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C103_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 44
+    },
+    {
+      "compressedBytes": 620,
+      "compressedRecordSha256": "c1acf6f6bc76a70592d97e35dc1d315d5783d4b3f9d2ef7715de3639ecff361e",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 1240,
+        "localPaletteNibbles": [
+          12,
+          0,
+          1,
+          2,
+          10,
+          13
+        ],
+        "packedBytes": 1078,
+        "packedSha256": "5c6e2a2e37a73a3862c84fcddd8a6cece262236dfe414dc85d1187819491266c",
+        "stridePixels": 44,
+        "unpackedBytes": 2156,
+        "unpackedPixelSha256": "0f7cf7feed751a0916f4dba0306f64ef80dbdfea3c7b336c84d88d6a47f05b4d"
+      },
+      "decompressedBytesHeaderValue": 620,
+      "entryPrefixHex": "2c003100",
+      "fileOffset": 76050,
+      "graphicIndex": 104,
+      "height": 49,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_104",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C104_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 44
+    },
+    {
+      "compressedBytes": 626,
+      "compressedRecordSha256": "f55c0c7c95d494f987ee1a11a2e70f9bda0e2dc385a63d929293c6b084a92152",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 1252,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedBytes": 2058,
+        "packedSha256": "3af2ac7c04b69df8ce6f72327355b78afd01ed1024e766119e4574079fb567d6",
+        "stridePixels": 84,
+        "unpackedBytes": 4067,
+        "unpackedPixelSha256": "292692e6f2bd4881f0be1b4c9bc2213b24280930fe92dba56ec10ed28df95ca3"
+      },
+      "decompressedBytesHeaderValue": 626,
+      "entryPrefixHex": "53003100",
+      "fileOffset": 76670,
+      "graphicIndex": 105,
+      "height": 49,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_105",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C105_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 83
+    },
+    {
+      "compressedBytes": 618,
+      "compressedRecordSha256": "8c29f7d686326f93b50495ab2955ab0edfa669c2a9182616f78227cf586e474a",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 1235,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedBytes": 2058,
+        "packedSha256": "67a8db07ad38f22b2a7cb7f53056b756534728188820b39d41088b186e97ab23",
+        "stridePixels": 84,
+        "unpackedBytes": 4067,
+        "unpackedPixelSha256": "1b9e4fb3811d692cba8602bad4efb0e9c7c4d5dc58ddd30e65e2e83b515181c7"
+      },
+      "decompressedBytesHeaderValue": 618,
+      "entryPrefixHex": "53003100",
+      "fileOffset": 77296,
+      "graphicIndex": 106,
+      "height": 49,
+      "nativeBitmap": "G2107_WallSet[...]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.set0.index_106",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C106_GRAPHIC_WALLSET_0",
+      "viewportZone": "pass300 pixelRegion/layout-696 zone pending per render event",
+      "width": 83
+    },
+    {
+      "compressedBytes": 421,
+      "compressedRecordSha256": "77fb4c0b45d9da6297f923bae2b32dbb75544c75f3146f5c4a0ec599ede87b3a",
+      "decode": {
+        "decoderNibbleOffsetAfterVisiblePixels": 842,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          0,
+          3,
+          4
+        ],
+        "packedBytes": 1715,
+        "packedSha256": "39ecbd1aba333bcf2bd3fdcd2f708a00e2ae590aa1673c55ccc2fbe61876e91b",
+        "stridePixels": 70,
+        "unpackedBytes": 3430,
+        "unpackedPixelSha256": "2ec0205368dcc4d046ed829c6e435730b1f1e8b21773fe12953a2c9e3ca19578"
+      },
+      "decompressedBytesHeaderValue": 421,
+      "entryPrefixHex": "46003100",
+      "fileOffset": 77914,
+      "graphicIndex": 107,
+      "height": 49,
+      "nativeBitmap": "G2107_WallSet[C14_WALL_D3C]",
+      "pass304Need": "wall comparator decoded byte/palette manifest for GRAPHICS.DAT wall graphics 93..107",
+      "role": "wall.front.blocking.d3c",
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C107_GRAPHIC_WALLSET_0_D3C",
+      "viewportZone": "C704_ZONE_WALL_D3C",
+      "width": 70
+    }
+  ],
+  "scope": "Deterministic source/data inventory for GRAPHICS.DAT wall indices 93..107 required by pass304 wall-comparator promotion; no bitmap dumps emitted.",
+  "status": "passed"
+}

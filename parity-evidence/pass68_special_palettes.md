@@ -7,8 +7,8 @@ Scope: **DM1 / PC 3.4 / English / V1 original-faithful graphics** — source-bac
 
 Local ReDMCSB source:
 
-- `/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:25` — `G8147_CREDITS[17]`
-- `/Users/bosse/.openclaw/workspace-main/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:43` — `G8148_ENTRANCE[17]`
+- `<workspace>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:25` — `G8147_CREDITS[17]`
+- `<workspace>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:43` — `G8148_ENTRANCE[17]`
 - `DRAWVIEW.C:420-421` — palette table entries `G8147_CREDITS` (`6`) and `G8148_ENTRANCE` (`7`)
 
 Rows are original VGA DAC 6-bit `COLOR_DEF` entries `{index, r, g, b}`. Firestaff stores the converted RGB8 values using the same conversion already used by the base palette seam:

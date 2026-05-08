@@ -1,11 +1,11 @@
 # Pass174 — ReDMCSB C080/F0377 delivery probe
 
-- run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe`
+- run base: `<firestaff-data>/firestaff-n2-runs/20260429-081157-pass174-redmcsb-c080-delivery-probe`
 - evidence root: `parity-evidence/verification/pass174_redmcsb_c080_delivery_probe`
 - completed: 12
 - errors: 0
 - buckets: {'click-no-visible-delta': 12}
-- ReDMCSB source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- ReDMCSB source root: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ## ReDMCSB source audit
 

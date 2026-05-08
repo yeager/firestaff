@@ -1,0 +1,347 @@
+{
+  "checks": {
+    "greatstone_pc34_map_data_seen": true,
+    "movemenu_absence_recorded": true,
+    "pass273_symbols_ok": true,
+    "pass296_movement_tuple_proof_available": true,
+    "pass320_blocker_preserved": true,
+    "queue_layout_derived": true,
+    "source_audit_ok": true
+  },
+  "derivedQueueLayout": {
+    "commandStructBytes": 6,
+    "queueSlots": 5,
+    "slots": [
+      {
+        "Command": "2C20:3E7E",
+        "X": "2C20:3E7A",
+        "Y": "2C20:3E7C",
+        "index": 0
+      },
+      {
+        "Command": "2C20:3E84",
+        "X": "2C20:3E80",
+        "Y": "2C20:3E82",
+        "index": 1
+      },
+      {
+        "Command": "2C20:3E8A",
+        "X": "2C20:3E86",
+        "Y": "2C20:3E88",
+        "index": 2
+      },
+      {
+        "Command": "2C20:3E90",
+        "X": "2C20:3E8C",
+        "Y": "2C20:3E8E",
+        "index": 3
+      },
+      {
+        "Command": "2C20:3E96",
+        "X": "2C20:3E92",
+        "Y": "2C20:3E94",
+        "index": 4
+      }
+    ],
+    "source": "DEFS.H:229-233 plus COMMAND.C:6 and M529_COMMAND_QUEUE_SIZE=4 for I34E"
+  },
+  "existingMovementProbeAudit": {
+    "candidateProbeScripts": [
+      "pass316_dm1_v1_f0380_f0097_direct_probe_attempt.py",
+      "pass317_dm1_v1_late_f0380_f0097_direct_probe_attempt.py",
+      "pass318_dm1_v1_f0097_after_f0128_offset_window_probe.py",
+      "pass320_dm1_v1_f0097_vidrv_window_after_f0128_sequence_probe.py"
+    ],
+    "decision": "Movement state binding can be source/public-symbol verified now; live promotion still depends on debugger stop/control sequencing before post-F0128/F0097 windows can be trusted.",
+    "pass296ProofGatePassed": true,
+    "pass296Status": "MOVEMENT_INPUT_TUPLE_PROOF_SOURCE_LOCKED_RUNTIME_SUPPORTED_DIRECT_F0380_BLOCKED_NOT_REQUIRED",
+    "pass320Status": "BLOCKED_F0128_GATE_NOT_RECAPTURED_STRICT_STOP_FILTER"
+  },
+  "greatstoneAtlasAudit": {
+    "atlasRoot": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+    "decision": "Greatstone confirms PC 3.4 dungeon-map data availability, but not runtime command queue/party tuple binding; ReDMCSB/pass273 remain the binding authorities.",
+    "dmPc34DungeonMapsListed": true,
+    "dmPc34MultiDungeonMapsListed": true,
+    "filesIndexPresent": true,
+    "movementBindingData": "MAP_DATA_ONLY_NO_RUNTIME_QUEUE_OR_PARTY_TUPLE_OFFSETS",
+    "summaryPresent": true
+  },
+  "movemenuAudit": {
+    "decision": "NOT_PRESENT_NONBLOCKING",
+    "paths": [],
+    "present": false,
+    "reason": "This ReDMCSB tree has no MOVEMENU.C; movement menu/input bindings are represented by COMMAND.C tables and CLIKMENU.C turn/move handlers, which this verifier audits explicitly.",
+    "requestedFile": "MOVEMENU.C"
+  },
+  "notClaimed": [
+    "new DOSBox runtime hit",
+    "post-F0128/F0097 true-stop promotion",
+    "pixel parity",
+    "new raw original bitmap publication"
+  ],
+  "probePlan": {
+    "dosboxNeededForThisVerifier": false,
+    "ifRuntimeProbeNext": [
+      "Use pass273 runtime addresses, not guessed offsets.",
+      "Set BPM on queue slot Command fields plus G0433/G0434/G0435, then BPM on G0308/G0306/G0307 and G0310/G0311/G0312.",
+      "Drive controlled kp5/kp4/kp6 only after debugger-run readiness.",
+      "On each true stop capture CPU plus MEMDUMP 2C20:3E7A 36 and MEMDUMP 2C20:3C88 96; ignore BPLIST/setup echoes as pass320 taught.",
+      "Promote only if queue command write/dequeue, tuple mutation or disabled-tick state, and subsequent F0128/F0097 consumption are observed in order within <=60s."
+    ],
+    "nextBlocker": "Debugger stop/control sequencing: pass320 did not recapture the post-F0128 gate after strict stop filtering, so live movement-state offset/table promotion must first get reliable true-stop control.",
+    "runtimeLimitSeconds": 60
+  },
+  "schema": "pass322_dm1_v1_movement_state_binding.v1",
+  "sourceAudit": [
+    {
+      "file": "COMMAND.C",
+      "id": "command_queue_storage",
+      "missing": [],
+      "ok": true,
+      "range": [
+        1,
+        16
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "keyboard_movement_to_queue",
+      "missing": [],
+      "ok": true,
+      "range": [
+        1734,
+        1812
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "mouse_movement_zones",
+      "missing": [],
+      "ok": true,
+      "range": [
+        100,
+        115
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "command_dequeue_dispatch",
+      "missing": [],
+      "ok": true,
+      "range": [
+        2045,
+        2156
+      ]
+    },
+    {
+      "file": "DEFS.H",
+      "id": "movement_command_ids",
+      "missing": [],
+      "ok": true,
+      "range": [
+        238,
+        243
+      ]
+    },
+    {
+      "file": "DEFS.H",
+      "id": "command_struct_layout",
+      "missing": [],
+      "ok": true,
+      "range": [
+        229,
+        233
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "id": "turn_state_write_path",
+      "missing": [],
+      "ok": true,
+      "range": [
+        142,
+        173
+      ]
+    },
+    {
+      "file": "CHAMPION.C",
+      "id": "direction_setter",
+      "missing": [],
+      "ok": true,
+      "range": [
+        93,
+        130
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "id": "move_destination_compute",
+      "missing": [],
+      "ok": true,
+      "range": [
+        180,
+        328
+      ]
+    },
+    {
+      "file": "MOVESENS.C",
+      "id": "movesens_party_xy_commit",
+      "missing": [],
+      "ok": true,
+      "range": [
+        316,
+        506
+      ]
+    },
+    {
+      "file": "MOVESENS.C",
+      "id": "movesens_draw_while_falling",
+      "missing": [],
+      "ok": true,
+      "range": [
+        550,
+        556
+      ]
+    },
+    {
+      "file": "GAMELOOP.C",
+      "id": "mainloop_consumes_current_tuple",
+      "missing": [],
+      "ok": true,
+      "range": [
+        80,
+        90
+      ]
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "MOVEMENT_STATE_BINDING_SOURCE_SYMBOL_LOCKED_RUNTIME_PROBE_DESIGNED",
+  "symbolBinding": {
+    "functions": [
+      {
+        "actualRuntime": "22F4:0699",
+        "expectedRuntime": "22F4:0699",
+        "mapLine": 543,
+        "mapSymbolPrefix": "F0380_COMMAND_PROCESSQUEUE_CPSC",
+        "ok": true,
+        "sourceName": "F0380_COMMAND_ProcessQueue_CPSC"
+      },
+      {
+        "actualRuntime": "1EA4:010D",
+        "expectedRuntime": "1EA4:010D",
+        "mapLine": 536,
+        "mapSymbolPrefix": "F0365_COMMAND_PROCESSTYPES1TO2_",
+        "ok": true,
+        "sourceName": "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+      },
+      {
+        "actualRuntime": "1EA4:01AA",
+        "expectedRuntime": "1EA4:01AA",
+        "mapLine": 537,
+        "mapSymbolPrefix": "F0366_COMMAND_PROCESSTYPES3TO6_",
+        "ok": true,
+        "sourceName": "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      },
+      {
+        "actualRuntime": "1859:0516",
+        "expectedRuntime": "1859:0516",
+        "mapLine": 465,
+        "mapSymbolPrefix": "F0267_MOVE_GETMOVERESULT_CPSCE",
+        "ok": true,
+        "sourceName": "F0267_MOVE_GetMoveResult_CPSCE"
+      },
+      {
+        "actualRuntime": "23AD:40FE",
+        "expectedRuntime": "23AD:40FE",
+        "mapLine": 382,
+        "mapSymbolPrefix": "F0128_DUNGEONVIEW_DRAW_CPSF",
+        "ok": true,
+        "sourceName": "F0128_DUNGEONVIEW_Draw_CPSF"
+      }
+    ],
+    "globals": [
+      {
+        "actualRuntime": "2C20:3E7A",
+        "expectedRuntime": "2C20:3E7A",
+        "mapLine": 1103,
+        "ok": true,
+        "publicSymbol": "J0OV9EXG6",
+        "sourceName": "G0432_as_CommandQueue"
+      },
+      {
+        "actualRuntime": "2C20:3EC8",
+        "expectedRuntime": "2C20:3EC8",
+        "mapLine": 286,
+        "ok": true,
+        "publicSymbol": "B6SYPBHVQH3",
+        "sourceName": "G0433_i_CommandQueueFirstIndex"
+      },
+      {
+        "actualRuntime": "2C20:1F08",
+        "expectedRuntime": "2C20:1F08",
+        "mapLine": 863,
+        "ok": true,
+        "publicSymbol": "G0434_i_CommandQueueLastIndex",
+        "sourceName": "G0434_i_CommandQueueLastIndex"
+      },
+      {
+        "actualRuntime": "2C20:1F0A",
+        "expectedRuntime": "2C20:1F0A",
+        "mapLine": 864,
+        "ok": true,
+        "publicSymbol": "G0435_B_CommandQueueLocked",
+        "sourceName": "G0435_B_CommandQueueLocked"
+      },
+      {
+        "actualRuntime": "2C20:3C92",
+        "expectedRuntime": "2C20:3C92",
+        "mapLine": 1182,
+        "ok": true,
+        "publicSymbol": "QEQRGB4",
+        "sourceName": "G0308_i_PartyDirection"
+      },
+      {
+        "actualRuntime": "2C20:3C94",
+        "expectedRuntime": "2C20:3C94",
+        "mapLine": 1249,
+        "ok": true,
+        "publicSymbol": "W9JOPB2",
+        "sourceName": "G0306_i_PartyMapX"
+      },
+      {
+        "actualRuntime": "2C20:3CE0",
+        "expectedRuntime": "2C20:3CE0",
+        "mapLine": 1100,
+        "ok": true,
+        "publicSymbol": "IQFBAUTV8Z",
+        "sourceName": "G0307_i_PartyMapY"
+      },
+      {
+        "actualRuntime": "2C20:3C9A",
+        "expectedRuntime": "2C20:3C9A",
+        "mapLine": 1287,
+        "ok": true,
+        "publicSymbol": "ZPFIGRFT8FM",
+        "sourceName": "G0310_i_DisabledMovementTicks"
+      },
+      {
+        "actualRuntime": "2C20:3D28",
+        "expectedRuntime": "2C20:3D28",
+        "mapLine": 1174,
+        "ok": true,
+        "publicSymbol": "PM1CAJ3O5",
+        "sourceName": "G0311_i_ProjectileDisabledMovementTicks"
+      },
+      {
+        "actualRuntime": "2C20:3CE4",
+        "expectedRuntime": "2C20:3CE4",
+        "mapLine": 1283,
+        "ok": true,
+        "publicSymbol": "ZH5OGNXB8COW",
+        "sourceName": "G0312_i_LastProjectileDisabledMovementDirection"
+      }
+    ],
+    "pass273Status": "UNBLOCKED_PUBLIC_SYMBOLS_FOUND_NO_RUNTIME_HOOK"
+  },
+  "timestampUtc": "2026-05-07T13:59:29.092726+00:00"
+}

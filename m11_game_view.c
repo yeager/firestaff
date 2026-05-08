@@ -1933,6 +1933,10 @@ static int m11_toggle_front_door(M11_GameViewState* state);
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel);
+static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input);
+static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
+                                           M12_MenuInput input,
+                                           const char* actionLabel);
 static void m11_check_party_death(M11_GameViewState* state);
 static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                                        int x,
@@ -4543,6 +4547,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
     DM1_V1_VBlankTiming_Init(&state->vblankTiming);
+    DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
     DM1_SaveMenu_Init(&state->saveMenu);
     /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
      * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
@@ -4854,6 +4859,103 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         return M11_GAME_INPUT_IGNORED;
     }
     return M11_GAME_INPUT_REDRAW;
+}
+
+static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
+    switch (input) {
+        case M12_MENU_INPUT_LEFT:
+            return DM1_V1_COMMAND_TURN_LEFT;
+        case M12_MENU_INPUT_RIGHT:
+            return DM1_V1_COMMAND_TURN_RIGHT;
+        case M12_MENU_INPUT_UP:
+            return DM1_V1_COMMAND_MOVE_FORWARD;
+        case M12_MENU_INPUT_STRAFE_RIGHT:
+            return DM1_V1_COMMAND_MOVE_RIGHT;
+        case M12_MENU_INPUT_DOWN:
+            return DM1_V1_COMMAND_MOVE_BACKWARD;
+        case M12_MENU_INPUT_STRAFE_LEFT:
+            return DM1_V1_COMMAND_MOVE_LEFT;
+        default:
+            return DM1_V1_COMMAND_NONE;
+    }
+}
+
+static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
+                                           M12_MenuInput input,
+                                           const char* actionLabel) {
+    int command;
+    struct PartyState_Compat beforeParty;
+    if (!state || !state->active) {
+        return 0;
+    }
+    command = m11_dm1_v1_pipeline_command_for_input(input);
+    if (command == DM1_V1_COMMAND_NONE) {
+        return 0;
+    }
+
+    beforeParty = state->world.party;
+    memset(&state->lastDm1V1MovementPipelineResult, 0,
+           sizeof(state->lastDm1V1MovementPipelineResult));
+
+    /* Pass345 live bridge: main_loop_m11.c maps route tokens to M12 inputs;
+     * this queues the corresponding ReDMCSB command id directly into the
+     * compat queue (COMMAND.C F0359/F0361 already-resolved command shape)
+     * and processes the F0380 -> F0365/F0366 -> MOVESENS path against the
+     * live M11 world party.  No OS keypad/NumLock synthesis is involved.
+     */
+    if (!DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(
+            &state->dm1V1MovementPipeline, command, 0, 0)) {
+        m11_set_status(state, actionLabel, "QUEUE FULL");
+        return 0;
+    }
+    if (!DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &state->dm1V1MovementPipeline,
+            state->world.dungeon,
+            state->world.things,
+            &state->world.party,
+            NULL,
+            &state->lastDm1V1MovementPipelineResult)) {
+        m11_set_status(state, actionLabel, "PIPELINE REJECTED");
+        return 0;
+    }
+
+    state->world.gameTick++;
+    (void)F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash);
+
+    m11_apply_survival_drain(state);
+    m11_apply_rest_recovery(state);
+    M11_GameView_UpdateTorchFuel(state);
+    m11_process_creature_ticks(state);
+    M11_GameView_TickAnimation(state);
+    m11_check_party_death(state);
+    m11_mark_explored(state);
+
+    if (state->lastDm1V1MovementPipelineResult.core.queue.movementDisabledGate) {
+        m11_set_status(state, actionLabel, "MOVEMENT COOLDOWN");
+    } else if (state->lastDm1V1MovementPipelineResult.core.turnApplied) {
+        if (state->world.party.direction != beforeParty.direction) {
+            m11_set_status(state, actionLabel, "FACING UPDATED");
+        } else {
+            m11_set_status(state, actionLabel, "TURN IGNORED");
+        }
+    } else if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred) {
+        if (state->world.party.mapIndex != beforeParty.mapIndex) {
+            (void)0;
+        } else if (state->world.party.mapX != beforeParty.mapX ||
+                   state->world.party.mapY != beforeParty.mapY) {
+            m11_set_status(state, actionLabel, "PARTY MOVED");
+        }
+    } else if (state->lastDm1V1MovementPipelineResult.core.movementBlocked) {
+        m11_set_status(state, actionLabel, "MOVEMENT BLOCKED");
+    } else {
+        m11_set_status(state, actionLabel, "INPUT CONSUMED");
+    }
+
+    DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
+        &state->dm1V1MovementPipeline);
+    DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
+    return state->lastDm1V1MovementPipelineResult.viewportDirty ||
+           state->lastDm1V1MovementPipelineResult.core.queue.dequeued;
 }
 
 static int m11_apply_tick(M11_GameViewState* state,
@@ -5377,6 +5479,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         case M12_MENU_INPUT_NONE:
         default:
             return M11_GAME_INPUT_IGNORED;
+    }
+    if (m11_dm1_v1_pipeline_command_for_input(input) != DM1_V1_COMMAND_NONE) {
+        if (!m11_apply_dm1_v1_pipeline_tick(state, input, label)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        return M11_GAME_INPUT_REDRAW;
     }
     if (!m11_apply_tick(state, command, label)) {
         return M11_GAME_INPUT_IGNORED;

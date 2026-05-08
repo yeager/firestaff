@@ -737,6 +737,54 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->dataDir        = NULL;
 }
 
+
+static void m11_write_autotest_runtime_probe(const char* path,
+                                             int launchedEver,
+                                             const M11_GameViewState* gameView) {
+    FILE* f;
+    if (!path || path[0] == '\0') {
+        return;
+    }
+    f = fopen(path, "w");
+    if (!f) {
+        return;
+    }
+    fprintf(f,
+            "{\n"
+            "  \"schema\": \"firestaff_m11_autotest_runtime_probe.v1\",\n"
+            "  \"launchedEver\": %d,\n"
+            "  \"active\": %d,\n"
+            "  \"title\": \"%s\",\n"
+            "  \"sourceId\": \"%s\",\n"
+            "  \"lastAction\": \"%s\",\n"
+            "  \"lastOutcome\": \"%s\",\n"
+            "  \"gameTick\": %u,\n"
+            "  \"party\": {\"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d, \"direction\": %d, \"championCount\": %d},\n"
+            "  \"pipeline\": {\"dequeued\": %d, \"command\": %d, \"turnApplied\": %d, \"stepApplied\": %d, \"movementBlocked\": %d, \"anyMovementOccurred\": %d, \"anyTurnOccurred\": %d, \"viewportDirty\": %d}\n"
+            "}\n",
+            launchedEver,
+            gameView ? gameView->active : 0,
+            gameView ? gameView->title : "",
+            gameView ? gameView->sourceId : "",
+            gameView ? gameView->lastAction : "",
+            gameView ? gameView->lastOutcome : "",
+            gameView ? (unsigned int)gameView->world.gameTick : 0U,
+            gameView ? gameView->world.party.mapIndex : -1,
+            gameView ? gameView->world.party.mapX : -1,
+            gameView ? gameView->world.party.mapY : -1,
+            gameView ? gameView->world.party.direction : -1,
+            gameView ? gameView->world.party.championCount : -1,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.dequeued : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.command : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.turnApplied : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.stepApplied : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.core.movementBlocked : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.anyMovementOccurred : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.anyTurnOccurred : 0,
+            gameView ? gameView->lastDm1V1MovementPipelineResult.viewportDirty : 0);
+    fclose(f);
+}
+
 static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
     if (!token || len == 0U) {
         return M12_MENU_INPUT_NONE;
@@ -828,6 +876,12 @@ static int m11_script_keycode_from_name(const char* name) {
     if (strcmp(name, "right") == 0) return SDLK_RIGHT;
     if (strcmp(name, "enter") == 0 || strcmp(name, "return") == 0) return SDLK_RETURN;
     if (strcmp(name, "kp-enter") == 0) return SDLK_KP_ENTER;
+    if (strcmp(name, "kp-1") == 0 || strcmp(name, "kp1") == 0) return SDLK_KP_1;
+    if (strcmp(name, "kp-2") == 0 || strcmp(name, "kp2") == 0) return SDLK_KP_2;
+    if (strcmp(name, "kp-3") == 0 || strcmp(name, "kp3") == 0) return SDLK_KP_3;
+    if (strcmp(name, "kp-4") == 0 || strcmp(name, "kp4") == 0) return SDLK_KP_4;
+    if (strcmp(name, "kp-5") == 0 || strcmp(name, "kp5") == 0) return SDLK_KP_5;
+    if (strcmp(name, "kp-6") == 0 || strcmp(name, "kp6") == 0) return SDLK_KP_6;
     if (strcmp(name, "space") == 0) return SDLK_SPACE;
     if (strcmp(name, "tab") == 0) return SDLK_TAB;
     if (strcmp(name, "esc") == 0 || strcmp(name, "escape") == 0) return SDLK_ESCAPE;
@@ -1054,10 +1108,27 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_UP;
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
+                /* ReDMCSB PC-34/I34E source lock: COMMAND.C:677-684 maps
+                 * keypad scancodes 0x4B/0x4C/0x4D/0x4F/0x50/0x51 to
+                 * turn-left/forward/turn-right/strafe-left/back/strafe-right;
+                 * IO2.C:47-59 normalizes shifted arrow scancodes into the
+                 * same command-table codes. SDL reports NumLock-on keypad
+                 * keys as SDLK_KP_N, so route them explicitly before the
+                 * generic q/e/wasd convenience aliases. */
+                case SDLK_KP_5:
+                    return M12_MENU_INPUT_UP;
+                case SDLK_KP_2:
+                    return M12_MENU_INPUT_DOWN;
+                case SDLK_KP_1:
+                    return M12_MENU_INPUT_STRAFE_LEFT;
+                case SDLK_KP_3:
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
                 case SDLK_LEFT:
+                case SDLK_KP_4:
                 case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
+                case SDLK_KP_6:
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
                 case SDLK_A:
@@ -1250,10 +1321,27 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_UP;
                 case SDLK_DOWN:
                     return M12_MENU_INPUT_DOWN;
+                /* ReDMCSB PC-34/I34E source lock: COMMAND.C:677-684 maps
+                 * keypad scancodes 0x4B/0x4C/0x4D/0x4F/0x50/0x51 to
+                 * turn-left/forward/turn-right/strafe-left/back/strafe-right;
+                 * IO2.C:47-59 normalizes shifted arrow scancodes into the
+                 * same command-table codes. SDL reports NumLock-on keypad
+                 * keys as SDLK_KP_N, so route them explicitly before the
+                 * generic q/e/wasd convenience aliases. */
+                case SDLK_KP_5:
+                    return M12_MENU_INPUT_UP;
+                case SDLK_KP_2:
+                    return M12_MENU_INPUT_DOWN;
+                case SDLK_KP_1:
+                    return M12_MENU_INPUT_STRAFE_LEFT;
+                case SDLK_KP_3:
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
                 case SDLK_LEFT:
+                case SDLK_KP_4:
                 case SDLK_Q:
                     return M12_MENU_INPUT_LEFT;
                 case SDLK_RIGHT:
+                case SDLK_KP_6:
                 case SDLK_E:
                     return M12_MENU_INPUT_RIGHT;
                 case SDLK_A:
@@ -1588,6 +1676,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fprintf(stderr, "firestaff: launch smoke failed: no launch reached before exit\n");
         runRc = 3;
     }
+    m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
+                                     launchedEver,
+                                     &gameView);
     m11_sync_and_save_window_size(&menuState);
     M11_GameView_Shutdown(&gameView);
     free(launcherFramebuffer);

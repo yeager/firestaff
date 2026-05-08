@@ -1,0 +1,157 @@
+{
+  "actual_dmexe_loader_load_segment": "0733",
+  "artifact_policy": {
+    "no_original_binaries_committed": true,
+    "no_verified_runtime_hit_claims": true,
+    "text_only": true
+  },
+  "candidate_breakpoints": [
+    {
+      "actual_dmexe_loader_load_segment": "0733",
+      "classification": "actual_loader_runtime_breakpoint_candidate_only_not_verified_hit",
+      "confidence": "medium_high",
+      "global_watch_targets": [
+        "G0432_as_CommandQueue",
+        "G0433_i_CommandQueueFirstIndex",
+        "G0434_i_CommandQueueLastIndex",
+        "G0435_B_CommandQueueLocked",
+        "G0308_i_PartyDirection"
+      ],
+      "id": "command_accepted",
+      "promotion_blocker": "Capture loaded FIRES PSP/load segment and debugger hit at this queue-dispatch prologue or branch after command dequeuing.",
+      "runtime_cs_ip_candidate": "22AF:06E9",
+      "source_citations": [
+        "COMMAND.C:2075-2081",
+        "COMMAND.C:2095-2096",
+        "COMMAND.C:2118-2126",
+        "COMMAND.C:2151-2155"
+      ],
+      "source_file": "COMMAND.C",
+      "source_function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "source_line_range": [
+        2045,
+        2160
+      ],
+      "static_cs_ip": "1B7C:06E9"
+    },
+    {
+      "actual_dmexe_loader_load_segment": "0733",
+      "classification": "actual_loader_runtime_breakpoint_candidate_only_not_verified_hit",
+      "confidence": "high_static",
+      "global_watch_targets": [
+        "G0306_i_PartyMapX",
+        "G0307_i_PartyMapY",
+        "G0308_i_PartyDirection"
+      ],
+      "id": "turn_types_1_to_2",
+      "promotion_blocker": "Runtime hit on 1771:010d with command 1/2 and party-direction before/after values.",
+      "runtime_cs_ip_candidate": "1EA4:010D",
+      "source_citations": [
+        "CLIKMENU.C:167-173"
+      ],
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "source_line_range": [
+        142,
+        179
+      ],
+      "static_cs_ip": "1771:010D"
+    },
+    {
+      "actual_dmexe_loader_load_segment": "0733",
+      "classification": "actual_loader_runtime_breakpoint_candidate_only_not_verified_hit",
+      "confidence": "high_static",
+      "global_watch_targets": [
+        "G0306_i_PartyMapX",
+        "G0307_i_PartyMapY",
+        "G0308_i_PartyDirection"
+      ],
+      "id": "move_types_3_to_6",
+      "promotion_blocker": "Runtime hit on 1771:01aa with command 3..6 and source/destination party coordinates.",
+      "runtime_cs_ip_candidate": "1EA4:01AA",
+      "source_citations": [
+        "CLIKMENU.C:264-269",
+        "CLIKMENU.C:272-275",
+        "CLIKMENU.C:326-328"
+      ],
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "source_line_range": [
+        180,
+        328
+      ],
+      "static_cs_ip": "1771:01AA"
+    },
+    {
+      "actual_dmexe_loader_load_segment": "0733",
+      "classification": "actual_loader_runtime_breakpoint_candidate_only_not_verified_hit",
+      "confidence": "medium_high",
+      "global_watch_targets": [
+        "G0306_i_PartyMapX",
+        "G0307_i_PartyMapY",
+        "G0308_i_PartyDirection"
+      ],
+      "id": "move_get_move_result",
+      "promotion_blocker": "Runtime hit on 1126:0516 plus watchpoints proving G0306/G0307 writes for the party path.",
+      "runtime_cs_ip_candidate": "1859:0516",
+      "source_citations": [
+        "MOVESENS.C:432-443",
+        "MOVESENS.C:492-506",
+        "MOVESENS.C:556"
+      ],
+      "source_file": "MOVESENS.C",
+      "source_function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "source_line_range": [
+        316,
+        560
+      ],
+      "static_cs_ip": "1126:0516"
+    },
+    {
+      "actual_dmexe_loader_load_segment": "0733",
+      "classification": "actual_loader_runtime_breakpoint_candidate_only_not_verified_hit",
+      "confidence": "low_medium",
+      "global_watch_targets": [
+        "G0306_i_PartyMapX",
+        "G0307_i_PartyMapY",
+        "G0308_i_PartyDirection",
+        "G0296_puc_Bitmap_Viewport"
+      ],
+      "id": "viewport_game_loop_draw_call_site",
+      "promotion_blocker": "Need FIRES.MAP or debugger stepping from F0128 through DUNVIEW helpers; current static evidence only identifies a viewport-adjacent loop cluster.",
+      "runtime_cs_ip_candidate": "2AFF:110E",
+      "source_citations": [
+        "GAMELOOP.C:58-63",
+        "GAMELOOP.C:78-90"
+      ],
+      "source_file": "GAMELOOP.C",
+      "source_function": "F0002_MAIN_GameLoop_CPSDF -> F0128_DUNGEONVIEW_Draw_CPSF",
+      "source_line_range": [
+        35,
+        95
+      ],
+      "static_cs_ip": "23CC:110E"
+    }
+  ],
+  "formula": "runtime_cs = actual_dmexe_loader_load_segment + static_cs; runtime_ip = static_ip",
+  "global_address_status": "source_locked_names_only_numeric_data_addresses_still_require_debugger_or_map_evidence",
+  "global_declarations": {
+    "G0296_puc_Bitmap_Viewport": "TOWNSGLB.H:1371",
+    "G0306_i_PartyMapX": "TOWNSGLB.H:1382",
+    "G0307_i_PartyMapY": "TOWNSGLB.H:1383",
+    "G0308_i_PartyDirection": "TOWNSGLB.H:1381",
+    "G0432_as_CommandQueue": "TOWNSGLB.H:678",
+    "G0433_i_CommandQueueFirstIndex": "TOWNSGLB.H:679",
+    "G0434_i_CommandQueueLastIndex": "TOWNSGLB.H:680",
+    "G0435_B_CommandQueueLocked": "TOWNSGLB.H:681"
+  },
+  "inputs": {
+    "pass237_manifest": "<firestaff-repo>/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "pass246_manifest": "<firestaff-repo>/parity-evidence/verification/pass246_dm1_v1_dmexe_fires_load_segment_bridge/manifest.json",
+    "redmcsb_source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+  },
+  "promotion_rule": "Do not copy these rows into verified runtime hooks until DOSBox debugger hits the runtime CS:IP and seam-specific global/watchpoint state is recorded.",
+  "schema": "dm1_pc34_i34e_actual_loader_symbol_candidates.v1",
+  "status": "PASS_ACTUAL_LOADER_RUNTIME_CANDIDATES_READY_NO_PROMOTIONS",
+  "timestamp_utc": "2026-05-06T15:42:00.415175+00:00"
+}

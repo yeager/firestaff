@@ -1,4 +1,4 @@
-# TITLE path: /Users/bosse/.openclaw/data/redmcsb-original/TITLE
+# TITLE path: <local-home>/.openclaw/data/redmcsb-original/TITLE
 PASS P58_TITLE_FRONTEND_01 frontend renders from original TITLE data into a 320x200 V1 screen bitmap
 PASS P58_TITLE_FRONTEND_02 frontend can reach first frame, palette-break boundary frames, and last frame
 PASS P58_TITLE_FRONTEND_03 frontend preserves pass-57 TITLE segment palettes as 37 + 16 frames

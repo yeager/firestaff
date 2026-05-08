@@ -1,0 +1,143 @@
+{
+  "artifact_policy": {
+    "no_original_binaries_committed": true,
+    "temp_build_trees_removed": true,
+    "text_only_repo_artifacts": true
+  },
+  "conclusion": "N2-local DOSBox-X CPU/core variants and classic DOSBox did not unblock the authentic TCPP101 DUNVIEW.C compile. DUNVIEW.OBJ remains zero/missing, so FIRES.MAP remains blocked.",
+  "guards": {
+    "authentic_dunview_compile_line_found": true,
+    "authentic_tlink_map_line_found": true,
+    "mkii_uses_tcpp101": true,
+    "variant_matrix_includes_dosbox_x_and_classic_dosbox": true,
+    "variants_all_zero_dunview_obj": true
+  },
+  "manual_variant_matrix_date": "2026-05-06",
+  "next_single_action": "Run the same HARDDISK/SOURCE tree in a non-DOSBox DOS environment (real DOS, 86Box/PCem, or QEMU+FreeDOS/MS-DOS with Turbo C++ 1.01 mounted) and preserve only DUNVIEW.OBJ/FIRES.MAP metadata if produced.",
+  "schema": "pass243_dm1_v1_dunview_emulator_variant_runbook.v1",
+  "source_lines": {
+    "dunview_first_failing_assignment": {
+      "line": 4791,
+      "text": "L0174_B_DrawCreaturesCompleted = L0186_B_SquareHasProjectile = L0195_B_SquareHasExplosion = C0_FALSE;"
+    },
+    "mkii_dunview_compile": {
+      "line": 473,
+      "text": "TCC.EXE -c -ml -O -Z    -DEXEID=74 -n\\OBJECT\\I34E\\FIRES DUNVIEW.C  >>\\BUILD\\MKII.LOG"
+    },
+    "mkii_fires_map_tlink": {
+      "line": 510,
+      "text": "TLINK.EXE /i /s \\OBJECT\\I34E\\STATS.EXE\\C0L.OBJ @\\SOURCE\\I34E.LNK \\TCPP101\\LIB\\CL.LIB,\\BUILD\\I34E\\FIRES.EXE,\\BUILD\\I34E\\FIRES.MAP >>\\BUILD\\MKII.LOG"
+    },
+    "mkii_tcpp101_path": {
+      "line": 10,
+      "text": "SET PATH=\\TCPP101\\BIN;\\TASM20;\\LZEXE91"
+    }
+  },
+  "status": "BLOCKED_DUNVIEW_TCPP101_DOSBOX_VARIANTS_EXHAUSTED",
+  "variants": [
+    {
+      "command": "TCC.EXE -c -ml -O -Z -DEXEID=74 -n\\\\OBJECT\\\\I34E\\\\FIRES DUNVIEW.C",
+      "config": {
+        "core": "normal",
+        "cputype": "386",
+        "cycles": "3000",
+        "machine": "svga_s3",
+        "memsize": 32
+      },
+      "dunview_log_size": 278528,
+      "dunview_obj_size": 0,
+      "emulator": "dosbox-x 2024.03.01",
+      "first_diagnostic": "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+      "name": "dosbox-x normal 386",
+      "result": "timeout with zero-byte/missing DUNVIEW.OBJ; DOSBox-X INT6 flood observed when stdout was not suppressed",
+      "return_code": 124,
+      "timeout_seconds": 45
+    },
+    {
+      "command": "TCC.EXE -c -ml -O -Z -DEXEID=74 -n\\\\OBJECT\\\\I34E\\\\FIRES DUNVIEW.C",
+      "config": {
+        "core": "normal",
+        "cputype": "386_prefetch",
+        "cycles": "3000",
+        "machine": "svga_s3",
+        "memsize": 32
+      },
+      "dunview_log_size": 278528,
+      "dunview_obj_size": 0,
+      "emulator": "dosbox-x 2024.03.01",
+      "first_diagnostic": "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+      "name": "dosbox-x normal 386_prefetch",
+      "result": "timeout with zero-byte/missing DUNVIEW.OBJ; no improvement over normal 386",
+      "return_code": 124,
+      "timeout_seconds": 45
+    },
+    {
+      "command": "TCC.EXE -c -ml -O -Z -DEXEID=74 -n\\\\OBJECT\\\\I34E\\\\FIRES DUNVIEW.C",
+      "config": {
+        "core": "simple",
+        "cputype": "386",
+        "cycles": "3000",
+        "machine": "svga_s3",
+        "memsize": 32
+      },
+      "dunview_log_size": 280735,
+      "dunview_obj_size": 0,
+      "emulator": "dosbox-x 2024.03.01",
+      "error_lines_seen": [
+        4791,
+        4827,
+        4838,
+        4845,
+        4849
+      ],
+      "first_diagnostic": "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+      "name": "dosbox-x simple 386",
+      "result": "compiler returned to DOSBox but emitted errors and no DUNVIEW.OBJ",
+      "return_code": 0,
+      "timeout_seconds": 45
+    },
+    {
+      "command": "TCC.EXE -c -ml -O -Z -DEXEID=74 -n\\\\OBJECT\\\\I34E\\\\FIRES DUNVIEW.C",
+      "config": {
+        "core": "dynamic",
+        "cputype": "auto",
+        "cycles": "max",
+        "machine": "svga_s3",
+        "memsize": 32
+      },
+      "dunview_log_size": 280735,
+      "dunview_obj_size": 0,
+      "emulator": "dosbox-x 2024.03.01",
+      "error_lines_seen": [
+        4791,
+        4827,
+        4838,
+        4845,
+        4849
+      ],
+      "first_diagnostic": "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+      "name": "dosbox-x dynamic auto",
+      "result": "same compiler failure pattern as simple 386; no DUNVIEW.OBJ",
+      "return_code": 0,
+      "timeout_seconds": 45
+    },
+    {
+      "command": "TCC.EXE -c -ml -O -Z -DEXEID=74 -n\\\\OBJECT\\\\I34E\\\\FIRES DUNVIEW.C",
+      "config": {
+        "core": "normal",
+        "cputype": "386",
+        "cycles": "3000",
+        "machine": "svga_s3",
+        "memsize": 32
+      },
+      "dunview_log_size": 1187,
+      "dunview_obj_size": 0,
+      "emulator": "dosbox 0.74-3",
+      "first_diagnostic": "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
+      "name": "classic dosbox normal 386",
+      "result": "classic DOSBox did not complete the DUNVIEW compile inside the bounded window; no DUNVIEW.OBJ",
+      "return_code": 124,
+      "timeout_seconds": 45
+    }
+  ]
+}

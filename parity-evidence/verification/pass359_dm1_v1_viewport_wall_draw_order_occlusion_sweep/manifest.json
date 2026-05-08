@@ -1,0 +1,43 @@
+{
+  "status": "PASS_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_OCCLUSION_SWEEP",
+  "pass": "pass359",
+  "date": "2026-05-07",
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "evidence_file": "parity-evidence/pass359_dm1_v1_viewport_wall_draw_order_occlusion_sweep.md",
+  "verifier": "tools/verify_pass359_dm1_v1_viewport_wall_draw_order_occlusion_sweep.py",
+  "source_anchors": [
+    {"file": "DRAWVIEW.C", "lines": "709-900"},
+    {"file": "DUNVIEW.C", "lines": "2962-3003"},
+    {"file": "DUNVIEW.C", "lines": "3048-3082"},
+    {"file": "DUNVIEW.C", "lines": "4547-4910"},
+    {"file": "DUNVIEW.C", "lines": "6400-6835"},
+    {"file": "DUNVIEW.C", "lines": "7244-7937"},
+    {"file": "DUNVIEW.C", "lines": "8318-8618"},
+    {"file": "COORD.C", "lines": "1693-1724"},
+    {"file": "COORD.C", "lines": "174-186"},
+    {"file": "DEFS.H", "lines": "4042-4057"}
+  ],
+  "firestaff_artifacts": [
+    "m11_game_view.c:9329-9371",
+    "m11_game_view.c:9373-9414",
+    "m11_game_view.c:9918-9979",
+    "m11_game_view.c:12107-12135",
+    "m11_game_view.c:17980-18080",
+    "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py",
+    "tools/verify_v1_viewport_occlusion_gate.py",
+    "tools/verify_v1_viewport_side_wall_occlusion_gate.py",
+    "tools/verify_v1_viewport_draw_order_gate.py",
+    "tools/verify_v1_viewport_wall_depth_source_lock_gate.py",
+    "tools/verify_v1_viewport_redmcsb_draw_stack_gate.py",
+    "tools/verify_v1_viewport_center_door_occlusion_gate.py"
+  ],
+  "required_gates": [
+    "dm1_v1_viewport_wall_draw_order_source_lock",
+    "v1_viewport_occlusion_gate",
+    "v1_viewport_side_wall_occlusion_gate",
+    "v1_viewport_draw_order_gate",
+    "v1_viewport_wall_depth_source_lock_gate",
+    "v1_viewport_redmcsb_draw_stack_gate",
+    "v1_viewport_center_door_occlusion_gate"
+  ]
+}

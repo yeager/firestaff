@@ -19,13 +19,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-REDMCSB_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 COORD_C = REDMCSB_SOURCE / "COORD.C"
-ZONES_JSON = ROOT / "zones_h_reconstruction.json"
+ZONES_JSON = ROOT / "data/zones_h_reconstruction.json"
 MATRIX_C = ROOT / "touch_click_zone_matrix_pc34_compat.c"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/touch_movement_viewport_source_lock.json"
 
@@ -183,8 +180,8 @@ def parse_firestaff_matrix() -> list[dict[str, Any]]:
             "h": int(h),
             "name": name,
         })
-    if len(rows) != 88:
-        raise SystemExit(f"expected 88 Firestaff matrix entries, found {len(rows)}")
+    if len(rows) != 103:
+        raise SystemExit(f"expected 103 Firestaff matrix entries, found {len(rows)}")
     return rows
 
 
@@ -209,6 +206,12 @@ def command_route_pattern(row: dict[str, Any]) -> str:
     button = RIGHT_BUTTON if "RIGHT" in row["button"] else LEFT_BUTTON
     if row["zone"] == 568:
         zone_symbol = r"(?:C568_ZONE_[A-Z0-9_]+|M701_ZONE_TOGGLE_MUSIC_ICON)"
+    elif row["zone"] == 570:
+        zone_symbol = r"M664_ZONE_RESURRECT"
+    elif row["zone"] == 571:
+        zone_symbol = r"M665_ZONE_REINCARNATE"
+    elif row["zone"] == 573:
+        zone_symbol = r"M666_ZONE_CANCEL"
     else:
         zone_symbol = rf"C{row['zone']:03d}_ZONE_[A-Z0-9_]+"
     return (
@@ -282,7 +285,7 @@ def build_report() -> dict[str, Any]:
         "source_root": str(REDMCSB_SOURCE),
         "source_citations": [
             "DEFS.H:197-211 defines MOUSE_INPUT command/box/button records",
-            "COMMAND.C:375-506 defines primary interface, movement, inventory, action, spell, champion-name/hand, and chest mouse command-to-zone/button tables",
+            "COMMAND.C:375-511 defines primary interface, movement, inventory, action, spell, champion-name/hand, chest, and resurrect/reincarnate panel mouse command-to-zone/button tables; COMMAND.C:380-391 covers the remaining source-locked bar-graph toggle and champion-icon primary-interface zones",
             "COMMAND.C:396-405 G0448_as_Graphic561_SecondaryMouseInput_Movement routes left/right movement and viewport/toggle commands to zones/buttons",
             "COMMAND.C:1403-1431 F0358_COMMAND_GetCommandFromMouseInput_CPSC scans mouse-input entries and tests button/zone matches",
             "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",

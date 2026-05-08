@@ -1,0 +1,369 @@
+{
+  "captureExecutionSupport": {
+    "coverage": {
+      "requiredLabelCoverage": true,
+      "requiredPromotionRowsGameplayOrWallCloseup": true
+    },
+    "manifest": "parity-evidence/verification/pass308_original_capture_execution_manifest.json",
+    "status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING"
+  },
+  "existingOriginalCropAudit": {
+    "fullComparatorPromotionBlockedByDecodedGraphics": false,
+    "manifestsScanned": [
+      "verification-screens/pass112-n2-route-probe/original_viewport_224x136_manifest.tsv",
+      "verification-screens/pass209-delayed-click-zone-route/original_viewport_224x136_manifest.tsv",
+      "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_224x136_manifest.tsv",
+      "verification-screens/pass304-original-pc34-wall-comparator-batch-A/original_viewport_224x136_manifest.tsv",
+      "verification-screens/pass304-original-pc34-wall-comparator-batch-B/original_viewport_224x136_manifest.tsv",
+      "verification-screens/pass304-original-pc34-wall-comparator-batch-C/original_viewport_224x136_manifest.tsv",
+      "verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_224x136_manifest.tsv"
+    ],
+    "reason": "required pass304 route labels have captured crop hashes and pass308 capture coverage is true; pass312 binds the original runtime command/party-tuple/F0128 state oracle. Duplicate hashes remain semantic evidence only until comparator use.",
+    "requiredLabelHits": [
+      {
+        "filename": "01_ingame_start_original_viewport_224x136.ppm",
+        "height": 136,
+        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-A/original_viewport_224x136_manifest.tsv",
+        "routeLabel": "start_south",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "height": 136,
+        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-A/original_viewport_224x136_manifest.tsv",
+        "routeLabel": "turn_right_west",
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "width": 224
+      },
+      {
+        "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "height": 136,
+        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-A/original_viewport_224x136_manifest.tsv",
+        "routeLabel": "move_forward_west",
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "width": 224
+      },
+      {
+        "filename": "01_ingame_start_original_viewport_224x136.ppm",
+        "height": 136,
+        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-B/original_viewport_224x136_manifest.tsv",
+        "routeLabel": "start_south",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "height": 136,
+        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-B/original_viewport_224x136_manifest.tsv",
+        "routeLabel": "turn_left_east",
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "width": 224
+      },
+      {
+        "filename": "01_ingame_start_original_viewport_224x136.ppm",
+        "height": 136,
+        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-C/original_viewport_224x136_manifest.tsv",
+        "routeLabel": "start_south",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "height": 136,
+        "manifest": "verification-screens/pass304-original-pc34-wall-comparator-batch-C/original_viewport_224x136_manifest.tsv",
+        "routeLabel": "blocked_forward_south_wall",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      }
+    ],
+    "routeLabelCoverage": true,
+    "uniqueCropSha256": [
+      "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+      "358136006c6d53d112d1cfea3d4bd0fa0902df0ad8b7130cf68778e298a24aa9",
+      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+      "84788a8c8e6f6104255fd7041a9fafa81291e346e64cc2427a7a033b5a77e46e",
+      "88a17d0b56fe3a8363ff006f498354e87e455098369b414143b0271cb9105aba",
+      "e0b1843b4342d09408dd92e52484a578da3875c8392d690a694f23ff2080c844",
+      "ea845264f9229fed624079892da4c51653b7a101b2c0fa3f95aea4a4621f7edb"
+    ],
+    "usableForPromotion": true
+  },
+  "nextCaptureCommands": {
+    "batchA_start_right_forward": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-A \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:move_forward_west wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "batchB_start_left": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-B \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp4 wait:1200 shot:turn_left_east wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "batchC_start_blocked_forward": "OUT_DIR=$PWD/verification-screens/pass304-original-pc34-wall-comparator-batch-C \\\nDM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \\\nDM1_ORIGINAL_PROGRAM=\"DM -vv -sn -pk\" \\\nDM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\\nWAIT_BEFORE_INPUT_MS=5000 \\\nNEW_FILE_TIMEOUT_MS=6000 \\\nDM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp8 wait:1200 shot:blocked_forward_south_wall wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion wait:600 shot:padding_not_for_promotion\" \\\nDOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "knownBlocker": "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches; route capture now uses a proven title->entrance->gameplay prelude plus keypad tokens, but party-tuple promotion still needs a source-bound runtime state oracle."
+  },
+  "notClaimed": [
+    "pixel parity",
+    "decoded full GRAPHICS.DAT bitmap byte dump publication"
+  ],
+  "pass": "pass304_dm1_v1_original_viewport_capture_blocker_manifest",
+  "promotionCondition": "Original capture labels and party tuple/F0128 state oracle are source/runtime-bound by pass308/pass312; final comparator promotion is blocked only until requiredDecodedGraphicsDatRecords.missingWallSetGraphicIndices is empty and matched original-vs-Firestaff viewport comparator passes.",
+  "requiredDecodedGraphicsDatRecords": {
+    "allManifestedGraphicIndices": [
+      78,
+      79,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ],
+    "blocker": "all wall-set graphic indices used by pass304 snapshots have decoded bitmap/palette byte records via pass305.",
+    "manifestedEntryGraphicIndices": [
+      78,
+      79,
+      107
+    ],
+    "manifestedWallGraphicIndices": [
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ],
+    "missingWallSetGraphicIndices": [],
+    "wallSetGraphicIndicesFromCurrentRenderPlan": [
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ]
+  },
+  "requiredOriginalAssets": {
+    "DM.EXE": {
+      "bytes": 11471,
+      "exists": true,
+      "path": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+      "resolvedPath": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+      "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"
+    },
+    "DUNGEON.DAT": {
+      "bytes": 33357,
+      "exists": true,
+      "path": "<firestaff-original-games>/_canonical/dm1/DUNGEON.DAT",
+      "resolvedPath": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    "GRAPHICS.DAT": {
+      "bytes": 363417,
+      "exists": true,
+      "path": "<firestaff-original-games>/_canonical/dm1/GRAPHICS.DAT",
+      "resolvedPath": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    "TITLE": {
+      "bytes": 12002,
+      "exists": true,
+      "path": "<firestaff-original-games>/_canonical/dm1/TITLE",
+      "resolvedPath": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    }
+  },
+  "requiredOriginalCrop": {
+    "fullFrame": {
+      "height": 200,
+      "width": 320
+    },
+    "requiredFormat": "PPM and PNG; PPM SHA-256 is comparator/hash source of truth",
+    "source": "scripts/dosbox_dm1_original_viewport_reference_capture.sh normalize_existing_raw_images crop=(0,33,224,169)",
+    "viewportCrop": {
+      "height": 136,
+      "width": 224,
+      "x": 0,
+      "y": 33
+    }
+  },
+  "requiredRouteStates": [
+    {
+      "captureBatch": "A",
+      "name": "start_south",
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "pixelRegionsReady": true,
+      "reason": "initial pass127 tuple before movement input",
+      "renderEventCount": 10,
+      "requiredShotLabel": "start_south",
+      "routeFromFreshGameplay": [],
+      "wallBitmapEventCount": 8
+    },
+    {
+      "captureBatch": "A",
+      "name": "turn_right_west",
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "pixelRegionsReady": true,
+      "reason": "COMMAND.C turn-right dispatch mutates direction 2/SOUTH -> 3/WEST",
+      "renderEventCount": 16,
+      "requiredShotLabel": "turn_right_west",
+      "routeFromFreshGameplay": [
+        "right"
+      ],
+      "wallBitmapEventCount": 13
+    },
+    {
+      "captureBatch": "A",
+      "name": "move_forward_west",
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "pixelRegionsReady": true,
+      "reason": "after west-facing step, tuple is mapX=0,mapY=3,dir=3/WEST",
+      "renderEventCount": 17,
+      "requiredShotLabel": "move_forward_west",
+      "routeFromFreshGameplay": [
+        "right",
+        "up"
+      ],
+      "wallBitmapEventCount": 14
+    },
+    {
+      "captureBatch": "B",
+      "name": "turn_left_east",
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "pixelRegionsReady": true,
+      "reason": "branch from the fresh start tuple; cannot be reached after batch A without reset/state restore",
+      "renderEventCount": 10,
+      "requiredShotLabel": "turn_left_east",
+      "routeFromFreshGameplay": [
+        "left"
+      ],
+      "wallBitmapEventCount": 8
+    },
+    {
+      "captureBatch": "C",
+      "name": "blocked_forward_south_wall",
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "pixelRegionsReady": true,
+      "reason": "blocked step from start keeps mapX=1,mapY=3,dir=2/SOUTH while advancing the command tick",
+      "renderEventCount": 10,
+      "requiredShotLabel": "blocked_forward_south_wall",
+      "routeFromFreshGameplay": [
+        "up"
+      ],
+      "wallBitmapEventCount": 8
+    }
+  ],
+  "sourceInputs": {
+    "entryGraphicsIndexManifest": "parity-evidence/verification/pass302_dm1_graphics_dat_index_manifest.json",
+    "pass127StateTables": [
+      "parity-evidence/pass127_turn_viewport_orientation_probe.md",
+      "parity-evidence/pass127_viewport_world_f0115_row_mapping.md"
+    ],
+    "redmcsbAnchors": {
+      "CHAMPION.C": {
+        "bytes": 161349,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+        "sha256": "f4983741edc1c6ef4a7673271a36fefed39345c9dcb15e5a2eee06deaa7b8787"
+      },
+      "CLIKMENU.C": {
+        "bytes": 36305,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+        "sha256": "bb836ba5bcab765855a27ddd8e35d8df46693e965049e9c5f18340ea1d653409"
+      },
+      "COMMAND.C": {
+        "bytes": 194980,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+        "sha256": "68c7388a693c08c207c8dc7907acf1322b99a9467a035a044600c343c903a20f"
+      },
+      "DRAWVIEW.C": {
+        "bytes": 52330,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+        "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
+      },
+      "DUNVIEW.C": {
+        "bytes": 613651,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+        "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846"
+      },
+      "GAMELOOP.C": {
+        "bytes": 20376,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+        "sha256": "aedc34899c28024d657cdcb11976399cc2eaedc0a5d6fdd0f8cd3372e2c8c96b"
+      },
+      "MOVESENS.C": {
+        "bytes": 127437,
+        "exists": true,
+        "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+        "resolvedPath": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+        "sha256": "35cfd3ba0a4e33bd5f8731eb52184271cd22093e95ff98b639f240b3afb508da"
+      }
+    },
+    "renderPlan": "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json",
+    "renderPlanStatus": "PASS_RENDER_PLAN_COMPARATOR_SEAM",
+    "wallGraphicsIndexManifest": "parity-evidence/verification/pass305_dm1_wall_graphics_93_107_manifest.json",
+    "wallGraphicsIndexStatus": "passed"
+  },
+  "stateOracleSupport": {
+    "manifest": "parity-evidence/verification/pass312_dm1_v1_original_runtime_state_oracle.json",
+    "partyTupleF0128StateOracle": true,
+    "status": "PASS_STATE_ORACLE_SOURCE_RUNTIME_BOUND"
+  },
+  "status": "PASS_ORIGINAL_PC34_VIEWPORT_CAPTURE_PROMOTION_READY"
+}

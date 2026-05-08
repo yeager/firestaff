@@ -1,5 +1,5 @@
 {
-  "canonical_dm1_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "canonical_dm1_root": "<firestaff-original-games>/_canonical/dm1",
   "existing_artifacts": {
     "capture_overlay_recovery": {
       "boundary": "source/tool route is present; semantic original capture must classify as expected route before pixel overlay parity claims",
@@ -19,35 +19,35 @@
     "files": {
       "movement_viewport_wall_golden_json": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
+        "path": "<firestaff-repo>/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
       },
       "movement_viewport_wall_golden_tool": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/tools/verify_dm1_v1_movement_viewport_wall_golden.py"
+        "path": "<firestaff-repo>/tools/verify_dm1_v1_movement_viewport_wall_golden.py"
       },
       "overlay_source_lock_tool": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/tools/verify_original_overlay_capture_source_lock.py"
+        "path": "<firestaff-repo>/tools/verify_original_overlay_capture_source_lock.py"
       },
       "pass175_queue_manifest": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass175_original_queue_breakpoint_probe/manifest.json"
+        "path": "<firestaff-repo>/parity-evidence/verification/pass175_original_queue_breakpoint_probe/manifest.json"
       },
       "pass175_queue_probe_tool": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/tools/pass175_original_queue_breakpoint_probe.py"
+        "path": "<firestaff-repo>/tools/pass175_original_queue_breakpoint_probe.py"
       },
       "pass175_runtime_debugger_gate_tool": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/tools/pass175_c080_runtime_debugger_gate.py"
+        "path": "<firestaff-repo>/tools/pass175_c080_runtime_debugger_gate.py"
       },
       "pass175_runtime_debugger_manifest": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/manifest.json"
+        "path": "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/manifest.json"
       },
       "pass177_draw_stack_verify_out": {
         "exists": true,
-        "path": "/home/trv2/work/firestaff/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+        "path": "<firestaff-repo>/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
       }
     },
     "movement_viewport_wall_golden": {
@@ -61,7 +61,7 @@
         "turn_left_east has D1C front wall blocker",
         "blocked_forward_south preserves party state after wall collision"
       ],
-      "citation": "/home/trv2/work/firestaff/parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
+      "citation": "<firestaff-repo>/parity-evidence/verification/pass127_turn_viewport_orientation_probe.json",
       "entry_state": {
         "direction": 2,
         "mapIndex": 0,
@@ -111,12 +111,12 @@
     "pass177_draw_stack": {
       "missing": [],
       "ok": true,
-      "verify_out": "/home/trv2/work/firestaff/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+      "verify_out": "<firestaff-repo>/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
     }
   },
   "forbidden_hosts": [
-    "DANNESBURK",
-    "192.168.2.126"
+    "<private-host>",
+    "<private-host-ip>"
   ],
   "redmcsb_source_audit": [
     {
@@ -230,9 +230,9 @@
       "ok": true
     }
   ],
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/home/trv2/work/firestaff",
+  "redmcsb_source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "<firestaff-repo>",
   "schema": "pass179_dm1_v1_original_evidence_capture_integration_gate.v1",
   "status": "PASS_SOURCE_LOCKED_ORIGINAL_RUNTIME_BLOCKED_ON_ADDRESS_MAP",
-  "worker": "N2 / firestaff-worker / trv2@192.168.3.121"
+  "worker": "N2 / firestaff-worker / trv2@<n2-private-ip>"
 }

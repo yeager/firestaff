@@ -1,0 +1,217 @@
+{
+  "batchPlans": [
+    {
+      "batchIndex": 0,
+      "commandHash": "487c335f9eb7a83a6bec258e9d0ada5dd043e88d3c74bef01deb3dcc6f4aeaa3",
+      "expectedViewportCrop": {
+        "height": 136,
+        "width": 224
+      },
+      "hasSixShotScriptContract": true,
+      "label": "batchA_start_right_forward",
+      "labelHash": "4e9754194ce8152227bc56da09c63d8b00e5a127686106ab470493bac0525fd4",
+      "paddingShotCount": 3,
+      "promotionShotLabels": [
+        "start_south",
+        "turn_right_west",
+        "move_forward_west"
+      ],
+      "shotLabels": [
+        "start_south",
+        "turn_right_west",
+        "move_forward_west",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion"
+      ],
+      "usesDeterministicRouteEvents": true,
+      "usesDosboxXvfbRun": true,
+      "usesOriginalPc34Stage": true
+    },
+    {
+      "batchIndex": 1,
+      "commandHash": "5663d133d6f3353f1b893047737ec5de0f5ebe19bf80ae88d9b3c2214ab21d85",
+      "expectedViewportCrop": {
+        "height": 136,
+        "width": 224
+      },
+      "hasSixShotScriptContract": true,
+      "label": "batchB_start_left",
+      "labelHash": "10611e403ea54341bd0a5ac463895ec60579af1107abbebef7aa4041bb9c90cb",
+      "paddingShotCount": 4,
+      "promotionShotLabels": [
+        "start_south",
+        "turn_left_east"
+      ],
+      "shotLabels": [
+        "start_south",
+        "turn_left_east",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion"
+      ],
+      "usesDeterministicRouteEvents": true,
+      "usesDosboxXvfbRun": true,
+      "usesOriginalPc34Stage": true
+    },
+    {
+      "batchIndex": 2,
+      "commandHash": "ea1128975716a71926226239597be778a1320d35c09791c984276640e195a440",
+      "expectedViewportCrop": {
+        "height": 136,
+        "width": 224
+      },
+      "hasSixShotScriptContract": true,
+      "label": "batchC_start_blocked_forward",
+      "labelHash": "7f8e9468797b4eff2d0af1910532e2024577010a268135e030b6f5a416ef3b4f",
+      "paddingShotCount": 4,
+      "promotionShotLabels": [
+        "start_south",
+        "blocked_forward_south_wall"
+      ],
+      "shotLabels": [
+        "start_south",
+        "blocked_forward_south_wall",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion",
+        "padding_not_for_promotion"
+      ],
+      "usesDeterministicRouteEvents": true,
+      "usesDosboxXvfbRun": true,
+      "usesOriginalPc34Stage": true
+    }
+  ],
+  "coverage": {
+    "allBatchesKeepSixShotContract": true,
+    "allBatchesUseDeterministicRouteEvents": true,
+    "allBatchesUseDosboxXvfbRun": true,
+    "allBatchesUseOriginalPc34Stage": true,
+    "promotionShotLabels": [
+      "blocked_forward_south_wall",
+      "move_forward_west",
+      "start_south",
+      "turn_left_east",
+      "turn_right_west"
+    ],
+    "requiredRouteStates": [
+      {
+        "captureBatch": "A",
+        "name": "start_south",
+        "party": {
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "pixelRegionsReady": true,
+        "reason": "initial pass127 tuple before movement input",
+        "renderEventCount": 10,
+        "requiredShotLabel": "start_south",
+        "routeFromFreshGameplay": [],
+        "wallBitmapEventCount": 8
+      },
+      {
+        "captureBatch": "A",
+        "name": "turn_right_west",
+        "party": {
+          "direction": 3,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "pixelRegionsReady": true,
+        "reason": "COMMAND.C turn-right dispatch mutates direction 2/SOUTH -> 3/WEST",
+        "renderEventCount": 16,
+        "requiredShotLabel": "turn_right_west",
+        "routeFromFreshGameplay": [
+          "right"
+        ],
+        "wallBitmapEventCount": 13
+      },
+      {
+        "captureBatch": "A",
+        "name": "move_forward_west",
+        "party": {
+          "direction": 3,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 3
+        },
+        "pixelRegionsReady": true,
+        "reason": "after west-facing step, tuple is mapX=0,mapY=3,dir=3/WEST",
+        "renderEventCount": 17,
+        "requiredShotLabel": "move_forward_west",
+        "routeFromFreshGameplay": [
+          "right",
+          "up"
+        ],
+        "wallBitmapEventCount": 14
+      },
+      {
+        "captureBatch": "B",
+        "name": "turn_left_east",
+        "party": {
+          "direction": 1,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "pixelRegionsReady": true,
+        "reason": "branch from the fresh start tuple; cannot be reached after batch A without reset/state restore",
+        "renderEventCount": 10,
+        "requiredShotLabel": "turn_left_east",
+        "routeFromFreshGameplay": [
+          "left"
+        ],
+        "wallBitmapEventCount": 8
+      },
+      {
+        "captureBatch": "C",
+        "name": "blocked_forward_south_wall",
+        "party": {
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "pixelRegionsReady": true,
+        "reason": "blocked step from start keeps mapX=1,mapY=3,dir=2/SOUTH while advancing the command tick",
+        "renderEventCount": 10,
+        "requiredShotLabel": "blocked_forward_south_wall",
+        "routeFromFreshGameplay": [
+          "up"
+        ],
+        "wallBitmapEventCount": 8
+      }
+    ],
+    "totalBatches": 3
+  },
+  "inputStatus": {
+    "pass300": "PASS_RENDER_PLAN_COMPARATOR_SEAM",
+    "pass304": "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED",
+    "pass306": "passed"
+  },
+  "knownBlockers": [
+    "Current script requires exactly six shots and has no reset/state-restore marker. The pass127 comparator set branches from the fresh start tuple, so exact promotion needs three independent batches; route capture now uses a proven title->entrance->gameplay prelude plus keypad tokens, but party-tuple promotion still needs a source-bound runtime state oracle."
+  ],
+  "notClaimed": [
+    "original screenshot capture succeeded",
+    "pixel parity",
+    "bitmap bytes or screenshots in repository"
+  ],
+  "pass": "pass307_original_capture_batch_plan_manifest",
+  "remainingBlockers": [
+    "execute the three DOSBox/Xvfb capture batches and keep screenshots outside the repo unless explicitly promoted as small metadata/evidence",
+    "verify captured 224x136 viewport crops against pass300/pass306 wall-region metadata",
+    "do not promote padding shots or bitmap parity claims from this metadata-only manifest"
+  ],
+  "scope": "Deterministic metadata batch plan for pass304 PC34 original viewport capture commands; no runtime capture and no pixel parity claim.",
+  "sourceInputs": {
+    "pass300WallRenderPlan": "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json",
+    "pass304BlockerManifest": "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json",
+    "pass306Bridge": "parity-evidence/verification/pass306_dm1_wall_pixel_region_graphics_bridge.json"
+  },
+  "status": "passed"
+}

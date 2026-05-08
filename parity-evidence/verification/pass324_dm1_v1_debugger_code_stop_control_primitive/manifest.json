@@ -1,0 +1,90 @@
+{
+  "control_primitive": {
+    "negative_control": "BPLIST/setup lines include 'Breakpoint list:' and '00. BP xxxx:yyyy' but occur before F5 and are rejected unless preceded by a run-to-prompt transition",
+    "prompt": "->",
+    "recommended_parser_rule": "Use an owned PTY transcript. Record a real code stop only after F5/run bytes were sent, '(Running)' appeared, '->' reappeared, and post-running text contains a code-view address. Never infer stops from BPLIST or 'DEBUG: Set breakpoint'.",
+    "run_control": "F5 in DOSBox-debug; vt100 bytes ESC O t",
+    "running_marker": "(Running)",
+    "stop_observable": "terminal transition from (Running) back to -> with code-view disassembly refreshed; dosbox-debug 0.74-3 does not emit a stable 'breakpoint hit' text line for code BPs"
+  },
+  "runtime_probe": {
+    "command_log": [
+      {
+        "cmd": "BPDEL *",
+        "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
+        "t": 1778163388.8084373
+      },
+      {
+        "cmd": "BP 0499:0020",
+        "excerpt": "\n-> B_  P_   _  0_  4_  9_  9_  :_  0_  0_  2_  0_  \nDEBUG: Set breakpoint at 0499:0020\n\n-> _            ",
+        "t": 1778163389.5635371
+      },
+      {
+        "cmd": "BPLIST",
+        "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 0499:0020\n\n-> _      ",
+        "t": 1778163390.3166952
+      },
+      {
+        "bytes": "ESC O t",
+        "control": "F5",
+        "t": 1778163390.3670394
+      }
+    ],
+    "method": "direct pexpect PTY + Xvfb, no tmux capture-pane",
+    "ran": true,
+    "transcript_path": "/home/trv2/work/firestaff-worktrees/pass324-debugger-control-primitive-20260507140940/parity-evidence/verification/pass324_dm1_v1_debugger_code_stop_control_primitive/dosbox_debug_pty.clean.txt",
+    "transition": {
+      "before_had_prompt": true,
+      "bplist_text_after_running": false,
+      "post_running_code_lines": [
+        "0499:0022  FDstd"
+      ],
+      "prompt_reappeared_after_running": true,
+      "running_marker_seen": true,
+      "separable_from_bplist": true,
+      "stop_code_addr_after_running": "0499:0022",
+      "target_breakpoint": "0499:0020"
+    }
+  },
+  "schema": "pass324_dm1_v1_debugger_code_stop_control_primitive.v1",
+  "source_audit": [
+    {
+      "anchors": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "file": "DUNVIEW.C",
+      "id": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "anchors": {
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "file": "DRAWVIEW.C",
+      "id": "F0097_DUNGEONVIEW_DrawViewport",
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "anchors": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "file": "COMMAND.C",
+      "id": "F0380_COMMAND_ProcessQueue_CPSC",
+      "ok": true,
+      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    }
+  ],
+  "status": "PASS_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE_FOUND",
+  "tested_methods": [
+    "direct pexpect PTY: primitive found",
+    "script(1)-style PTY capture is equivalent in principle but pexpect is preferable because it preserves command/control ownership and timing",
+    "tmux capture-pane: rejected as primary primitive because command echoes and BPLIST/setup text contaminated prior pass318/pass320 stop detection"
+  ],
+  "timestamp_utc": "2026-05-07T14:16:36.635476+00:00"
+}

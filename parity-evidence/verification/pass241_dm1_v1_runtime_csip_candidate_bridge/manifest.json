@@ -1,0 +1,171 @@
+{
+  "artifact_policy": {
+    "no_original_binaries_committed": true,
+    "no_source_or_log_dump": true,
+    "text_only": true
+  },
+  "chain_coverage": {
+    "command": true,
+    "movement": true,
+    "viewport": true
+  },
+  "guards": {
+    "pass235_entry_capture_ok": true,
+    "pass235_entry_ip_zero": true,
+    "pass235_fires_sha256_ok": true,
+    "pass235_load_segment_matches_psp_plus_10": true,
+    "pass235_source_audit_ok": true,
+    "pass237_fires_sha256_ok": true,
+    "pass237_static_status_ok": true,
+    "symbol_map_has_no_promotions": true
+  },
+  "inputs": {
+    "pass235_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/manifest.json",
+    "pass237_manifest": "/home/trv2/work/firestaff/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json",
+    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+  },
+  "load_segment_source": {
+    "capture_kind": "pass235 automated DOSBox-debug entry capture for decompressed FIRES.EXENEW fixture",
+    "entry_runtime_cs_ip": "01ED:0000",
+    "formula": "runtime_cs = captured_load_segment + static_cs; runtime_ip = static_ip",
+    "load_segment": "01ed",
+    "psp_segment_inferred": "01DD"
+  },
+  "promotion_rule": "These rows are numeric breakpoint candidates only. Keep data/original_runtime symbol-map entries unpromoted until a debugger-observed seam hit proves the command/movement/viewport state transition.",
+  "runtime_csip_candidates": [
+    {
+      "classification": "runtime_candidate_only_not_verified_hit",
+      "confidence": "medium_high",
+      "id": "command_accepted",
+      "load_segment": "01ed",
+      "promotion_blocker": "Capture loaded FIRES PSP/load segment and debugger hit at this queue-dispatch prologue or branch after command dequeuing.",
+      "runtime_cs_ip_candidate": "1d69:06e9",
+      "source_file": "COMMAND.C",
+      "source_function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "static_cs_ip": "1b7c:06e9",
+      "symbol_map_entry_id": "command_accepted"
+    },
+    {
+      "classification": "runtime_candidate_only_not_verified_hit",
+      "confidence": "high_static",
+      "id": "turn_types_1_to_2",
+      "load_segment": "01ed",
+      "promotion_blocker": "Runtime hit on 1771:010d with command 1/2 and party-direction before/after values.",
+      "runtime_cs_ip_candidate": "195e:010d",
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "static_cs_ip": "1771:010d",
+      "symbol_map_entry_id": "turn_or_step_state_applied"
+    },
+    {
+      "classification": "runtime_candidate_only_not_verified_hit",
+      "confidence": "high_static",
+      "id": "move_types_3_to_6",
+      "load_segment": "01ed",
+      "promotion_blocker": "Runtime hit on 1771:01aa with command 3..6 and source/destination party coordinates.",
+      "runtime_cs_ip_candidate": "195e:01aa",
+      "source_file": "CLIKMENU.C",
+      "source_function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "static_cs_ip": "1771:01aa",
+      "symbol_map_entry_id": "turn_or_step_state_applied"
+    },
+    {
+      "classification": "runtime_candidate_only_not_verified_hit",
+      "confidence": "medium_high",
+      "id": "move_get_move_result",
+      "load_segment": "01ed",
+      "promotion_blocker": "Runtime hit on 1126:0516 plus watchpoints proving G0306/G0307 writes for the party path.",
+      "runtime_cs_ip_candidate": "1313:0516",
+      "source_file": "MOVESENS.C",
+      "source_function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "static_cs_ip": "1126:0516",
+      "symbol_map_entry_id": "party_coordinates_committed"
+    },
+    {
+      "classification": "runtime_candidate_only_not_verified_hit",
+      "confidence": "low_medium",
+      "id": "viewport_game_loop_draw_call_site",
+      "load_segment": "01ed",
+      "promotion_blocker": "Need FIRES.MAP or debugger stepping from F0128 through DUNVIEW helpers; current static evidence only identifies a viewport-adjacent loop cluster.",
+      "runtime_cs_ip_candidate": "25b9:110e",
+      "source_file": "GAMELOOP.C",
+      "source_function": "F0002_MAIN_GameLoop_CPSDF -> F0128_DUNGEONVIEW_Draw_CPSF",
+      "static_cs_ip": "23cc:110e",
+      "symbol_map_entry_id": "draw_uses_mutated_tuple"
+    }
+  ],
+  "schema": "pass241_dm1_v1_runtime_csip_candidate_bridge.v1",
+  "source_audit_seams": [
+    {
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command_accepted",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn_handler",
+      "line_range": [
+        142,
+        179
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "move_handler",
+      "line_range": [
+        180,
+        347
+      ],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "move_result",
+      "line_range": [
+        316,
+        850
+      ],
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "draw_uses_mutated_tuple",
+      "line_range": [
+        55,
+        95
+      ],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_buffer_composed",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "ok": true
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_present",
+      "line_range": [
+        709,
+        858
+      ],
+      "ok": true
+    }
+  ],
+  "status": "PASS_RUNTIME_CSIP_CANDIDATES_BRIDGED_NO_PROMOTIONS"
+}

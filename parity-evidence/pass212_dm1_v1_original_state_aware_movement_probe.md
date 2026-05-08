@@ -95,4 +95,4 @@ Do **not** promote another fixed-sleep route. The next route driver needs a post
 
 Until one of those observables exists, the missing signal is: **post-command redraw/state mutation after party-control input**.
 
-Non-claims: no DANNESBURK use, no push, no OpenAI API key, no Sonnet/q3.6 use, no original-vs-Firestaff pixel parity claim.
+Non-claims: no <private-host> use, no push, no OpenAI API key, no Sonnet/q3.6 use, no original-vs-Firestaff pixel parity claim.

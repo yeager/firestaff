@@ -1,0 +1,414 @@
+{
+  "schema": "firestaff.csb_v1_parity_surface_matrix.v1",
+  "pass": true,
+  "scope": "First countable CSB V1 parity surface matrix; source/evidence boundary only.",
+  "surface_count": 6,
+  "surfaces": [
+    {
+      "id": "startup_load_assets",
+      "status": "SOURCE_LOCKED_BLOCKED_RUNTIME",
+      "acceptance_boundary": "CSB startup/load cannot be counted until Atari ST v2.x GRAPHICS.DAT and DUNGEON.DAT identity plus CSB support files are verified by a CSB-specific gate.",
+      "required_evidence": [
+        "atari_v20_graphics",
+        "atari_v20_dungeon",
+        "canonical_atari_graphics",
+        "canonical_atari_dungeon"
+      ],
+      "anchors": [
+        {
+          "id": "csb_required_payloads",
+          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/README",
+          "lines": "1-30",
+          "needles": [
+            "dungeon.dat",
+            "hcsb.dat",
+            "hcsb.hct",
+            "mini.dat",
+            "graphics.dat",
+            "config.txt"
+          ]
+        },
+        {
+          "id": "csb_graphics_open",
+          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+          "lines": "1740-1830",
+          "needles": [
+            "graphics.dat",
+            "Cannot find 'graphics.dat'"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dungeon_load_and_state",
+      "status": "SOURCE_LOCKED_BLOCKED_RUNTIME",
+      "acceptance_boundary": "Dungeon-load parity must prove CSB dungeon identity/state from the curated Atari dungeon payload before gameplay/rendering counts.",
+      "required_evidence": [
+        "atari_v20_dungeon",
+        "canonical_atari_dungeon"
+      ],
+      "anchors": [
+        {
+          "id": "redmcsb_dungeon_ids",
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+          "lines": "519-523",
+          "needles": [
+            "C12_DUNGEON_CSB_PRISON",
+            "C13_DUNGEON_CSB_GAME"
+          ]
+        },
+        {
+          "id": "csb_dungeon_index_usage",
+          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/SaveGame.cpp",
+          "lines": "160-190",
+          "needles": [
+            "dungeonDatIndex",
+            "NumWordsInTextArray"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "prison_champion_route",
+      "status": "SOURCE_LOCKED_BLOCKED_RUNTIME",
+      "acceptance_boundary": "Prison/champion flow counts only after the Utility/Make-New-Adventure route is reproduced from a CSB prison/game state, not by DM1 champion routing reuse.",
+      "required_evidence": [],
+      "anchors": [
+        {
+          "id": "csbwin_play_workflow",
+          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+          "lines": "1-30",
+          "needles": [
+            "Enter the dungeon",
+            "choose prison",
+            "Make New Adventure"
+          ]
+        },
+        {
+          "id": "csb_utility_buttons",
+          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+          "lines": "4545-4555",
+          "needles": [
+            "LOAD CHAMPIONS",
+            "SAVE CHAMPIONS",
+            "MAKE NEW ADVENTURE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "viewport_hud_rendering",
+      "status": "SOURCE_LOCKED_BLOCKED_CAPTURE",
+      "acceptance_boundary": "Viewport/HUD parity remains blocked until a CSB original capture path yields stable frame/state anchors tied to the Atari v2.x renderer lane.",
+      "required_evidence": [
+        "atari_v20_graphics",
+        "canonical_atari_graphics"
+      ],
+      "anchors": [
+        {
+          "id": "redmcsb_viewport_boxes",
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+          "lines": "380-390",
+          "needles": [
+            "full dungeon view",
+            "ThievesEye_ViewportVisibleArea"
+          ]
+        },
+        {
+          "id": "csbwin_viewport_trace",
+          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+          "lines": "1368-1385",
+          "needles": [
+            "traceViewportDrawing",
+            "MF_CHECKED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "input_and_mode_routing",
+      "status": "SOURCE_LOCKED_BLOCKED_RUNTIME",
+      "acceptance_boundary": "Input parity must prove CSB mode-specific mouse/keyboard routing from reference state, including Utility/reincarnate modes, before controls count.",
+      "required_evidence": [],
+      "anchors": [
+        {
+          "id": "csb_keyboard_modes",
+          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/data.cpp",
+          "lines": "1740-1755",
+          "needles": [
+            "keyboardMode=1",
+            "adventuring"
+          ]
+        },
+        {
+          "id": "csb_reincarnate_mode",
+          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp",
+          "lines": "1410-1425",
+          "needles": [
+            "keyboardMode == 2",
+            "Reincarnate mode"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "save_new_adventure",
+      "status": "BLOCKED_MISSING_SAMPLE",
+      "acceptance_boundary": "Save/new-adventure parity cannot be counted without a curated extracted CSBGAME*.DAT/BAK sample or generated-save harness with recorded provenance.",
+      "required_evidence": [],
+      "anchors": [
+        {
+          "id": "redmcsb_csb_save_header",
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+          "lines": "468-498",
+          "needles": [
+            "CSB_SAVE_HEADER",
+            "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK"
+          ]
+        },
+        {
+          "id": "redmcsb_new_adventure_gate",
+          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+          "lines": "5-64",
+          "needles": [
+            "F7086_IsReadyToMakeNewAdventure",
+            "C13_DUNGEON_CSB_GAME"
+          ]
+        },
+        {
+          "id": "firestaff_sample_blocker",
+          "path": "/home/trv2/work/firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+          "lines": "1-20",
+          "needles": [
+            "BLOCKED",
+            "CSBGAME*.DAT"
+          ]
+        }
+      ]
+    }
+  ],
+  "source_anchors": [
+    {
+      "surface": "startup_load_assets",
+      "id": "csb_required_payloads",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "lines": "1-30",
+      "needles": [
+        "dungeon.dat",
+        "hcsb.dat",
+        "hcsb.hct",
+        "mini.dat",
+        "graphics.dat",
+        "config.txt"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "startup_load_assets",
+      "id": "csb_graphics_open",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+      "lines": "1740-1830",
+      "needles": [
+        "graphics.dat",
+        "Cannot find 'graphics.dat'"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "dungeon_load_and_state",
+      "id": "redmcsb_dungeon_ids",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "519-523",
+      "needles": [
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "dungeon_load_and_state",
+      "id": "csb_dungeon_index_usage",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/SaveGame.cpp",
+      "lines": "160-190",
+      "needles": [
+        "dungeonDatIndex",
+        "NumWordsInTextArray"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "prison_champion_route",
+      "id": "csbwin_play_workflow",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+      "lines": "1-30",
+      "needles": [
+        "Enter the dungeon",
+        "choose prison",
+        "Make New Adventure"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "prison_champion_route",
+      "id": "csb_utility_buttons",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+      "lines": "4545-4555",
+      "needles": [
+        "LOAD CHAMPIONS",
+        "SAVE CHAMPIONS",
+        "MAKE NEW ADVENTURE"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "viewport_hud_rendering",
+      "id": "redmcsb_viewport_boxes",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "lines": "380-390",
+      "needles": [
+        "full dungeon view",
+        "ThievesEye_ViewportVisibleArea"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "viewport_hud_rendering",
+      "id": "csbwin_viewport_trace",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "lines": "1368-1385",
+      "needles": [
+        "traceViewportDrawing",
+        "MF_CHECKED"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "input_and_mode_routing",
+      "id": "csb_keyboard_modes",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/data.cpp",
+      "lines": "1740-1755",
+      "needles": [
+        "keyboardMode=1",
+        "adventuring"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "input_and_mode_routing",
+      "id": "csb_reincarnate_mode",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp",
+      "lines": "1410-1425",
+      "needles": [
+        "keyboardMode == 2",
+        "Reincarnate mode"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "save_new_adventure",
+      "id": "redmcsb_csb_save_header",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "468-498",
+      "needles": [
+        "CSB_SAVE_HEADER",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "save_new_adventure",
+      "id": "redmcsb_new_adventure_gate",
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-64",
+      "needles": [
+        "F7086_IsReadyToMakeNewAdventure",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "surface": "save_new_adventure",
+      "id": "firestaff_sample_blocker",
+      "path": "/home/trv2/work/firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+      "lines": "1-20",
+      "needles": [
+        "BLOCKED",
+        "CSBGAME*.DAT"
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "asset_refs": [
+    {
+      "id": "atari_v20_graphics",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
+      "expected_size": 319080,
+      "actual_size": 319080,
+      "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "actual_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "ok": true
+    },
+    {
+      "id": "atari_v20_dungeon",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/DUNGEON.DAT",
+      "expected_size": 2098,
+      "actual_size": 2098,
+      "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "ok": true
+    },
+    {
+      "id": "canonical_atari_graphics",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
+      "expected_size": 319080,
+      "actual_size": 319080,
+      "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "actual_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "ok": true
+    },
+    {
+      "id": "canonical_atari_dungeon",
+      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-DUNGEON.DAT",
+      "expected_size": 2098,
+      "actual_size": 2098,
+      "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "ok": true
+    }
+  ],
+  "git_refs": [
+    {
+      "id": "csb_lineage",
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src",
+      "expected_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
+      "actual_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
+      "ok": true
+    },
+    {
+      "id": "csbwin_lineage",
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+      "expected_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
+      "actual_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
+      "ok": true
+    }
+  ],
+  "non_claims": [
+    "No CSB launch, rendering, gameplay, or save compatibility is enabled or claimed.",
+    "No menu_startup_m12.c or other launch/runtime code is modified by this gate.",
+    "Atari ST and Amiga CSB payloads remain separate; this matrix anchors the current Atari ST v2.x lane only."
+  ],
+  "failures": []
+}

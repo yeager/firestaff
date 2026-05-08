@@ -1,0 +1,204 @@
+{
+  "addresses": {
+    "F0097_DUNGEONVIEW_DrawViewport_entry": "2809:1E31",
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
+    "F0097_after_palette_zone_setup": "2809:1EBD",
+    "F0097_before_viewport_args": "2809:1EEE",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
+  },
+  "blocker": "No explicit F0097-window stop appeared after the F0128-gated arm. Need either reliable post-stop debugger command sequencing/retained BPLIST, or different static offsets/segment rebasing before claiming viewport_present.",
+  "bounded_sanitized_transcript_excerpt": [
+    "--- STOP 1 other stage=f0128_gate ---",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:",
+    "-> BP 23AD:40FE_   deleted.",
+    "Breakpoint list:"
+  ],
+  "debugger_events": [
+    {
+      "cmd": "BPDEL *",
+      "event": "debugger_cmd",
+      "t": 1778159568.0218036
+    },
+    {
+      "cmd": "BP 23AD:40FE",
+      "event": "debugger_cmd",
+      "t": 1778159568.2118454
+    },
+    {
+      "cmd": "BPLIST",
+      "event": "debugger_cmd",
+      "t": 1778159568.4025962
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159568.6098936
+    },
+    {
+      "cmd": "BPLIST",
+      "event": "debugger_cmd",
+      "t": 1778159568.797964
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159570.308919
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159571.8063805
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159573.3070354
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159574.8085208
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159576.307185
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159577.809064
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159579.307886
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159580.8099878
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159582.3060584
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159583.808128
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159585.3118498
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159586.8132102
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159588.3153846
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159589.817535
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159591.3270314
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159592.8274183
+    },
+    {
+      "cmd": "CPU",
+      "event": "debugger_cmd",
+      "t": 1778159594.3293352
+    }
+  ],
+  "debugger_hits_captured": [
+    {
+      "kind": "other",
+      "sig": "Breakpoint list:",
+      "stage": "f0128_gate",
+      "t": 1778159568.6098797
+    }
+  ],
+  "direct_hits": {
+    "f0097_hit_kinds": [],
+    "f0097_window": false,
+    "f0128_23AD_40FE": false
+  },
+  "method": "F0128-gated F0097 offset window: arm only F0128 first; after first F0128 stop, arm entry/post-zone/arg/VIDRV-call candidates and continue guarded route.",
+  "promotion_rule": "Promote viewport_present only for an explicit F0097-window debugger stop after prior F0128 stop.",
+  "route": "wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:1800 one wait:1800 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp6 wait:900 kp4 wait:900 kp5 wait:900",
+  "schema": "pass318_dm1_v1_f0097_after_f0128_offset_window_probe.raw_probe.v1",
+  "source_audit": [
+    {
+      "file": "DRAWVIEW.C",
+      "found": {
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "line_range": [
+        709,
+        858
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "found": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610
+      },
+      "line_range": [
+        8604,
+        8611
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_F0097_AFTER_F0128_WINDOW_NO_HIT",
+  "timestamp_utc": "2026-05-07T13:13:15.708530+00:00"
+}

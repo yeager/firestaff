@@ -15,7 +15,7 @@
  *            väggmasker, thing-typ-enum, cell/direction-enum, view square
  *            och view wall index-tabeller, square aspect-accessorer.
  *
- *   DUNGEON.C — F0151_DUNGEON_GetSquare (rad 937–978):
+ *   DUNGEON.C — F0151_DUNGEON_GetSquare (lines 1423–1475):
  *     Returnerar en byte per ruta; bits 7–5 = element-typ, bits 4–0 = flaggor.
  *     Gränskontroll: utanför karta → returnerar C00_ELEMENT_WALL med
  *     riktningsspecifika random-ornament-flaggor.
@@ -25,13 +25,13 @@
  *     Använder G0233_ai_DirectionToStepEastCount[4] och
  *     G0234_ai_DirectionToStepNorthCount[4].
  *
- *   DUNGEON.C — F0172_DUNGEON_SetSquareAspect (rad 1170–1327):
+ *   DUNGEON.C — F0172_DUNGEON_SetSquareAspect (lines 2466–2721):
  *     Beräknar square aspect[5/7 ints] per ruta i viewport:
  *     [0]=element, [1]=firstThing, [2..4]=wallOrnamentOrdinals (R/F/L),
  *     [4]=floorOrnamentOrdinal, etc. Hanterar WALL, PIT, CORRIDOR,
  *     FAKEWALL, TELEPORTER, STAIRS, DOOR.
  *
- *   DUNVIEW.C — (rad 700+): Viewport-ritningsloop. Itererar depth 3→0,
+ *   DUNVIEW.C — F0128_DUNGEONVIEW_DrawDungeon (lines 8445–8542): Viewport-ritningsloop. Itererar depth 3→0,
  *     lane C/L/R. Vid varje depth anropas F0172 för square aspect;
  *     front wall (element==WALL) vid djup D ockluderar allt bakom.
  *     Väggar ritas med index M575..M587 (13/15 view wall positions).
@@ -434,6 +434,16 @@ void dm1_compute_view_square_coords(int party_x, int party_y, int direction,
 uint16_t dm1_compute_wall_visibility(const dm1_view_square_t *square,
                                       int direction);
 
+
+/*
+ * dm1_classify_square_aspect_element — Source-locked F0172 element
+ * classification for one square in viewport context.  Converts raw stored
+ * square types to runtime square-aspect element values: closed pits become
+ * corridors, closed fakewalls become walls, and doors/stairs become side or
+ * front elements according to orientation versus party direction.
+ */
+int dm1_classify_square_aspect_element(uint8_t raw_byte, int direction);
+
 /*
  * dm1_build_viewport — Huvudfunktion: bygg komplett viewport-state.
  *
@@ -461,7 +471,7 @@ bool dm1_is_front_wall_at_depth(const dm1_viewport_state_t *vp, int depth);
 /*
  * dm1_get_visible_squares — Returnerar antal icke-ockluderade rutor.
  * Fyller visible_indices[] med index i vp->squares[].
- * Ordning: depth 3→0 (back-to-front), per lane center→left→right.
+ * Ordning: depth 3→0 (back-to-front), per DUNVIEW draw row: left→right→center.
  */
 int dm1_get_visible_squares(const dm1_viewport_state_t *vp,
                              int visible_indices[DM1_VIEWPORT_SQUARE_COUNT]);
@@ -478,6 +488,16 @@ int dm1_get_visible_squares(const dm1_viewport_state_t *vp,
  *   Allt annat: passabelt (pit/corridor/stairs/teleporter)
  */
 bool dm1_square_blocks_movement(uint8_t raw_byte);
+
+/*
+ * dm1_viewport_uses_flipped_wall_and_footprints — ReDMCSB DUNVIEW.C:F0128
+ * parity switch for alternate wall/floor rendering.  Source line 8357 assigns
+ * G0076_B_UseFlippedWallAndFootprintsBitmaps = (mapX + mapY + direction) & 1;
+ * F0108 then reuses that flag for center-lane footprint floor ornaments
+ * (DUNVIEW.C:3967-3980), while wall and floor blits use it throughout
+ * F0128/F0122-F0127.
+ */
+bool dm1_viewport_uses_flipped_wall_and_footprints(int map_x, int map_y, int direction);
 
 
 #ifdef __cplusplus

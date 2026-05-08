@@ -1142,6 +1142,63 @@ int main(int argc, char** argv) {
                  moved,
                  "movement changes the rendered pseudo-viewport with real world movement");
 
+    {
+        M11_GameViewState releaseViewport;
+        unsigned char releaseInitial[320 * 200];
+        unsigned char releaseTurned[320 * 200];
+        unsigned char releaseMoved[320 * 200];
+        unsigned int releaseInitialViewportHash;
+        unsigned int releaseTurnedViewportHash;
+        unsigned int releaseMovedViewportHash;
+        memset(&releaseViewport, 0, sizeof(releaseViewport));
+        M11_GameView_Init(&releaseViewport);
+        releaseViewport.showDebugHUD = 0;
+        probe_record(&tally,
+                     "INV_GV_06A",
+                     M11_GameView_OpenSelectedMenuEntry(&releaseViewport, &menuState) == 1 &&
+                         releaseViewport.showDebugHUD == 0,
+                     "release-mode viewport harness opens DM1 without debug HUD chrome");
+
+        memset(releaseInitial, 0, sizeof(releaseInitial));
+        M11_GameView_Draw(&releaseViewport, releaseInitial, 320, 200);
+        releaseInitialViewportHash = probe_hash_rect(releaseInitial, 320,
+                                                     PROBE_DM1_VIEWPORT_X,
+                                                     PROBE_DM1_VIEWPORT_Y,
+                                                     PROBE_DM1_VIEWPORT_W,
+                                                     PROBE_DM1_VIEWPORT_H);
+
+        (void)M11_GameView_HandleInput(&releaseViewport, M12_MENU_INPUT_RIGHT);
+        memset(releaseTurned, 0, sizeof(releaseTurned));
+        M11_GameView_Draw(&releaseViewport, releaseTurned, 320, 200);
+        releaseTurnedViewportHash = probe_hash_rect(releaseTurned, 320,
+                                                    PROBE_DM1_VIEWPORT_X,
+                                                    PROBE_DM1_VIEWPORT_Y,
+                                                    PROBE_DM1_VIEWPORT_W,
+                                                    PROBE_DM1_VIEWPORT_H);
+        probe_record(&tally,
+                     "INV_GV_06B",
+                     releaseTurnedViewportHash != releaseInitialViewportHash,
+                     "release-mode viewport aperture changes after a real turn, not only status/debug panels");
+
+        probe_record(&tally,
+                     "INV_GV_06C",
+                     M11_GameView_HandleInput(&releaseViewport, M12_MENU_INPUT_UP) == M11_GAME_INPUT_REDRAW &&
+                         strcmp(releaseViewport.lastOutcome, "PARTY MOVED") == 0,
+                     "release-mode forward input advances through the real movement tick after a turn");
+        memset(releaseMoved, 0, sizeof(releaseMoved));
+        M11_GameView_Draw(&releaseViewport, releaseMoved, 320, 200);
+        releaseMovedViewportHash = probe_hash_rect(releaseMoved, 320,
+                                                   PROBE_DM1_VIEWPORT_X,
+                                                   PROBE_DM1_VIEWPORT_Y,
+                                                   PROBE_DM1_VIEWPORT_W,
+                                                   PROBE_DM1_VIEWPORT_H);
+        probe_record(&tally,
+                     "INV_GV_06D",
+                     releaseMovedViewportHash != releaseTurnedViewportHash,
+                     "release-mode viewport aperture changes after forward movement, preventing a static front-wall frame");
+        M11_GameView_Shutdown(&releaseViewport);
+    }
+
     probe_record(&tally,
                  "INV_GV_08",
                  probe_count_non_zero(framebuffer,
@@ -2903,8 +2960,11 @@ int main(int argc, char** argv) {
             }
         }
 
+        /* ReDMCSB DUNGEON.C F0172 only exposes C02_ELEMENT_PIT to
+         * DUNVIEW when MASK0x0008_PIT_OPEN is set; closed pits render
+         * as corridor, so focused pit visibility probes must set open. */
         probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
+                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
         memset(pitFb, 0, sizeof(pitFb));
         M11_GameView_Draw(&focusView, pitFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -2913,7 +2973,7 @@ int main(int argc, char** argv) {
         }
 
         probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x04));
+                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
         memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
         M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3142,7 +3202,7 @@ int main(int argc, char** argv) {
                 probe_set_square(focusView.world.dungeon,
                                  focusView.world.party.mapX + kPitPositions[pi].relSide,
                                  focusView.world.party.mapY - kPitPositions[pi].relForward,
-                                 (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
+                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
                 memset(pitFb, 0, sizeof(pitFb));
                 M11_GameView_Draw(&focusView, pitFb, 320, 200);
                 if (memcmp(baseFb, pitFb, sizeof(baseFb)) != 0) {
@@ -3156,7 +3216,7 @@ int main(int argc, char** argv) {
                 probe_set_square(focusView.world.dungeon,
                                  focusView.world.party.mapX + kInvisiblePitPositions[pi].relSide,
                                  focusView.world.party.mapY - kInvisiblePitPositions[pi].relForward,
-                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x04));
+                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
                 memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
                 M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
                 if (memcmp(baseFb, invisiblePitFb, sizeof(baseFb)) != 0) {

@@ -24,7 +24,7 @@ Verification commands run in this worktree:
 ```sh
 python3 tools/pass206_dm1_v1_original_runner_minimal_gate.py
 python3 tools/pass207_dm1_v1_original_movement_viewport_blocker_gate.py
-DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
+DM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 \
 DOSBOX=/usr/bin/dosbox \
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \

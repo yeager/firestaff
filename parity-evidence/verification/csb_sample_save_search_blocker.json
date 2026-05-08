@@ -1,5 +1,5 @@
 {
-  "schema": "firestaff.csb_sample_save_search_blocker.v1",
+  "schema": "firestaff.csb_sample_save_search_blocker.v2",
   "pass": true,
   "verifier_semantics": "Inventory only; exits 0 whether a curated sample is present or absent.",
   "roots": [
@@ -12,6 +12,47 @@
     {
       "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa",
       "size": 730035
+    }
+  ],
+  "atari_st_save_disk_msa_inventory": [
+    {
+      "path": "~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa",
+      "size": 730035,
+      "sha256": "bca3db90f795c633fcb0cc7a10a4811dae616b7d8e7eb8b65b4f59af10598d29",
+      "format": "Atari ST Magic Shadow Archiver (MSA) floppy image",
+      "msa_header": {
+        "magic": "0x0e0f",
+        "sectors_per_track": 9,
+        "sides_minus_one": 1,
+        "start_track": 0,
+        "end_track": 79,
+        "decoded_size": 737280,
+        "compressed_tracks": 2,
+        "uncompressed_tracks": 158
+      },
+      "gemdos_fat12_inventory": {
+        "boot_sector": {
+          "bytes_per_sector": 512,
+          "sectors_per_cluster": 2,
+          "reserved_sectors": 1,
+          "fat_count": 2,
+          "root_entry_count": 112,
+          "total_sectors": 1440,
+          "media_descriptor": "0xf9",
+          "sectors_per_fat": 5,
+          "sectors_per_track": 9,
+          "heads": 2,
+          "boot_signature_tail": "72cc"
+        },
+        "root_directory_offset": 5632,
+        "root_directory_size": 3584,
+        "active_root_entries": [],
+        "active_root_entry_count": 0,
+        "deleted_root_entry_count": 0,
+        "free_root_entry_count": 112,
+        "contains_csbgame_root_entry": false
+      },
+      "sample_status": "NO_ROOT_DIRECTORY_FILES"
     }
   ],
   "archive_save_name_hits": [
@@ -378,8 +419,9 @@
     "Use a real extracted CSBGAME*.DAT/BAK saved-game sample, not a game/utility executable disk string reference.",
     "Decoded save header must use C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK (DEFS.H:496-498; CEDTINCU.C:27-32).",
     "CSB_SAVE_HEADER.DungeonID must be C13_DUNGEON_CSB_GAME for CSB game saves (DEFS.H:482-494, 519-523; CEDTINCU.C:49-58; CEDTINCH.C:55-58).",
+    "Save-disk MSA images must decode to GEMDOS/FAT12 root entries containing CSBGAME*.DAT/BAK before they count as sample provenance.",
     "Platform/FormatID must pass the source gates for the targeted media (CEDTINCU.C:49-58; CEDTINCH.C:55-58).",
     "Save routing must map C13_DUNGEON_CSB_GAME or C12_DUNGEON_CSB_PRISON to M746_FILE_ID_SAVE_CSBGAME_DAT, not DMSAVE.DAT (CEDTINC8.C:101-118)."
   ],
-  "blocker": "No extracted curated CSBGAME*.DAT/BAK saved-game sample is present under the approved N2 original-game roots."
+  "blocker": "No extracted curated CSBGAME*.DAT/BAK saved-game sample is present under the approved N2 original-game roots; the N2 Atari ST Save Disk .msa candidate decodes as an empty GEMDOS/FAT12 root directory."
 }

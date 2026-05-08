@@ -16,7 +16,7 @@ Goal: strengthen the DM1 V1 original overlay/capture evidence without touching r
 ```text
 probe=original_overlay_capture_source_lock
 section=redmcsb_source_lock
-redmcsbSource=/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
+redmcsbSource=<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source
 sourceRange=COORD.C:1693-1698 id=viewport-screen-origin status=ok
 sourceClaim=DM1 viewport screen anchor is x=0, y=33 for the PC34-era route.
 sourceRange=DUNVIEW.C:2969-3000 id=viewport-buffer-compose status=ok

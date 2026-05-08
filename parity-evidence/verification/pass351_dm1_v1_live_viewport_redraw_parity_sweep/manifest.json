@@ -1,0 +1,87 @@
+{
+  "base_commit": "d0d53af pass349: prove launcher keypad runtime route",
+  "branch": "worker/pass351-dm1-v1-live-viewport-redraw-parity-sweep-20260507",
+  "claim": "Verified source-locked route input -> compat movement -> viewport redraw wiring. Deterministic compat/source evidence only; no original-runtime pixel parity claim.",
+  "created_at_utc": "2026-05-07T19:56:14Z",
+  "date": "2026-05-07",
+  "gates_planned": [
+    "python3 tools/verify_pass351_dm1_v1_live_viewport_redraw_parity_sweep.py",
+    "ctest -R pass351_dm1_v1_live_viewport_redraw_parity_sweep --output-on-failure",
+    "ctest -R dm1_v1_movement_pipeline_pc34_compat --output-on-failure",
+    "ctest -R dm1_v1_movement_command_core_pc34_compat --output-on-failure",
+    "ctest -R dm1_v1_command_movement_sensor_timing_pc34_compat --output-on-failure",
+    "git diff --check"
+  ],
+  "head": "d0d53af",
+  "pass": "pass351_dm1_v1_live_viewport_redraw_parity_sweep",
+  "scope": "DM1 V1 live viewport redraw parity sweep after pass345/pass346/pass347 integration",
+  "source_audit_required_first": true,
+  "verifier": "tools/verify_pass351_dm1_v1_live_viewport_redraw_parity_sweep.py",
+  "verifier_result": {
+    "checked": 11,
+    "claim": "source-locked live route -> compat movement -> viewport redraw evidence; no original pixel parity claim",
+    "failed": 0,
+    "failures": [],
+    "passed": 11,
+    "redmcsb_common_source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "repo": "/home/trv2/work/firestaff-pass351-dm1-v1-live-viewport-redraw-parity-sweep-20260507",
+    "results": [
+      {
+        "anchor": "COMMAND.C:106-114",
+        "id": "redmcsb_mouse_movement_zones",
+        "status": "ok"
+      },
+      {
+        "anchor": "COMMAND.C:677-684",
+        "id": "redmcsb_i34e_keyboard_movement_table",
+        "status": "ok"
+      },
+      {
+        "anchor": "COMMAND.C:2075-2156",
+        "id": "redmcsb_f0380_gate_dequeue_dispatch",
+        "status": "ok"
+      },
+      {
+        "anchor": "CLIKMENU.C:156-173,224-346",
+        "id": "redmcsb_turn_and_step_side_effects",
+        "status": "ok"
+      },
+      {
+        "anchor": "GAMELOOP.C:90,150-155",
+        "id": "redmcsb_main_loop_redraw_present",
+        "status": "ok"
+      },
+      {
+        "anchor": "DUNVIEW.C:8608-8611",
+        "id": "redmcsb_f0128_to_f0097",
+        "status": "ok"
+      },
+      {
+        "anchor": "DRAWVIEW.C:709-724,1056-1068",
+        "id": "redmcsb_f0097_viewport_request_and_blit",
+        "status": "ok"
+      },
+      {
+        "anchor": "main_loop_m11.c:788-814,1105-1133,1603-1617",
+        "id": "firestaff_script_and_key_routes_to_m12",
+        "status": "ok"
+      },
+      {
+        "anchor": "m11_game_view.c:4864-4958",
+        "id": "firestaff_live_m12_to_dm1_commands_and_pipeline",
+        "status": "ok"
+      },
+      {
+        "anchor": "dm1_v1_movement_command_core_pc34_compat.c:74-187",
+        "id": "firestaff_core_sets_redraw_after_accepted_effects",
+        "status": "ok"
+      },
+      {
+        "anchor": "dm1_v1_movement_pipeline_pc34_compat.c:91-203",
+        "id": "firestaff_pipeline_publishes_viewport_dirty",
+        "status": "ok"
+      }
+    ],
+    "verifier": "pass351_dm1_v1_live_viewport_redraw_parity_sweep"
+  }
+}

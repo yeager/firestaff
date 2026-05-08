@@ -1,0 +1,127 @@
+[
+  {
+    "event": "route_step",
+    "t": 1778095032.7432055,
+    "route_item": "wait:7000"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095039.7645116,
+    "route_item": "enter"
+  },
+  {
+    "event": "key",
+    "running_guard": true,
+    "t": 1778095040.03831,
+    "route_item": "enter"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095040.2184505,
+    "route_item": "wait:1500"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095041.7222905,
+    "route_item": "one"
+  },
+  {
+    "event": "key",
+    "running_guard": true,
+    "t": 1778095041.9435682,
+    "route_item": "one"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095042.123688,
+    "route_item": "wait:1500"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095043.6284661,
+    "route_item": "click:276,140"
+  },
+  {
+    "event": "click",
+    "running_guard": true,
+    "screen": [
+      553,
+      281
+    ],
+    "t": 1778095043.7467356,
+    "route_item": "click:276,140"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095043.9268496,
+    "route_item": "wait:1500"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095045.4322746,
+    "route_item": "one"
+  },
+  {
+    "event": "key",
+    "running_guard": true,
+    "t": 1778095045.4534569,
+    "route_item": "one"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095045.6335592,
+    "route_item": "wait:1500"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095047.1384404,
+    "route_item": "kp5"
+  },
+  {
+    "event": "key",
+    "running_guard": true,
+    "t": 1778095047.1598618,
+    "route_item": "kp5"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095047.3401155,
+    "route_item": "wait:700"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095048.0418427,
+    "route_item": "kp4"
+  },
+  {
+    "event": "key",
+    "running_guard": true,
+    "t": 1778095048.063911,
+    "route_item": "kp4"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095048.2440207,
+    "route_item": "wait:700"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095048.9463792,
+    "route_item": "kp6"
+  },
+  {
+    "event": "key",
+    "running_guard": true,
+    "t": 1778095048.9688427,
+    "route_item": "kp6"
+  },
+  {
+    "event": "route_step",
+    "t": 1778095049.148962,
+    "route_item": "wait:700"
+  },
+  {
+    "event": "route_done",
+    "t": 1778095049.8516002
+  }
+]

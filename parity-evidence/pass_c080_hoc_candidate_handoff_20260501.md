@@ -2,7 +2,7 @@
 
 ## ReDMCSB source audit
 
-Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+Primary source: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
 
 The expected handoff chain is source-locked as:
 
@@ -38,7 +38,7 @@ No broad movement/viewport/touch rewrite was needed. The existing Firestaff path
 
 ## Verification run
 
-Commands run on N2 in `/home/trv2/work/firestaff`:
+Commands run on N2 in `<firestaff-repo>`:
 
 ```sh
 ctest --test-dir build -R "v1_champion_(recruit_source_path|portrait_click_source_path|portrait_click_geometry)|m11_game_view_probe" --output-on-failure

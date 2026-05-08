@@ -9,6 +9,7 @@
 #include "font_m11.h"
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_save_load.h"
+#include "dm1_v1_movement_pipeline_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,6 +98,11 @@ typedef struct {
     uint32_t lastWorldHash;
     struct TickResult_Compat lastTickResult;
     struct GameWorld_Compat world;
+    /* Pass345: live route tokens feed the source-locked DM1 V1
+     * COMMAND.C F0380 -> CLIKMENU.C F0365/F0366 movement pipeline before
+     * the viewport redraw result is returned to main_loop_m11.c. */
+    struct Dm1V1MovementPipelinePc34Compat dm1V1MovementPipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat lastDm1V1MovementPipelineResult;
     struct ChampionMirrorCatalog_Compat mirrorCatalog;
     int mirrorCatalogAvailable;
     /* Source-backed champion mirror candidate panel.  Mirrors the

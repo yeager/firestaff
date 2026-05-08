@@ -1,0 +1,311 @@
+{
+  "comparatorStatus": "exact draw-command comparator plus viewport-region pixel comparator scaffold only; no original/ReDMCSB/Firestaff pixel parity claim",
+  "errors": [],
+  "firestaffOrder": [
+    {
+      "offset": 113,
+      "symbol": "DM1_V2_VIEW_SQUARE_D3L"
+    },
+    {
+      "offset": 179,
+      "symbol": "DM1_V2_VIEW_SQUARE_D3R"
+    },
+    {
+      "offset": 230,
+      "symbol": "DM1_V2_VIEW_SQUARE_D3C"
+    },
+    {
+      "offset": 296,
+      "symbol": "DM1_V2_VIEW_SQUARE_D2L"
+    },
+    {
+      "offset": 362,
+      "symbol": "DM1_V2_VIEW_SQUARE_D2R"
+    },
+    {
+      "offset": 413,
+      "symbol": "DM1_V2_VIEW_SQUARE_D2C"
+    },
+    {
+      "offset": 479,
+      "symbol": "DM1_V2_VIEW_SQUARE_D1L"
+    },
+    {
+      "offset": 545,
+      "symbol": "DM1_V2_VIEW_SQUARE_D1R"
+    },
+    {
+      "offset": 596,
+      "symbol": "DM1_V2_VIEW_SQUARE_D1C"
+    },
+    {
+      "offset": 662,
+      "symbol": "DM1_V2_VIEW_SQUARE_D0L"
+    },
+    {
+      "offset": 728,
+      "symbol": "DM1_V2_VIEW_SQUARE_D0R"
+    },
+    {
+      "offset": 779,
+      "symbol": "DM1_V2_VIEW_SQUARE_D0C"
+    }
+  ],
+  "matchedDungeonStateFixture": {
+    "frontWallSquare": {
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 4,
+      "relativeSquare": "D1C"
+    },
+    "initialState": {
+      "direction": 2,
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3,
+      "rawLE": "0x0861"
+    },
+    "name": "dm1_pc34_entry_portrait_wall",
+    "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "source": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "status": "source-locked sparse fixture feeds mapX/mapY/direction into renderer draw-list; full DUNGEON.DAT square decoder still pending"
+  },
+  "nextBlockers": [
+    "Replace sparse source-locked entry fixture with full DUNGEON.DAT square decoder.",
+    "Capture original/ReDMCSB and Firestaff viewport pixels for identical mapX/mapY/direction.",
+    "Feed captured original/ReDMCSB and Firestaff framebuffers into the region comparator; only then promote to pixel parity."
+  ],
+  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V2 renderer-side D0-D3 draw-list emission and matched-state comparator scaffold",
+  "sourceAnchors": [
+    {
+      "file": "DEFS.H",
+      "line": 992,
+      "needle": "unsigned char MapCount;",
+      "text": "unsigned char MapCount;"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 995,
+      "needle": "unsigned int16_t InitialPartyLocation;",
+      "text": "unsigned int16_t InitialPartyLocation; /* Bits 15-12 Unreferenced, Bits 11-10: Direction, Bits 9-5: Y, Bits 4-0: X */"
+    },
+    {
+      "file": "LOADSAVE.C",
+      "line": 1940,
+      "needle": "if (G0298_B_NewGame)",
+      "text": "if (G0298_B_NewGame) {"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 35,
+      "needle": "G0233_ai_Graphic559_DirectionToStepEastCount",
+      "text": "int16_t G0233_ai_Graphic559_DirectionToStepEastCount[4] = {"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 40,
+      "needle": "G0234_ai_Graphic559_DirectionToStepNorthCount",
+      "text": "int16_t G0234_ai_Graphic559_DirectionToStepNorthCount[4] = {"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 1389,
+      "needle": "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount",
+      "text": "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[P0253_i_Direction] * P0254_i_StepsForwardCount, *P0257_pi_MapY += G0234_ai_Graphic559_DirectionToStepNorthCount[P0253_i_Direction] * P0254_i_StepsForwardCount;"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 1390,
+      "needle": "P0253_i_Direction += 1",
+      "text": "P0253_i_Direction += 1, P0253_i_Direction &= 3; /* Simulate turning right */"
+    },
+    {
+      "file": "DUNGEON.C",
+      "line": 1391,
+      "needle": "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount",
+      "text": "*P0256_pi_MapX += G0233_ai_Graphic559_DirectionToStepEastCount[P0253_i_Direction] * P0255_i_StepsRightCount, *P0257_pi_MapY += G0234_ai_Graphic559_DirectionToStepNorthCount[P0253_i_Direction] * P0255_i_StepsRightCount;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8337,
+      "needle": "if (G0297_B_DrawFloorAndCeilingRequested)",
+      "text": "if (G0297_B_DrawFloorAndCeilingRequested) {"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8338,
+      "needle": "F0098_DUNGEONVIEW_DrawFloorAndCeiling();",
+      "text": "F0098_DUNGEONVIEW_DrawFloorAndCeiling();"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8490,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, -1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, -1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8491,
+      "needle": "F0116_DUNGEONVIEW_DrawSquareD3L",
+      "text": "F0116_DUNGEONVIEW_DrawSquareD3L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8494,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8495,
+      "needle": "F0117_DUNGEONVIEW_DrawSquareD3R",
+      "text": "F0117_DUNGEONVIEW_DrawSquareD3R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8498,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 0",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 0, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8499,
+      "needle": "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+      "text": "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8512,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, -1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, -1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8513,
+      "needle": "F0119_DUNGEONVIEW_DrawSquareD2L",
+      "text": "F0119_DUNGEONVIEW_DrawSquareD2L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8516,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, 1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, 1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8517,
+      "needle": "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF",
+      "text": "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8520,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, 0",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, 0, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8521,
+      "needle": "F0121_DUNGEONVIEW_DrawSquareD2C",
+      "text": "F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8524,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, -1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, -1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8525,
+      "needle": "F0122_DUNGEONVIEW_DrawSquareD1L",
+      "text": "F0122_DUNGEONVIEW_DrawSquareD1L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8528,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8529,
+      "needle": "F0123_DUNGEONVIEW_DrawSquareD1R",
+      "text": "F0123_DUNGEONVIEW_DrawSquareD1R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8532,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 0",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 0, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8533,
+      "needle": "F0124_DUNGEONVIEW_DrawSquareD1C",
+      "text": "F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8536,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 0, -1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 0, -1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8537,
+      "needle": "F0125_DUNGEONVIEW_DrawSquareD0L",
+      "text": "F0125_DUNGEONVIEW_DrawSquareD0L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8540,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 0, 1",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 0, 1, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8541,
+      "needle": "F0126_DUNGEONVIEW_DrawSquareD0R",
+      "text": "F0126_DUNGEONVIEW_DrawSquareD0R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8542,
+      "needle": "F0127_DUNGEONVIEW_DrawSquareD0C",
+      "text": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6666,
+      "needle": "case C19_ELEMENT_STAIRS_FRONT",
+      "text": "case C19_ELEMENT_STAIRS_FRONT:"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6697,
+      "needle": "case C00_ELEMENT_WALL",
+      "text": "case C00_ELEMENT_WALL:"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6721,
+      "needle": "case C17_ELEMENT_DOOR_FRONT",
+      "text": "case C17_ELEMENT_DOOR_FRONT:"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6816,
+      "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0206_ai_SquareAspect[M550_FIRST_THING], P0153_i_Direction, P0154_i_MapX, P0155_i_MapY, M600_VIEW_SQUARE_D3C, L0204_i_Order);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6828,
+      "needle": "F0113_DUNGEONVIEW_DrawField",
+      "text": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[M600_VIEW_SQUARE_D3C], C704_ZONE_WALL_D3C);"
+    }
+  ],
+  "status": "passed"
+}

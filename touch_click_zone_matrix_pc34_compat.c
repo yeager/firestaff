@@ -110,8 +110,77 @@ static const TouchClickZonePc34Compat kTouchClickZones[] = {
     { 64u, 543u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  179, 104,  16,  16, "inventory.chest_7","COMMAND.C:505 maps C064 to C543 inventory chest 7; DATA.C:1022 and layout-696 C106/C543 resolve to viewport-local x=179 y=104 w=16 h=16" },
     { 65u, 544u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  196, 105,  16,  16, "inventory.chest_8","COMMAND.C:506 maps C065 to C544 inventory chest 8; DATA.C:1023 and layout-696 C106/C544 resolve to viewport-local x=196 y=105 w=16 h=16" },
     { 70u, 545u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,   56,  13,  16,  16, "inventory.mouth",        "COMMAND.C:426 and 2314-2319 map C070 mouth to C545 and F0349_INVENTORY_ProcessCommand70_ClickOnMouth" },
-    { 71u, 546u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,   12,  13,  16,  16, "inventory.eye",          "COMMAND.C:427 and 2318-2320 map C071 eye to C546 and F0352_INVENTORY_ProcessCommand71_ClickOnEye" }
+    { 71u, 546u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,   12,  13,  16,  16, "inventory.eye",          "COMMAND.C:427 and 2318-2320 map C071 eye to C546 and F0352_INVENTORY_ProcessCommand71_ClickOnEye" },
+
+    /* Resurrect/reincarnate panel: viewport-relative COMMAND.C G0457. */
+    {160u, 570u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  104,  53,  55,  57, "panel.resurrect",     "COMMAND.C:508-511 maps C160 resurrect to M664; DEFS.H:3979-3982 maps I34E M664 to layout-696 zone 570; layout-696 C569/C570 gives viewport-local box" },
+    {161u, 571u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  163,  53,  55,  57, "panel.reincarnate",   "COMMAND.C:508-511 maps C161 reincarnate to M665; DEFS.H:3979-3982 maps I34E M665 to layout-696 zone 571; layout-696 C569/C571 gives viewport-local box" },
+    {162u, 573u, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  104, 113, 114,  11, "panel.cancel",        "COMMAND.C:508-511 maps C162 cancel to M666; DEFS.H:3979-3982 maps I34E M666 to layout-696 zone 573; layout-696 C572/C573 gives viewport-local box" },
+
+    /* Remaining primary-interface UI zones from COMMAND.C G0447. */
+    {  7u, 187u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,      43,   0,  24,  29, "champion0.bar_graphs_toggle", "COMMAND.C:380 maps left-button C007 toggle-inventory champion 0 to C187; layout-696 C183/C187 gives x=43 y=0 w=24 h=29" },
+    {  8u, 188u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     112,   0,  24,  29, "champion1.bar_graphs_toggle", "COMMAND.C:381 maps left-button C008 toggle-inventory champion 1 to C188; layout-696 C184/C188 gives x=112 y=0 w=24 h=29" },
+    {  9u, 189u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     181,   0,  24,  29, "champion2.bar_graphs_toggle", "COMMAND.C:382 maps left-button C009 toggle-inventory champion 2 to C189; layout-696 C185/C189 gives x=181 y=0 w=24 h=29" },
+    { 10u, 190u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     250,   0,  24,  29, "champion3.bar_graphs_toggle", "COMMAND.C:383 maps left-button C010 toggle-inventory champion 3 to C190; layout-696 C186/C190 gives x=250 y=0 w=24 h=29" },
+    { 12u, 151u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,       0,   0,  67,  29, "champion0.status_box", "COMMAND.C:384 maps left-button C012 click-in-champion-0-status-box to C151; layout-696 C150/C151 gives x=0 y=0 w=67 h=29" },
+    { 13u, 152u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,      69,   0,  67,  29, "champion1.status_box", "COMMAND.C:385 maps left-button C013 click-in-champion-1-status-box to C152; layout-696 C150/C152 gives x=69 y=0 w=67 h=29" },
+    { 14u, 153u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     138,   0,  67,  29, "champion2.status_box", "COMMAND.C:386 maps left-button C014 click-in-champion-2-status-box to C153; layout-696 C150/C153 gives x=138 y=0 w=67 h=29" },
+    { 15u, 154u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     207,   0,  67,  29, "champion3.status_box", "COMMAND.C:387 maps left-button C015 click-in-champion-3-status-box to C154; layout-696 C150/C154 gives x=207 y=0 w=67 h=29" },
+    {125u, 113u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     281,   0,  19,  14, "champion.icon_top_left", "COMMAND.C:388 maps C125 top-left champion icon to C113; layout-696 C112/C113 gives x=281 y=0 w=19 h=14" },
+    {126u, 114u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     301,   0,  19,  14, "champion.icon_top_right", "COMMAND.C:389 maps C126 top-right champion icon to C114; layout-696 C112/C114 gives x=301 y=0 w=19 h=14" },
+    {127u, 115u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     301,  15,  19,  14, "champion.icon_bottom_right", "COMMAND.C:390 maps C127 bottom-right champion icon to C115; layout-696 C112/C115 gives x=301 y=15 w=19 h=14" },
+    {128u, 116u, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,     281,  15,  19,  14, "champion.icon_bottom_left", "COMMAND.C:391 maps C128 bottom-left champion icon to C116; layout-696 C112/C116 gives x=281 y=15 w=19 h=14" }
 };
+
+
+typedef struct TouchClickSourceOrderedRoutePc34Compat {
+    unsigned int commandId;
+    unsigned int zoneIndex;
+} TouchClickSourceOrderedRoutePc34Compat;
+
+/* ReDMCSB COMMAND.C source-order active in-game mouse search:
+ * F0359_COMMAND_ProcessClick_CPSC checks G0441 primary first, then G0442
+ * secondary (COMMAND.C:1641-1644). STARTUP2.C:1179-1182 installs the
+ * primary interface and secondary movement tables. These lists intentionally
+ * model only that active interface+movement seam; action/spell/inventory child
+ * tables remain separate dispatch-time subroutes. */
+static const TouchClickSourceOrderedRoutePc34Compat kPrimaryInterfaceSourceOrder[] = {
+    { 12u, 151u }, { 13u, 152u }, { 14u, 153u }, { 15u, 154u },
+    { 125u, 113u }, { 126u, 114u }, { 127u, 115u }, { 128u, 116u },
+    { 7u, 187u }, { 8u, 188u }, { 9u, 189u }, { 10u, 190u },
+    { 7u, 151u }, { 8u, 152u }, { 9u, 153u }, { 10u, 154u },
+    { 100u, 13u }, { 111u, 11u }
+};
+
+static const TouchClickSourceOrderedRoutePc34Compat kSecondaryMovementSourceOrder[] = {
+    { 1u, 68u }, { 3u, 70u }, { 2u, 69u },
+    { 6u, 73u }, { 5u, 72u }, { 4u, 71u },
+    { 80u, 7u }, { 83u, 2u }
+};
+
+static int TOUCHCLICK_Compat_FindSourceOrderedHit(
+    const TouchClickSourceOrderedRoutePc34Compat* routes,
+    unsigned int routeCount,
+    int screenX,
+    int screenY,
+    unsigned int buttonMask,
+    TouchClickZonePc34Compat* outZone) {
+    unsigned int r;
+    unsigned int i;
+    for (r = 0; r < routeCount; ++r) {
+        for (i = 0; i < TOUCHCLICK_Compat_GetZoneCount(); ++i) {
+            const TouchClickZonePc34Compat* z = &kTouchClickZones[i];
+            if (z->coordMode != TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT) continue;
+            if (z->commandId != routes[r].commandId || z->zoneIndex != routes[r].zoneIndex) continue;
+            if (buttonMask && !(buttonMask & z->buttonMask)) continue;
+            if (screenX < z->x || screenY < z->y ||
+                screenX >= z->x + z->w || screenY >= z->y + z->h) continue;
+            if (outZone) *outZone = *z;
+            return 1;
+        }
+    }
+    return 0;
+}
 
 unsigned int TOUCHCLICK_Compat_GetZoneCount(void) {
     return (unsigned int)(sizeof(kTouchClickZones) / sizeof(kTouchClickZones[0]));
@@ -146,6 +215,37 @@ int TOUCHCLICK_Compat_HitTestInCoordMode(int x,
     }
     if (best) {
         if (outZone) *outZone = *best;
+        return 1;
+    }
+    if (outZone) memset(outZone, 0, sizeof(*outZone));
+    return 0;
+}
+
+
+int TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(int screenX,
+                                                  int screenY,
+                                                  unsigned int buttonMask,
+                                                  TouchClickZonePc34Compat* outZone) {
+    if (buttonMask == 0u) {
+        if (outZone) memset(outZone, 0, sizeof(*outZone));
+        return 0;
+    }
+    if (TOUCHCLICK_Compat_FindSourceOrderedHit(
+            kPrimaryInterfaceSourceOrder,
+            (unsigned int)(sizeof(kPrimaryInterfaceSourceOrder) / sizeof(kPrimaryInterfaceSourceOrder[0])),
+            screenX,
+            screenY,
+            buttonMask,
+            outZone)) {
+        return 1;
+    }
+    if (TOUCHCLICK_Compat_FindSourceOrderedHit(
+            kSecondaryMovementSourceOrder,
+            (unsigned int)(sizeof(kSecondaryMovementSourceOrder) / sizeof(kSecondaryMovementSourceOrder[0])),
+            screenX,
+            screenY,
+            buttonMask,
+            outZone)) {
         return 1;
     }
     if (outZone) memset(outZone, 0, sizeof(*outZone));
@@ -270,7 +370,7 @@ int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX,
     if (!TOUCHCLICK_Compat_NormalizeScaledScreenPoint(physicalX, physicalY, surfaceW, surfaceH, &screenX, &screenY)) {
         return 0;
     }
-    if (!TOUCHCLICK_Compat_HitTestWithButton(screenX, screenY, buttonMask, &zone)) {
+    if (!TOUCHCLICK_Compat_HitTestPrimaryThenSecondary(screenX, screenY, buttonMask, &zone)) {
         return 0;
     }
     outDispatch->screenX = screenX;
@@ -284,5 +384,5 @@ int TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(int physicalX,
 }
 
 const char* TOUCHCLICK_Compat_GetSourceEvidence(void) {
-    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C:1693-1722 defines source viewport origin/extent (x=0 y=33 w=224 h=136); COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
+    return "COMMAND.C:375-506 defines active in-game mouse command-to-zone/button tables; CEDT026.C:141-161 registers a mouse handler that forwards raw X/Y/button events to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:1394-1439 F0358_COMMAND_GetCommandFromMouseInput_CPSC matches normalized 320x200 coordinates and P0724_i_ButtonsStatus against the route Button mask; COMMAND.C:1641-1644 source-orders primary mouse input before secondary mouse input; STARTUP2.C:1179-1182 installs primary interface plus secondary movement tables; INPUT.C:641-664 forwards left/right button masks 0x0002/0x0001 with screen coordinates to F0359_COMMAND_ProcessClick_CPSC; COMMAND.C:412-451 and 498-506 define source-backed inventory toggles/slots/chest slots; COORD.C:1693-1722 defines source viewport origin/extent (x=0 y=33 w=224 h=136); COORD.C:2036-2245 and 2451-2505 define runtime layout record resolution; DEFS.H:3748-3937 names C002..M701 zones; zones_h_reconstruction.json is GRAPHICS.DAT C696 layout-696 for DM1 PC 3.4 English/I34E.";
 }

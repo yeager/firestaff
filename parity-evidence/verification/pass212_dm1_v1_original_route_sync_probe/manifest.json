@@ -1,6 +1,17 @@
 {
   "schema": "pass212_dm1_v1_original_route_sync_probe.v1",
-  "status": "BLOCKED_ROUTE_CAPTURE_SYNC",
+  "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
+  "superseded_by_later_batch_capture": {
+    "superseded": true,
+    "reason": "pass304/pass308 captured the focused route-label set; remaining blocker is original runtime state-oracle proof",
+    "pass304Status": "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED",
+    "pass304RouteLabelCoverage": true,
+    "pass308Status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
+    "pass308Coverage": {
+      "requiredLabelCoverage": true,
+      "requiredPromotionRowsGameplayOrWallCloseup": true
+    }
+  },
   "attempt_dir": "verification-screens/pass210-n2-original-movement-route-fresh",
   "source_seam": [
     {
@@ -59,7 +70,7 @@
       "classification": "entrance_menu",
       "raw_sha256_prefix": "17bd7e878157",
       "viewport_sha256_prefix": "701689e73fc0",
-      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+      "classifier_reason": "dungeon entrance/menu controls still occupy the right column"
     },
     {
       "shot": 2,
@@ -69,7 +80,7 @@
       "classification": "wall_closeup",
       "raw_sha256_prefix": "fbeb1b82cd09",
       "viewport_sha256_prefix": "1e71ed879980",
-      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+      "classifier_reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence"
     },
     {
       "shot": 3,
@@ -79,7 +90,7 @@
       "classification": "dungeon_gameplay",
       "raw_sha256_prefix": "48ed3743ab6a",
       "viewport_sha256_prefix": "701689e73fc0",
-      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+      "classifier_reason": "viewport content with mostly dark in-game right column"
     },
     {
       "shot": 4,
@@ -89,7 +100,7 @@
       "classification": "dungeon_gameplay",
       "raw_sha256_prefix": "48ed3743ab6a",
       "viewport_sha256_prefix": "701689e73fc0",
-      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+      "classifier_reason": "viewport content with mostly dark in-game right column"
     },
     {
       "shot": 5,
@@ -99,7 +110,7 @@
       "classification": "wall_closeup",
       "raw_sha256_prefix": "fbeb1b82cd09",
       "viewport_sha256_prefix": "1e71ed879980",
-      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+      "classifier_reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence"
     },
     {
       "shot": 6,
@@ -109,7 +120,7 @@
       "classification": "dungeon_gameplay",
       "raw_sha256_prefix": "48ed3743ab6a",
       "viewport_sha256_prefix": "701689e73fc0",
-      "classifier_reason": "from committed pass211 blocker shot binding; raw payload intentionally untracked"
+      "classifier_reason": "viewport content with mostly dark in-game right column"
     }
   ],
   "raw_duplicate_groups": {
@@ -142,9 +153,7 @@
     "duplicate raw-frame SHA groups show command/post-redraw collapse: fbeb1b82cd09=[2, 5], 48ed3743ab6a=[3, 4, 6]",
     "duplicate viewport-crop SHA groups show non-distinct presented viewports: 701689e73fc0=[1, 3, 4, 6], 1e71ed879980=[2, 5]"
   ],
-  "warnings": [
-    "using committed pass211 blocker manifest fallback because the raw attempt directory is absent/incomplete"
-  ],
+  "warnings": [],
   "retry_contract": {
     "purpose": "separate gameplay-readiness from post-command redraw capture; keep raw PNG/PPM payloads out of git",
     "route_events": "wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank",
@@ -157,24 +166,32 @@
       "dungeon_gameplay"
     ],
     "promotion_rule": "all six raw frames classify dungeon_gameplay and both raw/crop SHA groups are non-duplicate",
-    "recommended_command": "OUT_DIR=$PWD/verification-screens/pass212-n2-original-movement-route-sync-retry DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+    "recommended_command": "OUT_DIR=$PWD/verification-screens/pass212-n2-original-movement-route-sync-retry DM1_ORIGINAL_STAGE_DIR=<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
   },
   "audited_inputs": [
     {
       "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_shot_labels.tsv",
-      "exists": false
+      "exists": true,
+      "size_bytes": 514,
+      "sha256": "89b02911507bf31619dcb054122f94c08094071faf250ff302400875a7d5d3c0"
     },
     {
       "path": "verification-screens/pass210-n2-original-movement-route-fresh/raw_manifest.tsv",
-      "exists": false
+      "exists": true,
+      "size_bytes": 1682,
+      "sha256": "27c9105c111b2fbf33c9dad5709747cef3c46ee6213d7a47b27511bbd88aead9"
     },
     {
       "path": "verification-screens/pass210-n2-original-movement-route-fresh/original_viewport_224x136_manifest.tsv",
-      "exists": false
+      "exists": true,
+      "size_bytes": 979,
+      "sha256": "07eb7a74aefe3b4530f7dfddff16323ff9342b6d99582d79100596f8a0231b28"
     },
     {
       "path": "verification-screens/pass210-n2-original-movement-route-fresh/pass80_original_frame_classifier.json",
-      "exists": false
+      "exists": true,
+      "size_bytes": 13211,
+      "sha256": "3aa30a62d07e8e559420439ea8c27a2bb27a155861e60894921c136706064cdc"
     },
     {
       "path": "verification-screens/pass210-n2-original-movement-route-fresh/original-viewpoint-route-keys.log",
@@ -187,8 +204,8 @@
     {
       "path": "parity-evidence/verification/pass211_dm1_v1_original_movement_fresh_blocker/manifest.json",
       "exists": true,
-      "size_bytes": 22254,
-      "sha256": "18820df8e60e3971cb71bc9c1d4f308bfb219d1565e1cbb7ec45f1b06103e491"
+      "size_bytes": 22138,
+      "sha256": "3bd031ac005f2272ad04f6f2c4f0d19667c5394dcd4df9aa26e14c0ffa31c0a1"
     },
     {
       "path": "parity-evidence/verification/pass211_dm1_v1_original_movement_fresh_blocker/README.md",

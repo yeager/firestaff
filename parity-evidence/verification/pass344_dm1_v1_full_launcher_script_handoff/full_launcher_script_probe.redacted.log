@@ -1,0 +1,9 @@
+pass344 full launcher script probe (redacted)
+utc=2026-05-07T19:34:49.309988+00:00
+command=timeout 45s /home/trv2/.openclaw/data/firestaff-builds/pass344-verify/firestaff --duration 12000 --width 1920 --height 1080 --data-dir /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 --script enter,down,down,down,down,down,down,enter,left,up,right
+env=HOME=<PASS344_HOME> SDL_VIDEODRIVER=dummy FIRESTAFF_AUTOTEST=1 FIRESTAFF_FAIL_IF_NO_LAUNCH=1
+returncode=0
+stdout:
+<empty>
+stderr:
+<empty>

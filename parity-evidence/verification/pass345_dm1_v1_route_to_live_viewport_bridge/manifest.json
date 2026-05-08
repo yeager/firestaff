@@ -1,0 +1,367 @@
+{
+  "bridge": {
+    "compatPath": "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat -> DM1_V1_MovementPipeline_ProcessOneTickPc34Compat",
+    "keyboardHack": false,
+    "productEntry": "M11_GameView_HandleInput",
+    "routeInput": "main_loop_m11.c M12 route tokens/up-left-right/down/strafe",
+    "viewportPath": "lastDm1V1MovementPipelineResult.viewportDirty/dequeued -> M11_GAME_INPUT_REDRAW"
+  },
+  "checks": [
+    {
+      "file": "m11_game_view.h",
+      "kind": "product_marker",
+      "marker": "struct Dm1V1MovementPipelinePc34Compat dm1V1MovementPipeline",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.h",
+      "kind": "product_marker",
+      "marker": "struct Dm1V1MovementPipelineResultPc34Compat lastDm1V1MovementPipelineResult",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline)",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "m11_dm1_v1_pipeline_command_for_input",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "DM1_V1_COMMAND_MOVE_FORWARD",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "lastDm1V1MovementPipelineResult.viewportDirty",
+      "ok": true
+    },
+    {
+      "file": "m11_game_view.c",
+      "kind": "product_marker",
+      "marker": "return M11_GAME_INPUT_REDRAW",
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "252-260",
+      "markers": [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+        "C001_COMMAND_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C002_COMMAND_TURN_RIGHT"
+      ],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "272-305",
+      "markers": [
+        "0xAB34",
+        "0xAB35",
+        "0xAB36",
+        "0x9B41"
+      ],
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "150-155",
+      "markers": [
+        "G0310_i_DisabledMovementTicks",
+        "G0311_i_ProjectileDisabledMovementTicks"
+      ],
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "164-219",
+      "markers": [
+        "F0361_COMMAND_ProcessKeyPress",
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "G0321_B_StopWaitingForPlayerInput"
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "142-174",
+      "markers": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval"
+      ],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "180-347",
+      "markers": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "kind": "redmcsb_source_lock",
+      "lines": "316-326",
+      "markers": [
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true
+    },
+    {
+      "kind": "build_configure",
+      "name": "cmake_configure_build_pass345",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "-S",
+          "/home/trv2/work/firestaff",
+          "-B",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass345-verify"
+        ],
+        "outputTail": "-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Configuring done (0.5s)\n-- Generating done (0.1s)\n-- Build files have been written to: /home/trv2/.openclaw/data/firestaff-builds/pass345-verify\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "build_targets",
+      "name": "pass345_narrow_targets",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "cmake",
+          "--build",
+          "/home/trv2/.openclaw/data/firestaff-builds/pass345-verify",
+          "--target",
+          "firestaff_m11_hall_walkaround_runtime_probe",
+          "test_dm1_v1_movement_pipeline_pc34_compat",
+          "-j1"
+        ],
+        "outputTail": "irestaff_m12.dir/config_m12.c.o\n[241/282] Building C object CMakeFiles/firestaff_m12.dir/asset_status_m12.c.o\n[242/282] Building C object CMakeFiles/firestaff_m12.dir/card_art_m12.c.o\n[243/282] Building C object CMakeFiles/firestaff_m12.dir/card_art_generated_m12.c.o\n[244/282] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_m12.c.o\n[245/282] Building C object CMakeFiles/firestaff_m12.dir/branding_logo_readme_m12.c.o\n[246/282] Building C object CMakeFiles/firestaff_m12.dir/bestiary_m12.c.o\n[247/282] Building C object CMakeFiles/firestaff_m12.dir/creature_art_m12.c.o\n[248/282] Building C object CMakeFiles/firestaff_m12.dir/data_validator_m12.c.o\n[249/282] Building C object CMakeFiles/firestaff_m12.dir/changelog_m12.c.o\n[250/282] Building C object CMakeFiles/firestaff_m12.dir/theme_m12.c.o\n[251/282] Building C object CMakeFiles/firestaff_m12.dir/animated_bg_m12.c.o\n[252/282] Building C object CMakeFiles/firestaff_m12.dir/input_remap_m12.c.o\n[253/282] Building C object CMakeFiles/firestaff_m12.dir/save_browser_m12.c.o\n[254/282] Building C object CMakeFiles/firestaff_m12.dir/custom_dungeon_m12.c.o\n[255/282] Building C object CMakeFiles/firestaff_m12.dir/item_encyclopedia_m12.c.o\n[256/282] Building C object CMakeFiles/firestaff_m12.dir/campaign_m12.c.o\n[257/282] Building C object CMakeFiles/firestaff_m12.dir/spell_reference_m12.c.o\n[258/282] Building C object CMakeFiles/firestaff_m12.dir/map_viewer_m12.c.o\n[259/282] Building C object CMakeFiles/firestaff_m12.dir/music_jukebox_m12.c.o\n[260/282] Building C object CMakeFiles/firestaff_m12.dir/gamepad_config_m12.c.o\n[261/282] Building C object CMakeFiles/firestaff_m12.dir/touch_layout_m12.c.o\n[262/282] Building C object CMakeFiles/firestaff_m12.dir/presentation_preview_m12.c.o\n[263/282] Building C object CMakeFiles/firestaff_m12.dir/screenshot_gallery_m12.c.o\n[264/282] Linking C static library libfirestaff_m12.a\n[265/282] Building C object CMakeFiles/firestaff_m11_hall_walkaround_runtime_probe.dir/probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c.o\n[266/282] Linking C executable firestaff_m11_hall_walkaround_runtime_probe\n[267/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/test_dm1_v1_movement_pipeline_pc34_compat.c.o\n[268/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_viewport_3d_pc34_compat.c.o\n[269/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_creature_render_pc34_compat.c.o\n[270/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_viewport_renderer_pc34.c.o\n[271/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_dungeon_world_pc34_compat.c.o\n[272/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v2_movement_engine_pc34.c.o\n[273/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/csb_v1_game_state_pc34_compat.c.o\n[274/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_champion_stats_pc34_compat.c.o\n[275/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_inventory_pc34_compat.c.o\n[276/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_spell_casting_pc34_compat.c.o\n[277/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_stairs_level_pc34_compat.c.o\n[278/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_text_message_pc34_compat.c.o\n[279/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_sound_pc34_compat.c.o\n[280/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_teleporter_pit_pc34_compat.c.o\n[281/282] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/dm1_v1_light_pc34_compat.c.o\n[282/282] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "narrow_test",
+      "name": "test_dm1_v1_movement_pipeline_pc34_compat",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/home/trv2/.openclaw/data/firestaff-builds/pass345-verify/test_dm1_v1_movement_pipeline_pc34_compat"
+        ],
+        "outputTail": "DM1 V1 Movement Pipeline Integration Tests\nSource: MOVESENS.C, COMMAND.C, CLIKMENU.C, CHAMPION.C, GAMELOOP.C\n\n\n138 passed, 0 failed\n",
+        "returncode": 0
+      }
+    },
+    {
+      "kind": "runtime_probe",
+      "name": "firestaff_m11_hall_walkaround_runtime_probe",
+      "ok": true,
+      "result": {
+        "cmd": [
+          "/home/trv2/.openclaw/data/firestaff-builds/pass345-verify/firestaff_m11_hall_walkaround_runtime_probe",
+          "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "/home/trv2/work/firestaff/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe"
+        ],
+        "outputTail": "wrote /home/trv2/work/firestaff/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe/dm1_v1_hall_walkaround_runtime_probe.md and /home/trv2/work/firestaff/parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe/dm1_v1_hall_walkaround_runtime_probe.json\nPASS dm1 v1 hall walkaround runtime probe\n",
+        "returncode": 0
+      }
+    },
+    {
+      "championPanelStable": true,
+      "kind": "runtime_probe_manifest",
+      "ok": true,
+      "path": "parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe/dm1_v1_hall_walkaround_runtime_probe.json",
+      "routeChecks": [
+        {
+          "expected": {
+            "direction": 2,
+            "mapX": 1,
+            "mapY": 3
+          },
+          "name": "start_hall_initial_south",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 1,
+            "mapX": 1,
+            "mapY": 3,
+            "result": 1
+          },
+          "name": "turn_left_east_view_changes",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 1,
+            "mapX": 1,
+            "mapY": 3,
+            "result": 1
+          },
+          "name": "step_east_blocked_by_hall_side",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 0,
+            "front.mirrorOrdinal": 1,
+            "result": 1
+          },
+          "name": "turn_left_north_front_mirror",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 0,
+            "mapX": 1,
+            "mapY": 3,
+            "result": 1
+          },
+          "name": "step_north_mirror_wall_blocked",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 3,
+            "result": 1
+          },
+          "name": "turn_left_west_open_lane",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 3,
+            "mapX": 0,
+            "mapY": 3,
+            "result": 1
+          },
+          "name": "step_west_moves_in_hall",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 0,
+            "result": 1
+          },
+          "name": "turn_right_north_from_west_cell",
+          "ok": true
+        },
+        {
+          "expected": {
+            "direction": 1,
+            "front.mirrorOrdinal": 2,
+            "result": 1
+          },
+          "name": "turn_right_east_front_second_mirror",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "dm1Data": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "notClaimed": [
+    "DOSBox/original FIRES debugger hit",
+    "pixel parity",
+    "full launcher handoff closure"
+  ],
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass345_dm1_v1_route_to_live_viewport_bridge.v1",
+  "sourceLocks": [
+    {
+      "file": "COMMAND.C",
+      "lines": "252-260",
+      "markers": [
+        "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
+        "C001_COMMAND_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C002_COMMAND_TURN_RIGHT"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "272-305",
+      "markers": [
+        "0xAB34",
+        "0xAB35",
+        "0xAB36",
+        "0x9B41"
+      ]
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lines": "150-155",
+      "markers": [
+        "G0310_i_DisabledMovementTicks",
+        "G0311_i_ProjectileDisabledMovementTicks"
+      ]
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lines": "164-219",
+      "markers": [
+        "F0361_COMMAND_ProcessKeyPress",
+        "F0380_COMMAND_ProcessQueue_CPSC",
+        "G0321_B_StopWaitingForPlayerInput"
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "markers": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval"
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "markers": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ]
+    },
+    {
+      "file": "MOVESENS.C",
+      "lines": "316-326",
+      "markers": [
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ]
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BRIDGE_CLOSED",
+  "timestampUtc": "2026-05-07T19:35:40.350939+00:00"
+}

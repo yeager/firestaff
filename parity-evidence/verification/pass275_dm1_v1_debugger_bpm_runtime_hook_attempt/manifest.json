@@ -1,0 +1,104 @@
+{
+  "address_strings_seen": {
+    "F0128_DUNGEONVIEW_Draw_CPSF": true,
+    "F0267_MOVE_GetMoveResult_CPSCE": true,
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+    "F0380_COMMAND_ProcessQueue_CPSC": true,
+    "G0306_i_PartyMapX": true,
+    "G0307_i_PartyMapY": true,
+    "G0308_i_PartyDirection": true,
+    "G0432_as_CommandQueue": true,
+    "G0433_i_CommandQueueFirstIndex": true,
+    "G0434_i_CommandQueueLastIndex": true,
+    "G0435_B_CommandQueueLocked": false
+  },
+  "addresses": {
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "F0267_MOVE_GetMoveResult_CPSCE": "1859:0516",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699",
+    "G0306_i_PartyMapX": "2C20:3C94",
+    "G0307_i_PartyMapY": "2C20:3CE0",
+    "G0308_i_PartyDirection": "2C20:3C92",
+    "G0432_as_CommandQueue": "2C20:3E7A",
+    "G0433_i_CommandQueueFirstIndex": "2C20:3EC8",
+    "G0434_i_CommandQueueLastIndex": "2C20:1F08",
+    "G0435_B_CommandQueueLocked": "2C20:1F0A"
+  },
+  "blocker": "The debugger can set pass273 BP/BPM addresses and continue via vt100 F5 (Esc O t), and it observed live BPM changes at G0432/G0433/G0308/G0306/G0307. However the automated route injector was synchronous: once an early BPM stopped the emulator, subsequent xdotool kp5/kp4/kp6 inputs were posted while the DOS runtime was paused. The transcript therefore does not prove the required key-input -> G0432 write -> F0380 dequeue -> party tuple mutation -> F0128 consumption chain.",
+  "dosbox_debug": "/usr/bin/dosbox-debug",
+  "dosbox_window_pid": 1873113,
+  "key_rc": 0,
+  "listed_breakpoints_or_watches": [
+    "1859:0516",
+    "1EA4:010D",
+    "1EA4:01AA",
+    "23AD:40FE"
+  ],
+  "memdump_text": "parity-evidence/verification/pass275_dm1_v1_debugger_bpm_runtime_hook_attempt/MEMDUMP.TXT",
+  "method": "tmux TERM=vt100 debugger commands; vt100 F5 workaround Escape O t; Xvfb+xdotool game input",
+  "promotion_rule": "Do not claim runtime hook unless transcript proves key input writes G0432, F0380 dequeues, movement/turn mutates G0308 or G0306/G0307, and F0128 consumes resulting tuple.",
+  "route": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 kp5 wait:700 kp4 wait:700 kp6 wait:700",
+  "schema": "pass275_dm1_v1_debugger_bpm_runtime_hook_attempt.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        1,
+        16
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "COMMAND.C",
+      "line_range": [
+        2045,
+        2156
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "CLIKMENU.C",
+      "line_range": [
+        142,
+        328
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line_range": [
+        55,
+        91
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "MOVESENS.C",
+      "line_range": [
+        316,
+        556
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line_range": [
+        8318,
+        8611
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "status": "BLOCKED_NO_PROVEN_RUNTIME_HOOK",
+  "timestamp_utc": "2026-05-06T19:05:27.100450+00:00",
+  "transcript": "parity-evidence/verification/pass275_dm1_v1_debugger_bpm_runtime_hook_attempt/dosbox_debug_runtime_attempt.clean.txt"
+}

@@ -1,5 +1,5 @@
 probe=redmcsb_inventory_source_sequence
-sourceRoot=/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
+sourceRoot=<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source
 sourceRange=DEFS.H:778-817 label=slot ids 0..37, including chest slots status=ok
 sourceRange=DEFS.H:1873-1878 label=slot-box/chest constants and hand-slot index macro status=ok
 sourceRange=DATA.C:927-1023 label=slot-box locations/zones for status hands, inventory, and chest status=ok

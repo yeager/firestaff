@@ -18,7 +18,7 @@ Scope: evidence gate only. This does **not** claim Firestaff runtime behavior, b
 
 ## Verification
 
-Commands run on N2 (`firestaff-worker`) in `/home/trv2/work/firestaff`:
+Commands run on N2 (`firestaff-worker`) in `<firestaff-repo>`:
 
 ```sh
 python3 -m py_compile tools/verify_csb_save_header_routing_source_lock.py

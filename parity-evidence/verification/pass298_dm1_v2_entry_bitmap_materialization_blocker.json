@@ -1,0 +1,242 @@
+{
+  "canonicalGraphicsDat": {
+    "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+  },
+  "currentMismatch": {
+    "mismatchedPixels": 16405,
+    "totalPixels": 30464
+  },
+  "errors": [],
+  "missingImplementationSeam": "Decode GRAPHICS.DAT graphic indexes 78, 79, and 107 into the I34E native bitmap handles and blit/clip them through the ReDMCSB F0674/F0792/F0132 viewport path instead of dm1_v2_vp_render_composition_flat symbolic rectangles.",
+  "pass": "pass298_dm1_v2_entry_bitmap_materialization_blocker",
+  "pixelParityClaim": false,
+  "repro": [
+    "cmake -S . -B build-pass298",
+    "cmake --build build-pass298 --target dm1_v2_export_entry_viewport_png",
+    "ctest --test-dir build-pass298 --output-on-failure -R \"dm1_v2_(entry_viewport_png_export_gate|entry_viewport_png_comparator_gate|completion_matrix)\"",
+    "python3 tools/verify_dm1_v2_entry_bitmap_materialization_blocker.py"
+  ],
+  "requiredOriginalAssets": [
+    {
+      "graphicIndex": 78,
+      "requiredBlit": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2108_Floor, C701_ZONE_VIEWPORT_FLOOR_AREA, flip)",
+      "requiredDecode": "F0490_MEMORY_LoadDecompressAndExpandGraphic(78, F0631_GetBitmapPointer(G2108_Floor))",
+      "role": "floor.base",
+      "runtimeNativeBitmap": "G2108_Floor",
+      "runtimeNativeBitmapInitialValue": -1,
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "M650_GRAPHIC_FLOOR_SET_0_FLOOR",
+      "viewportZone": "C701_ZONE_VIEWPORT_FLOOR_AREA"
+    },
+    {
+      "graphicIndex": 79,
+      "requiredBlit": "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport) or F0792_DUNGEONVIEW_DrawBitmapYYY(G2109_Ceiling, C700_ZONE_VIEWPORT_CEILING_AREA, flip)",
+      "requiredDecode": "F0490_MEMORY_LoadDecompressAndExpandGraphic(79, F0631_GetBitmapPointer(G2109_Ceiling))",
+      "role": "ceiling.base",
+      "runtimeNativeBitmap": "G2109_Ceiling",
+      "runtimeNativeBitmapInitialValue": -2,
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "M651_GRAPHIC_FLOOR_SET_0_CEILING",
+      "viewportZone": "C700_ZONE_VIEWPORT_CEILING_AREA"
+    },
+    {
+      "graphicIndex": 107,
+      "requiredBlit": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2107_WallSet[C14_WALL_D3C], C704_ZONE_WALL_D3C, flip)",
+      "requiredDecode": "F0490_MEMORY_LoadDecompressAndExpandGraphic(107, F0631_GetBitmapPointer(G2107_WallSet[C14_WALL_D3C]))",
+      "role": "wall.front.blocking.d3c",
+      "runtimeNativeBitmap": "G2107_WallSet[C14_WALL_D3C]",
+      "runtimeNativeBitmapInitialValue": -5,
+      "sourceFile": "GRAPHICS.DAT",
+      "symbol": "C107_GRAPHIC_WALLSET_0_D3C",
+      "viewportZone": "C704_ZONE_WALL_D3C"
+    }
+  ],
+  "scope": "Exact blocker manifest for DM1 V2 entry viewport map=0 x=1 y=3 dir=2 bitmap-backed materialization.",
+  "sourceAnchors": [
+    {
+      "assertion": "floor-set base graphic family starts at GRAPHICS.DAT index 78",
+      "file": "DEFS.H",
+      "line": 2348,
+      "needle": "M644_GRAPHIC_FIRST_FLOOR_SET",
+      "ok": true
+    },
+    {
+      "assertion": "entry map floor set 0 floor is GRAPHICS.DAT index 78",
+      "file": "DEFS.H",
+      "line": 2349,
+      "needle": "M650_GRAPHIC_FLOOR_SET_0_FLOOR",
+      "ok": true
+    },
+    {
+      "assertion": "entry map floor set 0 ceiling is GRAPHICS.DAT index 79",
+      "file": "DEFS.H",
+      "line": 2350,
+      "needle": "M651_GRAPHIC_FLOOR_SET_0_CEILING",
+      "ok": true
+    },
+    {
+      "assertion": "wall-set 0 graphic family starts at GRAPHICS.DAT index 86",
+      "file": "DEFS.H",
+      "line": 2351,
+      "needle": "M646_GRAPHIC_FIRST_WALL_SET",
+      "ok": true
+    },
+    {
+      "assertion": "blocking D3C front wall is GRAPHICS.DAT index 107",
+      "file": "DEFS.H",
+      "line": 2373,
+      "needle": "C107_GRAPHIC_WALLSET_0_D3C",
+      "ok": true
+    },
+    {
+      "assertion": "runtime G2107 wall-set slot for D3C is slot 14",
+      "file": "DEFS.H",
+      "line": 3437,
+      "needle": "C14_WALL_D3C",
+      "ok": true
+    },
+    {
+      "assertion": "I34E native bitmap handle for floor",
+      "file": "DUNVIEW.C",
+      "line": 126,
+      "needle": "G2108_Floor = -1",
+      "ok": true
+    },
+    {
+      "assertion": "I34E native bitmap handle for ceiling",
+      "file": "DUNVIEW.C",
+      "line": 127,
+      "needle": "G2109_Ceiling = -2",
+      "ok": true
+    },
+    {
+      "assertion": "I34E runtime wall-set native bitmap table",
+      "file": "DUNVIEW.C",
+      "line": 183,
+      "needle": "G2107_WallSet[15]",
+      "ok": true
+    },
+    {
+      "assertion": "G2107[C14_WALL_D3C] native bitmap handle for blocking front wall",
+      "file": "DUNVIEW.C",
+      "line": 200,
+      "needle": "-5 }; /* Wall D3C */",
+      "ok": true
+    },
+    {
+      "assertion": "floor/ceiling GRAPHICS.DAT index calculation",
+      "file": "DUNVIEW.C",
+      "line": 2043,
+      "needle": "M644_GRAPHIC_FIRST_FLOOR_SET",
+      "ok": true
+    },
+    {
+      "assertion": "floor bitmap decode from GRAPHICS.DAT",
+      "file": "DUNVIEW.C",
+      "line": 2053,
+      "needle": "F0490_MEMORY_LoadDecompressAndExpandGraphic(AP0098_i_GraphicIndex",
+      "ok": true
+    },
+    {
+      "assertion": "ceiling bitmap decode from GRAPHICS.DAT",
+      "file": "DUNVIEW.C",
+      "line": 2054,
+      "needle": "AP0098_i_GraphicIndex + 1",
+      "ok": true
+    },
+    {
+      "assertion": "wall-set GRAPHICS.DAT index calculation",
+      "file": "DUNVIEW.C",
+      "line": 2153,
+      "needle": "M646_GRAPHIC_FIRST_WALL_SET",
+      "ok": true
+    },
+    {
+      "assertion": "loads 15 wall-set bitmaps",
+      "file": "DUNVIEW.C",
+      "line": 2215,
+      "needle": "L0070_i_WallSetLastGraphicIndex < 15",
+      "ok": true
+    },
+    {
+      "assertion": "wall-set bitmap decode into native table",
+      "file": "DUNVIEW.C",
+      "line": 2216,
+      "needle": "G2107_WallSet[L0070_i_WallSetLastGraphicIndex]",
+      "ok": true
+    },
+    {
+      "assertion": "I34E bitmap-zone blit/clipping function",
+      "file": "DUNVIEW.C",
+      "line": 3288,
+      "needle": "F0792_DUNGEONVIEW_DrawBitmapYYY",
+      "ok": true
+    },
+    {
+      "assertion": "zone clipping/dimensions before blit",
+      "file": "DUNVIEW.C",
+      "line": 3300,
+      "needle": "F0635_(L2443_puc_Bitmap",
+      "ok": true
+    },
+    {
+      "assertion": "bitmap materialization into G0296_puc_Bitmap_Viewport",
+      "file": "DUNVIEW.C",
+      "line": 3301,
+      "needle": "F0132_VIDEO_Blit",
+      "ok": true
+    },
+    {
+      "assertion": "viewport redraw begins with floor/ceiling request",
+      "file": "DUNVIEW.C",
+      "line": 8337,
+      "needle": "G0297_B_DrawFloorAndCeilingRequested",
+      "ok": true
+    },
+    {
+      "assertion": "ceiling bitmap copied into viewport on flipped entry route",
+      "file": "DUNVIEW.C",
+      "line": 8367,
+      "needle": "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport)",
+      "ok": true
+    },
+    {
+      "assertion": "floor bitmap blitted/clipped into viewport floor zone",
+      "file": "DUNVIEW.C",
+      "line": 8368,
+      "needle": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2108_Floor",
+      "ok": true
+    },
+    {
+      "assertion": "D3/D2/D1/D0 draw walk starts after base",
+      "file": "DUNVIEW.C",
+      "line": 8490,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "ok": true
+    },
+    {
+      "assertion": "near/current square draw terminates walk",
+      "file": "DUNVIEW.C",
+      "line": 8542,
+      "needle": "F0127_DUNGEONVIEW_DrawSquareD0C",
+      "ok": true
+    },
+    {
+      "assertion": "I34E blocking front wall draws bitmap slot C14/D3C",
+      "file": "DUNVIEW.C",
+      "line": 6708,
+      "needle": "F0792_DUNGEONVIEW_DrawBitmapYYY(G2107_WallSet[C14_WALL_D3C]",
+      "ok": true
+    },
+    {
+      "assertion": "front blocking wall returns after wall materialization",
+      "file": "DUNVIEW.C",
+      "line": 6720,
+      "needle": "return",
+      "ok": true
+    }
+  ],
+  "status": "passed"
+}

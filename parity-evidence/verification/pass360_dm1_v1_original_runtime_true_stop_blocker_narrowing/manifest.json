@@ -1,0 +1,208 @@
+{
+  "blockerNarrowing": {
+    "nextUnblocker": "Re-establish the live FIRES CS:IP map or an equivalent source-bound runtime locator for F0128/F0097/VIDRV, then rerun a single owned-PTY sequence that records F0128 -> F0097/VIDRV after controlled movement input.",
+    "notBlockedBy": [
+      "Firestaff M11 movement route (pass349/pass351/pass352/pass358/pass359)",
+      "owned-PTY debugger control primitive (pass324)",
+      "BPLIST/setup parser ambiguity (strictly rejected here)",
+      "breakpoint retention alone (pass329/pass330 retain F0128 but still do not stop at it)"
+    ],
+    "promoteViewportComparator": false,
+    "stillBlockedBy": "No bounded controlled original FIRES run produces a strict post-running code stop at F0128, followed by F0097 or VIDRV slot 9, at the current candidate CS:IP targets."
+  },
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "candidateRuntimeTargets": {
+    "F0097_DUNGEONVIEW_DrawViewport": "2809:1E31",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+    "VIDRV_09_BlitViewPort_indirect_call_candidate": "2809:1EFF"
+  },
+  "head": "b4e8667904094c58831dbe96303789769c3dcbc5",
+  "notClaimed": [
+    "new original FIRES F0128/F0097/VIDRV true stop",
+    "original-vs-Firestaff pixel parity",
+    "runtime proof from static offsets alone",
+    "runtime proof from BPLIST/setup text"
+  ],
+  "priorArtifactAudit": {
+    "pass315": {
+      "exists": true,
+      "expected": "F0128_RUNTIME_HIT_VERIFIED_F0380_REMAINS_BLOCKED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass315_dm1_v1_f0128_runtime_hit_verifier/manifest.json",
+      "role": "legacy F0128 claim to reclassify under strict parser",
+      "status": "F0128_RUNTIME_HIT_VERIFIED_F0380_REMAINS_BLOCKED",
+      "strictReclassification": {
+        "acceptedAsStrictTrueStopNow": false,
+        "legacyClaimPresent": true,
+        "legacyHitSignature": "BP 23AD:40FE",
+        "reason": "legacy evidence records a BP/list signature from a source pass that remained blocked; pass324/pass359 require a post-running code-view transition instead",
+        "sourcePassStatus": "BLOCKED_NO_PROVEN_RUNTIME_HOOK"
+      }
+    },
+    "pass324": {
+      "exists": true,
+      "expected": "PASS_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE_FOUND",
+      "ok": true,
+      "path": "parity-evidence/verification/pass324_dm1_v1_debugger_code_stop_control_primitive/manifest.json",
+      "role": "owned-PTY strict control primitive",
+      "status": "PASS_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE_FOUND"
+    },
+    "pass326": {
+      "exists": true,
+      "expected": "BLOCKED_PASS326_DIRECT_PTY_F0128_CODE_STOP_NOT_PROVEN",
+      "ok": true,
+      "path": "parity-evidence/verification/pass326_dm1_v1_direct_pty_f0128_code_stop/manifest.json",
+      "role": "strict F0128 target stop attempt",
+      "runtimeFlags": {
+        "breakpointRetainedPostRoute": false,
+        "postRoutePauseCodeAddr": null,
+        "ran": true,
+        "sawRunning": false,
+        "strictF0097OrVidrvAfterF0128": false,
+        "strictF0128Stop": false
+      },
+      "status": "BLOCKED_PASS326_DIRECT_PTY_F0128_CODE_STOP_NOT_PROVEN"
+    },
+    "pass328": {
+      "exists": true,
+      "expected": "BLOCKED_PASS328_BREAKPOINT_ARMING_TIMING",
+      "ok": true,
+      "path": "parity-evidence/verification/pass328_dm1_v1_direct_pty_postload_route_timing/manifest.json",
+      "role": "post-load arming timing attempt",
+      "runtimeFlags": {
+        "breakpointRetainedPostRoute": false,
+        "postRoutePauseCodeAddr": null,
+        "ran": true,
+        "sawRunning": false,
+        "strictF0097OrVidrvAfterF0128": false,
+        "strictF0128Stop": false
+      },
+      "status": "BLOCKED_PASS328_BREAKPOINT_ARMING_TIMING"
+    },
+    "pass329": {
+      "exists": true,
+      "expected": "BLOCKED_PASS329_CODE_STOP_TRANSITION_NOT_EMITTED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass329_dm1_v1_direct_pty_breakpoint_arming_timing/manifest.json",
+      "role": "breakpoint retention / arming timing attempt",
+      "runtimeFlags": {
+        "breakpointRetainedPostRoute": true,
+        "postRoutePauseCodeAddr": null,
+        "ran": true,
+        "sawRunning": true,
+        "strictF0097OrVidrvAfterF0128": false,
+        "strictF0128Stop": false
+      },
+      "status": "BLOCKED_PASS329_CODE_STOP_TRANSITION_NOT_EMITTED"
+    },
+    "pass330": {
+      "exists": true,
+      "expected": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE",
+      "ok": true,
+      "path": "parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json",
+      "role": "route-to-target stop transition investigation",
+      "runtimeFlags": {
+        "breakpointRetainedPostRoute": true,
+        "postRoutePauseCodeAddr": "280C:01E3",
+        "ran": true,
+        "sawRunning": true,
+        "strictF0097OrVidrvAfterF0128": false,
+        "strictF0128Stop": false
+      },
+      "status": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE"
+    },
+    "pass357": {
+      "exists": true,
+      "expected": "BLOCKED_PASS357_ORIGINAL_RUNTIME_TRUE_STOP_CONTROL_REQUIRED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass357_dm1_v1_original_runtime_true_stop_control_blocker/manifest.json",
+      "role": "prior consolidated true-stop blocker",
+      "status": "BLOCKED_PASS357_ORIGINAL_RUNTIME_TRUE_STOP_CONTROL_REQUIRED"
+    },
+    "pass359": {
+      "exists": true,
+      "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
+      "ok": true,
+      "path": "parity-evidence/verification/pass359_dm1_v1_movement_route_runtime_blocker_followup/manifest.json",
+      "role": "movement route retired / original true-stop active classification",
+      "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
+    }
+  },
+  "repo": "/home/trv2/work/firestaff",
+  "schema": "pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.v1",
+  "sourceAudit": [
+    {
+      "decision": "F0128 is the source redraw seam that consumes the current party tuple.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "mainloop_draw_consumes_party_tuple",
+      "lines": "80-90",
+      "missingCount": 0,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "decision": "Keyboard input is drained before F0380 queue dispatch during the wait loop.",
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "mainloop_input_then_queue_dispatch",
+      "lines": "164-219",
+      "missingCount": 0,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "decision": "F0380 remains the source movement command dequeue/dispatch seam.",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "queue_dequeue_dispatch",
+      "lines": "2045-2156",
+      "missingCount": 0,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "decision": "Accepted turns/steps mutate direction/coordinates and apply movement cooldown.",
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "turn_step_mutate_party_tuple",
+      "lines": "142-174,180-347",
+      "missingCount": 0,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "decision": "F0128 composes viewport content and calls F0097 for presentation.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_composes_then_calls_f0097",
+      "lines": "8336-8611",
+      "missingCount": 0,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "decision": "F0097 is the PC34 viewport-present seam through video-driver slot 9.",
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_pc34_vidrv9_present",
+      "lines": "709-858",
+      "missingCount": 0,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    },
+    {
+      "decision": "VIDRV slot 9 is the source viewport blit implementation.",
+      "file": "VIDEODRV.C",
+      "function": "G8133_ac_Code1DispatchTable / F8161_VIDRV_09_BlitViewPort",
+      "id": "vidrv_slot9_blit_binding",
+      "lines": "941-957,3566-3582",
+      "missingCount": 0,
+      "ok": true,
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C"
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
+  "timestampUtc": "2026-05-07T22:47:02.719642+00:00"
+}

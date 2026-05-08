@@ -1,5 +1,5 @@
 V1 viewport ReDMCSB draw-stack source gate passed
-- ReDMCSB F0115 starts at /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:4547
+- ReDMCSB F0115 starts at <redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:4547
 - ReDMCSB function structure: note projectile/creature before drawing: line 4569
 - ReDMCSB function structure: draw each object: line 4570
 - ReDMCSB function structure: draw creature after objects: line 4573
@@ -11,12 +11,12 @@ V1 viewport ReDMCSB draw-stack source gate passed
 - ReDMCSB object native graphic: line 4855
 - ReDMCSB creature native graphic: line 5311
 - ReDMCSB projectile native graphic: line 5693
-- Firestaff m11_draw_wall_face starts at /home/trv2/work/firestaff/m11_game_view.c:7731
+- Firestaff m11_draw_wall_face starts at <firestaff-repo>/m11_game_view.c:7731
 - Firestaff wall front wall/door/stair face: line 7754
 - Firestaff wall wall ornament before contents: line 7824
 - Firestaff wall door ornament before contents: line 7838
 - Firestaff wall open-cell contents: line 7845
-- Firestaff m11_draw_wall_contents starts at /home/trv2/work/firestaff/m11_game_view.c:7854
+- Firestaff m11_draw_wall_contents starts at <firestaff-repo>/m11_game_view.c:7854
 - Firestaff contents early open-cell guard: line 7866
 - Firestaff contents layer 0 floor ornaments: line 7877
 - Firestaff contents floor ornament draw: line 7884

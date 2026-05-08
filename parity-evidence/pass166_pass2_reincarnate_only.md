@@ -1,7 +1,7 @@
 # Pass 166 — pass 2 reincarnate-only rerun
 
 - Host: N2 (`Firestaff-Worker-VM`)
-- Run base: `/home/trv2/.openclaw/data/firestaff-n2-runs/20260429-073006-pass166-pass2-reincarnate-only`
+- Run base: `<firestaff-data>/firestaff-n2-runs/20260429-073006-pass166-pass2-reincarnate-only`
 - Evidence root: `parity-evidence/verification/pass166_source_portrait_click_route_probe/enter_portrait11182_then_reincarnate`
 - Scenario: `enter_portrait11182_then_reincarnate` / `DM -vv -sn`
 - Runner note: run under `xvfb-run -a` after the first attempt failed with `DISPLAY=(null)`.

@@ -10,10 +10,7 @@ import sys
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_REDMCSB_ROOT = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+DEFAULT_REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", DEFAULT_REDMCSB_ROOT))
 FIRESTAFF_SRC = ROOT / "m11_game_view.c"
 FIRESTAFF_PROBE = ROOT / "probes/m11/firestaff_m11_game_view_probe.c"

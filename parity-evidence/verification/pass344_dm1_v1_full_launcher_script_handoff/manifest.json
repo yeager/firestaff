@@ -1,0 +1,138 @@
+{
+  "branch": "worker/fix-blockers-pass304-original-capture-20260507",
+  "exact_narrow_launcher_command": {
+    "argv": [
+      "timeout",
+      "45s",
+      "/home/trv2/.openclaw/data/firestaff-builds/pass344-verify/firestaff",
+      "--duration",
+      "12000",
+      "--width",
+      "1920",
+      "--height",
+      "1080",
+      "--data-dir",
+      "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+      "--script",
+      "enter,down,down,down,down,down,down,enter,left,up,right"
+    ],
+    "env": {
+      "FIRESTAFF_AUTOTEST": "1",
+      "FIRESTAFF_FAIL_IF_NO_LAUNCH": "1",
+      "HOME": "/home/trv2/.openclaw/data/firestaff-homes/pass344-verify",
+      "SDL_VIDEODRIVER": "dummy"
+    },
+    "log": "parity-evidence/verification/pass344_dm1_v1_full_launcher_script_handoff/full_launcher_script_probe.redacted.log",
+    "returncode": 0,
+    "script": "enter,down,down,down,down,down,down,enter,left,up,right"
+  },
+  "failures": [],
+  "gates": {
+    "build_firestaff_rc": 0,
+    "cmake_configure_rc": 0,
+    "probe_rc": 0
+  },
+  "head": "a29e68fda1d1446d28ab96a2b248fa2e36032434",
+  "pass": "pass344_dm1_v1_full_launcher_script_handoff",
+  "redmcsb_anchors": [
+    {
+      "file": "ENTRANCE.C",
+      "lines": "739-747",
+      "meaning": "entrance installs primary mouse input, no movement secondary table"
+    },
+    {
+      "file": "ENTRANCE.C",
+      "lines": "856-882",
+      "meaning": "entrance discards input then drains command queue until new-game mode changes"
+    },
+    {
+      "file": "STARTUP2.C",
+      "lines": "1179-1182",
+      "meaning": "post-load game installs interface primary plus movement secondary input tables"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lines": "164-168,215",
+      "meaning": "game loop drains keyboard and command queue while waiting for player input"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "243-260",
+      "meaning": "PC34 keyboard movement command table maps turn/move commands"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "375-405",
+      "meaning": "interface primary and movement secondary mouse command tables"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "meaning": "queue processor owns command dispatch seam"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2438-2451",
+      "meaning": "entrance enter/resume commands switch load mode"
+    }
+  ],
+  "repo": "/home/trv2/work/firestaff",
+  "static_results": [
+    {
+      "check": "script token reader exists",
+      "file": "main_loop_m11.c",
+      "needle": "m11_next_script_input",
+      "ok": true
+    },
+    {
+      "check": "script SDL event bridge exists",
+      "file": "main_loop_m11.c",
+      "needle": "m11_push_script_event_token",
+      "ok": true
+    },
+    {
+      "check": "active game-view input branch exists",
+      "file": "main_loop_m11.c",
+      "needle": "if (gameView.active)",
+      "ok": true
+    },
+    {
+      "check": "post-launch tokens route to game view",
+      "file": "main_loop_m11.c",
+      "needle": "M11_GameView_HandleInput(&gameView, input)",
+      "ok": true
+    },
+    {
+      "check": "launcher top-level short-circuit remains disabled",
+      "file": "main_loop_m11.c",
+      "needle": "Do not short-circuit Enter/Right",
+      "ok": true
+    },
+    {
+      "check": "M12 launch request opens runtime",
+      "file": "main_loop_m11.c",
+      "needle": "m11_open_requested_launch(&gameView, &menuState",
+      "ok": true
+    },
+    {
+      "check": "explicit launch row requests runtime handoff",
+      "file": "menu_startup_m12.c",
+      "needle": "state->launchRequested = 1",
+      "ok": true
+    },
+    {
+      "check": "V3 block remains explicit",
+      "file": "menu_startup_m12.c",
+      "needle": "pmode == M12_PRESENTATION_V3_MODERN_3D",
+      "ok": true
+    },
+    {
+      "check": "modern mouse launch hit remains explicit",
+      "file": "menu_hit_m12.c",
+      "needle": "M12_HIT_GAMEOPT_LAUNCH",
+      "ok": true
+    }
+  ],
+  "status": "MOVEMENT_PROVED_FULL_LAUNCHER",
+  "utc": "2026-05-07T19:34:49.310406+00:00"
+}

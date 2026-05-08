@@ -1,0 +1,64 @@
+(B=---(Register Overview)---
+(BEAX=ESI=DS=ES=FS=GS=SS=
+EBX=EDI=CS=EIP=C  Z  S  O  A  P  D  I  T
+ECX=EBP=IOPL   CPL
+EDX=ESP=
+---(Data Overview   Scroll: page up/down)---
+---(Code Overview   Scroll: up/down     )---
+---(Variable Overview)---
+---(OutPut/Input    Scroll: home/end    )---(B
+DOSBox version 0.74-3
+Copyright 2002-2019 DOSBox Team, published under GNU GPL.
+---
+CONFIG:Loading primary settings from config file <n2-home>/.dosbox/dosbox-0.74-3.conf
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5727:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+MIXER:Can't open audio: ALSA: Couldn't open audio device: No such file or directory , running in nosound mode.
+ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
+ALSA:Can't open sequencer
+MIDI:Opened device:none
+0000:0000     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0010     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0020     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0030     60 10 00 F0 60 10 00 F0 80 10 00 F0 60 10 00 F0  `...`.`...
+0000:0040     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0050     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0060     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0070     60 10 00 F0 60 10 00 F0 60 10 00 F0 60 10 00 F0  `...`...`...`...
+0000:0000  60pusha
+(B0000:0001  1000adc  [bx+si],alds:[0000]=1060
+0000:0003  F060lock pusha
+0000:0005  1000adc  [bx+si],alds:[0000]=1060
+0000:0007  F060lock pusha
+0000:0009  1000adc  [bx+si],alds:[0000]=1060
+0000:000B  F060lock pusha
+0000:000D  1000adc  [bx+si],alds:[0000]=1060
+0000:000F  F060lock pusha
+0000:0011  1000adc  [bx+si],alds:[0000]=1060
+(Running)00  DS=00000000000000000000 Real00  CS=00000  C0 Z0 S0 O0 A0 P0 D0 I1(B T0000  CPL00000: SBLASTER:DSP:Reset
+0: IO:Read from port 0278
+0: IO:Read from port 0279
+0: IO:Read from port 03BC
+0: IO:Read from port 03BE
+0: INT10:Set Video Mode 3
+0: VGA:Blinking 8
+0: BIOS:Keyboard layout file auto not found
+0: BIOS:Keyboard layout file auto not found
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: FILES:file open command 2 file CON
+0: EXEC:Parsing command line: AUTOEXEC.BAT
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: EXEC:Parsing command line: SET BLASTER=A220 I7 D1 H5 T6
+0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+0: EXEC:Parsing command line: exit
+0: SBLASTER:DSP:Reset
+c

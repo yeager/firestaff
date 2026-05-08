@@ -28,8 +28,8 @@ This visual oracle is intentionally weaker than a future memory oracle for `G030
 
 ## Attempt audit
 
-- attempt dir: `/home/trv2/work/firestaff-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe`
-- classifier JSON: `/home/trv2/work/firestaff-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe/pass80_movement_six_class_gate.json`
+- attempt dir: `<firestaff-repo>-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe`
+- classifier JSON: `<firestaff-repo>-pass220-readiness/verification-screens/pass212-n2-state-aware-movement-probe/pass80_movement_six_class_gate.json`
 - classifier pass: `False`
 - class counts: `{'dungeon_gameplay': 6}`
 - duplicate SHA counts: `{'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': 6}`
@@ -57,4 +57,4 @@ Blocked: the current captures are gameplay-classified but do not expose post-com
 - shot 4 `move_left_after_gate` repeats the previous raw SHA; no post-command redraw/state observable
 - pass80 duplicate-frame gate failed; repeated raw SHA values cannot prove post-command redraw
 
-Non-claims: no DANNESBURK use, no push, no PNG/PPM committed, no original-vs-Firestaff pixel parity claim.
+Non-claims: no <private-host> use, no push, no PNG/PPM committed, no original-vs-Firestaff pixel parity claim.

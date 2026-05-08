@@ -1,0 +1,518 @@
+{
+  "checks": {
+    "frame_offsets_extracted": true,
+    "g2107_wall_order_ok": true,
+    "greatstone_pc34_graphics_listed": true,
+    "pass305_wall_records_ok": true,
+    "pass318_blocker_preserved": true,
+    "pass320_blocker_preserved": true,
+    "source_audit_ok": true,
+    "tiledefs_absence_recorded": true,
+    "vidrv_candidate_bound": true
+  },
+  "existingProbeAudit": {
+    "decision": "Preserve pass318/pass320 blocker: exact VIDRV call candidate is source/planned only until strict F0128 and F0097/VIDRV true stops are recaptured.",
+    "pass318Status": "BLOCKED_F0097_RUNTIME_HIT_STATIC_VIDRV_CANDIDATE_2809_1EFF",
+    "pass320ExactVidrvCandidate": "2809:1EFF",
+    "pass320Status": "BLOCKED_F0128_GATE_NOT_RECAPTURED_STRICT_STOP_FILTER",
+    "postF0128WindowPromotable": false
+  },
+  "frameOffsetBindings": [
+    {
+      "byteWidth": 64,
+      "frameIndex": 0,
+      "height": 51,
+      "sourceX": 18,
+      "sourceY": 0,
+      "viewSquare": "D3C",
+      "x1": 74,
+      "x2": 149,
+      "y1": 25,
+      "y2": 75
+    },
+    {
+      "byteWidth": 64,
+      "frameIndex": 1,
+      "height": 51,
+      "sourceX": 32,
+      "sourceY": 0,
+      "viewSquare": "D3L",
+      "x1": 0,
+      "x2": 83,
+      "y1": 25,
+      "y2": 75
+    },
+    {
+      "byteWidth": 64,
+      "frameIndex": 2,
+      "height": 51,
+      "sourceX": 0,
+      "sourceY": 0,
+      "viewSquare": "D3R",
+      "x1": 139,
+      "x2": 223,
+      "y1": 25,
+      "y2": 75
+    },
+    {
+      "byteWidth": 72,
+      "frameIndex": 3,
+      "height": 71,
+      "sourceX": 16,
+      "sourceY": 0,
+      "viewSquare": "D2C",
+      "x1": 60,
+      "x2": 163,
+      "y1": 20,
+      "y2": 90
+    },
+    {
+      "byteWidth": 72,
+      "frameIndex": 4,
+      "height": 71,
+      "sourceX": 61,
+      "sourceY": 0,
+      "viewSquare": "D2L",
+      "x1": 0,
+      "x2": 74,
+      "y1": 20,
+      "y2": 90
+    },
+    {
+      "byteWidth": 72,
+      "frameIndex": 5,
+      "height": 71,
+      "sourceX": 0,
+      "sourceY": 0,
+      "viewSquare": "D2R",
+      "x1": 149,
+      "x2": 223,
+      "y1": 20,
+      "y2": 90
+    },
+    {
+      "byteWidth": 128,
+      "frameIndex": 6,
+      "height": 111,
+      "sourceX": 48,
+      "sourceY": 0,
+      "viewSquare": "D1C",
+      "x1": 32,
+      "x2": 191,
+      "y1": 9,
+      "y2": 119
+    },
+    {
+      "byteWidth": 128,
+      "frameIndex": 7,
+      "height": 111,
+      "sourceX": 192,
+      "sourceY": 0,
+      "viewSquare": "D1L",
+      "x1": 0,
+      "x2": 63,
+      "y1": 9,
+      "y2": 119
+    },
+    {
+      "byteWidth": 128,
+      "frameIndex": 8,
+      "height": 111,
+      "sourceX": 0,
+      "sourceY": 0,
+      "viewSquare": "D1R",
+      "x1": 160,
+      "x2": 223,
+      "y1": 9,
+      "y2": 119
+    },
+    {
+      "byteWidth": 0,
+      "frameIndex": 9,
+      "height": 0,
+      "sourceX": 0,
+      "sourceY": 0,
+      "viewSquare": "D0C",
+      "x1": 0,
+      "x2": 223,
+      "y1": 0,
+      "y2": 135
+    },
+    {
+      "byteWidth": 16,
+      "frameIndex": 10,
+      "height": 136,
+      "sourceX": 0,
+      "sourceY": 0,
+      "viewSquare": "D0L",
+      "x1": 0,
+      "x2": 31,
+      "y1": 0,
+      "y2": 135
+    },
+    {
+      "byteWidth": 16,
+      "frameIndex": 11,
+      "height": 136,
+      "sourceX": 0,
+      "sourceY": 0,
+      "viewSquare": "D0R",
+      "x1": 192,
+      "x2": 223,
+      "y1": 0,
+      "y2": 135
+    }
+  ],
+  "greatstoneAtlasAudit": {
+    "atlasRoot": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+    "decision": "Greatstone lists PC 3.4 graphics.dat/dungeon graphics pages, but the local crawl does not contain the per-entry graphics.dat HTML payload; pass305 canonical GRAPHICS.DAT decode remains the byte-level wall tile authority.",
+    "dmPagePresent": true,
+    "graphicsDatLinkCount": 20,
+    "keywordIndexPresent": true,
+    "pc34GraphicsDatListed": true,
+    "pc34GraphicsLinks": [
+      "db_data/dm_pc_34/graphics.dat/graphics.dat.html",
+      "db_data/dm_pc_34_multi/graphics.dat/graphics.dat.html"
+    ],
+    "pc34MultiGraphicsDatListed": true,
+    "summaryPresent": true
+  },
+  "notClaimed": [
+    "new DOSBox runtime hit",
+    "pixel parity",
+    "new raw bitmap publication",
+    "TILEDEFS.C existence"
+  ],
+  "probePlan": {
+    "dosboxNeededForThisVerifier": false,
+    "nextBlocker": "Debugger stop/control sequencing: pass320 did not recapture the strict F0128 gate, so wall tile offset bindings are source/data locked but not live-runtime promoted.",
+    "nextRuntimeProbeShape": [
+      "Retain pass320 strict-stop filtering.",
+      "Arm F0128 23AD:40FE, F0097 2809:1E31, and the VIDRV call candidate 2809:1EFF after debugger readiness.",
+      "After the route reaches a true post-F0128 stop, capture G0296 viewport pointer, L2413 viewport box, G0076 flip flag, and wall draw-site sequence around G2107 ordinals used in DUNVIEW.C.",
+      "Promote each wall tile only when runtime draw-site ordinal -> G2107 negative bitmap id -> GRAPHICS.DAT index 93..107 -> frame offset is observed in order."
+    ],
+    "ownVerifier": "python3 tools/verify_pass323_dm1_v1_wall_graphics_offset_binding.py"
+  },
+  "runtimeOffsetBinding": {
+    "f0097Entry": "2809:1E31",
+    "promotionRule": "Promote only after strict true-stop recapture of F0128 followed by F0097/VIDRV call-window stop; do not use BPLIST/setup echoes.",
+    "sourceAnchor": "DRAWVIEW.C:857 PC-family (*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box)",
+    "vidrvSlot9CallCandidate": "2809:1EFF"
+  },
+  "schema": "pass323_dm1_v1_wall_graphics_offset_binding.v1",
+  "sourceAudit": [
+    {
+      "file": "DRAWVIEW.C",
+      "id": "drawview_pc_viewport_present",
+      "missing": [],
+      "ok": true,
+      "range": [
+        709,
+        858
+      ]
+    },
+    {
+      "file": "VIDEODRV.C",
+      "id": "videodrv_slot9_viewport_blit",
+      "missing": [],
+      "ok": true,
+      "range": [
+        941,
+        957
+      ]
+    },
+    {
+      "file": "VIDEODRV.C",
+      "id": "videodrv_vga_color_offset_scope",
+      "missing": [],
+      "ok": true,
+      "range": [
+        3566,
+        3582
+      ]
+    },
+    {
+      "file": "DEFS.H",
+      "id": "tiledefs_substitute_view_square_wall_ordinals",
+      "missing": [],
+      "ok": true,
+      "range": [
+        3423,
+        3437
+      ]
+    },
+    {
+      "file": "DEFS.H",
+      "id": "tiledefs_substitute_zone_wall_ordinals",
+      "missing": [],
+      "ok": true,
+      "range": [
+        4042,
+        4057
+      ]
+    },
+    {
+      "file": "DEFS.H",
+      "id": "wall_graphics_constants",
+      "missing": [],
+      "ok": true,
+      "range": [
+        2359,
+        2373
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "wallset_negative_bitmap_slots",
+      "missing": [],
+      "ok": true,
+      "range": [
+        183,
+        200
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "wall_frames_and_offsets",
+      "missing": [],
+      "ok": true,
+      "range": [
+        577,
+        594
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "wallset_load_loop",
+      "missing": [],
+      "ok": true,
+      "range": [
+        2214,
+        2217
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "wall_bitmap_draw_helpers",
+      "missing": [],
+      "ok": true,
+      "range": [
+        3048,
+        3074
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "wall_center_draw_sites",
+      "missing": [],
+      "ok": true,
+      "range": [
+        6699,
+        6714
+      ]
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "wall_d2_draw_sites",
+      "missing": [],
+      "ok": true,
+      "range": [
+        7291,
+        7306
+      ]
+    }
+  ],
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "WALL_GRAPHICS_OFFSET_BINDING_SOURCE_DATA_LOCKED_RUNTIME_BLOCKED",
+  "tiledefsAudit": {
+    "decision": "NOT_PRESENT_NONBLOCKING_DEFS_H_DUNVIEW_ARE_TILEDEF_AUTHORITY",
+    "paths": [],
+    "present": false,
+    "reason": "This ReDMCSB tree has no TILEDEFS.C; PC wall/tile ordinals and zones are in DEFS.H, while wall-set bitmap tables/load/draw offsets are in DUNVIEW.C.",
+    "requestedFile": "TILEDEFS.C"
+  },
+  "timestampUtc": "2026-05-07T14:08:08.550719+00:00",
+  "wallSlotBindings": [
+    {
+      "compressedRecordSha256": "9ecf557b1eea5674240bd416b231f984064c43abce85a195dfd5658cb9d204d5",
+      "g2107NegativeBitmapId": -17,
+      "graphicsDatIndex": 93,
+      "graphicsDatRole": "wall.set0.index_93",
+      "height": 136,
+      "ok": true,
+      "ordinal": 0,
+      "unpackedPixelSha256": "310d84187894af6ad39550d547c28e171f809b731d59d133ca47061d99b48635",
+      "wallName": "D0R",
+      "width": 33
+    },
+    {
+      "compressedRecordSha256": "b08dd46981ef4ef905b1074f835f78a4328cdb7ee64380575c688da18ab589ec",
+      "g2107NegativeBitmapId": -16,
+      "graphicsDatIndex": 94,
+      "graphicsDatRole": "wall.set0.index_94",
+      "height": 136,
+      "ok": true,
+      "ordinal": 1,
+      "unpackedPixelSha256": "9b73c633c61d387f4453a3449c3cb8df6d84115707a20f52e5267a6ef064ff31",
+      "wallName": "D0L",
+      "width": 33
+    },
+    {
+      "compressedRecordSha256": "8a53fb2431031b9900667a682984d3dcc2f73394f7f75a9583f5e724d12cd54b",
+      "g2107NegativeBitmapId": -15,
+      "graphicsDatIndex": 95,
+      "graphicsDatRole": "wall.set0.index_95",
+      "height": 111,
+      "ok": true,
+      "ordinal": 2,
+      "unpackedPixelSha256": "3312d9dcb1749f37805c9d3328864eeddedc1377b22169b0f65355d913d4787c",
+      "wallName": "D1R",
+      "width": 60
+    },
+    {
+      "compressedRecordSha256": "c40e6dc635e72a174a6b21b409f80381f1e6b75b0e030dd1ec6a38e687166789",
+      "g2107NegativeBitmapId": -14,
+      "graphicsDatIndex": 96,
+      "graphicsDatRole": "wall.set0.index_96",
+      "height": 111,
+      "ok": true,
+      "ordinal": 3,
+      "unpackedPixelSha256": "688cf9032dad24570c2ce7a8480b14ee1e232e9b98c3a1f8e193549bae419d49",
+      "wallName": "D1L",
+      "width": 60
+    },
+    {
+      "compressedRecordSha256": "4fd3456fef8d200d04874dfabf372804eb640910359c1e1739c5a6a9908941f3",
+      "g2107NegativeBitmapId": -13,
+      "graphicsDatIndex": 97,
+      "graphicsDatRole": "wall.set0.index_97",
+      "height": 111,
+      "ok": true,
+      "ordinal": 4,
+      "unpackedPixelSha256": "21090a186ba9545307b356b0693c17ea2e5165197e6e0d56f32528f754a8bfc2",
+      "wallName": "D1C",
+      "width": 160
+    },
+    {
+      "compressedRecordSha256": "1ae8cf04388720e7fc98956db432f75ca430c5e32203745a645251ee27a9801e",
+      "g2107NegativeBitmapId": -9,
+      "graphicsDatIndex": 98,
+      "graphicsDatRole": "wall.set0.index_98",
+      "height": 52,
+      "ok": true,
+      "ordinal": 5,
+      "unpackedPixelSha256": "4915e30ac285629899b44d33004db77480dc0a2992d87d38689a4022739b7e6a",
+      "wallName": "D2R2",
+      "width": 8
+    },
+    {
+      "compressedRecordSha256": "88b934e6399b16409233d7e951cf0b042e1c9020c732b9411db836ae078ff504",
+      "g2107NegativeBitmapId": -8,
+      "graphicsDatIndex": 99,
+      "graphicsDatRole": "wall.set0.index_99",
+      "height": 52,
+      "ok": true,
+      "ordinal": 6,
+      "unpackedPixelSha256": "984794cba13ce7e7d89fb3a22614862a5eb0627400cc0ed5901b5909406b2fa6",
+      "wallName": "D2L2",
+      "width": 8
+    },
+    {
+      "compressedRecordSha256": "d930addad0f09129bb6fe3f70750dfe9f30a10ad33dbd17e054c6321b46221ea",
+      "g2107NegativeBitmapId": -12,
+      "graphicsDatIndex": 100,
+      "graphicsDatRole": "wall.set0.index_100",
+      "height": 74,
+      "ok": true,
+      "ordinal": 7,
+      "unpackedPixelSha256": "a8a05e342a5a651b291c4b5a60e819dc3c202bffebea9830aa85be2df5c784bb",
+      "wallName": "D2R",
+      "width": 78
+    },
+    {
+      "compressedRecordSha256": "7efa9b0affa13c2714457cbb19d68081003844f501a19ea89fdcd69be436dffd",
+      "g2107NegativeBitmapId": -11,
+      "graphicsDatIndex": 101,
+      "graphicsDatRole": "wall.set0.index_101",
+      "height": 74,
+      "ok": true,
+      "ordinal": 8,
+      "unpackedPixelSha256": "0616c704688d22a286a31d5e1c8056c7e3f82bb571399ae2103988e36e728520",
+      "wallName": "D2L",
+      "width": 78
+    },
+    {
+      "compressedRecordSha256": "eea676ef285a7c1d8c7d9071f18d2cff646079bbd836ff13ac0bba89cdc97728",
+      "g2107NegativeBitmapId": -10,
+      "graphicsDatIndex": 102,
+      "graphicsDatRole": "wall.set0.index_102",
+      "height": 74,
+      "ok": true,
+      "ordinal": 9,
+      "unpackedPixelSha256": "a0e5832c7b1dba6ca4c2f2aa38bb73725cde3be5789dab6220edc6f7abaee267",
+      "wallName": "D2C",
+      "width": 106
+    },
+    {
+      "compressedRecordSha256": "eccbec82a89cf368aa26293cf3563e1c0cd8f027ebd437ea637802afbb21aef8",
+      "g2107NegativeBitmapId": -4,
+      "graphicsDatIndex": 103,
+      "graphicsDatRole": "wall.set0.index_103",
+      "height": 49,
+      "ok": true,
+      "ordinal": 10,
+      "unpackedPixelSha256": "9583ee58a22f26efb026b5ad65bdd804603201843973c5f696680bd836b9a0bd",
+      "wallName": "D3R2",
+      "width": 44
+    },
+    {
+      "compressedRecordSha256": "c1acf6f6bc76a70592d97e35dc1d315d5783d4b3f9d2ef7715de3639ecff361e",
+      "g2107NegativeBitmapId": -3,
+      "graphicsDatIndex": 104,
+      "graphicsDatRole": "wall.set0.index_104",
+      "height": 49,
+      "ok": true,
+      "ordinal": 11,
+      "unpackedPixelSha256": "0f7cf7feed751a0916f4dba0306f64ef80dbdfea3c7b336c84d88d6a47f05b4d",
+      "wallName": "D3L2",
+      "width": 44
+    },
+    {
+      "compressedRecordSha256": "f55c0c7c95d494f987ee1a11a2e70f9bda0e2dc385a63d929293c6b084a92152",
+      "g2107NegativeBitmapId": -7,
+      "graphicsDatIndex": 105,
+      "graphicsDatRole": "wall.set0.index_105",
+      "height": 49,
+      "ok": true,
+      "ordinal": 12,
+      "unpackedPixelSha256": "292692e6f2bd4881f0be1b4c9bc2213b24280930fe92dba56ec10ed28df95ca3",
+      "wallName": "D3R",
+      "width": 83
+    },
+    {
+      "compressedRecordSha256": "8c29f7d686326f93b50495ab2955ab0edfa669c2a9182616f78227cf586e474a",
+      "g2107NegativeBitmapId": -6,
+      "graphicsDatIndex": 106,
+      "graphicsDatRole": "wall.set0.index_106",
+      "height": 49,
+      "ok": true,
+      "ordinal": 13,
+      "unpackedPixelSha256": "1b9e4fb3811d692cba8602bad4efb0e9c7c4d5dc58ddd30e65e2e83b515181c7",
+      "wallName": "D3L",
+      "width": 83
+    },
+    {
+      "compressedRecordSha256": "77fb4c0b45d9da6297f923bae2b32dbb75544c75f3146f5c4a0ec599ede87b3a",
+      "g2107NegativeBitmapId": -5,
+      "graphicsDatIndex": 107,
+      "graphicsDatRole": "wall.front.blocking.d3c",
+      "height": 49,
+      "ok": true,
+      "ordinal": 14,
+      "unpackedPixelSha256": "2ec0205368dcc4d046ed829c6e435730b1f1e8b21773fe12953a2c9e3ca19578",
+      "wallName": "D3C",
+      "width": 70
+    }
+  ]
+}

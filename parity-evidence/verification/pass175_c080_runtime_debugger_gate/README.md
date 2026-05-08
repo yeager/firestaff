@@ -19,17 +19,17 @@ Exact remaining blocker: native gdb can open/probe only far enough to show the s
 - `F0280_CHAMPION_AddCandidateChampionToParty` (DUNVIEW.C:3913-3930 + MOVESENS.C:1501-1503 + REVIVE.C:63-150,260-275): front-wall C127_SENSOR_WALL_CHAMPION_PORTRAIT reaches F0280 and sets G0299_ui_CandidateChampionOrdinal
 
 ## Tool probes
-- `dm_exe_file` rc=0: `/usr/bin/file /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
-  - /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed
+- `dm_exe_file` rc=0: `/usr/bin/file <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
+  - <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed
 - `gdb_version` rc=0: `/usr/bin/gdb --version`
   - GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1
   - Copyright (C) 2024 Free Software Foundation, Inc.
   - License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
   - This is free software: you are free to change and redistribute it.
   - There is NO WARRANTY, to the extent permitted by law.
-- `gdb_stock_dm_symbol_gate` rc=1: `/usr/bin/gdb --batch -x /home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb`
-  - /home/trv2/work/firestaff/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:
-  - "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE": not in executable format: file format not recognized
+- `gdb_stock_dm_symbol_gate` rc=1: `/usr/bin/gdb --batch -x <firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb`
+  - <firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:
+  - "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE": not in executable format: file format not recognized
 - `dosbox_debug_version` rc=0: `/usr/bin/dosbox-debug -version`
   - DOSBox version 0.74-3, copyright 2002-2019 DOSBox Team.
   - DOSBox is written by the DOSBox Team (See AUTHORS file))
@@ -47,4 +47,4 @@ Exact remaining blocker: native gdb can open/probe only far enough to show the s
 - does not prove original runtime reached F0359/F0380/F0377/F0280
 - does not retire pass175 on visual no-delta
 - does not try alternate coordinates
-- does not use DANNESBURK or non-N2 references
+- does not use <private-host> or non-N2 references

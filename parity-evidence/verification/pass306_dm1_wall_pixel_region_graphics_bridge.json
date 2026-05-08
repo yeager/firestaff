@@ -1,0 +1,2647 @@
+{
+  "bridgedWallPixelRegions": [
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 643,
+        "compressedRecordSha256": "eccbec82a89cf368aa26293cf3563e1c0cd8f027ebd437ea637802afbb21aef8",
+        "fileOffset": 75407,
+        "graphicIndex": 103,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          0,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "dfbea8f9f7f0d7c07f5371ccac4e912b648c03d3e718714e548a4369dc16e3ae",
+        "unpackedPixelSha256": "9583ee58a22f26efb026b5ad65bdd804603201843973c5f696680bd836b9a0bd",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 180,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3R2",
+      "selectedWall": "DM1_WALL_D3R2",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:6321-6327",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 103,
+      "zone": 703
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 618,
+        "compressedRecordSha256": "8c29f7d686326f93b50495ab2955ab0edfa669c2a9182616f78227cf586e474a",
+        "fileOffset": 77296,
+        "graphicIndex": 106,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedSha256": "67a8db07ad38f22b2a7cb7f53056b756534728188820b39d41088b186e97ab23",
+        "unpackedPixelSha256": "1b9e4fb3811d692cba8602bad4efb0e9c7c4d5dc58ddd30e65e2e83b515181c7",
+        "width": 83
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 83,
+        "x": 7,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3L",
+      "selectedWall": "DM1_WALL_D3L",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:6421-6427",
+      "sourceClip": {
+        "height": 49,
+        "width": 83,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 106,
+      "zone": 705
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 421,
+        "compressedRecordSha256": "77fb4c0b45d9da6297f923bae2b32dbb75544c75f3146f5c4a0ec599ede87b3a",
+        "fileOffset": 77914,
+        "graphicIndex": 107,
+        "height": 49,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          0,
+          3,
+          4
+        ],
+        "packedSha256": "39ecbd1aba333bcf2bd3fdcd2f708a00e2ae590aa1673c55ccc2fbe61876e91b",
+        "unpackedPixelSha256": "2ec0205368dcc4d046ed829c6e435730b1f1e8b21773fe12953a2c9e3ca19578",
+        "width": 70
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 70,
+        "x": 77,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3C",
+      "selectedWall": "DM1_WALL_D3C",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:6707-6714",
+      "sourceClip": {
+        "height": 49,
+        "width": 70,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 107,
+      "zone": 704
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 126,
+        "compressedRecordSha256": "1ae8cf04388720e7fc98956db432f75ca430c5e32203745a645251ee27a9801e",
+        "fileOffset": 71927,
+        "graphicIndex": 98,
+        "height": 52,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedSha256": "f80f39cc9ffe84fcfb947ea49732a166850de6dccc3aa005929d85f0588b535a",
+        "unpackedPixelSha256": "4915e30ac285629899b44d33004db77480dc0a2992d87d38689a4022739b7e6a",
+        "width": 8
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 52,
+        "width": 8,
+        "x": 216,
+        "y": 24
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R2",
+      "selectedWall": "DM1_WALL_D2R2",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:6880-6889",
+      "sourceClip": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 98,
+      "zone": 708
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1117,
+        "compressedRecordSha256": "7efa9b0affa13c2714457cbb19d68081003844f501a19ea89fdcd69be436dffd",
+        "fileOffset": 73278,
+        "graphicIndex": 101,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          10,
+          0
+        ],
+        "packedSha256": "d6512838f7f975c27ac07fb396075d8e7ca7c68739552fc23695a163547b6618",
+        "unpackedPixelSha256": "0616c704688d22a286a31d5e1c8056c7e3f82bb571399ae2103988e36e728520",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2L",
+      "selectedWall": "DM1_WALL_D2L",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:6954-6964",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 101,
+      "zone": 710
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1089,
+        "compressedRecordSha256": "d930addad0f09129bb6fe3f70750dfe9f30a10ad33dbd17e054c6321b46221ea",
+        "fileOffset": 72189,
+        "graphicIndex": 100,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          12,
+          13,
+          10,
+          0
+        ],
+        "packedSha256": "c031ac6a319490d60db570d0ab37a3cbe99d1b7dbff693f4729d3fefe5c1b33b",
+        "unpackedPixelSha256": "a8a05e342a5a651b291c4b5a60e819dc3c202bffebea9830aa85be2df5c784bb",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 146,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R",
+      "selectedWall": "DM1_WALL_D2R",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:7105-7115",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 100,
+      "zone": 711
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 2456,
+        "compressedRecordSha256": "4fd3456fef8d200d04874dfabf372804eb640910359c1e1739c5a6a9908941f3",
+        "fileOffset": 69471,
+        "graphicIndex": 97,
+        "height": 111,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          12,
+          0
+        ],
+        "packedSha256": "3788c7117221a99e6b2d3b9b5dadde60a2d1185f0dfb7ff2d27258ad8ba7fb83",
+        "unpackedPixelSha256": "21090a186ba9545307b356b0693c17ea2e5165197e6e0d56f32528f754a8bfc2",
+        "width": 160
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 111,
+        "width": 160,
+        "x": 32,
+        "y": 9
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D1C",
+      "selectedWall": "DM1_WALL_D1C",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:7833-7840",
+      "sourceClip": {
+        "height": 111,
+        "width": 160,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 97,
+      "zone": 712
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1092,
+        "compressedRecordSha256": "b08dd46981ef4ef905b1074f835f78a4328cdb7ee64380575c688da18ab589ec",
+        "fileOffset": 65229,
+        "graphicIndex": 94,
+        "height": 136,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedSha256": "9b475ac0ccbc73412bfd20a58d0a8ed1ec31cd9561a3836fba02af208f7d7e5e",
+        "unpackedPixelSha256": "9b73c633c61d387f4453a3449c3cb8df6d84115707a20f52e5267a6ef064ff31",
+        "width": 33
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D0L",
+      "selectedWall": "DM1_WALL_D0L",
+      "snapshot": "start_south",
+      "source": "DUNVIEW.C:8016-8033",
+      "sourceClip": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 94,
+      "zone": 716
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 620,
+        "compressedRecordSha256": "c1acf6f6bc76a70592d97e35dc1d315d5783d4b3f9d2ef7715de3639ecff361e",
+        "fileOffset": 76050,
+        "graphicIndex": 104,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          0,
+          1,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "5c6e2a2e37a73a3862c84fcddd8a6cece262236dfe414dc85d1187819491266c",
+        "unpackedPixelSha256": "0f7cf7feed751a0916f4dba0306f64ef80dbdfea3c7b336c84d88d6a47f05b4d",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3L2",
+      "selectedWall": "DM1_WALL_D3R2",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6254-6260",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 104,
+      "zone": 702
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 643,
+        "compressedRecordSha256": "eccbec82a89cf368aa26293cf3563e1c0cd8f027ebd437ea637802afbb21aef8",
+        "fileOffset": 75407,
+        "graphicIndex": 103,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          0,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "dfbea8f9f7f0d7c07f5371ccac4e912b648c03d3e718714e548a4369dc16e3ae",
+        "unpackedPixelSha256": "9583ee58a22f26efb026b5ad65bdd804603201843973c5f696680bd836b9a0bd",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 180,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3R2",
+      "selectedWall": "DM1_WALL_D3L2",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6321-6327",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 103,
+      "zone": 703
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 618,
+        "compressedRecordSha256": "8c29f7d686326f93b50495ab2955ab0edfa669c2a9182616f78227cf586e474a",
+        "fileOffset": 77296,
+        "graphicIndex": 106,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedSha256": "67a8db07ad38f22b2a7cb7f53056b756534728188820b39d41088b186e97ab23",
+        "unpackedPixelSha256": "1b9e4fb3811d692cba8602bad4efb0e9c7c4d5dc58ddd30e65e2e83b515181c7",
+        "width": 83
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 83,
+        "x": 7,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3L",
+      "selectedWall": "DM1_WALL_D3R",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6421-6427",
+      "sourceClip": {
+        "height": 49,
+        "width": 83,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 106,
+      "zone": 705
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 626,
+        "compressedRecordSha256": "f55c0c7c95d494f987ee1a11a2e70f9bda0e2dc385a63d929293c6b084a92152",
+        "fileOffset": 76670,
+        "graphicIndex": 105,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedSha256": "3af2ac7c04b69df8ce6f72327355b78afd01ed1024e766119e4574079fb567d6",
+        "unpackedPixelSha256": "292692e6f2bd4881f0be1b4c9bc2213b24280930fe92dba56ec10ed28df95ca3",
+        "width": 83
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 83,
+        "x": 134,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3R",
+      "selectedWall": "DM1_WALL_D3L",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6554-6564",
+      "sourceClip": {
+        "height": 49,
+        "width": 83,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 105,
+      "zone": 706
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 421,
+        "compressedRecordSha256": "77fb4c0b45d9da6297f923bae2b32dbb75544c75f3146f5c4a0ec599ede87b3a",
+        "fileOffset": 77914,
+        "graphicIndex": 107,
+        "height": 49,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          0,
+          3,
+          4
+        ],
+        "packedSha256": "39ecbd1aba333bcf2bd3fdcd2f708a00e2ae590aa1673c55ccc2fbe61876e91b",
+        "unpackedPixelSha256": "2ec0205368dcc4d046ed829c6e435730b1f1e8b21773fe12953a2c9e3ca19578",
+        "width": 70
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 70,
+        "x": 77,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3C",
+      "selectedWall": "DM1_WALL_D3C",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6707-6714",
+      "sourceClip": {
+        "height": 49,
+        "width": 70,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 107,
+      "zone": 704
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 136,
+        "compressedRecordSha256": "88b934e6399b16409233d7e951cf0b042e1c9020c732b9411db836ae078ff504",
+        "fileOffset": 72053,
+        "graphicIndex": 99,
+        "height": 52,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedSha256": "9ee01018cd61747076e5841ba67aea0f7f723678ee72c573b3ea2018bc36b33b",
+        "unpackedPixelSha256": "984794cba13ce7e7d89fb3a22614862a5eb0627400cc0ed5901b5909406b2fa6",
+        "width": 8
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 24
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2L2",
+      "selectedWall": "DM1_WALL_D2R2",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6849-6858",
+      "sourceClip": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 99,
+      "zone": 707
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 126,
+        "compressedRecordSha256": "1ae8cf04388720e7fc98956db432f75ca430c5e32203745a645251ee27a9801e",
+        "fileOffset": 71927,
+        "graphicIndex": 98,
+        "height": 52,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedSha256": "f80f39cc9ffe84fcfb947ea49732a166850de6dccc3aa005929d85f0588b535a",
+        "unpackedPixelSha256": "4915e30ac285629899b44d33004db77480dc0a2992d87d38689a4022739b7e6a",
+        "width": 8
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 52,
+        "width": 8,
+        "x": 216,
+        "y": 24
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R2",
+      "selectedWall": "DM1_WALL_D2L2",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6880-6889",
+      "sourceClip": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 98,
+      "zone": 708
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1117,
+        "compressedRecordSha256": "7efa9b0affa13c2714457cbb19d68081003844f501a19ea89fdcd69be436dffd",
+        "fileOffset": 73278,
+        "graphicIndex": 101,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          10,
+          0
+        ],
+        "packedSha256": "d6512838f7f975c27ac07fb396075d8e7ca7c68739552fc23695a163547b6618",
+        "unpackedPixelSha256": "0616c704688d22a286a31d5e1c8056c7e3f82bb571399ae2103988e36e728520",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2L",
+      "selectedWall": "DM1_WALL_D2R",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:6954-6964",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 101,
+      "zone": 710
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1089,
+        "compressedRecordSha256": "d930addad0f09129bb6fe3f70750dfe9f30a10ad33dbd17e054c6321b46221ea",
+        "fileOffset": 72189,
+        "graphicIndex": 100,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          12,
+          13,
+          10,
+          0
+        ],
+        "packedSha256": "c031ac6a319490d60db570d0ab37a3cbe99d1b7dbff693f4729d3fefe5c1b33b",
+        "unpackedPixelSha256": "a8a05e342a5a651b291c4b5a60e819dc3c202bffebea9830aa85be2df5c784bb",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 146,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R",
+      "selectedWall": "DM1_WALL_D2L",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:7105-7115",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 100,
+      "zone": 711
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1012,
+        "compressedRecordSha256": "eea676ef285a7c1d8c7d9071f18d2cff646079bbd836ff13ac0bba89cdc97728",
+        "fileOffset": 74395,
+        "graphicIndex": 102,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          0,
+          3
+        ],
+        "packedSha256": "3305aad48565c8e6a0ba6af44d754f8fafb6999401dc1785f9520fd5723db5e6",
+        "unpackedPixelSha256": "a0e5832c7b1dba6ca4c2f2aa38bb73725cde3be5789dab6220edc6f7abaee267",
+        "width": 106
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 106,
+        "x": 59,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2C",
+      "selectedWall": "DM1_WALL_D2C",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:7299-7306",
+      "sourceClip": {
+        "height": 74,
+        "width": 106,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 102,
+      "zone": 709
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1545,
+        "compressedRecordSha256": "8a53fb2431031b9900667a682984d3dcc2f73394f7f75a9583f5e724d12cd54b",
+        "fileOffset": 66321,
+        "graphicIndex": 95,
+        "height": 111,
+        "localPaletteNibbles": [
+          2,
+          13,
+          1,
+          15,
+          12,
+          10
+        ],
+        "packedSha256": "f99d3c393a758e24e052bfa2a17bf6c6e4ceac1ff23203d089de659766bc9ec9",
+        "unpackedPixelSha256": "3312d9dcb1749f37805c9d3328864eeddedc1377b22169b0f65355d913d4787c",
+        "width": 60
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 111,
+        "width": 60,
+        "x": 164,
+        "y": 9
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D1R",
+      "selectedWall": "DM1_WALL_D1L",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:7613-7623",
+      "sourceClip": {
+        "height": 111,
+        "width": 60,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 95,
+      "zone": 714
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1092,
+        "compressedRecordSha256": "b08dd46981ef4ef905b1074f835f78a4328cdb7ee64380575c688da18ab589ec",
+        "fileOffset": 65229,
+        "graphicIndex": 94,
+        "height": 136,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedSha256": "9b475ac0ccbc73412bfd20a58d0a8ed1ec31cd9561a3836fba02af208f7d7e5e",
+        "unpackedPixelSha256": "9b73c633c61d387f4453a3449c3cb8df6d84115707a20f52e5267a6ef064ff31",
+        "width": 33
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D0L",
+      "selectedWall": "DM1_WALL_D0R",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:8016-8033",
+      "sourceClip": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 94,
+      "zone": 716
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1164,
+        "compressedRecordSha256": "9ecf557b1eea5674240bd416b231f984064c43abce85a195dfd5658cb9d204d5",
+        "fileOffset": 64065,
+        "graphicIndex": 93,
+        "height": 136,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedSha256": "093d5115c3329a9049ac7a3848cef97c221b5f4fe30a0273419596d3b18f1591",
+        "unpackedPixelSha256": "310d84187894af6ad39550d547c28e171f809b731d59d133ca47061d99b48635",
+        "width": 33
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 136,
+        "width": 33,
+        "x": 191,
+        "y": 0
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D0R",
+      "selectedWall": "DM1_WALL_D0L",
+      "snapshot": "turn_right_west",
+      "source": "DUNVIEW.C:8126-8139",
+      "sourceClip": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 93,
+      "zone": 717
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 620,
+        "compressedRecordSha256": "c1acf6f6bc76a70592d97e35dc1d315d5783d4b3f9d2ef7715de3639ecff361e",
+        "fileOffset": 76050,
+        "graphicIndex": 104,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          0,
+          1,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "5c6e2a2e37a73a3862c84fcddd8a6cece262236dfe414dc85d1187819491266c",
+        "unpackedPixelSha256": "0f7cf7feed751a0916f4dba0306f64ef80dbdfea3c7b336c84d88d6a47f05b4d",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3L2",
+      "selectedWall": "DM1_WALL_D3L2",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6254-6260",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 104,
+      "zone": 702
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 643,
+        "compressedRecordSha256": "eccbec82a89cf368aa26293cf3563e1c0cd8f027ebd437ea637802afbb21aef8",
+        "fileOffset": 75407,
+        "graphicIndex": 103,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          0,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "dfbea8f9f7f0d7c07f5371ccac4e912b648c03d3e718714e548a4369dc16e3ae",
+        "unpackedPixelSha256": "9583ee58a22f26efb026b5ad65bdd804603201843973c5f696680bd836b9a0bd",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 180,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3R2",
+      "selectedWall": "DM1_WALL_D3R2",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6321-6327",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 103,
+      "zone": 703
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 618,
+        "compressedRecordSha256": "8c29f7d686326f93b50495ab2955ab0edfa669c2a9182616f78227cf586e474a",
+        "fileOffset": 77296,
+        "graphicIndex": 106,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedSha256": "67a8db07ad38f22b2a7cb7f53056b756534728188820b39d41088b186e97ab23",
+        "unpackedPixelSha256": "1b9e4fb3811d692cba8602bad4efb0e9c7c4d5dc58ddd30e65e2e83b515181c7",
+        "width": 83
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 83,
+        "x": 7,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3L",
+      "selectedWall": "DM1_WALL_D3L",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6421-6427",
+      "sourceClip": {
+        "height": 49,
+        "width": 83,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 106,
+      "zone": 705
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 626,
+        "compressedRecordSha256": "f55c0c7c95d494f987ee1a11a2e70f9bda0e2dc385a63d929293c6b084a92152",
+        "fileOffset": 76670,
+        "graphicIndex": 105,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedSha256": "3af2ac7c04b69df8ce6f72327355b78afd01ed1024e766119e4574079fb567d6",
+        "unpackedPixelSha256": "292692e6f2bd4881f0be1b4c9bc2213b24280930fe92dba56ec10ed28df95ca3",
+        "width": 83
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 83,
+        "x": 134,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3R",
+      "selectedWall": "DM1_WALL_D3R",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6554-6564",
+      "sourceClip": {
+        "height": 49,
+        "width": 83,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 105,
+      "zone": 706
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 421,
+        "compressedRecordSha256": "77fb4c0b45d9da6297f923bae2b32dbb75544c75f3146f5c4a0ec599ede87b3a",
+        "fileOffset": 77914,
+        "graphicIndex": 107,
+        "height": 49,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          0,
+          3,
+          4
+        ],
+        "packedSha256": "39ecbd1aba333bcf2bd3fdcd2f708a00e2ae590aa1673c55ccc2fbe61876e91b",
+        "unpackedPixelSha256": "2ec0205368dcc4d046ed829c6e435730b1f1e8b21773fe12953a2c9e3ca19578",
+        "width": 70
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 70,
+        "x": 77,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3C",
+      "selectedWall": "DM1_WALL_D3C",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6707-6714",
+      "sourceClip": {
+        "height": 49,
+        "width": 70,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 107,
+      "zone": 704
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 136,
+        "compressedRecordSha256": "88b934e6399b16409233d7e951cf0b042e1c9020c732b9411db836ae078ff504",
+        "fileOffset": 72053,
+        "graphicIndex": 99,
+        "height": 52,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedSha256": "9ee01018cd61747076e5841ba67aea0f7f723678ee72c573b3ea2018bc36b33b",
+        "unpackedPixelSha256": "984794cba13ce7e7d89fb3a22614862a5eb0627400cc0ed5901b5909406b2fa6",
+        "width": 8
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 24
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2L2",
+      "selectedWall": "DM1_WALL_D2L2",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6849-6858",
+      "sourceClip": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 99,
+      "zone": 707
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 126,
+        "compressedRecordSha256": "1ae8cf04388720e7fc98956db432f75ca430c5e32203745a645251ee27a9801e",
+        "fileOffset": 71927,
+        "graphicIndex": 98,
+        "height": 52,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedSha256": "f80f39cc9ffe84fcfb947ea49732a166850de6dccc3aa005929d85f0588b535a",
+        "unpackedPixelSha256": "4915e30ac285629899b44d33004db77480dc0a2992d87d38689a4022739b7e6a",
+        "width": 8
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 52,
+        "width": 8,
+        "x": 216,
+        "y": 24
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R2",
+      "selectedWall": "DM1_WALL_D2R2",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6880-6889",
+      "sourceClip": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 98,
+      "zone": 708
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1117,
+        "compressedRecordSha256": "7efa9b0affa13c2714457cbb19d68081003844f501a19ea89fdcd69be436dffd",
+        "fileOffset": 73278,
+        "graphicIndex": 101,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          10,
+          0
+        ],
+        "packedSha256": "d6512838f7f975c27ac07fb396075d8e7ca7c68739552fc23695a163547b6618",
+        "unpackedPixelSha256": "0616c704688d22a286a31d5e1c8056c7e3f82bb571399ae2103988e36e728520",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2L",
+      "selectedWall": "DM1_WALL_D2L",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:6954-6964",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 101,
+      "zone": 710
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1089,
+        "compressedRecordSha256": "d930addad0f09129bb6fe3f70750dfe9f30a10ad33dbd17e054c6321b46221ea",
+        "fileOffset": 72189,
+        "graphicIndex": 100,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          12,
+          13,
+          10,
+          0
+        ],
+        "packedSha256": "c031ac6a319490d60db570d0ab37a3cbe99d1b7dbff693f4729d3fefe5c1b33b",
+        "unpackedPixelSha256": "a8a05e342a5a651b291c4b5a60e819dc3c202bffebea9830aa85be2df5c784bb",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 146,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R",
+      "selectedWall": "DM1_WALL_D2R",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:7105-7115",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 100,
+      "zone": 711
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1012,
+        "compressedRecordSha256": "eea676ef285a7c1d8c7d9071f18d2cff646079bbd836ff13ac0bba89cdc97728",
+        "fileOffset": 74395,
+        "graphicIndex": 102,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          0,
+          3
+        ],
+        "packedSha256": "3305aad48565c8e6a0ba6af44d754f8fafb6999401dc1785f9520fd5723db5e6",
+        "unpackedPixelSha256": "a0e5832c7b1dba6ca4c2f2aa38bb73725cde3be5789dab6220edc6f7abaee267",
+        "width": 106
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 106,
+        "x": 59,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2C",
+      "selectedWall": "DM1_WALL_D2C",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:7299-7306",
+      "sourceClip": {
+        "height": 74,
+        "width": 106,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 102,
+      "zone": 709
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1605,
+        "compressedRecordSha256": "c40e6dc635e72a174a6b21b409f80381f1e6b75b0e030dd1ec6a38e687166789",
+        "fileOffset": 67866,
+        "graphicIndex": 96,
+        "height": 111,
+        "localPaletteNibbles": [
+          2,
+          13,
+          1,
+          15,
+          12,
+          10
+        ],
+        "packedSha256": "4e7cf5182a68f411ed68a2711855693883400fd41a988282567e4c8ea6af2b8b",
+        "unpackedPixelSha256": "688cf9032dad24570c2ce7a8480b14ee1e232e9b98c3a1f8e193549bae419d49",
+        "width": 60
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 111,
+        "width": 60,
+        "x": 0,
+        "y": 9
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D1L",
+      "selectedWall": "DM1_WALL_D1L",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:7445-7455",
+      "sourceClip": {
+        "height": 111,
+        "width": 60,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 96,
+      "zone": 713
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1545,
+        "compressedRecordSha256": "8a53fb2431031b9900667a682984d3dcc2f73394f7f75a9583f5e724d12cd54b",
+        "fileOffset": 66321,
+        "graphicIndex": 95,
+        "height": 111,
+        "localPaletteNibbles": [
+          2,
+          13,
+          1,
+          15,
+          12,
+          10
+        ],
+        "packedSha256": "f99d3c393a758e24e052bfa2a17bf6c6e4ceac1ff23203d089de659766bc9ec9",
+        "unpackedPixelSha256": "3312d9dcb1749f37805c9d3328864eeddedc1377b22169b0f65355d913d4787c",
+        "width": 60
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 111,
+        "width": 60,
+        "x": 164,
+        "y": 9
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D1R",
+      "selectedWall": "DM1_WALL_D1R",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:7613-7623",
+      "sourceClip": {
+        "height": 111,
+        "width": 60,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 95,
+      "zone": 714
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 2456,
+        "compressedRecordSha256": "4fd3456fef8d200d04874dfabf372804eb640910359c1e1739c5a6a9908941f3",
+        "fileOffset": 69471,
+        "graphicIndex": 97,
+        "height": 111,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          12,
+          0
+        ],
+        "packedSha256": "3788c7117221a99e6b2d3b9b5dadde60a2d1185f0dfb7ff2d27258ad8ba7fb83",
+        "unpackedPixelSha256": "21090a186ba9545307b356b0693c17ea2e5165197e6e0d56f32528f754a8bfc2",
+        "width": 160
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 111,
+        "width": 160,
+        "x": 32,
+        "y": 9
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D1C",
+      "selectedWall": "DM1_WALL_D1C",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:7833-7840",
+      "sourceClip": {
+        "height": 111,
+        "width": 160,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 97,
+      "zone": 712
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1164,
+        "compressedRecordSha256": "9ecf557b1eea5674240bd416b231f984064c43abce85a195dfd5658cb9d204d5",
+        "fileOffset": 64065,
+        "graphicIndex": 93,
+        "height": 136,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedSha256": "093d5115c3329a9049ac7a3848cef97c221b5f4fe30a0273419596d3b18f1591",
+        "unpackedPixelSha256": "310d84187894af6ad39550d547c28e171f809b731d59d133ca47061d99b48635",
+        "width": 33
+      },
+      "layout": 696,
+      "party": {
+        "direction": 3,
+        "mapIndex": 0,
+        "mapX": 0,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 136,
+        "width": 33,
+        "x": 191,
+        "y": 0
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D0R",
+      "selectedWall": "DM1_WALL_D0R",
+      "snapshot": "move_forward_west",
+      "source": "DUNVIEW.C:8126-8139",
+      "sourceClip": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 93,
+      "zone": 717
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 620,
+        "compressedRecordSha256": "c1acf6f6bc76a70592d97e35dc1d315d5783d4b3f9d2ef7715de3639ecff361e",
+        "fileOffset": 76050,
+        "graphicIndex": 104,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          0,
+          1,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "5c6e2a2e37a73a3862c84fcddd8a6cece262236dfe414dc85d1187819491266c",
+        "unpackedPixelSha256": "0f7cf7feed751a0916f4dba0306f64ef80dbdfea3c7b336c84d88d6a47f05b4d",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3L2",
+      "selectedWall": "DM1_WALL_D3R2",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:6254-6260",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 104,
+      "zone": 702
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 643,
+        "compressedRecordSha256": "eccbec82a89cf368aa26293cf3563e1c0cd8f027ebd437ea637802afbb21aef8",
+        "fileOffset": 75407,
+        "graphicIndex": 103,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          0,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "dfbea8f9f7f0d7c07f5371ccac4e912b648c03d3e718714e548a4369dc16e3ae",
+        "unpackedPixelSha256": "9583ee58a22f26efb026b5ad65bdd804603201843973c5f696680bd836b9a0bd",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 180,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3R2",
+      "selectedWall": "DM1_WALL_D3L2",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:6321-6327",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 103,
+      "zone": 703
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1117,
+        "compressedRecordSha256": "7efa9b0affa13c2714457cbb19d68081003844f501a19ea89fdcd69be436dffd",
+        "fileOffset": 73278,
+        "graphicIndex": 101,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          10,
+          0
+        ],
+        "packedSha256": "d6512838f7f975c27ac07fb396075d8e7ca7c68739552fc23695a163547b6618",
+        "unpackedPixelSha256": "0616c704688d22a286a31d5e1c8056c7e3f82bb571399ae2103988e36e728520",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2L",
+      "selectedWall": "DM1_WALL_D2R",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:6954-6964",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 101,
+      "zone": 710
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1089,
+        "compressedRecordSha256": "d930addad0f09129bb6fe3f70750dfe9f30a10ad33dbd17e054c6321b46221ea",
+        "fileOffset": 72189,
+        "graphicIndex": 100,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          12,
+          13,
+          10,
+          0
+        ],
+        "packedSha256": "c031ac6a319490d60db570d0ab37a3cbe99d1b7dbff693f4729d3fefe5c1b33b",
+        "unpackedPixelSha256": "a8a05e342a5a651b291c4b5a60e819dc3c202bffebea9830aa85be2df5c784bb",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 146,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R",
+      "selectedWall": "DM1_WALL_D2L",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:7105-7115",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 100,
+      "zone": 711
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1012,
+        "compressedRecordSha256": "eea676ef285a7c1d8c7d9071f18d2cff646079bbd836ff13ac0bba89cdc97728",
+        "fileOffset": 74395,
+        "graphicIndex": 102,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          0,
+          3
+        ],
+        "packedSha256": "3305aad48565c8e6a0ba6af44d754f8fafb6999401dc1785f9520fd5723db5e6",
+        "unpackedPixelSha256": "a0e5832c7b1dba6ca4c2f2aa38bb73725cde3be5789dab6220edc6f7abaee267",
+        "width": 106
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 106,
+        "x": 59,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2C",
+      "selectedWall": "DM1_WALL_D2C",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:7299-7306",
+      "sourceClip": {
+        "height": 74,
+        "width": 106,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 102,
+      "zone": 709
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 2456,
+        "compressedRecordSha256": "4fd3456fef8d200d04874dfabf372804eb640910359c1e1739c5a6a9908941f3",
+        "fileOffset": 69471,
+        "graphicIndex": 97,
+        "height": 111,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          12,
+          0
+        ],
+        "packedSha256": "3788c7117221a99e6b2d3b9b5dadde60a2d1185f0dfb7ff2d27258ad8ba7fb83",
+        "unpackedPixelSha256": "21090a186ba9545307b356b0693c17ea2e5165197e6e0d56f32528f754a8bfc2",
+        "width": 160
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 111,
+        "width": 160,
+        "x": 32,
+        "y": 9
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D1C",
+      "selectedWall": "DM1_WALL_D1C",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:7833-7840",
+      "sourceClip": {
+        "height": 111,
+        "width": 160,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 97,
+      "zone": 712
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1092,
+        "compressedRecordSha256": "b08dd46981ef4ef905b1074f835f78a4328cdb7ee64380575c688da18ab589ec",
+        "fileOffset": 65229,
+        "graphicIndex": 94,
+        "height": 136,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedSha256": "9b475ac0ccbc73412bfd20a58d0a8ed1ec31cd9561a3836fba02af208f7d7e5e",
+        "unpackedPixelSha256": "9b73c633c61d387f4453a3449c3cb8df6d84115707a20f52e5267a6ef064ff31",
+        "width": 33
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D0L",
+      "selectedWall": "DM1_WALL_D0R",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:8016-8033",
+      "sourceClip": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 94,
+      "zone": 716
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1164,
+        "compressedRecordSha256": "9ecf557b1eea5674240bd416b231f984064c43abce85a195dfd5658cb9d204d5",
+        "fileOffset": 64065,
+        "graphicIndex": 93,
+        "height": 136,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedSha256": "093d5115c3329a9049ac7a3848cef97c221b5f4fe30a0273419596d3b18f1591",
+        "unpackedPixelSha256": "310d84187894af6ad39550d547c28e171f809b731d59d133ca47061d99b48635",
+        "width": 33
+      },
+      "layout": 696,
+      "party": {
+        "direction": 1,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 136,
+        "width": 33,
+        "x": 191,
+        "y": 0
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D0R",
+      "selectedWall": "DM1_WALL_D0L",
+      "snapshot": "turn_left_east",
+      "source": "DUNVIEW.C:8126-8139",
+      "sourceClip": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 93,
+      "zone": 717
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 643,
+        "compressedRecordSha256": "eccbec82a89cf368aa26293cf3563e1c0cd8f027ebd437ea637802afbb21aef8",
+        "fileOffset": 75407,
+        "graphicIndex": 103,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          0,
+          2,
+          10,
+          13
+        ],
+        "packedSha256": "dfbea8f9f7f0d7c07f5371ccac4e912b648c03d3e718714e548a4369dc16e3ae",
+        "unpackedPixelSha256": "9583ee58a22f26efb026b5ad65bdd804603201843973c5f696680bd836b9a0bd",
+        "width": 44
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 44,
+        "x": 180,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3R2",
+      "selectedWall": "DM1_WALL_D3R2",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:6321-6327",
+      "sourceClip": {
+        "height": 49,
+        "width": 44,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 103,
+      "zone": 703
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 618,
+        "compressedRecordSha256": "8c29f7d686326f93b50495ab2955ab0edfa669c2a9182616f78227cf586e474a",
+        "fileOffset": 77296,
+        "graphicIndex": 106,
+        "height": 49,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          0,
+          10,
+          3
+        ],
+        "packedSha256": "67a8db07ad38f22b2a7cb7f53056b756534728188820b39d41088b186e97ab23",
+        "unpackedPixelSha256": "1b9e4fb3811d692cba8602bad4efb0e9c7c4d5dc58ddd30e65e2e83b515181c7",
+        "width": 83
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 83,
+        "x": 7,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3L",
+      "selectedWall": "DM1_WALL_D3L",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:6421-6427",
+      "sourceClip": {
+        "height": 49,
+        "width": 83,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 106,
+      "zone": 705
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 421,
+        "compressedRecordSha256": "77fb4c0b45d9da6297f923bae2b32dbb75544c75f3146f5c4a0ec599ede87b3a",
+        "fileOffset": 77914,
+        "graphicIndex": 107,
+        "height": 49,
+        "localPaletteNibbles": [
+          1,
+          12,
+          2,
+          0,
+          3,
+          4
+        ],
+        "packedSha256": "39ecbd1aba333bcf2bd3fdcd2f708a00e2ae590aa1673c55ccc2fbe61876e91b",
+        "unpackedPixelSha256": "2ec0205368dcc4d046ed829c6e435730b1f1e8b21773fe12953a2c9e3ca19578",
+        "width": 70
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 49,
+        "width": 70,
+        "x": 77,
+        "y": 25
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D3C",
+      "selectedWall": "DM1_WALL_D3C",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:6707-6714",
+      "sourceClip": {
+        "height": 49,
+        "width": 70,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 107,
+      "zone": 704
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 126,
+        "compressedRecordSha256": "1ae8cf04388720e7fc98956db432f75ca430c5e32203745a645251ee27a9801e",
+        "fileOffset": 71927,
+        "graphicIndex": 98,
+        "height": 52,
+        "localPaletteNibbles": [
+          12,
+          1,
+          2,
+          10,
+          0,
+          3
+        ],
+        "packedSha256": "f80f39cc9ffe84fcfb947ea49732a166850de6dccc3aa005929d85f0588b535a",
+        "unpackedPixelSha256": "4915e30ac285629899b44d33004db77480dc0a2992d87d38689a4022739b7e6a",
+        "width": 8
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 52,
+        "width": 8,
+        "x": 216,
+        "y": 24
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R2",
+      "selectedWall": "DM1_WALL_D2R2",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:6880-6889",
+      "sourceClip": {
+        "height": 52,
+        "width": 8,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 0,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 98,
+      "zone": 708
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1117,
+        "compressedRecordSha256": "7efa9b0affa13c2714457cbb19d68081003844f501a19ea89fdcd69be436dffd",
+        "fileOffset": 73278,
+        "graphicIndex": 101,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          13,
+          12,
+          10,
+          0
+        ],
+        "packedSha256": "d6512838f7f975c27ac07fb396075d8e7ca7c68739552fc23695a163547b6618",
+        "unpackedPixelSha256": "0616c704688d22a286a31d5e1c8056c7e3f82bb571399ae2103988e36e728520",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2L",
+      "selectedWall": "DM1_WALL_D2L",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:6954-6964",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 101,
+      "zone": 710
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1089,
+        "compressedRecordSha256": "d930addad0f09129bb6fe3f70750dfe9f30a10ad33dbd17e054c6321b46221ea",
+        "fileOffset": 72189,
+        "graphicIndex": 100,
+        "height": 74,
+        "localPaletteNibbles": [
+          1,
+          2,
+          12,
+          13,
+          10,
+          0
+        ],
+        "packedSha256": "c031ac6a319490d60db570d0ab37a3cbe99d1b7dbff693f4729d3fefe5c1b33b",
+        "unpackedPixelSha256": "a8a05e342a5a651b291c4b5a60e819dc3c202bffebea9830aa85be2df5c784bb",
+        "width": 78
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 74,
+        "width": 78,
+        "x": 146,
+        "y": 19
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D2R",
+      "selectedWall": "DM1_WALL_D2R",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:7105-7115",
+      "sourceClip": {
+        "height": 74,
+        "width": 78,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 100,
+      "zone": 711
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 2456,
+        "compressedRecordSha256": "4fd3456fef8d200d04874dfabf372804eb640910359c1e1739c5a6a9908941f3",
+        "fileOffset": 69471,
+        "graphicIndex": 97,
+        "height": 111,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          12,
+          0
+        ],
+        "packedSha256": "3788c7117221a99e6b2d3b9b5dadde60a2d1185f0dfb7ff2d27258ad8ba7fb83",
+        "unpackedPixelSha256": "21090a186ba9545307b356b0693c17ea2e5165197e6e0d56f32528f754a8bfc2",
+        "width": 160
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 111,
+        "width": 160,
+        "x": 32,
+        "y": 9
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D1C",
+      "selectedWall": "DM1_WALL_D1C",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:7833-7840",
+      "sourceClip": {
+        "height": 111,
+        "width": 160,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 97,
+      "zone": 712
+    },
+    {
+      "event": "draw_wall_bitmap",
+      "expectedPixelsFrom": "GRAPHICS.DAT wall-set bitmap bytes after DM1 PC34 palette decode",
+      "graphicsDatRecord": {
+        "compressedBytes": 1092,
+        "compressedRecordSha256": "b08dd46981ef4ef905b1074f835f78a4328cdb7ee64380575c688da18ab589ec",
+        "fileOffset": 65229,
+        "graphicIndex": 94,
+        "height": 136,
+        "localPaletteNibbles": [
+          2,
+          13,
+          15,
+          1,
+          10,
+          0
+        ],
+        "packedSha256": "9b475ac0ccbc73412bfd20a58d0a8ed1ec31cd9561a3836fba02af208f7d7e5e",
+        "unpackedPixelSha256": "9b73c633c61d387f4453a3449c3cb8df6d84115707a20f52e5267a6ef064ff31",
+        "width": 33
+      },
+      "layout": 696,
+      "party": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "rect": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "regionWithinDecodedBitmap": true,
+      "row": "D0L",
+      "selectedWall": "DM1_WALL_D0L",
+      "snapshot": "blocked_forward_south_wall",
+      "source": "DUNVIEW.C:8016-8033",
+      "sourceClip": {
+        "height": 136,
+        "width": 33,
+        "x": 0,
+        "y": 0
+      },
+      "valid": 1,
+      "viewportRectWithin224x136": true,
+      "wallSetGraphicIndex": 94,
+      "zone": 716
+    }
+  ],
+  "coverage": {
+    "bridgedEvents": 51,
+    "bridgedIndicesFromActualRenderEvents": [
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ],
+    "missingEventRecords": 0,
+    "missingRequiredPass304WallIndices": [],
+    "pass300WallPixelRegionEvents": 51,
+    "presentRequiredPass304WallIndices": [
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ],
+    "requiredPass304WallIndices": [
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ]
+  },
+  "missingWallPixelRegionRecords": [],
+  "notClaimed": [
+    "original pixel parity",
+    "published bitmap byte dumps",
+    "route-proven original PC34 screenshots for pass304 states"
+  ],
+  "pass": "pass306_dm1_wall_pixel_region_graphics_bridge",
+  "remainingComparatorBlockers": [
+    "original PC34 viewport capture remains route-unproven for pass304 required states",
+    "metadata bridge does not yet perform per-pixel blit/crop comparison against original captures",
+    "D4 rows remain object-stack/content events only and are intentionally excluded from wall bitmap comparison"
+  ],
+  "scope": "Bridge pass300 DM1 V1 wall pixelRegion descriptors to pass305 GRAPHICS.DAT wall-record checksums for indices 93..107.",
+  "sourceAnchors": [
+    {
+      "claim": "ReDMCSB wall draw calls select G0698_puc_Bitmap_WallSet_Wall_D3LCR and Graphic558 wall frame descriptors before drawing into the viewport bitmap.",
+      "file": "DUNVIEW.C",
+      "lines": "6699-6702"
+    },
+    {
+      "claim": "pass300 pixelRegion rect/sourceClip descriptors are layout-zone based viewport regions, not raw screenshot crops.",
+      "file": "COORD.C",
+      "function": "F0635_ layout-696 zone resolution"
+    },
+    {
+      "claim": "pass305 decodes/checksums the wall-set records required by pass304 without dumping bitmap bytes.",
+      "file": "GRAPHICS.DAT",
+      "indices": "93..107"
+    }
+  ],
+  "sourceInputs": {
+    "pass300WallRenderPlan": "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json",
+    "pass304OriginalCaptureBlocker": "parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json",
+    "pass305WallGraphicsManifest": "parity-evidence/verification/pass305_dm1_wall_graphics_93_107_manifest.json"
+  },
+  "status": "passed"
+}

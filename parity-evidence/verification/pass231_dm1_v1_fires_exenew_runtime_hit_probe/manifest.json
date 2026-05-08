@@ -1,0 +1,49 @@
+{
+  "classification": "blocked/local-fires-exenew-fixture-not-committed",
+  "fires_exenew": {
+    "expected_sha256": "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94",
+    "expected_size": 178224,
+    "present": false
+  },
+  "inputs": {
+    "fires_exenew": "/home/trv2/work/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+  },
+  "non_claims": [
+    "does not commit FIRES.EXENEW",
+    "does not claim COMMAND.C F0380 has a runtime CS:IP"
+  ],
+  "promotion_rule": "FIRES.EXENEW is intentionally local evidence only; require local regeneration plus debugger/map hit before promotion.",
+  "redmcsb_command_source_audit": {
+    "command_accepted_source_window": [
+      2118,
+      2126
+    ],
+    "dispatch_window": [
+      2150,
+      2156
+    ],
+    "file": "COMMAND.C",
+    "function": "F0380_COMMAND_ProcessQueue_CPSC",
+    "line_window": [
+      2045,
+      2156
+    ],
+    "missing_needles": [],
+    "needle_lines": {
+      "advance_first": 2123,
+      "decrement_count": 2121,
+      "empty_queue_i34e": 2084,
+      "lock_queue": 2075,
+      "move_dispatch": 2155,
+      "read_command": 2095,
+      "read_x": 2118,
+      "read_y": 2119,
+      "turn_dispatch": 2151,
+      "unlock_queue": 2126
+    },
+    "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+  },
+  "schema": "pass231_dm1_v1_fires_exenew_runtime_hit_probe.v1"
+}

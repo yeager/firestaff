@@ -2,8 +2,8 @@
   "schema": "firestaff.csb_utility_member_source_lock.v1",
   "pass": true,
   "scope": "CSB utility file-name/source member identity only; no gameplay/render/save parity claim.",
-  "redmcsb_source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "extracted_dm_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted",
+  "redmcsb_source": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "extracted_dm_root": "<firestaff-original-games>/_extracted",
   "source_checks": [
     {
       "id": "hint-file-index-namespace",
@@ -91,7 +91,7 @@
   "non_claims": [
     "Does not choose a CSB gameplay/rendering target beyond keeping Atari and Amiga utility members separate.",
     "Does not validate CSBGAME.DAT save contents or compatibility.",
-    "Does not use DANNESBURK or any UI/gameplay capture."
+    "Does not use <private-host> or any UI/gameplay capture."
   ],
   "failures": []
 }

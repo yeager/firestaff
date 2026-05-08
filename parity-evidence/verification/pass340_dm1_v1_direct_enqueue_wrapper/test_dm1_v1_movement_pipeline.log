@@ -1,0 +1,6 @@
+$ ./build/test_dm1_v1_movement_pipeline_pc34_compat
+DM1 V1 Movement Pipeline Integration Tests
+Source: MOVESENS.C, COMMAND.C, CLIKMENU.C, CHAMPION.C, GAMELOOP.C
+
+
+138 passed, 0 failed
