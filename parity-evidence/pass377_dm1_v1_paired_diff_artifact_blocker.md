@@ -16,7 +16,7 @@ Blocker #4 is narrowed to original-side absence only: all six Firestaff viewport
 ## Dependency blockers
 
 - `blocker_1_original_true_stop_transcript` `BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED` — strict original FIRES F0128 -> F0097/VIDRV true-stop is still required before original frames are promotable ok=`True`
-- `blocker_2_labelled_original_full_frames` `BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY` — labels/raw original 320x200 frames are command-contract only until actually captured/classified ok=`True`
+- `blocker_2_labelled_original_full_frames` `BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED` — labels/raw original 320x200 frames and 224x136 crops exist, but duplicate hashes/pass86 mismatches still block semantic promotion ok=`True`
 - `blocker_3_original_viewport_crops` `BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING` — 224x136 original crops are missing until pass86 succeeds on labelled original frames ok=`True`
 - `firestaff_route_source_locked` `PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED` — Firestaff movement/capture side is not the active route blocker ok=`True`
 
@@ -32,7 +32,7 @@ Blocker #4 is narrowed to original-side absence only: all six Firestaff viewport
 ## Pairing/diff plan
 
 - plan: `parity-evidence/overlays/pass377/pass377_pairing_plan.json`
-- original-side blockers from pass70: `['missing original manifest: verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv', 'not all six Firestaff/original viewport crop pairs are present']`
+- original-side blockers from pass70: `[]`
 - diffs run: `False` (requires promotable original pair; no parity claim)
 
 ## Non-claims

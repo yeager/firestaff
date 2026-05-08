@@ -142,7 +142,7 @@
     "paired Firestaff/original diff artifacts for this route are not tracked"
   ],
   "branch": "bosse/land-blockers-20260508-1248",
-  "head": "41f39aa61b93237d752590616b9cb6d95650cd26",
+  "head": "822ee6befecc641d840e9966746b90ba88ae38bb",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "new original FIRES F0128/F0097/VIDRV true stop",
@@ -360,5 +360,5 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED",
-  "timestamp_utc": "2026-05-08T10:47:17.346357+00:00"
+  "timestamp_utc": "2026-05-08T10:48:21.791066+00:00"
 }

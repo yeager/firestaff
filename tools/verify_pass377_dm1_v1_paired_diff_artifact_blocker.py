@@ -90,8 +90,8 @@ PRIOR_DEPENDENCIES = {
     },
     "blocker_2_labelled_original_full_frames": {
         "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
-        "expected_status": "BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY",
-        "role": "labels/raw original 320x200 frames are command-contract only until actually captured/classified",
+        "expected_status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED",
+        "role": "labels/raw original 320x200 frames and 224x136 crops exist, but duplicate hashes/pass86 mismatches still block semantic promotion",
     },
     "blocker_3_original_viewport_crops": {
         "path": "parity-evidence/verification/pass376_dm1_v1_original_overlay_parity_plan/manifest.json",
@@ -139,12 +139,15 @@ def load_dependencies() -> dict[str, Any]:
         path = ROOT / dep["path"]
         data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
         status = data.get("status")
+        route_probe = data.get("route_artifact_probe", {}) if isinstance(data, dict) else {}
         out[name] = {
             **dep,
             "exists": path.exists(),
             "status": status,
             "ok": path.exists() and status == dep["expected_status"],
             "active_blocker": data.get("activeBlocker") or data.get("blocker") or data.get("blockers"),
+            "semantic_promotion_ok": route_probe.get("semantic_promotion_ok"),
+            "duplicate_sha256_counts": route_probe.get("duplicate_sha256_counts"),
         }
     return out
 
@@ -245,8 +248,9 @@ def main() -> int:
     source_ok = all(row["ok"] for row in sources)
     deps_ok = all(row["ok"] for row in deps.values())
     firestaff_ok = len(fs_rows) == 6 and all(row["ok"] for row in fs_rows)
-    original_missing = any("original" in b for b in plan.get("blockers", []))
-    ok = source_ok and deps_ok and firestaff_ok and original_missing and plan_rc == 0
+    original_semantic_ready = deps.get("blocker_2_labelled_original_full_frames", {}).get("semantic_promotion_ok") is True
+    original_not_promotable = not original_semantic_ready
+    ok = source_ok and deps_ok and firestaff_ok and original_not_promotable and plan_rc == 0
     manifest: dict[str, Any] = {
         "schema": f"{PASS}.v1",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -265,7 +269,7 @@ def main() -> int:
         "blocker_narrowing": {
             "blocker_4": "paired Firestaff/original diff artifacts",
             "firestaff_side_ready": firestaff_ok,
-            "original_side_ready": False,
+            "original_side_ready": original_semantic_ready,
             "depends_on_blockers_1_to_3": [
                 "blocker_1_original_true_stop_transcript",
                 "blocker_2_labelled_original_full_frames",
