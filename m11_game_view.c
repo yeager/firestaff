@@ -12145,8 +12145,9 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
      * as a result side-lane items, creatures, and missiles disappeared
      * unless debug HUD was enabled.  Draw only contents here (no invented
      * pane fill/border), after source wall/door panels and before center
-     * contents, and stop at nearer closed center-line blockers. */
-    for (depth = 0; depth < 3; ++depth) {
+     * contents, in ReDMCSB far-to-near square order, and stop at nearer
+     * closed center-line blockers. */
+    for (depth = 2; depth >= 0; --depth) {
         int sideSlot;
         const M11_ViewRect* outer = &frames[depth];
         const M11_ViewRect* inner = &frames[depth + 1];
