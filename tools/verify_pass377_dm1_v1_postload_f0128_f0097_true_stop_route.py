@@ -21,6 +21,23 @@ else:
     if not (ROOT/rt.get("transcript","")).exists(): errs.append("missing transcript")
     if not (ROOT/rt.get("routeKeylog","")).exists(): errs.append("missing route keylog")
     if m.get("notPromotedBy") != ["BPLIST", "BP command echo", "tmux/capture-pane", "source-only address binding"]: errs.append("promotion guard missing")
+    if not isinstance(m.get("branch"), str) or not m.get("branch"):
+        errs.append("branch not serialized as string")
+    if not isinstance(m.get("head"), str) or len(m.get("head", "")) < 7:
+        errs.append("head not serialized as string")
+    promo=m.get("strictStopPromotion", {})
+    if not isinstance(promo, dict):
+        errs.append("missing strictStopPromotion")
+    else:
+        if promo.get("promoted") is True and m.get("status") != "PASS377_POSTLOAD_F0128_F0097_TRUE_STOP_SEQUENCE_PROVEN":
+            errs.append("promotion true without sequence status")
+        if m.get("status") == "BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED":
+            if promo.get("strictPostRunningF0128Stop"):
+                errs.append("blocked despite promoted F0128 flag")
+            if promo.get("sawRunning") is not True:
+                errs.append("blocked attempt did not record running marker")
+            if promo.get("routeInputAfterArming") is not True:
+                errs.append("blocked attempt did not record post-arming route input")
     direct=rt.get("directHits",{})
     if m.get("status")=="BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED":
         if direct.get("f0128_23AD_40FE"): errs.append("blocked despite F0128 hit")

@@ -11,13 +11,13 @@
     "promoteViewportComparator": false,
     "stillBlockedBy": "No bounded controlled original FIRES run produces a strict post-running code stop at F0128, followed by F0097 or VIDRV slot 9, at the current candidate CS:IP targets."
   },
-  "branch": "bosse/land-blockers-20260508-1248",
+  "branch": "worker/dm1v1-true-stop-promotion-fix-20260508",
   "candidateRuntimeTargets": {
     "F0097_DUNGEONVIEW_DrawViewport": "2809:1E31",
     "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
     "VIDRV_09_BlitViewPort_indirect_call_candidate": "2809:1EFF"
   },
-  "head": "822ee6befecc641d840e9966746b90ba88ae38bb",
+  "head": "a54e4eb36358e54fe8928bf90b2d6b3a6a273591",
   "latestControlledRuntimeAttempt": {
     "blocker": "F0128 breakpoint armed/retained but no strict running-to-23AD:40FE prompt transition emitted",
     "boundedSecondsPerStrategy": 75,
@@ -28,7 +28,7 @@
     },
     "method": "arm F0128 at initial debugger prompt before any game route input, run through full load+movement route",
     "nextCommand": "python3 tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py --seconds 75 && python3 tools/verify_pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py && python3 tools/verify_pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.py",
-    "postRoutePauseCodeAddr": "280C:1528",
+    "postRoutePauseCodeAddr": "280C:149C",
     "ran": true,
     "sourceManifest": "parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json",
     "status": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE",
@@ -121,7 +121,7 @@
       "role": "route-to-target stop transition investigation",
       "runtimeFlags": {
         "breakpointRetainedPostRoute": true,
-        "postRoutePauseCodeAddr": "280C:1528",
+        "postRoutePauseCodeAddr": "280C:149C",
         "ran": true,
         "sawRunning": true,
         "strictF0097OrVidrvAfterF0128": false,
@@ -146,7 +146,7 @@
       "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/Users/bosse/.openclaw/workspace-main/firestaff-local/firestaff-land-blockers-20260508-1248",
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-true-stop-promotion-fix-20260508",
   "schema": "pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing.v1",
   "sourceAudit": [
     {
@@ -157,7 +157,7 @@
       "lines": "80-90",
       "missingCount": 0,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "decision": "Keyboard input is drained before F0380 queue dispatch during the wait loop.",
@@ -167,7 +167,7 @@
       "lines": "164-219",
       "missingCount": 0,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "decision": "F0380 remains the source movement command dequeue/dispatch seam.",
@@ -177,7 +177,7 @@
       "lines": "2045-2156",
       "missingCount": 0,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "decision": "Accepted turns/steps mutate direction/coordinates and apply movement cooldown.",
@@ -187,7 +187,7 @@
       "lines": "142-174,180-347",
       "missingCount": 0,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "decision": "F0128 composes viewport content and calls F0097 for presentation.",
@@ -197,7 +197,7 @@
       "lines": "8336-8611",
       "missingCount": 0,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "decision": "F0097 is the PC34 viewport-present seam through video-driver slot 9.",
@@ -207,7 +207,7 @@
       "lines": "709-858",
       "missingCount": 0,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     },
     {
       "decision": "VIDRV slot 9 is the source viewport blit implementation.",
@@ -217,10 +217,10 @@
       "lines": "941-957,3566-3582",
       "missingCount": 0,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C"
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/VIDEODRV.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
-  "timestampUtc": "2026-05-08T10:48:21.722402+00:00"
+  "timestampUtc": "2026-05-08T11:00:31.685033+00:00"
 }

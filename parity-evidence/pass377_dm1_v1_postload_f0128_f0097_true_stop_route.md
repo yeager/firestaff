@@ -14,11 +14,13 @@ Status: `BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED`
 - Strategy: `post_load_arm_before_route`
 - Method: run to stable load/menu prefix, pause to debugger prompt, arm F0128, then continue into route
 - Direct hits: `{'f0128_23AD_40FE': False, 'f0097_2809_1EFF_after_f0128': False}`
-- Stage/blocker: `F0128 breakpoint armed but no strict running-to-23AD:40FE prompt transition emitted`
+- Running observed: `True`; route after arming: `True`; retained post-route: `True`
+- Post-route pause code addr: `07FB:01EB`
+- Stage/blocker: `F0128 breakpoint armed/retained after post-load route, but no strict running-to-23AD:40FE prompt transition emitted`
 - Transcript: `parity-evidence/verification/pass377_dm1_v1_postload_f0128_f0097_true_stop_route/post_load_arm_before_route.clean.txt`
 
 ## Decision
 
-This is a controlled post-load arming attempt from the pass360/pass376 contract. It does not promote viewport parity unless strict post-Running F0128 and later F0097/VIDRV stops both appear in order.
+Strict true-stop promoted: `False`. This is a controlled post-load arming attempt from the pass360/pass376 contract. It does not promote viewport parity unless strict post-Running F0128 and later F0097/VIDRV stops both appear in order.
 
 Manifest: `parity-evidence/verification/pass377_dm1_v1_postload_f0128_f0097_true_stop_route/manifest.json`

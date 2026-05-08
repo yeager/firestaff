@@ -72,7 +72,8 @@ def write_report(m: dict[str, Any]) -> None:
     lines=["# Pass377 — DM1 V1 post-load F0128→F0097 true-stop route", "", f"Status: `{m['status']}`", "", "## Source audit", ""]
     for row in m["sourceAudit"]:
         lines.append(f"- `{row['file']}:{row['lines']}` ok=`{row['ok']}` anchors=`{row['anchors']}`")
-    lines += ["", "## Runtime attempt", "", f"- Strategy: `{m['runtimeProbe'].get('strategy')}`", f"- Method: {m['runtimeProbe'].get('method')}", f"- Direct hits: `{m['runtimeProbe'].get('directHits')}`", f"- Stage/blocker: `{m.get('blocker')}`", f"- Transcript: `{m['runtimeProbe'].get('transcript')}`", "", "## Decision", "", "This is a controlled post-load arming attempt from the pass360/pass376 contract. It does not promote viewport parity unless strict post-Running F0128 and later F0097/VIDRV stops both appear in order.", "", f"Manifest: `parity-evidence/verification/{PASS}/manifest.json`"]
+    promo=m.get("strictStopPromotion", {})
+    lines += ["", "## Runtime attempt", "", f"- Strategy: `{m['runtimeProbe'].get('strategy')}`", f"- Method: {m['runtimeProbe'].get('method')}", f"- Direct hits: `{m['runtimeProbe'].get('directHits')}`", f"- Running observed: `{promo.get('sawRunning')}`; route after arming: `{promo.get('routeInputAfterArming')}`; retained post-route: `{promo.get('breakpointRetainedPostRoute')}`", f"- Post-route pause code addr: `{promo.get('postRoutePauseCodeAddr')}`", f"- Stage/blocker: `{m.get('blocker')}`", f"- Transcript: `{m['runtimeProbe'].get('transcript')}`", "", "## Decision", "", f"Strict true-stop promoted: `{promo.get('promoted')}`. This is a controlled post-load arming attempt from the pass360/pass376 contract. It does not promote viewport parity unless strict post-Running F0128 and later F0097/VIDRV stops both appear in order.", "", f"Manifest: `parity-evidence/verification/{PASS}/manifest.json`"]
     REPORT.write_text("\n".join(lines)+"\n", encoding="utf-8")
 
 def main() -> int:
@@ -101,7 +102,18 @@ def main() -> int:
     priors={"pass360":load_json("parity-evidence/verification/pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing/manifest.json").get("status"), "pass376":load_json("parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json").get("status")}
     runtime_slim=jsonable({k:v for k,v in runtime.items() if k not in {"routeLog","commandLog"}})
     runtime_slim.update({"boundedSeconds":args.seconds, "routeLogCount":len(runtime.get("routeLog", [])), "commandLogCount":len(runtime.get("commandLog", [])), "transcript":str(transcript_dst.relative_to(ROOT)), "routeKeylog":str(route_dst.relative_to(ROOT))})
-    manifest={"schema":PASS+".v1", "timestampUtc":datetime.now(timezone.utc).isoformat(), "status":status, "repo":str(ROOT), "branch":mod.run(["git","branch","--show-current"]), "head":mod.run(["git","rev-parse","HEAD"]), "sourceRoot":str(SRC), "sourceAudit":source, "priorContract":priors, "addresses":{"F0128_DUNGEONVIEW_Draw_CPSF":"23AD:40FE", "F0097_VIDRV_09_BlitViewPort_indirect_call":"2809:1EFF", "F0097_DUNGEONVIEW_DrawViewport_entry":"2809:1E31"}, "runtimeProbe":runtime_slim, "blocker":None if status.startswith("PASS377_POSTLOAD_F0128_F0097") else runtime.get("blocker") or runtime.get("stage"), "promotionRule":"Promote only if a strict post-Running stop at 23AD:40FE is followed in the same bounded owned-PTY run by 2809:1EFF/VIDRV; setup echo/BPLIST text is excluded.", "notPromotedBy":["BPLIST", "BP command echo", "tmux/capture-pane", "source-only address binding"]}
+    promotion={
+        "promoted": status == "PASS377_POSTLOAD_F0128_F0097_TRUE_STOP_SEQUENCE_PROVEN",
+        "strictPostRunningF0128Stop": bool(direct.get("f0128_23AD_40FE")),
+        "strictPostF0128VidrvStop": bool(direct.get("f0097_2809_1EFF_after_f0128")),
+        "sawRunning": bool(runtime.get("sawRunning")),
+        "routeInputAfterArming": bool(runtime.get("routeInputAfterArming")),
+        "breakpointRetainedPostRoute": runtime.get("breakpointRetainedPostRoute"),
+        "postRoutePauseCodeAddr": runtime.get("postRoutePauseCodeAddr"),
+        "exactBlocker": None if status == "PASS377_POSTLOAD_F0128_F0097_TRUE_STOP_SEQUENCE_PROVEN" else (runtime.get("blocker") or runtime.get("stage")),
+        "stage": runtime.get("stage"),
+    }
+    manifest={"schema":PASS+".v1", "timestampUtc":datetime.now(timezone.utc).isoformat(), "status":status, "repo":str(ROOT), "branch":mod.run(["git","branch","--show-current"]).stdout.strip(), "head":mod.run(["git","rev-parse","HEAD"]).stdout.strip(), "sourceRoot":str(SRC), "sourceAudit":source, "priorContract":priors, "addresses":{"F0128_DUNGEONVIEW_Draw_CPSF":"23AD:40FE", "F0097_VIDRV_09_BlitViewPort_indirect_call":"2809:1EFF", "F0097_DUNGEONVIEW_DrawViewport_entry":"2809:1E31"}, "runtimeProbe":runtime_slim, "strictStopPromotion":promotion, "blocker":None if status.startswith("PASS377_POSTLOAD_F0128_F0097") else promotion["exactBlocker"], "promotionRule":"Promote only if a strict post-Running stop at 23AD:40FE is followed in the same bounded owned-PTY run by 2809:1EFF/VIDRV; setup echo/BPLIST text is excluded.", "notPromotedBy":["BPLIST", "BP command echo", "tmux/capture-pane", "source-only address binding"]}
     (OUT/"manifest.json").write_text(json.dumps(jsonable(manifest), indent=2, sort_keys=True)+"\n", encoding="utf-8")
     manifest=jsonable(manifest)
     write_report(manifest)

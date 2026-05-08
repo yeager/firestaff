@@ -10,7 +10,7 @@ EDX=ESP=
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /tmp/firestaff-pass330-4c80xmys/dosbox.conf
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass330-vioxv074/dosbox.conf
 0: IO:Writing 05 to port 03CF
 MIXER:No Sound Mode Selected.
 ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
@@ -67,7 +67,7 @@ MIDI:Opened device:none
 0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
 
 
-0: EXEC:Parsing command line: mount c /tmp/firestaff-pass330-4c80xmys/dos
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass330-vioxv074/dos
 78
 3: EXEC:Execute mount.COM 0
 78
@@ -189,17 +189,17 @@ MIDI:Opened device:none
 78
 24910620: FILES:file open command 2 file data\graphics.dat
 78
-37395187: EXEC:Execute FIRES 0
+37395189: EXEC:Execute FIRES 0
 78
-37395187: FILES:file open command 0 file FIRES
+37395189: FILES:file open command 0 file FIRES
 78
-38625005: FILES:file open command 0 file EMMXXXX0
+38625007: FILES:file open command 0 file EMMXXXX0
 78
-38625022: IOCTL:07:Fakes output status is ready for handle 3
+38625024: IOCTL:07:Fakes output status is ready for handle 3
 78
-38636663: FILES:file open command 2 file DATA\GRAPHICS.DAT
+38636665: FILES:file open command 2 file DATA\GRAPHICS.DAT
 78
-41509643: FILES:file open command 2 file DATA\DUNGEON.DAT
+41509645: FILES:file open command 2 file DATA\DUNGEON.DAT
 FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
 1B18:006C  294608sub  [bp+08],axss:[0F34]=0400
 1B18:006F  835E0A00sbb  word [bp+0A],0000ss:[0F36]=0000
@@ -211,7 +211,7 @@ FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
 1B18:0082  837E0A00cmp  word [bp+0A],0000ss:[0F36]=0000
 1B18:0086  77AD    ja   00000035 ($-53)(no jmp)
 1B18:0088  7506jne  00000090 ($+6)(no jmp)
--> _     450  DS=2C23001303154B  CS=1B186C11400F2000F2A44589448....
+-> _     44F  DS=2C230013031524C  CS=1B186C11400F2000F2A44587350....
 -> B_  ....P_  ....D_  ....E_  ....L_  .... _  ....*_
 DEBUG: Breakpoints deleted.
 
@@ -228,4 +228,23 @@ Breakpoint list:
 00. BP 23AD:40FE
 
 -> _      ....
-(Running)
+(Running)....
+07FB:01D1  833E543D00cmp  word [3D54],0000ds:[3D54]=00
+07FB:01D6  744D    je   00000225 ($+4d)  (down)
+07FB:01D8  FF36E03Cpush word [3CE0]ds:[3CE0]=0006
+07FB:01DC  FF36943Cpush word [3C94]ds:[3C94]=0001
+07FB:01E0  33C0xor  ax,ax
+07FB:01E2  50    push ax
+07FB:01E3  B80100    mov  ax,0001
+07FB:01E6  50      push ax
+07FB:01E7  FF36923Cpush word [3C92]    ds:[3C92]=0002
+07FB:01EB  9AEB05980Acall 0A98:05EB
+-> _     004663339056  CS=07FB1D101BCAFFFFC8268767886...
+-> B_  ...P_  ...L_  ...I_  ...S_  ...T_
+Breakpoint list:
+78
+-------------------------------------------------------------------------
+78
+00. BP 23AD:40FE
+
+-> _

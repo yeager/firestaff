@@ -271,7 +271,17 @@ def run_one(strategy: str, seconds: int) -> dict[str, Any]:
             f0128 = any(s.get('addr') == F0128 for s in stops)
             f0097 = any(s.get('addr') == F0097 for s in stops[1:]) if f0128 else False
             route_after_arm = any(r.get('t', 0) > arm_time for r in routelog)
-            return {'strategy': strategy, 'method': method, 'ran': True, 'durationSeconds': round(time.time() - start, 3), 'routeLog': routelog, 'commandLog': cmdlog, 'stops': stops, 'sawRunning': saw_running, 'routeInputAfterArming': route_after_arm, 'directHits': {'f0128_23AD_40FE': f0128, 'f0097_2809_1EFF_after_f0128': f0097}, 'stage': None if f0128 else ('route input after arming' if not route_after_arm else 'code-stop transition'), 'blocker': None if f0128 else ('route input not delivered after F0128 arming' if not route_after_arm else 'F0128 breakpoint armed but no strict running-to-23AD:40FE prompt transition emitted')}
+            retained = True if f0128 else None
+            pause_addr = None
+            if not f0128:
+                ok = wait_prompt_by_pause(child, display, win, cmdlog, transcript, 'post-route post-load retention check')
+                pause_addr = last_code_addr(''.join(transcript)) if ok else None
+                if ok:
+                    dbg(child, 'BPLIST', cmdlog, transcript)
+                    retained = F0128 in clean(cmdlog[-1].get('excerpt', '')).upper()
+            stage_name = None if f0128 else ('route input after arming' if not route_after_arm else ('breakpoint retention' if retained is False else 'code-stop transition'))
+            blocker = None if f0128 else ('route input not delivered after F0128 arming' if not route_after_arm else ('F0128 breakpoint absent from BPLIST after post-load route pause' if retained is False else 'F0128 breakpoint armed/retained after post-load route, but no strict running-to-23AD:40FE prompt transition emitted'))
+            return {'strategy': strategy, 'method': method, 'ran': True, 'durationSeconds': round(time.time() - start, 3), 'routeLog': routelog, 'commandLog': cmdlog, 'stops': stops, 'sawRunning': saw_running, 'routeInputAfterArming': route_after_arm, 'breakpointRetainedPostRoute': retained, 'postRoutePauseCodeAddr': pause_addr, 'directHits': {'f0128_23AD_40FE': f0128, 'f0097_2809_1EFF_after_f0128': f0097}, 'stage': stage_name, 'blocker': blocker}
         finally:
             try:
                 transcript.append(drain(child, .5))
