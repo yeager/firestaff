@@ -17,6 +17,61 @@ static int dm1_v1_is_step_command(int command)
     return command >= DM1_V1_COMMAND_MOVE_FORWARD && command <= DM1_V1_COMMAND_MOVE_LEFT;
 }
 
+static int dm1_v1_compute_step_stamina_cost(const struct ChampionState_Compat* champion)
+{
+    int maxLoad;
+
+    if (!champion) {
+        return 0;
+    }
+    maxLoad = champion->maxLoad ? (int)champion->maxLoad : 1;
+    return (int)(((unsigned long)champion->load * 3ul) / (unsigned long)maxLoad) + 1;
+}
+
+static void dm1_v1_apply_pre_step_stamina_cost(
+    struct PartyState_Compat* party,
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+{
+    int i;
+
+    if (!party || !outResult) {
+        return;
+    }
+
+    for (i = 0; i < party->championCount && i < CHAMPION_MAX_PARTY; ++i) {
+        struct ChampionState_Compat* champion = &party->champions[i];
+        int cost;
+        int staminaAfter;
+
+        /* Source lock: CLIKMENU.C:237-255 applies F0325 only to living
+         * champions before movement-arrow/blocker/stairs resolution.
+         */
+        if (champion->hp.current == 0) {
+            continue;
+        }
+
+        cost = dm1_v1_compute_step_stamina_cost(champion);
+        staminaAfter = (int)champion->stamina.current - cost;
+        outResult->staminaCost[i] = cost;
+        outResult->staminaAffectedCount++;
+
+        if (staminaAfter <= 0) {
+            int damage = (-staminaAfter) >> 1;
+            champion->stamina.current = 0;
+            outResult->staminaDamage[i] = damage;
+            if (damage > 0) {
+                champion->hp.current = (champion->hp.current > damage)
+                    ? (unsigned short)(champion->hp.current - damage)
+                    : 0;
+            }
+        } else if (staminaAfter > (int)champion->stamina.maximum) {
+            champion->stamina.current = champion->stamina.maximum;
+        } else {
+            champion->stamina.current = (unsigned short)staminaAfter;
+        }
+    }
+}
+
 static void dm1_v1_apply_stairs_transition_result(
     struct PartyState_Compat* party,
     const struct StairsTransitionResult_Compat* stairs,
@@ -113,6 +168,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     }
 
     outResult->commandHandled = 1;
+    dm1_v1_apply_pre_step_stamina_cost(party, outResult);
     action = dm1_v1_command_to_move_action(outResult->queue.command);
 
     /* Source lock: CLIKMENU.C:264-267 consumes MOVE_BACKWARD while already
@@ -191,7 +247,7 @@ const char* DM1_V1_MovementCommandCore_SourceEvidencePc34Compat(void)
 {
     return "ReDMCSB Toolchains/Common/Source source lock: "
            "COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC:2075-2099 locks/empty-checks/movement-disabled gate, 2118-2127 dequeues, 2150-2156 dispatches turn/move; "
-           "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/discard, 325-346 move-result and cooldown; "
+           "CLIKMENU.C:F0364_COMMAND_TakeStairs:135-139 removes party then resolves level/direction, CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty:156-173 stop-wait/turn/sensor leave-enter, CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_MoveParty:237-255 living-champion stamina decrement before movement resolution, 224-233 arrow deltas, 264-276 stairs special cases, 269-323 relative step/block/discard, 325-346 move-result and cooldown; CHAMPION.C:F0325_CHAMPION_DecrementStamina:2025-2048 clamps stamina and damages on underflow; "
            "DUNGEON.C:F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement:1389-1391 applies forward/right deltas; "
            "CHAMPION.C:F0284_CHAMPION_SetPartyDirection:117-130 rotates champion cells/directions and party direction; "
            "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE:316-328 signature/source-destination contract, 433-435 projectile-impact precheck, 738-741 move-result globals, 752-783 party-square/scent/last-movement update.";
