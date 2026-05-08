@@ -822,9 +822,20 @@ MOTION_STEP:
         case PROJECTILE_BLOCKER_FLUXCAGE:
             dispatch = PROJECTILE_RESULT_HIT_FLUXCAGE;
             goto RESOLVE;
-        case PROJECTILE_BLOCKER_CLOSED_DOOR:
-            dispatch = PROJECTILE_RESULT_HIT_DOOR;
-            goto RESOLVE;
+        case PROJECTILE_BLOCKER_CLOSED_DOOR: {
+            int passesDoor = 0;
+            F0816_PROJECTILE_DoesPassThroughDoor_Compat(
+                in, digest, rng, &passesDoor);
+            if (!passesDoor) {
+                dispatch = PROJECTILE_RESULT_HIT_DOOR;
+                goto RESOLVE;
+            }
+            /* ReDMCSB/CSBWin parity: F0217/ProcessMissileEncounter
+             * returns false for pass-through doors, so F0219/ProcessTT_25
+             * continues the same motion step and later reschedules the
+             * projectile instead of treating it as a resolved hit. */
+            break;
+        }
         case PROJECTILE_BLOCKER_OTHER_PROJECTILE:
             dispatch = PROJECTILE_RESULT_HIT_OTHER_PROJECTILE;
             goto RESOLVE;
@@ -873,8 +884,15 @@ MOTION_STEP:
             && digest->destDoorState != PROJECTILE_DOOR_STATE_NONE
             && !digest->destDoorIsDestroyed
             && digest->destDoorState >= PROJECTILE_DOOR_STATE_CLOSED_HALF) {
-            dispatch = PROJECTILE_RESULT_HIT_DOOR;
-            goto RESOLVE;
+            int passesDoor = 0;
+            F0816_PROJECTILE_DoesPassThroughDoor_Compat(
+                in, digest, rng, &passesDoor);
+            if (!passesDoor) {
+                dispatch = PROJECTILE_RESULT_HIT_DOOR;
+                goto RESOLVE;
+            }
+            /* Door pass-through mirrors PROJEXPL.C:F0217 returning
+             * C0_FALSE; the caller keeps flying and reschedules. */
         }
     }
 
