@@ -1,0 +1,14 @@
+{
+  "status": "PASS_DM1_V1_VIEWPORT_EXPLOSION_PASS_GAP_SOURCE_LOCK_BLOCKER_NARROWED",
+  "date": "2026-05-08",
+  "scope": "DM1 V1 movement/viewport/walls explosion/projectile thing layers",
+  "renderer_behavior_changes": false,
+  "pixel_parity_claim": false,
+  "source_anchors": [
+    {"file": "DUNVIEW.C", "lines": "4547-4582", "claim": "F0115 object/creature/projectile phases precede explosion phase"},
+    {"file": "DUNVIEW.C", "lines": "5679-5683", "claim": "projectile pass restarts list per current view cell"},
+    {"file": "DUNVIEW.C", "lines": "5915-5933", "claim": "explosion pass starts only after all packed cells"}
+  ],
+  "current_firestaff_gap": "m11_draw_effect_cue coalesces projectiles and explosions per open cell via m11_draw_wall_contents Layer 3",
+  "minimal_fix": "split projectile draw from explosion draw; keep projectiles per-cell and run deferred explosion pass after packed-cell traversal"
+}
