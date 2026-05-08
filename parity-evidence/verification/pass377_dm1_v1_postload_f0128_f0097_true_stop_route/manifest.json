@@ -4,9 +4,9 @@
     "F0097_VIDRV_09_BlitViewPort_indirect_call": "2809:1EFF",
     "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE"
   },
-  "blocker": "F0128 breakpoint armed but no strict running-to-23AD:40FE prompt transition emitted",
-  "branch": "CompletedProcess(args=['git', 'branch', '--show-current'], returncode=0, stdout='worker/dm1v1-f0128-true-stop-fix-20260508\\n')",
-  "head": "CompletedProcess(args=['git', 'rev-parse', 'HEAD'], returncode=0, stdout='b45b20ff442e395812cbd71f63d85e5fad625662\\n')",
+  "blocker": "F0128 breakpoint armed/retained after post-load route, but no strict running-to-23AD:40FE prompt transition emitted",
+  "branch": "worker/dm1v1-true-stop-promotion-fix-20260508",
+  "head": "a54e4eb36358e54fe8928bf90b2d6b3a6a273591",
   "notPromotedBy": [
     "BPLIST",
     "BP command echo",
@@ -15,20 +15,22 @@
   ],
   "priorContract": {
     "pass360": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
-    "pass376": "BLOCKED_PASS376_ORIGINAL_ARTIFACT_COMMAND_MANIFEST_READY"
+    "pass376": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED"
   },
   "promotionRule": "Promote only if a strict post-Running stop at 23AD:40FE is followed in the same bounded owned-PTY run by 2809:1EFF/VIDRV; setup echo/BPLIST text is excluded.",
-  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-f0128-true-stop-fix-20260508",
+  "repo": "/home/trv2/work/firestaff-worktrees/dm1v1-true-stop-promotion-fix-20260508",
   "runtimeProbe": {
-    "blocker": "F0128 breakpoint armed but no strict running-to-23AD:40FE prompt transition emitted",
+    "blocker": "F0128 breakpoint armed/retained after post-load route, but no strict running-to-23AD:40FE prompt transition emitted",
     "boundedSeconds": 75,
-    "commandLogCount": 6,
+    "breakpointRetainedPostRoute": true,
+    "commandLogCount": 8,
     "directHits": {
       "f0097_2809_1EFF_after_f0128": false,
       "f0128_23AD_40FE": false
     },
-    "durationSeconds": 103.515,
+    "durationSeconds": 109.389,
     "method": "run to stable load/menu prefix, pause to debugger prompt, arm F0128, then continue into route",
+    "postRoutePauseCodeAddr": "07FB:01EB",
     "ran": true,
     "routeInputAfterArming": true,
     "routeKeylog": "parity-evidence/verification/pass377_dm1_v1_postload_f0128_f0097_true_stop_route/post_load_arm_before_route_route_keylog.json",
@@ -103,5 +105,16 @@
   ],
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
   "status": "BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED",
-  "timestampUtc": "2026-05-08T10:45:09.613345+00:00"
+  "strictStopPromotion": {
+    "breakpointRetainedPostRoute": true,
+    "exactBlocker": "F0128 breakpoint armed/retained after post-load route, but no strict running-to-23AD:40FE prompt transition emitted",
+    "postRoutePauseCodeAddr": "07FB:01EB",
+    "promoted": false,
+    "routeInputAfterArming": true,
+    "sawRunning": true,
+    "stage": "code-stop transition",
+    "strictPostF0128VidrvStop": false,
+    "strictPostRunningF0128Stop": false
+  },
+  "timestampUtc": "2026-05-08T11:00:18.662894+00:00"
 }

@@ -10,7 +10,7 @@ EDX=ESP=
 DOSBox version 0.74-3
 Copyright 2002-2019 DOSBox Team, published under GNU GPL.
 ---
-CONFIG:Loading primary settings from config file /tmp/firestaff-pass330-v21hvfon/dosbox.conf
+CONFIG:Loading primary settings from config file /tmp/firestaff-pass330-x8bpb1bf/dosbox.conf
 0: IO:Writing 05 to port 03CF
 MIXER:No Sound Mode Selected.
 ALSA lib seq_hw.c:528:(snd_seq_hw_open) open /dev/snd/seq failed: Permission denied
@@ -67,7 +67,7 @@ MIDI:Opened device:none
 0: FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
 
 
-0: EXEC:Parsing command line: mount c /tmp/firestaff-pass330-v21hvfon/dos
+0: EXEC:Parsing command line: mount c /tmp/firestaff-pass330-x8bpb1bf/dos
 78
 3: EXEC:Execute mount.COM 0
 78
@@ -205,29 +205,29 @@ Breakpoint list:
 78
 24910620: FILES:file open command 2 file data\graphics.dat
 78
-37395195: EXEC:Execute FIRES 0
+37395193: EXEC:Execute FIRES 0
 78
-37395195: FILES:file open command 0 file FIRES
+37395193: FILES:file open command 0 file FIRES
 78
-38625013: FILES:file open command 0 file EMMXXXX0
+38625011: FILES:file open command 0 file EMMXXXX0
 78
-38625030: IOCTL:07:Fakes output status is ready for handle 3
+38625028: IOCTL:07:Fakes output status is ready for handle 3
 78
-38636671: FILES:file open command 2 file DATA\GRAPHICS.DAT
+38636669: FILES:file open command 2 file DATA\GRAPHICS.DAT
 78
-41509651: FILES:file open command 2 file DATA\DUNGEON.DAT
+41509649: FILES:file open command 2 file DATA\DUNGEON.DAT
 FD 00 36 07..691 0E 77 04 8A 00 77 04w...w
-280C:1514  86E2xchg dl,ah
-280C:1516  250FF0and  ax,F00F
-280C:1519  0AC2or   al,dl
-280C:151B  8AD0    dl,al
-280C:151D  8AF0dh,al
-280C:151F  2ED7xlat
-280C:1521  263235xor  dh,es:[di]es:[1CC0]=0000
-280C:1524  22C6and  al,dh
-280C:1526  32C2    xor  al,dl
-280C:1528  AA  stosb
--> _     10116C2  DS=E28295D03031E231CC280C151422F16D111F0E220684369...
+280C:1490  ABstosw
+280C:1491  E2D8loop 0000146B ($-28)
+280C:1493  46inc  si
+280C:1494  5D      pop  bp
+280C:1495  9D  popf
+280C:1496  7318jnc  000014B0 ($+18)(down)
+280C:1498  8A04al,[si]ds:[01EC]=0000
+280C:149A  4E  dec  si
+280C:149B  53      push bx
+280C:149C  BBE701bx,01E7
+-> _     1EC  DS=E3C895D03031E2314A8  CS=280C14901102000000F0A220611518...
 -> B_  ...P_  ...L_  ...I_  ...S_  ...T_
 Breakpoint list:
 78

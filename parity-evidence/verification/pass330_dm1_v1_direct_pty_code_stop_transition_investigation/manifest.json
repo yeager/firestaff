@@ -21,69 +21,69 @@
           {
             "cmd": "BPDEL *",
             "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
-            "t": 1778236105.759714
+            "t": 1778237629.759503
           },
           {
             "cmd": "BP 23AD:40FE",
             "excerpt": "\n-> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
-            "t": 1778236106.5847907
+            "t": 1778237630.5828767
           },
           {
             "cmd": "BPLIST",
             "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
-            "t": 1778236107.4091225
+            "t": 1778237631.4073064
           },
           {
             "control": "F5",
             "purpose": "run after initial F0128 arm",
-            "t": 1778236107.4594
+            "t": 1778237631.4574966
           },
           {
             "control": "Alt+Pause",
             "purpose": "post-route retention check",
-            "t": 1778236182.7473276
+            "t": 1778237706.7224138
           },
           {
             "cmd": "BPLIST",
             "excerpt": "...\n-> B_  ...P_  ...L_  ...I_  ...S_  ...T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
-            "t": 1778236188.6028423
+            "t": 1778237712.575342
           }
         ],
         "directHits": {
           "f0097_2809_1EFF_after_f0128": false,
           "f0128_23AD_40FE": false
         },
-        "durationSeconds": 88.205,
+        "durationSeconds": 88.181,
         "method": "arm F0128 at initial debugger prompt before any game route input, run through full load+movement route",
-        "postRoutePauseCodeAddr": "280C:1528",
+        "postRoutePauseCodeAddr": "280C:149C",
         "ran": true,
         "routeLog": [
           {
             "route_item": "wait:9000",
             "slept": true,
-            "t": 1778236107.4803529
+            "t": 1778237631.473134
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "enter",
-            "t": 1778236116.4968
+            "t": 1778237640.4896533
           },
           {
             "route_item": "wait:2200",
             "slept": true,
-            "t": 1778236116.718522
+            "t": 1778237640.7107074
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "one",
-            "t": 1778236118.9230692
+            "t": 1778237642.915505
           },
           {
             "route_item": "wait:2200",
             "slept": true,
-            "t": 1778236119.1421506
+            "t": 1778237643.1367893
           },
           {
             "out": "",
@@ -93,100 +93,100 @@
               553,
               281
             ],
-            "t": 1778236121.347012
+            "t": 1778237645.3401227
           },
           {
             "route_item": "wait:2200",
             "slept": true,
-            "t": 1778236121.4590106
+            "t": 1778237645.4593034
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "one",
-            "t": 1778236123.6640048
+            "t": 1778237647.6619616
           },
           {
             "route_item": "wait:3500",
             "slept": true,
-            "t": 1778236123.8868213
+            "t": 1778237647.883574
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp5",
-            "t": 1778236127.3951666
+            "t": 1778237651.3894663
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778236127.6153703
+            "t": 1778237651.608119
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp4",
-            "t": 1778236128.5164878
+            "t": 1778237652.5097914
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778236128.7357812
+            "t": 1778237652.7299767
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp6",
-            "t": 1778236129.639253
+            "t": 1778237653.6311548
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778236129.8600585
+            "t": 1778237653.852057
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp5",
-            "t": 1778236130.761281
+            "t": 1778237654.7533374
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778236130.9815664
+            "t": 1778237654.9752588
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp4",
-            "t": 1778236131.8828225
+            "t": 1778237655.8765721
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778236132.1016302
+            "t": 1778237656.0967803
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp6",
-            "t": 1778236133.0025797
+            "t": 1778237656.9983451
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778236133.2232103
+            "t": 1778237657.2189767
           },
           {
             "out": "",
             "rc": 0,
             "route_item": "kp5",
-            "t": 1778236134.124721
+            "t": 1778237658.120109
           },
           {
             "route_item": "wait:900",
             "slept": true,
-            "t": 1778236134.3461227
+            "t": 1778237658.3406909
           }
         ],
         "sawRunning": true,
@@ -231,5 +231,5 @@
     }
   ],
   "status": "BLOCKED_PASS330_CPU_NEVER_REACHES_F0128_UNDER_ROUTE",
-  "timestampUtc": "2026-05-08T10:29:49.331044+00:00"
+  "timestampUtc": "2026-05-08T10:55:13.296158+00:00"
 }
