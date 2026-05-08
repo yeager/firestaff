@@ -256,6 +256,10 @@ if(BUILD_TESTING)
             NAME csb_v1_parity_surface_matrix
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_parity_surface_matrix.py
         )
+        add_test(
+            NAME csb_v1_completion_matrix
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_completion_matrix.py
+        )
     endif()
 
     add_executable(test_touch_click_zone_matrix_pc34_compat_integration

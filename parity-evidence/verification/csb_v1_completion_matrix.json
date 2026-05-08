@@ -1,0 +1,207 @@
+{
+  "schema": "firestaff.csb_v1_completion_matrix.v1",
+  "pass": true,
+  "scope": "CSB V1 definition-of-done matrix; source/evidence boundary only, no runtime parity claim.",
+  "criteria": [
+    {
+      "id": "reference_inventory",
+      "score": 8,
+      "status": "SOURCE_LOCKED_PARTIAL"
+    },
+    {
+      "id": "definition_matrix",
+      "score": 10,
+      "status": "MATCHED_DEFINITION_ONLY"
+    },
+    {
+      "id": "launch_smoke",
+      "score": 0,
+      "status": "BLOCKED_RUNTIME"
+    },
+    {
+      "id": "core_input_movement",
+      "score": 0,
+      "status": "BLOCKED_RUNTIME"
+    },
+    {
+      "id": "viewport_ui_render",
+      "score": 0,
+      "status": "BLOCKED_CAPTURE"
+    },
+    {
+      "id": "gameplay_systems",
+      "score": 0,
+      "status": "BLOCKED_RUNTIME"
+    },
+    {
+      "id": "audio_timing",
+      "score": 0,
+      "status": "BLOCKED_RUNTIME"
+    },
+    {
+      "id": "original_overlay_regression",
+      "score": 0,
+      "status": "BLOCKED_CAPTURE"
+    }
+  ],
+  "source_anchors": [
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "468-523",
+      "needles": [
+        "CSB_SAVE_HEADER",
+        "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK",
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINC8.C",
+      "lines": "101-118",
+      "needles": [
+        "M745_FILE_ID_SAVE_DMSAVE_DAT",
+        "M746_FILE_ID_SAVE_CSBGAME_DAT",
+        "C12_DUNGEON_CSB_PRISON"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-64",
+      "needles": [
+        "F7086_IsReadyToMakeNewAdventure",
+        "F7272_IsDungeonValid",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "lines": "380-390",
+      "needles": [
+        "full dungeon view",
+        "ThievesEye_ViewportVisibleArea"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "lines": "4547-5205",
+      "needles": [
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "/* Draw objects */",
+        "/* Draw creatures */"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "lines": "1-30",
+      "needles": [
+        "dungeon.dat",
+        "hcsb.dat",
+        "graphics.dat",
+        "config.txt"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+      "lines": "500-625",
+      "needles": [
+        "CSBGAME",
+        "CSBGAME2",
+        "csbgame.dat",
+        "csbgame.bak"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp",
+      "lines": "1410-1425",
+      "needles": [
+        "keyboardMode == 2",
+        "Reincarnate mode"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+      "lines": "1740-1915",
+      "needles": [
+        "graphics.dat",
+        "Cannot find 'graphics.dat'",
+        "CSBgraphics.dat"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+      "lines": "1-30",
+      "needles": [
+        "Enter the dungeon",
+        "choose prison",
+        "Make New Adventure"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/SaveGame.cpp",
+      "lines": "160-190",
+      "needles": [
+        "dungeonDatIndex",
+        "NumWordsInTextArray"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Mouse.cpp",
+      "lines": "1600-1668",
+      "needles": [
+        "HandleClickInViewport",
+        "d.ClockRunning"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/data.cpp",
+      "lines": "1740-1755",
+      "needles": [
+        "keyboardMode=1",
+        "adventuring"
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "surface_matrix": {
+    "path": "parity-evidence/verification/csb_v1_parity_surface_matrix.json",
+    "pass": true,
+    "surface_count": 6
+  },
+  "completion_impact": {
+    "target": "CSB V1",
+    "before_percent": 10,
+    "after_percent": 18,
+    "definition_matrix_delta": 8
+  },
+  "non_claims": [
+    "No CSB runtime, launch, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.",
+    "No Firestaff runtime code is modified by this matrix.",
+    "DM1 gates cannot be counted as CSB V1 completion without CSB-specific evidence."
+  ],
+  "failures": []
+}
