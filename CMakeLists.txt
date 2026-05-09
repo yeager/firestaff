@@ -239,12 +239,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_draw
     endif()
 endif()
 
+# DM1 V1 game-loop redraw/cadence evidence probe
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c")
+    add_executable(firestaff_dm1_v1_game_loop_redraw_cadence_probe probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_game_loop_redraw_cadence_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_viewport_draw_order_probe
         COMMAND firestaff_dm1_v1_viewport_draw_order_probe
+    )
+    add_test(
+        NAME dm1_v1_game_loop_redraw_cadence_probe
+        COMMAND firestaff_dm1_v1_game_loop_redraw_cadence_probe
     )
 
     if(Python3_Interpreter_FOUND)
