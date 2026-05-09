@@ -39,6 +39,24 @@ Additional local cross-check:
 - `DungeonMasterPC34Multilingual/EUDATA/SONG.DAT` has the same SHA-256 as English `SONG.DAT`.
 - `DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT` is different, as expected, and matches the Firestaff MD5 assumption for `dm1 pc34-multi` (`f934d97e43e1ba6e5159839acbcd0611`).
 
+## Pass445 hash-lock evidence
+
+This pass promotes the PC34 dungeon/graphics source identity into a CTest gate:
+`pass445_dm1_v1_pc34_data_hash_lock`.
+
+| Filename | Variant | Bytes | SHA-256 | MD5 cross-ref |
+|---|---|---:|---|---|
+| `GRAPHICS.DAT` | DM PC 3.4 English / I34E | 363417 | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` | Daniel registry: `FA6B1AA29E191418713BF2CDA93D962E` |
+| `DUNGEON.DAT` | DM PC 3.4 English / I34E | 33357 | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | n/a |
+| `GRAPHICS.DAT` | DM PC 3.4 Multilanguage / EUDATA cross-reference | 398925 | `291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc` | Daniel registry: `F934D97E43E1BA6E5159839ACBCD0611` |
+| `DUNGEON.DAT` | DM PC 3.4 Multilanguage / EUDATA cross-reference; same payload as English | 33357 | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | n/a |
+
+ReDMCSB audit anchors used by the gate:
+
+- `FILENAME.C`: `DATA\\DUNGEON.DAT`, `DATA\\GRAPHICS.DAT`, `EUDATA\\DUNGEON~.DAT`, `EUDATA\\GRAPHICS.DAT`.
+- `MEMORY.C`: `F0477_MEMORY_OpenGraphicsDat_CPSDF`, `F0770_FILE_Open(G2130_GraphicsDatFileName)`, `F0479_MEMORY_ReadGraphicsDatHeader`.
+- `CEDTINCA.C`: `F7063_LoadDungeon` reads dungeon parts via `F7059_ReadDungeonPartWithChecksum`.
+
 ## Repro command
 
 Use the committed helper:
