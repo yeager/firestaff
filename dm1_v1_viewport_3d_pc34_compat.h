@@ -295,6 +295,24 @@ typedef struct {
 
 typedef struct {
     DM1_ViewSquareIndex square;
+    uint16_t cell_order;
+    bool stairs_draw_before_floor_ornament;
+    bool pit_draw_before_floor_ornament;
+    bool floor_ornament_before_things;
+    bool objects_creatures_projectiles_before_explosions;
+    bool field_after_things;
+    bool wall_case_returns_before_things;
+    const char *function_name;
+    const char *stairs_source_lines;
+    const char *pit_source_lines;
+    const char *floor_ornament_source_lines;
+    const char *things_source_lines;
+    const char *field_source_lines;
+    const char *wall_return_source_lines;
+} DM1_ViewportFloorFieldOrderSpec;
+
+typedef struct {
+    DM1_ViewSquareIndex square;
     int8_t rel_depth;
     int8_t rel_lateral;
     const char *redmcsb_function;
@@ -575,6 +593,9 @@ int dm1_viewport_3d_projectile_scale_index_for_cell(const DM1_ViewportProjectile
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);
+size_t dm1_viewport_3d_floor_field_order_spec_count(void);
+const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec(size_t index);
+const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_ViewSquareIndex square);
 
 /* Source-locked post-command redraw contract: a completed command mutates the
  * party/world state first, GAMELOOP.C redraws F0128 from G0308/G0306/G0307,

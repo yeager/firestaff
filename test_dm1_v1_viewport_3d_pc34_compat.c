@@ -389,6 +389,64 @@ static void test_post_command_redraw_contract(void)
     check_int("post_command_redraw.present_source", strstr(spec->present_source_lines, "DRAWVIEW.C:709-722") != NULL, 1);
 }
 
+static void test_floor_field_stairs_pit_teleporter_order(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        const char *function_name;
+        uint16_t order;
+        int has_floor_ornament;
+        const char *stairs_line;
+        const char *pit_line;
+        const char *things_line;
+        const char *field_line;
+        const char *wall_return_line;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, "F0676_DrawD3L2", 0x3421, 1, "6237-6252", "6275-6278", "6286", "6288-6289", "6253-6264" },
+        { DM1_VIEW_SQUARE_D3L,  "F0116_DUNGEONVIEW_DrawSquareD3L", 0x3421, 1, "6375-6405", "6461-6472", "6480", "6482-6495", "6406-6437" },
+        { DM1_VIEW_SQUARE_D3C,  "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF", 0x3421, 1, "6666-6696", "6748-6762", "6816", "6818-6831", "6697-6720" },
+        { DM1_VIEW_SQUARE_D0C,  "F0127_DUNGEONVIEW_DrawSquareD0C", 0x0021, 0, "8241-8273", "8274-8292", "8294", "8295-8308", "8185-8240" },
+    };
+
+    check_int("floor_field_order.count", (int)dm1_viewport_3d_floor_field_order_spec_count(), 4);
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportFloorFieldOrderSpec *spec =
+            dm1_viewport_3d_get_floor_field_order_spec_for_square(expected[i].square);
+        char id[128];
+        snprintf(id, sizeof(id), "floor_field_order.%zu.nonnull", i);
+        check_nonnull(id, spec);
+        if (!spec) continue;
+        snprintf(id, sizeof(id), "floor_field_order.%zu.function", i);
+        check_int(id, strcmp(spec->function_name, expected[i].function_name) == 0, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.cell_order", i);
+        check_int(id, spec->cell_order, expected[i].order);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.stairs_before_floor", i);
+        check_int(id, spec->stairs_draw_before_floor_ornament ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.pit_before_floor", i);
+        check_int(id, spec->pit_draw_before_floor_ornament ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.floor_before_things", i);
+        check_int(id, spec->floor_ornament_before_things ? 1 : 0, expected[i].has_floor_ornament);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.layer_z", i);
+        check_int(id, spec->objects_creatures_projectiles_before_explosions ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.field_after_things", i);
+        check_int(id, spec->field_after_things ? 1 : 0, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.wall_return", i);
+        check_int(id, spec->wall_case_returns_before_things ? 1 : 0, i < 3 ? 1 : 0);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.stairs_source", i);
+        check_int(id, strstr(spec->stairs_source_lines, expected[i].stairs_line) != NULL, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.pit_source", i);
+        check_int(id, strstr(spec->pit_source_lines, expected[i].pit_line) != NULL, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.things_source", i);
+        check_int(id, strstr(spec->things_source_lines, expected[i].things_line) != NULL, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.field_source", i);
+        check_int(id, strstr(spec->field_source_lines, expected[i].field_line) != NULL, 1);
+        snprintf(id, sizeof(id), "floor_field_order.%zu.wall_source", i);
+        check_int(id, strstr(spec->wall_return_source_lines, expected[i].wall_return_line) != NULL, 1);
+    }
+    check_int("floor_field_order.out_of_range", dm1_viewport_3d_get_floor_field_order_spec(4) == NULL, 1);
+    check_int("floor_field_order.no_d1_side_spec", dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D1L) == NULL, 1);
+}
+
 static void test_source_evidence_mentions_visual_lane(void)
 {
     const char *e = dm1_viewport_3d_source_evidence();
@@ -404,6 +462,8 @@ static void test_source_evidence_mentions_visual_lane(void)
     check_int("source_evidence.f0115_projectiles", strstr(e, "projectile draw pass") != NULL, 1);
     check_int("source_evidence.projectile_occlusion", strstr(e, "G2028 row and C2900 zone mapping") != NULL, 1);
     check_int("source_evidence.f0115_explosion_global", strstr(e, "explosion pass after all ordered cells") != NULL, 1);
+    check_int("source_evidence.floor_field_order", strstr(e, "stairs/pit/floor-ornament/F0115/teleporter-field order") != NULL, 1);
+    check_int("source_evidence.d0c_field_order", strstr(e, "DUNVIEW.C:8241-8308") != NULL, 1);
     check_int("source_evidence.door_front_occlusion", strstr(e, "door-front occlusion") != NULL, 1);
     check_int("source_evidence.d1c_door_front_occlusion", strstr(e, "DUNVIEW.C:7874-7937") != NULL, 1);
     check_int("source_evidence.defs_zones", strstr(e, "DEFS.H:4040-4057") != NULL, 1);
@@ -421,6 +481,7 @@ int main(void)
     test_f0115_cell_order_and_layer_z_order();
     test_projectile_occlusion_zone_mapping();
     test_door_front_occlusion_split_passes();
+    test_floor_field_stairs_pit_teleporter_order();
     test_parity_flip_restore();
     test_floor_ceiling_bands_and_zones();
     test_post_command_redraw_contract();

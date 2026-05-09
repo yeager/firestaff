@@ -148,6 +148,41 @@ static const DM1_ViewportPostCommandRedrawSpec s_post_command_redraw = {
     "DRAWVIEW.C:709-722 F0097_DUNGEONVIEW_DrawViewport requests the G0296 viewport blit and waits for vertical blank",
 };
 
+static const DM1_ViewportFloorFieldOrderSpec s_floor_field_order_specs[] = {
+    { DM1_VIEW_SQUARE_D3L2, 0x3421, true, true, true, true, true, true,
+      "F0676_DrawD3L2",
+      "DUNVIEW.C:6237-6252 stairs front bitmap before common floor/thing path",
+      "DUNVIEW.C:6275-6278 pit bitmap before floor ornament; BUG0_64 floor ornaments can draw over open pits",
+      "DUNVIEW.C:6282-6284 order then F0108 floor ornament",
+      "DUNVIEW.C:6286 F0115 object/creature/projectile/explosion handoff",
+      "DUNVIEW.C:6288-6289 teleporter field after F0115",
+      "DUNVIEW.C:6253-6264 wall bitmap/ornament then return before F0115" },
+    { DM1_VIEW_SQUARE_D3L, 0x3421, true, true, true, true, true, true,
+      "F0116_DUNGEONVIEW_DrawSquareD3L",
+      "DUNVIEW.C:6375-6405 stairs front bitmap before common floor/thing path",
+      "DUNVIEW.C:6461-6472 pit bitmap before floor ornament; BUG0_64 floor ornaments can draw over open pits",
+      "DUNVIEW.C:6475-6478 order then F0108 floor ornament",
+      "DUNVIEW.C:6480 F0115 object/creature/projectile/explosion handoff",
+      "DUNVIEW.C:6482-6495 teleporter field after F0115",
+      "DUNVIEW.C:6406-6437 wall bitmap/ornament then return unless front alcove branches to F0115" },
+    { DM1_VIEW_SQUARE_D3C, 0x3421, true, true, true, true, true, true,
+      "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+      "DUNVIEW.C:6666-6696 stairs front bitmap before common floor/thing path",
+      "DUNVIEW.C:6748-6762 pit bitmap before floor ornament; BUG0_64 floor ornaments can draw over open pits",
+      "DUNVIEW.C:6811-6814 order then F0108 floor ornament",
+      "DUNVIEW.C:6816 F0115 object/creature/projectile/explosion handoff",
+      "DUNVIEW.C:6818-6831 teleporter field after F0115",
+      "DUNVIEW.C:6697-6720 wall bitmap/ornament then return unless front alcove branches to F0115" },
+    { DM1_VIEW_SQUARE_D0C, 0x0021, true, true, false, true, true, false,
+      "F0127_DUNGEONVIEW_DrawSquareD0C",
+      "DUNVIEW.C:8241-8273 stairs front bitmap draws and breaks before F0115",
+      "DUNVIEW.C:8274-8292 pit floor/ceiling bitmap before F0115",
+      "DUNVIEW.C:8284-8294 no D0C floor-ornament call in this branch; ceiling pit precedes F0115",
+      "DUNVIEW.C:8294 F0115 object/creature/projectile/explosion handoff with C0x0021",
+      "DUNVIEW.C:8295-8308 teleporter field after F0115",
+      "DUNVIEW.C:8185-8240 door-side case breaks before common F0115; no wall case in D0C" },
+};
+
 static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
     { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, DM1_PC34_ZONE_WALL_D3L2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260", "DUNVIEW.C:6263-6264 wall ornament then return" },
     { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, DM1_PC34_ZONE_WALL_D3R2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327", "DUNVIEW.C:6330-6331 wall ornament then return" },
@@ -747,6 +782,25 @@ const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusi
     return NULL;
 }
 
+size_t dm1_viewport_3d_floor_field_order_spec_count(void)
+{
+    return sizeof(s_floor_field_order_specs) / sizeof(s_floor_field_order_specs[0]);
+}
+
+const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_floor_field_order_spec_count()) return NULL;
+    return &s_floor_field_order_specs[index];
+}
+
+const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_floor_field_order_spec_count(); ++i) {
+        if (s_floor_field_order_specs[i].square == square) return &s_floor_field_order_specs[i];
+    }
+    return NULL;
+}
+
 const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spec(void)
 {
     return &s_post_command_redraw;
@@ -782,6 +836,10 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:5681-5883 F0115 projectile draw pass and PC34 zone draw\n"
         "  DUNVIEW.C:373,5667-5683 projectile occlusion via G2028 row and C2900 zone mapping; D3 front cells/D0 back cells clipped\n"
         "  DUNVIEW.C:5915-5933 F0115 explosion pass after all ordered cells\n"
+        "  DUNVIEW.C:6237-6289 D3L2 stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
+        "  DUNVIEW.C:6375-6495 D3L stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
+        "  DUNVIEW.C:6666-6831 D3C stairs/pit/floor-ornament/F0115/teleporter-field order; wall returns before F0115\n"
+        "  DUNVIEW.C:8241-8308 D0C stairs/pit/ceiling-pit/F0115/teleporter-field order\n"
         "  DUNVIEW.C:6443-6459 D3L door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:6722-6746 D3C door-front occlusion: rear pass, frame/door, front pass\n"
         "  DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass\n"
