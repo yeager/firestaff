@@ -17,6 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = Path('/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source')
 ARTIFACT = Path('/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json')
+CORRECTED_ARTIFACT = Path('/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509')
 OUT_DIR = ROOT / 'parity-evidence/verification/pass452_dm1_v1_hall_original_route_state_blocker'
 OUT_JSON = OUT_DIR / 'manifest.json'
 OUT_MD = ROOT / 'parity-evidence/pass452_dm1_v1_hall_original_route_state_blocker.md'
@@ -85,6 +86,45 @@ def source_has(file: str, needles: list[str]) -> bool:
     return all(' '.join(n.split()) in flat for n in needles)
 
 
+def corrected_initial_south_transition() -> dict:
+    run_dir = CORRECTED_ARTIFACT / 'probe-initial-south-corrected'
+    keylog = run_dir / 'original-viewpoint-route-keys.log'
+    images = sorted(run_dir.glob('image*.png'))
+    import hashlib
+    hashes = []
+    for path in images:
+        h = hashlib.sha256(path.read_bytes()).hexdigest()
+        hashes.append(h)
+    log = keylog.read_text(encoding='utf-8', errors='replace') if keylog.exists() else ''
+    candidate_sha = 'e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e'
+    terminal_sha = '7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f'
+    candidate_index = hashes.index(candidate_sha) if candidate_sha in hashes else -1
+    terminal_index = hashes.index(terminal_sha) if terminal_sha in hashes else -1
+    ok = (
+        run_dir.is_dir()
+        and 'route-token click:111,82' in log
+        and 'left-click-mapped 111,82 -> absolute' in log
+        and 'client-relative 372,358' in log
+        and 'route-token click:130,115' in log
+        and 'client-relative 435,468' in log
+        and candidate_index > 0
+        and terminal_index > candidate_index
+    )
+    return {
+        'artifactRoot': str(CORRECTED_ARTIFACT),
+        'run': 'probe-initial-south-corrected',
+        'exists': run_dir.is_dir(),
+        'keyLog': str(keylog),
+        'imageCount': len(images),
+        'uniqueImageSha256Count': len(set(hashes)),
+        'candidateSelectSha256': candidate_sha,
+        'candidateIndex': candidate_index,
+        'terminalHudSha256': terminal_sha,
+        'terminalIndex': terminal_index,
+        'ok': ok,
+    }
+
+
 def main() -> int:
     if not ARTIFACT.exists():
         raise SystemExit(f'missing artifact manifest: {ARTIFACT}')
@@ -106,9 +146,12 @@ def main() -> int:
 
     before = data['entries'][3]
     after = data['entries'][4]
+    corrected = corrected_initial_south_transition()
+    status = 'PASS_PASS452_WRONG_FACING_BLOCKER_SUPERSEDED_BY_INITIAL_SOUTH_RERUN' if corrected['ok'] else 'BLOCKED_WRONG_FACING_AFTER_CAPTURE_ROUTE_TURNS_AWAY_FROM_INITIAL_C127'
+
     diagnosis = {
         'schema': 'pass452_dm1_v1_hall_original_route_state_blocker.v1',
-        'status': 'BLOCKED_WRONG_FACING_AFTER_CAPTURE_ROUTE_TURNS_AWAY_FROM_INITIAL_C127',
+        'status': status,
         'artifact_manifest': str(ARTIFACT),
         'artifact_status': data.get('status'),
         'pc34_hashes': provenance,
@@ -126,7 +169,8 @@ def main() -> int:
             'after_click_111_82_pc320_sha256': after.get('pc320_sha256'),
             'interpretation': 'hash changed only by pointer/visual noise; candidate panel was not visible, so do not promote candidate/resurrect/HUD parity from this run',
         },
-        'next_state_transition': {
+        'corrected_initial_south_transition': corrected,
+        'next_state_transition': None if corrected['ok'] else {
             'name': 'fresh_new_game_initial_south_c127_click_then_c160',
             'steps': [
                 'select VGA / No Sound / Mouse as before',
@@ -164,7 +208,7 @@ def main() -> int:
         '',
         'That route is not the source-locked initial C127 click state.  From the fresh game the party starts at map0 `(1,3)` facing **South**, already facing the C127 champion portrait sensor on `(1,4)`.  The capture then turned left to East, attempted an East step that was blocked, and turned left again to **North** before clicking x111/y82.  Since turns do not move the party and blocked steps do not move it, the click touched the north front wall, not the initial south C127 wall.',
         '',
-        'So the next blocker is **state/facing**, not coordinate geometry.  Do not keep trying visual mirror centers from the north-facing frame.',
+        'That stale run is now superseded by the corrected initial-south rerun when `corrected_initial_south_transition.ok` is true. The diagnosis remains in the evidence record so the bad route is not reused.',
         '',
         '## Source locks',
         '',
@@ -173,25 +217,35 @@ def main() -> int:
         lines.append(f"- `{lock['file']}:{lock['lines']}` — {lock['point']}")
     lines += [
         '',
-        '## Next executable transition',
+        '## Resolution',
         '',
-        'Use the same stock PC34 data and DOSBox-X setup, but after entering the fresh game, do **not** turn or step.  Click the source portrait center while still at initial South-facing Hall state:',
-        '',
-        '1. select VGA / No Sound / Mouse as before',
-        '2. press `Return Return` to enter the fresh game',
-        '3. capture first Hall frame: expected map0 `(1,3,S)`',
-        '4. click PC screen `x=111,y=82` (N2 root mapping from this run: `x=302,y=264`)',
-        '5. wait/capture `candidate_select`; expect resurrect/reincarnate/cancel panel',
-        '6. then click C160 resurrect `x=130,y=115` (root `x=340,y=330`) or C161 reincarnate `x=186,y=115`',
-        '',
-        f"Route edit: {diagnosis['next_state_transition']['route_edit']}.",
-        '',
-        'Exact command shell:',
-        '',
-        '```sh',
-        diagnosis['next_state_transition']['exact_next_command'],
-        '```',
+        f"- corrected initial-south rerun ok: `{diagnosis['corrected_initial_south_transition']['ok']}`",
+        f"- corrected artifact: `{diagnosis['corrected_initial_south_transition']['artifactRoot']}`",
+        f"- images: `{diagnosis['corrected_initial_south_transition']['imageCount']}` / unique `{diagnosis['corrected_initial_south_transition']['uniqueImageSha256Count']}`",
+        f"- candidate index: `{diagnosis['corrected_initial_south_transition']['candidateIndex']}`",
+        f"- terminal index: `{diagnosis['corrected_initial_south_transition']['terminalIndex']}`",
     ]
+    if diagnosis['next_state_transition']:
+        lines += [
+            '## Next executable transition',
+            '',
+            'Use the same stock PC34 data and DOSBox-X setup, but after entering the fresh game, do **not** turn or step.  Click the source portrait center while still at initial South-facing Hall state:',
+            '',
+            '1. select VGA / No Sound / Mouse as before',
+            '2. press `Return Return` to enter the fresh game',
+            '3. capture first Hall frame: expected map0 `(1,3,S)`',
+            '4. click PC screen `x=111,y=82` (N2 root mapping from this run: `x=302,y=264`)',
+            '5. wait/capture `candidate_select`; expect resurrect/reincarnate/cancel panel',
+            '6. then click C160 resurrect `x=130,y=115` (root `x=340,y=330`) or C161 reincarnate `x=186,y=115`',
+            '',
+            f"Route edit: {diagnosis['next_state_transition']['route_edit']}.",
+            '',
+            'Exact command shell:',
+            '',
+            '```sh',
+            diagnosis['next_state_transition']['exact_next_command'],
+            '```',
+        ]
     OUT_MD.parent.mkdir(parents=True, exist_ok=True)
     OUT_MD.write_text('\n'.join(lines) + '\n')
     print(f'PASS wrote {OUT_JSON}')

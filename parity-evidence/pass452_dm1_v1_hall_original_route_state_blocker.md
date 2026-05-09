@@ -1,6 +1,6 @@
 # Pass452 — DM1 V1 original Hall route-state blocker
 
-- status: `BLOCKED_WRONG_FACING_AFTER_CAPTURE_ROUTE_TURNS_AWAY_FROM_INITIAL_C127`
+- status: `PASS_PASS452_WRONG_FACING_BLOCKER_SUPERSEDED_BY_INITIAL_SOUTH_RERUN`
 - artifact: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json`
 - DUNGEON.DAT sha256: `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`
 - GRAPHICS.DAT sha256: `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`
@@ -22,7 +22,7 @@ The N2 capture did prove a stock PC34 Hall/front-mirror visible artifact, but it
 
 That route is not the source-locked initial C127 click state.  From the fresh game the party starts at map0 `(1,3)` facing **South**, already facing the C127 champion portrait sensor on `(1,4)`.  The capture then turned left to East, attempted an East step that was blocked, and turned left again to **North** before clicking x111/y82.  Since turns do not move the party and blocked steps do not move it, the click touched the north front wall, not the initial south C127 wall.
 
-So the next blocker is **state/facing**, not coordinate geometry.  Do not keep trying visual mirror centers from the north-facing frame.
+That stale run is now superseded by the corrected initial-south rerun when `corrected_initial_south_transition.ok` is true. The diagnosis remains in the evidence record so the bad route is not reused.
 
 ## Source locks
 
@@ -35,21 +35,10 @@ So the next blocker is **state/facing**, not coordinate geometry.  Do not keep t
 - `REVIVE.C:63-67,272,704-789` — F0280 appends/marks the candidate; only after that can C160/C161/C162 panel commands in F0282 finalize/cancel candidate state
 - `COMMAND.C:108-114,1985-1991` — viewport C080 and resurrect/reincarnate panel commands are separate command spaces; C160/C161 cannot create a candidate before C127/F0280
 
-## Next executable transition
+## Resolution
 
-Use the same stock PC34 data and DOSBox-X setup, but after entering the fresh game, do **not** turn or step.  Click the source portrait center while still at initial South-facing Hall state:
-
-1. select VGA / No Sound / Mouse as before
-2. press `Return Return` to enter the fresh game
-3. capture first Hall frame: expected map0 `(1,3,S)`
-4. click PC screen `x=111,y=82` (N2 root mapping from this run: `x=302,y=264`)
-5. wait/capture `candidate_select`; expect resurrect/reincarnate/cancel panel
-6. then click C160 resurrect `x=130,y=115` (root `x=340,y=330`) or C161 reincarnate `x=186,y=115`
-
-Route edit: remove the turn_left_east, step_east_blocked, and turn_left_north_front_mirror inputs before the portrait click.
-
-Exact command shell:
-
-```sh
-xvfb-run -a -s "-screen 0 800x600x24" dosbox-x -conf ~/openclaw-artifacts/dm1-hall-dosbox-20260509/dosboxx.conf -fastlaunch -nogui -nomenu -time-limit 150
-```
+- corrected initial-south rerun ok: `True`
+- corrected artifact: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
+- images: `6` / unique `3`
+- candidate index: `1`
+- terminal index: `2`

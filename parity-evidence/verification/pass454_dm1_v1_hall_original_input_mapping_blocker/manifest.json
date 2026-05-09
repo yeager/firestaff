@@ -1,7 +1,7 @@
 {
   "schema": "pass454_dm1_v1_hall_original_input_mapping_blocker.v1",
   "timestampUtc": "2026-05-09T15:31:54.353009+00:00",
-  "status": "BLOCKED_CAPTURE_AUTOMATION_ABSOLUTE_COORDINATES_USED_WITH_WINDOW_RELATIVE_CLICK",
+  "status": "PASS_PASS454_STALE_MAPPING_BLOCKER_SUPERSEDED_BY_CORRECTED_RERUN",
   "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-true-stop-20260509/manifest.json",
   "artifactManifestSha256": "33b54c69685392e80b3450ffdecf618b6ad0d176edde68a0a68ec1332c33fc12",
@@ -862,31 +862,33 @@
     "probe-pm-fresh-click",
     "probe-known-entry"
   ],
-  "diagnosis": "Fresh-entry attempts did not prove the original state machine because logged clicks do not land at the computed client-relative PC coordinate; at least one logged click is outside the DOSBox client window. That is an automation coordinate-space bug, not evidence against mouse release/down duration, UI-ready tick, empty hand, modal state, or PC34 data identity.",
-  "nextExecutableAction": {
-    "name": "rerun_fresh_initial_south_click_with_correct_window_relative_mapping",
-    "requirements": [
-      "Do not reuse the stale hall-true-stop click logs as candidate evidence.",
-      "For a DOSBox window, map PC 320x200 coordinates to client-relative coordinates and use xdotool mousemove --window with only those client-relative coordinates.",
-      "Alternatively use absolute/root coordinates without --window, but never add the window origin and also pass --window.",
-      "Log both requested PC coordinate and computed client-relative/absolute coordinate before every click.",
-      "Capture candidate_select only after the click primitive is proven by a movement/turn control click or debugger-visible C080 dispatch."
-    ],
-    "expectedClientRelativeForObservedWindow": {
-      "window": "1067x832",
-      "pc_111_82": [
-        372,
-        358
+  "diagnosis": "The original hall-true-stop fresh-entry logs used stale coordinate mapping. The corrected-coordinate rerun now supersedes that blocker when it logs client-relative and absolute/root coordinates separately and produces the expected candidate/terminal frame transition.",
+  "correctedRerun": {
+    "artifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
+    "run": "probe-initial-south-corrected",
+    "exists": true,
+    "keyLog": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/original-viewpoint-route-keys.log",
+    "clickCount": 2,
+    "allClicksClientCorrect": true,
+    "allClicksAbsoluteConsistent": true,
+    "requestedPcClicks": [
+      [
+        111,
+        82
       ],
-      "pc_130_115": [
-        435,
-        468
-      ],
-      "pc_159_147": [
-        532,
-        574
+      [
+        130,
+        115
       ]
-    }
+    ],
+    "imageCount": 6,
+    "uniqueImageSha256Count": 3,
+    "candidateSelectSha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+    "terminalHudSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+    "candidateIndex": 1,
+    "terminalIndex": 2,
+    "ok": true
   },
+  "nextExecutableAction": null,
   "errors": []
 }

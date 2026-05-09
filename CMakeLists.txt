@@ -1088,6 +1088,22 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass451_dm1_v1_hall_original_capture_storage_policy.py
         )
         add_test(
+            NAME pass452_dm1_v1_hall_original_route_state_blocker
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass452_dm1_v1_hall_original_route_state_blocker.py
+        )
+        add_test(
+            NAME pass453_dm1_v1_hall_panel_visible_delta_classification
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass453_dm1_v1_hall_panel_visible_delta_classification.py
+        )
+        add_test(
+            NAME pass454_dm1_v1_hall_original_input_mapping_blocker
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass454_dm1_v1_hall_original_input_mapping_blocker.py
+        )
+        add_test(
+            NAME pass455_dm1_v1_hall_corrected_click_primitive_capture
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass455_dm1_v1_hall_corrected_click_primitive_capture.py
+        )
+        add_test(
             NAME v1_viewport_front_wall_depth_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_front_wall_depth_gate.py
         )

@@ -23,6 +23,7 @@ OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 OUT_JSON = OUT_DIR / "manifest.json"
 OUT_MD = ROOT / "parity-evidence" / f"{PASS}.md"
 EXTERNAL_JSON = EXTERNAL_OUT_DIR / f"{PASS}.json"
+CORRECTED_ARTIFACT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
 
 EXPECTED_HASHES = {
     "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
@@ -40,6 +41,11 @@ FRESH_ATTEMPTS = {
 CLICK_RE = re.compile(
     r"^(?P<button>left|right)-click-mapped (?P<pcx>\d+),(?P<pcy>\d+) -> "
     r"(?:window-relative )?(?P<px>\d+),(?P<py>\d+) window=(?P<w>\d+)x(?P<h>\d+)(?: origin=(?P<ox>-?\d+),(?P<oy>-?\d+))?"
+)
+CORRECTED_CLICK_RE = re.compile(
+    r"^(?P<button>left|right)-click-mapped (?P<pcx>\d+),(?P<pcy>\d+) -> "
+    r"absolute (?P<absx>\d+),(?P<absy>\d+) client-relative (?P<cx>\d+),(?P<cy>\d+) "
+    r"window=(?P<w>\d+)x(?P<h>\d+) origin=(?P<ox>-?\d+),(?P<oy>-?\d+)"
 )
 
 
@@ -95,6 +101,54 @@ def parse_clicks(run_dir: Path) -> list[dict[str, Any]]:
             row["matchesExpectedPlusOrigin"] = abs(row["px"] - (want_x + row["ox"])) <= 1 and abs(row["py"] - (want_y + row["oy"])) <= 1
         rows.append(row)
     return rows
+
+
+def corrected_rerun_summary() -> dict[str, Any]:
+    run_dir = CORRECTED_ARTIFACT / "probe-initial-south-corrected"
+    keylog = run_dir / "original-viewpoint-route-keys.log"
+    images = sorted(run_dir.glob("image*.png"))
+    hashes = [sha256(path) for path in images]
+    clicks: list[dict[str, Any]] = []
+    if keylog.exists():
+        for line in keylog.read_text(encoding="utf-8", errors="replace").splitlines():
+            match = CORRECTED_CLICK_RE.match(line.strip())
+            if not match:
+                continue
+            row = {k: (int(v) if k != "button" else v) for k, v in match.groupdict().items()}
+            want_x, want_y = expected_window_relative(row["w"], row["h"], row["pcx"], row["pcy"])
+            row["expectedClientRelative"] = [want_x, want_y]
+            row["clientMatchesExpected"] = abs(row["cx"] - want_x) <= 1 and abs(row["cy"] - want_y) <= 1
+            row["absoluteMatchesOriginPlusClient"] = abs(row["absx"] - (row["ox"] + row["cx"])) <= 1 and abs(row["absy"] - (row["oy"] + row["cy"])) <= 1
+            clicks.append(row)
+    candidate_sha = "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e"
+    terminal_sha = "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f"
+    candidate_index = hashes.index(candidate_sha) if candidate_sha in hashes else -1
+    terminal_index = hashes.index(terminal_sha) if terminal_sha in hashes else -1
+    ok = (
+        run_dir.is_dir()
+        and len(clicks) >= 2
+        and all(c["clientMatchesExpected"] and c["absoluteMatchesOriginPlusClient"] for c in clicks)
+        and [[c["pcx"], c["pcy"]] for c in clicks[:2]] == [[111, 82], [130, 115]]
+        and candidate_index > 0
+        and terminal_index > candidate_index
+    )
+    return {
+        "artifactRoot": str(CORRECTED_ARTIFACT),
+        "run": "probe-initial-south-corrected",
+        "exists": run_dir.is_dir(),
+        "keyLog": str(keylog),
+        "clickCount": len(clicks),
+        "allClicksClientCorrect": bool(clicks) and all(c["clientMatchesExpected"] for c in clicks),
+        "allClicksAbsoluteConsistent": bool(clicks) and all(c["absoluteMatchesOriginPlusClient"] for c in clicks),
+        "requestedPcClicks": [[c["pcx"], c["pcy"]] for c in clicks],
+        "imageCount": len(hashes),
+        "uniqueImageSha256Count": len(set(hashes)),
+        "candidateSelectSha256": candidate_sha,
+        "terminalHudSha256": terminal_sha,
+        "candidateIndex": candidate_index,
+        "terminalIndex": terminal_index,
+        "ok": ok,
+    }
 
 
 def image_hashes_for_attempt(manifest: dict[str, Any], name: str) -> dict[str, Any]:
@@ -162,8 +216,12 @@ def build() -> dict[str, Any]:
     fresh_bad = [b for b in bad_clicks if b["run"] in FRESH_ATTEMPTS]
     fresh_static = [r for r in fresh_rows if r["imageSummary"].get("allImagesIdentical")]
 
+    corrected_summary = corrected_rerun_summary()
+
     if errors:
         status = "FAIL_PASS454_PROVENANCE"
+    elif corrected_summary["ok"]:
+        status = "PASS_PASS454_STALE_MAPPING_BLOCKER_SUPERSEDED_BY_CORRECTED_RERUN"
     elif fresh_bad:
         status = "BLOCKED_CAPTURE_AUTOMATION_ABSOLUTE_COORDINATES_USED_WITH_WINDOW_RELATIVE_CLICK"
     elif fresh_static:
@@ -200,8 +258,9 @@ def build() -> dict[str, Any]:
         "attemptRows": attempt_rows,
         "badClicks": bad_clicks,
         "freshStaticAttempts": [r["run"] for r in fresh_static],
-        "diagnosis": "Fresh-entry attempts did not prove the original state machine because logged clicks do not land at the computed client-relative PC coordinate; at least one logged click is outside the DOSBox client window. That is an automation coordinate-space bug, not evidence against mouse release/down duration, UI-ready tick, empty hand, modal state, or PC34 data identity.",
-        "nextExecutableAction": next_action,
+        "diagnosis": "The original hall-true-stop fresh-entry logs used stale coordinate mapping. The corrected-coordinate rerun now supersedes that blocker when it logs client-relative and absolute/root coordinates separately and produces the expected candidate/terminal frame transition.",
+        "correctedRerun": corrected_summary,
+        "nextExecutableAction": None if corrected_summary["ok"] else next_action,
         "errors": errors,
     }
 
@@ -213,7 +272,7 @@ def write_report(data: dict[str, Any]) -> None:
         f"- status: `{data['status']}`",
         f"- artifact manifest: `{data['artifactManifest']}`",
         f"- artifact manifest sha256: `{data['artifactManifestSha256']}`",
-        "- parity claim: **not made**; all Hall candidate labels remain blocked.",
+        "- parity claim: **not made here**; this gate only retires the stale coordinate-space blocker when pass455 evidence exists.",
         "",
         "## Diagnosis",
         "",
@@ -221,29 +280,35 @@ def write_report(data: dict[str, Any]) -> None:
         "",
         "## Evidence summary",
         "",
-        f"- fresh attempts with static image sequences: `{', '.join(data['freshStaticAttempts'])}`",
-        f"- mismapped click count: `{len(data['badClicks'])}`",
+        f"- stale fresh attempts with mismapped clicks: `{len(data['badClicks'])}`",
+        f"- corrected rerun ok: `{data['correctedRerun']['ok']}`",
+        f"- corrected requested PC clicks: `{data['correctedRerun']['requestedPcClicks']}`",
+        f"- corrected images: `{data['correctedRerun']['imageCount']}` images / `{data['correctedRerun']['uniqueImageSha256Count']}` unique hashes",
         "- PC34 data provenance remained hash-locked; no filename-only comparison was used.",
         "",
-        "## Next executable action",
-        "",
-        f"- `{data['nextExecutableAction']['name']}`",
     ]
-    for req in data["nextExecutableAction"]["requirements"]:
-        lines.append(f"- {req}")
-    lines += [
-        "",
-        "## Required client-relative checks for the observed 1067x832 DOSBox window",
-    ]
-    for key, value in data["nextExecutableAction"]["expectedClientRelativeForObservedWindow"].items():
-        lines.append(f"- `{key}`: `{value}`")
-    lines += [
-        "",
-        "## Blocked labels",
-        "",
-        "`candidate_select`, `panel_visible`, `cancel`, `resurrect_confirm`, `reincarnate_confirm`, and `hud_status_after` remain unpromoted for original PC34 Hall candidate parity.",
-        "",
-    ]
+    if data.get("nextExecutableAction"):
+        lines += [
+            "## Next executable action",
+            "",
+            f"- `{data['nextExecutableAction']['name']}`",
+        ]
+        for req in data["nextExecutableAction"]["requirements"]:
+            lines.append(f"- {req}")
+        lines += [
+            "",
+            "## Required client-relative checks for the observed 1067x832 DOSBox window",
+        ]
+        for key, value in data["nextExecutableAction"]["expectedClientRelativeForObservedWindow"].items():
+            lines.append(f"- `{key}`: `{value}`")
+        lines.append("")
+    else:
+        lines += [
+            "## Resolution",
+            "",
+            "The stale hall-true-stop mapping blocker is superseded by the corrected rerun. Candidate framebuffer promotion remains owned by pass455/pass449, not by this diagnostic gate.",
+            "",
+        ]
     OUT_MD.write_text("\n".join(lines), encoding="utf-8")
 
 

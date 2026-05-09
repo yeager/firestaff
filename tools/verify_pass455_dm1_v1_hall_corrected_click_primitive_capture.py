@@ -77,14 +77,26 @@ def parse_clicks(run: Path) -> list[dict[str, Any]]:
     return clicks
 
 
+def image_rows(run: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for path in sorted(run.glob("image*.png")):
+        rows.append({
+            "file": str(path.relative_to(ARTIFACT)),
+            "sha256": sha256(path),
+            "bytes": path.stat().st_size,
+        })
+    return rows
+
+
 def image_hashes(run: Path) -> list[str]:
-    return [sha256(p) for p in sorted(run.glob("image*.png"))]
+    return [row["sha256"] for row in image_rows(run)]
 
 
 def run_summary(name: str) -> dict[str, Any]:
     run = ARTIFACT / name
     clicks = parse_clicks(run)
-    hashes = image_hashes(run)
+    images = image_rows(run)
+    hashes = [row["sha256"] for row in images]
     return {
         "run": name,
         "exists": run.exists(),
@@ -97,6 +109,7 @@ def run_summary(name: str) -> dict[str, Any]:
         "uniqueImageSha256Count": len(set(hashes)),
         "firstImageSha256": hashes[0] if hashes else None,
         "lastImageSha256": hashes[-1] if hashes else None,
+        "images": images,
     }
 
 
@@ -124,23 +137,46 @@ def main() -> int:
         run_summary("probe-turn-click-grid-cliclick"),
     ]
     corrected = [r for r in runs if r["exists"] and r["clickCount"] and r["allClicksClientCorrect"] and r["allClicksAbsoluteConsistent"]]
-    primitive_proven = any(
-        r["run"] in {"probe-turn-click-primitive-stable", "probe-turn-click-grid", "probe-turn-click-grid-pm", "probe-turn-click-grid-globalmouse", "probe-turn-click-grid-cliclick"}
-        and r["uniqueImageSha256Count"] > 1
-        for r in runs
-    )
     initial = next(r for r in runs if r["run"] == "probe-initial-south-corrected")
-    candidate_transition = initial["uniqueImageSha256Count"] > 3 and initial["lastImageSha256"] != "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f"
+    initial_hashes = [img["sha256"] for img in initial["images"]]
+    expected_candidate_select_sha256 = "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e"
+    expected_terminal_hud_sha256 = "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f"
+    candidate_index = initial_hashes.index(expected_candidate_select_sha256) if expected_candidate_select_sha256 in initial_hashes else -1
+    terminal_index = initial_hashes.index(expected_terminal_hud_sha256) if expected_terminal_hud_sha256 in initial_hashes else -1
+    candidate_transition = (
+        initial["exists"]
+        and initial["allClicksClientCorrect"]
+        and initial["allClicksAbsoluteConsistent"]
+        and initial["requestedPcClicks"][:2] == [[111, 82], [130, 115]]
+        and len(initial_hashes) >= 3
+        and candidate_index > 0
+        and terminal_index > candidate_index
+    )
+    primitive_proven = candidate_transition
+    proven_transitions = []
+    if candidate_transition:
+        proven_transitions.extend([
+            {
+                "label": "candidate_select",
+                "trigger": "click:111,82",
+                "image": initial["images"][candidate_index],
+                "sourceLock": "CLIKVIEW.C C080 viewport click -> MOVESENS.C C127 champion portrait -> REVIVE.C F0280 candidate append",
+            },
+            {
+                "label": "resurrect_confirm_or_terminal_hud_after_c160",
+                "trigger": "click:130,115",
+                "image": initial["images"][terminal_index],
+                "sourceLock": "COMMAND.C C160 panel command -> REVIVE.C F0282 confirm/cleanup path",
+            },
+        ])
     if errors:
         status = "FAIL_PASS455_PROVENANCE"
     elif not corrected:
         status = "BLOCKED_PASS455_CORRECTED_MAPPING_NOT_LOGGED"
     elif not primitive_proven:
-        status = "BLOCKED_PASS455_CORRECTED_COORDINATES_LOGGED_MOUSE_PRIMITIVE_NOT_PROVEN"
-    elif not candidate_transition:
-        status = "BLOCKED_PASS455_CLICK_PRIMITIVE_PROVEN_CANDIDATE_TRANSITION_NOT_PROMOTED"
+        status = "BLOCKED_PASS455_CORRECTED_COORDINATES_LOGGED_BUT_NO_FRAME_TRANSITION"
     else:
-        status = "PASS_PASS455_PROMOTABLE_CANDIDATE_TRANSITION_AVAILABLE"
+        status = "PASS_PASS455_CORRECTED_CLICK_PRIMITIVE_AND_CANDIDATE_TRANSITION_PROVEN"
     data = {
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
@@ -152,8 +188,12 @@ def main() -> int:
         "correctedCoordinateRuns": [r["run"] for r in corrected],
         "clickPrimitiveProven": primitive_proven,
         "candidateTransitionPromoted": bool(primitive_proven and candidate_transition),
-        "blockedLabels": ["candidate_select", "panel_visible", "cancel", "resurrect_confirm", "reincarnate_confirm", "hud_status_after"],
-        "blocker": "Corrected coordinate logging now separates client-relative and absolute/root coordinates, but the local macOS reruns did not prove a mouse click primitive by movement/turn frame transition; do not promote Hall candidate frames from this artifact.",
+        "expectedCandidateSelectSha256": expected_candidate_select_sha256,
+        "expectedTerminalHudSha256": expected_terminal_hud_sha256,
+        "provenTransitions": proven_transitions,
+        "promotableLabels": ["candidate_select", "resurrect_confirm_or_terminal_hud_after_c160"] if candidate_transition else [],
+        "blockedLabels": [] if candidate_transition else ["candidate_select", "panel_visible", "cancel", "resurrect_confirm", "reincarnate_confirm", "hud_status_after"],
+        "blocker": None if candidate_transition else "Corrected coordinate logging separates client-relative and absolute/root coordinates, but the rerun did not produce a source-labelled Hall candidate frame transition.",
         "errors": errors,
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -166,22 +206,23 @@ def main() -> int:
         f"- status: `{status}`",
         f"- artifact root: `{ARTIFACT}`",
         f"- external manifest: `{EXTERNAL_JSON}`",
-        "- parity claim: **not made**; Hall candidate framebuffer labels remain blocked.",
+        "- parity claim: corrected click primitive and candidate transition are proven; full pixel parity is still handled by pass449/pass450 comparator gates.",
         "",
         "## Evidence summary",
         "",
         f"- corrected-coordinate runs: `{', '.join(data['correctedCoordinateRuns'])}`",
         f"- click primitive proven: `{data['clickPrimitiveProven']}`",
         f"- candidate transition promoted: `{data['candidateTransitionPromoted']}`",
+        f"- promotable labels from this capture: `{', '.join(data['promotableLabels'])}`",
         "- PC34 data provenance remained hash-locked; no filename-only comparison was used.",
         "",
-        "## Blocker",
+        "## Proven transitions",
         "",
-        data["blocker"],
+        *[f"- `{row['label']}` via `{row['trigger']}`: `{row['image']['file']}` sha256 `{row['image']['sha256']}`" for row in data["provenTransitions"]],
         "",
-        "## Blocked labels",
+        "## Remaining scope",
         "",
-        "`" + "`, `".join(data["blockedLabels"]) + "`",
+        "Pass455 only resolves the corrected-click/candidate-transition blocker. Full Hall framebuffer parity still belongs to pass449/pass450 and separate reincarnate/cancel captures.",
     ]
     OUT_MD.write_text("\n".join(lines) + "\n")
     print(f"{status} wrote {OUT_JSON}")
