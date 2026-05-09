@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+"""Pass455 DM1 V1 Hall corrected click primitive capture gate.
+
+Reads the external N1 artifact root created for the corrected-coordinate rerun.
+This gate verifies that the rerun logged client-relative coordinates separately
+from absolute/root coordinates, records whether the requested click primitive was
+proven by a visible frame transition, and keeps Hall candidate framebuffer labels
+blocked unless that primitive is proven.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+PASS = "pass455_dm1_v1_hall_corrected_click_primitive_capture"
+ARTIFACT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
+OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
+OUT_JSON = OUT_DIR / "manifest.json"
+OUT_MD = ROOT / "parity-evidence" / f"{PASS}.md"
+EXTERNAL_JSON = ARTIFACT / f"{PASS}.json"
+EXPECTED = {
+    "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+}
+DATA_STAGE = Path("/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34")
+
+CLICK_RE = re.compile(
+    r"^(?P<button>left|right)-click-mapped (?P<pcx>\d+),(?P<pcy>\d+) -> "
+    r"absolute (?P<absx>\d+),(?P<absy>\d+) client-relative (?P<cx>\d+),(?P<cy>\d+) "
+    r"window=(?P<w>\d+)x(?P<h>\d+) origin=(?P<ox>-?\d+),(?P<oy>-?\d+)"
+)
+
+
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def expected_client(width: int, height: int, pcx: int, pcy: int) -> list[int]:
+    content_aspect = 320.0 / 200.0
+    content_w = float(width)
+    content_h = content_w / content_aspect
+    if content_h > height:
+        content_h = float(height)
+        content_w = content_h * content_aspect
+    left = (width - content_w) / 2.0
+    top = (height - content_h) / 2.0
+    px = left + ((pcx + 0.5) / 320.0) * content_w
+    py = top + ((pcy + 0.5) / 200.0) * content_h
+    return [int(round(px)), int(round(py))]
+
+
+def parse_clicks(run: Path) -> list[dict[str, Any]]:
+    log = run / "original-viewpoint-route-keys.log"
+    if not log.exists():
+        return []
+    clicks = []
+    for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = CLICK_RE.match(line.strip())
+        if not m:
+            continue
+        d: dict[str, Any] = {k: (int(v) if k != "button" else v) for k, v in m.groupdict().items()}
+        want = expected_client(d["w"], d["h"], d["pcx"], d["pcy"])
+        d["expectedClientRelative"] = want
+        d["clientMatchesExpected"] = abs(d["cx"] - want[0]) <= 1 and abs(d["cy"] - want[1]) <= 1
+        d["absoluteMatchesOriginPlusClient"] = abs(d["absx"] - (d["ox"] + d["cx"])) <= 1 and abs(d["absy"] - (d["oy"] + d["cy"])) <= 1
+        clicks.append(d)
+    return clicks
+
+
+def image_hashes(run: Path) -> list[str]:
+    return [sha256(p) for p in sorted(run.glob("image*.png"))]
+
+
+def run_summary(name: str) -> dict[str, Any]:
+    run = ARTIFACT / name
+    clicks = parse_clicks(run)
+    hashes = image_hashes(run)
+    return {
+        "run": name,
+        "exists": run.exists(),
+        "clickCount": len(clicks),
+        "allClicksClientCorrect": bool(clicks) and all(c["clientMatchesExpected"] for c in clicks),
+        "allClicksAbsoluteConsistent": bool(clicks) and all(c["absoluteMatchesOriginPlusClient"] for c in clicks),
+        "requestedPcClicks": [[c["pcx"], c["pcy"]] for c in clicks],
+        "windowSamples": sorted({f"{c['w']}x{c['h']}@{c['ox']},{c['oy']}" for c in clicks}),
+        "imageCount": len(hashes),
+        "uniqueImageSha256Count": len(set(hashes)),
+        "firstImageSha256": hashes[0] if hashes else None,
+        "lastImageSha256": hashes[-1] if hashes else None,
+    }
+
+
+def provenance() -> dict[str, Any]:
+    rows = {
+        "DUNGEON.DAT_sha256": sha256(DATA_STAGE / "DATA" / "DUNGEON.DAT"),
+        "GRAPHICS.DAT_sha256": sha256(DATA_STAGE / "DATA" / "GRAPHICS.DAT"),
+        "TITLE_sha256": sha256(DATA_STAGE / "TITLE"),
+        "stage": str(DATA_STAGE),
+    }
+    return rows
+
+
+def main() -> int:
+    if not ARTIFACT.exists():
+        raise SystemExit(f"missing artifact root: {ARTIFACT}")
+    prov = provenance()
+    errors = [f"{k} mismatch" for k, v in EXPECTED.items() if prov.get(k) != v]
+    runs = [
+        run_summary("probe-initial-south-corrected"),
+        run_summary("probe-turn-click-primitive-stable"),
+        run_summary("probe-turn-click-grid"),
+        run_summary("probe-turn-click-grid-pm"),
+        run_summary("probe-turn-click-grid-globalmouse"),
+        run_summary("probe-turn-click-grid-cliclick"),
+    ]
+    corrected = [r for r in runs if r["exists"] and r["clickCount"] and r["allClicksClientCorrect"] and r["allClicksAbsoluteConsistent"]]
+    primitive_proven = any(
+        r["run"] in {"probe-turn-click-primitive-stable", "probe-turn-click-grid", "probe-turn-click-grid-pm", "probe-turn-click-grid-globalmouse", "probe-turn-click-grid-cliclick"}
+        and r["uniqueImageSha256Count"] > 1
+        for r in runs
+    )
+    initial = next(r for r in runs if r["run"] == "probe-initial-south-corrected")
+    candidate_transition = initial["uniqueImageSha256Count"] > 3 and initial["lastImageSha256"] != "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f"
+    if errors:
+        status = "FAIL_PASS455_PROVENANCE"
+    elif not corrected:
+        status = "BLOCKED_PASS455_CORRECTED_MAPPING_NOT_LOGGED"
+    elif not primitive_proven:
+        status = "BLOCKED_PASS455_CORRECTED_COORDINATES_LOGGED_MOUSE_PRIMITIVE_NOT_PROVEN"
+    elif not candidate_transition:
+        status = "BLOCKED_PASS455_CLICK_PRIMITIVE_PROVEN_CANDIDATE_TRANSITION_NOT_PROMOTED"
+    else:
+        status = "PASS_PASS455_PROMOTABLE_CANDIDATE_TRANSITION_AVAILABLE"
+    data = {
+        "schema": f"{PASS}.v1",
+        "timestampUtc": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "artifactRoot": str(ARTIFACT),
+        "pc34Provenance": prov,
+        "expectedPc34Provenance": EXPECTED,
+        "runs": runs,
+        "correctedCoordinateRuns": [r["run"] for r in corrected],
+        "clickPrimitiveProven": primitive_proven,
+        "candidateTransitionPromoted": bool(primitive_proven and candidate_transition),
+        "blockedLabels": ["candidate_select", "panel_visible", "cancel", "resurrect_confirm", "reincarnate_confirm", "hud_status_after"],
+        "blocker": "Corrected coordinate logging now separates client-relative and absolute/root coordinates, but the local macOS reruns did not prove a mouse click primitive by movement/turn frame transition; do not promote Hall candidate frames from this artifact.",
+        "errors": errors,
+    }
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    OUT_JSON.write_text(json.dumps(data, indent=2) + "\n")
+    ARTIFACT.mkdir(parents=True, exist_ok=True)
+    EXTERNAL_JSON.write_text(json.dumps(data, indent=2) + "\n")
+    lines = [
+        f"# {PASS}",
+        "",
+        f"- status: `{status}`",
+        f"- artifact root: `{ARTIFACT}`",
+        f"- external manifest: `{EXTERNAL_JSON}`",
+        "- parity claim: **not made**; Hall candidate framebuffer labels remain blocked.",
+        "",
+        "## Evidence summary",
+        "",
+        f"- corrected-coordinate runs: `{', '.join(data['correctedCoordinateRuns'])}`",
+        f"- click primitive proven: `{data['clickPrimitiveProven']}`",
+        f"- candidate transition promoted: `{data['candidateTransitionPromoted']}`",
+        "- PC34 data provenance remained hash-locked; no filename-only comparison was used.",
+        "",
+        "## Blocker",
+        "",
+        data["blocker"],
+        "",
+        "## Blocked labels",
+        "",
+        "`" + "`, `".join(data["blockedLabels"]) + "`",
+    ]
+    OUT_MD.write_text("\n".join(lines) + "\n")
+    print(f"{status} wrote {OUT_JSON}")
+    print(f"{status} wrote {OUT_MD}")
+    print(f"{status} wrote {EXTERNAL_JSON}")
+    return 0 if not errors and corrected else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
