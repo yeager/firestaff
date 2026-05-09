@@ -109,6 +109,7 @@ INPUTS = {
     "pass378_semantic_blocker": "parity-evidence/verification/pass378_dm1_v1_original_route_semantic_clean_blocker/manifest.json",
     "pass376_classifier": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
     "pass376_crop_manifest": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+    "pass376_route_labels": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
 }
 EXPECTED_SEQUENCE = ["dungeon_gameplay", "dungeon_gameplay", "dungeon_gameplay", "spell_panel", "dungeon_gameplay", "inventory"]
 
@@ -164,8 +165,82 @@ def summarize_classifier(rel: str) -> dict[str, Any]:
         "class_counts": data.get("class_counts") or dict(Counter(classes)),
         "duplicate_sha256_counts": data.get("duplicate_sha256_counts") or {h: n for h, n in Counter(hashes).items() if n > 1},
         "problems": data.get("problems", []),
+        "captures": captures,
     }
 
+
+
+def summarize_route_labels(rel: str) -> dict[str, Any]:
+    path = ROOT / rel
+    if not path.exists():
+        return {"exists": False, "path": rel, "rows": []}
+    rows: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("index\t"):
+            continue
+        parts = line.split("\t")
+        if len(parts) >= 4:
+            rows.append({"index": parts[0], "filename": parts[1], "route_label": parts[2], "route_token": parts[3]})
+    return {"exists": True, "path": rel, "rows": rows}
+
+
+def build_route_rows(labels: dict[str, Any], classifier: dict[str, Any], crops: dict[str, Any]) -> list[dict[str, Any]]:
+    label_rows = labels.get("rows") or []
+    captures = classifier.get("captures") or []
+    crop_rows = crops.get("rows") or []
+    out: list[dict[str, Any]] = []
+    for idx in range(max(len(label_rows), len(captures), len(crop_rows), len(EXPECTED_SEQUENCE))):
+        label = label_rows[idx] if idx < len(label_rows) else {}
+        cap = captures[idx] if idx < len(captures) else {}
+        crop = crop_rows[idx] if idx < len(crop_rows) else {}
+        expected = EXPECTED_SEQUENCE[idx] if idx < len(EXPECTED_SEQUENCE) else None
+        out.append({
+            "index": label.get("index") or f"{idx + 1:02d}",
+            "route_label": label.get("route_label"),
+            "route_token": label.get("route_token"),
+            "raw_file": cap.get("file"),
+            "expected_class": expected,
+            "actual_class": cap.get("classification"),
+            "class_match": cap.get("classification") == expected,
+            "raw_sha256": cap.get("sha256"),
+            "crop_file": crop.get("filename"),
+            "crop_sha256": crop.get("sha256"),
+        })
+    return out
+
+
+def duplicate_groups(rows: list[dict[str, Any]], key: str) -> dict[str, list[str]]:
+    seen: dict[str, list[str]] = {}
+    for row in rows:
+        value = row.get(key)
+        if value:
+            seen.setdefault(value, []).append(str(row.get("index")))
+    return {value: indices for value, indices in seen.items() if len(indices) > 1}
+
+
+def unblock_commands() -> dict[str, Any]:
+    route_capture = (
+        "OUT_DIR=$PWD/verification-screens/pass376-original-route "
+        "DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 "
+        "DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' "
+        "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 "
+        "DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 "
+        "shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 "
+        "shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 "
+        "shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" "
+        "xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+    )
+    return {
+        "semantic_route_capture": route_capture,
+        "crop_manifest_strict": "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports",
+        "readiness_gate": "python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py",
+        "promotion_requires": [
+            "six raw 320x200 frames classified as dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory",
+            "no duplicate raw frame hashes",
+            "six 224x136 viewport crops with no duplicate crop hashes",
+            "pass434 remains green and runtime evidence still proves F0380 -> F0365/F0366 -> G0321 -> later F0128",
+        ],
+    }
 
 def summarize_crop_manifest(rel: str) -> dict[str, Any]:
     path = ROOT / rel
@@ -185,6 +260,37 @@ def summarize_crop_manifest(rel: str) -> dict[str, Any]:
         "rows_all_224x136": len(rows) == 6 and all(r["kind"] == "original_viewport_224x136" and r["width"] == 224 and r["height"] == 136 for r in rows),
         "duplicate_sha256_counts": {h: n for h, n in Counter(hashes).items() if n > 1},
         "rows": rows,
+    }
+
+
+def quarantine_pass376_artifacts(classifier: dict[str, Any], crops: dict[str, Any]) -> dict[str, Any]:
+    raw_dups = classifier.get("duplicate_sha256_counts") or {}
+    crop_dups = crops.get("duplicate_sha256_counts") or {}
+    reasons: list[str] = []
+    if classifier.get("pass") is not True:
+        reasons.append("raw classifier did not pass")
+    if classifier.get("sequence_ok") is not True:
+        reasons.append("raw classifier sequence does not match semantic promotion sequence")
+    if raw_dups:
+        reasons.append("raw route repeats screenshot hashes")
+    if crop_dups:
+        reasons.append("viewport crops repeat hashes")
+    quarantined = bool(reasons)
+    return {
+        "quarantined": quarantined,
+        "artifact_set": "pass376-original-route/pass376-original-dm1-viewports",
+        "reason": "; ".join(reasons) if reasons else None,
+        "raw_path": classifier.get("path"),
+        "crop_path": crops.get("path"),
+        "raw_classes": classifier.get("classes"),
+        "expected_sequence": classifier.get("expected_sequence"),
+        "raw_duplicate_sha256_counts": raw_dups,
+        "crop_duplicate_sha256_counts": crop_dups,
+        "decision": (
+            "quarantine as non-promotable historical evidence; do not use for semantic original-route readiness or pixel parity until a replacement six-state route is captured"
+            if quarantined else
+            "not quarantined"
+        ),
     }
 
 
@@ -216,18 +322,20 @@ def blocker_list(data: dict[str, Any]) -> list[str]:
         blockers.append("runtime does not prove later F0128 viewport draw after stop-wait")
 
     classifier = data["classifier"]
-    if classifier.get("pass") is not True:
-        blockers.append("pass376 raw route classifier is not green")
-    if classifier.get("sequence_ok") is not True:
-        blockers.append("pass376 raw route classes do not match the semantic promotion sequence")
-    if classifier.get("duplicate_sha256_counts"):
-        blockers.append("pass376 raw route repeats screenshot hashes")
-
     crops = data["crop_manifest"]
+    quarantine = data.get("pass376_quarantine") or {}
+    if quarantine.get("quarantined"):
+        blockers.append("pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence")
+    else:
+        if classifier.get("pass") is not True:
+            blockers.append("pass376 raw route classifier is not green")
+        if classifier.get("sequence_ok") is not True:
+            blockers.append("pass376 raw route classes do not match the semantic promotion sequence")
+        if classifier.get("duplicate_sha256_counts"):
+            blockers.append("pass376 raw route repeats screenshot hashes")
+
     if crops.get("rows_all_224x136") is not True:
         blockers.append("pass376 crop manifest is not exactly six 224x136 viewport crops")
-    if crops.get("duplicate_sha256_counts"):
-        blockers.append("pass376 viewport crops repeat hashes, so labels are not semantically distinct")
 
     return blockers
 
@@ -276,6 +384,43 @@ def write_report(data: dict[str, Any]) -> None:
         f"- crop manifest rows_all_224x136: `{data['crop_manifest'].get('rows_all_224x136')}`",
         f"- crop duplicate hashes: `{data['crop_manifest'].get('duplicate_sha256_counts')}`",
         "",
+        "## Current route label/class/hash matrix",
+        "",
+        "| # | route label | expected | actual | class ok | raw sha | crop sha |",
+        "|---|---|---|---|---|---|---|",
+    ])
+    for route in data.get("route_rows", []):
+        raw_sha = (route.get("raw_sha256") or "")[:12]
+        crop_sha = (route.get("crop_sha256") or "")[:12]
+        lines.append(f"| {route.get('index')} | `{route.get('route_label')}` | `{route.get('expected_class')}` | `{route.get('actual_class')}` | `{route.get('class_match')}` | `{raw_sha}` | `{crop_sha}` |")
+    lines.extend([
+        "",
+        "## Duplicate hash groups",
+        "",
+        f"- raw frame duplicates by route index: `{data.get('raw_duplicate_route_indices')}`",
+        f"- viewport crop duplicates by route index: `{data.get('crop_duplicate_route_indices')}`",
+        "",
+        "## Pass376 artifact quarantine",
+        "",
+        f"- quarantined: `{data.get('pass376_quarantine', {}).get('quarantined')}`",
+        f"- reason: `{data.get('pass376_quarantine', {}).get('reason')}`",
+        f"- decision: {data.get('pass376_quarantine', {}).get('decision')}",
+        "",
+        "## Next unblock command contract",
+        "",
+        "Run the route capture, then strict crop manifest, then this gate again. These are actionability checks only; they do not claim pixel parity.",
+        "",
+        "```bash",
+        data["next_unblock"]["semantic_route_capture"],
+        data["next_unblock"]["crop_manifest_strict"],
+        data["next_unblock"]["readiness_gate"],
+        "```",
+        "",
+        "Promotion requires:",
+    ])
+    lines.extend(f"- {item}" for item in data["next_unblock"]["promotion_requires"])
+    lines.extend([
+        "",
         "## Blockers",
         "",
     ])
@@ -299,17 +444,23 @@ def write_report(data: dict[str, Any]) -> None:
 def main() -> int:
     VERIFY_DIR.mkdir(parents=True, exist_ok=True)
     data: dict[str, Any] = {
-        "schema": f"{PASS}.v1",
+        "schema": f"{PASS}.v2",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
         "repo": str(ROOT),
         "sourceRoot": str(REDMCSB),
         "source_audit": audit_sources(),
-        "inputs": {name: load_json(rel) for name, rel in INPUTS.items() if name not in {"pass376_classifier", "pass376_crop_manifest"}},
+        "inputs": {name: load_json(rel) for name, rel in INPUTS.items() if name not in {"pass376_classifier", "pass376_crop_manifest", "pass376_route_labels"}},
         "classifier": summarize_classifier(INPUTS["pass376_classifier"]),
         "crop_manifest": summarize_crop_manifest(INPUTS["pass376_crop_manifest"]),
+        "route_labels": summarize_route_labels(INPUTS["pass376_route_labels"]),
+        "next_unblock": unblock_commands(),
         "promotion_rule": "Promote only when pass434 readiness is green, bounded original-runtime evidence proves F0380 pop/load plus F0365/F0366 command dispatch plus G0321 stop-wait write plus a later F0128 viewport draw, and six raw/cropped route states are non-duplicate and match dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory.",
-        "not_claimed": ["DOSBox/live original capture during this gate", "original-vs-Firestaff pixel parity", "semantic route promotion while F0365/F0366 is unproven"],
+        "not_claimed": ["DOSBox/live original capture during this gate", "original-vs-Firestaff pixel parity", "semantic route promotion while pass376 artifacts are quarantined"],
     }
+    data["pass376_quarantine"] = quarantine_pass376_artifacts(data["classifier"], data["crop_manifest"])
+    data["route_rows"] = build_route_rows(data["route_labels"], data["classifier"], data["crop_manifest"])
+    data["raw_duplicate_route_indices"] = duplicate_groups(data["route_rows"], "raw_sha256")
+    data["crop_duplicate_route_indices"] = duplicate_groups(data["route_rows"], "crop_sha256")
     data["blockers"] = blocker_list(data)
     data["status"] = EXPECTED_BLOCKED if data["blockers"] else READY
     MANIFEST.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")

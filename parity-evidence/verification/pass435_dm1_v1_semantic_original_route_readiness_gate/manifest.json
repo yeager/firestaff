@@ -1,12 +1,485 @@
 {
   "blockers": [
-    "pass376 raw route classifier is not green",
-    "pass376 raw route classes do not match the semantic promotion sequence",
-    "pass376 raw route repeats screenshot hashes",
-    "pass376 viewport crops repeat hashes, so labels are not semantically distinct"
+    "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
   ],
   "classifier": {
     "capture_count": 6,
+    "captures": [
+      {
+        "bytes": 8017,
+        "classification": "dungeon_gameplay",
+        "expected_class": "dungeon_gameplay",
+        "expected_match": true,
+        "file": "verification-screens/pass376-original-route/image0001-raw.png",
+        "height": 200,
+        "reason": "viewport content with mostly dark in-game right column",
+        "regions": {
+          "inventory_extent": {
+            "color_ratio": 0.0,
+            "luma_stddev": 68.96,
+            "mean_rgb": [
+              108.91,
+              108.91,
+              108.91
+            ],
+            "nonblack_ratio": 0.7836,
+            "unique_colors": 6
+          },
+          "right_action": {
+            "color_ratio": 0.0,
+            "luma_stddev": 29.74,
+            "mean_rgb": [
+              3.52,
+              3.52,
+              3.52
+            ],
+            "nonblack_ratio": 0.0138,
+            "unique_colors": 2
+          },
+          "right_column": {
+            "color_ratio": 0.0597,
+            "luma_stddev": 38.64,
+            "mean_rgb": [
+              0.72,
+              13.8,
+              13.8
+            ],
+            "nonblack_ratio": 0.0626,
+            "unique_colors": 3
+          },
+          "spell_area": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "title_top": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "viewport": {
+            "color_ratio": 0.0,
+            "luma_stddev": 57.48,
+            "mean_rgb": [
+              146.05,
+              146.05,
+              146.05
+            ],
+            "nonblack_ratio": 0.925,
+            "unique_colors": 6
+          }
+        },
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+        "width": 320
+      },
+      {
+        "bytes": 5404,
+        "classification": "wall_closeup",
+        "expected_class": "dungeon_gameplay",
+        "expected_match": false,
+        "file": "verification-screens/pass376-original-route/image0002-raw.png",
+        "height": 200,
+        "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+        "regions": {
+          "inventory_extent": {
+            "color_ratio": 0.0,
+            "luma_stddev": 27.04,
+            "mean_rgb": [
+              178.19,
+              178.19,
+              178.19
+            ],
+            "nonblack_ratio": 1.0,
+            "unique_colors": 4
+          },
+          "right_action": {
+            "color_ratio": 0.0,
+            "luma_stddev": 29.74,
+            "mean_rgb": [
+              3.52,
+              3.52,
+              3.52
+            ],
+            "nonblack_ratio": 0.0138,
+            "unique_colors": 2
+          },
+          "right_column": {
+            "color_ratio": 0.0597,
+            "luma_stddev": 38.64,
+            "mean_rgb": [
+              0.72,
+              13.8,
+              13.8
+            ],
+            "nonblack_ratio": 0.0626,
+            "unique_colors": 3
+          },
+          "spell_area": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "title_top": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "viewport": {
+            "color_ratio": 0.0,
+            "luma_stddev": 27.99,
+            "mean_rgb": [
+              178.39,
+              178.39,
+              178.39
+            ],
+            "nonblack_ratio": 1.0,
+            "unique_colors": 5
+          }
+        },
+        "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+        "width": 320
+      },
+      {
+        "bytes": 8017,
+        "classification": "dungeon_gameplay",
+        "expected_class": "dungeon_gameplay",
+        "expected_match": true,
+        "file": "verification-screens/pass376-original-route/image0003-raw.png",
+        "height": 200,
+        "reason": "viewport content with mostly dark in-game right column",
+        "regions": {
+          "inventory_extent": {
+            "color_ratio": 0.0,
+            "luma_stddev": 68.96,
+            "mean_rgb": [
+              108.91,
+              108.91,
+              108.91
+            ],
+            "nonblack_ratio": 0.7836,
+            "unique_colors": 6
+          },
+          "right_action": {
+            "color_ratio": 0.0,
+            "luma_stddev": 29.74,
+            "mean_rgb": [
+              3.52,
+              3.52,
+              3.52
+            ],
+            "nonblack_ratio": 0.0138,
+            "unique_colors": 2
+          },
+          "right_column": {
+            "color_ratio": 0.0597,
+            "luma_stddev": 38.64,
+            "mean_rgb": [
+              0.72,
+              13.8,
+              13.8
+            ],
+            "nonblack_ratio": 0.0626,
+            "unique_colors": 3
+          },
+          "spell_area": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "title_top": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "viewport": {
+            "color_ratio": 0.0,
+            "luma_stddev": 57.48,
+            "mean_rgb": [
+              146.05,
+              146.05,
+              146.05
+            ],
+            "nonblack_ratio": 0.925,
+            "unique_colors": 6
+          }
+        },
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+        "width": 320
+      },
+      {
+        "bytes": 8017,
+        "classification": "dungeon_gameplay",
+        "expected_class": "spell_panel",
+        "expected_match": false,
+        "file": "verification-screens/pass376-original-route/image0004-raw.png",
+        "height": 200,
+        "reason": "viewport content with mostly dark in-game right column",
+        "regions": {
+          "inventory_extent": {
+            "color_ratio": 0.0,
+            "luma_stddev": 68.96,
+            "mean_rgb": [
+              108.91,
+              108.91,
+              108.91
+            ],
+            "nonblack_ratio": 0.7836,
+            "unique_colors": 6
+          },
+          "right_action": {
+            "color_ratio": 0.0,
+            "luma_stddev": 29.74,
+            "mean_rgb": [
+              3.52,
+              3.52,
+              3.52
+            ],
+            "nonblack_ratio": 0.0138,
+            "unique_colors": 2
+          },
+          "right_column": {
+            "color_ratio": 0.0597,
+            "luma_stddev": 38.64,
+            "mean_rgb": [
+              0.72,
+              13.8,
+              13.8
+            ],
+            "nonblack_ratio": 0.0626,
+            "unique_colors": 3
+          },
+          "spell_area": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "title_top": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "viewport": {
+            "color_ratio": 0.0,
+            "luma_stddev": 57.48,
+            "mean_rgb": [
+              146.05,
+              146.05,
+              146.05
+            ],
+            "nonblack_ratio": 0.925,
+            "unique_colors": 6
+          }
+        },
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+        "width": 320
+      },
+      {
+        "bytes": 5404,
+        "classification": "wall_closeup",
+        "expected_class": "dungeon_gameplay",
+        "expected_match": false,
+        "file": "verification-screens/pass376-original-route/image0005-raw.png",
+        "height": 200,
+        "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+        "regions": {
+          "inventory_extent": {
+            "color_ratio": 0.0,
+            "luma_stddev": 27.04,
+            "mean_rgb": [
+              178.19,
+              178.19,
+              178.19
+            ],
+            "nonblack_ratio": 1.0,
+            "unique_colors": 4
+          },
+          "right_action": {
+            "color_ratio": 0.0,
+            "luma_stddev": 29.74,
+            "mean_rgb": [
+              3.52,
+              3.52,
+              3.52
+            ],
+            "nonblack_ratio": 0.0138,
+            "unique_colors": 2
+          },
+          "right_column": {
+            "color_ratio": 0.0597,
+            "luma_stddev": 38.64,
+            "mean_rgb": [
+              0.72,
+              13.8,
+              13.8
+            ],
+            "nonblack_ratio": 0.0626,
+            "unique_colors": 3
+          },
+          "spell_area": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "title_top": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "viewport": {
+            "color_ratio": 0.0,
+            "luma_stddev": 27.99,
+            "mean_rgb": [
+              178.39,
+              178.39,
+              178.39
+            ],
+            "nonblack_ratio": 1.0,
+            "unique_colors": 5
+          }
+        },
+        "sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+        "width": 320
+      },
+      {
+        "bytes": 8017,
+        "classification": "dungeon_gameplay",
+        "expected_class": "inventory",
+        "expected_match": false,
+        "file": "verification-screens/pass376-original-route/image0006-raw.png",
+        "height": 200,
+        "reason": "viewport content with mostly dark in-game right column",
+        "regions": {
+          "inventory_extent": {
+            "color_ratio": 0.0,
+            "luma_stddev": 68.96,
+            "mean_rgb": [
+              108.91,
+              108.91,
+              108.91
+            ],
+            "nonblack_ratio": 0.7836,
+            "unique_colors": 6
+          },
+          "right_action": {
+            "color_ratio": 0.0,
+            "luma_stddev": 29.74,
+            "mean_rgb": [
+              3.52,
+              3.52,
+              3.52
+            ],
+            "nonblack_ratio": 0.0138,
+            "unique_colors": 2
+          },
+          "right_column": {
+            "color_ratio": 0.0597,
+            "luma_stddev": 38.64,
+            "mean_rgb": [
+              0.72,
+              13.8,
+              13.8
+            ],
+            "nonblack_ratio": 0.0626,
+            "unique_colors": 3
+          },
+          "spell_area": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "title_top": {
+            "color_ratio": 0.0,
+            "luma_stddev": 0.0,
+            "mean_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "nonblack_ratio": 0.0,
+            "unique_colors": 1
+          },
+          "viewport": {
+            "color_ratio": 0.0,
+            "luma_stddev": 57.48,
+            "mean_rgb": [
+              146.05,
+              146.05,
+              146.05
+            ],
+            "nonblack_ratio": 0.925,
+            "unique_colors": 6
+          }
+        },
+        "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+        "width": 320
+      }
+    ],
     "class_counts": {
       "dungeon_gameplay": 4,
       "wall_closeup": 2
@@ -42,6 +515,18 @@
       "duplicate raw frames detected: 2 unique sha256 value(s) repeat"
     ],
     "sequence_ok": false
+  },
+  "crop_duplicate_route_indices": {
+    "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81": [
+      "02",
+      "05"
+    ],
+    "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
+      "01",
+      "03",
+      "04",
+      "06"
+    ]
   },
   "crop_manifest": {
     "duplicate_sha256_counts": {
@@ -1351,7 +1836,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "86b6cddfa8702207a48984f99b08954f60dc4153",
+      "head": "60ca0f5b207e1a2bce2bdb6d610845a5b969f08f",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1422,7 +1907,7 @@
       ],
       "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-05-09T03:46:27.479510+00:00",
+      "timestamp_utc": "2026-05-09T04:17:54.085454+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
@@ -1480,14 +1965,185 @@
       }
     }
   },
+  "next_unblock": {
+    "crop_manifest_strict": "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports",
+    "promotion_requires": [
+      "six raw 320x200 frames classified as dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory",
+      "no duplicate raw frame hashes",
+      "six 224x136 viewport crops with no duplicate crop hashes",
+      "pass434 remains green and runtime evidence still proves F0380 -> F0365/F0366 -> G0321 -> later F0128"
+    ],
+    "readiness_gate": "python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py",
+    "semantic_route_capture": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+  },
   "not_claimed": [
     "DOSBox/live original capture during this gate",
     "original-vs-Firestaff pixel parity",
-    "semantic route promotion while F0365/F0366 is unproven"
+    "semantic route promotion while pass376 artifacts are quarantined"
   ],
+  "pass376_quarantine": {
+    "artifact_set": "pass376-original-route/pass376-original-dm1-viewports",
+    "crop_duplicate_sha256_counts": {
+      "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81": 2,
+      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": 4
+    },
+    "crop_path": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+    "decision": "quarantine as non-promotable historical evidence; do not use for semantic original-route readiness or pixel parity until a replacement six-state route is captured",
+    "expected_sequence": [
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "spell_panel",
+      "dungeon_gameplay",
+      "inventory"
+    ],
+    "quarantined": true,
+    "raw_classes": [
+      "dungeon_gameplay",
+      "wall_closeup",
+      "dungeon_gameplay",
+      "dungeon_gameplay",
+      "wall_closeup",
+      "dungeon_gameplay"
+    ],
+    "raw_duplicate_sha256_counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+      "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+    },
+    "raw_path": "verification-screens/pass376-original-route/pass80_original_frame_classifier.json",
+    "reason": "raw classifier did not pass; raw classifier sequence does not match semantic promotion sequence; raw route repeats screenshot hashes; viewport crops repeat hashes"
+  },
   "promotion_rule": "Promote only when pass434 readiness is green, bounded original-runtime evidence proves F0380 pop/load plus F0365/F0366 command dispatch plus G0321 stop-wait write plus a later F0128 viewport draw, and six raw/cropped route states are non-duplicate and match dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory.",
+  "raw_duplicate_route_indices": {
+    "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": [
+      "01",
+      "03",
+      "04",
+      "06"
+    ],
+    "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": [
+      "02",
+      "05"
+    ]
+  },
   "repo": "/home/trv2/work/firestaff",
-  "schema": "pass435_dm1_v1_semantic_original_route_readiness_gate.v1",
+  "route_labels": {
+    "exists": true,
+    "path": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
+    "rows": [
+      {
+        "filename": "01_ingame_start_original_viewport_224x136.ppm",
+        "index": "01",
+        "route_label": "readiness_preflight",
+        "route_token": "shot:readiness_preflight"
+      },
+      {
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "index": "02",
+        "route_label": "turn_left_after_vblank",
+        "route_token": "shot:turn_left_after_vblank"
+      },
+      {
+        "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "index": "03",
+        "route_label": "turn_right_after_vblank",
+        "route_token": "shot:turn_right_after_vblank"
+      },
+      {
+        "filename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+        "index": "04",
+        "route_label": "forward_after_vblank",
+        "route_token": "shot:forward_after_vblank"
+      },
+      {
+        "filename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+        "index": "05",
+        "route_label": "turn_left_2_after_vblank",
+        "route_token": "shot:turn_left_2_after_vblank"
+      },
+      {
+        "filename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+        "index": "06",
+        "route_label": "post_redraw_after_vblank",
+        "route_token": "shot:post_redraw_after_vblank"
+      }
+    ]
+  },
+  "route_rows": [
+    {
+      "actual_class": "dungeon_gameplay",
+      "class_match": true,
+      "crop_file": "01_ingame_start_original_viewport_224x136.ppm",
+      "crop_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+      "expected_class": "dungeon_gameplay",
+      "index": "01",
+      "raw_file": "verification-screens/pass376-original-route/image0001-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "route_label": "readiness_preflight",
+      "route_token": "shot:readiness_preflight"
+    },
+    {
+      "actual_class": "wall_closeup",
+      "class_match": false,
+      "crop_file": "02_ingame_turn_right_original_viewport_224x136.ppm",
+      "crop_sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+      "expected_class": "dungeon_gameplay",
+      "index": "02",
+      "raw_file": "verification-screens/pass376-original-route/image0002-raw.png",
+      "raw_sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+      "route_label": "turn_left_after_vblank",
+      "route_token": "shot:turn_left_after_vblank"
+    },
+    {
+      "actual_class": "dungeon_gameplay",
+      "class_match": true,
+      "crop_file": "03_ingame_move_forward_original_viewport_224x136.ppm",
+      "crop_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+      "expected_class": "dungeon_gameplay",
+      "index": "03",
+      "raw_file": "verification-screens/pass376-original-route/image0003-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "route_label": "turn_right_after_vblank",
+      "route_token": "shot:turn_right_after_vblank"
+    },
+    {
+      "actual_class": "dungeon_gameplay",
+      "class_match": false,
+      "crop_file": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+      "crop_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+      "expected_class": "spell_panel",
+      "index": "04",
+      "raw_file": "verification-screens/pass376-original-route/image0004-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "route_label": "forward_after_vblank",
+      "route_token": "shot:forward_after_vblank"
+    },
+    {
+      "actual_class": "wall_closeup",
+      "class_match": false,
+      "crop_file": "05_ingame_after_cast_original_viewport_224x136.ppm",
+      "crop_sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+      "expected_class": "dungeon_gameplay",
+      "index": "05",
+      "raw_file": "verification-screens/pass376-original-route/image0005-raw.png",
+      "raw_sha256": "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde",
+      "route_label": "turn_left_2_after_vblank",
+      "route_token": "shot:turn_left_2_after_vblank"
+    },
+    {
+      "actual_class": "dungeon_gameplay",
+      "class_match": false,
+      "crop_file": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+      "crop_sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+      "expected_class": "inventory",
+      "index": "06",
+      "raw_file": "verification-screens/pass376-original-route/image0006-raw.png",
+      "raw_sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "route_label": "post_redraw_after_vblank",
+      "route_token": "shot:post_redraw_after_vblank"
+    }
+  ],
+  "schema": "pass435_dm1_v1_semantic_original_route_readiness_gate.v2",
   "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "source_audit": [
     {
@@ -1583,5 +2239,5 @@
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-05-09T03:46:27.564702+00:00"
+  "timestampUtc": "2026-05-09T04:18:07.176172+00:00"
 }
