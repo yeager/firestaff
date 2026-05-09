@@ -96,6 +96,7 @@ cc $CFLAGS_COMMON \
     "$HERE/dm1_v1_movement_timing_pc34_compat.c" \
     "$HERE/dm1_v1_movement_command_core_pc34_compat.c" \
     "$HERE/dm1_v1_movement_pipeline_pc34_compat.c" \
+    "$HERE/dm1_v1_resurrection_pc34_compat.c" \
     "$HERE/m11_v1_turning_presentation_pc34_compat.c" \
     "$HERE/changelog_m12.c" \
     $GFX_OBJS \
