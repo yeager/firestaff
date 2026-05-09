@@ -202,6 +202,20 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     return timing;
 }
 
+unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing) {
+    if (timing && timing->vblankBeforeEachZoomStep) {
+        return 20u;
+    }
+    return 50u;
+}
+
+unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing) {
+    if (!timing) {
+        return 0u;
+    }
+    return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) * 20u;
+}
+
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
                                          unsigned int requestedFrameOrdinal,
                                          unsigned char* screenBitmap,

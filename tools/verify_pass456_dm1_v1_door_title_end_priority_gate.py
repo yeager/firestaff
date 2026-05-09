@@ -39,8 +39,8 @@ if not all(i >= 0 for i in order) or order != sorted(order):
 require(main, "timing = V1_TitleFrontend_GetSourceTimingEvidence();", "TITLE timing evidence loaded")
 if "(void)timing;" in main:
     errors.append("TITLE timing evidence is still unused at runtime")
-require(main, "timing.vblankBeforeEachZoomStep", "TITLE vblank cadence used in runtime delay")
-require(main, "timing.postZoomVblankCount + timing.finalFadeGuardVblankCount", "TITLE final guard cadence used")
+require(main, "V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing)", "TITLE vblank cadence helper used in runtime delay")
+require(main, "V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing)", "TITLE final guard cadence helper used")
 require(title, "V1_TitleFrontend_GetSourceAnimationStepCount", "TITLE source animation schedule")
 
 # End animation: source schedule and runtime overlay must still expose THE END,

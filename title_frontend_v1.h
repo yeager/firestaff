@@ -91,6 +91,8 @@ typedef struct V1_TitleFrontendSourceTiming {
 V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned int requestedStepOrdinal);
 
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void);
+unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing);
+unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing);
 
 /*
  * ReDMCSB TITLE.C source animation event schedule for the PC/F20 path.

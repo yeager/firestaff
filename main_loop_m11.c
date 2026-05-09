@@ -676,20 +676,15 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         M11_Render_PresentIndexed(indexedScreen, M11_FB_WIDTH, M11_FB_HEIGHT);
         /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
          * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
-         * smash straight into the entrance screen.  The decoded TITLE.DAT
-         * bank has more visible frames than the source zoom loop, so use a
-         * deliberate 50 ms presentation cadence here instead of racing the
-         * launcher at full frame speed. */
-        if (timing.vblankBeforeEachZoomStep) {
-            SDL_Delay(20);
-        } else {
-            SDL_Delay(50);
-        }
+         * smash straight into the entrance screen.  Bind the runtime delay
+         * through the TITLE frontend helper so the observable handoff cadence
+         * remains tied to the source timing evidence. */
+        SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
         if (M11_Render_PumpEvents()) {
             break;
         }
     }
-    SDL_Delay((timing.postZoomVblankCount + timing.finalFadeGuardVblankCount) * 20U);
+    SDL_Delay(V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }
