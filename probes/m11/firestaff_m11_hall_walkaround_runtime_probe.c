@@ -373,6 +373,7 @@ int main(int argc, char** argv) {
     ok &= expect_int("resurrect keeps champion", rows[12].championCount, 1);
     ok &= expect_int("resurrect clears ordinal", rows[12].candidateMirrorOrdinal, -1);
     ok &= expect_int("resurrect clears panel", rows[12].candidateMirrorPanelActive, 0);
+    ok &= expect_int("resurrect disables front mirror TextString route", rows[12].front.mirrorOrdinal, -1);
 
     result = M11_GameView_SelectFrontMirrorCandidate(&game);
     snapshot(&game, "resurrected_mirror_reselect_blocked", result, &rows[13]);

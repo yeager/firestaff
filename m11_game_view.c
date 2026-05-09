@@ -5191,6 +5191,46 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
     return m11_front_cell_mirror_ordinal(state);
 }
 
+static int m11_disable_front_mirror_route(M11_GameViewState* state,
+                                          int mirrorOrdinal) {
+    int mapX;
+    int mapY;
+    unsigned short thing;
+
+    if (!state || mirrorOrdinal < 0 || !state->world.things ||
+        !state->world.things->textStrings) {
+        return 0;
+    }
+
+    mapX = state->world.party.mapX;
+    mapY = state->world.party.mapY;
+    switch (state->world.party.direction & 3) {
+        case DIR_NORTH: mapY -= 1; break;
+        case DIR_EAST:  mapX += 1; break;
+        case DIR_SOUTH: mapY += 1; break;
+        default:        mapX -= 1; break;
+    }
+    thing = m11_get_first_square_thing(&state->world, state->world.party.mapIndex,
+                                       mapX, mapY);
+    while (thing != THING_ENDOFLIST && thing != THING_NONE) {
+        int thingType = THING_GET_TYPE(thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        unsigned short next = m11_raw_next_thing(state->world.things, thing);
+        if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
+            thingIndex < state->world.things->textStringCount &&
+            F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                &state->mirrorCatalog, thingIndex) == mirrorOrdinal) {
+            return m11_unlink_thing_from_square(&state->world,
+                                                state->world.party.mapIndex,
+                                                mapX,
+                                                mapY,
+                                                thing);
+        }
+        thing = next;
+    }
+    return 0;
+}
+
 static int m11_front_mirror_record_already_in_party(const M11_GameViewState* state,
                                                      int mirrorOrdinal) {
     struct ChampionState_Compat champion;
@@ -5281,6 +5321,7 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
     state->candidateMirrorOrdinal = mirrorOrdinal;
     state->candidateMirrorPartyIndex = previousPartyCount;
     state->candidateMirrorPanelActive = 1;
+    state->inventoryPanelActive = 1;
     (void)M11_GameView_GetMirrorNameByOrdinal(state, mirrorOrdinal,
                                               mirrorName, sizeof(mirrorName));
     (void)M11_GameView_GetMirrorTitleByOrdinal(state, mirrorOrdinal,
@@ -5318,7 +5359,9 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
     if (reincarnate) {
         m11_apply_reincarnation_to_candidate(state, championIndex);
     }
+    (void)m11_disable_front_mirror_route(state, state->candidateMirrorOrdinal);
     state->candidateMirrorPanelActive = 0;
+    state->inventoryPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
     state->candidateMirrorPartyIndex = -1;
     m11_refresh_hash(state);
@@ -5345,6 +5388,7 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
         }
     }
     state->candidateMirrorPanelActive = 0;
+    state->inventoryPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
     state->candidateMirrorPartyIndex = -1;
     m11_refresh_hash(state);
@@ -8696,6 +8740,10 @@ enum {
     /* Empty panel background (graphic 20 in original CSB/DM).
      * 144×73 in GRAPHICS.DAT. Ref: C020_GRAPHIC_PANEL_EMPTY. */
     M11_GFX_PANEL_EMPTY = 20,
+
+    /* Resurrect/Reincarnate/Cancel panel (graphic 40 in original DM1).
+     * Drawn into C101_ZONE_PANEL when G0299 candidate is open. */
+    M11_GFX_PANEL_RESURRECT_REINCARNATE = 40,
 
     /* Slot box graphics (18×18 each in GRAPHICS.DAT).
      * Used by DrawIconInSlotBox (ReDMCSB INVNTORY.C / OBJECT.C).
@@ -19680,6 +19728,43 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             }
         }
     }
+
+    if (!state->showDebugHUD && state->candidateMirrorPanelActive) {
+        int zx = 0, zy = 0, zw = 0, zh = 0;
+        int drewPanel = 0;
+        if (M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh) &&
+            state->assetsAvailable) {
+            const M11_AssetSlot* rrPanel = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)M11_GFX_PANEL_RESURRECT_REINCARNATE);
+            if (rrPanel && rrPanel->width == zw && rrPanel->height == zh) {
+                M11_AssetLoader_Blit(rrPanel, framebuffer, framebufferWidth,
+                                     framebufferHeight,
+                                     M11_VIEWPORT_X + zx,
+                                     M11_VIEWPORT_Y + zy, 6);
+                drewPanel = 1;
+            }
+        }
+        if (!drewPanel && M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
+                          zw, zh, M11_COLOR_GREEN);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
+                          zw, zh, M11_COLOR_ORANGE);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + zx + 16, M11_VIEWPORT_Y + zy + 18,
+                          "RESURRECT", &g_text_small);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + zx + 78, M11_VIEWPORT_Y + zy + 18,
+                          "REINCARNATE", &g_text_small);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_VIEWPORT_X + zx + 44, M11_VIEWPORT_Y + zy + 58,
+                          "CANCEL", &g_text_small);
+        }
+        return;
+    }
+
     if (state->showDebugHUD) {
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       panelX, panelY, panelW, panelH, M11_COLOR_BROWN);

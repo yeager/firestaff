@@ -960,6 +960,7 @@ int main(int argc, char** argv) {
             M11_GameViewState pointerMirrorMiss;
             memcpy(&pointerMirrorMiss, &mirrorView, sizeof(pointerMirrorMiss));
             pointerMirrorMiss.world.party.championCount = 0;
+            memset(pointerMirrorMiss.world.party.champions, 0, sizeof(pointerMirrorMiss.world.party.champions));
             pointerMirrorMiss.candidateMirrorPanelActive = 0;
             pointerMirrorMiss.candidateMirrorOrdinal = -1;
             probe_record(&tally,
@@ -970,6 +971,7 @@ int main(int argc, char** argv) {
                          "non-portrait C007 viewport click follows C080 source routing and does not use Firestaff procedural turn shortcuts or open the mirror panel");
             memcpy(&pointerMirror, &mirrorView, sizeof(pointerMirror));
             pointerMirror.world.party.championCount = 0;
+            memset(pointerMirror.world.party.champions, 0, sizeof(pointerMirror.world.party.champions));
             pointerMirror.candidateMirrorPanelActive = 0;
             pointerMirror.candidateMirrorOrdinal = -1;
             probe_record(&tally,
@@ -978,26 +980,33 @@ int main(int argc, char** argv) {
                              pointerMirror.candidateMirrorPanelActive == 1 &&
                              pointerMirror.candidateMirrorOrdinal == mirrorOrdinal,
                          "source portrait click center x111/y82 opens the mirror candidate panel when a mirror TextString is in the front cell");
-            probe_record(&tally,
-                         "INV_GV_407B",
-                         M11_GameView_HandlePointer(&pointerMirror, 130, 115, 1) == M11_GAME_INPUT_REDRAW &&
-                             pointerMirror.candidateMirrorPanelActive == 0 &&
-                             pointerMirror.world.party.championCount == 1,
-                         "source C160 resurrect center x130/y115 confirms the open mirror candidate panel");
         }
         {
             M11_GameViewState pointerMirrorReincarnate;
             memcpy(&pointerMirrorReincarnate, &mirrorView, sizeof(pointerMirrorReincarnate));
-            pointerMirrorReincarnate.world.party.championCount = 0;
-            pointerMirrorReincarnate.candidateMirrorPanelActive = 0;
-            pointerMirrorReincarnate.candidateMirrorOrdinal = -1;
-            (void)M11_GameView_HandlePointer(&pointerMirrorReincarnate, 111, 82, 1);
+            pointerMirrorReincarnate.world.things = NULL;
             probe_record(&tally,
                          "INV_GV_407C",
                          M11_GameView_HandlePointer(&pointerMirrorReincarnate, 186, 115, 1) == M11_GAME_INPUT_REDRAW &&
                              pointerMirrorReincarnate.candidateMirrorPanelActive == 0 &&
                              pointerMirrorReincarnate.world.party.championCount == 1,
                          "source C161 reincarnate center x186/y115 confirms the open mirror candidate panel");
+        }
+        {
+            M11_GameViewState pointerMirrorResurrect;
+            memcpy(&pointerMirrorResurrect, &mirrorView, sizeof(pointerMirrorResurrect));
+            pointerMirrorResurrect.world.party.championCount = 0;
+            memset(pointerMirrorResurrect.world.party.champions, 0, sizeof(pointerMirrorResurrect.world.party.champions));
+            pointerMirrorResurrect.candidateMirrorPanelActive = 0;
+            pointerMirrorResurrect.candidateMirrorOrdinal = -1;
+            (void)M11_GameView_HandlePointer(&pointerMirrorResurrect, 111, 82, 1);
+            probe_record(&tally,
+                         "INV_GV_407B",
+                         M11_GameView_HandlePointer(&pointerMirrorResurrect, 130, 115, 1) == M11_GAME_INPUT_REDRAW &&
+                             pointerMirrorResurrect.candidateMirrorPanelActive == 0 &&
+                             pointerMirrorResurrect.world.party.championCount == 1 &&
+                             M11_GameView_GetFrontMirrorOrdinal(&pointerMirrorResurrect) == -1,
+                         "source C160 resurrect center x130/y115 confirms the open mirror candidate panel and disables the mirror TextString route");
         }
         probe_record(&tally,
                      "INV_GV_407",
@@ -8094,6 +8103,19 @@ int main(int argc, char** argv) {
     } else {
         probe_record(&tally, "INV_GV_204", 1,
                      "panel 20: skipped (no GRAPHICS.DAT)");
+    }
+
+    /* INV_GV_204B: Resurrect/Reincarnate panel (graphic 40) loads as 144×73. */
+    if (gameView.assetsAvailable) {
+        const M11_AssetSlot* panel40 = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&gameView.assetLoader, 40);
+        probe_record(&tally,
+                     "INV_GV_204B",
+                     panel40 != NULL && panel40->width == 144 && panel40->height == 73,
+                     "resurrect/reincarnate/cancel panel (graphic 40) loads as 144x73 from GRAPHICS.DAT");
+    } else {
+        probe_record(&tally, "INV_GV_204B", 1,
+                     "panel 40: skipped (no GRAPHICS.DAT)");
     }
 
     /* INV_GV_205: Status box frame (graphic 7) loads as 67×29. */
