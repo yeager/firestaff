@@ -7,7 +7,7 @@ This fixes the immediate metadata-only seam: source-locked wall/occlusion metada
 ## Evidence
 
 - JSON artifact: `parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json`
-- Snapshots compared: ['start_south', 'turn_right_west', 'move_forward_west', 'turn_left_east', 'blocked_forward_south_wall']
+- Snapshots compared: ['start_south', 'turn_right_west', 'forward_west_blocked', 'turn_left_east', 'forward_south_corridor']
 - Unsupported visible wall rows still blocking full pixel promotion: `[]`
 - Region descriptors: viewport rect, source clip, layout 696 zone, selected wall bitmap, and wall-set graphic index for every D3/D2/D1/D0 wall event
 

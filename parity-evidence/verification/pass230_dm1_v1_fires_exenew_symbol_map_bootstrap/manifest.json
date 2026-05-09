@@ -2,12 +2,12 @@
   "classification": "blocked/source-symbol-map-and-debugger-hits-required",
   "exact_remaining_blocker": "FIRES.EXENEW now supplies the decompressed runtime image layout, but no N2-local FIRES.MAP/public-symbol table or debugger-observed source seam CS:IP/global addresses bind ReDMCSB functions to the loaded image.",
   "inputs": {
-    "pass208": "/home/trv2/work/firestaff/parity-evidence/verification/pass208_dm1_v1_fires_loader_csip_source_map_gate/manifest.json",
-    "pass210": "/home/trv2/work/firestaff/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json",
-    "pass229": "/home/trv2/work/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/manifest.json",
-    "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    "runtime_image": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/home/trv2/work/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "pass208": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass208_dm1_v1_fires_loader_csip_source_map_gate/manifest.json",
+    "pass210": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json",
+    "pass229": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/manifest.json",
+    "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "runtime_image": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "n2_only": true,
   "non_claims": [
@@ -172,13 +172,6 @@
         "id": "draw_uses_mutated_tuple",
         "runtime_cs_ip": null,
         "source_citation": "GAMELOOP.C:55-63,80-90"
-      },
-      {
-        "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
-        "function": "F0128_DUNGEONVIEW_Draw_CPSF",
-        "id": "viewport_buffer_composed",
-        "runtime_cs_ip": null,
-        "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611"
       },
       {
         "confidence": "source_locked_decompressed_image_available_runtime_hit_required",

@@ -19,7 +19,7 @@
     "g2153IncrementObserved": true,
     "sourceAuditOk": true
   },
-  "repo": "/home/trv2/work/firestaff-worktrees/pass395-touch-queue-integration",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "reversibleScope": "touch_pointer_input_pc34_compat.{h,c} maps pointer/touch hits to existing DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat; no keyboard synthesis and no replacement dispatcher",
   "sourceAudits": [
     "defs_mouse_payload_buttons",
@@ -29,6 +29,6 @@
     "startup_primary_secondary_tables",
     "viewport_coordinates"
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS395_TOUCH_POINTER_TO_EXISTING_COMMAND_QUEUE_SEAM_VERIFIED"
 }

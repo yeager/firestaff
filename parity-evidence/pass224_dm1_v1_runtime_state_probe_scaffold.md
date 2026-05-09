@@ -28,7 +28,7 @@ Scope: JSON-only runtime/state probe contract for the pass223 post-redraw seams.
 
 - classification: `blocked/missing-original-runtime-state-hook-api`
 - hook capable in committed runner files: `False`
-- tools: `{'dosbox': '/usr/bin/dosbox', 'dosbox-debug': '/usr/bin/dosbox-debug', 'dosbox-x': '/usr/bin/dosbox-x', 'gdb': '/usr/bin/gdb', 'xvfb-run': '/usr/bin/xvfb-run', 'xdotool': '/usr/bin/xdotool'}`
+- tools: `{'dosbox': None, 'dosbox-debug': None, 'dosbox-x': None, 'gdb': None, 'xvfb-run': None, 'xdotool': None}`
 
 ## Exact blocker
 

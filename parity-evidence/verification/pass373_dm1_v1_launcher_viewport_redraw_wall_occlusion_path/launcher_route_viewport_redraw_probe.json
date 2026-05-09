@@ -4,9 +4,10 @@
   "active": 1,
   "title": "DUNGEON MASTER",
   "sourceId": "dm1",
-  "lastAction": "WAIT",
-  "lastOutcome": "IDLE TICK ADVANCED",
-  "gameTick": 7,
-  "party": {"mapIndex": 0, "mapX": 0, "mapY": 3, "direction": 3, "championCount": 0},
-  "pipeline": {"dequeued": 1, "command": 3, "turnApplied": 0, "stepApplied": 1, "movementBlocked": 0, "anyMovementOccurred": 1, "anyTurnOccurred": 0, "viewportDirty": 1}
+  "lastAction": "TURN RIGHT",
+  "lastOutcome": "FACING UPDATED",
+  "gameTick": 1,
+  "party": {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 3, "championCount": 0},
+  "pipeline": {"dequeued": 1, "command": 2, "turnApplied": 1, "stepApplied": 0, "movementBlocked": 0, "anyMovementOccurred": 0, "anyTurnOccurred": 1, "viewportDirty": 1},
+  "redraw": {"inputRedrawDrawCount": 1, "inputRedrawAfterViewportDirtyCount": 1, "lastInputRedrawAfterViewportDirty": 1}
 }

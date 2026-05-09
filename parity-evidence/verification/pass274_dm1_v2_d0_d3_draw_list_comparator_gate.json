@@ -67,7 +67,7 @@
     },
     "name": "dm1_pc34_entry_portrait_wall",
     "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-    "source": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "source": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
     "status": "source-locked sparse fixture feeds mapX/mapY/direction into renderer draw-list; full DUNGEON.DAT square decoder still pending"
   },
   "nextBlockers": [
@@ -75,7 +75,7 @@
     "Capture original/ReDMCSB and Firestaff viewport pixels for identical mapX/mapY/direction.",
     "Feed captured original/ReDMCSB and Firestaff framebuffers into the region comparator; only then promote to pixel parity."
   ],
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V2 renderer-side D0-D3 draw-list emission and matched-state comparator scaffold",
   "sourceAnchors": [
     {

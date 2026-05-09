@@ -13,76 +13,23 @@
     "qemu_hard_image_not_vvfat": true
   },
   "run_metadata": {
-    "disk_image_exists": true,
+    "disk_image_exists": false,
     "disk_image_sha256": null,
-    "disk_image_size": 268435456,
+    "disk_image_size": null,
     "dunview_obj_mdir": {
       "present": false,
-      "stderr_excerpt": "mdir: File \"::/OBJECT/I34E/FIRES/DUNVIEW.OBJ\" not found\n",
-      "stdout_excerpt": ""
+      "reason": "disk image missing"
     },
     "fires_map_mdir": {
       "present": false,
-      "stderr_excerpt": "mdir: File \"::/BUILD/I34E/FIRES.MAP\" not found\n",
-      "stdout_excerpt": ""
+      "reason": "disk image missing"
     },
-    "first_error": "Error dunview.c 3938: Out of memory in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
-    "host_end": "2026-05-06T13:42:57+00:00",
-    "host_start": "2026-05-06T13:34:50+00:00",
+    "host_end": null,
+    "host_start": null,
     "qemu_log": {
-      "char_count": 1220,
-      "head": [
-        "QEMU_DUNVIEW_START ",
-        "Turbo C++  Version 1.01 Copyright (c) 1990 Borland International",
-        "dunview.c:",
-        "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2810: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2813: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2881: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2941: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 3590: Possibly incorrect assignment in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
-        "Warning dunview.c 3826: Suspicious pointer conversion in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
-        "Error dunview.c 3938: Out of memory in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
-        "*** 1 errors in Compile ***",
-        "",
-        "",
-        "        Available memory 0",
-        "",
-        "AFTER_TCC ",
-        " Volume in drive C is CDRIVE",
-        " Volume Serial Number is 37A6-34C0",
-        "QEMU_DUNVIEW_DONE "
-      ],
-      "line_count": 22,
-      "present": true,
-      "tail": [
-        "QEMU_DUNVIEW_START ",
-        "Turbo C++  Version 1.01 Copyright (c) 1990 Borland International",
-        "dunview.c:",
-        "Warning dunview.c 2314: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2350: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2810: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2813: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2881: Possibly incorrect assignment in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 2941: Suspicious pointer conversion in function F0096_DUNGEONVIEW_LoadCurrentMap",
-        "Warning dunview.c 3590: Possibly incorrect assignment in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
-        "Warning dunview.c 3826: Suspicious pointer conversion in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
-        "Error dunview.c 3938: Out of memory in function F0107_DUNGEONVIEW_IsDrawnWallOrn",
-        "*** 1 errors in Compile ***",
-        "",
-        "",
-        "        Available memory 0",
-        "",
-        "AFTER_TCC ",
-        " Volume in drive C is CDRIVE",
-        " Volume Serial Number is 37A6-34C0",
-        "QEMU_DUNVIEW_DONE "
-      ]
+      "present": false
     },
-    "run_dir": "/home/trv2/.openclaw/data/firestaff-qemu-dunview-20260506g"
+    "run_dir": "/Users/bosse/.openclaw/data/firestaff-qemu-dunview-20260506g"
   },
   "schema": "pass244_dm1_v1_qemu_freedos_dunview_path.v1",
   "source_lines": {
@@ -103,5 +50,5 @@
       "text": "SET PATH=\\TCPP101\\BIN;\\TASM20;\\LZEXE91"
     }
   },
-  "status": "BLOCKED_QEMU_FREEDOS_DUNVIEW_COMPLETED_ZERO_OR_MISSING_OBJ"
+  "status": "BLOCKED_QEMU_FREEDOS_DUNVIEW_BOOT_OR_BATCH_NO_LOG"
 }

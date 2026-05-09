@@ -16,8 +16,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 REDMCSB = Path(os.environ.get(
     "REDMCSB_COMMON_SOURCE",
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    os.environ.get(
+        "FIRESTAFF_REDMCSB_SOURCE",
+        str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/"
+            "ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    ),
 ))
 
 CHECKS = [

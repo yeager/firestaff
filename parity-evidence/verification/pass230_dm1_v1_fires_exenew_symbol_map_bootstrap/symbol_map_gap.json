@@ -43,13 +43,6 @@
     },
     {
       "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
-      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
-      "id": "viewport_buffer_composed",
-      "runtime_cs_ip": null,
-      "source_citation": "DUNVIEW.C:8336-8357,8466-8542,8608-8611"
-    },
-    {
-      "confidence": "source_locked_decompressed_image_available_runtime_hit_required",
       "function": "F0097_DUNGEONVIEW_DrawViewport / E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF",
       "id": "viewport_present",
       "runtime_cs_ip": null,

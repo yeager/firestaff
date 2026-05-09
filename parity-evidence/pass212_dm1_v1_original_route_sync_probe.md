@@ -37,7 +37,7 @@ This is a manifest-only synchronization probe. It preserves why the original mov
 ## Supersession
 
 This old route-sync blocker is retired as an active blocker by pass304/pass308 batch capture coverage.
-- pass304: `BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED` / route label coverage `True`
+- pass304: `PASS_ORIGINAL_PC34_VIEWPORT_CAPTURE_PROMOTION_READY` / route label coverage `True`
 - pass308: `PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING` / coverage `{'requiredLabelCoverage': True, 'requiredPromotionRowsGameplayOrWallCloseup': True}`
 - Remaining blocker: state-oracle proof for original runtime party tuple/F0128 binding, not another retry of this stale six-shot route.
 

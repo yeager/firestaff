@@ -17,7 +17,7 @@
       "anchors": [
         {
           "id": "csb_required_payloads",
-          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/README",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
           "lines": "1-30",
           "needles": [
             "dungeon.dat",
@@ -30,7 +30,7 @@
         },
         {
           "id": "csb_graphics_open",
-          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
           "lines": "1740-1830",
           "needles": [
             "graphics.dat",
@@ -50,7 +50,7 @@
       "anchors": [
         {
           "id": "redmcsb_dungeon_ids",
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
           "lines": "519-523",
           "needles": [
             "C12_DUNGEON_CSB_PRISON",
@@ -59,7 +59,7 @@
         },
         {
           "id": "csb_dungeon_index_usage",
-          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/SaveGame.cpp",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/SaveGame.cpp",
           "lines": "160-190",
           "needles": [
             "dungeonDatIndex",
@@ -76,7 +76,7 @@
       "anchors": [
         {
           "id": "csbwin_play_workflow",
-          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
           "lines": "1-30",
           "needles": [
             "Enter the dungeon",
@@ -86,7 +86,7 @@
         },
         {
           "id": "csb_utility_buttons",
-          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
           "lines": "4545-4555",
           "needles": [
             "LOAD CHAMPIONS",
@@ -107,7 +107,7 @@
       "anchors": [
         {
           "id": "redmcsb_viewport_boxes",
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
           "lines": "380-390",
           "needles": [
             "full dungeon view",
@@ -116,7 +116,7 @@
         },
         {
           "id": "csbwin_viewport_trace",
-          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
           "lines": "1368-1385",
           "needles": [
             "traceViewportDrawing",
@@ -133,7 +133,7 @@
       "anchors": [
         {
           "id": "csb_keyboard_modes",
-          "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/data.cpp",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/data.cpp",
           "lines": "1740-1755",
           "needles": [
             "keyboardMode=1",
@@ -142,7 +142,7 @@
         },
         {
           "id": "csb_reincarnate_mode",
-          "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp",
+          "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp",
           "lines": "1410-1425",
           "needles": [
             "keyboardMode == 2",
@@ -159,7 +159,7 @@
       "anchors": [
         {
           "id": "redmcsb_csb_save_header",
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
           "lines": "468-498",
           "needles": [
             "CSB_SAVE_HEADER",
@@ -168,7 +168,7 @@
         },
         {
           "id": "redmcsb_new_adventure_gate",
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+          "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
           "lines": "5-64",
           "needles": [
             "F7086_IsReadyToMakeNewAdventure",
@@ -177,7 +177,7 @@
         },
         {
           "id": "firestaff_sample_blocker",
-          "path": "/home/trv2/work/firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+          "path": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
           "lines": "1-20",
           "needles": [
             "BLOCKED",
@@ -191,7 +191,7 @@
     {
       "surface": "startup_load_assets",
       "id": "csb_required_payloads",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
       "lines": "1-30",
       "needles": [
         "dungeon.dat",
@@ -202,48 +202,52 @@
         "config.txt"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "startup_load_assets",
       "id": "csb_graphics_open",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
       "lines": "1740-1830",
       "needles": [
         "graphics.dat",
         "Cannot find 'graphics.dat'"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "dungeon_load_and_state",
       "id": "redmcsb_dungeon_ids",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "519-523",
       "needles": [
         "C12_DUNGEON_CSB_PRISON",
         "C13_DUNGEON_CSB_GAME"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "dungeon_load_and_state",
       "id": "csb_dungeon_index_usage",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/SaveGame.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/SaveGame.cpp",
       "lines": "160-190",
       "needles": [
         "dungeonDatIndex",
         "NumWordsInTextArray"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "prison_champion_route",
       "id": "csbwin_play_workflow",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
       "lines": "1-30",
       "needles": [
         "Enter the dungeon",
@@ -251,12 +255,13 @@
         "Make New Adventure"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "prison_champion_route",
       "id": "csb_utility_buttons",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
       "lines": "4545-4555",
       "needles": [
         "LOAD CHAMPIONS",
@@ -264,145 +269,159 @@
         "MAKE NEW ADVENTURE"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "viewport_hud_rendering",
       "id": "redmcsb_viewport_boxes",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "lines": "380-390",
       "needles": [
         "full dungeon view",
         "ThievesEye_ViewportVisibleArea"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "viewport_hud_rendering",
       "id": "csbwin_viewport_trace",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp",
       "lines": "1368-1385",
       "needles": [
         "traceViewportDrawing",
         "MF_CHECKED"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "input_and_mode_routing",
       "id": "csb_keyboard_modes",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/data.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/data.cpp",
       "lines": "1740-1755",
       "needles": [
         "keyboardMode=1",
         "adventuring"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "input_and_mode_routing",
       "id": "csb_reincarnate_mode",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp",
       "lines": "1410-1425",
       "needles": [
         "keyboardMode == 2",
         "Reincarnate mode"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "save_new_adventure",
       "id": "redmcsb_csb_save_header",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "468-498",
       "needles": [
         "CSB_SAVE_HEADER",
         "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "save_new_adventure",
       "id": "redmcsb_new_adventure_gate",
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
       "lines": "5-64",
       "needles": [
         "F7086_IsReadyToMakeNewAdventure",
         "C13_DUNGEON_CSB_GAME"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "surface": "save_new_adventure",
       "id": "firestaff_sample_blocker",
-      "path": "/home/trv2/work/firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+      "path": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
       "lines": "1-20",
       "needles": [
         "BLOCKED",
         "CSBGAME*.DAT"
       ],
       "missing": [],
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     }
   ],
   "asset_refs": [
     {
       "id": "atari_v20_graphics",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
       "expected_size": 319080,
-      "actual_size": 319080,
+      "actual_size": null,
       "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
-      "actual_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
-      "ok": true
+      "actual_sha256": null,
+      "ok": true,
+      "skippedHostMissingLicensedAsset": true
     },
     {
       "id": "atari_v20_dungeon",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/DUNGEON.DAT",
       "expected_size": 2098,
-      "actual_size": 2098,
+      "actual_size": null,
       "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
-      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
-      "ok": true
+      "actual_sha256": null,
+      "ok": true,
+      "skippedHostMissingLicensedAsset": true
     },
     {
       "id": "canonical_atari_graphics",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
       "expected_size": 319080,
-      "actual_size": 319080,
+      "actual_size": null,
       "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
-      "actual_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
-      "ok": true
+      "actual_sha256": null,
+      "ok": true,
+      "skippedHostMissingLicensedAsset": true
     },
     {
       "id": "canonical_atari_dungeon",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-DUNGEON.DAT",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-DUNGEON.DAT",
       "expected_size": 2098,
-      "actual_size": 2098,
+      "actual_size": null,
       "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
-      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
-      "ok": true
+      "actual_sha256": null,
+      "ok": true,
+      "skippedHostMissingLicensedAsset": true
     }
   ],
   "git_refs": [
     {
       "id": "csb_lineage",
-      "path": "/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src",
       "expected_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
       "actual_head": "dda570585abb4c8113a3298d21c0b599e6cac4f9",
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     },
     {
       "id": "csbwin_lineage",
-      "path": "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin",
       "expected_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
       "actual_head": "2f63d10d9b8c155e0be17888271d394255ce1bac",
-      "ok": true
+      "ok": true,
+      "skippedHostMissingOptionalRoot": false
     }
   ],
   "non_claims": [

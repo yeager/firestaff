@@ -1,5 +1,5 @@
 {
-  "branch": "worker/dm1v1-post-55-next-gap-20260508",
+  "branch": "land-20260509",
   "checks": [
     {
       "file": "DUNVIEW.C",
@@ -67,9 +67,9 @@
     {
       "kind": "completion_matrix_credit",
       "observed": {
-        "completionPercent": 57,
+        "completionPercent": 58,
         "note": "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, and pass375 moves explosions into the ReDMCSB F0115 after-all-packed-cells deferred pass. Full pixel/content parity remains open.",
-        "points": 57,
+        "points": 58,
         "viewport_ui_render": 12
       },
       "ok": true
@@ -83,7 +83,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_firestaff_completion_matrix.py"
         ],
         "outputTail": "firestaff completion matrix verifier OK\n",
@@ -95,23 +95,23 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/firestaff_completion_status.py"
         ],
-        "outputTail": "DM1 V1 | completionPercent=57% | points=57/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=10% | points=10/100 | status=inventory_only | primaryBlocker=Need CSB-specific parity matrix and launch/render gates; do not infer from DM1.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+        "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=19% | points=19/100 | status=inventory_and_launch_blocker | primaryBlocker=Need a positive CSB V1 launch/render smoke and runtime/capture gates; current launch evidence is a deliberate negative blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
         "returncode": 0
       }
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "184be187c038948eaf714a4c9c2e21f3a4c70fce",
+  "head": "f3e6a003f92b5e43e6343fbcd2e2663056124267",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "DOS keyboard-buffer true-stop proof"
   ],
   "pass373Manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721",
   "schema": "pass374_dm1_v1_completion_viewport_wall_credit.v1",
   "sourceLocks": [
     {
@@ -126,7 +126,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "transparent wall, opaque wall, and door bitmap routines target the viewport bitmap",
@@ -141,7 +141,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "contents are replayed by ordered cell nibbles rather than by a flat depth sort",
@@ -156,7 +156,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "D3 wall/door branches draw wall layers, door passes, and return/occlude as source order dictates",
@@ -171,7 +171,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "center wall/door branches layer opaque wall/door graphics before ordered contents",
@@ -186,7 +186,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "main viewport pass redraws floor/ceiling, replays visible squares far-to-near, then requests viewport presentation",
@@ -204,7 +204,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "viewport redraw request is presented and synchronized after composition",
@@ -218,10 +218,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-05-08T09:58:31.595955+00:00"
+  "timestampUtc": "2026-05-09T08:47:18.852339+00:00"
 }

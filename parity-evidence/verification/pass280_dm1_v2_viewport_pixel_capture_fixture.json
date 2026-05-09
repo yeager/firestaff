@@ -43,7 +43,7 @@
   "fixturePath": "parity-evidence/fixtures/pass280_dm1_v2_entry_viewport_pixel_capture_fixture.json",
   "noPixelParityClaim": true,
   "pass": "pass280_dm1_v2_viewport_pixel_capture_fixture",
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
   "scope": "source-locked path for matched original/ReDMCSB and Firestaff entry viewport pixel capture/comparison",
   "sourceAnchors": [
     {

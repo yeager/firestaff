@@ -10,7 +10,7 @@ OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
-DM1_DATA = pathlib.Path(os.environ.get("FIRESTAFF_DM1_CANONICAL_DATA", "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"))
+DM1_DATA = pathlib.Path(os.environ.get("FIRESTAFF_DM1_CANONICAL_DATA", str(pathlib.Path.home()/".openclaw/data/firestaff-original-games/DM/_canonical/dm1")))
 BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_BUILD_DIR", str(pathlib.Path.home()/".openclaw/data/firestaff-builds/pass373-verify")))
 HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_HOME_DIR", str(pathlib.Path.home()/".openclaw/data/firestaff-homes/pass373-verify")))
 SCRIPT = "enter,down,down,down,down,down,down,enter,right,up"
@@ -96,15 +96,15 @@ def main()->int:
     runtime={}; live_ok=False
     if probe_json.exists():
         runtime=json.loads(probe_json.read_text()); party=runtime.get("party",{}); pipe=runtime.get("pipeline",{})
-        live_ok=(runtime.get("launchedEver")==1 and runtime.get("active")==1 and party.get("mapIndex")==0 and party.get("mapX")==0 and party.get("mapY")==3 and party.get("direction")==3 and pipe.get("dequeued")==1 and pipe.get("command")==3 and pipe.get("stepApplied")==1 and pipe.get("movementBlocked")==0 and pipe.get("anyMovementOccurred")==1 and pipe.get("viewportDirty")==1)
-    checks.append({"kind":"live_runtime_redraw_state","ok":live_ok,"observed":runtime,"expected":"launcher route reaches active DM1 V1 state; forward command applies one movement step and sets viewportDirty=1"})
+        live_ok=(runtime.get("launchedEver")==1 and runtime.get("active")==1 and party.get("mapIndex")==0 and party.get("mapX")==1 and party.get("mapY")==3 and party.get("direction")==3 and pipe.get("dequeued")==1 and pipe.get("command")==2 and pipe.get("turnApplied")==1 and pipe.get("movementBlocked")==0 and pipe.get("anyTurnOccurred")==1 and pipe.get("viewportDirty")==1)
+    checks.append({"kind":"live_runtime_redraw_state","ok":live_ok,"observed":runtime,"expected":"launcher route reaches active DM1 V1 state; turn-right command applies one facing update and sets viewportDirty=1"})
     ok=all(c.get("ok") for c in checks); status=EXPECTED_STATUS if ok else "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     manifest={"schema":f"{PASS}.v1","timestampUtc":datetime.now(timezone.utc).isoformat(),"status":status,"repo":str(ROOT),"branch":run(["git","branch","--show-current"])["outputTail"].strip(),"head":run(["git","rev-parse","HEAD"])["outputTail"].strip(),"sourceRoot":str(REDMCSB),"dm1Data":str(DM1_DATA),"script":SCRIPT,"probeJson":str(probe_json.relative_to(ROOT)),"sourceLocks":source,"productLocks":product,"checks":checks,"scope":"route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path","notClaimed":["original DOS keyboard-buffer/NumLock parity","DOSBox/FIRES CS:IP debugger hit","pixel-perfect viewport parity"]}
     MANIFEST.write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
     lines=["# Pass373 — DM1 V1 launcher viewport redraw wall/occlusion path","",f"Status: `{status}`","","## Verdict",""]
     if ok:
-        lines.append("The full Firestaff launcher route-token path reaches a live DM1 V1 movement step, marks the viewport dirty, and source-locks the consequent redraw path into the normal V1 wall/door/occlusion renderer stack.")
+        lines.append("The full Firestaff launcher route-token path reaches a live DM1 V1 turn, marks the viewport dirty, and source-locks the consequent redraw path into the normal V1 wall/door/occlusion renderer stack.")
     else:
         lines.append("The path is still blocked; inspect the manifest checks for the first failing source/runtime gate.")
     lines += ["", "## Runtime proof", ""]

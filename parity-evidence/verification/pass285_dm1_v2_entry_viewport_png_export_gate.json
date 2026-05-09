@@ -9,7 +9,7 @@
     "height": 136,
     "width": 224
   },
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "Firestaff-side PNG export seam for dm1_v2_vp_build_composition_from_dungeon(map=0,x=1,y=3,dir=2)",
   "sourceAnchors": [
     {

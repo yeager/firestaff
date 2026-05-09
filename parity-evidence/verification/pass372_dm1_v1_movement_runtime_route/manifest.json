@@ -196,7 +196,7 @@
       "path": "test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "27f66ba9c4244c4f16f544428a282d32a3b6bfbc",
+  "head": "f3e6a003f92b5e43e6343fbcd2e2663056124267",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -352,5 +352,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
-  "timestampUtc": "2026-05-09T07:57:45.600433+00:00"
+  "timestampUtc": "2026-05-09T08:46:50.651642+00:00"
 }

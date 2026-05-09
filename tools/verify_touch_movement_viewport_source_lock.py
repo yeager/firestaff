@@ -180,8 +180,8 @@ def parse_firestaff_matrix() -> list[dict[str, Any]]:
             "h": int(h),
             "name": name,
         })
-    if len(rows) != 103:
-        raise SystemExit(f"expected 103 Firestaff matrix entries, found {len(rows)}")
+    if len(rows) != 104:
+        raise SystemExit(f"expected 104 Firestaff matrix entries, found {len(rows)}")
     return rows
 
 
@@ -204,6 +204,12 @@ def verify_firestaff_matrix_subset() -> list[dict[str, Any]]:
 
 def command_route_pattern(row: dict[str, Any]) -> str:
     button = RIGHT_BUTTON if "RIGHT" in row["button"] else LEFT_BUTTON
+    if row["zone"] == 0:
+        return (
+            rf"\{{\s*C{row['command']:03d}_COMMAND_[A-Z0-9_]+\s*,\s*"
+            rf"{row['x']}\s*,\s*{row['x'] + row['w'] - 1}\s*,\s*"
+            rf"{row['y']}\s*,\s*{row['y'] + row['h'] - 1}\s*,\s*{button}\s*\}}"
+        )
     if row["zone"] == 568:
         zone_symbol = r"(?:C568_ZONE_[A-Z0-9_]+|M701_ZONE_TOGGLE_MUSIC_ICON)"
     elif row["zone"] == 570:
@@ -247,8 +253,17 @@ def verify_full_matrix_zones(matrix_rows: list[dict[str, Any]]) -> list[dict[str
     records = {int(k): v for k, v in data["records"].items()}
     rows: list[dict[str, Any]] = []
     for row in matrix_rows:
-        actual = resolve_zone(records, row["zone"])
         expected = {k: row[k] for k in ("x", "y", "w", "h")}
+        if row["zone"] == 0:
+            rows.append({
+                "name": row["name"],
+                "zone": row["zone"],
+                "coord_mode": row["coord_mode"],
+                "layout_696_rect": expected,
+                "layout_citation": "COMMAND.C absolute primary-interface rectangle",
+            })
+            continue
+        actual = resolve_zone(records, row["zone"])
         if actual != expected:
             raise SystemExit(
                 f"matrix entry {row['name']} zone {row['zone']} mismatch: "

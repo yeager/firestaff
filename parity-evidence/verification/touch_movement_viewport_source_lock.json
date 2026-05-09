@@ -759,6 +759,13 @@
       "name": "champion.icon_bottom_left",
       "route_found": true,
       "zone": 116
+    },
+    {
+      "button": "left",
+      "command": 147,
+      "name": "system.freeze_game",
+      "route_found": true,
+      "zone": 0
     }
   ],
   "full_matrix_zones": [
@@ -1894,9 +1901,21 @@
       },
       "name": "champion.icon_bottom_left",
       "zone": 116
+    },
+    {
+      "coord_mode": "TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT",
+      "layout_696_rect": {
+        "h": 2,
+        "w": 2,
+        "x": 0,
+        "y": 198
+      },
+      "layout_citation": "COMMAND.C absolute primary-interface rectangle",
+      "name": "system.freeze_game",
+      "zone": 0
     }
   ],
-  "matrix_zone_count": 103,
+  "matrix_zone_count": 104,
   "non_claims": [
     "No input behavior is changed by this verifier.",
     "This does not source-lock V2 inventory art or HUD rendering behavior.",
@@ -1977,13 +1996,13 @@
     "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",
     "COORD.C:1915-1920 F0798_COMMAND_IsPointInZone inclusive zone hit-test"
   ],
-  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "pass",
   "verified_files": [
-    "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
-    "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
-    "<firestaff-repo>/data/zones_h_reconstruction.json",
-    "<firestaff-repo>/touch_click_zone_matrix_pc34_compat.c"
+    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+    "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/data/zones_h_reconstruction.json",
+    "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/touch_click_zone_matrix_pc34_compat.c"
   ],
   "zones": [
     {

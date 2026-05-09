@@ -4,7 +4,7 @@
   "superseded_by_later_batch_capture": {
     "superseded": true,
     "reason": "pass304/pass308 captured the focused route-label set; remaining blocker is original runtime state-oracle proof",
-    "pass304Status": "BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED",
+    "pass304Status": "PASS_ORIGINAL_PC34_VIEWPORT_CAPTURE_PROMOTION_READY",
     "pass304RouteLabelCoverage": true,
     "pass308Status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
     "pass308Coverage": {

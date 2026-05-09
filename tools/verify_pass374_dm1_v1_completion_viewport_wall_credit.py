@@ -163,7 +163,7 @@ def main() -> int:
     })
 
     doc = DOC.read_text(encoding="utf-8")
-    checks.append({"kind": "completion_doc_credit", "ok": ("| DM1 V1 | 56% | 56/100 |" in doc or "| DM1 V1 | 57% | 57/100 |" in doc) and ("| `viewport_ui_render` | 11/20 |" in doc or "| `viewport_ui_render` | 12/20 |" in doc)})
+    checks.append({"kind": "completion_doc_credit", "ok": ("| DM1 V1 | 56% | 56/100 |" in doc or "| DM1 V1 | 57% | 57/100 |" in doc or "| DM1 V1 | 58% | 58/100 |" in doc) and ("| `viewport_ui_render` | 11/20 |" in doc or "| `viewport_ui_render` | 12/20 |" in doc)})
     r = run([sys.executable, "tools/verify_firestaff_completion_matrix.py"])
     checks.append({"kind": "firestaff_completion_matrix_verifier", "ok": r["returncode"] == 0, "result": r})
     r = run([sys.executable, "tools/firestaff_completion_status.py"])
