@@ -8459,6 +8459,7 @@ enum {
     M11_GFX_DOOR_SET0_D1    = 248, /* 96x88 */
     M11_GFX_DOOR_BUTTON_BASE = 453, /* 8x9 */
     M11_GFX_DOOR_MASK_DESTROYED = 439, /* M649_GRAPHIC_DOOR_MASK_DESTROYED */
+    M11_GFX_DOOR_MASK_THIEVES_EYE = 440, /* C16 mask: M649 + (16 - 15) */
 
     /* ReDMCSB I34E DUNVIEW.C F0095 materializes each wall set from
      * M646_GRAPHIC_FIRST_WALL_SET + wallSet * M647_WALL_SET_GRAPHIC_COUNT.
@@ -10291,6 +10292,43 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
                                    ornW, ornH,
                                    9);
     }
+}
+
+static void m11_draw_dm1_center_thieves_eye_mask(const M11_GameViewState* state,
+                                                 unsigned char* framebuffer,
+                                                 int fbW,
+                                                 int fbH,
+                                                 const M11_ViewportCell cells[3][3]) {
+    static const M11_DM1ZoneBlit kDoorPanelD1C =
+        {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86};
+    const M11_ViewportCell* cell;
+    const M11_AssetSlot* slot;
+    if (!state || !state->assetsAvailable ||
+        state->world.lifecycle.status.thievesEyeCount == 0) {
+        return;
+    }
+    if (!cells || !cells[0][1].valid || cells[0][1].elementType != DUNGEON_ELEMENT_DOOR) {
+        return;
+    }
+    cell = &cells[0][1];
+    if (cell->doorState == 0) {
+        return;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                M11_GFX_DOOR_MASK_THIEVES_EYE);
+    if (!slot || slot->width <= 0 || slot->height <= 0) {
+        return;
+    }
+    /* ReDMCSB STARTUP2.C maps C16_DOOR_ORNAMENT_THIEVES_EYE_MASK to
+     * M649_GRAPHIC_DOOR_MASK_DESTROYED + 1 (GRAPHICS.DAT 440), and
+     * DUNVIEW.C F0111 applies that C16 ornament only for the D1C door. */
+    M11_AssetLoader_BlitScaled(slot,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + kDoorPanelD1C.dstX,
+                               M11_VIEWPORT_Y + kDoorPanelD1C.dstY,
+                               kDoorPanelD1C.width,
+                               kDoorPanelD1C.height,
+                               9);
 }
 
 static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* state,
@@ -18284,6 +18322,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                           maxVisibleForward, cells);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_center_thieves_eye_mask(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight,
