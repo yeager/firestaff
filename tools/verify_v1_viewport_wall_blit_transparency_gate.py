@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""Source-lock V1 DM1 wall-panel blits as opaque geometry.
+"""Source-lock V1 DM1 side-wall panel transparency.
 
-This verifier prevents regression of the pass195 right-side viewport geometry
-fix: DUNVIEW.C draws wall panels with F0104/F0105 (no C10 transparency), while
-Firestaff had keyed side-wall panels on palette 10 and punched black holes in
-valid tan wall texels around ingame_move_forward/D1R.
+ReDMCSB PC/I34E side-wall paths draw side panels through F0104/F0105.
+Those helpers call F0132_VIDEO_Blit with C10_COLOR_FLESH as the transparent
+key.  Center-front walls are different: F0118/F0121/F0124 use F0792/F0765
+with CM1_COLOR_NO_TRANSPARENCY.
 """
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "m11_game_view.c"
 
 CITATIONS = [
-    "ReDMCSB DUNVIEW.C:7604-7628 draws D1R wall via F0104(... C714_ZONE_WALL_D1R) and returns, with no C10 transparency key.",
-    "ReDMCSB DUNVIEW.C:7690-7704 draws D1R corridor/teleporter ceiling pit then F0115 objects, not a wall panel.",
-    "ReDMCSB DUNVIEW.C:8117-8144 draws D0R wall via F0104(... C717_ZONE_WALL_D0R) and returns, with no C10 transparency key.",
-    "ReDMCSB DUNVIEW.C:2389-2408 prebuilds flipped wall bitmaps; C10 is used as a temporary fill for derived flipped masks, not as transparency for the direct wall primitives.",
+    "ReDMCSB DUNVIEW.C:3111-3155 F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap blits with C10_COLOR_FLESH on MEDIA529/PC paths.",
+    "ReDMCSB DUNVIEW.C:3193-3267 F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally preserves the same C10 transparency after flip.",
+    "ReDMCSB DUNVIEW.C:6423-6427 / 6555-6563 route D3L/D3R side walls through F0105/F0104.",
+    "ReDMCSB DUNVIEW.C:6708 / 7300 / 7834 route center walls through F0792_DUNGEONVIEW_DrawBitmapYYY with CM1_COLOR_NO_TRANSPARENCY.",
 ]
 
 
@@ -29,33 +28,33 @@ def line_no(text: str, needle: str) -> int:
 
 def main() -> int:
     text = SRC.read_text()
-    start = text.index("static void m11_draw_dm1_side_walls(")
-    end = text.index("static void m11_draw_dm1_center_doors(", start)
-    body = text[start:end]
+    side_start = text.index("static void m11_draw_dm1_side_walls(")
+    side_end = text.index("static void m11_draw_dm1_center_doors(", side_start)
+    side = text[side_start:side_end]
+    front_start = text.index("static void m11_draw_dm1_front_walls(")
+    front_end = text.index("static int m11_dm1_side_lane_clear_before_depth", front_start)
+    front = text[front_start:front_end]
 
-    required = [
-        "M11_GFX_WALLSET0_D1R",
-        "M11_GFX_WALLSET0_D0R",
+    required_side = [
+        "F0104/F0105",
+        "C10_COLOR_FLESH as the transparent color",
         "m11_draw_dm1_wall_blit_with_transparency",
-        "-1);",
-        "real tan wall texel",
+        "&kSideBlits[i],\n                                                               10);",
+        "&swapped,\n                                                     10);",
+        "partner = i ^ 1",
     ]
-    missing = [needle for needle in required if needle not in body]
+    missing = [needle for needle in required_side if needle not in side]
     if missing:
-        raise AssertionError(f"side-wall opaque source-lock missing tokens: {missing}")
+        raise AssertionError(f"side-wall C10 transparency source-lock missing tokens: {missing}")
 
-    bad = re.search(
-        r"m11_draw_dm1_wall_blit_with_transparency\([^;]*M11_COLOR_MAGENTA\s*\)",
-        body,
-        re.S,
-    )
-    if bad:
-        raise AssertionError(
-            "side-wall wall-panel blit still keys on M11_COLOR_MAGENTA; "
-            "DUNVIEW.C F0104/F0105 wall primitives are opaque"
-        )
+    if "&kFrontBlits[depth],\n                                                     -1);" not in front:
+        raise AssertionError("center-front flipped wall path must remain opaque (-1 transparency)")
 
-    print("PASS v1 viewport wall-panel blits are opaque source-locked")
+    helper = text[text.index("static int m11_draw_dm1_wall_blit_flipped("):text.index("static unsigned int m11_wallset_graphic_index_for_state", text.index("static int m11_draw_dm1_wall_blit_flipped("))]
+    if "transparentColor >= 0" not in helper or "continue;" not in helper:
+        raise AssertionError("flipped wall helper does not honor transparentColor")
+
+    print("PASS v1 viewport side-wall panels use ReDMCSB C10 transparency; center walls stay opaque")
     print("Firestaff: m11_game_view.c:{}".format(line_no(text, "static void m11_draw_dm1_side_walls(")))
     for citation in CITATIONS:
         print("- " + citation)

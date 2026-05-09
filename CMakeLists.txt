@@ -345,6 +345,30 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_launch_blocker_m12
     )
 
+    add_executable(test_m12_quick_resume_gate
+        test_m12_quick_resume_gate.c
+    )
+    target_link_libraries(test_m12_quick_resume_gate PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_quick_resume_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_quick_resume_gate
+        COMMAND test_m12_quick_resume_gate
+    )
+
+    add_executable(test_m11_quick_resume_roundtrip
+        test_m11_quick_resume_roundtrip.c
+    )
+    target_link_libraries(test_m11_quick_resume_roundtrip PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m11_quick_resume_roundtrip PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_quick_resume_roundtrip
+        COMMAND test_m11_quick_resume_roundtrip
+    )
+
     add_executable(firestaff_m11_touch_pointer_dispatch_probe
         probes/m11/firestaff_m11_touch_pointer_dispatch_probe.c
     )
@@ -484,6 +508,18 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_dm1_v1_movement_core_probe
         COMMAND firestaff_dm1_v1_movement_core_probe
+    )
+
+    add_executable(firestaff_dm1_v1_canonical_movement_probe
+        probes/dm1/firestaff_dm1_v1_canonical_movement_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_canonical_movement_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_canonical_movement_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_canonical_movement_probe
+        COMMAND firestaff_dm1_v1_canonical_movement_probe
     )
 
     add_executable(firestaff_dm1_v1_walls_occlusion_blockers_probe
@@ -996,6 +1032,10 @@ if(BUILD_TESTING)
         add_test(
             NAME dm1_v1_viewport_walls_golden_comparison
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_walls_golden_comparison.py
+        )
+        add_test(
+            NAME dm1_v1_real_wall_asset_distinctness_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_real_wall_asset_distinctness_gate.py
         )
         add_test(
             NAME v1_viewport_front_wall_depth_gate

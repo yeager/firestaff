@@ -3,7 +3,7 @@
 
 This gate covers a narrow invariant outside the D1C/D2C/D3C front-wall gate:
 ReDMCSB draws side squares far-to-near, and a near D1L/D1R wall branch draws the
-opaque side wall then returns.  Therefore farther same-side open-cell contents
+C10-keyed side wall then returns.  Therefore farther same-side open-cell contents
 must not be drawn over a nearer side wall in Firestaff's split renderer.
 """
 from __future__ import annotations
@@ -93,7 +93,7 @@ def main() -> int:
         d1l,
         [
             ('D1L wall case', 'case C00_ELEMENT_WALL:'),
-            ('D1L opaque side-wall blit', 'F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G3008_i_WallSet_Wall_D1L'),
+            ('D1L C10-keyed side-wall blit', 'F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G3008_i_WallSet_Wall_D1L'),
             ('D1L near wall returns', 'return;'),
             ('D1L open-cell content branch', 'F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF'),
         ],
@@ -103,7 +103,7 @@ def main() -> int:
         d1r,
         [
             ('D1R wall case', 'case C00_ELEMENT_WALL:'),
-            ('D1R opaque side-wall blit', 'F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G3009_i_WallSet_Wall_D1R'),
+            ('D1R C10-keyed side-wall blit', 'F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G3009_i_WallSet_Wall_D1R'),
             ('D1R near wall returns', 'return;'),
             ('D1R open-cell content branch', 'F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF'),
         ],
@@ -152,15 +152,15 @@ def main() -> int:
             ('D2L2 side wall after D3', '{2, 2, -2, M11_GFX_WALLSET0_D2L2'),
             ('D1L side wall after D2', '{1, 1, -1, M11_GFX_WALLSET0_D1L'),
             ('D0L side wall nearest', '{0, 0, -1, M11_GFX_WALLSET0_D0L'),
-            ('opaque wall blit', 'm11_draw_dm1_wall_blit_with_transparency'),
+            ('C10-keyed wall blit', 'm11_draw_dm1_wall_blit_with_transparency'),
         ],
-        'Firestaff side wall far-to-near opaque blits',
+        'Firestaff side wall far-to-near C10-keyed blits',
     )
-    if '-1);' not in side_walls:
-        raise AssertionError('Firestaff side wall blit does not pass -1 no-transparency key')
+    if '10);' not in side_walls:
+        raise AssertionError('Firestaff side wall blit does not pass C10 transparency key')
     if 'm11_dm1_side_lane_clear_for_rel(cells,' not in side_walls:
         raise AssertionError('Firestaff side-wall panels are not guarded by same-lane near-wall occlusion')
-    ok.append(f'Firestaff side-wall opaque far-to-near blits guarded by same-lane occlusion: m11_game_view.c:{line_no(text, side_walls_start)}')
+    ok.append(f'Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:{line_no(text, side_walls_start)}')
 
     ornaments_start, _ornaments_end, ornaments = find_function(text, 'm11_draw_dm1_wall_ornaments')
     require_in_order(

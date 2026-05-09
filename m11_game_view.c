@@ -969,6 +969,9 @@ static uint32_t m11_read_u32_le(const unsigned char* src) {
            ((uint32_t)src[3] << 24);
 }
 
+static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
+                                             const char* path);
+
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize) {
@@ -4678,6 +4681,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     m11_log_event(state, M11_COLOR_YELLOW, "T0: %s LOADED", spec->title);
     m11_set_status(state, "BOOT", "GAME DATA LOADED");
     m11_set_inspect_readout(state, "READY", "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION");
+    if (spec->savePath && spec->savePath[0] != '\0') {
+        if (!m11_game_view_load_quicksave_path(state, spec->savePath)) {
+            return 0;
+        }
+        m11_log_event(state, M11_COLOR_LIGHT_CYAN, "RESUMED: %s", spec->savePath);
+    }
     return 1;
 }
 
@@ -4709,6 +4718,10 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.gameId = entry->gameId;
     spec.dataDir = M12_AssetStatus_GetDataDir(&menuState->assetStatus);
     spec.sourceId = entry->gameId;
+    if (menuState->launchRequested) {
+        M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
+        spec.savePath = intent.savePath;
+    }
     spec.sourceKind = (entry->sourceKind == M12_MENU_SOURCE_CUSTOM_DUNGEON)
                           ? M11_GAME_SOURCE_CUSTOM_DUNGEON
                           : M11_GAME_SOURCE_BUILTIN_CATALOG;
@@ -4791,8 +4804,8 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     return 1;
 }
 
-int M11_GameView_QuickLoad(M11_GameViewState* state) {
-    char path[M11_GAME_VIEW_PATH_CAPACITY];
+static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
+                                             const char* path) {
     FILE* file = NULL;
     long fileSizeLong;
     int blobSize;
@@ -4802,11 +4815,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     uint32_t expectedHash;
     uint32_t loadedHash = 0;
 
-    if (!state || !state->active) {
-        return 0;
-    }
-    if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
-        m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
+    if (!state || !state->active || !path || path[0] == '\0') {
         return 0;
     }
 
@@ -4871,6 +4880,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     state->world = loadedWorld;
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
+    m11_mark_explored(state);
     m11_set_status(state, "LOAD", "QUICKSAVE RESTORED");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTORED");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
@@ -4879,6 +4889,20 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
              (unsigned int)state->lastWorldHash,
              path);
     return 1;
+}
+
+int M11_GameView_QuickLoad(M11_GameViewState* state) {
+    char path[M11_GAME_VIEW_PATH_CAPACITY];
+
+    if (!state || !state->active) {
+        return 0;
+    }
+    if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
+        m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
+        return 0;
+    }
+
+    return m11_game_view_load_quicksave_path(state, path);
 }
 
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
@@ -8876,7 +8900,8 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
                                           unsigned char* framebuffer,
                                           int fbW,
                                           int fbH,
-                                          const M11_DM1WallFrontBlit* blit) {
+                                          const M11_DM1WallFrontBlit* blit,
+                                          int transparentColor) {
     const M11_AssetSlot* slot;
     unsigned int graphicIndex;
     int y;
@@ -8901,6 +8926,9 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
             unsigned char pixel;
             if (fbX < 0 || fbX >= fbW) continue;
             pixel = slot->pixels[y * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
             framebuffer[fbY * fbW + fbX] = pixel;
         }
     }
@@ -9483,7 +9511,8 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                  * the native center-wall graphic flipped horizontally. */
                 (void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,
                                                      fbW, fbH,
-                                                     &kFrontBlits[depth]);
+                                                     &kFrontBlits[depth],
+                                                     -1);
             } else {
                 (void)m11_draw_dm1_front_wall_blit(state, framebuffer,
                                                    fbW, fbH,
@@ -10048,10 +10077,11 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
             continue;
         }
         if (m11_viewport_cell_is_wall_like(&cell)) {
-            /* ReDMCSB wall primitives use F0104/F0105 wall blits into
-             * C702..C717 without C10 transparency; C10_COLOR_FLESH is a
-             * real tan wall texel.  Keying side-wall panels on palette 10
-             * cuts black holes into D1R/D0R right-side geometry. */
+            /* ReDMCSB I34E/P31J side-wall primitives use F0104/F0105 into
+             * C702..C717, and those helpers call F0132_VIDEO_Blit with
+             * C10_COLOR_FLESH as the transparent color.  Center walls use
+             * F0792/F0765 without transparency; side panels must keep the
+             * C10 key so clipped L/R panels do not overpaint the corridor. */
             if (flipWalls) {
                 /* ReDMCSB F0116/F0117 (MEDIA709/720 path): when flipped,
                  * left zones use the right-side graphic flipped horizontally
@@ -10064,14 +10094,15 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                                      framebuffer,
                                                      fbW,
                                                      fbH,
-                                                     &swapped);
+                                                     &swapped,
+                                                     10);
             } else {
                 (void)m11_draw_dm1_wall_blit_with_transparency(state,
                                                                framebuffer,
                                                                fbW,
                                                                fbH,
                                                                &kSideBlits[i],
-                                                               -1);
+                                                               10);
             }
         }
     }

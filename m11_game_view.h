@@ -38,6 +38,7 @@ typedef struct {
     const char* dataDir;
     const char* sourceId;
     const char* dungeonPath;
+    const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     int languageIndex;
     int rendererBackend;
     M11_GameSourceKind sourceKind;

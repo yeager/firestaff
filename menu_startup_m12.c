@@ -807,9 +807,43 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
 }
 
 
+static int m12_is_valid_quicksave_path(const char* path) {
+    static const unsigned char quicksaveMagic[8] = {
+        'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
+    };
+    enum { M12_QUICKSAVE_HEADER_SIZE = 16 };
+    FILE* fp;
+    unsigned char header[M12_QUICKSAVE_HEADER_SIZE];
+    long fileSize;
+    unsigned int blobSize;
+
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    if (fread(header, 1U, sizeof(header), fp) != sizeof(header) ||
+        memcmp(header, quicksaveMagic, sizeof(quicksaveMagic)) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    blobSize = ((unsigned int)header[8]) |
+               ((unsigned int)header[9] << 8) |
+               ((unsigned int)header[10] << 16) |
+               ((unsigned int)header[11] << 24);
+    if (blobSize == 0U || fseek(fp, 0L, SEEK_END) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    fileSize = ftell(fp);
+    fclose(fp);
+    return fileSize == (long)(M12_QUICKSAVE_HEADER_SIZE + blobSize);
+}
+
 static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config config;
-    FILE* fp;
     if (!state) {
         return;
     }
@@ -820,17 +854,10 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config_SetDefaults(&config);
     M12_Config_Load(&config, NULL);
 
-    if (config.lastSavePath[0] == '\0') {
+    if (!m12_is_valid_quicksave_path(config.lastSavePath)) {
         return;
     }
-    fp = fopen(config.lastSavePath, "rb");
-    if (!fp) {
-        return;
-    }
-    fclose(fp);
-    state->quickResumeAvailable = 1;
-    snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
-             "%s", config.lastSavePath);
+
     /* Extract game id from save path pattern: firestaff-{id}-quicksave.sav */
     {
         const char* base = strrchr(config.lastSavePath, '/');
@@ -843,15 +870,25 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
         } else {
             ++base;
         }
-        if (strncmp(base, prefix, strlen(prefix)) == 0) {
-            start = base + strlen(prefix);
-            end = strstr(start, suffix);
-            if (end && (size_t)(end - start) < sizeof(state->quickResumeGameId)) {
-                memcpy(state->quickResumeGameId, start, (size_t)(end - start));
-                state->quickResumeGameId[end - start] = '\0';
-            }
+        if (strncmp(base, prefix, strlen(prefix)) != 0) {
+            return;
         }
+        start = base + strlen(prefix);
+        end = strstr(start, suffix);
+        if (!end || (size_t)(end - start) >= sizeof(state->quickResumeGameId)) {
+            return;
+        }
+        memcpy(state->quickResumeGameId, start, (size_t)(end - start));
+        state->quickResumeGameId[end - start] = '\0';
     }
+
+    if (strcmp(state->quickResumeGameId, "dm1") != 0) {
+        return;
+    }
+
+    state->quickResumeAvailable = 1;
+    snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
+             "%s", config.lastSavePath);
 }
 
 static void m12_save_config(const M12_StartupMenuState* state);
@@ -5074,6 +5111,13 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.rendererBackend = M12_StartupMenu_GetRendererBackend(state);
     intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
+    if (state->quickResumeAvailable &&
+        state->quickResumeSavePath[0] != '\0' &&
+        state->quickResumeGameId[0] != '\0' &&
+        intent.gameId &&
+        strcmp(state->quickResumeGameId, intent.gameId) == 0) {
+        intent.savePath = state->quickResumeSavePath;
+    }
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);
     intent.valid = m12_game_supported(intent.gameId) &&

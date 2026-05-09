@@ -226,10 +226,16 @@ int F0502_DUNGEON_LoadTileData_Compat(
         /* File layout after header + map descriptors:
          *   ColumnsCumulativeSquareThingCount table (totalColumns * 2 bytes)
          *   SquareFirstThings (squareFirstThingCount * 2 bytes)
+         *   Text data (textDataWordCount * 2 bytes)
          *   Thing data for types 0-15 (thingCounts[i] * ThingDataByteCount[i])
          *   Raw map data (rawMapDataByteCount bytes)
-         *   Text data (textDataWordCount * 2 bytes)
          *   2-byte checksum (PC 3.4)
+         *
+         * Source lock: ReDMCSB DUNGEON.C loads the map bytes after the
+         * header/map descriptors/cumulative table/SFT/text/thing sections.
+         * F0504_DUNGEON_LoadThingData_Compat below uses the same text-before-
+         * thing layout; omitting textDataWordCount here shifted DM1 V1 map 0
+         * into object bytes, making the entrance look boxed in by walls.
          */
         {
                 int totalColumns = 0;
@@ -244,6 +250,7 @@ int F0502_DUNGEON_LoadTileData_Compat(
                         (long)state->header.mapCount * DUNGEON_MAP_DESC_SIZE +
                         (long)totalColumns * 2 +
                         (long)state->header.squareFirstThingCount * 2 +
+                        (long)state->header.textDataWordCount * 2 +
                         thingDataTotalBytes;
         }
 
@@ -593,7 +600,7 @@ int F0504_DUNGEON_LoadThingData_Compat(
         file = fopen(path, "rb");
         if (!file) return 0;
 
-        /* File layout: header → maps → cumtable → SFT → thingdata → rawmapdata → textdata → checksum(2)
+        /* File layout: header → maps → cumtable → SFT → textdata → thingdata → rawmapdata → checksum(2)
          * Cumtable has totalColumns entries (NOT totalColumns+1).
          * SFT starts right after cumulative thing count table. */
         for (i = 0; i < (int)state->header.mapCount; i++) {

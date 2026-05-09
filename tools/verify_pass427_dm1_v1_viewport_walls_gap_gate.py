@@ -134,8 +134,12 @@ def main() -> int:
     require(side, "partner = i ^ 1", "Firestaff parity partner swap")
     require(side, "swapped.graphicIndex = kSideBlits[partner].graphicIndex", "Firestaff parity graphic swap")
     require(side, "m11_draw_dm1_wall_blit_flipped", "Firestaff F0105 parity flip path")
-    require(side, "m11_draw_dm1_wall_blit_with_transparency", "Firestaff F0104 opaque path")
-    require(side, "-1);", "Firestaff wall path keeps C10_COLOR_FLESH opaque")
+    require(side, "m11_draw_dm1_wall_blit_with_transparency", "Firestaff F0104 C10-keyed path")
+    # ReDMCSB DUNVIEW.C:3128/3144 (MEDIA463 includes I34E/PC34) routes side walls
+    # through F0104/F0105, which call F0132_VIDEO_Blit with C10_COLOR_FLESH as the
+    # transparent color.  Side panels must keep that key; only center walls
+    # (F0792/F0765) draw with CM1_COLOR_NO_TRANSPARENCY.
+    require(side, "10);", "Firestaff side wall path keeps C10_COLOR_FLESH transparent")
 
     door_start, doors = find_function(fire, "m11_draw_dm1_side_doors")
     require_in_order(doors, [
