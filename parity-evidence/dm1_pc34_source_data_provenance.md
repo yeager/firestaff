@@ -30,14 +30,16 @@ Deprecated reference note:
 | File | Bytes | SHA-256 | Existing Firestaff assumption |
 |---|---:|---|---|
 | `DUNGEON.DAT` | 33357 | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | M10/M11 real dungeon probes consume this file by path, no conflicting hash found. |
-| `GRAPHICS.DAT` | 363417 | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` | Matches `asset_status_m12.c` / `asset_validator_checksums_m12.json` MD5 `fa6b1aa29e191418713bf2cda93d962e` for `dm1 pc34-en`; also the SHA-256 cited in `DM1_ALL_GRAPHICS_FIX_PLAN.md`. |
+| `GRAPHICS.DAT` | 363417 | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` | Exact variant: DM PC 3.4 English / I34E. Matches Daniel registry MD5 `fa6b1aa29e191418713bf2cda93d962e` for `DM PC 3.4 English GRAPHICS.DAT`; MD5 is provenance only, SHA-256 is the gate identity. |
 | `SONG.DAT` | 162482 | `71e1ba82b7f3cfeb99ae181bd9d685201bdc2b11f42643460120ddcb3470c177` | Matches the DM PC `SONG.DAT` entry in `asset_validator_checksums_m12.json` by file identity and runtime audio assumptions. |
 
 Additional local cross-check:
 
-- `DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT` has the same SHA-256 as English `DUNGEON.DAT`.
+- `DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT` has the same SHA-256 as English `DUNGEON.DAT`: `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` (33357 bytes).
 - `DungeonMasterPC34Multilingual/EUDATA/SONG.DAT` has the same SHA-256 as English `SONG.DAT`.
-- `DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT` is different, as expected, and matches the Firestaff MD5 assumption for `dm1 pc34-multi` (`f934d97e43e1ba6e5159839acbcd0611`).
+- `DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT` is different, as expected: SHA-256 `291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc`, 398925 bytes, Daniel registry MD5 `f934d97e43e1ba6e5159839acbcd0611` for `DM PC 3.4 Multilanguage GRAPHICS.DAT`.
+
+Pass446 rule: no Firestaff runtime/parity comparison may identify original dungeon/graphics data by basename alone. Every comparison must name the exact variant and SHA-256; registry MD5s are useful provenance cross-references but are not SHA-256 substitutes.
 
 ## Pass445 hash-lock evidence
 

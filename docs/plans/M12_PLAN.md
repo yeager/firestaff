@@ -916,17 +916,18 @@ The asset database ships as `data/assets.json` alongside the binary.
               "id": "DUNGEON.DAT",
               "description": "Dungeon data (maps, objects, creatures, events)",
               "required": true,
-              "md5": "b076a54e8b3c89tried9d6f3a2e1c8b4",
-              "size_bytes": 33286,
-              "notes": "Primary game data. Identical across all PC 3.4 language variants."
+              "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "size_bytes": 33357,
+              "notes": "Locked local target: DM PC 3.4 English / I34E DUNGEON.DAT. ReDMCSB names the path, but Firestaff evidence must identify this payload by exact variant + SHA-256, not by filename alone."
             },
             {
               "id": "GRAPHICS.DAT",
               "description": "All game graphics (sprites, tiles, UI elements)",
               "required": true,
-              "md5": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
-              "size_bytes": 527964,
-              "notes": "Contains IMG3-encoded bitmaps. Format documented in Fontanel's ReDMCSB."
+              "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "md5_provenance": "fa6b1aa29e191418713bf2cda93d962e",
+              "size_bytes": 363417,
+              "notes": "Locked local target: DM PC 3.4 English / I34E GRAPHICS.DAT. Daniel's registry MD5 is provenance only; SHA-256 is the gate identity."
             },
             {
               "id": "SOUND.DAT",
@@ -1029,10 +1030,11 @@ The asset database ships as `data/assets.json` alongside the binary.
 
 **Localised text resources:** Different language versions may share `GRAPHICS.DAT` but have different `DUNGEON.DAT` (embedded text). Each language variant is a separate entry under `variants`.
 
-**Discovery strategy:** The validator hashes every file in the user's directory (recursively, up to configurable depth), then looks up each hash in a reverse-index built from the database. This means:
-- File names don't matter (users can rename files freely)
-- Directory structure doesn't matter (nested folders are fine)
-- Multiple games in the same directory are detected simultaneously
+**Discovery strategy:** Final validator design should be hash-first: hash candidate files, then look up each hash in a reverse index built from the database. Current M12 startup status code is narrower: it tries a bounded list of expected filenames and then validates MD5. Therefore current evidence must not claim arbitrary-renamed files are supported until a recursive hash-first scanner exists.
+- Filename alone never identifies a variant.
+- A matched name plus MD5 is catalog/status evidence only.
+- Runtime/parity evidence must name the exact variant and SHA-256 for every `DUNGEON.DAT` / `GRAPHICS.DAT` comparison.
+- Multiple games in the same directory are a design goal, not a current parity proof.
 - A single scan discovers all playable variants at once
 
 **Community contributions:** The database has a `generated_at` timestamp. Users can submit new variant hashes via GitHub pull requests to the `data/assets.json` file. The build system validates the JSON schema on CI.
