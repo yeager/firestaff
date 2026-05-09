@@ -377,29 +377,23 @@ void dm1_viewport_3d_draw_wall(DM1_Viewport3DState *state,
                                const uint8_t *wall_bitmap,
                                const DM1_WallFrame *frame)
 {
-    if (!frame || frame->byte_width == 0 || !wall_bitmap) return;
+    if (!state || !frame || frame->byte_width == 0 || frame->height == 0 || !wall_bitmap) return;
+
+    DM1_ViewportBlitClipGate gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    if (!gate.visible) return;
 
     uint8_t *vp = state->viewport_pixels;
     int vp_stride = state->viewport_stride;
     int bw = frame->byte_width;
-    int bh = frame->height;
-    int dx = frame->blit_x;
-    int dy = frame->blit_y;
 
-    for (int y = 0; y < bh; y++) {
-        int vy = dy + y;
-        if (vy < 0 || vy >= DM1_VIEWPORT_HEIGHT) continue;
+    for (int y = 0; y < gate.height; y++) {
+        const uint8_t *src_row = wall_bitmap + (gate.src_y + y) * bw + gate.src_x;
+        uint8_t *dst_row = vp + (gate.dst_y + y) * vp_stride + gate.dst_x;
 
-        const uint8_t *src_row = wall_bitmap + y * bw;
-        uint8_t *dst_row = vp + vy * vp_stride;
-
-        for (int x = 0; x < bw; x++) {
-            int vx = dx + x;
-            if (vx < 0 || vx >= DM1_VIEWPORT_WIDTH) continue;
-
+        for (int x = 0; x < gate.width; x++) {
             uint8_t pixel = src_row[x];
             if (pixel != COLOR_TRANSPARENT) {
-                dst_row[vx] = pixel;
+                dst_row[x] = pixel;
             }
         }
     }
@@ -417,35 +411,19 @@ void dm1_viewport_3d_draw_wall_opaque(DM1_Viewport3DState *state,
                                       const uint8_t *wall_bitmap,
                                       const DM1_WallFrame *frame)
 {
-    if (!frame || frame->byte_width == 0 || !wall_bitmap) return;
+    if (!state || !frame || frame->byte_width == 0 || frame->height == 0 || !wall_bitmap) return;
+
+    DM1_ViewportBlitClipGate gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
+    if (!gate.visible) return;
 
     uint8_t *vp = state->viewport_pixels;
     int vp_stride = state->viewport_stride;
     int bw = frame->byte_width;
-    int bh = frame->height;
-    int dx = frame->blit_x;
-    int dy = frame->blit_y;
 
-    for (int y = 0; y < bh; y++) {
-        int vy = dy + y;
-        if (vy < 0 || vy >= DM1_VIEWPORT_HEIGHT) continue;
-
-        const uint8_t *src_row = wall_bitmap + y * bw;
-        uint8_t *dst_row = vp + vy * vp_stride + dx;
-
-        /* Clamp copy width to viewport bounds */
-        int copy_w = bw;
-        if (dx + copy_w > DM1_VIEWPORT_WIDTH) {
-            copy_w = DM1_VIEWPORT_WIDTH - dx;
-        }
-        if (dx < 0) {
-            src_row -= dx;
-            dst_row -= dx;
-            copy_w += dx;
-        }
-        if (copy_w > 0) {
-            memcpy(dst_row, src_row, (size_t)copy_w);
-        }
+    for (int y = 0; y < gate.height; y++) {
+        const uint8_t *src_row = wall_bitmap + (gate.src_y + y) * bw + gate.src_x;
+        uint8_t *dst_row = vp + (gate.dst_y + y) * vp_stride + gate.dst_x;
+        memcpy(dst_row, src_row, (size_t)gate.width);
     }
 }
 
@@ -657,6 +635,48 @@ const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square)
     return &s_wall_frames[idx];
 }
 
+DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate(const DM1_WallFrame *frame,
+                                                                      int source_width,
+                                                                      int source_height)
+{
+    DM1_ViewportBlitClipGate gate;
+    memset(&gate, 0, sizeof(gate));
+    gate.source_lines = "DUNVIEW.C:3053-3058,3198-3204; COORD.C:2390-2409; IMAGE3.C:866-889";
+
+    if (!frame || source_width <= 0 || source_height <= 0) return gate;
+
+    int dst_x = frame->left_x;
+    int dst_y = frame->top_y;
+    int src_x = frame->blit_x;
+    int src_y = frame->blit_y;
+    int width = (int)frame->right_x - (int)frame->left_x + 1;
+    int height = (int)frame->bottom_y - (int)frame->top_y + 1;
+
+    if (width <= 0 || height <= 0) return gate;
+    if (src_x >= source_width || src_y >= source_height) return gate;
+
+    if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+    if (dst_y < 0) { src_y -= dst_y; height += dst_y; dst_y = 0; }
+    if (dst_x + width > DM1_VIEWPORT_WIDTH) width = DM1_VIEWPORT_WIDTH - dst_x;
+    if (dst_y + height > DM1_VIEWPORT_HEIGHT) height = DM1_VIEWPORT_HEIGHT - dst_y;
+
+    if (src_x < 0) { dst_x -= src_x; width += src_x; src_x = 0; }
+    if (src_y < 0) { dst_y -= src_y; height += src_y; src_y = 0; }
+    if (src_x + width > source_width) width = source_width - src_x;
+    if (src_y + height > source_height) height = source_height - src_y;
+
+    if (width <= 0 || height <= 0) return gate;
+
+    gate.visible = true;
+    gate.src_x = (int16_t)src_x;
+    gate.src_y = (int16_t)src_y;
+    gate.dst_x = (int16_t)dst_x;
+    gate.dst_y = (int16_t)dst_y;
+    gate.width = (int16_t)width;
+    gate.height = (int16_t)height;
+    return gate;
+}
+
 size_t dm1_viewport_3d_draw_order_count(void)
 {
     return sizeof(s_draw_order) / sizeof(s_draw_order[0]);
@@ -827,7 +847,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:183  G2107_WallSet[15] PC34/I34E wall bitmap order\n"
         "  DUNVIEW.C:2225 F0096_DUNGEONVIEW_LoadCurrentMapGraphics_CPSDF\n"
         "  DUNVIEW.C:2427-2443 G3048_WallSetFlipped pair generation for flipped-capable ports\n"
-        "  DUNVIEW.C:581  G0163_aauc_Graphic558_Frame_Walls[12][8]\n"
+        "  DUNVIEW.C:581  G0163_aauc_Graphic558_Frame_Walls[12][8]\n  DUNVIEW.C:3053-3058 F0100 uses frame clip + source x/y; C4 zero gates empty walls\n  COORD.C:2390-2409 F0635 clips MEDIA720 zones and source offsets; IMAGE3.C:866-889 F0684 skips empty blits\n"
         "  DEFS.H:4040-4057 PC34 viewport zone constants for ceiling/floor/wall areas\n"
         "  DUNVIEW.C:2962 F0098_DUNGEONVIEW_DrawFloorAndCeiling\n"
         "  DUNVIEW.C:3018 F0099_DUNGEONVIEW_CopyBitmapAndFlipHorizontal\n"
